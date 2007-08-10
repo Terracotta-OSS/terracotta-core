@@ -5,7 +5,7 @@ package com.tctest;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.concurrent.ThreadUtil;
@@ -32,7 +32,7 @@ public class TransparentListApp extends AbstractTransparentApp {
   
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClassName = TransparentListApp.class.getName();
-    ITransparencyClassSpec spec = config.getOrCreateSpec(testClassName);
+    TransparencyClassSpec spec = config.getOrCreateSpec(testClassName);
     spec.addRoot("queue", "sharedQueue");
     testClassName = TransparentListApp.Action.class.getName();
     spec = config.getOrCreateSpec(testClassName);

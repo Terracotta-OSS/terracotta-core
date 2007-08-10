@@ -12,7 +12,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 import com.tc.exception.TCRuntimeException;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.spec.SynchronizedIntSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -137,7 +137,7 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
     visitor.visit(config, Barriers.class);
 
     String testClassName = ObjectDataTestApp.class.getName();
-    ITransparencyClassSpec spec = config.getOrCreateSpec(testClassName);
+    TransparencyClassSpec spec = config.getOrCreateSpec(testClassName);
 
     String idProviderClassname = IDProvider.class.getName();
     config.addIncludePattern(idProviderClassname);
@@ -168,7 +168,7 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
 
     String workerFactoryClassname = WorkerFactory.class.getName();
     config.addIncludePattern(workerFactoryClassname);
-    ITransparencyClassSpec workerFactorySpec = config.getOrCreateSpec(workerFactoryClassname);
+    TransparencyClassSpec workerFactorySpec = config.getOrCreateSpec(workerFactoryClassname);
     workerFactorySpec.addRoot("globalWorkerCount", workerFactoryClassname + ".globalWorkerCount");
 
     // Create locks
@@ -316,7 +316,7 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
 
     public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
       String classname = Barriers.class.getName();
-      ITransparencyClassSpec spec = config.getOrCreateSpec(classname);
+      TransparencyClassSpec spec = config.getOrCreateSpec(classname);
       spec.addRoot("barriers", classname + ".barriers");
       String barriersExpression = "* " + classname + ".*(..)";
       config.addWriteAutolock(barriersExpression);

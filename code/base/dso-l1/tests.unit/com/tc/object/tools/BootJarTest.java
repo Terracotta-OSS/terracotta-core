@@ -8,6 +8,7 @@ import com.tc.object.Portability;
 import com.tc.object.PortabilityImpl;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpecImpl;
 import com.tc.util.Assert;
 import com.tc.util.TCAssertionError;
 
@@ -112,7 +113,7 @@ public class BootJarTest extends BaseDSOTestCase {
     bootJar.loadClassIntoJar(STRING_CLASS, bytesProvider.getBytesForClass(STRING_CLASS), false);
     // load an "instrumented" class into the jar.
     String classname = Boolean.class.getName();
-    TransparencyClassSpec spec = new TransparencyClassSpec(classname, config);
+    TransparencyClassSpec spec = new TransparencyClassSpecImpl(classname, config);
     spec.markPreInstrumented();
     byte[] classBytes = bytesProvider.getBytesForClass(classname);
     assertNotNull(classBytes);

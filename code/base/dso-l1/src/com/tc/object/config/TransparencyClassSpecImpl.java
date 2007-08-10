@@ -33,7 +33,7 @@ import java.util.Set;
 /**
  * Describe the Custom adaption of a class
  */
-public class TransparencyClassSpec implements ITransparencyClassSpec {
+public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   
   private static final Object         HONOR_TRANSIENT_KEY        = "honor-transient";
   private static final Object         HONOR_VOLATILE_KEY         = "honor-volatile";
@@ -67,7 +67,7 @@ public class TransparencyClassSpec implements ITransparencyClassSpec {
   private String                      logicalExtendingClassName  = null;
   private ClassAdapterFactory         customClassAdapter         = null;
 
-  public TransparencyClassSpec(String className, DSOClientConfigHelper configuration, String changeApplicatorClassName) {
+  public TransparencyClassSpecImpl(String className, DSOClientConfigHelper configuration, String changeApplicatorClassName) {
     this.configuration = configuration;
     this.className = className;
     this.changeApplicatorClassName = changeApplicatorClassName;
@@ -75,7 +75,7 @@ public class TransparencyClassSpec implements ITransparencyClassSpec {
     this.isLogical = true;
   }
 
-  public TransparencyClassSpec(String className, DSOClientConfigHelper configuration) {
+  public TransparencyClassSpecImpl(String className, DSOClientConfigHelper configuration) {
     this.className = className;
     this.configuration = configuration;
     this.isLogical = false;
@@ -84,7 +84,7 @@ public class TransparencyClassSpec implements ITransparencyClassSpec {
     this.changeApplicatorSpec = null;
   }
 
-  public ITransparencyClassSpec getClassSpec(String clazzName) {
+  public TransparencyClassSpec getClassSpec(String clazzName) {
     String name = clazzName.replace('/', '.');
     return configuration.getSpec(name);
   }
@@ -96,12 +96,12 @@ public class TransparencyClassSpec implements ITransparencyClassSpec {
            && (configuration.getSpec(name).getInstrumentationAction() != ADAPTABLE);
   }
 
-  public ITransparencyClassSpec addRoot(String variableName, String rootName) {
+  public TransparencyClassSpec addRoot(String variableName, String rootName) {
     configuration.addRoot(new Root(className, variableName, rootName), false);
     return this;
   }
 
-  public ITransparencyClassSpec addRoot(String variableName, String rootName, boolean dsoFinal) {
+  public TransparencyClassSpec addRoot(String variableName, String rootName, boolean dsoFinal) {
     configuration.addRoot(new Root(className, variableName, rootName, dsoFinal), false);
     return this;
   }
@@ -114,7 +114,7 @@ public class TransparencyClassSpec implements ITransparencyClassSpec {
     return nonInstrumentedMethods.contains(methodName);
   }
 
-  public ITransparencyClassSpec markPreInstrumented() {
+  public TransparencyClassSpec markPreInstrumented() {
     preInstrumented = true;
     return this;
   }
@@ -155,12 +155,12 @@ public class TransparencyClassSpec implements ITransparencyClassSpec {
     return null;
   }
 
-  public ITransparencyClassSpec addSupportMethodCreator(MethodCreator creator) {
+  public TransparencyClassSpec addSupportMethodCreator(MethodCreator creator) {
     supportMethodCreators.add(creator);
     return this;
   }
 
-  public ITransparencyClassSpec addDistributedMethodCall(String methodName, String description, boolean runOnAllNodes) {
+  public TransparencyClassSpec addDistributedMethodCall(String methodName, String description, boolean runOnAllNodes) {
     if ("<init>".equals(methodName) || "<clinit>".equals(methodName)) { throw new AssertionError(
                                                                                                  "Initializers of class "
                                                                                                      + className
@@ -176,12 +176,12 @@ public class TransparencyClassSpec implements ITransparencyClassSpec {
     return this;
   }
 
-  public ITransparencyClassSpec addTransient(String variableName) {
+  public TransparencyClassSpec addTransient(String variableName) {
     configuration.addTransient(className, variableName);
     return this;
   }
 
-  public ITransparencyClassSpec addMethodAdapter(String method, MethodAdapter adapter) {
+  public TransparencyClassSpec addMethodAdapter(String method, MethodAdapter adapter) {
     methodAdapters.put(method, adapter);
     return this;
   }
@@ -277,7 +277,7 @@ public class TransparencyClassSpec implements ITransparencyClassSpec {
     return this.logicalExtendingClassName;
   }
 
-  public void moveToLogical(ITransparencyClassSpec superClassSpec) {
+  public void moveToLogical(TransparencyClassSpec superClassSpec) {
     this.isLogical = true;
     String superClassLogicalExtendingClassName = superClassSpec.getLogicalExtendingClassName();
     if (superClassLogicalExtendingClassName == null) {
@@ -381,7 +381,7 @@ public class TransparencyClassSpec implements ITransparencyClassSpec {
     codeSpecs.put(name, codeSpec);
   }
 
-  public ITransparencyClassSpec setHonorVolatile(boolean b) {
+  public TransparencyClassSpec setHonorVolatile(boolean b) {
     flags.put(HONOR_VOLATILE_KEY, new Boolean(b));
     return this;
   }
@@ -396,22 +396,22 @@ public class TransparencyClassSpec implements ITransparencyClassSpec {
     return ((Boolean) flag).booleanValue();
   }
 
-  public ITransparencyClassSpec setHonorTransient(boolean b) {
+  public TransparencyClassSpec setHonorTransient(boolean b) {
     flags.put(HONOR_TRANSIENT_KEY, new Boolean(b));
     return this;
   }
 
-  public ITransparencyClassSpec setCallConstructorOnLoad(boolean b) {
+  public TransparencyClassSpec setCallConstructorOnLoad(boolean b) {
     onLoad.setToCallConstructorOnLoad(b);
     return this;
   }
 
-  public ITransparencyClassSpec setExecuteScriptOnLoad(String script) {
+  public TransparencyClassSpec setExecuteScriptOnLoad(String script) {
     onLoad.setExecuteScriptOnLoad(script);
     return this;
   }
 
-  public ITransparencyClassSpec setCallMethodOnLoad(String method) {
+  public TransparencyClassSpec setCallMethodOnLoad(String method) {
     onLoad.setMethodCallOnLoad(method);
     return this;
   }

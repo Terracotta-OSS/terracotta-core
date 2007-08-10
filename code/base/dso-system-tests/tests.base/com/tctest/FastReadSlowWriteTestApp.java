@@ -7,7 +7,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.spec.SynchronizedIntSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -24,12 +24,12 @@ public class FastReadSlowWriteTestApp extends AbstractTransparentApp {
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
 
-    ITransparencyClassSpec thisSpec = config.getOrCreateSpec(FastReadSlowWriteTestApp.class.getName());
+    TransparencyClassSpec thisSpec = config.getOrCreateSpec(FastReadSlowWriteTestApp.class.getName());
     thisSpec.addRoot("idGenerator", "idGenerator");
     new SynchronizedIntSpec().visit(visitor, config);
 
-    ITransparencyClassSpec readerSpec = config.getOrCreateSpec("com.tctest.TestReader");
-    ITransparencyClassSpec writerSpec = config.getOrCreateSpec("com.tctest.TestWriter");
+    TransparencyClassSpec readerSpec = config.getOrCreateSpec("com.tctest.TestReader");
+    TransparencyClassSpec writerSpec = config.getOrCreateSpec("com.tctest.TestWriter");
 
     readerSpec.addRoot("stuff", "rootBabyRoot");
     writerSpec.addRoot("stuff", "rootBabyRoot");

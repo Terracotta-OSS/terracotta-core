@@ -9,7 +9,7 @@ import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
@@ -100,7 +100,7 @@ public class IllegalMonitorStateTest extends TransparentTestBase {
 
     public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
       String testClass = App.class.getName();
-      ITransparencyClassSpec spec = config.getOrCreateSpec(testClass);
+      TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
 
       config.addWriteAutolock("* " + testClass + ".wrongLockHeld()");
       config.addReadAutolock("* " + testClass + ".readOnlyLockHeld()");

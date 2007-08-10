@@ -6,7 +6,7 @@ package com.tctest;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
@@ -74,7 +74,7 @@ public class MutableInstrumentedEnumTest extends TransparentTestBase {
 
     public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
       String testClass = MutableInstrumentedEnumTestApp.class.getName();
-      ITransparencyClassSpec spec = config.getOrCreateSpec(testClass);
+      TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
 
       config.getOrCreateSpec(MutableEnum.class.getName());
       config.getOrCreateSpec(Ref.class.getName());

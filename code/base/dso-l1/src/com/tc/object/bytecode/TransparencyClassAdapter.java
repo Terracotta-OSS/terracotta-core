@@ -18,7 +18,7 @@ import com.tc.logging.TCLogging;
 import com.tc.object.Portability;
 import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.ILockDefinition;
-import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.text.Banner;
@@ -38,7 +38,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
   private final PhysicalClassAdapterLogger physicalClassLogger;
   private final InstrumentationLogger      instrumentationLogger;
 
-  public TransparencyClassAdapter(ClassInfo classInfo, ITransparencyClassSpec spec, final ClassVisitor cv,
+  public TransparencyClassAdapter(ClassInfo classInfo, TransparencyClassSpec spec, final ClassVisitor cv,
                                   ManagerHelper mgrHelper, InstrumentationLogger instrumentationLogger,
                                   ClassLoader caller, Portability portability) {
     super(classInfo, spec, cv, mgrHelper, caller, portability);

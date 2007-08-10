@@ -12,7 +12,7 @@ import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
@@ -53,7 +53,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
     config.addAutolock("* *..*.*(..)", ConfigLockLevel.WRITE);
 
     final String testClass = EhcacheManagerTestApp.class.getName();
-    final ITransparencyClassSpec spec = config.getOrCreateSpec(testClass);
+    final TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     spec.addRoot("barrier", "barrier");
     new CyclicBarrierSpec().visit(visitor, config);
   }

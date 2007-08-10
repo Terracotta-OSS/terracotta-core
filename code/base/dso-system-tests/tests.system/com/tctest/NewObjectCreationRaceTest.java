@@ -8,7 +8,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -173,7 +173,7 @@ public class NewObjectCreationRaceTest extends TransparentTestBase {
       new CyclicBarrierSpec().visit(visitor, config);
 
       String testClass;
-      ITransparencyClassSpec spec;
+      TransparencyClassSpec spec;
       String methodExpression;
 
       testClass = Ref.class.getName();

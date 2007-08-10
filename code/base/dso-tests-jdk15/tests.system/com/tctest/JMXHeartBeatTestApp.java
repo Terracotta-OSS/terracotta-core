@@ -8,7 +8,7 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
@@ -50,7 +50,7 @@ public class JMXHeartBeatTestApp extends AbstractTransparentApp {
     String testClass = JMXHeartBeatTestApp.class.getName();
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);
-    ITransparencyClassSpec spec = config.getOrCreateSpec(testClass);
+    TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     config.addIncludePattern(testClass + "$*");
 
     // roots

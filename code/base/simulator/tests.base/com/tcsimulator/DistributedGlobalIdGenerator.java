@@ -5,7 +5,7 @@ package com.tcsimulator;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.GlobalIdGenerator;
 
 import java.util.ArrayList;
@@ -32,7 +32,7 @@ public class DistributedGlobalIdGenerator implements GlobalIdGenerator {
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper cfg) {
     String classname = DistributedGlobalIdGenerator.class.getName();
-    ITransparencyClassSpec spec = cfg.getOrCreateSpec(classname);
+    TransparencyClassSpec spec = cfg.getOrCreateSpec(classname);
     spec.addRoot("DistributedGlobalIdGeneratorcurrentId", classname + ".currentId");
     cfg.addWriteAutolock("long " + classname + ".nextId()");
   }

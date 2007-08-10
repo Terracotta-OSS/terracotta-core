@@ -5,7 +5,7 @@ package com.tcsimulator.listener;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ErrorContext;
 import com.tc.simulator.listener.ResultsListener;
 
@@ -21,7 +21,7 @@ public final class ResultsListenerObject implements ResultsListener {
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper cfg) {
     String classname = ResultsListenerObject.class.getName();
-    ITransparencyClassSpec spec = cfg.getOrCreateSpec(classname);
+    TransparencyClassSpec spec = cfg.getOrCreateSpec(classname);
 
     spec.addTransient("startTimeout");
     spec.addTransient("results");

@@ -5,7 +5,7 @@ package com.tctest;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
@@ -39,7 +39,7 @@ public class NestedTransactionApp extends AbstractTransparentApp {
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    ITransparencyClassSpec spec = config.getOrCreateSpec(TARGET_CLASS_NAME);
+    TransparencyClassSpec spec = config.getOrCreateSpec(TARGET_CLASS_NAME);
 
     config.getOrCreateSpec(TARGET_INNER_CLASS_NAME);
 

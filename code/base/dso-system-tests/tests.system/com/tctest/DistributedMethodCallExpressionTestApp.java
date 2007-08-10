@@ -10,7 +10,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.DistributedMethodSpec;
-import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.object.config.spec.SynchronizedIntSpec;
 import com.tc.simulator.app.ApplicationConfig;
@@ -113,7 +113,7 @@ public class DistributedMethodCallExpressionTestApp extends AbstractTransparentA
       new CyclicBarrierSpec().visit(visitor, config);
       new SynchronizedIntSpec().visit(visitor, config);
 
-      ITransparencyClassSpec spec = config.getOrCreateSpec(FooObject.class.getName());
+      TransparencyClassSpec spec = config.getOrCreateSpec(FooObject.class.getName());
       String testClassName = DistributedMethodCallExpressionTestApp.class.getName();
       spec = config.getOrCreateSpec(testClassName);
       spec.addRoot("model", "model");

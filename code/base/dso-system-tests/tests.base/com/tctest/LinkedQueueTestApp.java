@@ -8,7 +8,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.spec.LinkedQueueSpec;
 import com.tc.object.config.spec.SynchronizedIntSpec;
 import com.tc.simulator.app.ApplicationConfig;
@@ -78,7 +78,7 @@ public class LinkedQueueTestApp extends AbstractTransparentApp {
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
 
     String testClassName = LinkedQueueTestApp.class.getName();
-    ITransparencyClassSpec spec = config.getOrCreateSpec(testClassName);
+    TransparencyClassSpec spec = config.getOrCreateSpec(testClassName);
 
     // Create Roots
     spec.addRoot("queue", testClassName + ".queue");

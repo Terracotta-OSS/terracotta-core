@@ -15,7 +15,7 @@ import com.tc.object.applicator.LiteralTypesApplicator;
 import com.tc.object.applicator.PhysicalApplicator;
 import com.tc.object.applicator.ProxyApplicator;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.dna.api.IDNAEncoding;
 import com.tc.object.dna.impl.DNAEncoding;
 import com.tc.object.field.TCFieldFactory;
@@ -67,7 +67,7 @@ public class TCClassFactoryImpl implements TCClassFactory {
   }
 
   public Class getLogicalSuperClassWithDefaultConstructor(Class clazz) {
-    ITransparencyClassSpec spec = config.getSpec(clazz.getName());
+    TransparencyClassSpec spec = config.getSpec(clazz.getName());
     if (spec == null) { return null; }
 
     while (clazz != null) {

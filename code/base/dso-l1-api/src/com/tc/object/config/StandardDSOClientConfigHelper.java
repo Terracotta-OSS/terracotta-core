@@ -25,9 +25,9 @@ public interface StandardDSOClientConfigHelper {
 
   // HACK: duplicated from DSOClientConfigHelper  
 
-  ITransparencyClassSpec getOrCreateSpec(String className);
+  TransparencyClassSpec getOrCreateSpec(String className);
 
-  ITransparencyClassSpec getOrCreateSpec(String className, String applicator);
+  TransparencyClassSpec getOrCreateSpec(String className, String applicator);
 
   void addCustomAdapter(String name, ClassAdapterFactory adapterFactory);
 

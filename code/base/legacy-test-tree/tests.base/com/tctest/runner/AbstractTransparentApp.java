@@ -6,7 +6,7 @@ package com.tctest.runner;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOApplicationConfig;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.Application;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.app.ErrorContext;
@@ -73,7 +73,7 @@ public abstract class AbstractTransparentApp implements Application {
     config.addRoot("AbstractTransparentAppAppIds", AbstractTransparentApp.class.getName() + ".appIds");
     config.addWriteAutolock("* " + AbstractTransparentApp.class.getName() + ".*(..)");
 
-    ITransparencyClassSpec spec = config.getOrCreateSpec(TransparentAppCoordinator.class.getName());
+    TransparencyClassSpec spec = config.getOrCreateSpec(TransparentAppCoordinator.class.getName());
     spec.addRoot("participants", "participants");
     config.addWriteAutolock("* " + TransparentAppCoordinator.class.getName() + ".*(..)");
   }

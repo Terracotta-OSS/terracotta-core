@@ -16,7 +16,7 @@ import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
 import com.tc.object.Portability;
-import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpec;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -66,7 +66,7 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
     return fieldName.startsWith(LOGICAL_TYPE_DELEGATE_FIELD_NAME_PREFIX);
   }
 
-  protected ITransparencyClassSpec getTransparencyClassSpec() {
+  protected TransparencyClassSpec getTransparencyClassSpec() {
     return spec.getTransparencyClassSpec();
   }
 
@@ -81,7 +81,7 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
     return getTransparencyClassSpec().isRootInThisClass(fieldInfo);
   }
 
-  public ClassAdapterBase(ClassInfo classInfo, ITransparencyClassSpec spec2, ClassVisitor delegate,
+  public ClassAdapterBase(ClassInfo classInfo, TransparencyClassSpec spec2, ClassVisitor delegate,
                           ManagerHelper mgrHelper, ClassLoader caller, Portability p) {
     super(delegate);
     this.portability = p;

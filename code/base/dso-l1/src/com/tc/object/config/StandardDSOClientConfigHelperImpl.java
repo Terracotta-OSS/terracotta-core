@@ -389,7 +389,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   private void doAutoconfig(boolean interrogateBootJar) {
-    ITransparencyClassSpec spec = null;
+    TransparencyClassSpec spec = null;
     ILockDefinition ld = null;
 
     // Table model stuff
@@ -630,17 +630,17 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     // We dont want them to get tc fields, TransparentAccess interfaces etc. but we do want them
     // to be instrumented for Array manipulations, clone(), wait(), notify() calls etc.
     spec = getOrCreateSpec("java.util.AbstractCollection");
-    spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
+    spec.setInstrumentationAction(TransparencyClassSpecImpl.ADAPTABLE);
     spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
     spec = getOrCreateSpec("java.util.AbstractList");
     spec.setHonorTransient(true);
-    spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
+    spec.setInstrumentationAction(TransparencyClassSpecImpl.ADAPTABLE);
     spec.addSupportMethodCreator(new AbstractListMethodCreator());
     spec = getOrCreateSpec("java.util.AbstractSet");
     spec = getOrCreateSpec("java.util.AbstractSequentialList");
-    spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
+    spec.setInstrumentationAction(TransparencyClassSpecImpl.ADAPTABLE);
     spec = getOrCreateSpec("java.util.Dictionary");
-    spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
+    spec.setInstrumentationAction(TransparencyClassSpecImpl.ADAPTABLE);
 
     // AbstractMap is special because it actually has some fields so it needs to be instrumented and not just ADAPTABLE
     spec = getOrCreateSpec("java.util.AbstractMap");
@@ -733,7 +733,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     spec = getOrCreateSpec("javax.servlet.GenericServlet");
     spec.setHonorTransient(true);
-    spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
+    spec.setInstrumentationAction(TransparencyClassSpecImpl.ADAPTABLE);
 
     // BEGIN: weblogic stuff
     addAspectModule("weblogic.servlet.internal", "com.tc.weblogic.SessionAspectModule");
@@ -914,15 +914,15 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   private void addLogicalAdaptedLinkedBlockingQueueSpec() {
-    ITransparencyClassSpec spec = getOrCreateSpec("java.util.AbstractQueue");
-    spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
+    TransparencyClassSpec spec = getOrCreateSpec("java.util.AbstractQueue");
+    spec.setInstrumentationAction(TransparencyClassSpecImpl.ADAPTABLE);
 
     spec = getOrCreateSpec("java.util.concurrent.LinkedBlockingQueue",
                            "com.tc.object.applicator.LinkedBlockingQueueApplicator");
   }
 
   private void addJavaUtilConcurrentHashMapSpec() {
-    ITransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.ConcurrentHashMap",
+    TransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.ConcurrentHashMap",
                                                  "com.tc.object.applicator.ConcurrentHashMapApplicator");
     spec.setHonorTransient(true);
     spec.setPostCreateMethod("__tc_rehash");
@@ -937,7 +937,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       getOrCreateSpec("java.util.concurrent.locks.AbstractOwnableSynchronizer");
     }
     
-    ITransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.FutureTask$Sync");
+    TransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.FutureTask$Sync");
     addWriteAutolock("* java.util.concurrent.FutureTask$Sync.*(..)");
     spec.setHonorTransient(true);
     spec.addDistributedMethodCall("managedInnerCancel", "()V", false);
@@ -949,7 +949,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   private void addJDK15InstrumentedSpec() {
     if (Vm.getMegaVersion() >= 1 && Vm.getMajorVersion() > 4) {
-      ITransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock");
+      TransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock");
       spec.addTransient("sync");
       spec.setPreCreateMethod("validateInUnLockState");
       spec.setCallConstructorOnLoad(true);
@@ -1012,7 +1012,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   private void addJDK15PreInstrumentedSpec() {
     if (Vm.getMegaVersion() >= 1 && Vm.getMajorVersion() > 4) {
-      ITransparencyClassSpec spec = getOrCreateSpec("sun.misc.Unsafe");
+      TransparencyClassSpec spec = getOrCreateSpec("sun.misc.Unsafe");
       addCustomAdapter("sun.misc.Unsafe", new UnsafeAdapter());
       spec = getOrCreateSpec(DSOUnsafe.CLASS_DOTS);
       addCustomAdapter(DSOUnsafe.CLASS_DOTS, new DSOUnsafeAdapter());
@@ -1089,7 +1089,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   private void markAllSpecsPreInstrumented() {
     for (Iterator i = classSpecs.values().iterator(); i.hasNext();) {
-      ITransparencyClassSpec s = (ITransparencyClassSpec) i.next();
+      TransparencyClassSpec s = (TransparencyClassSpec) i.next();
       s.markPreInstrumented();
     }
   }
@@ -1416,25 +1416,25 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   private boolean isHonorJavaTransient(ClassInfo classInfo) {
-    ITransparencyClassSpec spec = getSpec(classInfo.getName());
+    TransparencyClassSpec spec = getSpec(classInfo.getName());
     if (spec != null && spec.isHonorTransientSet()) { return spec.isHonorJavaTransient(); }
     return getInstrumentationDescriptorFor(classInfo).isHonorTransient();
   }
 
   private boolean isHonorJavaVolatile(ClassInfo classInfo) {
-    ITransparencyClassSpec spec = getSpec(classInfo.getName());
+    TransparencyClassSpec spec = getSpec(classInfo.getName());
     if (spec != null && spec.isHonorVolatileSet()) { return spec.isHonorVolatile(); }
     return getInstrumentationDescriptorFor(classInfo).isHonorVolatile();
   }
 
   public boolean isCallConstructorOnLoad(ClassInfo classInfo) {
-    ITransparencyClassSpec spec = getSpec(classInfo.getName());
+    TransparencyClassSpec spec = getSpec(classInfo.getName());
     if (spec != null && spec.isCallConstructorSet()) { return spec.isCallConstructorOnLoad(); }
     return getInstrumentationDescriptorFor(classInfo).isCallConstructorOnLoad();
   }
 
   public String getPreCreateMethodIfDefined(String className) {
-    ITransparencyClassSpec spec = getSpec(className);
+    TransparencyClassSpec spec = getSpec(className);
     if (spec != null) {
       return spec.getPreCreateMethod();
     } else {
@@ -1443,7 +1443,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   public String getPostCreateMethodIfDefined(String className) {
-    ITransparencyClassSpec spec = getSpec(className);
+    TransparencyClassSpec spec = getSpec(className);
     if (spec != null) {
       return spec.getPostCreateMethod();
     } else {
@@ -1452,13 +1452,13 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   public String getOnLoadScriptIfDefined(ClassInfo classInfo) {
-    ITransparencyClassSpec spec = getSpec(classInfo.getName());
+    TransparencyClassSpec spec = getSpec(classInfo.getName());
     if (spec != null && spec.isExecuteScriptOnLoadSet()) { return spec.getOnLoadExecuteScript(); }
     return getInstrumentationDescriptorFor(classInfo).getOnLoadScriptIfDefined();
   }
 
   public String getOnLoadMethodIfDefined(ClassInfo classInfo) {
-    ITransparencyClassSpec spec = getSpec(classInfo.getName());
+    TransparencyClassSpec spec = getSpec(classInfo.getName());
     if (spec != null && spec.isCallMethodOnLoadSet()) { return spec.getOnLoadMethod(); }
     return getInstrumentationDescriptorFor(classInfo).getOnLoadMethodIfDefined();
   }
@@ -1485,12 +1485,12 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
                                                            final boolean forcePortable, boolean honorTransient) {
     String className = classInfo.getName();
     ManagerHelper mgrHelper = mgrHelperFactory.createHelper();
-    ITransparencyClassSpec spec = getOrCreateSpec(className);
+    TransparencyClassSpec spec = getOrCreateSpec(className);
     spec.setHonorTransient(honorTransient);
 
     if (forcePortable) {
-      if (spec.getInstrumentationAction() == TransparencyClassSpec.NOT_SET) {
-        spec.setInstrumentationAction(TransparencyClassSpec.PORTABLE);
+      if (spec.getInstrumentationAction() == TransparencyClassSpecImpl.NOT_SET) {
+        spec.setInstrumentationAction(TransparencyClassSpecImpl.PORTABLE);
       } else {
         logger.info("Not making " + className + " forcefully portable");
       }
@@ -1512,11 +1512,11 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       return adapter.create(writer, caller);
     } else {
       ManagerHelper mgrHelper = mgrHelperFactory.createHelper();
-      ITransparencyClassSpec spec = getOrCreateSpec(classInfo.getName());
+      TransparencyClassSpec spec = getOrCreateSpec(classInfo.getName());
 
       if (forcePortable) {
-        if (spec.getInstrumentationAction() == TransparencyClassSpec.NOT_SET) {
-          spec.setInstrumentationAction(TransparencyClassSpec.PORTABLE);
+        if (spec.getInstrumentationAction() == TransparencyClassSpecImpl.NOT_SET) {
+          spec.setInstrumentationAction(TransparencyClassSpecImpl.PORTABLE);
         } else {
           logger.info("Not making " + classInfo.getName() + " forcefully portable");
         }
@@ -1536,14 +1536,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  private ITransparencyClassSpec basicGetOrCreateSpec(String className, String applicator, boolean rememberSpec) {
+  private TransparencyClassSpec basicGetOrCreateSpec(String className, String applicator, boolean rememberSpec) {
     synchronized (classSpecs) {
-      ITransparencyClassSpec spec = getSpec(className);
+      TransparencyClassSpec spec = getSpec(className);
       if (spec == null) {
         if (applicator != null) {
-          spec = new TransparencyClassSpec(className, this, applicator);
+          spec = new TransparencyClassSpecImpl(className, this, applicator);
         } else {
-          spec = new TransparencyClassSpec(className, this);
+          spec = new TransparencyClassSpecImpl(className, this);
         }
         if (rememberSpec) {
           addSpec(spec);
@@ -1553,16 +1553,16 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  public ITransparencyClassSpec getOrCreateSpec(String className) {
+  public TransparencyClassSpec getOrCreateSpec(String className) {
     return basicGetOrCreateSpec(className, null, true);
   }
 
-  public ITransparencyClassSpec getOrCreateSpec(final String className, final String applicator) {
+  public TransparencyClassSpec getOrCreateSpec(final String className, final String applicator) {
     if (applicator == null) throw new AssertionError();
     return basicGetOrCreateSpec(className, applicator, true);
   }
 
-  private void addSpec(ITransparencyClassSpec spec) {
+  private void addSpec(TransparencyClassSpec spec) {
     synchronized (classSpecs) {
       Assert.eval(!classSpecs.containsKey(spec.getClassName()));
       Assert.assertNotNull(spec);
@@ -1571,7 +1571,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   public boolean isLogical(String className) {
-    ITransparencyClassSpec spec = getSpec(className);
+    TransparencyClassSpec spec = getSpec(className);
     return spec != null && spec.isLogical();
   }
 
@@ -1587,7 +1587,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   public Class getChangeApplicator(Class clazz) {
     ChangeApplicatorSpec applicatorSpec = null;
-    ITransparencyClassSpec spec = getSpec(clazz.getName());
+    TransparencyClassSpec spec = getSpec(clazz.getName());
     if (spec != null) {
       applicatorSpec = spec.getChangeApplicatorSpec();
     }
@@ -1608,7 +1608,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   public boolean isUseNonDefaultConstructor(Class clazz) {
     String className = clazz.getName();
     if (literalValues.isLiteral(className)) { return true; }
-    ITransparencyClassSpec spec = getSpec(className);
+    TransparencyClassSpec spec = getSpec(className);
     if (spec != null) { return spec.isUseNonDefaultConstructor(); }
     if (moduleSpecs != null) {
       for (int i = 0; i < moduleSpecs.length; i++) {
@@ -1623,7 +1623,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   /*
-   * public String getChangeApplicatorClassNameFor(String className) { ITransparencyClassSpec spec = getSpec(className);
+   * public String getChangeApplicatorClassNameFor(String className) { TransparencyClassSpec spec = getSpec(className);
    * if (spec == null) return null; return spec.getChangeApplicatorClassName(); }
    */
 
@@ -1641,13 +1641,13 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     classSpecs.remove(className);
   }
 
-  public ITransparencyClassSpec getSpec(String className) {
+  public TransparencyClassSpec getSpec(String className) {
     // NOTE: This method doesn't create a spec for you. If you want that use getOrCreateSpec()
     className = className.replace('/', '.');
-    ITransparencyClassSpec rv = (ITransparencyClassSpec) classSpecs.get(className);
+    TransparencyClassSpec rv = (TransparencyClassSpec) classSpecs.get(className);
 
     if (rv == null) {
-      rv = (ITransparencyClassSpec) userDefinedBootSpecs.get(className);
+      rv = (TransparencyClassSpec) userDefinedBootSpecs.get(className);
     } else {
       // shouldn't have a spec in both of the spec collections
       Assert.assertNull(userDefinedBootSpecs.get(className));
@@ -1662,9 +1662,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     BootJar bootJar = BootJar.getDefaultBootJarForReading();
     Set bjClasses = bootJar.getAllPreInstrumentedClasses();
     int bootJarPopulation = bjClasses.size();
-    ITransparencyClassSpec[] allSpecs = getAllSpecs();
+    TransparencyClassSpec[] allSpecs = getAllSpecs();
     for (int i = 0; i < allSpecs.length; i++) {
-      ITransparencyClassSpec classSpec = allSpecs[i];
+      TransparencyClassSpec classSpec = allSpecs[i];
       Assert.assertNotNull(classSpec);
       String message = "";
       if (classSpec.isPreInstrumented()) {
@@ -1705,8 +1705,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  public synchronized ITransparencyClassSpec[] getAllSpecs() {
-    ITransparencyClassSpec[] allspecs = new ITransparencyClassSpec[classSpecs.values().size()];
+  public synchronized TransparencyClassSpec[] getAllSpecs() {
+    TransparencyClassSpec[] allspecs = new TransparencyClassSpec[classSpecs.values().size()];
     classSpecs.values().toArray(allspecs);
     return allspecs;
   }
@@ -1767,7 +1767,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   public String getLogicalExtendingClassName(String className) {
-    ITransparencyClassSpec spec = getSpec(className);
+    TransparencyClassSpec spec = getSpec(className);
     if (spec == null || !spec.isLogical()) { return null; }
     return spec.getLogicalExtendingClassName();
   }
@@ -1780,7 +1780,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     this.synchronousWriteApplications.add(name);
   }
 
-  public void addUserDefinedBootSpec(String className, ITransparencyClassSpec spec) {
+  public void addUserDefinedBootSpec(String className, TransparencyClassSpec spec) {
     userDefinedBootSpecs.put(className, spec);
   }
 

@@ -16,19 +16,19 @@ import com.tc.object.bytecode.MethodAdapter;
 import com.tc.object.bytecode.MethodCreator;
 import com.tc.object.logging.InstrumentationLogger;
 
-public interface ITransparencyClassSpec {
+public interface TransparencyClassSpec {
 
   public boolean hasPhysicallyPortableSpecs(ClassInfo classInfo);
 
-  public ITransparencyClassSpec addRoot(String variableName, String rootName);
+  public TransparencyClassSpec addRoot(String variableName, String rootName);
 
-  public ITransparencyClassSpec addRoot(String variableName, String rootName, boolean dsoFinal);
+  public TransparencyClassSpec addRoot(String variableName, String rootName, boolean dsoFinal);
 
   public void addDoNotInstrument(String methodName);
 
   public boolean doNotInstrument(String methodName);
 
-  public ITransparencyClassSpec markPreInstrumented();
+  public TransparencyClassSpec markPreInstrumented();
 
   public boolean isPreInstrumented();
 
@@ -40,13 +40,13 @@ public interface ITransparencyClassSpec {
 
   public ILockDefinition getNonAutoLockDefinition(ILockDefinition lds[]);
 
-  public ITransparencyClassSpec addSupportMethodCreator(MethodCreator creator);
+  public TransparencyClassSpec addSupportMethodCreator(MethodCreator creator);
 
-  public ITransparencyClassSpec addDistributedMethodCall(String methodName, String description, boolean runOnAllNodes);
+  public TransparencyClassSpec addDistributedMethodCall(String methodName, String description, boolean runOnAllNodes);
 
-  public ITransparencyClassSpec addTransient(String variableName);
+  public TransparencyClassSpec addTransient(String variableName);
 
-  public ITransparencyClassSpec addMethodAdapter(String method, MethodAdapter adapter);
+  public TransparencyClassSpec addMethodAdapter(String method, MethodAdapter adapter);
 
   public String getClassName();
 
@@ -84,7 +84,7 @@ public interface ITransparencyClassSpec {
 
   public String getLogicalExtendingClassName();
 
-  public void moveToLogical(ITransparencyClassSpec superClassSpec);
+  public void moveToLogical(TransparencyClassSpec superClassSpec);
 
   public void addAlwaysLogSpec(String name);
 
@@ -130,19 +130,19 @@ public interface ITransparencyClassSpec {
 
   public void addMethodCodeSpec(String name, ITransparencyCodeSpec codeSpec);
 
-  public ITransparencyClassSpec setHonorVolatile(boolean b);
+  public TransparencyClassSpec setHonorVolatile(boolean b);
 
   public boolean isHonorVolatileSet();
 
   public boolean isHonorVolatile();
 
-  public ITransparencyClassSpec setHonorTransient(boolean b);
+  public TransparencyClassSpec setHonorTransient(boolean b);
 
-  public ITransparencyClassSpec setCallConstructorOnLoad(boolean b);
+  public TransparencyClassSpec setCallConstructorOnLoad(boolean b);
 
-  public ITransparencyClassSpec setExecuteScriptOnLoad(String script);
+  public TransparencyClassSpec setExecuteScriptOnLoad(String script);
 
-  public ITransparencyClassSpec setCallMethodOnLoad(String method);
+  public TransparencyClassSpec setCallMethodOnLoad(String method);
 
   public boolean isCallConstructorSet();
 
@@ -192,6 +192,6 @@ public interface ITransparencyClassSpec {
 
   public String getChangeApplicatorClassName();
 
-  public ITransparencyClassSpec getClassSpec(String superName);
+  public TransparencyClassSpec getClassSpec(String superName);
 
 }

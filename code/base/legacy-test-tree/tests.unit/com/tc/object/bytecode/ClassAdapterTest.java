@@ -7,7 +7,7 @@ package com.tc.object.bytecode;
 import com.tc.object.TestClientObjectManager;
 import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.LockDefinition;
 import com.tc.object.loaders.IsolationClassLoader;
 import com.tc.object.tx.MockTransactionManager;
@@ -99,7 +99,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
 
   public void testSuperclassTransients() throws Exception {
     String supersuperclass = ClassAdapterTestTargetBaseBase.class.getName();
-    ITransparencyClassSpec spec = config.getOrCreateSpec(supersuperclass);
+    TransparencyClassSpec spec = config.getOrCreateSpec(supersuperclass);
     spec.addTransient("myString");
 
     String superclass = ClassAdapterTestTargetBase.class.getName();

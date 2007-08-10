@@ -6,7 +6,7 @@ package com.tctest.performance.faulting;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOApplicationConfig;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.test.TempDirectoryHelper;
@@ -53,8 +53,8 @@ public abstract class AbstractSingleQueueFaultTestApp extends AbstractTransparen
     sharedResults = new ArrayList();
   }
 
-  protected static ITransparencyClassSpec visitConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    ITransparencyClassSpec spec = config.getOrCreateSpec(CyclicBarrier.class.getName());
+  protected static TransparencyClassSpec visitConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
+    TransparencyClassSpec spec = config.getOrCreateSpec(CyclicBarrier.class.getName());
     String className = AbstractSingleQueueFaultTestApp.class.getName();
     spec = config.getOrCreateSpec(className);
 

@@ -10,7 +10,7 @@ import com.tc.object.bytecode.ClassAdapterBase;
 import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
@@ -682,7 +682,7 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    ITransparencyClassSpec spec = config.getOrCreateSpec(CyclicBarrier.class.getName());
+    TransparencyClassSpec spec = config.getOrCreateSpec(CyclicBarrier.class.getName());
     config.addWriteAutolock("* " + CyclicBarrier.class.getName() + "*.*(..)");
 
     String testClass = PhysicalInstrumentedMethodsTestApp.class.getName();

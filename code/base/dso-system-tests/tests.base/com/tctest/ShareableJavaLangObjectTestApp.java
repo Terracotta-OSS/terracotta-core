@@ -5,7 +5,7 @@ package com.tctest;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
@@ -30,7 +30,7 @@ public class ShareableJavaLangObjectTestApp extends AbstractTransparentApp {
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClass = ShareableJavaLangObjectTestApp.class.getName();
-    ITransparencyClassSpec spec = config.getOrCreateSpec(testClass);
+    TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
 
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);

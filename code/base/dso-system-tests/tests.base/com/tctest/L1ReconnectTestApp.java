@@ -10,7 +10,7 @@ import org.apache.commons.io.IOUtils;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -53,7 +53,7 @@ public class L1ReconnectTestApp extends AbstractTransparentApp {
     String testClass = L1ReconnectTestApp.class.getName();
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);
-    ITransparencyClassSpec spec = config.getOrCreateSpec(testClass);
+    TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     config.addIncludePattern(testClass + "$*");
     spec.addRoot("sum", "sum");
   }

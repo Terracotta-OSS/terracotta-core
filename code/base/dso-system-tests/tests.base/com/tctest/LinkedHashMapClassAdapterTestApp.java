@@ -7,7 +7,7 @@ import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
@@ -49,7 +49,7 @@ public class LinkedHashMapClassAdapterTestApp extends AbstractTransparentApp {
     config.addWriteAutolock("* " + CustomLinkedHashMap.class.getName() + "*.*(..)");
     
     final String testClass = LinkedHashMapClassAdapterTestApp.class.getName();
-    final ITransparencyClassSpec spec = config.getOrCreateSpec(testClass);
+    final TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     spec.addRoot("barrier", "barrier");
     spec.addRoot("linkedHashMap", "linkedHashMap");
     spec.addRoot("nodeId", "nodeId");

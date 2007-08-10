@@ -10,7 +10,7 @@ import com.tc.logging.TCLogging;
 import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.spec.SynchronizedIntSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -33,7 +33,7 @@ public class ConcurrentLockSystemTestApp extends AbstractTransparentApp {
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClassname = ConcurrentLockSystemTestApp.class.getName();
-    ITransparencyClassSpec spec = config.getOrCreateSpec(testClassname);
+    TransparencyClassSpec spec = config.getOrCreateSpec(testClassname);
     spec.addRoot("testObject", testClassname + ".testObject");
     spec.addRoot("participants", testClassname + ".participants");
 

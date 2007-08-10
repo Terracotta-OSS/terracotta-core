@@ -5,7 +5,7 @@ package com.tctest;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractTransparentApp;
@@ -60,7 +60,7 @@ public class CacheLoadPerformanceTestApp extends AbstractTransparentApp {
     String testClass = CacheLoadPerformanceTestApp.class.getName();
     String methodExpression = "* " + testClass + ".*(..)";
     config.addWriteAutolock(methodExpression);
-    ITransparencyClassSpec spec = config.getOrCreateSpec(testClass);
+    TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     spec.addRoot("cache", "cache");
     config.addIncludePattern(TestKey.class.getName());
     config.addIncludePattern(TestValue.class.getName());

@@ -15,8 +15,8 @@ import com.tc.backport175.bytecode.AnnotationElement.Annotation;
 import com.tc.exception.TCLogicalSubclassNotPortableException;
 import com.tc.object.LiteralValues;
 import com.tc.object.Portability;
-import com.tc.object.config.ITransparencyClassSpec;
 import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.TransparencyClassSpecImpl;
 import com.tc.object.config.TransparencyClassSpecUtil;
 import com.tc.util.Assert;
 
@@ -36,7 +36,7 @@ class InstrumentationSpec {
 
   private static final LiteralValues  literalValues               = new LiteralValues();
 
-  private byte                        instrumentationAction       = TransparencyClassSpec.NOT_ADAPTABLE;
+  private byte                        instrumentationAction       = TransparencyClassSpecImpl.NOT_ADAPTABLE;
 
   private byte                        managedMethods              = IS_NOT_NEEDED;
   private byte                        valuesGetterMethod          = IS_NOT_NEEDED;
@@ -61,11 +61,11 @@ class InstrumentationSpec {
   private int                         classVersion;
   private boolean                     hasVisitedField;
   private boolean                     isSubclassOfLogicalClass;
-  private ITransparencyClassSpec       superClassSpec;
+  private TransparencyClassSpec       superClassSpec;
 
   private final ClassInfo             classInfo;
   private final Map                   fieldInfoMap;
-  private final ITransparencyClassSpec spec;
+  private final TransparencyClassSpec spec;
   private final ManagerHelper         mgrHelper;
 
   private final Set                   classHierarchy;
@@ -74,7 +74,7 @@ class InstrumentationSpec {
   private final Set                   logicalExtendingFieldSpec;
   private final ClassLoader           caller;
 
-  InstrumentationSpec(ClassInfo classInfo, ITransparencyClassSpec spec, ManagerHelper mgrHelper, ClassLoader caller) {
+  InstrumentationSpec(ClassInfo classInfo, TransparencyClassSpec spec, ManagerHelper mgrHelper, ClassLoader caller) {
     this.classInfo = classInfo;
     this.spec = spec;
     this.mgrHelper = mgrHelper;
@@ -197,25 +197,25 @@ class InstrumentationSpec {
     this.isInterface = Modifier.isInterface(classAccess);
 
     if (isInterface) {
-      this.instrumentationAction = TransparencyClassSpec.NOT_ADAPTABLE;
-    } else if (spec.getInstrumentationAction() == TransparencyClassSpec.PORTABLE) {
-      this.instrumentationAction = TransparencyClassSpec.PORTABLE;
-    } else if (spec.getInstrumentationAction() == TransparencyClassSpec.ADAPTABLE) {
-      this.instrumentationAction = TransparencyClassSpec.ADAPTABLE;
+      this.instrumentationAction = TransparencyClassSpecImpl.NOT_ADAPTABLE;
+    } else if (spec.getInstrumentationAction() == TransparencyClassSpecImpl.PORTABLE) {
+      this.instrumentationAction = TransparencyClassSpecImpl.PORTABLE;
+    } else if (spec.getInstrumentationAction() == TransparencyClassSpecImpl.ADAPTABLE) {
+      this.instrumentationAction = TransparencyClassSpecImpl.ADAPTABLE;
     } else if (spec.isLogical() || spec.ignoreChecks()) {
       // Logically managed classes need not have all super classes instrumented.
       // currently THashMap and THashSet are not in bootjar and are instrumented during runtime.
-      this.instrumentationAction = TransparencyClassSpec.PORTABLE;
+      this.instrumentationAction = TransparencyClassSpecImpl.PORTABLE;
     } else if (superClassChecks(portability)) {
-      this.instrumentationAction = TransparencyClassSpec.ADAPTABLE;
+      this.instrumentationAction = TransparencyClassSpecImpl.ADAPTABLE;
     } else {
-      this.instrumentationAction = TransparencyClassSpec.PORTABLE;
+      this.instrumentationAction = TransparencyClassSpecImpl.PORTABLE;
     }
     decideOnInstrumentationsToDo(portability);
   }
 
   private void decideOnInstrumentationsToDo(Portability portability) {
-    if (this.instrumentationAction == TransparencyClassSpec.PORTABLE) {
+    if (this.instrumentationAction == TransparencyClassSpecImpl.PORTABLE) {
       if (!isLogical()) {
         valuesGetterMethod = IS_NEEDED;
         valuesSetterMethod = IS_NEEDED;
@@ -265,15 +265,15 @@ class InstrumentationSpec {
   }
 
   boolean isClassNotAdaptable() {
-    return this.instrumentationAction == TransparencyClassSpec.NOT_ADAPTABLE;
+    return this.instrumentationAction == TransparencyClassSpecImpl.NOT_ADAPTABLE;
   }
 
   boolean isClassAdaptable() {
-    return this.instrumentationAction == TransparencyClassSpec.ADAPTABLE;
+    return this.instrumentationAction == TransparencyClassSpecImpl.ADAPTABLE;
   }
 
   boolean isClassPortable() {
-    return this.instrumentationAction == TransparencyClassSpec.PORTABLE;
+    return this.instrumentationAction == TransparencyClassSpecImpl.PORTABLE;
   }
 
   boolean isSubclassofLogicalClass() {
@@ -417,11 +417,11 @@ class InstrumentationSpec {
     return (managedField == IS_NEEDED);
   }
 
-  ITransparencyClassSpec getTransparencyClassSpec() {
+  TransparencyClassSpec getTransparencyClassSpec() {
     return spec;
   }
 
-  ITransparencyClassSpec getSuperclassTransparencyClassSpec() {
+  TransparencyClassSpec getSuperclassTransparencyClassSpec() {
     return spec.getClassSpec(superNameDots);
   }
 
