@@ -10,6 +10,7 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.Arrays;
@@ -19,10 +20,10 @@ import java.util.concurrent.CyclicBarrier;
 
 public class EnumTestApp extends AbstractTransparentApp {
 
-  private final DataRoot                   dataRoot          = new DataRoot();
+  private final DataRoot                   dataRoot = new DataRoot();
   private final CyclicBarrier              barrier;
-  private final Map                        raceRoot          = new HashMap();
-  private final Map<String, ClassWithEnum> shareMap          = new HashMap<String, ClassWithEnum>();
+  private final Map<String, Object>        raceRoot = new HashMap<String, Object>();
+  private final Map<String, ClassWithEnum> shareMap = new HashMap<String, ClassWithEnum>();
 
   private State                            stateRoot;
 
@@ -127,6 +128,24 @@ public class EnumTestApp extends AbstractTransparentApp {
         testRace();
       }
 
+      System.err.println("Entering final stage : Just to make the test run longer.");
+      for (int i = 0; i < 5000; i++) {
+        switch(i % 3) {
+          case 0 :
+            dataRoot.setState(State.RUN);
+            break;
+          case 1 :
+            dataRoot.setState(State.START);
+            break;
+          case 2 :
+            dataRoot.setState(State.STOP);
+        }
+        ThreadUtil.reallySleep(10);
+        if(i % 500 == 0) {
+          System.err.println(Thread.currentThread().getName() + " : Completed : " + i);
+        }
+      }
+
     } catch (Throwable t) {
       notifyError(t);
     }
@@ -190,7 +209,7 @@ public class EnumTestApp extends AbstractTransparentApp {
     other.join();
   }
 
-  private static void shareWithLock(Object lock, Object toShare, Map root, CyclicBarrier barrier) {
+  private static void shareWithLock(Object lock, Object toShare, Map<String, Object> root, CyclicBarrier barrier) {
     synchronized (lock) {
       root.put(String.valueOf(System.identityHashCode(lock)), toShare);
 

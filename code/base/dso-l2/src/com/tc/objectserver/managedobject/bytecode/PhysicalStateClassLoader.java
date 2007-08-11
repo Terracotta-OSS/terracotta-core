@@ -70,6 +70,9 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
     
     addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.JAVA_LANG_CLASSLOADER, "writeObject", "(Ljava/lang/Object;)V");
     addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.JAVA_LANG_CLASSLOADER_HOLDER, "writeObject", "(Ljava/lang/Object;)V");
+    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.ENUM, "writeObject", "(Ljava/lang/Object;)V");
+    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.ENUM_HOLDER, "writeObject", "(Ljava/lang/Object;)V");
+    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.CURRENCY, "writeObject", "(Ljava/lang/Object;)V");
 
 
     addMapping(OBJECT_INPUT_METHODS, LiteralValues.INTEGER, "readInt", "()I");
@@ -94,6 +97,9 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
     
     addMapping(OBJECT_INPUT_METHODS, LiteralValues.JAVA_LANG_CLASSLOADER, "readObject", "()Ljava/lang/Object;");
     addMapping(OBJECT_INPUT_METHODS, LiteralValues.JAVA_LANG_CLASSLOADER_HOLDER, "readObject", "()Ljava/lang/Object;");
+    addMapping(OBJECT_INPUT_METHODS, LiteralValues.ENUM, "readObject", "()Ljava/lang/Object;");
+    addMapping(OBJECT_INPUT_METHODS, LiteralValues.ENUM_HOLDER, "readObject", "()Ljava/lang/Object;");
+    addMapping(OBJECT_INPUT_METHODS, LiteralValues.CURRENCY, "readObject", "()Ljava/lang/Object;");
 
     
   }

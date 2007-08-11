@@ -15,13 +15,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Responsuible for handling literals
+ * Responsible for handling literals
  */
 public class LiteralValues {
-  
+
   public final static String ENUM_CLASS_DOTS              = "java.lang.Enum";
-  
-  // XXX:: If you are adding more types, please see PhysicalStateClassLoader and DNAEncoding
+
+  /*********************************************************************************************************************
+   * NOTE:: READ THIS IF YOU ARE ADDING NEW TYPES TO THIS FILE. XXX:: If you are adding more types, please see
+   * PhysicalStateClassLoader and DNAEncoding. You need to be adding New code in both those classes or else some things
+   * will be broken.
+   ********************************************************************************************************************/
   public final static int    INTEGER                      = 0;
   public final static int    LONG                         = 1;
   public final static int    CHARACTER                    = 2;
@@ -46,7 +50,7 @@ public class LiteralValues {
   public final static int    ENUM_HOLDER                  = 21;
   public final static int    CURRENCY                     = 22;
 
-  private final Map values;
+  private final Map          values;
 
   public LiteralValues() {
     super();
