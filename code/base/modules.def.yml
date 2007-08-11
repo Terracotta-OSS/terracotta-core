@@ -46,6 +46,13 @@ modules:
         - common-api
         - common
         - thirdparty-api
+  - modules-common-1.0:
+      options:
+        jdk: J2SE-1.4
+        module: true
+      dependencies:
+        - common-api
+        - dso-l1-api
   - dso-common:
       options:
         jdk: J2SE-1.4
@@ -395,6 +402,7 @@ modules:
         - common
         - dso-common
         - management
+        - modules-common-1.0
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
@@ -500,13 +508,6 @@ modules:
         - thirdparty-api
         - thirdparty
         - legacy-test-tree
-  - modules-common-1.0:
-      options:
-        jdk: J2SE-1.4
-        module: true
-      dependencies:
-        - common-api
-        - dso-l1-api
   - clustered-apache-struts-1.1:
       options:
         jdk: J2SE-1.4
