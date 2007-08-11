@@ -84,6 +84,7 @@ bundled_components:
         - dso-l1-api
         - dso-l1-jdk15
         - dso-l2
+        - dso-l2-common
         - dso-spring:
             exclude-runtime-libraries: true
         - linked-child-process
