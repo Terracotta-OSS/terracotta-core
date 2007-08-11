@@ -16,14 +16,6 @@ bundled_components:
         compiler_versions:
           - 1.4
           - 1.5
-      module_packages:
-        - terracotta-api-version-PREALPHA:
-            install_directory: lib
-            modules:
-              - common-api
-              - dso-l1-api
-              - modules-common-1.0
-              - thirdparty-api
       modules:
         - aspectwerkz:
             exclude-runtime-libraries: true

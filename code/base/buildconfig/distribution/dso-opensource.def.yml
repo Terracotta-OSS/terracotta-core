@@ -71,13 +71,6 @@ bundled_components:
               - dso-l1-tomcat
               - dso-l1-tomcat50
               - dso-l1-tomcat55
-        - tc-compile-version-PREALPHA:
-            install_directory: lib
-            modules:
-              - common-api
-              - dso-l1-api
-              - modules-common-1.0
-              - thirdparty-api
       # NOTE: this section also controls what goes into the 'tc.jar' file
       modules:
         - aspectwerkz:
