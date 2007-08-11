@@ -16,6 +16,7 @@ import com.tc.test.server.appserver.war.War;
 import com.tc.test.server.appserver.was6x.Was6xAppServerFactory;
 import com.tc.test.server.appserver.wasce1x.Wasce1xAppServerFactory;
 import com.tc.test.server.appserver.weblogic8x.Weblogic8xAppServerFactory;
+import com.tc.test.server.appserver.weblogic9x.Weblogic9xAppServerFactory;
 import com.tc.test.server.tcconfig.StandardTerracottaAppServerConfig;
 import com.tc.util.Assert;
 import com.tc.util.io.FileUtils;
@@ -76,6 +77,7 @@ public abstract class AppServerFactory {
         if ("5".equals(majorVersion)) return new Tomcat5xAppServerFactory(new ProtectedKey(), config);
       case WEBLOGIC:
         if ("8".equals(majorVersion)) return new Weblogic8xAppServerFactory(new ProtectedKey(), config);
+        if ("9".equals(majorVersion)) return new Weblogic9xAppServerFactory(new ProtectedKey(), config);
       case WASCE:
         if ("1".equals(majorVersion)) return new Wasce1xAppServerFactory(new ProtectedKey(), config);
       case JBOSS:
