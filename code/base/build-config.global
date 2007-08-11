@@ -11,7 +11,8 @@ tc.tests.configuration.variants.selected.spring=20
 # for container tests, you can also specify 'appserver=xxxx' on command line
 appserver=tomcat-5.5.23
 
-#appserver=jetty-6.1.3
+#appserver=weblogic-9.2.mp2
+#appserver=jetty-6.1.4
 #appserver=websphere-6.1.0.7
 #appserver=glassfish-v1.ur1-p01-b02
 #appserver=weblogic-8.1.sp6
