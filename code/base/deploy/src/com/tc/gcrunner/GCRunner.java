@@ -4,12 +4,24 @@
  */
 package com.tc.gcrunner;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.UnrecognizedOptionException;
+
+import com.tc.admin.TCStop;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.object.ObjectManagementMonitorMBean;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.net.ConnectException;
+import java.util.Arrays;
+import java.util.HashMap;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
@@ -24,25 +36,109 @@ import javax.management.remote.JMXServiceURL;
 public class GCRunner {
   private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
 
-  public static void main(String[] args) {
-    if (args == null || args.length != 2) {
-      usage();
-      return;
+  private String                m_host;
+  private int                   m_port;
+  private String                m_userName;
+
+  public static final String    DEFAULT_HOST  = "localhost";
+  public static final int       DEFAULT_PORT  = 9520;
+
+  public static void main(String[] args) throws Exception {
+    Options options = new Options();
+    CommandLine commandLine = null;
+
+    Option hostOption = new Option("n", "hostname", true, "Terracotta Server hostname");
+    hostOption.setType(String.class);
+    hostOption.setRequired(false);
+    hostOption.setArgName("l2-hostname");
+    options.addOption(hostOption);
+
+    Option jmxPortOption = new Option("p", "jmxport", true, "Terracotta Server JMX port");
+    jmxPortOption.setType(Integer.class);
+    jmxPortOption.setRequired(false);
+    jmxPortOption.setArgName("l2-jmx-port");
+    options.addOption(jmxPortOption);
+
+    Option userNameOption = new Option("u", "username", true, "user name");
+    userNameOption.setType(String.class);
+    userNameOption.setRequired(false);
+    options.addOption(userNameOption);
+
+    Option helpOption = new Option("h", "help");
+    helpOption.setType(String.class);
+    helpOption.setRequired(false);
+    options.addOption(helpOption);
+
+    try {
+      commandLine = new GnuParser().parse(options, args);
+    } catch (UnrecognizedOptionException e) {
+      System.err.println(e.getMessage());
+      usageAndDie(options);
     }
 
-    String hostName = args[0];
-    int jmxPort = Integer.parseInt(args[1]);
+    System.err.println("args: " + Arrays.asList(commandLine.getArgs()));
+    if (commandLine == null || commandLine.getArgs().length > 2) {
+      usageAndDie(options);
+    }
 
-    ObjectManagementMonitorMBean mbean = null;
-    try {
-      final JMXConnector jmxConnector = getJMXConnector(hostName, jmxPort);
-      final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
-      mbean = (ObjectManagementMonitorMBean) MBeanServerInvocationHandler
-          .newProxyInstance(mbs, L2MBeanNames.OBJECT_MANAGEMENT, ObjectManagementMonitorMBean.class, false);
-    } catch (Exception e) {
-      consoleLogger.error("Error occurred connecting to DSO server.");
+    if (commandLine.hasOption("h")) {
+      new HelpFormatter().printHelp("java " + TCStop.class.getName(), options);
       System.exit(1);
     }
+
+    String userName = null;
+    if (commandLine.hasOption('u')) {
+      userName = commandLine.getOptionValue('u');
+    }
+
+    String host = null;
+    int port = -1;
+
+    if (commandLine.getArgs().length == 0) {
+      host = DEFAULT_HOST;
+      port = DEFAULT_PORT;
+      System.err.println("No host or port provided. Invoking GC on Terracotta server at '" + host + "', port " + port
+                         + " by default.");
+    } else if (commandLine.getArgs().length == 1) {
+      host = DEFAULT_HOST;
+      port = Integer.parseInt(commandLine.getArgs()[0]);
+    } else {
+      host = commandLine.getArgs()[0];
+      port = Integer.parseInt(commandLine.getArgs()[1]);
+    }
+
+    try {
+      new GCRunner(host, port, userName).runGC();
+    } catch (ConnectException ce) {
+      System.err.println("Unable to connect to host '" + host + "', port " + port
+                         + ". Are you sure there is a Terracotta server running there?");
+    } catch (Exception e) {
+      System.err.println(e.getMessage());
+      usageAndDie(options);
+    }
+  }
+
+  private static void usageAndDie(Options options) throws Exception {
+    new HelpFormatter().printHelp("java " + GCRunner.class.getName(), options);
+    System.exit(1);
+  }
+
+  public GCRunner(String host, int port) {
+    m_host = host;
+    m_port = port;
+  }
+
+  public GCRunner(String host, int port, String userName) {
+    this(host, port);
+    m_userName = userName;
+  }
+
+  private void runGC() throws Exception {
+    ObjectManagementMonitorMBean mbean = null;
+    final JMXConnector jmxConnector = getJMXConnector();
+    final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
+    mbean = (ObjectManagementMonitorMBean) MBeanServerInvocationHandler
+        .newProxyInstance(mbs, L2MBeanNames.OBJECT_MANAGEMENT, ObjectManagementMonitorMBean.class, false);
 
     try {
       mbean.runGC();
@@ -51,12 +147,45 @@ public class GCRunner {
     }
   }
 
-  private static JMXConnector getJMXConnector(String hostName, int jmxPort) throws IOException {
-    String url = "service:jmx:rmi:///jndi/rmi://" + hostName + ":" + jmxPort + "/jmxrmi";
-    JMXServiceURL jmxServerUrl = new JMXServiceURL(url);
-    JMXConnector jmxConnector = JMXConnectorFactory.newJMXConnector(jmxServerUrl, null);
-    jmxConnector.connect();
-    return jmxConnector;
+  private static String getPassword() {
+    try {
+      Method m = System.class.getMethod("console", new Class[] {});
+      Object console = m.invoke(null, null);
+      if (console != null) {
+        m = console.getClass().getMethod("readPassword", new Class[] { String.class, Object[].class });
+        if (m != null) {
+          byte[] pw = (byte[]) m.invoke(console, new Object[] { "[%s]", "[console] Enter Password: " });
+          return new String(pw);
+        }
+      }
+    } catch (Exception e) {/**/
+    }
+
+    try {
+      System.out.print("Enter password: ");
+      return new jline.ConsoleReader().readLine(new Character('*'));
+    } catch (Exception e) {/**/
+    }
+
+    return null;
+  }
+
+  private JMXConnector getJMXConnector() throws Exception {
+    String uri = "service:jmx:rmi:///jndi/rmi://" + m_host + ":" + m_port + "/jmxrmi";
+    JMXServiceURL url = new JMXServiceURL(uri);
+    HashMap env = new HashMap();
+
+    if (m_userName != null) {
+      String[] creds = { m_userName, getPassword() };
+      env.put("jmx.remote.credentials", creds);
+    }
+
+    try {
+      return JMXConnectorFactory.connect(url, env);
+    } catch (IOException ioe) {
+      url = new JMXServiceURL("service:jmx:jmxmp://" + m_host + ":" + m_port);
+      return JMXConnectorFactory.connect(url, env);
+    }
   }
 
   private static void usage() {

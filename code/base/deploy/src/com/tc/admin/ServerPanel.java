@@ -243,7 +243,7 @@ public class ServerPanel extends XContainer {
     m_statusView.setIndicator(m_serverNode.getServerStatusColor());
   }
 
-  private boolean isRuntimeInfoShowing() {
+  boolean isRuntimeInfoShowing() {
     return m_runtimeInfoPanel.isVisible() ||
       (m_altProductInfoPanel != null && m_altProductInfoPanel.isVisible());
   }

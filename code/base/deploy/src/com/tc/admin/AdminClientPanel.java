@@ -38,6 +38,7 @@ import com.tc.admin.common.XTreeModel;
 import com.tc.admin.common.XTreeNode;
 
 import java.awt.BorderLayout;
+import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.HierarchyEvent;
@@ -596,6 +597,33 @@ public class AdminClientPanel extends XContainer
     return true;
   }
  
+  public boolean testServerMatch(ServerNode serverNode) {
+    ProductInfo consoleInfo = new ProductInfo();
+    String consoleVersion = consoleInfo.getVersion();
+    ProductInfo serverInfo = serverNode.getProductInfo();
+    String serverVersion = serverInfo.getVersion();
+    int spaceIndex = serverVersion.lastIndexOf(" ");
+    
+    // The version string that comes from the server is of the form "Terracotta 2.4", while
+    // the default ProductInfo.getVersion is just the raw version number string: "2.4"
+    
+    if(spaceIndex != -1) {
+      serverVersion = serverVersion.substring(spaceIndex+1);
+    }
+    
+    if (!consoleVersion.equals(serverVersion)) {
+      Frame frame = getFrame();
+      String msg = "<html>Version mismatch for "+this+".<br><br><table><tr><td>Terracotta Server Version:</td><td>"+serverVersion+
+        "</tr><tr><td>AdminConsole Version:</td><td>"+consoleVersion+"</td></tr></table><br>Continue?</html>";
+      String title = frame.getTitle();
+      int options = JOptionPane.YES_NO_OPTION;
+      int answer = JOptionPane.showConfirmDialog(frame, msg, title, options);
+      return (answer == JOptionPane.YES_OPTION);
+    }
+    
+    return true;
+  }
+
   class UpdateCheckerAction extends XAbstractAction {
     Dialog m_updateCheckerDialog;
     ProductInfo m_productInfo;

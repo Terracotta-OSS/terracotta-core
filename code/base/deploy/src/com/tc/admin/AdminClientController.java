@@ -15,6 +15,7 @@ public interface AdminClientController {
   void    nodeStructureChanged(XTreeNode node);
   void    remove(XTreeNode node);
   void    nodeChanged(XTreeNode node);
+  boolean testServerMatch(ServerNode node);
   void    log(String msg);
   void    log(Exception e);
   void    block();

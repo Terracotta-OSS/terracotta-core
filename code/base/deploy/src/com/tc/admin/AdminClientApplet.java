@@ -53,6 +53,10 @@ public class AdminClientApplet extends XApplet
     m_mainPanel.nodeChanged(node);
   }
 
+  public boolean testServerMatch(ServerNode node) {
+    return m_mainPanel.testServerMatch(node);
+  }
+  
  public void updateServerPrefs() {
     m_mainPanel.updateServerPrefs();
   }

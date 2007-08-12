@@ -31,7 +31,7 @@ public class ActivePassiveServerManager {
   private static final String                    HOST             = "localhost";
   private static final String                    SERVER_NAME      = "testserver";
   private static final String                    CONFIG_FILE_NAME = "active-passive-server-config.xml";
-  private static final boolean                   DEBUG            = false;
+  private static final boolean                   DEBUG            = true;
   private static final int                       NULL_VAL         = -1;
 
   private final File                             tempDir;
@@ -454,8 +454,7 @@ public class ActivePassiveServerManager {
     debugPrintln("***** finished waiting to find an appropriate passive server.");
 
     verifyActiveServerState();
-    debugPrintln("***** Closing active's jmxConnector ");
-    jmxConnectors[activeIndex].close();
+
     ServerControl server = servers[activeIndex].getServerControl();
     server.crash();
     debugPrintln("***** Sleeping after crashing active server ");
@@ -475,7 +474,7 @@ public class ActivePassiveServerManager {
     ServerControl server = servers[activeIndex].getServerControl();
     if (!server.isRunning()) { throw new AssertionError("Server[" + servers[activeIndex].getDsoPort()
                                                         + "] is not running as expected!"); }
-    JMXConnector jmxConnector = getJMXConnector(jmxPorts[activeIndex]);
+    JMXConnector jmxConnector = jmxConnectors[activeIndex];
     MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
     TCServerInfoMBean mbean = (TCServerInfoMBean) MBeanServerInvocationHandler
         .newProxyInstance(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, true);

@@ -155,7 +155,7 @@ public class ResolveTwoActiveServersTestApp extends AbstractErrorCatchingTranspa
 
   private void createJMXConnectors() throws IOException {
     for (int i = 0; i < serverControls.length; i++) {
-      String url = "service:jmx:rmi:///jndi/rmi://localhost:" + serverControls[i].getAdminPort() + "/jmxrmi";
+      String url = "service:jmx:jmxmp://localhost:" + serverControls[i].getAdminPort();
       JMXServiceURL jmxServerUrl = new JMXServiceURL(url);
       jmxConnectors[i] = JMXConnectorFactory.newJMXConnector(jmxServerUrl, null);
     }

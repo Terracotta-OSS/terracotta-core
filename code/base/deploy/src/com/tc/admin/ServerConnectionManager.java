@@ -283,7 +283,11 @@ public class ServerConnectionManager implements NotificationListener {
   }
   
   public boolean testIsConnected() throws Exception {
+    if(m_connectCntx == null) return false;
+    
     synchronized(m_connectTestLock) {
+      if (m_connectCntx == null) return false;
+      
       if (m_connectCntx.jmxc == null) {
         initConnectors();
       }

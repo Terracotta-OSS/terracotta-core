@@ -37,7 +37,6 @@ import javax.naming.ServiceUnavailableException;
 import javax.swing.Icon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
-import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
 import javax.swing.JTree;
@@ -239,38 +238,11 @@ public class ServerNode extends ComponentNode
     m_popupMenu.add(m_autoConnectMenuItem = new JCheckBoxMenuItem(m_autoConnectAction));
     m_autoConnectMenuItem.setSelected(autoConnect);
   }
-
-  private boolean testServerMatch() {
-    ProductInfo consoleInfo = new ProductInfo();
-    String consoleVersion = consoleInfo.getVersion();
-    ProductInfo serverInfo = getProductInfo();
-    String serverVersion = serverInfo.getVersion();
-    int spaceIndex = serverVersion.lastIndexOf(" ");
-    
-    // The version string that comes from the server is of the form "Terracotta 2.4", while
-    // the default ProductInfo.getVersion is just the raw version number string: "2.4"
-    
-    if(spaceIndex != -1) {
-      serverVersion = serverVersion.substring(spaceIndex+1);
-    }
-    
-    if (!consoleVersion.equals(serverVersion)) {
-      Frame frame = (Frame) m_serverPanel.getAncestorOfClass(java.awt.Frame.class);
-      String msg = "<html>Version mismatch.<br><br><table><tr><td>Terracotta Server Version:</td><td>"+serverVersion+
-        "</tr><tr><td>AdminConsole Version:</td><td>"+consoleVersion+"</td></tr></table><br>Continue?</html>";
-      String title = frame.getTitle();
-      int options = JOptionPane.YES_NO_OPTION;
-      int answer = JOptionPane.showConfirmDialog(frame, msg, title, options);
-      return (answer == JOptionPane.YES_OPTION);
-    }
-    
-    return true;
-  }
   
   private void setConnected(boolean connected) {
     if (m_acc == null) { return; }
     if (connected) {
-      if (!testServerMatch()) {
+      if (!m_serverPanel.isRuntimeInfoShowing() && !m_acc.controller.testServerMatch(this)) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             disconnect();
@@ -641,7 +613,7 @@ public class ServerNode extends ComponentNode
     return ServerHelper.getHelper().getServerInfoMBean(cntx);
   }
 
-  ProductInfo getProductInfo() {
+  public ProductInfo getProductInfo() {
     ProductInfo info;
 
     try {
