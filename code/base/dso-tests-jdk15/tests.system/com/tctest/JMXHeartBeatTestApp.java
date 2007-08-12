@@ -4,6 +4,7 @@
  */
 package com.tctest;
 
+import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.object.config.ConfigVisitor;
@@ -21,8 +22,6 @@ import java.util.concurrent.CyclicBarrier;
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXServiceURL;
 
 public class JMXHeartBeatTestApp extends AbstractTransparentApp {
 
@@ -69,10 +68,8 @@ public class JMXHeartBeatTestApp extends AbstractTransparentApp {
     boolean isAlive = false;
 
     try {
-      String theUrl = "service:jmx:jmxmp://localhost:" + config.getAttribute(JMX_PORT);
-      JMXServiceURL url = new JMXServiceURL(theUrl);
       echo("connecting to jmx server....");
-      jmxc = JMXConnectorFactory.connect(url, null);
+      jmxc = new JMXConnectorProxy("localhost", Integer.parseInt(config.getAttribute(JMX_PORT)));
       mbsc = jmxc.getMBeanServerConnection();
       echo("obtained mbeanserver connection");
       serverMBean = (TCServerInfoMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc,
@@ -88,9 +85,7 @@ public class JMXHeartBeatTestApp extends AbstractTransparentApp {
       if (jmxc != null) {
         try {
           jmxc.close();
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+        } catch (IOException e) {/**/}
       }
     }
 

@@ -6,6 +6,7 @@ package com.tctest;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
+import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.net.proxy.TCPProxy;
@@ -25,8 +26,6 @@ import java.util.Random;
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXServiceURL;
 
 public class ResolveTwoActiveServersTestApp extends AbstractErrorCatchingTransparentApp {
   private String[]              myArrayTestRoot;
@@ -134,13 +133,11 @@ public class ResolveTwoActiveServersTestApp extends AbstractErrorCatchingTranspa
   }
 
   private void ensurePassiveServer(int index) throws IOException {
-    jmxConnectors[index].connect();
     TCServerInfoMBean m = getJmxServer(index);
     Assert.assertTrue(m.isPassiveStandby());
   }
 
   private void ensureActiveServer(int index) throws IOException {
-    jmxConnectors[index].connect();
     MBeanServerConnection mBeanServer = jmxConnectors[index].getMBeanServerConnection();
     TCServerInfoMBean m = (TCServerInfoMBean) MBeanServerInvocationHandler
         .newProxyInstance(mBeanServer, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, true);
@@ -153,11 +150,9 @@ public class ResolveTwoActiveServersTestApp extends AbstractErrorCatchingTranspa
                                                                              TCServerInfoMBean.class, true);
   }
 
-  private void createJMXConnectors() throws IOException {
+  private void createJMXConnectors() {
     for (int i = 0; i < serverControls.length; i++) {
-      String url = "service:jmx:jmxmp://localhost:" + serverControls[i].getAdminPort();
-      JMXServiceURL jmxServerUrl = new JMXServiceURL(url);
-      jmxConnectors[i] = JMXConnectorFactory.newJMXConnector(jmxServerUrl, null);
+      jmxConnectors[i] = new JMXConnectorProxy("localhost", serverControls[i].getAdminPort());
     }
   }
 

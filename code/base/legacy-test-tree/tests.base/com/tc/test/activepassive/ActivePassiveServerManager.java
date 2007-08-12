@@ -5,12 +5,14 @@
 package com.tc.test.activepassive;
 
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.objectserver.control.ExtraProcessServerControl;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.util.PortChooser;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.TestState;
 
 import java.io.File;
@@ -24,14 +26,12 @@ import java.util.Random;
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXServiceURL;
 
 public class ActivePassiveServerManager {
   private static final String                    HOST             = "localhost";
   private static final String                    SERVER_NAME      = "testserver";
   private static final String                    CONFIG_FILE_NAME = "active-passive-server-config.xml";
-  private static final boolean                   DEBUG            = true;
+  private static final boolean                   DEBUG            = false;
   private static final int                       NULL_VAL         = -1;
 
   private final File                             tempDir;
@@ -343,6 +343,9 @@ public class ActivePassiveServerManager {
   }
 
   private TCServerInfoMBean getTcServerInfoMBean(int index) throws IOException {
+    if(jmxConnectors[index] != null) {
+      closeJMXConnector(index);
+    }
     jmxConnectors[index] = getJMXConnector(jmxPorts[index]);
     MBeanServerConnection mBeanServer = jmxConnectors[index].getMBeanServerConnection();
     return (TCServerInfoMBean) MBeanServerInvocationHandler.newProxyInstance(mBeanServer, L2MBeanNames.TC_SERVER_INFO,
@@ -350,9 +353,7 @@ public class ActivePassiveServerManager {
   }
 
   public static JMXConnector getJMXConnector(int jmxPort) throws IOException {
-    String url = "service:jmx:jmxmp://" + HOST + ":" + jmxPort;
-    JMXServiceURL jmxServerUrl = new JMXServiceURL(url);
-    JMXConnector jmxConnector = JMXConnectorFactory.newJMXConnector(jmxServerUrl, null);
+    JMXConnector jmxConnector = new JMXConnectorProxy(HOST, jmxPort);
     jmxConnector.connect();
     return jmxConnector;
   }
@@ -424,14 +425,22 @@ public class ActivePassiveServerManager {
     closeJMXConnectors();
   }
 
-  private void closeJMXConnectors() {
-    for (int i = 0; i < jmxConnectors.length; i++) {
+  private void closeJMXConnector(int i) {
+    if(jmxConnectors[i] != null) {
       try {
         jmxConnectors[i].close();
-      } catch (Exception e) {
+      } catch(Exception e) {
         System.out.println("JMXConnector for server=[" + dsoPorts[i] + "] already closed.");
         e.printStackTrace();
       }
+      jmxConnectors[i] = null;
+    }
+  }
+  
+  private void closeJMXConnectors() {
+    for (int i = 0; i < jmxConnectors.length; i++) {
+      closeJMXConnector(i);
+      ThreadUtil.reallySleep(100);
     }
   }
 
@@ -474,15 +483,14 @@ public class ActivePassiveServerManager {
     ServerControl server = servers[activeIndex].getServerControl();
     if (!server.isRunning()) { throw new AssertionError("Server[" + servers[activeIndex].getDsoPort()
                                                         + "] is not running as expected!"); }
-    JMXConnector jmxConnector = jmxConnectors[activeIndex];
-    MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
+    MBeanServerConnection mbs = jmxConnectors[activeIndex].getMBeanServerConnection();
     TCServerInfoMBean mbean = (TCServerInfoMBean) MBeanServerInvocationHandler
         .newProxyInstance(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, true);
     if (!mbean.isActive()) {
-      jmxConnector.close();
+      closeJMXConnector(activeIndex);
       throw new AssertionError("Server[" + servers[activeIndex].getDsoPort() + "] is not an active server as expected!");
     }
-    jmxConnector.close();
+    closeJMXConnector(activeIndex);
   }
 
   private void waitForServerCrash(ServerControl server) throws Exception {
@@ -490,7 +498,9 @@ public class ActivePassiveServerManager {
     long startTime = System.currentTimeMillis();
     while (duration > (System.currentTimeMillis() - startTime)) {
       if (server.isRunning()) {
-        Thread.sleep(1000);
+        try {
+          Thread.sleep(1000);
+        } catch(Exception e) {/**/}
       } else {
         return;
       }
@@ -507,7 +517,7 @@ public class ActivePassiveServerManager {
     System.out.println("Crashing passive server: dsoPort=[" + servers[passiveToCrash].getDsoPort() + "]");
 
     debugPrintln("***** Closing passive's jmxConnector ");
-    jmxConnectors[passiveToCrash].close();
+    closeJMXConnector(passiveToCrash);
 
     ServerControl server = servers[passiveToCrash].getServerControl();
     if (!server.isRunning()) { throw new AssertionError("Server[" + servers[passiveToCrash].getDsoPort()

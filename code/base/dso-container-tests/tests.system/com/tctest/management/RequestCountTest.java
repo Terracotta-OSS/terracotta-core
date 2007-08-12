@@ -6,6 +6,7 @@ package com.tctest.management;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.management.JMXConnectorProxy;
 import com.tc.management.TerracottaManagement;
 import com.tc.management.beans.sessions.SessionMonitorMBean;
 import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
@@ -17,7 +18,6 @@ import com.tc.test.server.appserver.load.Node;
 import com.tc.test.server.util.TcConfigBuilder;
 import com.tctest.webapp.servlets.CounterServlet;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.Iterator;
 import java.util.Set;
@@ -25,8 +25,6 @@ import java.util.Set;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXServiceURL;
 
 import junit.framework.Test;
 
@@ -161,12 +159,9 @@ public final class RequestCountTest extends AbstractDeploymentTest {
     jmxConnector.close();
   }
 
-  private JMXConnector getJMXConnector() throws IOException {
-    JMXServiceURL jmxServerUrl = new JMXServiceURL("service:jmx:jmxmp://localhost:"
-                                                   + getServerManager().getServerTcConfig().getJmxPort());
-    JMXConnector jmxConnector = JMXConnectorFactory.newJMXConnector(jmxServerUrl, null);
-    jmxConnector.connect();
-    return jmxConnector;
+  private JMXConnector getJMXConnector() {
+    int jmxPort = getServerManager().getServerTcConfig().getJmxPort();
+    return new JMXConnectorProxy("localhost", jmxPort);
   }
 
   private static class NodeWithJMX extends Node {

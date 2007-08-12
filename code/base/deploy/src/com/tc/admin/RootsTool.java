@@ -7,21 +7,18 @@ package com.tc.admin;
 import com.tc.admin.dso.DSOHelper;
 import com.tc.admin.dso.DSORoot;
 import com.tc.admin.dso.RootsHelper;
+import com.tc.management.JMXConnectorProxy;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.MapEntryFacade;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXServiceURL;
 
 /**
  * Utility to dump distributed object graph from the server
@@ -37,13 +34,7 @@ public class RootsTool {
   }
 
   private void connect() throws IOException {
-    // String url = "service:jmx:jmxmp://" + context.host + ":" + context.port;
-    String url = "service:jmx:rmi:///jndi/rmi://" + context.host + ":" + context.port + "/jmxrmi";
-    JMXServiceURL service = new JMXServiceURL(url);
-
-    Map env = new HashMap();
-    jmxc = JMXConnectorFactory.newJMXConnector(service, env);
-    jmxc.connect();
+    jmxc = new JMXConnectorProxy(context.host, context.port);
 
     context.jmxc = jmxc;
     context.mbsc = jmxc.getMBeanServerConnection();

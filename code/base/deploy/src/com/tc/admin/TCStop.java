@@ -16,12 +16,12 @@ import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory;
+import com.tc.management.JMXConnectorProxy;
 import com.tc.management.TerracottaManagement;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.ConnectException;
 import java.util.ArrayList;
@@ -30,8 +30,6 @@ import java.util.HashMap;
 
 import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXServiceURL;
 
 public class TCStop {
 
@@ -209,20 +207,14 @@ public class TCStop {
   }
   
   private JMXConnector getJMXConnector() throws Exception {
-    String uri = "service:jmx:jmxmp://" + m_host + ":" + m_port;
-    JMXServiceURL url = new JMXServiceURL(uri);
-    HashMap env = new HashMap();
-    
-    if(m_userName != null) {
-      String[] creds = {m_userName, getPassword()};
+    HashMap env = null;
+
+    if (m_userName != null) {
+      env = new HashMap();
+      String[] creds = { m_userName, getPassword() };
       env.put("jmx.remote.credentials", creds);
     }
 
-    try {
-      return JMXConnectorFactory.connect(url, env);
-    } catch(IOException ioe) {
-      url = new JMXServiceURL("service:jmx:jmxmp://" + m_host + ":" + m_port);
-      return JMXConnectorFactory.connect(url, env);
-    }
+    return new JMXConnectorProxy(m_host, m_port, env);
   }
 }

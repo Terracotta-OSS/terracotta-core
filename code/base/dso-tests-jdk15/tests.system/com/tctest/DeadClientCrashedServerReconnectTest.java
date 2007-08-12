@@ -9,6 +9,7 @@ import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogging;
+import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.object.DistributedObjectClient;
@@ -31,8 +32,6 @@ import java.util.List;
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXServiceURL;
 
 public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
 
@@ -113,10 +112,7 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
   }
 
   private void checkServerHasClients(int clientCount, int jmxPort) throws Exception {
-    String url = "service:jmx:jmxmp://localhost:" + jmxPort;
-    JMXServiceURL jmxServerUrl = new JMXServiceURL(url);
-    JMXConnector jmxConnector = JMXConnectorFactory.newJMXConnector(jmxServerUrl, null);
-    jmxConnector.connect();
+    JMXConnector jmxConnector = new JMXConnectorProxy("localhost", jmxPort);
     MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
     DSOMBean mbean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, L2MBeanNames.DSO, DSOMBean.class,
                                                                               true);
@@ -127,6 +123,7 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
                                                                          + actualClientCount + "]."); }
 
     System.out.println("***** " + clientCount + " clients are connected to the server.");
+    jmxConnector.close();
   }
 
   private static final class TestPauseListener implements PauseListener {

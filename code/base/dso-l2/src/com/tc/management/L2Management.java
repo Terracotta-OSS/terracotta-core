@@ -33,7 +33,6 @@ import javax.management.MBeanServerFactory;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnectorServer;
-import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
 import javax.management.remote.rmi.RMIConnectorServer;
 import javax.management.remote.rmi.RMIJRMPServerImpl;
@@ -119,17 +118,29 @@ public class L2Management extends TerracottaManagement {
                                                   + "]");
       if (!credentialsMsg.equals("")) CustomerLogging.getConsoleLogger().info(credentialsMsg);
     } else {
-      url = new JMXServiceURL("jmxmp", "localhost", jmxPort);
-      jmxConnectorServer = JMXConnectorServerFactory.newJMXConnectorServer(url, env, mBeanServer);
+      url = new JMXServiceURL("service:jmx:rmi://");
+      RMIJRMPServerImpl server = new RMIJRMPServerImpl(jmxPort, null, null, env);
+      jmxConnectorServer = new RMIConnectorServer(url, env, server, mBeanServer);
       jmxConnectorServer.start();
-      CustomerLogging.getConsoleLogger().info("JMX Server started. Available at URL[" + url + "]");
+      getRMIRegistry(jmxPort).bind("jmxrmi", server);
+      CustomerLogging.getConsoleLogger().info(
+                                              "JMX Server started. " + authMsg + " - Available at URL["
+                                                  + "service:jmx:rmi:///jndi/rmi://localhost:" + jmxPort + "/jmxrmi"
+                                                  + "]");
+
+//      url = new JMXServiceURL("jmxmp", "localhost", jmxPort);
+//      jmxConnectorServer = JMXConnectorServerFactory.newJMXConnectorServer(url, env, mBeanServer);
+//      jmxConnectorServer.start();
+//      CustomerLogging.getConsoleLogger().info("JMX Server started. Available at URL[" + url + "]");
     }
   }
 
   public synchronized void stop() throws IOException, InstanceNotFoundException, MBeanRegistrationException {
     unregisterMBeans();
     if (jmxConnectorServer != null) {
+      System.err.print("================ Stopping ConnectorServer... ");
       jmxConnectorServer.stop();
+      System.err.println("done.");
     }
   }
 

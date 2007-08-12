@@ -16,7 +16,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/management"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/treemap-tc-1.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jmxremote-1.0.1_04.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jmxremote_optional-1.0.1_04-b58.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jmxremote_optional-1.0.1_04-b58.jar" sourcepath="C:/jmx_remote-1_0_1_03/jmxremote-1_0_1-src/src"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/appframe-1.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jfreechart-1.0.0x.jar"/>
 	<classpathentry kind="lib" path="/dependencies/lib/jline-0.9.9.jar"/>

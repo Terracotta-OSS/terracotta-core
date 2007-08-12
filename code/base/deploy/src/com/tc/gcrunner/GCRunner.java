@@ -14,10 +14,10 @@ import org.apache.commons.cli.UnrecognizedOptionException;
 import com.tc.admin.TCStop;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
+import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.object.ObjectManagementMonitorMBean;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.ConnectException;
 import java.util.Arrays;
@@ -26,8 +26,6 @@ import java.util.HashMap;
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXServiceURL;
 
 /**
  * Application that runs gc by interacting with ObjectManagementMonitorMBean. Expects 2 args: (1) hostname of machine
@@ -171,29 +169,14 @@ public class GCRunner {
   }
 
   private JMXConnector getJMXConnector() throws Exception {
-    String uri = "service:jmx:rmi:///jndi/rmi://" + m_host + ":" + m_port + "/jmxrmi";
-    JMXServiceURL url = new JMXServiceURL(uri);
-    HashMap env = new HashMap();
+    HashMap env = null;
 
     if (m_userName != null) {
+      env = new HashMap();
       String[] creds = { m_userName, getPassword() };
       env.put("jmx.remote.credentials", creds);
     }
 
-    try {
-      return JMXConnectorFactory.connect(url, env);
-    } catch (IOException ioe) {
-      url = new JMXServiceURL("service:jmx:jmxmp://" + m_host + ":" + m_port);
-      return JMXConnectorFactory.connect(url, env);
-    }
-  }
-
-  private static void usage() {
-
-    consoleLogger
-        .error("This script runs DGC in the indicated DSO server when GC is not enabled through config file and DGC is not already running on the DSO server.\n"
-               + "        Usage:  run-dgc.sh/.bat [hostname] [jmxport]\n\n"
-               + "        hostname     IP address or hostname of DSO server machine (e.g., 127.0.0.1)\n"
-               + "        jmxport      JMX port number associated with DSO server (e.g., 9520)");
+    return new JMXConnectorProxy(m_host, m_port, env);
   }
 }
