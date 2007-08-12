@@ -271,6 +271,9 @@ public class ExtraProcessServerControl extends ServerControlBase {
     String[] args = getMainClassArguments();
     LinkedJavaProcess stopper = createLinkedJavaProcess("com.tc.admin.TCStop", args);
     stopper.start();
+    stopper.mergeSTDERR("TCStop");
+    stopper.mergeSTDOUT("TCStop");
+    stopper.STDIN().close();
   }
 
   public void shutdown() throws Exception {
