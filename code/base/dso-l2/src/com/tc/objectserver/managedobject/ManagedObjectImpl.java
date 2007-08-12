@@ -42,7 +42,7 @@ import java.util.Set;
  * Responsible for maintaining the state of a shared object. Used for broadcasting new instances of an object as well as
  * having changes applied to it and keeping track of references for garbage collection. If you add fields to this object
  * that need to be serialized make sure you add them to the ManagedObjectSerializer
- * 
+ *
  * @author steve TODO:: Remove Cacheable interface from this Object.
  */
 public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference, Serializable, PrettyPrintable {
@@ -222,7 +222,7 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     DNAWriterImpl writer = new ObjectDNAWriterImpl(out, id, getClassname(), serializer, DNA_STORAGE_ENCODING,
                                                    getLoaderDescription(), version);
     state.dehydrate(id, writer);
-    writer.finalizeDNA();
+    writer.finalizeDNA(false);
   }
 
   public String toString() {

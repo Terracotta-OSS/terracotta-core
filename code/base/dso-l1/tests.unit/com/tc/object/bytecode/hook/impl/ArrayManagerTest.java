@@ -215,7 +215,7 @@ public class ArrayManagerTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public void dehydrate(DNAWriter writer) throws DNAException {
+    public boolean dehydrateIfNew(DNAWriter writer) throws DNAException {
       throw new ImplementMe();
     }
 
@@ -228,10 +228,6 @@ public class ArrayManagerTest extends TestCase {
     }
 
     public void floatFieldChanged(String classname, String fieldname, float newValue, int index) {
-      throw new ImplementMe();
-    }
-
-    public boolean getAndResetNew() {
       throw new ImplementMe();
     }
 

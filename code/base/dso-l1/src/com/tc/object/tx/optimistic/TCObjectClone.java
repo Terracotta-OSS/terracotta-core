@@ -160,11 +160,7 @@ public class TCObjectClone implements TCObject {
     throw new ImplementMe();
   }
 
-  public void dehydrate(DNAWriter writer) throws DNAException {
-    throw new ImplementMe();
-  }
-
-  public boolean getAndResetNew() {
+  public boolean dehydrateIfNew(DNAWriter writer) throws DNAException {
     throw new ImplementMe();
   }
 

@@ -6,7 +6,6 @@ package com.tc.object;
 
 import com.tc.object.cache.Cacheable;
 import com.tc.object.dna.api.DNA;
-import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.DNAWriter;
 
 import gnu.trove.TLinkable;
@@ -102,13 +101,6 @@ public interface TCObject extends Cacheable {
 
   public void setVersion(long version);
 
-  /**
-   * Writers all of the object data to the given DNAWriter
-   */
-  public void dehydrate(DNAWriter writer) throws DNAException;
-
-  public boolean getAndResetNew();
-
   public void setIsNew();
 
   public boolean isNew();
@@ -122,4 +114,10 @@ public interface TCObject extends Cacheable {
   public void disableAutoLocking();
 
   public boolean autoLockingDisabled();
+
+  /**
+   * Writers all of the object data to the given DNAWriter, iff object is new
+   */
+
+  public boolean dehydrateIfNew(DNAWriter writer);
 }

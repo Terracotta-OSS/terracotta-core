@@ -23,7 +23,7 @@ public class TestDNAWriter implements DNAWriter {
     //
   }
 
-  public void finalizeDNA() {
+  public void finalizeDNA(boolean isDeltaDNA) {
     //
   }
 

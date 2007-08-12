@@ -139,8 +139,8 @@ public class NullTCObject implements TCObject {
     // do nothing
   }
 
-  public void dehydrate(DNAWriter to) throws DNAException {
-    // do nothing
+  public boolean dehydrateIfNew(DNAWriter to) {
+    return true;
   }
 
   public void markAccessed() {
@@ -162,10 +162,6 @@ public class NullTCObject implements TCObject {
   public void resolveAllReferences() {
     // throw new ImplementMe();
     // do nothing
-  }
-
-  public boolean getAndResetNew() {
-    throw new AssertionError();
   }
 
   public void setIsNew() {

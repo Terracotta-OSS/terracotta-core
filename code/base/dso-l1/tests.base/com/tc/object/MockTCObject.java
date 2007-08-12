@@ -26,6 +26,8 @@ public class MockTCObject implements TCObject {
   private TCClass      tcClazz;
   private boolean      accessed    = false;
 
+  private boolean dehydrateReturnValue = true;
+
   public MockTCObject(final ObjectID id, final Object obj) {
     this(id, obj, false, false);
   }
@@ -34,6 +36,10 @@ public class MockTCObject implements TCObject {
     this.peer = obj;
     this.id = id;
     this.tcClazz = new MockTCClass(isIndexed, isLogical);
+  }
+
+  public void setDehydrateReturnValue(boolean dehydrateReturnValue) {
+    this.dehydrateReturnValue = dehydrateReturnValue;
   }
 
   public List getHistory() {
@@ -103,8 +109,8 @@ public class MockTCObject implements TCObject {
     return;
   }
 
-  public void dehydrate(DNAWriter writer) throws DNAException {
-    return;
+  public boolean dehydrateIfNew(DNAWriter writer) throws DNAException {
+    return dehydrateReturnValue;
   }
 
   public void objectFieldChanged(String classname, String fieldname, Object newValue, int index) {
@@ -213,10 +219,6 @@ public class MockTCObject implements TCObject {
 
   public void resolveAllReferences() {
     //
-  }
-
-  public boolean getAndResetNew() {
-    return false;
   }
 
   public void setIsNew() {

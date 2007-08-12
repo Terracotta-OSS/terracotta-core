@@ -26,14 +26,14 @@ public class DNAWriterImpl implements DNAWriter {
   private int                            actionCount   = 0;
 
   public DNAWriterImpl(TCByteBufferOutputStream output, ObjectID id, String className,
-                       ObjectStringSerializer serializer, DNAEncoding encoding, String loaderDesc, boolean isDelta) {
+                       ObjectStringSerializer serializer, DNAEncoding encoding, String loaderDesc) {
     this.output = output;
     this.encoding = encoding;
 
     this.headerMark = output.mark();
     output.writeInt(-1); // reserve 4 bytes for total length of this DNA
     output.writeInt(-1); // reserve 4 bytes for # of actions
-    output.writeBoolean(isDelta);
+    output.writeBoolean(true);
     output.writeLong(id.toLong());
     this.parentIdMark = output.mark();
     output.writeLong(NULL_ID); // reserve 8 bytes for the parent object ID
@@ -117,16 +117,13 @@ public class DNAWriterImpl implements DNAWriter {
     encoding.encode(value, output);
   }
 
-  private void finalizeHeader() {
+  public void finalizeDNA(boolean isDelta) {
     int totalLength = this.output.getBytesWritten() - this.headerMark.getPosition();
-    byte[] lengths = new byte[8];
+    byte[] lengths = new byte[9];
     Conversion.writeInt(totalLength, lengths, 0);
     Conversion.writeInt(actionCount, lengths, 4);
+    lengths[8] = isDelta ? (byte) 1 : (byte) 0;
     this.headerMark.write(lengths);
-  }
-
-  public void finalizeDNA() {
-    finalizeHeader();
   }
 
   public void setParentObjectID(ObjectID id) {

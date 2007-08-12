@@ -27,7 +27,7 @@ public interface DNAWriter {
 
   void addLiteralValue(Object value);
 
-  void finalizeDNA();
+  void finalizeDNA(boolean isDeltaDNA);
 
   void setParentObjectID(ObjectID id);
 

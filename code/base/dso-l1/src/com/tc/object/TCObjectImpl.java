@@ -266,8 +266,17 @@ public abstract class TCObjectImpl implements TCObject {
   /**
    * Writes the data in the object to the DNA writer supplied.
    */
-  public void dehydrate(DNAWriter writer) throws DNAException {
-    tcClazz.dehydrate(this, writer, getPeerObject());
+  public boolean dehydrateIfNew(DNAWriter writer) throws DNAException {
+    // must hold resolve lock during dehydrate to avoid racing with reference clearing
+    synchronized (getResolveLock()) {
+      if (isNew()) {
+        tcClazz.dehydrate(this, writer, getPeerObject());
+        setFlag(IS_NEW_OFFSET, false);
+        return true;
+      }
+    }
+
+    return false;
   }
 
   public synchronized void setVersion(long version) {
@@ -383,14 +392,6 @@ public abstract class TCObjectImpl implements TCObject {
   public int accessCount(int factor) {
     // TODO:: Implement when needed
     throw new UnsupportedOperationException();
-  }
-
-  public synchronized boolean getAndResetNew() {
-    if (getFlag(IS_NEW_OFFSET)) {
-      setFlag(IS_NEW_OFFSET, false);
-      return true;
-    }
-    return false;
   }
 
   public synchronized void setIsNew() {

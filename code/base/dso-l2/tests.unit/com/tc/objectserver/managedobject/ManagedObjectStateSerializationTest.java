@@ -365,7 +365,7 @@ public class ManagedObjectStateSerializationTest extends TestCase {
       addPhysicalAction(field, value, value instanceof ObjectID);
     }
 
-    public void finalizeDNA() {
+    public void finalizeDNA(boolean isDeltaDNA) {
       //
     }
 

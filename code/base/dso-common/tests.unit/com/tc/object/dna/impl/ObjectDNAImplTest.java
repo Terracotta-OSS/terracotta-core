@@ -21,6 +21,10 @@ public class ObjectDNAImplTest extends DNAImplTest {
     assertFalse(dna.isDelta());
   }
 
+  protected boolean getIsDelta() {
+    return false;
+  }
+
   protected DNAImpl createDNAImpl(ObjectStringSerializer serializer, boolean b) {
     return new ObjectDNAImpl(serializer, b);
   }

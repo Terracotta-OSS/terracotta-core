@@ -205,6 +205,10 @@ public class ExtraProcessServerControl extends ServerControlBase {
     return javaHome;
   }
 
+  public void setJavaHome(File javaHome) {
+    this.javaHome = javaHome;
+  }
+
   protected String[] getMainClassArguments() {
     if (serverName != null && !serverName.equals("")) {
       return new String[] { StandardTVSConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, this.configFileLoc,
@@ -238,7 +242,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     waitUntilStarted();
     System.err.println(this.name + " started.");
   }
-  
+
   protected LinkedJavaProcess createLinkedJavaProcess(String mainClassName, String[] arguments) {
     LinkedJavaProcess result = new LinkedJavaProcess(mainClassName, arguments);
     result.setDirectory(this.runningDirectory);

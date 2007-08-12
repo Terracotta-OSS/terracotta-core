@@ -39,13 +39,13 @@ public class VersionizedDNAWrapperTest extends TestCase {
     dnaWriter.addPhysicalAction(action3.getFieldName(), action3.getObject());
     dnaWriter.setParentObjectID(pid);
     dnaWriter.setArrayLength(arrayLen);
-    dnaWriter.finalizeDNA();
+    dnaWriter.finalizeDNA(true);
 
     TCByteBufferInputStream in = new TCByteBufferInputStream(out.toArray());
     DNAImpl dna = createDNAImpl(serializer, true);
     assertSame(dna, dna.deserializeFrom(in));
     assertEquals(0, in.available());
-    
+
     VersionizedDNAWrapper vdna = new VersionizedDNAWrapper(dna, 10);
     assertEquals(10, vdna.getVersion());
     try {
@@ -54,7 +54,7 @@ public class VersionizedDNAWrapperTest extends TestCase {
     } catch(UnsupportedOperationException use) {
       // this is expected
     }
-    
+
     vdna = new VersionizedDNAWrapper(dna, 10, true);
     DNACursor cursor = vdna.getCursor();
     cursor.reset();
@@ -82,16 +82,16 @@ public class VersionizedDNAWrapperTest extends TestCase {
     compareAction(action3, cursor.getPhysicalAction());
     assertFalse(cursor.next(encoding));
   }
-  
+
   protected DNAImpl createDNAImpl(ObjectStringSerializer serializer, boolean b) {
     return new DNAImpl(serializer, b);
   }
-  
+
   protected DNAWriter createDNAWriter(TCByteBufferOutputStream out, ObjectID id, String type,
                                       ObjectStringSerializer serializer, DNAEncoding encoding, String string) {
-    return new DNAWriterImpl(out, id, type, serializer, encoding, "loader description", true);
+    return new DNAWriterImpl(out, id, type, serializer, encoding, "loader description");
   }
-  
+
   private void compareAction(LogicalAction expect, LogicalAction actual) {
     assertEquals(expect.getMethod(), actual.getMethod());
     assertTrue(Arrays.equals(expect.getParameters(), actual.getParameters()));

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.change;
 
@@ -77,17 +78,17 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
     // NOTE: This method releases the change events to conserve memory
 
     if (dnaCreated.attemptSet()) {
-      boolean commitNew = tcObject.getAndResetNew();
-
       TCClass tcClass = tcObject.getTCClass();
       String className = tcClass.getExtendingClassName();
       String loaderDesc = tcClass.getDefiningLoaderDescription();
-      DNAWriter writer = new DNAWriterImpl(output, tcObject.getObjectID(), className, serializer, encoding, loaderDesc,
-                                           !commitNew);
+      DNAWriter writer = new DNAWriterImpl(output, tcObject.getObjectID(), className, serializer, encoding, loaderDesc);
 
-      if (commitNew) {
-        tcObject.dehydrate(writer);
+      final boolean isDelta;
+
+      if (tcObject.dehydrateIfNew(writer)) {
+        isDelta = false;
       } else {
+        isDelta = true;
         if (arrayEvents != null) {
           writeEventsToDNA(arrayEvents.values(), writer);
         }
@@ -102,7 +103,7 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
         }
       }
 
-      writer.finalizeDNA();
+      writer.finalizeDNA(isDelta);
       return;
     }
 

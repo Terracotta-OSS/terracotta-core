@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -46,8 +47,8 @@ public class FileSharingTestApp extends AbstractTransparentApp {
   }
 
   /**
-   * This is the basic test which only makes sure that the file object is shared. It
-   * does not test the cross platform test.
+   * This is the basic test which only makes sure that the file object is shared. It does not test the cross platform
+   * test.
    */
   private void basicTest(int index) throws Exception {
     if (index == 0) {
@@ -68,15 +69,16 @@ public class FileSharingTestApp extends AbstractTransparentApp {
    */
   private void fileDehydrateTest(int index) throws Exception {
     if (index == 0) {
-      Manageable managed = (Manageable)fileRoot;
+      Manageable managed = (Manageable) fileRoot;
       TCObject tcObject = managed.__tc_managed();
       MockDNAWriter dnaWriter = new MockDNAWriter();
-      tcObject.dehydrate(dnaWriter);
+      tcObject.setIsNew();
+      tcObject.dehydrateIfNew(dnaWriter);
 
       List dna = dnaWriter.getDNA();
       boolean separatorFound = false;
-      for (Iterator i=dna.iterator(); i.hasNext(); ) {
-        PhysicalAction action = (PhysicalAction)i.next();
+      for (Iterator i = dna.iterator(); i.hasNext();) {
+        PhysicalAction action = (PhysicalAction) i.next();
         Assert.assertTrue(action.isTruePhysical());
         if ("File.fileSeparator".equals(action.getFieldName())) {
           separatorFound = true;
@@ -115,11 +117,11 @@ public class FileSharingTestApp extends AbstractTransparentApp {
     }
 
     public void addPhysicalAction(String fieldName, Object value) {
-      //dna.add(new PhysicalAction(fieldName, value));
+      // dna.add(new PhysicalAction(fieldName, value));
       addPhysicalAction(fieldName, value, true);
     }
 
-    public void finalizeDNA() {
+    public void finalizeDNA(boolean isDeltaDNA) {
       //
     }
 

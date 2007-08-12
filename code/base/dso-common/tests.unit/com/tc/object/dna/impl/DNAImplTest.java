@@ -41,7 +41,7 @@ public class DNAImplTest extends TestCase {
     dnaWriter.addPhysicalAction(action3.getFieldName(), action3.getObject());
     dnaWriter.setParentObjectID(pid);
     dnaWriter.setArrayLength(arrayLen);
-    dnaWriter.finalizeDNA();
+    dnaWriter.finalizeDNA(getIsDelta());
 
     TCByteBufferInputStream in = new TCByteBufferInputStream(out.toArray());
     dna = createDNAImpl(serializer, true);
@@ -73,6 +73,10 @@ public class DNAImplTest extends TestCase {
     assertOverridable();
   }
 
+  protected boolean getIsDelta() {
+    return true;
+  }
+
   protected void assertOverridable() {
     assertTrue(dna.isDelta());
   }
@@ -83,7 +87,7 @@ public class DNAImplTest extends TestCase {
 
   protected DNAWriter createDNAWriter(TCByteBufferOutputStream out, ObjectID id, String type,
                                       ObjectStringSerializer serializer, DNAEncoding encoding, String string) {
-    return new DNAWriterImpl(out, id, type, serializer, encoding, "loader description", true);
+    return new DNAWriterImpl(out, id, type, serializer, encoding, "loader description");
   }
 
   private void compareAction(LogicalAction expect, LogicalAction actual) {
