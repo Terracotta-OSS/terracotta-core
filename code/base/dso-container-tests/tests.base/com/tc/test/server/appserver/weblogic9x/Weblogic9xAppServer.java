@@ -52,7 +52,10 @@ public final class Weblogic9xAppServer extends CargoAppServer {
     protected void setState(State state) {
       if (state.equals(State.STARTING)) {
         adjustConfig();
-        this.setBeaHome(this.getHome());
+        File license = new File(getHome(), "license.bea");
+        if (license.exists()) {
+          this.setBeaHome(this.getHome());
+        }
       }
     }
 
