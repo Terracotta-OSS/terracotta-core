@@ -109,6 +109,7 @@ bundled_modules:
         - clustered-rife-1.6.0
         - clustered-websphere-6.1.0.7
         - clustered-wicket-1.3        
+        - clustered-surefire-2.3
         - modules-common-1.0        
 packaging:
   - tar:
