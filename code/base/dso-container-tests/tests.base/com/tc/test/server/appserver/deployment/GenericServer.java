@@ -48,20 +48,18 @@ import javax.management.MBeanServerConnection;
 import junit.framework.Assert;
 
 public class GenericServer extends AbstractStoppable implements WebApplicationServer {
-  private static final boolean        GC_LOGGGING     = false;
-  private static final boolean        ENABLE_DEBUGGER = false;
+  private static final boolean              GC_LOGGGING     = false;
+  private static final boolean              ENABLE_DEBUGGER = false;
 
-  private int                         jmxRemotePort;
-  private int                         rmiRegistryPort;
-  int                                 contextId       = 1;
-  private AppServerFactory            factory;
-  private AppServer                   server;
-  private StandardAppServerParameters parameters;
-  private ServerResult                result;
-  private final AppServerInstallation installation;
-  private final Map                   proxyBuilderMap = new HashMap();
-  static final boolean                MONKEY_MODE     = true;
-  private ProxyBuilder                proxyBuilder    = null;
+  private final int                         jmxRemotePort;
+  private final int                         rmiRegistryPort;
+  private final AppServerFactory            factory;
+  private AppServer                         server;
+  private final StandardAppServerParameters parameters;
+  private ServerResult                      result;
+  private final AppServerInstallation       installation;
+  private final Map                         proxyBuilderMap = new HashMap();
+  private ProxyBuilder                      proxyBuilder    = null;
 
   public GenericServer(TestConfigObject config, AppServerFactory factory, AppServerInstallation installation,
                        FileSystemPath tcConfigPath, int serverId, File tempDir) throws Exception {
@@ -87,7 +85,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     parameters.appendJvmArgs("-Xbootclasspath/p:" + bootJarFile.getAbsolutePath());
     parameters.appendSysProp("tc.classpath", "file://" + writeTerracottaClassPathFile());
     parameters.appendSysProp("tc.session.classpath", config.sessionClasspath());
-    
+
     if (!Vm.isIBM()) {
       parameters.appendJvmArgs("-XX:+HeapDumpOnOutOfMemoryError");
     }

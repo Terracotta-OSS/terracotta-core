@@ -267,8 +267,9 @@ public abstract class TCObjectImpl implements TCObject {
    * Writes the data in the object to the DNA writer supplied.
    */
   public boolean dehydrateIfNew(DNAWriter writer) throws DNAException {
-    // must hold resolve lock during dehydrate to avoid racing with reference clearing
-    synchronized (getResolveLock()) {
+    // The dehydrate and flipping the "new" flag must be atomic -- otherwise the client
+    // memory manager might start nulling field values!
+    synchronized (this) {
       if (isNew()) {
         tcClazz.dehydrate(this, writer, getPeerObject());
         setFlag(IS_NEW_OFFSET, false);
