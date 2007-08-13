@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ivy-module version="1.0">
+  <info organisation="ibiblio" module="clustered-surefire-2.3"/>
+  <dependencies>
+    <!--
+    <dependency name="*** DEPENDENCY NAME ***" rev="*** DEPENDENCY REVISION ***" org="terracotta"/>
+    -->
+  </dependencies>
+</ivy-module>
