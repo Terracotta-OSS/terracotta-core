@@ -148,7 +148,7 @@ public class GCRunner {
   private static String getPassword() {
     try {
       Method m = System.class.getMethod("console", new Class[] {});
-      Object console = m.invoke(null, null);
+      Object console = m.invoke(null, (Object[])null);
       if (console != null) {
         m = console.getClass().getMethod("readPassword", new Class[] { String.class, Object[].class });
         if (m != null) {

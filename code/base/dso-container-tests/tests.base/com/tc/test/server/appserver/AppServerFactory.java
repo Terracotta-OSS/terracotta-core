@@ -76,7 +76,7 @@ public abstract class AppServerFactory {
       case TOMCAT:
         if ("5".equals(majorVersion)) return new Tomcat5xAppServerFactory(new ProtectedKey(), config);
       case WEBLOGIC:
-        if ("8".equals(majorVersion)) return new Weblogic8xAppServerFactory(new ProtectedKey(), config);
+        if ("8".equals(majorVersion) || "9".equals(majorVersion)) return new Weblogic8xAppServerFactory(new ProtectedKey(), config);
         if ("9".equals(majorVersion)) return new Weblogic9xAppServerFactory(new ProtectedKey(), config);
       case WASCE:
         if ("1".equals(majorVersion)) return new Wasce1xAppServerFactory(new ProtectedKey(), config);
