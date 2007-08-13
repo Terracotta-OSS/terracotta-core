@@ -13,7 +13,6 @@ import org.codehaus.cargo.container.tomcat.Tomcat5xRemoteDeployer;
 import org.codehaus.cargo.container.tomcat.TomcatPropertySet;
 import org.codehaus.cargo.container.tomcat.TomcatRuntimeConfiguration;
 import org.codehaus.cargo.util.log.SimpleLogger;
-import org.springframework.jmx.support.MBeanServerConnectionFactoryBean;
 import org.springframework.remoting.RemoteLookupFailureException;
 import org.springframework.remoting.httpinvoker.CommonsHttpInvokerRequestExecutor;
 import org.springframework.remoting.httpinvoker.HttpInvokerProxyFactoryBean;
@@ -24,6 +23,7 @@ import org.xml.sax.SAXException;
 
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
+import com.tc.management.JMXConnectorProxy;
 import com.tc.test.TestConfigObject;
 import com.tc.test.server.ServerResult;
 import com.tc.test.server.appserver.AppServer;
@@ -231,10 +231,8 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
   }
 
   public MBeanServerConnection getMBeanServerConnection() throws Exception {
-    MBeanServerConnectionFactoryBean factoryBean = new MBeanServerConnectionFactoryBean();
-    factoryBean.setServiceUrl("service:jmx:jmxmp://localhost:" + this.jmxRemotePort);
-    factoryBean.afterPropertiesSet();
-    return (MBeanServerConnection) factoryBean.getObject();
+    JMXConnectorProxy jmxConnectorProxy = new JMXConnectorProxy("localhost", this.jmxRemotePort);
+    return jmxConnectorProxy.getMBeanServerConnection();
   }
 
   public WebApplicationServer addWarDeployment(Deployment warDeployment, String context) {
