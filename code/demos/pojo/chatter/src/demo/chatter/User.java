@@ -36,9 +36,8 @@ public class User implements ChatListener {
 	}
 
 	public void newMessage(Message message) {
-		display
-				.updateMessage(message.getUser().getName(), message
-						.getMessage(), this.equals(message.getUser()));
+		display.updateMessage(message.getUser().getName(),
+				message.getMessage(), this.equals(message.getUser()));
 	}
 
 	public void newUser(String username) {
