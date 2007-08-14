@@ -44,6 +44,7 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
                                                                   + MODULE_FILENAME_EXT_REGEX + "$";
 
   private final URL[]           bundleRepositories;
+  private final String          defaultGroupId;  
   private final Framework       framework;
 
   static {
@@ -54,8 +55,9 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
   /**
    * Creates and starts an in-memory OSGi layer using Knopflerfish.
    */
-  public KnopflerfishOSGi(final URL[] bundleRepositories) throws Exception {
+  public KnopflerfishOSGi(final String groupId, final URL[] bundleRepositories) throws Exception {
     this.bundleRepositories = bundleRepositories;
+    this.defaultGroupId     = groupId;
     System.setProperty("org.knopflerfish.osgi.registerserviceurlhandler", "false");
     framework = new Framework(null);
     framework.launch(0);
@@ -79,6 +81,7 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
           throw new BundleException("Invalid bundle repository specified in the URL [" + bundleDir + "]");
         }
 
+        
         final File[] bundleFiles = findBundleFiles(bundleDir);
         for (int j = 0; j < bundleFiles.length; j++) {
           installBundle(getBundleName(bundleFiles[j]), getBundleVersion(bundleFiles[j]));

@@ -30,10 +30,11 @@ public interface EmbeddedOSGiRuntime {
   public static final String MODULES_URL_PROPERTY_NAME = "tc.tests.configuration.modules.url";
 
   void installBundles() throws BundleException;
-  
+
   void installBundle(final String bundleName, final String bundleVersion) throws BundleException;
 
-  void startBundle(final String bundleName, final String bundleVersion, final EmbeddedOSGiRuntimeCallbackHandler handler) throws BundleException;
+  void startBundle(final String bundleName, final String bundleVersion, final EmbeddedOSGiRuntimeCallbackHandler handler)
+      throws BundleException;
 
   Bundle getBundle(final String bundleName, final String bundleVersion) throws BundleException;
 
@@ -58,40 +59,63 @@ public interface EmbeddedOSGiRuntime {
 
     private static final TCLogger logger = TCLogging.getLogger(EmbeddedOSGiRuntime.class);
 
+    static String groupIdToRelativePath(final String groupId) {
+      return groupId.replace('.', '/');
+    }
+
+    static String[] decomposeGroupId(final String groupId) {
+      return groupId.split("\\.");
+    }
+
+    static File getPathFromGroupId(final File prefix, final String groupId) {
+      final String[] groupPaths = decomposeGroupId(groupId);
+      File path = prefix;
+      for (int i = 0; i < groupPaths.length; i++) {
+        path = new File(path, groupPaths[i]);
+      }
+      return path.getAbsoluteFile();
+    }
+
     public static EmbeddedOSGiRuntime createOSGiRuntime(final Modules modules) throws BundleException, Exception {
       final List prependLocations = new ArrayList();
-      // There are two repositories that we [optionally] prepend: a system property (used by tests) and the installation
-      // root (which is not set when running tests)
+
+      // There are two repositories that we [optionally] prepend: a system property (used by tests)
+      // and the installation root (which is not set when running tests)
       try {
         if (Directories.getInstallationRoot() != null) {
-          logger.debug("Prepending bundle repository: " + new File(Directories.getInstallationRoot(), "modules").toURL().toString());
-          prependLocations.add(new File(Directories.getInstallationRoot(), "modules").toURL());
+          final URL defaultRepository = getPathFromGroupId(new File(Directories.getInstallationRoot(), "modules"),
+              modules.getGroupId()).toURL();
+          // final URL defaultRepository = new File(Directories.getInstallationRoot(), "modules").toURL();
+          logger.debug("Prepending default bundle repository: " + defaultRepository.toString());
+          prependLocations.add(defaultRepository);
         }
       } catch (FileNotFoundException fnfe) {
         // Ignore, tc.install-dir is not set so we must be in a test environment
       }
+
       try {
         if (System.getProperty(MODULES_URL_PROPERTY_NAME) != null) {
           prependLocations.add(new URL(System.getProperty(MODULES_URL_PROPERTY_NAME)));
         }
         final URL[] prependURLs = new URL[prependLocations.size()];
         prependLocations.toArray(prependURLs);
-  
+
         final URL[] bundleRepositories = new URL[modules.sizeOfRepositoryArray() + prependURLs.length];
         for (int pos = 0; pos < prependURLs.length; pos++) {
           bundleRepositories[pos] = prependURLs[pos];
         }
-        
+
+        if (prependURLs.length > 0) logger.info("OSGi Bundle Repositories:");
         for (int pos = prependURLs.length; pos < bundleRepositories.length; pos++) {
-          bundleRepositories[pos] = new URL(modules.getRepositoryArray(pos - prependURLs.length));
+          // final String groupId = modules.getRepositoryArray(pos - prependURLs.length).getGroupId();
+          // final String spec = groupIdToRelativePath(groupId == null ? modules.getGroupId() : groupId);
+          // final URL context = new URL(modules.getRepositoryArray(pos - prependURLs.length).getStringValue());
+          // bundleRepositories[pos] = new URL(context, spec);
+          bundleRepositories[pos] = new URL(modules.getRepositoryArray(pos - prependURLs.length).getStringValue());
+          logger.info("\t" + bundleRepositories[pos]);
         }
-  
-        logger.info("OSGi Bundle Repositories:");
-        for (int i = 0; i < bundleRepositories.length; i++) {
-          logger.info("\t" + bundleRepositories[i]);
-        }
-        
-        return new KnopflerfishOSGi(bundleRepositories);
+
+        return new KnopflerfishOSGi(modules.getGroupId(), bundleRepositories);
       } catch (MalformedURLException muex) {
         throw new BundleException(muex.getMessage());
       }

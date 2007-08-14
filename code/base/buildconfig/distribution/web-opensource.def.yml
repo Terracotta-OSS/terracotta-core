@@ -45,7 +45,7 @@ bundled_components:
       install_directory: eclipse
 bundled_modules:
   - core:
-      install_directory: eclipse/org.terracotta.dso/modules
+      install_directory: eclipse/org.terracotta.dso/modules/org/terracotta/modules
       manifest:
         - clustered-apache-struts-1.1
         - clustered-cglib-2.1.3

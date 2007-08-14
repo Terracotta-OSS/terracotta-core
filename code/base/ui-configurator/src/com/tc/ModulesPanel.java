@@ -14,6 +14,7 @@ import com.tc.admin.common.XTable;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.Module;
 import com.terracottatech.config.Modules;
+import com.terracottatech.config.Repository;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -143,7 +144,8 @@ public class ModulesPanel extends XContainer implements TableModelListener {
     m_modulesTableModel.clear();
     m_repositoriesTableModel.clear();
     if (m_modules != null) {
-      m_repositoriesTableModel.set(m_modules.xgetRepositoryArray());
+      //m_repositoriesTableModel.set(m_modules.xgetRepositoryArray());
+      m_repositoriesTableModel.set(m_modules.getRepositoryArray());
       m_modulesTableModel.set(m_modules.getModuleArray());
     }
   }
@@ -236,7 +238,10 @@ public class ModulesPanel extends XContainer implements TableModelListener {
     }
 
     public void setValueAt(Object value, int row, int col) {
-      m_modules.setRepositoryArray(row, (String) value);
+      //m_modules.setRepositoryArray(row, (String) value);
+      Repository repo = Repository.Factory.newInstance();
+      repo.setStringValue((String) value);
+      m_modules.setRepositoryArray(0, repo);
       super.setValueAt(value, row, col);
     }
 

@@ -95,7 +95,7 @@ bundled_components:
         - ui-configurator
 bundled_modules:
   - core:
-      install_directory: modules
+      install_directory: modules/org/terracotta/modules
       manifest:
         - clustered-apache-struts-1.1
         - clustered-cglib-2.1.3

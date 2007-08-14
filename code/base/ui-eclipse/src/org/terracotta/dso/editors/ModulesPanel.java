@@ -26,6 +26,7 @@ import org.terracotta.ui.util.SWTUtil;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.Module;
 import com.terracottatech.config.Modules;
+import com.terracottatech.config.Repository;
 
 public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectStructureListener {
   private Client                 m_dsoClient;
@@ -166,7 +167,9 @@ public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectS
   }
 
   private void internalAddModuleRepo(String location) {
-    ensureModules().addRepository(location);
+    //ensureModules().addRepository(location);
+    Repository repo = ensureModules().addNewRepository();
+    repo.setStringValue(location);
     createModuleRepoTableItem(location);
   }
 
@@ -178,9 +181,10 @@ public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectS
   private void initModuleRepositories() {
     m_layout.m_moduleRepoTable.removeAll();
     if (m_modules == null) return;
-    String[] repos = m_modules.getRepositoryArray();
+    //String[] repos = m_modules.getRepositoryArray();
+    Repository[] repos = m_modules.getRepositoryArray();
     for (int i = 0; i < repos.length; i++) {
-      createModuleRepoTableItem(repos[i]);
+      createModuleRepoTableItem(repos[i].getStringValue());
     }
     if (repos.length > 0) {
       m_layout.m_moduleRepoTable.setSelection(0);
@@ -350,7 +354,10 @@ public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectS
       int index = table.getSelectionIndex();
 
       if (event.widget == m_layout.m_moduleRepoTable) {
-        m_modules.setRepositoryArray(index, text);
+        //m_modules.setRepositoryArray(index, text);
+        Repository repo = Repository.Factory.newInstance();
+        repo.setStringValue(text);
+        m_modules.setRepositoryArray(index, repo);
         fireModuleRepoChanged(index);
       } else {
         Module module = (Module) item.getData();

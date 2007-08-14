@@ -325,6 +325,19 @@
     </xs:all>
   </xs:complexType>
 
+  <xs:complexType name="repository">
+	  <xs:annotation>
+	    <xs:documentation>
+	      Identifies a URI from which config-bundle modules may be found.
+	    </xs:documentation>
+	  </xs:annotation>
+	  <xs:simpleContent>
+	    <xs:extension base="xs:anyURI">
+	      <xs:attribute name="group-id" type="xs:string" default="org.terracotta.modules" />
+	    </xs:extension>
+	  </xs:simpleContent>
+  </xs:complexType>
+
   <xs:complexType name="module">
     <xs:annotation>
       <xs:documentation>
@@ -336,13 +349,15 @@
     </xs:annotation>
     <xs:attribute name="name" type="xs:string" />
     <xs:attribute name="version" type="xs:string" />
+    <xs:attribute name="group-id" type="xs:string" default="org.terracotta.modules" />
   </xs:complexType>
 
   <xs:complexType name="modules">
     <xs:sequence maxOccurs="unbounded">
-      <xs:element name="repository" type="xs:anyURI" minOccurs="0" />
+      <xs:element name="repository" type="repository" minOccurs="0" />
       <xs:element name="module" type="module" minOccurs="0" />
     </xs:sequence>
+    <xs:attribute name="group-id" type="xs:string" default="org.terracotta.modules" />
   </xs:complexType>
 
   <xs:complexType name="dso-application">
