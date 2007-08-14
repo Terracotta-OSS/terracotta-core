@@ -415,8 +415,4 @@
       <lock-level>read</lock-level>
     </autolock>
   </locks>
-
-  <additional-boot-jar-classes>
-    <include>java.util.Random</include>
-  </additional-boot-jar-classes>
 </xml-fragment>
