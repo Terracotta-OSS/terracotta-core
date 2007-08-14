@@ -31,13 +31,36 @@ import com.tc.util.sequence.MutableSequence;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase implements ManagedObjectPersistor {
+
+  private static final Comparator              MO_COMPARATOR      = new Comparator() {
+
+                                                                    public int compare(Object o1, Object o2) {
+                                                                      long oid1 = ((ManagedObject) o1).getID().toLong();
+                                                                      long oid2 = ((ManagedObject) o2).getID().toLong();
+                                                                      if (oid1 < oid2) {
+                                                                        return -1;
+                                                                      } else if (oid1 > oid2) {
+                                                                        return 1;
+                                                                      } else {
+                                                                        return 0;
+                                                                      }
+                                                                    }
+
+                                                                  };
+  private static final Object                  MO_PERSISTOR_KEY   = ManagedObjectPersistorImpl.class.getName()
+                                                                    + ".saveAllObjects";
+  private static final Object                  MO_PERSISTOR_VALUE = "Complete";
+
   private final Database                       objectDB;
   private final SerializationAdapterFactory    saf;
   private final CursorConfig                   objectDBCursorConfig;
@@ -277,8 +300,16 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
     long t0 = System.currentTimeMillis();
     if (managedObjects.isEmpty()) return;
     Object failureContext = null;
+
+    // XXX:: We are sorting so that we maintain lock ordering when writting to sleepycat (check
+    // SleepycatPersistableMap.basicClear()). This is done under the assumption that this method is not called
+    // twice with the same transaction
+    Object old = persistenceTransaction.setProperty(MO_PERSISTOR_KEY, MO_PERSISTOR_VALUE);
+    Assert.assertNull(old);
+    SortedSet sortedList = getSortedManagedObjectsSet(managedObjects);
+
     try {
-      for (Iterator i = managedObjects.iterator(); i.hasNext();) {
+      for (Iterator i = sortedList.iterator(); i.hasNext();) {
         final ManagedObject managedObject = (ManagedObject) i.next();
 
         final OperationStatus status = basicSaveObject(persistenceTransaction, managedObject);
@@ -306,6 +337,13 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
       double avg = ((double) saveAllObjectCount / (double) saveAllElapsed) * 1000;
       logger.debug("save time: " + delta + ", " + managedObjects.size() + " objects; avg: " + avg + "/sec");
     }
+  }
+
+  private SortedSet getSortedManagedObjectsSet(Collection managedObjects) {
+    TreeSet sorted = new TreeSet(MO_COMPARATOR);
+    sorted.addAll(managedObjects);
+    Assert.assertEquals(managedObjects.size(), sorted.size());
+    return sorted;
   }
 
   private long saveAllCount       = 0;

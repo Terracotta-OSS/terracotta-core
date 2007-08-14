@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.persistence.sleepycat;
 
@@ -24,21 +25,21 @@ import java.util.Set;
 
 public class SleepycatPersistableMap implements Map {
 
-  private static final Object REMOVED     = new Object();
+  private static final Object   REMOVED     = new Object();
 
   /*
    * This map contains the mappings already in the database
    */
-  private final Map           map         = new THashMap(0);
+  private final Map             map         = new THashMap(0);
 
   /*
    * This map contains the newly added mappings that are not in the database yet
    */
-  private final Map           delta       = new THashMap(0);
+  private final Map             delta       = new THashMap(0);
 
-  private final long          id;
-  private int                 removeCount = 0;
-  private boolean             clear       = false;
+  private final long            id;
+  private int                   removeCount = 0;
+  private boolean               clear       = false;
 
   public SleepycatPersistableMap(ObjectID id) {
     this.id = id.toLong();

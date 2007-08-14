@@ -213,6 +213,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     try {
       return object.createFacade(limit);
     } finally {
+      //TODO:: Change this to release readonly
       release(persistenceTransactionProvider.nullTransaction(), object);
     }
   }

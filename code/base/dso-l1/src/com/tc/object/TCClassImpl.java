@@ -153,8 +153,9 @@ public class TCClassImpl implements TCClass {
     if (force || (localVersion < dnaVersion)) {
       tcObject.setVersion(dnaVersion);
       applicator.hydrate(objectManager, tcObject, dna, pojo);
-    } else {
-      logger.info("IGNORING UPDATE, local object at version " + localVersion + ", dna update is version " + dnaVersion);
+    } else if (logger.isDebugEnabled()) {
+      logger
+          .debug("IGNORING UPDATE, local object at version " + localVersion + ", dna update is version " + dnaVersion);
     }
 
   }

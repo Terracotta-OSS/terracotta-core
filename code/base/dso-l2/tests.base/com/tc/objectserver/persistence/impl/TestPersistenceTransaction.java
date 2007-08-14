@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.persistence.impl;
 
@@ -21,5 +22,13 @@ public final class TestPersistenceTransaction implements PersistenceTransaction 
     } catch (InterruptedException e) {
       throw new TCRuntimeException(e);
     }
+  }
+
+  public Object getProperty(Object key) {
+    return null;
+  }
+
+  public Object setProperty(Object key, Object value) {
+    return null;
   }
 }

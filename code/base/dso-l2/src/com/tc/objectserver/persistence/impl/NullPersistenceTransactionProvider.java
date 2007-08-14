@@ -22,6 +22,14 @@ public class NullPersistenceTransactionProvider implements PersistenceTransactio
     public void commit() {
       return;
     }
+
+    public Object getProperty(Object key) {
+      return null;
+    }
+
+    public Object setProperty(Object key, Object value) {
+      return null;
+    }
   }
 
 }
