@@ -113,12 +113,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
                                    File javaHome, boolean useIdentifier) {
     super(host, dsoPort, adminPort);
     this.useIdentifier = useIdentifier;
-    if (javaHome != null) {
-      this.javaHome = javaHome;
-    }
-    else {
-      this.javaHome = new File(TestConfigObject.getInstance().getL2StartupJavaHome());
-    }
+    this.javaHome = javaHome;
     this.serverName = serverName;
     jvmArgs = new ArrayList();
 
@@ -225,7 +220,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
 
   public void start() throws Exception {
     System.err.println("Starting " + this.name + /* ": jvmArgs=" + jvmArgs + */", main=" + getMainClassName()
-                       + ", main args=" + ArrayUtils.toString(getMainClassArguments()));
+                       + ", main args=" + ArrayUtils.toString(getMainClassArguments()) + ", jvm=[" + getJavaHome() + "]");
     process = createLinkedJavaProcess();
     process.setJavaArguments((String[]) jvmArgs.toArray(new String[jvmArgs.size()]));
     process.start();
