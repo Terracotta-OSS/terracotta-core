@@ -3,19 +3,19 @@
  */
 package demo.sharededitor.models;
 
-import demo.sharededitor.events.IListListener;
+import demo.sharededitor.events.ListListener;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Collections;
 import java.util.Iterator;
 
-public class ObjectManager implements IListListener {
+public class ObjectManager implements ListListener {
 	private List objList;
 
 	private transient List grabList;
 
-	private transient IListListener listener;
+	private transient ListListener listener;
 
 	private transient BaseObject lastGrabbed;
 
@@ -30,7 +30,7 @@ public class ObjectManager implements IListListener {
 		grabList = Collections.synchronizedList(new ArrayList());
 	}
 
-	public void setListener(IListListener listener) {
+	public void setListener(ListListener listener) {
 		this.listener = listener;
 		notifyListener(null);
 	}

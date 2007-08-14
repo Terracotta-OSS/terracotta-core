@@ -1,6 +1,6 @@
 /*
 @COPYRIGHT@
-*/
+ */
 package demo.sharededitor.controls;
 
 //import java.awt.BasicStroke;
@@ -13,15 +13,14 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.event.MouseInputAdapter;
 
-import demo.sharededitor.events.IListListener;
+import demo.sharededitor.events.ListListener;
 import demo.sharededitor.models.BaseObject;
 import demo.sharededitor.models.ObjectManager;
-import demo.sharededitor.ui.IFontable;
-import demo.sharededitor.ui.ITexturable;
+import demo.sharededitor.ui.Fontable;
+import demo.sharededitor.ui.Texturable;
 import demo.sharededitor.ui.Renderer;
 
-public final class Dispatcher extends MouseInputAdapter implements KeyListener
-{
+public final class Dispatcher extends MouseInputAdapter implements KeyListener {
 	private ObjectManager objmgr;
 
 	private transient Renderer renderer;
@@ -46,251 +45,218 @@ public final class Dispatcher extends MouseInputAdapter implements KeyListener
 
 	private transient int fontSize;
 
-	public Dispatcher(ObjectManager objects, Renderer renderer)
-	{
+	public Dispatcher(ObjectManager objects, Renderer renderer) {
 		this.renderer = renderer;
 		this.renderer.addMouseListener(this);
 		this.renderer.addMouseMotionListener(this);
 		this.renderer.addKeyListener(this);
 
 		this.objmgr = objects;
-		this.objmgr.setListener((IListListener) this.renderer);
+		this.objmgr.setListener((ListListener) this.renderer);
 	}
 
-	public synchronized void mousePressed(MouseEvent e)
-	{
+	public synchronized void mousePressed(MouseEvent e) {
 		this.renderer.requestFocusInWindow();
 		int x = e.getX();
 		int y = e.getY();
-		trackXY(x, y); 
+		trackXY(x, y);
 
 		if (objmgr.canGrabAt(x, y))
 			objmgr.grabAt(x, y, !e.isControlDown());
-		else
-		{
+		else {
 			BaseObject obj = objmgr.create(x, y, this.drawTool);
 			obj.setFillStyle(this.fillstyle);
 			obj.setForeground(this.foreground);
 			obj.setBackground(this.background);
 			obj.setStroke(this.stroke);
-			if ((obj instanceof ITexturable)
-				&& (BaseObject.FILLSTYLE_TEXTURED == fillstyle))
-			{
-				ITexturable to = (ITexturable) obj;
+			if ((obj instanceof Texturable)
+					&& (BaseObject.FILLSTYLE_TEXTURED == fillstyle)) {
+				Texturable to = (Texturable) obj;
 				to.setTexture(this.texture);
 			}
 
-			if (obj instanceof IFontable)
-			{
-				IFontable fo = (IFontable) obj;
+			if (obj instanceof Fontable) {
+				Fontable fo = (Fontable) obj;
 				fo.setFontInfo(this.fontName, this.fontSize, "");
 			}
 		}
 	}
 
-	public synchronized void mouseDragged(MouseEvent e)
-	{
+	public synchronized void mouseDragged(MouseEvent e) {
 		if (objmgr.lastGrabbed() == null)
-		   return;
+			return;
 
 		int x = e.getX();
 		int y = e.getY();
 		BaseObject current = objmgr.lastGrabbed();
-		
-		if (current.isAnchorGrabbed()) current.resize(x, y);
-		else current.move(x - lx, y - ly);
-			
+
+		if (current.isAnchorGrabbed())
+			current.resize(x, y);
+		else
+			current.move(x - lx, y - ly);
+
 		trackXY(x, y);
 	}
 
-	public synchronized void mouseClicked(MouseEvent e)
-	{
-		BaseObject current  = objmgr.grabAt(e.getX(), e.getY(), !e.isControlDown());
-		if (current != null)
-		{
-		   switch(e.getClickCount())
-		   {
-		      case 1: 
-		         current.selectAction(true); 
-		         break;
-		      case 2: 
-		         current.alternateSelectAction(true); 
-		         break;
-		   }
-	   }
+	public synchronized void mouseClicked(MouseEvent e) {
+		BaseObject current = objmgr.grabAt(e.getX(), e.getY(), !e
+				.isControlDown());
+		if (current != null) {
+			switch (e.getClickCount()) {
+			case 1:
+				current.selectAction(true);
+				break;
+			case 2:
+				current.alternateSelectAction(true);
+				break;
+			}
+		}
 		trackXY(e.getX(), e.getY());
 	}
 
-	public synchronized void mouseMoved(MouseEvent e)
-	{
+	public synchronized void mouseMoved(MouseEvent e) {
 		trackXY(e.getX(), e.getY());
 	}
-	
-	public synchronized void mouseReleased(MouseEvent e)
-	{
+
+	public synchronized void mouseReleased(MouseEvent e) {
 		trackXY(e.getX(), e.getY());
 		BaseObject current = objmgr.lastGrabbed();
-		if ((current != null) && current.isTransient())
-		{
-		   objmgr.deleteSelection();
-		   objmgr.selectAllWithin(current);
-	   }
+		if ((current != null) && current.isTransient()) {
+			objmgr.deleteSelection();
+			objmgr.selectAllWithin(current);
+		}
 	}
 
-	public synchronized void keyPressed(KeyEvent e)
-	{
+	public synchronized void keyPressed(KeyEvent e) {
 		processCommand(e);
 	}
 
-	public synchronized void keyTyped(KeyEvent e)
-	{
+	public synchronized void keyTyped(KeyEvent e) {
 		processCommand(e);
 	}
 
-	public synchronized void keyReleased(KeyEvent e)
-	{
+	public synchronized void keyReleased(KeyEvent e) {
 		// no need to do anything here
 	}
 
-	private void processCommand(KeyEvent e)
-	{
-		if (KeyEvent.KEY_TYPED == e.getID())
-		{
+	private void processCommand(KeyEvent e) {
+		if (KeyEvent.KEY_TYPED == e.getID()) {
 			if ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxy1234567890!@#$%^&*() _+=-`~[]\\{}|:;'?/><,.\""
-				.indexOf(e.getKeyChar()) != -1) sendCharToObject(e.getKeyChar());
-		}
-		else
-		{
+					.indexOf(e.getKeyChar()) != -1)
+				sendCharToObject(e.getKeyChar());
+		} else {
 			int keyCode = e.getKeyCode();
-			if (e.isControlDown())
-			{
-				switch (keyCode)
-				{
-					case KeyEvent.VK_BACK_SPACE:
-						this.objmgr.deleteSelection();
-						break;
-					case KeyEvent.VK_I:
-						this.objmgr.invertSelection();
-						break;
-					case KeyEvent.VK_A:
-						this.objmgr.toggleSelection();
-						break;
+			if (e.isControlDown()) {
+				switch (keyCode) {
+				case KeyEvent.VK_BACK_SPACE:
+					this.objmgr.deleteSelection();
+					break;
+				case KeyEvent.VK_I:
+					this.objmgr.invertSelection();
+					break;
+				case KeyEvent.VK_A:
+					this.objmgr.toggleSelection();
+					break;
 				}
-			}
-			else
-			{
-				switch (keyCode)
-				{
-					case KeyEvent.VK_BACK_SPACE:
-						sendKeyToObject(keyCode);
-						break;
-					case KeyEvent.VK_DELETE:
-						this.objmgr.deleteSelection();
-						break;
-					case KeyEvent.VK_ENTER:
-					case KeyEvent.VK_ESCAPE:
-						this.objmgr.clearSelection();
-						break;
+			} else {
+				switch (keyCode) {
+				case KeyEvent.VK_BACK_SPACE:
+					sendKeyToObject(keyCode);
+					break;
+				case KeyEvent.VK_DELETE:
+					this.objmgr.deleteSelection();
+					break;
+				case KeyEvent.VK_ENTER:
+				case KeyEvent.VK_ESCAPE:
+					this.objmgr.clearSelection();
+					break;
 				}
 			}
 		}
 	}
 
-	private void sendCharToObject(char c)
-	{
+	private void sendCharToObject(char c) {
 		BaseObject current = objmgr.lastGrabbed();
-		if ((current != null) && (current instanceof IFontable))
-		{
-			((IFontable) current).appendToText(c);
+		if ((current != null) && (current instanceof Fontable)) {
+			((Fontable) current).appendToText(c);
 			//String text = ((IFontable) current).getText();
 			//((IFontable) current).setText(text + c);
 		}
 	}
 
-	private void sendKeyToObject(int keyCode)
-	{
+	private void sendKeyToObject(int keyCode) {
 		BaseObject current = objmgr.lastGrabbed();
-		if ((current != null)
-			&& (current instanceof IFontable))
-		{
-			String text = ((IFontable) current).getText();
-			if (text.length() == 0) return;
-			((IFontable) current).setText(text.substring(0, text.length() - 1));
+		if ((current != null) && (current instanceof Fontable)) {
+			String text = ((Fontable) current).getText();
+			if (text.length() == 0)
+				return;
+			((Fontable) current).setText(text.substring(0, text.length() - 1));
 		}
 	}
 
-	private void trackXY(int x, int y)
-	{
+	private void trackXY(int x, int y) {
 		lx = x;
 		ly = y;
 	}
 
-	public synchronized void setDrawTool(String name)
-	{
+	public synchronized void setDrawTool(String name) {
 		this.renderer.requestFocusInWindow();
 		this.drawTool = name;
 	}
 
-	public synchronized void setTexture(Image texture)
-	{
+	public synchronized void setTexture(Image texture) {
 		this.renderer.requestFocusInWindow();
-		this.texture       = texture;
+		this.texture = texture;
 		BaseObject current = objmgr.lastGrabbed();
-		if ((current != null)
-			&& (current instanceof ITexturable)
-			&& (BaseObject.FILLSTYLE_TEXTURED == fillstyle)) {
-			((ITexturable) current).clearTexture();
-			((ITexturable) current).setTexture(texture);
+		if ((current != null) && (current instanceof Texturable)
+				&& (BaseObject.FILLSTYLE_TEXTURED == fillstyle)) {
+			((Texturable) current).clearTexture();
+			((Texturable) current).setTexture(texture);
 		}
 	}
 
-	public synchronized void setFontName(String fontName)
-	{
+	public synchronized void setFontName(String fontName) {
 		this.renderer.requestFocusInWindow();
-		this.fontName      = fontName;
+		this.fontName = fontName;
 		BaseObject current = objmgr.lastGrabbed();
-		if ((current != null)
-			&& (current instanceof IFontable))
-			((IFontable) current).setFontName(fontName);
+		if ((current != null) && (current instanceof Fontable))
+			((Fontable) current).setFontName(fontName);
 	}
 
-	public synchronized void setFontSize(int fontSize)
-	{
+	public synchronized void setFontSize(int fontSize) {
 		this.renderer.requestFocusInWindow();
-		this.fontSize      = fontSize;
+		this.fontSize = fontSize;
 		BaseObject current = objmgr.lastGrabbed();
-		if ((current != null)
-			&& (current instanceof IFontable))
-			((IFontable) current).setFontSize(fontSize);
+		if ((current != null) && (current instanceof Fontable))
+			((Fontable) current).setFontSize(fontSize);
 	}
 
-	public synchronized void setFillStyle(int fillstyle)
-	{
+	public synchronized void setFillStyle(int fillstyle) {
 		this.renderer.requestFocusInWindow();
 		this.fillstyle = fillstyle;
 	}
 
-	public synchronized void setStroke(Stroke stroke)
-	{
+	public synchronized void setStroke(Stroke stroke) {
 		this.renderer.requestFocusInWindow();
-		this.stroke        = stroke;
+		this.stroke = stroke;
 		BaseObject current = objmgr.lastGrabbed();
-		if (current != null) current.setStroke(stroke);
+		if (current != null)
+			current.setStroke(stroke);
 	}
 
-	public synchronized void setForeground(Color foreground)
-	{
+	public synchronized void setForeground(Color foreground) {
 		this.renderer.requestFocusInWindow();
-		this.foreground    = foreground;
+		this.foreground = foreground;
 		BaseObject current = objmgr.lastGrabbed();
-		if (current != null) current.setForeground(foreground);
+		if (current != null)
+			current.setForeground(foreground);
 	}
 
-	public synchronized void setBackground(Color background)
-	{
+	public synchronized void setBackground(Color background) {
 		this.renderer.requestFocusInWindow();
-		this.background    = background;
+		this.background = background;
 		BaseObject current = objmgr.lastGrabbed();
-		if (current != null) current.setBackground(background);
+		if (current != null)
+			current.setBackground(background);
 	}
 }

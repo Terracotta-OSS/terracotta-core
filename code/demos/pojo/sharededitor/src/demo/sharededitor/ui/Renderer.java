@@ -10,11 +10,11 @@ import java.awt.Image;
 
 import javax.swing.JComponent;
 
-import demo.sharededitor.events.IListListener;
+import demo.sharededitor.events.ListListener;
 import demo.sharededitor.models.BaseObject;
 import demo.sharededitor.models.ObjectManager;
 
-public final class Renderer extends JComponent implements IListListener {
+public final class Renderer extends JComponent implements ListListener {
 	public static final long serialVersionUID = 0;
 
 	public Renderer() {

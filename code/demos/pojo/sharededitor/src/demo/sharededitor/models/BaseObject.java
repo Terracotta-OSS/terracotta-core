@@ -5,15 +5,11 @@ package demo.sharededitor.models;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
-import java.awt.Paint;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.Stroke;
-import java.awt.TexturePaint;
-import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
@@ -25,14 +21,14 @@ import java.util.List;
 
 import javax.swing.ImageIcon;
 
-import demo.sharededitor.events.IListListener;
-import demo.sharededitor.ui.IFillStyleConsts;
-import demo.sharededitor.ui.ITexturable;
+import demo.sharededitor.events.ListListener;
+import demo.sharededitor.ui.FillStyleConsts;
+import demo.sharededitor.ui.Texturable;
 
-public abstract class BaseObject implements IFillStyleConsts {
+public abstract class BaseObject implements FillStyleConsts {
 	private List listeners;
 
-	public void addListener(IListListener listListener) {
+	public void addListener(ListListener listListener) {
 		if (listeners == null) {
 			listeners = Collections.synchronizedList(new ArrayList());
 		}
@@ -41,7 +37,7 @@ public abstract class BaseObject implements IFillStyleConsts {
 			listeners.add(listListener);
 	}
 
-	public void removeListener(IListListener listListener) {
+	public void removeListener(ListListener listListener) {
 		if ((listeners != null) && (listeners.contains(listListener))) {
 			listeners.remove(listListener);
 		}
@@ -52,7 +48,7 @@ public abstract class BaseObject implements IFillStyleConsts {
 			return;
 
 		for (Iterator i = listeners.iterator(); i.hasNext();) {
-			IListListener listListener = (IListListener) i.next();
+			ListListener listListener = (ListListener) i.next();
 			listListener.changed(this, this);
 		}
 	}
@@ -120,9 +116,10 @@ public abstract class BaseObject implements IFillStyleConsts {
 		}
 
 		if ((FILLSTYLE_TEXTURED == this.fillstyle)
-				&& (this instanceof ITexturable) && isTextured()
+				&& (this instanceof Texturable) && isTextured()
 				&& (bounds.width > 0) && (bounds.height > 0)) {
-			g.drawImage(getTexture(), bounds.x, bounds.y, bounds.width, bounds.height, null);
+			g.drawImage(getTexture(), bounds.x, bounds.y, bounds.width,
+					bounds.height, null);
 		}
 
 		g.setStroke(this.stroke);
@@ -198,8 +195,8 @@ public abstract class BaseObject implements IFillStyleConsts {
 			Image scaledImage = image.getScaledInstance(width, height,
 					Image.SCALE_FAST);
 			oos.writeObject(new ImageIcon(scaledImage));
-			
-			texture 	 = bos.toByteArray();
+
+			texture = bos.toByteArray();
 			textureImage = null;
 		} catch (Exception ex) {
 			throw new InternalError("Unable to convert Image to byte[]");
@@ -210,10 +207,10 @@ public abstract class BaseObject implements IFillStyleConsts {
 		try {
 			if (textureImage == null) {
 				ByteArrayInputStream bis = new ByteArrayInputStream(texture);
-				ObjectInputStream ois    = new ObjectInputStream(bis);
-				ImageIcon image          = (ImageIcon) ois.readObject();
-				textureImage             = image.getImage(); 
-			} 
+				ObjectInputStream ois = new ObjectInputStream(bis);
+				ImageIcon image = (ImageIcon) ois.readObject();
+				textureImage = image.getImage();
+			}
 			return textureImage;
 		} catch (Exception ex) {
 			throw new InternalError("Unable to convert byte[] to Image");

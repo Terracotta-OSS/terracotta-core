@@ -3,13 +3,13 @@
  */
 package demo.sharededitor.models;
 
-import demo.sharededitor.ui.ITexturable;
+import demo.sharededitor.ui.Texturable;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.RectangularShape;
 import java.awt.Image;
 import java.awt.Shape;
 
-final class Circle extends BaseObject implements ITexturable {
+final class Circle extends BaseObject implements Texturable {
 	private Ellipse2D.Double shape;
 
 	protected Shape getShape() {
@@ -26,7 +26,7 @@ final class Circle extends BaseObject implements ITexturable {
 					new Ellipse2D.Double(x2 - 5, y1 - 5, 10, 10),
 					new Ellipse2D.Double(x1 - 5, y1 - 5, 10, 10) };
 			return anchors;
-		} 
+		}
 
 		((Ellipse2D.Double) anchors[0]).x = x1 - 5;
 		((Ellipse2D.Double) anchors[0]).y = y2 - 5;

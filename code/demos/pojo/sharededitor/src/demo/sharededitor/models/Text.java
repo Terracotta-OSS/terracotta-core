@@ -17,10 +17,10 @@ import java.awt.geom.Rectangle2D;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 
-import demo.sharededitor.ui.IFontable;
-import demo.sharededitor.ui.ITexturable;
+import demo.sharededitor.ui.Fontable;
+import demo.sharededitor.ui.Texturable;
 
-public class Text extends BaseObject implements IFontable, ITexturable {
+public class Text extends BaseObject implements Fontable, Texturable {
 	private Shape shape = null;
 
 	protected Shape getShape() {
@@ -50,7 +50,7 @@ public class Text extends BaseObject implements IFontable, ITexturable {
 	}
 
 	public synchronized void resize(int x, int y) {
-		// we purposely don't allow the resizing operation for Text objects 
+		// we purposely don't allow the resizing operation for Text objects
 	}
 
 	public synchronized void clearTexture() {

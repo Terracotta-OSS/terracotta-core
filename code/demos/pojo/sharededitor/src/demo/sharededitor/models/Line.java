@@ -22,7 +22,7 @@ final class Line extends BaseObject {
 					new Ellipse2D.Double(shape.x2 - 5, shape.y2 - 5, 10, 10),
 					new Ellipse2D.Double(shape.x1 - 5, shape.y1 - 5, 10, 10) };
 			return anchors;
-		} 
+		}
 
 		((Ellipse2D.Double) anchors[0]).x = shape.x2 - 5;
 		((Ellipse2D.Double) anchors[0]).y = shape.y2 - 5;

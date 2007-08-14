@@ -37,7 +37,7 @@ public final class Main extends JFrame {
 		setDefaultLookAndFeelDecorated(true);
 
 		pack();
-		
+
 		setResizable(false);
 		setVisible(true);
 	}

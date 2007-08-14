@@ -9,9 +9,9 @@ import java.awt.geom.RoundRectangle2D;
 import java.awt.Image;
 import java.awt.Shape;
 
-import demo.sharededitor.ui.ITexturable;
+import demo.sharededitor.ui.Texturable;
 
-class Square extends BaseObject implements ITexturable {
+class Square extends BaseObject implements Texturable {
 	private RoundRectangle2D.Double shape;
 
 	protected Shape getShape() {
@@ -28,7 +28,7 @@ class Square extends BaseObject implements ITexturable {
 					new Ellipse2D.Double(x2 - 5, y1 - 5, 10, 10),
 					new Ellipse2D.Double(x1 - 5, y1 - 5, 10, 10) };
 			return anchors;
-		} 
+		}
 
 		((Ellipse2D.Double) anchors[0]).x = x1 - 5;
 		((Ellipse2D.Double) anchors[0]).y = y2 - 5;

@@ -26,7 +26,7 @@ import javax.swing.JToolBar;
 
 public final class Dashboard extends JToolBar {
 	private static final long serialVersionUID = -7801767824425098852L;
-	//private static boolean transparentMode = false;
+	// private static boolean transparentMode = false;
 	private Dispatcher dispatcher;
 
 	public Dashboard(Dispatcher dispatcher) {
@@ -65,28 +65,28 @@ public final class Dashboard extends JToolBar {
 		add(b1);
 
 		b1 = new JToggleButton(new SetDrawToolAction("Square",
-				IFillStyleConsts.FILLSTYLE_TRANSPARENT));
+				FillStyleConsts.FILLSTYLE_TRANSPARENT));
 		b1.setIcon(new ImageIcon(getResource(IMAGE_SQUARE)));
 		b1.setToolTipText("Draw transparent squares and rectangular shapes");
 		bg.add(b1);
 		add(b1);
 
 		b1 = new JToggleButton(new SetDrawToolAction("Square",
-				IFillStyleConsts.FILLSTYLE_SOLID));
+				FillStyleConsts.FILLSTYLE_SOLID));
 		b1.setIcon(new ImageIcon(getResource(IMAGE_FILLEDSQUARE)));
 		b1.setToolTipText("Draw solid squares and rectangular shapes");
 		bg.add(b1);
 		add(b1);
 
 		b1 = new JToggleButton(new SetDrawToolAction("Circle",
-				IFillStyleConsts.FILLSTYLE_TRANSPARENT));
+				FillStyleConsts.FILLSTYLE_TRANSPARENT));
 		b1.setIcon(new ImageIcon(getResource(IMAGE_CIRCLE)));
 		b1.setToolTipText("Draw transparent circles and oval shapes");
 		bg.add(b1);
 		add(b1);
 
 		b1 = new JToggleButton(new SetDrawToolAction("Circle",
-				IFillStyleConsts.FILLSTYLE_SOLID));
+				FillStyleConsts.FILLSTYLE_SOLID));
 		b1.setIcon(new ImageIcon(getResource(IMAGE_FILLEDCIRCLE)));
 		b1.setToolTipText("Draw solid circles and oval shapes");
 		bg.add(b1);
@@ -99,7 +99,7 @@ public final class Dashboard extends JToolBar {
 		bg.add(b1);
 
 		b1 = new JToggleButton(new SetDrawToolAction("Image",
-				IFillStyleConsts.FILLSTYLE_TEXTURED));
+				FillStyleConsts.FILLSTYLE_TEXTURED));
 		textureToolButton = b1;
 		b1.setIcon(new ImageIcon(getResource(IMAGE_PLACEHOLDER)));
 		setWithImageIcon(b1, new ImageIcon(getResource(IMAGE_BEDROOM)));
@@ -133,7 +133,7 @@ public final class Dashboard extends JToolBar {
 
 		// default settings
 		dispatcher.setStroke(new BasicStroke(1));
-		dispatcher.setFillStyle(IFillStyleConsts.FILLSTYLE_SOLID);
+		dispatcher.setFillStyle(FillStyleConsts.FILLSTYLE_SOLID);
 		dispatcher.setForeground(Color.DARK_GRAY);
 		dispatcher.setBackground(Color.LIGHT_GRAY);
 		dispatcher.setTexture(new ImageIcon(getResource(IMAGE_BEDROOM))
@@ -175,7 +175,7 @@ public final class Dashboard extends JToolBar {
 		b.setIcon(new ImageIcon(scaled));
 	}
 
-	class SetDrawToolAction extends AbstractAction implements IFillStyleConsts {
+	class SetDrawToolAction extends AbstractAction implements FillStyleConsts {
 		private static final long serialVersionUID = 1L;
 
 		private String name;
@@ -230,7 +230,7 @@ public final class Dashboard extends JToolBar {
 		}
 	}
 
-	class SetTextureAction extends AbstractAction implements IFillStyleConsts {
+	class SetTextureAction extends AbstractAction implements FillStyleConsts {
 		private static final long serialVersionUID = 1L;
 		//private String name;
 		public void actionPerformed(ActionEvent e) {
