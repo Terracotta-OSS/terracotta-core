@@ -80,11 +80,11 @@ public class ClientTerminatingTestApp extends ServerCrashingAppBase {
         client.start();
         int exitCode = client.waitFor();
         if (exitCode == 0) {
-          System.err.println(this + "Client existed Normally");
+          System.err.println(this + "Client exited normally");
           verify(myList, toAdd);
         } else {
-          String errorMsg = this + "Client existed Abnormally. Exit code = " + exitCode;
-          System.err.println(errorMsg);
+          String errorMsg = this + "Client exited abnormally. Exit code = " + exitCode;
+          System.err.println("error message: " + errorMsg);
           throw new AssertionError(errorMsg);
         }
       }
@@ -134,8 +134,9 @@ public class ClientTerminatingTestApp extends ServerCrashingAppBase {
     }
 
     public static void main(String args[]) {
-      if (args.length < 2 || args.length > 3) { throw new AssertionError(
-                                                                         "Usage : Client <id> <num of increments> [shouldForceKill]"); }
+      if (args.length < 2 || args.length > 3) {
+        throw new AssertionError("Usage : Client <id> <num of increments> [shouldForceKill]");
+      }
 
       boolean shouldForceKill;
       if (args.length == 3 && args[2] != null && !args[2].equals("")) {
