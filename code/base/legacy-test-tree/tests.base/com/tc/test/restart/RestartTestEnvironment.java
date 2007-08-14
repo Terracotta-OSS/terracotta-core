@@ -21,6 +21,7 @@ import com.tc.objectserver.control.ExtraProcessServerControl.DebugParams;
 import com.tc.test.TestConfigObject;
 import com.tc.util.PortChooser;
 import com.tctest.restart.TestThreadGroup;
+import com.terracottatech.config.PersistenceMode;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -128,10 +129,20 @@ public class RestartTestEnvironment {
     builder.getSystem().setConfigurationModel(configurationModel);
 
     String persistenceMode = L2ConfigBuilder.PERSISTENCE_MODE_TEMPORARY_SWAP_ONLY;
+
     if (isPersistent && isParanoid) {
+      // for crash tests
       persistenceMode = L2ConfigBuilder.PERSISTENCE_MODE_PERMANENT_STORE;
     } else if (isPersistent) {
+
+      // for restart tests
       persistenceMode = L2ConfigBuilder.PERSISTENCE_MODE_TEMPORARY_SWAP_ONLY;
+
+      // for normal mode tests
+      if (configFactory.getPersistenceMode() == PersistenceMode.PERMANENT_STORE) {
+        persistenceMode = L2ConfigBuilder.PERSISTENCE_MODE_PERMANENT_STORE;
+      }
+
     }
 
     L2ConfigBuilder l2 = new L2ConfigBuilder();
