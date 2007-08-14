@@ -86,7 +86,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     parameters.appendSysProp("tc.classpath", "file://" + writeTerracottaClassPathFile());
     parameters.appendSysProp("tc.session.classpath", config.sessionClasspath());
 
-    if (!Vm.isIBM()) {
+    if (!Vm.isIBM() && !(Os.isMac() && Vm.isJDK14())) {
       parameters.appendJvmArgs("-XX:+HeapDumpOnOutOfMemoryError");
     }
 

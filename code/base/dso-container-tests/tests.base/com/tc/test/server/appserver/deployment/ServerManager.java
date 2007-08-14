@@ -12,6 +12,7 @@ import com.tc.test.server.appserver.AppServerInstallation;
 import com.tc.test.server.util.AppServerUtil;
 import com.tc.test.server.util.TcConfigBuilder;
 import com.tc.util.PortChooser;
+import com.tc.util.runtime.Os;
 import com.tc.util.runtime.Vm;
 
 import java.io.File;
@@ -90,7 +91,7 @@ public class ServerManager {
 
   private void startDSO(boolean withPersistentStore) throws Exception {
     dsoServer = new DSOServer(withPersistentStore, tempDir, serverTcConfig);
-    if (!Vm.isIBM()) {
+    if (!Vm.isIBM() && !(Os.isMac() && Vm.isJDK14())) {
       dsoServer.getJvmArgs().add("-XX:+HeapDumpOnOutOfMemoryError");
     }
     dsoServer.getJvmArgs().add("-Xmx128m");
