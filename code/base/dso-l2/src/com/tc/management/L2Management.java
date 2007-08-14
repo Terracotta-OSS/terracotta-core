@@ -33,6 +33,7 @@ import javax.management.MBeanServerFactory;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnectorServer;
+import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
 import javax.management.remote.rmi.RMIConnectorServer;
 import javax.management.remote.rmi.RMIJRMPServerImpl;
@@ -118,29 +119,17 @@ public class L2Management extends TerracottaManagement {
                                                   + "]");
       if (!credentialsMsg.equals("")) CustomerLogging.getConsoleLogger().info(credentialsMsg);
     } else {
-      url = new JMXServiceURL("service:jmx:rmi://");
-      RMIJRMPServerImpl server = new RMIJRMPServerImpl(jmxPort, null, null, env);
-      jmxConnectorServer = new RMIConnectorServer(url, env, server, mBeanServer);
+      url = new JMXServiceURL("jmxmp", "localhost", jmxPort);
+      jmxConnectorServer = JMXConnectorServerFactory.newJMXConnectorServer(url, env, mBeanServer);
       jmxConnectorServer.start();
-      getRMIRegistry(jmxPort).bind("jmxrmi", server);
-      CustomerLogging.getConsoleLogger().info(
-                                              "JMX Server started. " + authMsg + " - Available at URL["
-                                                  + "service:jmx:rmi:///jndi/rmi://localhost:" + jmxPort + "/jmxrmi"
-                                                  + "]");
-
-//      url = new JMXServiceURL("jmxmp", "localhost", jmxPort);
-//      jmxConnectorServer = JMXConnectorServerFactory.newJMXConnectorServer(url, env, mBeanServer);
-//      jmxConnectorServer.start();
-//      CustomerLogging.getConsoleLogger().info("JMX Server started. Available at URL[" + url + "]");
+      CustomerLogging.getConsoleLogger().info("JMX Server started. Available at URL[" + url + "]");
     }
   }
 
   public synchronized void stop() throws IOException, InstanceNotFoundException, MBeanRegistrationException {
     unregisterMBeans();
     if (jmxConnectorServer != null) {
-      System.err.print("================ Stopping ConnectorServer... ");
       jmxConnectorServer.stop();
-      System.err.println("done.");
     }
   }
 
@@ -163,7 +152,6 @@ public class L2Management extends TerracottaManagement {
     mBeanServer.registerMBean(objectManagementBean, L2MBeanNames.OBJECT_MANAGEMENT);
 
     if (TCPropertiesImpl.getProperties().getBoolean("tc.management.test.mbeans.enabled")) {
-      System.out.println("******* registering dumper mbean");
       mBeanServer.registerMBean(new L2Dumper(tcDumper), L2MBeanNames.DUMPER);
     }
   }
@@ -174,7 +162,6 @@ public class L2Management extends TerracottaManagement {
     mBeanServer.unregisterMBean(L2MBeanNames.OBJECT_MANAGEMENT);
 
     if (TCPropertiesImpl.getProperties().getBoolean("tc.management.test.mbeans.enabled")) {
-      System.out.println("******* un-registering dumper mbean");
       mBeanServer.unregisterMBean(L2MBeanNames.DUMPER);
     }
   }

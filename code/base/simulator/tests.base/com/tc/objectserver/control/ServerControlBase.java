@@ -6,13 +6,9 @@ package com.tc.objectserver.control;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 public abstract class ServerControlBase implements ServerControl {
 
-  private final List   testSockets = new ArrayList();
   private final int    adminPort;
   private final String host;
   private final int    dsoPort;
@@ -24,24 +20,20 @@ public abstract class ServerControlBase implements ServerControl {
   }
 
   public boolean isRunning() {
+    Socket socket = null;
     try {
-      Socket socket = new Socket(host, adminPort);
-      testSockets.add(socket);
+      socket = new Socket(host, adminPort);
       if (!socket.isConnected()) throw new AssertionError();
       return true;
     } catch (IOException e) {
       return false;
-    }
-  }
-
-  public void clean() {
-    for (Iterator i = testSockets.iterator(); i.hasNext();) {
-      Socket s = (Socket) i.next();
-      try {
-        System.out.println("Checking socket: " + s);
-        if (s.isConnected()) s.close();
-      } catch (Exception e) {
-        e.printStackTrace();
+    } finally {
+      if (socket != null) {
+        try {
+          socket.close();
+        } catch (IOException ioe) {
+          // ignore
+        }
       }
     }
   }

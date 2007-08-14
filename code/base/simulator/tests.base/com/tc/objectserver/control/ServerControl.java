@@ -35,8 +35,6 @@ public interface ServerControl {
    */
   public boolean isRunning();
 
-  public void clean();
-
   public void waitUntilShutdown() throws Exception;
 
   public int getDsoPort();

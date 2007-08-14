@@ -342,7 +342,6 @@ import com.tc.objectserver.control.IntraProcessServerControl;
     public void clean() {
       assertServerNotNull();
       assertServerOff();
-      server.clean();
     }
 
     public void waitUntilShutdown() throws Exception {
