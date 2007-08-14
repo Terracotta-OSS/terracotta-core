@@ -118,6 +118,13 @@ show_test_results <test_run_name>
     <test_run_name> is the name of a test run (e.g., 'testrun-0007')
     or just 'latest'.
 
+SPECIFY WHICH JDK TO RUN THE TESTS
+Use this option with tcbuild
+
+tests-jdk=1.4 --> will run the test with JAVA_HOME_14
+tests-jdk=1.5 --> will run the test with JAVA_HOME_15
+tests-jdk=/path/to/your/jdk --> anything you want
+
 PACKAGING & DISTRIBUTION
 
 NOTE: Output of binaries are placed under code/base/build/dist
