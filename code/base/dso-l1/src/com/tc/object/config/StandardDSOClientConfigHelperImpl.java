@@ -1662,21 +1662,22 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     BootJar bootJar = BootJar.getDefaultBootJarForReading();
     Set bjClasses = bootJar.getAllPreInstrumentedClasses();
     int bootJarPopulation = bjClasses.size();
-    TransparencyClassSpec[] allSpecs = getAllSpecs();
+
+    TransparencyClassSpec[] allSpecs = getAllSpecs(true);
     for (int i = 0; i < allSpecs.length; i++) {
       TransparencyClassSpec classSpec = allSpecs[i];
       Assert.assertNotNull(classSpec);
-      String message = "";
+
       if (classSpec.isPreInstrumented()) {
-        message = "* " + classSpec.getClassName() + "... ";
         preInstrumentedCount++;
         if (!(bjClasses.contains(classSpec.getClassName()) || classSpec.isHonorJDKSubVersionSpecific())) {
-          message += "missing";
+          String message = "* " + classSpec.getClassName() + "... missing";
           missingCount++;
           logger.info(message);
         }
       }
     }
+
     if (missingCount > 0) {
       logger.info("Number of classes in the DSO boot jar:" + bootJarPopulation);
       logger.info("Number of classes expected to be in the DSO boot jar:" + preInstrumentedCount);
@@ -1705,10 +1706,20 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  public synchronized TransparencyClassSpec[] getAllSpecs() {
-    TransparencyClassSpec[] allspecs = new TransparencyClassSpec[classSpecs.values().size()];
-    classSpecs.values().toArray(allspecs);
-    return allspecs;
+  private synchronized TransparencyClassSpec[] getAllSpecs(boolean includeBootJarSpecs) {
+    ArrayList rv = new ArrayList(classSpecs.values());
+
+    if (includeBootJarSpecs) {
+      for (Iterator i = getAllUserDefinedBootSpecs(); i.hasNext();) {
+        rv.add(i.next());
+      }
+    }
+
+    return (TransparencyClassSpec[]) rv.toArray(new TransparencyClassSpec[rv.size()]);
+  }
+
+  public TransparencyClassSpec[] getAllSpecs() {
+    return getAllSpecs(false);
   }
 
   public void addDistributedMethodCall(DistributedMethodSpec dms) {
