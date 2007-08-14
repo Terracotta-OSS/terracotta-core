@@ -27,9 +27,11 @@ import com.tc.util.runtime.ThreadDump;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -60,7 +62,6 @@ public class TCTestCase extends TestCase {
 
   private Date                             allDisabledUntil;
   private final Map                        disabledUntil             = new Hashtable();
-  private boolean                          allDisabledLogged         = false;
 
   // This stuff is static since Junit new()'s up an instance of the test case for each test method,
   // and the timeout covers the entire test case (ie. all methods). It wouldn't be very effective to start
@@ -128,10 +129,6 @@ public class TCTestCase extends TestCase {
       System.out.println("NOTE: ALL tests in " + this.getClass().getName() + " are disabled until "
           + this.allDisabledUntil);
       System.out.flush();
-      if (!allDisabledLogged) {
-        logDisabledTest("all", allDisabledUntil, null);
-        allDisabledLogged = true;
-      }
       return;
     }
 
@@ -140,9 +137,10 @@ public class TCTestCase extends TestCase {
       System.out.println("NOTE: Test method " + testMethod + "() is disabled until "
           + this.disabledUntil.get(testMethod));
       System.out.flush();
-      logDisabledTest(testMethod, (Date) disabledUntil.get(testMethod), null);
       return;
     }
+
+    printOutCurrentJavaProcesses();
 
     // don't move this stuff to runTest(), you want the timeout timer to catch hangs in setUp() too.
     // Yes it means you can't customize the timeout threshold in setUp() -- take a deep breath and
@@ -173,6 +171,16 @@ public class TCTestCase extends TestCase {
 
     // no errors -- woo-hoo!
     return;
+  }
+
+  private void printOutCurrentJavaProcesses() throws Exception {
+    PrintWriter out = null;
+    try {
+      out = new PrintWriter(new FileWriter(this.getTempFile("javaprocesses.txt")));
+      out.println(ProcessInfo.ps_grep_java());      
+    } finally {
+      if (out != null) out.close();
+    }
   }
 
   private void scheduleTimeoutTask() throws IOException {
@@ -259,21 +267,6 @@ public class TCTestCase extends TestCase {
 
   protected final File getTempFile(String fileName) throws IOException {
     return getTempDirectoryHelper().getFile(fileName);
-  }
-
-  private static final String disabledTestLogPrefix = "!disabled_test: ";
-
-  protected void logDisabledTest(String testName, Date until, String platform) {
-    StringBuffer message = new StringBuffer();
-    message.append(disabledTestLogPrefix);
-    message.append(this.getClass().getName()).append("#").append(testName);
-    if (until != null) {
-      message.append(", until: ").append(DATE_FORMAT.format(until));
-    }
-    if (platform != null) {
-      message.append(", platform: ").append(platform);
-    }
-    System.out.println(message.toString());
   }
 
   /**
