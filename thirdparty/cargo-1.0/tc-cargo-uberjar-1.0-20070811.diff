@@ -1,0 +1,2798 @@
+Index: containers/jboss/src/main/java/org/codehaus/cargo/container/jboss/internal/AbstractJBossInstalledLocalContainer.java
+===================================================================
+--- containers/jboss/src/main/java/org/codehaus/cargo/container/jboss/internal/AbstractJBossInstalledLocalContainer.java	(revision 1460)
++++ containers/jboss/src/main/java/org/codehaus/cargo/container/jboss/internal/AbstractJBossInstalledLocalContainer.java	(working copy)
+@@ -114,12 +114,14 @@
+             "--server=" + getConfiguration().getPropertyValue(GeneralPropertySet.HOSTNAME) + ":"
+                 + getConfiguration().getPropertyValue(GeneralPropertySet.RMI_PORT));
+ 
++        
+         AntContainerExecutorThread jbossRunner = new AntContainerExecutorThread(java);
+         jbossRunner.start();
+ 
+         // Sleep some extra time to fully ensure JBoss is stopped before giving back the control
+         // to the user.
+-        Thread.sleep(2000L);
++        Thread.sleep(3000L);
++        
+     }
+ 
+     /**
+Index: containers/jboss/src/main/java/org/codehaus/cargo/container/jboss/JBossStandaloneLocalConfiguration.java
+===================================================================
+--- containers/jboss/src/main/java/org/codehaus/cargo/container/jboss/JBossStandaloneLocalConfiguration.java	(revision 1460)
++++ containers/jboss/src/main/java/org/codehaus/cargo/container/jboss/JBossStandaloneLocalConfiguration.java	(working copy)
+@@ -228,6 +228,21 @@
+         getAntUtils().addTokenToFilterChain(filterChain, "cargo.jboss.binding.url",
+             getFileHandler().getURL(bindingXmlFile));
+ 
++        
++        // Terracotta: setting jvmRoute
++        String[] jvmarg = getPropertyValue(GeneralPropertySet.JVMARGS).split("\\s+");
++        String jvmroute = getPropertyValue(GeneralPropertySet.HOSTNAME);
++        for (int i = 0; i < jvmarg.length; i++) {
++          if (jvmarg[i].indexOf("jvmroute") >= 0) {
++            String[] tokens = jvmarg[i].split("=");
++            if (tokens.length == 2) {
++              jvmroute = tokens[1];
++            }
++          }
++        }
++        getAntUtils().addTokenToFilterChain(filterChain, "jboss.jvmroute", jvmroute);
++       
++        
+         getAntUtils().addTokenToFilterChain(filterChain, GeneralPropertySet.RMI_PORT,
+             getPropertyValue(GeneralPropertySet.RMI_PORT));
+ 
+Index: containers/jboss/src/main/resources/org/codehaus/cargo/container/internal/resources/jboss4x/cargo-binding.xml
+===================================================================
+--- containers/jboss/src/main/resources/org/codehaus/cargo/container/internal/resources/jboss4x/cargo-binding.xml	(revision 1460)
++++ containers/jboss/src/main/resources/org/codehaus/cargo/container/internal/resources/jboss4x/cargo-binding.xml	(working copy)
+@@ -173,6 +173,7 @@
+ 
+      <xsl:output method="xml" />
+      <xsl:param name="port"/>
++     <xsl:param name="jvmRoute"/>
+ 
+      <xsl:variable name="portAJP" select="$port - 71"/>
+      <xsl:variable name="portHttps" select="$port + 363"/>
+@@ -206,6 +207,16 @@
+          </Connector>
+       </xsl:template>
+ 
++     <xsl:template match="Engine">
++       <Engine>
++         <xsl:attribute name="jvmRoute">@jboss.jvmroute@</xsl:attribute>
++         <xsl:for-each select="@*">
++           <xsl:attribute name="{name()}"><xsl:value-of select="." /></xsl:attribute>
++         </xsl:for-each>
++         <xsl:apply-templates/>
++       </Engine>
++     </xsl:template>
++     
+      <xsl:template match="*|@*">
+        <xsl:copy>
+          <xsl:apply-templates select="@*|node()"/>
+@@ -216,6 +227,7 @@
+             </xslt-config>
+          </delegate-config>
+          <binding port="@cargo.servlet.port@"/>
++         <binding jvmRoute="@jboss.jvmroute@"/>
+       </service-config>
+ 
+    </server>
+Index: containers/tomcat/src/main/java/org/codehaus/cargo/container/tomcat/internal/AbstractCatalinaStandaloneLocalConfiguration.java
+===================================================================
+--- containers/tomcat/src/main/java/org/codehaus/cargo/container/tomcat/internal/AbstractCatalinaStandaloneLocalConfiguration.java	(revision 1460)
++++ containers/tomcat/src/main/java/org/codehaus/cargo/container/tomcat/internal/AbstractCatalinaStandaloneLocalConfiguration.java	(working copy)
+@@ -35,230 +35,240 @@
+ import org.codehaus.cargo.container.tomcat.Tomcat5xEmbeddedLocalContainer;
+ 
+ import java.io.File;
++import java.util.Arrays;
++import java.util.Collections;
+ import java.util.Iterator;
+ 
+ /**
+- * Catalina standalone {@link org.codehaus.cargo.container.spi.configuration.ContainerConfiguration}
++ * Catalina standalone
++ * {@link org.codehaus.cargo.container.spi.configuration.ContainerConfiguration}
+  * implementation.
+- *
+- * @version $Id$
++ * 
++ * @version $Id: AbstractCatalinaStandaloneLocalConfiguration.java 1160
++ *          2006-07-30 20:15:34Z vmassol $
+  */
+-public abstract class AbstractCatalinaStandaloneLocalConfiguration
+-    extends AbstractTomcatStandaloneLocalConfiguration
+-{
+-    /**
+-     * {@inheritDoc}
+-     * @see AbstractTomcatStandaloneLocalConfiguration#AbstractTomcatStandaloneLocalConfiguration(String)
+-     */
+-    public AbstractCatalinaStandaloneLocalConfiguration(String dir)
+-    {
+-        super(dir);
++public abstract class AbstractCatalinaStandaloneLocalConfiguration extends
++    AbstractTomcatStandaloneLocalConfiguration {
++  /**
++   * {@inheritDoc}
++   * 
++   * @see AbstractTomcatStandaloneLocalConfiguration#AbstractTomcatStandaloneLocalConfiguration(String)
++   */
++  public AbstractCatalinaStandaloneLocalConfiguration(String dir) {
++    super(dir);
+ 
+-        setProperty(ServletPropertySet.USERS, "admin::manager");
+-        setProperty(GeneralPropertySet.RMI_PORT, "8205");
+-    }
++    setProperty(ServletPropertySet.USERS, "admin::manager");
++    setProperty(GeneralPropertySet.RMI_PORT, "8205");
++  }
+ 
+-    /**
+-     * {@inheritDoc}
+-     * @see org.codehaus.cargo.container.spi.configuration.AbstractLocalConfiguration#configure(LocalContainer)
+-     */
+-    protected void doConfigure(LocalContainer container) throws Exception
+-    {
+-        setupConfigurationDir();
++  /**
++   * {@inheritDoc}
++   * 
++   * @see org.codehaus.cargo.container.spi.configuration.AbstractLocalConfiguration#configure(LocalContainer)
++   */
++  protected void doConfigure(LocalContainer container) throws Exception {
++    setupConfigurationDir();
+ 
+-        FilterChain filterChain = createTomcatFilterChain();
++    FilterChain filterChain = createTomcatFilterChain();
+ 
+-        getFileHandler().createDirectory(getHome(), "temp");
+-        getFileHandler().createDirectory(getHome(), "logs");
++    getFileHandler().createDirectory(getHome(), "temp");
++    getFileHandler().createDirectory(getHome(), "logs");
+ 
+-        String confDir = getFileHandler().createDirectory(getHome(), "conf");
++    String confDir = getFileHandler().createDirectory(getHome(), "conf");
+ 
+-        getResourceUtils().copyResource(RESOURCE_PATH + container.getId() + "/server.xml",
+-            new File(confDir, "server.xml"), filterChain);
++    getResourceUtils().copyResource(
++        RESOURCE_PATH + container.getId() + "/server.xml",
++        new File(confDir, "server.xml"), filterChain);
+ 
+-        getResourceUtils().copyResource(RESOURCE_PATH + container.getId()
+-            + "/tomcat-users.xml", new File(confDir, "tomcat-users.xml"), filterChain);
+-        getResourceUtils().copyResource(RESOURCE_PATH + container.getId() + "/web.xml",
+-            new File(confDir, "web.xml"));
++    getResourceUtils().copyResource(
++        RESOURCE_PATH + container.getId() + "/tomcat-users.xml",
++        new File(confDir, "tomcat-users.xml"), filterChain);
++    getResourceUtils().copyResource(
++        RESOURCE_PATH + container.getId() + "/web.xml",
++        new File(confDir, "web.xml"));
+ 
+-        setupManager(container);
++    setupManager(container);
+ 
+-        // deploy the web-app by copying the WAR file
+-        setupWebApps(container);
+-    }
++    // deploy the web-app by copying the WAR file
++    setupWebApps(container);
++  }
+ 
+-    /**
+-     * Setup the manager webapp.
+-     *
+-     * @param container the container to configure
+-     */
+-    protected abstract void setupManager(LocalContainer container);
++  /**
++   * Setup the manager webapp.
++   * 
++   * @param container
++   *          the container to configure
++   */
++  protected abstract void setupManager(LocalContainer container);
+ 
+-    /**
+-     * Setup the web apps directory and deploy applications.
+-     *
+-     * @param container the container to configure
+-     */
+-    private void setupWebApps(LocalContainer container)
+-    {
+-        try 
+-        {
+-            if (container instanceof EmbeddedLocalContainer)
+-            {
+-                // embedded Tomcat doesn't need CPC
+-                Tomcat5xEmbeddedLocalDeployer deployer =
+-                    new Tomcat5xEmbeddedLocalDeployer((Tomcat5xEmbeddedLocalContainer) container);
+-                deployer.deploy(getDeployables());
+-            }
+-            else
+-            {
+-                // Create a webapps directory for automatic deployment of WARs dropped inside.
+-                String appDir = getFileHandler().createDirectory(getHome(), "webapps");
++  /**
++   * Setup the web apps directory and deploy applications.
++   * 
++   * @param container
++   *          the container to configure
++   */
++  private void setupWebApps(LocalContainer container) {
++    try {
++      if (container instanceof EmbeddedLocalContainer) {
++        // embedded Tomcat doesn't need CPC
++        Tomcat5xEmbeddedLocalDeployer deployer = new Tomcat5xEmbeddedLocalDeployer((Tomcat5xEmbeddedLocalContainer) container);
++        deployer.deploy(getDeployables());
++      } else {
++        // Create a webapps directory for automatic deployment of WARs dropped
++        // inside.
++        String appDir = getFileHandler().createDirectory(getHome(), "webapps");
+ 
+-                // Deploy all deployables into the webapps directory, except for expanded WARs which
+-                // remain in their initial location (we point Resin to them).
+-                TomcatCopyingInstalledLocalDeployer deployer =
+-                    new TomcatCopyingInstalledLocalDeployer((InstalledLocalContainer) container);
+-                deployer.setShouldDeployExpandedWARs(true);
+-                deployer.setShouldCopyWars(false);
+-                deployer.deploy(getDeployables());
++        // Deploy all deployables into the webapps directory, except for
++        // expanded WARs which
++        // remain in their initial location (we point Resin to them).
++        TomcatCopyingInstalledLocalDeployer deployer = new TomcatCopyingInstalledLocalDeployer((InstalledLocalContainer) container);
++        deployer.setShouldDeployExpandedWARs(true);
++        deployer.setShouldCopyWars(false);
++        deployer.deploy(getDeployables());
+ 
+-                // Deploy the CPC (Cargo Ping Component) to the webapps directory
+-                getResourceUtils().copyResource(RESOURCE_PATH + "cargocpc.war",
+-                    new File(appDir, "cargocpc.war"));
+-            }
+-        }
+-        catch (Exception e)
+-        {
+-            throw new ContainerException("Failed to create a " + container.getName()
+-                + " container configuration", e);
+-        }
++        // Deploy the CPC (Cargo Ping Component) to the webapps directory
++        getResourceUtils().copyResource(RESOURCE_PATH + "cargocpc.war",
++            new File(appDir, "cargocpc.war"));
++      }
++    } catch (Exception e) {
++      throw new ContainerException("Failed to create a " + container.getName()
++          + " container configuration", e);
+     }
++  }
+ 
+-    /**
+-     * Translate Cargo logging levels into Tomcat logging levels.
+-     *
+-     * @param cargoLoggingLevel Cargo logging level
+-     * @return the corresponding Tomcat logging level
+-     */
+-    private String getTomcatLoggingLevel(String cargoLoggingLevel)
+-    {
+-        String level;
++  /**
++   * Translate Cargo logging levels into Tomcat logging levels.
++   * 
++   * @param cargoLoggingLevel
++   *          Cargo logging level
++   * @return the corresponding Tomcat logging level
++   */
++  private String getTomcatLoggingLevel(String cargoLoggingLevel) {
++    String level;
+ 
+-        if (cargoLoggingLevel.equalsIgnoreCase("low"))
+-        {
+-            level = "1";
++    if (cargoLoggingLevel.equalsIgnoreCase("low")) {
++      level = "1";
++    } else if (cargoLoggingLevel.equalsIgnoreCase("medium")) {
++      level = "2";
++    } else {
++      level = "4";
++    }
++
++    return level;
++  }
++
++  /**
++   * {@inheritDoc}
++   * 
++   * @see org.codehaus.cargo.container.spi.configuration.AbstractStandaloneLocalConfiguration#createFilterChain()
++   */
++  protected FilterChain createTomcatFilterChain() {
++    FilterChain filterChain = createFilterChain();
++
++    // Terracotta: setting jvmRoute
++    String[] jvmarg = getPropertyValue(GeneralPropertySet.JVMARGS).split("\\s+");
++    String catalina_jvmroute = getPropertyValue(GeneralPropertySet.HOSTNAME);
++    for (int i = 0; i < jvmarg.length; i++) {
++      if (jvmarg[i].indexOf("jvmroute") >= 0) {
++        String[] tokens = jvmarg[i].split("=");
++        if (tokens.length == 2) {
++          catalina_jvmroute = tokens[1];
+         }
+-        else if (cargoLoggingLevel.equalsIgnoreCase("medium"))
+-        {
+-            level = "2";
+-        }
+-        else
+-        {
+-            level = "4";
+-        }
+-
+-        return level;
++      }
+     }
++    getAntUtils().addTokenToFilterChain(filterChain, "catalina.jvmroute",
++        catalina_jvmroute);
+ 
+-    /**
+-     * {@inheritDoc}
+-     * @see org.codehaus.cargo.container.spi.configuration.AbstractStandaloneLocalConfiguration#createFilterChain()
+-     */
+-    protected FilterChain createTomcatFilterChain()
+-    {
+-        FilterChain filterChain = createFilterChain();
+-        
+-        // Add logging property tokens
+-        getAntUtils().addTokenToFilterChain(filterChain, "catalina.logging.level", 
+-            getTomcatLoggingLevel(getPropertyValue(GeneralPropertySet.LOGGING)));
++    // Add logging property tokens
++    getAntUtils().addTokenToFilterChain(filterChain, "catalina.logging.level",
++        getTomcatLoggingLevel(getPropertyValue(GeneralPropertySet.LOGGING)));
+ 
+-        // Add Tomcat shutdown port token
+-        getAntUtils().addTokenToFilterChain(filterChain, GeneralPropertySet.RMI_PORT,
+-            getPropertyValue(GeneralPropertySet.RMI_PORT));
++    // Add Tomcat shutdown port token
++    getAntUtils().addTokenToFilterChain(filterChain,
++        GeneralPropertySet.RMI_PORT,
++        getPropertyValue(GeneralPropertySet.RMI_PORT));
+ 
+-        // Add Catalina secure token, set to true if the protocol is https, false otherwise
+-        getAntUtils().addTokenToFilterChain(filterChain, "catalina.secure",
+-            String.valueOf("https".equalsIgnoreCase(getPropertyValue(
+-                GeneralPropertySet.PROTOCOL))));
++    // Add Catalina secure token, set to true if the protocol is https, false
++    // otherwise
++    getAntUtils().addTokenToFilterChain(
++        filterChain,
++        "catalina.secure",
++        String.valueOf("https".equalsIgnoreCase(getPropertyValue(GeneralPropertySet.PROTOCOL))));
+ 
+-        // Add token filters for authenticated users
+-        getAntUtils().addTokenToFilterChain(filterChain, "tomcat.users", getSecurityToken());
++    // Add token filters for authenticated users
++    getAntUtils().addTokenToFilterChain(filterChain, "tomcat.users",
++        getSecurityToken());
+ 
+-        // Add webapp contexts in order to explicitely point to where the
+-        // wars are located.
+-        StringBuffer webappTokenValue = new StringBuffer(" ");
+-        
+-        Iterator it = getDeployables().iterator();
+-        while (it.hasNext())
+-        {
+-            Deployable deployable = (Deployable) it.next();
++    // Add webapp contexts in order to explicitely point to where the
++    // wars are located.
++    StringBuffer webappTokenValue = new StringBuffer(" ");
+ 
+-            if (deployable.getType() != DeployableType.WAR)
+-            {
+-                throw new ContainerException("Only WAR archives are supported for deployment "
+-                    + "in Tomcat. Got [" + deployable.getFile() + "]");
+-            }
++    Iterator it = getDeployables().iterator();
++    while (it.hasNext()) {
++      Deployable deployable = (Deployable) it.next();
+ 
+-            // Do not create tokens for WARs containing a context file as they
+-            // are copied to the webapps directory.
+-            if (deployable instanceof TomcatWAR)
+-            {
+-                TomcatWAR tomcatWar = (TomcatWAR) deployable;
+-                if (tomcatWar.containsContextFile())
+-                {
+-                    continue;
+-                }
+-            }
++      if (deployable.getType() != DeployableType.WAR) {
++        throw new ContainerException("Only WAR archives are supported for deployment "
++            + "in Tomcat. Got [" + deployable.getFile() + "]");
++      }
+ 
+-            webappTokenValue.append(createContextToken((WAR) deployable));    
++      // Do not create tokens for WARs containing a context file as they
++      // are copied to the webapps directory.
++      if (deployable instanceof TomcatWAR) {
++        TomcatWAR tomcatWar = (TomcatWAR) deployable;
++        if (tomcatWar.containsContextFile()) {
++          continue;
+         }
+-        
+-        getAntUtils().addTokenToFilterChain(filterChain, "tomcat.webapps",
+-            webappTokenValue.toString());
+-        
+-        return filterChain;
++      }
++
++      webappTokenValue.append(createContextToken((WAR) deployable));
+     }
+ 
+-    /**
+-     * @return The XML that should be inserted into the server.xml file.  If no datasource,
+-     * return " ".  Do not return empty string, as and cannot handle this.
+-     */
+-    protected abstract String createDatasourceTokenValue();
++    getAntUtils().addTokenToFilterChain(filterChain, "tomcat.webapps",
++        webappTokenValue.toString());
+ 
+-    /**
+-     * @param deployable the WAR to deploy
+-     * @return the "context" XML element to instert in the Tomcat <code>server.xml</code> 
+-     *         configuration file 
+-     */
+-    protected String createContextToken(WAR deployable)
+-    {
+-        StringBuffer contextTokenValue = new StringBuffer();
++    return filterChain;
++  }
+ 
+-        contextTokenValue.append("<Context path=\"");
+-        contextTokenValue.append("/" + deployable.getContext());
+-        contextTokenValue.append("\" docBase=\"");
++  /**
++   * @return The XML that should be inserted into the server.xml file. If no
++   *         datasource, return " ". Do not return empty string, as and cannot
++   *         handle this.
++   */
++  protected abstract String createDatasourceTokenValue();
+ 
+-        // Tomcat requires an absolute path for the "docBase" attribute.
+-        contextTokenValue.append(new File(deployable.getFile()).getAbsolutePath());
++  /**
++   * @param deployable
++   *          the WAR to deploy
++   * @return the "context" XML element to instert in the Tomcat
++   *         <code>server.xml</code> configuration file
++   */
++  protected String createContextToken(WAR deployable) {
++    StringBuffer contextTokenValue = new StringBuffer();
+ 
+-        contextTokenValue.append("\" debug=\"");
+-        contextTokenValue.append(getTomcatLoggingLevel(
+-            getPropertyValue(GeneralPropertySet.LOGGING)));
+-        contextTokenValue.append("\">");
++    contextTokenValue.append("<Context path=\"");
++    contextTokenValue.append("/" + deployable.getContext());
++    contextTokenValue.append("\" docBase=\"");
+ 
+-        contextTokenValue.append("\n" + createDatasourceTokenValue() + "\n");
++    // Tomcat requires an absolute path for the "docBase" attribute.
++    contextTokenValue.append(new File(deployable.getFile()).getAbsolutePath());
+ 
+-        contextTokenValue.append("</Context>");
+-        return contextTokenValue.toString();
+-    }
++    contextTokenValue.append("\" debug=\"");
++    contextTokenValue.append(getTomcatLoggingLevel(getPropertyValue(GeneralPropertySet.LOGGING)));
++    contextTokenValue.append("\">");
+ 
+-    /**
+-     * {@inheritDoc}
+-     * @see Object#toString()
+-     */
+-    public String toString()
+-    {
+-        return "Catalina Standalone Configuration";
+-    }
++    contextTokenValue.append("\n" + createDatasourceTokenValue() + "\n");
++
++    contextTokenValue.append("</Context>");
++    return contextTokenValue.toString();
++  }
++
++  /**
++   * {@inheritDoc}
++   * 
++   * @see Object#toString()
++   */
++  public String toString() {
++    return "Catalina Standalone Configuration";
++  }
+ }
+Index: containers/tomcat/src/main/resources/org/codehaus/cargo/container/internal/resources/tomcat5x/server.xml
+===================================================================
+--- containers/tomcat/src/main/resources/org/codehaus/cargo/container/internal/resources/tomcat5x/server.xml	(revision 1460)
++++ containers/tomcat/src/main/resources/org/codehaus/cargo/container/internal/resources/tomcat5x/server.xml	(working copy)
+@@ -10,7 +10,7 @@
+         debug="@catalina.logging.level@"/>
+ 
+     <Engine name="Catalina" defaultHost="@cargo.hostname@" 
+-        debug="@catalina.logging.level@">
++        debug="@catalina.logging.level@" jvmRoute="@catalina.jvmroute@">
+ 
+       <Realm className="org.apache.catalina.realm.MemoryRealm" />
+ 
+Index: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogicStandaloneLocalConfiguration.java
+===================================================================
+--- containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogicStandaloneLocalConfiguration.java	(revision 1460)
++++ containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogicStandaloneLocalConfiguration.java	(working copy)
+@@ -1,181 +0,0 @@
+-/* 
+- * ========================================================================
+- * 
+- * Copyright 2004-2005 Vincent Massol.
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- * 
+- *   http://www.apache.org/licenses/LICENSE-2.0
+- * 
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- * 
+- * ========================================================================
+- */
+-package org.codehaus.cargo.container.weblogic;
+-
+-import org.apache.tools.ant.types.FilterChain;
+-import org.apache.tools.ant.util.FileUtils;
+-import org.codehaus.cargo.container.Container;
+-import org.codehaus.cargo.container.ContainerException;
+-import org.codehaus.cargo.container.LocalContainer;
+-import org.codehaus.cargo.container.configuration.ConfigurationCapability;
+-import org.codehaus.cargo.container.deployable.Deployable;
+-import org.codehaus.cargo.container.deployable.DeployableType;
+-import org.codehaus.cargo.container.deployable.WAR;
+-import org.codehaus.cargo.container.spi.configuration.AbstractStandaloneLocalConfiguration;
+-import org.codehaus.cargo.container.weblogic.internal.WebLogicStandaloneLocalConfigurationCapability;
+-
+-import java.io.File;
+-import java.util.Iterator;
+-
+-/**
+- * WebLogic standalone {@link org.codehaus.cargo.container.spi.configuration.ContainerConfiguration}
+- * implementation.
+- *  
+- * @version $Id$
+- */
+-public class WebLogicStandaloneLocalConfiguration extends AbstractStandaloneLocalConfiguration
+-{
+-    /**
+-     * Capability of the WebLogic standalone configuration.
+-     */
+-    private static ConfigurationCapability capability = 
+-        new WebLogicStandaloneLocalConfigurationCapability();
+-
+-    /**
+-     * {@inheritDoc}
+-     * @see AbstractStandaloneLocalConfiguration#AbstractStandaloneLocalConfiguration(String)
+-     */
+-    public WebLogicStandaloneLocalConfiguration(String dir)
+-    {
+-        super(dir);
+-
+-        setProperty(WebLogicPropertySet.ADMIN_USER, "weblogic");
+-        setProperty(WebLogicPropertySet.ADMIN_PWD, "weblogic");
+-        setProperty(WebLogicPropertySet.SERVER, "server");
+-    }
+-
+-    /**
+-     * {@inheritDoc}
+-     * @see org.codehaus.cargo.container.configuration.Configuration#getCapability()
+-     */
+-    public ConfigurationCapability getCapability()
+-    {
+-        return capability;
+-    }
+-    
+-    /**
+-     * {@inheritDoc}
+-     * @see AbstractStandaloneLocalConfiguration#configure(LocalContainer)
+-     */
+-    protected void doConfigure(LocalContainer container) throws Exception
+-    {
+-        setupConfigurationDir();
+-
+-        FilterChain filterChain = createWebLogicFilterChain();
+-
+-        getResourceUtils().copyResource(RESOURCE_PATH + container.getId() + "/config.xml",
+-            new File(getHome(), "config.xml"), filterChain);
+-
+-        getResourceUtils().copyResource(RESOURCE_PATH + container.getId()
+-            + "/DefaultAuthenticatorInit.ldift",
+-            new File(getHome(), "DefaultAuthenticatorInit.ldift"), filterChain);
+-
+-        setupDeployables(container);
+-    }
+-
+-    /**
+-     * @return an Ant filter chain containing implementation for the filter tokens used in the 
+-     *         WebLogic configuration files
+-     */
+-    private FilterChain createWebLogicFilterChain()
+-    {
+-        FilterChain filterChain = createFilterChain();
+-        
+-        StringBuffer appTokenValue = new StringBuffer(" ");
+-        
+-        Iterator it = getDeployables().iterator();
+-        while (it.hasNext())
+-        {
+-            Deployable deployable = (Deployable) it.next();
+-
+-            if ((deployable.getType() == DeployableType.WAR) && ((WAR) deployable).isExpandedWar())
+-            {
+-                String context = ((WAR) deployable).getContext();
+-                appTokenValue.append("<Application "); 
+-                appTokenValue.append("Name=\"_" + context + "_app\" ");
+-                appTokenValue.append(
+-                    "Path=\"" + getFileHandler().getParent(deployable.getFile()) + "\" "); 
+-                appTokenValue.append(
+-                    "StagedTargets=\"server\" StagingMode=\"stage\" TwoPhase=\"true\"");
+-                appTokenValue.append(">");
+-                
+-                appTokenValue.append("<WebAppComponent ");
+-                appTokenValue.append("Name=\"" + context + "\" "); 
+-                appTokenValue.append("Targets=\"server\" ");
+-                appTokenValue.append("URI=\"" + context + "\"");
+-                appTokenValue.append("/></Application>");
+-            }
+-        }
+-        
+-        getAntUtils().addTokenToFilterChain(filterChain, "weblogic.apps", appTokenValue.toString());
+-            
+-        return filterChain;
+-    }
+-
+-    /**
+-     * Deploy the Deployables to the weblogic configuration.
+-     * 
+-     * @param container the container to configure
+-     */
+-    protected void setupDeployables(Container container)
+-    {
+-        try 
+-        {
+-            FileUtils fileUtils = FileUtils.newFileUtils();
+-
+-            // Create the applications directory
+-            String appDir = getFileHandler().createDirectory(getHome(), "applications");
+-            
+-            // Deploy all deployables into the applications directory
+-            Iterator it = getDeployables().iterator();
+-            while (it.hasNext())
+-            {
+-                Deployable deployable = (Deployable) it.next();
+-                if ((deployable.getType() == DeployableType.WAR) 
+-                    && ((WAR) deployable).isExpandedWar())
+-                {
+-                    continue;
+-                }
+-
+-                fileUtils.copyFile(deployable.getFile(),
+-                    getFileHandler().append(appDir, getFileHandler().getName(deployable.getFile())),
+-                    null, true);
+-            }
+-            
+-            // Deploy the cargocpc web-app by copying the WAR file
+-            getResourceUtils().copyResource(RESOURCE_PATH + "cargocpc.war",
+-                new File(appDir, "cargocpc.war"));
+-        }
+-        catch (Exception e)
+-        {
+-            throw new ContainerException("Failed to deploy Deployables in the " 
+-                + container.getName() + " [" + getHome() + "] domain directory", e);
+-        }
+-    }    
+-
+-    /**
+-     * {@inheritDoc}
+-     * @see Object#toString()
+-     */
+-    public String toString()
+-    {
+-        return "WebLogic Standalone Configuration";
+-    }
+-}
+Index: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogic8xStandaloneLocalConfiguration.java
+===================================================================
+--- containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogic8xStandaloneLocalConfiguration.java	(revision 1460)
++++ containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogic8xStandaloneLocalConfiguration.java	(working copy)
+@@ -40,7 +40,7 @@
+  *  
+  * @version $Id$
+  */
+-public class WebLogicStandaloneLocalConfiguration extends AbstractStandaloneLocalConfiguration
++public class WebLogic8xStandaloneLocalConfiguration extends AbstractStandaloneLocalConfiguration
+ {
+     /**
+      * Capability of the WebLogic standalone configuration.
+@@ -52,7 +52,7 @@
+      * {@inheritDoc}
+      * @see AbstractStandaloneLocalConfiguration#AbstractStandaloneLocalConfiguration(String)
+      */
+-    public WebLogicStandaloneLocalConfiguration(String dir)
++    public WebLogic8xStandaloneLocalConfiguration(String dir)
+     {
+         super(dir);
+ 
+Index: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogicExistingLocalConfiguration.java
+===================================================================
+--- containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogicExistingLocalConfiguration.java	(revision 1460)
++++ containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogicExistingLocalConfiguration.java	(working copy)
+@@ -1,130 +0,0 @@
+-/* 
+- * ========================================================================
+- * 
+- * Copyright 2005 Vincent Massol.
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- * 
+- *   http://www.apache.org/licenses/LICENSE-2.0
+- * 
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- * 
+- * ========================================================================
+- */
+-package org.codehaus.cargo.container.weblogic;
+-
+-import java.io.File;
+-import java.util.Iterator;
+-
+-import org.apache.tools.ant.util.FileUtils;
+-import org.codehaus.cargo.container.Container;
+-import org.codehaus.cargo.container.ContainerException;
+-import org.codehaus.cargo.container.LocalContainer;
+-import org.codehaus.cargo.container.configuration.ConfigurationCapability;
+-import org.codehaus.cargo.container.deployable.Deployable;
+-import org.codehaus.cargo.container.deployable.DeployableType;
+-import org.codehaus.cargo.container.deployable.WAR;
+-import org.codehaus.cargo.container.spi.configuration.AbstractExistingLocalConfiguration;
+-import org.codehaus.cargo.container.weblogic.internal.WebLogicExistingLocalConfigurationCapability;
+-
+-/**
+- * WebLogic existing configuration implementation. The configuration home must point to a valid
+- * WebLogic domain directory.
+- *  
+- * @version $Id$
+- */
+-public class WebLogicExistingLocalConfiguration extends AbstractExistingLocalConfiguration
+-{
+-    /**
+-     * Capability of the WebLogic standalone configuration.
+-     */
+-    private static ConfigurationCapability capability =
+-        new WebLogicExistingLocalConfigurationCapability();
+-
+-    /**
+-     * {@inheritDoc}
+-     * @see AbstractExistingLocalConfiguration#AbstractExistingLocalConfiguration(String)
+-     */
+-    public WebLogicExistingLocalConfiguration(String dir)
+-    {
+-        super(dir);
+-
+-        setProperty(WebLogicPropertySet.ADMIN_USER, "weblogic");
+-        setProperty(WebLogicPropertySet.ADMIN_PWD, "weblogic");
+-        setProperty(WebLogicPropertySet.SERVER, "server");
+-    }
+-
+-    /**
+-     * {@inheritDoc}
+-     * @see AbstractExistingLocalConfiguration#configure(LocalContainer)
+-     */
+-    protected void doConfigure(LocalContainer container) throws Exception
+-    {
+-        setupDeployables(container);
+-    }
+-
+-    /**
+-     * {@inheritDoc}
+-     * @see AbstractExistingLocalConfiguration#getCapability()
+-     */
+-    public ConfigurationCapability getCapability()
+-    {
+-        return capability;
+-    }
+-
+-    /**
+-     * {@inheritDoc}
+-     * @see Object#toString()
+-     */
+-    public String toString()
+-    {
+-        return "WebLogic Existing Configuration";
+-    }
+-
+-    /**
+-     * Deploy the Deployables to the weblogic configuration.
+-     * 
+-     * @param container the container to configure
+-     */
+-    protected void setupDeployables(Container container)
+-    {
+-        try
+-        {
+-            FileUtils fileUtils = FileUtils.newFileUtils();
+-
+-            // Create the applications directory
+-            String appDir = getFileHandler().createDirectory(getHome(), "applications");
+-
+-            // Deploy all deployables into the applications directory
+-            Iterator it = getDeployables().iterator();
+-            while (it.hasNext())
+-            {
+-                Deployable deployable = (Deployable) it.next();
+-                if ((deployable.getType() == DeployableType.WAR)
+-                    && ((WAR) deployable).isExpandedWar())
+-                {
+-                    continue;
+-                }
+-
+-                fileUtils.copyFile(deployable.getFile(),
+-                    getFileHandler().append(appDir, getFileHandler().getName(deployable.getFile())),
+-                    null, true);
+-            }
+-
+-            // Deploy the cargocpc web-app by copying the WAR file
+-            getResourceUtils().copyResource(RESOURCE_PATH + "cargocpc.war",
+-                new File(appDir, "cargocpc.war"));
+-        }
+-        catch (Exception e)
+-        {
+-            throw new ContainerException("Failed to deploy Deployables in the "
+-                + container.getName() + " [" + getHome() + "] domain directory", e);
+-        }
+-    }
+-}
+Index: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogic9xExistingLocalConfiguration.java
+===================================================================
+--- containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogic9xExistingLocalConfiguration.java	(revision 1460)
++++ containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogic9xExistingLocalConfiguration.java	(working copy)
+@@ -39,7 +39,7 @@
+  *  
+  * @version $Id$
+  */
+-public class WebLogicExistingLocalConfiguration extends AbstractExistingLocalConfiguration
++public class WebLogic9xExistingLocalConfiguration extends AbstractExistingLocalConfiguration
+ {
+     /**
+      * Capability of the WebLogic standalone configuration.
+@@ -51,7 +51,7 @@
+      * {@inheritDoc}
+      * @see AbstractExistingLocalConfiguration#AbstractExistingLocalConfiguration(String)
+      */
+-    public WebLogicExistingLocalConfiguration(String dir)
++    public WebLogic9xExistingLocalConfiguration(String dir)
+     {
+         super(dir);
+ 
+@@ -99,7 +99,7 @@
+             FileUtils fileUtils = FileUtils.newFileUtils();
+ 
+             // Create the applications directory
+-            String appDir = getFileHandler().createDirectory(getHome(), "applications");
++            String appDir = getFileHandler().createDirectory(getHome(), "autodeploy");
+ 
+             // Deploy all deployables into the applications directory
+             Iterator it = getDeployables().iterator();
+Index: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/internal/WebLogicStandaloneLocalConfigurationCapability.java
+===================================================================
+--- containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/internal/WebLogicStandaloneLocalConfigurationCapability.java	(revision 1460)
++++ containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/internal/WebLogicStandaloneLocalConfigurationCapability.java	(working copy)
+@@ -29,7 +29,7 @@
+ 
+ /**
+  * Capabilities of the WebLogic's 
+- * {@link org.codehaus.cargo.container.weblogic.WebLogicStandaloneLocalConfiguration} configuration.
++ * {@link org.codehaus.cargo.container.weblogic.WebLogic8xStandaloneLocalConfiguration} configuration.
+  *  
+  * @version $Id$
+  */
+Index: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/internal/WebLogicExistingLocalConfigurationCapability.java
+===================================================================
+--- containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/internal/WebLogicExistingLocalConfigurationCapability.java	(revision 1460)
++++ containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/internal/WebLogicExistingLocalConfigurationCapability.java	(working copy)
+@@ -28,7 +28,7 @@
+ 
+ /**
+  * Capabilities of the WebLogic's 
+- * {@link org.codehaus.cargo.container.weblogic.WebLogicExistingLocalConfiguration} configuration.
++ * {@link org.codehaus.cargo.container.weblogic.WebLogic9xExistingLocalConfiguration} configuration.
+  *  
+  * @version $Id$
+  */
+Index: api/container/src/main/java/org/codehaus/cargo/container/deployer/URLDeployableMonitor.java
+===================================================================
+--- api/container/src/main/java/org/codehaus/cargo/container/deployer/URLDeployableMonitor.java	(revision 1460)
++++ api/container/src/main/java/org/codehaus/cargo/container/deployer/URLDeployableMonitor.java	(working copy)
+@@ -101,14 +101,14 @@
+      */
+     public void monitor()
+     {
+-        getLogger().debug("Checking URL [" + this.pingURL + "] for status using a timeout of ["
++        getLogger().info("Checking URL [" + this.pingURL + "] for status using a timeout of ["
+             + this.timeout + "] ms...", this.getClass().getName());
+ 
+         // We check if the deployable is servicing requests by pinging a URL specified by the user
+         HttpUtils.HttpResult results = new HttpUtils.HttpResult();
+         boolean isDeployed = this.httpUtils.ping(this.pingURL, results);
+ 
+-        getLogger().debug("URL [" + this.pingURL + "] is " + (isDeployed ? "" : "not ")
++        getLogger().info("URL [" + this.pingURL + "] is " + (isDeployed ? "" : "not ")
+             + "responding...", this.getClass().getName());
+ 
+         Iterator it = this.listeners.iterator();
+@@ -116,7 +116,7 @@
+         {
+             DeployableMonitorListener listener = (DeployableMonitorListener) it.next();
+ 
+-            getLogger().debug("Notifying monitor listener [" + listener + "]",
++            getLogger().info("Notifying monitor listener [" + listener + "]",
+                 this.getClass().getName());
+ 
+             if (isDeployed)
+Index: api/container/src/main/java/org/codehaus/cargo/container/spi/AbstractInstalledLocalContainer.java
+===================================================================
+--- api/container/src/main/java/org/codehaus/cargo/container/spi/AbstractInstalledLocalContainer.java	(revision 1460)
++++ api/container/src/main/java/org/codehaus/cargo/container/spi/AbstractInstalledLocalContainer.java	(working copy)
+@@ -22,10 +22,17 @@
+  */
+ package org.codehaus.cargo.container.spi;
+ 
++import java.io.File;
++import java.io.FileNotFoundException;
++import java.lang.reflect.Constructor;
++import java.util.HashMap;
++import java.util.Iterator;
++import java.util.Map;
++
+ import org.apache.tools.ant.taskdefs.Java;
+ import org.apache.tools.ant.types.Path;
++import org.codehaus.cargo.container.ContainerException;
+ import org.codehaus.cargo.container.ContainerType;
+-import org.codehaus.cargo.container.ContainerException;
+ import org.codehaus.cargo.container.InstalledLocalContainer;
+ import org.codehaus.cargo.container.configuration.LocalConfiguration;
+ import org.codehaus.cargo.container.internal.util.AntBuildListener;
+@@ -128,7 +135,7 @@
+     {
+         return this.httpUtils;
+     }
+-    
++
+     /**
+      * @return the JDK utility class
+      */
+@@ -170,7 +177,7 @@
+     {
+         this.fileHandler = fileHandler;
+     }
+-    
++
+     /**
+      * {@inheritDoc}
+      * @see InstalledLocalContainer#setHome(String) 
+@@ -188,7 +195,7 @@
+     {
+         Map props = new HashMap();
+         props.putAll(properties);
+-        
++
+         this.systemProperties = props;
+     }
+ 
+@@ -217,7 +224,7 @@
+     public String[] getExtraClasspath()
+     {
+         return this.extraClasspath;
+-    }   
++    }
+ 
+     /**
+      * {@inheritDoc}
+@@ -231,9 +238,9 @@
+     /**
+      * Implementation of {@link org.codehaus.cargo.container.LocalContainer#start()} that all
+      * containers extending this class must implement.
+-     *
++     * 
+      * @param java the predefined Ant {@link org.apache.tools.ant.taskdefs.Java} command to use to
+-     *             start the container
++     *            start the container
+      * @throws Exception if any error is raised during the container start
+      */
+     protected abstract void doStart(Java java) throws Exception;
+@@ -241,7 +248,7 @@
+     /**
+      * Implementation of {@link org.codehaus.cargo.container.LocalContainer#stop()} that all
+      * containers extending this class must implement.
+-     *
++     * 
+      * @param java the predefined Ant {@link Java} command to use to stop the container
+      * @throws Exception if any error is raised during the container stop
+      */
+@@ -253,7 +260,7 @@
+      */
+     protected final void startInternal() throws Exception
+     {
+-        doStart(createJavaTask());
++        doStart(createJavaTask("start"));
+     }
+ 
+     /**
+@@ -262,7 +269,7 @@
+      */
+     protected final void stopInternal() throws Exception
+     {
+-        doStop(createJavaTask());
++        doStop(createJavaTask("stop"));
+     }
+ 
+     /**
+@@ -271,9 +278,16 @@
+      *
+      * @return The created task instance
+      */
+-    private Java createJavaTask()
++    private Java createJavaTask(String task)
+     {
+-        Java java = (Java) getAntUtils().createAntTask("java");
++        Java java = null;
++      
++        if (task.equals("start")) {
++          java = getTerracottaJava();
++        } else {
++          java = (Java) getAntUtils().createAntTask("java");
++        }        
++        
+         java.setFork(true);
+ 
+         // If the user has not specified any output file then the process's output will be logged
+@@ -288,20 +302,20 @@
+         // Add a build listener to the Ant project so that we can catch what the Java task logs
+         java.getProject().addBuildListener(
+             new AntBuildListener(getLogger(), this.getClass().getName()));
+-        
++
+         // Add extra container classpath entries specified by the user.
+         addExtraClasspath(java);
+-       
++
+         // Add system properties for the container JVM
+         addSystemProperties(java);
+ 
+         // Add JVM args if defined
+-        String jvmargs = getConfiguration().getPropertyValue(GeneralPropertySet.JVMARGS); 
++        String jvmargs = getConfiguration().getPropertyValue(GeneralPropertySet.JVMARGS);
+         if (jvmargs != null)
+         {
+             java.createJvmarg().setLine(jvmargs);
+         }
+-        
++
+         return java;
+     }
+ 
+@@ -318,31 +332,29 @@
+             while (keys.hasNext())
+             {
+                 String key = (String) keys.next();
+-    
+-                java.addSysproperty(getAntUtils().createSysProperty(key, 
++
++                java.addSysproperty(getAntUtils().createSysProperty(key,
+                     (String) getSystemProperties().get(key)));
+             }
+         }
+     }
+-    
++
+     /**
+-     * Adds the tools.jar to the classpath, except for Mac OSX as it is not
+-     * needed.
++     * Adds the tools.jar to the classpath, except for Mac OSX as it is not needed.
+      * 
+      * @param classpath the classpath object to which to add the tools.jar
+-     * @exception FileNotFoundException in case the tools.jar file cannot be
+-     *            found
++     * @exception FileNotFoundException in case the tools.jar file cannot be found
+      */
+     protected final void addToolsJarToClasspath(Path classpath) throws FileNotFoundException
+     {
+-        // On OSX, the tools.jar classes are included in the classes.jar so there is no need to 
++        // On OSX, the tools.jar classes are included in the classes.jar so there is no need to
+         // include any tools.jar file to the cp.
+         if (!getJdkUtils().isOSX())
+-        {    
++        {
+             classpath.createPathElement().setLocation(getJdkUtils().getToolsJar());
+         }
+     }
+-    
++
+     /**
+      * Add extra container classpath entries specified by the user.
+      * 
+@@ -363,10 +375,10 @@
+                 getLogger().debug("Adding [" + pathElement + "] to execution classpath",
+                     this.getClass().getName());
+             }
+-            
++
+             classpath.addExisting(path);
+-        }        
+-    }    
++        }
++    }
+ 
+     /**
+      * {@inheritDoc}
+@@ -403,4 +415,32 @@
+     {
+         return ContainerType.INSTALLED;
+     }
++    
++    /**
++     * Terracotta - Linked Process
++     * 
++     * @return Java
++     */
++    private Java getTerracottaJava()
++    {
++        String cargoJava = System.getProperty("cargo_java");
++        Java java = (Java) getAntUtils().createAntTask("java");
++        if (cargoJava != null)
++        {
++            try
++            {
++                Class cargoJavaClass = Class.forName(cargoJava);
++                Constructor cargoJavaConstructor = cargoJavaClass
++                    .getConstructor(new Class[] {Java.class});
++                java = (Java) cargoJavaConstructor.newInstance(new Object[] {java});
++            }
++            catch (Exception e)
++            {
++                getLogger().debug("unable to load CargoJava from system property cargo_java",
++                    getClass().getName());
++                e.printStackTrace();
++            }
++        }
++        return java;
++    }
+ }
+Index: api/container/src/main/java/org/codehaus/cargo/container/internal/util/ResourceUtils.java
+===================================================================
+--- api/container/src/main/java/org/codehaus/cargo/container/internal/util/ResourceUtils.java	(revision 1460)
++++ api/container/src/main/java/org/codehaus/cargo/container/internal/util/ResourceUtils.java	(working copy)
+@@ -96,6 +96,7 @@
+     public void copyResource(String resourceName, File destFile, FilterChain filterChain) 
+         throws IOException
+     {
++        destFile.getParentFile().mkdirs();
+         InputStream resource = ResourceUtils.class.getResourceAsStream(resourceName);
+         if (resource == null)
+         {
+Index: api/generic/src/main/java/org/codehaus/cargo/generic/DefaultContainerFactory.java
+===================================================================
+--- api/generic/src/main/java/org/codehaus/cargo/generic/DefaultContainerFactory.java	(revision 1460)
++++ api/generic/src/main/java/org/codehaus/cargo/generic/DefaultContainerFactory.java	(working copy)
+@@ -37,214 +37,219 @@
+ import java.util.HashSet;
+ 
+ /**
+- * Default implementation of {@link ContainerFactory}. Registers all known containers.
++ * Default implementation of {@link ContainerFactory}. Registers all known
++ * containers.
+  * 
+  * @version $Id$
+  */
+-public class DefaultContainerFactory extends AbstractIntrospectionGenericHintFactory
+-    implements ContainerFactory
+-{
++public class DefaultContainerFactory extends
++    AbstractIntrospectionGenericHintFactory implements ContainerFactory {
++  /**
++   * @see GenericParameters
++   */
++  private static class ContainerFactoryParameters implements GenericParameters {
+     /**
+-     * @see GenericParameters
++     * The configuration object to associate with the container.
+      */
+-    private static class ContainerFactoryParameters implements GenericParameters
+-    {
+-        /**
+-         * The configuration object to associate with the container.
+-         */
+-        public Configuration configuration;
+-    }
+-    
+-    /**
+-     * Initialize container name mappings with container ids.
+-     */
+-    public DefaultContainerFactory()
+-    {
+-        super();
++    public Configuration configuration;
++  }
+ 
+-        // Note: We register containers using introspection so that we don't have to depend on 
+-        // those containers at build time nor at runtime. More specifically this allows a user
+-        // to use the generic API and choose what container implementation jar he wants to use
+-        // without having to add all container implementations jars in the classpath.
++  /**
++   * Initialize container name mappings with container ids.
++   */
++  public DefaultContainerFactory() {
++    super();
+ 
+-        // Note: Sorted by container id alphabetical order
++    // Note: We register containers using introspection so that we don't have to
++    // depend on
++    // those containers at build time nor at runtime. More specifically this
++    // allows a user
++    // to use the generic API and choose what container implementation jar he
++    // wants to use
++    // without having to add all container implementations jars in the
++    // classpath.
+ 
+-        registerContainer("geronimo1x", ContainerType.INSTALLED,
+-            "org.codehaus.cargo.container.geronimo.Geronimo1xInstalledLocalContainer");
++    // Note: Sorted by container id alphabetical order
+ 
+-        registerContainer("jboss3x", ContainerType.INSTALLED,
+-            "org.codehaus.cargo.container.jboss.JBoss3xInstalledLocalContainer");
+-        registerContainer("jboss4x", ContainerType.INSTALLED,
+-            "org.codehaus.cargo.container.jboss.JBoss4xInstalledLocalContainer");
+-        registerContainer("jboss4x", ContainerType.REMOTE,
+-            "org.codehaus.cargo.container.jboss.JBoss4xRemoteContainer");
++    registerContainer("geronimo1x", ContainerType.INSTALLED,
++        "org.codehaus.cargo.container.geronimo.Geronimo1xInstalledLocalContainer");
+ 
+-        registerContainer("jetty4x", ContainerType.EMBEDDED,
+-            "org.codehaus.cargo.container.jetty.Jetty4xEmbeddedLocalContainer");
+-        registerContainer("jetty5x", ContainerType.EMBEDDED,
+-            "org.codehaus.cargo.container.jetty.Jetty5xEmbeddedLocalContainer");
+-        registerContainer("jetty6x", ContainerType.EMBEDDED,
+-            "org.codehaus.cargo.container.jetty.Jetty6xEmbeddedLocalContainer");
++    registerContainer("jboss3x", ContainerType.INSTALLED,
++        "org.codehaus.cargo.container.jboss.JBoss3xInstalledLocalContainer");
++    registerContainer("jboss4x", ContainerType.INSTALLED,
++        "org.codehaus.cargo.container.jboss.JBoss4xInstalledLocalContainer");
++    registerContainer("jboss4x", ContainerType.REMOTE,
++        "org.codehaus.cargo.container.jboss.JBoss4xRemoteContainer");
+ 
+-        registerContainer("jo1x", ContainerType.INSTALLED,
+-            "org.codehaus.cargo.container.jo.Jo1xInstalledLocalContainer");
+-        
+-        registerContainer("oc4j9x", ContainerType.INSTALLED,
+-            "org.codehaus.cargo.container.orion.Oc4j9xInstalledLocalContainer");
++    registerContainer("jetty4x", ContainerType.EMBEDDED,
++        "org.codehaus.cargo.container.jetty.Jetty4xEmbeddedLocalContainer");
++    registerContainer("jetty5x", ContainerType.EMBEDDED,
++        "org.codehaus.cargo.container.jetty.Jetty5xEmbeddedLocalContainer");
++    registerContainer("jetty6x", ContainerType.EMBEDDED,
++        "org.codehaus.cargo.container.jetty.Jetty6xEmbeddedLocalContainer");
+ 
+-        registerContainer("orion1x", ContainerType.INSTALLED,
+-            "org.codehaus.cargo.container.orion.Orion1xInstalledLocalContainer");
+-        registerContainer("orion2x", ContainerType.INSTALLED,
+-            "org.codehaus.cargo.container.orion.Orion2xInstalledLocalContainer");
+-        
+-        registerContainer("resin2x", ContainerType.INSTALLED,
+-            "org.codehaus.cargo.container.resin.Resin2xInstalledLocalContainer");
+-        registerContainer("resin3x", ContainerType.INSTALLED,
+-            "org.codehaus.cargo.container.resin.Resin3xInstalledLocalContainer");
++    registerContainer("jo1x", ContainerType.INSTALLED,
++        "org.codehaus.cargo.container.jo.Jo1xInstalledLocalContainer");
+ 
+-        registerContainer("tomcat3x", ContainerType.INSTALLED,
+-            "org.codehaus.cargo.container.tomcat.Tomcat3xInstalledLocalContainer");
+-        registerContainer("tomcat4x", ContainerType.INSTALLED,
+-            "org.codehaus.cargo.container.tomcat.Tomcat4xInstalledLocalContainer");
+-        registerContainer("tomcat4x", ContainerType.REMOTE,
+-            "org.codehaus.cargo.container.tomcat.Tomcat4xRemoteContainer");
+-        registerContainer("tomcat5x", ContainerType.INSTALLED,
+-            "org.codehaus.cargo.container.tomcat.Tomcat5xInstalledLocalContainer");
+-        registerContainer("tomcat5x", ContainerType.REMOTE,
+-            "org.codehaus.cargo.container.tomcat.Tomcat5xRemoteContainer");
+-        registerContainer("tomcat5x", ContainerType.EMBEDDED,
+-            "org.codehaus.cargo.container.tomcat.Tomcat5xEmbeddedLocalContainer");
+-        
+-        registerContainer("weblogic8x", ContainerType.INSTALLED,
+-            "org.codehaus.cargo.container.weblogic.WebLogic8xInstalledLocalContainer");
+-    }
++    registerContainer("oc4j9x", ContainerType.INSTALLED,
++        "org.codehaus.cargo.container.orion.Oc4j9xInstalledLocalContainer");
+ 
+-    /**
+-     * {@inheritDoc}
+-     * @see ContainerFactory#isContainerRegistered(String, ContainerType)
+-     */
+-    public boolean isContainerRegistered(String containerId, ContainerType containerType)
+-    {
+-        return hasMapping(
+-            new RegistrationKey(new SimpleContainerIdentity(containerId), containerType.getType()));
+-    }
++    registerContainer("orion1x", ContainerType.INSTALLED,
++        "org.codehaus.cargo.container.orion.Orion1xInstalledLocalContainer");
++    registerContainer("orion2x", ContainerType.INSTALLED,
++        "org.codehaus.cargo.container.orion.Orion2xInstalledLocalContainer");
+ 
+-    /**
+-     * {@inheritDoc}
+-     * @see ContainerFactory#registerContainer(String, org.codehaus.cargo.container.ContainerType, Class)
+-     */
+-    public void registerContainer(String containerId, ContainerType containerType,
+-        Class containerClass)
+-    {
+-        registerImplementation(new RegistrationKey(new SimpleContainerIdentity(containerId),
+-            containerType.getType()), containerClass);
+-    }
++    registerContainer("resin2x", ContainerType.INSTALLED,
++        "org.codehaus.cargo.container.resin.Resin2xInstalledLocalContainer");
++    registerContainer("resin3x", ContainerType.INSTALLED,
++        "org.codehaus.cargo.container.resin.Resin3xInstalledLocalContainer");
+ 
+-    /**
+-     * Registers a container using a class specified as a String.
+-     *
+-     * @param containerId {@inheritDoc}
+-     * @param containerType {@inheritDoc}
+-     * @param containerClassName the container implementation class to register as a String
+-     * @see #registerContainer(String, ContainerType, Class)
+-     */
+-    public void registerContainer(String containerId, ContainerType containerType,
+-        String containerClassName)
+-    {
+-        registerImplementation(new RegistrationKey(new SimpleContainerIdentity(containerId),
+-            containerType.getType()), containerClassName);
+-    }
++    registerContainer("tomcat3x", ContainerType.INSTALLED,
++        "org.codehaus.cargo.container.tomcat.Tomcat3xInstalledLocalContainer");
++    registerContainer("tomcat4x", ContainerType.INSTALLED,
++        "org.codehaus.cargo.container.tomcat.Tomcat4xInstalledLocalContainer");
++    registerContainer("tomcat4x", ContainerType.REMOTE,
++        "org.codehaus.cargo.container.tomcat.Tomcat4xRemoteContainer");
++    registerContainer("tomcat5x", ContainerType.INSTALLED,
++        "org.codehaus.cargo.container.tomcat.Tomcat5xInstalledLocalContainer");
++    registerContainer("tomcat5x", ContainerType.REMOTE,
++        "org.codehaus.cargo.container.tomcat.Tomcat5xRemoteContainer");
++    registerContainer("tomcat5x", ContainerType.EMBEDDED,
++        "org.codehaus.cargo.container.tomcat.Tomcat5xEmbeddedLocalContainer");
+ 
+-    /**
+-     * {@inheritDoc}
+-     * @see ContainerFactory#getContainerClass
+-     */
+-    public Class getContainerClass(String containerId, ContainerType containerType)
+-    {
+-        return getMapping(
+-            new RegistrationKey(new SimpleContainerIdentity(containerId), containerType.getType()));
+-    }
++    registerContainer("weblogic8x", ContainerType.INSTALLED,
++        "org.codehaus.cargo.container.weblogic.WebLogic8xInstalledLocalContainer");
++    registerContainer("weblogic9x", ContainerType.INSTALLED,
++        "org.codehaus.cargo.container.weblogic.WebLogic9xInstalledLocalContainer");
++  }
+ 
+-    /**
+-     * {@inheritDoc}
+-     * @see ContainerFactory#createContainer(String, ContainerType, Configuration)
+-     */
+-    public Container createContainer(String containerId, ContainerType containerType,
+-        Configuration configuration)
+-    {
+-        ContainerFactoryParameters parameters = new ContainerFactoryParameters();
+-        parameters.configuration = configuration;
++  /**
++   * {@inheritDoc}
++   * 
++   * @see ContainerFactory#isContainerRegistered(String, ContainerType)
++   */
++  public boolean isContainerRegistered(String containerId,
++      ContainerType containerType) {
++    return hasMapping(new RegistrationKey(new SimpleContainerIdentity(
++        containerId), containerType.getType()));
++  }
+ 
+-        return (Container) createImplementation(new RegistrationKey(new SimpleContainerIdentity(
+-            containerId), containerType.getType()), parameters, "container");
+-    }
+-    
+-    /**
+-     * {@inheritDoc}
+-     * @see org.codehaus.cargo.generic.spi.AbstractGenericHintFactory#getConstructor
+-     */
+-    protected Constructor getConstructor(Class containerClass, String containerType,
+-        GenericParameters parameters) throws NoSuchMethodException
+-    {
+-        Constructor constructor;
++  /**
++   * {@inheritDoc}
++   * 
++   * @see ContainerFactory#registerContainer(String,
++   *      org.codehaus.cargo.container.ContainerType, Class)
++   */
++  public void registerContainer(String containerId,
++      ContainerType containerType, Class containerClass) {
++    registerImplementation(new RegistrationKey(new SimpleContainerIdentity(
++        containerId), containerType.getType()), containerClass);
++  }
+ 
+-        ContainerType type = ContainerType.toType(containerType);
+-        
+-        if (type.isLocal())
+-        {
+-            constructor = containerClass.getConstructor(new Class[] {LocalConfiguration.class});
+-        }
+-        else if (type.isRemote())
+-        {
+-            constructor = containerClass.getConstructor(new Class[] {RuntimeConfiguration.class});
+-        }
+-        else
+-        {
+-            throw new ContainerException("Unknown container type [" + type.getType() + "]");
+-        }
+-            
+-        return constructor;
+-    }
++  /**
++   * Registers a container using a class specified as a String.
++   * 
++   * @param containerId
++   *          {@inheritDoc}
++   * @param containerType
++   *          {@inheritDoc}
++   * @param containerClassName
++   *          the container implementation class to register as a String
++   * @see #registerContainer(String, ContainerType, Class)
++   */
++  public void registerContainer(String containerId,
++      ContainerType containerType, String containerClassName) {
++    registerImplementation(new RegistrationKey(new SimpleContainerIdentity(
++        containerId), containerType.getType()), containerClassName);
++  }
+ 
+-    /**
+-     * {@inheritDoc}
+-     * @see org.codehaus.cargo.generic.spi.AbstractGenericHintFactory#createInstance
+-     */
+-    protected Object createInstance(Constructor constructor, String containerType, 
+-        GenericParameters parameters) throws Exception
+-    {
+-        Configuration configuration = ((ContainerFactoryParameters) parameters).configuration;
++  /**
++   * {@inheritDoc}
++   * 
++   * @see ContainerFactory#getContainerClass
++   */
++  public Class getContainerClass(String containerId, ContainerType containerType) {
++    return getMapping(new RegistrationKey(new SimpleContainerIdentity(
++        containerId), containerType.getType()));
++  }
+ 
+-        return constructor.newInstance(new Object[] {configuration});
++  /**
++   * {@inheritDoc}
++   * 
++   * @see ContainerFactory#createContainer(String, ContainerType, Configuration)
++   */
++  public Container createContainer(String containerId,
++      ContainerType containerType, Configuration configuration) {
++    ContainerFactoryParameters parameters = new ContainerFactoryParameters();
++    parameters.configuration = configuration;
++
++    return (Container) createImplementation(new RegistrationKey(
++        new SimpleContainerIdentity(containerId), containerType.getType()),
++        parameters, "container");
++  }
++
++  /**
++   * {@inheritDoc}
++   * 
++   * @see org.codehaus.cargo.generic.spi.AbstractGenericHintFactory#getConstructor
++   */
++  protected Constructor getConstructor(Class containerClass,
++      String containerType, GenericParameters parameters)
++      throws NoSuchMethodException {
++    Constructor constructor;
++
++    ContainerType type = ContainerType.toType(containerType);
++
++    if (type.isLocal()) {
++      constructor = containerClass
++          .getConstructor(new Class[] { LocalConfiguration.class });
++    } else if (type.isRemote()) {
++      constructor = containerClass
++          .getConstructor(new Class[] { RuntimeConfiguration.class });
++    } else {
++      throw new ContainerException("Unknown container type [" + type.getType()
++          + "]");
+     }
+ 
+-    /**
+-     * {@inheritDoc}
+-     * @see org.codehaus.cargo.generic.ContainerFactory#getContainerIds()
+-     */
+-    public Map getContainerIds()
+-    {
+-        Map containerIds = new HashMap();
++    return constructor;
++  }
+ 
+-        Iterator keys = getMappings().keySet().iterator();
+-        while (keys.hasNext())
+-        {
+-            RegistrationKey key = (RegistrationKey) keys.next();
++  /**
++   * {@inheritDoc}
++   * 
++   * @see org.codehaus.cargo.generic.spi.AbstractGenericHintFactory#createInstance
++   */
++  protected Object createInstance(Constructor constructor,
++      String containerType, GenericParameters parameters) throws Exception {
++    Configuration configuration = ((ContainerFactoryParameters) parameters).configuration;
+ 
+-            SimpleContainerIdentity identity = (SimpleContainerIdentity) key.getContainerIdentity();
+-            if (containerIds.containsKey(identity.getId()))
+-            {
+-                Set hints = (Set) containerIds.get(identity.getId());
+-                hints.add(ContainerType.toType(key.getHint()));
+-            }
+-            else
+-            {
+-                Set hints = new HashSet();
+-                hints.add(ContainerType.toType(key.getHint()));
+-                containerIds.put(identity.getId(), hints);
+-            }
+-        }
++    return constructor.newInstance(new Object[] { configuration });
++  }
+ 
+-        return containerIds;
++  /**
++   * {@inheritDoc}
++   * 
++   * @see org.codehaus.cargo.generic.ContainerFactory#getContainerIds()
++   */
++  public Map getContainerIds() {
++    Map containerIds = new HashMap();
++
++    Iterator keys = getMappings().keySet().iterator();
++    while (keys.hasNext()) {
++      RegistrationKey key = (RegistrationKey) keys.next();
++
++      SimpleContainerIdentity identity = (SimpleContainerIdentity) key
++          .getContainerIdentity();
++      if (containerIds.containsKey(identity.getId())) {
++        Set hints = (Set) containerIds.get(identity.getId());
++        hints.add(ContainerType.toType(key.getHint()));
++      } else {
++        Set hints = new HashSet();
++        hints.add(ContainerType.toType(key.getHint()));
++        containerIds.put(identity.getId(), hints);
++      }
+     }
++
++    return containerIds;
++  }
+ }
+Index: api/generic/src/main/java/org/codehaus/cargo/generic/DefaultContainerCapabilityFactory.java
+===================================================================
+--- api/generic/src/main/java/org/codehaus/cargo/generic/DefaultContainerCapabilityFactory.java	(revision 1460)
++++ api/generic/src/main/java/org/codehaus/cargo/generic/DefaultContainerCapabilityFactory.java	(working copy)
+@@ -27,121 +27,133 @@
+ import java.lang.reflect.Constructor;
+ 
+ /**
+- * Default implementation of {@link org.codehaus.cargo.generic.ContainerCapabilityFactory}.
+- * Registers all known container capabilities.
+- *
+- * @version $Id$
++ * Default implementation of
++ * {@link org.codehaus.cargo.generic.ContainerCapabilityFactory}. Registers all
++ * known container capabilities.
++ * 
++ * @version $Id: DefaultContainerCapabilityFactory.java 1233 2006-11-22
++ *          09:15:56Z vmassol $
+  */
+-public class DefaultContainerCapabilityFactory extends AbstractIntrospectionGenericHintFactory
+-    implements ContainerCapabilityFactory
+-{
+-    /**
+-     * Initialize container capability name mappings with container ids.
+-     */
+-    public DefaultContainerCapabilityFactory()
+-    {
+-        super();
++public class DefaultContainerCapabilityFactory extends
++    AbstractIntrospectionGenericHintFactory implements
++    ContainerCapabilityFactory {
++  /**
++   * Initialize container capability name mappings with container ids.
++   */
++  public DefaultContainerCapabilityFactory() {
++    super();
+ 
+-        // Note: We register container capabilities using introspection so that we don't have to
+-        // depend on those classes at build time nor at runtime. More specifically this allows a
+-        // user to use the generic API and choose what container implementation jar he wants to use
+-        // without having to add all container implementations jars in the classpath.
++    // Note: We register container capabilities using introspection so that we
++    // don't have to
++    // depend on those classes at build time nor at runtime. More specifically
++    // this allows a
++    // user to use the generic API and choose what container implementation jar
++    // he wants to use
++    // without having to add all container implementations jars in the
++    // classpath.
+ 
+-        // Note: Sorted by container id alphabetical order
++    // Note: Sorted by container id alphabetical order
+ 
+-        registerContainerCapability("geronimo1x",
+-            "org.codehaus.cargo.container.internal.J2EEContainerCapability");
++    registerContainerCapability("geronimo1x",
++        "org.codehaus.cargo.container.internal.J2EEContainerCapability");
+ 
+-        registerContainerCapability("jboss3x",
+-            "org.codehaus.cargo.container.jboss.internal.JBossContainerCapability");
+-        registerContainerCapability("jboss4x",
+-            "org.codehaus.cargo.container.jboss.internal.JBossContainerCapability");
++    registerContainerCapability("jboss3x",
++        "org.codehaus.cargo.container.jboss.internal.JBossContainerCapability");
++    registerContainerCapability("jboss4x",
++        "org.codehaus.cargo.container.jboss.internal.JBossContainerCapability");
+ 
+-        registerContainerCapability("jetty4x",
+-            "org.codehaus.cargo.container.internal.ServletContainerCapability");
+-        registerContainerCapability("jetty5x",
+-            "org.codehaus.cargo.container.internal.ServletContainerCapability");
+-        registerContainerCapability("jetty6x",
+-            "org.codehaus.cargo.container.internal.ServletContainerCapability");
++    registerContainerCapability("jetty4x",
++        "org.codehaus.cargo.container.internal.ServletContainerCapability");
++    registerContainerCapability("jetty5x",
++        "org.codehaus.cargo.container.internal.ServletContainerCapability");
++    registerContainerCapability("jetty6x",
++        "org.codehaus.cargo.container.internal.ServletContainerCapability");
+ 
+-        registerContainerCapability("jo1x",
+-            "org.codehaus.cargo.container.internal.ServletContainerCapability");
++    registerContainerCapability("jo1x",
++        "org.codehaus.cargo.container.internal.ServletContainerCapability");
+ 
+-        registerContainerCapability("oc4j9x",
+-            "org.codehaus.cargo.container.internal.J2EEContainerCapability");
++    registerContainerCapability("oc4j9x",
++        "org.codehaus.cargo.container.internal.J2EEContainerCapability");
+ 
+-        registerContainerCapability("orion1x",
+-            "org.codehaus.cargo.container.internal.J2EEContainerCapability");
+-        registerContainerCapability("orion2x",
+-            "org.codehaus.cargo.container.internal.J2EEContainerCapability");
++    registerContainerCapability("orion1x",
++        "org.codehaus.cargo.container.internal.J2EEContainerCapability");
++    registerContainerCapability("orion2x",
++        "org.codehaus.cargo.container.internal.J2EEContainerCapability");
+ 
+-        registerContainerCapability("resin2x",
+-            "org.codehaus.cargo.container.internal.ServletContainerCapability");
+-        registerContainerCapability("resin3x",
+-            "org.codehaus.cargo.container.internal.ServletContainerCapability");
++    registerContainerCapability("resin2x",
++        "org.codehaus.cargo.container.internal.ServletContainerCapability");
++    registerContainerCapability("resin3x",
++        "org.codehaus.cargo.container.internal.ServletContainerCapability");
+ 
+-        registerContainerCapability("tomcat3x",
+-            "org.codehaus.cargo.container.internal.ServletContainerCapability");
+-        registerContainerCapability("tomcat4x",
+-            "org.codehaus.cargo.container.internal.ServletContainerCapability");
+-        registerContainerCapability("tomcat5x",
+-            "org.codehaus.cargo.container.internal.ServletContainerCapability");
++    registerContainerCapability("tomcat3x",
++        "org.codehaus.cargo.container.internal.ServletContainerCapability");
++    registerContainerCapability("tomcat4x",
++        "org.codehaus.cargo.container.internal.ServletContainerCapability");
++    registerContainerCapability("tomcat5x",
++        "org.codehaus.cargo.container.internal.ServletContainerCapability");
+ 
+-        registerContainerCapability("weblogic8x",
+-            "org.codehaus.cargo.container.internal.J2EEContainerCapability");
+-    }
++    registerContainerCapability("weblogic8x",
++        "org.codehaus.cargo.container.internal.J2EEContainerCapability");
++    registerContainerCapability("weblogic9x",
++        "org.codehaus.cargo.container.internal.J2EEContainerCapability");
++  }
+ 
+-    /**
+-     * {@inheritDoc}
+-     * @see org.codehaus.cargo.generic.ContainerCapabilityFactory#registerContainerCapability(String, Class)
+-     */
+-    public void registerContainerCapability(String containerId, Class containerCapabilityClass)
+-    {
+-        registerImplementation(new RegistrationKey(new SimpleContainerIdentity(containerId),
+-            "default"), containerCapabilityClass);
+-    }
++  /**
++   * {@inheritDoc}
++   * 
++   * @see org.codehaus.cargo.generic.ContainerCapabilityFactory#registerContainerCapability(String,
++   *      Class)
++   */
++  public void registerContainerCapability(String containerId,
++      Class containerCapabilityClass) {
++    registerImplementation(new RegistrationKey(new SimpleContainerIdentity(
++        containerId), "default"), containerCapabilityClass);
++  }
+ 
+-    /**
+-     * Registers a container capability using a class specified as a String.
+-     *
+-     * @param containerId {@inheritDoc}
+-     * @param containerCapabilityClassName the container capability implementation class to
+-     *        register as a String
+-     * @see #registerContainerCapability(String, Class)
+-     */
+-    public void registerContainerCapability(String containerId, String containerCapabilityClassName)
+-    {
+-        registerImplementation(new RegistrationKey(new SimpleContainerIdentity(containerId),
+-            "default"), containerCapabilityClassName);
+-    }
++  /**
++   * Registers a container capability using a class specified as a String.
++   * 
++   * @param containerId
++   *          {@inheritDoc}
++   * @param containerCapabilityClassName
++   *          the container capability implementation class to register as a
++   *          String
++   * @see #registerContainerCapability(String, Class)
++   */
++  public void registerContainerCapability(String containerId,
++      String containerCapabilityClassName) {
++    registerImplementation(new RegistrationKey(new SimpleContainerIdentity(
++        containerId), "default"), containerCapabilityClassName);
++  }
+ 
+-    /**
+-     * {@inheritDoc}
+-     * @see org.codehaus.cargo.generic.ContainerCapabilityFactory#createContainerCapability(String)
+-     */
+-    public ContainerCapability createContainerCapability(String containerId)
+-    {
+-        return (ContainerCapability) createImplementation(new RegistrationKey(
+-            new SimpleContainerIdentity(containerId), "default"), null, "container capability");
+-    }
++  /**
++   * {@inheritDoc}
++   * 
++   * @see org.codehaus.cargo.generic.ContainerCapabilityFactory#createContainerCapability(String)
++   */
++  public ContainerCapability createContainerCapability(String containerId) {
++    return (ContainerCapability) createImplementation(new RegistrationKey(
++        new SimpleContainerIdentity(containerId), "default"), null,
++        "container capability");
++  }
+ 
+-    /**
+-     * {@inheritDoc}
+-     * @see org.codehaus.cargo.generic.spi.AbstractGenericHintFactory#getConstructor
+-     */
+-    protected Constructor getConstructor(Class containerCapabilityClass, String hint,
+-        GenericParameters parameters) throws NoSuchMethodException
+-    {
+-        return containerCapabilityClass.getConstructor(null);
+-    }
++  /**
++   * {@inheritDoc}
++   * 
++   * @see org.codehaus.cargo.generic.spi.AbstractGenericHintFactory#getConstructor
++   */
++  protected Constructor getConstructor(Class containerCapabilityClass,
++      String hint, GenericParameters parameters) throws NoSuchMethodException {
++    return containerCapabilityClass.getConstructor(null);
++  }
+ 
+-    /**
+-     * {@inheritDoc}
+-     * @see org.codehaus.cargo.generic.spi.AbstractGenericHintFactory#createInstance
+-     */
+-    protected Object createInstance(Constructor constructor, String hint,
+-        GenericParameters parameters) throws Exception
+-    {
+-        return constructor.newInstance(null);
+-    }
++  /**
++   * {@inheritDoc}
++   * 
++   * @see org.codehaus.cargo.generic.spi.AbstractGenericHintFactory#createInstance
++   */
++  protected Object createInstance(Constructor constructor, String hint,
++      GenericParameters parameters) throws Exception {
++    return constructor.newInstance(null);
++  }
+ }
+Index: api/generic/src/main/java/org/codehaus/cargo/generic/configuration/DefaultConfigurationFactory.java
+===================================================================
+--- api/generic/src/main/java/org/codehaus/cargo/generic/configuration/DefaultConfigurationFactory.java	(revision 1460)
++++ api/generic/src/main/java/org/codehaus/cargo/generic/configuration/DefaultConfigurationFactory.java	(working copy)
+@@ -32,255 +32,300 @@
+ import java.lang.reflect.Constructor;
+ 
+ /**
+- * Default {@link ConfigurationFactory} implementation that has all the known container 
+- * configurations registered against their containers. It also supports registering new
+- * configurations against any container.
++ * Default {@link ConfigurationFactory} implementation that has all the known
++ * container configurations registered against their containers. It also
++ * supports registering new configurations against any container.
+  * 
+- * @version $Id$
++ * @version $Id: DefaultConfigurationFactory.java 1233 2006-11-22 09:15:56Z
++ *          vmassol $
+  */
+-public class DefaultConfigurationFactory extends AbstractIntrospectionGenericHintFactory
+-    implements ConfigurationFactory
+-{
+-    /**
+-     * File utility class.
+-     */
+-    private FileHandler fileHandler = new DefaultFileHandler();
++public class DefaultConfigurationFactory extends
++    AbstractIntrospectionGenericHintFactory implements ConfigurationFactory {
++  /**
++   * File utility class.
++   */
++  private FileHandler fileHandler = new DefaultFileHandler();
+ 
++  /**
++   * @see GenericParameters
++   */
++  private static class ConfigurationFactoryParameters implements
++      GenericParameters {
+     /**
+-     * @see GenericParameters
++     * The home directory for the configuration.
+      */
+-    private static class ConfigurationFactoryParameters implements GenericParameters
+-    {
+-        /**
+-         * The home directory for the configuration.
+-         */
+-        public String home;
+-    }
+-    
+-    /**
+-     * Register default configurations.
+-     */
+-    public DefaultConfigurationFactory()
+-    {
+-        super();
++    public String home;
++  }
+ 
+-        // Note: Sorted by container id alphabetical order
++  /**
++   * Register default configurations.
++   */
++  public DefaultConfigurationFactory() {
++    super();
+ 
+-        registerConfiguration("geronimo1x", ContainerType.INSTALLED, ConfigurationType.STANDALONE,
+-            "org.codehaus.cargo.container.geronimo.Geronimo1xStandaloneLocalConfiguration");
+-        registerConfiguration("geronimo1x", ContainerType.INSTALLED, ConfigurationType.EXISTING,
+-            "org.codehaus.cargo.container.geronimo.Geronimo1xExistingLocalConfiguration");
++    // Note: Sorted by container id alphabetical order
+ 
+-        registerConfiguration("jboss3x", ContainerType.INSTALLED, ConfigurationType.STANDALONE,
+-            "org.codehaus.cargo.container.jboss.JBossStandaloneLocalConfiguration");
+-        registerConfiguration("jboss3x", ContainerType.INSTALLED, ConfigurationType.EXISTING,
+-            "org.codehaus.cargo.container.jboss.JBossExistingLocalConfiguration");
+-        registerConfiguration("jboss4x", ContainerType.INSTALLED, ConfigurationType.STANDALONE,
+-            "org.codehaus.cargo.container.jboss.JBossStandaloneLocalConfiguration");
+-        registerConfiguration("jboss4x", ContainerType.INSTALLED, ConfigurationType.EXISTING,
+-            "org.codehaus.cargo.container.jboss.JBossExistingLocalConfiguration");
+-        registerConfiguration("jboss4x", ContainerType.REMOTE, ConfigurationType.RUNTIME,
+-            "org.codehaus.cargo.container.jboss.JBossRuntimeConfiguration");
++    registerConfiguration("geronimo1x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.geronimo.Geronimo1xStandaloneLocalConfiguration");
++    registerConfiguration("geronimo1x", ContainerType.INSTALLED,
++        ConfigurationType.EXISTING,
++        "org.codehaus.cargo.container.geronimo.Geronimo1xExistingLocalConfiguration");
+ 
+-        registerConfiguration("jetty4x", ContainerType.EMBEDDED, ConfigurationType.STANDALONE,
+-            "org.codehaus.cargo.container.jetty.Jetty4xEmbeddedStandaloneLocalConfiguration");
+-        registerConfiguration("jetty5x", ContainerType.EMBEDDED, ConfigurationType.STANDALONE,
+-            "org.codehaus.cargo.container.jetty.Jetty5xEmbeddedStandaloneLocalConfiguration");
+-        registerConfiguration("jetty6x", ContainerType.EMBEDDED, ConfigurationType.STANDALONE,
+-            "org.codehaus.cargo.container.jetty.Jetty6xEmbeddedStandaloneLocalConfiguration");
++    registerConfiguration("jboss3x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.jboss.JBossStandaloneLocalConfiguration");
++    registerConfiguration("jboss3x", ContainerType.INSTALLED,
++        ConfigurationType.EXISTING,
++        "org.codehaus.cargo.container.jboss.JBossExistingLocalConfiguration");
++    registerConfiguration("jboss4x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.jboss.JBossStandaloneLocalConfiguration");
++    registerConfiguration("jboss4x", ContainerType.INSTALLED,
++        ConfigurationType.EXISTING,
++        "org.codehaus.cargo.container.jboss.JBossExistingLocalConfiguration");
++    registerConfiguration("jboss4x", ContainerType.REMOTE,
++        ConfigurationType.RUNTIME,
++        "org.codehaus.cargo.container.jboss.JBossRuntimeConfiguration");
+ 
+-        registerConfiguration("jo1x", ContainerType.INSTALLED, ConfigurationType.STANDALONE,
+-            "org.codehaus.cargo.container.jo.Jo1xStandaloneLocalConfiguration");
+-        
+-        registerConfiguration("orion1x", ContainerType.INSTALLED, ConfigurationType.STANDALONE,
+-            "org.codehaus.cargo.container.orion.OrionStandaloneLocalConfiguration");
+-        registerConfiguration("orion2x", ContainerType.INSTALLED, ConfigurationType.STANDALONE,
+-            "org.codehaus.cargo.container.orion.OrionStandaloneLocalConfiguration");
+-        registerConfiguration("oc4j9x", ContainerType.INSTALLED, ConfigurationType.STANDALONE,
+-            "org.codehaus.cargo.container.orion.Oc4j9xStandaloneLocalConfiguration");
++    registerConfiguration(
++        "jetty4x",
++        ContainerType.EMBEDDED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.jetty.Jetty4xEmbeddedStandaloneLocalConfiguration");
++    registerConfiguration(
++        "jetty5x",
++        ContainerType.EMBEDDED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.jetty.Jetty5xEmbeddedStandaloneLocalConfiguration");
++    registerConfiguration(
++        "jetty6x",
++        ContainerType.EMBEDDED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.jetty.Jetty6xEmbeddedStandaloneLocalConfiguration");
+ 
+-        registerConfiguration("resin2x", ContainerType.INSTALLED, ConfigurationType.STANDALONE,
+-            "org.codehaus.cargo.container.resin.Resin2xStandaloneLocalConfiguration");
+-        registerConfiguration("resin2x", ContainerType.INSTALLED, ConfigurationType.EXISTING,
+-            "org.codehaus.cargo.container.resin.ResinExistingLocalConfiguration");
+-        registerConfiguration("resin3x", ContainerType.INSTALLED, ConfigurationType.STANDALONE,
+-            "org.codehaus.cargo.container.resin.Resin3xStandaloneLocalConfiguration");
+-        registerConfiguration("resin3x", ContainerType.INSTALLED, ConfigurationType.EXISTING,
+-            "org.codehaus.cargo.container.resin.ResinExistingLocalConfiguration");
+-        
+-        registerConfiguration("tomcat3x", ContainerType.INSTALLED, ConfigurationType.STANDALONE,
+-            "org.codehaus.cargo.container.tomcat.Tomcat3xStandaloneLocalConfiguration");
+-        registerConfiguration("tomcat4x", ContainerType.INSTALLED, ConfigurationType.STANDALONE,
+-            "org.codehaus.cargo.container.tomcat.Tomcat4xStandaloneLocalConfiguration");
+-        registerConfiguration("tomcat4x", ContainerType.INSTALLED, ConfigurationType.EXISTING,
+-            "org.codehaus.cargo.container.tomcat.TomcatExistingLocalConfiguration");
+-        registerConfiguration("tomcat4x", ContainerType.REMOTE, ConfigurationType.RUNTIME,
+-            "org.codehaus.cargo.container.tomcat.TomcatRuntimeConfiguration");
+-        registerConfiguration("tomcat5x", ContainerType.INSTALLED, ConfigurationType.STANDALONE,
+-            "org.codehaus.cargo.container.tomcat.Tomcat5xStandaloneLocalConfiguration");
+-        registerConfiguration("tomcat5x", ContainerType.EMBEDDED, ConfigurationType.STANDALONE,
+-            "org.codehaus.cargo.container.tomcat.Tomcat5xStandaloneLocalConfiguration");
+-        registerConfiguration("tomcat5x", ContainerType.INSTALLED, ConfigurationType.EXISTING,
+-            "org.codehaus.cargo.container.tomcat.TomcatExistingLocalConfiguration");
+-        registerConfiguration("tomcat5x", ContainerType.EMBEDDED, ConfigurationType.EXISTING,
+-            "org.codehaus.cargo.container.tomcat.TomcatExistingLocalConfiguration");
+-        registerConfiguration("tomcat5x", ContainerType.REMOTE, ConfigurationType.RUNTIME,
+-            "org.codehaus.cargo.container.tomcat.TomcatRuntimeConfiguration");
++    registerConfiguration("jo1x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.jo.Jo1xStandaloneLocalConfiguration");
+ 
+-        registerConfiguration("weblogic8x", ContainerType.INSTALLED, ConfigurationType.STANDALONE,
+-            "org.codehaus.cargo.container.weblogic.WebLogicStandaloneLocalConfiguration");
+-        registerConfiguration("weblogic8x", ContainerType.INSTALLED, ConfigurationType.EXISTING,
+-            "org.codehaus.cargo.container.weblogic.WebLogicExistingLocalConfiguration");
+-    }
++    registerConfiguration("orion1x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.orion.OrionStandaloneLocalConfiguration");
++    registerConfiguration("orion2x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.orion.OrionStandaloneLocalConfiguration");
++    registerConfiguration("oc4j9x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.orion.Oc4j9xStandaloneLocalConfiguration");
+ 
+-    /**
+-     * {@inheritDoc}
+-     * @see ConfigurationFactory#isConfigurationRegistered
+-     */
+-    public boolean isConfigurationRegistered(String containerId, ContainerType containerType,
+-        ConfigurationType configurationType)
+-    {
+-        return hasMapping(new RegistrationKey(new FullContainerIdentity(containerId,
+-            containerType), configurationType.getType()));
+-    }
++    registerConfiguration("resin2x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.resin.Resin2xStandaloneLocalConfiguration");
++    registerConfiguration("resin2x", ContainerType.INSTALLED,
++        ConfigurationType.EXISTING,
++        "org.codehaus.cargo.container.resin.ResinExistingLocalConfiguration");
++    registerConfiguration("resin3x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.resin.Resin3xStandaloneLocalConfiguration");
++    registerConfiguration("resin3x", ContainerType.INSTALLED,
++        ConfigurationType.EXISTING,
++        "org.codehaus.cargo.container.resin.ResinExistingLocalConfiguration");
+ 
+-    /**
+-     * {@inheritDoc}
+-     * @see ConfigurationFactory#registerConfiguration
+-     */
+-    public void registerConfiguration(String containerId, ContainerType containerType,
+-        ConfigurationType configurationType, Class configurationClass)
+-    {
+-        registerImplementation(new RegistrationKey(new FullContainerIdentity(containerId,
+-            containerType), configurationType.getType()), configurationClass);
+-    }
++    registerConfiguration("tomcat3x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.tomcat.Tomcat3xStandaloneLocalConfiguration");
++    registerConfiguration("tomcat4x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.tomcat.Tomcat4xStandaloneLocalConfiguration");
++    registerConfiguration("tomcat4x", ContainerType.INSTALLED,
++        ConfigurationType.EXISTING,
++        "org.codehaus.cargo.container.tomcat.TomcatExistingLocalConfiguration");
++    registerConfiguration("tomcat4x", ContainerType.REMOTE,
++        ConfigurationType.RUNTIME,
++        "org.codehaus.cargo.container.tomcat.TomcatRuntimeConfiguration");
++    registerConfiguration("tomcat5x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.tomcat.Tomcat5xStandaloneLocalConfiguration");
++    registerConfiguration("tomcat5x", ContainerType.EMBEDDED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.tomcat.Tomcat5xStandaloneLocalConfiguration");
++    registerConfiguration("tomcat5x", ContainerType.INSTALLED,
++        ConfigurationType.EXISTING,
++        "org.codehaus.cargo.container.tomcat.TomcatExistingLocalConfiguration");
++    registerConfiguration("tomcat5x", ContainerType.EMBEDDED,
++        ConfigurationType.EXISTING,
++        "org.codehaus.cargo.container.tomcat.TomcatExistingLocalConfiguration");
++    registerConfiguration("tomcat5x", ContainerType.REMOTE,
++        ConfigurationType.RUNTIME,
++        "org.codehaus.cargo.container.tomcat.TomcatRuntimeConfiguration");
+ 
+-    /**
+-     * Registers a configuration using a class specified as a String.
+-     *
+-     * @param containerId {@inheritDoc}
+-     * @param containerType {@inheritDoc}
+-     * @param configurationType {@inheritDoc}
+-     * @param configurationClassName the configuration implementation class to register as a String
+-     * @see #registerConfiguration(String, org.codehaus.cargo.container.ContainerType, org.codehaus.cargo.container.configuration.ConfigurationType, Class)
+-     */
+-    public void registerConfiguration(String containerId, ContainerType containerType,
+-        ConfigurationType configurationType, String configurationClassName)
+-    {
+-        registerImplementation(new RegistrationKey(new FullContainerIdentity(containerId,
+-            containerType), configurationType.getType()), configurationClassName);
+-    }
++    registerConfiguration("weblogic8x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.weblogic.WebLogic8xStandaloneLocalConfiguration");
++    registerConfiguration("weblogic8x", ContainerType.INSTALLED,
++        ConfigurationType.EXISTING,
++        "org.codehaus.cargo.container.weblogic.WebLogic8xExistingLocalConfiguration");
++    registerConfiguration("weblogic9x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.weblogic.WebLogic9xStandaloneLocalConfiguration");
++    registerConfiguration("weblogic9x", ContainerType.INSTALLED,
++        ConfigurationType.EXISTING,
++        "org.codehaus.cargo.container.weblogic.WebLogic9xExistingLocalConfiguration");
++  }
+ 
+-    /**
+-     * {@inheritDoc}
+-     * @see ConfigurationFactory#getConfigurationClass
+-     */
+-    public Class getConfigurationClass(String containerId, ContainerType containerType,
+-        ConfigurationType configurationType)
+-    {
+-        return getMapping(new RegistrationKey(new FullContainerIdentity(containerId,
+-            containerType), configurationType.getType()));
+-    }
++  /**
++   * {@inheritDoc}
++   * 
++   * @see ConfigurationFactory#isConfigurationRegistered
++   */
++  public boolean isConfigurationRegistered(String containerId,
++      ContainerType containerType, ConfigurationType configurationType) {
++    return hasMapping(new RegistrationKey(new FullContainerIdentity(
++        containerId, containerType), configurationType.getType()));
++  }
+ 
+-    /**
+-     * {@inheritDoc}
+-     * @see ConfigurationFactory#createConfiguration(String, org.codehaus.cargo.container.ContainerType, org.codehaus.cargo.container.configuration.ConfigurationType)
+-     */
+-    public Configuration createConfiguration(String containerId, ContainerType containerType,
+-        ConfigurationType configurationType)
+-    {
+-        return createConfiguration(containerId, containerType, configurationType, null);
+-    }
++  /**
++   * {@inheritDoc}
++   * 
++   * @see ConfigurationFactory#registerConfiguration
++   */
++  public void registerConfiguration(String containerId,
++      ContainerType containerType, ConfigurationType configurationType,
++      Class configurationClass) {
++    registerImplementation(new RegistrationKey(new FullContainerIdentity(
++        containerId, containerType), configurationType.getType()),
++        configurationClass);
++  }
+ 
+-    /**
+-     * {@inheritDoc}
+-     * @see ConfigurationFactory#createConfiguration(String, org.codehaus.cargo.container.ContainerType, org.codehaus.cargo.container.configuration.ConfigurationType, String) 
+-     */
+-    public Configuration createConfiguration(String containerId, ContainerType containerType,
+-        ConfigurationType configurationType, String home)
+-    {
+-        ConfigurationFactoryParameters parameters = new ConfigurationFactoryParameters();
+-        parameters.home = home;
+-        
+-        return (Configuration) createImplementation(new RegistrationKey(
+-            new FullContainerIdentity(containerId, containerType), configurationType.getType()),
+-            parameters, "configuration");
+-    }
++  /**
++   * Registers a configuration using a class specified as a String.
++   * 
++   * @param containerId
++   *          {@inheritDoc}
++   * @param containerType
++   *          {@inheritDoc}
++   * @param configurationType
++   *          {@inheritDoc}
++   * @param configurationClassName
++   *          the configuration implementation class to register as a String
++   * @see #registerConfiguration(String,
++   *      org.codehaus.cargo.container.ContainerType,
++   *      org.codehaus.cargo.container.configuration.ConfigurationType, Class)
++   */
++  public void registerConfiguration(String containerId,
++      ContainerType containerType, ConfigurationType configurationType,
++      String configurationClassName) {
++    registerImplementation(new RegistrationKey(new FullContainerIdentity(
++        containerId, containerType), configurationType.getType()),
++        configurationClassName);
++  }
+ 
+-    /**
+-     * {@inheritDoc}
+-     * @see org.codehaus.cargo.generic.spi.AbstractGenericHintFactory#getConstructor(Class, String, GenericParameters)
+-     */
+-    protected Constructor getConstructor(Class configurationClass, String hint,
+-        GenericParameters parameters) throws NoSuchMethodException
+-    {
+-        Constructor constructor;
+-        
+-        // Runtime configurations have constructors that do not take any parameter.
+-        if (ConfigurationType.toType(hint) == ConfigurationType.RUNTIME)
+-        {
+-            constructor = configurationClass.getConstructor(new Class[] {});
+-        }
+-        else if ((ConfigurationType.toType(hint) == ConfigurationType.EXISTING) 
+-            || (ConfigurationType.toType(hint) == ConfigurationType.STANDALONE))
+-        {
+-            constructor = configurationClass.getConstructor(new Class[] {String.class});
+-        }
+-        else
+-        {
+-            throw new ContainerException("Unknown configuration type [" + hint + "]");
+-        }
+-        
+-        return constructor; 
++  /**
++   * {@inheritDoc}
++   * 
++   * @see ConfigurationFactory#getConfigurationClass
++   */
++  public Class getConfigurationClass(String containerId,
++      ContainerType containerType, ConfigurationType configurationType) {
++    return getMapping(new RegistrationKey(new FullContainerIdentity(
++        containerId, containerType), configurationType.getType()));
++  }
++
++  /**
++   * {@inheritDoc}
++   * 
++   * @see ConfigurationFactory#createConfiguration(String,
++   *      org.codehaus.cargo.container.ContainerType,
++   *      org.codehaus.cargo.container.configuration.ConfigurationType)
++   */
++  public Configuration createConfiguration(String containerId,
++      ContainerType containerType, ConfigurationType configurationType) {
++    return createConfiguration(containerId, containerType, configurationType,
++        null);
++  }
++
++  /**
++   * {@inheritDoc}
++   * 
++   * @see ConfigurationFactory#createConfiguration(String,
++   *      org.codehaus.cargo.container.ContainerType,
++   *      org.codehaus.cargo.container.configuration.ConfigurationType, String)
++   */
++  public Configuration createConfiguration(String containerId,
++      ContainerType containerType, ConfigurationType configurationType,
++      String home) {
++    ConfigurationFactoryParameters parameters = new ConfigurationFactoryParameters();
++    parameters.home = home;
++
++    return (Configuration) createImplementation(new RegistrationKey(
++        new FullContainerIdentity(containerId, containerType),
++        configurationType.getType()), parameters, "configuration");
++  }
++
++  /**
++   * {@inheritDoc}
++   * 
++   * @see org.codehaus.cargo.generic.spi.AbstractGenericHintFactory#getConstructor(Class,
++   *      String, GenericParameters)
++   */
++  protected Constructor getConstructor(Class configurationClass, String hint,
++      GenericParameters parameters) throws NoSuchMethodException {
++    Constructor constructor;
++
++    // Runtime configurations have constructors that do not take any parameter.
++    if (ConfigurationType.toType(hint) == ConfigurationType.RUNTIME) {
++      constructor = configurationClass.getConstructor(new Class[] {});
++    } else if ((ConfigurationType.toType(hint) == ConfigurationType.EXISTING)
++        || (ConfigurationType.toType(hint) == ConfigurationType.STANDALONE)) {
++      constructor = configurationClass
++          .getConstructor(new Class[] { String.class });
++    } else {
++      throw new ContainerException("Unknown configuration type [" + hint + "]");
+     }
+ 
+-    /**
+-     * {@inheritDoc}
+-     * @see org.codehaus.cargo.generic.spi.AbstractGenericHintFactory#createInstance
+-     */
+-    protected Object createInstance(Constructor constructor, String hint,
+-        GenericParameters parameters) throws Exception
+-    {
+-        Object instance;
++    return constructor;
++  }
+ 
+-        String home = ((ConfigurationFactoryParameters) parameters).home;
++  /**
++   * {@inheritDoc}
++   * 
++   * @see org.codehaus.cargo.generic.spi.AbstractGenericHintFactory#createInstance
++   */
++  protected Object createInstance(Constructor constructor, String hint,
++      GenericParameters parameters) throws Exception {
++    Object instance;
+ 
+-        // Runtime configurations have constructors that do not take any parameter.
+-        if (ConfigurationType.toType(hint) == ConfigurationType.RUNTIME)
+-        {
+-            if (home != null)
+-            {
+-                throw new ContainerException("The configuration home parameter should not be "
+-                    + "specified for runtime configurations");
+-            }
+-            
+-            instance = constructor.newInstance(new Object[] {});
++    String home = ((ConfigurationFactoryParameters) parameters).home;
++
++    // Runtime configurations have constructors that do not take any parameter.
++    if (ConfigurationType.toType(hint) == ConfigurationType.RUNTIME) {
++      if (home != null) {
++        throw new ContainerException(
++            "The configuration home parameter should not be "
++                + "specified for runtime configurations");
++      }
++
++      instance = constructor.newInstance(new Object[] {});
++    } else if ((ConfigurationType.toType(hint) == ConfigurationType.EXISTING)
++        || (ConfigurationType.toType(hint) == ConfigurationType.STANDALONE)) {
++      if (home == null) {
++        // The user has not specified a home directory for the configuration,
++        // create one
++        // in the temporary directory if it's a standalone configuration
++        if (ConfigurationType.toType(hint) == ConfigurationType.EXISTING) {
++          throw new ContainerException(
++              "The configuration home parameter must be "
++                  + "specified for existing configurations");
++        } else {
++          home = this.fileHandler.getTmpPath("conf");
+         }
+-        else if ((ConfigurationType.toType(hint) == ConfigurationType.EXISTING) 
+-            || (ConfigurationType.toType(hint) == ConfigurationType.STANDALONE))
+-        {
+-            if (home == null)
+-            {
+-                // The user has not specified a home directory for the configuration, create one
+-                // in the temporary directory if it's a standalone configuration
+-                if (ConfigurationType.toType(hint) == ConfigurationType.EXISTING)
+-                {
+-                    throw new ContainerException("The configuration home parameter must be "
+-                        + "specified for existing configurations");
+-                }
+-                else
+-                {
+-                    home = this.fileHandler.getTmpPath("conf");
+-                }
+-            }
++      }
+ 
+-            instance = constructor.newInstance(new Object[] {home}); 
+-        }
+-        else
+-        {
+-            throw new ContainerException("Unknown configuration type [" + hint + "]");
+-        }
+-        
+-        return instance; 
++      instance = constructor.newInstance(new Object[] { home });
++    } else {
++      throw new ContainerException("Unknown configuration type [" + hint + "]");
+     }
++
++    return instance;
++  }
+ }
+Index: api/generic/src/main/java/org/codehaus/cargo/generic/configuration/DefaultConfigurationCapabilityFactory.java
+===================================================================
+--- api/generic/src/main/java/org/codehaus/cargo/generic/configuration/DefaultConfigurationCapabilityFactory.java	(revision 1460)
++++ api/generic/src/main/java/org/codehaus/cargo/generic/configuration/DefaultConfigurationCapabilityFactory.java	(working copy)
+@@ -29,186 +29,237 @@
+ import java.lang.reflect.Constructor;
+ 
+ /**
+- * Default implementation of {@link ConfigurationCapabilityFactory}.
+- * Registers all known configuration capabilities.
+- *
+- * @version $Id$
++ * Default implementation of {@link ConfigurationCapabilityFactory}. Registers
++ * all known configuration capabilities.
++ * 
++ * @version $Id: DefaultConfigurationCapabilityFactory.java 1233 2006-11-22
++ *          09:15:56Z vmassol $
+  */
+-public class DefaultConfigurationCapabilityFactory extends AbstractIntrospectionGenericHintFactory
+-    implements ConfigurationCapabilityFactory
+-{
+-    /**
+-     * Initialize configuration capability name mappings with container ids and configuration types.
+-     */
+-    public DefaultConfigurationCapabilityFactory()
+-    {
+-        super();
++public class DefaultConfigurationCapabilityFactory extends
++    AbstractIntrospectionGenericHintFactory implements
++    ConfigurationCapabilityFactory {
++  /**
++   * Initialize configuration capability name mappings with container ids and
++   * configuration types.
++   */
++  public DefaultConfigurationCapabilityFactory() {
++    super();
+ 
+-        // Note: We register configuration capabilities using introspection so that we don't have to
+-        // depend on those classes at build time nor at runtime. More specifically this allows a
+-        // user to use the generic API and choose what container implementation jar he wants to use
+-        // without having to add all container implementations jars in the classpath.
++    // Note: We register configuration capabilities using introspection so that
++    // we don't have to
++    // depend on those classes at build time nor at runtime. More specifically
++    // this allows a
++    // user to use the generic API and choose what container implementation jar
++    // he wants to use
++    // without having to add all container implementations jars in the
++    // classpath.
+ 
+-        // Note: Sorted by container id alphabetical order
++    // Note: Sorted by container id alphabetical order
+ 
+-        registerConfigurationCapability("geronimo1x", ContainerType.INSTALLED,
+-            ConfigurationType.STANDALONE, "org.codehaus.cargo.container.geronimo.internal."
+-                + "GeronimoStandaloneLocalConfigurationCapability");
+-        registerConfigurationCapability("geronimo1x", ContainerType.INSTALLED,
+-            ConfigurationType.EXISTING, "org.codehaus.cargo.container.geronimo.internal."
+-                + "GeronimoExistingLocalConfigurationCapability");
++    registerConfigurationCapability("geronimo1x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.geronimo.internal."
++            + "GeronimoStandaloneLocalConfigurationCapability");
++    registerConfigurationCapability("geronimo1x", ContainerType.INSTALLED,
++        ConfigurationType.EXISTING,
++        "org.codehaus.cargo.container.geronimo.internal."
++            + "GeronimoExistingLocalConfigurationCapability");
+ 
+-        registerConfigurationCapability("jboss3x", ContainerType.INSTALLED,
+-            ConfigurationType.STANDALONE, "org.codehaus.cargo.container.jboss.internal."
+-                + "JBossStandaloneLocalConfigurationCapability");
+-        registerConfigurationCapability("jboss3x", ContainerType.INSTALLED,
+-            ConfigurationType.EXISTING, "org.codehaus.cargo.container.jboss.internal."
+-                + "JBossExistingLocalConfigurationCapability");
+-        registerConfigurationCapability("jboss3x", ContainerType.INSTALLED,
+-            ConfigurationType.RUNTIME, "org.codehaus.cargo.container.jboss.internal."
+-                + "JBossRuntimeConfigurationCapability");
+-        registerConfigurationCapability("jboss4x", ContainerType.INSTALLED,
+-            ConfigurationType.STANDALONE, "org.codehaus.cargo.container.jboss.internal."
+-                + "JBossStandaloneLocalConfigurationCapability");
+-        registerConfigurationCapability("jboss4x", ContainerType.INSTALLED,
+-            ConfigurationType.EXISTING, "org.codehaus.cargo.container.jboss.internal."
+-                + "JBossExistingLocalConfigurationCapability");
+-        registerConfigurationCapability("jboss4x", ContainerType.REMOTE,
+-            ConfigurationType.RUNTIME, "org.codehaus.cargo.container.jboss.internal."
+-                + "JBossRuntimeConfigurationCapability");
++    registerConfigurationCapability("jboss3x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.jboss.internal."
++            + "JBossStandaloneLocalConfigurationCapability");
++    registerConfigurationCapability("jboss3x", ContainerType.INSTALLED,
++        ConfigurationType.EXISTING,
++        "org.codehaus.cargo.container.jboss.internal."
++            + "JBossExistingLocalConfigurationCapability");
++    registerConfigurationCapability("jboss3x", ContainerType.INSTALLED,
++        ConfigurationType.RUNTIME,
++        "org.codehaus.cargo.container.jboss.internal."
++            + "JBossRuntimeConfigurationCapability");
++    registerConfigurationCapability("jboss4x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.jboss.internal."
++            + "JBossStandaloneLocalConfigurationCapability");
++    registerConfigurationCapability("jboss4x", ContainerType.INSTALLED,
++        ConfigurationType.EXISTING,
++        "org.codehaus.cargo.container.jboss.internal."
++            + "JBossExistingLocalConfigurationCapability");
++    registerConfigurationCapability("jboss4x", ContainerType.REMOTE,
++        ConfigurationType.RUNTIME,
++        "org.codehaus.cargo.container.jboss.internal."
++            + "JBossRuntimeConfigurationCapability");
+ 
+-        registerConfigurationCapability("jetty4x", ContainerType.EMBEDDED,
+-            ConfigurationType.STANDALONE, "org.codehaus.cargo.container.jetty.internal."
+-                + "Jetty4xStandaloneLocalConfigurationCapability");
+-        registerConfigurationCapability("jetty5x", ContainerType.EMBEDDED,
+-            ConfigurationType.STANDALONE, "org.codehaus.cargo.container.jetty.internal."
+-                + "Jetty5xStandaloneLocalConfigurationCapability");
+-        registerConfigurationCapability("jetty6x", ContainerType.EMBEDDED,
+-            ConfigurationType.STANDALONE, "org.codehaus.cargo.container.jetty.internal."
+-                + "Jetty6xStandaloneLocalConfigurationCapability");
++    registerConfigurationCapability("jetty4x", ContainerType.EMBEDDED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.jetty.internal."
++            + "Jetty4xStandaloneLocalConfigurationCapability");
++    registerConfigurationCapability("jetty5x", ContainerType.EMBEDDED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.jetty.internal."
++            + "Jetty5xStandaloneLocalConfigurationCapability");
++    registerConfigurationCapability("jetty6x", ContainerType.EMBEDDED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.jetty.internal."
++            + "Jetty6xStandaloneLocalConfigurationCapability");
+ 
+-        registerConfigurationCapability("jo1x", ContainerType.INSTALLED,
+-            ConfigurationType.STANDALONE, "org.codehaus.cargo.container.jo.internal."
+-                + "Jo1xStandaloneLocalConfigurationCapability");
++    registerConfigurationCapability("jo1x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.jo.internal."
++            + "Jo1xStandaloneLocalConfigurationCapability");
+ 
+-        registerConfigurationCapability("orion1x", ContainerType.INSTALLED,
+-            ConfigurationType.STANDALONE, "org.codehaus.cargo.container.orion.internal."
+-                + "OrionStandaloneLocalConfigurationCapability");
+-        registerConfigurationCapability("orion2x", ContainerType.INSTALLED,
+-            ConfigurationType.STANDALONE, "org.codehaus.cargo.container.orion.internal."
+-                + "OrionStandaloneLocalConfigurationCapability");
+-        registerConfigurationCapability("oc4j9x", ContainerType.INSTALLED,
+-            ConfigurationType.STANDALONE, "org.codehaus.cargo.container.orion.internal."
+-                + "OrionStandaloneLocalConfigurationCapability");
++    registerConfigurationCapability("orion1x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.orion.internal."
++            + "OrionStandaloneLocalConfigurationCapability");
++    registerConfigurationCapability("orion2x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.orion.internal."
++            + "OrionStandaloneLocalConfigurationCapability");
++    registerConfigurationCapability("oc4j9x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.orion.internal."
++            + "OrionStandaloneLocalConfigurationCapability");
+ 
+-        registerConfigurationCapability("resin2x", ContainerType.INSTALLED,
+-            ConfigurationType.STANDALONE, "org.codehaus.cargo.container.resin.internal."
+-                + "ResinStandaloneLocalConfigurationCapability");
+-        registerConfigurationCapability("resin2x", ContainerType.INSTALLED,
+-            ConfigurationType.EXISTING, "org.codehaus.cargo.container.resin.internal."
+-                + "ResinExistingLocalConfigurationCapability");
+-        registerConfigurationCapability("resin3x", ContainerType.INSTALLED,
+-            ConfigurationType.STANDALONE, "org.codehaus.cargo.container.resin.internal."
+-                + "ResinStandaloneLocalConfigurationCapability");
+-        registerConfigurationCapability("resin3x", ContainerType.INSTALLED,
+-            ConfigurationType.EXISTING, "org.codehaus.cargo.container.resin.internal."
+-                + "ResinExistingLocalConfigurationCapability");
++    registerConfigurationCapability("resin2x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.resin.internal."
++            + "ResinStandaloneLocalConfigurationCapability");
++    registerConfigurationCapability("resin2x", ContainerType.INSTALLED,
++        ConfigurationType.EXISTING,
++        "org.codehaus.cargo.container.resin.internal."
++            + "ResinExistingLocalConfigurationCapability");
++    registerConfigurationCapability("resin3x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.resin.internal."
++            + "ResinStandaloneLocalConfigurationCapability");
++    registerConfigurationCapability("resin3x", ContainerType.INSTALLED,
++        ConfigurationType.EXISTING,
++        "org.codehaus.cargo.container.resin.internal."
++            + "ResinExistingLocalConfigurationCapability");
+ 
+-        registerConfigurationCapability("tomcat3x", ContainerType.INSTALLED,
+-            ConfigurationType.STANDALONE, "org.codehaus.cargo.container.tomcat.internal."
+-                + "TomcatStandaloneLocalConfigurationCapability");
+-        registerConfigurationCapability("tomcat4x", ContainerType.INSTALLED,
+-            ConfigurationType.STANDALONE, "org.codehaus.cargo.container.tomcat.internal."
+-                + "TomcatStandaloneLocalConfigurationCapability");
+-        registerConfigurationCapability("tomcat4x", ContainerType.INSTALLED,
+-            ConfigurationType.EXISTING, "org.codehaus.cargo.container.tomcat.internal."
+-                + "TomcatExistingLocalConfigurationCapability");
+-        registerConfigurationCapability("tomcat4x", ContainerType.REMOTE,
+-            ConfigurationType.RUNTIME, "org.codehaus.cargo.container.tomcat.internal."
+-                + "TomcatRuntimeConfigurationCapability");
+-        registerConfigurationCapability("tomcat5x", ContainerType.INSTALLED,
+-            ConfigurationType.STANDALONE, "org.codehaus.cargo.container.tomcat.internal."
+-                + "TomcatStandaloneLocalConfigurationCapability");
+-        registerConfigurationCapability("tomcat5x", ContainerType.EMBEDDED,
+-            ConfigurationType.STANDALONE, "org.codehaus.cargo.container.tomcat.internal."
+-                + "TomcatStandaloneLocalConfigurationCapability");
+-        registerConfigurationCapability("tomcat5x", ContainerType.INSTALLED,
+-            ConfigurationType.EXISTING, "org.codehaus.cargo.container.tomcat.internal."
+-                + "TomcatExistingLocalConfigurationCapability");
+-        registerConfigurationCapability("tomcat5x", ContainerType.EMBEDDED,
+-            ConfigurationType.EXISTING, "org.codehaus.cargo.container.tomcat.internal."
+-                + "TomcatExistingLocalConfigurationCapability");
+-        registerConfigurationCapability("tomcat5x", ContainerType.REMOTE,
+-            ConfigurationType.RUNTIME, "org.codehaus.cargo.container.tomcat.internal."
+-                + "TomcatRuntimeConfigurationCapability");
++    registerConfigurationCapability("tomcat3x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.tomcat.internal."
++            + "TomcatStandaloneLocalConfigurationCapability");
++    registerConfigurationCapability("tomcat4x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.tomcat.internal."
++            + "TomcatStandaloneLocalConfigurationCapability");
++    registerConfigurationCapability("tomcat4x", ContainerType.INSTALLED,
++        ConfigurationType.EXISTING,
++        "org.codehaus.cargo.container.tomcat.internal."
++            + "TomcatExistingLocalConfigurationCapability");
++    registerConfigurationCapability("tomcat4x", ContainerType.REMOTE,
++        ConfigurationType.RUNTIME,
++        "org.codehaus.cargo.container.tomcat.internal."
++            + "TomcatRuntimeConfigurationCapability");
++    registerConfigurationCapability("tomcat5x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.tomcat.internal."
++            + "TomcatStandaloneLocalConfigurationCapability");
++    registerConfigurationCapability("tomcat5x", ContainerType.EMBEDDED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.tomcat.internal."
++            + "TomcatStandaloneLocalConfigurationCapability");
++    registerConfigurationCapability("tomcat5x", ContainerType.INSTALLED,
++        ConfigurationType.EXISTING,
++        "org.codehaus.cargo.container.tomcat.internal."
++            + "TomcatExistingLocalConfigurationCapability");
++    registerConfigurationCapability("tomcat5x", ContainerType.EMBEDDED,
++        ConfigurationType.EXISTING,
++        "org.codehaus.cargo.container.tomcat.internal."
++            + "TomcatExistingLocalConfigurationCapability");
++    registerConfigurationCapability("tomcat5x", ContainerType.REMOTE,
++        ConfigurationType.RUNTIME,
++        "org.codehaus.cargo.container.tomcat.internal."
++            + "TomcatRuntimeConfigurationCapability");
+ 
+-        registerConfigurationCapability("weblogic8x", ContainerType.INSTALLED,
+-            ConfigurationType.STANDALONE, "org.codehaus.cargo.container.weblogic.internal."
+-                + "WebLogicStandaloneLocalConfigurationCapability");
+-        registerConfigurationCapability("weblogic8x", ContainerType.INSTALLED,
+-            ConfigurationType.EXISTING, "org.codehaus.cargo.container.weblogic.internal."
+-                + "WebLogicExistingLocalConfigurationCapability");
+-    }
++    registerConfigurationCapability("weblogic8x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.weblogic.internal."
++            + "WebLogicStandaloneLocalConfigurationCapability");
++    registerConfigurationCapability("weblogic8x", ContainerType.INSTALLED,
++        ConfigurationType.EXISTING,
++        "org.codehaus.cargo.container.weblogic.internal."
++            + "WebLogicExistingLocalConfigurationCapability");
++    registerConfigurationCapability("weblogic9x", ContainerType.INSTALLED,
++        ConfigurationType.STANDALONE,
++        "org.codehaus.cargo.container.weblogic.internal."
++            + "WebLogicStandaloneLocalConfigurationCapability");
++    registerConfigurationCapability("weblogic9x", ContainerType.INSTALLED,
++        ConfigurationType.EXISTING,
++        "org.codehaus.cargo.container.weblogic.internal."
++            + "WebLogicExistingLocalConfigurationCapability");
++  }
+ 
+-    /**
+-     * {@inheritDoc}
+-     * @see ConfigurationCapabilityFactory#registerConfigurationCapability
+-     */
+-    public void registerConfigurationCapability(String containerId, ContainerType containerType,
+-        ConfigurationType configurationType, Class configurationCapabilityClass)
+-    {
+-        registerImplementation(new RegistrationKey(
+-            new FullContainerIdentity(containerId, containerType), configurationType.getType()),
+-            configurationCapabilityClass);
+-    }
++  /**
++   * {@inheritDoc}
++   * 
++   * @see ConfigurationCapabilityFactory#registerConfigurationCapability
++   */
++  public void registerConfigurationCapability(String containerId,
++      ContainerType containerType, ConfigurationType configurationType,
++      Class configurationCapabilityClass) {
++    registerImplementation(new RegistrationKey(new FullContainerIdentity(
++        containerId, containerType), configurationType.getType()),
++        configurationCapabilityClass);
++  }
+ 
+-    /**
+-     * Registers a configuration capability using a class specified as a String.
+-     *
+-     * @param containerId {@inheritDoc}
+-     * @param containerType {@inheritDoc}
+-     * @param configurationType {@inheritDoc}
+-     * @param configurationCapabilityClass the configuration capability implementation class to
+-     *        register as a String
+-     * @see #registerConfigurationCapability(String, org.codehaus.cargo.container.ContainerType, org.codehaus.cargo.container.configuration.ConfigurationType, String)
+-     */
+-    public void registerConfigurationCapability(String containerId, ContainerType containerType,
+-        ConfigurationType configurationType, String configurationCapabilityClass)
+-    {
+-        registerImplementation(new RegistrationKey(
+-            new FullContainerIdentity(containerId, containerType), configurationType.getType()),
+-            configurationCapabilityClass);
+-    }
++  /**
++   * Registers a configuration capability using a class specified as a String.
++   * 
++   * @param containerId
++   *          {@inheritDoc}
++   * @param containerType
++   *          {@inheritDoc}
++   * @param configurationType
++   *          {@inheritDoc}
++   * @param configurationCapabilityClass
++   *          the configuration capability implementation class to register as a
++   *          String
++   * @see #registerConfigurationCapability(String,
++   *      org.codehaus.cargo.container.ContainerType,
++   *      org.codehaus.cargo.container.configuration.ConfigurationType, String)
++   */
++  public void registerConfigurationCapability(String containerId,
++      ContainerType containerType, ConfigurationType configurationType,
++      String configurationCapabilityClass) {
++    registerImplementation(new RegistrationKey(new FullContainerIdentity(
++        containerId, containerType), configurationType.getType()),
++        configurationCapabilityClass);
++  }
+ 
+-    /**
+-     * {@inheritDoc}
+-     * @see ConfigurationCapabilityFactory#createConfigurationCapability
+-     */
+-    public ConfigurationCapability createConfigurationCapability(String containerId,
+-        ContainerType containerType, ConfigurationType configurationType)
+-    {
+-        return (ConfigurationCapability) createImplementation(new RegistrationKey(
+-            new FullContainerIdentity(containerId, containerType), configurationType.getType()),
+-            null, "configuration capability");
+-    }
++  /**
++   * {@inheritDoc}
++   * 
++   * @see ConfigurationCapabilityFactory#createConfigurationCapability
++   */
++  public ConfigurationCapability createConfigurationCapability(
++      String containerId, ContainerType containerType,
++      ConfigurationType configurationType) {
++    return (ConfigurationCapability) createImplementation(new RegistrationKey(
++        new FullContainerIdentity(containerId, containerType),
++        configurationType.getType()), null, "configuration capability");
++  }
+ 
+-    /**
+-     * {@inheritDoc}
+-     * @see org.codehaus.cargo.generic.spi.AbstractGenericHintFactory#getConstructor
+-     */
+-    protected Constructor getConstructor(Class configurationCapabilityClass, String hint,
+-        GenericParameters parameters) throws NoSuchMethodException
+-    {
+-        return configurationCapabilityClass.getConstructor(null);
+-    }
++  /**
++   * {@inheritDoc}
++   * 
++   * @see org.codehaus.cargo.generic.spi.AbstractGenericHintFactory#getConstructor
++   */
++  protected Constructor getConstructor(Class configurationCapabilityClass,
++      String hint, GenericParameters parameters) throws NoSuchMethodException {
++    return configurationCapabilityClass.getConstructor(null);
++  }
+ 
+-    /**
+-     * {@inheritDoc}
+-     * @see org.codehaus.cargo.generic.spi.AbstractGenericHintFactory#createInstance
+-     */
+-    protected Object createInstance(Constructor constructor, String hint,
+-        GenericParameters parameters) throws Exception
+-    {
+-        return constructor.newInstance(null);
+-    }
++  /**
++   * {@inheritDoc}
++   * 
++   * @see org.codehaus.cargo.generic.spi.AbstractGenericHintFactory#createInstance
++   */
++  protected Object createInstance(Constructor constructor, String hint,
++      GenericParameters parameters) throws Exception {
++    return constructor.newInstance(null);
++  }
+ }
+Index: pom.xml
+===================================================================
+--- pom.xml	(revision 1460)
++++ pom.xml	(working copy)
+@@ -71,6 +71,14 @@
+             </dependency>
+           </dependencies>
+         </plugin>
++        <plugin>
++          <groupId>org.codehaus.mojo</groupId>
++          <artifactId>clirr-maven-plugin</artifactId>
++          <configuration>
++            <failOnError>false</failOnError>
++            <minSeverity>info</minSeverity>
++          </configuration>
++        </plugin>
+       </plugins>
+     </pluginManagement>
+   </build>
