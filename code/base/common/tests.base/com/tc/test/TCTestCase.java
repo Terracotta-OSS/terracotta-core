@@ -238,7 +238,7 @@ public class TCTestCase extends TestCase {
   }
 
   protected boolean cleanTempDir() {
-    return true;
+    return false;
   }
 
   protected final synchronized DataDirectoryHelper getDataDirectoryHelper() {
