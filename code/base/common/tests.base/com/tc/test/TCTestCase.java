@@ -230,14 +230,11 @@ public class TCTestCase extends TestCase {
 
   protected final synchronized TempDirectoryHelper getTempDirectoryHelper() {
     if (tempDirectoryHelper == null) {
-      System.err.println("@@@@@ Initializing tempDirectoryHelper....");
       try {
         tempDirectoryHelper = new TempDirectoryHelper(getClass(), cleanTempDir());
       } catch (IOException ioe) {
         throw new TCRuntimeException("Can't get configuration for temp directory", ioe);
       }
-    } else {
-      System.err.println("@@@@@ Already has tempDirectoryHelper....");
     }
 
     return tempDirectoryHelper;
