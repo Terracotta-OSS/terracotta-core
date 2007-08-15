@@ -69,6 +69,8 @@ public class TCTestCase extends TestCase {
   private static final Timer               timeoutTimer              = new TCTimerImpl("Timeout Thread", true);
   private static final SynchronizedBoolean timeoutTaskAdded          = new SynchronizedBoolean(false);
 
+  private static boolean                   printedProcess            = false;
+
   // If you want to customize this, you have to do it in the constructor of your test case (setUp() is too late)
   private long                             timeoutThreshold          = DEFAULT_TIMEOUT_THRESHOLD;
 
@@ -79,7 +81,7 @@ public class TCTestCase extends TestCase {
 
   // a way to ensure that system clock moves forward...
   private long                             previousSystemMillis      = 0;
-  
+
   public TCTestCase() {
     super();
     init();
@@ -89,7 +91,7 @@ public class TCTestCase extends TestCase {
     super(arg0);
     init();
   }
-  
+
   private void init() {
     TCLogging.disableLocking();
     printOutCurrentJavaProcesses();
@@ -141,7 +143,7 @@ public class TCTestCase extends TestCase {
           + this.disabledUntil.get(testMethod));
       System.out.flush();
       return;
-    }   
+    }
 
     // don't move this stuff to runTest(), you want the timeout timer to catch hangs in setUp() too.
     // Yes it means you can't customize the timeout threshold in setUp() -- take a deep breath and
@@ -175,10 +177,12 @@ public class TCTestCase extends TestCase {
   }
 
   private void printOutCurrentJavaProcesses() {
+    if (printedProcess) return;
+    printedProcess = true;
     PrintWriter out = null;
     try {
       out = new PrintWriter(new FileWriter(this.getTempFile("javaprocesses.txt")));
-      out.println(ProcessInfo.ps_grep_java());      
+      out.println(ProcessInfo.ps_grep_java());
     } catch (Exception e) {
       throw new RuntimeException(e);
     } finally {
