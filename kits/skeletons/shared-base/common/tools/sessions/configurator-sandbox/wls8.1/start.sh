@@ -28,7 +28,7 @@ PORT="$1"
 
 if test "$2" != "nodso"; then
   TC_CONFIG_PATH="${SANDBOX}/wls8.1/tc-config.xml"
-  set -- -q "${TC_CONFIG}"
+  set -- -q "${TC_CONFIG_PATH}"
   . "${TC_INSTALL_DIR}/bin/dso-env.sh"
 
   OPTS="${TC_JAVA_OPTS} -Dwebserver.log.name=${PORT}"

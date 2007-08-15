@@ -23,7 +23,7 @@ TC_INSTALL_DIR="`pwd`"
 cd "${starting_dir}"
 
 TC_CONFIG_PATH="${WAS_SANDBOX}/tc-config.xml"
-set -- -q "${TC_CONFIG}"
+set -- -q "${TC_CONFIG_PATH}"
 . "${TC_INSTALL_DIR}"/bin/dso-env.sh
 export WAS_SANDBOX
 export TC_INSTALL_DIR

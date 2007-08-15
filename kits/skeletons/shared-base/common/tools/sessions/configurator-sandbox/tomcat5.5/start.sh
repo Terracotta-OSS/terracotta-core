@@ -16,7 +16,7 @@ export CATALINA_BASE
 
 if test "$2" != "nodso"; then
   TC_CONFIG_PATH="${SANDBOX}/tomcat5.5/tc-config.xml"
-  set -- -q "${TC_CONFIG}"
+  set -- -q "${TC_CONFIG_PATH}"
   . "${TC_INSTALL_DIR}/bin/dso-env.sh"
 
   OPTS="${TC_JAVA_OPTS} -Dwebserver.log.name=${PORT}"
