@@ -4,6 +4,8 @@
  */
 package com.tc.object.tools;
 
+import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.VendorVmSignature;
 import com.tc.util.VendorVmSignatureException;
 
@@ -35,12 +37,15 @@ public class BootJarSignature {
   }
 
   /**
-   * For now just do a regular string equality check on the signature;
-   * this can be a place to hide ugly compatibility stuff as needed
-   * @return <code>true</code> if <code>signature</code> is compatible with the current object instance. 
+   * For now just do a regular string equality check on the signature; this can be a place to hide ugly compatibility
+   * stuff as needed
+   * 
+   * @return <code>true</code> if <code>signature</code> is compatible with the current object instance.
    */
   public boolean isCompatibleWith(final BootJarSignature bootJarSignature) {
-    return signature.equals(bootJarSignature.signature);
+    TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor("l1");
+    boolean isCheckRequired = props.getBoolean("jvm.check.compatibility");
+    return isCheckRequired ? signature.equals(bootJarSignature.signature) : true;
   }
 
   static BootJarSignature getSignatureForThisVM() throws UnsupportedVMException {
@@ -49,7 +54,8 @@ public class BootJarSignature {
 
   /**
    * Calculates the filename for the DSO Boot JAR for the current VM
-   * @return A String representing DSO Boot JAR filename  
+   * 
+   * @return A String representing DSO Boot JAR filename
    */
   public static String getBootJarNameForThisVM() throws UnsupportedVMException {
     BootJarSignature signatureForThisVM = getSignatureForThisVM();
@@ -57,10 +63,10 @@ public class BootJarSignature {
   }
 
   /**
-   * README: This main() method is called from the dso-java[.bat] script. It isn't for simple test purposes or
-   * anything. Specificallly, there is a contract here.....running main() should output the expected name of the dso
-   * boot jar for the VM running this method. If you think you want to change what this method does, you better have a
-   * look at the calling scripts ;-)
+   * README: This main() method is called from the dso-java[.bat] script. It isn't for simple test purposes or anything.
+   * Specificallly, there is a contract here.....running main() should output the expected name of the dso boot jar for
+   * the VM running this method. If you think you want to change what this method does, you better have a look at the
+   * calling scripts ;-)
    */
   public static void main(String args[]) {
     try {

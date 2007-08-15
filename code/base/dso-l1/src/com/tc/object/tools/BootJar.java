@@ -85,26 +85,21 @@ public class BootJar {
 
   static BootJar getBootJarForReading(File bootJar, BootJarSignature expectedSignature) throws IOException,
       BootJarException {
-
     if (!existingFileIsAccessible(bootJar)) throw new FileNotFoundException("Cannot access file: "
                                                                             + bootJar.getAbsolutePath());
-
     JarFile jarFile = new JarFile(bootJar, false);
     Manifest manifest = jarFile.getManifest();
     BootJarMetaData metaData = new BootJarMetaData(manifest);
-    
-    // verify VM signature
-    BootJarSignature signatureFromJar = new BootJarSignature(metaData.getVMSignature());
 
-    if (!expectedSignature.isCompatibleWith(signatureFromJar)) {
-      // make formatter sane
-      throw new InvalidJVMVersionException(
-                                           "Incompatible boot jar JVM version; expected '"
-                                               + expectedSignature
-                                               + "' but was (in boot jar) '"
-                                               + signatureFromJar
-                                               + "'; Please regenerate the DSO boot jar to match this VM, or switch to a VM compatible with this boot jar");
-    }
+    // verify VM signature (iff l1.jvm.check.compatibility == true, see: tc.properties)
+    BootJarSignature signatureFromJar = new BootJarSignature(metaData.getVMSignature());
+    boolean isCompatibleVM = expectedSignature.isCompatibleWith(signatureFromJar);
+    if (!isCompatibleVM) throw new InvalidJVMVersionException(
+                                                              "Incompatible boot jar JVM version; expected '"
+                                                                  + expectedSignature
+                                                                  + "' but was (in boot jar) '"
+                                                                  + signatureFromJar
+                                                                  + "'; Please regenerate the DSO boot jar to match this VM, or switch to a VM compatible with this boot jar");
     return new BootJar(bootJar, false, metaData, jarFile);
   }
 
@@ -134,7 +129,7 @@ public class BootJar {
   public static String classNameToFileName(String className) {
     return className.replace('.', '/') + ".class";
   }
-  
+
   public static String fileNameToClassName(String filename) {
     if (!filename.endsWith(".class")) throw new AssertionError("Invalid class file name: " + filename);
     return filename.substring(0, filename.lastIndexOf('.')).replace('/', '.');
@@ -147,7 +142,7 @@ public class BootJar {
   public void loadClassIntoJar(String className, byte[] data, boolean isPreinstrumented) {
     loadClassIntoJar(className, data, isPreinstrumented, false);
   }
-  
+
   public void loadClassIntoJar(String className, byte[] data, boolean isPreinstrumented, boolean isForeign) {
     boolean added = classes.add(className);
 
@@ -169,7 +164,8 @@ public class BootJar {
     if (!openForWrite) throw new AssertionError("boot jar not open for writing");
   }
 
-  private synchronized void basicLoadClassIntoJar(JarEntry je, byte[] classBytes, boolean isPreinstrumented, boolean isForeign) {
+  private synchronized void basicLoadClassIntoJar(JarEntry je, byte[] classBytes, boolean isPreinstrumented,
+                                                  boolean isForeign) {
     assertWrite();
 
     Attributes attributes = manifest.getAttributes(je.getName());
@@ -191,32 +187,32 @@ public class BootJar {
   private static final int QUERY_PREINSTRUMENTED = 1;
   private static final int QUERY_UNINSTRUMENTED  = 2;
   private static final int QUERY_FOREIGN         = 3;
-  
+
   public synchronized byte[] getBytesForClass(final String name) throws IOException {
-    JarEntry entry      = jarFileInput.getJarEntry(BootJar.classNameToFileName(name));
-    final int bufsize   = 4098;
+    JarEntry entry = jarFileInput.getJarEntry(BootJar.classNameToFileName(name));
+    final int bufsize = 4098;
     final byte[] buffer = new byte[bufsize];
     final BufferedInputStream is = new BufferedInputStream(jarFileInput.getInputStream(entry));
-    ByteArrayOutputStream     os = new ByteArrayOutputStream();
-    for(int k=0; (k=is.read(buffer)) != -1;) {
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    for (int k = 0; (k = is.read(buffer)) != -1;) {
       os.write(buffer, 0, k);
     }
     is.close();
     return os.toByteArray();
   }
-  
+
   private synchronized Set getBootJarClassNames(int query) throws IOException {
     assertOpen();
     Set rv = new HashSet();
     for (Enumeration e = jarFileInput.entries(); e.hasMoreElements();) {
-      JarEntry entry = (JarEntry)e.nextElement();
+      JarEntry entry = (JarEntry) e.nextElement();
       String entryName = entry.getName();
-      
+
       // This condition used to only exclude "META-INF/MANIFEST.MF". Jar signing puts additional META-INF files into the
       // boot jar, which caused an assertion error. So, now only try reading specs from actual class files present in
       // the jar
       if (entryName.toLowerCase().endsWith(".class")) {
-        switch(query) {
+        switch (query) {
           case QUERY_ALL:
             rv.add(fileNameToClassName(entry.getName()));
             break;
@@ -235,19 +231,19 @@ public class BootJar {
               rv.add(fileNameToClassName(entry.getName()));
             }
           default:
-            Assert.failure("Query arg for getBootJarClasses() must be one of the following: QUERY_ALL, QUERY_PREINSTRUMENTED, QUERY_UNINSTRUMENTED, QUERY_FOREIGN");
+            Assert
+                .failure("Query arg for getBootJarClasses() must be one of the following: QUERY_ALL, QUERY_PREINSTRUMENTED, QUERY_UNINSTRUMENTED, QUERY_FOREIGN");
             break;
         }
       }
     }
     return rv;
   }
-  
-  
+
   public synchronized Set getAllClasses() throws IOException {
     return getBootJarClassNames(QUERY_ALL);
   }
-  
+
   public synchronized Set getAllUninstrumentedClasses() throws IOException {
     return getBootJarClassNames(QUERY_UNINSTRUMENTED);
   }
@@ -269,15 +265,16 @@ public class BootJar {
     if (attributes == null) throw new AssertionError("Invalid jar file: No attributes for jar entry: "
                                                      + entry.getName());
     String value = attributes.getValue(attributeName);
-    if (value == null) throw new AssertionError("Invalid jar file: No " + attributeName
-                                                + " attribute for jar entry: " + entry.getName());
+    if (value == null) throw new AssertionError("Invalid jar file: No " + attributeName + " attribute for jar entry: "
+                                                + entry.getName());
     return value;
-    
+
   }
+
   private boolean isForeign(JarEntry entry) throws IOException {
     return Boolean.valueOf(getJarEntryAttributeValue(entry, FOREIGN_NAME)).booleanValue();
   }
-  
+
   private boolean isPreInstrumentedEntry(JarEntry entry) throws IOException {
     return Boolean.valueOf(getJarEntryAttributeValue(entry, PREINSTRUMENTED_NAME)).booleanValue();
   }
@@ -346,52 +343,41 @@ public class BootJar {
     BootJarMetaData(Manifest manifest) throws BootJarException {
       Assert.assertNotNull(manifest);
       Attributes attributes = (Attributes) manifest.getEntries().get(META_DATA_ATTRIBUTE_NAME);
-      if (attributes == null) {
-        throw new InvalidBootJarMetaDataException("Missing attributes in jar manifest.");
-      }
+      if (attributes == null) { throw new InvalidBootJarMetaDataException("Missing attributes in jar manifest."); }
 
       version = attributes.getValue(VERSION);
-      if (version == null) {
-        throw new InvalidBootJarMetaDataException("Missing metadata: version.");
-      }
+      if (version == null) { throw new InvalidBootJarMetaDataException("Missing metadata: version."); }
 
       String expect_version = VERSION_1_1;
       if (expect_version.equals(version)) {
         vmSignature = attributes.getValue(VM_SIGNATURE);
-        if (vmSignature == null) {
-          throw new InvalidJVMVersionException("Missing vm signature.");
-        }
+        if (vmSignature == null) { throw new InvalidJVMVersionException("Missing vm signature."); }
       } else {
         throw new InvalidBootJarMetaDataException("Incompatible DSO meta data: version; expected '" + expect_version
-          + "' but was (in boot jar): '" + version);
+                                                  + "' but was (in boot jar): '" + version);
       }
 
       tcversion = attributes.getValue(TC_VERSION);
-      if (tcversion == null) {
-        throw new InvalidBootJarMetaDataException("Missing metadata: tcversion.");
-      }
+      if (tcversion == null) { throw new InvalidBootJarMetaDataException("Missing metadata: tcversion."); }
 
       tcmoniker = attributes.getValue(TC_MONIKER);
-      if (tcmoniker == null) { 
-        throw new InvalidBootJarMetaDataException("Missing metadata: tcmoniker.");
-      }
+      if (tcmoniker == null) { throw new InvalidBootJarMetaDataException("Missing metadata: tcmoniker."); }
 
       ProductInfo productInfo = ProductInfo.getInstance();
       String expect_tcversion = productInfo.buildVersion();
 
       if (productInfo.isDevMode()) {
-        logger.warn("The value for the DSO meta data, tcversion is: '"
-          + expect_tcversion
-          + "'; this might not be correct, this value is used only under development mode or when tests are being run.");
+        logger
+            .warn("The value for the DSO meta data, tcversion is: '"
+                  + expect_tcversion
+                  + "'; this might not be correct, this value is used only under development mode or when tests are being run.");
       }
-      if (!productInfo.isDevMode() && !expect_tcversion.equals(tcversion)) {
-        throw new InvalidBootJarMetaDataException(
-          "Incompatible DSO meta data: tcversion; expected '"
-          + expect_tcversion
-          + "' but was (in boot jar): '"
-          + tcversion 
-          + "'");
-      }
+      if (!productInfo.isDevMode() && !expect_tcversion.equals(tcversion)) { throw new InvalidBootJarMetaDataException(
+                                                                                                                       "Incompatible DSO meta data: tcversion; expected '"
+                                                                                                                           + expect_tcversion
+                                                                                                                           + "' but was (in boot jar): '"
+                                                                                                                           + tcversion
+                                                                                                                           + "'"); }
     }
 
     public void write(Manifest manifest) {
@@ -405,7 +391,8 @@ public class BootJar {
         Object prev = manifest.getEntries().put(META_DATA_ATTRIBUTE_NAME, attributes);
         Assert.assertNull(prev);
       } else {
-        throw new AssertionError("Unexptected metadata for version, expecting '" + VERSION_1_1 + "', but was '" + version + "'");
+        throw new AssertionError("Unexptected metadata for version, expecting '" + VERSION_1_1 + "', but was '"
+                                 + version + "'");
       }
     }
 
@@ -440,7 +427,7 @@ public class BootJar {
     public Boolean isPreinstrumented() {
       return isPreinstrumented;
     }
-    
+
     public Boolean isForeign() {
       return isForeign;
     }
