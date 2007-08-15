@@ -79,17 +79,20 @@ public class TCTestCase extends TestCase {
 
   // a way to ensure that system clock moves forward...
   private long                             previousSystemMillis      = 0;
-
+  
   public TCTestCase() {
     super();
-
-    TCLogging.disableLocking();
+    init();
   }
 
   public TCTestCase(String arg0) {
     super(arg0);
-
+    init();
+  }
+  
+  private void init() {
     TCLogging.disableLocking();
+    printOutCurrentJavaProcesses();
   }
 
   // called by timer thread (ie. NOT the main thread of test case)
@@ -138,9 +141,7 @@ public class TCTestCase extends TestCase {
           + this.disabledUntil.get(testMethod));
       System.out.flush();
       return;
-    }
-
-    printOutCurrentJavaProcesses();
+    }   
 
     // don't move this stuff to runTest(), you want the timeout timer to catch hangs in setUp() too.
     // Yes it means you can't customize the timeout threshold in setUp() -- take a deep breath and
@@ -173,11 +174,13 @@ public class TCTestCase extends TestCase {
     return;
   }
 
-  private void printOutCurrentJavaProcesses() throws Exception {
+  private void printOutCurrentJavaProcesses() {
     PrintWriter out = null;
     try {
       out = new PrintWriter(new FileWriter(this.getTempFile("javaprocesses.txt")));
       out.println(ProcessInfo.ps_grep_java());      
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     } finally {
       if (out != null) out.close();
     }
@@ -227,18 +230,21 @@ public class TCTestCase extends TestCase {
 
   protected final synchronized TempDirectoryHelper getTempDirectoryHelper() {
     if (tempDirectoryHelper == null) {
+      System.err.println("@@@@@ Initializing tempDirectoryHelper....");
       try {
         tempDirectoryHelper = new TempDirectoryHelper(getClass(), cleanTempDir());
       } catch (IOException ioe) {
         throw new TCRuntimeException("Can't get configuration for temp directory", ioe);
       }
+    } else {
+      System.err.println("@@@@@ Already has tempDirectoryHelper....");
     }
 
     return tempDirectoryHelper;
   }
 
   protected boolean cleanTempDir() {
-    return false;
+    return true;
   }
 
   protected final synchronized DataDirectoryHelper getDataDirectoryHelper() {
