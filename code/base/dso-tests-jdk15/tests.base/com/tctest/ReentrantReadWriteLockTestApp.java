@@ -852,7 +852,9 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       writeLock.lock();
       barrier4.await();
       Thread.sleep(2000);
-      Assert.assertTrue(lock.hasQueuedThreads());
+      if (!isCrashTest) {
+        Assert.assertTrue(lock.hasQueuedThreads());
+      }
       Assert.assertEquals(3, lock.getWriteHoldCount());
       writeLock.unlock();
       Assert.assertEquals(2, lock.getWriteHoldCount());
