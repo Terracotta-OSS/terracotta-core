@@ -56,13 +56,11 @@ if $cygwin; then
   [ -n "$DSO_BOOT_JAR" ] && DSO_BOOT_JAR=`cygpath --windows "$DSO_BOOT_JAR"`
 fi
 
-if test \! -f "${DSO_BOOT_JAR}"; then
-  if test -n "${TC_CONFIG_PATH}"; then
-   "${JAVACMD}" -Dtc.install-root="${TC_INSTALL_DIR}" -cp "${TC_JAR}" com.tc.object.tools.BootJarTool -o "${DSO_BOOT_JAR}" -f "${TC_CONFIG_PATH}"
-  else
-   "${JAVACMD}" -Dtc.install-root="${TC_INSTALL_DIR}" -cp "${TC_JAR}" com.tc.object.tools.BootJarTool -o "${DSO_BOOT_JAR}"
-  fi
-  if test $? != 0; then
-    exit 14
-  fi
+if test -n "${TC_CONFIG_PATH}"; then
+  ./"${TC_INSTALL_DIR}/bin/make-boot-jar.sh" -o "${DSO_BOOT_JAR}" -f "${TC_CONFIG_PATH}"
+else
+  ./"${TC_INSTALL_DIR}/bin/make-boot-jar.sh" -o "${DSO_BOOT_JAR}"
+fi
+if test $? != 0; then
+  exit 14
 fi
