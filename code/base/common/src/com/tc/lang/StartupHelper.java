@@ -54,35 +54,15 @@ public class StartupHelper {
 
   private static void setThreadGroup(Thread thread, ThreadGroup group) {
     String fieldName = Vm.isIBM() ? "threadGroup" : "group";
-    Class c = thread.getClass();
+    Class c = Thread.class;
 
     try {
       Field groupField = c.getDeclaredField(fieldName);
       groupField.setAccessible(true);
       groupField.set(thread, group);
     } catch (Exception e) {
-      if (e instanceof NoSuchFieldException) {
-        debugNoSuchFieldException(c);
-      }
-
       if (e instanceof RuntimeException) { throw (RuntimeException) e; }
       throw new RuntimeException(e);
     }
   }
-
-  private static void debugNoSuchFieldException(Class c) {
-    // see MNK-307
-
-    System.err.println("Dumping fields of " + c + " defined by " + c.getClassLoader());
-
-    while (c != null) {
-      Field[] fields = c.getDeclaredFields();
-      for (int i = 0; i < fields.length; i++) {
-        Field field = fields[i];
-        System.err.println(field);
-      }
-      c = c.getSuperclass();
-    }
-  }
-
 }
