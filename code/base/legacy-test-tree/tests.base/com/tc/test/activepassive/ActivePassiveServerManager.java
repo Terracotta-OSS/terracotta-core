@@ -70,11 +70,9 @@ public class ActivePassiveServerManager {
   private List                                   jvmArgs          = null;
 
   public ActivePassiveServerManager(boolean isActivePassiveTest, File tempDir, PortChooser portChooser,
-                                    String configModel, ActivePassiveTestSetupManager setupManger,
-                                    File javaHome, TestTVSConfigurationSetupManagerFactory configFactory)
-      throws Exception {
-    this(isActivePassiveTest, tempDir, portChooser, configModel, setupManger, javaHome, configFactory,
-         new ArrayList());
+                                    String configModel, ActivePassiveTestSetupManager setupManger, File javaHome,
+                                    TestTVSConfigurationSetupManagerFactory configFactory) throws Exception {
+    this(isActivePassiveTest, tempDir, portChooser, configModel, setupManger, javaHome, configFactory, new ArrayList());
 
   }
 
@@ -343,7 +341,7 @@ public class ActivePassiveServerManager {
   }
 
   private TCServerInfoMBean getTcServerInfoMBean(int index) throws IOException {
-    if(jmxConnectors[index] != null) {
+    if (jmxConnectors[index] != null) {
       closeJMXConnector(index);
     }
     jmxConnectors[index] = getJMXConnector(jmxPorts[index]);
@@ -426,17 +424,17 @@ public class ActivePassiveServerManager {
   }
 
   private void closeJMXConnector(int i) {
-    if(jmxConnectors[i] != null) {
+    if (jmxConnectors[i] != null) {
       try {
         jmxConnectors[i].close();
-      } catch(Exception e) {
+      } catch (Exception e) {
         System.out.println("JMXConnector for server=[" + dsoPorts[i] + "] already closed.");
         e.printStackTrace();
       }
       jmxConnectors[i] = null;
     }
   }
-  
+
   private void closeJMXConnectors() {
     for (int i = 0; i < jmxConnectors.length; i++) {
       closeJMXConnector(i);
@@ -500,7 +498,8 @@ public class ActivePassiveServerManager {
       if (server.isRunning()) {
         try {
           Thread.sleep(1000);
-        } catch(Exception e) {/**/}
+        } catch (Exception e) {/**/
+        }
       } else {
         return;
       }
@@ -611,6 +610,28 @@ public class ActivePassiveServerManager {
     } else if (serverCrashMode.equals(ActivePassiveCrashMode.RANDOM_SERVER_CRASH)) {
       crashRandomServer();
     }
+
+    if (serverPersistence.equals(ActivePassivePersistenceMode.PERMANENT_STORE)) {
+      System.out.println("Deleting data directory for server=[" + servers[lastCrashedIndex].getDsoPort() + "]");
+      deleteDirectory(serverConfigCreator.getDataLocation(lastCrashedIndex));
+    }
+  }
+
+  private void deleteDirectory(String directory) {
+    debugPrintln("\n ##### about to delete dataFile=[" + directory + "] and all of its content...");
+    File[] files = new File(directory).listFiles();
+    for (int i = 0; i < files.length; i++) {
+      if (files[i].isDirectory()) {
+        deleteDirectory(files[i].getAbsolutePath());
+      } else {
+        boolean successful = files[i].delete();
+        if (!successful) { throw new AssertionError("delete file=[" + files[i].getAbsolutePath() + "] failed"); }
+        debugPrintln("\n ##### deleted file=[" + files[i].getAbsolutePath() + "]");
+      }
+    }
+    if (!(new File(directory).delete())) { throw new AssertionError("delete file=[" + directory + "] failed"); }
+    debugPrintln("\n ##### deleted directory=[" + directory + "]");
+    debugPrintln("\n ##### dataFile=[" + directory + "] still exists? [" + (new File(directory).exists()) + "]");
   }
 
   /*

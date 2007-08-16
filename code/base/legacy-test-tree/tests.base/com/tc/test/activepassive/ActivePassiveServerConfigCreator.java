@@ -38,6 +38,7 @@ public class ActivePassiveServerConfigCreator {
   private final File                                    configFile;
   private final File                                    tempDir;
   private final TestTVSConfigurationSetupManagerFactory configFactory;
+  private final String[]                                dataLocations;
 
   public ActivePassiveServerConfigCreator(int serverCount, int[] dsoPorts, int[] jmxPorts, int[] l2GroupPorts,
                                           String[] serverNames, String serverPersistence, boolean serverDiskless,
@@ -54,13 +55,25 @@ public class ActivePassiveServerConfigCreator {
     this.configFile = configFile;
     this.tempDir = tempDir;
     this.configFactory = configFactory;
+    dataLocations = new String[serverCount];
 
     checkPersistenceAndDiskLessMode();
   }
 
+  public String getDataLocation(int i) {
+    if (i < 1 && i > dataLocations.length) { throw new AssertionError("Invalid index=[" + i + "]... there are ["
+                                                                      + dataLocations.length
+                                                                      + "] servers involved in this test."); }
+    if (serverDiskless) {
+      return dataLocations[i];
+    } else {
+      return dataLocations[0];
+    }
+  }
+
   private void checkPersistenceAndDiskLessMode() {
-    if (!serverDiskless && serverPersistence.equals(L2ConfigBuilder.PERSISTENCE_MODE_TEMPORARY_SWAP_ONLY)) { throw new AssertionError(
-                                                                                                                                      "The servers are not running in diskless mode so persistence mode should be set to permanent-store"); }
+    if (!serverDiskless && serverPersistence.equals(ActivePassivePersistenceMode.TEMPORARY_SWAP_ONLY)) { throw new AssertionError(
+                                                                                                                                  "The servers are not running in diskless mode so persistence mode should be set to permanent-store"); }
   }
 
   private void checkConfigurationModel() {
@@ -93,9 +106,13 @@ public class ActivePassiveServerConfigCreator {
     for (int i = 0; i < serverCount; i++) {
       L2ConfigBuilder l2 = new L2ConfigBuilder();
       if (serverDiskless) {
-        l2.setData(dataLocationHome + File.separator + "server-" + i);
+        dataLocations[i] = dataLocationHome + File.separator + "server-" + i;
+        l2.setData(dataLocations[i]);
       } else {
         l2.setData(dataLocationHome);
+        if (dataLocations[0] == null) {
+          dataLocations[0] = dataLocationHome;
+        }
       }
       l2.setLogs(logLocationHome + "server-" + i);
       l2.setName(serverNames[i]);
