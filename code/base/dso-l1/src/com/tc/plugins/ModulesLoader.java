@@ -25,6 +25,7 @@ import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.NamedClassLoader;
 import com.tc.object.loaders.Namespace;
 import com.tc.object.util.JarResourceLoader;
+import com.tc.util.Environment;
 import com.tc.util.VendorVmSignature;
 import com.tc.util.VendorVmSignatureException;
 import com.terracottatech.config.DsoApplication;
@@ -72,9 +73,10 @@ public class ModulesLoader {
   }
 
   private static void insertBasicConfigBundles(Modules modules) {
-    Module m = modules.addNewModule();
-    m.setName("modules-common-1.0");
-    m.setVersion("1.0.0");
+    if (Environment.inTest()) return;
+    Module bundle = modules.addNewModule();
+    bundle.setName("modules-common-1.0");
+    bundle.setVersion("1.0.0");
   }
 
   public static void initModules(final DSOClientConfigHelper configHelper, final ClassProvider classProvider,
@@ -209,7 +211,7 @@ public class ModulesLoader {
       if (path == null) { //
         path = (String) bundle.getHeaders().get(TC_CONFIG_HEADER); // terracotta specific config (eg: tests)
         if (path == null) { //
-          path = "terracotta.xml"; // default terracotta config 
+          path = "terracotta.xml"; // default terracotta config
         }
       }
       return path;
@@ -221,7 +223,7 @@ public class ModulesLoader {
   private static void loadConfiguration(final DSOClientConfigHelper configHelper, final Bundle bundle)
       throws BundleException {
 
-    // attempt to load the config-bundle's fragment of the configuration file 
+    // attempt to load the config-bundle's fragment of the configuration file
     final String configPath = getConfigPath(bundle);
     final InputStream is;
     try {

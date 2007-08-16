@@ -12,10 +12,10 @@ import org.osgi.framework.ServiceReference;
 import com.tc.config.Directories;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.util.Environment;
 import com.terracottatech.config.Modules;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -81,16 +81,12 @@ public interface EmbeddedOSGiRuntime {
 
       // There are two repositories that we [optionally] prepend: a system property (used by tests)
       // and the installation root (which is not set when running tests)
-      try {
-        if (Directories.getInstallationRoot() != null) {
-          final URL defaultRepository = getPathFromGroupId(new File(Directories.getInstallationRoot(), "modules"),
-              modules.getGroupId()).toURL();
-          // final URL defaultRepository = new File(Directories.getInstallationRoot(), "modules").toURL();
-          logger.debug("Prepending default bundle repository: " + defaultRepository.toString());
-          prependLocations.add(defaultRepository);
-        }
-      } catch (FileNotFoundException fnfe) {
-        // Ignore, tc.install-dir is not set so we must be in a test environment
+      if (!Environment.inTest()) {
+        final URL defaultRepository = getPathFromGroupId(new File(Directories.getInstallationRoot(), "modules"),
+            modules.getGroupId()).toURL();
+        // final URL defaultRepository = new File(Directories.getInstallationRoot(), "modules").toURL();
+        logger.debug("Prepending default bundle repository: " + defaultRepository.toString());
+        prependLocations.add(defaultRepository);
       }
 
       try {
