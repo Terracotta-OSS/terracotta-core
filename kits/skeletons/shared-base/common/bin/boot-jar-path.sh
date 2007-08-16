@@ -57,9 +57,9 @@ if $cygwin; then
 fi
 
 if test -n "${TC_CONFIG_PATH}"; then
-  ./"${TC_INSTALL_DIR}/bin/make-boot-jar.sh" -o "${DSO_BOOT_JAR}" -f "${TC_CONFIG_PATH}"
+  . "${TC_INSTALL_DIR}/bin/make-boot-jar.sh" -o "${DSO_BOOT_JAR}" -f "${TC_CONFIG_PATH}"
 else
-  ./"${TC_INSTALL_DIR}/bin/make-boot-jar.sh" -o "${DSO_BOOT_JAR}"
+  . "${TC_INSTALL_DIR}/bin/make-boot-jar.sh" -o "${DSO_BOOT_JAR}"
 fi
 if test $? != 0; then
   exit 14
