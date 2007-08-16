@@ -48,6 +48,14 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     setProperty("l2-group-port", data);
   }
 
+  public void setPasswordFile(String data) {
+    setProperty("password-file", data);
+  }
+
+  public void setAccessFile(String data) {
+    setProperty("access-file", data);
+  }
+
   public static final String PERSISTENCE_MODE_TEMPORARY_SWAP_ONLY = "temporary-swap-only";
   public static final String PERSISTENCE_MODE_PERMANENT_STORE     = "permanent-store";
 
@@ -84,17 +92,19 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
 
   private static final String[] DSO_PERSISTENCE = new String[] { "mode" };
   private static final String[] DSO_GC          = new String[] { "enabled", "verbose", "interval" };
-  private static final String[] DSO             = concat(new Object[] { DSO_PERSISTENCE, DSO_GC, });
+  private static final String[] AUTHENTICATION  = new String[] { "password-file", "access-file" };
+  private static final String[] DSO             = concat(new Object[] { DSO_PERSISTENCE, DSO_GC });
 
-  private static final String[] ALL_PROPERTIES  = concat(new Object[] { L2, DSO });
+  private static final String[] ALL_PROPERTIES  = concat(new Object[] { L2, AUTHENTICATION, DSO });
 
   public String toString() {
     String out = "";
 
     out += indent() + "<server" + (this.name != null ? " name=\"" + this.name + "\"" : "") + ">\n";
 
-    out += elements(L2) + openElement("dso", DSO) + elementGroup("persistence", DSO_PERSISTENCE)
-        + elementGroup("garbage-collection", DSO_GC) + closeElement("dso", DSO);
+    out += elements(L2) + elementGroup("authentication", AUTHENTICATION) + openElement("dso", DSO)
+        + elementGroup("persistence", DSO_PERSISTENCE) + elementGroup("garbage-collection", DSO_GC)
+        + closeElement("dso", DSO);
 
     out += closeElement("server");
 
