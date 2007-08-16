@@ -611,7 +611,7 @@ public class ActivePassiveServerManager {
       crashRandomServer();
     }
 
-    if (serverPersistence.equals(ActivePassivePersistenceMode.PERMANENT_STORE)) {
+    if (serverNetworkShare && serverPersistence.equals(ActivePassivePersistenceMode.PERMANENT_STORE)) {
       System.out.println("Deleting data directory for server=[" + servers[lastCrashedIndex].getDsoPort() + "]");
       deleteDirectory(serverConfigCreator.getDataLocation(lastCrashedIndex));
     }
