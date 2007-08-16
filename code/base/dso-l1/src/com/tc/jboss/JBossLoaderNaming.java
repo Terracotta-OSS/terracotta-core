@@ -16,6 +16,7 @@ public class JBossLoaderNaming {
 
   private static final String UCL           = "org.jboss.mx.loading.UnifiedClassLoader";
   private static final String UCL3          = "org.jboss.mx.loading.UnifiedClassLoader3";
+  private static final String CACHE_LOADER  = "org.jboss.mx.loading.HeirarchicalLoaderRepository3$CacheClassLoader";
 
   private static String       serverHomeDir = null;
   private static String       serverBaseDir = null;
@@ -47,6 +48,8 @@ public class JBossLoaderNaming {
     if (UCL3.equals(className)) {
       return makeUCLName(loader, true);
     } else if (UCL.equals(className)) { return makeUCLName(loader, false); }
+
+    if (CACHE_LOADER.equals(className)) { return null; }
 
     throw new UnsupportedOperationException("Support missing for loader of type: " + className);
   }
