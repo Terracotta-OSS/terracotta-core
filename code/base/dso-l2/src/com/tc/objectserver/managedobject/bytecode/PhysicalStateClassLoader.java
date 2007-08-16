@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.managedobject.bytecode;
 
@@ -67,13 +68,13 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
     addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.STRING_BYTES, "writeObject", "(Ljava/lang/Object;)V");
     addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.BIG_INTEGER, "writeObject", "(Ljava/lang/Object;)V");
     addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.BIG_DECIMAL, "writeObject", "(Ljava/lang/Object;)V");
-    
+
     addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.JAVA_LANG_CLASSLOADER, "writeObject", "(Ljava/lang/Object;)V");
-    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.JAVA_LANG_CLASSLOADER_HOLDER, "writeObject", "(Ljava/lang/Object;)V");
+    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.JAVA_LANG_CLASSLOADER_HOLDER, "writeObject",
+               "(Ljava/lang/Object;)V");
     addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.ENUM, "writeObject", "(Ljava/lang/Object;)V");
     addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.ENUM_HOLDER, "writeObject", "(Ljava/lang/Object;)V");
     addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.CURRENCY, "writeObject", "(Ljava/lang/Object;)V");
-
 
     addMapping(OBJECT_INPUT_METHODS, LiteralValues.INTEGER, "readInt", "()I");
     addMapping(OBJECT_INPUT_METHODS, LiteralValues.LONG, "readLong", "()J");
@@ -94,14 +95,13 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
     addMapping(OBJECT_INPUT_METHODS, LiteralValues.STRING_BYTES, "readObject", "()Ljava/lang/Object;");
     addMapping(OBJECT_INPUT_METHODS, LiteralValues.BIG_INTEGER, "readObject", "()Ljava/lang/Object;");
     addMapping(OBJECT_INPUT_METHODS, LiteralValues.BIG_DECIMAL, "readObject", "()Ljava/lang/Object;");
-    
+
     addMapping(OBJECT_INPUT_METHODS, LiteralValues.JAVA_LANG_CLASSLOADER, "readObject", "()Ljava/lang/Object;");
     addMapping(OBJECT_INPUT_METHODS, LiteralValues.JAVA_LANG_CLASSLOADER_HOLDER, "readObject", "()Ljava/lang/Object;");
     addMapping(OBJECT_INPUT_METHODS, LiteralValues.ENUM, "readObject", "()Ljava/lang/Object;");
     addMapping(OBJECT_INPUT_METHODS, LiteralValues.ENUM_HOLDER, "readObject", "()Ljava/lang/Object;");
     addMapping(OBJECT_INPUT_METHODS, LiteralValues.CURRENCY, "readObject", "()Ljava/lang/Object;");
 
-    
   }
 
   public PhysicalStateClassLoader(ClassLoader parent) {
@@ -136,7 +136,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
   private byte[] basicCreateClassBytes(ClassSpec cs, ObjectID parentID, List fields) {
     String classNameSlash = cs.getGeneratedClassName().replace('.', '/');
     String superClassNameSlash = cs.getSuperClassName().replace('.', '/');
-    ClassWriter cw = new ClassWriter(0);  // don't compute maxs
+    ClassWriter cw = new ClassWriter(0); // don't compute maxs
 
     cw.visit(V1_2, ACC_PUBLIC | ACC_SUPER, classNameSlash, null, superClassNameSlash, null);
 
@@ -230,11 +230,12 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
   // out.writeChar(c);
   // }
   // *************************************************************************************
-  private void createWriteObjectMethod(ClassWriter cw, String classNameSlash, ClassSpec cs, String superClassNameSlash, List fields) {
+  private void createWriteObjectMethod(ClassWriter cw, String classNameSlash, ClassSpec cs, String superClassNameSlash,
+                                       List fields) {
     MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "writeObject", "(Ljava/io/ObjectOutput;)V", null,
                                       new String[] { "java/io/IOException" });
     mv.visitCode();
-    
+
     if (!cs.isDirectSubClassOfPhysicalMOState()) {
       mv.visitVarInsn(ALOAD, 0);
       mv.visitVarInsn(ALOAD, 1);
@@ -267,7 +268,8 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
   // c = in.readChar();
   // }
   // *************************************************************************************
-  private void createReadObjectMethod(ClassWriter cw, String classNameSlash, ClassSpec cs, String superClassNameSlash, List fields) {
+  private void createReadObjectMethod(ClassWriter cw, String classNameSlash, ClassSpec cs, String superClassNameSlash,
+                                      List fields) {
     MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "readObject", "(Ljava/io/ObjectInput;)V", null, new String[] {
         "java/io/IOException", "java/lang/ClassNotFoundException" });
     mv.visitCode();
@@ -277,7 +279,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
       mv.visitVarInsn(ALOAD, 1);
       mv.visitMethodInsn(INVOKESPECIAL, superClassNameSlash, "readObject", "(Ljava/io/ObjectInput;)V");
     }
-    
+
     for (Iterator i = fields.iterator(); i.hasNext();) {
       FieldType f = (FieldType) i.next();
       mv.visitVarInsn(ALOAD, 0);
@@ -337,8 +339,8 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
   // long x;
   // Object o;
   // protected void basicDehydrate(DNAWriter writer) {
-  // writer.addPhysicalAction("x", new Long(x));
-  // writer.addPhysicalAction("o", o);
+  // writer.addPhysicalAction("x", new Long(x), false);
+  // writer.addPhysicalAction("o", o, true);
   // }
   // *************************************************************************************
   private void createBasicDehydrateMethod(ClassWriter cw, String classNameSlash, ClassSpec cs,
@@ -358,9 +360,14 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
       mv.visitVarInsn(ALOAD, 1);
       mv.visitLdcInsn(f.getQualifiedName());
       getObjectFor(mv, classNameSlash, f);
-      // TODO:: May be we shouldnt call DNAWriter methods from instrumented code !
+      if (f.canBeReferenced()) {
+        mv.visitInsn(ICONST_1); // true
+      } else {
+        mv.visitInsn(ICONST_0); // false
+      }
+      // XXX:: We are calling DNAWriter methods from instrumented code !
       mv.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/dna/api/DNAWriter", "addPhysicalAction",
-                         "(Ljava/lang/String;Ljava/lang/Object;)V");
+                         "(Ljava/lang/String;Ljava/lang/Object;Z)V");
     }
     mv.visitInsn(RETURN);
 
@@ -626,9 +633,9 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
         return "shortValue";
       case LiteralValues.BOOLEAN:
         return "booleanValue";
-      // ObjectIDs are NOT stored as longs anymore :(
-      // case LiteralValues.OBJECT_ID:
-      // return "toLong";
+        // ObjectIDs are NOT stored as longs anymore :(
+        // case LiteralValues.OBJECT_ID:
+        // return "toLong";
       default:
         throw new AssertionError("This type is invalid : " + type);
     }

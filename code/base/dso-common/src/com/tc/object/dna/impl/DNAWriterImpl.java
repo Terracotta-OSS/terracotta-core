@@ -6,7 +6,6 @@ package com.tc.object.dna.impl;
 
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCByteBufferOutputStream.Mark;
-import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.DNAEncoding;
@@ -15,7 +14,6 @@ import com.tc.util.Conversion;
 public class DNAWriterImpl implements DNAWriter {
 
   private static final long              NULL_ID       = ObjectID.NULL_ID.toLong();
-  private static final LiteralValues     literalValues = new LiteralValues();
 
   private final TCByteBufferOutputStream output;
   private final Mark                     headerMark;
@@ -79,6 +77,11 @@ public class DNAWriterImpl implements DNAWriter {
     addPhysicalAction(fieldName, value, value instanceof ObjectID);
   }
 
+  /**
+   * NOTE::README:XXX: This method is called from instrumented code in the L2.
+   * 
+   * @see PhysicalStateClassLoader.createBasicDehydrateMethod()
+   */
   public void addPhysicalAction(String fieldName, Object value, boolean canBeReferenced) {
     if (value == null) {
       // Normally null values are converted into Null ObjectID much earlier, but this is not true when there are
@@ -88,8 +91,11 @@ public class DNAWriterImpl implements DNAWriter {
     }
 
     actionCount++;
-    if (canBeReferenced && literalValues.isLiteralInstance(value)) {
-      // an Object reference is set to a literal instance
+    if (canBeReferenced) {
+      // An Object reference can be set to a literal instance, like
+      // Object o = new Integer(10);
+      // XXX::Earlier we used to also check LiteralValues.isLiteralInstance(value) before entering this block, but I
+      // think that is unnecessary and wrong when we optimize later to store ObjectIDs as longs in most cases in the L2
       output.writeByte(DNAEncodingImpl.PHYSICAL_ACTION_TYPE_REF_OBJECT);
     } else {
       output.writeByte(DNAEncodingImpl.PHYSICAL_ACTION_TYPE);
