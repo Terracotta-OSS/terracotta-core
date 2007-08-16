@@ -1,0 +1,17 @@
+<?xml version = "1.0" encoding="UTF-8"?>
+<!--
+	
+	All content copyright (c) 2007 Terracotta, Inc.,
+	except as may otherwise be noted in a separate copyright notice.
+	All rights reserved
+	
+-->
+<xml-fragment>
+	<instrumented-classes>
+	   <!-- 
+	     Fix for CDV-357: Getting verifier errors when instrumenting obfuscated classes
+	     These classes are obfuscated and as such can't be instrumented. 
+	   -->
+		<exclude>com.sun.crypto.provider..*</exclude>
+	</instrumented-classes>
+</xml-fragment>
