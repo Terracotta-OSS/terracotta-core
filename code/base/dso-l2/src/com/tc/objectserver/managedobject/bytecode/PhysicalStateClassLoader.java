@@ -13,6 +13,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
 import com.tc.util.AdaptedClassDumper;
+import com.tc.util.Assert;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -116,6 +117,14 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
     MethodDetail md = (MethodDetail) map.get(new Integer(type));
     if (md == null) { throw new TCRuntimeException("Unknown Type : " + type + " Map = " + map); }
     return md;
+  }
+
+  // Helper Method for tests
+  public static void verifyTypePresent(int type) {
+    MethodDetail md = get(OBJECT_INPUT_METHODS, type);
+    Assert.assertNotNull(md);
+    md = get(OBJECT_OUTPUT_METHODS, type);
+    Assert.assertNotNull(md);
   }
 
   public PhysicalStateClassLoader() {
