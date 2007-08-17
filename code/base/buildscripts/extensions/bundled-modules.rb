@@ -16,7 +16,7 @@ module BundledModules
           build_module = @module_set[pluginmodule]
           module_jar = @build_results.module_jar_file(build_module)
           fail "Unable to locate the jar file for the module #{pluginmodule}" unless File.exists?(module_jar.to_s)
-          modules_to_include += "#{module_jar.filename} "
+          modules_to_include += "#{module_jar.to_s.sub(srcdir , '')[1..-1]} "
         end
 
         # now copy everything that's listed in the manifest over to the kits' modules directory

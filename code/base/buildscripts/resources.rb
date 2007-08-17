@@ -131,12 +131,18 @@ NOTE: Output of binaries are placed under code/base/build/dist
 
 --no-demo
     Use this option with "dist" target will create only the binaries
-    
-dist
-    Create distribution binaries
 
-dist web
-    Create eclipse plugin binaries
+dist <product_code> <flavor> [maven.repo=URL]
+    Create distribution binaries.
+    <product_code> may be one of dso (the default), web, or api
+    <flavor> may be either OPENSOURCE (the default) or ENTERPRISE.
+    If provided, the maven.repo parameter specifies the URL of the Maven
+    repository to which the generated binaries will be deployed.  Maven must
+    be installed to use this option.
+
+dist_jars <product_code> <distribution_type>
+    Acts like the dist target but will only build the jar files that will be found
+    in a kit.
 
 create_package <product_code>
     Assembles and packages the kit. Product codes: dso, web
@@ -146,10 +152,6 @@ create_all_packages
     Assembles, packages, and publishes all possible kits, based on the
     configuration files found under the code/base/buildconfig/distribution
     directory.
-
-dist_jars <product_code> <distribution_type>
-    Acts like the dist target but will only build the jar files that will be found
-    in a kit.
 
 RUNNING SERVERS, CLASSES, ETC.
 

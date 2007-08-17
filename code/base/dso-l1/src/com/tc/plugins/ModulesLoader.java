@@ -131,6 +131,7 @@ public class ModulesLoader {
   private static void initModules(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper,
                                   final ClassProvider classProvider, final Module[] modules, final boolean forBootJar)
       throws BundleException {
+    
     // install all available bundles
     osgiRuntime.installBundles();
 
@@ -155,10 +156,17 @@ public class ModulesLoader {
       }
     };
 
-    for (int pos = 0; pos < modules.length; ++pos) {
-      String name = modules[pos].getName();
-      String version = modules[pos].getVersion();
-      osgiRuntime.startBundle(name, version, callback);
+    startBundles(osgiRuntime, modules, callback);
+  }
+  
+  private static final void startBundles(final EmbeddedOSGiRuntime osgiRuntime, final Module[] modules, final EmbeddedOSGiRuntimeCallbackHandler callback) 
+    throws BundleException {
+    for (int i = 0; i < modules.length; ++i) {
+      final Module module  = modules[i];
+      final String name    = module.getName();
+      final String version = module.getVersion();
+      final String groupId = module.getGroupId();
+      osgiRuntime.startBundle(name, version, groupId, callback);
     }
   }
 

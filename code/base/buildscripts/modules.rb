@@ -212,6 +212,13 @@ class BuildModule
     def has_subtree?(name)
       File.directory?(FilePath.new(@root, name).to_s)
     end
+
+    # Returns the groupId for this module.  Currently this method simply returns the hard-coded
+    # value "org.terracotta.modules".  At some point in time, it may be possible for each module to
+    # specify its own groupId.
+    def group_id
+      "org.terracotta.modules"
+    end
 end
 
 # Maintains a set of BuildModule objects. This is little more than an array, but lets

@@ -107,7 +107,7 @@ class BuildResults
         else
           puts "#{@build_dir.tos_s} does not exist to archive the testrun"
         end
-        
+
     end
 
     # The directory to store module JAR files.
@@ -144,8 +144,11 @@ class BuildResults
         module_metainf_dir = FilePath.new(build_module.root, "META-INF").to_s
         manifest = FilePath.new(module_metainf_dir, "MANIFEST.MF").to_s
         module_version = extract_version_from_manifest(manifest)
-        jarfile  = "#{build_module.name}-#{module_version}.jar"
-        FilePath.new(self.modules_home, jarfile)
+        artifact = build_module.name
+        output_dir = FilePath.new(self.modules_home, build_module.group_id.gsub(/\./, '/'),
+                                  artifact, module_version).ensure_directory
+        jarfile  = "#{artifact}-#{module_version}.jar"
+        FilePath.new(output_dir, jarfile)
       else
         nil
       end

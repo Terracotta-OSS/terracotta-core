@@ -26,4 +26,9 @@ postscripts:
   - make-terracotta-api-pom:
       args:
         - version-PREALPHA
-  
+  - maven-deploy:
+      args:
+        - artifact: tc-compile
+          file: tc-compile-version-PREALPHA.jar
+        - artifact: tc.test-compile
+          file: tc.test-compile-version-PREALPHA.jar

@@ -31,18 +31,18 @@ public interface EmbeddedOSGiRuntime {
 
   void installBundles() throws BundleException;
 
-  void installBundle(final String bundleName, final String bundleVersion) throws BundleException;
+  void installBundle(final String name, final String version, final String groupId) throws BundleException;
 
-  void startBundle(final String bundleName, final String bundleVersion, final EmbeddedOSGiRuntimeCallbackHandler handler)
+  void startBundle(final String name, final String version, final String groupId, final EmbeddedOSGiRuntimeCallbackHandler handler)
       throws BundleException;
 
-  Bundle getBundle(final String bundleName, final String bundleVersion) throws BundleException;
+  Bundle getBundle(final String name, final String version, final String groupId) throws BundleException;
 
   void registerService(final Object serviceObject, final Dictionary serviceProps) throws BundleException;
 
-  void stopBundle(final String bundleName, final String bundleVersion) throws BundleException;
+  void stopBundle(final String name, final String version, final String groupId) throws BundleException;
 
-  void uninstallBundle(final String bundleName, final String bundleVersion) throws BundleException;
+  void uninstallBundle(final String name, final String version, final String groupId) throws BundleException;
 
   ServiceReference[] getAllServiceReferences(final String clazz, final String filter) throws InvalidSyntaxException;
 
@@ -82,9 +82,7 @@ public interface EmbeddedOSGiRuntime {
       // There are two repositories that we [optionally] prepend: a system property (used by tests)
       // and the installation root (which is not set when running tests)
       if (!Environment.inTest()) {
-        final URL defaultRepository = getPathFromGroupId(new File(Directories.getInstallationRoot(), "modules"),
-            modules.getGroupId()).toURL();
-        // final URL defaultRepository = new File(Directories.getInstallationRoot(), "modules").toURL();
+        final URL defaultRepository = new File(Directories.getInstallationRoot(), "modules").toURL();
         logger.debug("Prepending default bundle repository: " + defaultRepository.toString());
         prependLocations.add(defaultRepository);
       }
@@ -103,15 +101,11 @@ public interface EmbeddedOSGiRuntime {
 
         if (prependURLs.length > 0) logger.info("OSGi Bundle Repositories:");
         for (int pos = prependURLs.length; pos < bundleRepositories.length; pos++) {
-          // final String groupId = modules.getRepositoryArray(pos - prependURLs.length).getGroupId();
-          // final String spec = groupIdToRelativePath(groupId == null ? modules.getGroupId() : groupId);
-          // final URL context = new URL(modules.getRepositoryArray(pos - prependURLs.length).getStringValue());
-          // bundleRepositories[pos] = new URL(context, spec);
-          bundleRepositories[pos] = new URL(modules.getRepositoryArray(pos - prependURLs.length).getStringValue());
+          bundleRepositories[pos] = new URL(modules.getRepositoryArray(pos - prependURLs.length));
           logger.info("\t" + bundleRepositories[pos]);
         }
 
-        return new KnopflerfishOSGi(modules.getGroupId(), bundleRepositories);
+        return new KnopflerfishOSGi(bundleRepositories);
       } catch (MalformedURLException muex) {
         throw new BundleException(muex.getMessage());
       }
