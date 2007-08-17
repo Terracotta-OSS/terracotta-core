@@ -18,7 +18,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
         'groupId' => 'org.terracotta'
       }
 
-      command = ['mvn']
+      command = [FilePath.new('mvn').batch_extension.to_s]
 
       if repo.downcase == MAVEN_REPO_LOCAL
         command << 'install:install-file'
