@@ -110,8 +110,8 @@ public class GCRunner {
     } catch (ConnectException ce) {
       System.err.println("Unable to connect to host '" + host + "', port " + port
                          + ". Are you sure there is a Terracotta server running there?");
-    } catch (Exception e) {
-      System.err.println(e.getMessage());
+    } catch(SecurityException se) {
+      System.err.println(se.getMessage());
       usageAndDie(options);
     }
   }
@@ -168,7 +168,7 @@ public class GCRunner {
     return null;
   }
 
-  private JMXConnector getJMXConnector() throws Exception {
+  private JMXConnector getJMXConnector() {
     HashMap env = null;
 
     if (m_userName != null) {

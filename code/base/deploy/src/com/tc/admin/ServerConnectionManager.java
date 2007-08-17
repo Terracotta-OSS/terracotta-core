@@ -5,6 +5,7 @@
 package com.tc.admin;
 
 import com.tc.config.schema.L2Info;
+import com.tc.management.JMXConnectorProxy;
 
 import java.io.IOException;
 import java.rmi.ConnectException;
@@ -21,7 +22,6 @@ import javax.management.Notification;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
 public class ServerConnectionManager implements NotificationListener {
@@ -29,10 +29,7 @@ public class ServerConnectionManager implements NotificationListener {
   private boolean                 m_autoConnect;
   private ConnectionContext       m_connectCntx;
   private ConnectionListener      m_connectListener;
-  private JMXServiceURL           m_serviceURL;
-  private JMXServiceURL           m_secureServiceURL;
-  private JMXConnector            m_jmxConnector;
-  private JMXConnector            m_secureJmxConnector;
+  private JMXConnectorProxy       m_jmxConnector;
   private HashMap                 m_connectEnv;
   private ServerHelper            m_serverHelper;
   private boolean                 m_connected;
@@ -89,8 +86,6 @@ public class ServerConnectionManager implements NotificationListener {
     m_connectCntx = new ConnectionContext(l2Info);
 
     try {
-      m_secureServiceURL = new JMXServiceURL(getSecureJMXServicePath());
-      m_serviceURL = new JMXServiceURL(getJMXServicePath());
       if (isAutoConnect()) {
         startConnect();
       }
@@ -227,28 +222,20 @@ public class ServerConnectionManager implements NotificationListener {
     }
   }
   
-  private void initConnectors() throws IOException {
-    if(m_secureJmxConnector != null) new Thread(new ConnectorCloser(m_secureJmxConnector)).start();
-    m_secureJmxConnector = JMXConnectorFactory.newJMXConnector(m_secureServiceURL, getConnectionEnvironment());
-    
+  private void initConnector() {
     if(m_jmxConnector != null) new Thread(new ConnectorCloser(m_jmxConnector)).start();
-    m_jmxConnector = JMXConnectorFactory.newJMXConnector(m_serviceURL, getConnectionEnvironment());
+    m_jmxConnector = new JMXConnectorProxy(getHostname(), getJMXPortNumber(), getConnectionEnvironment());
   }
 
-  public JMXConnector getJmxConnector() throws IOException {
-    initConnectors();
+  public JMXConnector getJmxConnector() {
+    initConnector();
     return m_jmxConnector;
-  }
-  
-  public JMXConnector getSecureJmxConnector() throws IOException {
-    initConnectors();
-    return m_secureJmxConnector;
   }
   
   private void startConnect() {
     try {
       cancelConnectThread();
-      initConnectors();
+      initConnector();
       m_connectThread = new ConnectThread();
       m_connectThread.start();
     } catch (Exception e) {
@@ -289,22 +276,12 @@ public class ServerConnectionManager implements NotificationListener {
       if (m_connectCntx == null) return false;
       
       if (m_connectCntx.jmxc == null) {
-        initConnectors();
+        initConnector();
       }
       
-      JMXConnector connector = null;
-      try {
-        m_secureJmxConnector.connect(getConnectionEnvironment());
-        connector = m_secureJmxConnector;
-      } catch(IOException ioe) {
-        if(isConnectException(ioe)) {
-          throw ioe;
-        }
-        m_jmxConnector.connect(getConnectionEnvironment());
-        connector = m_jmxConnector;
-      }
-      m_connectCntx.mbsc = connector.getMBeanServerConnection();
-      m_connectCntx.jmxc = connector;
+      m_jmxConnector.connect(getConnectionEnvironment());
+      m_connectCntx.mbsc = m_jmxConnector.getMBeanServerConnection();
+      m_connectCntx.jmxc = m_jmxConnector;
       m_connectException = null;
   
       return true;
@@ -373,19 +350,7 @@ public class ServerConnectionManager implements NotificationListener {
   }
 
   JMXServiceURL getJMXServiceURL() {
-    return m_serviceURL;
-  }
-
-  JMXServiceURL getSecureJMXServiceURL() {
-    return m_secureServiceURL;
-  }
-
-  private String getJMXServicePath() {
-    return "service:jmx:jmxmp://" + this;
-  }
-
-  private String getSecureJMXServicePath() {
-    return "service:jmx:rmi:///jndi/rmi://" + this + "/jmxrmi";
+    return m_jmxConnector.getServiceURL();
   }
 
   public String getName() {
@@ -557,7 +522,6 @@ public class ServerConnectionManager implements NotificationListener {
     m_serverHelper = null;
     m_connectCntx = null;
     m_connectListener = null;
-    m_serviceURL = null;
     m_connectThread = null;
   }
 

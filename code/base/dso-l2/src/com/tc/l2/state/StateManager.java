@@ -16,11 +16,12 @@ public interface StateManager {
   public static final State   PASSIVE_UNINTIALIZED = new State("PASSIVE-UNINITIALIZED");
   public static final State   PASSIVE_STANDBY      = new State("PASSIVE-STANDBY");
   public static final State   START_STATE          = new State("START-STATE");
+  public static final State   STOP_STATE           = new State("STOP-STATE");
   public static final State[] validStates          = new State[] { START_STATE, PASSIVE_UNINTIALIZED, PASSIVE_STANDBY,
-      ACTIVE_COORDINATOR                          };
+      ACTIVE_COORDINATOR, STOP_STATE              };
 
   public void startElection();
-  
+
   public void startElectionIfNecessary(NodeID disconnectedNode);
 
   public void registerForStateChangeEvents(StateChangeListener listener);
@@ -30,13 +31,13 @@ public interface StateManager {
   public boolean isActiveCoordinator();
 
   public void moveNodeToPassiveStandby(NodeID nodeID);
-  
+
   public void moveToPassiveStandbyState();
-  
+
   public void publishActiveState(NodeID nodeID) throws GroupException;
-  
+
   public void handleClusterStateMessage(L2StateMessage clusterMsg);
-  
+
   public NodeID getActiveNodeID();
 
 }

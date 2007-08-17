@@ -144,10 +144,10 @@ public class NonPortableObjectDialog extends MessageDialog {
     super(
         parentShell,
         NonPortableMessages.getString("PROBLEM_SHARING_DATA"), null, event.getReason().getMessage(), MessageDialog.ERROR, new String[] { //$NON-NLS-1$
-        NonPortableMessages.getString("PREVIOUS_ISSUE"), //$NON-NLS-1$
+          IDialogConstants.CANCEL_LABEL, NonPortableMessages.getString("PREVIOUS_ISSUE"), //$NON-NLS-1$
           NonPortableMessages.getString("NEXT_ISSUE"), //$NON-NLS-1$
           NonPortableMessages.getString("APPLY"), //$NON-NLS-1$
-          IDialogConstants.CANCEL_LABEL }, 1);
+           }, 1);
     setShellStyle(getShellStyle() | SWT.RESIZE);
     fEvent = event;
     fJavaProject = getJavaProject(fEvent);
@@ -225,9 +225,9 @@ public class NonPortableObjectDialog extends MessageDialog {
 
   protected void createButtonsForButtonBar(Composite parent) {
     super.createButtonsForButtonBar(parent);
-    fPreviousIssueButton = getButton(0);
-    fNextIssueButton = getButton(1);
-    fApplyButton = getButton(2);
+    fPreviousIssueButton = getButton(1);
+    fNextIssueButton = getButton(2);
+    fApplyButton = getButton(3);
     fPreviousIssueButton.setEnabled(getPreviousIssue() != null);
     fNextIssueButton.setEnabled(getNextIssue() != null);
     fApplyButton.setEnabled(false);
@@ -237,12 +237,6 @@ public class NonPortableObjectDialog extends MessageDialog {
     Composite composite = new Composite(parent, SWT.NONE);
     composite.setLayoutData(new GridData(GridData.FILL_BOTH));
     composite.setLayout(new GridLayout());
-
-    // Composite topPanel = new Composite(composite, SWT.NONE);
-    // topPanel.setLayoutData(new GridData(GridData.FILL_BOTH));
-    // GridLayout gridLayout = new GridLayout(2, true);
-    // gridLayout.marginWidth = 0;
-    // topPanel.setLayout(gridLayout);
 
     SashForm sash = new SashForm(composite, SWT.SMOOTH);
     sash.setOrientation(SWT.HORIZONTAL);
@@ -328,17 +322,17 @@ public class NonPortableObjectDialog extends MessageDialog {
   protected void buttonPressed(int buttonId) {
     switch (buttonId) {
       case 0:
-        gotoPreviousIssue();
+        cancelPressed();
         break;
       case 1:
-        gotoNextIssue();
+        gotoPreviousIssue();
         break;
       case 2:
-        apply();
-        okPressed();
+        gotoNextIssue();
         break;
       case 3:
-        cancelPressed();
+        apply();
+        okPressed();
         break;
     }
   }

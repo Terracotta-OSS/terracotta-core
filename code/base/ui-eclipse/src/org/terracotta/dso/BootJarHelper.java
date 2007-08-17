@@ -19,6 +19,7 @@ import org.eclipse.jdt.launching.JavaLaunchDelegate;
 
 import com.tc.object.tools.BootJarSignature;
 import com.tc.object.tools.UnsupportedVMException;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.File;
 
@@ -88,9 +89,7 @@ public class BootJarHelper implements IJavaLaunchConfigurationConstants {
     IStreamMonitor outMonitor   = streamsProxy.getOutputStreamMonitor();    
     
     while(!process.isTerminated()) {
-      try {
-        Thread.sleep(100);
-      } catch(Exception e) {/**/}
+      ThreadUtil.reallySleep(100);
     }
     
     return outMonitor.getContents().trim();

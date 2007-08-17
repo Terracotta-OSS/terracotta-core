@@ -656,6 +656,10 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     }
   }
 
+  public boolean isBlocking() {
+    return startupLock != null && startupLock.isBlocking();
+  
+  }
   private Node[] makeAllNodes() {
     String[] l2s = configSetupManager.allCurrentlyKnownServers();
     Node[] rv = new Node[l2s.length];

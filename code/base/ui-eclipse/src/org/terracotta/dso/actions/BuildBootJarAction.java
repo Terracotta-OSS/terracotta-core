@@ -42,6 +42,8 @@ import org.terracotta.dso.ProjectNature;
 import org.terracotta.dso.TcPlugin;
 import org.terracotta.dso.dialogs.ExceptionDialog;
 
+import com.tc.util.concurrent.ThreadUtil;
+
 import java.lang.reflect.InvocationTargetException;
 
 public class BuildBootJarAction extends Action implements IActionDelegate, IWorkbenchWindowActionDelegate,
@@ -186,10 +188,7 @@ public class BuildBootJarAction extends Action implements IActionDelegate, IWork
     checkCancel(monitor);
     while (!m_process.isTerminated()) {
       checkCancel(monitor);
-      try {
-        Thread.sleep(100);
-      } catch (Exception e) {/**/
-      }
+      ThreadUtil.reallySleep(100);
     }
 
     if (m_process.getExitValue() != 0) {

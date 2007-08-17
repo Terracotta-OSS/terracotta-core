@@ -11,6 +11,7 @@ public class LockActionGroup extends ActionGroup {
   private ConfigViewPart fPart;
   private EditLockExpressionAction fEditExpressionAction;
   private LockLevelAction fLevelAction;
+  private AutoSynchronizedAction fAutoSyncAction;
   
   LockActionGroup(ConfigViewPart part) {
     fPart = part;
@@ -24,12 +25,14 @@ public class LockActionGroup extends ActionGroup {
   private void makeActions() {
     fLevelAction = new LockLevelAction(fPart);
     fEditExpressionAction = new EditLockExpressionAction(fPart);
+    fAutoSyncAction = new AutoSynchronizedAction(fPart);
   }
   
   public void setContext(ActionContext context) {
     super.setContext(context);
     fLevelAction.setContext(context);
     fEditExpressionAction.setContext(context);
+    fAutoSyncAction.setContext(context);
   }
 
   public void fillContextMenu(IMenuManager menu) {
@@ -38,6 +41,9 @@ public class LockActionGroup extends ActionGroup {
     }
     if(fLevelAction.canActionBeAdded()) {
       menu.add(fLevelAction);
+    }
+    if(fAutoSyncAction.canActionBeAdded()) {
+      menu.add(fAutoSyncAction);
     }
   }
 }

@@ -22,6 +22,7 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.ConnectException;
 import java.util.ArrayList;
@@ -143,15 +144,27 @@ public class TCStop {
 
     try {
       new TCStop(host, port, userName).stop();
-    } catch (ConnectException ce) {
-      System.err.println("Unable to connect to host '" + host + "', port " + port
-                         + ". Are you sure there is a Terracotta server running there?");
-    } catch(Exception e) {
-      System.err.println(e.getMessage());
+    } catch(SecurityException se) {
+      System.err.println(se.getMessage());
       usageAndDie(options);
+    } catch (Exception e) {
+      Throwable root = getRootCause(e);
+      if(root instanceof ConnectException) {
+        System.err.println("Unable to connect to host '" + host + "', port " + port
+                           + ". Are you sure there is a Terracotta server running there?");
+      }
     }
   }
 
+  private static Throwable getRootCause(Throwable e) {
+    Throwable t = e;
+    while (t != null) {
+      e = t;
+      t = t.getCause();
+    }
+    return e;
+  }
+  
   private static void usageAndDie(Options options) throws Exception {
     new HelpFormatter().printHelp("java " + TCStop.class.getName(), options);
     System.exit(1);
@@ -167,7 +180,7 @@ public class TCStop {
     m_userName = userName;
   }
 
-  public void stop() throws Exception {
+  public void stop() throws IOException {
     JMXConnector jmxc = getJMXConnector();
     MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
 
@@ -176,9 +189,6 @@ public class TCStop {
                                                                                 TCServerInfoMBean.class, mbsc);
       try {
         tcServerInfo.shutdown();
-      } catch (Exception e) {
-        jmxc.close();
-        throw e;
       } finally {
         jmxc.close();
       }
@@ -206,7 +216,7 @@ public class TCStop {
     return null;
   }
   
-  private JMXConnector getJMXConnector() throws Exception {
+  private JMXConnector getJMXConnector() {
     HashMap env = null;
 
     if (m_userName != null) {

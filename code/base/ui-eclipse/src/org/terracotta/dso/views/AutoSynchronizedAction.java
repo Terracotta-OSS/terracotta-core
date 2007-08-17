@@ -9,30 +9,30 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.ui.actions.ActionContext;
 
-public class HonorTransientAction extends Action {
+public class AutoSynchronizedAction extends Action {
   ConfigViewPart fPart;
   
-  HonorTransientAction(ConfigViewPart part) {
-    super("Honor transient", AS_CHECK_BOX);
+  AutoSynchronizedAction(ConfigViewPart part) {
+    super("Auto-synchronized", AS_CHECK_BOX);
     fPart = part;
   }
   
   public void run() {
-    fPart.setHonorTransient(isChecked());
+    fPart.setAutoSynchronized(isChecked());
   }
 
   public void setContext(ActionContext context) {
     Object element = SelectionUtil.getSingleElement(getSelection());
 
-    if(element instanceof IncludeWrapper) {
-      IncludeWrapper wrapper = (IncludeWrapper)element;
-      setChecked(wrapper.getHonorTransient());
+    if(element instanceof AutolockWrapper) {
+      AutolockWrapper wrapper = (AutolockWrapper)element;
+      setChecked(wrapper.getAutoSynchronized());
     }
   }
 
   public boolean canActionBeAdded() {
     Object element = SelectionUtil.getSingleElement(getSelection());
-    return element instanceof IncludeWrapper;
+    return element instanceof AutolockWrapper;
   }
   
   private ISelection getSelection() {

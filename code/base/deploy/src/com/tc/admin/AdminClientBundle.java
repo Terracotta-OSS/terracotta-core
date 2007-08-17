@@ -90,7 +90,7 @@ public class AdminClientBundle extends ListResourceBundle {
      "Class"},
 
     {"dso.classes.instanceCount",
-     "Creation count"},
+     "Creation count since active server start"},
 
     {"dso.locks.refreshing",
      "Refreshing locks..."},

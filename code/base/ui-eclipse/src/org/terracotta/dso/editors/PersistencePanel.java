@@ -56,9 +56,10 @@ public class PersistencePanel extends ConfigurationEditorPanel
     if(!hasAnySet() && m_dsoServerData.getPersistence() != null) {
       m_dsoServerData.unsetPersistence();
       m_persistence = null;
-      fireXmlObjectStructureChanged();
-      updateChildren();
+//      fireXmlObjectStructureChanged();
+//      updateChildren();
     }
+    fireXmlObjectStructureChanged();
   }
 
   private void fireXmlObjectStructureChanged() {

@@ -71,6 +71,11 @@ public class L2State implements StateChangeListener {
     return false;
   }
 
+  public boolean isStopState() {
+    if (getState().equals(StateManager.STOP_STATE)) { return true; }
+    return false;
+  }
+  
   public void registerStateChangeListener(StateChangeListener listener) {
     if (changeListener != null) { throw new AssertionError("State change listerer is already set."); }
     changeListener = listener;

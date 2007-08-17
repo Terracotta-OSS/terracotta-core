@@ -45,12 +45,14 @@ import com.terracottatech.config.AdditionalBootJarClasses;
 import com.terracottatech.config.Application;
 import com.terracottatech.config.Autolock;
 import com.terracottatech.config.ClassExpression;
+import com.terracottatech.config.Client;
 import com.terracottatech.config.DistributedMethods;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.Include;
 import com.terracottatech.config.InstrumentedClasses;
 import com.terracottatech.config.LockLevel;
 import com.terracottatech.config.Locks;
+import com.terracottatech.config.Modules;
 import com.terracottatech.config.NamedLock;
 import com.terracottatech.config.Root;
 import com.terracottatech.config.Roots;
@@ -2977,6 +2979,11 @@ public class ConfigurationHelper {
     return classes != null && classes.sizeOfIncludeArray() > 0;
   }
 
+  public boolean hasModules() {
+    Modules modules = getModules();
+    return modules != null && modules.sizeOfModuleArray() > 0;
+  }
+  
   // Validation support
 
   public void validateAll() {
@@ -3580,6 +3587,19 @@ public class ConfigurationHelper {
     return dsoApp;
   }
 
+  private Client ensureClient() {
+    TcConfig config = getConfig();
+    Client client = null;
+    
+    if (config != null) {
+      if((client = config.getClients()) == null) {
+        client = config.addNewClients();
+      }
+    }
+
+    return client;
+  }
+  
   private Application getApplication() {
     TcConfig config = getConfig();
     return config != null ? config.getApplication() : null;
@@ -3720,6 +3740,10 @@ public class ConfigurationHelper {
     }
   }
 
+  private Modules getModules() {
+    return ensureClient().getModules();
+  }
+  
   private AdditionalBootJarClasses getAdditionalBootJarClasses() {
     return ensureDsoApplication().getAdditionalBootJarClasses();
   }

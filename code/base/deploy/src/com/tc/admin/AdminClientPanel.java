@@ -598,6 +598,10 @@ public class AdminClientPanel extends XContainer
   }
  
   public boolean testServerMatch(ServerNode serverNode) {
+    if(com.tc.util.ProductInfo.getInstance().isDevMode()) {
+      return true;
+    }
+    
     ProductInfo consoleInfo = new ProductInfo();
     String consoleVersion = consoleInfo.getVersion();
     ProductInfo serverInfo = serverNode.getProductInfo();
@@ -613,7 +617,7 @@ public class AdminClientPanel extends XContainer
     
     if (!consoleVersion.equals(serverVersion)) {
       Frame frame = getFrame();
-      String msg = "<html>Version mismatch for "+this+".<br><br><table><tr><td>Terracotta Server Version:</td><td>"+serverVersion+
+      String msg = "<html>Version mismatch for "+serverNode+".<br><br><table><tr><td>Terracotta Server Version:</td><td>"+serverVersion+
         "</tr><tr><td>AdminConsole Version:</td><td>"+consoleVersion+"</td></tr></table><br>Continue?</html>";
       String title = frame.getTitle();
       int options = JOptionPane.YES_NO_OPTION;

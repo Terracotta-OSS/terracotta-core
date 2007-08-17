@@ -188,15 +188,11 @@ public class ProjectWizard extends Wizard {
     throws CoreException
   {
     TcPlugin plugin     = TcPlugin.getDefault();
-    IProject proj       = m_javaProject.getProject();
+    IProject project    = m_javaProject.getProject();
     String   configPath = getDomainConfigurationPath();
     String   serverOpts = getServerOptions();
-    IFolder  folder     = proj.getFolder("terracotta");
+    IFolder  folder     = plugin.ensureRuntimeDirectory(project, monitor);
     
-    if(!folder.exists()) {
-      folder.create(true, true, monitor);
-    }
-
     /**
      * Make sure the terracotta artifact directory isn't considered
      * a package fragment.
@@ -237,7 +233,7 @@ public class ProjectWizard extends Wizard {
     if(!configPath.endsWith(".xml")) {
       configPath = configPath.concat(".xml");
     }
-    final IFile configFile = proj.getFile(new Path(configPath));
+    final IFile configFile = project.getFile(new Path(configPath));
     if(!configFile.exists()) {
       InputStream is = null;
       
@@ -259,7 +255,7 @@ public class ProjectWizard extends Wizard {
     }
     
     m_javaProject.getProject().refreshLocal(IResource.DEPTH_INFINITE, monitor);
-    plugin.setup(proj, configPath, serverOpts);
+    plugin.setup(project, configPath, serverOpts);
   }
 
   private static void ensureParent(IFile file) throws CoreException {

@@ -10,6 +10,7 @@ import org.apache.xmlbeans.XmlError;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlOptions;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
@@ -98,6 +99,7 @@ import com.tc.admin.common.InputStreamDrainer;
 import com.tc.config.Loader;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.server.ServerConstants;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Os;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
@@ -140,11 +142,8 @@ import java.util.List;
  * @see com.terracottatech.config.TCConfigDocument.TCConfig
  */
 
-public class TcPlugin extends AbstractUIPlugin
-  implements QualifiedNames,
-             IJavaLaunchConfigurationConstants,
-             TcPluginStatusConstants
-{
+public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaLaunchConfigurationConstants,
+    TcPluginStatusConstants {
   private static TcPlugin           m_plugin;
   private Loader                    m_configLoader;
   private CompilationUnitVisitor    m_compilationUnitVisitor;
@@ -156,15 +155,15 @@ public class TcPlugin extends AbstractUIPlugin
   private BootClassHelper           m_bootClassHelper;
   private ConfigurationEventManager m_configurationEventManager;
 
+  public static final String        PLUGIN_ID                        = "org.terracotta.dso";
 
-  public static final String        PLUGIN_ID               = "org.terracotta.dso";
-
-  public static final String        DEFAULT_CONFIG_FILENAME = "tc-config.xml";
-  public static final String        DEFAULT_SERVER_OPTIONS  = "-Xms256m -Xmx256m";
+  public static final String        DEFAULT_CONFIG_FILENAME          = "tc-config.xml";
+  public static final String        DEFAULT_SERVER_OPTIONS           = "-Xms256m -Xmx256m";
+  public static final boolean       DEFAULT_AUTO_START_SERVER_OPTION = false;
 
   public TcPlugin() {
     super();
-    if(m_plugin != null) throw new IllegalStateException("Plugin already instantiated.");
+    if (m_plugin != null) throw new IllegalStateException("Plugin already instantiated.");
     m_plugin = this;
     m_configurationEventManager = new ConfigurationEventManager();
   }
@@ -271,13 +270,13 @@ public class TcPlugin extends AbstractUIPlugin
   }
 
   private static String getJavaCmd() {
-    String javaCmd = System.getProperty("java.home")+File.separatorChar+"bin"+File.separatorChar+"java";
-    if(Os.isWindows()) {
+    String javaCmd = System.getProperty("java.home") + File.separatorChar + "bin" + File.separatorChar + "java";
+    if (Os.isWindows()) {
       javaCmd += ".exe";
     }
     return javaCmd;
   }
-  
+
   private void buildBootJarForThisVM() {
     new Thread() {
       public void run() {
@@ -311,10 +310,7 @@ public class TcPlugin extends AbstractUIPlugin
             } catch (InterruptedException ie) {/**/
             }
 
-            try {
-              Thread.sleep(1000);
-            } catch (InterruptedException ie) {/**/
-            }
+            ThreadUtil.reallySleep(1000);
           }
 
           m_bootClassHelper = BootClassHelper.initialize();
@@ -337,14 +333,14 @@ public class TcPlugin extends AbstractUIPlugin
 
   public void setup(IProject project, String configFilePath) {
     boolean isConfigEditorVisible = getConfigurationEditor(project) != null;
-    
-    if(isConfigEditorVisible) closeConfigurationEditor(project);
-    
+
+    if (isConfigEditorVisible) closeConfigurationEditor(project);
+
     clearConfigurationSessionProperties(project);
     setConfigurationFilePath(project, configFilePath);
     reloadConfiguration(project);
 
-    if(isConfigEditorVisible) ensureConfigurationEditor(project);
+    if (isConfigEditorVisible) ensureConfigurationEditor(project);
   }
 
   public void setup(IProject project, String configFilePath, String serverOpts) {
@@ -355,7 +351,7 @@ public class TcPlugin extends AbstractUIPlugin
   public void setup(IFile configFile) {
     setup(configFile.getProject(), configFile.getProjectRelativePath().toString());
   }
-  
+
   public void addTerracottaNature(IJavaProject currentProject) {
     IWorkbench workbench = PlatformUI.getWorkbench();
     IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
@@ -464,7 +460,8 @@ public class TcPlugin extends AbstractUIPlugin
     }
   }
 
-  public ILaunch launchServer(IJavaProject javaProject, String projectName, String serverName) throws CoreException {
+  public ILaunch launchServer(IJavaProject javaProject, String projectName, String serverName, IProgressMonitor monitor)
+      throws CoreException {
     IProject project = javaProject.getProject();
     ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
     String id = ID_JAVA_APPLICATION;
@@ -489,7 +486,9 @@ public class TcPlugin extends AbstractUIPlugin
       wc.setAttribute(ATTR_CLASSPATH_PROVIDER, "org.terracotta.dso.classpathProvider");
       wc.setAttribute(ATTR_WORKING_DIRECTORY, project.getLocation().append("terracotta").makeAbsolute().toOSString());
 
-      return wc.launch(ILaunchManager.DEBUG_MODE, null);
+      ensureRuntimeDirectory(project, monitor);
+
+      return wc.launch(ILaunchManager.DEBUG_MODE, monitor);
     } else {
       System.out.println("No config file specified.  Set in project properties");
       return null;
@@ -771,10 +770,10 @@ public class TcPlugin extends AbstractUIPlugin
   public static final TcConfig BAD_CONFIG = createTemplateConfigDoc().getTcConfig();
 
   public static TcConfigDocument createTemplateConfigDoc() {
-    TcConfigDocument doc     = TcConfigDocument.Factory.newInstance();
-    TcConfig         config  = doc.addNewTcConfig();
-    Servers          servers = config.addNewServers();
-    Server           server  = servers.addNewServer();
+    TcConfigDocument doc = TcConfigDocument.Factory.newInstance();
+    TcConfig config = doc.addNewTcConfig();
+    Servers servers = config.addNewServers();
+    Server server = servers.addNewServer();
 
     server.setHost("%i");
     server.setName("localhost");
@@ -782,9 +781,9 @@ public class TcPlugin extends AbstractUIPlugin
     server.setJmxPort(9520);
     server.setData("terracotta/server-data");
     server.setLogs("terracotta/server-logs");
-    
+
     config.addNewClients().setLogs("terracotta/client-logs");
-    
+
     return doc;
   }
 
@@ -935,7 +934,7 @@ public class TcPlugin extends AbstractUIPlugin
     ResourceDeltaVisitor rdv = getResourceDeltaVisitor();
     rdv.fIgnoreNextConfigChange = true;
   }
-  
+
   public void saveConfiguration(IProject project) {
     IFile configFile;
     TcConfig config;
@@ -944,7 +943,7 @@ public class TcPlugin extends AbstractUIPlugin
     InputStream stream;
 
     ignoreNextConfigChange();
-    
+
     opts = getXmlOptions();
     configFile = getConfigurationFile(project);
     config = getConfiguration(project);
@@ -1116,6 +1115,15 @@ public class TcPlugin extends AbstractUIPlugin
   public String getServerOptions(IProject project) {
     String options = getPersistentProperty(project, SERVER_OPTIONS);
     return options != null ? options : "";
+  }
+
+  public void setAutoStartServerOption(IProject project, boolean autoStartServer) {
+    setPersistentProperty(project, AUTO_START_SERVER_OPTION, Boolean.toString(autoStartServer));
+  }
+
+  public boolean getAutoStartServerOption(IProject project) {
+    String option = getPersistentProperty(project, AUTO_START_SERVER_OPTION);
+    return option != null && Boolean.parseBoolean(option);
   }
 
   public boolean hasTerracottaNature(IJavaElement element) {
@@ -1435,51 +1443,42 @@ public class TcPlugin extends AbstractUIPlugin
   public void fireIncludeRuleChanged(IProject project, int index) {
     m_configurationEventManager.fireIncludeRuleChanged(project, index);
     JavaSetupParticipant.inspectAll();
-    updateDecorators(
-        new String[] {
-          AdaptedModuleDecorator.DECORATOR_ID,
-          AdaptedTypeDecorator.DECORATOR_ID,
-          AdaptedPackageFragmentDecorator.DECORATOR_ID });
+    updateDecorators(new String[] {
+      AdaptedModuleDecorator.DECORATOR_ID,
+      AdaptedTypeDecorator.DECORATOR_ID,
+      AdaptedPackageFragmentDecorator.DECORATOR_ID });
   }
 
   public void fireIncludeRulesChanged(IProject project) {
     m_configurationEventManager.fireIncludeRulesChanged(project);
     JavaSetupParticipant.inspectAll();
-    updateDecorators(
-        new String[] {
-          AdaptedModuleDecorator.DECORATOR_ID,
-          AdaptedTypeDecorator.DECORATOR_ID,
-          AdaptedPackageFragmentDecorator.DECORATOR_ID });
+    updateDecorators(new String[] {
+      AdaptedModuleDecorator.DECORATOR_ID,
+      AdaptedTypeDecorator.DECORATOR_ID,
+      AdaptedPackageFragmentDecorator.DECORATOR_ID });
   }
 
   public void fireExcludeRuleChanged(IProject project, int index) {
     m_configurationEventManager.fireExcludeRuleChanged(project, index);
     JavaSetupParticipant.inspectAll();
-    updateDecorators(
-        new String[] {
-          ExcludedTypeDecorator.DECORATOR_ID,
-          ExcludedModuleDecorator.DECORATOR_ID });
+    updateDecorators(new String[] { ExcludedTypeDecorator.DECORATOR_ID, ExcludedModuleDecorator.DECORATOR_ID });
   }
 
   public void fireExcludeRulesChanged(IProject project) {
     m_configurationEventManager.fireExcludeRulesChanged(project);
     JavaSetupParticipant.inspectAll();
-    updateDecorators(
-        new String[] {
-          ExcludedTypeDecorator.DECORATOR_ID,
-          ExcludedModuleDecorator.DECORATOR_ID });
+    updateDecorators(new String[] { ExcludedTypeDecorator.DECORATOR_ID, ExcludedModuleDecorator.DECORATOR_ID });
   }
 
   public void fireInstrumentationRulesChanged(IProject project) {
     m_configurationEventManager.fireInstrumentationRulesChanged(project);
     JavaSetupParticipant.inspectAll();
-    updateDecorators(
-        new String[] {
-          AdaptedModuleDecorator.DECORATOR_ID,
-          AdaptedTypeDecorator.DECORATOR_ID,
-          AdaptedPackageFragmentDecorator.DECORATOR_ID,
-          ExcludedTypeDecorator.DECORATOR_ID,
-          ExcludedModuleDecorator.DECORATOR_ID });
+    updateDecorators(new String[] {
+      AdaptedModuleDecorator.DECORATOR_ID,
+      AdaptedTypeDecorator.DECORATOR_ID,
+      AdaptedPackageFragmentDecorator.DECORATOR_ID,
+      ExcludedTypeDecorator.DECORATOR_ID,
+      ExcludedModuleDecorator.DECORATOR_ID });
   }
 
   public void fireTransientFieldsChanged(IProject project) {
@@ -1547,27 +1546,34 @@ public class TcPlugin extends AbstractUIPlugin
   public static Image createImage(String path) {
     return new JavaElementImageDescriptor(getImageDescriptor(path), 0, new Point(16, 16)).createImage(false);
   }
-  
+
   public String configDocumentAsString(TcConfigDocument configDoc) {
     InputStream is = configDoc.newInputStream(getXmlOptions());
     StringWriter writer = new StringWriter();
     try {
       CopyUtils.copy(is, writer);
-    } catch(IOException ioe) {/**/}
+    } catch (IOException ioe) {/**/
+    }
     return writer.toString();
+  }
+
+  public IFolder ensureRuntimeDirectory(IProject project, IProgressMonitor monitor) throws CoreException {
+    IFolder folder = project.getFolder("terracotta");
+    if (!folder.exists()) {
+      folder.create(true, true, monitor);
+    }
+    return project.getFolder("terracotta");
   }
 }
 
 class ErrorDialog extends MessageDialog {
   ErrorDialog(String msg) {
-    super(null, "Terracotta Plugin", null, msg, MessageDialog.ERROR,
-          new String[] { IDialogConstants.OK_LABEL }, 0);
+    super(null, "Terracotta Plugin", null, msg, MessageDialog.ERROR, new String[] { IDialogConstants.OK_LABEL }, 0);
   }
-  
+
   static void showError(String msg) {
     ErrorDialog dialog = new ErrorDialog(msg);
     dialog.setShellStyle(dialog.getShellStyle() | SWT.RESIZE);
     dialog.open();
   }
 }
-

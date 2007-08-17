@@ -25,6 +25,7 @@ public class StartupLock {
   private final TCFile          location;
   private TCFileLock            lock;
   private TCFileChannel         channel;
+  private boolean               blocking;
 
   public StartupLock(TCFile location) {
     this.location = location;
@@ -35,6 +36,7 @@ public class StartupLock {
       if (lock != null) {
         try {
           this.lock.release();
+          blocking = false;
         } catch (IOException e) {
           logger.error(e);
         }
@@ -70,7 +72,9 @@ public class StartupLock {
 
     try {
       if (block) {
+        blocking = true;
         lock = channel.lock();
+        blocking = false;
       } else {
         lock = channel.tryLock();
       }
@@ -79,6 +83,8 @@ public class StartupLock {
     } catch (IOException ioe) {
       throw new TCDataFileLockingException("Unable to acquire file lock on '" + tcFile.getFile().getAbsolutePath()
           + "'.  Aborting Terracotta server startup.");
+    } finally {
+      blocking = false;
     }
 
     Assert.eval(tcFile.exists());
@@ -86,6 +92,10 @@ public class StartupLock {
     return lock != null;
   }
 
+  public boolean isBlocking() {
+    return this.blocking;
+  }
+  
   private void ensureFileExists(TCFile file) throws FileNotCreatedException {
     if (!file.exists()) {
       try {

@@ -470,6 +470,27 @@ public class ConfigViewPart extends ViewPart
     }
   }
 
+  void setAutoSynchronized(boolean autoSynchronized) {
+    ISelection selection = getSelection();
+    Object element = SelectionUtil.getSingleElement(selection);
+    
+    if(element instanceof AutolockWrapper) {
+      AutolockWrapper wrapper = (AutolockWrapper)element;
+      
+      if(autoSynchronized) wrapper.setAutoSynchronized(autoSynchronized);
+      else wrapper.unsetAutoSynchronized();
+      
+      IProject project = m_javaProject.getProject();
+      fPlugin.removeConfigurationListener(m_configAdapter);
+      fPlugin.fireAutolockChanged(project, wrapper.getIndex());        
+
+      if(fPlugin.getConfigurationEditor(project) == null) {
+        fPlugin.saveConfiguration(project);
+      }
+      fPlugin.addConfigurationListener(m_configAdapter);
+    }
+  }
+  
   void addTransientField(IField field) {
     addTransientFields(new IField[] {field});
   }

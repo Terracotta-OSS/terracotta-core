@@ -27,6 +27,18 @@ public class AutolockWrapper extends LockWrapper {
     m_parent.getAutolockArray(m_index).setLockLevel(level);
   }
   
+  boolean getAutoSynchronized() {
+    return m_parent.getAutolockArray(m_index).getAutoSynchronized();
+  }
+
+  void setAutoSynchronized(boolean autoSynchronized) {
+    m_parent.getAutolockArray(m_index).setAutoSynchronized(autoSynchronized);
+  }
+  
+  void unsetAutoSynchronized() {
+    m_parent.getAutolockArray(m_index).unsetAutoSynchronized();
+  }
+  
   void remove() {
     m_parent.removeAutolock(m_index);
   }

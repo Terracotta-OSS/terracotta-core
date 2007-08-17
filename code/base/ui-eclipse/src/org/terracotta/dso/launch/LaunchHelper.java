@@ -20,7 +20,14 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
@@ -55,7 +62,7 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
         public void run() {
           IWorkbench workbench = PlatformUI.getWorkbench();
           if(workbench != null) {
-            workbench.saveAllEditors(false);
+            workbench.saveAllEditors(true);
           }
         }
       });
@@ -81,8 +88,9 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
         String configServerSpec = wc.getAttribute(ID_CONFIG_SERVER_SPEC, (String)null);
         if(configServerSpec == null) {
           ServerTracker tracker = ServerTracker.getDefault();
-          if(!tracker.anyRunning(javaProject) && queryStartServer(monitor)) {
-            tracker.startServer(javaProject, plugin.getAnyServerName(project));
+          boolean autoStartServer = plugin.getAutoStartServerOption(project);
+          if(!tracker.anyRunning(javaProject) && (autoStartServer || queryStartServer(project, monitor))) {
+            tracker.startServer(javaProject, plugin.getAnyServerName(project), monitor);
           }
           if(monitor.isCanceled()) {
             return null;
@@ -139,6 +147,8 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
       wc.setAttribute(ATTR_VM_ARGUMENTS,
         cpProp + configProp + bootProp + " " + projectNameProp + " " + vmArgs);
 
+      plugin.ensureRuntimeDirectory(project, monitor);
+
       return wc;
     } catch(Throwable t) {
       String msg = "Unable to launch '"+config.getName()+"'\n\n"+t.getLocalizedMessage();
@@ -162,6 +172,7 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
     IFile               configFile              = plugin.getConfigurationFile(project);
     boolean             stdBootJarExists        = false;
     boolean             configHasBootJarClasses = configHelper.hasBootJarClasses();
+    boolean             configHasModules        = configHelper.hasModules();
     
     try {
       stdBootJarExists = BootJarHelper.getHelper().getBootJarFile().exists();
@@ -175,7 +186,7 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
       long bootStamp = bootJar.getLocation().toFile().lastModified();
       long confStamp = configFile.getLocation().toFile().lastModified();
       
-      if(!bootJar.exists() || (configHasBootJarClasses && bootStamp < confStamp)) {
+      if(!bootJar.exists() || ((configHasModules || configHasBootJarClasses) && bootStamp < confStamp)) {
         Display.getDefault().syncExec(new Runnable() {
           public void run() {
             BuildBootJarAction bbja = new BuildBootJarAction(javaProject);
@@ -203,24 +214,53 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
     return configSpec;
   }
   
-  private boolean queryStartServer(final IProgressMonitor monitor) {
+  class QueryStartServerDialog extends MessageDialog {
+    Label msgLabel;
+    final AtomicBoolean quitAsking = new AtomicBoolean();
+    
+    QueryStartServerDialog(String title, String msg) {
+      super(new Shell(Display.getDefault()), title, null, msg,
+        MessageDialog.QUESTION, new String[] {
+          IDialogConstants.YES_LABEL,
+          IDialogConstants.NO_LABEL,
+          IDialogConstants.CANCEL_LABEL }, 0);
+    }
+    
+    protected Control createCustomArea(Composite parent) {
+      final Button quitAskingButton = new Button(parent, SWT.CHECK);
+      quitAskingButton.setText("Remember this setting");
+      quitAskingButton.addSelectionListener(new SelectionAdapter() {
+        public void widgetSelected(SelectionEvent e) {
+          quitAsking.set(quitAskingButton.getSelection());
+        }
+      });
+      
+      return quitAskingButton;
+    }
+    
+    boolean quitAsking() {
+      return quitAsking.get();
+    }
+  }
+  
+  private boolean queryStartServer(final IProject project, final IProgressMonitor monitor) {
     final AtomicBoolean startServer = new AtomicBoolean();
 
     Display.getDefault().syncExec(new Runnable() {
       public void run() {
         String title = "Terracotta";
         String msg = "Start a local Terracotta Server?";
-        MessageDialog dialog = new MessageDialog(new Shell(Display.getDefault()), title, null, msg,
-            MessageDialog.QUESTION, new String[] {
-              IDialogConstants.YES_LABEL,
-              IDialogConstants.NO_LABEL,
-              IDialogConstants.CANCEL_LABEL }, 0);
+        QueryStartServerDialog dialog = new QueryStartServerDialog(title, msg);
         int result = dialog.open();
 
         if(result == 2) {
           monitor.setCanceled(true);
         } else {
-          startServer.set(result == 0);
+          boolean start = (result==0);
+          startServer.set(start);
+          if(dialog.quitAsking()) {
+            TcPlugin.getDefault().setAutoStartServerOption(project, start);
+          }
         }
       }
     });

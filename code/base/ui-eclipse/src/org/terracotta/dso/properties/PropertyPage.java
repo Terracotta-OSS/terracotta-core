@@ -34,16 +34,20 @@ public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
   private Text                m_configPathField;
   private Button              m_configFileButton;
   private Text                m_serverOptionsField;
+  private Button              m_autoStartServerButton;
   private Button              m_resetOptionsButton;
 
-  private static final String DEFAULT_CONFIG_FILENAME = TcPlugin.DEFAULT_CONFIG_FILENAME;
-  private static final String DEFAULT_SERVER_OPTIONS  = TcPlugin.DEFAULT_SERVER_OPTIONS;
+  private static final String DEFAULT_CONFIG_FILENAME           = TcPlugin.DEFAULT_CONFIG_FILENAME;
+  private static final String DEFAULT_SERVER_OPTIONS            = TcPlugin.DEFAULT_SERVER_OPTIONS;
+  private static final boolean DEFAULT_AUTO_START_SERVER_OPTION = TcPlugin.DEFAULT_AUTO_START_SERVER_OPTION;
+  
 
   private void fillControls() {
     TcPlugin plugin = TcPlugin.getDefault();
     IProject project = getProject();
     m_configPathField.setText(plugin.getConfigurationFilePath(project));
     m_serverOptionsField.setText(plugin.getServerOptions(project));
+    m_autoStartServerButton.setSelection(plugin.getAutoStartServerOption(project));
   }
 
   protected Control createContents(Composite parent) {
@@ -103,6 +107,10 @@ public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
       }
     });
 
+    m_autoStartServerButton = new Button(topComp, SWT.CHECK);
+    m_autoStartServerButton.setText("Auto-start server");
+    m_autoStartServerButton.setLayoutData(new GridData());
+    
     Composite composite = new Composite(topComp, SWT.EMBEDDED);
     composite.setLayoutData(new GridData(GridData.FILL_VERTICAL));
     fillControls();
@@ -112,6 +120,7 @@ public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
   protected void performDefaults() {
     m_configPathField.setText(DEFAULT_CONFIG_FILENAME);
     m_serverOptionsField.setText(DEFAULT_SERVER_OPTIONS);
+    m_autoStartServerButton.setSelection(DEFAULT_AUTO_START_SERVER_OPTION);
   }
 
   private IProject getProject() {
@@ -122,6 +131,7 @@ public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
     TcPlugin plugin = TcPlugin.getDefault();
     IProject project = getProject();
     plugin.setup(project, m_configPathField.getText(), m_serverOptionsField.getText());
+    plugin.setAutoStartServerOption(project, m_autoStartServerButton.getSelection());
   }
 
   public boolean performOk() {

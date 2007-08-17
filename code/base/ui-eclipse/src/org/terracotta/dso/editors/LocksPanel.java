@@ -84,10 +84,10 @@ public class LocksPanel extends ConfigurationEditorPanel {
   }
 
   private void testDisableRemoveButtons() {
-    m_layout.m_removeAutoLockButton.setEnabled(m_layout.m_autoLocksTable.getSelectionCount()>0);
-    m_layout.m_removeNamedLockButton.setEnabled(m_layout.m_namedLocksTable.getSelectionCount()>0);
+    m_layout.m_removeAutoLockButton.setEnabled(m_layout.m_autoLocksTable.getSelectionCount() > 0);
+    m_layout.m_removeNamedLockButton.setEnabled(m_layout.m_namedLocksTable.getSelectionCount() > 0);
   }
-  
+
   private void addListeners() {
     m_layout.m_addAutoLockButton.addSelectionListener(m_addLockHandler);
     m_layout.m_removeAutoLockButton.addSelectionListener(m_removeLockHandler);
@@ -156,6 +156,7 @@ public class LocksPanel extends ConfigurationEditorPanel {
     if (m_locks == null) return;
     String[] autolockLevels = getListDefaults(Autolock.class, "lock-level");
     SWTUtil.makeTableComboItem(m_layout.m_autoLocksTable, Layout.AUTO_LOCK_COLUMN, autolockLevels);
+    SWTUtil.makeTableComboItem(m_layout.m_autoLocksTable, Layout.AUTO_SYNCHRONIZED_COLUMN, new String[] {"true", "false"});
     Autolock[] autolocks = m_locks.getAutolockArray();
     for (int i = 0; i < autolocks.length; i++) {
       createAutolockTableItem(autolocks[i]);
@@ -183,6 +184,8 @@ public class LocksPanel extends ConfigurationEditorPanel {
   private void initAutolockTableItem(TableItem item, Autolock lock) {
     item.setText(Layout.AUTO_METHOD_COLUMN, lock.getMethodExpression());
     item.setText(Layout.AUTO_LOCK_COLUMN, lock.isSetLockLevel() ? lock.getLockLevel().toString() : "");
+    item.setText(Layout.AUTO_SYNCHRONIZED_COLUMN, lock.isSetAutoSynchronized() ? Boolean.toString(lock
+        .getAutoSynchronized()) : "false");
   }
 
   private void updateAutolockTableItem(int index) {
@@ -248,19 +251,22 @@ public class LocksPanel extends ConfigurationEditorPanel {
 
   private static class Layout {
 
-    private static final String AUTO_LOCKS          = "Auto Locks";
-    private static final String NAMED_LOCKS         = "Named Locks";
-    private static final String LOCK_NAME           = "Lock Name";
-    private static final String METHOD_EXPRESSION   = "Method Expression";
-    private static final String LOCK_LEVEL          = "Lock Level";
-    private static final String ADD                 = "Add...";
-    private static final String REMOVE              = "Remove";
+    private static final String AUTO_LOCKS               = "Auto Locks";
+    private static final String NAMED_LOCKS              = "Named Locks";
+    private static final String LOCK_NAME                = "Lock Name";
+    private static final String METHOD_EXPRESSION        = "Method Expression";
+    private static final String LOCK_LEVEL               = "Lock Level";
+    private static final String AUTO_SYNCHRONIZED        = "Auto Synchronized";
+    private static final String ADD                      = "Add...";
+    private static final String REMOVE                   = "Remove";
 
-    private static final int    AUTO_METHOD_COLUMN  = 0;
-    private static final int    AUTO_LOCK_COLUMN    = 1;
-    private static final int    NAMED_NAME_COLUMN   = 0;
-    private static final int    NAMED_METHOD_COLUMN = 1;
-    private static final int    NAMED_LOCK_COLUMN   = 2;
+    private static final int    AUTO_METHOD_COLUMN       = 0;
+    private static final int    AUTO_LOCK_COLUMN         = 1;
+    private static final int    AUTO_SYNCHRONIZED_COLUMN = 2;
+
+    private static final int    NAMED_NAME_COLUMN        = 0;
+    private static final int    NAMED_METHOD_COLUMN      = 1;
+    private static final int    NAMED_LOCK_COLUMN        = 2;
 
     private Table               m_autoLocksTable;
     private Button              m_addAutoLockButton;
@@ -306,12 +312,12 @@ public class LocksPanel extends ConfigurationEditorPanel {
       m_autoLocksTable = new Table(sidePanel, SWT.BORDER | SWT.MULTI | SWT.FULL_SELECTION | SWT.V_SCROLL);
       m_autoLocksTable.setHeaderVisible(true);
       m_autoLocksTable.setLinesVisible(true);
-      SWTUtil.makeTableColumnsResizeWeightedWidth(sidePanel, m_autoLocksTable, new int[] { 3, 1 });
-      SWTUtil.makeTableColumnsEditable(m_autoLocksTable, new int[] { AUTO_METHOD_COLUMN });
+      SWTUtil.makeTableColumnsResizeWeightedWidth(sidePanel, m_autoLocksTable, new int[] { 3, 1, 1 });
+      SWTUtil.makeTableColumnsEditable(m_autoLocksTable, new int[] { AUTO_METHOD_COLUMN, AUTO_SYNCHRONIZED_COLUMN });
       GridData gridData = new GridData(GridData.FILL_BOTH);
       gridData.heightHint = SWTUtil.tableRowsToPixels(m_autoLocksTable, 3);
       m_autoLocksTable.setLayoutData(gridData);
-      
+
       TableColumn methodCol = new TableColumn(m_autoLocksTable, SWT.NONE, AUTO_METHOD_COLUMN);
       methodCol.setResizable(true);
       methodCol.setText(METHOD_EXPRESSION);
@@ -321,6 +327,11 @@ public class LocksPanel extends ConfigurationEditorPanel {
       lockCol.setResizable(true);
       lockCol.setText(LOCK_LEVEL);
       lockCol.pack();
+
+      TableColumn autoSyncCol = new TableColumn(m_autoLocksTable, SWT.NONE, AUTO_SYNCHRONIZED_COLUMN);
+      autoSyncCol.setResizable(true);
+      autoSyncCol.setText(AUTO_SYNCHRONIZED);
+      autoSyncCol.pack();
 
       Composite buttonPanel = new Composite(comp, SWT.NONE);
       gridLayout = new GridLayout();
@@ -479,13 +490,17 @@ public class LocksPanel extends ConfigurationEditorPanel {
     public void handleEvent(Event e) {
       TableItem item = (TableItem) e.item;
       String text = item.getText(e.index).trim();
-      int index = ((Table)e.widget).getSelectionIndex();
+      int index = ((Table) e.widget).getSelectionIndex();
 
       if (e.widget == m_layout.m_autoLocksTable) {
         Autolock lock = (Autolock) item.getData();
-        
-        if (e.index == Layout.AUTO_METHOD_COLUMN) {
-          if(text.length() == 0) {
+
+        if (e.index == Layout.AUTO_SYNCHRONIZED_COLUMN) {
+          boolean autoSync = Boolean.parseBoolean(text);
+          if(autoSync) lock.setAutoSynchronized(true);
+          else lock.unsetAutoSynchronized();
+        } else if (e.index == Layout.AUTO_METHOD_COLUMN) {
+          if (text.length() == 0) {
             item.setText(lock.getMethodExpression());
             removeAutolockLater(index);
             return;
@@ -500,7 +515,7 @@ public class LocksPanel extends ConfigurationEditorPanel {
         NamedLock lock = (NamedLock) item.getData();
 
         if (e.index == Layout.NAMED_NAME_COLUMN) {
-          if(text.length() == 0) {
+          if (text.length() == 0) {
             item.setText(lock.getLockName());
             removeNamedLockLater(index);
             return;
@@ -508,7 +523,7 @@ public class LocksPanel extends ConfigurationEditorPanel {
             lock.setLockName(text);
           }
         } else if (e.index == Layout.NAMED_METHOD_COLUMN) {
-          if(text.length() == 0) {
+          if (text.length() == 0) {
             item.setText(lock.getMethodExpression());
             removeNamedLockLater(index);
             return;
@@ -544,7 +559,7 @@ public class LocksPanel extends ConfigurationEditorPanel {
       }
     });
   }
-  
+
   public void namedLockChanged(IProject project, int index) {
     if (project.equals(getProject())) {
       updateNamedLockTableItem(index);

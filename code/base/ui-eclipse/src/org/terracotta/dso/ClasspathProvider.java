@@ -79,14 +79,27 @@ public class ClasspathProvider extends StandardClasspathProvider {
 
     return result;
   }
-  
+
   private static IPath[] gatherDevClasspathEntries() {
     IPath location = TcPlugin.getDefault().getLocation();
     List<IPath> list = new ArrayList<IPath>();
     IPath buildPath = location.append("..");
 
-    String[] dirs = { "deploy", "common", "management", "aspectwerkz", "thirdparty", "dso-common", "dso-common-jdk15",
-        "dso-l1", "dso-l1-jdk15", "dso-l2" };
+    String[] dirs = {
+      "deploy",
+      "common",
+      "common-api",
+      "management",
+      "aspectwerkz",
+      "thirdparty",
+      "thirdparty-api",
+      "dso-common",
+      "dso-common-jdk15",
+      "dso-l1",
+      "dso-l1-api",
+      "dso-l1-jdk15",
+      "dso-l2",
+      "dso-l2-common" };
 
     for (int i = 0; i < dirs.length; i++) {
       list.add(buildPath.append(dirs[i]).append("build.eclipse").append("src.classes"));
@@ -113,7 +126,7 @@ public class ClasspathProvider extends StandardClasspathProvider {
         projectDir = location.append("..").append(dir).toFile();
         ivy = new File(projectDir + File.separator + "ivy.xml");
         if (ivy.exists()) {
-          SAXParserFactory factory = SAXParserFactory.newInstance(); 
+          SAXParserFactory factory = SAXParserFactory.newInstance();
           SAXParser parser = factory.newSAXParser();
           parser.parse(new FileInputStream(ivy), new DefaultHandler() {
             public void startElement(String uri, String localName, String qName, Attributes attributes) {

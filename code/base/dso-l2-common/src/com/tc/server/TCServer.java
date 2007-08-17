@@ -21,6 +21,8 @@ public interface TCServer {
 
   long getActivateTime();
 
+  boolean canShutdown();
+  
   void shutdown();
 
   String getDescriptionOfCapabilities();

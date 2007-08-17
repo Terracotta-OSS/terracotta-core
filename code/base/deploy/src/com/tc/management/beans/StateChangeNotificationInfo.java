@@ -20,6 +20,8 @@ public class StateChangeNotificationInfo {
       "jmx.terracotta.L2.passive-standby"           };
   private static final String[] START_INFO           = new String[] { "TCServer start-state", "Start-State",
       "jmx.terracotta.L2.start-state"               };
+  private static final String[] STOP_INFO            = new String[] { "TCServer stop-state", "Stop-State",
+      "jmx.terracotta.L2.stop-state"                };
 
   private final Map             map;
 
@@ -29,6 +31,7 @@ public class StateChangeNotificationInfo {
     map.put(StateManager.PASSIVE_STANDBY.getName(), PASSIVE_STANDBY_INFO);
     map.put(StateManager.PASSIVE_UNINTIALIZED.getName(), PASSIVE_UNINIT_INFO);
     map.put(StateManager.START_STATE.getName(), START_INFO);
+    map.put(StateManager.STOP_STATE.getName(), STOP_INFO);
   }
 
   public String getMsg(State state) {

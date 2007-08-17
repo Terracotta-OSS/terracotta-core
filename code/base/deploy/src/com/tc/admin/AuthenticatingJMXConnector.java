@@ -11,7 +11,6 @@ import javax.management.MBeanServerConnection;
 import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
 import javax.management.remote.JMXConnector;
-import javax.naming.CommunicationException;
 import javax.security.auth.Subject;
 
 /**
@@ -73,18 +72,8 @@ public final class AuthenticatingJMXConnector implements JMXConnector {
   private void _connect() throws IOException {
     Map env = m_connectManager.getConnectionEnvironment();
     
-    try {
-      setConnector(m_connectManager.getSecureJmxConnector());
-      getConnector().connect(env);
-    } catch (IOException ioe) {
-      Throwable cause = ioe.getCause();
-      if(cause instanceof CommunicationException) {
-        setConnector(m_connectManager.getJmxConnector());
-        getConnector().connect(env);
-      } else {
-        throw ioe;
-      }
-    }
+    setConnector(m_connectManager.getJmxConnector());
+    getConnector().connect(env);
   }
   
   public synchronized void connect(Map conEnv) throws IOException {
@@ -133,7 +122,7 @@ public final class AuthenticatingJMXConnector implements JMXConnector {
     m_connectManager.setCredentials(username, password);
     try {
       m_collapseObserver.fireUpdateEvent();
-      setConnector(m_connectManager.getSecureJmxConnector());
+      setConnector(m_connectManager.getJmxConnector());
       getConnector().connect(m_connectManager.getConnectionEnvironment());
     } catch (Exception e) {
       synchronized (m_error_lock) {

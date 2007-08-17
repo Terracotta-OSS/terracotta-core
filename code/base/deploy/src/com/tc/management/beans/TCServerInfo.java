@@ -86,6 +86,9 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
    * shutdown and we'll get all sorts of other errors trying to return from this call.
    */
   public void shutdown() {
+    if(!server.canShutdown()) {
+      throw new RuntimeException("Server cannot be shutdown because it is not fully started.");
+    }
     final Timer timer = new Timer();
     final TimerTask task = new TimerTask() {
       public void run() {

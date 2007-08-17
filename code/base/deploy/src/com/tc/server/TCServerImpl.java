@@ -22,6 +22,7 @@ import com.tc.config.schema.NewSystemConfig;
 import com.tc.config.schema.messaging.http.ConfigServlet;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
+import com.tc.l2.state.StateManager;
 import com.tc.lang.StartupHelper;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
@@ -141,13 +142,18 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
   }
 
-  public void shutdown() {
-    synchronized (stateLock) {
-      if (!isStopped()) {
-        stop();
-      }
+  public boolean canShutdown() {
+    return (!state.isStartState() || (dsoServer != null && dsoServer.isBlocking())) && !state.isStopState();
+  }
+  
+  public synchronized void shutdown() {
+    if (canShutdown()) {
+      state.setState(StateManager.STOP_STATE);
+      stopServer();
       consoleLogger.info("Server exiting...");
       System.exit(0);
+    } else {
+      logger.warn("Server in incorrect state (" + state.getState() + ") to be shutdown.");
     }
   }
 

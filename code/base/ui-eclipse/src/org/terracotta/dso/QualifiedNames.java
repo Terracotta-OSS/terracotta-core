@@ -61,6 +61,11 @@ public interface QualifiedNames {
     SERVER_OPTIONS =
       new QualifiedName(TERRACOTTA_QUALIFIER,
                         "ServerOptions");
+
+  public static final QualifiedName
+    AUTO_START_SERVER_OPTION =
+      new QualifiedName(TERRACOTTA_QUALIFIER,
+                        "AutoStartServerOption");
   
   public static final QualifiedName
     CONFIG_PROBLEM_CONTINUE =
