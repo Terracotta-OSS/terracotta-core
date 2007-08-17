@@ -44,9 +44,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
 
         full_command = command + command_args.map { |key, val| "-D#{key}=#{val}" }
 
-        unless system(*full_command)
-          fail("Maven deploy for artifact #{artifact} failed.")
-        end
+        Registry[:platform].exec(full_command.first, *full_command[1..-1])
       end
     end
   end
