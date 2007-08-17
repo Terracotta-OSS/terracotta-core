@@ -6,7 +6,7 @@
 #  All rights reserved.
 #
 
-if [ $# == 0 ]; then
+if [ $# -eq 0 ]; then
   echo "usage: dso-java [-options] class [args...]"
   exit 0
 fi
