@@ -137,8 +137,9 @@ dist <product_code> <flavor> [maven.repo=URL]
     <product_code> may be one of dso (the default), web, or api
     <flavor> may be either OPENSOURCE (the default) or ENTERPRISE.
     If provided, the maven.repo parameter specifies the URL of the Maven
-    repository to which the generated binaries will be deployed.  Maven must
-    be installed to use this option.
+    repository to which the generated binaries will be deployed.  The
+    keyword 'local' can be used in place of a URL to specify the local
+    Maven repository.  Maven must be installed to use this option.
 
 dist_jars <product_code> <distribution_type>
     Acts like the dist target but will only build the jar files that will be found
