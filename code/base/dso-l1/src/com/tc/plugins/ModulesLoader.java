@@ -131,9 +131,6 @@ public class ModulesLoader {
   private static void initModules(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper,
                                   final ClassProvider classProvider, final Module[] modules, final boolean forBootJar)
       throws BundleException {
-    
-    // install all available bundles
-    osgiRuntime.installBundles();
 
     if (configHelper instanceof StandardDSOClientConfigHelper) {
       final Dictionary serviceProps = new Hashtable();
@@ -143,8 +140,7 @@ public class ModulesLoader {
       osgiRuntime.registerService(configHelper, serviceProps);
     }
 
-    // now start the bundles that are listed in the modules section of the config
-    EmbeddedOSGiRuntimeCallbackHandler callback = new EmbeddedOSGiRuntimeCallbackHandler() {
+    EmbeddedOSGiRuntimeCallbackHandler handler = new EmbeddedOSGiRuntimeCallbackHandler() {
       public void callback(final Object payload) throws BundleException {
         Bundle bundle = (Bundle) payload;
         if (bundle != null) {
@@ -156,18 +152,8 @@ public class ModulesLoader {
       }
     };
 
-    startBundles(osgiRuntime, modules, callback);
-  }
-  
-  private static final void startBundles(final EmbeddedOSGiRuntime osgiRuntime, final Module[] modules, final EmbeddedOSGiRuntimeCallbackHandler callback) 
-    throws BundleException {
-    for (int i = 0; i < modules.length; ++i) {
-      final Module module  = modules[i];
-      final String name    = module.getName();
-      final String version = module.getVersion();
-      final String groupId = module.getGroupId();
-      osgiRuntime.startBundle(name, version, groupId, callback);
-    }
+    osgiRuntime.installBundles();
+    osgiRuntime.startBundles(modules, handler);
   }
 
   private static void registerClassLoader(final ClassProvider classProvider, final Bundle bundle)

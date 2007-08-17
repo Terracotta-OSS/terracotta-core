@@ -13,6 +13,7 @@ import com.tc.config.Directories;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.util.Environment;
+import com.terracottatech.config.Module;
 import com.terracottatech.config.Modules;
 
 import java.io.File;
@@ -31,18 +32,20 @@ public interface EmbeddedOSGiRuntime {
 
   void installBundles() throws BundleException;
 
-  void installBundle(final String name, final String version, final String groupId) throws BundleException;
+  void startBundles(final Module[] modules, final EmbeddedOSGiRuntimeCallbackHandler handler) throws BundleException;
 
-  void startBundle(final String name, final String version, final String groupId, final EmbeddedOSGiRuntimeCallbackHandler handler)
-      throws BundleException;
+  void installBundle(final Module bundle) throws BundleException;
 
-  Bundle getBundle(final String name, final String version, final String groupId) throws BundleException;
+  void uninstallBundle(final Module bundle) throws BundleException;
+
+  void startBundle(final Module bundle, 
+                   final EmbeddedOSGiRuntimeCallbackHandler handler) throws BundleException;
+
+  void stopBundle(final Module bundle) throws BundleException;
+
+  Bundle getBundle(final Module bundle) throws BundleException;
 
   void registerService(final Object serviceObject, final Dictionary serviceProps) throws BundleException;
-
-  void stopBundle(final String name, final String version, final String groupId) throws BundleException;
-
-  void uninstallBundle(final String name, final String version, final String groupId) throws BundleException;
 
   ServiceReference[] getAllServiceReferences(final String clazz, final String filter) throws InvalidSyntaxException;
 
@@ -58,23 +61,6 @@ public interface EmbeddedOSGiRuntime {
   static class Factory {
 
     private static final TCLogger logger = TCLogging.getLogger(EmbeddedOSGiRuntime.class);
-
-    static String groupIdToRelativePath(final String groupId) {
-      return groupId.replace('.', '/');
-    }
-
-    static String[] decomposeGroupId(final String groupId) {
-      return groupId.split("\\.");
-    }
-
-    static File getPathFromGroupId(final File prefix, final String groupId) {
-      final String[] groupPaths = decomposeGroupId(groupId);
-      File path = prefix;
-      for (int i = 0; i < groupPaths.length; i++) {
-        path = new File(path, groupPaths[i]);
-      }
-      return path.getAbsoluteFile();
-    }
 
     public static EmbeddedOSGiRuntime createOSGiRuntime(final Modules modules) throws BundleException, Exception {
       final List prependLocations = new ArrayList();

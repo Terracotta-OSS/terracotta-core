@@ -12,9 +12,11 @@ import org.osgi.framework.Constants;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 
+import com.tc.util.Assert;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.util.URLUtil;
+import com.terracottatech.config.Module;
 
 import java.io.File;
 import java.io.IOException;
@@ -69,38 +71,46 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
 
   public void installBundles() throws BundleException {
     for (int i = 0; i < bundleRepositories.length; i++) {
-      final URL bundleLocation = bundleRepositories[i];
+      final URL location = bundleRepositories[i];
       // TODO: Add support for protocols other than file://
-      if (bundleLocation.getProtocol().equalsIgnoreCase("file")) {
-        final File bundleDir = new File(bundleLocation.getFile());
-        if (!bundleDir.exists()) {
+      if (location.getProtocol().equalsIgnoreCase("file")) {
+        final File repository = new File(location.getFile());
+        if (!repository.exists()) {
           // TODO: We need a better way to handle this. If we throw an exception
           // here, and we're running a test, then it breaks the test;
           // but if we're in production and 'bundleDir' does not exists, then
           // the client wont be notified of the anomaly; maybe print a warning message???
-          logger.warn("The bundle repository: '" + bundleDir + "' does not exist.");
+          warn(Message.WARN_MISSING_REPOSITORY, new Object[] { repository });
           continue;
         }
 
-        if (bundleDir.isDirectory()) {
-          final File[] bundleFiles = findBundleFiles(bundleDir);
+        if (repository.isDirectory()) {
+          final File[] bundleFiles = findBundleFiles(repository);
           for (int j = 0; j < bundleFiles.length; j++) {
             installBundle(bundleFiles[j]);
           }
-        } else {
-          throw new BundleException("Invalid bundle repository specified in the URL [" + bundleDir + "]");
+          return;
         }
+
+        exception(Message.ERROR_INVALID_REPOSITORY, new Object[] { repository }, null);
       }
     }
   }
 
+  public void startBundles(final Module[] bundles, final EmbeddedOSGiRuntimeCallbackHandler handler)
+      throws BundleException {
+    for (int i = 0; i < bundles.length; ++i) {
+      startBundle(bundles[i], handler);
+    }
+  }
+
   private void installBundle(final File bundle) throws BundleException {
-    URL bundleLocation = null;
+    URL repository = null;
     try {
-      bundleLocation = bundle.toURL();
-      installBundle(bundleLocation);
+      repository = bundle.toURL();
+      installBundle(repository);
     } catch (MalformedURLException mue) {
-      throw new BundleException("Invalid bundle URL [" + bundleLocation.toString() + "]", mue);
+      exception(Message.ERROR_INVALID_REPOSITORY, new Object[] { repository }, mue);
     }
   }
 
@@ -113,29 +123,21 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
       final String symbolicName = getSymbolicName(bundleId);
       if (symbolicName == null) {
         framework.uninstallBundle(bundleId);
-        // TODO: Fix this, we shouldn't have to do this much just to log a warning...
         final File bundleFile = new File(new URI(bundle.toString()));
-        final String name = getBundleName(bundleFile);
-        final String version = getBundleVersion(bundleFile);
-        final String msg = MessageFormat.format("Skipped config-bundle installation of file: " + BUNDLE_PATH
-            + ", it does not appear to be a valid config-bundle file.", new String[] { name, version });
-        logger.warn(msg);
+        warn(Message.WARN_SKIPPED_FILE_INSTALLATION, new Object[] { bundleFile.getName() });
       } else {
         info(Message.BUNDLE_INSTALLED, new Object[] { symbolicName });
       }
     } catch (URISyntaxException e) {
       throw new RuntimeException(e);
-    } catch (IOException ioe) {
-      throw new BundleException("Unable to open URL [" + bundle.toString() + "]", ioe);
+    } catch (IOException e) {
+      exception(Message.ERROR_BUNDLE_INACCESSIBLE, new Object[] { bundle.toString() }, e);
     }
   }
 
-  public void installBundle(final String name, final String version, final String groupId) throws BundleException {
-    final URL bundleLocation = getBundleURL(name, version, groupId);
-    if (bundleLocation == null) throw new BundleException("Unable to find bundle '" + name + "', version '" + version
-        + "' for group-id '" + groupId
-        + "' from the default repository or any of the repositories listed in your config");
-    installBundle(bundleLocation);
+  public void installBundle(final Module bundle) throws BundleException {
+    final URL location = getBundleURL(bundle);
+    installBundle(location);
   }
 
   /**
@@ -150,7 +152,7 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     Collection jarFiles = FileUtils.listFiles(repository, new String[] { "jar" }, true);
     for (Iterator i = jarFiles.iterator(); i.hasNext();) {
       File jarFile = (File) i.next();
-      if (isBundleFileName(jarFile)) {
+      if (isValidFilename(jarFile)) {
         list.add(jarFile);
       } else {
         final String msg = MessageFormat.format(
@@ -163,6 +165,12 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     return (File[]) list.toArray(new File[list.size()]);
   }
 
+  /**
+   * Locate and return the symbolic name of an installed bundle given a <code>RequiredBundleSpec</code>.
+   * 
+   * @return The symbolic name of the bundle, meaning: it was installed, and it was a config-bundle, and it conforms to
+   *         the <code>spec</code> - otherwise return <code>null</code>
+   */
   private Bundle findBundleBySymbolicName(final RequiredBundleSpec spec) {
     final Bundle[] bundles = framework.getSystemBundleContext().getBundles();
     for (int i = 0; i < bundles.length; i++) {
@@ -196,13 +204,14 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     handler.callback(bundle);
   }
 
-  public void startBundle(final String name, final String version, final String groupId,
-                          final EmbeddedOSGiRuntimeCallbackHandler handler) throws BundleException {
-    startBundle(getBundleID(name, version, groupId), handler);
+  public void startBundle(final Module bundle, final EmbeddedOSGiRuntimeCallbackHandler handler) throws BundleException {
+    final long id = getBundleId(bundle);
+    startBundle(id, handler);
   }
 
-  public Bundle getBundle(final String name, final String version, final String groupId) throws BundleException {
-    return framework.bundles.getBundle(getBundleID(name, version, groupId));
+  public Bundle getBundle(final Module bundle) throws BundleException {
+    final long id = getBundleId(bundle);
+    return framework.bundles.getBundle(id);
   }
 
   public void registerService(final Object serviceObject, final Dictionary serviceProps) throws BundleException {
@@ -226,21 +235,22 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     framework.getSystemBundleContext().ungetService(service);
   }
 
-  public void stopBundle(final String name, final String version, final String groupId) throws BundleException {
-    final long bundleID = getBundleID(name, version, groupId);
+  public void stopBundle(final Module bundle) throws BundleException {
+    final long id = getBundleId(bundle);
     if (logger.isDebugEnabled()) {
-      info(Message.STOPPING_BUNDLE, new Object[] { getSymbolicName(name, version, groupId) });
+      info(Message.STOPPING_BUNDLE, new Object[] { getSymbolicName(id) });
     }
-    framework.stopBundle(bundleID);
-    info(Message.BUNDLE_STOPPED, new Object[] { getSymbolicName(name, version, groupId) });
+    framework.stopBundle(id);
+    info(Message.BUNDLE_STOPPED, new Object[] { getSymbolicName(id) });
   }
 
-  public void uninstallBundle(final String name, final String version, final String groupId) throws BundleException {
+  public void uninstallBundle(final Module bundle) throws BundleException {
+    final long id = getBundleId(bundle);
     if (logger.isDebugEnabled()) {
-      info(Message.UNINSTALLING_BUNDLE, new Object[] { getSymbolicName(name, version, groupId) });
+      info(Message.UNINSTALLING_BUNDLE, new Object[] { getSymbolicName(id) });
     }
-    framework.uninstallBundle(getBundleID(name, version, groupId));
-    info(Message.BUNDLE_UNINSTALLED, new Object[] { getSymbolicName(name, version, groupId) });
+    framework.uninstallBundle(id);
+    info(Message.BUNDLE_UNINSTALLED, new Object[] { getSymbolicName(id) });
   }
 
   public void shutdown() throws BundleException {
@@ -251,37 +261,30 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     info(Message.SHUTDOWN, new Object[0]);
   }
 
-  private URL getBundleURL(final String name, final String version, final String groupId) throws BundleException {
+  private URL getBundleURL(final Module bundle) throws BundleException {
+    final String name = bundle.getName();
+    final String version = bundle.getVersion();
+    final String groupId = bundle.getGroupId();
     final String base = groupId.replace('.', File.separatorChar);
-    final String path = MessageFormat.format("{2}{3}{0}{3}{1}{3}" + BUNDLE_PATH, new String[] { name, version,
-        base, File.separator });
+    final String path = MessageFormat.format("{2}{3}{0}{3}{1}{3}" + BUNDLE_PATH, new String[] { name, version, base,
+        File.separator });
     try {
       final URL url = URLUtil.resolve(bundleRepositories, path);
       if (url == null) {
-        final String msg = MessageFormat
-            .format(
-                "Unable to locate the config-bundle file for bundle ''{0}'' version ''{1}'' using group-id ''{2}'', "
-                    + "please check that module name and version number you specified is correct; "
-                    + "config-bundle filenames are extrapolated by concatenating the bundle name and version number, the resulting "
-                    + "filename is expected to conform to the following pattern: {3}", new String[] { name, version,
-                    groupId, BUNDLE_FILENAME_PATTERN });
-        throw new BundleException(msg);
+        exception(Message.ERROR_BUNDLE_NOT_FOUND, new Object[] { name, version, groupId, BUNDLE_FILENAME_PATTERN },
+            null);
       }
       return url;
-    } catch (MalformedURLException murle) {
-      throw new BundleException("Unable to resolve bundle '" + path
-          + "', please check that your repositories are correctly configured", murle);
+    } catch (MalformedURLException e) {
+      exception(Message.ERROR_BUNDLE_URL_UNRESOLVABLE, new Object[] { path }, e);
     }
+    Assert.fail("KnopflerfishOSGi.getBundleURL(Module) may throw an exception, but should never return null.");
+    return null;
   }
 
-  private long getBundleID(final String name, final String version, final String groupId) throws BundleException {
-    final URL bundleURL = getBundleURL(name, version, groupId);
-    return framework.getBundleId(bundleURL.toString());
-  }
-
-  private String getSymbolicName(final String name, final String version, final String groupId) throws BundleException {
-    final Bundle bundle = framework.getSystemBundleContext().getBundle(getBundleID(name, version, groupId));
-    return bundle.getSymbolicName();
+  private long getBundleId(final Module bundle) throws BundleException {
+    final URL location = getBundleURL(bundle);
+    return framework.getBundleId(location.toString());
   }
 
   private String getSymbolicName(final long id) throws BundleException {
@@ -289,21 +292,13 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     return bundle.getSymbolicName();
   }
 
-  // ---
-
-  private String getBundleVersion(File bundleFile) {
-    return bundleFile.getName().replaceFirst(BUNDLE_FILENAME_REGEX, "").replaceFirst(BUNDLE_FILENAME_EXT_REGEX, "");
-  }
-
-  private String getBundleName(File bundleFile) {
-    return bundleFile.getName().replaceFirst("-" + BUNDLE_VERSION_REGEX + BUNDLE_FILENAME_EXT_REGEX, "");
-  }
-
   /**
    * Returns <code>true</code> if the given File object refers to a file matching the
    * {@link KnopflerfishOSGi#BUNDLE_FILENAME_PATTERN}, <code>false</code> otherwise.
+   * 
+   * @return <code>true</code> if the name of the file conforms to the <code>BUNDLE_FILENAME_PATTERN</code>
    */
-  protected boolean isBundleFileName(final File file) {
+  protected boolean isValidFilename(final File file) {
     return file.isFile() && file.getName().matches(BUNDLE_FILENAME_PATTERN);
   }
 
