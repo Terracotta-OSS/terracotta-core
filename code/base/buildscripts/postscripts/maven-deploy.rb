@@ -7,8 +7,7 @@
 class BaseCodeTerracottaBuilder <  TerracottaBuilder
   protected
 
-  MAVEN_REPO_CONFIG_KEY = 'maven.repo'
-  MAVEN_REPO_LOCAL = 'local'
+  include MavenConstants
 
   # Deploy artifacts created by 'dist' to a local or remote Maven repository.
   def postscript(ant, build_environment, product_directory, *args)

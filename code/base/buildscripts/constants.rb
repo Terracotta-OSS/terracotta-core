@@ -15,3 +15,8 @@ module PropertyNames
 
   TC_BASE_DIR = 'tc.base-dir'
 end
+
+module MavenConstants
+  MAVEN_REPO_CONFIG_KEY = 'maven.repo'
+  MAVEN_REPO_LOCAL = 'local'
+end
