@@ -23,6 +23,7 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.session.NullSessionManager;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
@@ -120,11 +121,17 @@ public class MemoryDataStoreServer {
     }
 
   }
+  
 
   public static void main(String[] args) {
-    MemoryDataStoreServer server = createInstance(0);
+    final String                         PropertyMemoryStorePort = "l2.memorystore.port";
+    final int                            memoryStorePort;
+    memoryStorePort = TCPropertiesImpl.getProperties().getInt(PropertyMemoryStorePort);
+
+    MemoryDataStoreServer server = createInstance(memoryStorePort);
     try {
       server.start();
+      System.out.println("Memory Data Store Server started at port " + server.getListenPort());
 
       while (server.getState() == STARTED) {
         Thread.sleep(Long.MAX_VALUE);

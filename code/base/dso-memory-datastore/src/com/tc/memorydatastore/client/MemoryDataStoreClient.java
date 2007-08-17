@@ -137,6 +137,11 @@ public class MemoryDataStoreClient implements MemoryDataMap {
     Assert.assertTrue(responseMessage.isRequestCompletedFlag());
     return responseMessage.getValues();
   }
+  
+  public Collection getAll() {
+    byte[] emptyKey = new byte[0];
+    return(getAll(emptyKey));
+  }
 
   public void remove(byte[] key) {
     ThreadID thId = getThreadID();

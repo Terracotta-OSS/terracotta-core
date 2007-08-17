@@ -328,6 +328,16 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
       SerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
       persistor = new SleepycatPersistor(TCLogging.getLogger(SleepycatPersistor.class), dbenv,
                                          serializationAdapterFactory);
+      /* This commented code is for replacing SleepyCat with MemoryDataStore as an in-memory DB for testing purpose.
+       * You need to include MemoryDataStore in tc.jar and enable with tc.properties l2.memorystore.enabled=true.
+      boolean useMemoryStore = false;
+      if (l2Properties.getProperty("memorystore.enabled", false) != null) {
+        useMemoryStore = l2Properties.getBoolean("memorystore.enabled");
+      }
+      if (useMemoryStore) {
+        persistor = new MemoryStorePersistor(TCLogging.getLogger(MemoryStorePersistor.class));
+      } 
+      */
 
       String cachePolicy = l2Properties.getProperty("objectmanager.cachePolicy").toUpperCase();
       if (cachePolicy.equals("LRU")) {

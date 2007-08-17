@@ -177,7 +177,7 @@ public class MemoryDataStore {
 
     public Collection getAll(byte[] key) {
       if (key.length <= 0) {
-        return null;
+        //return null;
       }
 
       //long startTime = System.currentTimeMillis();
@@ -192,7 +192,7 @@ public class MemoryDataStore {
         Map.Entry entry = (Map.Entry) i.next();
         ByteArrayObjectWrapper k = (ByteArrayObjectWrapper) entry.getKey();
         byte[] v = (byte[]) entry.getValue();
-        if (k.startsWith(wrappedKey)) {
+        if (key.length == 0 || k.startsWith(wrappedKey)) {
           returnValues.add(new TCByteArrayKeyValuePair(k.value, v));
         } else {
           break;
