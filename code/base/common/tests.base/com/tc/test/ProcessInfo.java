@@ -30,7 +30,7 @@ public class ProcessInfo {
       out.start();
       err.start();
       
-      System.out.println("ps_grep_java exit code: " + p.waitFor());
+      p.waitFor();
       String result = out.getOutput().trim() + "\n" + err.getOutput();
       
       return result.trim();
