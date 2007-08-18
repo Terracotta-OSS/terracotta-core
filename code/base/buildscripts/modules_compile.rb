@@ -32,7 +32,7 @@ class BuildSubtree
                 puts "AspectJ #{build_module.name}/#{name}..."
 
                 # Include the java.lang.System class to get access to Java
-                # system properties                
+                # system properties
                 javac_classpath = JavaSystem.getProperty('java.class.path')
 
                 ant.java(
@@ -131,22 +131,30 @@ class BuildSubtree
 end
 
 class BuildModule
+  include MavenConstants
+
     # Compiles the module. All this does is call BuildSubtree#compile on each of the module's
     # subtrees.
     def compile(jvm_set, build_results, ant, config_source, build_environment)
-        @subtrees.each { |subtree| subtree.compile(jvm_set, build_results, ant, config_source, build_environment) }
-        if self.module?
-           create_module_jar(ant, build_results)
+      @subtrees.each do |subtree|
+        subtree.compile(jvm_set, build_results, ant, config_source, build_environment)
+      end
+
+      if self.module?
+        module_info = create_module_jar(ant, build_results)
+        if repo = config_source[MAVEN_REPO_CONFIG_KEY]
+          maven = MavenDeploy.new(repo, MODULES_GROUP_ID)
+          maven.deploy_file(module_info.jarfile.to_s, module_info.artifact_id, module_info.version)
         end
+      end
     end
 
-    # Creates a JAR file for a pluggable module and stores it in build/modules.
+    # Creates a JAR file for a pluggable module and stores it in build/modules.  Returns a
+    # ModuleInfo object describing the module.
     def create_module_jar(ant, build_results)
       basedir  = build_results.classes_directory(subtree('src')).ensure_directory
-      module_metainf_dir = FilePath.new(self.root, "META-INF").to_s
-      manifest = FilePath.new(module_metainf_dir, "MANIFEST.MF").to_s
-      jarfile = build_results.module_jar_file(self)
-
-      ant.jar(:destfile => jarfile.to_s, :basedir => basedir.to_s, :manifest => manifest)
+      module_info = build_results.module_info(self)
+      ant.jar(:destfile => module_info.jarfile.to_s, :basedir => basedir.to_s, :manifest => module_info.manifest)
+      module_info
     end
 end

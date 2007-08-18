@@ -38,7 +38,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     original_no_demo = @no_demo
     @no_demo = true
     begin
-      dist_all(flavor)
+      depends :dist_all
     ensure
       @no_demo = original_no_demo
     end
