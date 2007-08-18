@@ -23,7 +23,7 @@ public class EventManagerImpl implements EventManager, ApplicationContextAware {
   }
 
   public int size() {
-    return listener.getEvents().size();
+    return listener.size();
   }
 
   public void publishEvents(Object source, String message, int count) {
@@ -37,7 +37,7 @@ public class EventManagerImpl implements EventManager, ApplicationContextAware {
   }
   
   public void clear() {
-    listener.getEvents().clear();
+    listener.clear();
   }
 
   public Date getLastEventTime() {

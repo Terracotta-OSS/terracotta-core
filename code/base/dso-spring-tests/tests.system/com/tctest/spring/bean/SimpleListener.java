@@ -15,9 +15,17 @@ import java.util.List;
 public class SimpleListener implements ApplicationListener {
     private transient List events = new ArrayList();
     private Date lastEventTime;
-
-    public List getEvents() {
-      return this.events;
+   
+    public int size() {
+      synchronized(events) {
+        return events.size();
+      }
+    }
+    
+    public void clear() {
+      synchronized (events) {
+        events.clear();
+      }
     }
     
     // ApplicationListener
@@ -25,7 +33,9 @@ public class SimpleListener implements ApplicationListener {
     public void onApplicationEvent(ApplicationEvent event) {
       if(event instanceof SingletonEvent) {
         System.out.println("Got SingletonEvent: " + event);
-        this.events.add(event);
+        synchronized (events) {
+          this.events.add(event);
+        }
         this.lastEventTime = new Date();
       } else {
         System.out.println("Got some other kind of event: " + event);
