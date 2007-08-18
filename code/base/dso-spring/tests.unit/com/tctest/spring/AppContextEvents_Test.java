@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.spring;
 
@@ -18,7 +19,6 @@ import com.tctest.spring.bean.SimpleListener;
 import com.tctest.spring.bean.SingletonEvent;
 
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * Test case for <code>ApplicationEventPublisher</code>.
@@ -45,7 +45,6 @@ public class AppContextEvents_Test extends TransparentTestBase {
     return AppContextEventsApp.class;
   }
 
-  
   public static class AppContextEventsApp extends AbstractTransparentApp {
 
     public AppContextEventsApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
@@ -53,49 +52,49 @@ public class AppContextEvents_Test extends TransparentTestBase {
     }
 
     public void run() {
-        try {
-          ClassPathXmlApplicationContext ctx1 = new ClassPathXmlApplicationContext("com/tctest/spring/beanfactory.xml");
-          ClassPathXmlApplicationContext ctx2 = 
-            new ClassPathXmlApplicationContext(new String[] {"com/tctest/spring/beanfactory3.xml"}, ctx1);
-          
-          SimpleListener simpleListener = (SimpleListener) ctx1.getBean("simpleListener");
-          List events = simpleListener.getEvents();
-          
-          moveToStageAndWait(1);
+      try {
+        ClassPathXmlApplicationContext ctx1 = new ClassPathXmlApplicationContext("com/tctest/spring/beanfactory.xml");
+        ClassPathXmlApplicationContext ctx2 = new ClassPathXmlApplicationContext(
+                                                                                 new String[] { "com/tctest/spring/beanfactory3.xml" },
+                                                                                 ctx1);
 
-          ctx1.publishEvent(new SingletonEvent("ctx1", "Test event1 "+getApplicationId()));
-          moveToStageAndWait(2);
+        SimpleListener simpleListener = (SimpleListener) ctx1.getBean("simpleListener");
 
-          waitEvents(events, NODE_COUNT, 5000L);
-          assertEquals("Haven't received distributed events: "+events, NODE_COUNT, events.size());
+        moveToStageAndWait(1);
 
-          moveToStageAndWait(3);
-          
-          ctx2.publishEvent(new SingletonEvent("ctx2", "Test event2 "+getApplicationId()));
-          moveToStageAndWait(4);
+        ctx1.publishEvent(new SingletonEvent("ctx1", "Test event1 " + getApplicationId()));
+        moveToStageAndWait(2);
 
-          waitEvents(events, NODE_COUNT * 2, 5000L);
-          
-          int ctx2Count = 0;
-          for (Iterator it = events.iterator(); it.hasNext();) {
-            SingletonEvent e = (SingletonEvent) it.next();
-            if(e.getSource().equals("ctx2")) ctx2Count++;
-          }
-          
-          assertEquals("Haven't received distributed events: "+events, NODE_COUNT, ctx2Count);
-          
-        } catch (Throwable e) {
-          moveToStage(1);
-          moveToStage(2);
-          moveToStage(3);
-          notifyError(e);
-           
+        waitEvents(simpleListener, NODE_COUNT, 5000L);
+        assertEquals(NODE_COUNT, simpleListener.size());
+
+        moveToStageAndWait(3);
+
+        ctx2.publishEvent(new SingletonEvent("ctx2", "Test event2 " + getApplicationId()));
+        moveToStageAndWait(4);
+
+        waitEvents(simpleListener, NODE_COUNT * 2, 5000L);
+
+        int ctx2Count = 0;
+        for (Iterator it = simpleListener.takeEvents().iterator(); it.hasNext();) {
+          SingletonEvent e = (SingletonEvent) it.next();
+          if (e.getSource().equals("ctx2")) ctx2Count++;
         }
+
+        assertEquals(NODE_COUNT, ctx2Count);
+
+      } catch (Throwable e) {
+        moveToStage(1);
+        moveToStage(2);
+        moveToStage(3);
+        notifyError(e);
+
+      }
     }
 
-    private void waitEvents(List events, int count, long timeout) {
+    private void waitEvents(SimpleListener listener, int count, long timeout) {
       long time = System.currentTimeMillis();
-      while(events.size()<count && (System.currentTimeMillis()-time)<timeout) {
+      while (listener.size() < count && (System.currentTimeMillis() - time) < timeout) {
         try {
           Thread.sleep(50L);
         } catch (Exception e) {
@@ -106,15 +105,16 @@ public class AppContextEvents_Test extends TransparentTestBase {
 
     public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
       config.addIncludePattern("com.tctest.spring.bean.SingletonEvent", true, true, false);
-      
+
       DSOSpringConfigHelper springConfig = new StandardDSOSpringConfigHelper();
-      springConfig.addApplicationNamePattern(SpringTestConstants.APPLICATION_NAME);  // app name used by testing framework
+      springConfig.addApplicationNamePattern(SpringTestConstants.APPLICATION_NAME); // app name used by testing
+      // framework
       springConfig.addConfigPattern("*/beanfactory.xml");
       springConfig.addConfigPattern("*/beanfactory3.xml");
       springConfig.addDistributedEvent("com.tctest.spring.bean.SingletonEvent");
       config.addDSOSpringConfig(springConfig);
     }
-    
+
   }
-  
+
 }
