@@ -28,6 +28,7 @@ public class ServerManager {
 
   protected static TCLogger      logger         = TCLogging.getLogger(ServerManager.class);
   private static int             appServerIndex = 0;
+  private final boolean          DEBUG_MODE     = false;
 
   private List                   serversToStop  = new ArrayList();
   private DSOServer              dsoServer;
@@ -50,9 +51,15 @@ public class ServerManager {
     sandbox = AppServerUtil.createSandbox(tempDir);
     warDir = new File(sandbox, "war");
     installation = AppServerUtil.createAppServerInstallation(factory, installDir, sandbox);
-    PortChooser pc = new PortChooser();
-    serverTcConfig.setDsoPort(pc.chooseRandomPort());
-    serverTcConfig.setJmxPort(pc.chooseRandomPort());
+    
+    if (DEBUG_MODE) {
+      serverTcConfig.setDsoPort(9510);
+      serverTcConfig.setJmxPort(9520);
+    } else {
+      PortChooser pc = new PortChooser();
+      serverTcConfig.setDsoPort(pc.chooseRandomPort());
+      serverTcConfig.setJmxPort(pc.chooseRandomPort());
+    }
   }
 
   public void addServerToStop(Stoppable stoppable) {
@@ -75,7 +82,7 @@ public class ServerManager {
 
     AppServerUtil.shutdownAndArchive(sandbox, new File(tempDir, "sandbox"));
   }
-  
+
   void timeout() {
     logger.info("Test has timed out. Force shutdown and archive...");
     AppServerUtil.forceShutdownAndArchive(sandbox, new File(tempDir, "sandbox"));
