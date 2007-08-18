@@ -490,24 +490,6 @@ modules:
         - thirdparty
         - dso-system-tests
         - legacy-test-tree
-  - dso-performance-tests:
-      options:
-        jdk: J2SE-1.5
-      dependencies:
-        - aspectwerkz
-        - common-api
-        - common
-        - linked-child-process
-        - management
-        - dso-common
-        - dso-common-jdk15
-        - dso-l1-api
-        - dso-l1
-        - dso-l1-jdk15
-        - simulator
-        - thirdparty-api
-        - thirdparty
-        - legacy-test-tree
   - clustered-apache-struts-1.1:
       options:
         jdk: J2SE-1.4
