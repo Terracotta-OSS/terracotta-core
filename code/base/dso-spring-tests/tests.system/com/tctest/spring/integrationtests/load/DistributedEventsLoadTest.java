@@ -8,7 +8,6 @@ import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tc.test.server.appserver.deployment.TestCallback;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
-import com.tc.util.runtime.Os;
 import com.tctest.spring.bean.EventManager;
 import com.tctest.spring.integrationtests.SpringDeploymentTest;
 
@@ -21,7 +20,7 @@ import junit.framework.Test;
 
 public class DistributedEventsLoadTest extends SpringDeploymentTest {
   private static final boolean DEBUG                         = false;
-  private static final int     NUM_ITERATION                 = 10;
+  private static final int     NUM_ITERATION                 = 500;
 
   private static final String  REMOTE_SERVICE_NAME           = "EventManager";
   private static final String  BEAN_DEFINITION_FILE_FOR_TEST = "classpath:/com/tctest/spring/distributedevents.xml";
@@ -34,7 +33,7 @@ public class DistributedEventsLoadTest extends SpringDeploymentTest {
   public static Test suite() {
     return new ServerTestSetup(DistributedEventsLoadTest.class);
   }
-  
+
   public DistributedEventsLoadTest() {
     // this.disableAllUntil("2010-01-01", new String[]{"solaris"});
   }
@@ -46,18 +45,8 @@ public class DistributedEventsLoadTest extends SpringDeploymentTest {
     }
   }
 
-  public void testTwoNodeDistributedEventsLoad() throws Throwable {
-    publishDistributedEvents(2);
-  }
-
   public void testFourNodeDistributedEventsLoad() throws Throwable {
     publishDistributedEvents(4);
-  }
-
-  public void testEightNodeDistributedEventsLoad() throws Throwable {
-    if (!Os.isSolaris()) { // solaris boxes are too slow for this test
-      publishDistributedEvents(8);
-    }
   }
 
   private void publishDistributedEvents(final int nodeCount) throws Throwable {
