@@ -46,7 +46,7 @@ public class SessionValve55 extends ValveBase {
   private final Map mgrs = new HashMap();
 
   public void invoke(Request valveReq, Response valveRes) throws IOException, ServletException {
-    if (TerracottaSessionManager.isDsoSessionApp(valveReq)) {
+    if (valveReq.getContext() != null && TerracottaSessionManager.isDsoSessionApp(valveReq)) {
       tcInvoke(valveReq, valveRes);
     } else {
       if (getNext() != null) getNext().invoke(valveReq, valveRes);

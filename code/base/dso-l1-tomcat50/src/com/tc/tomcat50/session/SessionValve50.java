@@ -46,7 +46,7 @@ public class SessionValve50 extends ValveBase {
 
   public void invoke(final Request valveReq, final Response valveRes, final ValveContext valveContext)
       throws IOException, ServletException {
-    if (valveReq instanceof CoyoteRequest && valveRes instanceof CoyoteResponse
+    if (valveReq.getContext() != null && valveReq instanceof CoyoteRequest && valveRes instanceof CoyoteResponse
         && TerracottaSessionManager.isDsoSessionApp((HttpServletRequest) valveReq)) {
       tcInvoke((CoyoteRequest) valveReq, (CoyoteResponse) valveRes, valveContext);
     } else {
