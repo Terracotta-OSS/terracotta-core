@@ -23,7 +23,7 @@ public class LinkedBlockingQueueCrashTestApp extends AbstractTransparentApp {
   int upbound = 2000;
   long MaxRuntimeMillis = 5 * 60 * 1000 + 30000;
   
-  private final CyclicBarrier     barrier; 
+  private final CyclicBarrier     barrier = new CyclicBarrier(getParticipantCount()); 
   private final LinkedBlockingQueue<EventNode> lbqueue1 = new LinkedBlockingQueue<EventNode>();
   private final LinkedBlockingQueue<EventNode> lbqueue2 = new LinkedBlockingQueue<EventNode>();
   private final EventNode eventIndex = new EventNode(0, "test");
@@ -31,7 +31,6 @@ public class LinkedBlockingQueueCrashTestApp extends AbstractTransparentApp {
 
   public LinkedBlockingQueueCrashTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
-    barrier = new CyclicBarrier(getParticipantCount());
   }
 
   public void run() {
