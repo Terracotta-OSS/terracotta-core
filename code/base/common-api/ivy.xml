@@ -2,7 +2,7 @@
 <ivy-module version="1.0">
   <info organisation="ibiblio" module="common-api"/>
   <dependencies>
-    <dependency name="commons-lang" rev="2.0" org="terracotta"/>
+    <dependency name="commons-lang" rev="2.0" />
     <dependency name="jetty-util" rev="6.0.1" org="terracotta"/>
   </dependencies>
 </ivy-module>
