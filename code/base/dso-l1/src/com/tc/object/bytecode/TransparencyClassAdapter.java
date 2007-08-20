@@ -109,10 +109,10 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
       if ((spec.isClassPortable() && spec.isPhysical() && !ByteCodeUtil.isTCSynthetic(name))
           || (spec.isClassAdaptable() && isRoot(access, name))) {
         // include the field, but remove final modifier for *most* fields
-        if (Modifier.isFinal(access) && !isMagicSerializationField(access, name, desc)) {
-          fieldVisitor = cv.visitField(~Modifier.FINAL & access, name, desc, signature, value);
-        } else {
+        if ((Modifier.isStatic(access) && !isRoot(access, name)) || isMagicSerializationField(access, name, desc)) {
           fieldVisitor = cv.visitField(access, name, desc, signature, value);
+        } else {
+          fieldVisitor = cv.visitField(~Modifier.FINAL & access, name, desc, signature, value);
         }
         generateGettersSetters(access, name, desc, Modifier.isStatic(access));
       } else {

@@ -4,6 +4,7 @@
  */
 package com.tctest;
 
+import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -13,6 +14,8 @@ import com.tc.util.Assert;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.io.File;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -69,6 +72,8 @@ public class TransparencyTestApp extends AbstractTransparentApp {
     System.out.println("out is: " + out);
     System.err.println("err is: " + err);
 
+    testStaticNonRoot();
+
     myRoot = new HashMap();
     synchronized (myRoot) {
       test1();
@@ -78,6 +83,25 @@ public class TransparencyTestApp extends AbstractTransparentApp {
       testFunnyCstr();
     }
 
+  }
+
+  private void testStaticNonRoot() {
+    try {
+      Class c = TestObj.class;
+      Field f = c.getDeclaredField("staticFinalNonRoot");
+
+      Assert.assertTrue(ManagerUtil.isPhysicallyInstrumented(c));
+
+      Assert.assertFalse(ManagerUtil.isRoot(f));
+
+      int access = f.getModifiers();
+      Assert.assertTrue(Modifier.isFinal(access));
+      Assert.assertTrue(Modifier.isStatic(access));
+      Assert.assertTrue(Modifier.isPublic(access));
+
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   FunnyCstr funnyCstr;
@@ -488,7 +512,9 @@ public class TransparencyTestApp extends AbstractTransparentApp {
     }
   }
 
-  public class TestObj {
+  public static class TestObj {
+
+    public static final Object staticFinalNonRoot = new Object();
 
     public void __tc_getallfieldvalues(Map values) {
       values.put("transientObject", transientObject);
