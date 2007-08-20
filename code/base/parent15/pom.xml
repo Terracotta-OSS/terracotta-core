@@ -19,7 +19,6 @@
     <module>../dso-spring-aj</module>
     <module>../dso-alt-boot-jar-tests</module>
     <module>../dso-crash-tests</module>
-    <module>../dso-performance-tests</module>
     <module>../dso-l1-tomcat55</module>
 <!--
     <module>../ui-eclipse</module>
@@ -537,12 +536,6 @@
         <groupId>org.terracotta</groupId>
         <artifactId>dso-memory-datastore</artifactId>
         <version>${tcVersion}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.terracotta</groupId>
-        <artifactId>dso-performance-tests</artifactId>
-        <version>${tcVersion}</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>

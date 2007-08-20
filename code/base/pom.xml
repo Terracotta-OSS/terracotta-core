@@ -480,10 +480,6 @@ Dir.foreach( "." ) { |dir|
                   <jdk>J2SE-1.4</jdk>
                 </option>
                 <option>
-                  <module>dso-performance-tests</module>
-                  <jdk>J2SE-1.5</jdk>
-                </option>
-                <option>
                   <module>modules-common-1.0</module>
                   <jdk>J2SE-1.4</jdk>
                   <isModule>true</isModule>

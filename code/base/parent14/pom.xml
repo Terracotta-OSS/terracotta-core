@@ -663,12 +663,6 @@
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
-        <artifactId>dso-performance-tests</artifactId>
-        <version>${tcVersion}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.terracotta</groupId>
         <artifactId>dso-spring</artifactId>
         <version>${tcVersion}</version>
       </dependency>
