@@ -9,6 +9,7 @@ import com.tc.exception.ImplementMe;
 import com.tc.test.TempDirectoryHelper;
 import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.glassfishv1.GlassfishV1AppServerFactory;
+import com.tc.test.server.appserver.jboss3x.JBoss3xAppServerFactory;
 import com.tc.test.server.appserver.jboss4x.JBoss4xAppServerFactory;
 import com.tc.test.server.appserver.jetty6x.Jetty6xAppServerFactory;
 import com.tc.test.server.appserver.tomcat5x.Tomcat5xAppServerFactory;
@@ -81,6 +82,7 @@ public abstract class AppServerFactory {
       case WASCE:
         if ("1".equals(majorVersion)) return new Wasce1xAppServerFactory(new ProtectedKey(), config);
       case JBOSS:
+        if ("3".equals(majorVersion)) return new JBoss3xAppServerFactory(new ProtectedKey(), config);
         if ("4".equals(majorVersion)) return new JBoss4xAppServerFactory(new ProtectedKey(), config);
       case GLASSFISH:
         if ("v1".equals(majorVersion)) return new GlassfishV1AppServerFactory(new ProtectedKey(), config);
