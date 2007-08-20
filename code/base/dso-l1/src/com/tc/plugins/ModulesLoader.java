@@ -37,10 +37,14 @@ import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ModulesLoader {
 
@@ -152,8 +156,51 @@ public class ModulesLoader {
       }
     };
 
-    osgiRuntime.installBundles();
-    osgiRuntime.startBundles(modules, handler);
+    List moduleList = new ArrayList();
+    moduleList.addAll(getAdditionalModules());
+    moduleList.addAll(Arrays.asList(modules));
+
+    Module[] allModules = (Module[]) moduleList.toArray(new Module[moduleList.size()]);
+    
+    osgiRuntime.installBundles(allModules);
+    osgiRuntime.startBundles(allModules, handler);
+  }
+
+  private static List getAdditionalModules() {
+    List modules = new ArrayList();
+
+    // TODO should use tc properties
+    String additionalModuleList = System.getProperty("tc.tests.configuration.modules", "");
+
+    String[] additionalModules = additionalModuleList.split(",");
+    // clustered-apache-struts-1.1-1.1.0.jar
+    // org.terracotta.modules.clustered-apache-struts-1.1-1.1.0.jar
+    Pattern pattern = Pattern.compile("(.+?)-([0-9\\.]+)-([0-9\\.\\-]+)");
+    for (int i = 0; i < additionalModules.length; i++) {
+      Matcher matcher = pattern.matcher(additionalModules[i]);
+      if (!matcher.find() || matcher.groupCount() < 3) {
+        logger.error("Invalid module id " + additionalModules[i]);
+        continue;
+      }
+
+      String component = matcher.group(1);
+      String componentVersion = matcher.group(2);
+      String moduleVersion = matcher.group(3);
+
+      String groupId = "org.terracotta.modules";
+      int n = component.lastIndexOf('.');
+      if (n > 0) {
+        groupId = component.substring(0, n);
+        component = component.substring(n + 1);
+      }
+
+      Module module = Module.Factory.newInstance();
+      module.setGroupId(groupId);
+      module.setName(component + "-" + componentVersion);
+      module.setVersion(moduleVersion);
+      modules.add(module);
+    }
+    return modules;
   }
 
   private static void registerClassLoader(final ClassProvider classProvider, final Bundle bundle)

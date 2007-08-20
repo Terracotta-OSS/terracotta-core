@@ -12,7 +12,6 @@ import org.osgi.framework.Constants;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 
-import com.tc.util.Assert;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.util.URLUtil;
@@ -69,32 +68,38 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     framework.launch(0);
   }
 
-  public void installBundles() throws BundleException {
-    for (int i = 0; i < bundleRepositories.length; i++) {
-      final URL location = bundleRepositories[i];
-      // TODO: Add support for protocols other than file://
-      if (location.getProtocol().equalsIgnoreCase("file")) {
-        final File repository = new File(location.getFile());
-        if (!repository.exists()) {
-          // TODO: We need a better way to handle this. If we throw an exception
-          // here, and we're running a test, then it breaks the test;
-          // but if we're in production and 'bundleDir' does not exists, then
-          // the client wont be notified of the anomaly; maybe print a warning message???
-          warn(Message.WARN_MISSING_REPOSITORY, new Object[] { repository });
-          continue;
-        }
-
-        if (repository.isDirectory()) {
-          final File[] bundleFiles = findBundleFiles(repository);
-          for (int j = 0; j < bundleFiles.length; j++) {
-            installBundle(bundleFiles[j]);
-          }
-          return;
-        }
-
-        exception(Message.ERROR_INVALID_REPOSITORY, new Object[] { repository }, null);
-      }
+  public void installBundles(Module[] bundles) throws BundleException {
+    for (int i = 0; i < bundles.length; i++) {
+      Module bundle = bundles[i];
+      URL bundleURL = getBundleURL(bundle);
+      installBundle(bundleURL);
     }
+    
+//    for (int i = 0; i < bundleRepositories.length; i++) {
+//      final URL location = bundleRepositories[i];
+//      // TODO: Add support for protocols other than file://
+//      if (location.getProtocol().equalsIgnoreCase("file")) {
+//        final File repository = new File(location.getFile());
+//        if (!repository.exists()) {
+//          // TODO: We need a better way to handle this. If we throw an exception
+//          // here, and we're running a test, then it breaks the test;
+//          // but if we're in production and 'bundleDir' does not exists, then
+//          // the client wont be notified of the anomaly; maybe print a warning message???
+//          warn(Message.WARN_MISSING_REPOSITORY, new Object[] { repository });
+//          continue;
+//        }
+//
+//        if (repository.isDirectory()) {
+//          final File[] bundleFiles = findBundleFiles(repository);
+//          for (int j = 0; j < bundleFiles.length; j++) {
+//            installBundle(bundleFiles[j]);
+//          }
+//          return;
+//        }
+//
+//        exception(Message.ERROR_INVALID_REPOSITORY, new Object[] { repository }, null);
+//      }
+//    }
   }
 
   public void startBundles(final Module[] bundles, final EmbeddedOSGiRuntimeCallbackHandler handler)
@@ -105,12 +110,11 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
   }
 
   private void installBundle(final File bundle) throws BundleException {
-    URL repository = null;
     try {
-      repository = bundle.toURL();
-      installBundle(repository);
+      URL bundleURL = bundle.toURL();
+      installBundle(bundleURL);
     } catch (MalformedURLException mue) {
-      exception(Message.ERROR_INVALID_REPOSITORY, new Object[] { repository }, mue);
+      exception(Message.ERROR_INVALID_REPOSITORY, new Object[] { bundle }, mue);
     }
   }
 
@@ -268,18 +272,17 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     final String base = groupId.replace('.', File.separatorChar);
     final String path = MessageFormat.format("{2}{3}{0}{3}{1}{3}" + BUNDLE_PATH, new String[] { name, version, base,
         File.separator });
+    URL url = null;
     try {
-      final URL url = URLUtil.resolve(bundleRepositories, path);
+      url = URLUtil.resolve(bundleRepositories, path);
       if (url == null) {
         exception(Message.ERROR_BUNDLE_NOT_FOUND, new Object[] { name, version, groupId, BUNDLE_FILENAME_PATTERN },
             null);
       }
-      return url;
     } catch (MalformedURLException e) {
       exception(Message.ERROR_BUNDLE_URL_UNRESOLVABLE, new Object[] { path }, e);
     }
-    Assert.fail("KnopflerfishOSGi.getBundleURL(Module) may throw an exception, but should never return null.");
-    return null;
+    return url;
   }
 
   private long getBundleId(final Module bundle) throws BundleException {
