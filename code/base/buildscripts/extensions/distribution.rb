@@ -18,10 +18,8 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   def dist_all(flavor='OPENSOURCE')
     @flavor = flavor.downcase
     depends :init, :compile
-    srcdir        = @static_resources.distribution_config_directory(flavor).canonicalize.to_s
-    product_codes = Dir.entries(srcdir).delete_if { |entry| (/\-(#{flavor})\.def\.yml$/i !~ entry) || (/^x\-/i =~ entry) }
-    product_codes.each do |product_code|
-      @product_code = product_code.sub(/\-.*$/, '')
+    product_definition_files(flavor).each do |product_definition_file|
+      @product_code = product_code(product_definition_file)
       @flavor       = flavor
       call_actions :__assemble
       srcdir  = product_directory.to_s
@@ -38,7 +36,18 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     original_no_demo = @no_demo
     @no_demo = true
     begin
-      depends :dist_all
+      product_definition_files(flavor).each do |def_file|
+        product_code = product_code(def_file)
+        config = product_config(product_code)
+        if postscripts = config['postscripts']
+          if mvn = postscripts.find { |entry| entry.is_a?(Hash) && entry['maven-deploy'] }
+            @product_code = product_code
+            @flavor = flavor.downcase
+            depends :init, :compile
+            call_actions :__assemble
+          end
+        end
+      end
     ensure
       @no_demo = original_no_demo
     end
