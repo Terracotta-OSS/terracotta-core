@@ -7,9 +7,11 @@ package com.tc.jboss;
 import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.loaders.NamedClassLoader;
 import com.tc.object.loaders.Namespace;
+import com.tc.util.runtime.Os;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 public class JBossLoaderNaming {
@@ -33,9 +35,26 @@ public class JBossLoaderNaming {
     ncl.__tc_setClassLoaderName(Namespace.createLoaderName(Namespace.JBOSS_NAMESPACE, "boot"));
     ClassProcessorHelper.registerGlobalLoader(ncl);
 
-    serverHomeDir = homeDir.getAbsoluteFile().toURL().toExternalForm();
-    serverBaseDir = baseDir.getAbsoluteFile().toURL().toExternalForm();
-    serverTempDir = tempDir.getAbsoluteFile().toURL().toExternalForm();
+    serverHomeDir = fixUpUrl(homeDir.getAbsoluteFile().toURL()).toExternalForm();
+    serverBaseDir = fixUpUrl(baseDir.getAbsoluteFile().toURL()).toExternalForm();
+    serverTempDir = fixUpUrl(tempDir.getAbsoluteFile().toURL()).toExternalForm();
+
+  }
+
+  private static URL fixUpUrl(URL url) throws MalformedURLException {
+    if (Os.isWindows()) {
+      // make sure the drive letter is always uppercase
+      String file = url.getFile();
+
+      if (file.matches("^/[A-Za-z]:/.+$")) {
+        char drive = Character.toUpperCase(file.charAt(1));
+        file = "/" + drive + file.substring(2);
+      }
+
+      return new URL(url.getProtocol(), url.getHost(), file);
+    }
+
+    return url;
   }
 
   public synchronized static String getLoaderName(ClassLoader loader) throws Exception {
@@ -77,7 +96,7 @@ public class JBossLoaderNaming {
       u = url;
     }
 
-    String urlString = u.toExternalForm();
+    String urlString = fixUpUrl(u).toExternalForm();
 
     if (urlString.startsWith(serverHomeDir)) {
       urlString = urlString.substring(serverHomeDir.length());
