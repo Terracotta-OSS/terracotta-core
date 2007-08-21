@@ -83,12 +83,16 @@ public final class Weblogic9xAppServer extends CargoAppServer {
     }
     
     private void prepareSecurityFile() {
-      if (Os.isLinux()) {
-        InputStream in = getClass().getResourceAsStream("Linux_SerializedSystemIni.dat");
+      if (Os.isLinux()) {      
+        FileWriter writer = null;
         try {
-          IOUtils.copy(in, new FileWriter(new File(getConfiguration().getHome(), "/security/SerializedSystemIni.dat")));
+          InputStream in = getClass().getResourceAsStream("Linux_SerializedSystemIni.dat");
+          writer = new FileWriter(new File(getConfiguration().getHome(), "/security/SerializedSystemIni.dat")); 
+          IOUtils.copy(in, writer);
         } catch (IOException e) {
           throw new RuntimeException(e);
+        } finally {
+          IOUtils.closeQuietly(writer);
         }
       }
     }
