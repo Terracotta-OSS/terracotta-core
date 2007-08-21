@@ -17,6 +17,7 @@ appserver=tomcat-5.5.23
 #appserver=glassfish-v1.ur1-p01-b02
 #appserver=weblogic-8.1.sp6
 #appserver=jboss-4.0.5
+#appserver=jboss-3.2.8.sp1
 #appserver=wasce-1.0.1.2
 #appserver=tomcat-5.0.28
 
