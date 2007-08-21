@@ -60,7 +60,7 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>tc-cargo-core-uberjar</artifactId>
-      <version>1.0-20070811</version>
+      <version>1.0-20070820</version>
     </dependency>
   
     <dependency>
