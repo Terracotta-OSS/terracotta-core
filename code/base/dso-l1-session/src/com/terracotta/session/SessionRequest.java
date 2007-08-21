@@ -6,12 +6,20 @@ package com.terracotta.session;
 
 import com.terracotta.session.util.Assert;
 
+import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 public class SessionRequest extends HttpServletRequestWrapper implements TerracottaRequest {
+
+  // Attribute name for storing the Session in the request
+  private static final String SESSION_ATTRIBUTE_NAME = SessionRequest.class.getName() + ".session";
+  
+  // Attribute name for storing a Boolean.TRUE indicating the request has been forwarded
+  public static final String SESSION_FORWARD_ATTRIBUTE_NAME = SessionRequest.class.getName() + ".forward";
+  
   private final HttpServletRequest  req;
   private final HttpServletResponse res;
   private SessionId                 requestedSessionId;
@@ -19,8 +27,6 @@ public class SessionRequest extends HttpServletRequestWrapper implements Terraco
   private final boolean             isForwarded;
   private final boolean             isSessionOwner;
   private final SessionManager      mgr;
-
-  private Session                   session;
 
   public SessionRequest(SessionId requestedSessionId, HttpServletRequest req, HttpServletResponse res,
                         SessionManager sessionManager) {
@@ -41,10 +47,13 @@ public class SessionRequest extends HttpServletRequestWrapper implements Terraco
     if (nativeSess instanceof Session) {
       this.isForwarded = true;
       this.isSessionOwner = false;
-      this.session = (Session) nativeSess;
+      setAttribute(SESSION_ATTRIBUTE_NAME, nativeSess);
     } else {
       this.isSessionOwner = true;
-      this.isForwarded = req.getAttribute("javax.servlet.forward.request_uri") != null;
+      
+      // Added by TerracottaDispatcher when requests get forwarded through
+      Object fwdFlag = req.getAttribute(SESSION_FORWARD_ATTRIBUTE_NAME);
+      this.isForwarded = (fwdFlag != null && fwdFlag.equals(Boolean.TRUE));
     }
   }
 
@@ -73,9 +82,11 @@ public class SessionRequest extends HttpServletRequestWrapper implements Terraco
   }
 
   public final Session getTerracottaSession(boolean createNew) {
+    Session session = (Session) getAttribute(SESSION_ATTRIBUTE_NAME);
     if (session != null) return session;
     session = (createNew) ? mgr.getSession(requestedSessionId, req, res) : mgr.getSessionIfExists(requestedSessionId,
                                                                                                   req, res);
+    setAttribute(SESSION_ATTRIBUTE_NAME, session);
 
     if (session != null) {
       session.associateRequest(this);
@@ -85,7 +96,7 @@ public class SessionRequest extends HttpServletRequestWrapper implements Terraco
   }
 
   public boolean isSessionOwner() {
-    return isSessionOwner && session != null;
+    return isSessionOwner && getAttribute(SESSION_ATTRIBUTE_NAME) != null;
   }
 
   public boolean isForwarded() {
@@ -96,10 +107,16 @@ public class SessionRequest extends HttpServletRequestWrapper implements Terraco
     return requestStartMillis;
   }
 
+  public RequestDispatcher getRequestDispatcher(String path) {
+    return new TerracottaDispatcher(super.getRequestDispatcher(path));
+  }
+  
   void clearSession() {
-    Assert.pre(session != null);
-    session = null;
+    Assert.pre(getAttribute(SESSION_ATTRIBUTE_NAME) != null);
+    removeAttribute(SESSION_ATTRIBUTE_NAME);
+
     requestedSessionId = null;
   }
 
 }
+
