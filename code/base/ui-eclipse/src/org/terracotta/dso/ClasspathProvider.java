@@ -5,7 +5,6 @@
 package org.terracotta.dso;
 
 import org.apache.commons.io.FileUtils;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.debug.core.ILaunchConfiguration;
@@ -18,7 +17,6 @@ import org.xml.sax.helpers.DefaultHandler;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -27,24 +25,22 @@ import java.util.List;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+/**
+ * ClasspathProvider for Terracotta processes, such as TCServer and BootJarTool.
+ * Not used for DSO clients.
+ */
 public class ClasspathProvider extends StandardClasspathProvider {
   public ClasspathProvider() {
     super();
   }
 
-  public IRuntimeClasspathEntry[] computeUnresolvedClasspath(ILaunchConfiguration configuration) throws CoreException {
-    IRuntimeClasspathEntry[] cpe = super.computeUnresolvedClasspath(configuration);
+  public IRuntimeClasspathEntry[] computeUnresolvedClasspath(ILaunchConfiguration configuration) {
     IPath jarPath = TcPlugin.getDefault().getLibDirPath().append("tc.jar");
 
     if (jarPath.toFile().exists()) {
-      IRuntimeClasspathEntry[] result = new IRuntimeClasspathEntry[cpe.length + 1];
-
-      System.arraycopy(cpe, 0, result, 0, cpe.length);
-      result[cpe.length] = JavaRuntime.newArchiveRuntimeClasspathEntry(jarPath.makeAbsolute());
-
-      return result;
+      return new IRuntimeClasspathEntry[] {JavaRuntime.newArchiveRuntimeClasspathEntry(jarPath.makeAbsolute())};
     } else {
-      ArrayList<IRuntimeClasspathEntry> list = new ArrayList<IRuntimeClasspathEntry>(Arrays.asList(cpe));
+      ArrayList<IRuntimeClasspathEntry> list = new ArrayList<IRuntimeClasspathEntry>();
       IPath[] paths = gatherDevClasspathEntries();
 
       for (int i = 0; i < paths.length; i++) {
