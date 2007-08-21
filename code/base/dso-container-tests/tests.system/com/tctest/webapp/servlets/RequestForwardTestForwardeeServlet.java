@@ -12,8 +12,9 @@ import javax.servlet.http.HttpServletResponse;
 public final class RequestForwardTestForwardeeServlet extends HttpServlet {
   protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     final String action = req.getParameter("action");
-    System.err.println("### ForwardEEServlet.doGet is here...");
+    System.err.println("\n### ForwardEEServlet.doGet is here...: " + action);
     String reply = "FORWARD OK";
+    
     if (action.endsWith("s")) {
       req.getSession();
       reply= "FORWARD GOT SESSION";
@@ -22,6 +23,8 @@ public final class RequestForwardTestForwardeeServlet extends HttpServlet {
     } else {
       reply = "INVALID REQUEST";
     }
+
+    System.err.println("###   reply=" + reply);
     resp.getWriter().print(reply);
     resp.flushBuffer();
   }

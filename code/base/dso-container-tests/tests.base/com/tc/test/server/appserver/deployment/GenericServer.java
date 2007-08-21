@@ -122,6 +122,10 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
       case AppServerFactory.WEBSPHERE:
         parameters.appendSysProp("javax.management.builder.initial", "");
         break;
+      case AppServerFactory.WEBLOGIC:
+        // bumped up because ContainerHibernateTest was failing with WL 9
+        parameters.appendJvmArgs("-XX:MaxPermSize=128m");
+        break;
     }
 
     proxyBuilderMap.put(RmiServiceExporter.class, new RMIProxyBuilder());
