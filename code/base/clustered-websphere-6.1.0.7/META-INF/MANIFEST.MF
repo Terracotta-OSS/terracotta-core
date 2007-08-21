@@ -10,3 +10,4 @@ Bundle-Vendor: Terracotta, Inc.
 Bundle-Version: 1.0.0
 Import-Package: org.terracotta.modules.configuration
 Bundle-Activator: org.terracotta.modules.websphere_6_1.WebsphereTerracottaConfigurator
+Require-Bundle: org.terracotta.modules.modules_common

@@ -10,5 +10,5 @@ Bundle-RequiredExecutionEnvironment: J2SE-1.4
 Bundle-SymbolicName: org.terracotta.modules.clustered-iBatis-2.2.0
 Bundle-Vendor: Terracotta, Inc.
 Bundle-Version: 1.0.0
-Require-Bundle: org.terracotta.modules.clustered-cglib-2.1.3
+Require-Bundle: org.terracotta.modules.modules_common, org.terracotta.modules.clustered-cglib-2.1.3 
 Import-Package: org.terracotta.modules.configuration

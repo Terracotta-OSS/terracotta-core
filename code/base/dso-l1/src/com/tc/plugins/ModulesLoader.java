@@ -26,7 +26,6 @@ import com.tc.object.loaders.NamedClassLoader;
 import com.tc.object.loaders.Namespace;
 import com.tc.object.util.JarResourceLoader;
 import com.tc.util.Assert;
-import com.tc.util.Environment;
 import com.tc.util.VendorVmSignature;
 import com.tc.util.VendorVmSignatureException;
 import com.terracottatech.config.DsoApplication;
@@ -77,19 +76,11 @@ public class ModulesLoader {
     // cannot be instantiated
   }
 
-  private static void insertBasicConfigBundles(Modules modules) {
-    if (Environment.inTest()) return;
-    Module bundle = modules.addNewModule();
-    bundle.setName("modules-common-1.0");
-    bundle.setVersion("1.0.0");
-  }
-
   public static void initModules(final DSOClientConfigHelper configHelper, final ClassProvider classProvider,
                                  final boolean forBootJar) {
     EmbeddedOSGiRuntime osgiRuntime = null;
     synchronized (lock) {
       Modules modules = configHelper.getModulesForInitialization();
-      insertBasicConfigBundles(modules);
 
       if (modules != null && modules.sizeOfModuleArray() > 0) {
         try {
@@ -163,7 +154,7 @@ public class ModulesLoader {
     moduleList.addAll(Arrays.asList(modules));
 
     Module[] allModules = (Module[]) moduleList.toArray(new Module[moduleList.size()]);
-    
+
     osgiRuntime.installBundles(allModules);
     osgiRuntime.startBundles(allModules, handler);
   }
@@ -173,8 +164,8 @@ public class ModulesLoader {
 
     // TODO: should use tc properties
     final String additionalModuleList = System.getProperty("tc.tests.configuration.modules", "");
-    final String[] additionalModules  = additionalModuleList.split(",");
-    
+    final String[] additionalModules = additionalModuleList.split(",");
+
     // clustered-apache-struts-1.1-1.1.0.jar
     // org.terracotta.modules.clustered-apache-struts-1.1-1.1.0.jar
     Pattern pattern = Pattern.compile("(.+?)-([0-9\\.]+)-([0-9\\.\\-]+)");
@@ -182,7 +173,7 @@ public class ModulesLoader {
       if (additionalModules[i].length() == 0) {
         continue;
       }
-      
+
       final Matcher matcher = pattern.matcher(additionalModules[i]);
       if (!matcher.find() || matcher.groupCount() < 3) {
         logger.error("Invalid module id " + additionalModules[i]);
@@ -199,7 +190,7 @@ public class ModulesLoader {
       if (n > 0) {
         groupId = component.substring(0, n);
         component = component.substring(n + 1);
-        module.setGroupId(groupId); 
+        module.setGroupId(groupId);
       }
       module.setName(component + "-" + componentVersion);
       module.setVersion(moduleVersion);

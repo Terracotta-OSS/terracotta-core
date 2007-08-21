@@ -8,7 +8,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/simulator"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/management"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1-api"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/modules-common-1.0"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
 	<classpathentry kind="lib" path="/dependencies/lib/osgi_R4_core-1.0.jar"/>

@@ -10,3 +10,4 @@ Bundle-Vendor: Terracotta, Inc.
 Bundle-Version: 1.0.0
 Bundle-Activator: org.terracotta.modules.wicket_1_3_0.WicketTerracottaConfigurator
 Import-Package: org.terracotta.modules.configuration
+Require-Bundle: org.terracotta.modules.modules_common

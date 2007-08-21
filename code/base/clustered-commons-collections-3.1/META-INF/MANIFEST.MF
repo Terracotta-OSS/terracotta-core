@@ -9,3 +9,4 @@ Bundle-RequiredExecutionEnvironment: J2SE-1.4
 Bundle-SymbolicName: org.terracotta.modules.clustered_commons_collections_3.1
 Bundle-Vendor: Terracotta, Inc.
 Bundle-Version: 1.0.0
+Require-Bundle: org.terracotta.modules.modules_common
