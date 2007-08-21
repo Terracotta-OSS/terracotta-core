@@ -44,10 +44,6 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
   private String                  targetClassName  = ClassAdapterTestTarget.class.getName();        // "com.tctest.ClassAdapterTestTarget";
   private ClassLoader             origThreadContextClassLoader;
 
-  public ClassAdapterTest() {
-    disableAllUntil("2007-08-31");
-  }
-  
   protected void setUp() throws Exception {
     System.getProperties().remove(ClassAdapterTestTarget.KEY);
     initializeConfig();
