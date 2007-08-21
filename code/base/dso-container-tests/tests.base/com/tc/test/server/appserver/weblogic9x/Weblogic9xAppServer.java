@@ -16,7 +16,7 @@ import com.tc.util.ReplaceLine;
 import com.tc.util.runtime.Os;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -74,26 +74,46 @@ public final class Weblogic9xAppServer extends CargoAppServer {
         throw new RuntimeException(ioe);
       }
     }
-    
+
     private void setBeaHomeIfNeeded() {
       File license = new File(getHome(), "license.bea");
       if (license.exists()) {
         this.setBeaHome(this.getHome());
       }
     }
-    
+
     private void prepareSecurityFile() {
-      if (Os.isLinux()) {      
-        FileWriter writer = null;
+      if (Os.isLinux()) {
         try {
-          InputStream in = getClass().getResourceAsStream("Linux_SerializedSystemIni.dat");
-          writer = new FileWriter(new File(getConfiguration().getHome(), "/security/SerializedSystemIni.dat")); 
-          IOUtils.copy(in, writer);
+          String[] resources = new String[] { "user_staged_config/readme.txt",
+              "servers/AdminServer/security/boot.properties", "security/XACMLRoleMapperInit.ldift",
+              "security/SerializedSystemIni.dat", "security/DefaultRoleMapperInit.ldift",
+              "security/DefaultAuthenticatorInit.ldift", "lib/readme.txt", "init-info/tokenValue.properties",
+              "init-info/startscript.xml", "init-info/security.xml", "init-info/domain-info.xml",
+              "console-ext/readme.txt", "config/config.xml", "config/startup/readme.txt", "config/security/readme.txt",
+              "config/nodemanager/nm_password.properties", "config/lib/readme.txt", "config/jms/readme.txt",
+              "config/jdbc/readme.txt", "config/diagnostics/readme.txt", "config/deployments/readme.txt",
+              "autodeploy/readme.txt", "fileRealm.properties" };
+          for (int i = 0; i < resources.length; i++) {
+            String resource = "linux/" + resources[i];
+            File dest = new File(getConfiguration().getHome(), resources[i]);
+            copyResource(resource, dest);
+          }
         } catch (IOException e) {
           throw new RuntimeException(e);
-        } finally {
-          IOUtils.closeQuietly(writer);
         }
+
+      }
+    }
+
+    private void copyResource(String name, File dest) throws IOException {
+      InputStream in = getClass().getResourceAsStream(name);
+      FileOutputStream out = new FileOutputStream(dest);
+      try {
+        IOUtils.copy(in, out);
+      } finally {
+        IOUtils.closeQuietly(in);
+        IOUtils.closeQuietly(out);
       }
     }
   }

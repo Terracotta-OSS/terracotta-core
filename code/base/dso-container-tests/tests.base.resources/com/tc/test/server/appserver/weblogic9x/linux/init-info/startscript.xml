@@ -1,0 +1,1213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<scripts>
+	<script name="startWebLogic" version="3" path="bin" overwrite="false" unixFileSep="${CLASSPATHSEP}">
+		<function name="stopAll">
+			<comment message="We separate the stop commands into a function so we are able to use the trap command in Unix (calling a function) to stop these services"/>
+			<if>
+				<test type="string" not="true">
+					<operand value="X%ALREADY_STOPPED%"/>
+					<operand value="X"/>
+				</test>
+				<then>
+					<exit/>
+				</then>
+			</if>
+			<comment message="STOP POINTBASE (only if we started it)"/>
+			<if>
+				<test type="string">
+					<operand value="%POINTBASE_FLAG%"/>
+					<operand value="true"/>
+				</test>
+				<then>
+					<echo message="Stopping PointBase server..."/>
+					<exec name="Stop Pointbase" type="script">
+						<cmd start="%WL_HOME%\common\bin\stopPointBase" min="false"/>
+						<params>
+							<value>-port=%POINTBASE_PORT%</value>
+							<value>-name=%POINTBASE_DBNAME%</value>
+						</params>
+						<redirect file="%DOMAIN_HOME%\pointbaseShutdown.log" tostream="1" fromstream="2"/>
+					</exec>
+					<marker name="stopPointbase" type="exec" action="insert"/>
+					<echo message="PointBase server stopped."/>
+				</then>
+			</if>
+			<marker name="Stop Portal SearchEngine" type="exec" action="insert"/>
+			<setenv name="ALREADY_STOPPED">
+				<value>true</value>
+			</setenv>
+			<comment message="Restore IP configuration the node manager starts IP Migration"/>
+			<if>
+				<test type="string" not="true">
+					<operand value="%SERVER_IP%"/>
+					<operand value=""/>
+				</test>
+				<then>
+					<exec name="wlsifconfig" type="script">
+						<cmd start="%WL_HOME%\common\bin\wlsifconfig" min="false"/>
+						<params>
+							<value>-removeif</value>
+							<value>"%IFNAME%"</value>
+							<value>"%SERVER_IP%"</value>
+						</params>
+					</exec>
+				</then>
+			</if>
+		</function>
+		<comment>
+			<value>*************************************************************************</value>
+			<value>This script is used to start WebLogic Server for this domain.</value>
+			<value></value>
+			<value>To create your own start script for your domain, you can initialize the</value>
+			<value>environment by calling @USERDOMAINHOME\setDomainEnv.</value>
+			<value></value>
+			<value>setDomainEnv initializes or calls commEnv to initialize the following variables:</value>
+			<value></value>
+			<value>BEA_HOME       - The BEA home directory of your WebLogic installation.</value>
+			<value>JAVA_HOME      - Location of the version of Java used to start WebLogic</value>
+			<value>                 Server.</value>
+			<value>JAVA_VENDOR    - Vendor of the JVM (i.e. BEA, HP, IBM, Sun, etc.)</value>
+			<value>PATH           - JDK and WebLogic directories are added to system path.</value>
+			<value>WEBLOGIC_CLASSPATH</value>
+			<value>               - Classpath needed to start WebLogic Server.</value>
+			<value>PATCH_CLASSPATH - Classpath used for patches</value>
+			<value>PATCH_LIBPATH  - Library path used for patches</value>
+			<value>PATCH_PATH     - Path used for patches</value>
+			<value>WEBLOGIC_EXTENSION_DIRS - Extension dirs for WebLogic classpath patch</value>
+			<value>JAVA_VM        - The java arg specifying the VM to run.  (i.e.</value>
+			<value>               - server, -hotspot, etc.)</value>
+			<value>USER_MEM_ARGS  - The variable to override the standard memory arguments</value>
+			<value>                 passed to java.</value>
+			<value>PRODUCTION_MODE - The variable that determines whether Weblogic Server is started in production mode.</value>
+			<value>POINTBASE_HOME - Point Base home directory.</value>
+			<value>POINTBASE_CLASSPATH</value>
+			<value>               - Classpath needed to start PointBase.</value>
+			<value></value>
+			<value>Other variables used in this script include:</value>
+			<value>SERVER_NAME    - Name of the weblogic server.</value>
+			<value>JAVA_OPTIONS   - Java command-line options for running the server. (These</value>
+			<value>                 will be tagged on to the end of the JAVA_VM and</value>
+			<value>                 MEM_ARGS)</value>
+			<value></value>
+			<value>For additional information, refer to the WebLogic Server Administration</value>
+			<value preserve="true">Console Online Help(http://e-docs.bea.com/wls/docs92/ConsoleHelp/startstop.html).</value>
+			<value>*************************************************************************</value>
+		</comment>
+		<comment message="Call setDomainEnv here."/>
+		<setenv name="DOMAIN_HOME" shorten="true">
+			<value>\home\teck\domain</value>
+		</setenv>
+		<exec name="setDomainEnv" type="script">
+			<cmd start="%DOMAIN_HOME%\bin\setDomainEnv" min="false" source="true"/>
+			<params>
+				<value>%*</value>
+			</params>
+		</exec>
+		<setenv name="SAVE_JAVA_OPTIONS">
+			<value>%JAVA_OPTIONS%</value>
+		</setenv>
+		<setenv name="SAVE_CLASSPATH">
+			<value>%CLASSPATH%</value>
+		</setenv>
+		<comment message="Start PointBase"/>
+		<marker name="PB_DEBUG_LEVEL" type="setenv" action="replace"/>
+		<setenv name="PB_DEBUG_LEVEL" scope="local">
+			<value>0</value>
+		</setenv>
+		<if>
+			<test type="string">
+				<operand value="%POINTBASE_FLAG%"/>
+				<operand value="true"/>
+			</test>
+			<then>
+				<exec name="Pointbase" type="script">
+					<cmd start="%WL_HOME%\common\bin\startPointBase" min="false"/>
+					<params>
+						<value>-port=%POINTBASE_PORT%</value>
+						<value>-debug=%PB_DEBUG_LEVEL%</value>
+						<value>-console=false</value>
+						<value>-background=true</value>
+						<value>-ini=%DOMAIN_HOME%\pointbase.ini</value>
+					</params>
+					<redirect file="%DOMAIN_HOME%\pointbase.log" tostream="1" fromstream="2"/>
+				</exec>
+				<marker name="startPointbase" type="exec" action="insert"/>
+			</then>
+		</if>
+		<marker name="Start Portal SearchEngine" type="blockinsert" action="insert" merge="true"/>
+		<setenv name="JAVA_OPTIONS">
+			<value>%SAVE_JAVA_OPTIONS%</value>
+		</setenv>
+		<setenv name="SAVE_JAVA_OPTIONS">
+			<value></value>
+		</setenv>
+		<setenv name="CLASSPATH">
+			<value>%SAVE_CLASSPATH%</value>
+		</setenv>
+		<setenv name="SAVE_CLASSPATH">
+			<value></value>
+		</setenv>
+		<trap signal="1 2 3 15">
+			<call name="stopAll"/>
+		</trap>
+		<if>
+			<test type="string">
+				<operand value="%PRODUCTION_MODE%"/>
+				<operand value="true"/>
+			</test>
+			<then>
+				<setenv name="WLS_DISPLAY_MODE">
+					<value>Production</value>
+				</setenv>
+			</then>
+			<else>
+				<setenv name="WLS_DISPLAY_MODE">
+					<value>Development</value>
+				</setenv>
+			</else>
+		</if>
+		<if>
+			<test type="string" not="true">
+				<operand value="%WLS_USER%"/>
+				<operand value=""/>
+			</test>
+			<then>
+				<setenv name="JAVA_OPTIONS" delim=" ">
+					<value>%JAVA_OPTIONS%</value>
+					<value>-Dweblogic.management.username=%WLS_USER%</value>
+				</setenv>
+			</then>
+		</if>
+		<if>
+			<test type="string" not="true">
+				<operand value="%WLS_PW%"/>
+				<operand value=""/>
+			</test>
+			<then>
+				<setenv name="JAVA_OPTIONS" delim=" ">
+					<value>%JAVA_OPTIONS%</value>
+					<value>-Dweblogic.management.password=%WLS_PW%</value>
+				</setenv>
+			</then>
+		</if>
+		<marker name="MEDREC_WEBLOGIC_CLASSPATH" type="setenv" action="insert"/>
+		<setenv name="CLASSPATH">
+			<value>%CLASSPATH%</value>
+			<value>%MEDREC_WEBLOGIC_CLASSPATH%</value>
+		</setenv>
+		<echo message="."/>
+		<echo message="."/>
+		<echo message="JAVA Memory arguments: %MEM_ARGS%"/>
+		<echo message="."/>
+		<echo message="WLS Start Mode=%WLS_DISPLAY_MODE%"/>
+		<echo message="."/>
+		<echo message="CLASSPATH=%CLASSPATH%"/>
+		<echo message="."/>
+		<echo message="PATH=%PATH%"/>
+		<echo message="."/>
+		<echo message="***************************************************"/>
+		<echo message="*  To start WebLogic Server, use a username and   *"/>
+		<echo message="*  password assigned to an admin-level user.  For *"/>
+		<echo message="*  server administration, use the WebLogic Server *"/>
+		<echo message="*  console at http://hostname:port/console        *"/>
+		<echo message="***************************************************"/>
+		<comment message="Set up IP Migration related variables."/>
+		<comment message="Set interface name."/>
+		<if>
+			<test type="string" not="true">
+				<operand value="%Interface%"/>
+				<operand value=""/>
+			</test>
+			<then>
+				<setenv name="IFNAME">
+					<value>%Interface%</value>
+				</setenv>
+			</then>
+			<else>
+				<setenv name="IFNAME">
+					<value></value>
+				</setenv>
+			</else>
+		</if>
+		<comment message="Set IP Mask."/>
+		<if>
+			<test type="string" not="true">
+				<operand value="%NetMask%"/>
+				<operand value=""/>
+			</test>
+			<then>
+				<setenv name="IPMASK">
+					<value>%NetMask%</value>
+				</setenv>
+			</then>
+			<else>
+				<setenv name="IPMASK">
+					<value></value>
+				</setenv>
+			</else>
+		</if>
+		<comment message="Perform IP Migration if SERVER_IP is set by node manager."/>
+		<if>
+			<test type="string" not="true">
+				<operand value="%SERVER_IP%"/>
+				<operand value=""/>
+			</test>
+			<then>
+				<exec name="wlsifconfig" type="script">
+					<cmd start="%WL_HOME%\common\bin\wlsifconfig" min="false"/>
+					<params>
+						<value>-addif</value>
+						<value>"%IFNAME%"</value>
+						<value>"%SERVER_IP%"</value>
+						<value>"%IPMASK%"</value>
+					</params>
+				</exec>
+			</then>
+		</if>
+		<comment message="START WEBLOGIC"/>
+		<echo message="starting weblogic with Java version:"/>
+		<exec name="Java Version" type="program">
+			<cmd start="%JAVA_HOME%\bin\java" end="-version" min="false"/>
+			<params>
+				<value>%JAVA_VM%</value>
+			</params>
+		</exec>
+		<if>
+			<test type="string">
+				<operand value="%WLS_REDIRECT_LOG%"/>
+				<operand value=""/>
+			</test>
+			<then>
+				<echo message="Starting WLS with line:"/>
+				<echo message="%JAVA_HOME%\bin\java %JAVA_VM% %MEM_ARGS% %JAVA_OPTIONS% -Dweblogic.Name=%SERVER_NAME% -Djava.security.policy=%WL_HOME%\server\lib\weblogic.policy  %PROXY_SETTINGS% %SERVER_CLASS%"/>
+				<exec name="startserver" type="program">
+					<cmd start="%JAVA_HOME%\bin\java" end="%SERVER_CLASS%" min="false"/>
+					<params>
+						<value>%JAVA_VM%</value>
+						<value>%MEM_ARGS%</value>
+						<value>%JAVA_OPTIONS%</value>
+						<value>-Dweblogic.Name=%SERVER_NAME%</value>
+						<value>-Djava.security.policy=%WL_HOME%\server\lib\weblogic.policy</value>
+						<value>%PROXY_SETTINGS%</value>
+					</params>
+				</exec>
+			</then>
+			<else>
+				<echo message="Redirecting output from WLS window to %WLS_REDIRECT_LOG%"/>
+				<exec name="startserver" type="program">
+					<cmd start="%JAVA_HOME%\bin\java" end="%SERVER_CLASS%" min="false"/>
+					<params>
+						<value>%JAVA_VM%</value>
+						<value>%MEM_ARGS%</value>
+						<value>%JAVA_OPTIONS%</value>
+						<value>-Dweblogic.Name=%SERVER_NAME%</value>
+						<value>-Djava.security.policy=%WL_HOME%\server\lib\weblogic.policy</value>
+						<value>%PROXY_SETTINGS%</value>
+					</params>
+					<redirect file="%WLS_REDIRECT_LOG%" tostream="1" fromstream="2"/>
+				</exec>
+			</else>
+		</if>
+		<call name="stopAll"/>
+		<popd/>
+		<comment>
+			<value>Exit this script only if we have been told to exit.</value>
+		</comment>
+		<if>
+			<test type="string">
+				<operand value="%doExitFlag%"/>
+				<operand value="true"/>
+			</test>
+			<then>
+				<exit hard="true"/>
+			</then>
+		</if>
+	</script>
+	<script name="startWebLogic" version="3" overwrite="false" unixFileSep="${CLASSPATHSEP}">
+		<setenv name="DOMAIN_HOME">
+			<value>\home\teck\domain</value>
+		</setenv>
+		<exec name="startWebLogic" type="script">
+			<cmd start="%DOMAIN_HOME%\bin\startWebLogic" min="false"/>
+			<params>
+				<value>%*</value>
+			</params>
+		</exec>
+	</script>
+	<script name="stopWebLogic" version="3" path="bin" overwrite="false">
+		<if>
+			<test type="string" not="true">
+				<operand value="%1"/>
+				<operand value=""/>
+			</test>
+			<then>
+				<setenv name="userID">
+					<value>username='%1',</value>
+				</setenv>
+				<shift/>
+			</then>
+			<else>
+				<if>
+					<test type="string" not="true">
+						<operand value="%userID%"/>
+						<operand value=""/>
+					</test>
+					<then>
+						<setenv name="userID">
+							<value>username='%userID%',</value>
+						</setenv>
+					</then>
+				</if>
+			</else>
+		</if>
+		<if>
+			<test type="string" not="true">
+				<operand value="%1"/>
+				<operand value=""/>
+			</test>
+			<then>
+				<setenv name="password">
+					<value>password='%1',</value>
+				</setenv>
+				<shift/>
+			</then>
+			<else>
+				<if>
+					<test type="string" not="true">
+						<operand value="%password%"/>
+						<operand value=""/>
+					</test>
+					<then>
+						<setenv name="password">
+							<value>password='%password%',</value>
+						</setenv>
+					</then>
+				</if>
+			</else>
+		</if>
+		<comment message="set ADMIN_URL"/>
+		<if>
+			<test type="string" not="true">
+				<operand value="%1"/>
+				<operand value=""/>
+			</test>
+			<then>
+				<setenv name="ADMIN_URL">
+					<value>%1</value>
+				</setenv>
+				<shift/>
+			</then>
+			<else>
+				<if>
+					<test type="string">
+						<operand value="%ADMIN_URL%"/>
+						<operand value=""/>
+					</test>
+					<then>
+						<setenv name="ADMIN_URL">
+							<value preserve="true">t3://localhost:7001</value>
+						</setenv>
+					</then>
+				</if>
+			</else>
+		</if>
+		<comment message="Call setDomainEnv here because we want to have shifted out the environment vars above"/>
+		<setenv name="DOMAIN_HOME" shorten="true">
+			<value>\home\teck\domain</value>
+		</setenv>
+		<exec name="setDomainEnv" type="script">
+			<cmd start="%DOMAIN_HOME%\bin\setDomainEnv" min="false" source="true"/>
+		</exec>
+		<echo>
+			<value>connect(%userID% %password% url='%ADMIN_URL%',adminServerName='%SERVER_NAME%')</value>
+			<value>shutdown('%SERVER_NAME%','Server')</value>
+			<value>exit()</value>
+			<redirect file="shutdown.py"/>
+		</echo>
+		<echo message="Stopping Weblogic Server..."/>
+		<exec name="Stop Weblogic Server..." type="program">
+			<cmd start="%JAVA_HOME%\bin\java" end="weblogic.WLST" min="false"/>
+			<params>
+				<value>%JAVA_OPTIONS%</value>
+			</params>
+			<params type="post">
+				<value>shutdown.py</value>
+			</params>
+			<redirect tostream="1" fromstream="2"/>
+		</exec>
+		<echo message="Done"/>
+		<exit hard="true"/>
+	</script>
+	<script name="startPointBaseConsole" version="3" path="bin" overwrite="false">
+		<comment message="Call setDomainEnv here to get the correct pointbase port"/>
+		<setenv name="DOMAIN_HOME" shorten="true">
+			<value>\home\teck\domain</value>
+		</setenv>
+		<exec name="setDomainEnv" type="script">
+			<cmd start="%DOMAIN_HOME%\bin\setDomainEnv" min="false" source="true"/>
+		</exec>
+		<exec name="Pointbase" type="script">
+			<cmd start="%WL_HOME%\common\bin\startPointBaseConsole" min="false"/>
+			<params>
+				<value>-port=%POINTBASE_PORT%</value>
+			</params>
+		</exec>
+	</script>
+	<script name="startManagedWebLogic" version="3" path="bin" overwrite="false">
+		<function name="usage">
+			<echo message="Need to set SERVER_NAME and ADMIN_URL environment variables or specify"/>
+			<echo message="them in command line:"/>
+			<echo message="Usage: %1 SERVER_NAME {ADMIN_URL}"/>
+			<echo message="for example:"/>
+			<echo>
+				<value preserve="true">%1 managedserver1 http://localhost:7001</value>
+			</echo>
+		</function>
+		<comment>
+			<value>*************************************************************************</value>
+			<value>This script is used to start a managed WebLogic Server for the domain in</value>
+			<value>the current working directory.  This script can either read in the SERVER_NAME and</value>
+			<value>ADMIN_URL as positional parameters or will read them from environment variables that are </value>
+			<value>set before calling this script. If SERVER_NAME is not sent as a parameter or exists with a value</value>
+			<value>as an environment variable the script will EXIT. If the ADMIN_URL value cannot be determined</value>
+			<value>by reading a parameter or from the environment a default value will be used.</value>
+			<value></value>
+			<value> For additional information, refer to the WebLogic Server Administration </value>
+			<value preserve="true">Guide (http://e-docs.bea.com/wls/docs92/adminguide)</value>
+			<value>*************************************************************************</value>
+		</comment>
+		<comment message=" Set SERVER_NAME to the name of the server you wish to start up."/>
+		<setenv name="DOMAIN_NAME">
+			<value>domain</value>
+		</setenv>
+		<setenv name="ADMIN_URL">
+			<value preserve="true">http://localhost:7001</value>
+		</setenv>
+		<comment message=" Set WLS_USER equal to your system username and WLS_PW equal  "/>
+		<comment message=" to your system password for no username and password prompt "/>
+		<comment message=" during server startup.  Both are required to bypass the startup"/>
+		<comment message=" prompt."/>
+		<setenv name="WLS_USER" scope="global">
+			<value></value>
+		</setenv>
+		<setenv name="WLS_PW" scope="global">
+			<value></value>
+		</setenv>
+		<comment message=" Set JAVA_OPTIONS to the java flags you want to pass to the vm. i.e.: "/>
+		<comment message=" set JAVA_OPTIONS=-Dweblogic.attribute=value -Djava.attribute=value"/>
+		<setenv name="JAVA_OPTIONS" delim=" ">
+			<value>-Dweblogic.security.SSL.trustedCAKeyStore="\home\teck\bea\weblogic92\server\lib\cacerts"</value>
+			<value>%JAVA_OPTIONS%</value>
+		</setenv>
+		<comment message=" Set JAVA_VM to the java virtual machine you want to run.  For instance:"/>
+		<comment message=" set JAVA_VM=-server"/>
+		<setenv name="JAVA_VM">
+			<value></value>
+		</setenv>
+		<comment message=" Set SERVER_NAME and ADMIN_URL, they must by specified before starting"/>
+		<comment message=" a managed server, detailed information can be found at"/>
+		<comment>
+			<value preserve="true">http://e-docs.bea.com/wls/docs92/adminguide</value>
+		</comment>
+		<if>
+			<test type="string">
+				<operand value="%1"/>
+				<operand value=""/>
+			</test>
+			<then>
+				<if>
+					<test type="string">
+						<operand value="%SERVER_NAME%"/>
+						<operand value=""/>
+					</test>
+					<then>
+						<call name="usage" args="%0"/>
+						<exit/>
+					</then>
+				</if>
+			</then>
+			<else>
+				<setenv name="SERVER_NAME">
+					<value>%1</value>
+				</setenv>
+				<shift/>
+			</else>
+		</if>
+		<if>
+			<test type="string">
+				<operand value="%1"/>
+				<operand value=""/>
+			</test>
+			<then>
+				<if>
+					<test type="string">
+						<operand value="%ADMIN_URL%"/>
+						<operand value=""/>
+					</test>
+					<then>
+						<call name="usage" args="%0"/>
+						<exit/>
+					</then>
+				</if>
+			</then>
+			<else>
+				<setenv name="ADMIN_URL">
+					<value>%1</value>
+				</setenv>
+				<shift/>
+			</else>
+		</if>
+		<comment message="Export the admin_url whether the user specified it OR it was sent on the command-line"/>
+		<setenv name="ADMIN_URL" scope="global">
+			<value>%ADMIN_URL%</value>
+		</setenv>
+		<setenv name="SERVER_NAME" scope="global">
+			<value>%SERVER_NAME%</value>
+		</setenv>
+		<setenv name="DOMAIN_HOME">
+			<value>\home\teck\domain</value>
+		</setenv>
+		<if>
+			<test type="string">
+				<operand value="%1"/>
+				<operand value=""/>
+			</test>
+			<then>
+				<comment message=" Call Weblogic Server with our default params since the user did not specify any other ones"/>
+				<exec name="startWebLogic" type="script">
+					<cmd start="%DOMAIN_HOME%\bin\startWebLogic" min="false"/>
+					<params>
+						<value>nodebug</value>
+						<value>nopointbase</value>
+						<value>noiterativedev</value>
+						<value>notestconsole</value>
+					</params>
+				</exec>
+			</then>
+			<else>
+				<comment message=" Call Weblogic Server with the params the user sent in INSTEAD of the defaults"/>
+				<exec name="startWebLogic" type="script">
+					<cmd start="%DOMAIN_HOME%\bin\startWebLogic" min="false"/>
+					<params>
+						<value>%1</value>
+						<value>%2</value>
+						<value>%3</value>
+						<value>%4</value>
+						<value>%5</value>
+						<value>%6</value>
+						<value>%7</value>
+						<value>%8</value>
+						<value>%9</value>
+					</params>
+				</exec>
+			</else>
+		</if>
+	</script>
+	<script name="stopManagedWebLogic" version="3" path="bin" overwrite="false">
+		<function name="usage">
+			<echo message="You must have a value for SERVER_NAME either set as an environment variable or the first parameter on the command-line."/>
+			<echo message="ADMIN_URL defaults to t3://localhost:7001 if not set as an environment variable or the second command-line parameter."/>
+			<echo message="USER_NAME and PASSWORD are required for shutting the server down when running in production mode:"/>
+			<echo message="Usage: %1 {SERVER_NAME} {ADMIN_URL} {USER_NAME} {PASSWORD}"/>
+			<echo message="for example:"/>
+			<echo>
+				<value preserve="true">%1 managedserver1 t3://localhost:7001 weblogic weblogic</value>
+			</echo>
+		</function>
+		<comment>
+			<value>*************************************************************************</value>
+			<value>This script is used to stop a managed WebLogic Server for the domain in</value>
+			<value>the current working directory.  This script reads in the SERVER_NAME and</value>
+			<value>ADMIN_URL as positional parameters, sets the SERVER_NAME variable, then</value>
+			<value>calls the startWLS.cmd script under ${WL_HOME}/server/bin.</value>
+			<value></value>
+			<value>Other variables that startWLS takes are:</value>
+			<value></value>
+			<value>WLS_USER       - cleartext user for server startup</value>
+			<value>WLS_PW         - cleartext password for server startup</value>
+			<value>JAVA_OPTIONS   - Java command-line options for running the server. (These</value>
+			<value>                 will be tagged on to the end of the JAVA_VM)</value>
+			<value>JAVA_VM        - The java arg specifying the VM to run.  (i.e. -server, </value>
+			<value>                 -hotspot, etc.)</value>
+			<value></value>
+			<value>For additional information, refer to the WebLogic Server Administration </value>
+			<value></value>
+			<value preserve="true">Guide (http://e-docs.bea.com/wls/docs92/adminguide)</value>
+			<value></value>
+			<value>*************************************************************************</value>
+		</comment>
+		<comment message=" Set SERVER_NAME and ADMIN_URL, they must by specified before starting"/>
+		<comment message=" a managed server, detailed information can be found at"/>
+		<comment>
+			<value preserve="true"> http://e-docs.bea.com/wls/docs92/adminguide</value>
+		</comment>
+		<if>
+			<test type="string">
+				<operand value="%1"/>
+				<operand value=""/>
+			</test>
+			<then>
+				<if>
+					<test type="string">
+						<operand value="%SERVER_NAME%"/>
+						<operand value=""/>
+					</test>
+					<then>
+						<call name="usage" args="%0"/>
+						<exit/>
+					</then>
+				</if>
+			</then>
+			<else>
+				<setenv name="SERVER_NAME" scope="global">
+					<value>%1</value>
+				</setenv>
+				<shift/>
+			</else>
+		</if>
+		<if>
+			<test type="string">
+				<operand value="%1"/>
+				<operand value=""/>
+			</test>
+			<then>
+				<if>
+					<test type="string">
+						<operand value="%ADMIN_URL%"/>
+						<operand value=""/>
+					</test>
+					<then>
+						<setenv name="ADMIN_URL" scope="global">
+							<value preserve="true">t3://localhost:7001</value>
+						</setenv>
+					</then>
+				</if>
+			</then>
+			<else>
+				<setenv name="ADMIN_URL" scope="global">
+					<value>%1</value>
+				</setenv>
+				<shift/>
+			</else>
+		</if>
+		<setenv name="DOMAIN_HOME">
+			<value>\home\teck\domain</value>
+		</setenv>
+		<exec name="stopWebLogic" type="script">
+			<cmd start="%DOMAIN_HOME%\bin\stopWebLogic" min="false"/>
+			<params>
+				<value>%1</value>
+				<value>%2</value>
+			</params>
+		</exec>
+	</script>
+	<script name="setDomainEnv" version="3" path="bin" scope="global" overwrite="false" unixFileSep="${CLASSPATHSEP}">
+		<comment>
+			<value>*************************************************************************</value>
+			<value>This script is used to setup the needed environment to be able to start Weblogic Server in this domain.</value>
+			<value></value>
+			<value>This script initializes the following variables before calling commEnv to set other variables:</value>
+			<value></value>
+			<value>WL_HOME         - The BEA home directory of your WebLogic installation.</value>
+			<value>JAVA_VM         - The desired Java VM to use. You can set this environment variable before calling</value>
+			<value>                  this script to switch between Sun or BEA or just have the default be set. </value>
+			<value>JAVA_HOME       - Location of the version of Java used to start WebLogic</value>
+			<value>                  Server. Depends directly on which JAVA_VM value is set by default or by the environment.</value>
+			<value>USER_MEM_ARGS   - The variable to override the standard memory arguments</value>
+			<value>                  passed to java.</value>
+			<value>PRODUCTION_MODE - The variable that determines whether Weblogic Server is started in production mode.</value>
+			<value>DOMAIN_PRODUCTION_MODE </value>
+			<value>                - The variable that determines whether the workshop related settings like the debugger,</value>
+			<value>                  testconsole or iterativedev should be enabled. ONLY settable using the </value>
+			<value>                  command-line parameter named production</value>
+			<value>                  NOTE: Specifying the production command-line param will force </value>
+			<value>                         the server to start in production mode.</value>
+			<value></value>
+			<value>Other variables used in this script include:</value>
+			<value>SERVER_NAME     - Name of the weblogic server.</value>
+			<value>JAVA_OPTIONS    - Java command-line options for running the server. (These</value>
+			<value>                  will be tagged on to the end of the JAVA_VM and</value>
+			<value>                  MEM_ARGS)</value>
+			<value></value>
+			<value>For additional information, refer to the WebLogic Server Administration</value>
+			<value preserve="true">Console Online Help(http://e-docs.bea.com/wls/docs92/ConsoleHelp/startstop.html).</value>
+			<value>*************************************************************************</value>
+		</comment>
+		<setenv name="WL_HOME" shorten="true" scope="global">
+			<value>\home\teck\bea\weblogic92</value>
+		</setenv>
+		<setenv name="BEA_JAVA_HOME">
+			<value>\home\teck\bea\jrockit90_150_10</value>
+		</setenv>
+		<setenv name="SUN_JAVA_HOME">
+			<value>\home\teck\bea\jdk150_10</value>
+		</setenv>
+		<if>
+			<test type="string">
+				<operand value="%JAVA_VENDOR%"/>
+				<operand value="BEA"/>
+			</test>
+			<then>
+				<setenv name="JAVA_HOME">
+					<value>%BEA_JAVA_HOME%</value>
+				</setenv>
+			</then>
+			<else>
+				<if>
+					<test type="string">
+						<operand value="%JAVA_VENDOR%"/>
+						<operand value="Sun"/>
+					</test>
+					<then>
+						<setenv name="JAVA_HOME">
+							<value>%SUN_JAVA_HOME%</value>
+						</setenv>
+					</then>
+					<else>
+						<setenv name="JAVA_VENDOR" scope="global">
+							<value>Sun</value>
+						</setenv>
+						<setenv name="JAVA_HOME">
+							<value>\home\teck\bea\jdk150_10</value>
+						</setenv>
+					</else>
+				</if>
+			</else>
+		</if>
+		<comment>
+			<value>We need to reset the value of JAVA_HOME to get it shortened AND </value>
+			<value>we can not shorten it above because immediate variable expansion will blank it</value>
+		</comment>
+		<setenv name="JAVA_HOME" shorten="true">
+			<value>%JAVA_HOME%</value>
+		</setenv>
+		<setenv name="SAMPLES_HOME" scope="global">
+			<value>%WL_HOME%\samples</value>
+		</setenv>
+		<setenv name="DOMAIN_HOME" shorten="true" scope="global">
+			<value>\home\teck\domain</value>
+		</setenv>
+		<setenv name="LONG_DOMAIN_HOME">
+			<value>\home\teck\domain</value>
+		</setenv>
+		<if>
+			<test type="string">
+				<operand value="%DEBUG_PORT%"/>
+				<operand value=""/>
+			</test>
+			<then>
+				<setenv name="DEBUG_PORT" scope="global">
+					<value>8453</value>
+				</setenv>
+			</then>
+		</if>
+		<if>
+			<test type="string">
+				<operand value="%SERVER_NAME%"/>
+				<operand value=""/>
+			</test>
+			<then>
+				<setenv name="SERVER_NAME" scope="global">
+					<value>AdminServer</value>
+				</setenv>
+			</then>
+		</if>
+		<marker name="debugFlag" type="setenv" action="replace"/>
+		<marker name="testConsoleFlag" type="setenv" action="insert"/>
+		<marker name="iterativeDevFlag" type="setenv" action="insert"/>
+		<marker name="logErrorsToConsoleFlag" type="setenv" action="insert"/>
+		<marker name="POINTBASE_FLAG" type="setenv" action="replace"/>
+		<setenv name="POINTBASE_FLAG" scope="global">
+			<value>false</value>
+		</setenv>
+		<marker name="POINTBASE_PORT" type="setenv" action="insert"/>
+		<marker name="POINTBASE_DBNAME" type="setenv" action="insert"/>
+		<setenv name="enableHotswapFlag" scope="global">
+			<value></value>
+		</setenv>
+		<comment/>
+		<setenv name="PRODUCTION_MODE">
+			<value></value>
+		</setenv>
+		<parseargs>
+			<arg name="debugFlag" switch="nodebug">
+				<setenv name="debugFlag" scope="global">
+					<value>false</value>
+				</setenv>
+			</arg>
+			<arg name="DOMAIN_PRODUCTION_MODE" switch="production">
+				<setenv name="DOMAIN_PRODUCTION_MODE">
+					<value>true</value>
+				</setenv>
+			</arg>
+			<arg name="testConsoleFlag" switch="notestconsole">
+				<setenv name="testConsoleFlag" scope="global">
+					<value>false</value>
+				</setenv>
+			</arg>
+			<arg name="iterativeDevFlag" switch="noiterativedev">
+				<setenv name="iterativeDevFlag" scope="global">
+					<value>false</value>
+				</setenv>
+			</arg>
+			<arg name="logErrorsToConsoleFlag" switch="noLogErrorsToConsole">
+				<setenv name="logErrorsToConsoleFlag" scope="global">
+					<value>false</value>
+				</setenv>
+			</arg>
+			<arg name="POINTBASE_FLAG" switch="nopointbase">
+				<setenv name="POINTBASE_FLAG" scope="global">
+					<value>false</value>
+				</setenv>
+			</arg>
+			<arg name="doExitFlag" switch="doExit" default="false">
+				<setenv name="doExitFlag" scope="global">
+					<value>true</value>
+				</setenv>
+			</arg>
+			<arg name="doIgnoreExitFlag" switch="noExit">
+				<setenv name="doExitFlag" scope="global">
+					<value>false</value>
+				</setenv>
+			</arg>
+			<arg name="verboseLoggingFlag" switch="verbose" default="false">
+				<setenv name="verboseLoggingFlag" scope="global">
+					<value>true</value>
+				</setenv>
+			</arg>
+			<arg name="enableHotswapFlag" switch="enableHotswap">
+				<setenv name="enableHotswapFlag" scope="global">
+					<value>-javaagent:%WL_HOME%/server/lib/diagnostics-agent.jar</value>
+				</setenv>
+			</arg>
+			<arg name="null" switch="*">
+				<setenv name="PROXY_SETTINGS" scope="global">
+					<value>%PROXY_SETTINGS% %1</value>
+				</setenv>
+			</arg>
+		</parseargs>
+		<setenv name="MEM_DEV_ARGS" scope="global">
+			<value></value>
+		</setenv>
+		<comment/>
+		<if>
+			<test type="string">
+				<operand value="%DOMAIN_PRODUCTION_MODE%"/>
+				<operand value="true"/>
+			</test>
+			<then>
+				<setenv name="PRODUCTION_MODE" scope="global">
+					<value>%DOMAIN_PRODUCTION_MODE%</value>
+				</setenv>
+			</then>
+		</if>
+		<if>
+			<test type="string">
+				<operand value="%PRODUCTION_MODE%"/>
+				<operand value="true"/>
+			</test>
+			<then>
+				<setenv name="debugFlag" scope="global">
+					<value>false</value>
+				</setenv>
+				<setenv name="testConsoleFlag" scope="global">
+					<value>false</value>
+				</setenv>
+				<setenv name="iterativeDevFlag" scope="global">
+					<value>false</value>
+				</setenv>
+			</then>
+		</if>
+		<comment>
+			<value>If you want to override the default Patch Classpath, Library Path and Path for this domain,</value>
+			<value>Please uncomment the following lines and add a valid value for the environment variables</value>
+			<value>set PATCH_CLASSPATH=[myPatchClasspath] (windows)</value>
+			<value>set PATCH_LIBPATH=[myPatchLibpath] (windows)</value>
+			<value>set PATCH_PATH=[myPatchPath] (windows)</value>
+			<value>PATCH_CLASSPATH=[myPatchClasspath] (unix)</value>
+			<value>PATCH_LIBPATH=[myPatchLibpath] (unix)</value>
+			<value>PATCH_PATH=[myPatchPath] (unix)</value>
+		</comment>
+		<exec name="commEnv" type="script">
+			<cmd start="%WL_HOME%\common\bin\commEnv" min="false" source="true"/>
+		</exec>
+		<setenv name="WLS_HOME">
+			<value>%WL_HOME%\server</value>
+		</setenv>
+		<setenv name="WLI_HOME">
+			<value>%WL_HOME%\integration</value>
+		</setenv>
+		<marker name="MEM_ARGS" type="setenv" action="replace"/>
+		<setenv name="MEM_ARGS" scope="global">
+			<value>-Xms256m -Xmx512m</value>
+		</setenv>
+		<if>
+			<test type="string">
+				<operand value="%JAVA_VENDOR%"/>
+				<operand value="Sun"/>
+			</test>
+			<then>
+				<if>
+					<test type="string">
+						<operand value="%PRODUCTION_MODE%"/>
+						<operand value=""/>
+					</test>
+					<then>
+						<setenv name="MEM_DEV_ARGS" scope="global">
+							<value>-XX:CompileThreshold=8000 -XX:PermSize=48m </value>
+						</setenv>
+					</then>
+				</if>
+			</then>
+		</if>
+		<comment message="Had to have a separate test here BECAUSE of immediate variable expansion on windows"/>
+		<if>
+			<test type="string">
+				<operand value="%JAVA_VENDOR%"/>
+				<operand value="Sun"/>
+			</test>
+			<then>
+				<setenv name="MEM_ARGS" scope="global">
+					<value>%MEM_ARGS% %MEM_DEV_ARGS% -XX:MaxPermSize=128m</value>
+				</setenv>
+			</then>
+		</if>
+		<if>
+			<test type="string">
+				<operand value="%JAVA_VENDOR%"/>
+				<operand value="HP"/>
+			</test>
+			<then>
+				<setenv name="MEM_ARGS" scope="global">
+					<value>%MEM_ARGS% -XX:MaxPermSize=128m</value>
+				</setenv>
+			</then>
+		</if>
+		<comment message="IF USER_MEM_ARGS the environment variable is set, use it to override ALL MEM_ARGS values"/>
+		<if>
+			<test type="string" not="true">
+				<operand value="%USER_MEM_ARGS%"/>
+				<operand value=""/>
+			</test>
+			<then>
+				<setenv name="MEM_ARGS" scope="global">
+					<value>%USER_MEM_ARGS%</value>
+				</setenv>
+			</then>
+		</if>
+		<setenv name="JAVA_PROPERTIES" scope="global">
+			<value>-Dplatform.home=%WL_HOME% -Dwls.home=%WLS_HOME% -Dwli.home=%WLI_HOME%</value>
+		</setenv>
+		<comment>
+			<value> To use Java Authorization Contract for Containers (JACC) in this domain, </value>
+			<value> please uncomment the following section. If there are multiple machines in </value>
+			<value> your domain, be sure to edit the setDomainEnv in the associated domain on </value>
+			<value> each machine.</value>
+			<value></value>
+			<value>-Djava.security.manager</value>
+			<value>-Djava.security.policy=location of weblogic.policy</value>
+			<value>-Djavax.security.jacc.policy.provider=weblogic.security.jacc.simpleprovider.SimpleJACCPolicy</value>
+			<value>-Djavax.security.jacc.PolicyConfigurationFactory.provider=weblogic.security.jacc.simpleprovider.PolicyConfigurationFactoryImpl</value>
+			<value>-Dweblogic.security.jacc.RoleMapperFactory.provider=weblogic.security.jacc.simpleprovider.RoleMapperFactoryImpl</value>
+		</comment>
+		<marker name="EXTRA_JAVA_PROPERTIES" type="setenv" action="insert"/>
+		<setenv name="JAVA_PROPERTIES" scope="global">
+			<value>%JAVA_PROPERTIES% %EXTRA_JAVA_PROPERTIES%</value>
+		</setenv>
+		<setenv name="ARDIR">
+			<value>%WL_HOME%\server\lib</value>
+		</setenv>
+		<pushd path="%LONG_DOMAIN_HOME%"/>
+		<comment message="Clustering support (edit for your cluster!)"/>
+		<if>
+			<test type="string">
+				<operand value="%ADMIN_URL%"/>
+				<operand value=""/>
+			</test>
+			<then>
+				<comment message="The then part of this block is telling us we are either starting an admin server OR we are non-clustered"/>
+				<setenv name="CLUSTER_PROPERTIES" scope="global">
+					<value>-Dweblogic.management.discover=true</value>
+				</setenv>
+			</then>
+			<else>
+				<setenv name="CLUSTER_PROPERTIES" scope="global">
+					<value>-Dweblogic.management.discover=false -Dweblogic.management.server=%ADMIN_URL%</value>
+				</setenv>
+			</else>
+		</if>
+		<marker name="LOG4J_CONFIG_FILE" type="setenv" action="insert"/>
+		<if>
+			<test type="string" not="true">
+				<operand value="%LOG4J_CONFIG_FILE%"/>
+				<operand value=""/>
+			</test>
+			<then>
+				<setenv name="JAVA_PROPERTIES">
+					<value>%JAVA_PROPERTIES% -Dlog4j.configuration=file:%LOG4J_CONFIG_FILE%</value>
+				</setenv>
+			</then>
+		</if>
+		<setenv name="JAVA_PROPERTIES" scope="global">
+			<value>%JAVA_PROPERTIES% %CLUSTER_PROPERTIES%</value>
+		</setenv>
+		<comment message="Clear the pre_classpath here in case an application template wants to set it before the larger pre_classpath is invoked below"/>
+		<setenv name="PRE_CLASSPATH">
+		</setenv>
+		<marker name="PRE_CLASSPATH" type="setenv" action="insert"/>
+		<setenv name="JAVA_DEBUG" scope="global">
+		</setenv>
+		<if>
+			<test type="string">
+				<operand value="%debugFlag%"/>
+				<operand value="true"/>
+			</test>
+			<then>
+				<setenv name="JAVA_DEBUG" scope="global">
+					<value>-Xdebug -Xnoagent -Xrunjdwp:transport=dt_socket,address=%DEBUG_PORT%,server=y,suspend=n -Djava.compiler=NONE</value>
+				</setenv>
+				<setenv name="JAVA_OPTIONS" scope="global">
+					<value>%JAVA_OPTIONS% %enableHotswapFlag% -ea -da:com.bea... -da:javelin... -da:weblogic... -ea:com.bea.wli... -ea:com.bea.broker... -ea:com.bea.sbconsole...</value>
+				</setenv>
+			</then>
+			<else>
+				<setenv name="JAVA_OPTIONS" scope="global">
+					<value>%JAVA_OPTIONS% %enableHotswapFlag% -da</value>
+				</setenv>
+			</else>
+		</if>
+		<if>
+			<test type="directory" not="true">
+				<operand value="%JAVA_HOME%\lib"/>
+			</test>
+			<then>
+				<echo>
+					<value>The JRE was not found in directory %JAVA_HOME%. (JAVA_HOME)</value>
+					<value>Please edit your environment and set the JAVA_HOME</value>
+					<value>variable to point to the root directory of your Java installation.</value>
+				</echo>
+				<popd/>
+				<pause/>
+				<exit/>
+			</then>
+		</if>
+		<if>
+			<test type="string">
+				<operand value="%POINTBASE_FLAG%"/>
+				<operand value="true"/>
+			</test>
+			<then>
+				<setenv name="DATABASE_CLASSPATH">
+					<value>%POINTBASE_CLASSPATH%</value>
+				</setenv>
+			</then>
+			<else>
+				<setenv name="DATABASE_CLASSPATH">
+					<value>%POINTBASE_CLIENT_CLASSPATH%</value>
+				</setenv>
+			</else>
+		</if>
+		<setenv name="POST_CLASSPATH">
+		</setenv>
+		<marker name="POST_CLASSPATH" type="setenv" action="insert"/>
+		<setenv name="POST_CLASSPATH">
+			<value>%POST_CLASSPATH%</value>
+			<value>%DATABASE_CLASSPATH%</value>
+			<value>%ARDIR%\xqrl.jar</value>
+		</setenv>
+		<comment message="PROFILING SUPPORT"/>
+		<setenv name="JAVA_PROFILE">
+		</setenv>
+		<setenv name="SERVER_CLASS" scope="global">
+			<value>weblogic.Server</value>
+		</setenv>
+		<marker name="WLP_HOME" type="setenv" action="insert"/>
+		<marker name="P13N_HOME" type="setenv" action="insert"/>
+		<marker name="WLP_POST_CLASSPATH" type="setenv" action="insert"/>
+		<marker name="HARMONY_PORTLETS_PROPERTIES" type="setenv" action="insert"/>
+		<marker name="WLP_JAVA_PROPERTIES" type="setenv" action="insert"/>
+		<setenv name="JAVA_PROPERTIES" scope="global">
+			<value>%JAVA_PROPERTIES% %WLP_JAVA_PROPERTIES%</value>
+		</setenv>
+		<marker name="LD_callSetEnv" type="exec" action="insert"/>
+		<setenv name="JAVA_OPTIONS">
+			<value>%JAVA_OPTIONS% %JAVA_PROPERTIES% -Dwlw.iterativeDev=%iterativeDevFlag% -Dwlw.testConsole=%testConsoleFlag% -Dwlw.logErrorsToConsole=%logErrorsToConsoleFlag%</value>
+		</setenv>
+		<comment message="-- Setup properties so that we can save stdout and stderr to files"/>
+		<if>
+			<test type="string" not="true">
+				<operand value="%WLS_STDOUT_LOG%"/>
+				<operand value=""/>
+			</test>
+			<then>
+				<echo message="Logging WLS stdout to %WLS_STDOUT_LOG%"/>
+				<setenv name="JAVA_OPTIONS">
+					<value>%JAVA_OPTIONS% -Dweblogic.Stdout=%WLS_STDOUT_LOG%</value>
+				</setenv>
+			</then>
+		</if>
+		<if>
+			<test type="string" not="true">
+				<operand value="%WLS_STDERR_LOG%"/>
+				<operand value=""/>
+			</test>
+			<then>
+				<echo message="Logging WLS stderr to %WLS_STDERR_LOG%"/>
+				<setenv name="JAVA_OPTIONS">
+					<value>%JAVA_OPTIONS% -Dweblogic.Stderr=%WLS_STDERR_LOG%</value>
+				</setenv>
+			</then>
+		</if>
+		<comment message="ADD EXTENSIONS TO CLASSPATHS"/>
+		<if>
+			<test type="string" not="true">
+				<operand value="%EXT_PRE_CLASSPATH%"/>
+				<operand value=""/>
+			</test>
+			<then>
+				<setenv name="PRE_CLASSPATH">
+					<value>%EXT_PRE_CLASSPATH%</value>
+					<value>%PRE_CLASSPATH%</value>
+				</setenv>
+			</then>
+		</if>
+		<if>
+			<test type="string" not="true">
+				<operand value="%EXT_POST_CLASSPATH%"/>
+				<operand value=""/>
+			</test>
+			<then>
+				<setenv name="POST_CLASSPATH">
+					<value>%POST_CLASSPATH%</value>
+					<value>%EXT_POST_CLASSPATH%</value>
+				</setenv>
+			</then>
+		</if>
+		<marker name="WEBLOGIC_EXTENSION_DIRS" type="setenv" action="insert"/>
+		<if>
+			<test type="string" not="true">
+				<operand value="%WEBLOGIC_EXTENSION_DIRS%"/>
+				<operand value=""/>
+			</test>
+			<then>
+				<setenv name="JAVA_OPTIONS">
+					<value>%JAVA_OPTIONS% -Dweblogic.ext.dirs=%WEBLOGIC_EXTENSION_DIRS%</value>
+				</setenv>
+			</then>
+		</if>
+		<setenv name="JAVA_OPTIONS" scope="global">
+			<value>%JAVA_OPTIONS%</value>
+		</setenv>
+		<comment message="SET THE CLASSPATH"/>
+		<setenv name="CLASSPATH" scope="global">
+			<value>%PRE_CLASSPATH%</value>
+			<value>%WEBLOGIC_CLASSPATH%</value>
+			<value>%POST_CLASSPATH%</value>
+			<value>%WLP_POST_CLASSPATH%</value>
+		</setenv>
+		<setenv name="JAVA_VM" scope="global">
+			<value>%JAVA_VM% %JAVA_DEBUG% %JAVA_PROFILE%</value>
+		</setenv>
+	</script>
+</scripts>
