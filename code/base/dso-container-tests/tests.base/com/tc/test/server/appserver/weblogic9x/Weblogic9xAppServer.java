@@ -90,7 +90,7 @@ public final class Weblogic9xAppServer extends CargoAppServer {
               "security/SerializedSystemIni.dat", "security/DefaultRoleMapperInit.ldift",
               "security/DefaultAuthenticatorInit.ldift", "lib/readme.txt", "init-info/tokenValue.properties",
               "init-info/startscript.xml", "init-info/security.xml", "init-info/domain-info.xml",
-              "console-ext/readme.txt", "config/config.xml", "config/startup/readme.txt", "config/security/readme.txt",
+              "console-ext/readme.txt", "config/startup/readme.txt", "config/security/readme.txt",
               "config/nodemanager/nm_password.properties", "config/lib/readme.txt", "config/jms/readme.txt",
               "config/jdbc/readme.txt", "config/diagnostics/readme.txt", "config/deployments/readme.txt",
               "autodeploy/readme.txt", "fileRealm.properties" };
