@@ -81,7 +81,6 @@ public class ModulesLoader {
     EmbeddedOSGiRuntime osgiRuntime = null;
     synchronized (lock) {
       Modules modules = configHelper.getModulesForInitialization();
-
       if (modules != null && modules.sizeOfModuleArray() > 0) {
         try {
           osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
