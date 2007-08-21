@@ -4,6 +4,7 @@
  */
 package com.tc.test.server.appserver.weblogic9x;
 
+import org.apache.commons.io.IOUtils;
 import org.codehaus.cargo.container.InstalledLocalContainer;
 import org.codehaus.cargo.container.State;
 import org.codehaus.cargo.container.configuration.LocalConfiguration;
@@ -12,9 +13,12 @@ import org.codehaus.cargo.container.weblogic.WebLogic9xInstalledLocalContainer;
 import com.tc.test.server.appserver.AppServerParameters;
 import com.tc.test.server.appserver.cargo.CargoAppServer;
 import com.tc.util.ReplaceLine;
+import com.tc.util.runtime.Os;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Weblogic9x AppServer implementation
@@ -52,10 +56,8 @@ public final class Weblogic9xAppServer extends CargoAppServer {
     protected void setState(State state) {
       if (state.equals(State.STARTING)) {
         adjustConfig();
-        File license = new File(getHome(), "license.bea");
-        if (license.exists()) {
-          this.setBeaHome(this.getHome());
-        }
+        setBeaHomeIfNeeded();
+        prepareSecurityFile();
       }
     }
 
@@ -70,6 +72,24 @@ public final class Weblogic9xAppServer extends CargoAppServer {
         ReplaceLine.parseFile(tokens, new File(getConfiguration().getHome(), "/config/config.xml"));
       } catch (IOException ioe) {
         throw new RuntimeException(ioe);
+      }
+    }
+    
+    private void setBeaHomeIfNeeded() {
+      File license = new File(getHome(), "license.bea");
+      if (license.exists()) {
+        this.setBeaHome(this.getHome());
+      }
+    }
+    
+    private void prepareSecurityFile() {
+      if (Os.isLinux()) {
+        InputStream in = getClass().getResourceAsStream("Linux_SerializedSystemIni.dat");
+        try {
+          IOUtils.copy(in, new FileWriter(new File(getConfiguration().getHome(), "/security/SerializedSystemIni.dat")));
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
       }
     }
   }
