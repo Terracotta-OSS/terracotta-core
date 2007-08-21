@@ -39,6 +39,11 @@ public class TestClientObjectManager implements ClientObjectManager {
     this.isManaged = b;
   }
 
+  public boolean getIsManaged() {
+    return this.isManaged;
+  }
+
+
   public boolean isManaged(Object pojo) {
     return this.object2TCObject.containsKey(pojo) || isManaged;
   }
@@ -50,7 +55,7 @@ public class TestClientObjectManager implements ClientObjectManager {
   public boolean isPortableClass(Class clazz) {
     return true;
   }
-  
+
   public void sharedIfManaged(Object pojo) {
     if (isManaged(pojo)) {
       lookupOrCreate(pojo);

@@ -69,13 +69,21 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
   }
 
   private void initClassLoader() {
-    this.classLoader = new IsolationClassLoader(config, testClientObjectManager, testTransactionManager);
-    this.classLoader.init();
+    boolean isManaged = testClientObjectManager.getIsManaged();
+    testClientObjectManager.setIsManaged(false);
+
+    try {
+      this.classLoader = new IsolationClassLoader(config, testClientObjectManager, testTransactionManager);
+      this.classLoader.init();
+    } finally {
+      testClientObjectManager.setIsManaged(isManaged);
+    }
   }
-  
+
   private void setTargetClientObjectManager(Class clazz) throws Exception {
-    Method m = clazz.getDeclaredMethod("setTestClientObjectManager", new Class[] {testClientObjectManager.getClass()});
-    m.invoke(null, new Object[]{testClientObjectManager});
+    Method m = clazz
+        .getDeclaredMethod("setTestClientObjectManager", new Class[] { testClientObjectManager.getClass() });
+    m.invoke(null, new Object[] { testClientObjectManager });
   }
 
   protected void tearDown() throws Exception {
