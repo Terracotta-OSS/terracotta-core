@@ -14,11 +14,12 @@ import org.osgi.framework.ServiceReference;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.util.URLUtil;
+import com.tc.util.Assert;
 import com.terracottatech.config.Module;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -29,12 +30,18 @@ import java.util.Collection;
 import java.util.Dictionary;
 import java.util.Iterator;
 import java.util.List;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
 
 /**
  * Embedded KnopflerFish OSGi implementation, see the <a href="http://www.knopflerfish.org/">Knopflerfish documentation</a>
  * for more details.
  */
 final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
+
+  private static final String   REQUIRE_BUNDLE                = "Require-Bundle";
+  private static final String   BUNDLE_VERSION                = "Bundle-Version";
+  private static final String   BUNDLE_SYMBOLIC_NAME          = "Bundle-SymbolicName";
 
   private static final TCLogger logger                        = TCLogging.getLogger(KnopflerfishOSGi.class);
 
@@ -74,32 +81,6 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
       URL bundleURL = getBundleURL(bundle);
       installBundle(bundleURL);
     }
-    
-//    for (int i = 0; i < bundleRepositories.length; i++) {
-//      final URL location = bundleRepositories[i];
-//      // TODO: Add support for protocols other than file://
-//      if (location.getProtocol().equalsIgnoreCase("file")) {
-//        final File repository = new File(location.getFile());
-//        if (!repository.exists()) {
-//          // TODO: We need a better way to handle this. If we throw an exception
-//          // here, and we're running a test, then it breaks the test;
-//          // but if we're in production and 'bundleDir' does not exists, then
-//          // the client wont be notified of the anomaly; maybe print a warning message???
-//          warn(Message.WARN_MISSING_REPOSITORY, new Object[] { repository });
-//          continue;
-//        }
-//
-//        if (repository.isDirectory()) {
-//          final File[] bundleFiles = findBundleFiles(repository);
-//          for (int j = 0; j < bundleFiles.length; j++) {
-//            installBundle(bundleFiles[j]);
-//          }
-//          return;
-//        }
-//
-//        exception(Message.ERROR_INVALID_REPOSITORY, new Object[] { repository }, null);
-//      }
-//    }
   }
 
   public void startBundles(final Module[] bundles, final EmbeddedOSGiRuntimeCallbackHandler handler)
@@ -109,9 +90,87 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     }
   }
 
+  public void startBundle(final Module bundle, final EmbeddedOSGiRuntimeCallbackHandler handler) throws BundleException {
+    final long id = getBundleId(bundle);
+    startBundle(id, handler);
+  }
+
+  private Bundle installBundle(final RequiredBundleSpec spec) throws BundleException {
+    for (int i = 0; i < bundleRepositories.length; i++) {
+      final URL location = bundleRepositories[i];
+
+      // TODO: Support protocols other than file://
+      if (location.getProtocol().equalsIgnoreCase("file")) {
+        final File repository = new File(location.getFile(), spec.getGroupId().replace('.', File.separatorChar));
+
+        if (!repository.exists() || !repository.isDirectory()) {
+          warn(Message.WARN_MISSING_REPOSITORY, new Object[] { repository });
+          continue;
+        }
+
+        final Collection jarFiles = FileUtils.listFiles(repository, new String[] { "jar" }, true);
+        for (Iterator j = jarFiles.iterator(); j.hasNext();) {
+          File jarFile = (File) j.next();
+          if (!isValidFilename(jarFile)) continue;
+          try {
+            final JarFile bundle = new JarFile(jarFile);
+            final Attributes attributes = bundle.getManifest().getMainAttributes();
+
+            final String symbolicName = attributes.getValue(BUNDLE_SYMBOLIC_NAME);
+            final String version = attributes.getValue(BUNDLE_VERSION);
+
+            if (spec.isCompatible(symbolicName, version)) {
+              installBundle(jarFile);
+              return findBundleBySymbolicName(spec);
+            }
+          } catch (IOException e) {
+            warn(Message.WARN_SKIPPED_FILE_UNREADABLE, new Object[] { repository, e.getMessage() });
+          }
+        }
+      }
+    }
+    return findBundleBySymbolicName(spec);
+  }
+
+  private void startBundle(final long bundleId, final EmbeddedOSGiRuntimeCallbackHandler handler)
+      throws BundleException {
+    // locate the bundle (assume it has been installed)
+    final Bundle bundle = framework.bundles.getBundle(bundleId);
+
+    // locate and recursively install all of the bundles' other bundle dependencies
+    final String requires = (String) bundle.getHeaders().get(REQUIRE_BUNDLE);
+    final String[] bundles = RequiredBundleSpec.parseList(requires);
+    for (int i = 0; i < bundles.length; i++) {
+      final RequiredBundleSpec spec = new RequiredBundleSpec(bundles[i]);
+      Bundle required = findBundleBySymbolicName(spec);
+      if (required == null) {
+        required = installBundle(spec);
+        if (required == null) {
+          exception(Message.ERROR_REQUIRED_BUNDLE_MISSING, new Object[] { spec.getSymbolicName(), spec.getVersion() },
+              null);
+        }
+      }
+      startBundle(required.getBundleId(), handler);
+    }
+
+    // now start the bundle unless the bundle is already running or if it is still starting...
+    // TODO: check if KF already does this for us (i kinda doubt it)
+    if (((bundle.getState() & Bundle.STARTING) != Bundle.STARTING)
+        && ((bundle.getState() & Bundle.ACTIVE) != Bundle.ACTIVE)) {
+      // now start the bundle
+      if (logger.isDebugEnabled()) {
+        info(Message.STARTING_BUNDLE, new Object[] { bundle.getSymbolicName() });
+      }
+      framework.startBundle(bundle.getBundleId());
+      info(Message.BUNDLE_STARTED, new Object[] { bundle.getSymbolicName() });
+      Assert.assertNotNull(handler);
+      handler.callback(bundle);
+    }
+  }
+
   private void installBundle(final File bundle) throws BundleException {
     try {
-      URL bundleURL = bundle.toURL();
+      final URL bundleURL = bundle.toURL();
       installBundle(bundleURL);
     } catch (MalformedURLException mue) {
       exception(Message.ERROR_INVALID_REPOSITORY, new Object[] { bundle }, mue);
@@ -158,13 +217,9 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
       File jarFile = (File) i.next();
       if (isValidFilename(jarFile)) {
         list.add(jarFile);
-      } else {
-        final String msg = MessageFormat.format(
-            "Skipped config-bundle installation of file: {0}, config-bundle filenames are expected "
-                + "to conform to the following pattern: {1}",
-            new String[] { jarFile.getName(), BUNDLE_FILENAME_PATTERN });
-        logger.warn(msg);
+        continue;
       }
+      warn(Message.WARN_SKIPPED_MISNAMED_FILE, new Object[] { jarFile.getName(), BUNDLE_FILENAME_PATTERN });
     }
     return (File[]) list.toArray(new File[list.size()]);
   }
@@ -179,38 +234,11 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     final Bundle[] bundles = framework.getSystemBundleContext().getBundles();
     for (int i = 0; i < bundles.length; i++) {
       Bundle bundle = bundles[i];
-      final String symbolicName = (String) bundle.getHeaders().get("Bundle-SymbolicName");
-      final String version = (String) bundle.getHeaders().get("Bundle-Version");
+      final String symbolicName = (String) bundle.getHeaders().get(BUNDLE_SYMBOLIC_NAME);
+      final String version = (String) bundle.getHeaders().get(BUNDLE_VERSION);
       if (spec.isCompatible(symbolicName, version)) { return bundle; }
     }
     return null;
-  }
-
-  private void startBundle(final long bundleId, final EmbeddedOSGiRuntimeCallbackHandler handler)
-      throws BundleException {
-    final Bundle bundle = framework.bundles.getBundle(bundleId);
-    final String requires = (String) bundle.getHeaders().get("Require-Bundle");
-
-    final String[] bundles = RequiredBundleSpec.parseList(requires);
-    for (int i = 0; i < bundles.length; i++) {
-      final RequiredBundleSpec spec = new RequiredBundleSpec(bundles[i]);
-      final Bundle reqdBundle = findBundleBySymbolicName(spec);
-      if (reqdBundle == null) { throw new BundleException("No compatible bundle installed for the required bundle: "
-          + spec.getSymbolicName() + ", bundle-version: " + spec.getBundleVersion()); }
-      startBundle(reqdBundle.getBundleId(), handler);
-    }
-
-    if (logger.isDebugEnabled()) {
-      info(Message.STARTING_BUNDLE, new Object[] { bundle.getSymbolicName() });
-    }
-    framework.startBundle(bundle.getBundleId());
-    info(Message.BUNDLE_STARTED, new Object[] { bundle.getSymbolicName() });
-    handler.callback(bundle);
-  }
-
-  public void startBundle(final Module bundle, final EmbeddedOSGiRuntimeCallbackHandler handler) throws BundleException {
-    final long id = getBundleId(bundle);
-    startBundle(id, handler);
   }
 
   public Bundle getBundle(final Module bundle) throws BundleException {
@@ -274,7 +302,7 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
         File.separator });
     URL url = null;
     try {
-      url = URLUtil.resolve(bundleRepositories, path);
+      url = resolveUrls(bundleRepositories, path);
       if (url == null) {
         exception(Message.ERROR_BUNDLE_NOT_FOUND, new Object[] { name, version, groupId, BUNDLE_FILENAME_PATTERN },
             null);
@@ -305,4 +333,26 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     return file.isFile() && file.getName().matches(BUNDLE_FILENAME_PATTERN);
   }
 
+  /**
+   * @return the full URL to the given [relative] path, which could be located at any of the URLs in
+   *         <code>baseURLs</code>, or <code>null</code> if the path does not exist at any of them.
+   * @throws MalformedURLException
+   */
+  static URL resolveUrls(final URL[] baseURLs, final String path) throws MalformedURLException {
+    if (baseURLs != null && path != null) {
+      for (int pos = 0; pos < baseURLs.length; pos++) {
+        final URL testURL = new URL(baseURLs[pos].toString() + (baseURLs[pos].toString().endsWith("/") ? "" : "/")
+            + path);
+        try {
+          final InputStream is = testURL.openStream();
+          is.read();
+          is.close();
+          return testURL;
+        } catch (IOException ioe) {
+          // Ignore this, the URL is bad
+        }
+      }
+    }
+    return null;
+  }
 }

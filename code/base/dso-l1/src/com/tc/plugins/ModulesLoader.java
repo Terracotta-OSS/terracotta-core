@@ -25,6 +25,7 @@ import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.NamedClassLoader;
 import com.tc.object.loaders.Namespace;
 import com.tc.object.util.JarResourceLoader;
+import com.tc.util.Assert;
 import com.tc.util.Environment;
 import com.tc.util.VendorVmSignature;
 import com.tc.util.VendorVmSignatureException;
@@ -146,6 +147,7 @@ public class ModulesLoader {
 
     EmbeddedOSGiRuntimeCallbackHandler handler = new EmbeddedOSGiRuntimeCallbackHandler() {
       public void callback(final Object payload) throws BundleException {
+        Assert.assertTrue(payload instanceof Bundle);
         Bundle bundle = (Bundle) payload;
         if (bundle != null) {
           if (!forBootJar) {
@@ -167,35 +169,38 @@ public class ModulesLoader {
   }
 
   private static List getAdditionalModules() {
-    List modules = new ArrayList();
+    final List modules = new ArrayList();
 
-    // TODO should use tc properties
-    String additionalModuleList = System.getProperty("tc.tests.configuration.modules", "");
-
-    String[] additionalModules = additionalModuleList.split(",");
+    // TODO: should use tc properties
+    final String additionalModuleList = System.getProperty("tc.tests.configuration.modules", "");
+    final String[] additionalModules  = additionalModuleList.split(",");
+    
     // clustered-apache-struts-1.1-1.1.0.jar
     // org.terracotta.modules.clustered-apache-struts-1.1-1.1.0.jar
     Pattern pattern = Pattern.compile("(.+?)-([0-9\\.]+)-([0-9\\.\\-]+)");
     for (int i = 0; i < additionalModules.length; i++) {
-      Matcher matcher = pattern.matcher(additionalModules[i]);
+      if (additionalModules[i].length() == 0) {
+        continue;
+      }
+      
+      final Matcher matcher = pattern.matcher(additionalModules[i]);
       if (!matcher.find() || matcher.groupCount() < 3) {
         logger.error("Invalid module id " + additionalModules[i]);
         continue;
       }
 
       String component = matcher.group(1);
-      String componentVersion = matcher.group(2);
-      String moduleVersion = matcher.group(3);
+      final String componentVersion = matcher.group(2);
+      final String moduleVersion = matcher.group(3);
 
-      String groupId = "org.terracotta.modules";
-      int n = component.lastIndexOf('.');
+      final Module module = Module.Factory.newInstance();
+      String groupId = module.getGroupId(); // rely on the constant defined in the schema for the default groupId
+      final int n = component.lastIndexOf('.');
       if (n > 0) {
         groupId = component.substring(0, n);
         component = component.substring(n + 1);
+        module.setGroupId(groupId); 
       }
-
-      Module module = Module.Factory.newInstance();
-      module.setGroupId(groupId);
       module.setName(component + "-" + componentVersion);
       module.setVersion(moduleVersion);
       modules.add(module);

@@ -1,7 +1,8 @@
-#Wed Dec 06 14:45:38 PST 2006
+#Fri Aug 17 14:51:21 PDT 2007
 eclipse.preferences.version=1
 formatter_profile=_Unmanaged profile
 formatter_settings_version=10
+instance/org.eclipse.core.net/org.eclipse.core.net.hasMigrated=true
 org.eclipse.jdt.ui.exception.name=e
 org.eclipse.jdt.ui.gettersetter.use.is=true
 org.eclipse.jdt.ui.ignorelowercasenames=true

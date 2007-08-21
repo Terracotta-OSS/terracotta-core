@@ -11,6 +11,18 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+//
+// Require-Bundle ::= bundle {, bundle...}
+// bundle ::=  symbolic-name{;bundle-version:="constraint"{;resolution:=optional}}
+// constraint ::= [range] || (range)  
+// range ::= min-version, {max-version}
+// 
+// NOTES: 
+// - For the constraints, the symbol (,) signifies inclusivity (ie: >= and <=), while the square-brackets
+//   signify exclusivity
+// - Only one type of resolution is supported: "optional"
+//
+
 final class RequiredBundleSpec {
   private static final String PROP_KEY_RESOLUTION         = "resolution";
   private static final String PROP_KEY_BUNDLE_VERSION     = "bundle-version";
@@ -22,21 +34,20 @@ final class RequiredBundleSpec {
   public static final String[] parseList(final String source) throws BundleException {
     ArrayList list = new ArrayList();
     if (source != null) {
-      final String spec     = source.replaceAll(" ", "");
-      final String regex    = REQUIRE_BUNDLE_EXPR_MATCHER;
+      final String spec = source.replaceAll(" ", "");
+      final String regex = REQUIRE_BUNDLE_EXPR_MATCHER;
       final Pattern pattern = Pattern.compile(regex);
       final Matcher matcher = pattern.matcher(spec);
-      StringBuffer check    = new StringBuffer();
+      StringBuffer check = new StringBuffer();
       while (matcher.find()) {
-         final String group = matcher.group();
-         check.append("," + group);
-         list.add(group);
+        final String group = matcher.group();
+        check.append("," + group);
+        list.add(group);
       }
-      if (!spec.equals(check.toString().replaceFirst(",", ""))) {
-        throw new BundleException("Syntax error specifying required-bundles list: '" + source + "'"); 
-      }
+      if (!spec.equals(check.toString().replaceFirst(",", ""))) { throw new BundleException(
+          "Syntax error specifying required-bundles list: '" + source + "'"); }
     }
-    return (String[])list.toArray(new String[0]);
+    return (String[]) list.toArray(new String[0]);
   }
 
   public RequiredBundleSpec(final String spec) {
@@ -53,7 +64,33 @@ final class RequiredBundleSpec {
     return this.symbolicName;
   }
 
-  public final String getBundleVersion() {
+  public final String getName() {
+    return extractInfo("name");
+  }
+
+  public final String getGroupId() {
+    return extractInfo("group-id");
+  }
+
+  private final String extractInfo(final String n) {
+    final String[] pieces = this.symbolicName.split("\\.");
+    int k = 0;
+    for (int i = pieces.length - 1; i >= 0; i--) {
+      if (pieces[i].matches("^[a-zA-Z][a-zA-Z0-9_]+")) {
+        k = i;
+        break;
+      }
+    }
+    final StringBuffer result = new StringBuffer();
+    final int start = n.equals("name") ? k : 0;
+    final int end = n.equals("name") ? pieces.length : k;
+    for (int j = start; j < end; j++) {
+      result.append(pieces[j]).append(".");
+    }
+    return result.toString().replaceFirst("\\.$", "");
+  }
+
+  public final String getVersion() {
     final String bundleversion = (String) attributes.get(PROP_KEY_BUNDLE_VERSION);
     return (bundleversion == null) ? "(any-version)" : bundleversion;
   }
@@ -63,9 +100,9 @@ final class RequiredBundleSpec {
     return (resolution != null) && resolution.equals("optional");
   }
 
-  public final boolean isCompatible(final String symbolicName, final String version) {
+  public final boolean isCompatible(final String symname, final String version) {
     // symbolic-names must match
-    if (!this.symbolicName.equals(symbolicName)) { return false; }
+    if (!this.symbolicName.equals(symname)) { return false; }
 
     // if symbolic-names are matching, then check for version compatibility 
     String spec = (String) attributes.get(PROP_KEY_BUNDLE_VERSION);
@@ -90,12 +127,12 @@ final class RequiredBundleSpec {
     final boolean inclusiveFloor = spec.startsWith("[");
     final boolean inclusiveCeiling = spec.endsWith("]");
 
-    spec                      = spec.replaceAll("\\[|\\]|\\(|\\)", "");
-    final String[] range      = spec.replaceAll(" ", "").split(",");
-    final VersionSpec floor   = new VersionSpec(range[0]);
+    spec = spec.replaceAll("\\[|\\]|\\(|\\)", "");
+    final String[] range = spec.replaceAll(" ", "").split(",");
+    final VersionSpec floor = new VersionSpec(range[0]);
     final VersionSpec ceiling = new VersionSpec(range[1]);
-    final boolean lowerBound  = inclusiveFloor ? (floor.compareTo(target) >= 0) : (floor.compareTo(target) > 0);
-    final boolean upperBound  = inclusiveCeiling ? (target.compareTo(ceiling) <= 0) : (target.compareTo(ceiling) < 0);
+    final boolean lowerBound = inclusiveFloor ? (floor.compareTo(target) >= 0) : (floor.compareTo(target) > 0);
+    final boolean upperBound = inclusiveCeiling ? (target.compareTo(ceiling) <= 0) : (target.compareTo(ceiling) < 0);
 
     // it's compatible if version falls within the (lower|upper)-bound versions
     // according to the (in|ex)clusivity flags

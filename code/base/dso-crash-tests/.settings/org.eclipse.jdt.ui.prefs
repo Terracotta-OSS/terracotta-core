@@ -1,6 +1,7 @@
-#Tue Mar 06 18:10:24 PST 2007
+#Fri Aug 17 14:51:22 PDT 2007
 eclipse.preferences.version=1
 formatter_settings_version=8
+instance/org.eclipse.core.net/org.eclipse.core.net.hasMigrated=true
 internal.default.compliance=default
 org.eclipse.jdt.ui.exception.name=e
 org.eclipse.jdt.ui.gettersetter.use.is=true

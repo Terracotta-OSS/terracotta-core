@@ -33,10 +33,13 @@ abstract class AbstractEmbeddedOSGiRuntime implements EmbeddedOSGiRuntime {
 
     static final Message WARN_MISSING_REPOSITORY        = new Message("warn.missing.repository");
     static final Message WARN_SKIPPED_FILE_INSTALLATION = new Message("warn.skipped.file.installation");
+    static final Message WARN_SKIPPED_FILE_UNREADABLE   = new Message("warn.skipped.file.unreadable");
+    static final Message WARN_SKIPPED_MISNAMED_FILE     = new Message("warn.skipped.misnamed.file");
     static final Message ERROR_INVALID_REPOSITORY       = new Message("error.missing.repository");
     static final Message ERROR_BUNDLE_INACCESSIBLE      = new Message("error.bundle.inaccessible");
-    static final Message ERROR_BUNDLE_NOT_FOUND         = new Message("error.bundle.missing");
+    static final Message ERROR_BUNDLE_NOT_FOUND         = new Message("error.bundle.not.found");
     static final Message ERROR_BUNDLE_URL_UNRESOLVABLE  = new Message("error.bundle.unresolved");
+    static final Message ERROR_REQUIRED_BUNDLE_MISSING  = new Message("error.bundle.dependency.missing");
 
     private final String resourceBundleKey;
 
