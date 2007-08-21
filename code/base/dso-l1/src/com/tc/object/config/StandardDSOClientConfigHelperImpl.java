@@ -72,6 +72,8 @@ import com.tc.util.ClassUtils;
 import com.tc.util.ClassUtils.ClassSpec;
 import com.tc.util.runtime.Vm;
 import com.tc.weblogic.transform.EJBCodeGeneratorAdapter;
+import com.tc.weblogic.transform.EventsManagerAdapter;
+import com.tc.weblogic.transform.FilterManagerAdapter;
 import com.tc.weblogic.transform.GenericClassLoaderAdapter;
 import com.tc.weblogic.transform.ServerAdapter;
 import com.tc.weblogic.transform.ServletResponseImplAdapter;
@@ -1066,6 +1068,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     addCustomAdapter("weblogic.utils.classloaders.GenericClassLoader", new GenericClassLoaderAdapter());
     addCustomAdapter("weblogic.ejb20.ejbc.EjbCodeGenerator", new EJBCodeGeneratorAdapter());
     addCustomAdapter("weblogic.servlet.internal.WebAppServletContext", new WebAppServletContextAdapter());
+    addCustomAdapter("weblogic.servlet.internal.EventsManager", new EventsManagerAdapter());
+    addCustomAdapter("weblogic.servlet.internal.FilterManager", new FilterManagerAdapter());
     addCustomAdapter("weblogic.servlet.internal.ServletResponseImpl", new ServletResponseImplAdapter());
     addCustomAdapter("weblogic.servlet.internal.TerracottaServletResponseImpl",
                      new TerracottaServletResponseImplAdapter());

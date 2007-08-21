@@ -12,8 +12,6 @@ import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.ClassAdapterFactory;
-import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
-import com.tc.object.loaders.NamedClassLoader;
 import com.tc.object.loaders.Namespace;
 
 public class GenericClassLoaderAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
@@ -123,8 +121,9 @@ public class GenericClassLoaderAdapter extends ClassAdapter implements Opcodes, 
 
   }
 
-  void foo() {
-    ClassProcessorHelper.registerGlobalLoader((NamedClassLoader) this);
-  }
+// for asm code above
+//  void foo() {
+//    ClassProcessorHelper.registerGlobalLoader((NamedClassLoader) this);
+//  }
 
 }
