@@ -85,15 +85,12 @@ public final class Weblogic9xAppServer extends CargoAppServer {
     private void prepareSecurityFile() {
       if (Os.isLinux()) {
         try {
-          String[] resources = new String[] { "user_staged_config/readme.txt",
-              "servers/AdminServer/security/boot.properties", "security/XACMLRoleMapperInit.ldift",
-              "security/SerializedSystemIni.dat", "security/DefaultRoleMapperInit.ldift",
-              "security/DefaultAuthenticatorInit.ldift", "lib/readme.txt", "init-info/tokenValue.properties",
-              "init-info/startscript.xml", "init-info/security.xml", "init-info/domain-info.xml",
-              "console-ext/readme.txt", "config/startup/readme.txt", "config/security/readme.txt",
-              "config/nodemanager/nm_password.properties", "config/lib/readme.txt", "config/jms/readme.txt",
-              "config/jdbc/readme.txt", "config/diagnostics/readme.txt", "config/deployments/readme.txt",
-              "autodeploy/readme.txt", "fileRealm.properties" };
+          String[] resources = new String[] { "security/XACMLRoleMapperInit.ldift", "security/SerializedSystemIni.dat",
+              "security/DefaultRoleMapperInit.ldift", "security/DefaultAuthenticatorInit.ldift",
+              "init-info/tokenValue.properties", "init-info/startscript.xml", "init-info/security.xml",
+              "init-info/domain-info.xml", "config/nodemanager/nm_password.properties", "fileRealm.properties",
+              "bin/setDomainEnv.sh", "bin/startManagedWebLogic.sh", "bin/startPointBaseConsole.sh", 
+              "bin/startWebLogic.sh", "bin/stopManagedWebLogic.sh", "bin/stopWebLogic.sh"};
           for (int i = 0; i < resources.length; i++) {
             String resource = "linux/" + resources[i];
             File dest = new File(getConfiguration().getHome(), resources[i]);
@@ -107,6 +104,7 @@ public final class Weblogic9xAppServer extends CargoAppServer {
     }
 
     private void copyResource(String name, File dest) throws IOException {
+      dest.getParentFile().mkdirs();
       InputStream in = getClass().getResourceAsStream(name);
       FileOutputStream out = new FileOutputStream(dest);
       try {

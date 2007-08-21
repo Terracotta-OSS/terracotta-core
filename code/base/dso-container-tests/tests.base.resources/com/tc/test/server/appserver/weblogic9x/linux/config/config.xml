@@ -19,7 +19,7 @@ http://www.bea.com/ns/weblogic/920/domain.xsd" xmlns="http://www.bea.com/ns/webl
       <sec:name>myrealm</sec:name>
     </realm>
     <default-realm>myrealm</default-realm>
-    <credential-encrypted>{3DES}7SFxF5n4e8kDm+fThVT0I9s3IyravWnh9X5yenhjQescZ6tiWG+xQt6ZLS++r9rji2iG2x94oLKo59FA6diJT1p27ghFs7OO</credential-encrypted>
+    <credential-encrypted>password2</credential-encrypted>
     <node-manager-username>weblogic</node-manager-username>
     <node-manager-password-encrypted>{3DES}QOXJRgPKctBBP49O/fJBKg==</node-manager-password-encrypted>
   </security-configuration>

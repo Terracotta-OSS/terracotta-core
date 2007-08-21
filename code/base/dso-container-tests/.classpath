@@ -30,6 +30,6 @@
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/derbyclient-10.2.2.0.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
-	<classpathentry kind="lib" path="/dependencies/lib/tc-cargo-core-uberjar-1.0-20070820.jar"/>
+	<classpathentry kind="lib" path="/dependencies/lib/tc-cargo-core-uberjar-1.0-20070821.jar"/>
 	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
 </classpath>
