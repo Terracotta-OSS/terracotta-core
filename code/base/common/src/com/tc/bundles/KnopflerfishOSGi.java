@@ -75,11 +75,21 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     framework.launch(0);
   }
 
+  public URL[] getRepositories() {
+    return this.bundleRepositories;
+  }
+
   public void installBundles(Module[] bundles) throws BundleException {
     for (int i = 0; i < bundles.length; i++) {
       Module bundle = bundles[i];
       URL bundleURL = getBundleURL(bundle);
       installBundle(bundleURL);
+    }
+  }
+
+  public void installBundles(final URL[] bundles) throws BundleException {
+    for (int i = 0; i < bundles.length; i++) {
+      installBundle(bundles[i]);
     }
   }
 
@@ -90,12 +100,20 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     }
   }
 
+  public void startBundles(final URL[] bundles, final EmbeddedOSGiRuntimeCallbackHandler handler)
+      throws BundleException {
+    for (int i = 0; i < bundles.length; i++) {
+      final long id = framework.getBundleId(bundles[i].toString());
+      startBundle(id, handler);
+    }
+  }
+
   public void startBundle(final Module bundle, final EmbeddedOSGiRuntimeCallbackHandler handler) throws BundleException {
     final long id = getBundleId(bundle);
     startBundle(id, handler);
   }
 
-  private Bundle installBundle(final RequiredBundleSpec spec) throws BundleException {
+  private Bundle installBundle(final BundleSpec spec) throws BundleException {
     for (int i = 0; i < bundleRepositories.length; i++) {
       final URL location = bundleRepositories[i];
 
@@ -132,16 +150,36 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     return findBundleBySymbolicName(spec);
   }
 
-  private void startBundle(final long bundleId, final EmbeddedOSGiRuntimeCallbackHandler handler)
+  private void startBundle(final long id, final EmbeddedOSGiRuntimeCallbackHandler handler) throws BundleException {
+    final Bundle bundle      = framework.bundles.getBundle(id);
+    final boolean isStarting = ((bundle.getState() & Bundle.STARTING) == Bundle.STARTING);
+    final boolean isActive   = ((bundle.getState() & Bundle.ACTIVE) == Bundle.ACTIVE);
+    
+    if (isActive || isStarting) {
+      warn(Message.WARN_SKIPPED_ALREADY_ACTIVE, new Object[] { bundle.getSymbolicName() });
+      return;
+    }
+    
+    info(Message.STARTING_BUNDLE, new Object[] { bundle.getSymbolicName() });
+    framework.startBundle(bundle.getBundleId());
+    info(Message.BUNDLE_STARTED, new Object[] { bundle.getSymbolicName() });
+    Assert.assertNotNull(handler);
+    handler.callback(bundle);
+  }
+  
+  /**
+   * @deprecated
+   */
+  private void _startBundle(final long bundleId, final EmbeddedOSGiRuntimeCallbackHandler handler)
       throws BundleException {
     // locate the bundle (assume it has been installed)
     final Bundle bundle = framework.bundles.getBundle(bundleId);
 
     // locate and recursively install all of the bundles' other bundle dependencies
     final String requires = (String) bundle.getHeaders().get(REQUIRE_BUNDLE);
-    final String[] bundles = RequiredBundleSpec.parseList(requires);
+    final String[] bundles = BundleSpec.parseList(requires);
     for (int i = 0; i < bundles.length; i++) {
-      final RequiredBundleSpec spec = new RequiredBundleSpec(bundles[i]);
+      final BundleSpec spec = new BundleSpec(bundles[i]);
       Bundle required = findBundleBySymbolicName(spec);
       if (required == null) {
         required = installBundle(spec);
@@ -230,7 +268,7 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
    * @return The symbolic name of the bundle, meaning: it was installed, and it was a config-bundle, and it conforms to
    *         the <code>spec</code> - otherwise return <code>null</code>
    */
-  private Bundle findBundleBySymbolicName(final RequiredBundleSpec spec) {
+  private Bundle findBundleBySymbolicName(final BundleSpec spec) {
     final Bundle[] bundles = framework.getSystemBundleContext().getBundles();
     for (int i = 0; i < bundles.length; i++) {
       Bundle bundle = bundles[i];
@@ -329,7 +367,7 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
    * 
    * @return <code>true</code> if the name of the file conforms to the <code>BUNDLE_FILENAME_PATTERN</code>
    */
-  protected boolean isValidFilename(final File file) {
+  private boolean isValidFilename(final File file) {
     return file.isFile() && file.getName().matches(BUNDLE_FILENAME_PATTERN);
   }
 
@@ -341,8 +379,7 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
   private static URL resolveUrls(final URL[] urls, final String path) throws MalformedURLException {
     if (urls != null && path != null) {
       for (int i = 0; i < urls.length; i++) {
-        final URL testURL = new URL(urls[i].toString() + (urls[i].toString().endsWith("/") ? "" : "/")
-            + path);
+        final URL testURL = new URL(urls[i].toString() + (urls[i].toString().endsWith("/") ? "" : "/") + path);
         try {
           final InputStream is = testURL.openStream();
           is.read();

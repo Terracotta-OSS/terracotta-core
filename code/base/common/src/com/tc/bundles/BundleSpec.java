@@ -6,9 +6,12 @@ package com.tc.bundles;
 
 import org.osgi.framework.BundleException;
 
+import com.tc.bundles.exception.InvalidBundleManifestException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,7 +39,7 @@ import java.util.regex.Pattern;
 //
 // ---------------------------------------------------------------------------------------------------------------------------
 
-final class RequiredBundleSpec {
+final class BundleSpec {
   private static final String PROP_KEY_RESOLUTION         = "resolution";
   private static final String PROP_KEY_BUNDLE_VERSION     = "bundle-version";
   private static final String REQUIRE_BUNDLE_EXPR_MATCHER = "([A-Za-z0-9._\\-]+(;resolution:=\"optional\")?(;bundle-version:=(\"[A-Za-z0-9.]+\"|\"\\[[A-Za-z0-9.]+,[A-Za-z0-9.]+\\]\"))?)";
@@ -44,26 +47,36 @@ final class RequiredBundleSpec {
   private final String        symbolicName;
   private Map                 attributes;
 
-  public static final String[] parseList(final String source) throws BundleException {
-    ArrayList list = new ArrayList();
-    if (source != null) {
-      final String spec = source.replaceAll(" ", "");
-      final String regex = REQUIRE_BUNDLE_EXPR_MATCHER;
-      final Pattern pattern = Pattern.compile(regex);
-      final Matcher matcher = pattern.matcher(spec);
-      StringBuffer check = new StringBuffer();
-      while (matcher.find()) {
-        final String group = matcher.group();
-        check.append("," + group);
-        list.add(group);
-      }
-      if (!spec.equals(check.toString().replaceFirst(",", ""))) { throw new BundleException(
-          "Syntax error specifying required-bundles list: '" + source + "'"); }
+  public static final String[] getRequirements(final Manifest manifest) throws BundleException {
+    return getRequirements(manifest.getMainAttributes().getValue("Require-Bundle"));
+  }
+  
+  public static final String[] getRequirements(final String source) throws BundleException {
+    if (source == null) return new String[0];
+    
+    final ArrayList list     = new ArrayList();
+    final String spec        = source.replaceAll(" ", "");
+    final String regex       = REQUIRE_BUNDLE_EXPR_MATCHER;
+    final Pattern pattern    = Pattern.compile(regex);
+    final Matcher matcher    = pattern.matcher(spec);
+    final StringBuffer check = new StringBuffer();
+    while (matcher.find()) {
+      final String group = matcher.group();
+      check.append("," + group);
+      list.add(group);
     }
+    
+    if (!spec.equals(check.toString().replaceFirst(",", "")))
+      throw new InvalidBundleManifestException("Syntax error specifying Require-Bundle: " + source);
+    
     return (String[]) list.toArray(new String[0]);
   }
+  
+  public static final String[] parseList(final String source) throws BundleException {
+    return getRequirements(source);
+  }
 
-  public RequiredBundleSpec(final String spec) {
+  public BundleSpec(final String spec) {
     attributes = new HashMap();
     final String[] data = spec.split(";");
     this.symbolicName = data[0];

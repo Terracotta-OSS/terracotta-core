@@ -30,16 +30,21 @@ public interface EmbeddedOSGiRuntime {
 
   public static final String MODULES_URL_PROPERTY_NAME = "tc.tests.configuration.modules.url";
 
+  URL[] getRepositories();
+
   void installBundles(Module[] allModules) throws BundleException;
 
+  void installBundles(final URL[] bundles) throws BundleException;
+
   void startBundles(final Module[] modules, final EmbeddedOSGiRuntimeCallbackHandler handler) throws BundleException;
+
+  void startBundles(final URL[] bundles, final EmbeddedOSGiRuntimeCallbackHandler handler) throws BundleException;
 
   void installBundle(final Module bundle) throws BundleException;
 
   void uninstallBundle(final Module bundle) throws BundleException;
 
-  void startBundle(final Module bundle, 
-                   final EmbeddedOSGiRuntimeCallbackHandler handler) throws BundleException;
+  void startBundle(final Module bundle, final EmbeddedOSGiRuntimeCallbackHandler handler) throws BundleException;
 
   void stopBundle(final Module bundle) throws BundleException;
 

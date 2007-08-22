@@ -13,6 +13,7 @@ import org.osgi.framework.ServiceReference;
 
 import com.tc.bundles.EmbeddedOSGiRuntime;
 import com.tc.bundles.EmbeddedOSGiRuntimeCallbackHandler;
+import com.tc.bundles.Resolver;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
@@ -109,7 +110,7 @@ public class ModulesLoader {
     shutdown(osgiRuntime);
     System.exit(-1);
   }
-  
+
   private static void shutdown(final EmbeddedOSGiRuntime osgiRuntime) {
     try {
       osgiRuntime.shutdown();
@@ -149,8 +150,11 @@ public class ModulesLoader {
 
     Module[] allModules = (Module[]) moduleList.toArray(new Module[moduleList.size()]);
 
-    osgiRuntime.installBundles(allModules);
-    osgiRuntime.startBundles(allModules, handler);
+    final Resolver resolver = new Resolver(osgiRuntime.getRepositories(), allModules);
+    final URL[] locations = resolver.resolve();
+
+    osgiRuntime.installBundles(locations);
+    osgiRuntime.startBundles(locations, handler);
   }
 
   private static List getAdditionalModules() {

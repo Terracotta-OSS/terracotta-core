@@ -32,6 +32,7 @@ abstract class AbstractEmbeddedOSGiRuntime implements EmbeddedOSGiRuntime {
     static final Message SHUTDOWN                       = new Message("framework.shutdown");
 
     static final Message WARN_MISSING_REPOSITORY        = new Message("warn.missing.repository");
+    static final Message WARN_SKIPPED_ALREADY_ACTIVE    = new Message("warn.skipped.activation");
     static final Message WARN_SKIPPED_FILE_INSTALLATION = new Message("warn.skipped.file.installation");
     static final Message WARN_SKIPPED_FILE_UNREADABLE   = new Message("warn.skipped.file.unreadable");
     static final Message WARN_SKIPPED_MISNAMED_FILE     = new Message("warn.skipped.misnamed.file");
