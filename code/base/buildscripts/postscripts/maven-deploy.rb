@@ -17,7 +17,9 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
         next unless arg
         file = FilePath.new(product_directory, interpolate(arg['file'])).to_s
         artifact = arg['artifact']
-        maven.deploy_file(file, artifact, arg['version'] || build_environment.version)
+        version = arg[VERSION_CONFIG_KEY] || config_source[VERSION_CONFIG_KEY] ||
+                  config_source['version'] || build_environment.version
+        maven.deploy_file(file, artifact, version)
       end
     end
   end

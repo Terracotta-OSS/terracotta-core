@@ -18,6 +18,7 @@ end
 
 module MavenConstants
   MAVEN_REPO_CONFIG_KEY = 'maven.repo'
+  VERSION_CONFIG_KEY = 'maven.version'
   MAVEN_REPO_LOCAL = 'local'
   DEFAULT_GROUP_ID = 'org.terracotta'
   MODULES_GROUP_ID = 'org.terracotta.modules'
