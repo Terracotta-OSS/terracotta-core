@@ -28,7 +28,7 @@ module BundledVendors
     end
 
     def getCachedVendorDir(url, vendor)
-        cache_dir = FilePath.new('.tc-build-cache').ensure_directory.canonicalize.to_s
+        cache_dir = FilePath.new(ENV['HOME'], '.tc').ensure_directory.canonicalize.to_s
         zipfile   = FilePath.new(cache_dir, vendor + ".zip").to_s
         ant.get(:src => url, :dest => zipfile, :usetimestamp => true)
         ant.unzip(:src => zipfile, :dest => cache_dir, :overwrite => true)
