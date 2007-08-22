@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.spring.integrationtests.tests;
 
@@ -22,6 +23,7 @@ import org.springframework.web.context.request.SessionScope;
 import org.springframework.web.servlet.DispatcherServlet;
 
 import com.tc.test.TestConfigObject;
+import com.tc.test.server.appserver.AppServerFactory;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.ProxyBuilder;
@@ -40,71 +42,71 @@ import javax.servlet.http.HttpSessionBindingListener;
 
 import junit.framework.Test;
 
-
 /**
  * Test clustering custom scoped bean. This custom scope is a subtype of SessionScope with finer granularity driven by
  * CONVERSATION parameter of the http request
  */
 public class CustomScopedBeanTest extends AbstractTwoServerDeploymentTest {
-  private static final String APP_NAME = "test-customscope";
+  private static final String APP_NAME    = "test-customscope";
 
   private static final String FASADE_NAME = "TestFasadeService";
-  
-  private ITestFacade beanN1C1; // node1 session1 conv1
-  private ITestFacade beanN1C2; // node1 session1 conv2
-  
-  private ITestFacade beanN2C1; // node2 session1 conv1
-  private ITestFacade beanN2C2; // node2 session1 conv2
-  
-  
+
+  private ITestFacade         beanN1C1;                         // node1 session1 conv1
+  private ITestFacade         beanN1C2;                         // node1 session1 conv2
+
+  private ITestFacade         beanN2C1;                         // node2 session1 conv1
+  private ITestFacade         beanN2C2;                         // node2 session1 conv2
+
   public CustomScopedBeanTest() {
-    disableTestUntil("testDestructionCallbacks", "2007-08-01");
-    disableTestUntil("testTransientFields", "2007-08-01");
-    
+    // MNK-352, MNK-353
+    if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.WEBLOGIC) {
+      disableAllUntil("2008-12-01");
+    }
+
     disableVariant(TestConfigObject.SPRING_VARIANT, "128");
   }
-  
+
   protected void setUp() throws Exception {
     try {
       super.setUp();
-      
-      Map initCtx = new HashMap(); 
+
+      Map initCtx = new HashMap();
       initCtx.put(ProxyBuilder.EXPORTER_TYPE_KEY, HttpInvokerServiceExporter.class);
-      
+
       HttpClient clientS1C1 = new HttpClientWithParams(Collections.singletonMap(ConversationScope.CONV_KEY, "(1)"));
       initCtx.put(ProxyBuilder.HTTP_CLIENT_KEY, clientS1C1);
-      
+
       beanN1C1 = (ITestFacade) server0.getProxy(ITestFacade.class, APP_NAME + "/http/" + FASADE_NAME, initCtx);
       beanN2C1 = (ITestFacade) server1.getProxy(ITestFacade.class, APP_NAME + "/http/" + FASADE_NAME, initCtx);
-      
+
       HttpClient clientS1C2 = new HttpClientWithParams(Collections.singletonMap(ConversationScope.CONV_KEY, "(2)"));
-      clientS1C2.setState(clientS1C1.getState()); // share state across the clients, they should be in the same session now
+      clientS1C2.setState(clientS1C1.getState()); // share state across the clients, they should be in the same session
+                                                  // now
       initCtx.put(ProxyBuilder.HTTP_CLIENT_KEY, clientS1C2);
-      
+
       beanN1C2 = (ITestFacade) server0.getProxy(ITestFacade.class, APP_NAME + "/http/" + FASADE_NAME, initCtx);
       beanN2C2 = (ITestFacade) server1.getProxy(ITestFacade.class, APP_NAME + "/http/" + FASADE_NAME, initCtx);
     } catch (Exception e) {
-      e.printStackTrace(); 
+      e.printStackTrace();
       throw e;
-    }      
+    }
   }
 
-  
   public void testSharedFields() throws Exception {
-    beanN1C1.setField("newVal1");   
+    beanN1C1.setField("newVal1");
     beanN2C2.setField("newVal2");
 
     assertEquals("Failed to share", "newVal1", beanN2C1.getField());
     assertEquals("Failed to share", "newVal2", beanN1C2.getField());
   }
-  
+
   public void testScopeId() throws Exception {
     String id11 = beanN1C1.getConversationId();
     String id12 = beanN1C2.getConversationId();
 
     String id21 = beanN2C1.getConversationId();
     String id22 = beanN2C2.getConversationId();
-    
+
     assertEquals("Unexpected scope", id11, id21);
     assertEquals("Unexpected scope", id12, id22);
   }
@@ -115,19 +117,19 @@ public class CustomScopedBeanTest extends AbstractTwoServerDeploymentTest {
     String conversationId12 = beanN2C1.getConversationId();
     String conversationId22 = beanN2C2.getConversationId();
 
-    beanN1C1.setField("newVal11");   
+    beanN1C1.setField("newVal11");
     beanN1C2.setField("newVal12");
-    beanN2C1.setField("newVal21");   
+    beanN2C1.setField("newVal21");
     beanN2C2.setField("newVal22");
-    
+
     assertTrue("Failed to create scoped bean", beanN1C1.isInClusteredSingletonCache(conversationId11));
     assertTrue("Failed to create scoped bean", beanN1C2.isInClusteredSingletonCache(conversationId12));
     assertTrue("Failed to create scoped bean", beanN2C1.isInClusteredSingletonCache(conversationId21));
     assertTrue("Failed to create scoped bean", beanN2C2.isInClusteredSingletonCache(conversationId22));
-    
+
     beanN1C1.invokeDestructionCallback();
     beanN2C2.invokeDestructionCallback();
-        
+
     assertFalse("Failed to destruct scoped bean", beanN1C1.isInClusteredSingletonCache(conversationId11));
     assertFalse("Failed to destruct scoped bean", beanN1C2.isInClusteredSingletonCache(conversationId12));
     assertFalse("Failed to destruct scoped bean", beanN2C1.isInClusteredSingletonCache(conversationId21));
@@ -139,19 +141,18 @@ public class CustomScopedBeanTest extends AbstractTwoServerDeploymentTest {
     assertEquals("Failed to initialize transient field", "transient-val", beanN1C2.getTransientField());
     assertEquals("Failed to initialize transient field", "transient-val", beanN2C1.getTransientField());
     assertEquals("Failed to initialize transient field", "transient-val", beanN2C2.getTransientField());
-    
+
     beanN1C1.setTransientField("newVal11");
     beanN1C2.setTransientField("newVal12");
     beanN2C1.setTransientField("newVal21");
     beanN2C2.setTransientField("newVal22");
-    
+
     assertEquals("Unexpected sharing", "newVal11", beanN1C1.getTransientField());
     assertEquals("Unexpected sharing", "newVal12", beanN1C2.getTransientField());
     assertEquals("Unexpected sharing", "newVal21", beanN2C1.getTransientField());
     assertEquals("Unexpected sharing", "newVal22", beanN2C2.getTransientField());
   }
 
-  
   private static class InnerTestSetup extends SpringTwoServerTestSetup {
 
     private InnerTestSetup() {
@@ -160,7 +161,7 @@ public class CustomScopedBeanTest extends AbstractTwoServerDeploymentTest {
 
     protected void configureWar(DeploymentBuilder builder) {
       builder.addBeanDefinitionFile("classpath:/com/tctest/spring/beanfactory-customscope.xml");
-      
+
       builder.addRemoteService(HttpInvokerServiceExporter.class, FASADE_NAME, "testFacade", ITestFacade.class);
 
       builder.setDispatcherServlet("httpinvoker", "/http/*", DispatcherServlet.class, null, true);
@@ -168,27 +169,25 @@ public class CustomScopedBeanTest extends AbstractTwoServerDeploymentTest {
     }
   }
 
-
   public static Test suite() {
     return new InnerTestSetup();
   }
-  
-  
+
   /**
-   * Custom scope and client  
+   * Custom scope and client
    */
   public static class ConversationScope extends SessionScope implements Scope {
     public static final String CONV_KEY = "CONVERSATION";
-    
+
     public String getConversationId() {
       String conversation = getWebConversationName();
       return conversation == null ? null : super.getConversationId() + conversation;
     }
-    
+
     public Object get(String name, ObjectFactory objectFactory) {
       return super.get(getWebConversationName() + name, objectFactory);
     }
-    
+
     public Object remove(String name) {
       return super.remove(getWebConversationName() + name);
     }
@@ -196,20 +195,19 @@ public class CustomScopedBeanTest extends AbstractTwoServerDeploymentTest {
     public void registerDestructionCallback(String name, Runnable callback) {
       super.registerDestructionCallback(getWebConversationName() + name, callback);
     }
-    
+
     public Object getDestructionCallback(String name) {
-      return RequestContextHolder.currentRequestAttributes().getAttribute(
-          ServletRequestAttributes.DESTRUCTION_CALLBACK_NAME_PREFIX + getWebConversationName() + name, 
-          RequestAttributes.SCOPE_SESSION);
+      return RequestContextHolder.currentRequestAttributes()
+          .getAttribute(ServletRequestAttributes.DESTRUCTION_CALLBACK_NAME_PREFIX + getWebConversationName() + name,
+                        RequestAttributes.SCOPE_SESSION);
     }
-    
+
     private String getWebConversationName() {
-      return HttpRequestAccessor.getRequest(
-           (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getParameter(CONV_KEY);
+      return HttpRequestAccessor.getRequest((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())
+          .getParameter(CONV_KEY);
     }
   }
-  
-  
+
   public static class HttpClientWithParams extends HttpClient {
     private Map stickyParameters = null;
 
@@ -237,29 +235,33 @@ public class CustomScopedBeanTest extends AbstractTwoServerDeploymentTest {
       return sb.toString();
     }
   }
-  
-  
+
   public static interface ITestFacade {
     public String getConversationId();
+
     public String getTransientField();
+
     public void setTransientField(String string);
+
     public String getField();
+
     public void setField(String value);
+
     public void invokeDestructionCallback();
+
     public boolean isInClusteredSingletonCache(String conversationId);
   }
-  
-  
+
   public static class ConversationScopeTestFacade implements ITestFacade, BeanFactoryAware {
-    private BeanFactory factory;
+    private BeanFactory       factory;
     private ConversationScope scope;
-    private ISimpleBean bean;
-    private String beanName;
-    
+    private ISimpleBean       bean;
+    private String            beanName;
+
     public void setBeanFactory(BeanFactory factory) {
       this.factory = factory;
     }
-    
+
     public void setScope(ConversationScope scope) {
       this.scope = scope;
     }
@@ -267,33 +269,35 @@ public class CustomScopedBeanTest extends AbstractTwoServerDeploymentTest {
     public void setBean(ISimpleBean bean) {
       this.bean = bean;
     }
-    
+
     public void setField(String value) {
       bean.setField(value);
     }
-    
+
     public String getField() {
       return bean.getField();
     }
-    
+
     public String getTransientField() {
       return bean.getTransientField();
     }
-    
+
     public void setTransientField(String value) {
       bean.setTransientField(value);
     }
-    
+
     public String getConversationId() {
       return scope.getConversationId();
     }
-    
+
     public void invokeDestructionCallback() {
-      LogFactory.getLog(getClass()).info("#### invokeDestructionCallback() " + getBeanName() + " " + scope.getConversationId());
+      LogFactory.getLog(getClass()).info(
+                                         "#### invokeDestructionCallback() " + getBeanName() + " "
+                                             + scope.getConversationId());
       HttpSessionBindingListener listener = (HttpSessionBindingListener) scope.getDestructionCallback(getBeanName());
       listener.valueUnbound(null); // cause unbound
     }
-    
+
     public boolean isInClusteredSingletonCache(String conversationId) {
       ComplexBeanId beanId = new ComplexBeanId(conversationId, getBeanName());
       boolean res = ((DistributableBeanFactory) factory).getBeanContainer(beanId) != null;
@@ -302,12 +306,12 @@ public class CustomScopedBeanTest extends AbstractTwoServerDeploymentTest {
     }
 
     private String getBeanName() {
-      if(beanName==null) {
+      if (beanName == null) {
         beanName = bean.getBeanName();
       }
       return beanName;
     }
 
   }
-  
+
 }
