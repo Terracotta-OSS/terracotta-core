@@ -30,8 +30,6 @@ public final class Weblogic9xAppServer extends CargoAppServer {
   }
 
   protected String cargoServerKey() {
-    // this is intentional, since cargo doesn't support weblogic92
-    // we force it to support weblogic92 by faking weblogic8x
     return "weblogic9x";
   }
 
