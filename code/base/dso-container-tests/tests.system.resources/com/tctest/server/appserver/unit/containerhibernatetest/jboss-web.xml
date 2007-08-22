@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+
+<jboss-web>
+    <class-loading java2ClassLoadingCompliance="false" useJBossWebLoader="false">
+        <loader-repository>
+            com.tctest.server.appserver.unit:loader=events.war
+            <loader-repository-config>java2ParentDelegation=false</loader-repository-config>
+        </loader-repository>
+    </class-loading>
+</jboss-web>

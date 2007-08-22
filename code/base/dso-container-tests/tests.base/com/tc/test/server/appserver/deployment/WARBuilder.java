@@ -5,8 +5,6 @@
 package com.tc.test.server.appserver.deployment;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.logging.LogFactory;
-import org.apache.log4j.Logger;
 import org.apache.tools.ant.taskdefs.War;
 import org.apache.tools.ant.taskdefs.Zip.Duplicate;
 import org.apache.tools.ant.types.ZipFileSet;
@@ -82,12 +80,9 @@ public class WARBuilder implements DeploymentBuilder {
     this.warFileName = warFileName;
     this.tempDirPath = new FileSystemPath(tempDir);
     this.testConfig = config;
-    
+
     // this is needed for spring tests
     addDirectoryOrJARContainingClass(WARBuilder.class); // test framework
-    addDirectoryOrJARContainingClass(LogFactory.class); // commons-logging
-    addDirectoryOrJARContainingClass(Logger.class); // log4j
-
   }
 
   public DeploymentBuilder addClassesDirectory(FileSystemPath path) {
