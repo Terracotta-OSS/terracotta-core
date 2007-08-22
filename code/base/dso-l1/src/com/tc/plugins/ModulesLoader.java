@@ -80,46 +80,41 @@ public class ModulesLoader {
                                  final boolean forBootJar) {
     EmbeddedOSGiRuntime osgiRuntime = null;
     synchronized (lock) {
-      Modules modules = configHelper.getModulesForInitialization();
-      if (modules != null && modules.sizeOfModuleArray() > 0) {
+      final Modules modules = configHelper.getModulesForInitialization();
+      if ((modules != null) && (modules.sizeOfModuleArray() > 0)) {
         try {
           osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
-        } catch (Exception e) {
-          throw new RuntimeException("Unable to create runtime for plugins", e);
-        }
-        try {
           initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), forBootJar);
           if (!forBootJar) {
             getModulesCustomApplicatorSpecs(osgiRuntime, configHelper);
           }
         } catch (BundleException be1) {
           consoleLogger.fatal("Unable to initialize modules, shutting down.  See log for details.", be1);
-          try {
-            osgiRuntime.shutdown();
-          } catch (BundleException be2) {
-            logger.error("Error shutting down plugin runtime", be2);
-          }
-          System.exit(-1);
-        } catch (InvalidSyntaxException be1) {
-          consoleLogger.fatal("Unable to initialize modules, shutting down.  See log for details", be1);
-          try {
-            osgiRuntime.shutdown();
-          } catch (BundleException be2) {
-            logger.error("Error shutting down plugin runtime", be2);
-          }
-          System.exit(-1);
+          shutdownAndExit(osgiRuntime);
+        } catch (InvalidSyntaxException ise) {
+          consoleLogger.fatal("Unable to initialize modules, shutting down.  See log for details", ise);
+          shutdownAndExit(osgiRuntime);
+        } catch (Exception e) {
+          throw new RuntimeException("Unable to create runtime for plugins", e);
         } finally {
           if (forBootJar) {
-            try {
-              osgiRuntime.shutdown();
-            } catch (BundleException be2) {
-              logger.error("Error shutting down plugin runtime", be2);
-            }
+            shutdown(osgiRuntime);
           }
         }
-      } else {
-        osgiRuntime = null;
       }
+    }
+  }
+
+  private static void shutdownAndExit(final EmbeddedOSGiRuntime osgiRuntime) {
+    shutdown(osgiRuntime);
+    System.exit(-1);
+  }
+  
+  private static void shutdown(final EmbeddedOSGiRuntime osgiRuntime) {
+    try {
+      osgiRuntime.shutdown();
+    } catch (BundleException be2) {
+      logger.error("Error shutting down plugin runtime", be2);
     }
   }
 

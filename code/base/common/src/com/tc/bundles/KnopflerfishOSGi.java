@@ -338,7 +338,7 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
    *         <code>baseURLs</code>, or <code>null</code> if the path does not exist at any of them.
    * @throws MalformedURLException
    */
-  static URL resolveUrls(final URL[] urls, final String path) throws MalformedURLException {
+  private static URL resolveUrls(final URL[] urls, final String path) throws MalformedURLException {
     if (urls != null && path != null) {
       for (int i = 0; i < urls.length; i++) {
         final URL testURL = new URL(urls[i].toString() + (urls[i].toString().endsWith("/") ? "" : "/")
