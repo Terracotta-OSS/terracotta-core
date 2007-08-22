@@ -35,12 +35,12 @@ import java.util.Properties;
 public abstract class AppServerFactory {
 
   public static final int          WEBLOGIC  = 0;
-  public static final int          JBOSS     = 1;
-  public static final int          TOMCAT    = 2;
-  public static final int          WASCE     = 3;
-  public static final int          GLASSFISH = 4;
-  public static final int          JETTY     = 5;
-  public static final int          WEBSPHERE = 6;
+  public static final int          JBOSS     = 1 << 1;
+  public static final int          TOMCAT    = 1 << 2;
+  public static final int          WASCE     = 1 << 3;
+  public static final int          GLASSFISH = 1 << 4;
+  public static final int          JETTY     = 1 << 5;
+  public static final int          WEBSPHERE = 1 << 6;
 
   protected final TestConfigObject config;
   private boolean                  licenseIsSet;
@@ -145,11 +145,12 @@ public abstract class AppServerFactory {
     return getAppServerId(TestConfigObject.getInstance().appserverFactoryName());
   }
   
-  public static boolean currentAppServerBelongsTo(int[] set) {
+  public static boolean currentAppServerBelongsTo(int bitSet) {
     int appId = getCurrentAppServerId();
-    for (int i = 0; i < set.length; i++ ) {
-      if (set[i] == appId ) return true;
-    }
-    return false;
+    return (bitSet & appId) != 0;
+  }
+  
+  public static String getCurrentAppServerMajorVersion() {
+    return TestConfigObject.getInstance().appserverMajorVersion();
   }
 }

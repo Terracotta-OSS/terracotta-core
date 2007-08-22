@@ -34,10 +34,12 @@ public class ContainerHibernateTest extends AbstractTwoServerDeploymentTest {
   }
 
   public boolean shouldDisable() {
-    int appId = AppServerFactory.getCurrentAppServerId();
-    return super.shouldDisable()
-           || AppServerFactory.WASCE == appId
-           || AppServerFactory.WEBSPHERE == appId;
+    boolean wasceOrWebSphere = AppServerFactory.currentAppServerBelongsTo(AppServerFactory.WASCE
+                                                                          | AppServerFactory.WEBSPHERE);
+    boolean isJboss3 = AppServerFactory.JBOSS == AppServerFactory.getCurrentAppServerId()
+                       && "3".equals(AppServerFactory.getCurrentAppServerMajorVersion());
+
+    return super.shouldDisable() || wasceOrWebSphere || isJboss3;
   }
 
   public void testHibernate() throws Exception {
@@ -70,8 +72,8 @@ public class ContainerHibernateTest extends AbstractTwoServerDeploymentTest {
       builder.addDirectoryOrJARContainingClass(org.apache.derby.jdbc.ClientDriver.class); // derby*.jar
       builder.addDirectoryOrJARContainingClass(antlr.Tool.class); // antlr*.jar
       // WarBuilder includes these jars by default
-      //builder.addDirectoryOrJARContainingClass(Logger.class); // log4j
-      //builder.addDirectoryOrJARContainingClass(LogFactory.class); // common-loggings
+      // builder.addDirectoryOrJARContainingClass(Logger.class); // log4j
+      // builder.addDirectoryOrJARContainingClass(LogFactory.class); // common-loggings
 
       builder.addResource("/com/tctest/server/appserver/unit", "hibernate.cfg.xml", "WEB-INF/classes");
       builder.addResource("/com/tctest/server/appserver/unit", "Event.hbm.xml", "WEB-INF/classes");

@@ -32,11 +32,11 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   private static final int TIMEOUT_DEFAULT     = 30 * 60;
 
   public AbstractDeploymentTest() {
-    boolean glassFishOrJetty = AppServerFactory.currentAppServerBelongsTo(new int[] { AppServerFactory.GLASSFISH,
-        AppServerFactory.JETTY });
+    boolean glassFishOrJetty = AppServerFactory.currentAppServerBelongsTo(AppServerFactory.GLASSFISH
+                                                                          | AppServerFactory.JETTY);
     if (isSessionTest() && glassFishOrJetty) {
       disableAllUntil(new Date(Long.MAX_VALUE));
-    }    
+    }
   }
 
   protected void beforeTimeout() throws Throwable {
@@ -97,7 +97,7 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   protected WebApplicationServer makeWebApplicationServer(String tcConfig) throws Exception {
     return getServerManager().makeWebApplicationServer(tcConfig);
   }
-  
+
   protected WebApplicationServer makeWebApplicationServer(TcConfigBuilder configBuilder) throws Exception {
     return getServerManager().makeWebApplicationServer(configBuilder);
   }
@@ -143,7 +143,7 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   public boolean isWithPersistentStore() {
     return false;
   }
-  
+
   protected final boolean cleanTempDir() {
     return false;
   }
@@ -168,7 +168,7 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   public boolean shouldDisable() {
     return isAllDisabled() || shouldDisableForJavaVersion() || shouldDisableForVariants();
   }
-  
+
   private boolean shouldDisableForVariants() {
     for (Iterator iter = disabledVariants.entrySet().iterator(); iter.hasNext();) {
       Map.Entry entry = (Map.Entry) iter.next();
