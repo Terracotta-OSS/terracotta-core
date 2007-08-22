@@ -53,8 +53,8 @@ public class TCServerImpl extends SEDA implements TCServer {
   private static final TCLogger                logger        = TCLogging.getLogger(TCServer.class);
   private static final TCLogger                consoleLogger = CustomerLogging.getConsoleLogger();
 
-  private long                                 startTime;
-  private long                                 activateTime;
+  private volatile long                        startTime     = -1;
+  private volatile long                        activateTime  = -1;
 
   private DistributedObjectServer              dsoServer;
   private Server                               httpServer;
@@ -145,7 +145,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   public boolean canShutdown() {
     return (!state.isStartState() || (dsoServer != null && dsoServer.isBlocking())) && !state.isStopState();
   }
-  
+
   public synchronized void shutdown() {
     if (canShutdown()) {
       state.setState(StateManager.STOP_STATE);
@@ -162,9 +162,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   public long getActivateTime() {
-    synchronized (stateLock) {
-      return activateTime;
-    }
+    return activateTime;
   }
 
   public int getDSOListenPort() {
