@@ -99,7 +99,12 @@ public class GCRunner {
                          + " by default.");
     } else if (commandLine.getArgs().length == 1) {
       host = DEFAULT_HOST;
-      port = Integer.parseInt(commandLine.getArgs()[0]);
+      try {
+        port = Integer.parseInt(commandLine.getArgs()[0]);
+      } catch (NumberFormatException e) {
+        port = DEFAULT_PORT;
+        System.err.println("Invalid port number specified. Using default port '" + port + "'");
+      }
     } else {
       host = commandLine.getArgs()[0];
       port = Integer.parseInt(commandLine.getArgs()[1]);
