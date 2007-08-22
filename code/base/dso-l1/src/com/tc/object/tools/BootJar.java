@@ -7,6 +7,8 @@ package com.tc.object.tools;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.NotInBootJar;
+import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 
@@ -93,13 +95,16 @@ public class BootJar {
 
     // verify VM signature (iff l1.jvm.check.compatibility == true, see: tc.properties)
     BootJarSignature signatureFromJar = new BootJarSignature(metaData.getVMSignature());
-    boolean isCompatibleVM = expectedSignature.isCompatibleWith(signatureFromJar);
-    if (!isCompatibleVM) throw new InvalidJVMVersionException(
-                                                              "Incompatible boot jar JVM version; expected '"
-                                                                  + expectedSignature
-                                                                  + "' but was (in boot jar) '"
-                                                                  + signatureFromJar
-                                                                  + "'; Please regenerate the DSO boot jar to match this VM, or switch to a VM compatible with this boot jar");
+    TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor("l1");
+    final boolean checkJvmCompatibility = props.getBoolean("jvm.check.compatibility");
+    if (checkJvmCompatibility && !expectedSignature.isCompatibleWith(signatureFromJar)) {
+      throw new InvalidJVMVersionException(
+                                           "Incompatible boot jar JVM version; expected '"
+                                               + expectedSignature
+                                               + "' but was (in boot jar) '"
+                                               + signatureFromJar
+                                               + "'; Please regenerate the DSO boot jar to match this VM, or switch to a VM compatible with this boot jar");
+    }
     return new BootJar(bootJar, false, metaData, jarFile);
   }
 

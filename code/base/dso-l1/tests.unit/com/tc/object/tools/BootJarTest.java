@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.tools;
 
@@ -23,21 +24,20 @@ public class BootJarTest extends BaseDSOTestCase {
   private final ClassBytesProvider bytesProvider = new ClassLoaderBytesProvider(getClass().getClassLoader());
 
   public BootJarTest() {
-    //
+     // 
   }
 
-  public void testBootJarVersion() throws Exception {
+  public void testInvalidBootJarVersion() throws Exception {
     File jarFile = this.getTempFile("dso-boot.jar");
-
-    BootJar bootJar = BootJar.getBootJarForWriting(jarFile, "hotspot_win32_150");
+    BootJar bootJar = BootJar.getBootJarForWriting(jarFile, "bogus_jvm_signature_666");
     bootJar.loadClassIntoJar(STRING_CLASS, bytesProvider.getBytesForClass(STRING_CLASS), false);
     bootJar.close();
-
     try {
       BootJar.getBootJarForReading(jarFile);
-      fail("Expected InvalidJVMVersionException!");
+      fail("The test was expecting an InvalidJVMVersionException, but it was not thrown.");
     } catch (InvalidJVMVersionException e) {
-      // expected (since vm signature won't match the running VM signature)
+      // we expect this to happen since the vm signature won't
+      // match the running VM signature)
     }
   }
 
