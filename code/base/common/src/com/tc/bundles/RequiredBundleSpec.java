@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2007 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2007 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.bundles;
 
@@ -11,17 +12,29 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+// ---------------------------------------------------------------------------------------------------------------------------
 //
-// Require-Bundle ::= bundle {, bundle...}
-// bundle ::=  symbolic-name{;bundle-version:="constraint"{;resolution:=optional}}
-// constraint ::= [range] || (range)  
-// range ::= min-version, {max-version}
+// Here's how you specify required-bundles...
+//
+// SYNTAX:
+//   Require-Bundle ::= bundle {, bundle...}
+//   bundle ::= symbolic-name{;bundle-version:="constraint"{;resolution:=optional}}
+//   constraint ::= [range] || (range)
+//   range ::= min, {max}
 // 
-// NOTES: 
-// - For the constraints, the symbol (,) signifies inclusivity (ie: >= and <=), while the square-brackets
-//   signify exclusivity
-// - Only one type of resolution is supported: "optional"
+// EXAMPLES:
+//   Require-Bundle: foo.bar.baz.widget                                   - require widget bundle from group foo.bar.baz
+//   Require-Bundle: foo.bar.baz.widget, foo.bar.baz.gadget               - require widget and gadget bundles
+//   Require-Bundle: foo.bar.baz.widget;bundle-version:="1.0.0"           - widget bundle must be version 1.0.0
+//   Require-Bundle: foo.bar.baz.widget;bundle-version:="[1.0.0, 2.0.0]"  - bundle version must > 1.0.0 and < 2.0.0
+//   Require-Bundle: foo.bar.baz.widget;bundle-version:="[1.0.0, 2.0.0)"  - bundle version must > 1.0.0 and <= 2.0.0
+//   Require-Bundle: foo.bar.baz.widget;bundle-version:="(1.0.0, 2.0.0)"  - bundle version must >= 1.0.0 and <= 2.0.0
+//   Require-Bundle: foo.bar.baz.widget;bundle-version:="(1.0.0, 2.0.0]"  - bundle version must >= 1.0.0 and < 2.0.0
+//   Require-Bundle: foo.bar.baz.widget;bundle-version:="[1.0.0,]"        - bundle version must > 1.0.0
+//   Require-Bundle: foo.bar.baz.widget;bundle-version:="(1.0.0,)"        - bundle version must >= 1.0.0
+//   Require-Bundle: foo.bar.baz.widget;resolution:=optional              - bundle is optional (recognized but not supported)
 //
+// ---------------------------------------------------------------------------------------------------------------------------
 
 final class RequiredBundleSpec {
   private static final String PROP_KEY_RESOLUTION         = "resolution";
@@ -104,18 +117,18 @@ final class RequiredBundleSpec {
     // symbolic-names must match
     if (!this.symbolicName.equals(symname)) { return false; }
 
-    // if symbolic-names are matching, then check for version compatibility 
+    // if symbolic-names are matching, then check for version compatibility
     String spec = (String) attributes.get(PROP_KEY_BUNDLE_VERSION);
 
-    //  no specific bundle-version required/specified
-    //  so it must be compatible with the version
+    // no specific bundle-version required/specified
+    // so it must be compatible with the version
     if (spec == null) { return true; }
 
     // clean up the version spec a bit
     spec = spec.replaceAll("\\\"", "");
     final VersionSpec target = new VersionSpec(version);
 
-    // bundle-version:="1.0.0" 
+    // bundle-version:="1.0.0"
     // anything >= 1.0.0
     if (!spec.startsWith("[") && !spec.startsWith("(")) {
       final VersionSpec v = new VersionSpec(spec);
