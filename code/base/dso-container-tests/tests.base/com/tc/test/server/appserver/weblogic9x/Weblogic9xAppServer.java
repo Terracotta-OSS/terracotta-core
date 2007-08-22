@@ -85,12 +85,7 @@ public final class Weblogic9xAppServer extends CargoAppServer {
     private void prepareSecurityFile() {
       if (Os.isLinux()) {
         try {
-          String[] resources = new String[] { "security/XACMLRoleMapperInit.ldift", "security/SerializedSystemIni.dat",
-              "security/DefaultRoleMapperInit.ldift", "security/DefaultAuthenticatorInit.ldift",
-              "init-info/tokenValue.properties", "init-info/startscript.xml", "init-info/security.xml",
-              "init-info/domain-info.xml", "config/nodemanager/nm_password.properties", "fileRealm.properties",
-              "bin/setDomainEnv.sh", "bin/startManagedWebLogic.sh", "bin/startPointBaseConsole.sh", 
-              "bin/startWebLogic.sh", "bin/stopManagedWebLogic.sh", "bin/stopWebLogic.sh"};
+          String[] resources = new String[] { "security/SerializedSystemIni.dat" };
           for (int i = 0; i < resources.length; i++) {
             String resource = "linux/" + resources[i];
             File dest = new File(getConfiguration().getHome(), resources[i]);
