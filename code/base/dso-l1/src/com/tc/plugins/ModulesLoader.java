@@ -12,7 +12,7 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 
 import com.tc.bundles.EmbeddedOSGiRuntime;
-import com.tc.bundles.EmbeddedOSGiRuntimeCallbackHandler;
+import com.tc.bundles.EmbeddedOSGiEventHandler;
 import com.tc.bundles.Resolver;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.logging.CustomerLogging;
@@ -112,11 +112,7 @@ public class ModulesLoader {
   }
 
   private static void shutdown(final EmbeddedOSGiRuntime osgiRuntime) {
-    try {
-      osgiRuntime.shutdown();
-    } catch (BundleException be2) {
-      logger.error("Error shutting down plugin runtime", be2);
-    }
+    osgiRuntime.shutdown();
   }
 
   private static void initModules(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper,
@@ -131,7 +127,7 @@ public class ModulesLoader {
       osgiRuntime.registerService(configHelper, serviceProps);
     }
 
-    EmbeddedOSGiRuntimeCallbackHandler handler = new EmbeddedOSGiRuntimeCallbackHandler() {
+    EmbeddedOSGiEventHandler handler = new EmbeddedOSGiEventHandler() {
       public void callback(final Object payload) throws BundleException {
         Assert.assertTrue(payload instanceof Bundle);
         Bundle bundle = (Bundle) payload;
@@ -144,12 +140,11 @@ public class ModulesLoader {
       }
     };
 
-    List moduleList = new ArrayList();
+    final List moduleList = new ArrayList();
     moduleList.addAll(getAdditionalModules());
     moduleList.addAll(Arrays.asList(modules));
 
-    Module[] allModules = (Module[]) moduleList.toArray(new Module[moduleList.size()]);
-
+    final Module[] allModules = (Module[]) moduleList.toArray(new Module[moduleList.size()]);
     final Resolver resolver = new Resolver(osgiRuntime.getRepositories(), allModules);
     final URL[] locations = resolver.resolve();
 

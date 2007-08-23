@@ -5,6 +5,6 @@ package com.tc.bundles;
 
 import org.osgi.framework.BundleException;
 
-public interface EmbeddedOSGiRuntimeCallbackHandler {
-  void callback(Object payload)  throws BundleException;
+public interface EmbeddedOSGiEventHandler {
+  void callback(Object payload) throws BundleException;
 }

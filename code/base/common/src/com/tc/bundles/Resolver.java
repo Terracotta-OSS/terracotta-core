@@ -68,7 +68,6 @@ public class Resolver {
     for (Iterator i = registry.iterator(); i.hasNext();) {
       final Entry entry = (Entry) i.next();
       urls[j++] = entry.getLocation();
-      //System.err.println("- " + FileUtils.toFile(entry.getLocation()).getName());
     }
     return urls;
   }
@@ -99,10 +98,7 @@ public class Resolver {
 
   private final URL addToRegistry(final URL location, final Manifest manifest) {
     final Entry entry = new Entry(location, manifest);
-    if (!registry.contains(entry)) {
-      registry.add(entry);
-      //System.err.println("+ " + FileUtils.toFile(entry.getLocation()).getName());
-    }
+    if (!registry.contains(entry)) registry.add(entry);
     return entry.getLocation();
   }
 
@@ -177,13 +173,6 @@ public class Resolver {
       System.err.println("IO exception reading: " + location + ", error: " + e.getMessage());
       return null;
     }
-  }
-
-  private final URL resolveLocation(final BundleSpec spec) {
-    final String groupId = spec.getGroupId();
-    final String name = spec.getName();
-    final String version = spec.getVersion();
-    return resolveLocation(name, version, groupId);
   }
 
   private final URL resolveLocation(final Module module) {

@@ -4,7 +4,6 @@
  */
 package com.tc.bundles;
 
-import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
@@ -13,7 +12,6 @@ import com.tc.config.Directories;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.util.Environment;
-import com.terracottatech.config.Module;
 import com.terracottatech.config.Modules;
 
 import java.io.File;
@@ -32,23 +30,9 @@ public interface EmbeddedOSGiRuntime {
 
   URL[] getRepositories();
 
-  void installBundles(Module[] allModules) throws BundleException;
-
   void installBundles(final URL[] bundles) throws BundleException;
 
-  void startBundles(final Module[] modules, final EmbeddedOSGiRuntimeCallbackHandler handler) throws BundleException;
-
-  void startBundles(final URL[] bundles, final EmbeddedOSGiRuntimeCallbackHandler handler) throws BundleException;
-
-  void installBundle(final Module bundle) throws BundleException;
-
-  void uninstallBundle(final Module bundle) throws BundleException;
-
-  void startBundle(final Module bundle, final EmbeddedOSGiRuntimeCallbackHandler handler) throws BundleException;
-
-  void stopBundle(final Module bundle) throws BundleException;
-
-  Bundle getBundle(final Module bundle) throws BundleException;
+  void startBundles(final URL[] bundles, final EmbeddedOSGiEventHandler handler) throws BundleException;
 
   void registerService(final Object serviceObject, final Dictionary serviceProps) throws BundleException;
 
@@ -58,10 +42,7 @@ public interface EmbeddedOSGiRuntime {
 
   void ungetService(final ServiceReference service);
 
-  /**
-   * This should shut down the OSGi framework itself and all running bundles.
-   */
-  void shutdown() throws BundleException;
+  void shutdown();
 
   static class Factory {
 
