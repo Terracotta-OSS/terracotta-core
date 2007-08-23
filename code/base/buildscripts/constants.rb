@@ -18,6 +18,7 @@ end
 
 module MavenConstants
   MAVEN_REPO_CONFIG_KEY = 'maven.repo'
+  MAVEN_REPO_ID_CONFIG_KEY = 'maven.repositoryId'
   MAVEN_VERSION_CONFIG_KEY = 'maven.version'
   MAVEN_SNAPSHOT_CONFIG_KEY = 'maven.snapshot'
   MAVEN_REPO_LOCAL = 'local'

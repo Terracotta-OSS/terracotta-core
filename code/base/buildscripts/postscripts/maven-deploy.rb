@@ -13,6 +13,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   def postscript(ant, build_environment, product_directory, *args)
     if repo = config_source[MAVEN_REPO_CONFIG_KEY]
       maven = MavenDeploy.new(:repository_url => repo,
+                              :repository_id => config_source[MAVEN_REPO_ID_CONFIG_KEY],
                               :snapshot => config_source[MAVEN_SNAPSHOT_CONFIG_KEY])
       args.each do |arg|
         next unless arg

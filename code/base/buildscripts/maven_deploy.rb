@@ -7,6 +7,7 @@ class MavenDeploy
     @generate_pom = options.has_key?(:generate_pom) ? options[:generate_pom] : true
     @group_id = options[:group_id] || DEFAULT_GROUP_ID
     @repository_url = options[:repository_url] || MAVEN_REPO_LOCAL
+    @repository_id = options[:repository_id]
     @snapshot = options[:snapshot]
   end
 
@@ -16,7 +17,7 @@ class MavenDeploy
     end
 
     command = dry_run ? ['echo'] : []
-    command << FilePath.new('mvn').batch_extension.to_s
+    command << FilePath.new('mvn').batch_extension.to_s << '-B'
 
     version += '-SNAPSHOT' if @snapshot && version !~ /-SNAPSHOT$/
 
@@ -36,9 +37,14 @@ class MavenDeploy
       command_args['url'] = @repository_url
     end
 
+    command_args['repositoryId'] = @repository_id if @repository_id
+
     full_command = command + command_args.map { |key, val| "-D#{key}=#{val}" }
 
     puts("Deploying #{File.basename(file)} to Maven repository at #@repository_url")
-    Registry[:platform].exec(full_command.first, *full_command[1..-1])
+    unless system(*full_command)
+      fail("deployment failed")
+    end
+    #Registry[:platform].exec(full_command.first, *full_command[1..-1])
   end
 end
