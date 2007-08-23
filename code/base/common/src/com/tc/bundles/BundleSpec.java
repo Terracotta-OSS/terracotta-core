@@ -10,6 +10,7 @@ import com.tc.bundles.exception.InvalidBundleManifestException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.jar.Manifest;
 import java.util.regex.Matcher;
@@ -20,22 +21,22 @@ import java.util.regex.Pattern;
 // Here's how you specify required-bundles...
 //
 // SYNTAX:
-//   Require-Bundle ::= bundle {, bundle...}
-//   bundle ::= symbolic-name{;bundle-version:="constraint"{;resolution:=optional}}
-//   constraint ::= [range] || (range)
-//   range ::= min, {max}
+// Require-Bundle ::= bundle {, bundle...}
+// bundle ::= symbolic-name{;bundle-version:="constraint"{;resolution:=optional}}
+// constraint ::= [range] || (range)
+// range ::= min, {max}
 // 
 // EXAMPLES:
-//   Require-Bundle: foo.bar.baz.widget                                   - require widget bundle from group foo.bar.baz
-//   Require-Bundle: foo.bar.baz.widget, foo.bar.baz.gadget               - require widget and gadget bundles
-//   Require-Bundle: foo.bar.baz.widget;bundle-version:="1.0.0"           - widget bundle must be version 1.0.0
-//   Require-Bundle: foo.bar.baz.widget;bundle-version:="[1.0.0, 2.0.0]"  - bundle version must > 1.0.0 and < 2.0.0
-//   Require-Bundle: foo.bar.baz.widget;bundle-version:="[1.0.0, 2.0.0)"  - bundle version must > 1.0.0 and <= 2.0.0
-//   Require-Bundle: foo.bar.baz.widget;bundle-version:="(1.0.0, 2.0.0)"  - bundle version must >= 1.0.0 and <= 2.0.0
-//   Require-Bundle: foo.bar.baz.widget;bundle-version:="(1.0.0, 2.0.0]"  - bundle version must >= 1.0.0 and < 2.0.0
-//   Require-Bundle: foo.bar.baz.widget;bundle-version:="[1.0.0,]"        - bundle version must > 1.0.0
-//   Require-Bundle: foo.bar.baz.widget;bundle-version:="(1.0.0,)"        - bundle version must >= 1.0.0
-//   Require-Bundle: foo.bar.baz.widget;resolution:=optional              - bundle is optional (recognized but not supported)
+// Require-Bundle: foo.bar.baz.widget - require widget bundle from group foo.bar.baz
+// Require-Bundle: foo.bar.baz.widget, foo.bar.baz.gadget - require widget and gadget bundles
+// Require-Bundle: foo.bar.baz.widget;bundle-version:="1.0.0" - widget bundle must be version 1.0.0
+// Require-Bundle: foo.bar.baz.widget;bundle-version:="[1.0.0, 2.0.0]" - bundle version must > 1.0.0 and < 2.0.0
+// Require-Bundle: foo.bar.baz.widget;bundle-version:="[1.0.0, 2.0.0)" - bundle version must > 1.0.0 and <= 2.0.0
+// Require-Bundle: foo.bar.baz.widget;bundle-version:="(1.0.0, 2.0.0)" - bundle version must >= 1.0.0 and <= 2.0.0
+// Require-Bundle: foo.bar.baz.widget;bundle-version:="(1.0.0, 2.0.0]" - bundle version must >= 1.0.0 and < 2.0.0
+// Require-Bundle: foo.bar.baz.widget;bundle-version:="[1.0.0,]" - bundle version must > 1.0.0
+// Require-Bundle: foo.bar.baz.widget;bundle-version:="(1.0.0,)" - bundle version must >= 1.0.0
+// Require-Bundle: foo.bar.baz.widget;resolution:=optional - bundle is optional (recognized but not supported)
 //
 // ---------------------------------------------------------------------------------------------------------------------------
 
@@ -50,28 +51,29 @@ final class BundleSpec {
   public static final String[] getRequirements(final Manifest manifest) throws BundleException {
     return getRequirements(manifest.getMainAttributes().getValue("Require-Bundle"));
   }
-  
+
   public static final String[] getRequirements(final String source) throws BundleException {
     if (source == null) return new String[0];
-    
-    final ArrayList list     = new ArrayList();
-    final String spec        = source.replaceAll(" ", "");
-    final String regex       = REQUIRE_BUNDLE_EXPR_MATCHER;
-    final Pattern pattern    = Pattern.compile(regex);
-    final Matcher matcher    = pattern.matcher(spec);
+
+    final List list = new ArrayList();
+    final String spec = source.replaceAll(" ", "");
+    final String regex = REQUIRE_BUNDLE_EXPR_MATCHER;
+    final Pattern pattern = Pattern.compile(regex);
+    final Matcher matcher = pattern.matcher(spec);
     final StringBuffer check = new StringBuffer();
+
     while (matcher.find()) {
       final String group = matcher.group();
       check.append("," + group);
       list.add(group);
     }
-    
-    if (!spec.equals(check.toString().replaceFirst(",", "")))
-      throw new InvalidBundleManifestException("Syntax error specifying Require-Bundle: " + source);
-    
+
+    if (!spec.equals(check.toString().replaceFirst(",", ""))) throw new InvalidBundleManifestException(
+        "Syntax error specifying Require-Bundle: " + source);
+
     return (String[]) list.toArray(new String[0]);
   }
-  
+
   public static final String[] parseList(final String source) throws BundleException {
     return getRequirements(source);
   }

@@ -9,6 +9,8 @@ import org.osgi.framework.BundleException;
 
 import com.tc.bundles.exception.InvalidBundleManifestException;
 import com.tc.bundles.exception.MissingBundleException;
+import com.tc.logging.CustomerLogging;
+import com.tc.logging.TCLogger;
 import com.terracottatech.config.Module;
 
 import java.io.File;
@@ -22,10 +24,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
-// TODO: Add some logging
 public class Resolver {
 
   private static final String BUNDLE_VERSION            = "Bundle-Version";
@@ -52,19 +56,19 @@ public class Resolver {
   public final URL[] resolve() throws BundleException {
     for (int i = 0; i < modules.length; i++) {
       final URL location = resolveLocation(modules[i]);
-
-      // unable to resolve, bad location - log and skip
       if (location == null) {
-        System.err.println("Bad location: " + location);
-        continue;
+        final String msg = error(Message.ERROR_BUNDLE_UNRESOLVED, new Object[] { modules[i].getName(),
+            modules[i].getVersion(), modules[i].getGroupId() });
+        throw new MissingBundleException(msg);
       }
-
-      // the location points to a valid bundle, resolve it's dependencies
       resolveDependencies(location);
     }
+    return getResolvedUrls();
+  }
 
-    URL[] urls = new URL[registry.size()];
+  private final URL[] getResolvedUrls() {
     int j = 0;
+    final URL[] urls = new URL[registry.size()];
     for (Iterator i = registry.iterator(); i.hasNext();) {
       final Entry entry = (Entry) i.next();
       urls[j++] = entry.getLocation();
@@ -75,8 +79,9 @@ public class Resolver {
   private final void resolveDependencies(final URL location) throws BundleException {
     final Manifest manifest = getManifest(location);
     if (manifest == null) {
-      System.err.println("Bad or unreadable: " + location);
-      throw new InvalidBundleManifestException("Bad or unreadable: " + location);
+      final String msg = error(Message.ERROR_BUNDLE_UNREADABLE, new Object[] { FileUtils.toFile(location).getName(),
+          FileUtils.toFile(location).getParent() });
+      throw new InvalidBundleManifestException(msg);
     }
 
     final String[] requirements = BundleSpec.getRequirements(manifest);
@@ -86,8 +91,9 @@ public class Resolver {
       if (required == null) {
         required = addToRegistry(spec);
         if (required == null) {
-          System.err.println("Required bundle missing: " + required);
-          throw new MissingBundleException("Required bundle missing: " + required);
+          final String msg = error(Message.ERROR_BUNDLE_DEPENDENCY_UNRESOLVED, new Object[] { spec.getName(),
+              spec.getVersion(), spec.getGroupId() });
+          throw new MissingBundleException(msg);
         }
       }
       resolveDependencies(required);
@@ -109,7 +115,7 @@ public class Resolver {
       if (location.getProtocol().equalsIgnoreCase("file")) {
         final File repository = new File(location.getFile(), spec.getGroupId().replace('.', File.separatorChar));
         if (!repository.exists() || !repository.isDirectory()) {
-          System.err.println("Bad location: " + location);
+          warn(Message.WARN_REPOSITORY_UNRESOLVED, new Object[] { location });
           continue;
         }
 
@@ -117,13 +123,13 @@ public class Resolver {
         for (Iterator j = jarfiles.iterator(); j.hasNext();) {
           final File bundleFile = (File) j.next();
           if (!bundleFile.isFile() || !bundleFile.getName().matches(BUNDLE_FILENAME_PATTERN)) {
-            System.err.println("Is not considered a bundle file: " + bundleFile.getAbsolutePath());
+            warn(Message.WARN_FILE_IGNORED_INVALID_NAME, new Object[] { bundleFile.getName() });
             continue;
           }
 
           final Manifest manifest = getManifest(bundleFile);
           if (manifest == null) {
-            System.err.println("Bad or unreadable: " + bundleFile.getAbsolutePath());
+            warn(Message.WARN_FILE_IGNORED_MISSING_MANIFEST, new Object[] { bundleFile.getName() });
             continue;
           }
 
@@ -133,13 +139,13 @@ public class Resolver {
             try {
               return addToRegistry(bundleFile.toURL(), manifest);
             } catch (MalformedURLException e) {
-              System.err.println("Unable to convert to URL: " + bundleFile.getAbsolutePath()); // should be fatal?
+              error(Message.ERROR_BUNDLE_MALFORMED_URL, new Object[] { bundleFile.getName() }); // should be fatal???
               return null;
             }
           }
         }
       } else {
-        System.err.println("Unsupported repository location protocol: " + location.getProtocol());
+        warn(Message.WARN_REPOSITORY_PROTOCOL_UNSUPPORTED, new Object[] { location.getProtocol() });
       }
     }
     return null;
@@ -170,8 +176,9 @@ public class Resolver {
       final JarFile bundle = new JarFile(FileUtils.toFile(location));
       return bundle.getManifest();
     } catch (IOException e) {
-      System.err.println("IO exception reading: " + location + ", error: " + e.getMessage());
+      // ignore and return null, this is a bad URL
       return null;
+      // warn(Message.WARN_EXCEPTION_OCCURED, new Object[] { location, e.getMessage() });
     }
   }
 
@@ -192,23 +199,31 @@ public class Resolver {
   private URL resolveUrls(final URL[] urls, final String path) {
     if (urls != null && path != null) {
       for (int i = 0; i < urls.length; i++) {
+        URL location = null;
+        InputStream is = null;
         try {
-          final URL testURL = new URL(urls[i].toString() + (urls[i].toString().endsWith("/") ? "" : "/") + path);
-          final InputStream is = testURL.openStream();
+          location = new URL(urls[i].toString() + (urls[i].toString().endsWith("/") ? "" : "/") + path);
+          is = location.openStream();
           is.read();
           is.close();
-          return testURL;
-        } catch (MalformedURLException e) {
-          // Ignore this, the URL is bad
-        } catch (IOException e) {
-          // Ignore this, the URL is bad
+          return location;
+        } catch (Exception e) {
+          // ignore and return null, this is a bad URL
+          return null;
+          // warn(Message.WARN_EXCEPTION_OCCURED, new Object[] { location, e.getMessage() });
+        } finally {
+          try {
+            if (is != null) is.close();
+          } catch (IOException e) {
+            // ignore
+          }
         }
       }
     }
     return null;
   }
 
-  class Entry {
+  private class Entry {
     private URL      location;
     private Manifest manifest;
 
@@ -268,4 +283,58 @@ public class Resolver {
     }
   }
 
+  private static class Message {
+
+    static final Message WARN_BUNDLE_UNRESOLVED               = new Message("warn.bundle.unresolved");
+    static final Message WARN_REPOSITORY_UNRESOLVED           = new Message("warn.repository.unresolved");
+    static final Message WARN_FILE_IGNORED_INVALID_NAME       = new Message("warn.file.ignored.invalid-name");
+    static final Message WARN_FILE_IGNORED_MISSING_MANIFEST   = new Message("warn.file.ignored.missing-manifest");
+    static final Message WARN_REPOSITORY_PROTOCOL_UNSUPPORTED = new Message("warn.repository.protocol.unsupported");
+    static final Message WARN_EXCEPTION_OCCURED               = new Message("warn.exception.occured");
+    static final Message ERROR_BUNDLE_UNREADABLE              = new Message("error.bundle.unreadable");
+    static final Message ERROR_BUNDLE_UNRESOLVED              = new Message("error.bundle.unresolved");
+    static final Message ERROR_BUNDLE_DEPENDENCY_UNRESOLVED   = new Message("error.bundle-dependency.unresolved");
+    static final Message ERROR_BUNDLE_MALFORMED_URL           = new Message("error.bundle.malformed-url");
+
+    private final String resourceBundleKey;
+
+    private Message(final String resourceBundleKey) {
+      this.resourceBundleKey = resourceBundleKey;
+    }
+
+    String key() {
+      return resourceBundleKey;
+    }
+  }
+
+  // private static final TCLogger logger = TCLogging.getLogger(Resolver.class);
+  private static final TCLogger       logger = CustomerLogging.getConsoleLogger();
+  private static final ResourceBundle resourceBundle;
+
+  static {
+    try {
+      resourceBundle = ResourceBundle.getBundle(Resolver.class.getName(), Locale.getDefault(), Resolver.class
+          .getClassLoader());
+    } catch (MissingResourceException mre) {
+      throw new RuntimeException("No resource bundle exists for " + Resolver.class.getName());
+    } catch (Throwable t) {
+      throw new RuntimeException("Unexpected error loading resource bundle for " + Resolver.class.getName(), t);
+    }
+  }
+
+  private final String warn(final Message message, final Object[] arguments) {
+    final String msg = formatMessage(message, arguments);
+    logger.warn(msg);
+    return msg;
+  }
+
+  private final String error(final Message message, final Object[] arguments) {
+    final String msg = formatMessage(message, arguments);
+    logger.error(message);
+    return msg;
+  }
+
+  private final static String formatMessage(final Message message, final Object[] arguments) {
+    return MessageFormat.format(resourceBundle.getString(message.key()), arguments);
+  }
 }
