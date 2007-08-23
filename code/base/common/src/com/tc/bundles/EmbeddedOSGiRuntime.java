@@ -59,6 +59,7 @@ public interface EmbeddedOSGiRuntime {
         prependLocations.add(defaultRepository);
       }
 
+
       try {
         if (System.getProperty(MODULES_URL_PROPERTY_NAME) != null) {
           prependLocations.add(new URL(System.getProperty(MODULES_URL_PROPERTY_NAME)));

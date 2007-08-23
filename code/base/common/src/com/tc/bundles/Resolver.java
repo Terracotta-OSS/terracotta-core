@@ -98,7 +98,7 @@ public class Resolver {
       }
       resolveDependencies(required);
     }
-
+    
     addToRegistry(location, manifest);
   }
 
@@ -193,30 +193,26 @@ public class Resolver {
     final String base = groupId.replace('.', File.separatorChar);
     final String path = MessageFormat.format("{2}{3}{0}{3}{1}{3}" + BUNDLE_PATH, new String[] { name, version, base,
         File.separator });
-    return resolveUrls(repositories, path);
+    return resolveUrls(path);
   }
 
-  private URL resolveUrls(final URL[] urls, final String path) {
-    if (urls != null && path != null) {
-      for (int i = 0; i < urls.length; i++) {
-        URL location = null;
-        InputStream is = null;
+  private URL resolveUrls(final String path) {
+    for (int i = 0; i < repositories.length; i++) {
+      URL location = null;
+      InputStream is = null;
+      try {
+        location = new URL(repositories[i].toString() + (repositories[i].toString().endsWith("/") ? "" : "/") + path);
+        is = location.openStream();
+        is.read();
+        is.close();
+        return location;
+      } catch (IOException e) {
+        // ignore bad or unreachable URL
+      } finally {
         try {
-          location = new URL(urls[i].toString() + (urls[i].toString().endsWith("/") ? "" : "/") + path);
-          is = location.openStream();
-          is.read();
-          is.close();
-          return location;
-        } catch (Exception e) {
-          // ignore and return null, this is a bad URL
-          return null;
-          // warn(Message.WARN_EXCEPTION_OCCURED, new Object[] { location, e.getMessage() });
-        } finally {
-          try {
-            if (is != null) is.close();
-          } catch (IOException e) {
-            // ignore
-          }
+          if (is != null) is.close();
+        } catch (IOException e) {
+          // ignore
         }
       }
     }
@@ -307,7 +303,6 @@ public class Resolver {
     }
   }
 
-  // private static final TCLogger logger = TCLogging.getLogger(Resolver.class);
   private static final TCLogger       logger = CustomerLogging.getConsoleLogger();
   private static final ResourceBundle resourceBundle;
 
