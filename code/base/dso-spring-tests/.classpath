@@ -30,5 +30,6 @@
 	<classpathentry kind="lib" path="/dependencies/lib/commons-collections-3.1.jar"/>
 	<classpathentry kind="lib" path="/dependencies/lib/cglib-nodep-2.1_3.jar"/>
 	<classpathentry kind="lib" path="/dependencies/lib/dom4j-1.6.1.jar"/>
+	<classpathentry kind="lib" path="/dependencies/lib/httpunit-1.6.2.jar"/>
 	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
 </classpath>

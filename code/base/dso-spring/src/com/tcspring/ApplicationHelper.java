@@ -15,7 +15,7 @@ import java.util.Iterator;
 
 /**
  * ApplicationHelper
- * 
+ *
  * @author Eugene Kuleshov
  */
 public class ApplicationHelper {
@@ -46,6 +46,11 @@ public class ApplicationHelper {
             int n = name.lastIndexOf('@');
             if (n > -1) {
               name = name.substring(n + 1);
+            }
+
+            // for weblogic 9.2
+            if (name.endsWith(".war")) {
+              name = name.substring(0, name.length() - 4);
             }
           }
         }
