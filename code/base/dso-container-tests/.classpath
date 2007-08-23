@@ -31,6 +31,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
 	<classpathentry kind="lib" path="/dependencies/lib/tc-cargo-core-uberjar-1.0-20070821a.jar"/>
 	<classpathentry kind="lib" path="/dependencies/lib/derby-10.2.2.0.jar"/>
-	<classpathentry kind="lib" path="/dependencies/lib/httpunit-1.6.2.jar"/>
+	<classpathentry kind="lib" path="/dependencies/lib/httpunit-1.6.jar"/>
 	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
 </classpath>
