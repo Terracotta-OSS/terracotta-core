@@ -1,20 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<projectDescription ><name >thirdparty</name>
-
-<comment >thirdparty source code</comment>
-
-<projects />
-<buildSpec ><buildCommand ><name >org.eclipse.jdt.core.javabuilder</name>
-
-<arguments />
-</buildCommand>
-
-</buildSpec>
-
-<natures ><nature >org.eclipse.jdt.core.javanature</nature>
-
-<nature >org.eclipse.pde.PluginNature</nature>
-
-</natures>
-
+<projectDescription>
+	<name>thirdparty</name>
+	<comment>thirdparty source code</comment>
+	<projects>
+		<project>thirdparty-api</project>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>org.eclipse.jdt.core.javabuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>org.eclipse.jdt.core.javanature</nature>
+		<nature>org.eclipse.pde.PluginNature</nature>
+	</natures>
 </projectDescription>

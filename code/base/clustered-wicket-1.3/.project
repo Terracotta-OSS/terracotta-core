@@ -3,6 +3,7 @@
 	<name>clustered-wicket-1.3</name>
 	<comment></comment>
 	<projects>
+		<project>dso-container-tests</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

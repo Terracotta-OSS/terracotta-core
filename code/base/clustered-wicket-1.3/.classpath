@@ -19,5 +19,6 @@
 	<classpathentry kind="lib" path="/dependencies/lib/osgi_R4_core-1.0.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
+	<classpathentry kind="lib" path="/dependencies/lib/httpunit-1.6.2.jar"/>
 	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
 </classpath>

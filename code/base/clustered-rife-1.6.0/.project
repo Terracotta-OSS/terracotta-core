@@ -3,6 +3,7 @@
 	<name>clustered-rife-1.6.0</name>
 	<comment></comment>
 	<projects>
+		<project>dso-container-tests</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
