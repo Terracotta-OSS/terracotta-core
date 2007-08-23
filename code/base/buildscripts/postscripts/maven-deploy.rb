@@ -12,12 +12,13 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   # Deploy artifacts created by 'dist' to a local or remote Maven repository.
   def postscript(ant, build_environment, product_directory, *args)
     if repo = config_source[MAVEN_REPO_CONFIG_KEY]
-      maven = MavenDeploy.new(repo)
+      maven = MavenDeploy.new(:repository_url => repo,
+                              :snapshot => config_source[MAVEN_SNAPSHOT_CONFIG_KEY])
       args.each do |arg|
         next unless arg
         file = FilePath.new(product_directory, interpolate(arg['file'])).to_s
         artifact = arg['artifact']
-        version = arg[VERSION_CONFIG_KEY] || config_source[VERSION_CONFIG_KEY] ||
+        version = arg[MAVEN_VERSION_CONFIG_KEY] || config_source[MAVEN_VERSION_CONFIG_KEY] ||
                   config_source['version'] || build_environment.version
         maven.deploy_file(file, artifact, version)
       end

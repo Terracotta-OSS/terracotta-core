@@ -2,11 +2,12 @@
 class MavenDeploy
   include MavenConstants
 
-  def initialize(repository_url = 'local', group_id = DEFAULT_GROUP_ID)
-    @packaging = 'jar'
-    @generate_pom = true
-    @group_id = group_id
-    @repository_url = repository_url
+  def initialize(options = {})
+    @packaging = options[:packaging] || 'jar'
+    @generate_pom = options.has_key?(:generate_pom) ? options[:generate_pom] : true
+    @group_id = options[:group_id] || DEFAULT_GROUP_ID
+    @repository_url = options[:repository_url] || MAVEN_REPO_LOCAL
+    @snapshot = options[:snapshot]
   end
 
   def deploy_file(file, artifact_id, version, dry_run = false)
@@ -16,6 +17,8 @@ class MavenDeploy
 
     command = dry_run ? ['echo'] : []
     command << FilePath.new('mvn').batch_extension.to_s
+
+    version += '-SNAPSHOT' if @snapshot && version !~ /-SNAPSHOT$/
 
     command_args = {
       'packaging' => @packaging,
