@@ -13,6 +13,7 @@ import com.tc.process.StreamCopier;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TestConfigObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -41,6 +42,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
   private StreamCopier        outCopier;
   private StreamCopier        errCopier;
   private final boolean       useIdentifier;
+  private String              stopperOutput;
 
   // constructor 1: used by container tests
   public ExtraProcessServerControl(String host, int dsoPort, int adminPort, String configFileLoc, boolean mergeOutput)
@@ -268,22 +270,26 @@ public class ExtraProcessServerControl extends ServerControlBase {
     LinkedJavaProcess stopper = createLinkedJavaProcess("com.tc.admin.TCStop", args);
     stopper.start();
 
-    FileOutputStream stopperLog = null;
+    ByteArrayOutputStream stopperLog = null;
     try {
-      stopperLog = new FileOutputStream("TCStop.log");
+      stopperLog = new ByteArrayOutputStream();
       StreamCopier stdoutCopier = new StreamCopier(stopper.STDOUT(), stopperLog);
       StreamCopier stderrCopier = new StreamCopier(stopper.STDERR(), stopperLog);
 
       stdoutCopier.start();
       stderrCopier.start();
 
-      stdoutCopier.join(30 * 1000);
-      stderrCopier.join(30 * 1000);
+      stdoutCopier.join(60 * 1000);
+      stderrCopier.join(60 * 1000);
+
     } finally {
-      if (stopperLog != null) stopperLog.close();
+      if (stopperLog != null) {
+        stopperOutput = stopperLog.toString();
+        stopperLog.close();
+      }
       stopper.STDIN().close();
     }
-    
+
   }
 
   public void shutdown() throws Exception {
@@ -308,8 +314,10 @@ public class ExtraProcessServerControl extends ServerControlBase {
     long timeout = start + SHUTDOWN_WAIT_TIME;
     while (isRunning()) {
       Thread.sleep(1000);
-      if (System.currentTimeMillis() > timeout) { throw new Exception("Server was shutdown but still up after "
-                                                                      + SHUTDOWN_WAIT_TIME + " ms"); }
+      if (System.currentTimeMillis() > timeout) {
+        System.err.println("TCStoper output: " + stopperOutput);
+        throw new Exception("Server was shutdown but still up after " + SHUTDOWN_WAIT_TIME + " ms");
+      }
     }
   }
 
