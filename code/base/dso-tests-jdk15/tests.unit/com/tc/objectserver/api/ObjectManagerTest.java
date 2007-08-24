@@ -1100,7 +1100,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     assertEquals(1, stats3.getCandidateGarbageCount());
   }
 
-  public void testLookupFacadeForMissingObject() {
+  public void DISABLEDtestLookupFacadeForMissingObject() {
     initObjectManager();
 
     try {

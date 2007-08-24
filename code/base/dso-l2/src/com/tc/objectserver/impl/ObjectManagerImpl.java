@@ -63,11 +63,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private static final TCLogger                logger                   = TCLogging.getLogger(ObjectManager.class);
 
-  private static final byte                    DEFAULT_FLAG             = 0x00;
-  private static final byte                    MISSING_OK               = 0x01;
-  private static final byte                    NEW_REQUEST              = 0x02;
-  private static final byte                    REMOVE_ON_RELEASE        = 0x04;
-
   private static final int                     MAX_COMMIT_SIZE          = TCPropertiesImpl
                                                                             .getProperties()
                                                                             .getInt(
@@ -186,11 +181,11 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     syncAssertNotInShutdown();
 
     if (collector.isPausingOrPaused()) {
-      // XXX:: since we are making pending without trying to lookup, cache hit count might be skewed
-      makePending(channelID, new ObjectManagerLookupContext(responseContext), maxReachableObjects);
+      makePending(channelID, new ObjectManagerLookupContext(responseContext, false, false), maxReachableObjects);
       return false;
     }
-    return basicLookupObjectsFor(channelID, new ObjectManagerLookupContext(responseContext), maxReachableObjects);
+    return basicLookupObjectsFor(channelID, new ObjectManagerLookupContext(responseContext, false, false),
+                                 maxReachableObjects);
   }
 
   public Iterator getRoots() {
@@ -213,34 +208,22 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     try {
       return object.createFacade(limit);
     } finally {
-      //TODO:: Change this to release readonly
-      release(persistenceTransactionProvider.nullTransaction(), object);
+      releaseReadOnly(object);
     }
   }
 
-  private synchronized ManagedObject lookup(ObjectID id, boolean missingOk) {
+  private ManagedObject lookup(ObjectID id, boolean missingOk) {
     syncAssertNotInShutdown();
 
-    ManagedObjectReference mor = null;
-    try {
-      while (true) {
-        mor = getOrLookupReference(null, id, (missingOk ? REMOVE_ON_RELEASE | MISSING_OK : REMOVE_ON_RELEASE));
-        if (mor == null) {
-          Assert.assertTrue(missingOk);
-          return null;
-        }
+    WaitForLookupContext waitContext = new WaitForLookupContext(id);
+    ObjectManagerLookupContext context = new ObjectManagerLookupContext(waitContext, missingOk, true);
+    basicLookupObjectsFor(ChannelID.NULL_ID, context, -1);
 
-        if (mor.isReferenced()) {
-          wait();
-        } else {
-          markReferenced(mor);
-          break;
-        }
-      }
-    } catch (InterruptedException ie) {
-      Assert.eval(false);
+    ManagedObject mo = waitContext.getLookedUpObject();
+    if (mo == null) {
+      Assert.assertTrue(missingOk);
     }
-    return mor.getObject();
+    return mo;
   }
 
   public ManagedObject getObjectByID(ObjectID id) {
@@ -271,13 +254,13 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
    * Retrieves materialized references-- if not materialized, will initiate a request to materialize them from the
    * object store.
    */
-  private ManagedObjectReference getOrLookupReference(ObjectManagerLookupContext context, ObjectID id, byte flags) {
+  private ManagedObjectReference getOrLookupReference(ObjectManagerLookupContext context, ObjectID id) {
     ManagedObjectReference rv = getReference(id);
 
     if (rv == null) {
-      // Request Faulting in a different stage and give back a "Referenced" Proxy
-      ManagedObjectFaultingContext mofc = new ManagedObjectFaultingContext(id, isRemoveOnRelease(flags),
-                                                                           isMissingOkay(flags));
+      // Request Faulting in a different stage and give back a "Referenced" proxy
+      ManagedObjectFaultingContext mofc = new ManagedObjectFaultingContext(id, context.removeOnRelease(), context
+          .isMissingOK());
       faultSink.add(mofc);
 
       // don't account for a cache "miss" unless this was a real request
@@ -289,13 +272,13 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       FaultingManagedObjectReference fmr = (FaultingManagedObjectReference) rv;
       if (!fmr.isFaultingInProgress()) {
         references.remove(id);
-        if (isMissingOkay(flags)) { return null; }
+        if (context.isMissingOK()) { return null; }
         throw new AssertionError("Request for a non-existent object: " + id + " context: " + context);
       }
-      if (isNewRequest(flags)) stats.cacheMiss();
+      if (context.isNewRequest()) stats.cacheMiss();
     } else {
-      if (isNewRequest(flags)) stats.cacheHit();
-      if (!isRemoveOnRelease(flags)) {
+      if (context.isNewRequest()) stats.cacheHit();
+      if (!context.removeOnRelease()) {
         if (rv.isRemoveOnRelease()) {
           // This Object is faulted in by GC or Management interface with removeOnRelease = true, but before they got a
           // chance to grab it, a regular request for object is received. Take corrective action.
@@ -306,20 +289,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         }
       }
     }
-
     return rv;
-  }
-
-  private boolean isNewRequest(byte flags) {
-    return ((flags & NEW_REQUEST) != 0x00);
-  }
-
-  private boolean isMissingOkay(byte flags) {
-    return ((flags & MISSING_OK) != 0x00);
-  }
-
-  private boolean isRemoveOnRelease(byte flags) {
-    return ((flags & REMOVE_ON_RELEASE) != 0x00);
   }
 
   public synchronized void addFaultedObject(ObjectID oid, ManagedObject mo, boolean removeOnRelease) {
@@ -411,8 +381,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   }
 
-  // Called from within Sync blocks only.
-  private boolean basicLookupObjectsFor(ChannelID channelID, ObjectManagerLookupContext context, int maxReachableObjects) {
+  private synchronized boolean basicLookupObjectsFor(ChannelID channelID, ObjectManagerLookupContext context,
+                                                     int maxReachableObjects) {
     Set objects = createNewSet();
 
     final Set newObjectIDs = context.getNewObjectIDs();
@@ -424,8 +394,11 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       // We don't check available flag before doing calling getOrLookupReference() for two reasons.
       // 1) To get the right hit/miss count and
       // 2) to Fault objects that are not available
-      ManagedObjectReference reference = getOrLookupReference(context, id, (context.isNewRequest() ? NEW_REQUEST
-          : DEFAULT_FLAG));
+      ManagedObjectReference reference = getOrLookupReference(context, id);
+      if (reference == null) {
+        Assert.assertTrue(context.isMissingOK());
+        continue;
+      }
       if (available && reference.isReferenced()) {
         available = false;
         // Setting only the first referenced object to process Pending. If objects are being faulted in, then this
@@ -433,7 +406,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         addBlocked(channelID, context, maxReachableObjects, id);
       }
 
-      if (reference == null) throw new AssertionError("ManagedObjectReference is null");
       objects.add(reference);
     }
 
@@ -841,10 +813,15 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private static class ObjectManagerLookupContext implements ObjectManagerResultsContext {
 
     private final ObjectManagerResultsContext responseContext;
+    private final boolean                     missingOK;
+    private final boolean                     removeOnRelease;
     private int                               processedCount = 0;
 
-    public ObjectManagerLookupContext(ObjectManagerResultsContext responseContext) {
+    public ObjectManagerLookupContext(ObjectManagerResultsContext responseContext, boolean missingOK,
+                                      boolean removeOnRelease) {
       this.responseContext = responseContext;
+      this.missingOK = missingOK;
+      this.removeOnRelease = removeOnRelease;
     }
 
     public void makeOldRequest() {
@@ -857,6 +834,14 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
     public boolean isNewRequest() {
       return processedCount == 0;
+    }
+
+    public boolean isMissingOK() {
+      return missingOK;
+    }
+
+    public boolean removeOnRelease() {
+      return removeOnRelease;
     }
 
     public Set getLookupIDs() {
@@ -872,9 +857,53 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
 
     public String toString() {
-      return "ObjectManagerLookupContext : [ processed count = " + processedCount
-             + ", responseContext = " + responseContext + "] ";
+      return "ObjectManagerLookupContext : [ processed count = " + processedCount + ", responseContext = "
+             + responseContext + "] ";
     }
+  }
+
+  private static class WaitForLookupContext implements ObjectManagerResultsContext {
+
+    private final ObjectID lookupID;
+    private final Set      lookupIDs = new HashSet();
+    private boolean        resultSet = false;
+    private ManagedObject  result;
+
+    public WaitForLookupContext(ObjectID id) {
+      this.lookupID = id;
+      lookupIDs.add(id);
+    }
+
+    public synchronized ManagedObject getLookedUpObject() {
+      while (!resultSet) {
+        try {
+          wait();
+        } catch (InterruptedException e) {
+          throw new AssertionError(e);
+        }
+      }
+      return result;
+    }
+
+    public Set getLookupIDs() {
+      return lookupIDs;
+    }
+
+    public Set getNewObjectIDs() {
+      return Collections.EMPTY_SET;
+    }
+
+    public synchronized void setResults(ObjectManagerLookupResults results) {
+      resultSet = true;
+      Map objects = results.getObjects();
+      Assert.assertTrue(objects.size() == 0 || objects.size() == 1);
+      if (objects.size() == 1) {
+        result = (ManagedObject) objects.get(lookupID);
+        Assert.assertNotNull(result);
+      }
+      notifyAll();
+    }
+
   }
 
   private static class Pending {
