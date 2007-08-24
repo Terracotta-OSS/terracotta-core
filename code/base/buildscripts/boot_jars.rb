@@ -43,17 +43,16 @@ class BootJar
   # to pass in the build results (so we can get at the Terracotta classes that are used
   # to find and build boot JARs), the module set (ditto), ant (so we can actually run Java
   # to build the boot JAR), and the platform (ditto).
-  def initialize(build_results, jvm, directory, module_set, ant, platform, config_file)
+  def initialize(build_results, jvm, directory, module_set, ant, config_file)
     @build_results = build_results
     @jvm           = jvm
     @directory     = directory
-    @path          = nil
     @module_set    = module_set
     @ant           = ant
-    @platform      = platform
     @config_file   = config_file
-    @created       = false
+    @path          = nil
 
+    @platform = Registry[:platform]
     @static_resources = Registry[:static_resources]
   end
 
@@ -64,7 +63,7 @@ class BootJar
   def path
     # We cache this, since it can be fairly expensive to run the command to figure out
     # what this should be.
-    if @path.nil?
+    unless @path
       outputproperty, errorproperty = @platform.next_output_properties
       @ant.java(:classname   => 'com.tc.object.tools.BootJarSignature',
                 :classpath   => @module_set['dso-l1'].subtree('src').classpath(@build_results, :full, :runtime).to_s,
@@ -94,21 +93,22 @@ class BootJar
     @path
   end
 
-  # Make sure there's a boot JAR at the given location. This <b>will delete any existing file
-  # at the specified location</b>! Be careful. This will only create this boot JAR once for
-  # a given instance of this object, so you don't have to worry about repeating work.
-  def ensure_created
-    unless @created
+  # Make sure there's a boot JAR at the given location.  To delete any existing file
+  # at the specified location, pass :delete_existing => true as part of the options hash.
+  # This will only create this boot JAR once for a given instance of this object, so you
+  # don't have to worry about repeating work.
+  def ensure_created(options = {})
+    File.delete(path.to_s) if options[:delete_existing] && exist?
+    unless exist?
       classpath = @module_set['dso-tests-jdk15'].subtree('src').classpath(@build_results, :full, :runtime)
       puts("Creating boot JAR with: #{@jvm} and config file: #{@config_file}")
-      
-      File.delete(path.to_s) if FileTest.exist?(path.to_s)
+
       sysproperties = {
         PropertyNames::TC_BASE_DIR => @static_resources.root_dir.to_s,
         PropertyNames::MODULES_URL => @build_results.modules_home.to_url
       }
-      
-      begin  
+
+      begin
         @ant.java(:classname   => 'com.tc.object.tools.BootJarTool',
                   :classpath   => classpath.to_s,
                   :jvm         => @jvm.java,
@@ -130,15 +130,13 @@ class BootJar
       rescue
         raise("Bootjar creation failed")
       end
-    
-      @created = true
     end
     self
   end
 
-  # Have we created this boot JAR yet?
+  # Does the boot JAR exist?
   def exist?
-    @created
+    File.exist?(path.to_s)
   end
 end
 
@@ -151,11 +149,11 @@ class UserBootJar
     @boot_jar_path = path
     fail("Can't find bootjar defined by boot_jar_path [#{@boot_jar_path}]") unless File.exist?(@boot_jar_path)
   end
-  
+
   def path
     @boot_jar_path
   end
-  
+
   def exist?
     @boot_jar_path
   end

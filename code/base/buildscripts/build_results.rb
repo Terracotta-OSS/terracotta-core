@@ -40,6 +40,10 @@ class BuildResults
         FilePath.new(@build_dir, subtree.build_module.name, "#{subtree.name}.classes").ensure_directory
     end
 
+    def boot_jar_directory
+      FilePath.new(@build_dir, "boot-jars")
+    end
+
     # Given a subtree and a path (absolute or relative, starting from anywhere) to a .class
     # file, returns the fully-qualified name of the Java class that should reside in that file.
     def class_name_for_class_file(subtree, class_file)
@@ -100,7 +104,7 @@ class BuildResults
                           :includes => "**/testrun*/**",
                           :excludes => "**/*.jar,**/*.class,**/objectdb/**,**/*.war,**/core,**/*.rar,**/var/**,**/repository/**,**/META-INF/**")
               ant.fileset(:dir => @build_dir.to_s,
-                          :includes => "**/normal-boot-jars/*.jar,**/build-config.local,**/war/*.war")
+                          :includes => "**/boot-jars/*.jar,**/build-config.local,**/war/*.war")
           end
 
           puts "Done archiving build."
