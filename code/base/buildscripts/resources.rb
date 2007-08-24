@@ -26,7 +26,8 @@ resolve_dependencies
     tcbuild command-line.
 
 compile
-    Compiles all the code.
+    Compiles all the code.  To override the JDK used for compiling, see the
+    jdk= option described in JDK SELECTION below.
 
 smart_compile <project-name>
     Compiles the project and all of its dependencies
@@ -46,18 +47,21 @@ compile_only=dso-container-tests,dso-spring-tests
     Only compile specified projects
 
 --no-ivy
-    Don't run ivy
+    Bypass Ivy dependency resolution
 
 --no-compile
     Don't compile
 
 TESTING
 
-NOTE: for all of the check targets described below, the debug=<port> option can be used to run the
-test(s) using the JPDA/JDWP JVM debugging facilities.  The <port> argument specifies the port on
-which the debug server will listen for connections.  For example:
+NOTE: for all of the check targets described below, the debug=<port> option can
+be used to run the test(s) using the JPDA/JDWP JVM debugging facilities.  The
+<port> argument specifies the port on which the debug server will listen for
+connections.  For example:
 
   tcbuild check_one AssertTest debug=8000
+
+NOTE: To override the JDK used for testing, see the JDK SELECTION section below.
 
 check
     Runs all tests
@@ -118,12 +122,6 @@ show_test_results <test_run_name>
     <test_run_name> is the name of a test run (e.g., 'testrun-0007')
     or just 'latest'.
 
-SPECIFY WHICH JDK TO RUN THE TESTS
-Use this option with tcbuild
-
-tests-jdk=1.4 --> will run the test with JAVA_HOME_14
-tests-jdk=1.5 --> will run the test with JAVA_HOME_15
-tests-jdk=/path/to/your/jdk --> anything you want
 
 PACKAGING & DISTRIBUTION
 
@@ -164,6 +162,8 @@ run_server
     Runs the Terracotta server. The 'jvmargs' parameter can be
     used to set JVM arguments for it, if you need any extra ones.
 
+NOTE: The jdk= option, described in the JDK SELECTION section below, can be
+used to specify the JDK used by these targets.
 
 MISCELLANEOUS
 
@@ -182,11 +182,31 @@ show_config
 generate_config_classes
     Generates XMLBeans against the Terracotta schema
 
+JDK SELECTION
 
-NOTE: To bypass Ivy dependency resolution, pass the --no-ivy option anywhere
-on the tcbuild command-line.  For example:
+You can override the default JDK used for compiling and/or testing by
+specifying either the jdk= option or the tests-jdk= option.  The jdk= option
+will force tcbuild to use the specified JDK for all tasks during the build,
+including compiling, testing, building the bootjar, and running classes.
+The tests-jdk= option tells tcbuild to use the specified JDK for executing
+tests, while using the default JDK for everything else.
 
-    ./tcbuild --no-ivy compile
+Both jdk= and tests-jdk= can be given either the name of a JDK specified in
+jdk.def.yml, or the path to a Java installation.  For example:
+
+  tests-jdk=1.4               # run tests using J2SE_14
+  tests-jdk=1.5               # run tests using J2SE_15
+  jdk=/usr/local/jdk1.6.0     # do everything with JAVASE_16
+
+SEE ALSO
+
+Further documentation is available on the following wiki pages:
+
+http://docs.terracotta.org/confluence/display/devdocs/Building+Terracotta
+http://docs.terracotta.org/confluence/display/devdocs/Configuring+JDK+Versions
+http://docs.terracotta.org/confluence/display/devdocs/tcbuild+Targets
+http://docs.terracotta.org/confluence/display/devdocs/Source+Modules
+
 END_HELP_MESSAGE
 
 end # module Resources
