@@ -64,7 +64,7 @@ module BundledComponents
           if jvm
             puts("Building boot JAR with #{jvm}")
             bootjar = BootJar.new(@build_results, jvm, bootjar_dir, @module_set,
-                                  ant, @static_resources.dso_boot_jar_config_file.to_s)
+                                  @static_resources.dso_boot_jar_config_file.to_s)
             bootjar.ensure_created(:delete_existing => true)
           else
             puts("Couldn't find suitable JVM for building boot JAR")

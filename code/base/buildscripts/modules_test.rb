@@ -367,7 +367,7 @@ class SubtreeTestRun
                 boot_jar_dir = FilePath.new(boot_jar_base_dir, subdir)
               end
 
-              boot_jar = BootJar.new(@build_results, tests_jvm, boot_jar_dir, module_set, @ant,
+              boot_jar = BootJar.new(@build_results, tests_jvm, boot_jar_dir, module_set,
                                      boot_jar_config_file.to_s)
               if boot_jar.exist?
                 puts("Using existing boot JAR at #{boot_jar.path}")

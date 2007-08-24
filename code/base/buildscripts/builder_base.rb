@@ -101,6 +101,7 @@ class TerracottaBuilder
         puts
         @default_target = default_target
         @ant = TerracottaAnt.new
+        Registry[:ant] = @ant
         @platform = CrossPlatform.create_implementation(:ant => @ant)
         Registry[:platform] = @platform
 
@@ -127,7 +128,7 @@ class TerracottaBuilder
         actual_targets = [ @default_target ] if actual_targets.empty?
 
         write_failure_file_if_necessary_at_beginning
-        
+
         begin
             do_run(actual_targets)
         rescue => e
@@ -146,16 +147,16 @@ class TerracottaBuilder
         write_failure_file_if_necessary_at_end
 
         # Support for making build archives.
-        # archive only if "force-archive=true", or when the run fails        
-        if ((@config_source['monkey-name'] && @script_results.failed?) || 
+        # archive only if "force-archive=true", or when the run fails
+        if ((@config_source['monkey-name'] && @script_results.failed?) ||
              @config_source["force-archive"] =~ /true/)
-          archive_build_if_necessary          
-        end        
-        
+          archive_build_if_necessary
+        end
+
         # Print out the duration and the results at the end.
         puts ""
         puts "[%8.2f seconds] %s" % [ (end_time - @start_time), @script_results.to_s ]
-        
+
         ExitCodeHelper.exit(@script_results.result_code)
     end
 

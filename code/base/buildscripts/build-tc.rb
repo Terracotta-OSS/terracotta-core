@@ -460,7 +460,7 @@ END
 
       unless jvmargs.detect { |arg| arg =~ /^\s*\-Xbootclasspath.*$/i }
         begin
-          boot_jar = BootJar.new(@build_results, jvm, home.dir, @module_set, @ant, home.config_file).ensure_created
+          boot_jar = BootJar.new(@build_results, jvm, home.dir, @module_set, home.config_file).ensure_created
           jvmargs << '-Xbootclasspath/p:%s' % boot_jar.path.to_s
         rescue
           STDERR.puts("Failed to create bootjar for: " + classname.to_s + ". Check log for exception.")
@@ -579,7 +579,7 @@ END
     jvm = @jvm_set[jvm_spec]
     output_path = @build_results.tools_home
     output_path = FilePath.new(config_source['dest']) unless config_source['dest'].nil?
-    boot_jar = BootJar.new(@build_results, jvm, output_path, @module_set, ant, @static_resources.dso_boot_jar_config_file)
+    boot_jar = BootJar.new(@build_results, jvm, output_path, @module_set, @static_resources.dso_boot_jar_config_file)
     boot_jar.ensure_created(:delete_existing => true)
     puts ""
     puts "Boot JAR for JVM '%s' successfully created at '%s'." % [ jvm.to_s, boot_jar.path.to_s ]
