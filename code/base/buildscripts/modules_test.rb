@@ -356,9 +356,19 @@ class SubtreeTestRun
               boot_jar = UserBootJar.new(@config_source['boot_jar_path'])
             else
               module_set = @subtree.build_module.module_set
-              boot_jar = BootJar.new(@build_results, tests_jvm, @build_results.boot_jar_directory,
-                                     module_set, @ant,
-                                     @subtree.boot_jar_config_file(@static_resources).to_s)
+              boot_jar_config_file = @subtree.boot_jar_config_file(@static_resources)
+
+              boot_jar_base_dir = @build_results.boot_jar_directory
+              if boot_jar_config_file == @static_resources.dso_boot_jar_config_file
+                boot_jar_dir = FilePath.new(boot_jar_base_dir, 'standard')
+              else
+                basename = Regexp.new(BuildSubtree::BOOT_JAR_CONFIG_FILE_BASENAME)
+                subdir = "#{@subtree.build_module.name}-#{boot_jar_config_file.filename.to_s.gsub(basename, '')}"
+                boot_jar_dir = FilePath.new(boot_jar_base_dir, subdir)
+              end
+
+              boot_jar = BootJar.new(@build_results, tests_jvm, boot_jar_dir, module_set, @ant,
+                                     boot_jar_config_file.to_s)
               if boot_jar.exist?
                 puts("Using existing boot JAR at #{boot_jar.path}")
               else

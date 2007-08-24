@@ -99,6 +99,11 @@ class FilePath
         self.<<(*parts)
     end
 
+    # Does this FilePath refer to the same path as other?
+    def ==(other)
+      self.canonicalize.to_s == other.canonicalize.to_s
+    end
+
     # Appends additional components to this FilePath. This follows the same rules as the
     # constructor, meaning you can pass in all kinds of garbage and it will, generally
     # speaking, clean it up for you.

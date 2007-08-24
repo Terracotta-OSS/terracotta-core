@@ -9,17 +9,19 @@
 # Adds a method to BuildSubtree indicating where the boot JAR configuration file for the
 # given subtree is; falls back to a static copy if none is present for this boot JAR.
 class BuildSubtree
+  BOOT_JAR_CONFIG_FILE_BASENAME = '.boot-jar-config.xml'
+
   # Returns the Terracotta configuration file that should be used to build the boot JAR
   # for the given subtree. This will be _module_/_subtree_.boot-jar-config.xml if it exists,
   # or static_resources.dso_boot_jar_config_file otherwise.
   def boot_jar_config_file(static_resources)
 	jdktype = @build_module.jdk.actual_type
 	jdkrelease = @build_module.jdk.release
-	out = FilePath.new(build_module.root, "%s.%s-%s.boot-jar-config.xml" % [name, jdktype, jdkrelease])
+	out = FilePath.new(build_module.root, "#{name}.#{jdktype}-#{jdkrelease}#{BOOT_JAR_CONFIG_FILE_BASENAME}")
 	if !FileTest.file?(out.to_s)
-		out = FilePath.new(build_module.root, "%s.%s.boot-jar-config.xml" % [name, jdktype])
+		out = FilePath.new(build_module.root, "#{name}.#{jdktype}#{BOOT_JAR_CONFIG_FILE_BASENAME}")
  		if !FileTest.file?(out.to_s)
-   			out = FilePath.new(build_module.root, "%s.boot-jar-config.xml" % name)
+   			out = FilePath.new(build_module.root, "#{name}#{BOOT_JAR_CONFIG_FILE_BASENAME}")
 			if !FileTest.file?(out.to_s)
 				out = static_resources.dso_boot_jar_config_file unless FileTest.file?(out.to_s)
 			end
