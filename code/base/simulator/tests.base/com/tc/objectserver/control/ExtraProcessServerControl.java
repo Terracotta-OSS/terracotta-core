@@ -220,7 +220,8 @@ public class ExtraProcessServerControl extends ServerControlBase {
 
   public void start() throws Exception {
     System.err.println("Starting " + this.name + /* ": jvmArgs=" + jvmArgs + */", main=" + getMainClassName()
-                       + ", main args=" + ArrayUtils.toString(getMainClassArguments()) + ", jvm=[" + getJavaHome() + "]");
+                       + ", main args=" + ArrayUtils.toString(getMainClassArguments()) + ", jvm=[" + getJavaHome()
+                       + "]");
     process = createLinkedJavaProcess();
     process.setJavaArguments((String[]) jvmArgs.toArray(new String[jvmArgs.size()]));
     process.start();
@@ -266,9 +267,23 @@ public class ExtraProcessServerControl extends ServerControlBase {
     String[] args = getMainClassArguments();
     LinkedJavaProcess stopper = createLinkedJavaProcess("com.tc.admin.TCStop", args);
     stopper.start();
-    stopper.mergeSTDERR("TCStop");
-    stopper.mergeSTDOUT("TCStop");
-    stopper.STDIN().close();
+
+    FileOutputStream stopperLog = null;
+    try {
+      stopperLog = new FileOutputStream("TCStop.log");
+      StreamCopier stdoutCopier = new StreamCopier(stopper.STDOUT(), stopperLog);
+      StreamCopier stderrCopier = new StreamCopier(stopper.STDERR(), stopperLog);
+
+      stdoutCopier.start();
+      stderrCopier.start();
+
+      stdoutCopier.join(30 * 1000);
+      stderrCopier.join(30 * 1000);
+    } finally {
+      if (stopperLog != null) stopperLog.close();
+      stopper.STDIN().close();
+    }
+    
   }
 
   public void shutdown() throws Exception {
