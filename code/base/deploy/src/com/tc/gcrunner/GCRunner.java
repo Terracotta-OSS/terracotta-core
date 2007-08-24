@@ -18,8 +18,8 @@ import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.object.ObjectManagementMonitorMBean;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
-import java.net.ConnectException;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -112,10 +112,10 @@ public class GCRunner {
 
     try {
       new GCRunner(host, port, userName).runGC();
-    } catch (ConnectException ce) {
-      System.err.println("Unable to connect to host '" + host + "', port " + port
+    } catch (IOException ioe) {
+      System.err.println("Unable to connect to host '" + host + "', port " + port 
                          + ". Are you sure there is a Terracotta server running there?");
-    } catch(SecurityException se) {
+    } catch (SecurityException se) {
       System.err.println(se.getMessage());
       usageAndDie(options);
     }
@@ -142,11 +142,10 @@ public class GCRunner {
     final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
     mbean = (ObjectManagementMonitorMBean) MBeanServerInvocationHandler
         .newProxyInstance(mbs, L2MBeanNames.OBJECT_MANAGEMENT, ObjectManagementMonitorMBean.class, false);
-
     try {
       mbean.runGC();
-    } catch (RuntimeException re) {
-      consoleLogger.error(re.getCause().getMessage());
+    } catch (RuntimeException e) {
+      consoleLogger.error(e.getCause().getMessage());
     }
   }
 
