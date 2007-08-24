@@ -9,6 +9,7 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.HashMap;
@@ -73,6 +74,7 @@ public class HashMapBatchTxnTestApp extends AbstractTransparentApp {
           }
         }    
       }
+      ThreadUtil.reallySleep(20);
     }
     
     barrier.await();
@@ -85,6 +87,7 @@ public class HashMapBatchTxnTestApp extends AbstractTransparentApp {
         HashMap<Integer,Integer> submap = hashmap_root.get(new Integer(i));
         Assert.assertTrue("Sub-HashMap("+i+") size is "+submap.size()+ " but expect "+(10+(i%10)), submap.size() == (10+(i%10))); 
       }
+      ThreadUtil.reallySleep(20);
     }
     System.out.println("XXX verification done");
     
