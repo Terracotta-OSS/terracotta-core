@@ -27,5 +27,5 @@ appserver=tomcat-5.5.23
 tc.tests.configuration.appserver.repository=http://kong.terracotta.lan/resources/appservers
 #tc.tests.configuration.appserver.home=C:\\tomcat-5.5.23
 
-maven.version=2.5
+maven.version=2.5-SNAPSHOT
 
