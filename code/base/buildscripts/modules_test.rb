@@ -285,6 +285,7 @@ class SubtreeTestRun
         @build_results = build_results
         @build_environment = build_environment
         @config_source = config_source
+        @internal_config_source = Registry[:internal_config_source]
         @ant = ant
         @platform = platform
         @aggregation_directory = aggregation_directory
@@ -393,6 +394,11 @@ class SubtreeTestRun
         # download appserver and set appserver.home if needed
         download_appserver_if_needed()
 
+        # Set the tc.tests.configuration.transparent-tests.mode property if necessary
+        if mode = @config_source['test.mode']
+          @internal_config_source['tc.tests.configuration.transparent-tests.mode'] = mode
+        end
+
         # This creates the file that TestConfigObject reads.
         @subtree.create_build_configuration_file(@static_resources, @testrun_results, @build_results, @build_environment, @config_source, boot_jar, @ant, tests_jvm, all_jvmargs, @timeout)
 
@@ -484,7 +490,7 @@ class SubtreeTestRun
           end
           @ant.delete(:file => appserver_zip_path)
         end
-        Registry[:internal_config_source]['tc.tests.configuration.appserver.home'] = appserver_home
+        @internal_config_source['tc.tests.configuration.appserver.home'] = appserver_home
       end
     end
 
