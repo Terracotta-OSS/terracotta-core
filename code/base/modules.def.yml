@@ -392,30 +392,6 @@ modules:
         - dso-memory-datastore
         - dso-tests-jdk15
         - dso-l1-jdk15
-  - dso-container-tests:
-      options:
-        jdk: J2SE-1.4
-      dependencies:
-        - aspectwerkz
-        - linked-child-process
-        - common-api
-        - common
-        - dso-common
-        - management
-        - modules-common-1.0
-        - dso-common-jdk15
-        - dso-l1-api
-        - dso-l1
-        - dso-l1-session
-        - management
-        - simulator
-        - thirdparty-api
-        - thirdparty
-        - legacy-test-tree
-        - dso-l2-common
-        - dso-l2
-        - deploy        
-        - clustered-ehcache-commons-1.0
   - dso-spring-tests:
       options:
         jdk: J2SE-1.4
@@ -782,7 +758,31 @@ modules:
         - dso-l1-api
         - thirdparty-api
         - modules-common-1.0
-
+  - dso-container-tests:
+      options:
+        jdk: J2SE-1.4
+      dependencies:
+        - aspectwerkz
+        - linked-child-process
+        - common-api
+        - common
+        - dso-common
+        - management
+        - modules-common-1.0
+        - dso-common-jdk15
+        - dso-l1-api
+        - dso-l1
+        - dso-l1-session
+        - management
+        - simulator
+        - thirdparty-api
+        - thirdparty
+        - legacy-test-tree
+        - dso-l2-common
+        - dso-l2
+        - deploy        
+        - clustered-ehcache-commons-1.0
+        
 # these groups are used by the monkeys to run tests in each module.
 module-groups:
   container:
