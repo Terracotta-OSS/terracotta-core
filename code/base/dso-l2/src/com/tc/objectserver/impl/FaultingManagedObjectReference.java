@@ -23,7 +23,7 @@ public class FaultingManagedObjectReference implements ManagedObjectReference {
     return inProgress;
   }
 
-  public void faultingComplete() {
+  public void faultingFailed() {
     this.inProgress = false;
   }
 
@@ -44,7 +44,7 @@ public class FaultingManagedObjectReference implements ManagedObjectReference {
   }
 
   public boolean isReferenced() {
-    return true;
+    return inProgress;
   }
 
   public boolean isNew() {

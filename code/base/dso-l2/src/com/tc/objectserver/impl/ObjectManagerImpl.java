@@ -301,7 +301,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         throw new AssertionError("ManagedObjectReference is not what was expected : " + mor + " oid : " + oid);
       }
       fmor = (FaultingManagedObjectReference) mor;
-      fmor.faultingComplete();
+      fmor.faultingFailed();
     } else {
       Assert.assertEquals(oid, mo.getID());
       ManagedObjectReference mor = (ManagedObjectReference) references.remove(oid);
@@ -311,8 +311,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       }
       fmor = (FaultingManagedObjectReference) mor;
       addNewReference(mo, removeOnRelease);
-      makeUnBlocked(oid);
     }
+    makeUnBlocked(oid);
     postRelease();
   }
 
