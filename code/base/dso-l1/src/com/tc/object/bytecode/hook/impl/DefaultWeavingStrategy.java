@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.bytecode.hook.impl;
 
@@ -32,13 +33,19 @@ import com.tc.aspectwerkz.transform.inlining.weaver.MethodCallVisitor;
 import com.tc.aspectwerkz.transform.inlining.weaver.MethodExecutionVisitor;
 import com.tc.aspectwerkz.transform.inlining.weaver.StaticInitializationVisitor;
 import com.tc.exception.TCLogicalSubclassNotPortableException;
+import com.tc.object.bytecode.ByteCodeUtil;
+import com.tc.object.bytecode.RenameClassesAdapter;
 import com.tc.object.bytecode.SafeSerialVersionUIDAdder;
+import com.tc.object.config.ClassReplacementMapping;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.InstrumentationLoggerImpl;
 import com.tc.util.AdaptedClassDumper;
 import com.tc.util.InitialClassDumper;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,7 +56,7 @@ import java.util.Set;
 
 /**
  * A weaving strategy implementing a weaving scheme based on statical compilation, and no reflection.
- *
+ * 
  * @author <a href="mailto:jboner@codehaus.org">Jonas Bon&#233;r </a>
  * @author <a href="mailto:alex@gnilux.com">Alexandre Vasseur </a>
  */
@@ -78,7 +85,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
 
   /**
    * Performs the weaving of the target class.
-   *
+   * 
    * @param className
    * @param context
    */
@@ -151,6 +158,39 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
         m_instrumentationLogger.classIncluded(className);
       }
 
+      // handle replacement classes
+      if (isDsoAdaptable) {
+        ClassReplacementMapping mapping = m_configHelper.getClassReplacementMapping();
+        String replacementClassName = mapping.getReplacementClassName(className);
+
+        // check if there's a replacement class
+        if (replacementClassName != null && !replacementClassName.equals(className)) {
+          // obtain the resource of the replacement class either from a module bundle, or from the
+          // active classloader
+          URL replacementResource = mapping.getReplacementResource(replacementClassName, loader);
+          if (replacementResource == null) { throw new ClassNotFoundException("No resource found for class: "
+                                                                              + replacementClassName); }
+
+          // obtain the bytes of the replacement class
+          InputStream is = replacementResource.openStream();
+          try {
+            byte[] replacementBytes = ByteCodeUtil.getBytesForInputstream(is);
+
+            // perform the rename transformation so that it can be used instead of the original class
+            ClassReader cr = new ClassReader(replacementBytes);
+            ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+            ClassVisitor cv = new RenameClassesAdapter(cw, mapping);
+            cr.accept(cv, ClassReader.SKIP_FRAMES);
+
+            context.setCurrentBytecode(cw.toByteArray());
+          } catch (IOException e) {
+            throw new ClassNotFoundException("Error reading bytes for " + replacementResource, e);
+          } finally {
+            is.close();
+          }
+        }
+      }
+
       // ------------------------------------------------
       // -- Phase AW -- weave in aspects
       if (isAdvisable) {
@@ -189,9 +229,11 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
         HashMap newInvocationsByCallerMemberHash = null;
         if (!filterForCall) {
           newInvocationsByCallerMemberHash = new HashMap();
-          crLookahead.accept(
-              new ConstructorCallVisitor.LookaheadNewDupInvokeSpecialInstructionClassAdapter(newInvocationsByCallerMemberHash),
-              ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+          crLookahead
+              .accept(
+                      new ConstructorCallVisitor.LookaheadNewDupInvokeSpecialInstructionClassAdapter(
+                                                                                                     newInvocationsByCallerMemberHash),
+                      ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
         }
 
         // prepare handler jp, by gathering ALL catch blocks and their exception type
@@ -199,7 +241,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
         if (!filterForHandler) {
           final ClassVisitor cv = new EmptyVisitor();
           HandlerVisitor.LookaheadCatchLabelsClassAdapter lookForCatches = //
-              new HandlerVisitor.LookaheadCatchLabelsClassAdapter(cv, loader, classInfo, context, catchLabels);
+          new HandlerVisitor.LookaheadCatchLabelsClassAdapter(cv, loader, classInfo, context, catchLabels);
           // we must visit exactly as we will do further on with debug info (that produces extra labels)
           final ClassReader crLookahead2 = new ClassReader(bytecode);
           crLookahead2.accept(lookForCatches, ClassReader.SKIP_FRAMES);
@@ -208,7 +250,8 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
         // gather wrapper methods to support multi-weaving
         // skip annotations visit and debug info by using the lookahead read-only classreader
         Set addedMethods = new HashSet();
-        crLookahead.accept(new AlreadyAddedMethodAdapter(addedMethods), ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+        crLookahead.accept(new AlreadyAddedMethodAdapter(addedMethods), ClassReader.SKIP_DEBUG
+                                                                        | ClassReader.SKIP_FRAMES);
 
         // ------------------------------------------------
         // -- Phase 1 -- type change (ITDs)
@@ -303,7 +346,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
 
   /**
    * Filters out the classes that are not eligible for transformation.
-   *
+   * 
    * @param definitions the definitions
    * @param ctxs an array with the contexts
    * @param classInfo the class to filter
@@ -319,7 +362,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
 
   /**
    * Filters out the classes that are not eligible for transformation.
-   *
+   * 
    * @param definition the definition
    * @param ctxs an array with the contexts
    * @param classInfo the class to filter

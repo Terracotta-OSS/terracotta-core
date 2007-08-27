@@ -1,23 +1,24 @@
 package com.tctest;
 
-import java.util.Iterator;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
-
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.Status;
+import EDU.oswego.cs.dl.util.concurrent.BrokenBarrierException;
+import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
+
+import java.util.Iterator;
 
 public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	static final int EXPECTED_THREAD_COUNT = 2;
@@ -54,6 +55,8 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 		final String testClass = EhcacheManagerTestApp.class.getName();
 		final TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
 		spec.addRoot("barrier", "barrier");
+		
+		new CyclicBarrierSpec().visit(visitor, config);
 	}
 
 	/**
@@ -63,7 +66,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	protected void runTest() throws Throwable {
 		final int CACHE_POPULATION = 10;
 
-		if (barrier.await() == 0) {
+		if (barrier.barrier() == 0) {
 			// create 2 caches, wait for the other node to verify 
 			addCache("CACHE1", true);
 			addCache("CACHE2", false);
@@ -119,7 +122,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 			waitForPermissionToProceed();
 			verifyCacheManagerShutdown();
 		}
-		barrier.await();
+		barrier.barrier();
 	}
 	
 	/**
@@ -220,7 +223,6 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 * 
 	 * @param name
 	 */
-	@SuppressWarnings("unchecked")
 	private void removeCache(final String name) {
 		Ehcache cache = cacheManager.getEhcache(name);
 		for (Iterator i = cache.getKeys().iterator(); i.hasNext();) {
@@ -263,12 +265,12 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	// This is lame but it makes runTest() slightly more readable
 	private void letOtherNodeProceed() throws InterruptedException,
 			BrokenBarrierException {
-		barrier.await();
+		barrier.barrier();
 	}
 
 	// This is lame but it makes runTest() slightly more readable
 	private void waitForPermissionToProceed() throws InterruptedException,
 			BrokenBarrierException {
-		barrier.await();
+		barrier.barrier();
 	}
 }

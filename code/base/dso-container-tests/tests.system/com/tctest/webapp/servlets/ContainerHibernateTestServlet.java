@@ -94,14 +94,21 @@ public final class ContainerHibernateTestServlet extends HttpServlet {
     System.out.println("Email list for Eng meeting: " + emailList);
     httpSession.setAttribute("events", eventList);
     System.out.println("added event list to session");
+
     HibernateUtil.getSessionFactory().close();
   }
 
   private void doServer1(HttpSession httpSession) throws Exception {
-    List events = (List) httpSession.getAttribute("events");
+    // comment this out intentionally
+    // List events = (List) httpSession.getAttribute("events");
+
+    EventManager mgr = new EventManager();
+    // this will get the data from ehcache
+    List events = mgr.listEvents();
+
     System.out.println("events: " + events);
     Assert.assertTrue(events.size() >= 2);
-    
+
     Session session = HibernateUtil.getSessionFactory().getCurrentSession();
     session.beginTransaction();
 
@@ -131,7 +138,7 @@ public final class ContainerHibernateTestServlet extends HttpServlet {
     }
     System.out.println("phones: " + phones);
     Assert.assertTrue(phones.size() >= 2);
-    
+
     session.getTransaction().commit();
     HibernateUtil.getSessionFactory().close();
     System.out.println("DONE!");

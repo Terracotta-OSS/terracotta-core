@@ -62,7 +62,7 @@ public class EventManager {
 
     session.beginTransaction();
 
-    List result = session.createQuery("from Event").list();    
+    List result = session.createQuery("from Event").setCacheable(true).list();    
 
     session.getTransaction().commit();
 

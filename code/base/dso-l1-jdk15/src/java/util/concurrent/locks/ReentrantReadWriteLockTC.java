@@ -10,7 +10,6 @@ import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.lockmanager.api.LockLevel;
-import com.tc.util.DebugUtil;
 import com.tc.util.concurrent.locks.TCLock;
 import com.tcclient.util.concurrent.locks.ConditionObject;
 
@@ -165,10 +164,6 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
     }
 
     public void lock() {
-      if (DebugUtil.DEBUG) {
-        System.err.println("Client " + ManagerUtil.getClientID() + " in ReentrantReadWriteLock.lock() -- dsoLock: "
-                           + ((dsoLock == null) ? "null" : "not null") + ", sync: " + sync);
-      }
       dsoLock.lock();
       super.lock();
     }
@@ -331,9 +326,6 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
     s.defaultReadObject();
     readerLock = new ReadLock(this, sync);
     writerLock = new WriteLock(this, sync);
-    if (DebugUtil.DEBUG) {
-      System.err.println("DEBUG: in readObject() -- sync: " + sync);
-    }
   }
 
   public void validateInUnLockState() {
@@ -348,9 +340,6 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
 
   // TODO: need to review
   public String toString() {
-    if (DebugUtil.DEBUG) {
-      System.err.println("DEBUG: in toString() -- sync: " + sync);
-    }
     if (ManagerUtil.isManaged(this)) {
       String objectString = getClass().getName() + "@" + Integer.toHexString(hashCode());
       return objectString + "[Write locks = " + writeLock() + ", Read locks = " + readLock() + "]";

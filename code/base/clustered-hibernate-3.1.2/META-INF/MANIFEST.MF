@@ -8,6 +8,7 @@ Bundle-RequiredExecutionEnvironment: J2SE-1.4
 Bundle-SymbolicName: org.terracotta.modules.clustered-hibernate-3.2.2
 Bundle-Vendor: Terracotta, Inc.
 Bundle-Version: 1.0.0
-Require-Bundle: org.terracotta.modules.modules_common, org.terracotta.modules.clustered-cglib-2.1.3 
+Require-Bundle: org.terracotta.modules.modules_common,
+ org.terracotta.modules.clustered-cglib-2.1.3
 Import-Package: org.terracotta.modules.configuration
 Bundle-Activator: org.terracotta.modules.hibernate_3_1_2.HibernateTerracottaConfigurator

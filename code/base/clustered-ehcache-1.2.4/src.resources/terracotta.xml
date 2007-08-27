@@ -14,15 +14,13 @@
   </instrumented-classes>
 
   <transient-fields>
-    <field-name>net.sf.ehcache.store.DiskStore.spoolThread</field-name>
-    <field-name>net.sf.ehcache.store.DiskStore.expiryThread</field-name>
-    <field-name>net.sf.ehcache.store.DiskStore.spoolAndExpiryThread</field-name>
-    <field-name>net.sf.ehcache.store.DiskStore.randomAccessFile</field-name>
-    <field-name>net.sf.ehcache.distribution.RMIAsynchronousCacheReplicator.replicationThread</field-name>
     <field-name>net.sf.ehcache.CacheManager.cacheManagerEventListener</field-name>
     <field-name>net.sf.ehcache.CacheManager.cacheManagerPeerListener</field-name>
     <field-name>net.sf.ehcache.CacheManager.cacheManagerPeerProvider</field-name>
     <field-name>net.sf.ehcache.CacheManager.shutdownHook</field-name>
+    <field-name>net.sf.ehcache.Element.nextToLastAccessTime</field-name>
+    <field-name>net.sf.ehcache.Element.lastAccessTime</field-name>
+    <field-name>net.sf.ehcache.Element.hitCount</field-name>
   </transient-fields>
 
   <roots>
@@ -41,378 +39,100 @@
     <root>
       <field-name>net.sf.ehcache.store.MemoryStoreEvictionPolicy.FIFO</field-name>
     </root>
+    <root>
+      <field-name>net.sf.ehcache.store.MemoryStoreEvictionPolicy.DSO</field-name>
+    </root>
   </roots>
 
   <locks>
-    <autolock>
-      <method-expression>* net.sf.ehcache.*..*.*(..)</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
     <named-lock>
       <lock-name>__ehcache_lock__CacheManager.init</lock-name>
       <method-expression>* net.sf.ehcache.CacheManager.init(..)</method-expression>
       <lock-level>write</lock-level>
     </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.clearAll</lock-name>
+    <autolock auto-synchronized="true">
       <method-expression>* net.sf.ehcache.CacheManager.clearAll(..)</method-expression>
       <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.getCacheManagerEventListener</lock-name>
+    </autolock>
+    <autolock auto-synchronized="true">
       <method-expression>* net.sf.ehcache.CacheManager.getCacheManagerEventListener(..)</method-expression>
       <lock-level>read</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.getCacheManagerPeerProvider</lock-name>
+    </autolock>
+    <autolock auto-synchronized="true">
       <method-expression>* net.sf.ehcache.CacheManager.getCacheManagerPeerProvider(..)</method-expression>
       <lock-level>read</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.getCachePeerProvider</lock-name>
+    </autolock>
+    <autolock auto-synchronized="true">
       <method-expression>* net.sf.ehcache.CacheManager.getCachePeerProvider(..)</method-expression>
       <lock-level>read</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.getStatus</lock-name>
+    </autolock>
+    <autolock auto-synchronized="true">
       <method-expression>* net.sf.ehcache.CacheManager.getStatus(..)</method-expression>
       <lock-level>read</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.setCacheManagerEventListener</lock-name>
+    </autolock>
+    <autolock auto-synchronized="true">
       <method-expression>* net.sf.ehcache.CacheManager.setCacheManagerEventListener(..)</method-expression>
       <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.shutdown</lock-name>
+    </autolock>
+    <autolock auto-synchronized="true">
       <method-expression>* net.sf.ehcache.CacheManager.shutdown(..)</method-expression>
       <lock-level>write</lock-level>
-    </named-lock>
-    
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.addConfiguredCaches</lock-name>
+    </autolock>
+    <autolock auto-synchronized="true">
       <method-expression>* net.sf.ehcache.CacheManager.addConfiguredCaches(..)</method-expression>
       <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.checkStatus</lock-name>
+    </autolock>
+    <autolock auto-synchronized="true">
       <method-expression>* net.sf.ehcache.CacheManager.checkStatus(..)</method-expression>
       <lock-level>read</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.configure</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.configure(..)</method-expression>
-      <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.detectAndFixCacheManagerPeerListenerConflict</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.detectAndFixCacheManagerPeerListenerConflict(..)</method-expression>
-      <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.detectAndFixDiskStorePathConflict</lock-name>
+    </autolock>
+    <autolock auto-synchronized="true">
       <method-expression>* net.sf.ehcache.CacheManager.detectAndFixDiskStorePathConflict(..)</method-expression>
       <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.getPeerListener</lock-name>
+    </autolock>
+    <autolock auto-synchronized="true">
       <method-expression>* net.sf.ehcache.CacheManager.getCachePeerListener(..)</method-expression>
       <lock-level>read</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.reinitialisationCheck</lock-name>
+    </autolock>
+    <autolock auto-synchronized="true">
       <method-expression>* net.sf.ehcache.CacheManager.reinitialisationCheck(..)</method-expression>
       <lock-level>read</lock-level>
-    </named-lock>
-
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.addCache</lock-name>
+    </autolock>
+    <autolock>
       <method-expression>* net.sf.ehcache.CacheManager.addCache(..)</method-expression>
       <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.addCacheNoCheck</lock-name>
+    </autolock>
+    <autolock>
       <method-expression>* net.sf.ehcache.CacheManager.addCacheNoCheck(..)</method-expression>
       <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.cacheExists</lock-name>
+    </autolock>
+    <autolock>
       <method-expression>* net.sf.ehcache.CacheManager.cacheExists(..)</method-expression>
       <lock-level>read</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.getCache</lock-name>
+    </autolock>
+    <autolock>
       <method-expression>* net.sf.ehcache.CacheManager.getCache(..)</method-expression>
       <lock-level>read</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.getCacheNames</lock-name>
+    </autolock>
+    <autolock>
       <method-expression>* net.sf.ehcache.CacheManager.getCacheNames(..)</method-expression>
       <lock-level>read</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.getEhcache</lock-name>
+    </autolock>
+    <autolock>
       <method-expression>* net.sf.ehcache.CacheManager.getEhcache(..)</method-expression>
       <lock-level>read</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.removeAll</lock-name>
+    </autolock>
+    <autolock>
       <method-expression>* net.sf.ehcache.CacheManager.removalAll(..)</method-expression>
       <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.removeCache</lock-name>
+    </autolock>
+    <autolock>
       <method-expression>* net.sf.ehcache.CacheManager.removeCache(..)</method-expression>
       <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.replaceCacheWithDecoratedCache</lock-name>
+    </autolock>
+    <autolock>
       <method-expression>* net.sf.ehcache.CacheManager.replaceCacheWithDecoratedCache(..)</method-expression>
       <lock-level>write</lock-level>
-    </named-lock>
-
-    <!-- @@@TODO: We need to instrument all of the Hashtable class' methods from a different config bundle -->
-    <autolock>
-      <method-expression>void java.util.Hashtable.clear()</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>Object java.util.Hashtable.clone()</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>boolean java.util.Hashtable.contains(Object)</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>boolean java.util.Hashtable.containsKey(Object)</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>boolean java.util.Hashtable.containsValue(Object)</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>java.util.Enumeration java.util.Hashtable.elements()</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>java.util.Set java.util.Hashtable.entrySet()</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>boolean java.util.Hashtable.equals(Object)</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>* java.util.Hashtable.get(Object)</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>boolean java.util.Hashtable.isEmpty()</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>java.util.Enumeration java.util.Hashtable.keys()</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>java.util.Set java.util.Hashtable.keySet()</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>* java.util.Hashtable.put(..)</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>void java.util.Hashtable.putAll(Map)</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>void java.util.Hashtable.rehash()</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>V java.util.Hashtable.remove(Object)</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>int java.util.Hashtable.size()</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>java.lang.String java.util.Hashtable.toString()</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>java.util.Collection java.util.Hashtable.values()</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-
-    <!-- @@@TODO: We need to instrument all of the Vector class' methods from a different config bundle -->
-    <autolock>
-      <method-expression>boolean java.util.Vector.add(..)</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>void java.util.Vector.add(..)</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>boolean java.util.Vector.addAll(java.util.Collection)</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>boolean java.util.Vector.addAll(int,java.util.Collection)</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>void java.util.Vector.addElement(..)</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>int java.util.Vector.capacity()</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>void java.util.Vector.clear()</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>Object java.util.Vector.clone()</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>boolean java.util.Vector.contains(Object)</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>boolean java.util.Vector.containsAll(java.util.Collection)</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>void java.util.Vector.copyInto(Object[])</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>* java.util.Vector.elementAt(int)</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>java.util.Enumeration java.util.Vector.elements()</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>void java.util.Vector.ensureCapacity(int)</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>boolean java.util.Vector.equals(Object)</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>* java.util.Vector.firstElement()</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>* java.util.Vector.get(int)</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>int java.util.Vector.indexOf(Object)</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>int java.util.Vector.indexOf(Object,int)</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>void java.util.Vector.insertElementAt(..)</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>boolean java.util.Vector.isEmpty()</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>* java.util.Vector.lastElement()</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>int java.util.Vector.lastIndexOf(Object)</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>int java.util.Vector.lastIndexOf(Object,int)</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>* java.util.Vector.remove(int)</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>boolean java.util.Vector.remove(Object)</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>boolean java.util.Vector.removeAll(java.util.Collection)</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>void java.util.Vector.removeAllElements()</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>boolean java.util.Vector.removeElement(Object)</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>void java.util.Vector.removeElementAt(int)</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>void java.util.Vector.removeRange(int,int)</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>boolean java.util.Vector.retainAll(java.util.Collection)</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>* java.util.Vector.set(..)</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>void java.util.Vector.setElementAt(..)</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>void java.util.Vector.setSize(int)</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>int java.util.Vector.size()</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>java.util.List java.util.Vector.subList(int,int)</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>Object[] java.util.Vector.toArray()</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>* java.util.Vector.toArray(..)</method-expression>
-      <lock-level>write</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>String java.util.Vector.toString()</method-expression>
-      <lock-level>read</lock-level>
-    </autolock>
-    <autolock>
-      <method-expression>void java.util.Vector.trimToSize()</method-expression>
-      <lock-level>read</lock-level>
     </autolock>
   </locks>
 </xml-fragment>

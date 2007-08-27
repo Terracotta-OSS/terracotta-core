@@ -5,17 +5,21 @@
 
 <hibernate-mapping>
 
-    <class name="com.tctest.domain.Event" table="EVENTS">
-        <id name="id" column="EVENT_ID">
-            <generator class="native"/>
-        </id>
-        <property name="date" type="timestamp" column="EVENT_DATE"/>
-        <property name="title"/>
-        
-        <set name="participants" table="PERSON_EVENT" lazy="true" inverse="true" cascade="lock">
-		    <key column="EVENT_ID"/>
-		    <many-to-many column="PERSON_ID" class="com.tctest.domain.Person"/>
+	<class name="com.tctest.domain.Event" table="EVENTS">
+		<cache usage="read-write" />
+		<id name="id" column="EVENT_ID">
+			<generator class="native" />
+		</id>
+		<property name="date" type="timestamp" column="EVENT_DATE" />
+		<property name="title" />
+
+		<set name="participants" table="PERSON_EVENT" lazy="true"
+			inverse="true" cascade="lock">
+			<cache usage="read-write" />
+			<key column="EVENT_ID" />
+			<many-to-many column="PERSON_ID"
+				class="com.tctest.domain.Person" />
 		</set>
-    </class>
+	</class>
 
 </hibernate-mapping>

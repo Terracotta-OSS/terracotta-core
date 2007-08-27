@@ -68,7 +68,7 @@ public class ContainerHibernateTest extends AbstractTwoServerDeploymentTest {
       builder.addDirectoryOrJARContainingClass(org.dom4j.Node.class); // domj4*.jar
       builder.addDirectoryOrJARContainingClass(net.sf.cglib.core.ClassInfo.class); // cglib-nodep*.jar
       builder.addDirectoryOrJARContainingClass(javax.transaction.Transaction.class); // jta*.jar
-      builder.addDirectoryOrJARContainingClass(org.apache.commons.collections.Buffer.class); // commons-collections*.jar
+      builder.addDirectoryOrJARContainingClass(org.apache.commons.collections.Buffer.class); // 
       builder.addDirectoryOrJARContainingClass(org.apache.derby.jdbc.ClientDriver.class); // derby*.jar
       builder.addDirectoryOrJARContainingClass(antlr.Tool.class); // antlr*.jar
 
@@ -78,6 +78,7 @@ public class ContainerHibernateTest extends AbstractTwoServerDeploymentTest {
       }
 
       builder.addResource("/com/tctest/server/appserver/unit", "hibernate.cfg.xml", "WEB-INF/classes");
+      builder.addResource("/com/tctest/server/appserver/unit", "ehcache13.xml", "WEB-INF/classes");
       builder.addResource("/com/tctest/server/appserver/unit", "Event.hbm.xml", "WEB-INF/classes");
       builder.addResource("/com/tctest/server/appserver/unit", "Person.hbm.xml", "WEB-INF/classes");
       builder.addResource("/com/tctest/server/appserver/unit", "PhoneNumber.hbm.xml", "WEB-INF/classes");

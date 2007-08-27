@@ -87,6 +87,7 @@ import com.terracottatech.config.SpringApplication;
 
 import java.io.IOException;
 import java.lang.reflect.Modifier;
+import java.net.URL;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -145,6 +146,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
                                                                                         .synchronizedMap(new HashMap());
 
   private final Map                              customAdapters                     = new ConcurrentHashMap();
+  
+  private final ClassReplacementMapping          classReplacements                  = new ClassReplacementMappingImpl();
+
+  private final Map                              classResources                     = new ConcurrentHashMap();
 
   private final Map                              aspectModules                      = Collections
                                                                                         .synchronizedMap(new HashMap());
@@ -298,7 +303,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return this.portability;
   }
 
-  private void addAutoLockExcludePattern(String expression) {
+  public void addAutoLockExcludePattern(String expression) {
     String executionExpression = ExpressionHelper.expressionPattern2ExecutionExpression(expression);
     ExpressionVisitor visitor = expressionHelper.createExpressionVisitor(executionExpression);
     autoLockExcludes.add(visitor);
@@ -938,7 +943,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     if (Vm.getMegaVersion() >= 1 && Vm.getMajorVersion() >= 6) {
       getOrCreateSpec("java.util.concurrent.locks.AbstractOwnableSynchronizer");
     }
-    
+
     TransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.FutureTask$Sync");
     addWriteAutolock("* java.util.concurrent.FutureTask$Sync.*(..)");
     spec.setHonorTransient(true);
@@ -1089,6 +1094,27 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       Object prev = this.customAdapters.put(name, factory);
       Assert.assertNull(prev);
     }
+  }
+  
+  public void addClassReplacement(final String originalClassName, final String replacementClassName,
+                                  final URL replacementResource) {
+    synchronized (classReplacements) {
+      String prev = this.classReplacements.addMapping(originalClassName, replacementClassName, replacementResource);
+      Assert.assertNull(prev);
+    }
+  }
+
+  public ClassReplacementMapping getClassReplacementMapping() {
+    return classReplacements;
+  }
+
+  public void addClassResource(final String className, final URL resource) {
+    Object prev = this.classResources.put(className, resource);
+    Assert.assertNull(prev);
+  }
+
+  public URL getClassResource(String className) {
+    return (URL) this.classResources.get(className);
   }
 
   private void markAllSpecsPreInstrumented() {

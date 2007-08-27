@@ -10,6 +10,9 @@ import com.tc.asm.Type;
 import com.tc.object.ObjectID;
 import com.tc.util.Assert;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -395,5 +398,43 @@ public class ByteCodeUtil implements Opcodes {
     mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
     mv.visitLdcInsn(msg);
     mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V");
+  }
+  
+  public static final String classNameToFileName(String className) {
+    return className.replace('.', '/') + ".class";
+  }
+  
+  public static final byte[] getBytesForClass(String className, ClassLoader loader) throws ClassNotFoundException {
+    String resource = classNameToFileName(className);
+    InputStream is = loader.getResourceAsStream(resource);
+    if (is == null) { throw new ClassNotFoundException("No resource found for class: " + className); }
+    try {
+      return getBytesForInputstream(is);
+    } catch (IOException e) {
+      throw new ClassNotFoundException("Error reading bytes for " + resource, e);
+    }
+  }
+
+  public static final byte[] getBytesForInputstream(InputStream is) throws IOException {
+    final int size = 4096;
+    byte[] buffer = new byte[size];
+    ByteArrayOutputStream baos = new ByteArrayOutputStream(size);
+
+    int read;
+    try {
+      while ((read = is.read(buffer, 0, size)) > 0) {
+        baos.write(buffer, 0, read);
+      }
+    } finally {
+      if (is != null) {
+        try {
+          is.close();
+        } catch (IOException ioe) {
+          // ignore
+        }
+      }
+    }
+
+    return baos.toByteArray();
   }
 }

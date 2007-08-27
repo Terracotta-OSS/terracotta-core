@@ -35,5 +35,10 @@
       <method-expression>* org.hibernate.collection.PersistentMap.*(..)</method-expression>
       <lock-level>write</lock-level>
     </autolock>
+    <named-lock>
+      <lock-name>__hibernate_cache__EhCacheProvider</lock-name>
+      <method-expression>* org.hibernate.cache.EhCacheProvider.buildCache(..)</method-expression>
+      <lock-level>write</lock-level>
+    </named-lock>
   </locks>
 </xml-fragment>

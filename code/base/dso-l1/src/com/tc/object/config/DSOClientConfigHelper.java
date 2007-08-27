@@ -108,6 +108,8 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   void addReadAutolock(String methodPattern);
 
   void addAutolock(String methodPattern, ConfigLockLevel type);
+  
+  void addAutoLockExcludePattern(String expression);
 
   void addReadAutoSynchronize(String methodPattern);
 
@@ -195,5 +197,6 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   int getSessionLockType(String appName);
 
   Class getTCPeerClass(Class clazz);
-
+  
+  ClassReplacementMapping getClassReplacementMapping();
 }
