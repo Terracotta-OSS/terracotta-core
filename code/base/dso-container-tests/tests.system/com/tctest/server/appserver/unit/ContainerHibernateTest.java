@@ -34,7 +34,7 @@ public class ContainerHibernateTest extends AbstractTwoServerDeploymentTest {
 
   public ContainerHibernateTest() {
     // still doesn't work after the merge
-    disableAllUntil("2007-09-10");
+    //disableAllUntil("2007-09-10");
     
     if (shouldDisable()) {
       disableAllUntil(new Date(Long.MAX_VALUE));

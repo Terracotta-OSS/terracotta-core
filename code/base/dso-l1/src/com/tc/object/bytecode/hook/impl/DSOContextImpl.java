@@ -246,4 +246,8 @@ public class DSOContextImpl implements DSOContext {
   public int getSessionLockType(String appName) {
     return configHelper.getSessionLockType(appName);
   }
+  
+  public URL getClassResource(String className) {
+    return configHelper.getClassResource(className);
+  }
 }

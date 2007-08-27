@@ -41,8 +41,6 @@ public interface StandardDSOClientConfigHelper {
 
   void addClassResource(final String className, final URL resource);
 
-  URL getClassResource(String className);
-
   void addIncludePattern(String expression, boolean honorTransient, boolean oldStyleCallConstructorOnLoad,
                          boolean honorVolatile);
 

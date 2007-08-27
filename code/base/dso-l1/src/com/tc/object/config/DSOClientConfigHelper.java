@@ -21,6 +21,7 @@ import com.tc.object.config.schema.InstrumentedClass;
 import com.tc.object.logging.InstrumentationLogger;
 import com.terracottatech.config.Modules;
 
+import java.net.URL;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -199,4 +200,6 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   Class getTCPeerClass(Class clazz);
   
   ClassReplacementMapping getClassReplacementMapping();
+  
+  URL getClassResource(String className);
 }

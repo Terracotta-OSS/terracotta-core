@@ -6,6 +6,7 @@ package com.tc.object.bytecode.hook;
 import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.object.bytecode.Manager;
 
+import java.net.URL;
 import java.util.Collection;
 
 public interface DSOContext extends ClassProcessor {
@@ -22,5 +23,7 @@ public interface DSOContext extends ClassProcessor {
   public void addTransient(String beanClassName, String fieldName);
 
   public int getSessionLockType(String appName);
+  
+  public URL getClassResource(String className);
 
 }
