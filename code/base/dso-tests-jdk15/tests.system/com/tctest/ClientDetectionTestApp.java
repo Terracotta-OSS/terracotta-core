@@ -30,13 +30,15 @@ import java.util.concurrent.CyclicBarrier;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
+import javax.management.Notification;
+import javax.management.NotificationListener;
 import javax.management.ObjectName;
 
-public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp {
-  public static final String    CONFIG_FILE = "config-file";
-  public static final String    PORT_NUMBER = "port-number";
-  public static final String    HOST_NAME   = "host-name";
-  public static final String    JMX_PORT    = "jmx-port";
+public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp implements NotificationListener {
+  public static final String    CONFIG_FILE     = "config-file";
+  public static final String    PORT_NUMBER     = "port-number";
+  public static final String    HOST_NAME       = "host-name";
+  public static final String    JMX_PORT        = "jmx-port";
 
   private ApplicationConfig     appConfig;
   private JMXConnectorProxy     jmxc;
@@ -46,6 +48,8 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
   private CyclicBarrier         barrier4;
   private CyclicBarrier         barrier3;
   private CyclicBarrier         barrier2;
+
+  private Set                   notificationSet = new HashSet();
 
   public ClientDetectionTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -60,6 +64,7 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
     jmxc = new JMXConnectorProxy("localhost", Integer.valueOf(appConfig.getAttribute(JMX_PORT)));
     mbsc = jmxc.getMBeanServerConnection();
     dsoMBean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO, DSOMBean.class, false);
+    mbsc.addNotificationListener(L2MBeanNames.DSO, this, null, null);
 
     System.out.println("@@@@@@@ I'm online.... id = " + ManagerUtil.getClientID());
 
@@ -159,6 +164,16 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
       l1.barrier2.await();
 
     }
+  }
+
+  public void handleNotification(Notification notification, Object handback) {
+    if ("dso.client.attached".equalsIgnoreCase(notification.getType())) {
+      System.out.println(">>>>> notification: " + notification);
+      Assert.assertFalse("duplicate clients notification found", 
+                        notificationSet.contains(notification.getSource()));
+      notificationSet.add(notification.getSource());
+    }
+
   }
 
 }
