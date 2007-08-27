@@ -458,7 +458,7 @@ public class BootJarTool {
       loadTerracottaClass(TCProperties.class.getName());
       loadTerracottaClass(ClusterEventListener.class.getName());
 
-      // These two classes need to be specified as literal in order to prevent
+      // These classes need to be specified as literal in order to prevent
       // the static block of IdentityWeakHashMap from executing during generating
       // the boot jar.
       loadTerracottaClass("com.tc.object.util.IdentityWeakHashMap");

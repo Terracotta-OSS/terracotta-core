@@ -156,7 +156,8 @@ public class ModulesLoader {
     final List modules = new ArrayList();
 
     // TODO: should use tc properties
-    final String additionalModuleList = System.getProperty("tc.tests.configuration.modules", "");
+    //System.setProperty(EmbeddedOSGiRuntime.TESTS_CONFIG_MODULE_NAMES, "org.terracotta.modules.clustered-apache-struts-1.1-1.1.0.jar,clustered-apache-struts-2.2-2.2.0.jar");
+    final String additionalModuleList = System.getProperty(EmbeddedOSGiRuntime.TESTS_CONFIG_MODULE_NAMES, "");
     final String[] additionalModules = additionalModuleList.split(",");
 
     // clustered-apache-struts-1.1-1.1.0.jar
@@ -169,13 +170,14 @@ public class ModulesLoader {
 
       final Matcher matcher = pattern.matcher(additionalModules[i]);
       if (!matcher.find() || matcher.groupCount() < 3) {
-        logger.error("Invalid module id " + additionalModules[i]);
+        logger.error("Invalid bundle-jar filename " + additionalModules[i] + "; filenames need to match the pattern: "
+                     + pattern.toString());
         continue;
       }
 
       String component = matcher.group(1);
       final String componentVersion = matcher.group(2);
-      final String moduleVersion = matcher.group(3);
+      final String moduleVersion = matcher.group(3).replaceFirst("\\.$", "");
 
       final Module module = Module.Factory.newInstance();
       String groupId = module.getGroupId(); // rely on the constant defined in the schema for the default groupId
@@ -185,6 +187,7 @@ public class ModulesLoader {
         component = component.substring(n + 1);
         module.setGroupId(groupId);
       }
+      
       module.setName(component + "-" + componentVersion);
       module.setVersion(moduleVersion);
       modules.add(module);

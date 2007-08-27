@@ -26,7 +26,8 @@ import java.util.List;
  */
 public interface EmbeddedOSGiRuntime {
 
-  public static final String MODULES_URL_PROPERTY_NAME = "tc.tests.configuration.modules.url";
+  public static final String TESTS_CONFIG_MODULE_REPOSITORIES = "tc.tests.configuration.modules.url";
+  public static final String TESTS_CONFIG_MODULE_NAMES        = "tc.tests.configuration.modules";
 
   URL[] getRepositories();
 
@@ -59,10 +60,9 @@ public interface EmbeddedOSGiRuntime {
         prependLocations.add(defaultRepository);
       }
 
-
       try {
-        if (System.getProperty(MODULES_URL_PROPERTY_NAME) != null) {
-          prependLocations.add(new URL(System.getProperty(MODULES_URL_PROPERTY_NAME)));
+        if (System.getProperty(TESTS_CONFIG_MODULE_REPOSITORIES) != null) {
+          prependLocations.add(new URL(System.getProperty(TESTS_CONFIG_MODULE_REPOSITORIES)));
         }
         final URL[] prependURLs = new URL[prependLocations.size()];
         prependLocations.toArray(prependURLs);

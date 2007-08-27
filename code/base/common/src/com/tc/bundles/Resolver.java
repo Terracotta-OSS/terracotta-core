@@ -123,7 +123,7 @@ public class Resolver {
         for (Iterator j = jarfiles.iterator(); j.hasNext();) {
           final File bundleFile = (File) j.next();
           if (!bundleFile.isFile() || !bundleFile.getName().matches(BUNDLE_FILENAME_PATTERN)) {
-            warn(Message.WARN_FILE_IGNORED_INVALID_NAME, new Object[] { bundleFile.getName() });
+            warn(Message.WARN_FILE_IGNORED_INVALID_NAME, new Object[] { bundleFile.getName(), BUNDLE_FILENAME_PATTERN });
             continue;
           }
 

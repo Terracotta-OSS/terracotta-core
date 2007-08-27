@@ -30,8 +30,8 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
 
   private static final TCLogger logger                        = TCLogging.getLogger(KnopflerfishOSGi.class);
 
-  private static String         KF_BUNDLESTORAGE_PROP         = "org.knopflerfish.framework.bundlestorage";
-  private static String         KF_BUNDLESTORAGE_PROP_DEFAULT = "memory";
+  private static final String   KF_BUNDLESTORAGE_PROP         = "org.knopflerfish.framework.bundlestorage";
+  private static final String   KF_BUNDLESTORAGE_PROP_DEFAULT = "memory";
 
   private final URL[]           repositories;
   private final Framework       framework;
@@ -125,7 +125,7 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     framework.getSystemBundleContext().ungetService(service);
   }
 
-  public void shutdown() { 
+  public void shutdown() {
     if (logger.isDebugEnabled()) {
       info(Message.STOPPING_FRAMEWORK, new Object[0]);
     }
