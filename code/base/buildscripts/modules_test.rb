@@ -25,9 +25,8 @@ class BuildSubtree
     # which we should copy the XML result files for all tests. (This is used for
     # CruiseControl, since we want to be able to point it at a single directory of XML
     # log files from test runs, not one per subtree.)
-    def test_run(static_resources, testrun_results, build_results, build_environment, config_source, jvm_set, ant, platform, test_patterns, aggregation_directory=nil)
-        SubtreeTestRun.new(self, static_resources, buildconfig_properties,
-            testrun_results, build_results, build_environment, config_source, jvm_set, ant, platform, test_patterns, aggregation_directory)
+    def test_run(testrun_results, test_patterns, aggregation_directory=nil)
+        SubtreeTestRun.new(self, buildconfig_properties, testrun_results, test_patterns, aggregation_directory)
     end
 
     def container_home
@@ -275,26 +274,25 @@ class SubtreeTestRun
     # hash (see BuildSubtree#buildconfig_properties, above); test_patterns is an array of Ant-style
     # patterns indicating which tests should be run, and aggregation_directory is a directory to
     # copy the result XML files into when we're done running tests.
-    def initialize(subtree, static_resources, buildconfig, testrun_results, build_results, build_environment, config_source, jvm_set, ant, platform, test_patterns, aggregation_directory)
+    def initialize(subtree, buildconfig, testrun_results, test_patterns, aggregation_directory)
         @subtree = subtree
         @build_module = @subtree.build_module
-        @static_resources = static_resources
+        @static_resources = Registry[:static_resources]
         @buildconfig = buildconfig
         @testrun_results = testrun_results
         @test_patterns = test_patterns
-        @build_results = build_results
-        @build_environment = build_environment
-        @config_source = config_source
+        @build_results = Registry[:build_results]
+        @build_environment = Registry[:build_environment]
+        @config_source = Registry[:config_source]
         @internal_config_source = Registry[:internal_config_source]
-        @ant = ant
-        @platform = platform
+        @ant = Registry[:ant]
+        @platform = Registry[:platform]
         @aggregation_directory = aggregation_directory
-
         @use_dso_boot_jar = buildconfig['include-dso-boot-jar'] =~ /^\s*true\s*$/i
         @needs_dso_boot_jar = @use_dso_boot_jar || (buildconfig['build-dso-boot-jar'] =~ /^\s*true\s*$/i)
-        @timeout = (config_source["test_timeout"] || buildconfig["timeout"] || DEFAULT_TEST_TIMEOUT_SECONDS.to_s).to_i * 1000
+        @timeout = (@config_source["test_timeout"] || buildconfig["timeout"] || DEFAULT_TEST_TIMEOUT_SECONDS.to_s).to_i * 1000
 
-        @extra_jvmargs = config_source.as_array('jvmargs') || []
+        @extra_jvmargs = @config_source.as_array('jvmargs') || []
         if buildconfig['jvmargs']
           jvmargs = buildconfig['jvmargs'].split(/\s*,\s*/)
           # Make sure the heap size settings in the buildconfig override the

@@ -67,6 +67,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
 
     # Our BuildResults object.
     @build_results = BuildResults.new(FilePath.new(basedir, 'build'))
+    Registry[:build_results] = @build_results
 
     # Go get our module set and module groups from the modules.def.yml and associated files.
     built_data = BuildModuleSetBuilder.new(basedir, *module_files).build_modules
@@ -818,10 +819,7 @@ END
 
       test_set.run_on_subtrees(@module_set) do |subtree, test_patterns|
         test_runs[subtree] =
-        subtree.test_run(@static_resources, testrun_results,
-                         @build_results, @build_environment, config_source,
-                         @jvm_set, ant, platform, test_patterns,
-                         tests_aggregation_directory)
+        subtree.test_run(testrun_results, test_patterns, tests_aggregation_directory)
 
         begin
           test_runs[subtree].setUp
