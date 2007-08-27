@@ -22,7 +22,6 @@ import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.io.File;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -60,6 +59,7 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
   protected void runTest() throws Throwable {
     jmxc = new JMXConnectorProxy("localhost", Integer.valueOf(appConfig.getAttribute(JMX_PORT)));
     mbsc = jmxc.getMBeanServerConnection();
+    dsoMBean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO, DSOMBean.class, false);
 
     System.out.println("@@@@@@@ I'm online.... id = " + ManagerUtil.getClientID());
 
@@ -86,7 +86,6 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
   }
 
   private DSOClientMBean[] getDSOClientMBeans() {
-    dsoMBean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO, DSOMBean.class, false);
     ObjectName[] clientObjectNames = dsoMBean.getClients();
     DSOClientMBean[] clients = new DSOClientMBean[clientObjectNames.length];
     for (int i = 0; i < clients.length; i++) {
@@ -116,7 +115,6 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
     FileUtils.forceMkdir(workingDir);
 
     List jvmArgs = new ArrayList();
-    addTestTcPropertiesFile(jvmArgs);
     ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, L1Client.class, configFile
         .getAbsolutePath(), new String[0], workingDir, jvmArgs);
     client.start();
@@ -125,14 +123,6 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
     client.mergeSTDOUT();
 
     return client;
-  }
-
-  private void addTestTcPropertiesFile(List jvmArgs) {
-    URL url = getClass().getResource("/com/tc/properties/tests.properties");
-    if (url == null) { return; }
-    String pathToTestTcProperties = url.getPath();
-    if (pathToTestTcProperties == null || pathToTestTcProperties.equals("")) { return; }
-    jvmArgs.add("-Dcom.tc.properties=" + pathToTestTcProperties);
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
