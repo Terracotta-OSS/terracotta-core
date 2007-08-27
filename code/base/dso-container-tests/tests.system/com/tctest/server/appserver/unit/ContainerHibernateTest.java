@@ -4,6 +4,9 @@
  */
 package com.tctest.server.appserver.unit;
 
+import net.sf.ehcache.Cache;
+import net.sf.jsr107cache.CacheListener;
+
 import org.apache.commons.logging.LogFactory;
 import org.apache.derby.drda.NetworkServerControl;
 import org.apache.log4j.Logger;
@@ -29,6 +32,9 @@ public class ContainerHibernateTest extends AbstractTwoServerDeploymentTest {
   }
 
   public ContainerHibernateTest() {
+    // can't link to clustered-ehcache-commons-1.0
+    disableAllUntil(new Date(Long.MAX_VALUE));
+    
     if (shouldDisable()) {
       disableAllUntil(new Date(Long.MAX_VALUE));
     }
@@ -71,6 +77,8 @@ public class ContainerHibernateTest extends AbstractTwoServerDeploymentTest {
       builder.addDirectoryOrJARContainingClass(org.apache.commons.collections.Buffer.class); // 
       builder.addDirectoryOrJARContainingClass(org.apache.derby.jdbc.ClientDriver.class); // derby*.jar
       builder.addDirectoryOrJARContainingClass(antlr.Tool.class); // antlr*.jar
+      builder.addDirectoryOrJARContainingClass(Cache.class); // ehcache-1.3.0.jar
+      builder.addDirectoryOrJARContainingClass(CacheListener.class); // jsr107cache-1.0.jar
 
       if (AppServerFactory.getCurrentAppServerId() != AppServerFactory.JBOSS) {
         builder.addDirectoryOrJARContainingClass(Logger.class); // log4j
