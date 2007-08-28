@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tcspring;
 
@@ -24,7 +25,7 @@ public class ApplicationHelper {
   private static final String STANDALONE_APP  = "";
 
   // Those prefixes defined in com.tc.object.loaders.Namespace which is not visible from this class
-  private static final String TOMCAT_PREFIX   = "Tomcat.context:/";
+  private static final String TOMCAT_PREFIX   = "Tomcat.";
   private static final String WEBLOGIC_PREFIX = "Weblogic.";
 
   private String              appName;
@@ -41,7 +42,7 @@ public class ApplicationHelper {
         logger.info("Application name " + name);
         if (name != null) {
           if (name.startsWith(TOMCAT_PREFIX)) {
-            name = name.substring(TOMCAT_PREFIX.length());
+            name = name.substring(name.lastIndexOf('/') + 1);
           } else if (name.startsWith(WEBLOGIC_PREFIX)) {
             int n = name.lastIndexOf('@');
             if (n > -1) {

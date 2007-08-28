@@ -1,13 +1,15 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.tomcat.transform;
 
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
-import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
+import com.tc.asm.Type;
+import com.tc.asm.commons.LocalVariablesSorter;
 import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.ClassAdapterFactory;
 
@@ -28,37 +30,45 @@ public class WebAppLoaderAdapter extends ClassAdapter implements ClassAdapterFac
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
     MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
     if ("createClassLoader".equals(name) //
-        && "()Lorg/apache/catalina/loader/WebappClassLoader;".equals(desc)) { return new CreateClassLoaderAdapter(mv); }
+        && "()Lorg/apache/catalina/loader/WebappClassLoader;".equals(desc)) { return new CreateClassLoaderAdapter(
+                                                                                                                  access,
+                                                                                                                  desc,
+                                                                                                                  mv); }
     return mv;
   }
 
-  private static class CreateClassLoaderAdapter extends MethodAdapter implements Opcodes {
+  private static class CreateClassLoaderAdapter extends LocalVariablesSorter implements Opcodes {
 
-    public CreateClassLoaderAdapter(MethodVisitor mv) {
-      super(mv);
+    public CreateClassLoaderAdapter(int access, String desc, MethodVisitor mv) {
+      super(access, desc, mv);
     }
 
     public void visitInsn(int opcode) {
       if (ARETURN == opcode) {
+
+        int slot = newLocal(Type.getObjectType("java/lang/Object"));
+        mv.visitVarInsn(ASTORE, slot);
+
         // name the web app loader
-        mv.visitInsn(DUP);
-        mv.visitTypeInsn(CHECKCAST, ByteCodeUtil.NAMEDCLASSLOADER_CLASS);
+        mv.visitVarInsn(ALOAD, slot);
         mv.visitFieldInsn(GETSTATIC, "com/tc/object/loaders/Namespace", "TOMCAT_NAMESPACE", "Ljava/lang/String;");
-        mv.visitLdcInsn("context:");
         mv.visitVarInsn(ALOAD, 0);
         mv.visitMethodInsn(INVOKEINTERFACE, "org/apache/catalina/Loader", "getContainer",
                            "()Lorg/apache/catalina/Container;");
-        mv.visitMethodInsn(INVOKEINTERFACE, "org/apache/catalina/Container", "getName", "()Ljava/lang/String;");
-        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "concat", "(Ljava/lang/String;)Ljava/lang/String;");
+        mv.visitMethodInsn(INVOKESTATIC, "com/tc/tomcat/LoaderNaming", "getFullyQualifiedName",
+                           "(Lorg/apache/catalina/Container;)Ljava/lang/String;");
         mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/loaders/Namespace", "createLoaderName",
                            "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
-        mv.visitMethodInsn(INVOKEINTERFACE, ByteCodeUtil.NAMEDCLASSLOADER_CLASS, "__tc_setClassLoaderName", "(Ljava/lang/String;)V");
+        mv.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/loaders/NamedClassLoader", "__tc_setClassLoaderName",
+                           "(Ljava/lang/String;)V");
 
         // register the web app loader
-        mv.visitInsn(DUP);
-        mv.visitTypeInsn(CHECKCAST, ByteCodeUtil.NAMEDCLASSLOADER_CLASS);
+        mv.visitVarInsn(ALOAD, slot);
         mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/ClassProcessorHelper",
                            "registerGlobalLoader", "(" + ByteCodeUtil.NAMEDCLASSLOADER_TYPE + ")V");
+
+        // prepare for ARETURN
+        mv.visitVarInsn(ALOAD, slot);
       }
       super.visitInsn(opcode);
     }
