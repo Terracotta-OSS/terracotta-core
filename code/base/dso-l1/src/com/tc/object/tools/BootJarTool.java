@@ -119,6 +119,7 @@ import com.tc.plugins.ModulesLoader;
 import com.tc.properties.TCProperties;
 import com.tc.session.SessionSupport;
 import com.tc.text.Banner;
+import com.tc.tomcat.TomcatLoaderNaming;
 import com.tc.util.AbstractIdentifier;
 import com.tc.util.Assert;
 import com.tc.util.DebugUtil;
@@ -432,6 +433,7 @@ public class BootJarTool {
       loadTerracottaClass(JBossLoaderNaming.class.getName());
       loadTerracottaClass(JettyLoaderNaming.class.getName());
       loadTerracottaClass(WebsphereLoaderNaming.class.getName());
+      loadTerracottaClass(TomcatLoaderNaming.class.getName());
       loadTerracottaClass(TCLogger.class.getName());
       loadTerracottaClass(Banner.class.getName());
       loadTerracottaClass(StandardClassProvider.class.getName());

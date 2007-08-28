@@ -55,8 +55,8 @@ public class WebAppLoaderAdapter extends ClassAdapter implements ClassAdapterFac
         mv.visitVarInsn(ALOAD, 0);
         mv.visitMethodInsn(INVOKEINTERFACE, "org/apache/catalina/Loader", "getContainer",
                            "()Lorg/apache/catalina/Container;");
-        mv.visitMethodInsn(INVOKESTATIC, "com/tc/tomcat/LoaderNaming", "getFullyQualifiedName",
-                           "(Lorg/apache/catalina/Container;)Ljava/lang/String;");
+        mv.visitMethodInsn(INVOKESTATIC, "com/tc/tomcat/TomcatLoaderNaming", "getFullyQualifiedName",
+                           "(Ljava/lang/Object;)Ljava/lang/String;");
         mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/loaders/Namespace", "createLoaderName",
                            "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
         mv.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/loaders/NamedClassLoader", "__tc_setClassLoaderName",

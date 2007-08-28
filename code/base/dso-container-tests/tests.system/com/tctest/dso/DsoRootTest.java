@@ -21,10 +21,6 @@ public class DsoRootTest extends AbstractTwoServerDeploymentTest {
   private static final String CONTEXT             = "DsoRootTest";
   private static final String MAPPING             = "count";
 
-  public DsoRootTest() {
-    disableAllUntil("2007-09-10");
-  }
-  
   public static Test suite() {
     return new DsoRootTestSetup();
   }
@@ -70,7 +66,7 @@ public class DsoRootTest extends AbstractTwoServerDeploymentTest {
 
       String methodExpression = "* " + RootCounterServlet.class.getName() + "$Counter.*(..)";
       tcConfigBuilder.addAutoLock(methodExpression, "write");
-      
+
       tcConfigBuilder.addInstrumentedClass(RootCounterServlet.class.getName() + "$Counter", false);
     }
 

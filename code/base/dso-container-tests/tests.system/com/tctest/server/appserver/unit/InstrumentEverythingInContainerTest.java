@@ -21,10 +21,6 @@ public class InstrumentEverythingInContainerTest extends AbstractDeploymentTest 
   private static final String CONTEXT = "OkServlet";
   private Deployment          deployment;
 
-  public InstrumentEverythingInContainerTest() {
-    disableAllUntil("2007-09-10");
-  }
-  
   public static Test suite() {
     return new ServerTestSetup(InstrumentEverythingInContainerTest.class);
   }
@@ -42,7 +38,7 @@ public class InstrumentEverythingInContainerTest extends AbstractDeploymentTest 
     TcConfigBuilder tcConfigBuilder = new TcConfigBuilder();
     tcConfigBuilder.addInstrumentedClass("*..*");
     // These bytes are obfuscated and get verify errors when instrumented by DSO
-    tcConfigBuilder.addExclude("com.sun.crypto.provider..*");    
+    tcConfigBuilder.addExclude("com.sun.crypto.provider..*");
 
     WebApplicationServer server = makeWebApplicationServer(tcConfigBuilder);
     server.addWarDeployment(deployment, CONTEXT);
