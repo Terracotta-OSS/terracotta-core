@@ -480,7 +480,7 @@ Dir.foreach( "." ) { |dir|
                   <jdk>J2SE-1.4</jdk>
                 </option>
                 <option>
-                  <module>modules-common-1.0</module>
+                  <module>modules-common</module>
                   <jdk>J2SE-1.4</jdk>
                   <isModule>true</isModule>
                 </option>
@@ -599,7 +599,7 @@ Dir.foreach( "." ) { |dir|
                     <module>clustered-jetty-6.1</module>
                     <module>clustered-iBatis-2.2.0</module>
                     <module>clustered-hibernate-3.1.2</module>
-                    <module>modules-common-1.0</module>
+                    <module>modules-common</module>
 	              </modules>
 	            </moduleGroup>
 	            <moduleGroup>
