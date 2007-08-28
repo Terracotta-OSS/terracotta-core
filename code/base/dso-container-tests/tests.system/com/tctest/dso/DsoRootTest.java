@@ -21,6 +21,10 @@ public class DsoRootTest extends AbstractTwoServerDeploymentTest {
   private static final String CONTEXT             = "DsoRootTest";
   private static final String MAPPING             = "count";
 
+  public DsoRootTest() {
+    disableAllUntil("2007-09-10");
+  }
+  
   public static Test suite() {
     return new DsoRootTestSetup();
   }

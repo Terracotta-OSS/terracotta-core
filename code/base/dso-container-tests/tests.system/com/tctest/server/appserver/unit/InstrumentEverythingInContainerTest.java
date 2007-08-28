@@ -21,6 +21,10 @@ public class InstrumentEverythingInContainerTest extends AbstractDeploymentTest 
   private static final String CONTEXT = "OkServlet";
   private Deployment          deployment;
 
+  public InstrumentEverythingInContainerTest() {
+    disableAllUntil("2007-09-10");
+  }
+  
   public static Test suite() {
     return new ServerTestSetup(InstrumentEverythingInContainerTest.class);
   }
