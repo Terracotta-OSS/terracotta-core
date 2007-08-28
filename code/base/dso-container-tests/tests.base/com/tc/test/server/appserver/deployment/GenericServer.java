@@ -48,6 +48,7 @@ import javax.management.MBeanServerConnection;
 import junit.framework.Assert;
 
 public class GenericServer extends AbstractStoppable implements WebApplicationServer {
+  private static final String               SERVER          = "server_";
   private static final boolean              GC_LOGGGING     = false;
   private static final boolean              ENABLE_DEBUGGER = false;
 
@@ -60,6 +61,8 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
   private final AppServerInstallation       installation;
   private final Map                         proxyBuilderMap = new HashMap();
   private ProxyBuilder                      proxyBuilder    = null;
+  private File                              workingDir;
+  private String                            serverInstanceName;
 
   public GenericServer(TestConfigObject config, AppServerFactory factory, AppServerInstallation installation,
                        FileSystemPath tcConfigPath, int serverId, File tempDir) throws Exception {
@@ -71,10 +74,10 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     this.factory = factory;
     this.installation = installation;
     this.rmiRegistryPort = AppServerUtil.getPort();
-    this.jmxRemotePort = AppServerUtil.getPort();
-    int appId = AppServerFactory.getCurrentAppServerId();
-
-    parameters = (StandardAppServerParameters) factory.createParameters("server_" + serverId);
+    this.jmxRemotePort = AppServerUtil.getPort();    
+    this.serverInstanceName = SERVER + serverId;
+    this.parameters = (StandardAppServerParameters) factory.createParameters(serverInstanceName);
+    this.workingDir = new File(installation.sandboxDirectory(), serverInstanceName);
 
     File bootJarFile = new File(config.normalBootJar());
     File tcConfigFile = new File(tempDir, "tc-config.xml");
@@ -89,7 +92,8 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     if (!Vm.isIBM() && !(Os.isMac() && Vm.isJDK14())) {
       parameters.appendJvmArgs("-XX:+HeapDumpOnOutOfMemoryError");
     }
-
+    
+    int appId = AppServerFactory.getCurrentAppServerId();
     // glassfish fails with these options on
     if (appId != AppServerFactory.GLASSFISH) {
       parameters.appendSysProp("com.sun.management.jmxremote");
@@ -117,7 +121,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     switch (appId) {
       case AppServerFactory.TOMCAT:
       case AppServerFactory.JBOSS:
-        parameters.appendJvmArgs("-Djvmroute=" + "server_" + serverId);
+        parameters.appendJvmArgs("-Djvmroute=" + serverInstanceName);
         break;
       case AppServerFactory.WEBSPHERE:
         parameters.appendSysProp("javax.management.builder.initial", "");
@@ -146,7 +150,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
       parameters.appendJvmArgs("-verbose:gc");
       parameters.appendJvmArgs("-XX:+PrintGCDetails");
       parameters.appendJvmArgs("-Xloggc:"
-                               + new File(this.installation.sandboxDirectory(), "server_" + serverId + "-gc.log")
+                               + new File(this.installation.sandboxDirectory(), serverInstanceName + "-gc.log")
                                    .getAbsolutePath());
     }
 
@@ -340,5 +344,9 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
 
   public String toString() {
     return "Generic Server" + (result != null ? "; port:" + result.serverPort() : "");
+  }
+
+  public File getWorkingDirectory() {
+    return workingDir;
   }
 }

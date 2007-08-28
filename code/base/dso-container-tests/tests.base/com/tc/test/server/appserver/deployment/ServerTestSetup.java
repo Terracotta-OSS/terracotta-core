@@ -12,9 +12,10 @@ import junit.framework.TestSuite;
 
 public class ServerTestSetup extends TestSetup {
 
-  private final Class   testClass;
+  private final Class   testClass;  
   private ServerManager sm;
-  protected boolean     persistentMode = false;
+  protected boolean     persistentMode   = false;
+  
 
   public ServerTestSetup(Class testClass) {
     super(new TestSuite(testClass));
@@ -67,5 +68,4 @@ public class ServerTestSetup extends TestSetup {
     }
     return false;
   }
-
 }
