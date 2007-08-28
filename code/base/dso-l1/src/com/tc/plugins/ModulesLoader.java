@@ -145,8 +145,8 @@ public class ModulesLoader {
     moduleList.addAll(Arrays.asList(modules));
 
     final Module[] allModules = (Module[]) moduleList.toArray(new Module[moduleList.size()]);
-    final Resolver resolver = new Resolver(osgiRuntime.getRepositories(), allModules);
-    final URL[] locations = resolver.resolve();
+    final Resolver resolver = new Resolver(osgiRuntime.getRepositories());
+    final URL[] locations = resolver.resolve(allModules);
 
     osgiRuntime.installBundles(locations);
     osgiRuntime.startBundles(locations, handler);

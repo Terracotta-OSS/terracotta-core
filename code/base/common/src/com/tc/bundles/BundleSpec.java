@@ -16,31 +16,30 @@ import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-// ---------------------------------------------------------------------------------------------------------------------------
-//
-// Here's how you specify required-bundles...
-//
-// SYNTAX:
-// Require-Bundle ::= bundle {, bundle...}
-// bundle ::= symbolic-name{;bundle-version:="constraint"{;resolution:=optional}}
-// constraint ::= [range] || (range)
-// range ::= min, {max}
-// 
-// EXAMPLES:
-// Require-Bundle: foo.bar.baz.widget - require widget bundle from group foo.bar.baz
-// Require-Bundle: foo.bar.baz.widget, foo.bar.baz.gadget - require widget and gadget bundles
-// Require-Bundle: foo.bar.baz.widget;bundle-version:="1.0.0" - widget bundle must be version 1.0.0
-// Require-Bundle: foo.bar.baz.widget;bundle-version:="[1.0.0, 2.0.0]" - bundle version must > 1.0.0 and < 2.0.0
-// Require-Bundle: foo.bar.baz.widget;bundle-version:="[1.0.0, 2.0.0)" - bundle version must > 1.0.0 and <= 2.0.0
-// Require-Bundle: foo.bar.baz.widget;bundle-version:="(1.0.0, 2.0.0)" - bundle version must >= 1.0.0 and <= 2.0.0
-// Require-Bundle: foo.bar.baz.widget;bundle-version:="(1.0.0, 2.0.0]" - bundle version must >= 1.0.0 and < 2.0.0
-// Require-Bundle: foo.bar.baz.widget;bundle-version:="[1.0.0,]" - bundle version must > 1.0.0
-// Require-Bundle: foo.bar.baz.widget;bundle-version:="(1.0.0,)" - bundle version must >= 1.0.0
-// Require-Bundle: foo.bar.baz.widget;resolution:=optional - bundle is optional (recognized but not supported)
-//
-// ---------------------------------------------------------------------------------------------------------------------------
-
-final class BundleSpec {
+/**
+ * Specification for the Require-Bundle attribute
+ *  
+ * <pre>
+ * SYNTAX:
+ * Require-Bundle ::= bundle {, bundle...}
+ * bundle ::= symbolic-name{;bundle-version:="constraint"{;resolution:=optional}}
+ * constraint ::= [range] || (range)
+ * range ::= min, {max}
+ * 
+ * EXAMPLES:
+ * Require-Bundle: foo.bar.baz.widget - require widget bundle from group foo.bar.baz
+ * Require-Bundle: foo.bar.baz.widget, foo.bar.baz.gadget - require widget and gadget bundles
+ * Require-Bundle: foo.bar.baz.widget;bundle-version:="1.0.0" - widget bundle must be version 1.0.0
+ * Require-Bundle: foo.bar.baz.widget;bundle-version:="[1.0.0, 2.0.0]" - bundle version must > 1.0.0 and < 2.0.0
+ * Require-Bundle: foo.bar.baz.widget;bundle-version:="[1.0.0, 2.0.0)" - bundle version must > 1.0.0 and <= 2.0.0
+ * Require-Bundle: foo.bar.baz.widget;bundle-version:="(1.0.0, 2.0.0)" - bundle version must >= 1.0.0 and <= 2.0.0
+ * Require-Bundle: foo.bar.baz.widget;bundle-version:="(1.0.0, 2.0.0]" - bundle version must >= 1.0.0 and < 2.0.0
+ * Require-Bundle: foo.bar.baz.widget;bundle-version:="[1.0.0,]" - bundle version must > 1.0.0
+ * Require-Bundle: foo.bar.baz.widget;bundle-version:="(1.0.0,)" - bundle version must >= 1.0.0
+ * Require-Bundle: foo.bar.baz.widget;resolution:=optional - bundle is optional (recognized but not supported)
+ * </pre>
+ */
+public final class BundleSpec {
   private static final String PROP_KEY_RESOLUTION         = "resolution";
   private static final String PROP_KEY_BUNDLE_VERSION     = "bundle-version";
   private static final String REQUIRE_BUNDLE_EXPR_MATCHER = "([A-Za-z0-9._\\-]+(;resolution:=\"optional\")?(;bundle-version:=(\"[A-Za-z0-9.]+\"|\"\\[[A-Za-z0-9.]+,[A-Za-z0-9.]+\\]\"))?)";
@@ -57,8 +56,7 @@ final class BundleSpec {
 
     final List list = new ArrayList();
     final String spec = source.replaceAll(" ", "");
-    final String regex = REQUIRE_BUNDLE_EXPR_MATCHER;
-    final Pattern pattern = Pattern.compile(regex);
+    final Pattern pattern = Pattern.compile(REQUIRE_BUNDLE_EXPR_MATCHER);
     final Matcher matcher = pattern.matcher(spec);
     final StringBuffer check = new StringBuffer();
 

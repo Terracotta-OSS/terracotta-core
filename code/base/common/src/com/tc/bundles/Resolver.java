@@ -44,16 +44,13 @@ public class Resolver {
                                                             + BUNDLE_FILENAME_EXT_REGEX + "$";
 
   private URL[]               repositories;
-  private Module[]            modules;
-  private List                registry;
+  private List                registry                  = new ArrayList();
 
-  public Resolver(final URL[] repositories, final Module[] modules) {
+  public Resolver(final URL[] repositories) {
     this.repositories = repositories;
-    this.modules = modules;
-    this.registry = new ArrayList();
   }
 
-  public final URL[] resolve() throws BundleException {
+  public final URL[] resolve(Module[] modules) throws BundleException {
     for (int i = 0; i < modules.length; i++) {
       final URL location = resolveLocation(modules[i]);
       if (location == null) {
@@ -89,26 +86,31 @@ public class Resolver {
       final BundleSpec spec = new BundleSpec(requirements[i]);
       URL required = findInRegistry(spec);
       if (required == null) {
-        required = addToRegistry(spec);
+        required = resolveBundle(spec);
         if (required == null) {
           final String msg = error(Message.ERROR_BUNDLE_DEPENDENCY_UNRESOLVED, new Object[] { spec.getName(),
               spec.getVersion(), spec.getGroupId() });
           throw new MissingBundleException(msg);
         }
+        addToRegistry(required, getManifest(required));
       }
+      
+      // TODO do we really need to resolve it again if already found in the registry?
       resolveDependencies(required);
     }
-    
+
     addToRegistry(location, manifest);
   }
 
   private final URL addToRegistry(final URL location, final Manifest manifest) {
     final Entry entry = new Entry(location, manifest);
-    if (!registry.contains(entry)) registry.add(entry);
+    if (!registry.contains(entry)) {
+      registry.add(entry);
+    }
     return entry.getLocation();
   }
 
-  private final URL addToRegistry(BundleSpec spec) {
+  protected URL resolveBundle(BundleSpec spec) {
     for (int i = 0; i < repositories.length; i++) {
       final URL location = repositories[i];
       // TODO: support other protocol besides file://
@@ -137,7 +139,7 @@ public class Resolver {
           final String version = manifest.getMainAttributes().getValue(BUNDLE_VERSION);
           if (spec.isCompatible(symname, version)) {
             try {
-              return addToRegistry(bundleFile.toURL(), manifest);
+              return bundleFile.toURL();
             } catch (MalformedURLException e) {
               error(Message.ERROR_BUNDLE_MALFORMED_URL, new Object[] { bundleFile.getName() }); // should be fatal???
               return null;
@@ -189,7 +191,7 @@ public class Resolver {
     return resolveLocation(name, version, groupId);
   }
 
-  private final URL resolveLocation(final String name, final String version, final String groupId) {
+  protected URL resolveLocation(final String name, final String version, final String groupId) {
     final String base = groupId.replace('.', File.separatorChar);
     final String path = MessageFormat.format("{2}{3}{0}{3}{1}{3}" + BUNDLE_PATH, new String[] { name, version, base,
         File.separator });
@@ -219,6 +221,7 @@ public class Resolver {
     return null;
   }
 
+  // XXX it is a very bad idea to use URL to calculate hashcode
   private class Entry {
     private URL      location;
     private Manifest manifest;
