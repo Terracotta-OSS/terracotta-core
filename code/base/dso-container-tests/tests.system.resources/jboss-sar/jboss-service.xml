@@ -1,4 +1,9 @@
 <server>
+    <loader-repository>
+        com.tctest.service:loader=directory-monitor.sar
+        <loader-repository-config>java2ParentDelegation=false</loader-repository-config>
+    </loader-repository> 
+    
   <mbean code="com.tctest.service.DirectoryMonitor" 
          name="service.directory.monitor:service=Monitor">
     <attribute name="ScanRate">1000</attribute>

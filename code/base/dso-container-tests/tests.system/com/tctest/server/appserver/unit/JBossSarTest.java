@@ -27,7 +27,7 @@ public class JBossSarTest extends AbstractTwoServerDeploymentTest {
       disableAllUntil(new Date(Long.MAX_VALUE));
     }
   }
-  
+
   public static Test suite() {
     return new JBossSarTestSetup();
   }
@@ -45,12 +45,11 @@ public class JBossSarTest extends AbstractTwoServerDeploymentTest {
     sar.putEntry("META-INF/jboss-service.xml", readResource("/jboss-sar/jboss-service.xml"));
     sar.finish();
 
-    System.out.println("NOTHING TO DO");
     File deploy = new File(server0.getWorkingDirectory(), "deploy");
     FileUtils.copyFileToDirectory(sarFile, deploy);
     deploy = new File(server1.getWorkingDirectory(), "deploy");
     FileUtils.copyFileToDirectory(sarFile, deploy);
-    Thread.sleep(60 * 1000);
+    Thread.sleep(5000);
   }
 
   private byte[] readResource(String name) throws Exception {
