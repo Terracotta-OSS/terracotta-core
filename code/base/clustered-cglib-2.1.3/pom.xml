@@ -14,7 +14,7 @@
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>modules-common-1.0</artifactId>
+      <artifactId>modules-common</artifactId>
     </dependency>
   </dependencies>
 </project>

@@ -9,8 +9,8 @@
     <version>2.3-SNAPSHOT</version>
     <relativePath>../parent14</relativePath>
   </parent>
-  <artifactId>modules-common-1.0</artifactId>
-  <name>modules-common-1.0</name>
+  <artifactId>modules-common</artifactId>
+  <name>modules-common</name>
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>
