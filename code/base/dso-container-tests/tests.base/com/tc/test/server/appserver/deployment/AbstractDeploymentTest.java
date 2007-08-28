@@ -32,8 +32,8 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   private static final int TIMEOUT_DEFAULT     = 30 * 60;
 
   public AbstractDeploymentTest() {
-    boolean glassFishOrJetty = AppServerFactory.currentAppServerBelongsTo(AppServerFactory.GLASSFISH
-                                                                          | AppServerFactory.JETTY);
+    int id = AppServerFactory.getCurrentAppServerId();
+    boolean glassFishOrJetty = (id == AppServerFactory.GLASSFISH || id == AppServerFactory.JETTY);
     if (isSessionTest() && glassFishOrJetty) {
       disableAllUntil(new Date(Long.MAX_VALUE));
     }

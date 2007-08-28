@@ -34,8 +34,8 @@ public class ContainerHibernateTest extends AbstractTwoServerDeploymentTest {
 
   public ContainerHibernateTest() {
     // still doesn't work after the merge
-    //disableAllUntil("2007-09-10");
-    
+    // disableAllUntil("2007-09-10");
+
     if (shouldDisable()) {
       disableAllUntil(new Date(Long.MAX_VALUE));
     }
@@ -43,9 +43,8 @@ public class ContainerHibernateTest extends AbstractTwoServerDeploymentTest {
 
   public boolean shouldDisable() {
     // MNK-287
-    boolean wasceOrWebSphere = AppServerFactory.currentAppServerBelongsTo(AppServerFactory.WASCE
-                                                                          | AppServerFactory.WEBSPHERE);
-
+    int id = AppServerFactory.getCurrentAppServerId();
+    boolean wasceOrWebSphere = (id == AppServerFactory.WASCE || id == AppServerFactory.WEBSPHERE);
     return super.shouldDisable() || wasceOrWebSphere;
   }
 
@@ -81,7 +80,6 @@ public class ContainerHibernateTest extends AbstractTwoServerDeploymentTest {
       builder.addDirectoryOrJARContainingClass(Cache.class); // ehcache-1.3.0.jar
       builder.addDirectoryOrJARContainingClass(CacheListener.class); // jsr107cache-1.0.jar
       builder.addDirectoryOrJARContainingClass(TimeExpiryMemoryStore.class); // ehcache-commons-1.0
-      
 
       if (AppServerFactory.getCurrentAppServerId() != AppServerFactory.JBOSS) {
         builder.addDirectoryOrJARContainingClass(Logger.class); // log4j
