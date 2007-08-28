@@ -3,10 +3,10 @@
 	<classpathentry kind="src" output="build.eclipse/src.classes" path="src"/>
 	<classpathentry kind="src" output="build.eclipse/src.classes" path="src.resources"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/modules-common-1.0"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
 	<classpathentry kind="lib" path="/dependencies/lib/osgi_R4_core-1.0.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/modules-common"/>
 	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
 </classpath>

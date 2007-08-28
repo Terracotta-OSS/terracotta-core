@@ -46,7 +46,7 @@ modules:
         - common-api
         - common
         - thirdparty-api
-  - modules-common-1.0:
+  - modules-common:
       options:
         jdk: J2SE-1.4
         module: true
@@ -420,7 +420,7 @@ modules:
         jdk: J2SE-1.4
         module: true
       dependencies:
-        - modules-common-1.0
+        - modules-common
         - aspectwerkz
         - linked-child-process
         - common-api
@@ -441,7 +441,7 @@ modules:
         jdk: J2SE-1.4
         module: true
       dependencies:
-        - modules-common-1.0
+        - modules-common
         - aspectwerkz
         - dso-common
         - dso-l1-api
@@ -471,7 +471,7 @@ modules:
         - thirdparty-api
         - thirdparty
         - legacy-test-tree
-        - modules-common-1.0
+        - modules-common
   - clustered-commons-collections-3.1:
       options:
         jdk: J2SE-1.5
@@ -498,7 +498,7 @@ modules:
         jdk: J2SE-1.4
         module: true
       dependencies:
-        - modules-common-1.0
+        - modules-common
         - aspectwerkz
         - linked-child-process
         - common-api
@@ -520,7 +520,7 @@ modules:
         jdk: J2SE-1.4
         module: true
       dependencies:
-        - modules-common-1.0
+        - modules-common
         - clustered-cglib-2.1.3
         - aspectwerkz
         - linked-child-process
@@ -549,7 +549,7 @@ modules:
         - common
         - common-api
         - dso-common
-        - modules-common-1.0
+        - modules-common
         - thirdparty
         - thirdparty-api
         - simulator
@@ -560,7 +560,7 @@ modules:
         jdk: J2SE-1.4
         module: true
       dependencies:
-        - modules-common-1.0
+        - modules-common
         - aspectwerkz
         - linked-child-process
         - common-api
@@ -583,7 +583,7 @@ modules:
         jdk: J2SE-1.4
         module: true
       dependencies:
-        - modules-common-1.0
+        - modules-common
         - aspectwerkz
         - linked-child-process
         - common-api
@@ -606,7 +606,7 @@ modules:
         jdk: J2SE-1.4
         module: true
       dependencies:
-        - modules-common-1.0
+        - modules-common
         - clustered-cglib-2.1.3
         - aspectwerkz
         - linked-child-process
@@ -631,7 +631,7 @@ modules:
         jdk: J2SE-1.5
         module: true
       dependencies:
-        - modules-common-1.0
+        - modules-common
         - aspectwerkz
         - linked-child-process
         - common-api
@@ -655,7 +655,7 @@ modules:
         - common-api
         - dso-l1-api
         - thirdparty-api
-        - modules-common-1.0
+        - modules-common
   - dso-container-tests:
       options:
         jdk: J2SE-1.4
@@ -666,7 +666,7 @@ modules:
         - common
         - dso-common
         - management
-        - modules-common-1.0
+        - modules-common
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
@@ -685,7 +685,7 @@ modules:
         jdk: J2SE-1.5
         module: true
       dependencies:
-        - modules-common-1.0
+        - modules-common
         - aspectwerkz
         - linked-child-process
         - common
@@ -729,7 +729,7 @@ modules:
         - thirdparty
         - legacy-test-tree
         - dso-container-tests
-        - modules-common-1.0
+        - modules-common
   - dso-spring-tests:
       options:
         jdk: J2SE-1.4
@@ -779,10 +779,8 @@ modules:
         - dso-spring-tests
         - simulator
         - thirdparty-api
-        - thirdparty
-        - legacy-test-tree
         - dso-container-tests
-        
+        - modules-common
 # these groups are used by the monkeys to run tests in each module.
 module-groups:
   container:
@@ -832,7 +830,7 @@ module-groups:
     - clustered-hibernate-3.1.2
     - clustered-websphere-6.1.0.7
     - clustered-wicket-1.3
-    - modules-common-1.0
+    - modules-common
   gui:
     - ui-configurator
     - ui-eclipse

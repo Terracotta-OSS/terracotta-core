@@ -9,7 +9,7 @@ bundled_components:
             modules:
               - common-api
               - dso-l1-api
-              - modules-common-1.0
+              - modules-common
               - thirdparty-api
         - tc.test-compile-version-PREALPHA:
             source: tests.base

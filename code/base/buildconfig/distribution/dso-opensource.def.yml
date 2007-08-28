@@ -89,7 +89,7 @@ bundled_components:
             exclude-runtime-libraries: true
         - linked-child-process
         - management
-        - modules-common-1.0
+        - modules-common
         - thirdparty
         - thirdparty-api
         - ui-configurator
@@ -102,15 +102,16 @@ bundled_modules:
         - clustered-commons-collections-3.1
         - clustered-ehcache-1.2.4
         - clustered-ehcache-1.3
+        - clustered-ehcache-commons-1.0
         - clustered-hibernate-3.1.2
         - clustered-iBatis-2.2.0
         - clustered-jetty-6.1
         - clustered-lucene-2.0.0
         - clustered-rife-1.6.0
+        - clustered-surefire-2.3
         - clustered-websphere-6.1.0.7
         - clustered-wicket-1.3
-        - clustered-surefire-2.3
-        - modules-common-1.0
+        - modules-common
 packaging:
   - tar:
       assert: '@build_environment.os_type !~ /^\s*windows\s*$/i'
