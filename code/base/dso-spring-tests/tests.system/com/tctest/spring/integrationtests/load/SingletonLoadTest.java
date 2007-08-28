@@ -8,7 +8,6 @@ import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
-import com.tc.util.runtime.Os;
 import com.tctest.spring.bean.ISingleton;
 import com.tctest.spring.integrationtests.SpringDeploymentTest;
 
@@ -28,28 +27,18 @@ public class SingletonLoadTest extends SpringDeploymentTest {
   private String              CONTEXT                       = "test-singleton";
 
   private Deployment          deployment;
-  
+
   public static Test suite() {
     return new ServerTestSetup(SingletonLoadTest.class);
   }
-  
+
   protected void setUp() throws Exception {
     super.setUp();
     if (deployment == null) deployment = makeDeployment();
   }
 
-  public void testTwoNodeSingletonLoad() throws Exception {
-    runNodes(2);
-  }
-
   public void testFourNodeSingletonLoad() throws Exception {
     runNodes(4);
-  }
-
-  public void testEightNodeSingletonLoad() throws Exception {
-    if (!Os.isSolaris()) {
-      runNodes(8);
-    }
   }
 
   /*

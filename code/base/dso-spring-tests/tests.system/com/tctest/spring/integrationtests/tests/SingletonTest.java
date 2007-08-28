@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.spring.integrationtests.tests;
 
@@ -31,23 +32,15 @@ public class SingletonTest extends SpringDeploymentTest {
   public static Test suite() {
     return new ServerTestSetup(SingletonTest.class);
   }
-  
+
   protected void setUp() throws Exception {
     super.setUp();
     if (deployment == null) deployment = makeDeployment();
   }
 
-  public void testSingleton2() throws Exception {
-    runNodes(2);
-  }
-
   public void testSingleton4() throws Exception {
     runNodes(4);
   }
-
-//  public void testSingleton8() throws Exception {
-//    runNodes(8);
-//  }
 
   private void runNodes(int nodeCount) throws Exception {
     List servers = new ArrayList();
@@ -59,7 +52,7 @@ public class SingletonTest extends SpringDeploymentTest {
       servers.add(server);
     }
 
-//    ((WebApplicationServer) servers.get(0)).ping(url);
+    // ((WebApplicationServer) servers.get(0)).ping(url);
 
     WebApplicationServer prev = null;
     for (Iterator iter = servers.iterator(); iter.hasNext();) {
