@@ -49,7 +49,7 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
   private CyclicBarrier         barrier3;
   private CyclicBarrier         barrier2;
 
-  private Set                   notificationSet = new HashSet();
+  private Set                   channelIdSet = new HashSet();
 
   public ClientDetectionTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -64,8 +64,9 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
     jmxc = new JMXConnectorProxy("localhost", Integer.valueOf(appConfig.getAttribute(JMX_PORT)));
     mbsc = jmxc.getMBeanServerConnection();
     dsoMBean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO, DSOMBean.class, false);
+    getCurrentChannelIds();
     mbsc.addNotificationListener(L2MBeanNames.DSO, this, null, null);
-
+    
     System.out.println("@@@@@@@ I'm online.... id = " + ManagerUtil.getClientID());
 
     ExtraL1ProcessControl client1 = spawnNewClient(1);
@@ -100,11 +101,18 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
     return clients;
   }
 
+  private void getCurrentChannelIds() {
+    for (DSOClientMBean c : getDSOClientMBeans()) {
+      channelIdSet.add(String.valueOf(c.getChannelID().toLong()));
+    }
+  }
+  
   private void assertClientPresent(DSOClientMBean[] clientMBeans, int expectedCount) throws Exception {
     ThreadUtil.reallySleep(5000);
     System.out.println("assertClientPresent: expectedCount = " + expectedCount);
     Set set = new HashSet<String>();
     for (DSOClientMBean bean : clientMBeans) {
+      System.out.println("got channel Id from dso bean: " + bean.getChannelID().toLong());
       set.add(bean.getChannelID().toString() + bean.getRemoteAddress());
     }
     System.out.println(set);
@@ -168,10 +176,15 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
 
   public void handleNotification(Notification notification, Object handback) {
     if ("dso.client.attached".equalsIgnoreCase(notification.getType())) {
-      System.out.println(">>>>> notification: " + notification);
+      // extract channel id
+      String source = notification.getSource().toString();
+      int index = source.lastIndexOf('=');
+      String channelId = source.substring(index + 1);
+      
+      System.out.println(">>>>> notification of channelId: " + channelId);
       Assert.assertFalse("duplicate clients notification found", 
-                        notificationSet.contains(notification.getSource()));
-      notificationSet.add(notification.getSource());
+                        channelIdSet.contains(channelId));
+      channelIdSet.add(channelId);
     }
 
   }
