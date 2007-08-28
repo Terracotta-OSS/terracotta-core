@@ -1,2 +1,2 @@
 # specify test pattern here, one per line
-SimpleSessionTest
+ContainerWicketTest
