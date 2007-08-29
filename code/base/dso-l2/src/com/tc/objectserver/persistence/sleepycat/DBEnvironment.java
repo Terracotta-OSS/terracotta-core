@@ -40,6 +40,7 @@ public class DBEnvironment {
   private static final String              OBJECTID_SEQUENCE_NAME       = "objectids";
   private static final String              ROOT_DB_NAME                 = "roots";
   private static final String              OBJECT_DB_NAME               = "objects";
+  private static final String              OID_DB_NAME                  = "oids";
 
   private static final String              CLIENTID_SEQUENCE_NAME       = "clientids";
   private static final String              CLIENT_STATE_DB_NAME         = "clientstates";
@@ -144,6 +145,7 @@ public class DBEnvironment {
       this.catalog = new ClassCatalogWrapper(env, dbcfg);
       newDatabase(env, OBJECTID_SEQUENCE_NAME);
       newDatabase(env, OBJECT_DB_NAME);
+      newDatabase(env, OID_DB_NAME);
       newDatabase(env, ROOT_DB_NAME);
 
       newDatabase(env, CLIENTID_SEQUENCE_NAME);
@@ -250,6 +252,11 @@ public class DBEnvironment {
   public synchronized Database getObjectDatabase() throws TCDatabaseException {
     assertOpen();
     return (Database) databasesByName.get(OBJECT_DB_NAME);
+  }
+
+  public synchronized Database getOidDatabase() throws TCDatabaseException {
+    assertOpen();
+    return (Database) databasesByName.get(OID_DB_NAME);
   }
 
   public synchronized ClassCatalogWrapper getClassCatalogWrapper() throws TCDatabaseException {
