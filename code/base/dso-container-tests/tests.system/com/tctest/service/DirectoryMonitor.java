@@ -9,8 +9,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class DirectoryMonitor implements DirectoryMonitorMBean {
+  private static Log log       = LogFactory.getLog(DirectoryMonitor.class);
   private long       scanRate  = 1000L;
   private String     directory = ".";
   private Thread     scanThread;
@@ -45,16 +48,16 @@ public class DirectoryMonitor implements DirectoryMonitorMBean {
 
   public void start() {
     if (started) return;
-    
+
     synchronized (list) {
       list.add(new Integer(list.hashCode()));
       list.notifyAll();
     }
-    
+
     started = true;
     scanThread = new Thread(new ScannerThread(this));
     scanThread.start();
-    System.out.println("**** Directory Monitor - Started with scan rate " + this.getScanRate() + " *****");
+    log.debug("**** Directory Monitor - Started with scan rate " + this.getScanRate() + " *****");
   }
 
   public boolean isStarted() {
@@ -67,11 +70,11 @@ public class DirectoryMonitor implements DirectoryMonitorMBean {
     synchronized (this) {
       started = false;
     }
-    System.out.println("Directory Monitor - requesting stop.");
+    log.debug("Directory Monitor - requesting stop.");
   }
 
   public void takeAction(Collection files) {
-    System.out.println("********* Scanner Detected " + files.size() + " Files ********* ");
+    log.debug("********* Scanner Detected " + files.size() + " Files ********* ");
   }
 
   private class ScannerThread extends Thread {
@@ -87,7 +90,7 @@ public class DirectoryMonitor implements DirectoryMonitorMBean {
 
       dir = new File(monitor.getDirectory());
       if (!dir.isDirectory()) {
-        System.err.println(" Specified directory is invalid.");
+        log.warn(" Specified directory is invalid.");
       }
 
       if (monitor.getExtensionList() != null) {
@@ -96,14 +99,14 @@ public class DirectoryMonitor implements DirectoryMonitorMBean {
       // scan for files - log when files are found.
       for (;;) {
         try {
-          System.out.println("Scanning ... ");          
+          log.debug("Scanning ... ");
           Collection files = Arrays.asList(dir.listFiles());
 
           // if files are found, call Monitor.act();
           if (files.size() > 0) {
             monitor.takeAction(files);
           } else {
-            System.out.println("... found nothing");
+            log.debug("... found nothing");
           }
 
           sleep(monitor.getScanRate());
@@ -112,7 +115,7 @@ public class DirectoryMonitor implements DirectoryMonitorMBean {
         }
 
         if (!monitor.isStarted()) {
-          System.out.println("Stopping Directory Monitor.");
+          log.debug("Stopping Directory Monitor.");
           break;
         }
       }

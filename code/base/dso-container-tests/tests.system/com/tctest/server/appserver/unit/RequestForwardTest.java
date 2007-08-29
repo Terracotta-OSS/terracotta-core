@@ -31,28 +31,28 @@ public class RequestForwardTest extends AbstractOneServerDeploymentTest {
 
   public void testSessionForwardSession() throws Exception {
     WebConversation conversation = new WebConversation();
-    WebResponse response = request(server1, MAPPING1, "action=0", conversation);
+    WebResponse response = request(server0, MAPPING1, "action=0", conversation);
     assertEquals("INVALID REQUEST", response.getText().trim());
 
-    response = request(server1, MAPPING1, "action=s-f-s&target=" + MAPPING2, conversation);
+    response = request(server0, MAPPING1, "action=s-f-s&target=" + MAPPING2, conversation);
     assertEquals("FORWARD GOT SESSION", response.getText().trim());
   }
 
    public void testForwardSession() throws Exception {
      WebConversation conversation = new WebConversation();
-     WebResponse response = request(server1, MAPPING1, "action=0", conversation);
+     WebResponse response = request(server0, MAPPING1, "action=0", conversation);
      assertEquals("INVALID REQUEST", response.getText().trim());
 
-     response = request(server1, MAPPING1, "action=n-f-s&target=" + MAPPING2, conversation);
+     response = request(server0, MAPPING1, "action=n-f-s&target=" + MAPPING2, conversation);
      assertEquals("FORWARD GOT SESSION", response.getText().trim());
    }
   
    public void testSessionForward() throws Exception {
      WebConversation conversation = new WebConversation();
-     WebResponse response = request(server1, MAPPING1, "action=0", conversation);
+     WebResponse response = request(server0, MAPPING1, "action=0", conversation);
      assertEquals("INVALID REQUEST", response.getText().trim());
 
-     response = request(server1, MAPPING1, "action=s-f-n&target=" + MAPPING2, conversation);
+     response = request(server0, MAPPING1, "action=s-f-n&target=" + MAPPING2, conversation);
      assertEquals("FORWARD DID NOT GET SESSION", response.getText().trim());
    }
 

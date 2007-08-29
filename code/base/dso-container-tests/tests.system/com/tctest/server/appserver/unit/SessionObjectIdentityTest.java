@@ -24,9 +24,9 @@ public class SessionObjectIdentityTest extends AbstractOneServerDeploymentTest {
   public final void testSessions() throws Exception {
     WebConversation wc = new WebConversation();
     String url = "/" + CONTEXT + "/" + SERVLET;
-    WebResponse response = server1.ping(url, wc);
+    WebResponse response = server0.ping(url, wc);
     assertEquals("OK", response.getText().trim());
-    response = server1.ping(url, wc);
+    response = server0.ping(url, wc);
     assertEquals("OK", response.getText().trim());
   }
 

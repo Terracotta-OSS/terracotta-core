@@ -85,7 +85,7 @@ public class SessionEventsTest extends AbstractOneServerDeploymentTest {
   }
 
   private String request(String params, WebConversation wc) throws Exception {
-    return server1.ping("/" + CONTEXT + "/" + MAPPING + "?" + params, wc).getText().trim();
+    return server0.ping("/" + CONTEXT + "/" + MAPPING + "?" + params, wc).getText().trim();
   }
 
   private static class SessionEventsTestSetup extends OneServerTestSetup {

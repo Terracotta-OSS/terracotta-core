@@ -91,7 +91,7 @@ public class SessionInvalidatorTest extends AbstractOneServerDeploymentTest {
 
   private void checkResponse(String expected, String params, WebConversation wc) throws Exception {
     System.err.println("=== Send Request [" + (new Date()) + "]: params=[" + params + "]");
-    String actual = request(server1, params, wc);
+    String actual = request(server0, params, wc);
     System.err.println("=== Got Response [" + (new Date()) + "]: params=[" + params + "], response=[" + actual + "]");
     assertTimeDirection();
     assertEquals(expected, actual);

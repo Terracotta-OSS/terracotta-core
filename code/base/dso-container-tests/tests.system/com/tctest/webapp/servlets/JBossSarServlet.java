@@ -6,11 +6,16 @@ package com.tctest.webapp.servlets;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jboss.mx.util.MBeanProxyExt;
+import org.jboss.mx.util.MBeanServerLocator;
+
+import com.tctest.service.DirectoryMonitorMBean;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.management.MBeanServer;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -28,13 +33,10 @@ public class JBossSarServlet extends HttpServlet {
         }
       }
       log.debug("shared list: " + list);
-      // ServiceMBeanSupport mbeanSupport = new ServiceMBeanSupport();
-      // MBeanServer mbeanServer = mbeanSupport.getServer();
-      // DirectoryMonitorMBean dmm = (DirectoryMonitorMBean) MBeanServerInvocationHandler
-      // .newProxyInstance(mbeanServer, ObjectName.getInstance("service.directory.monitor:service=Monitor"),
-      // DirectoryMonitorMBean.class, false);
-      // log.debug("mbean property: " + dmm.getDirectory());
-      resp.getWriter().println("OK: " + list);
+      MBeanServer server = MBeanServerLocator.locateJBoss();
+      DirectoryMonitorMBean dmm = (DirectoryMonitorMBean) MBeanProxyExt
+          .create(DirectoryMonitorMBean.class, "service.directory.monitor:service=Monitor", server);
+      resp.getWriter().println("OK: " + list + ", " + dmm.getExtensionList());
     } catch (Exception e) {
       throw new ServletException(e);
     }

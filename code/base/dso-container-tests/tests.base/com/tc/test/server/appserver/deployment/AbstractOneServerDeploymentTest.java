@@ -14,10 +14,10 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 public abstract class AbstractOneServerDeploymentTest extends AbstractDeploymentTest {
-  public WebApplicationServer server1;
+  public WebApplicationServer server0;
 
-  public void setServer1(WebApplicationServer server1) {
-    this.server1 = server1;
+  public void setServer0(WebApplicationServer server0) {
+    this.server0 = server0;
   }
 
   protected boolean shouldKillAppServersEachRun() {
@@ -33,7 +33,7 @@ public abstract class AbstractOneServerDeploymentTest extends AbstractDeployment
 
     private boolean                start  = true;
 
-    protected WebApplicationServer server1;
+    protected WebApplicationServer server0;
 
     protected OneServerTestSetup(Class testClass, String context) {
       this(testClass, new TcConfigBuilder(), context);
@@ -66,14 +66,14 @@ public abstract class AbstractOneServerDeploymentTest extends AbstractDeployment
         logger.info("### WAR build " + (l2 - l1) / 1000f + " at " + deployment.getFileSystemPath());
 
         configureTcConfig(tcConfigBuilder);
-        server1 = createServer(deployment);
+        server0 = createServer(deployment);
 
         TestSuite suite = (TestSuite) getTest();
         for (int i = 0; i < suite.testCount(); i++) {
           Test t = suite.testAt(i);
           if (t instanceof AbstractOneServerDeploymentTest) {
             AbstractOneServerDeploymentTest test = (AbstractOneServerDeploymentTest) t;
-            test.setServer1(server1);
+            test.setServer0(server0);
           }
         }
       } catch (Exception e) {
