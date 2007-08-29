@@ -48,6 +48,7 @@ public class DirectoryMonitor implements DirectoryMonitorMBean {
     
     synchronized (list) {
       list.add(new Integer(list.hashCode()));
+      list.notifyAll();
     }
     
     started = true;
