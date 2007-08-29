@@ -454,7 +454,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     this.remoteTxManager.receivedBatchAcknowledgement(batchID);
   }
 
-  public void apply(TxnType txType, LockID[] lockIDs, Collection objectChanges, Set lookupObjectIDs, Map newRoots) {
+  public void apply(TxnType txType, List lockIDs, Collection objectChanges, Set lookupObjectIDs, Map newRoots) {
     // beginNull(TxnType.NORMAL);
     try {
       disableTransactionLogging();

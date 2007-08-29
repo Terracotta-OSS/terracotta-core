@@ -24,7 +24,7 @@ public interface BroadcastTransactionMessage {
                          GlobalTransactionID lowGlobalTransactionIDWatermark, Collection notifies, Map newRoots,
                          DmiDescriptor[] dmis);
 
-  public LockID[] getLockIDs();
+  public List getLockIDs();
 
   public TxnType getTransactionType();
 

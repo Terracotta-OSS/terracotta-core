@@ -79,7 +79,7 @@ public class BroadcastTransactionMessageTest extends TestCase {
     msg.hydrate();
 
     assertEquals(changes, msg.getObjectChanges());
-    assertEquals(Arrays.asList(lockIDs), Arrays.asList(msg.getLockIDs()));
+    assertEquals(Arrays.asList(lockIDs), msg.getLockIDs());
     assertEquals(cid, msg.getChangeID());
     assertEquals(txID, msg.getTransactionID());
     assertEquals(gtx, msg.getGlobalTransactionID());

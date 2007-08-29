@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.tx;
 
@@ -10,7 +11,6 @@ import com.tc.net.protocol.tcm.ChannelIDProvider;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.dmi.DmiDescriptor;
-import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.session.SessionID;
 
 import java.util.ArrayList;
@@ -92,7 +92,7 @@ public class MockTransactionManager implements ClientTransactionManager {
     throw new ImplementMe();
   }
 
-  public void apply(TxnType txType, LockID[] lockIDs, Collection objectChanges, Set lookupObjectIDs, Map newRoots) {
+  public void apply(TxnType txType, List lockIDs, Collection objectChanges, Set lookupObjectIDs, Map newRoots) {
     throw new ImplementMe();
   }
 

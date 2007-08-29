@@ -58,11 +58,11 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   private final static byte      DMI_ID                = 13;
 
   private List                   changes               = new LinkedList();
-  private List                   lockIDs               = new LinkedList();
   private List                   dmis                  = new LinkedList();
   private Set                    lookupObjectIDs       = new HashSet();
   private Collection             notifies              = new LinkedList();
   private Map                    newRoots              = new HashMap();
+  private List                   lockIDs;
 
   private long                   changeID;
   private TransactionID          transactionID;
@@ -72,8 +72,8 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   private GlobalTransactionID    lowWatermark;
   private ObjectStringSerializer serializer;
 
-  public BroadcastTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
-                                         TCMessageType type) {
+  public BroadcastTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out,
+                                         MessageChannel channel, TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 
@@ -133,6 +133,9 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
         this.serializer = (ObjectStringSerializer) getObject(new ObjectStringSerializer());
         return true;
       case LOCK_ID:
+        if (lockIDs == null) {
+          lockIDs = new LinkedList();
+        }
         this.lockIDs.add(new LockID(getStringValue()));
         return true;
       case NOTIFIED:
@@ -177,7 +180,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     Assert.assertNotNull(txnType);
 
     this.changes = chges;
-    this.lockIDs = new LinkedList(Arrays.asList(lids));
+    this.lockIDs = Arrays.asList(lids);
     this.changeID = cid;
     this.transactionID = txID;
     this.committerID = commitID;
@@ -193,8 +196,8 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     }
   }
 
-  public LockID[] getLockIDs() {
-    return (LockID[]) lockIDs.toArray(new LockID[lockIDs.size()]);
+  public List getLockIDs() {
+    return lockIDs;
   }
 
   public TxnType getTransactionType() {

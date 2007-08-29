@@ -62,7 +62,7 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
                                   + ", notified: " + btm.addNotifiesTo(new LinkedList()) + ", lookup ObjectIDs: "
                                   + btm.getLookupObjectIDs());
 
-    Assert.eval(btm.getLockIDs().length > 0);
+    Assert.eval(btm.getLockIDs().size() > 0);
     GlobalTransactionID lowWaterMark = btm.getLowGlobalTransactionIDWatermark();
     if (!lowWaterMark.isNull()) {
       gtxManager.setLowWatermark(lowWaterMark);

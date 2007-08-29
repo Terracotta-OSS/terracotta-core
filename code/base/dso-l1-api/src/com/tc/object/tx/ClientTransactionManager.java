@@ -7,10 +7,10 @@ import com.tc.net.protocol.tcm.ChannelIDProvider;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.dmi.DmiDescriptor;
-import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.session.SessionID;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,7 +40,7 @@ public interface ClientTransactionManager {
    * ANY tx is in progress. This is probably not exceptable. We will probably figure something out with the lock manager
    * where we can accuire a read lock if a field is accessed in a transaction
    */
-  public void apply(TxnType txType, LockID[] lockIDs, Collection objectChanges, Set lookupObjectIDs, Map newRoots);
+  public void apply(TxnType txType, List lockIDs, Collection objectChanges, Set lookupObjectIDs, Map newRoots);
 
   public void createObject(TCObject source);
 

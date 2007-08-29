@@ -15,7 +15,6 @@ import com.tc.object.TCObject;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.loaders.StandardClassProvider;
-import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.ClientTransaction;
 import com.tc.object.tx.ClientTransactionManager;
@@ -29,6 +28,7 @@ import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -51,7 +51,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new AssertionError("should not be called");
     }
 
-    public void apply(TxnType txType, LockID[] lockIDs, Collection objectChanges, Set lookupObjectIDs, Map newRoots) {
+    public void apply(TxnType txType, List lockIDs, Collection objectChanges, Set lookupObjectIDs, Map newRoots) {
       throw new ImplementMe();
     }
 
@@ -191,8 +191,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public void checkPortabilityOfField(Object value, String fieldName, Object pojo)
-        throws TCNonPortableObjectError {
+    public void checkPortabilityOfField(Object value, String fieldName, Object pojo) throws TCNonPortableObjectError {
       throw new ImplementMe();
     }
 
