@@ -89,7 +89,8 @@ public class DBEnvironment {
     this.ecfg.setTransactional(true);
     this.ecfg.setAllowCreate(true);
     this.ecfg.setReadOnly(false);
-    this.ecfg.setTxnWriteNoSync(!paranoid);
+//    this.ecfg.setTxnWriteNoSync(!paranoid);
+    this.ecfg.setTxnNoSync(!paranoid);
     this.dbcfg = new DatabaseConfig();
     this.dbcfg.setAllowCreate(true);
     this.dbcfg.setTransactional(true);
