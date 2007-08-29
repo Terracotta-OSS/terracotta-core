@@ -28,7 +28,7 @@ public class ServerManager {
 
   protected static TCLogger      logger         = TCLogging.getLogger(ServerManager.class);
   private static int             appServerIndex = 0;
-  private final boolean          DEBUG_MODE     = true;
+  private final boolean          DEBUG_MODE     = false;
 
   private List                   serversToStop  = new ArrayList();
   private DSOServer              dsoServer;

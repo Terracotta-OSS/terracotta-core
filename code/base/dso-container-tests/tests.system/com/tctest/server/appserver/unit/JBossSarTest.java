@@ -6,10 +6,6 @@ package com.tctest.server.appserver.unit;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.jboss.logging.JBossJDKLogManager;
-import org.jboss.mx.util.JBossNotificationBroadcasterSupport;
-import org.jboss.system.ServiceMBeanSupport;
-import org.jboss.xb.QNameBuilder;
 
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
@@ -50,14 +46,14 @@ public class JBossSarTest extends AbstractTwoServerDeploymentTest {
     FileUtils.copyFileToDirectory(sarFile, deploy);
     deploy = new File(server1.getWorkingDirectory(), "deploy");
     FileUtils.copyFileToDirectory(sarFile, deploy);
-    
+
     Thread.sleep(30 * 1000);
-    
+
     System.out.println("Hitting jboss servers...");
     WebResponse resp = request(server0, "", new WebConversation());
     System.out.println("server0 response: " + resp.getText());
     assertTrue(resp.getText().startsWith("OK"));
-    
+
     resp = request(server1, "", new WebConversation());
     System.out.println("server1 response: " + resp.getText());
     assertTrue(resp.getText().startsWith("OK"));
@@ -94,10 +90,10 @@ public class JBossSarTest extends AbstractTwoServerDeploymentTest {
 
     protected void configureWar(DeploymentBuilder builder) {
       builder.addDirectoryOrJARContainingClass(DirectoryMonitor.class);
-      builder.addDirectoryOrJARContainingClass(ServiceMBeanSupport.class);
-      builder.addDirectoryOrJARContainingClass(JBossNotificationBroadcasterSupport.class);
-      builder.addDirectoryOrJARContainingClass(JBossJDKLogManager.class);
-      builder.addDirectoryOrJARContainingClass(QNameBuilder.class);
+      // builder.addDirectoryOrJARContainingClass(ServiceMBeanSupport.class);
+      // builder.addDirectoryOrJARContainingClass(JBossNotificationBroadcasterSupport.class);
+      // builder.addDirectoryOrJARContainingClass(JBossJDKLogManager.class);
+      // builder.addDirectoryOrJARContainingClass(QNameBuilder.class);
 
       builder.addServlet(SERVLET, "/" + SERVLET + "/*", JBossSarServlet.class, null, true);
     }
