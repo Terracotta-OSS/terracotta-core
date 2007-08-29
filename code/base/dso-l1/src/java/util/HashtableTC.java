@@ -23,6 +23,7 @@ import java.util.Map.Entry;
 public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearable {
 
   private volatile transient TCObject $__tc_MANAGED;
+  private boolean                     evictionEnabled = true;
 
   public HashtableTC() {
     super();
@@ -238,6 +239,14 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
       }
     }
     return cleared;
+  }
+
+  public boolean isEvictionEnabled() {
+    return evictionEnabled;
+  }
+
+  public void setEvictionEnabled(boolean enabled) {
+    evictionEnabled = enabled;
   }
 
   public void __tc_managed(TCObject tcObject) {

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
@@ -20,13 +21,14 @@ public class TCObjectLogical extends TCObjectImpl {
   }
 
   protected boolean isEvictable() {
-    if (getPeerObject() instanceof Clearable) {
-      return true;
+    Object peer;
+    if ((peer = getPeerObject()) instanceof Clearable) {
+      return ((Clearable) peer).isEvictionEnabled();
     } else {
       return false;
     }
   }
-  
+
   protected int clearReferences(Object pojo, int toClear) {
     if(! (pojo instanceof Clearable)) {
       Assert.fail("TCObjectLogical.clearReferences expected Clearable but got " + (pojo == null ? "null" : pojo.getClass().getName()));
