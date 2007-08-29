@@ -205,6 +205,52 @@ public class DNAEncodingTest extends TestCase {
     }
     return rv;
   }
+  
+  public void testCompressedStringDecoding() throws Exception {
+    TCByteBufferOutputStream output = new TCByteBufferOutputStream();
+
+    DNAEncoding encoding = getApplicatorEncoding();
+    String bigString = getBigString(100000);
+    encoding.encode(bigString, output);
+
+    TCByteBuffer[] data = output.toArray();
+    
+
+    encoding = getStorageEncoder();
+    TCByteBufferInputStream input = new TCByteBufferInputStream(data);
+    UTF8ByteDataHolder decoded = (UTF8ByteDataHolder) encoding.decode(input);
+    
+    assertTrue(decoded.isCompressed());
+    assertEquals(bigString.getBytes("UTF-8").length, decoded.getUnCompressedStringLength());
+    System.err.println("Compressed String length = " + decoded.getBytes().length) ;
+    assertEquals(bigString, decoded.asString());
+    
+    output = new TCByteBufferOutputStream();
+    encoding.encode(decoded, output);
+    TCByteBuffer[] data2 = output.toArray();
+    input = new TCByteBufferInputStream(data2);
+    UTF8ByteDataHolder decoded2 = (UTF8ByteDataHolder) encoding.decode(input);
+    assertEquals(decoded, decoded2);
+    
+    encoding = getApplicatorEncoding();
+    input = new TCByteBufferInputStream(data);
+    String str = (String) encoding.decode(input);
+    assertEquals(bigString, str);
+
+    input = new TCByteBufferInputStream(data2);
+    str = (String) encoding.decode(input);
+    assertEquals(bigString, str);
+    
+  }
+
+  private String getBigString(int length) {
+    String sample = "mold for Big String";
+    StringBuffer sb = new StringBuffer();
+    while(sb.length() < length) {
+      sb.append(sample);
+    }
+    return sb.toString();
+  }
 
   public void testStringDecode() throws Exception {
     TCByteBufferOutputStream output = new TCByteBufferOutputStream();

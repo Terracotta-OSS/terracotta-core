@@ -5,6 +5,7 @@
 package com.tc.object.dna.impl;
 
 import com.tc.exception.TCRuntimeException;
+import com.tc.io.TCByteArrayOutputStream;
 import com.tc.io.TCDataInput;
 import com.tc.io.TCDataOutput;
 import com.tc.logging.TCLogger;
@@ -14,10 +15,12 @@ import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.NamedClassLoader;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 
 import gnu.trove.TObjectIntHashMap;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
@@ -28,6 +31,8 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Currency;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.InflaterInputStream;
 
 /**
  * Utility for encoding/decoding DNA
@@ -80,6 +85,7 @@ public class DNAEncodingImpl implements DNAEncoding {
   private static final byte          TYPE_ID_ENUM                         = 22;
   private static final byte          TYPE_ID_ENUM_HOLDER                  = 23;
   private static final byte          TYPE_ID_CURRENCY                     = 24;
+  private static final byte          TYPE_ID_STRING_COMPRESSED            = 25;
 
   private static final byte          ARRAY_TYPE_PRIMITIVE                 = 1;
   private static final byte          ARRAY_TYPE_NON_PRIMITIVE             = 2;
@@ -89,6 +95,19 @@ public class DNAEncodingImpl implements DNAEncoding {
 
   private static final ClassProvider FAILURE_PROVIDER                     = new FailureClassProvider();
   private static final ClassProvider LOCAL_PROVIDER                       = new LocalClassProvider();
+
+  private static final boolean       STRING_COMPRESSION_ENABLED           = TCPropertiesImpl
+                                                                              .getProperties()
+                                                                              .getBoolean(
+                                                                                          "l1.transactionmanager.strings.compress.enabled");
+  private static final boolean       STRING_COMPRESSION_LOGGING_ENABLED   = TCPropertiesImpl
+                                                                              .getProperties()
+                                                                              .getBoolean(
+                                                                                          "l1.transactionmanager.strings.compress.logging.enabled");
+  private static final int           STRING_COMPRESSION_MIN_SIZE          = TCPropertiesImpl
+                                                                              .getProperties()
+                                                                              .getInt(
+                                                                                      "l1.transactionmanager.strings.compress.minSize");
 
   /**
    * Used in the Applicators. The policy is set to APPLICATOR.
@@ -221,12 +240,25 @@ public class DNAEncodingImpl implements DNAEncoding {
         output.writeShort(((Short) value).shortValue());
         break;
       case LiteralValues.STRING:
-        output.writeByte(TYPE_ID_STRING);
-        writeString((String) value, output);
+        String s = (String) value;
+        if (STRING_COMPRESSION_ENABLED && s.length() >= STRING_COMPRESSION_MIN_SIZE) {
+          output.writeByte(TYPE_ID_STRING_COMPRESSED);
+          writeCompressedString(s, output);
+        } else {
+          output.writeByte(TYPE_ID_STRING);
+          writeString(s, output);
+        }
         break;
       case LiteralValues.STRING_BYTES:
-        output.writeByte(TYPE_ID_STRING_BYTES);
-        writeByteArray(((UTF8ByteDataHolder) value).getBytes(), output);
+        UTF8ByteDataHolder utfBytes = (UTF8ByteDataHolder) value;
+        if (utfBytes.isCompressed()) {
+          output.writeByte(TYPE_ID_STRING_COMPRESSED);
+          output.writeInt(utfBytes.getUnCompressedStringLength());
+          writeByteArray(utfBytes.getBytes(), output);
+        } else {
+          output.writeByte(TYPE_ID_STRING_BYTES);
+          writeByteArray(utfBytes.getBytes(), output);
+        }
         break;
       case LiteralValues.OBJECT_ID:
         output.writeByte(TYPE_ID_REFERENCE);
@@ -283,6 +315,32 @@ public class DNAEncodingImpl implements DNAEncoding {
     } catch (UnsupportedEncodingException e) {
       throw new AssertionError(e);
     }
+  }
+
+  private void writeCompressedString(String string, TCDataOutput output) {
+    try {
+      TCByteArrayOutputStream byteArrayOS = new TCByteArrayOutputStream(4096);
+      // Stride is 512 bytes by default, should I increase ?
+      DeflaterOutputStream dos = new DeflaterOutputStream(byteArrayOS);
+      byte[] uncompressed = string.getBytes("UTF-8");
+      dos.write(uncompressed);
+      dos.close();
+      byte[] compressed = byteArrayOS.getInternalArray();
+      // XXX:: We are writting the original string's length so that we save a couple of copies when decompressing
+      output.writeInt(uncompressed.length);
+      writeByteArray(compressed, 0, byteArrayOS.size(), output);
+      if (STRING_COMPRESSION_LOGGING_ENABLED) {
+        logger.info("Compressed String of size : " + string.length() + " bytes : " + uncompressed.length
+                    + " to  bytes : " + compressed.length);
+      }
+    } catch (Exception e) {
+      throw new AssertionError(e);
+    }
+  }
+
+  private void writeByteArray(byte[] bytes, int offset, int length, TCDataOutput output) {
+    output.writeInt(length);
+    output.write(bytes, offset, length);
   }
 
   private void writeByteArray(byte bytes[], TCDataOutput output) {
@@ -343,6 +401,8 @@ public class DNAEncodingImpl implements DNAEncoding {
         return new Short(input.readShort());
       case TYPE_ID_STRING:
         return readString(input, type);
+      case TYPE_ID_STRING_COMPRESSED:
+        return readCompressedString(input);
       case TYPE_ID_STRING_BYTES:
         return readString(input, type);
       case TYPE_ID_REFERENCE:
@@ -797,6 +857,36 @@ public class DNAEncodingImpl implements DNAEncoding {
       return new String(data, "UTF-8");
     } else {
       return new UTF8ByteDataHolder(data);
+    }
+  }
+
+  private Object readCompressedString(TCDataInput input) throws IOException {
+    int stringLength = input.readInt();
+    byte[] data = readByteArray(input);
+    if (policy == APPLICATOR) {
+      return inflateCompressedString(data, stringLength);
+    } else {
+      UTF8ByteDataHolder utfBytes = new UTF8ByteDataHolder(data, stringLength);
+      return utfBytes;
+    }
+  }
+
+  public static String inflateCompressedString(byte[] data, int length) {
+    try {
+      ByteArrayInputStream bais = new ByteArrayInputStream(data);
+      InflaterInputStream iis = new InflaterInputStream(bais);
+      byte uncompressed[] = new byte[length];
+      int read;
+      int offset = 0;
+      while (length > 0 && (read = iis.read(uncompressed, offset, length)) != -1) {
+        offset += read;
+        length -= read;
+      }
+      iis.close();
+      Assert.assertEquals(0, length);
+      return new String(uncompressed, "UTF-8");
+    } catch (IOException e) {
+      throw new AssertionError(e);
     }
   }
 
