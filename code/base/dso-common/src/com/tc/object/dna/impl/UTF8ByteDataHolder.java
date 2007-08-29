@@ -19,7 +19,6 @@ public class UTF8ByteDataHolder implements Serializable {
 
   private final byte[] bytes;
   private final int    uncompressedLength;
-  private int          hash = 0;
 
   // Used for tests
   public UTF8ByteDataHolder(String str) {
@@ -49,7 +48,7 @@ public class UTF8ByteDataHolder implements Serializable {
   }
 
   private String inflate() {
-    return DNAEncoding.inflateCompressedString(bytes, uncompressedLength);
+    return DNAEncodingImpl.inflateCompressedString(bytes, uncompressedLength);
   }
 
   private String getString() {
@@ -65,12 +64,9 @@ public class UTF8ByteDataHolder implements Serializable {
   }
 
   public int hashCode() {
-    if (hash == 0) {
-      int tmp = isCompressed() ? 21 : 37;
-      for (int i = 0, n = bytes.length; i < n; i++) {
-        tmp = 31 * tmp + bytes[i++];
-      }
-      hash = tmp;
+    int hash = isCompressed() ? 21 : 37;
+    for (int i = 0, n = bytes.length; i < n; i++) {
+      hash = 31 * hash + bytes[i++];
     }
     return hash;
   }
@@ -87,7 +83,7 @@ public class UTF8ByteDataHolder implements Serializable {
   public boolean isCompressed() {
     return uncompressedLength != -1;
   }
-  
+
   public int getUnCompressedStringLength() {
     return uncompressedLength;
   }
