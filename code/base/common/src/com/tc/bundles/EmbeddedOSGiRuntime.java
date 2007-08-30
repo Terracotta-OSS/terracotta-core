@@ -62,20 +62,21 @@ public interface EmbeddedOSGiRuntime {
         final Module module = modules.addNewModule();
         module.setName(name);
         module.setVersion(version);
+        logger.debug("Prepending default bundle: '" + name + "', version '" + version + "'");
       }
     }
 
     private static final void injectDefaultRepository(final List prependLocations) throws FileNotFoundException,
         MalformedURLException {
       final URL defaultRepository = new File(Directories.getInstallationRoot(), "modules").toURL();
-      logger.debug("Prepending default bundle repository: " + defaultRepository.toString());
+      logger.debug("Prepending default bundle repository: '" + defaultRepository.toString() + "'");
       prependLocations.add(defaultRepository);
     }
 
     private static final void injectTestRepository(final List prependLocations) throws MalformedURLException {
       final URL testRepository = new URL(System.getProperty(TESTS_CONFIG_MODULE_REPOSITORIES));
       prependLocations.add(testRepository);
-      logger.debug("Prepending test bundle repository: " + testRepository.toString());
+      logger.debug("Prepending test bundle repository: '" + testRepository.toString() + "'");
       prependLocations.add(testRepository);
     }
 
