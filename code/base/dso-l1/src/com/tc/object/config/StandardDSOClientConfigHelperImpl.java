@@ -201,6 +201,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     // this and remove isTCPatternMatchingHack();
     // addPermanentExcludePattern("com.tc..*");
     // addPermanentExcludePattern("com.terracottatech..*");
+
     addPermanentExcludePattern("java.awt.Component");
     addPermanentExcludePattern("java.lang.Thread");
     addPermanentExcludePattern("java.lang.ThreadLocal");
@@ -226,6 +227,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     addPermanentExcludePattern("java.nio.channels.SocketChannel");
     addPermanentExcludePattern("java.util.logging.FileHandler");
     addPermanentExcludePattern("java.util.logging.SocketHandler");
+
+    // Fix for CDV-357: Getting verifier errors when instrumenting obfuscated classes
+    // These classes are obfuscated and as such can't be instrumented. 
+    addPermanentExcludePattern("com.sun.crypto.provider..*");
 
     addUnsupportedJavaUtilConcurrentTypes();
 
