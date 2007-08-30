@@ -11,10 +11,13 @@ import org.osgi.framework.ServiceReference;
 import com.tc.config.Directories;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.util.Environment;
+import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesImpl;
+import com.terracottatech.config.Module;
 import com.terracottatech.config.Modules;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -49,21 +52,47 @@ public interface EmbeddedOSGiRuntime {
 
     private static final TCLogger logger = TCLogging.getLogger(EmbeddedOSGiRuntime.class);
 
-    public static EmbeddedOSGiRuntime createOSGiRuntime(final Modules modules) throws BundleException, Exception {
-      final List prependLocations = new ArrayList();
-
-      // There are two repositories that we [optionally] prepend: a system property (used by tests)
-      // and the installation root (which is not set when running tests)
-      if (!Environment.inTest()) {
-        final URL defaultRepository = new File(Directories.getInstallationRoot(), "modules").toURL();
-        logger.debug("Prepending default bundle repository: " + defaultRepository.toString());
-        prependLocations.add(defaultRepository);
+    private static final void injectDefaultModules(final Modules modules) {
+      final TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor("l1.configbundles");
+      final String[] entries = props.getProperty("default").split(";");
+      for (int i = 0; i < entries.length; i++) {
+        final String[] entry = entries[i].trim().split(",");
+        final String name = entry[0].trim();
+        final String version = entry.length > 1 ? entry[1].trim() : "1.0.0";
+        final Module module = modules.addNewModule();
+        module.setName(name);
+        module.setVersion(version);
       }
+    }
 
+    private static final void injectDefaultRepository(final List prependLocations) throws FileNotFoundException,
+        MalformedURLException {
+      final URL defaultRepository = new File(Directories.getInstallationRoot(), "modules").toURL();
+      logger.debug("Prepending default bundle repository: " + defaultRepository.toString());
+      prependLocations.add(defaultRepository);
+    }
+
+    private static final void injectTestRepository(final List prependLocations) throws MalformedURLException {
+      final URL testRepository = new URL(System.getProperty(TESTS_CONFIG_MODULE_REPOSITORIES));
+      prependLocations.add(testRepository);
+      logger.debug("Prepending test bundle repository: " + testRepository.toString());
+      prependLocations.add(testRepository);
+    }
+
+    public static EmbeddedOSGiRuntime createOSGiRuntime(final Modules modules) throws BundleException, Exception {
+      final boolean inTestMode = (System.getProperty(TESTS_CONFIG_MODULE_REPOSITORIES) != null);
+      final List prependLocations = new ArrayList();
       try {
-        if (System.getProperty(TESTS_CONFIG_MODULE_REPOSITORIES) != null) {
-          prependLocations.add(new URL(System.getProperty(TESTS_CONFIG_MODULE_REPOSITORIES)));
+        // There are two repositories that we [optionally] prepend: a system property (used by tests)
+        // and the installation root (which is not set when running tests)
+        // we also only load the default modules when not running tests
+        if (inTestMode) {
+          injectTestRepository(prependLocations);
+        } else {
+          injectDefaultRepository(prependLocations);
+          injectDefaultModules(modules);
         }
+
         final URL[] prependURLs = new URL[prependLocations.size()];
         prependLocations.toArray(prependURLs);
 

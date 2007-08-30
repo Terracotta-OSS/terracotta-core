@@ -28,10 +28,7 @@ import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.NamedClassLoader;
 import com.tc.object.loaders.Namespace;
 import com.tc.object.util.JarResourceLoader;
-import com.tc.properties.TCProperties;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
-import com.tc.util.Environment;
 import com.tc.util.VendorVmSignature;
 import com.tc.util.VendorVmSignatureException;
 import com.terracottatech.config.DsoApplication;
@@ -82,25 +79,11 @@ public class ModulesLoader {
     // cannot be instantiated
   }
 
-  private static final void injectDefaultModules(final Modules modules) {
-    if (Environment.inTest()) return;
-    
-    final TCProperties props = TCPropertiesImpl.getProperties();
-    final TCProperties l1props = props.getPropertiesFor("l1.configbundles");
-    final String[] names = l1props.getProperty("default").split(",");
-    for (int i = 0; i < names.length; i++) {
-      final Module module = modules.addNewModule();
-      module.setName(names[i]);
-      module.setVersion("1.0.0"); // XXX: this should be specified in tc.properties
-    }
-  }
-
   public static void initModules(final DSOClientConfigHelper configHelper, final ClassProvider classProvider,
                                  final boolean forBootJar) {
     EmbeddedOSGiRuntime osgiRuntime = null;
     synchronized (lock) {
       final Modules modules = configHelper.getModulesForInitialization();
-      //injectDefaultModules(modules);
       if ((modules != null) && (modules.sizeOfModuleArray() > 0)) {
         try {
           osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
