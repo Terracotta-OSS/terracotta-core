@@ -22,6 +22,7 @@ public class HibernateUtil {
     if (sessionFactory == null) {
       try {
         sessionFactory = config.buildSessionFactory();
+        System.out.println("@@@ sessionFactory identity hash code: " + System.identityHashCode(sessionFactory));
       } catch (HibernateException ex) {
         System.err.println("Initial SessionFactory creation failed." + ex);
         throw new ExceptionInInitializerError(ex);
