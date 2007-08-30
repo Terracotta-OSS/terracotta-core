@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Terracotta-Configuration: swing-models.xml, awt-models.xml
+Bundle-Category: terracotta
+Bundle-Copyright: Terracotta, Inc. (c) 2003-2007
+Bundle-Description: Core configuration for Terracotta L1's
+Bundle-ManifestVersion: 2
+Bundle-Name: Core Module
+Bundle-RequiredExecutionEnvironment: J2SE-1.4
+Bundle-SymbolicName: org.terracotta.modules.core_module
+Bundle-Vendor: Terracotta, Inc.
+Bundle-Version: 1.0.0
+Require-Bundle: org.terracotta.modules.modules_common

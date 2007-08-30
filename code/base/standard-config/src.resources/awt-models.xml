@@ -1,0 +1,143 @@
+<?xml version = "1.0" encoding="UTF-8"?>
+<!--
+   
+   All content copyright (c) 2007 Terracotta, Inc.,
+   except as may otherwise be noted in a separate copyright notice.
+   All rights reserved
+   
+-->
+<xml-fragment>
+   <instrumented-classes>
+      <include>
+        <class-expression>java.awt.Color</class-expression>
+        <honor-transient>true</honor-transient>
+      </include>
+      
+      <include>
+        <class-expression>java.awt.event.MouseMotionAdapter</class-expression>
+      </include>
+      <include>
+        <class-expression>java.awt.event.MouseAdapter</class-expression>
+      </include>
+      
+      <include>
+        <class-expression>java.awt.Point</class-expression>
+      </include>
+      <include>
+        <class-expression>java.awt.geom.Point2D</class-expression>
+      </include>
+      <include>
+        <class-expression>java.awt.geom.Point2D$Double</class-expression>
+      </include>
+      <include>
+        <class-expression>java.awt.geom.Point2D$Float</class-expression>
+      </include>
+      
+      <include>
+        <class-expression>java.awt.geom.Line2D</class-expression>
+      </include>
+      <include>
+        <class-expression>java.awt.geom.Line2D$Double</class-expression>
+      </include>
+      <include>
+        <class-expression>java.awt.geom.Line2D$Float</class-expression>
+      </include>
+      
+      <include>
+        <class-expression>java.awt.Rectangle</class-expression>
+      </include>
+      <include>
+        <class-expression>java.awt.geom.Rectangle2D</class-expression>
+      </include>
+      <include>
+        <class-expression>java.awt.geom.Rectangle2D$Double</class-expression>
+      </include>
+      <include>
+        <class-expression>java.awt.geom.Rectangle2D$Float</class-expression>
+      </include>
+      <include>
+        <class-expression>java.awt.geom.RoundRectangle2D</class-expression>
+      </include>
+      <include>
+        <class-expression>java.awt.geom.RoundRectangle2D$Double</class-expression>
+      </include>
+      <include>
+        <class-expression>java.awt.geom.RoundRectangle2D$Float</class-expression>
+      </include>
+      <include>
+        <class-expression>java.awt.geom.RectangularShape</class-expression>
+      </include>
+
+      <include>
+        <class-expression>java.awt.geom.Ellipse2D</class-expression>
+      </include>
+      <include>
+        <class-expression>java.awt.geom.Ellipse2D$Double</class-expression>
+      </include>
+      <include>
+        <class-expression>java.awt.geom.Ellipse2D$Float</class-expression>
+      </include>
+
+      <include>
+        <class-expression>java.awt.geom.Path2D</class-expression>
+      </include>
+      <include>
+        <class-expression>java.awt.geom.Path2D$Double</class-expression>
+      </include>
+      <include>
+        <class-expression>java.awt.geom.Path2D$Float</class-expression>
+      </include>
+
+      <include>
+        <class-expression>java.awt.geom.GeneralPath</class-expression>
+      </include>
+
+      <include>
+        <class-expression>java.awt.BasicStroke</class-expression>
+      </include>
+
+      <include>
+        <class-expression>java.awt.Dimension</class-expression>
+      </include>
+      <include>
+        <class-expression>java.awt.Dimension2D</class-expression>
+      </include>
+   </instrumented-classes>
+   
+   <transient-fields>
+     <field-name>java.awt.Color.cs</field-name>
+   </transient-fields>
+   
+   <additional-boot-jar-classes>
+     <include>java.awt.Color</include>
+     <include>java.awt.event.MouseMotionAdapter</include>
+     <include>java.awt.event.MouseAdapter</include>
+	  <include>java.awt.Point</include>
+	  <include>java.awt.geom.Point2D</include>
+	  <include>java.awt.geom.Point2D$Double</include>
+     <include>java.awt.geom.Point2D$Float</include>
+     <include>java.awt.geom.Line2D</include>
+     <include>java.awt.geom.Line2D$Double</include>
+     <include>java.awt.geom.Line2D$Float</include>
+     <include>java.awt.Rectangle</include>
+     <include>java.awt.geom.Rectangle2D</include>
+     <include>java.awt.geom.Rectangle2D$Double</include>
+     <include>java.awt.geom.Rectangle2D$Float</include>
+     <include>java.awt.geom.RoundRectangle2D</include>
+     <include>java.awt.geom.RoundRectangle2D$Double</include>
+     <include>java.awt.geom.RoundRectangle2D$Float</include>
+     <include>java.awt.geom.RectangularShape</include>
+     <include>java.awt.geom.Ellipse2D</include>
+     <include>java.awt.geom.Ellipse2D$Double</include>
+     <include>java.awt.geom.Ellipse2D$Float</include>
+     <include>java.awt.geom.GeneralPath</include>
+     <include>java.awt.BasicStroke</include>
+     <include>java.awt.Dimension</include>
+     <include>java.awt.geom.Dimension2D</include>
+     <!--      
+     <include>java.awt.geom.Path2D</include>
+     <include>java.awt.geom.Path2D$Double</include>
+     <include>java.awt.geom.Path2D$Float</include>
+     -->
+   </additional-boot-jar-classes>
+</xml-fragment>

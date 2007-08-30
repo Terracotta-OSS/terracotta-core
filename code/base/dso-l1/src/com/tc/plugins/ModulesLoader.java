@@ -28,7 +28,10 @@ import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.NamedClassLoader;
 import com.tc.object.loaders.Namespace;
 import com.tc.object.util.JarResourceLoader;
+import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
+import com.tc.util.Environment;
 import com.tc.util.VendorVmSignature;
 import com.tc.util.VendorVmSignatureException;
 import com.terracottatech.config.DsoApplication;
@@ -79,11 +82,25 @@ public class ModulesLoader {
     // cannot be instantiated
   }
 
+  private static final void injectDefaultModules(final Modules modules) {
+    if (Environment.inTest()) return;
+    
+    final TCProperties props = TCPropertiesImpl.getProperties();
+    final TCProperties l1props = props.getPropertiesFor("l1.configbundles");
+    final String[] names = l1props.getProperty("default").split(",");
+    for (int i = 0; i < names.length; i++) {
+      final Module module = modules.addNewModule();
+      module.setName(names[i]);
+      module.setVersion("1.0.0"); // XXX: this should be specified in tc.properties
+    }
+  }
+
   public static void initModules(final DSOClientConfigHelper configHelper, final ClassProvider classProvider,
                                  final boolean forBootJar) {
     EmbeddedOSGiRuntime osgiRuntime = null;
     synchronized (lock) {
       final Modules modules = configHelper.getModulesForInitialization();
+      injectDefaultModules(modules);
       if ((modules != null) && (modules.sizeOfModuleArray() > 0)) {
         try {
           osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
@@ -92,16 +109,19 @@ public class ModulesLoader {
             getModulesCustomApplicatorSpecs(osgiRuntime, configHelper);
           }
         } catch (MissingBundleException mbe) {
-          consoleLogger.fatal(mbe.getMessage() + " - unable to initialize modules, shutting down. See log for details.");
+          consoleLogger
+              .fatal(mbe.getMessage() + " - unable to initialize modules, shutting down. See log for details.");
           shutdownAndExit(osgiRuntime, mbe);
         } catch (InvalidBundleManifestException ibme) {
-          consoleLogger.fatal(ibme.getMessage() + " - unable to initialize modules, shutting down. See log for details.");
+          consoleLogger.fatal(ibme.getMessage()
+                              + " - unable to initialize modules, shutting down. See log for details.");
           shutdownAndExit(osgiRuntime, ibme);
         } catch (BundleException be) {
           consoleLogger.fatal(be.getMessage() + " - unable to initialize modules, shutting down. See log for details.");
           shutdownAndExit(osgiRuntime, be);
         } catch (InvalidSyntaxException ise) {
-          consoleLogger.fatal(ise.getMessage() + " - unable to initialize modules, shutting down. See log for details.");
+          consoleLogger
+              .fatal(ise.getMessage() + " - unable to initialize modules, shutting down. See log for details.");
           shutdownAndExit(osgiRuntime, ise);
         } catch (Exception e) {
           throw new RuntimeException("Unable to create runtime for plugins", e);
@@ -165,7 +185,8 @@ public class ModulesLoader {
     final List modules = new ArrayList();
 
     // TODO: should use tc properties
-    //System.setProperty(EmbeddedOSGiRuntime.TESTS_CONFIG_MODULE_NAMES, "org.terracotta.modules.clustered-apache-struts-1.1-1.1.0.jar,clustered-apache-struts-2.2-2.2.0.jar");
+    // System.setProperty(EmbeddedOSGiRuntime.TESTS_CONFIG_MODULE_NAMES,
+    // "org.terracotta.modules.clustered-apache-struts-1.1-1.1.0.jar,clustered-apache-struts-2.2-2.2.0.jar");
     final String additionalModuleList = System.getProperty(EmbeddedOSGiRuntime.TESTS_CONFIG_MODULE_NAMES, "");
     final String[] additionalModules = additionalModuleList.split(",");
 
@@ -196,7 +217,7 @@ public class ModulesLoader {
         component = component.substring(n + 1);
         module.setGroupId(groupId);
       }
-      
+
       module.setName(component + "-" + componentVersion);
       module.setVersion(moduleVersion);
       modules.add(module);
@@ -241,22 +262,24 @@ public class ModulesLoader {
     configHelper.setModuleSpecs(modulesSpecs);
   }
 
-  private static String getConfigPath(final Bundle bundle) throws BundleException {
-    final VendorVmSignature vmsig;
+  private static String[] getConfigPath(final Bundle bundle) throws BundleException {
     try {
-      vmsig = new VendorVmSignature();
+      final VendorVmSignature vmsig = new VendorVmSignature();
       final String TC_CONFIG_HEADER = "Terracotta-Configuration";
       final String TC_CONFIG_HEADER_FOR_VM = TC_CONFIG_HEADER + VendorVmSignature.SIGNATURE_SEPARATOR
                                              + vmsig.getSignature();
       // check if the config-bundle indicates a vm vendor specific terracotta configuration...
-      String path = (String) bundle.getHeaders().get(TC_CONFIG_HEADER_FOR_VM); // config for vendor specific vm
-      if (path == null) { //
-        path = (String) bundle.getHeaders().get(TC_CONFIG_HEADER); // terracotta specific config (eg: tests)
-        if (path == null) { //
-          path = "terracotta.xml"; // default terracotta config
+      // config for vendor specific vm
+      String path = (String) bundle.getHeaders().get(TC_CONFIG_HEADER_FOR_VM);
+      if (path == null) {
+        // terracotta specific config (eg: tests)
+        path = (String) bundle.getHeaders().get(TC_CONFIG_HEADER);
+        if (path == null) {
+          // default terracotta config
+          path = "terracotta.xml";
         }
       }
-      return path;
+      return path.split(",");
     } catch (VendorVmSignatureException e) {
       throw new BundleException(e.getMessage());
     }
@@ -264,50 +287,53 @@ public class ModulesLoader {
 
   private static void loadConfiguration(final DSOClientConfigHelper configHelper, final Bundle bundle)
       throws BundleException {
-
-    // attempt to load the config-bundle's fragment of the configuration file
-    final String configPath = getConfigPath(bundle);
-    final InputStream is;
-    try {
-      is = JarResourceLoader.getJarResource(new URL(bundle.getLocation()), configPath);
-    } catch (MalformedURLException murle) {
-      throw new BundleException("Unable to create URL from: " + bundle.getLocation(), murle);
-    } catch (IOException ioe) {
-      throw new BundleException("Unable to extract " + configPath + " from URL: " + bundle.getLocation(), ioe);
-    }
-
-    // if config-bundle's fragment of the configuration file is not included in the jar file
-    // then we don't need to merge it in with the current configuration --- but make a note of it.
-    if (is == null) {
-      logger.warn("The config file '" + configPath + "', for module '" + bundle.getSymbolicName()
-                  + "' does not appear to be a part of the module's config-bundle jar file contents.");
-      return;
-    }
-
-    // otherwise, merge it with the current configuration
-    try {
-      DsoApplication application = DsoApplication.Factory.parse(is);
-      if (application != null) {
-        ConfigLoader loader = new ConfigLoader(configHelper, logger);
-        loader.loadDsoConfig(application);
-        logger.info("Module configuration loaded for " + bundle.getSymbolicName() + " (" + configPath + ")");
-        // loader.loadSpringConfig(application.getSpring());
+    // attempt to load all of the config fragments found in the config-bundle
+    final String[] paths = getConfigPath(bundle);
+    for (int i = 0; i < paths.length; i++) {
+      final String configPath = paths[i].trim();
+      final InputStream is;
+      try {
+        is = JarResourceLoader.getJarResource(new URL(bundle.getLocation()), configPath);
+      } catch (MalformedURLException murle) {
+        throw new BundleException("Unable to create URL from: " + bundle.getLocation(), murle);
+      } catch (IOException ioe) {
+        throw new BundleException("Unable to extract " + configPath + " from URL: " + bundle.getLocation(), ioe);
       }
-    } catch (IOException ioe) {
-      logger.warn("Unable to read configuration from bundle: " + bundle.getSymbolicName(), ioe);
-    } catch (XmlException xmle) {
-      logger.warn("Unable to parse configuration from bundle: " + bundle.getSymbolicName(), xmle);
-    } catch (ConfigurationSetupException cse) {
-      logger.warn("Unable to load configuration from bundle: " + bundle.getSymbolicName(), cse);
-    } finally {
-      if (is != null) {
-        try {
-          is.close();
-        } catch (IOException ex) {
-          // ignore
+
+      // if config-bundle's fragment of the configuration file is not included in the jar file
+      // then we don't need to merge it in with the current configuration --- but make a note of it.
+      if (is == null) {
+        System.out.println("x " + configPath);
+        logger.warn("The config file '" + configPath + "', for module '" + bundle.getSymbolicName()
+                    + "' does not appear to be a part of the module's config-bundle jar file contents.");
+        continue;
+      }
+
+      // otherwise, merge it with the current configuration
+      try {
+        final DsoApplication application = DsoApplication.Factory.parse(is);
+        if (application != null) {
+          final ConfigLoader loader = new ConfigLoader(configHelper, logger);
+          loader.loadDsoConfig(application);
+          logger.info("Module configuration loaded for " + bundle.getSymbolicName() + " (" + configPath + ")");
+          // loader.loadSpringConfig(application.getSpring());
+        }
+        is.close();
+      } catch (IOException ioe) {
+        logger.warn("Unable to read configuration from bundle: " + bundle.getSymbolicName(), ioe);
+      } catch (XmlException xmle) {
+        logger.warn("Unable to parse configuration from bundle: " + bundle.getSymbolicName(), xmle);
+      } catch (ConfigurationSetupException cse) {
+        logger.warn("Unable to load configuration from bundle: " + bundle.getSymbolicName(), cse);
+      } finally {
+        if (is != null) {
+          try {
+            is.close();
+          } catch (IOException ex) {
+            // ignore
+          }
         }
       }
     }
   }
-
 }

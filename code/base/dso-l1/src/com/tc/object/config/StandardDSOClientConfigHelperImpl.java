@@ -398,8 +398,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   private void doAutoconfig(boolean interrogateBootJar) {
     TransparencyClassSpec spec = null;
     LockDefinition ld = null;
-
+    
     // Table model stuff
+    /**
     addIncludePattern("javax.swing.event.TableModelEvent", true);
     spec = getOrCreateSpec("javax.swing.event.TableModelEvent");
 
@@ -427,7 +428,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     ld = new LockDefinitionImpl("tcdefaultListLock", ConfigLockLevel.WRITE);
     ld.commit();
     addLock("* javax.swing.DefaultListModel.*(..)", ld);
+    */
 
+    /**
     addIncludePattern("java.awt.Color", true);
     spec = getOrCreateSpec("java.awt.Color");
     spec.addTransient("cs");
@@ -485,7 +488,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     spec = getOrCreateSpec("java.awt.Dimension");
     spec = getOrCreateSpec("java.awt.geom.Dimension2D");
     // end java.awt.Dimension
+     */
 
+    /**
     addIncludePattern("javax.swing.tree.TreePath", false);
     spec = getOrCreateSpec("javax.swing.tree.TreePath");
 
@@ -510,12 +515,15 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
                                   "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V", false);
     spec
         .addDistributedMethodCall("fireTreeStructureChanged", "(Ljava/lang/Object;Ljavax/swing/tree/TreePath;)V", false);
+    */
 
+    /**
     spec = getOrCreateSpec("javax.swing.AbstractListModel");
     spec.addTransient("listenerList");
     spec.addDistributedMethodCall("fireContentsChanged", "(Ljava/lang/Object;II)V", false);
     spec.addDistributedMethodCall("fireIntervalAdded", "(Ljava/lang/Object;II)V", false);
     spec.addDistributedMethodCall("fireIntervalRemoved", "(Ljava/lang/Object;II)V", false);
+    */
 
     spec = getOrCreateSpec("java.util.Arrays");
     spec.addDoNotInstrument("copyOfRange");
@@ -668,7 +676,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     spec = getOrCreateSpec("java.util.ConcurrentModificationException");
     spec = getOrCreateSpec("java.util.NoSuchElementException");
 
-    spec = getOrCreateSpec("java.util.EventObject");
+    //spec = getOrCreateSpec("java.util.EventObject");
     // spec.setHonorTransient(true);
 
     spec = getOrCreateSpec("com.tcclient.object.DistributedMethodCall");
