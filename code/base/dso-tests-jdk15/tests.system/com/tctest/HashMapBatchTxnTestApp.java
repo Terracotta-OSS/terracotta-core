@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.concurrent.CyclicBarrier;
 
 public class HashMapBatchTxnTestApp extends AbstractTransparentApp {
-  int BATCHSIZE = 2000;
+  int BATCHSIZE = 1000;
   int BATCHES = 80;
   
   private final CyclicBarrier     barrier; 
@@ -83,9 +83,9 @@ public class HashMapBatchTxnTestApp extends AbstractTransparentApp {
     System.out.println("XXX starting verification");
     for (int batch = 0; batch < BATCHES; ++batch) {
       System.out.println("XXX verifying batch "+batch);
-      for (int i = 0; i < (BATCHSIZE*2); ++i) {
-        HashMap<Integer,Integer> submap = hashmap_root.get(new Integer(i));
-        Assert.assertTrue("Sub-HashMap("+i+") size is "+submap.size()+ " but expect "+(10+(i%10)), submap.size() == (10+(i%10))); 
+      for (int i = 0; i < BATCHSIZE; ++i) {
+        HashMap<Integer,Integer> submap = hashmap_root.get(new Integer(batch*BATCHSIZE+i));
+        Assert.assertTrue("Sub-HashMap("+(batch*BATCHSIZE+i)+") size is "+submap.size()+ " but expect "+(10+(i%10)), submap.size() == (10+(i%10))); 
       }
       ThreadUtil.reallySleep(20);
     }
