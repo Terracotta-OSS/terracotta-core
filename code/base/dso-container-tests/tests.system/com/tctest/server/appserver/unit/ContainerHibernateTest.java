@@ -5,7 +5,6 @@
 package com.tctest.server.appserver.unit;
 
 import net.sf.ehcache.Cache;
-import net.sf.ehcache.store.TimeExpiryMemoryStore;
 import net.sf.jsr107cache.CacheListener;
 
 import org.apache.commons.logging.LogFactory;
@@ -79,7 +78,6 @@ public class ContainerHibernateTest extends AbstractTwoServerDeploymentTest {
       builder.addDirectoryOrJARContainingClass(antlr.Tool.class); // antlr*.jar
       builder.addDirectoryOrJARContainingClass(Cache.class); // ehcache-1.3.0.jar
       builder.addDirectoryOrJARContainingClass(CacheListener.class); // jsr107cache-1.0.jar
-      builder.addDirectoryOrJARContainingClass(TimeExpiryMemoryStore.class); // ehcache-commons-1.0
 
       if (AppServerFactory.getCurrentAppServerId() != AppServerFactory.JBOSS) {
         builder.addDirectoryOrJARContainingClass(Logger.class); // log4j

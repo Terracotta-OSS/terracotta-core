@@ -678,8 +678,7 @@ modules:
         - legacy-test-tree
         - dso-l2-common
         - dso-l2
-        - deploy        
-        - clustered-ehcache-commons-1.0
+        - deploy                
   - clustered-rife-1.6.0:
       options:
         jdk: J2SE-1.5

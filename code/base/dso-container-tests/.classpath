@@ -34,7 +34,6 @@
 	<classpathentry kind="lib" path="/dependencies/lib/httpunit-1.6.jar"/>
 	<classpathentry kind="lib" path="/dependencies/lib/ehcache-1.3.0.jar"/>
 	<classpathentry kind="lib" path="/dependencies/lib/jsr107cache-1.0.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/clustered-ehcache-commons-1.0"/>
 	<classpathentry kind="lib" path="/dependencies/lib/jboss-common-4.0.5.jar"/>
 	<classpathentry kind="lib" path="/dependencies/lib/jboss-jmx-4.0.5.jar"/>
 	<classpathentry kind="lib" path="/dependencies/lib/jboss-system-4.0.5.jar"/>

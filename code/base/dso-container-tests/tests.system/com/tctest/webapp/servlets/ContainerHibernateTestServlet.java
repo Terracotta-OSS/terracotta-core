@@ -106,7 +106,11 @@ public final class ContainerHibernateTestServlet extends HttpServlet {
     // this will get the data from ehcache
     List events = mgr.listEvents();
 
-    System.out.println("events: " + events);
+    System.out.println();    
+    System.out.println("@@@ There should be NO query for then events below since they are fetched from cache");
+    System.out.println(events);
+    System.out.println();
+    
     Assert.assertTrue(events.size() >= 2);
 
     Session session = HibernateUtil.getSessionFactory().getCurrentSession();
