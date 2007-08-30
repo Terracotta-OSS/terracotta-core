@@ -6,7 +6,8 @@ package com.tc.util;
 import java.io.Serializable;
 
 /**
- * Generic Identifier class. Currently used as superclass for ObjectID, TransactionID and ChannelID
+ * Generic Identifier class, parent class of many ID types.  Legal identifiers are
+ * expected to be >= 0 and -1 represents a "null" identifier.  
  * 
  * @author steve
  */
@@ -14,18 +15,32 @@ public abstract class AbstractIdentifier implements Serializable {
   private static final long NULL_ID = -1;
   private final long        id;
 
+  /**
+   * Create an identifier with a long value, which is expected to be >= 0.
+   */
   public AbstractIdentifier(long id) {
     this.id = id;
   }
 
+  /**
+   * Create a null identifier
+   */
   protected AbstractIdentifier() {
     this.id = NULL_ID;
   }
 
+  /**
+   * Check whether the identifier is null (-1).
+   * @return True if -1, false otherwise
+   */
   public boolean isNull() {
     return (this.id == NULL_ID);
   }
 
+  /**
+   * Convert to long
+   * @return Long identifier value
+   */
   public final long toLong() {
     return id;
   }
@@ -34,12 +49,19 @@ public abstract class AbstractIdentifier implements Serializable {
     return getIdentifierType() + "=" + "[" + id + "]";
   }
 
+  /**
+   * Subclasses of AbstractIdentifier specify their "type" by implementing this method and returning a string.
+   * The type is used in printing toString().
+   */
   abstract public String getIdentifierType();
 
   public int hashCode() {
     return (int) (this.id ^ (this.id >>> 32));
   }
 
+  /**
+   * Equality is based on the id value and the identifier class.   
+   */
   public boolean equals(Object obj) {
     if (obj instanceof AbstractIdentifier) {
       AbstractIdentifier other = (AbstractIdentifier) obj;

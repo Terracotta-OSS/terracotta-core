@@ -9,10 +9,14 @@ import com.tc.config.Directories;
 import java.io.File;
 import java.io.FileNotFoundException;
 
+/**
+ * Helper class for determining the runtime environment of Terracotta.
+ */
 public abstract class Environment {
 
   /**
-   * Check if the environment running is in test mode.
+   * Check if the environment running is in test mode based on absence/presence of 
+   * the installation root directory.
    * @return <code>true</code> if in test mode.
    */
   public final static boolean inTest() {

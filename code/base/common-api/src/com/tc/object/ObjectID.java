@@ -14,12 +14,22 @@ import java.io.Serializable;
  */
 public class ObjectID extends AbstractIdentifier implements Serializable {
 
+  /**
+   * The NULL ObjectID
+   */
   public final static ObjectID NULL_ID = new ObjectID();
 
+  /**
+   * Create an ObjectID with the specified ID
+   * @param id The id value, >= 0
+   */
   public ObjectID(long id) {
     super(id);
   }
 
+  /**
+   * Create a "null" ObjectID.
+   */
   private ObjectID() {
     super();
   }

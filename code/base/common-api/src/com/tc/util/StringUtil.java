@@ -6,71 +6,75 @@ package com.tc.util;
 
 import java.util.Arrays;
 
+/**
+ * String utility methods.
+ */
 public class StringUtil {
 
+  /** A space character */
   public static final char   SPACE        = ' ';
+  
+  /** A space string */
   public static final String SPACE_STRING = " ";
 
+  /** The empty string */
   public static final String EMPTY        = "";
 
+  /** A string representing a null value: "<null>" */
   public static final String NULL_STRING  = "<null>";
 
-  public static final boolean isNullOrBlank(String s) {
-    return s == null || EMPTY.equals(s.trim());
-  }
-
+  /**
+   * Normal toString(), but convert null to the {@link #NULL_STRING}.  
+   * @return Always a string, never null
+   */
   public static final String safeToString(Object object) {
     return object != null ? object.toString() : NULL_STRING;
   }
 
   /**
-   * @param list a list of String objects
-   * @param value a string to search for, may be null -- will return true if one of the array values in
-   *        <code>list</code> is null.
-   * @return true if <code>value</code> is contained in <code>list</code>, will search for <code>null</code> as
-   *         well.
+   * Indent lines using a single tab by inserting them into source 
+   * after line breaks and returning a new String.
+   * @param source Source string, may NOT be null
+   * @return New string, updated with indents
+   * @throws NullPointerException If source is null
    */
-  public static final boolean exists(String[] list, String value) {
-    if (list != null) {
-      for (int pos = 0; pos < list.length; ++pos) {
-        if (list[pos] == value || (list[pos] != null && value != null && list[pos].equals(value))) { return true; }
-      }
-    }
-    return false;
-  }
-
-  /**
-   * @return <code>position</code>th, <code>position</code>st, <code>position</code>nd, etc. - whatever is
-   *         appropriate.
-   */
-  public static String ordinal(long position) {
-    long mod10 = Math.abs(position) % 10;
-    long mod100 = Math.abs(position) % 100;
-    StringBuffer rv = new StringBuffer(EMPTY + position);
-    if (mod10 == 1) {
-      rv.append(mod100 == 11 ? "th" : "st");
-    } else if (mod10 == 2) {
-      rv.append(mod100 == 12 ? "th" : "nd");
-    } else if (mod10 == 3) {
-      rv.append(mod100 == 13 ? "th" : "rd");
-    } else {
-      rv.append("th");
-    }
-    return rv.toString();
-  }
-
   public static String indentLines(String source) {
     return indentLines(source, 1);
   }
 
+  /**
+   * Indent lines using tabs by inserting them into source 
+   * after line breaks and returning a new String.
+   * @param source Source string, may NOT be null
+   * @param indentLevel Number of tabs to insert, must be >= 0
+   * @return Original buffer, updated
+   * @throws IllegalArgumentException If indentLevel < 0
+   * @throws NullPointerException If source is null
+   */
   public static String indentLines(String source, int indentLevel) {
     return indentLines(new StringBuffer(source), indentLevel).toString();
   }
 
+  /**
+   * Indent lines using tabs by inserting them into source and returning source.
+   * @param source Source buffer, may be null
+   * @param indentLevel Number of tabs to insert, must be >= 0
+   * @return Original buffer, updated
+   * @throws IllegalArgumentException If indentLevel < 0
+   */
   public static StringBuffer indentLines(StringBuffer source, int indentLevel) {
     return indentLines(source, indentLevel, '\t');
   }
 
+  /**
+   * Indent lines in the StringBuffer (line breaks found at \n) with indentChar repeated 
+   * indentLevel times.
+   * @param source Source buffer, may be null
+   * @param indentLevel Number of chars to indent, must be >= 0
+   * @param indentChar Indent character (usually ' ' or '\t')
+   * @return Original buffer, updated
+   * @throws IllegalArgumentException If indentLevel < 0
+   */
   public static StringBuffer indentLines(StringBuffer source, int indentLevel, char indentChar) {
     if ((source == null) || (indentLevel == 0)) { return source; }
 
@@ -104,6 +108,14 @@ public class StringUtil {
     return source;
   }
 
+  /**
+   * Find index of "search" in "source", starting at "start" index.
+   * @param source Source buffer, must be non-null
+   * @param search Search string, must be non-null
+   * @param start Start index, should be 0<=start<source.length(), will return -1 if out of range
+   * @return Index of found string or -1 if not found
+   * @throws NullPointerException If source or search is null
+   */
   public static int indexOfStringBuffer(StringBuffer source, String search, int start) {
     return source.toString().indexOf(search, start);
   }
@@ -137,31 +149,25 @@ public class StringUtil {
     }
     return rv.toString();
   }
+  
+  /**
+   * Helper method to convert object array [a, b, c] to comma-separated string "a, b, c".  
+   * @param objs Array of objects, can be null
+   * @return String, never null
+   */
   public static final String toString(Object[] objs) {
     return toString(objs, ", ", null, null);
   }
 
-  public static final String toString(int[] objs, String separator, String prefix, String postfix) {
-    StringBuffer rv = new StringBuffer();
-    if (objs != null) {
-      for (int pos = 0; pos < objs.length; ++pos) {
-        if (rv.length() > 0 && separator != null) {
-          rv.append(separator);
-        }
-        if (prefix != null) {
-          rv.append(prefix);
-        }
-        rv.append(objs[pos]);
-        if (postfix != null) {
-          rv.append(postfix);
-        }
-      }
-    } else {
-      rv.append(NULL_STRING);
-    }
-    return rv.toString();
-  }
-
+  /**
+   * Format value to string using radix, then prepend with 0's out to paddedWidth.
+   * If the formatted value is > paddedWidth, then the value is returned.
+   * 
+   * @param value Long value, must be >= 0
+   * @param radix The radix to use when representing the value
+   * @param paddedWidth The width to pad to by prepending 0
+   * @return Padded formatted string value for the long value, never null
+   */
   public static final String toPaddedString(long value, int radix, int paddedWidth) {
     StringBuffer result = new StringBuffer();
     String strValue = Long.toString(value, radix);
@@ -170,41 +176,6 @@ public class StringUtil {
     }
     result.append(strValue);
     return result.toString();
-  }
-
-  public static final String rightJustify(String s, int fieldSize) {
-    if (s.length() == fieldSize) return s;
-    if (s.length() > fieldSize) {
-      final int i = Math.max(s.length() - (fieldSize - 3), 1);
-      return leftPad(s.substring(i), fieldSize, '.');
-    }
-    return leftPad(s, fieldSize, ' ');
-  }
-
-  public static final String rightPad(String s, int size, char padChar) {
-    if (s.length() >= size) return s;
-    final int padCount = size - s.length();
-    StringBuffer sb = new StringBuffer();
-    sb.append(s);
-    for (int i = 0; i < padCount; i++) {
-      sb.append(padChar);
-    }
-    String rv = sb.toString();
-    Assert.eval(rv.length() == size);
-    return rv;
-  }
-
-  public static final String leftPad(String s, int size, char padChar) {
-    if (s.length() >= size) return s;
-    final int padCount = size - s.length();
-    StringBuffer sb = new StringBuffer();
-    for (int i = 0; i < padCount; i++) {
-      sb.append(padChar);
-    }
-    sb.append(s);
-    String rv = sb.toString();
-    Assert.eval(rv.length() == size);
-    return rv;
   }
 
   /**
@@ -260,7 +231,7 @@ public class StringUtil {
    * immutable, a new string is returned instead.
    * 
    * @param source the string that needs to be reduced
-   * @return the reduces string
+   * @return the reduced string, null if source is null
    */
   public static final String reduce(String source) {
     if (null == source) return null;
@@ -270,12 +241,23 @@ public class StringUtil {
     return new String(chars);
   }
 
+  /**
+   * For a string s, if non-null return s, else return nullToken.
+   * @param s The starting string
+   * @param nullToken The null token
+   * @return s or nullToken depending on s
+   */
   public static final String getNonNull(String s, String nullToken) {
     return (s == null) ? nullToken : s;
   }
 
+  /**
+   * Get a non-null version of the String.
+   * @param s The string
+   * @return Either s or the empty string if s was null
+   */
   public static final String getNonNull(String s) {
-    return getNonNull(s, "");
+    return getNonNull(s, EMPTY);
   }
 
 }

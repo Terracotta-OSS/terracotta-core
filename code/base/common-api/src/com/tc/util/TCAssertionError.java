@@ -5,6 +5,9 @@ package com.tc.util;
 
 import com.tc.exception.TCRuntimeException;
 
+/**
+ * Assertion error thrown by {@link Assert}.
+ */
 public class TCAssertionError extends TCRuntimeException {
 
   public TCAssertionError() {

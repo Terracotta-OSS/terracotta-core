@@ -5,6 +5,8 @@ package com.tc.config;
 
 import org.apache.commons.lang.StringUtils;
 
+import com.tc.util.Environment;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 
@@ -17,12 +19,28 @@ public class Directories {
 
   /**
    * This is <code>public</code> <strong>ONLY</strong> so that some entities can <strong>SET</strong> it. You should
-   * <strong>NOT</strong> set it yourself; that breaks the point of encapsulation. Use the method instead.
+   * <strong>NOT</strong> set it yourself; that breaks the point of encapsulation. Use the method 
+   * {@link Environment#inTest()} instead.  The property name is "tc.install-root".  
    */
   public static final String TC_INSTALL_ROOT_PROPERTY_NAME               = "tc.install-root";
+  
+  /**
+   * The property "tc.install-root.ignore-checks", which is used for testing to ignore checks for the installation 
+   * root directory.
+   */
   public static final String TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME = "tc.install-root.ignore-checks";
+  
+  /**
+   * The property "tc.license-location", which indicates the directory containing the license.
+   */
   public static final String TC_LICENSE_LOCATION_PROPERTY_NAME           = "tc.license-location";
 
+  /**
+   * Get the location of the license directory based on the value of {@link #TC_LICENSE_LOCATION_PROPERTY_NAME}.
+   * @return Directory containing license file, never null
+   * @throws FileNotFoundException If the tc.license-location directory has not been set, the license 
+   * directory does not exist, or exists but is not a directory
+   */
   public static File getLicenseLocation() throws FileNotFoundException {
     String path = System.getProperty(TC_LICENSE_LOCATION_PROPERTY_NAME);
     if (StringUtils.isBlank(path)) { throw new FileNotFoundException(
@@ -39,6 +57,14 @@ public class Directories {
     return licenseDir;
   }
 
+  /**
+   * Get installation root directory.
+   * @return Installation root directory, never null
+   * @throws FileNotFoundException If {@link #TC_INSTALL_ROOT_PROPERTY_NAME} has not been set.  If 
+   * {@link #TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME} has not been set, this exception may be 
+   * thrown if the installation root directory has not been set, is not a directory, or does not contain
+   * a lib/tc.jar that is a file.  
+   */
   public static File getInstallationRoot() throws FileNotFoundException {
     String path = System.getProperty(TC_INSTALL_ROOT_PROPERTY_NAME);
 
