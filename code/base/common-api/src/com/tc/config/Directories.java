@@ -5,8 +5,6 @@ package com.tc.config;
 
 import org.apache.commons.lang.StringUtils;
 
-import com.tc.util.Environment;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 
