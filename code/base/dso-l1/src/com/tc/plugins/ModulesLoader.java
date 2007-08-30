@@ -84,34 +84,32 @@ public class ModulesLoader {
     EmbeddedOSGiRuntime osgiRuntime = null;
     synchronized (lock) {
       final Modules modules = configHelper.getModulesForInitialization();
-      if ((modules != null) && (modules.sizeOfModuleArray() > 0)) {
-        try {
-          osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
-          initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), forBootJar);
-          if (!forBootJar) {
-            getModulesCustomApplicatorSpecs(osgiRuntime, configHelper);
-          }
-        } catch (MissingBundleException mbe) {
-          consoleLogger
-              .fatal(mbe.getMessage() + " - unable to initialize modules, shutting down. See log for details.");
-          shutdownAndExit(osgiRuntime, mbe);
-        } catch (InvalidBundleManifestException ibme) {
-          consoleLogger.fatal(ibme.getMessage()
-                              + " - unable to initialize modules, shutting down. See log for details.");
-          shutdownAndExit(osgiRuntime, ibme);
-        } catch (BundleException be) {
-          consoleLogger.fatal(be.getMessage() + " - unable to initialize modules, shutting down. See log for details.");
-          shutdownAndExit(osgiRuntime, be);
-        } catch (InvalidSyntaxException ise) {
-          consoleLogger
-              .fatal(ise.getMessage() + " - unable to initialize modules, shutting down. See log for details.");
-          shutdownAndExit(osgiRuntime, ise);
-        } catch (Exception e) {
-          throw new RuntimeException("Unable to create runtime for plugins", e);
-        } finally {
-          if (forBootJar) {
-            shutdown(osgiRuntime);
-          }
+      try {
+        osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
+        initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), forBootJar);
+        if (!forBootJar) {
+          getModulesCustomApplicatorSpecs(osgiRuntime, configHelper);
+        }
+      } catch (MissingBundleException mbe) {
+        consoleLogger
+            .fatal(mbe.getMessage() + " - unable to initialize modules, shutting down. See log for details.");
+        shutdownAndExit(osgiRuntime, mbe);
+      } catch (InvalidBundleManifestException ibme) {
+        consoleLogger.fatal(ibme.getMessage()
+                            + " - unable to initialize modules, shutting down. See log for details.");
+        shutdownAndExit(osgiRuntime, ibme);
+      } catch (BundleException be) {
+        consoleLogger.fatal(be.getMessage() + " - unable to initialize modules, shutting down. See log for details.");
+        shutdownAndExit(osgiRuntime, be);
+      } catch (InvalidSyntaxException ise) {
+        consoleLogger
+            .fatal(ise.getMessage() + " - unable to initialize modules, shutting down. See log for details.");
+        shutdownAndExit(osgiRuntime, ise);
+      } catch (Exception e) {
+        throw new RuntimeException("Unable to create runtime for plugins", e);
+      } finally {
+        if (forBootJar) {
+          shutdown(osgiRuntime);
         }
       }
     }
@@ -286,7 +284,6 @@ public class ModulesLoader {
       // if config-bundle's fragment of the configuration file is not included in the jar file
       // then we don't need to merge it in with the current configuration --- but make a note of it.
       if (is == null) {
-        System.out.println("x " + configPath);
         logger.warn("The config file '" + configPath + "', for module '" + bundle.getSymbolicName()
                     + "' does not appear to be a part of the module's config-bundle jar file contents.");
         continue;
