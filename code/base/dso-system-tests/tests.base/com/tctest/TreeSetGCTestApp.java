@@ -6,15 +6,10 @@ package com.tctest;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
-import com.tc.object.applicator.HashSetApplicator;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.spec.CyclicBarrierSpec;
-import com.tc.object.handler.ReceiveTransactionHandler;
-import com.tc.object.tx.ClientTransactionManagerImpl;
-import com.tc.objectserver.managedobject.SetManagedObjectState;
-import com.tc.objectserver.tx.ServerTransactionManagerImpl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
@@ -71,41 +66,41 @@ public class TreeSetGCTestApp extends AbstractErrorCatchingTransparentApp {
     }
 
     if (error != null) {
-      List list = ServerTransactionManagerImpl.applyList;
-      for (Iterator iter = list.iterator(); iter.hasNext();) {
-        String info = (String) iter.next();
-        debugPrintln(info);
-      }
+    //  List list = ServerTransactionManagerImpl.applyList;
+      //for (Iterator iter = list.iterator(); iter.hasNext();) {
+        //String info = (String) iter.next();
+        //debugPrintln(info);
+      //}
 
-      list = ClientTransactionManagerImpl.txnList;
-      for (Iterator iter = list.iterator(); iter.hasNext();) {
-        String info = (String) iter.next();
-        debugPrintln(info);
-      }
+      //list = ClientTransactionManagerImpl.txnList;
+      //for (Iterator iter = list.iterator(); iter.hasNext();) {
+       // String info = (String) iter.next();
+        //debugPrintln(info);
+      //}
 
-      list = SetManagedObjectState.addedList;
-      for (Iterator iter = list.iterator(); iter.hasNext();) {
-        String info = (String) iter.next();
-        debugPrintln(info);
-      }
+      //list = SetManagedObjectState.addedList;
+      //for (Iterator iter = list.iterator(); iter.hasNext();) {
+       // String info = (String) iter.next();
+        //debugPrintln(info);
+      //}
 
-      list = SetManagedObjectState.removedList;
-      for (Iterator iter = list.iterator(); iter.hasNext();) {
-        String info = (String) iter.next();
-        debugPrintln(info);
-      }
+      //list = SetManagedObjectState.removedList;
+      //for (Iterator iter = list.iterator(); iter.hasNext();) {
+        //String info = (String) iter.next();
+        //debugPrintln(info);
+      //}
 
-      list = ReceiveTransactionHandler.receivedList;
-      for (Iterator iter = list.iterator(); iter.hasNext();) {
-        String info = (String) iter.next();
-        debugPrintln(info);
-      }
+      //list = ReceiveTransactionHandler.receivedList;
+      //for (Iterator iter = list.iterator(); iter.hasNext();) {
+        //String info = (String) iter.next();
+        //debugPrintln(info);
+      //}
 
-      list = HashSetApplicator.applyList;
-      for (Iterator iter = list.iterator(); iter.hasNext();) {
-        String applyInfo = (String) iter.next();
-        debugPrintln(applyInfo);
-      }
+      //list = HashSetApplicator.applyList;
+      //for (Iterator iter = list.iterator(); iter.hasNext();) {
+        //String applyInfo = (String) iter.next();
+        //debugPrintln(applyInfo);
+      //}
 
       throw error;
     }
@@ -210,9 +205,9 @@ public class TreeSetGCTestApp extends AbstractErrorCatchingTransparentApp {
                   error = new AssertionError("Element=[" + j + "] missing from TreeSet=[" + i + "]["
                                              + tsWrapper.getId() + "] with size=[" + size + "]  TreeSetContent=["
                                              + getContent(ts) + "]");
-                  debugPrintln("Error occurred... last txn committed in ClientTransactionManagerImpl:  ["
-                               + ClientTransactionManagerImpl.txnList
-                                   .get(ClientTransactionManagerImpl.txnList.size() - 1) + "]");
+                  //debugPrintln("Error occurred... last txn committed in ClientTransactionManagerImpl:  ["
+                    //           + ClientTransactionManagerImpl.txnList
+                      //             .get(ClientTransactionManagerImpl.txnList.size() - 1) + "]");
                   return;
                 }
                 debugPrintln(wrapMessage("reading Element=[" + j + "] TreeSet=[" + i + "][" + tsWrapper.getId()
