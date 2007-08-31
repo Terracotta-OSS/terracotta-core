@@ -8,6 +8,9 @@ import com.tc.io.TCDataOutput;
 
 import java.io.IOException;
 
+/**
+ * Defines how to encode DNA onto a stream or decode data from a stream, with some different policies for encoding.
+ */
 public interface DNAEncoding {
 
   /**
@@ -28,23 +31,52 @@ public interface DNAEncoding {
   public static final byte STORAGE    = 0x01;
   /**
    * When the policy is set to APPLICATOR then the DNAEncoding.decode() will return the original Objects that were
-   * encoded in the orinal stream. For Example if UTF8ByteDataHolder is serialized to a stream, then when it is
+   * encoded in the original stream. For Example if UTF8ByteDataHolder is serialized to a stream, then when it is
    * deserialized, you get a String object.
    * <p>
    * You may want such a policy in TCObjectInputStream, for example.
    */
   public static final byte APPLICATOR = 0x02;
 
+  /**
+   * Get the policy in use for this encoding, as defined by constants in this class.
+   * @return The policy
+   */
   public abstract byte getPolicy();
 
+  /**
+   * Encode a classloader object onto an output stream
+   * @param value The classloader
+   * @param output The output 
+   */
   public abstract void encodeClassLoader(Object value, TCDataOutput output);
 
+  /**
+   * Encode an object onto an output stream
+   * @param value The object
+   * @param output The output 
+   */
   public abstract void encode(Object value, TCDataOutput output);
 
+  /**
+   * Decode an object from an input stream
+   * @param input The input stream
+   */
   public abstract Object decode(TCDataInput input) throws IOException, ClassNotFoundException;
 
+  /**
+   * Encode an array onto an output stream, automatically determine array length
+   * @param value The array
+   * @param output The output 
+   */
   public abstract void encodeArray(Object value, TCDataOutput output);
 
+  /**
+   * Encode an array onto an output stream
+   * @param value The array
+   * @param output The output 
+   * @param length The length of the array to encode
+   */
   public abstract void encodeArray(Object value, TCDataOutput output, int length);
 
 }

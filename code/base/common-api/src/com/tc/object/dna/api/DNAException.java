@@ -5,6 +5,10 @@ package com.tc.object.dna.api;
 
 import com.tc.exception.TCRuntimeException;
 
+/**
+ * Generic exception thrown when working with DNA.  Typically used a replacement for something 
+ * like IOException or other non-Terracotta exception
+ */
 public class DNAException extends TCRuntimeException {
   public DNAException() {
     super();

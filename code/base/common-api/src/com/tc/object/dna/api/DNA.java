@@ -12,21 +12,42 @@ import com.tc.object.ObjectID;
  * @author Orion Letizi
  */
 public interface DNA {
+  /** Array size constant indicating no array size */
   public static final int NULL_ARRAY_SIZE    = -1;
+  
+  /** Version constant indicating no version */
   public static final int NULL_VERSION       = -1;
 
+  /** 
+   * Get the version of this DNA based on the global transaction ID,
+   * may be {@link #NULL_VERSION}.
+   */
   public long getVersion();
 
+  /**
+   * Determine whether this DNA has an array length
+   * @return True if has length
+   */
   public boolean hasLength();
 
+  /**
+   * Get length of the array in the DNA or {@link #NULL_ARRAY_SIZE} if it
+   * has no array length.
+   * @return Array length or {@link #NULL_ARRAY_SIZE}
+   */
   public int getArraySize();
 
   /**
-   * returns true if the DNA represents a change of an object and
-   * returns false if the DNA represents the entire object.
+   * Determine whether this DNA is a whole object or just a delta
+   * @return true if the DNA represents a change of an object and
+   * false if the DNA represents the entire object.
    */
   public boolean isDelta();
 
+  /**
+   * Get the class name of the type for this piece of DNA
+   * @return Class name
+   */
   public String getTypeName();
 
   /**
@@ -40,14 +61,23 @@ public interface DNA {
    */
   public ObjectID getObjectID() throws DNAException;
 
+  /**
+   * If this object is an inner class, get the parent object identifier
+   * @return The parent object if one exists 
+   * @throws DNAException Exception thrown if the id cannot be resolved
+   */
   public ObjectID getParentObjectID() throws DNAException;
 
   /**
    * Gets a DNACursor to spin through the field values.
    *
-   * @return
+   * @return The cursor
    */
   public DNACursor getCursor();
 
+  /**
+   * Get defining classloader name
+   * @return Classloader name
+   */
   public String getDefiningLoaderDescription();
 }
