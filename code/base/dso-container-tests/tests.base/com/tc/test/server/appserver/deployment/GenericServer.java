@@ -74,7 +74,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     this.factory = factory;
     this.installation = installation;
     this.rmiRegistryPort = AppServerUtil.getPort();
-    this.jmxRemotePort = AppServerUtil.getPort();    
+    this.jmxRemotePort = AppServerUtil.getPort();
     this.serverInstanceName = SERVER + serverId;
     this.parameters = (StandardAppServerParameters) factory.createParameters(serverInstanceName);
     this.workingDir = new File(installation.sandboxDirectory(), serverInstanceName);
@@ -92,7 +92,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     if (!Vm.isIBM() && !(Os.isMac() && Vm.isJDK14())) {
       parameters.appendJvmArgs("-XX:+HeapDumpOnOutOfMemoryError");
     }
-    
+
     int appId = AppServerFactory.getCurrentAppServerId();
     // glassfish fails with these options on
     if (appId != AppServerFactory.GLASSFISH) {
@@ -130,6 +130,16 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
         // bumped up because ContainerHibernateTest was failing with WL 9
         parameters.appendJvmArgs("-XX:MaxPermSize=128m");
         parameters.appendJvmArgs("-Xms128m -Xmx256m");
+
+        if ("9".equals(AppServerFactory.getCurrentAppServerMajorVersion())) {
+          Banner.warnBanner("Enabling debug for weblogic 9 -- This should be removed at some point");
+          parameters.appendSysProp("weblogic.kernel.debug", true);
+          parameters.appendSysProp("weblogic.debug.DebugConnection", true);
+
+          // This property enables a class adapter in StandardDSOClientConfigHelper.addWeblogicCustomAdapters()
+          parameters.appendSysProp("com.tc.weblogic.rjvm.debug", true);
+        }
+
         break;
     }
 
