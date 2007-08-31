@@ -1,4 +1,5 @@
 Manifest-Version: 1.0
+Terracotta-Configuration: awt-models, swing-models, exceptions
 Bundle-Activator: org.terracotta.modules.StandardConfigConfigurator
 Bundle-Category: terracotta
 Bundle-Copyright: Terracotta, Inc. (c) 2003-2007

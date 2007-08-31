@@ -91,19 +91,16 @@ public class ModulesLoader {
           getModulesCustomApplicatorSpecs(osgiRuntime, configHelper);
         }
       } catch (MissingBundleException mbe) {
-        consoleLogger
-            .fatal(mbe.getMessage() + " - unable to initialize modules, shutting down. See log for details.");
+        consoleLogger.fatal(mbe.getMessage() + " - unable to initialize modules, shutting down. See log for details.");
         shutdownAndExit(osgiRuntime, mbe);
       } catch (InvalidBundleManifestException ibme) {
-        consoleLogger.fatal(ibme.getMessage()
-                            + " - unable to initialize modules, shutting down. See log for details.");
+        consoleLogger.fatal(ibme.getMessage() + " - unable to initialize modules, shutting down. See log for details.");
         shutdownAndExit(osgiRuntime, ibme);
       } catch (BundleException be) {
         consoleLogger.fatal(be.getMessage() + " - unable to initialize modules, shutting down. See log for details.");
         shutdownAndExit(osgiRuntime, be);
       } catch (InvalidSyntaxException ise) {
-        consoleLogger
-            .fatal(ise.getMessage() + " - unable to initialize modules, shutting down. See log for details.");
+        consoleLogger.fatal(ise.getMessage() + " - unable to initialize modules, shutting down. See log for details.");
         shutdownAndExit(osgiRuntime, ise);
       } catch (Exception e) {
         throw new RuntimeException("Unable to create runtime for plugins", e);
@@ -243,27 +240,39 @@ public class ModulesLoader {
     configHelper.setModuleSpecs(modulesSpecs);
   }
 
+  /**
+   * Extract the list of xml-fragment files that a config bundle 
+   * should use for instrumentation. 
+   */
   private static String[] getConfigPath(final Bundle bundle) throws BundleException {
+    final VendorVmSignature vmsig;
     try {
-      final VendorVmSignature vmsig = new VendorVmSignature();
-      final String TC_CONFIG_HEADER = "Terracotta-Configuration";
-      final String TC_CONFIG_HEADER_FOR_VM = TC_CONFIG_HEADER + VendorVmSignature.SIGNATURE_SEPARATOR
-                                             + vmsig.getSignature();
-      // check if the config-bundle indicates a vm vendor specific terracotta configuration...
-      // config for vendor specific vm
-      String path = (String) bundle.getHeaders().get(TC_CONFIG_HEADER_FOR_VM);
-      if (path == null) {
-        // terracotta specific config (eg: tests)
-        path = (String) bundle.getHeaders().get(TC_CONFIG_HEADER);
-        if (path == null) {
-          // default terracotta config
-          path = "terracotta.xml";
-        }
-      }
-      return path.split(",");
+      vmsig = new VendorVmSignature();
     } catch (VendorVmSignatureException e) {
       throw new BundleException(e.getMessage());
     }
+
+    final String TERRACOTTA_CONFIGURATION = "Terracotta-Configuration";
+    final String TERRACOTTA_CONFIGURATION_FOR_VM = TERRACOTTA_CONFIGURATION + VendorVmSignature.SIGNATURE_SEPARATOR
+                                                   + vmsig.getSignature();
+
+    String path = (String) bundle.getHeaders().get(TERRACOTTA_CONFIGURATION_FOR_VM);
+    if (path == null) {
+      path = (String) bundle.getHeaders().get(TERRACOTTA_CONFIGURATION);
+      if (path == null) {
+        path = "terracotta.xml";
+      }
+    }
+
+    final String[] paths = path.split(",");
+    for (int i = 0; i < paths.length; i++) {
+      paths[i] = paths[i].trim();
+      if (!paths[i].endsWith(".xml")) {
+        paths[i] = paths[i].concat(".xml");
+      }
+    }
+
+    return paths;
   }
 
   private static void loadConfiguration(final DSOClientConfigHelper configHelper, final Bundle bundle)
@@ -271,7 +280,7 @@ public class ModulesLoader {
     // attempt to load all of the config fragments found in the config-bundle
     final String[] paths = getConfigPath(bundle);
     for (int i = 0; i < paths.length; i++) {
-      final String configPath = paths[i].trim();
+      final String configPath = paths[i];
       final InputStream is;
       try {
         is = JarResourceLoader.getJarResource(new URL(bundle.getLocation()), configPath);

@@ -27,7 +27,7 @@ public class Vm {
   }
 
   private Vm() {
-  // Utility class
+  // utility class
   }
 
   public static int getMegaVersion() {
@@ -64,6 +64,10 @@ public class Vm {
 
   public static boolean isJDK15Compliant() {
     return VERSION.isJDK15() || VERSION.isJDK16() || VERSION.isJDK17();
+  }
+  
+  public static boolean isJDK16Compliant() {
+    return VERSION.isJDK16() || VERSION.isJDK17();
   }
 
   public static boolean isIBM() {

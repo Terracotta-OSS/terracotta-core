@@ -1,0 +1,35 @@
+<?xml version = "1.0" encoding="UTF-8"?>
+<!--
+   
+   All content copyright (c) 2007 Terracotta, Inc.,
+   except as may otherwise be noted in a separate copyright notice.
+   All rights reserved
+   
+-->
+<xml-fragment>
+   <instrumented-classes>
+      <include>
+        <class-expression>java.lang.Error</class-expression>
+        <class-expression>java.lang.Exception</class-expression>
+        <class-expression>java.lang.RuntimeException</class-expression>
+        <class-expression>java.lang.InterruptedException</class-expression>
+        <class-expression>java.awt.AWTException</class-expression>
+        <class-expression>java.io.IOException</class-expression>
+        <class-expression>java.io.FileNotFoundException</class-expression>
+        <class-expression>java.util.ConcurrentModificationException</class-expression>
+        <class-expression>java.util.NoSuchElementException</class-expression>
+      </include>
+   </instrumented-classes>
+   
+   <additional-boot-jar-classes>
+        <include>java.lang.Error</include>
+        <include>java.lang.Exception</include>
+        <include>java.lang.RuntimeException</include>
+        <include>java.lang.InterruptedException</include>
+        <include>java.awt.AWTException</include>
+        <include>java.io.IOException</include>
+        <include>java.io.FileNotFoundException</include>
+        <include>java.util.ConcurrentModificationException</include>
+        <include>java.util.NoSuchElementException</include>
+   </additional-boot-jar-classes>
+</xml-fragment>

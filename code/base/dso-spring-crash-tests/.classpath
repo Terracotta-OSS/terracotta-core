@@ -16,5 +16,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-system-tests"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/legacy-test-tree"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
 	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
 </classpath>

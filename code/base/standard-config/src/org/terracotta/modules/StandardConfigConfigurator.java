@@ -11,6 +11,7 @@ import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.LockDefinition;
 import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
+import com.tc.util.runtime.Vm;
 
 public class StandardConfigConfigurator
       extends TerracottaConfiguratorModule {
@@ -142,11 +143,11 @@ public class StandardConfigConfigurator
       getOrCreateSpec("java.awt.geom.Ellipse2D$Float");
 
       // java.awt.geom.Path2D
-      // if (Vm.getMegaVersion() >= 1 && Vm.getMajorVersion() >= 6) {
-      // spec = getOrCreateSpec("java.awt.geom.Path2D");
-      // spec = getOrCreateSpec("java.awt.geom.Path2D$Double");
-      // spec = getOrCreateSpec("java.awt.geom.Path2D$Float");
-      // }
+      if (Vm.isJDK16Compliant()) {
+         getOrCreateSpec("java.awt.geom.Path2D");
+         getOrCreateSpec("java.awt.geom.Path2D$Double");
+         getOrCreateSpec("java.awt.geom.Path2D$Float");
+      }
 
       // GeneralPath
       getOrCreateSpec("java.awt.geom.GeneralPath");
