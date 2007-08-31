@@ -274,7 +274,7 @@ public class BootJarTool {
    * Checks if the given bootJarFile is complete; meaning: - All the classes declared in the configurations
    * <additional-boot-jar-classes/> section is present in the boot jar. - And there are no user-classes present in the
    * boot jar that is not declared in the <additional-boot-jar-classes/> section
-   *
+   * 
    * @return <code>true</cide> if the boot jar is complete.
    */
   private final boolean isBootJarComplete(File bootJarFile) {
@@ -292,7 +292,7 @@ public class BootJarTool {
    * Scans the boot JAR file for: - User-defined classes that are in the boot JAR but is not defined in the
    * <additional-boot-jar-classes/> section of the config - Class names declared in the config but are not in the boot
    * JAR
-   *
+   * 
    * @throws InvalidBootJarMetaDataException
    */
   private final Map compareBootJarContentsToUserSpec(File bootJarFile) throws InvalidBootJarMetaDataException {
@@ -1133,8 +1133,8 @@ public class BootJarTool {
 
       final Class topClass = getBootstrapClass(spec.getClassName());
       if (topClass == null) {
-        if (tcSpecs && !spec.isHonorJDKSubVersionSpecific()) { throw new AssertionError("Class not found: "
-                                                                                        + spec.getClassName()); }
+        if (tcSpecs && !spec.isHonorJDKSubVersionSpecific()) throw new AssertionError("Class not found: "
+                                                                                      + spec.getClassName());
         if (!tcSpecs) {
           nonExistingClasses.add(spec.getClassName());
         }
@@ -1168,9 +1168,8 @@ public class BootJarTool {
           }
 
           if (!specs.containsKey(clazz.getName()) && ((bootJar == null) || !bootJar.classLoaded(clazz.getName()))) {
-            if (tcSpecs) {
-              throw new AssertionError("Missing super class " + clazz.getName() + " for type " + spec.getClassName());
-            }
+            if (tcSpecs) { throw new AssertionError("Missing super class " + clazz.getName() + " for type "
+                                                    + spec.getClassName()); }
             supers.add(clazz.getName());
           }
 
@@ -2289,8 +2288,8 @@ public class BootJarTool {
     // That requirement is no more, but might come back, so I'm leaving at least this much scaffolding in place
     // WAS: systemProvider = new RuntimeJarBytesProvider(...)
     ClassLoader systemLoader = ClassLoader.getSystemClassLoader();
-    BootJarTool bjTool = new BootJarTool(new StandardDSOClientConfigHelperImpl(config, false), targetFile, systemLoader,
-                                         !verbose);
+    BootJarTool bjTool = new BootJarTool(new StandardDSOClientConfigHelperImpl(config, false), targetFile,
+                                         systemLoader, !verbose);
 
     if (mode.equals(MAKE_MODE)) {
       boolean makeItAnyway = commandLine.hasOption("w");

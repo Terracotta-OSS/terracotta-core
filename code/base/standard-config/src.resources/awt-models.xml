@@ -7,6 +7,7 @@
    
 -->
 <xml-fragment>
+   <!-- 
    <instrumented-classes>
       <include>
         <class-expression>java.awt.Color</class-expression>
@@ -134,10 +135,10 @@
      <include>java.awt.BasicStroke</include>
      <include>java.awt.Dimension</include>
      <include>java.awt.geom.Dimension2D</include>
-     <!--      
+
      <include>java.awt.geom.Path2D</include>
      <include>java.awt.geom.Path2D$Double</include>
      <include>java.awt.geom.Path2D$Float</include>
-     -->
    </additional-boot-jar-classes>
+   -->
 </xml-fragment>

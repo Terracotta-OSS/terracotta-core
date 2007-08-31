@@ -59,6 +59,7 @@ modules:
         module: true
       dependencies:
         - modules-common
+        - dso-l1-api
   - dso-common:
       options:
         jdk: J2SE-1.4

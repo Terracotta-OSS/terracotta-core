@@ -7,6 +7,7 @@
    
 -->
 <xml-fragment>
+   <!-- 
    <instrumented-classes>
       <include>
         <class-expression>javax.swing.event.TableModelEvent</class-expression>
@@ -136,4 +137,5 @@
      <include>javax.swing.tree.DefaultMutableTreeNode</include>
      <include>javax.swing.tree.DefaultTreeModel</include>
    </additional-boot-jar-classes>
+   -->
 </xml-fragment>

@@ -1,15 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <parent>
+    <artifactId>parent</artifactId>
     <groupId>org.terracotta</groupId>
-    <artifactId>parent14</artifactId>
-    <version>2.3-SNAPSHOT</version>
-    <relativePath>../parent14</relativePath>
+    <version>2.4-SNAPSHOT</version>
   </parent>
+  <modelVersion>4.0.0</modelVersion>
   <artifactId>standard-config</artifactId>
   <name>standard-config</name>
-  <dependencies/>
+  <dependencies>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>dso-l1-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>modules-common</artifactId>
+    </dependency>
+  </dependencies>
 </project>

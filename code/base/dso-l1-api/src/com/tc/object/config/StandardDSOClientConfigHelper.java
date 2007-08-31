@@ -28,6 +28,12 @@ public interface StandardDSOClientConfigHelper {
   
   void addAutoLockExcludePattern(String expression);
 
+  void addPermanentExcludePattern(String pattern);
+  
+  LockDefinition createLockDefinition(String name, ConfigLockLevel level);
+  
+  void addLock(String methodPattern, LockDefinition lockDefinition);
+  
   // HACK: duplicated from DSOClientConfigHelper
 
   TransparencyClassSpec getOrCreateSpec(String className);
