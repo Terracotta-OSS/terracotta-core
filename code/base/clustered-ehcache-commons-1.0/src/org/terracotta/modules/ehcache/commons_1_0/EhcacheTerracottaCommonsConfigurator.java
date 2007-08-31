@@ -17,7 +17,7 @@ public abstract class EhcacheTerracottaCommonsConfigurator extends TerracottaCon
     Bundle bundle = getExportedBundle(context, getExportedBundleName());
     Bundle thisBundle = getExportedBundle(context, COMMON_EHCACHE_BUNDLE_NAME);
     if (null == bundle) {
-      throw new RuntimeException("Couldn't find bundle with symbolic name '"+getExportedBundleName()+"' during the instrumentation configuration of the bunde '"+context.getBundle().getSymbolicName()+"'.");
+      throw new RuntimeException("Couldn't find bundle with symbolic name '"+getExportedBundleName()+"' during the instrumentation configuration of the bundle '"+context.getBundle().getSymbolicName()+"'.");
     }
     
     // setup the replacement classes
