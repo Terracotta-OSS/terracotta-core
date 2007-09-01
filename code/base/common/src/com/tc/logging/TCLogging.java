@@ -26,13 +26,15 @@ import java.io.StringWriter;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Properties;
+import java.util.Map.Entry;
 
 /**
  * Factory class for obtaining TCLogger instances.
- * 
+ *
  * @author teck
  */
 public class TCLogging {
@@ -89,7 +91,7 @@ public class TCLogging {
   public static TCLogger getLogger(String name) {
     if ((name == null) || !name.startsWith(INTERNAL_LOGGER_NAMESPACE_WITH_DOT)) {
       // this comment here to make formatter sane
-      throw new IllegalArgumentException("Logger not in valid namespace (ie. '" + INTERNAL_LOGGER_NAMESPACE_WITH_DOT
+      throw new IllegalArgumentException("Logger not in valid namepsace (ie. '" + INTERNAL_LOGGER_NAMESPACE_WITH_DOT
           + "' ): " + name);
     }
 
@@ -431,34 +433,50 @@ public class TCLogging {
   }
 
   private static void writeSystemProperties() {
-    Properties properties = System.getProperties();
-    int maxKeyLength = 1;
+    try {
+      Properties properties = System.getProperties();
+      int maxKeyLength = 1;
 
-    Iterator iter = properties.keySet().iterator();
-    while (iter.hasNext()) {
-      String key = (String) iter.next();
-      maxKeyLength = Math.max(maxKeyLength, key == null ? 0 : key.length());
+      ArrayList keys = new ArrayList();
+      Iterator iter = properties.entrySet().iterator();
+      while (iter.hasNext()) {
+        Entry entry = (Entry) iter.next();
+        Object objKey = entry.getKey();
+        Object objValue = entry.getValue();
+
+        // It's possible someone is being bad and shoving non-String keys or values into system props
+        if (objKey instanceof String && objValue instanceof String) {
+          String key = (String) objKey;
+          if (key != null) {
+            keys.add(key);
+          }
+          maxKeyLength = Math.max(maxKeyLength, key == null ? 0 : key.length());
+        }
+      }
+
+      StringBuffer data = new StringBuffer();
+      data.append("========================================================================\n");
+      data.append("All Java System Properties for this Terracotta instance:\n");
+
+      String[] sortedKeys = (String[]) keys.toArray(new String[keys.size()]);
+      Arrays.sort(sortedKeys);
+      for (int i = 0; i < sortedKeys.length; ++i) {
+        String key = sortedKeys[i];
+        String value = (String) properties.get(key);
+
+        while (key.length() < maxKeyLength)
+          key += " ";
+
+        data.append(key + ": " + value + "\n");
+      }
+
+      data.append("========================================================================\n");
+
+      getLogger(TCLogging.class).info(data.toString());
+    } catch (Throwable t) {
+      // don't let exceptions here be fatal
+      t.printStackTrace();
     }
-
-    StringBuffer data = new StringBuffer();
-    data.append("========================================================================\n");
-    data.append("All Java System Properties for this Terracotta instance:\n");
-
-    String[] keys = (String[]) properties.keySet().toArray(new String[properties.size()]);
-    Arrays.sort(keys);
-    for (int i = 0; i < keys.length; ++i) {
-      String key = keys[i];
-      String value = (String) properties.get(key);
-
-      while (key.length() < maxKeyLength)
-        key += " ";
-
-      data.append(key + ": " + value + "\n");
-    }
-
-    data.append("========================================================================\n");
-
-    getLogger(TCLogging.class).info(data.toString());
   }
 
   // This method for use in tests only
