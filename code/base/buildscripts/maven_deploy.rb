@@ -17,7 +17,7 @@ class MavenDeploy
     end
 
     command = dry_run ? ['echo'] : []
-    command << FilePath.new('mvn').batch_extension.to_s << '-B'
+    command << FilePath.new('mvn').batch_extension.to_s << '-B' << '-N'
 
     version += '-SNAPSHOT' if @snapshot && version !~ /-SNAPSHOT$/
 
@@ -27,7 +27,8 @@ class MavenDeploy
       'groupId' => @group_id,
       'artifactId' => artifact_id,
       'file' => file,
-      'version' => version
+      'version' => version,
+      'uniqueVersion' => false
     }
 
     if @repository_url.downcase == 'local'
