@@ -331,7 +331,7 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
   public void validateInUnLockState() {
     boolean isLocked = super.getReadLockCount() != 0 || super.isWriteLocked();
     if (isLocked) { throw new TCObjectNotSharableException(
-                                                           "You attempt to share a ReentrantReadWriteLock when it is in a lock state. Lock cannot be in a locked state when shared."); }
+                                                           "You are attempting to share a ReentrantReadWriteLock when it is in a locked state. Lock cannot be shared while locked."); }
   }
 
   public Sync getSync() {
