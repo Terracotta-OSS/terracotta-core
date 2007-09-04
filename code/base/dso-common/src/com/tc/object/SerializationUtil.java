@@ -3,6 +3,8 @@
  */
 package com.tc.object;
 
+import java.util.regex.Pattern;
+
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntIterator;
 
@@ -167,7 +169,8 @@ public class SerializationUtil {
     return i;
   }
 
+  private static final Pattern PARENT_FIELD_PATTERN = Pattern.compile("^this\\$\\d+$");
   public boolean isParent(String fieldName) {
-    return fieldName.matches("^this\\$\\d+$");
+    return PARENT_FIELD_PATTERN.matcher(fieldName).matches();
   }
 }
