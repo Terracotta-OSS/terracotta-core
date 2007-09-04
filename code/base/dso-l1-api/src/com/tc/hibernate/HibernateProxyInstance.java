@@ -3,6 +3,9 @@
  */
 package com.tc.hibernate;
 
+/**
+ *  This is a marker interface to indicate an instance is a Hibernate AccessPlan.
+ */
 public interface HibernateProxyInstance {
-  // This is a marker interface to indicate an instance is a Hibernate AccessPlan.
+  // Marker interface
 }

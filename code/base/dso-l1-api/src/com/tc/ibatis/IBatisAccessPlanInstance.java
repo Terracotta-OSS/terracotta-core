@@ -3,6 +3,9 @@
  */
 package com.tc.ibatis;
 
+/**
+ * This is a marker interface to indicate an instance is a IBatis AccessPlan.
+ */
 public interface IBatisAccessPlanInstance {
-  // This is a marker interface to indicate an instance is a IBatis AccessPlan.
+  // Marker interface
 }
