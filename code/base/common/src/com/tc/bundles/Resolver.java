@@ -204,6 +204,7 @@ public class Resolver {
       InputStream is = null;
       try {
         location = new URL(repositories[i].toString() + (repositories[i].toString().endsWith("/") ? "" : "/") + path);
+        System.out.println("[xxx] " + location.toString());
         is = location.openStream();
         is.read();
         is.close();

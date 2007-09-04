@@ -22,8 +22,8 @@ public class StandardConfigConfigurator
          final StandardDSOClientConfigHelper configHelper) {
       super.addInstrumentation(context, configHelper);
       this.configHelper = configHelper;
-      configSwingModels();
-      configAwtModels();
+      //configSwingModels();
+      //configAwtModels();
    }
 
    private void configSwingModels() {
