@@ -16,13 +16,21 @@ import com.tc.util.startuplock.LocationNotCreatedException;
 
 import java.net.BindException;
 
-// XXX: The dispatching in this class is retarded, but I wanted to move as much of the exception handling into a single
-// place first, then come up with fancy ways of dealing with them. --Orion 03/20/2006
+/**
+ * Handle throwables appropriately by printing messages to the logger, etc.  Deal with 
+ * nasty problems that can occur as the VM shuts down. 
+ */
 public class ThrowableHandler {
+  //XXX: The dispatching in this class is retarded, but I wanted to move as much of the exception handling into a single
+  //place first, then come up with fancy ways of dealing with them. --Orion 03/20/2006
 
   private final TCLogger            logger;
   private final ExceptionHelperImpl helper;
 
+  /**
+   * Construct a new ThrowableHandler with a logger
+   * @param logger Logger
+   */
   public ThrowableHandler(TCLogger logger) {
     this.logger = logger;
     helper = new ExceptionHelperImpl();
@@ -30,6 +38,11 @@ public class ThrowableHandler {
     helper.addHelper(new MortbayMultiExceptionHelper());
   }
 
+  /**
+   * Handle throwable occurring on thread
+   * @param thread Thread receiving Throwable
+   * @param t Throwable
+   */
   public void handleThrowable(final Thread thread, final Throwable t) {
     final Throwable proximateCause = helper.getProximateCause(t);
     final Throwable ultimateCause = helper.getUltimateCause(t);
