@@ -5,6 +5,7 @@ import org.osgi.framework.BundleContext;
 import org.terracotta.modules.configuration.TerracottaConfiguratorModule;
 
 import com.tc.object.bytecode.ClassAdapterFactory;
+import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 
@@ -31,12 +32,18 @@ public abstract class EhcacheTerracottaCommonsConfigurator extends TerracottaCon
     addExportedTcJarClass(configHelper, "com.tcclient.cache.CacheData");
     addExportedTcJarClass(configHelper, "com.tcclient.cache.CacheDataStore");
     addExportedTcJarClass(configHelper, "com.tcclient.cache.CacheDataStore$CacheEntryInvalidator");
+    addExportedTcJarClass(configHelper, "com.tcclient.cache.CacheDataStore$CacheInvalidationTimer");
     addExportedTcJarClass(configHelper, "com.tcclient.cache.Expirable");
     addExportedTcJarClass(configHelper, "com.tcclient.cache.Lock");
     addExportedTcJarClass(configHelper, "com.tcclient.cache.Timestamp");
+    addExportedTcJarClass(configHelper, "com.tcclient.cache.GlobalKeySet");
+    addExportedTcJarClass(configHelper, "com.tcclient.cache.CacheParticipants");
     
     // explicitly excluding autolocking
-    configHelper.addAutoLockExcludePattern("* com.tcclient.cache..*(..)");
+    configHelper.addAutoLockExcludePattern("* com.tcclient.cache.CacheData.*(..)");
+    configHelper.addAutoLockExcludePattern("* com.tcclient.cache.CacheDataStore.*(..)");
+    configHelper.addAutoLockExcludePattern("* com.tcclient.cache.Lock.*(..)");
+    configHelper.addAutoLockExcludePattern("* com.tcclient.cache.Timestamp.*(..)");
     configHelper.addAutoLockExcludePattern("* com.tcclient.ehcache..*(..)");
     configHelper.addAutoLockExcludePattern("* net.sf.ehcache.store.TimeExpiryMemoryStore.*(..)");
     configHelper.addAutoLockExcludePattern("* net.sf.ehcache.store.TimeExpiryMemoryStore$SpoolingTimeExpiryMap.*(..)");
@@ -61,6 +68,7 @@ public abstract class EhcacheTerracottaCommonsConfigurator extends TerracottaCon
     TransparencyClassSpec spec = configHelper.getOrCreateSpec("com.tcclient.cache.CacheDataStore");
     spec.setHonorTransient(true);
     spec.setCallMethodOnLoad("initialize");
+    spec.addDistributedMethodCall("stopInvalidatorThread", "()V", false);
     spec = configHelper.getOrCreateSpec("com.tcclient.cache.CacheData");
     spec.setCallConstructorOnLoad(true);
     spec.setHonorTransient(true);
@@ -68,6 +76,14 @@ public abstract class EhcacheTerracottaCommonsConfigurator extends TerracottaCon
     ClassAdapterFactory factory = new EhcacheMemoryStoreAdapter();
     spec = configHelper.getOrCreateSpec(MEMORYSTORE_CLASS_NAME_DOTS);
     spec.setCustomClassAdapter(factory);
+    
+    // autolocking
+    configHelper.addAutolock(" * com.tcclient.cache.GlobalKeySet.*(..)", ConfigLockLevel.WRITE);
+    configHelper.addAutolock(" * com.tcclient.cache.GlobalKeySet.allGlobalKeys(..)", ConfigLockLevel.READ);
+    
+    configHelper.addAutolock(" * com.tcclient.cache.CacheParticipants.*(..)", ConfigLockLevel.WRITE);
+    configHelper.addAutolock(" * com.tcclient.cache.CacheParticipants.getCacheParticipants(..)", ConfigLockLevel.READ);
+    configHelper.addAutolock(" * com.tcclient.cache.CacheParticipants.getNodeId(..)", ConfigLockLevel.READ);
 	}
   
   protected Bundle getExportedBundle(final BundleContext context, String targetBundleName) {

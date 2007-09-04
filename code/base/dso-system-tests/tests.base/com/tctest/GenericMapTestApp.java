@@ -90,7 +90,7 @@ public class GenericMapTestApp extends GenericTestApp {
     maps.add(new MyProperties());
     maps.add(new MyProperties2());
     maps.add(new MyProperties3());
-    maps.add(new TimeExpiryMap(1, 100, 200, "testMap"));
+    maps.add(new TimeExpiryMap(1, 100, 200, "testMap")); // no invalidator is running
 
     // maps.add(new IdentityHashMap());
     // maps.add(new WeakHashMap());

@@ -3,10 +3,18 @@
  */
 package com.tc.object.bytecode;
 
+import java.util.Collection;
+
 
 public interface TCMap {
 
   public void __tc_applicator_put(Object key, Object value);
 
   public void __tc_applicator_remove(Object key);
+  
+  public void __tc_remove_logical(Object key);
+  
+  public Collection __tc_getAllLocalEntriesSnapshot();
+  
+  public Collection __tc_getAllEntriesSnapshot();
 }

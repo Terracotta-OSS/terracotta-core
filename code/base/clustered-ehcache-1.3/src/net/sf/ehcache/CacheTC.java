@@ -1261,7 +1261,12 @@ public class CacheTC implements Ehcache {
    * Causes all elements stored in the Cache to be synchronously checked for expiry, and if expired, evicted.
    */
   public void evictExpiredElements() {
-    memoryStore.evictExpiredElements();
+    ManagerUtil.monitorEnter(memoryStore, LockLevel.WRITE);
+    try {
+      memoryStore.evictExpiredElements();
+    } finally {
+      ManagerUtil.monitorExit(memoryStore);
+    }
   }
 
   /**

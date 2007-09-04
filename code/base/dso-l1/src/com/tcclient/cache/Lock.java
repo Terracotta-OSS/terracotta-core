@@ -42,6 +42,10 @@ public class Lock {
     ManagerUtil.beginLock(lockId, lockType);
     isLocked = true;
   }
+  
+  public void writeLock() {
+    ManagerUtil.beginLock(lockId, lockType);
+  }
 
   public boolean tryWriteLock() {
     isLocked = ManagerUtil.tryBeginLock(lockId, lockType);

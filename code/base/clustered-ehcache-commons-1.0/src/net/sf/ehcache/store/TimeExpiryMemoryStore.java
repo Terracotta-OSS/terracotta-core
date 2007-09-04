@@ -26,6 +26,7 @@ public class TimeExpiryMemoryStore extends MemoryStore {
 
     try {
       map = loadMapInstance(cache.getName());
+      ((SpoolingTimeExpiryMap)map).initialize();
     } catch (CacheException e) {
       LOG.error(cache.getName() + "Cache: Cannot start TimeExpiryMemoryStore. Initial cause was " + e.getMessage(), e);
     }

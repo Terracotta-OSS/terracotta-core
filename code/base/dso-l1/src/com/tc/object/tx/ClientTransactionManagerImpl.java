@@ -256,6 +256,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
       if (type != null) {
         details += "Shared Object Type: " + type;
       }
+      
       throw new UnlockedSharedObjectException(errorMsg, Thread.currentThread().getName(), cidProvider.getChannelID()
           .toLong(), details);
     }

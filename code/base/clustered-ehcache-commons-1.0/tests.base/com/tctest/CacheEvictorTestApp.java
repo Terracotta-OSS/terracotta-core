@@ -148,8 +148,8 @@ public abstract class CacheEvictorTestApp extends AbstractErrorCatchingTranspare
   }
 
   private void testIdleAndTimeToLive(String cacheName, int ttl, int idle, int sleep) throws Exception {
-
     if (barrier() == 0) {
+      getCacheManger().removalAll();
       Cache newCache = new Cache(cacheName, 3, MemoryStoreEvictionPolicy.LFU, false, ".", false, ttl, idle, false, 120,
                                  null, null, 100);
       getCacheManger().addCache(newCache);

@@ -16,5 +16,7 @@ public interface InstrumentedClassConfigBuilder {
   public void setCallConstructorOnLoad(String value);
 
   public void setCallConstructorOnLoad(boolean value);
+  
+  public void setCallMethodOnLoad(String value);
 
 }
