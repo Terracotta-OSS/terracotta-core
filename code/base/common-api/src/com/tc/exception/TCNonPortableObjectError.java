@@ -3,14 +3,13 @@
  */
 package com.tc.exception;
 
+/**
+ * Indicates that an object cannot be made portable.  
+ */
 public class TCNonPortableObjectError extends TCError {
 
   private static final ExceptionWrapper wrapper = new ExceptionWrapperImpl();
   
-  private TCNonPortableObjectError() {
-    super();
-  }
-
   public TCNonPortableObjectError(String message) {
     super(wrapper.wrap(message));
   }

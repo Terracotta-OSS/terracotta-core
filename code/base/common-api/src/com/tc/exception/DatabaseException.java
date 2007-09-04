@@ -3,6 +3,9 @@
  */
 package com.tc.exception;
 
+/**
+ * Interface for exceptions thrown by the server's persistence database
+ */
 public interface DatabaseException {
   //
 }

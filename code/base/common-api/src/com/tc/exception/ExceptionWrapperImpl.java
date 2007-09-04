@@ -3,6 +3,9 @@
  */
 package com.tc.exception;
 
+/**
+ * Wrap exception in a nice block message surrounded by ****s
+ */
 public class ExceptionWrapperImpl implements ExceptionWrapper {
 
   private final int MAX_STAR_COUNT = 79;

@@ -19,6 +19,10 @@ public class ExceptionHelperImpl implements ExceptionHelper {
     return true;
   }
   
+  /**
+   * Add another helper to this helper.
+   * @param helper Helper
+   */
   public void addHelper(ExceptionHelper helper) {
     helpers.add(helper);
   }
