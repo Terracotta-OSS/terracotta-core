@@ -114,5 +114,9 @@ public class OidLongArray {
     int bitIndex = bit % BitsPerLong;
     return((ary[byteIndex] & bit(bitIndex)) != 0);
   }
+  
+  public int totalBits() {
+    return ary.length * BitsPerLong;
+  }
 
 }

@@ -693,9 +693,41 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   private OidLongArray dbToOidBitsArray(DatabaseEntry key, DatabaseEntry value) {
     return(new OidLongArray(key.getData(), value.getData()));
   }
+  
+  /*
+   * for testing purpose. Check if contains specified objectId
+   */
+  public boolean inMemoryContains(ObjectID objectId) {
+    return oidBitsArrayMap.contains(objectId);
+  }
+  
+  /*
+   * for testing purpose only. Return all IDs with ObjectID
+   */
+  public Collection bitsArrayMapToObjectID() {
+    HashSet objectIDs = new HashSet();
+    for(Iterator i = oidBitsArrayMap.map.keySet().iterator(); i.hasNext(); ) {
+      long oid = ((Long)i.next()).longValue();
+      OidLongArray bits = oidBitsArrayMap.getBitsArray(oid);
+      for (int offset = 0; offset < bits.totalBits(); ++offset) {
+        if (bits.isSet(offset)) {
+          Assert.assertTrue("Same object ID represented by different bits in memory",
+                            objectIDs.add(new ObjectID(oid + offset)));
+        }
+      }
+    }
+    return (objectIDs);
+  }
+  
+  /*
+   * for testing purpose only.
+   */
+  public void resetBitsArrayMap() {
+    oidBitsArrayMap.reset();
+  }
 
   private class OidBitsArrayMap {
-    final private ConcurrentHashMap map;
+    final ConcurrentHashMap map;
     final int longsPerMemUnit;
     final int memBitsLength;
     final int longsPerDiskUnit;
@@ -798,6 +830,13 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
       }
       return (false); 
     }
-  }
     
+    /*
+     * for testing purpose only.
+     */
+    public void reset() {
+      map.clear();
+    }
+  }
+   
 }
