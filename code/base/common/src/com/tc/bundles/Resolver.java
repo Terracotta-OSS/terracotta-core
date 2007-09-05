@@ -94,7 +94,7 @@ public class Resolver {
         }
         addToRegistry(required, getManifest(required));
       }
-      
+
       // TODO do we really need to resolve it again if already found in the registry?
       resolveDependencies(required);
     }
@@ -204,7 +204,6 @@ public class Resolver {
       InputStream is = null;
       try {
         location = new URL(repositories[i].toString() + (repositories[i].toString().endsWith("/") ? "" : "/") + path);
-        System.out.println("[xxx] " + location.toString());
         is = location.openStream();
         is.read();
         is.close();

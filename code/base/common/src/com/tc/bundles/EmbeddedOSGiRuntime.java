@@ -85,7 +85,6 @@ public interface EmbeddedOSGiRuntime {
     public static EmbeddedOSGiRuntime createOSGiRuntime(final Modules modules) throws BundleException, Exception {
       // TODO: THIS ISN'T VERY ACCURATE, WE NEED A MORE EXPLICIT WAY OF TELLING OUR CODE
       // THAT WE'RE RUNNING IN TEST MODE
-      System.out.println("[xxx] test mode: " + System.getProperty("tc.tests.mode"));
       final boolean inTestMode = (System.getProperty("tc.install-root") == null)
           || (System.getProperty(TESTS_CONFIG_MODULE_REPOSITORIES) != null);
       final List prependLocations = new ArrayList();
@@ -93,10 +92,8 @@ public interface EmbeddedOSGiRuntime {
         // There are two repositories that we [optionally] prepend: a system property (used by tests)
         // and the installation root (which is not set when running tests)
         if (inTestMode) {
-          System.out.println("[xxx] in test mode");
           injectTestRepository(prependLocations);
         } else {
-          System.out.println("[xxx] NOT in test mode");
           injectDefaultRepository(prependLocations);
           injectDefaultModules(modules);
         }
