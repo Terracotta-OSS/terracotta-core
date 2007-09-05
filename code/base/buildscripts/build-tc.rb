@@ -699,7 +699,7 @@ END
 
   def mark_this_revision_as_good(revision)
     STDERR.puts("Revision #{revision} is good to go.")
-    root = File.join(build_archive_dir.to_s, "general-monkey", @build_environment.current_branch)
+    root = File.join(build_archive_dir.to_s, "monkey-police", @build_environment.current_branch)
     FileUtils.mkdir_p(root) unless File.exist?(root)
     File.open(File.join(root, "good_rev.txt"), "w") do | f |
       f << revision.to_s + "\n"

@@ -24,7 +24,7 @@ class SvnUpdate
     @svninfo = YAML::load(`svn info #{@topdir}`)
     @branch  = get_branch()
 
-    @good_rev_file = File.join(build_archive_dir, "general-monkey", @branch, "good_rev.txt")
+    @good_rev_file = File.join(build_archive_dir, "monkey-police", @branch, "good_rev.txt")
 
     clean_up_temp_dir
   end
@@ -98,12 +98,12 @@ class SvnUpdate
       log("curr: #{current_rev}")
       log("good: #{current_good_rev}")
 
-      if @monkey_name == "general-monkey" || current_good_rev == -1
-        log("general-monkey - updating to HEAD")
+      if @monkey_name == "monkey-police" || current_good_rev == -1
+        log("monkey-police - updating to HEAD")
         svn_update_with_error_tolerant("HEAD")
         exit(0)
       elsif current_rev < current_good_rev
-        log("not general-monkey - updating to #{current_good_rev}")
+        log("not monkey-police - updating to #{current_good_rev}")
         svn_update_with_error_tolerant(current_good_rev)
         exit(0)
       elsif current_rev == current_good_rev
