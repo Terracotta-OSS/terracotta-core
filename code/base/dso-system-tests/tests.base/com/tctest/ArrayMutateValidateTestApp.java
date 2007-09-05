@@ -40,10 +40,6 @@ public class ArrayMutateValidateTestApp extends AbstractMutateValidateTransparen
         validationArray.add(val);
 
         Thread.sleep(1000);
-
-        if (i % 3 == 0) {
-          debugPrintln("****** appId[" + appId + "]:   val added=[" + val + "] index=[" + index + "]");
-        }
       }
     }
     synchronized (validationArray) {
@@ -53,10 +49,6 @@ public class ArrayMutateValidateTestApp extends AbstractMutateValidateTransparen
         validationArray.add(val);
 
         Thread.sleep(1000);
-
-        if (i % 3 == 0) {
-          debugPrintln("****** appId[" + appId + "]:   val added=[" + val + "] index=[" + index + "]");
-        }
       }
     }
     synchronized (validationArray) {
@@ -66,10 +58,6 @@ public class ArrayMutateValidateTestApp extends AbstractMutateValidateTransparen
         validationArray.add(val);
 
         Thread.sleep(1000);
-
-        if (i % 3 == 0) {
-          debugPrintln("****** appId[" + appId + "]:   val added=[" + val + "] index=[" + index + "]");
-        }
       }
     }
   }
@@ -77,11 +65,6 @@ public class ArrayMutateValidateTestApp extends AbstractMutateValidateTransparen
   protected void validate() throws Throwable {
     synchronized (validationArray) {
       for (int i = 0; i < (iterationCount1 + iterationCount2 + iterationCount3) * getParticipantCount(); i++) {
-
-        if (i % 100 == 0) {
-          debugPrintln("****** appId[" + appId + "]:   index=[" + i + "]");
-          debugPrintln("***** " + validationArray.get(i));
-        }
 
         boolean val = myArrayTestRoot[(i + 1) % myArrayTestRoot.length].equals(validationArray.get(i));
         if (!val) {

@@ -463,7 +463,6 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
     synchronized (workQueue2) {
       workQueue2.add(o);
       workQueue2.notify();
-      System.err.println(Thread.currentThread().getName() + " : notifying All : Size = " + workQueue2.size());
     }
   }
 }
