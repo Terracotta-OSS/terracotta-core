@@ -704,6 +704,10 @@ END
     File.open(File.join(root, "good_rev.txt"), "w") do | f |
       f << revision.to_s + "\n"
     end
+    
+    # clear sinner list
+    sinnerList = File.join(ENV['HOME'], ".tc", "sinner.txt")
+    FileUtils.rm(sinnerList) if File.exist?(sinnerList)
   end
 
   def mark_this_revision_as_bad(revision)
@@ -712,7 +716,19 @@ END
     else
       STDERR.puts("Revision #{revision} is bad, mm'kay! It doesn't compile.")
     end
-    STDERR.puts("Please let #{@build_environment.last_changed_author} know.")
+    
+    # get the original sinner who broke the build
+    sinnerList = File.join(ENV['HOME'], ".tc", "sinner.txt")
+    sinners = []
+    
+    File.open(sinnerList, "a+") do |f|
+      sinners.concat(f.readLines)
+      f.puts(@build_environment.last_changed_author)
+    end      
+    
+    sinners << @build_environment.last_changed_author
+    
+    STDERR.puts("Please let #{sinners} know.")
   end
 
   # The full path to the build archive, including directory.
