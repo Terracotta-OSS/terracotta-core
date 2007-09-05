@@ -12,7 +12,7 @@ require 'java'
 require 'builder/antbuilder'
 require 'fileutils'
 require 'yaml'
-require 'open-uri'
+require 'set'
 
 require 'buildscripts/cross_platform'
 require 'buildscripts/autorequire'
@@ -722,13 +722,13 @@ END
     sinners = []
     
     File.open(sinnerList, "a+") do |f|
-      sinners.concat(f.readLines)
+      sinners.concat(f.readlines)
       f.puts(@build_environment.last_changed_author)
     end      
     
     sinners << @build_environment.last_changed_author
     
-    STDERR.puts("Please let #{sinners} know.")
+    STDERR.puts("Please let #{sinners.to_set.to_a} know.")
   end
 
   # The full path to the build archive, including directory.
