@@ -1,9 +1,9 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.applicator;
 
-import com.tc.exception.TCRuntimeException;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.TCClass;
 import com.tc.object.TCObject;
@@ -13,59 +13,57 @@ import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.util.Assert;
-import com.tc.util.FieldUtils;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
+import java.io.ObjectInputStream;
+import java.lang.reflect.Method;
 
 public class FileApplicator extends PhysicalApplicator {
-  private final static String FILE_SEPARATOR_FIELD = "File.fileSeparator";
-  private final static String PATH_FIELD           = "path";
-  
+  private final static Method FILE_READ_OBJECT     = findReadObjectMethod();
+
+  private final static String FILE_SEPARATOR_FIELD = "java.io.File._tcFileSeparator";
+
   public FileApplicator(TCClass clazz, DNAEncoding encoding) {
     super(clazz, encoding);
+  }
+
+  private static Method findReadObjectMethod() {
+    try {
+      Method m = File.class.getDeclaredMethod("readObject", new Class[] { ObjectInputStream.class });
+      m.setAccessible(true);
+      return m;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
       ClassNotFoundException {
     DNACursor cursor = dna.getCursor();
-    String fieldName;
-    Object fieldValue;
     boolean remoteFileSeparatorObtained = false;
+    char sepChar = 0;
 
     while (cursor.next(encoding)) {
       PhysicalAction a = cursor.getPhysicalAction();
       Assert.eval(a.isTruePhysical());
-      fieldName = a.getFieldName();
-      fieldValue = a.getObject();
+      String fieldName = a.getFieldName();
+      Object fieldValue = a.getObject();
       if (FILE_SEPARATOR_FIELD.equals(fieldName)) {
-        replaceFileSeparator(po, fieldValue);
+        sepChar = ((String) fieldValue).charAt(0);
         remoteFileSeparatorObtained = true;
       } else {
         tcObject.setValue(fieldName, fieldValue);
       }
     }
-    Assert.assertTrue(remoteFileSeparatorObtained);
-  }
 
-  private void replaceFileSeparator(Object po, Object fieldValue) {
-    String remoteFileSeparator = (String) fieldValue;
-    if (!remoteFileSeparator.equals(File.separator)) {
+    if (!dna.isDelta()) {
+      Assert.assertTrue(remoteFileSeparatorObtained);
       try {
-        Field pathField = po.getClass().getDeclaredField(PATH_FIELD);
-        pathField.setAccessible(true);
-        String path = (String) pathField.get(po);
-        path = path.replace(remoteFileSeparator.charAt(0), File.separatorChar);
-        FieldUtils.tcSet(po, path, pathField);
-      } catch (SecurityException e) {
-        throw new TCRuntimeException(e);
-      } catch (NoSuchFieldException e) {
-        throw new TCRuntimeException(e);
-      } catch (IllegalArgumentException e) {
-        throw new TCRuntimeException(e);
-      } catch (IllegalAccessException e) {
-        throw new TCRuntimeException(e);
+        FILE_READ_OBJECT.invoke(po, new Object[] { new FileObjectInputStream(sepChar) });
+      } catch (Exception e) {
+        throw new RuntimeException(e);
       }
     }
   }
@@ -77,4 +75,26 @@ public class FileApplicator extends PhysicalApplicator {
     String fieldValue = File.separator;
     writer.addPhysicalAction(fieldName, fieldValue, false);
   }
+
+  private static class FileObjectInputStream extends ObjectInputStream {
+
+    private final char sep;
+    private boolean    charRead;
+
+    protected FileObjectInputStream(char sep) throws IOException, SecurityException {
+      super();
+      this.sep = sep;
+    }
+
+    public void defaultReadObject() {
+      //
+    }
+
+    public char readChar() throws IOException {
+      if (charRead) { throw new EOFException(); }
+      charRead = true;
+      return sep;
+    }
+  }
+
 }

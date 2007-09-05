@@ -20,12 +20,13 @@ import com.tc.util.Assert;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 public class FileSharingTestApp extends AbstractTransparentApp {
-  private final static String UNIX_STYLE_MOCK_FILE_NAME = "\\home\\test\\file1";
+  private final static String MOCK_FILE_NAME = "/home/teck/.bashrc";
 
   private final CyclicBarrier barrier;
   private File                fileRoot;
@@ -41,24 +42,43 @@ public class FileSharingTestApp extends AbstractTransparentApp {
 
       basicTest(index);
       fileDehydrateTest(index);
+
+      mutateFileTest(index);
+
     } catch (Throwable t) {
       notifyError(t);
     }
   }
 
-  /**
-   * This is the basic test which only makes sure that the file object is shared. It does not test the cross platform
-   * test.
-   */
+  private void mutateFileTest(int index) throws Exception {
+    File root = fileRoot; // ensure the root is faulted, so that the mutation will be broadcast
+
+    barrier.barrier();
+
+    if (index == 0) {
+      synchronized (root) {
+        Field field = File.class.getDeclaredField("path");
+        field.setAccessible(true);
+        field.set(root, "timmy");
+      }
+    }
+
+    barrier.barrier();
+
+    synchronized (root) {
+      Assert.assertEquals("timmy", root.getPath());
+    }
+  }
+
   private void basicTest(int index) throws Exception {
     if (index == 0) {
-      fileRoot = new File(UNIX_STYLE_MOCK_FILE_NAME);
+      fileRoot = new File(MOCK_FILE_NAME);
     }
 
     barrier.barrier();
 
     if (index != 0) {
-      Assert.assertEquals(UNIX_STYLE_MOCK_FILE_NAME, fileRoot.getPath());
+      Assert.assertEquals(new File(MOCK_FILE_NAME).getPath(), fileRoot.getPath());
     }
 
     barrier.barrier();
@@ -76,11 +96,14 @@ public class FileSharingTestApp extends AbstractTransparentApp {
       tcObject.dehydrateIfNew(dnaWriter);
 
       List dna = dnaWriter.getDNA();
+
+      Assert.assertEquals(2, dna.size());
+
       boolean separatorFound = false;
       for (Iterator i = dna.iterator(); i.hasNext();) {
         PhysicalAction action = (PhysicalAction) i.next();
         Assert.assertTrue(action.isTruePhysical());
-        if ("File.fileSeparator".equals(action.getFieldName())) {
+        if ("java.io.File._tcFileSeparator".equals(action.getFieldName())) {
           separatorFound = true;
         }
       }

@@ -710,6 +710,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     spec = getOrCreateSpec("com.tcclient.object.DistributedMethodCall");
 
     spec = getOrCreateSpec("java.io.File");
+    spec.setHonorTransient(true);
 
     spec = getOrCreateSpec("java.util.Date", "com.tc.object.applicator.DateApplicator");
     spec.addAlwaysLogSpec(SerializationUtil.SET_TIME_SIGNATURE);
