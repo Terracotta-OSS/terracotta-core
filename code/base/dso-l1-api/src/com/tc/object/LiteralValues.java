@@ -99,6 +99,11 @@ public class LiteralValues {
     values = Collections.unmodifiableMap(tmp);
   }
 
+  /**
+   * Determine LiteralValue code for an instance object
+   * @param pojo Object instance, should never be null
+   * @return Literal value code for the pojo's class
+   */
   public int valueFor(Object pojo) {
     if (pojo instanceof ClassLoader) { return JAVA_LANG_CLASSLOADER; }
 
@@ -108,11 +113,21 @@ public class LiteralValues {
     return i;
   }
 
+  /**
+   * Determine whether a class is a literal
+   * @param className Class name
+   * @return True if literal value class
+   */
   public boolean isLiteral(String className) {
     int i = valueForClassName(className);
     return i != OBJECT && i != ARRAY;
   }
 
+  /**
+   * Determine whether the instance is a literal
+   * @param obj Instance object, may be null
+   * @return True if literal value instance, false if null or not literal value instance
+   */
   public boolean isLiteralInstance(Object obj) {
     if (obj == null) { return false; }
     int i = valueFor(obj);
@@ -124,6 +139,11 @@ public class LiteralValues {
     Assert.assertNull(className, prev);
   }
 
+  /**
+   * Get literal value code for class name
+   * @param className Class name, may be null
+   * @return Literal value marker or {@link #OBJECT} if className is null
+   */
   public int valueForClassName(String className) {
     if ((className != null) && className.startsWith("[")) { return ARRAY; }
     Integer i = (Integer) values.get(className);

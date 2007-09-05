@@ -12,9 +12,20 @@ import com.tc.util.AbstractIdentifier;
  * @author steve
  */
 public class ChannelID extends AbstractIdentifier {
+  /**
+   * Indicates no ID
+   */
   public static final ChannelID NULL_ID      = new ChannelID();
+  
+  /**
+   * Special ID, indicates L2 server ID (value = Long.MIN_VALUE)
+   */
   public static final ChannelID L2_SERVER_ID = new ChannelID(Long.MIN_VALUE);
 
+  /**
+   * Construct with specific id value
+   * @param id ID value
+   */
   public ChannelID(long id) {
     super(id);
   }

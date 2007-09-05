@@ -3,6 +3,13 @@
  */
 package com.tc.net.protocol.tcm;
 
+/**
+ * Provides a ChannelID
+ */
 public interface ChannelIDProvider {
+  /**
+   * Get the channel ID of the provider
+   * @return The channel ID
+   */
   public ChannelID getChannelID();
 }
