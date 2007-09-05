@@ -68,6 +68,7 @@ public interface EmbeddedOSGiRuntime {
 
     private static final void injectDefaultRepository(final List prependLocations) throws FileNotFoundException,
         MalformedURLException {
+      if (System.getProperty("tc.install-root") == null) return;
       final URL defaultRepository = new File(Directories.getInstallationRoot(), "modules").toURL();
       logger.debug("Prepending default bundle repository: '" + defaultRepository.toString() + "'");
       prependLocations.add(defaultRepository);
@@ -85,22 +86,18 @@ public interface EmbeddedOSGiRuntime {
     public static EmbeddedOSGiRuntime createOSGiRuntime(final Modules modules) throws BundleException, Exception {
       // TODO: THIS ISN'T VERY ACCURATE, WE NEED A MORE EXPLICIT WAY OF TELLING OUR CODE
       // THAT WE'RE RUNNING IN TEST MODE
-      final boolean inTestMode = (System.getProperty("tc.install-root") == null)
+      final boolean excludeDefaults = (System.getProperty("tc.install-root") == null)
           || (System.getProperty(TESTS_CONFIG_MODULE_REPOSITORIES) != null);
       final List prependLocations = new ArrayList();
       try {
         // There are two repositories that we [optionally] prepend: a system property (used by tests)
         // and the installation root (which is not set when running tests)
-        if (inTestMode) {
-          injectTestRepository(prependLocations);
-        } else {
-          injectDefaultRepository(prependLocations);
-          //injectDefaultModules(modules);
-        }
+        injectTestRepository(prependLocations);
+        injectDefaultRepository(prependLocations);
+        if (!excludeDefaults) injectDefaultModules(modules);
 
         final URL[] prependURLs = new URL[prependLocations.size()];
         prependLocations.toArray(prependURLs);
-
         final URL[] bundleRepositories = new URL[modules.sizeOfRepositoryArray() + prependURLs.length];
         for (int pos = 0; pos < prependURLs.length; pos++) {
           bundleRepositories[pos] = prependURLs[pos];
