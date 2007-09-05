@@ -95,7 +95,7 @@ public interface EmbeddedOSGiRuntime {
           injectTestRepository(prependLocations);
         } else {
           injectDefaultRepository(prependLocations);
-          injectDefaultModules(modules);
+          //injectDefaultModules(modules);
         }
 
         final URL[] prependURLs = new URL[prependLocations.size()];
