@@ -34,6 +34,7 @@ import com.tc.test.server.util.AppServerUtil;
 import com.tc.test.server.util.TcConfigBuilder;
 import com.tc.text.Banner;
 import com.tc.util.runtime.Os;
+import com.tc.util.runtime.ThreadDump;
 import com.tc.util.runtime.Vm;
 
 import java.io.File;
@@ -264,7 +265,12 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
   }
 
   protected void doStop() throws Exception {
-    server.stop();
+    try {
+      server.stop();
+    } catch (Exception e) {
+      ThreadDump.dumpProcessGroup();
+      throw e;
+    }
   }
 
   /**
