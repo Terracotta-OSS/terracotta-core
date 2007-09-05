@@ -412,8 +412,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     // ------------------------------------------------------------------
     // NOTE: AWT and Swing models intsrumentation moved to StandardConfig 
     // config bundle configurator.
-    // ------------------------------------------------------------------
     
+    // ---------------------------
+    
+    /**
     // Color
     addIncludePattern("java.awt.Color", true);
     spec = getOrCreateSpec("java.awt.Color");
@@ -545,6 +547,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     ld.commit();
     addLock("* javax.swing.DefaultListModel.*(..)", ld);
     // ====================================================
+    */
     
     //
     spec = getOrCreateSpec("java.util.Arrays");
@@ -692,6 +695,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     // NOTE: Java Exception intrumentation moved to StandardConfig 
     // config bundle configurator.
     // -----------------------------------------------------------
+    /**
     spec = getOrCreateSpec("java.lang.Exception");
     spec = getOrCreateSpec("java.lang.RuntimeException");
     spec = getOrCreateSpec("java.lang.InterruptedException");
@@ -701,6 +705,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     spec = getOrCreateSpec("java.lang.Error");
     spec = getOrCreateSpec("java.util.ConcurrentModificationException");
     spec = getOrCreateSpec("java.util.NoSuchElementException");
+    */
     // =================================================================
 
     spec = getOrCreateSpec("java.util.EventObject");

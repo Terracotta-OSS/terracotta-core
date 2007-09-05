@@ -182,6 +182,7 @@ public class TestConfigObject {
       System.setProperty(Directories.TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME, "true");
     }
     System.setProperty(Directories.TC_LICENSE_LOCATION_PROPERTY_NAME, baseDir);
+    System.setProperty("tc.tests.mode", "true");
   }
 
   private static void invalidBaseDir() {

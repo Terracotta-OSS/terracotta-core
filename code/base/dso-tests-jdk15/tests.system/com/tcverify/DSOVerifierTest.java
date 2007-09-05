@@ -44,7 +44,7 @@ public class DSOVerifierTest extends TCTestCase {
   }
 
   public DSOVerifierTest() {
-    disableAllUntil("2007-09-11");    
+    //disableAllUntil("2007-09-11");    
   }
   
   protected void setUp() throws Exception {

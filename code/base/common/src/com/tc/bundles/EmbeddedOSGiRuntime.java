@@ -74,7 +74,9 @@ public interface EmbeddedOSGiRuntime {
     }
 
     private static final void injectTestRepository(final List prependLocations) throws MalformedURLException {
-      final URL testRepository = new URL(System.getProperty(TESTS_CONFIG_MODULE_REPOSITORIES));
+      final String repos = System.getProperty(TESTS_CONFIG_MODULE_REPOSITORIES);
+      if (repos == null) return;
+      final URL testRepository = new URL(repos);
       prependLocations.add(testRepository);
       logger.debug("Prepending test bundle repository: '" + testRepository.toString() + "'");
       prependLocations.add(testRepository);
@@ -83,6 +85,7 @@ public interface EmbeddedOSGiRuntime {
     public static EmbeddedOSGiRuntime createOSGiRuntime(final Modules modules) throws BundleException, Exception {
       // TODO: THIS ISN'T VERY ACCURATE, WE NEED A MORE EXPLICIT WAY OF TELLING OUR CODE
       // THAT WE'RE RUNNING IN TEST MODE
+      System.out.println("[xxx] test mode: " + System.getProperty("tc.tests.mode"));
       final boolean inTestMode = (System.getProperty("tc.install-root") == null)
           || (System.getProperty(TESTS_CONFIG_MODULE_REPOSITORIES) != null);
       final List prependLocations = new ArrayList();
@@ -95,7 +98,7 @@ public interface EmbeddedOSGiRuntime {
         } else {
           System.out.println("[xxx] NOT in test mode");
           injectDefaultRepository(prependLocations);
-          // injectDefaultModules(modules);
+          injectDefaultModules(modules);
         }
 
         final URL[] prependURLs = new URL[prependLocations.size()];

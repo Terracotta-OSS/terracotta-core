@@ -22,8 +22,8 @@ public class StandardConfigConfigurator
          final StandardDSOClientConfigHelper configHelper) {
       super.addInstrumentation(context, configHelper);
       this.configHelper = configHelper;
-      //configSwingModels();
-      //configAwtModels();
+      configSwingModels();
+      configAwtModels();
    }
 
    private void configSwingModels() {
@@ -61,13 +61,6 @@ public class StandardConfigConfigurator
             ConfigLockLevel.WRITE);
       ld.commit();
       addLock("* javax.swing.DefaultListModel.*(..)", ld);
-   }
-
-   private void configAwtModels() {
-      // Color
-      configHelper.addIncludePattern("java.awt.Color", true);
-      TransparencyClassSpec spec = getOrCreateSpec("java.awt.Color");
-      spec.addTransient("cs");
 
       // TreePath
       configHelper.addIncludePattern("javax.swing.tree.TreePath", false);
@@ -80,8 +73,8 @@ public class StandardConfigConfigurator
 
       // DefaultTreeModel
       spec = getOrCreateSpec("javax.swing.tree.DefaultTreeModel");
-      LockDefinition ld = configHelper.createLockDefinition(
-            "tcdefaultTreeLock", ConfigLockLevel.WRITE);
+      ld = configHelper.createLockDefinition("tcdefaultTreeLock",
+            ConfigLockLevel.WRITE);
       ld.commit();
       addLock("* javax.swing.tree.DefaultTreeModel.get*(..)", ld);
       addLock("* javax.swing.tree.DefaultTreeModel.set*(..)", ld);
@@ -111,6 +104,13 @@ public class StandardConfigConfigurator
             "(Ljava/lang/Object;II)V", false);
       spec.addDistributedMethodCall("fireIntervalRemoved",
             "(Ljava/lang/Object;II)V", false);
+   }
+
+   private void configAwtModels() {
+      // Color
+      configHelper.addIncludePattern("java.awt.Color", true);
+      TransparencyClassSpec spec = getOrCreateSpec("java.awt.Color");
+      spec.addTransient("cs");
 
       // MouseMotionAdapter, MouseAdapter
       getOrCreateSpec("java.awt.event.MouseMotionAdapter");
