@@ -53,6 +53,11 @@ public interface EmbeddedOSGiRuntime {
     private static final TCLogger logger = TCLogging.getLogger(EmbeddedOSGiRuntime.class);
 
     private static final void injectDefaultModules(final Modules modules) {
+      if ((System.getProperty("tc.install-root") == null)
+          && (System.getProperty(TESTS_CONFIG_MODULE_REPOSITORIES) == null)) {
+        return;
+      }
+
       final TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor("l1.configbundles");
       final String[] entries = props.getProperty("default").split(";");
       for (int i = 0; i < entries.length; i++) {
@@ -86,15 +91,14 @@ public interface EmbeddedOSGiRuntime {
     public static EmbeddedOSGiRuntime createOSGiRuntime(final Modules modules) throws BundleException, Exception {
       // TODO: THIS ISN'T VERY ACCURATE, WE NEED A MORE EXPLICIT WAY OF TELLING OUR CODE
       // THAT WE'RE RUNNING IN TEST MODE
-      final boolean excludeDefaults = (System.getProperty("tc.install-root") == null)
-          || (System.getProperty(TESTS_CONFIG_MODULE_REPOSITORIES) != null);
+      // final boolean excludeDefaults = (System.getProperty("tc.install-root") == null)
+      // || (System.getProperty(TESTS_CONFIG_MODULE_REPOSITORIES) != null);
       final List prependLocations = new ArrayList();
       try {
         // There are two repositories that we [optionally] prepend: a system property (used by tests)
         // and the installation root (which is not set when running tests)
         injectTestRepository(prependLocations);
         injectDefaultRepository(prependLocations);
-        //if (!excludeDefaults) 
         injectDefaultModules(modules);
 
         final URL[] prependURLs = new URL[prependLocations.size()];
