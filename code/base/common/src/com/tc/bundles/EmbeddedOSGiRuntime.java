@@ -57,7 +57,6 @@ public interface EmbeddedOSGiRuntime {
           && (System.getProperty(TESTS_CONFIG_MODULE_REPOSITORIES) == null)) {
         System.out.println("[xxx] No implicit modules were loaded because neither the tc.install-root or the "
             + "tc.tests.configuration.modules.url property was set.");
-        
         logger.debug("No implicit modules were loaded because neither the tc.install-root or the "
             + "tc.tests.configuration.modules.url property was set.");
         return;
@@ -69,7 +68,6 @@ public interface EmbeddedOSGiRuntime {
       if (entries.length == 0) {
         System.out.println("[xxx] No implicit modules were loaded because the l1.configbundles.default property "
             + "in tc.properties file was not set.");
-        
         logger.debug("No implicit modules were loaded because the l1.configbundles.default property "
             + "in tc.properties file was not set.");
         return;
@@ -94,13 +92,22 @@ public interface EmbeddedOSGiRuntime {
       prependLocations.add(defaultRepository);
     }
 
-    private static final void injectTestRepository(final List prependLocations) throws MalformedURLException {
+    private static final void injectTestRepository(final List prependLocations) throws MalformedURLException, FileNotFoundException {
       final String repos = System.getProperty(TESTS_CONFIG_MODULE_REPOSITORIES);
-      if (repos == null) return;
-      final URL testRepository = new URL(repos);
-      prependLocations.add(testRepository);
-      logger.debug("Prepending test bundle repository: '" + testRepository.toString() + "'");
-      prependLocations.add(testRepository);
+      if (repos != null) {
+        final URL testRepository = new URL(repos);
+        prependLocations.add(testRepository);
+        logger.debug("Prepending test bundle repository: '" + testRepository.toString() + "'");
+        prependLocations.add(testRepository);
+      }
+      
+      // HACK 
+      if (System.getProperty("tc.install-root") == null) return;
+      final File installRoot = Directories.getInstallationRoot();
+      if (!installRoot.toString().endsWith("build")) {
+        final File testRepository = new File(Directories.getInstallationRoot(), "build");
+        prependLocations.add(new File(testRepository, "modules").toURL());
+      }
     }
 
     public static EmbeddedOSGiRuntime createOSGiRuntime(final Modules modules) throws BundleException, Exception {
