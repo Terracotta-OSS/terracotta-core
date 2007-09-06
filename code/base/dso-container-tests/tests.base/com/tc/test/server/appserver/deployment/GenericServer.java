@@ -261,7 +261,13 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
 
   protected void doStart() throws Exception {
     server = factory.createAppServer(installation);
-    result = server.start(parameters);
+
+    try {
+      result = server.start(parameters);
+    } catch (Exception e) {
+      ThreadDump.dumpProcessGroup();
+      throw e;
+    }
   }
 
   protected void doStop() throws Exception {
