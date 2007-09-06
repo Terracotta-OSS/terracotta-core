@@ -37,6 +37,10 @@ import java.util.Map.Entry;
 public class HashMapTCTest extends TCTestCase {
   private ClassLoader origThreadContextClassLoader;
 
+  public HashMapTCTest() {
+    disableAllUntil("2007-10-01");
+  }
+  
   protected void setUp() throws Exception {
     ClassLoader loader = getClass().getClassLoader();
     InvocationHandler handler = new InvocationHandler() {
