@@ -694,7 +694,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     // NOTE: Java Exception intrumentation moved to StandardConfig 
     // config bundle configurator.
     // -----------------------------------------------------------
-    /**
     spec = getOrCreateSpec("java.lang.Exception");
     spec = getOrCreateSpec("java.lang.RuntimeException");
     spec = getOrCreateSpec("java.lang.InterruptedException");
@@ -705,7 +704,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     spec = getOrCreateSpec("java.util.ConcurrentModificationException");
     spec = getOrCreateSpec("java.util.NoSuchElementException");
     // =================================================================
-     */
 
     spec = getOrCreateSpec("java.util.EventObject");
     spec.setHonorTransient(true);

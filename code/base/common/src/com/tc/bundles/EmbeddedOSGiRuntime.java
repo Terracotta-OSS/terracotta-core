@@ -55,7 +55,10 @@ public interface EmbeddedOSGiRuntime {
     private static final void injectDefaultModules(final Modules modules) {
       if ((System.getProperty("tc.install-root") == null)
           && (System.getProperty(TESTS_CONFIG_MODULE_REPOSITORIES) == null)) {
-        logger.debug("No implicit modules were loaded because neither the tc.install-rooot or the "
+        System.out.println("[xxx] No implicit modules were loaded because neither the tc.install-root or the "
+            + "tc.tests.configuration.modules.url property was set.");
+        
+        logger.debug("No implicit modules were loaded because neither the tc.install-root or the "
             + "tc.tests.configuration.modules.url property was set.");
         return;
       }
@@ -64,6 +67,9 @@ public interface EmbeddedOSGiRuntime {
       final String[] entries = props.getProperty("default").split(";");
 
       if (entries.length == 0) {
+        System.out.println("[xxx] No implicit modules were loaded because the l1.configbundles.default property "
+            + "in tc.properties file was not set.");
+        
         logger.debug("No implicit modules were loaded because the l1.configbundles.default property "
             + "in tc.properties file was not set.");
         return;

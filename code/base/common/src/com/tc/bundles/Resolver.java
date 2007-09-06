@@ -49,18 +49,26 @@ public class Resolver {
   public Resolver(final URL[] repositories) {
     this.repositories = repositories;
   }
-
+  
   public final URL[] resolve(Module[] modules) throws BundleException {
     for (int i = 0; i < modules.length; i++) {
       final URL location = resolveLocation(modules[i]);
       if (location == null) {
         final String msg = error(Message.ERROR_BUNDLE_UNRESOLVED, new Object[] { modules[i].getName(),
-            modules[i].getVersion(), modules[i].getGroupId() });
+            modules[i].getVersion(), modules[i].getGroupId(), repositoriesToString() });
         throw new MissingBundleException(msg);
       }
       resolveDependencies(location);
     }
     return getResolvedUrls();
+  }
+  
+  private final String repositoriesToString() {
+    final StringBuffer repos = new StringBuffer();
+    for (int j = 0; j < repositories.length; j++) {
+      repos.append(repositories[j] + ";");
+    }
+    return repos.toString();
   }
 
   private final URL[] getResolvedUrls() {
@@ -89,7 +97,7 @@ public class Resolver {
         required = resolveBundle(spec);
         if (required == null) {
           final String msg = error(Message.ERROR_BUNDLE_DEPENDENCY_UNRESOLVED, new Object[] { spec.getName(),
-              spec.getVersion(), spec.getGroupId() });
+              spec.getVersion(), spec.getGroupId(), repositoriesToString() });
           throw new MissingBundleException(msg);
         }
         addToRegistry(required, getManifest(required));
