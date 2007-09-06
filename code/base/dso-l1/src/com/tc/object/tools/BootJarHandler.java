@@ -88,7 +88,7 @@ public class BootJarHandler {
   }
 
   private void createFinalBootJar() throws BootJarHandlerException {
-    announce("Creating boot JAR at '" + outputFileAbsPath + "...");
+    announceCreationStart();
     try {
       JarInputStream jarIn = new JarInputStream(new FileInputStream(tempOutputFile.getAbsolutePath()));
       Manifest manifest = jarIn.getManifest();
