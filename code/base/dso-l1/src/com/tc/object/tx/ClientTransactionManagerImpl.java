@@ -251,7 +251,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
       String errorMsg = "Attempt to access a shared object outside the scope of a shared lock.  "
                         + "\nAll access to shared objects must be within the scope of one or more shared locks defined in your Terracotta configuration.  "
                         + "\nPlease alter the locks section of your Terracotta configuration so that this access is auto-locked or protected by a named lock."
-                        + "\nFor more information on this issue, please visit our Troubleshooting Guide at: http://terracotta.org/kit/troubleshooting";
+                        + "\n\nFor more information on this issue, please visit our Troubleshooting Guide at:\n http://terracotta.org/kit/troubleshooting\n";
       String details = "";
       if (type != null) {
         details += "Shared Object Type: " + type;
