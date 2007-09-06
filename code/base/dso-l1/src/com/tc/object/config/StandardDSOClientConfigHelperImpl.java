@@ -414,7 +414,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     // config bundle configurator.
     
     // ---------------------------
-    /**
     // Color
     addIncludePattern("java.awt.Color", true);
     spec = getOrCreateSpec("java.awt.Color");
@@ -546,7 +545,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     ld.commit();
     addLock("* javax.swing.DefaultListModel.*(..)", ld);
     // ====================================================
-     */
     
     //
     spec = getOrCreateSpec("java.util.Arrays");
