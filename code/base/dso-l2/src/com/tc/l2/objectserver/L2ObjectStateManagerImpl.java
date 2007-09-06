@@ -68,24 +68,25 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     }
   }
 
-  public void addL2(NodeID nodeID, Set oids) {
+  public boolean addL2(NodeID nodeID, Set oids) {
     L2ObjectStateImpl l2State;
     synchronized (nodes) {
       l2State = (L2ObjectStateImpl) nodes.get(nodeID);
       if (l2State != null) {
         logger.warn("L2State already present for " + nodeID + ". " + l2State
                     + " IGNORING setExistingObjectsList : oids count = " + oids.size());
-        return;
+        return false;
       }
       l2State = new L2ObjectStateImpl(nodeID, oids);
       nodes.put(nodeID, l2State);
-      final L2ObjectStateImpl _l2State = l2State;
-      transactionManager.callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionLister() {
-        public void onCompletion() {
-          _l2State.moveToReadyToSyncState();
-        }
-      });
     }
+    final L2ObjectStateImpl _l2State = l2State;
+    transactionManager.callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionLister() {
+      public void onCompletion() {
+        _l2State.moveToReadyToSyncState();
+      }
+    });
+    return true;
   }
 
   public ManagedObjectSyncContext getSomeObjectsToSyncContext(NodeID nodeID, int count, Sink sink) {

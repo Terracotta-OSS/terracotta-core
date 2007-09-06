@@ -159,8 +159,8 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     }
   }
 
-  private void add2L2StateManager(NodeID nodeID, Set oids) {
-    l2ObjectStateManager.addL2(nodeID, oids);
+  private boolean add2L2StateManager(NodeID nodeID, Set oids) {
+    return l2ObjectStateManager.addL2(nodeID, oids);
   }
 
   public void missingObjectsFor(NodeID nodeID, int missingObjects) {
@@ -223,7 +223,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
             NodeID nodeID = (NodeID) e.getKey();
             logger.info("GC Completed : Starting scheduled passive sync for " + nodeID);
             disableGCIfNecessary();
-            // Shouldnt happen as this is in GC call back after GC completion
+            // Shouldn't happen as this is in GC call back after GC completion
             assertGCDisabled();
             toAdd.put(nodeID, e.getValue());
             e.setValue(ADDED);
@@ -250,7 +250,11 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     private void add2L2StateManager(Map toAdd) {
       for (Iterator i = toAdd.entrySet().iterator(); i.hasNext();) {
         Entry e = (Entry) i.next();
-        ReplicatedObjectManagerImpl.this.add2L2StateManager((NodeID) e.getKey(), (Set) e.getValue());
+        NodeID nodeID = (NodeID) e.getKey();
+        if (!ReplicatedObjectManagerImpl.this.add2L2StateManager(nodeID, (Set) e.getValue())) {
+          logger.warn(nodeID + " is already added to L2StateManager, clearing our internal data structures.");
+          syncCompleteFor(nodeID);
+        }
       }
     }
 
@@ -268,6 +272,11 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       boolean toAdd = false;
       synchronized (this) {
         disableGCIfNecessary();
+        if (syncingPassives.containsKey(nodeID)) {
+          logger.warn("Not adding " + nodeID + " since it is already present in syncingPassives : "
+                      + syncingPassives.keySet());
+          return;
+        }
         if (disabled) {
           syncingPassives.put(nodeID, ADDED);
           toAdd = true;
@@ -278,7 +287,10 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
         }
       }
       if (toAdd) {
-        ReplicatedObjectManagerImpl.this.add2L2StateManager(nodeID, oids);
+        if(!ReplicatedObjectManagerImpl.this.add2L2StateManager(nodeID, oids)) {
+          logger.warn(nodeID + " is already added to L2StateManager, clearing our internal data structures.");
+          syncCompleteFor(nodeID);
+        }
       }
     }
 
@@ -319,7 +331,14 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
         for (Iterator i = nodeID2ObjectIDs.entrySet().iterator(); i.hasNext();) {
           Entry e = (Entry) i.next();
           NodeID nodeID = (NodeID) e.getKey();
-          syncingPassives.put(nodeID, ADDED);
+          if (!syncingPassives.containsKey(nodeID)) {
+            syncingPassives.put(nodeID, ADDED);
+          } else {
+            logger.info("Removing " + e
+                        + " from the list to add to L2ObjectStateManager since its present in syncingPassives : "
+                        + syncingPassives.keySet());
+            i.remove();
+          }
         }
       }
       add2L2StateManager(nodeID2ObjectIDs);
