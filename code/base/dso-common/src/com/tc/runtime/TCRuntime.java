@@ -27,7 +27,7 @@ public class TCRuntime {
     TCProperties props = TCPropertiesImpl.getProperties();
 
     if (Vm.isJDK15Compliant()) {
-      if (props.getBoolean("memory.monitor.forcebasic") || Vm.isIBM()) {
+      if (props.getBoolean("memory.monitor.forcebasic")) {
         memoryManager = getMemoryManagerJdk15Basic();
       } else {
         memoryManager = getMemoryManagerJdk15PoolMonitor();

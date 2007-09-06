@@ -3,6 +3,8 @@
  */
 package com.tc.runtime;
 
+import com.tc.util.runtime.Vm;
+
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
@@ -17,7 +19,8 @@ class TCMemoryManagerJdk15PoolMonitor extends TCMemoryManagerJdk15Basic {
 
   private static final String          OLD_GEN_NAME     = "OLD GEN";
   // this pool is used when jdk is run with -client option
-  private static final String          TENURED_GEN_NAME = "TENURED GEN";                                  
+  private static final String          TENURED_GEN_NAME = "TENURED GEN"; 
+  private static final String          IBMJDK_TENURED_GEN_NAME = "Java heap";
 
   private final MemoryPoolMXBean       oldGenBean;
   private final GarbageCollectorMXBean oldGenCollectorBean;
@@ -62,7 +65,11 @@ class TCMemoryManagerJdk15PoolMonitor extends TCMemoryManagerJdk15Basic {
   }
 
   private boolean isOldGen(String name) {
-    return (name.toUpperCase().indexOf(OLD_GEN_NAME) > -1 || name.toUpperCase().indexOf(TENURED_GEN_NAME) > -1);
+    if (Vm.isIBM()) {
+      return (name.indexOf(IBMJDK_TENURED_GEN_NAME) > -1);
+    } else {
+      return (name.toUpperCase().indexOf(OLD_GEN_NAME) > -1 || name.toUpperCase().indexOf(TENURED_GEN_NAME) > -1);
+    }
   }
 
   public boolean isMemoryPoolMonitoringSupported() {
