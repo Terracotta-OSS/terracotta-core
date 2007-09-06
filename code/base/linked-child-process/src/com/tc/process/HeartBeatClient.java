@@ -28,6 +28,7 @@ public class HeartBeatClient extends Thread {
     try {
       socket = new Socket("localhost", listenPort);
       socket.setSoTimeout(HEARTBEAT_TIMEOUT);
+      socket.setTcpNoDelay(true);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -53,9 +54,13 @@ public class HeartBeatClient extends Thread {
           if (signal == null) {
             throw new Exception("Null signal");
           } else if (HeartBeatServer.PULSE.equals(signal)) {            
-            log("Received pulse from heartbeat server, port " + socket.getLocalPort());
-            missedPulse = 0;
+            log("Received pulse from heartbeat server, port " + socket.getLocalPort());            
             out.println(signal);
+            if (out.checkError()) {
+              out = new PrintWriter(socket.getOutputStream(), true);
+              throw new Exception("checkError fails. Recreate PrintWriter...");
+            }
+            missedPulse = 0;
           } else if (HeartBeatServer.KILL.equals(signal)) {
             log("Received KILL from heartbeat server. Killing self.");
             System.exit(1);
@@ -74,7 +79,7 @@ public class HeartBeatClient extends Thread {
         } catch (SocketTimeoutException toe) {
           log("No pulse received for " + (HeartBeatServer.PULSE_INTERVAL/1000) + " seconds");
           log("Missed pulse count: " + missedPulse++);
-          if (missedPulse >= 3) {
+          if (missedPulse >= 5) {
             throw new Exception("Missing 3 pulse from HeartBeatServer");
           }
         }

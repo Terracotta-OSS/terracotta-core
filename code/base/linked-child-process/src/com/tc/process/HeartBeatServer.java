@@ -179,13 +179,17 @@ public class HeartBeatServer {
         while (true) {
           log("send pulse to client: " + clientName);
           out.println(PULSE);
+          if (out.checkError()) {
+            out = new PrintWriter(socket.getOutputStream(), true);
+            throw new Exception("checkError fails. Recreate PrintWriter...");
+          }
           try {
             String reply = in.readLine();
             if (reply == null) { throw new Exception("read-half of socket closed."); }
             missedPulseCount = 0;
           } catch (SocketTimeoutException toe) {
-            missedPulseCount++;
-            if (missedPulseCount >= 3) {
+            log("Client: " + clientName + " missed " + (++missedPulseCount));            
+            if (missedPulseCount >= 5) {
               throw new Exception("Client missed 3 pulses... considered it dead.");
             }
           }
