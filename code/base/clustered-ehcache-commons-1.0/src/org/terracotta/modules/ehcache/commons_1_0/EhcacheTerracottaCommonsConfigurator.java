@@ -28,6 +28,7 @@ public abstract class EhcacheTerracottaCommonsConfigurator extends TerracottaCon
     // setup the class resources
     addExportedBundleClass(configHelper, thisBundle, "net.sf.ehcache.store.TimeExpiryMemoryStore");
     addExportedBundleClass(configHelper, thisBundle, "net.sf.ehcache.store.TimeExpiryMemoryStore$SpoolingTimeExpiryMap");
+    addExportedBundleClass(configHelper, thisBundle, "org.terracotta.modules.ehcache.commons_1_0.util.Util");
     addExportedTcJarClass(configHelper, "com.tcclient.ehcache.TimeExpiryMap");
     addExportedTcJarClass(configHelper, "com.tcclient.cache.CacheData");
     addExportedTcJarClass(configHelper, "com.tcclient.cache.CacheDataStore");
@@ -42,6 +43,7 @@ public abstract class EhcacheTerracottaCommonsConfigurator extends TerracottaCon
     // explicitly excluding autolocking
     configHelper.addAutoLockExcludePattern("* com.tcclient.cache.CacheData.*(..)");
     configHelper.addAutoLockExcludePattern("* com.tcclient.cache.CacheDataStore.*(..)");
+    configHelper.addAutoLockExcludePattern("* com.tcclient.cache.CacheParticipants.*(..)");
     configHelper.addAutoLockExcludePattern("* com.tcclient.cache.Lock.*(..)");
     configHelper.addAutoLockExcludePattern("* com.tcclient.cache.Timestamp.*(..)");
     configHelper.addAutoLockExcludePattern("* com.tcclient.ehcache..*(..)");
@@ -80,10 +82,10 @@ public abstract class EhcacheTerracottaCommonsConfigurator extends TerracottaCon
     // autolocking
     configHelper.addAutolock(" * com.tcclient.cache.GlobalKeySet.*(..)", ConfigLockLevel.WRITE);
     configHelper.addAutolock(" * com.tcclient.cache.GlobalKeySet.allGlobalKeys(..)", ConfigLockLevel.READ);
-    
-    configHelper.addAutolock(" * com.tcclient.cache.CacheParticipants.*(..)", ConfigLockLevel.WRITE);
-    configHelper.addAutolock(" * com.tcclient.cache.CacheParticipants.getCacheParticipants(..)", ConfigLockLevel.READ);
-    configHelper.addAutolock(" * com.tcclient.cache.CacheParticipants.getNodeId(..)", ConfigLockLevel.READ);
+//    
+//    configHelper.addAutolock(" * com.tcclient.cache.CacheParticipants.*(..)", ConfigLockLevel.WRITE);
+//    configHelper.addAutolock(" * com.tcclient.cache.CacheParticipants.getCacheParticipants(..)", ConfigLockLevel.READ);
+//    configHelper.addAutolock(" * com.tcclient.cache.CacheParticipants.getNodeId(..)", ConfigLockLevel.READ);
 	}
   
   protected Bundle getExportedBundle(final BundleContext context, String targetBundleName) {

@@ -26,7 +26,7 @@ public class CacheParticipants implements ClusterEventListener {
   }
 
   public void nodeConnected(String nodeId) {
-    //
+    if (!cacheParticipants.contains(nodeId)) cacheParticipants.add(nodeId);
   }
 
   public synchronized void nodeDisconnected(String nodeId) {

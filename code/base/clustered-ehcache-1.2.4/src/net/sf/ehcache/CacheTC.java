@@ -11,9 +11,11 @@ import net.sf.ehcache.store.TimeExpiryMemoryStore;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.terracotta.modules.ehcache.commons_1_0.util.Util;
 
 import com.tc.config.lock.LockLevel;
 import com.tc.object.bytecode.ManagerUtil;
+import com.tc.properties.TCProperties;
 import com.tc.util.Assert;
 
 import java.io.Serializable;
@@ -28,10 +30,8 @@ import java.util.Set;
 
 /**
  * This is a modification of the Ehcache net.sf.ehcache.Cache.java class, which is under the Apache open source license.
- * 
- * In this implementation, DiskStore is not supported, and thus, most synchronized are removed since the memory store methods
- * are being synchronized.
- * 
+ * In this implementation, DiskStore is not supported, and thus, most synchronized are removed since the memory store
+ * methods are being synchronized.
  */
 public class CacheTC implements Ehcache {
   /**
@@ -111,6 +111,7 @@ public class CacheTC implements Ehcache {
    * The {@link MemoryStore} of this {@link CacheTC}. All caches have a memory store.
    */
   private TimeExpiryMemoryStore                  memoryStore;
+  private final Object[]                         locks;
 
   private RegisteredEventListeners               registeredEventListeners;
 
@@ -301,6 +302,16 @@ public class CacheTC implements Ehcache {
     }
 
     this.bootstrapCacheLoader = bootstrapCacheLoader;
+
+    TCProperties ehcacheProperies = ManagerUtil.getTCProperties().getPropertiesFor("ehcache");
+    int concurrency = ehcacheProperies.getInt("concurrency");
+    if (concurrency <= 1) {
+      concurrency = 1;
+    }
+    this.locks = new Object[concurrency];
+    for (int i = 0; i < concurrency; i++) {
+      this.locks[i] = new Object();
+    }
   }
 
   // diskSpoolBufferSizeMB is ignored
@@ -409,11 +420,12 @@ public class CacheTC implements Ehcache {
 
     if (element == null) { throw new IllegalArgumentException("Element cannot be null"); }
 
-    ManagerUtil.monitorEnter(memoryStore, LockLevel.WRITE);
+    Object key = element.getObjectKey();
+    Object lock = getLockObject(key);
+    ManagerUtil.monitorEnter(lock, LockLevel.WRITE);
     try {
       element.resetAccessStatistics();
       boolean elementExists;
-      Object key = element.getObjectKey();
       elementExists = isElementInMemory(key) || isElementOnDisk(key);
       if (elementExists) {
         element.updateUpdateStatistics();
@@ -427,7 +439,7 @@ public class CacheTC implements Ehcache {
         registeredEventListeners.notifyElementPut(element, doNotNotifyCacheReplicators);
       }
     } finally {
-      ManagerUtil.monitorExit(memoryStore);
+      ManagerUtil.monitorExit(lock);
     }
 
   }
@@ -457,13 +469,15 @@ public class CacheTC implements Ehcache {
 
     if (element == null) { throw new IllegalArgumentException("Element cannot be null"); }
 
-    ManagerUtil.monitorEnter(memoryStore, LockLevel.WRITE);
+    Object key = element.getObjectKey();
+    Object lock = getLockObject(key);
+    ManagerUtil.monitorEnter(lock, LockLevel.WRITE);
     try {
       applyDefaultsToElementWithoutLifespanSet(element);
 
       memoryStore.put(element);
     } finally {
-      ManagerUtil.monitorExit(memoryStore);
+      ManagerUtil.monitorExit(lock);
     }
   }
 
@@ -542,11 +556,11 @@ public class CacheTC implements Ehcache {
      */
     List allKeyList = new ArrayList();
     Object[] keyArrays = null;
-    ManagerUtil.monitorEnter(memoryStore, LockLevel.READ);
+    readLockAll();
     try {
       keyArrays = memoryStore.getKeyArray();
     } finally {
-      ManagerUtil.monitorExit(memoryStore);
+      unlockAll();
     }
     if (keyArrays == null) { return allKeyList; }
 
@@ -602,7 +616,8 @@ public class CacheTC implements Ehcache {
 
   private Element searchInMemoryStore(Object key, boolean updateStatistics) {
     Element element;
-    ManagerUtil.monitorEnter(memoryStore, LockLevel.READ);
+    Object lock = getLockObject(key);
+    ManagerUtil.monitorEnter(lock, LockLevel.READ);
     try {
       if (updateStatistics) {
         element = memoryStore.get(key);
@@ -610,7 +625,7 @@ public class CacheTC implements Ehcache {
         element = memoryStore.getQuiet(key);
       }
     } finally {
-      ManagerUtil.monitorExit(memoryStore);
+      ManagerUtil.monitorExit(lock);
     }
     return element;
   }
@@ -718,11 +733,12 @@ public class CacheTC implements Ehcache {
     checkStatus();
     boolean removed = false;
     Element elementFromMemoryStore;
-    ManagerUtil.monitorEnter(memoryStore, LockLevel.WRITE);
+    Object lock = getLockObject(key);
+    ManagerUtil.monitorEnter(lock, LockLevel.WRITE);
     try {
       elementFromMemoryStore = memoryStore.remove(key);
     } finally {
-      ManagerUtil.monitorExit(memoryStore);
+      ManagerUtil.monitorExit(lock);
     }
 
     boolean removeNotified = false;
@@ -765,11 +781,11 @@ public class CacheTC implements Ehcache {
    */
   public void removeAll(boolean doNotNotifyCacheReplicators) throws IllegalStateException, CacheException {
     checkStatus();
-    ManagerUtil.monitorEnter(memoryStore, LockLevel.WRITE);
+    writeLockAll();
     try {
       memoryStore.removeAll();
     } finally {
-      ManagerUtil.monitorExit(memoryStore);
+      unlockAll();
     }
     registeredEventListeners.notifyRemoveAll(doNotNotifyCacheReplicators);
   }
@@ -781,7 +797,7 @@ public class CacheTC implements Ehcache {
    * @throws IllegalStateException if the cache is not {@link Status#STATUS_ALIVE}
    */
   public void dispose() throws IllegalStateException {
-    ManagerUtil.monitorEnter(memoryStore, LockLevel.WRITE);
+    writeLockAll();
     try {
       synchronized (this) {
         checkStatus();
@@ -792,7 +808,7 @@ public class CacheTC implements Ehcache {
         changeStatus(Status.STATUS_SHUTDOWN);
       }
     } finally {
-      ManagerUtil.monitorExit(memoryStore);
+      unlockAll();
       memoryStore = null;
     }
   }
@@ -803,12 +819,12 @@ public class CacheTC implements Ehcache {
    * @throws IllegalStateException if the cache is not {@link Status#STATUS_ALIVE}
    */
   public final void flush() throws IllegalStateException, CacheException {
-    ManagerUtil.monitorEnter(memoryStore, LockLevel.WRITE);
+    writeLockAll();
     try {
       checkStatus();
       memoryStore.flush();
     } finally {
-      ManagerUtil.monitorExit(memoryStore);
+      unlockAll();
     }
   }
 
@@ -846,11 +862,11 @@ public class CacheTC implements Ehcache {
    */
   public final long calculateInMemorySize() throws IllegalStateException, CacheException {
     checkStatus();
-    ManagerUtil.monitorEnter(memoryStore, LockLevel.READ);
+    readLockAll();
     try {
       return memoryStore.getSizeInBytes();
     } finally {
-      ManagerUtil.monitorExit(memoryStore);
+      unlockAll();
     }
   }
 
@@ -1064,11 +1080,13 @@ public class CacheTC implements Ehcache {
    */
   public final boolean isExpired(Element element) throws IllegalStateException, NullPointerException {
     checkStatus();
-    ManagerUtil.monitorEnter(memoryStore, LockLevel.READ);
+    Object key = element.getObjectKey();
+    Object lock = getLockObject(key);
+    ManagerUtil.monitorEnter(lock, LockLevel.READ);
     try {
       return memoryStore.isExpired(element.getObjectKey());
     } finally {
-      ManagerUtil.monitorExit(memoryStore);
+      ManagerUtil.monitorExit(lock);
     }
   }
 
@@ -1156,11 +1174,12 @@ public class CacheTC implements Ehcache {
    * @since 1.2
    */
   public final boolean isElementInMemory(Object key) {
-    ManagerUtil.monitorEnter(memoryStore, LockLevel.READ);
+    Object lock = getLockObject(key);
+    ManagerUtil.monitorEnter(lock, LockLevel.READ);
     try {
       return memoryStore.containsKey(key);
     } finally {
-      ManagerUtil.monitorExit(memoryStore);
+      ManagerUtil.monitorExit(lock);
     }
   }
 
@@ -1212,11 +1231,11 @@ public class CacheTC implements Ehcache {
   public synchronized void clearStatistics() throws IllegalStateException {
     checkStatus();
 
-    ManagerUtil.monitorEnter(memoryStore, LockLevel.WRITE);
+    writeLockAll();
     try {
       memoryStore.clearStatistics();
     } finally {
-      ManagerUtil.monitorExit(memoryStore);
+      unlockAll();
     }
   }
 
@@ -1244,7 +1263,12 @@ public class CacheTC implements Ehcache {
    * Causes all elements stored in the Cache to be synchronously checked for expiry, and if expired, evicted.
    */
   public void evictExpiredElements() {
-    memoryStore.evictExpiredElements();
+    writeLockAll();
+    try {
+      memoryStore.evictExpiredElements();
+    } finally {
+      unlockAll();
+    }
   }
 
   /**
@@ -1381,5 +1405,33 @@ public class CacheTC implements Ehcache {
 
   public CacheConfiguration getCacheConfiguration() {
     return null;
+  }
+
+  private int getStoreIndex(Object key) {
+    if (this.locks.length == 1) { return 0; }
+    int hashValue = Math.abs(Util.hash(key.hashCode()));
+    return hashValue % this.locks.length;
+  }
+
+  private Object getLockObject(Object key) {
+    return this.locks[getStoreIndex(key)];
+  }
+
+  private void readLockAll() {
+    for (int i = 0; i < this.locks.length; i++) {
+      ManagerUtil.monitorEnter(locks[i], LockLevel.READ);
+    }
+  }
+
+  private void writeLockAll() {
+    for (int i = 0; i < this.locks.length; i++) {
+      ManagerUtil.monitorEnter(locks[i], LockLevel.WRITE);
+    }
+  }
+
+  private void unlockAll() {
+    for (int i = 0; i < this.locks.length; i++) {
+      ManagerUtil.monitorExit(locks[i]);
+    }
   }
 }

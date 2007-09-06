@@ -23,44 +23,50 @@ import java.util.Map;
 import java.util.Set;
 
 public class CacheDataStore implements Serializable {
-  private final Map[]                        store;                                      // <Data>
-  private final Map[]                        dtmStore;                                   // <Timestamp>
+  private final Map[]                        store;                  // <Data>
+  private final Map[]                        dtmStore;               // <Timestamp>
   private final String                       cacheName;
   private final long                         maxIdleTimeoutSeconds;
   private final long                         maxTTLSeconds;
   private final long                         invalidatorSleepSeconds;
   private final GlobalKeySet[]               globalKeySet;
-  private final CacheParticipants            cacheParticipants = new CacheParticipants();
   private final Expirable                    callback;
   private int                                concurrency;
   private int                                evictorPoolSize;
   private boolean                            globalEvictionEnabled;
   private int                                globalEvictionFrequency;
+  private transient CacheParticipants        cacheParticipants;
   private transient int                      hitCount;
   private transient int                      missCountExpired;
   private transient int                      missCountNotFound;
   private transient CacheInvalidationTimer[] cacheInvalidationTimer;
-
-  /**
-   * Copy from java.util.HashMap.newHash()
-   */
+  
+  
   private static int hash(int h) {
-    // This function ensures that hashCodes that differ only by
-    // constant multiples at each bit position have a bounded
-    // number of collisions (approximately 8 at default load factor).
-    h ^= (h >>> 20) ^ (h >>> 12);
-    return h ^ (h >>> 7) ^ (h >>> 4);
+    h += ~(h << 9);
+    h ^= (h >>> 14);
+    h += (h << 4);
+    h ^= (h >>> 10);
+    return h;
   }
 
   public CacheDataStore(long invalidatorSleepSeconds, long maxIdleTimeoutSeconds, long maxTTLSeconds, String cacheName,
                         Expirable callback) {
     TCProperties ehcacheProperies = ManagerUtil.getTCProperties().getPropertiesFor("ehcache");
     this.concurrency = ehcacheProperies.getInt("concurrency");
-    this.evictorPoolSize = ehcacheProperies.getInt("evictor.pool.size");
+    if (this.concurrency <= 1) {
+      this.concurrency = 1;
+      this.evictorPoolSize = 1;
+    } else {
+      this.evictorPoolSize = ehcacheProperies.getInt("evictor.pool.size");
+      if (this.evictorPoolSize > this.concurrency) {
+        this.evictorPoolSize = this.concurrency;
+      }
+    }
 
     this.store = new Map[concurrency];
     this.dtmStore = new Map[concurrency];
-    this.globalKeySet = new GlobalKeySet[concurrency];
+    this.globalKeySet = new GlobalKeySet[evictorPoolSize];
 
     this.cacheName = cacheName;
     this.maxIdleTimeoutSeconds = maxIdleTimeoutSeconds;
@@ -84,7 +90,7 @@ public class CacheDataStore implements Serializable {
 
     this.store = new Map[concurrency];
     this.dtmStore = new Map[concurrency];
-    this.globalKeySet = new GlobalKeySet[concurrency];
+    this.globalKeySet = new GlobalKeySet[evictorPoolSize];
 
     this.cacheName = cacheName;
     this.maxIdleTimeoutSeconds = maxIdleTimeoutSeconds;
@@ -100,7 +106,7 @@ public class CacheDataStore implements Serializable {
   }
 
   private void initializeGlobalKeySet() {
-    for (int i = 0; i < concurrency; i++) {
+    for (int i = 0; i < evictorPoolSize; i++) {
       globalKeySet[i] = new GlobalKeySet(cacheName);
     }
   }
@@ -114,16 +120,17 @@ public class CacheDataStore implements Serializable {
   }
 
   public void initialize() {
+    this.cacheParticipants = new CacheParticipants();
+    this.cacheParticipants.register();
+
     int numOfStorePerInvalidator = this.concurrency / this.evictorPoolSize;
     int startEvitionIndex = 0;
-    int invalidatorId = 0;
     this.cacheInvalidationTimer = new CacheInvalidationTimer[evictorPoolSize];
     for (int i = 0; i < evictorPoolSize; i++) {
       int lastEvitionIndex = startEvitionIndex + numOfStorePerInvalidator;
       cacheInvalidationTimer[i] = new CacheInvalidationTimer(invalidatorSleepSeconds, cacheName
-                                                                                      + " invalidation thread"
-                                                                                      + invalidatorId,
-                                                             new CacheEntryInvalidator(globalKeySet[invalidatorId],
+                                                                                      + " invalidation thread" + i,
+                                                             new CacheEntryInvalidator(globalKeySet[i],
                                                                                        globalEvictionEnabled,
                                                                                        globalEvictionFrequency,
                                                                                        startEvitionIndex,
@@ -131,7 +138,6 @@ public class CacheDataStore implements Serializable {
       cacheInvalidationTimer[i].schedule(true);
       startEvitionIndex = lastEvitionIndex;
     }
-    this.cacheParticipants.register();
   }
 
   /**
@@ -182,12 +188,12 @@ public class CacheDataStore implements Serializable {
     if (cd != null) {
       if (!cd.isValid()) {
         missCountExpired++;
-        invalidate(cd);
+        invalidate(key, cd);
         return null;
       } else {
         hitCount++;
         cd.accessed();
-        updateTimestampIfNeeded(cd);
+        updateTimestampIfNeeded(key, cd);
       }
       return cd.getValue();
     }
@@ -195,13 +201,14 @@ public class CacheDataStore implements Serializable {
     return null;
   }
 
-  private void invalidate(CacheData cd) {
+  private void invalidate(Object key, CacheData cd) {
+    int storeIndex = getStoreIndex(key);
     if (!cd.isInvalidated()) {
-      ManagerUtil.monitorEnter(store, LockLevel.CONCURRENT);
+      ManagerUtil.monitorEnter(store[storeIndex], LockLevel.CONCURRENT);
       try {
         cd.invalidate();
       } finally {
-        ManagerUtil.monitorExit(store);
+        ManagerUtil.monitorExit(store[storeIndex]);
       }
     }
   }
@@ -298,7 +305,7 @@ public class CacheDataStore implements Serializable {
     return maxTTLSeconds;
   }
 
-  void updateTimestampIfNeeded(CacheData rv) {
+  void updateTimestampIfNeeded(Object key, CacheData rv) {
     if (maxIdleTimeoutSeconds <= 0) { return; }
 
     Assert.pre(rv != null);
@@ -306,11 +313,12 @@ public class CacheDataStore implements Serializable {
     final Timestamp t = rv.getTimestamp();
     final long expiredTimeMillis = t.getExpiredTimeMillis();
     if (needsUpdate(rv)) {
-      ManagerUtil.monitorEnter(store, LockLevel.CONCURRENT);
+      int storeIndex = getStoreIndex(key);
+      ManagerUtil.monitorEnter(store[storeIndex], LockLevel.CONCURRENT);
       try {
         t.setExpiredTimeMillis(now + rv.getMaxInactiveMillis());
       } finally {
-        ManagerUtil.monitorExit(store);
+        ManagerUtil.monitorExit(store[storeIndex]);
       }
     }
   }
@@ -413,7 +421,7 @@ public class CacheDataStore implements Serializable {
     long numOfObjectsPerChunk = entriesToBeExamined.size();
 
     if (isGlobalInvalidation) {
-      numOfObjectsPerChunk = Math.round(entriesToBeExamined.size()*1.0 / numOfChunks);
+      numOfObjectsPerChunk = Math.round(entriesToBeExamined.size() * 1.0 / numOfChunks);
     }
 
     for (Iterator it = entriesToBeExamined.iterator(); it.hasNext();) {
@@ -426,7 +434,6 @@ public class CacheDataStore implements Serializable {
         if (dtm.getInvalidatedTimeMillis() < System.currentTimeMillis()) {
           evaled++;
           expire(timestampEntry.getKey());
-          // if (evaluateCacheEntry(dtm, key)) invalCnt++;
         } else {
           notEvaled++;
         }

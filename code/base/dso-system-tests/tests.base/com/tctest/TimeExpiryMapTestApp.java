@@ -47,18 +47,21 @@ public class TimeExpiryMapTestApp extends AbstractTransparentApp {
     
     barrier.barrier();
     
+    long st = System.currentTimeMillis();
     if (index == 0) {
       dataRoot.put("key1", "val1");
       dataRoot.put("key2", "val2");
       dataRoot.put("key3", "val3");
     }
     
-    barrier.barrier();
-    
-    Thread.sleep(1000);
+    Thread.sleep(500);
     
     barrier.barrier();
     
+    long en = System.currentTimeMillis();
+    if (DebugUtil.DEBUG) {
+      System.err.println("Client " + ManagerUtil.getClientID() + ", index: " + index + " time for sleep: " + (en - st));
+    }
     Assert.assertEquals(3, dataRoot.size());
     Assert.assertFalse(dataRoot.isExpired("key1"));
     Assert.assertFalse(dataRoot.isExpired("key2"));
@@ -69,7 +72,7 @@ public class TimeExpiryMapTestApp extends AbstractTransparentApp {
     
     barrier.barrier();
     
-    Thread.sleep(9000);
+    Thread.sleep(10000);
     
     barrier.barrier();
     

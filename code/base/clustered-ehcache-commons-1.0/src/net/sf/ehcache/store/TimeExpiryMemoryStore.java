@@ -91,7 +91,7 @@ public class TimeExpiryMemoryStore extends MemoryStore {
   public final synchronized void clearStatistics() {
     ((SpoolingTimeExpiryMap) map).clearStatistics();
   }
-
+  
   public final class SpoolingTimeExpiryMap extends TimeExpiryMap {
 
     public SpoolingTimeExpiryMap(long timeToIdleSec, long maxIdleSec, long timeToLiveSec, String cacheName) {
