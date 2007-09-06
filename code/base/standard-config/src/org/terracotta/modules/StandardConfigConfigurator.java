@@ -166,7 +166,7 @@ public class StandardConfigConfigurator
       return spec;
    }
 
-   private void addLock(final String expr, final LockDefinition ld) {
+   private synchronized void addLock(final String expr, final LockDefinition ld) {
       configHelper.addLock(expr, ld);
    }
 

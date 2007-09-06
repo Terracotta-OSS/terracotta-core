@@ -101,7 +101,7 @@ public interface EmbeddedOSGiRuntime {
         prependLocations.add(testRepository);
       }
       
-      // HACK 
+      // HACK - until we can propagate TESTS_CONFIG_MODULE_REPOSITORIES across VMs during test
       if (System.getProperty("tc.install-root") == null) return;
       final File installRoot = Directories.getInstallationRoot();
       if (!installRoot.toString().endsWith("build")) {
