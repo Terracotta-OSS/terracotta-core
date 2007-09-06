@@ -179,9 +179,9 @@ public class HeartBeatServer {
         while (true) {
           log("send pulse to client: " + clientName);
           out.println(PULSE);
-          if (out.checkError()) {
+          if (out.checkError()) {            
             out = new PrintWriter(socket.getOutputStream(), true);
-            throw new Exception("checkError fails. Recreate PrintWriter...");
+            log("checkError fails. Recreate PrintWriter...");
           }
           try {
             String reply = in.readLine();

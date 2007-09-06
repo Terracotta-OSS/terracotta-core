@@ -58,7 +58,7 @@ public class HeartBeatClient extends Thread {
             out.println(signal);
             if (out.checkError()) {
               out = new PrintWriter(socket.getOutputStream(), true);
-              throw new Exception("checkError fails. Recreate PrintWriter...");
+              log("checkError fails. Recreate PrintWriter...");
             }
             missedPulse = 0;
           } else if (HeartBeatServer.KILL.equals(signal)) {
