@@ -55,11 +55,20 @@ public interface EmbeddedOSGiRuntime {
     private static final void injectDefaultModules(final Modules modules) {
       if ((System.getProperty("tc.install-root") == null)
           && (System.getProperty(TESTS_CONFIG_MODULE_REPOSITORIES) == null)) {
+        logger.debug("No implicit modules were loaded because neither the tc.install-rooot or the "
+            + "tc.tests.configuration.modules.url property was set.");
         return;
       }
 
       final TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor("l1.configbundles");
       final String[] entries = props.getProperty("default").split(";");
+
+      if (entries.length == 0) {
+        logger.debug("No implicit modules were loaded because the l1.configbundles.default property "
+            + "in tc.properties file was not set.");
+        return;
+      }
+
       for (int i = 0; i < entries.length; i++) {
         final String[] entry = entries[i].trim().split(",");
         final String name = entry[0].trim();
