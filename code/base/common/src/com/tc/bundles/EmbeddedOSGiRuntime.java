@@ -94,7 +94,8 @@ public interface EmbeddedOSGiRuntime {
         // and the installation root (which is not set when running tests)
         injectTestRepository(prependLocations);
         injectDefaultRepository(prependLocations);
-        if (!excludeDefaults) injectDefaultModules(modules);
+        //if (!excludeDefaults) 
+        injectDefaultModules(modules);
 
         final URL[] prependURLs = new URL[prependLocations.size()];
         prependLocations.toArray(prependURLs);
