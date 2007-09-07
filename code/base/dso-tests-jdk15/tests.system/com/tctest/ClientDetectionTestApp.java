@@ -162,12 +162,15 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
       System.out.println("@@@@@@@ I'm online.... id = " + ManagerUtil.getClientID());
       L1Client l1 = new L1Client();
 
+      System.out.println("entering barrier4");
       l1.barrier4.await();
       l1.barrier4.await();
 
+      System.out.println("entering barrier3");
       l1.barrier3.await();
       l1.barrier3.await();
 
+      System.out.println("entering barrier2");
       l1.barrier2.await();
       l1.barrier2.await();
 
