@@ -2,4 +2,4 @@ ClientObjectManagerTest
 ClientLockManagerTest
 ClientTransactionManagerTest
 RemoteTransactionManagerTest
-#HashMapTCTest
+HashMapTCTest
