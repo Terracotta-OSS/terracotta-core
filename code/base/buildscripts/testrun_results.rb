@@ -28,7 +28,10 @@ class TestRunResults
             end
         end
 
-        raise RuntimeError, "Unable to find an empty testing directory! We tried directories in '%s' named from 'testrun-%04d' to 'testrun-%04d', but they all existed (?!?)." % [ @build_dir.to_s, 0, 1000 ] if root_dir.nil?
+        unless root_dir
+          raise("Unable to find an empty testing directory! We tried directories in '#@build_dir' named from " +
+                "'testrun-0001' to 'testrun-1000', but they all existed (?!?).")
+        end
         root_dir.ensure_directory
 
         # create symlink to latest testrun
@@ -67,38 +70,38 @@ class TestRunResults
 
     # In what directory should the results for a given subtree go?
     def results_dir(subtree)
-        FilePath.new(subtree_dir(subtree), "%s.results" % subtree.name).ensure_directory
+        FilePath.new(subtree_dir(subtree), "#{subtree.name}.results").ensure_directory
     end
 
     # What's the name of the result file for a given subtree and a given test-class name?
     def results_file(subtree, test_class_name)
-        FilePath.new(results_dir(subtree), "TEST-%s.xml" % test_class_name)
+        FilePath.new(results_dir(subtree), "TEST-#{test_class_name}.xml")
     end
 
     # Where should temporary files for a given subtree be stored? This is the root of the
     # hierarchy named after fully-qualified class name that TCTestCase's getTempDir(), etc.
     # use.
     def temp_dir(subtree)
-        FilePath.new(subtree_dir(subtree), "%s.temp" % subtree.name).ensure_directory
+        FilePath.new(subtree_dir(subtree), "#{subtree.name}.temp").ensure_directory
     end
 
     # Where should Ant store its temporary files for a given subtree?
     def ant_temp_dir(subtree)
-        FilePath.new(subtree_dir(subtree), "%s.ant-temp" % subtree.name).ensure_directory
+        FilePath.new(subtree_dir(subtree), "#{subtree.name}.ant-temp").ensure_directory
     end
 
     # Where do we store the properties that TestConfigObject uses?
     def build_configuration_file(subtree)
-        FilePath.new(subtree_dir(subtree), "%s.config" % subtree.name)
+        FilePath.new(subtree_dir(subtree), "#{subtree.name}.config")
     end
 
     # In what directory should we put boot JARs that are required for the tests?
     def boot_jar_directory(subtree)
-        FilePath.new(subtree_dir(subtree), "%s.support" % subtree.name, "normal-boot-jars")
+        FilePath.new(subtree_dir(subtree), "#{subtree.name}.support", "normal-boot-jars")
     end
 
     # Where should we store required data files for tests on this subtree?
     def tests_data_dir(subtree)
-        FilePath.new(subtree_dir(subtree), "%s.data" % subtree.name).ensure_directory
+        FilePath.new(subtree_dir(subtree), "#{subtree.name}.data").ensure_directory
     end
 end
