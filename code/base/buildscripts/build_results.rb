@@ -40,7 +40,8 @@ class BuildResults
         FilePath.new(@build_dir, subtree.build_module.name, "#{subtree.name}.classes").ensure_directory
     end
 
-    def boot_jar_directory
+    # Returns a FilePath representing the directory where shared boot JARs are stored.
+    def shared_boot_jar_directory
       FilePath.new(@build_dir, "boot-jars")
     end
 

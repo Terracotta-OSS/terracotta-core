@@ -357,7 +357,7 @@ class SubtreeTestRun
               module_set = @subtree.build_module.module_set
               boot_jar_config_file = @subtree.boot_jar_config_file(@static_resources)
 
-              boot_jar_base_dir = @build_results.boot_jar_directory
+              boot_jar_base_dir = @build_results.shared_boot_jar_directory
               if boot_jar_config_file == @static_resources.dso_boot_jar_config_file
                 boot_jar_dir = FilePath.new(boot_jar_base_dir, 'standard')
               else
