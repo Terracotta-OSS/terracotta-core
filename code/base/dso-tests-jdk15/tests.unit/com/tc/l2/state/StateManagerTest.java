@@ -212,7 +212,7 @@ public class StateManagerTest extends TCTestCase {
       elections[i].join();
     }
 
-    Thread.sleep(500);
+    Thread.sleep(1000);
     // verification
     int activeCount = 0;
     for (int i = 0; i < nodes; ++i) {
@@ -220,7 +220,7 @@ public class StateManagerTest extends TCTestCase {
       if (active) ++activeCount;
       System.out.println("*** Server[" + i + "] state is " + sinks[i]);
     }
-    assertTrue(activeCount == 1);
+    assertEquals("Active coordinator",1, activeCount);
 
     shutdown(groupMgr, msgStage);
   }
@@ -278,7 +278,7 @@ public class StateManagerTest extends TCTestCase {
       elections[i].join();
     }
 
-    Thread.sleep(500);
+    Thread.sleep(1000);
     // verification
     int activeCount = 0;
     for (int i = 0; i < nodes; ++i) {
@@ -286,7 +286,7 @@ public class StateManagerTest extends TCTestCase {
       if (active) ++activeCount;
       System.out.println("*** Server[" + i + "] state is " + sinks[i]);
     }
-    assertTrue(activeCount == 1);
+    assertEquals("Active coordinator",1, activeCount);
 
     shutdown(groupMgr, msgStage);
   }
@@ -341,7 +341,8 @@ public class StateManagerTest extends TCTestCase {
       if (active) ++activeCount;
       System.out.println("*** Server[" + i + "] state is " + sinks[i]);
     }
-    assertTrue((activeCount == 1) && managers[0].isActiveCoordinator());
+    assertEquals("Active coordinator",1, activeCount);
+    assertTrue("Node-0 must be active coordinator",managers[0].isActiveCoordinator());
 
     // check API
     try {
@@ -366,7 +367,7 @@ public class StateManagerTest extends TCTestCase {
     for (int i = 1; i < nodes; ++i) {
       reElectThreads[i].join();
     }
-    Thread.sleep(500);
+    Thread.sleep(1000);
 
     // verify
     activeCount = 0;
@@ -375,7 +376,7 @@ public class StateManagerTest extends TCTestCase {
       if (active) ++activeCount;
       System.out.println("*** Server[" + i + "] (" + (active ? "active" : "non-active") + ")state is " + sinks[i]);
     }
-    assertTrue(activeCount == 1);
+    assertEquals("Active coordinator",1, activeCount);
 
     // shut them down
     shutdown(groupMgr, msgStage, 1, nodes);
