@@ -99,19 +99,12 @@ public class ClientDetectionTest extends TransparentTestBase {
                                                              instrumented2 });
 
     RootConfigBuilder testApp_barrier4 = new RootConfigBuilderImpl(ClientDetectionTestApp.class, "barrier4", "barrier4");
-    RootConfigBuilder testApp_barrier3 = new RootConfigBuilderImpl(ClientDetectionTestApp.class, "barrier3", "barrier3");
-    RootConfigBuilder testApp_barrier2 = new RootConfigBuilderImpl(ClientDetectionTestApp.class, "barrier2", "barrier2");
 
     RootConfigBuilder L1_barrier4 = new RootConfigBuilderImpl(ClientDetectionTestApp.L1Client.class, "barrier4",
                                                               "barrier4");
-    RootConfigBuilder L1_barrier3 = new RootConfigBuilderImpl(ClientDetectionTestApp.L1Client.class, "barrier3",
-                                                              "barrier3");
-    RootConfigBuilder L1_barrier2 = new RootConfigBuilderImpl(ClientDetectionTestApp.L1Client.class, "barrier2",
-                                                              "barrier2");
 
     out.getApplication().getDSO().setRoots(
-                                           new RootConfigBuilder[] { testApp_barrier4, testApp_barrier3,
-                                               testApp_barrier2, L1_barrier4, L1_barrier3, L1_barrier2 });
+                                           new RootConfigBuilder[] { testApp_barrier4, L1_barrier4 });
 
     return out;
   }

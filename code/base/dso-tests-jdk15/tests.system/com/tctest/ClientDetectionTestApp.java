@@ -46,9 +46,6 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
   private DSOMBean              dsoMBean;
 
   private CyclicBarrier         barrier4;
-  private CyclicBarrier         barrier3;
-  private CyclicBarrier         barrier2;
-
   private Set                   channelIdSet = new HashSet();
 
   public ClientDetectionTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
@@ -56,8 +53,6 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
     appConfig = cfg;
 
     barrier4 = new CyclicBarrier(4);
-    barrier3 = new CyclicBarrier(3);
-    barrier2 = new CyclicBarrier(2);
   }
 
   protected void runTest() throws Throwable {
@@ -76,19 +71,12 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
     barrier4.await();
     assertClientPresent(getDSOClientMBeans(), 4);
     barrier4.await();
-    client3.attemptShutdown();
-
-    barrier3.await();
-    assertClientPresent(getDSOClientMBeans(), 3);
-    barrier3.await();
-    client2.attemptShutdown();
-
-    barrier2.await();
-    assertClientPresent(getDSOClientMBeans(), 2);
-    barrier2.await();
     client1.attemptShutdown();
-
-    // assertClientPresent(getDSOClientMBeans(), 1);
+    client2.attemptShutdown();
+    client3.attemptShutdown();
+    
+    Thread.sleep(3000);
+    assertClientPresent(getDSOClientMBeans(), 1);
   }
 
   private DSOClientMBean[] getDSOClientMBeans() {
@@ -148,15 +136,10 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
     config.addWriteAutolock(methodExpression);
 
     spec.addRoot("barrier4", "barrier4");
-    spec.addRoot("barrier3", "barrier3");
-    spec.addRoot("barrier2", "barrier2");
-
   }
 
   public static class L1Client {
     CyclicBarrier barrier4 = new CyclicBarrier(4);
-    CyclicBarrier barrier3 = new CyclicBarrier(3);
-    CyclicBarrier barrier2 = new CyclicBarrier(2);
 
     public static void main(String args[]) throws Exception {
       System.out.println("@@@@@@@ I'm online.... id = " + ManagerUtil.getClientID());
@@ -165,15 +148,6 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
       System.out.println("entering barrier4");
       l1.barrier4.await();
       l1.barrier4.await();
-
-      System.out.println("entering barrier3");
-      l1.barrier3.await();
-      l1.barrier3.await();
-
-      System.out.println("entering barrier2");
-      l1.barrier2.await();
-      l1.barrier2.await();
-
     }
   }
 
