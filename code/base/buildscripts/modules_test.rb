@@ -17,7 +17,15 @@ DYNAMICALLY_GENERATED_PROPERTIES_PREFIX = 'tc.tests.info.'
 # the tests.
 STATIC_PROPERTIES_PREFIX = 'tc.tests.configuration.'
 
+module PropertyUtils
+  def property_string(key, value)
+    "#{key.escape}=#{value.escape}"
+  end
+end
+
 class BuildSubtree
+    include PropertyUtils
+
     # Creates a SubtreeTestRun object for this subtree and returns it. Most of the arguments
     # are self-explanatory (they're the obvious instances of the classes with the same names);
     # test_patterns is an array of Ant-style patterns (e.g., "**/*Test") that indicates
@@ -34,9 +42,7 @@ class BuildSubtree
     end
 
     def create_dynamic_property(key, value)
-      "%s%s=%s" % [ DYNAMICALLY_GENERATED_PROPERTIES_PREFIX,
-          key.to_s.to_propertyfile_escaped_s,
-          value.to_s.to_propertyfile_escaped_s ]
+      DYNAMICALLY_GENERATED_PROPERTIES_PREFIX + property_string(key, value)
     end
 
     # Creates a property file (in the style of java.util.Properties.load()) that contains all
@@ -61,12 +67,9 @@ class BuildSubtree
 
             # Builds up the set of classes required for DSO to support sessions
             sessionSet = PathSet.new
-            sessionSet << build_module.module_set['dso-l1-session'].subtree('src').own_classes_only_classpath(build_results)
-            sessionSet << build_module.module_set['dso-l1-tomcat'].subtree('src').own_classes_only_classpath(build_results)
-            sessionSet << build_module.module_set['dso-l1-tomcat50'].subtree('src').own_classes_only_classpath(build_results)
-            sessionSet << build_module.module_set['dso-l1-tomcat55'].subtree('src').own_classes_only_classpath(build_results)
-            sessionSet << build_module.module_set['dso-l1-weblogic'].subtree('src').own_classes_only_classpath(build_results)
-            sessionSet << build_module.module_set['dso-l1-session'].subtree('src').own_classes_only_classpath(build_results)
+            %w(session tomcat tomcat50 tomcat55 weblogic).each do |mod|
+              sessionSet << build_module.module_set["dso-l1-#{mod}"].subtree('src').own_classes_only_classpath(build_results)
+            end
 
             # Writes out the location of the boot JAR for this tree, if one was created.
             write_dynamic_property(file, "bootjars.normal", boot_jar.path) unless boot_jar.nil?
@@ -111,9 +114,10 @@ class BuildSubtree
             # they're only needed for container tests right now (and container tests spawn their own VMs and thus
             # just read these properties directly).
             full_all_variants.each do |variant_name, variant_values|
-              write_dynamic_property(file, "variants.available.%s" % variant_name, variant_values.join(","))
+              write_dynamic_property(file, "variants.available.#{variant_name}", variant_values.join(","))
               variant_values.each do |variant_value|
-                write_dynamic_property(file, "libraries.variants.%s.%s" % [ variant_name, variant_value ], full_variant_libraries(variant_name, variant_value))
+                write_dynamic_property(file, "libraries.variants.#{variant_name}.#{variant_value}",
+                                       full_variant_libraries(variant_name, variant_value))
               end
             end
 
@@ -123,8 +127,10 @@ class BuildSubtree
                 variant_name = $1
                 variant_value = config_source[key]
 
-                raise RuntimeError, "There is no variant '%s' for '%s'!" % [ variant_value, variant_name ] unless full_all_variants[variant_name].include?(variant_value)
-                write_dynamic_property(file, "variants.selected.%s" % variant_name, variant_value)
+                unless full_all_variants[variant_name].include?(variant_value)
+                  raise "There is no variant '#{variant_value}' for '#{variant_name}'!"
+                end
+                write_dynamic_property(file, "variants.selected.#{variant_name}", variant_value)
               end
             end
 
@@ -184,7 +190,7 @@ class BuildSubtree
     def write_static_properties(file, config_source)
         config_source.keys.each do |key|
             if key.starts_with?(STATIC_PROPERTIES_PREFIX)
-                file << "%s=%s\n" % [ key.to_s.to_propertyfile_escaped_s, config_source[key].to_s.to_propertyfile_escaped_s ]
+                file << property_string(key, config_source[key]) + "\n"
             end
         end
     end
@@ -216,7 +222,7 @@ class BuildSubtree
                         elsif line =~ /^\s*#.*$/ || line =~ /^\s*$/
                             # Nothing here
                         else
-                            raise RuntimeError, "%s:%d: Line is an invalid format: %s" % [ filepath, lineno, line ]
+                            raise "#{filepath}:%d: Line is an invalid format: #{line}" % [ lineno ]
                         end
 
                         lineno += 1
@@ -237,10 +243,10 @@ class BuildSubtree
 
         directories_copied_from = copy_all_test_data_to_directory(dir, ant)
         if directories_copied_from > 0
-            puts "Compiled test data from %d director%s into '%s' for tests on '%s/%s'." %
-            [ directories_copied_from, directories_copied_from == 1 ? "y" : "ies", dir.to_s, build_module.name, name ]
+            word = "director" + (directories_copied_from == 1 ? "y" : "ies")
+            puts("Compiled test data from #{directories_copied_from} #{word} into '#{dir}' for tests on '#{module_subtree_name}'.")
         else
-            puts "No data directories found for '%s/%s', or its dependencies." % [ build_module.name, name ]
+            puts "No data directories found for '#{module_subtree_name}', or its dependencies."
         end
         dir
     end
@@ -265,6 +271,7 @@ end
 # encapsulates all test set-up, run, and tear-down logic into a single place so that you can do
 # whatever you want with it.
 class SubtreeTestRun
+    include PropertyUtils
 
     # The default timeout for tests, in seconds. Currently, this is 15 minutes.
     DEFAULT_TEST_TIMEOUT_SECONDS = 15 * 60
@@ -344,7 +351,7 @@ class SubtreeTestRun
         add_debug_jvmargs
 
         puts "------------------------------------------------------------------------"
-        puts "PREPARING to run tests (%s) on subtree '%s/%s'..." % [ @test_patterns.join(", "), @subtree.build_module.name, @subtree.name ]
+        puts "PREPARING to run tests (#{@test_patterns.join(", ")}) on subtree '#{@subtree.module_subtree_name}'..."
         puts ""
 
         # Build a DSO boot JAR, if necessary.
@@ -419,7 +426,7 @@ class SubtreeTestRun
         @sysproperties['java.library.path'] = native_library_path.to_s unless native_library_path.to_s.blank?
 
         if @use_dso_boot_jar
-            @jvmargs << '-Xbootclasspath/p:%s' % boot_jar.path.to_s
+            @jvmargs << "-Xbootclasspath/p:#{boot_jar.path}"
             @sysproperties.merge!({
                 'tc.config' => @static_resources.dso_test_runtime_config_file,
                 'tc.dso.globalmode' => false
@@ -534,7 +541,7 @@ class SubtreeTestRun
         # Write out the system properties that we need to set.
         File.open(test_config_system_properties_file.to_s, "w") do |file|
             @sysproperties.each do |key, value|
-                file << "%s=%s\n" % [ key.to_s.to_propertyfile_escaped_s, value.to_s.to_propertyfile_escaped_s ]
+                file << property_string(key, value) + "\n"
             end
         end
 
@@ -550,45 +557,45 @@ class SubtreeTestRun
         # to correctly spawn the JVM that will run the test(s).
         File.open(@build_results.prepped_stamp_file(@subtree.build_module.module_set).to_s, "w") do |file|
             file << "# This file is an indication that 'tcbuild check_prep' has been run.\n"
-            file << "tcbuild.prepared.module=%s\n" % @subtree.build_module.name.to_propertyfile_escaped_s
-            file << "tcbuild.prepared.subtree=%s\n" % @subtree.name.to_propertyfile_escaped_s
-            file << "tcbuild.prepared.cwd=%s\n" % @cwd.to_s.to_propertyfile_escaped_s
-            file << "tcbuild.prepared.jvm.java=%s\n" % tests_jvm.java.to_s.to_propertyfile_escaped_s
-            file << "tcbuild.prepared.jvm.version=%s\n" % tests_jvm.actual_version.to_propertyfile_escaped_s
-            file << "tcbuild.prepared.jvm.type=%s\n" % tests_jvm.actual_type.to_propertyfile_escaped_s
+            file << "tcbuild.prepared.module=#{@subtree.build_module.name.escape}\n"
+            file << "tcbuild.prepared.subtree=#{@subtree.name.escape}\n"
+            file << "tcbuild.prepared.cwd=#{@cwd.escape}\n"
+            file << "tcbuild.prepared.jvm.java=#{tests_jvm.java.escape}\n"
+            file << "tcbuild.prepared.jvm.version=#{tests_jvm.actual_version.escape}\n"
+            file << "tcbuild.prepared.jvm.type=#{tests_jvm.actual_type.escape}\n"
 
             jvm_args = all_jvmargs
             if container_home = @subtree.container_home || @config_source['tc.tests.configuration.appserver.home']
               jvm_args << "-D#{@subtree.create_dynamic_property('appserver.home', container_home)}"
             end
-            file << "tcbuild.prepared.jvmargs=%s\n" % jvm_args.length.to_s.to_propertyfile_escaped_s
+            file << "tcbuild.prepared.jvmargs=#{jvm_args.length}\n"
 
             index = 0
             jvm_args.each do |jvmarg|
-                file << "tcbuild.prepared.jvmarg_%d=%s\n" % [ index, jvmarg.to_propertyfile_escaped_s ]
+                file << "tcbuild.prepared.jvmarg_%d=#{jvmarg.escape}\n" % [ index ]
                 index += 1
             end
 
 
             required_system_properties.each do |syspropertykey|
-                file << "tcbuild.prepared.system-property.%s=%s\n" % [ syspropertykey.to_propertyfile_escaped_s, @sysproperties[syspropertykey].to_s.to_propertyfile_escaped_s ]
+                file << "tcbuild.prepared.system-property.#{property_string(syspropertykey, @sysproperties[syspropertykey])}\n"
             end
         end
 
         puts "========================================================================"
-        puts "Wrote required system properties for module %s/%s to:" % [ @subtree.build_module.name, @subtree.name]
-        puts "  '%s'." % test_config_system_properties_file.to_s
+        puts "Wrote required system properties for module #{@subtree.module_subtree_name} to:"
+        puts "  '#{test_config_system_properties_file}'."
         puts "The test configuration system will automatically load this file as needed."
 
         extra = ""
         extra += "  JVM arguments:\n\n"
 
         unless all_jvmargs.empty?
-            all_jvmargs.each { |key| extra += "%s\n" % [ key ] }
+            all_jvmargs.each { |key| extra += "#{key}\n" }
         end
 
         unless required_system_properties.empty?
-            required_system_properties.each { |key| extra += "-D%s=%s\n" % [ key, @sysproperties[key] ] }
+            required_system_properties.each { |key| extra += "-D#{property_string(key, @sysproperties[key])}\n" }
         end
 
         unless extra.blank?
@@ -603,9 +610,9 @@ class SubtreeTestRun
 
         puts ""
         puts "And, just FYI (it isn't usually necessary to set these) the buildsystem "
-        puts "normally runs tests in %s/%s..." % [ @subtree.build_module.name, @subtree.name ]
-        puts "   ...with the current working directory set to:\n\n%s\n\n" % @cwd.to_s
-        puts "   ...using the Java command at '%s'." % tests_jvm.java.to_s
+        puts "normally runs tests in #{@subtree.module_subtree_name}..."
+        puts "   ...with the current working directory set to:\n\n#{@cwd}\n\n"
+        puts "   ...using the Java command at '#{tests_jvm.java}'."
         puts ""
     end
 
@@ -620,7 +627,7 @@ class SubtreeTestRun
 
         puts ""
         puts "========================================================================"
-        puts "RUNNING tests (%s) on %s/%s..." % [ @test_patterns.join(", "), @subtree.build_module.name, @subtree.name ]
+        puts "RUNNING tests (#{@test_patterns.join(', ')}) on #{@subtree.module_subtree_name}..."
         puts ""
 
         failed = false
@@ -661,11 +668,11 @@ class SubtreeTestRun
 
         # Check the failures by looking for the properies we set under failure_property_name, above.
         failure_properties.each { |property_name| failed = failed || (@ant.get_ant_property(property_name) != nil) }
-        script_results.failed("Execution of tests in subtree '%s/%s' failed." % [ @subtree.build_module.name, @subtree.name ]) if failed
+        script_results.failed("Execution of tests in subtree '#{@subtree.module_subtree_name}' failed.") if failed
 
         # Aggregate the results into the aggregation directory, if it's set.
         unless @aggregation_directory.nil?
-            puts "Copying test result files to '%s'..." % @aggregation_directory.to_s
+            puts "Copying test result files to '#{@aggregation_directory}'..."
             @ant.copy(:todir => @aggregation_directory.to_s) {
                 @ant.fileset(:dir => @testrun_results.results_dir(@subtree).to_s, :includes => '*.xml')
             }
@@ -705,20 +712,20 @@ END
     # command line (e.g., by invoking 'java' directly).
     def dump
         out = "\n\n========================================================================\n"
-        out += "When running tests on subtree %s/%s, the buildsystem will use the following:\n\n" % [ @subtree.build_module.name, @subtree.name ]
-        out += "  JVM arguments:               %s\n" % (all_jvmargs.empty? ? "<none>" : all_jvmargs.join(" "))
+        out += "When running tests on subtree #{@subtree.module_subtree_name}, the buildsystem will use the following:\n\n"
+        out += "  JVM arguments:               #{all_jvmargs.empty? ? '<none>' : all_jvmargs.join(' ')}\n"
 
         if @sysproperties.empty?
             out += "  System properties:           <none>\n"
         else
             out += "  System properties:           \n"
-            @sysproperties.each { |key, value| out += "          -D%s=%s\n" % [ key, value ] }
+            @sysproperties.each { |key, value| out += "          -D#{property_string(key, value)}\n" }
         end
 
-        out += "  Timeout:                     %s milliseconds\n" % @timeout
-        out += "  Current working directory:   %s\n" % @cwd.to_s
-        out += "  'java' command:              %s\n\n" % tests_jvm.java.to_s
-        out += "  CLASSPATH:\n\n%s\n\n" % @classpath
+        out += "  Timeout:                     #{@timeout} milliseconds\n"
+        out += "  Current working directory:   #{@cwd}\n"
+        out += "  'java' command:              #{tests_jvm.java}\n\n"
+        out += "  CLASSPATH:\n\n#{@classpath}\n\n"
 
         out
     end
@@ -902,7 +909,7 @@ END
     def create_did_not_run_file(class_name, target_file)
         File.open(target_file.to_s, "w") do |file|
             file << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-            file << "<testsuite errors=\"0\" failures=\"1\" name=\"%s\" tests=\"0\" time=\"0.000\">\n" % class_name.xml_escape(true)
+            file << "<testsuite errors=\"0\" failures=\"1\" name=\"#{class_name.escape(:xml_attribute)}\" tests=\"0\" time=\"0.000\">\n"
             file << "<testcase classname=\"#{class_name.xml_escape}\" name='test' time='0.0'>\n"
             file << ("  <failure type='junit.framework.AssertionFailedError' message=\"" + NOT_RUN_MESSAGE + "\">\n") % class_name.xml_escape(true)
             file << ("      " + NOT_RUN_MESSAGE + "\n") % class_name.xml_escape

@@ -98,7 +98,11 @@ class BuildSubtree
     end
 
     def to_s
-      "<Module subtree: #{build_module.name}/#{name}>"
+      "<Module subtree: #{module_subtree_name}>"
+    end
+
+    def module_subtree_name
+      "#{build_module.name}/#{name}"
     end
 
     # Returns a FilePath pointing to the root of this subtree's source (whether it actually
