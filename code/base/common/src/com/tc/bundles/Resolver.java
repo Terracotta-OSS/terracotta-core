@@ -37,7 +37,7 @@ public class Resolver {
 
   private static final String BUNDLE_FILENAME_EXT       = ".jar";
   private static final String BUNDLE_PATH               = "{0}-{1}" + BUNDLE_FILENAME_EXT;
-  private static final String BUNDLE_VERSION_REGEX      = "[0-9]+\\.[0-9]+\\.[0-9]+";
+  private static final String BUNDLE_VERSION_REGEX      = "[0-9]+\\.[0-9]+\\.[0-9]+(-SNAPSHOT)?";
   private static final String BUNDLE_FILENAME_REGEX     = ".+-";
   private static final String BUNDLE_FILENAME_EXT_REGEX = "\\" + BUNDLE_FILENAME_EXT;
   private static final String BUNDLE_FILENAME_PATTERN   = "^" + BUNDLE_FILENAME_REGEX + BUNDLE_VERSION_REGEX
