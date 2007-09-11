@@ -225,13 +225,12 @@ public class StateManagerTest extends TCTestCase {
     shutdown(groupMgr, msgStage);
   }
 
-  private void shutdown(TribesGroupManager[] groupMgr, L2StateMessageStage[] msgStage) throws Exception {
+  private void shutdown(TribesGroupManager[] groupMgr, L2StateMessageStage[] msgStage) {
     // shut them down
     shutdown(groupMgr, msgStage, 0, groupMgr.length);
   }
 
-  private void shutdown(TribesGroupManager[] groupMgr, L2StateMessageStage[] msgStage, int start, int end)
-      throws Exception {
+  private void shutdown(TribesGroupManager[] groupMgr, L2StateMessageStage[] msgStage, int start, int end) {
     for (int i = start; i < end; ++i) {
       try {
         groupMgr[i].stop();
@@ -240,7 +239,6 @@ public class StateManagerTest extends TCTestCase {
         System.out.println("*** Failed to stop Server[" + i + "] "+ groupMgr[i] + " " + ex);
       }
     }
-    Thread.sleep(2000);
     System.out.println("*** shutdown done");
   }
 
