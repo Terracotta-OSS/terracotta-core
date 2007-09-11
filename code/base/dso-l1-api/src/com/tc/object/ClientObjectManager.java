@@ -4,6 +4,8 @@
 package com.tc.object;
 
 import com.tc.exception.TCNonPortableObjectError;
+import com.tc.object.appevent.ApplicationEvent;
+import com.tc.object.appevent.ApplicationEventContext;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
@@ -28,8 +30,7 @@ public interface ClientObjectManager {
 
   public boolean isPortableInstance(Object instance);
 
-  public void checkPortabilityOfField(Object value, String fieldName, Object pojo)
-      throws TCNonPortableObjectError;
+  public void checkPortabilityOfField(Object value, String fieldName, Object pojo) throws TCNonPortableObjectError;
 
   public void checkPortabilityOfLogicalAction(Object[] params, int paramIndex, String methodName, Object pojo)
       throws TCNonPortableObjectError;
@@ -100,4 +101,24 @@ public interface ClientObjectManager {
   public boolean hasPendingCreateObjects();
 
   public Object createOrReplaceRoot(String rootName, Object root);
+
+  /**
+   * The following are in support of the Eclipse ApplicationEventDialog and the Session Configurator.
+   */
+
+  /**
+   * Store the pojo object hierarchy in the context's tree model.
+   */
+  void storeObjectHierarchy(Object pojo, ApplicationEventContext context);
+
+  /**
+   * Send an ApplicationEvent occurring on pojo to the server via JMX.
+   * The handling of concrete event types occurs in com.tc.objectserver.DSOApplicationEvents.
+   */
+  void sendApplicationEvent(Object pojo, ApplicationEvent event);
+
+  /**
+   * Clone logicalPojo and then apply the specified logical operation, returning the clone.
+   */
+  Object cloneAndInvokeLogicalOperation(Object logicalPojo, String methodName, Object[] parameters);
 }

@@ -13,6 +13,11 @@ import com.tc.object.ClientObjectManager;
 import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
+import com.tc.object.appevent.NonPortableEventContextFactory;
+import com.tc.object.appevent.ReadOnlyObjectEvent;
+import com.tc.object.appevent.ReadOnlyObjectEventContext;
+import com.tc.object.appevent.UnlockedSharedObjectEvent;
+import com.tc.object.appevent.UnlockedSharedObjectEventContext;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAException;
@@ -23,6 +28,7 @@ import com.tc.object.lockmanager.api.ThreadLockManager;
 import com.tc.object.lockmanager.api.WaitListener;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.session.SessionID;
+import com.tc.object.util.ReadOnlyException;
 import com.tc.text.Banner;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
@@ -39,36 +45,39 @@ import java.util.Map.Entry;
  * @author steve
  */
 public class ClientTransactionManagerImpl implements ClientTransactionManager {
-  private static final TCLogger          logger        = TCLogging.getLogger(ClientTransactionManagerImpl.class);
+  private static final TCLogger                logger        = TCLogging.getLogger(ClientTransactionManagerImpl.class);
 
-  private final ThreadLocal              transaction   = new ThreadLocal() {
-                                                         protected synchronized Object initialValue() {
-                                                           return new ThreadTransactionContext();
-                                                         }
-                                                       };
+  private final ThreadLocal                    transaction   = new ThreadLocal() {
+                                                               protected synchronized Object initialValue() {
+                                                                 return new ThreadTransactionContext();
+                                                               }
+                                                             };
 
-  private final ThreadLocal              txnLogging    = new ThreadLocal() {
-                                                         protected Object initialValue() {
-                                                           return new ThreadTransactionLoggingStack();
-                                                         }
+  private final ThreadLocal                    txnLogging    = new ThreadLocal() {
+                                                               protected Object initialValue() {
+                                                                 return new ThreadTransactionLoggingStack();
+                                                               }
 
-                                                       };
+                                                             };
 
-  private final ClientTransactionFactory txFactory;
-  private final RemoteTransactionManager remoteTxManager;
-  private final ClientObjectManager      objectManager;
-  private final ThreadLockManager        lockManager;
-  private final LiteralValues            literalValues = new LiteralValues();
+  private final ClientTransactionFactory       txFactory;
+  private final RemoteTransactionManager       remoteTxManager;
+  private final ClientObjectManager            objectManager;
+  private final ThreadLockManager              lockManager;
+  private final NonPortableEventContextFactory appEventContextFactory;
+  private final LiteralValues                  literalValues = new LiteralValues();
 
-  private final WaitListener             waitListener  = new WaitListener() {
-                                                         public void handleWaitEvent() {
-                                                           return;
-                                                         }
-                                                       };
+  private final WaitListener                   waitListener  = new WaitListener() {
+                                                               public void handleWaitEvent() {
+                                                                 return;
+                                                               }
+                                                             };
 
-  private final ChannelIDProvider        cidProvider;
+  private final ChannelIDProvider              cidProvider;
 
-  private final ClientTxMonitorMBean     txMonitor;
+  private final ClientTxMonitorMBean           txMonitor;
+
+  private final boolean                        sendErrors    = System.getProperty("project.name") != null;
 
   public ClientTransactionManagerImpl(ChannelIDProvider cidProvider, ClientObjectManager objectManager,
                                       ThreadLockManager lockManager, ClientTransactionFactory txFactory,
@@ -81,6 +90,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     this.objectManager.setTransactionManager(this);
     this.lockManager = lockManager;
     this.txMonitor = txMonitor;
+    this.appEventContextFactory = new NonPortableEventContextFactory(cidProvider);
   }
 
   public int queueLength(String lockName) {
@@ -256,7 +266,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
       if (type != null) {
         details += "Shared Object Type: " + type;
       }
-      
+
       throw new UnlockedSharedObjectException(errorMsg, Thread.currentThread().getName(), cidProvider.getChannelID()
           .toLong(), details);
     }
@@ -267,16 +277,37 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     if (isTransactionLoggingDisabled()) { return; }
 
     // First check if we have any TXN context at all (else exception thrown)
-    ClientTransaction txn = getTransaction(context);
+    ClientTransaction txn;
+
+    try {
+      txn = getTransaction(context);
+    } catch (UnlockedSharedObjectException usoe) {
+      if (sendErrors) {
+        UnlockedSharedObjectEventContext eventContext = appEventContextFactory
+            .createUnlockedSharedObjectEventContext(context, usoe);
+        objectManager.sendApplicationEvent(context, new UnlockedSharedObjectEvent(eventContext));
+//        objectManager.sendUnlockedSharedObjectEvent(context, eventContext);
+      }
+
+      throw usoe;
+    }
 
     // make sure we're not in a read-only transaction
     // txn.readOnlyCheck();
-    if (txn.getTransactionType() == TxnType.READ_ONLY) { throw new ReadOnlyException(
-                                                                                     "Current transaction with read-only access attempted to modify a shared object.  "
-                                                                                         + "\nPlease alter the locks section of your Terracotta configuration so that the methods involved in this transaction have read/write access.",
-                                                                                     Thread.currentThread().getName(),
-                                                                                     cidProvider.getChannelID()
-                                                                                         .toLong()); }
+    if (txn.getTransactionType() == TxnType.READ_ONLY) {
+      ReadOnlyException roe = new ReadOnlyException(
+                                                    "Current transaction with read-only access attempted to modify a shared object.  "
+                                                        + "\nPlease alter the locks section of your Terracotta configuration so that the methods involved in this transaction have read/write access.",
+                                                    Thread.currentThread().getName(), cidProvider.getChannelID()
+                                                        .toLong());
+      if (sendErrors) {
+        ReadOnlyObjectEventContext eventContext = appEventContextFactory.createReadOnlyObjectEventContext(context, roe);
+        objectManager.sendApplicationEvent(context, new ReadOnlyObjectEvent(eventContext));
+//        objectManager.sendReadOnlyObjectEvent(context, eventContext);
+      }
+
+      throw roe;
+    }
   }
 
   /**
@@ -490,9 +521,31 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
       disableTransactionLogging();
 
       Object pojo = source.getPeerObject();
-      ClientTransaction tx = getTransaction(pojo);
+      ClientTransaction tx;
 
-      tx.literalValueChanged(source, newValue, oldValue);
+      try {
+        tx = getTransaction(pojo);
+      } catch (UnlockedSharedObjectException usoe) {
+        if (sendErrors) {
+          UnlockedSharedObjectEventContext eventContext = appEventContextFactory
+              .createUnlockedSharedObjectEventContext(pojo, usoe);
+          objectManager.sendApplicationEvent(pojo, new UnlockedSharedObjectEvent(eventContext));
+//          objectManager.sendUnlockedSharedObjectEvent(pojo, eventContext);
+        }
+
+        throw usoe;
+      }
+
+      try {
+        tx.literalValueChanged(source, newValue, oldValue);
+      } catch (ReadOnlyException roe) {
+        if (sendErrors) {
+          ReadOnlyObjectEventContext eventContext = appEventContextFactory.createReadOnlyObjectEventContext(pojo, roe);
+          objectManager.sendApplicationEvent(pojo, new ReadOnlyObjectEvent(eventContext));
+//          objectManager.sendReadOnlyObjectEvent(pojo, eventContext);
+        }
+        throw roe;
+      }
     } finally {
       enableTransactionLogging();
     }
@@ -507,18 +560,52 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
 
       Object pojo = source.getPeerObject();
 
-      ClientTransaction tx = getTransaction(pojo);
+      ClientTransaction tx;
+      try {
+        tx = getTransaction(pojo);
+      } catch (UnlockedSharedObjectException usoe) {
+        if (sendErrors) {
+          UnlockedSharedObjectEventContext eventContext = appEventContextFactory
+              .createUnlockedSharedObjectEventContext(pojo, classname, fieldname, usoe);
+          objectManager.sendApplicationEvent(pojo, new UnlockedSharedObjectEvent(eventContext));
+//          objectManager.sendUnlockedSharedObjectEvent(pojo, eventContext);
+        }
+
+        throw usoe;
+      }
+
       logFieldChanged0(source, classname, fieldname, newValue, tx);
 
       if (newValue != null && literalValues.isLiteralInstance(newValue)) {
-        tx.fieldChanged(source, classname, fieldname, newValue, index);
+        try {
+          tx.fieldChanged(source, classname, fieldname, newValue, index);
+        } catch (ReadOnlyException roe) {
+          if (sendErrors) {
+            ReadOnlyObjectEventContext eventContext = appEventContextFactory
+                .createReadOnlyObjectEventContext(pojo, classname, fieldname, roe);
+            objectManager.sendApplicationEvent(pojo, new ReadOnlyObjectEvent(eventContext));
+//            objectManager.sendReadOnlyObjectEvent(pojo, eventContext);
+          }
+          throw roe;
+        }
       } else {
         if (newValue != null) {
           objectManager.checkPortabilityOfField(newValue, fieldname, pojo);
         }
 
         TCObject tco = objectManager.lookupOrCreate(newValue);
-        tx.fieldChanged(source, classname, fieldname, tco.getObjectID(), index);
+
+        try {
+          tx.fieldChanged(source, classname, fieldname, tco.getObjectID(), index);
+        } catch (ReadOnlyException roe) {
+          if (sendErrors) {
+            ReadOnlyObjectEventContext eventContext = appEventContextFactory
+                .createReadOnlyObjectEventContext(pojo, classname, fieldname, roe);
+            objectManager.sendApplicationEvent(pojo, new ReadOnlyObjectEvent(eventContext));
+//            objectManager.sendReadOnlyObjectEvent(pojo, eventContext);
+          }
+          throw roe;
+        }
 
         // record the reference in this transaction -- This is to solve the race condition of transactions
         // that reference objects newly "created" in other transactions that may not commit before us
@@ -536,7 +623,20 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     try {
       disableTransactionLogging();
       Object pojo = source.getPeerObject();
-      ClientTransaction tx = getTransaction(pojo);
+      ClientTransaction tx;
+
+      try {
+        tx = getTransaction(pojo);
+      } catch (UnlockedSharedObjectException usoe) {
+        if (sendErrors) {
+          UnlockedSharedObjectEventContext eventContext = appEventContextFactory
+              .createUnlockedSharedObjectEventContext(pojo, usoe);
+          objectManager.sendApplicationEvent(pojo, new UnlockedSharedObjectEvent(eventContext));
+//          objectManager.sendUnlockedSharedObjectEvent(pojo, eventContext);
+        }
+
+        throw usoe;
+      }
 
       if (!ClassUtils.isPrimitiveArray(array)) {
         Object[] objArray = (Object[]) array;
@@ -554,7 +654,17 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
           }
         }
       }
-      tx.arrayChanged(source, startPos, array, length);
+
+      try {
+        tx.arrayChanged(source, startPos, array, length);
+      } catch (ReadOnlyException roe) {
+        if (sendErrors) {
+          ReadOnlyObjectEventContext eventContext = appEventContextFactory.createReadOnlyObjectEventContext(pojo, roe);
+          objectManager.sendApplicationEvent(pojo, new ReadOnlyObjectEvent(eventContext));
+//          objectManager.sendReadOnlyObjectEvent(pojo, eventContext);
+        }
+        throw roe;
+      }
 
     } finally {
       enableTransactionLogging();
@@ -574,7 +684,21 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
       disableTransactionLogging();
 
       Object pojo = source.getPeerObject();
-      ClientTransaction tx = getTransaction(pojo);
+      ClientTransaction tx;
+
+      try {
+        tx = getTransaction(pojo);
+      } catch (UnlockedSharedObjectException usoe) {
+        if (sendErrors) {
+          UnlockedSharedObjectEventContext eventContext = appEventContextFactory
+              .createUnlockedSharedObjectEventContext(pojo, usoe);
+          pojo = objectManager.cloneAndInvokeLogicalOperation(pojo, methodName, parameters);
+          objectManager.sendApplicationEvent(pojo, new UnlockedSharedObjectEvent(eventContext));
+//          objectManager.sendUnlockedSharedObjectEvent(pojo, eventContext);
+        }
+
+        throw usoe;
+      }
 
       for (int i = 0; i < parameters.length; i++) {
         Object p = parameters[i];
@@ -594,7 +718,18 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
         }
       }
 
-      tx.logicalInvoke(source, method, parameters, methodName);
+      try {
+        tx.logicalInvoke(source, method, parameters, methodName);
+      } catch (ReadOnlyException roe) {
+        if (sendErrors) {
+          ReadOnlyObjectEventContext eventContext = appEventContextFactory.createReadOnlyObjectEventContext(pojo, roe);
+          pojo = objectManager.cloneAndInvokeLogicalOperation(pojo, methodName, parameters);
+          objectManager.sendApplicationEvent(pojo, new ReadOnlyObjectEvent(eventContext));
+//          objectManager.sendReadOnlyObjectEvent(pojo, eventContext);
+        }
+        throw roe;
+      }
+
     } finally {
       enableTransactionLogging();
     }

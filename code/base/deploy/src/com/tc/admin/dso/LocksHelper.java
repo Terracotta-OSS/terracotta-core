@@ -3,12 +3,12 @@
  */
 package com.tc.admin.dso;
 
-import com.tc.admin.BaseHelper;
-import com.tc.admin.ConnectionContext;
 import com.tc.admin.AdminClient;
 import com.tc.admin.AdminClientContext;
-import com.tc.objectserver.lockmanager.api.LockMBean;
+import com.tc.admin.BaseHelper;
+import com.tc.admin.ConnectionContext;
 import com.tc.objectserver.lockmanager.api.DeadlockChain;
+import com.tc.objectserver.lockmanager.api.LockMBean;
 
 import java.io.IOException;
 import java.net.URL;
@@ -16,6 +16,7 @@ import java.net.URL;
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanException;
+import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.swing.Icon;
@@ -63,7 +64,8 @@ public class LocksHelper extends BaseHelper {
            AttributeNotFoundException,
            InstanceNotFoundException,
            ReflectionException,
-           IOException
+           IOException,
+           MalformedObjectNameException
   {
     ObjectName dso = DSOHelper.getHelper().getDSOMBean(cc);
     return (LockMBean[])cc.getAttribute(dso, "Locks");

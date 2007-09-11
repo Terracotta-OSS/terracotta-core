@@ -103,6 +103,5 @@ public class ManageServerAction extends BaseAction implements IRunnableWithProgr
     } else {
       tracker.startServer(javaProject, m_name, monitor);
     }
-    //monitor.done();
   }
 }

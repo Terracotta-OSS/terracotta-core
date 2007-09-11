@@ -19,7 +19,7 @@ public class ServerSelection {
   private int          m_selectedServerIndex;
   
   // CDV-300: Disable 'was6.1' for the time being; configurator support for WebSphere is untested in a non-trivial environment
-  private static final String[] WEB_SERVERS               = {"tomcat5.5", "tomcat5.0", "tomcat6.0", "wls8.1" /*, "was6.1"*/};
+  private static final String[] WEB_SERVERS               = {"tomcat5.5", "tomcat5.0", "tomcat6.0", "wls8.1", "wls9.2" /*, "was6.1"*/};
   private static final String   SERVER_SELECTION_PREF_KEY = "SessionIntegrator.ServerSelection";
   private static final String   SELECTED_SERVER_PREF_KEY  = "SelectedServer";
   private static final String   SERVERS_PREF_KEY          = "Servers";

@@ -23,10 +23,16 @@ import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 
+import javax.management.AttributeNotFoundException;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanException;
 import javax.management.MBeanServerInvocationHandler;
+import javax.management.MalformedObjectNameException;
 import javax.management.Notification;
 import javax.management.NotificationListener;
+import javax.management.ReflectionException;
 import javax.swing.JOptionPane;
 
 public class GCStatsPanel extends XContainer implements NotificationListener {
@@ -35,7 +41,7 @@ public class GCStatsPanel extends XContainer implements NotificationListener {
   private PopupMenu                    m_popupMenu;
   private ObjectManagementMonitorMBean m_objectManagementMonitor;
 
-  public GCStatsPanel(ConnectionContext cc) {
+  public GCStatsPanel(ConnectionContext cc) throws IOException, MalformedObjectNameException, InstanceNotFoundException, MBeanException, ReflectionException, AttributeNotFoundException {
     super();
 
     m_cc = cc;
@@ -51,13 +57,8 @@ public class GCStatsPanel extends XContainer implements NotificationListener {
     DSOHelper helper = DSOHelper.getHelper();
     GCStats[] gcStats = null;
 
-    try {
-      gcStats = helper.getGCStats(cc);
-      cc.addNotificationListener(helper.getDSOMBean(cc), this);
-    } catch (Exception e) {
-      AdminClient.getContext().log(e);
-      gcStats = new GCStats[] {};
-    }
+    gcStats = helper.getGCStats(cc);
+    cc.addNotificationListener(helper.getDSOMBean(cc), this);
 
     model.setGCStats(gcStats);
 

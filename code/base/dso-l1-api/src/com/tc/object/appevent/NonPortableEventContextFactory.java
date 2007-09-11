@@ -5,6 +5,8 @@
 package com.tc.object.appevent;
 
 import com.tc.net.protocol.tcm.ChannelIDProvider;
+import com.tc.object.tx.UnlockedSharedObjectException;
+import com.tc.object.util.ReadOnlyException;
 
 public class NonPortableEventContextFactory {
 
@@ -35,4 +37,19 @@ public class NonPortableEventContextFactory {
                                                methodName, params, index);
   }
 
+  public UnlockedSharedObjectEventContext createUnlockedSharedObjectEventContext(Object pojo, String classname, String fieldname, UnlockedSharedObjectException ex) {
+    return new UnlockedSharedObjectEventContext(pojo, classname, fieldname, Thread.currentThread().getName(), getJVMId(), ex);
+  }
+
+  public UnlockedSharedObjectEventContext createUnlockedSharedObjectEventContext(Object pojo, UnlockedSharedObjectException ex) {
+    return new UnlockedSharedObjectEventContext(pojo, Thread.currentThread().getName(), getJVMId(), ex);
+  }
+
+  public ReadOnlyObjectEventContext createReadOnlyObjectEventContext(Object pojo, ReadOnlyException ex) {
+    return new ReadOnlyObjectEventContext(pojo, Thread.currentThread().getName(), getJVMId(), ex);
+  }
+
+  public ReadOnlyObjectEventContext createReadOnlyObjectEventContext(Object pojo, String classname, String fieldname, ReadOnlyException ex) {
+    return new ReadOnlyObjectEventContext(pojo, classname, fieldname, Thread.currentThread().getName(), getJVMId(), ex);
+  }
 }

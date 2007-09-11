@@ -105,8 +105,9 @@ public class SetupWizardPage extends WizardPage {
 
     m_resetOptionsButton = new Button(serverOptions, SWT.PUSH);
     m_resetOptionsButton.setText(RESET);
-    m_resetOptionsButton.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_END | GridData.VERTICAL_ALIGN_BEGINNING));
     SWTUtil.applyDefaultButtonSize(m_resetOptionsButton);
+    gridData = (GridData)m_resetOptionsButton.getLayoutData();
+    gridData.verticalAlignment = SWT.BEGINNING;
     m_resetOptionsButton.addSelectionListener(new SelectionAdapter() {
       public void widgetSelected(SelectionEvent e) {
         m_serverOptionsField.setText(DEFAULT_SERVER_OPTIONS);

@@ -155,25 +155,27 @@ public class ServerConnectionManager implements NotificationListener {
     setConnected(true);
   }
 
-  protected synchronized void setConnected(boolean connected) {
+  protected void setConnected(boolean connected) {
     if (m_connected != connected) {
-      m_connected = connected;
-      if (m_connected == false) {
-        cancelActiveServices();
-        m_active = m_started = m_passiveUninitialized = m_passiveStandby = false;
-        if (isAutoConnect()) {
-          startConnect();
-        }
-      } else { // connected
-        cacheCredentials(ServerConnectionManager.this, getCredentials());
-        m_started = true;
-        if ((m_active = internalIsActive()) == false) {
-          if((m_passiveUninitialized = internalIsPassiveUninitialized()) == false) {
-            m_passiveStandby = internalIsPassiveStandby();
+      synchronized (this) {
+        m_connected = connected;
+        if (m_connected == false) {
+          cancelActiveServices();
+          m_active = m_started = m_passiveUninitialized = m_passiveStandby = false;
+          if (isAutoConnect()) {
+            startConnect();
           }
-          addActivationListener();
+        } else { // connected
+          cacheCredentials(ServerConnectionManager.this, getCredentials());
+          m_started = true;
+          if ((m_active = internalIsActive()) == false) {
+            if ((m_passiveUninitialized = internalIsPassiveUninitialized()) == false) {
+              m_passiveStandby = internalIsPassiveStandby();
+            }
+            addActivationListener();
+          }
+          initConnectionMonitor();
         }
-        initConnectionMonitor();
       }
 
       // Notify listener that the connection state changed.
@@ -499,8 +501,23 @@ public class ServerConnectionManager implements NotificationListener {
     return getHostname() + ":" + getJMXPortNumber();
   }
 
+  public String getStatusString() {
+    StringBuffer sb = new StringBuffer(this.toString());
+    sb.append(":");
+    sb.append("connected=");
+    sb.append(m_connected);
+    if(m_connected) {
+      sb.append(",status=");
+      if(m_active) sb.append("active");
+      else if(m_passiveUninitialized) sb.append("passive-uninitialized");
+      else if(m_passiveStandby) sb.append("passive-standby");
+      else if(m_started) sb.append("started");
+    }
+    return sb.toString();
+  }
+  
   public void dump(String prefix) {
-    System.out.println(prefix+this+",connected="+m_connected+",autoConnect="+m_autoConnect+",started="+m_started+",exception="+m_connectException);
+    System.out.println(prefix+this+":connected="+m_connected+",autoConnect="+m_autoConnect+",started="+m_started+",exception="+m_connectException);
   }
   
   void cancelActiveServices() {

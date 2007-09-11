@@ -16,6 +16,8 @@ import org.dijon.RadioButton;
 import org.dijon.TextArea;
 import org.dijon.TextField;
 
+import com.tc.admin.common.AbstractResolutionAction;
+import com.tc.admin.common.AbstractWorkState;
 import com.tc.admin.common.NonPortableMessages;
 import com.tc.admin.common.NonPortableResolutionAction;
 import com.tc.admin.common.NonPortableWalkNode;
@@ -398,9 +400,9 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     if (event == null) { return; }
 
     fEvent = event;
-    fMessageLabel.setText(event.getReason().getMessage());
+    fMessageLabel.setText(event.getNonPortableEventReason().getMessage());
 
-    fObjectTree.setModel(event.getContext().getTreeModel());
+    fObjectTree.setModel(event.getNonPortableEventContext().getTreeModel());
 
     DefaultMutableTreeNode root = (DefaultMutableTreeNode) fObjectTree.getModel().getRoot();
     Enumeration enumeration = root.preorderEnumeration();
@@ -503,7 +505,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     showIssueDetailsPanel();
     fSummaryLabel.setText("<html><p>"+workState.summary()+"</p></html>");
     fSummaryLabel.setIcon(iconFor(workState));
-    fDescriptionText.setText(workState.descriptionFor(fEvent.getContext()));
+    fDescriptionText.setText(workState.descriptionFor(fEvent.getNonPortableEventContext()));
     fDescriptionText.select(0, 0);
     fResolutionsPanel.setVisible(true);
     DefaultMutableTreeNode actionTreeRoot = (DefaultMutableTreeNode) fActionTree.getModel().getRoot();
@@ -538,26 +540,26 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
   }
 
   class ActionTreeNode extends DefaultMutableTreeNode {
-    ActionTreeNode(NonPortableResolutionAction action) {
+    ActionTreeNode(AbstractResolutionAction action) {
       super(action);
     }
 
     public void setUserObject(Object o) {/**/
     }
 
-    NonPortableResolutionAction getAction() {
+    AbstractResolutionAction getAction() {
       Object obj = getUserObject();
-      if (obj instanceof NonPortableResolutionAction) { return (NonPortableResolutionAction) obj; }
+      if (obj instanceof AbstractResolutionAction) { return (AbstractResolutionAction) obj; }
       return null;
     }
 
     boolean isSelected() {
-      NonPortableResolutionAction action = getAction();
+      AbstractResolutionAction action = getAction();
       return action != null ? action.isSelected() : false;
     }
 
     void setSelected(boolean selected) {
-      NonPortableResolutionAction action = getAction();
+      AbstractResolutionAction action = getAction();
       if (action != null) {
         action.setSelected(selected);
         if (selected) {
@@ -570,7 +572,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     }
 
     void showControl(NonPortableObjectPanel panel) {
-      NonPortableResolutionAction action = getAction();
+      AbstractResolutionAction action = getAction();
       if (action != null && action.isSelected()) {
         action.showControl(panel);
       } else {
@@ -674,7 +676,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
         XCheckBox checkBox = (XCheckBox) e.getSource();
         actionNode.setSelected(checkBox.isSelected());
 
-        NonPortableResolutionAction action = actionNode.getAction();
+        AbstractResolutionAction action = actionNode.getAction();
         if (action != null && action.isSelected()) {
           action.showControl(NonPortableObjectPanel.this);
         } else {
@@ -775,28 +777,32 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     return !fConfigHelper.isAdaptable(workState.getTypeName());
   }
   
-  NonPortableResolutionAction[] createActions(NonPortableWorkState workState) {
-    ArrayList list = new ArrayList();
-    String fieldName = workState.getFieldName();
-
-    if (workState.isNeverPortable() || workState.isPortable()) {
-      if (fieldName != null && !workState.isTransient() && !fConfigHelper.isTransient(fieldName)) {
-        list.add(new MakeTransientAction(workState));
-      }
-    } else if (!workState.isPortable()) {
-      if(requiresPortabilityAction(workState)) {
-        list.add(new MakePortableAction(workState));
-      }
-      if (fieldName != null && !workState.isTransient() && !fConfigHelper.isTransient(fieldName)) {
-        list.add(new MakeTransientAction(workState));
+  AbstractResolutionAction[] createActions(AbstractWorkState workState) {
+    ArrayList<AbstractResolutionAction> list = new ArrayList<AbstractResolutionAction>();
+    
+    if(workState instanceof NonPortableWorkState) {
+      NonPortableWorkState nonPortableWorkState = (NonPortableWorkState)workState;
+      String fieldName = nonPortableWorkState.getFieldName();
+  
+      if (nonPortableWorkState.isNeverPortable() || nonPortableWorkState.isPortable()) {
+        if (fieldName != null && !nonPortableWorkState.isTransient() && !fConfigHelper.isTransient(fieldName)) {
+          list.add(new MakeTransientAction(nonPortableWorkState));
+        }
+      } else if (!nonPortableWorkState.isPortable()) {
+        if(requiresPortabilityAction(nonPortableWorkState)) {
+          list.add(new MakePortableAction(nonPortableWorkState));
+        }
+        if (fieldName != null && !nonPortableWorkState.isTransient() && !fConfigHelper.isTransient(fieldName)) {
+          list.add(new MakeTransientAction(nonPortableWorkState));
+        }
       }
     }
 
-    return (NonPortableResolutionAction[]) list.toArray(new NonPortableResolutionAction[0]);
+    return list.toArray(new AbstractResolutionAction[0]);
   }
 
-  NonPortableResolutionAction[] getActions(NonPortableWorkState state) {
-    NonPortableResolutionAction[] actions = state.getActions();
+  AbstractResolutionAction[] getActions(AbstractWorkState state) {
+    AbstractResolutionAction[] actions = state.getActions();
 
     if (actions == null) {
       state.setActions(actions = createActions(state));
@@ -805,10 +811,10 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     return actions;
   }
 
-  void createActionNodes(NonPortableWorkState state) {
+  void createActionNodes(AbstractWorkState state) {
     ActionTreeRootNode actionTreeRoot = (ActionTreeRootNode) fActionTree.getModel().getRoot();
-    NonPortableResolutionAction[] actions = getActions(state);
-    NonPortableResolutionAction action;
+    AbstractResolutionAction[] actions = getActions(state);
+    AbstractResolutionAction action;
 
     actionTreeRoot.fSelected = true;
     if (actions != null && actions.length > 0) {
@@ -835,13 +841,13 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
   }
 
   private Iterator selectedActions() {
-    ArrayList list = new ArrayList();
+    ArrayList<AbstractResolutionAction> list = new ArrayList<AbstractResolutionAction>();
 
     for (int i = 0; i < fIssueList.getModel().getSize(); i++) {
       IssueListItem item = (IssueListItem) fIssueList.getModel().getElementAt(i);
       DefaultMutableTreeNode node = item.fTreeNode;
-      NonPortableWorkState workState = (NonPortableWorkState) node.getUserObject();
-      NonPortableResolutionAction[] actions = workState.getActions();
+      AbstractWorkState workState = (AbstractWorkState) node.getUserObject();
+      AbstractResolutionAction[] actions = workState.getActions();
 
       if (actions != null && actions.length > 0) {
         for (int j = 0; j < actions.length; j++) {
@@ -859,7 +865,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     public void valueChanged(TreeSelectionEvent e) {
       ActionTreeNode actionNode = (ActionTreeNode) fActionTree.getLastSelectedPathComponent();
       if (actionNode != null) {
-        NonPortableResolutionAction action = actionNode.getAction();
+        AbstractResolutionAction action = actionNode.getAction();
 
         if (action != null && action.isSelected()) {
           action.showControl(NonPortableObjectPanel.this);
@@ -870,11 +876,11 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     }
   }
 
-  void setIncludeTypes(java.util.List types) {
+  void setIncludeTypes(java.util.List<String> types) {
     fIncludeTypesList.setListData(types.toArray(new String[0]));
   }
   
-  void setBootTypes(java.util.List types) {
+  void setBootTypes(java.util.List<String> types) {
     fBootTypesList.setListData(types.toArray(new String[0]));
   }
   
@@ -920,7 +926,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
   }
 
   class MakeTransientAction extends NonPortableResolutionAction {
-    ArrayList fRemovedChildNodes;
+    ArrayList<DefaultMutableTreeNode> fRemovedChildNodes;
 
     MakeTransientAction(NonPortableWorkState workState) {
       super(workState);
@@ -950,16 +956,16 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
 
       if (selected) {
         fConfigHelper.ensureTransient(fWorkState.getFieldName());
-        if (fRemovedChildNodes == null) fRemovedChildNodes = new ArrayList();
+        if (fRemovedChildNodes == null) fRemovedChildNodes = new ArrayList<DefaultMutableTreeNode>();
         for (int i = 0; i < treeItem.getChildCount(); i++) {
-          fRemovedChildNodes.add(treeItem.getChildAt(i));
+          fRemovedChildNodes.add((DefaultMutableTreeNode)treeItem.getChildAt(i));
         }
         treeItem.removeAllChildren();
       } else {
         fConfigHelper.ensureNotTransient(fWorkState.getFieldName());
 
         for (int i = 0; i < fRemovedChildNodes.size(); i++) {
-          treeItem.add((DefaultMutableTreeNode) fRemovedChildNodes.get(i));
+          treeItem.add(fRemovedChildNodes.get(i));
         }
         fRemovedChildNodes.clear();
       }

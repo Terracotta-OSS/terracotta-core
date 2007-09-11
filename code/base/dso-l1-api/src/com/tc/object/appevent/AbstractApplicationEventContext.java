@@ -1,16 +1,12 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * All content copyright (c) 2003-2007 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
 package com.tc.object.appevent;
 
-import com.tc.util.NonPortableReason;
-
-import java.io.Serializable;
-
 import javax.swing.tree.DefaultTreeModel;
 
-public class NonPortableEventContext implements Serializable {
+public abstract class AbstractApplicationEventContext implements ApplicationEventContext {
 
   private static final long      serialVersionUID = 4788562594133534828L;
 
@@ -20,9 +16,11 @@ public class NonPortableEventContext implements Serializable {
   private final String           targetClassName;
   private DefaultTreeModel       treeModel;
 
-  private String                 projectName; // optional: client Eclipse project name
+  private String                 projectName;                            // optional: client Eclipse
 
-  public NonPortableEventContext(Object pojo, String threadName, String clientId) {
+  // project name
+
+  public AbstractApplicationEventContext(Object pojo, String threadName, String clientId) {
     this.pojo = pojo;
     this.targetClassName = pojo.getClass().getName();
     this.threadName = threadName;
@@ -52,11 +50,6 @@ public class NonPortableEventContext implements Serializable {
 
   public DefaultTreeModel getTreeModel() {
     return treeModel;
-  }
-
-  public void addDetailsTo(NonPortableReason reason) {
-    reason.addDetail("Thread", threadName);
-    reason.addDetail("JVM ID", clientId);
   }
 
   public void setProjectName(String name) {

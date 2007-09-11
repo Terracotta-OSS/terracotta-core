@@ -276,9 +276,6 @@ public class SessionIntegratorFrame extends Frame {
         setDsoEnabled(m_dsoEnabledToggle.isSelected());
       }
     });
-    Preferences prefs = getPreferences();
-    m_dsoEnabled = prefs.getBoolean(DSO_ENABLED_PREF_KEY, false);
-    m_dsoEnabledToggle.setSelected(m_dsoEnabled);
 
     m_webAppTree = (XTree) findComponent("WebAppTree");
     m_webAppTreeModel = new WebAppTreeModel(this, getWebApps());
@@ -400,6 +397,8 @@ public class SessionIntegratorFrame extends Frame {
     m_webServer1StartupListener = new WebServer1StartupListener();
     m_webServer1ShutdownListener = new WebServer1ShutdownListener();
 
+    Preferences prefs = getPreferences();
+    
     m_webServer1Enabled = prefs.getBoolean(WEBSERVER1_ENABLED_PREF_KEY, true);
     m_webServer1EnabledToggle.setSelected(m_webServer1Enabled);
     m_webServer1EnabledToggle.addActionListener(new ActionListener() {
@@ -471,6 +470,8 @@ public class SessionIntegratorFrame extends Frame {
     testShutdownL2();
     testShutdownWebServer1();
     testShutdownWebServer2();
+    
+    setDsoEnabled(m_dsoEnabled = prefs.getBoolean(DSO_ENABLED_PREF_KEY, false));
   }
 
   static String getBundleString(String key) {
@@ -1225,6 +1226,8 @@ public class SessionIntegratorFrame extends Frame {
     getPreferences().putBoolean(DSO_ENABLED_PREF_KEY, m_dsoEnabled = enabled);
     storePreferences();
 
+    m_dsoEnabledToggle.setSelected(enabled);
+    
     m_l2Label.setIcon(null);
     m_l2Label.setText(L2_LABEL + (enabled ? "" : DISABLED_LABEL));
     m_l2Label.setEnabled(m_dsoEnabled);

@@ -6,8 +6,8 @@ package com.tctest;
 
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCNonPortableObjectError;
-import com.tc.object.tx.ReadOnlyException;
 import com.tc.object.tx.UnlockedSharedObjectException;
+import com.tc.object.util.ReadOnlyException;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;

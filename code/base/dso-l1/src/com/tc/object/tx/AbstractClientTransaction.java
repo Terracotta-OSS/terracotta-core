@@ -8,6 +8,7 @@ import com.tc.net.protocol.tcm.ChannelIDProvider;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.util.ReadOnlyException;
 import com.tc.util.SequenceID;
 
 /**

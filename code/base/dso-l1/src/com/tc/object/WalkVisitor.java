@@ -5,7 +5,7 @@
 package com.tc.object;
 
 import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
-import com.tc.object.appevent.NonPortableEventContext;
+import com.tc.object.appevent.ApplicationEventContext;
 import com.tc.object.appevent.NonPortableFieldSetContext;
 import com.tc.object.appevent.NonPortableObjectState;
 import com.tc.object.appevent.NonPortableRootContext;
@@ -29,7 +29,7 @@ public class WalkVisitor implements Visitor, WalkTest {
 
   private final ClientObjectManager     objMgr;
   private final DSOClientConfigHelper   config;
-  private final NonPortableEventContext context;
+  private final ApplicationEventContext context;
   private final DefaultTreeModel        treeModel;
 
   private static final String           MAX_WALK_DEPTH_PROP    = "org.terracotta.non-portable.max-walk-depth";
@@ -38,7 +38,7 @@ public class WalkVisitor implements Visitor, WalkTest {
                                                                                     DEFAULT_MAX_WALK_DEPTH);
 
   public WalkVisitor(ClientObjectManager objMgr, DSOClientConfigHelper config, Object root,
-                     NonPortableEventContext context) {
+                     ApplicationEventContext context) {
     this.objMgr = objMgr;
     this.config = config;
     this.context = context;

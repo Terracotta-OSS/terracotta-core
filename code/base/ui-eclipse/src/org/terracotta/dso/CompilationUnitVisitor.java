@@ -134,8 +134,6 @@ public class CompilationUnitVisitor extends ASTVisitor {
 
   private static final TcPlugin m_plugin = TcPlugin.getDefault();
   
-  private static final boolean CHECK_SYNCHRONIZED = false;
-  
   public CompilationUnitVisitor() {
     super();
     m_inspector = new InspectionAction();    

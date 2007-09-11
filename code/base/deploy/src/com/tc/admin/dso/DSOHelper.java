@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin.dso;
 
@@ -10,9 +11,15 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.api.GCStats;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 
+import java.io.IOException;
 import java.net.URL;
 
+import javax.management.AttributeNotFoundException;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanException;
+import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
+import javax.management.ReflectionException;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
@@ -36,13 +43,8 @@ public class DSOHelper extends BaseHelper {
     return m_dsoIcon;
   }
 
-  public ObjectName getDSOMBean(ConnectionContext cc) {
-    try {
-      return cc.queryName(L2MBeanNames.DSO.getCanonicalName());
-    } catch (Exception e) {/**/
-    }
-
-    return null;
+  public ObjectName getDSOMBean(ConnectionContext cc) throws IOException, MalformedObjectNameException {
+    return cc.queryName(L2MBeanNames.DSO.getCanonicalName());
   }
 
   public ManagedObjectFacade lookupFacade(ConnectionContext cc, ObjectID objectID, int batchSize) throws Exception {
@@ -54,7 +56,8 @@ public class DSOHelper extends BaseHelper {
     return (ManagedObjectFacade) cc.invoke(bean, op, args, types);
   }
 
-  public GCStats[] getGCStats(ConnectionContext cc) throws Exception {
+  public GCStats[] getGCStats(ConnectionContext cc) throws IOException, MalformedObjectNameException,
+      AttributeNotFoundException, ReflectionException, MBeanException, InstanceNotFoundException {
     ObjectName bean = getDSOMBean(cc);
     String attr = "GarbageCollectorStats";
 

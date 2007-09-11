@@ -12,6 +12,7 @@ import java.net.URL;
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanException;
+import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.swing.Icon;
@@ -49,7 +50,8 @@ public class ClientsHelper extends BaseHelper {
            AttributeNotFoundException,
            InstanceNotFoundException,
            ReflectionException,
-           IOException
+           IOException,
+           MalformedObjectNameException
   {
     ObjectName[] clientNames = getClientNames(cc);
     int          count       = (clientNames != null) ? clientNames.length : 0;
@@ -67,7 +69,8 @@ public class ClientsHelper extends BaseHelper {
            AttributeNotFoundException,
            InstanceNotFoundException,
            ReflectionException,
-           IOException
+           IOException,
+           MalformedObjectNameException
   {
     ObjectName dso = DSOHelper.getHelper().getDSOMBean(cc);
     return (ObjectName[])cc.getAttribute(dso, "Clients");

@@ -27,12 +27,10 @@ import org.eclipse.jdt.launching.JavaLaunchDelegate;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.IActionDelegate;
-import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.PlatformUI;
@@ -47,7 +45,7 @@ import com.tc.util.concurrent.ThreadUtil;
 import java.lang.reflect.InvocationTargetException;
 
 public class BuildBootJarAction extends Action implements IActionDelegate, IWorkbenchWindowActionDelegate,
-    IJavaLaunchConfigurationConstants, IProjectAction {
+    IJavaLaunchConfigurationConstants, IProjectAction, IRunnableWithProgress {
   private IJavaProject        m_javaProject;
   private IAction             m_action;
   private String              m_jreContainerPath;
@@ -74,39 +72,62 @@ public class BuildBootJarAction extends Action implements IActionDelegate, IWork
   }
 
   public void run(IAction action) {
-    IWorkbench workbench = PlatformUI.getWorkbench();
-
-    if (!workbench.saveAllEditors(true)) { return; }
-
     try {
-      IRunnableWithProgress op = new IRunnableWithProgress() {
-        public void run(IProgressMonitor monitor) throws InvocationTargetException {
-          try {
-            monitor.beginTask("Creating DSO BootJar...", IProgressMonitor.UNKNOWN);
-            doFinish(monitor);
-          } catch (Exception e) {
-            throw new InvocationTargetException(e);
-          } finally {
-            monitor.done();
-          }
-        }
-      };
-
-      new ProgressMonitorDialog(null).run(true, true, op);
-    } catch (InterruptedException e) {
-      /**/
-    } catch (final InvocationTargetException ite) {
-      Throwable t = ite.getCause();
-      ExceptionDialog dialog = new ExceptionDialog(TcPlugin.getStandardDisplay().getActiveShell(), EXCEPTION_TITLE,
-          EXCEPTION_MESSAGE, t.getMessage());
-      dialog.open();
-    } catch (final Exception e) {
+      IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+      window.run(true, true, this);
+    }
+    catch(Exception e) {
       Throwable t = e.getCause();
       ExceptionDialog dialog = new ExceptionDialog(TcPlugin.getStandardDisplay().getActiveShell(), EXCEPTION_TITLE,
           EXCEPTION_MESSAGE, t.getMessage());
       dialog.open();
     }
   }
+  
+  public void run(IProgressMonitor monitor) throws InvocationTargetException {
+    try {
+      monitor.beginTask("Creating DSO BootJar...", IProgressMonitor.UNKNOWN);
+      doFinish(monitor);
+      monitor.done();
+    } catch(Exception e) {
+      throw new InvocationTargetException(e);
+    }
+  }
+  
+//  public void run(IAction action) {
+//    IWorkbench workbench = PlatformUI.getWorkbench();
+//
+//    if (!workbench.saveAllEditors(true)) { return; }
+//
+//    try {
+//      IRunnableWithProgress op = new IRunnableWithProgress() {
+//        public void run(IProgressMonitor monitor) throws InvocationTargetException {
+//          try {
+//            monitor.beginTask("Creating DSO BootJar...", IProgressMonitor.UNKNOWN);
+//            doFinish(monitor);
+//          } catch (Exception e) {
+//            throw new InvocationTargetException(e);
+//          } finally {
+//            monitor.done();
+//          }
+//        }
+//      };
+//
+//      new ProgressMonitorDialog(null).run(true, true, op);
+//    } catch (InterruptedException e) {
+//      /**/
+//    } catch (final InvocationTargetException ite) {
+//      Throwable t = ite.getCause();
+//      ExceptionDialog dialog = new ExceptionDialog(TcPlugin.getStandardDisplay().getActiveShell(), EXCEPTION_TITLE,
+//          EXCEPTION_MESSAGE, t.getMessage());
+//      dialog.open();
+//    } catch (final Exception e) {
+//      Throwable t = e.getCause();
+//      ExceptionDialog dialog = new ExceptionDialog(TcPlugin.getStandardDisplay().getActiveShell(), EXCEPTION_TITLE,
+//          EXCEPTION_MESSAGE, t.getMessage());
+//      dialog.open();
+//    }
+//  }
 
   private void doFinish(final IProgressMonitor monitor) throws Exception {
     ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
@@ -144,7 +165,7 @@ public class BuildBootJarAction extends Action implements IActionDelegate, IWork
     IPath configPath = configFile != null ? configFile.getLocation() : null;
     String bootJarName = BootJarHelper.getHelper().getBootJarName(portablePath);
     IPath outPath = project.getLocation().append(bootJarName);
-    String args = "-w -o " + toOSString(outPath);
+    String args = "-v -w -o " + toOSString(outPath);
 
     if(configPath != null) args +=  " -f " + toOSString(configPath);
 
@@ -180,6 +201,7 @@ public class BuildBootJarAction extends Action implements IActionDelegate, IWork
 
     outMonitor.addListener(new IStreamListener() {
       public void streamAppended(final String text, IStreamMonitor streamMonitor) {
+        System.err.print(text);
         monitor.subTask(text);
         monitor.worked(1);
       }
@@ -193,6 +215,7 @@ public class BuildBootJarAction extends Action implements IActionDelegate, IWork
 
     if (m_process.getExitValue() != 0) {
       m_process = null;
+      monitor.done();
       throw new RuntimeException(errMonitor.getContents());
     } else {
       project.refreshLocal(IResource.DEPTH_INFINITE, null);

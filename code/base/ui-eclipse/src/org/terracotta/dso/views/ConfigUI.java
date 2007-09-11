@@ -12,6 +12,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.javaeditor.EditorUtility;
 import org.eclipse.jdt.ui.JavaUI;
+import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StructuredSelection;
@@ -60,16 +61,33 @@ public class ConfigUI {
     return StructuredSelection.EMPTY; 
   }
 
-  public static void jumpToMember(IJavaElement element) {
+  public static IEditorPart jumpToMember(IJavaElement element) {
     if (element != null) {
       try {
         IEditorPart editor = EditorUtility.openInEditor(element, false);
         JavaUI.revealInEditor(editor, element);
+        return editor;
       } catch (JavaModelException e) {
         JavaPlugin.log(e);
       } catch (PartInitException e) {
         JavaPlugin.log(e);
       }
     }
+    return null;
+  }
+
+  public static IEditorPart jumpToRegion(IJavaElement element, IRegion region) {
+    if (element != null) {
+      try {
+        IEditorPart editor = EditorUtility.openInEditor(element, false);
+        EditorUtility.revealInEditor(editor, region);
+        return editor;
+      } catch (JavaModelException e) {
+        JavaPlugin.log(e);
+      } catch (PartInitException e) {
+        JavaPlugin.log(e);
+      }
+    }
+    return null;
   }
 }

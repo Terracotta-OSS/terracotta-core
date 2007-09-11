@@ -24,20 +24,13 @@ public class ClientsNode extends ComponentNode
   private ConnectionContext m_cc;
   private DSOClient[]       m_clients;
 
-  public ClientsNode(ConnectionContext cc) {
+  public ClientsNode(ConnectionContext cc) throws Exception {
     super();
 
     m_cc = cc;
-
-    try {
-      ObjectName dso = DSOHelper.getHelper().getDSOMBean(m_cc);
-      m_cc.addNotificationListener(dso, this);
-      m_clients = ClientsHelper.getHelper().getClients(m_cc);
-    }
-    catch(Exception e) {
-      AdminClient.getContext().log(e);
-      m_clients = new DSOClient[]{};
-    }
+    
+    ObjectName dso = DSOHelper.getHelper().getDSOMBean(m_cc);
+    m_clients = ClientsHelper.getHelper().getClients(m_cc);
 
     for(int i = 0; i < m_clients.length; i++) {
       add(new ClientTreeNode(m_cc, m_clients[i]));
@@ -48,6 +41,8 @@ public class ClientsNode extends ComponentNode
     panel.setNode(this);
     setLabel(AdminClient.getContext().getMessage("clients"));
     setComponent(panel);
+
+    m_cc.addNotificationListener(dso, this);
   }
 
   public DSOClient[] getClients() {
@@ -55,11 +50,15 @@ public class ClientsNode extends ComponentNode
   }
 
   public void handleNotification(final Notification notice, final Object handback) {
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        internalHandleNotification(notice, handback);
-      }
-    });
+    String type = notice.getType();
+
+    if (DSOMBean.CLIENT_ATTACHED.equals(type) || DSOMBean.CLIENT_DETACHED.equals(type)) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          internalHandleNotification(notice, handback);
+        }
+      });
+    }
   }
   
   private void internalHandleNotification(Notification notice, Object handback) {
@@ -83,8 +82,7 @@ public class ClientsNode extends ComponentNode
       ((ClientsPanel)getComponent()).add(client);
 
       acc.setStatus(acc.getMessage("dso.client.new") + client);
-    }
-    else if(DSOMBean.CLIENT_DETACHED.equals(type)) {
+    } else if(DSOMBean.CLIENT_DETACHED.equals(type)) {
       AdminClientContext acc = AdminClient.getContext();
 
       acc.setStatus(acc.getMessage("dso.client.detaching"));
@@ -112,5 +110,18 @@ public class ClientsNode extends ComponentNode
 
       acc.setStatus(acc.getMessage("dso.client.detached") + client);
     }
+  }
+  
+  public void tearDown() {
+    try {
+      ObjectName dso = DSOHelper.getHelper().getDSOMBean(m_cc);
+      if(dso != null) {
+        m_cc.removeNotificationListener(dso, this);
+      }
+    } catch(Exception e) {/**/}
+    m_cc = null;
+    m_clients = null;
+    
+    super.tearDown();
   }
 }

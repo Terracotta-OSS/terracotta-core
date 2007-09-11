@@ -1,0 +1,2 @@
+BEA_HOME=${BEA_HOME},/bea
+JAVA_HOME=${JAVA_HOME},${java.home},/jdk1.5

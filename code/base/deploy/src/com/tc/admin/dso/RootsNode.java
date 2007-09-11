@@ -24,57 +24,40 @@ import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
-public class RootsNode extends ComponentNode
-  implements NotificationListener
-{
-  private ConnectionContext m_cc;
-  private DSORoot[]         m_roots;
-  private JPopupMenu        m_popupMenu;
-  private RefreshAction     m_refreshAction;
+public class RootsNode extends ComponentNode implements NotificationListener {
+  private ConnectionContext   m_cc;
+  private DSORoot[]           m_roots;
+  private JPopupMenu          m_popupMenu;
+  private RefreshAction       m_refreshAction;
 
   private static final String REFRESH_ACTION = "RefreshAction";
 
-  public RootsNode(ConnectionContext cc) {
+  public RootsNode(ConnectionContext cc) throws Exception {
     super();
 
-    m_cc    = cc;
+    m_cc = cc;
     m_roots = getRoots();
 
     initMenu();
 
-    AdminClientContext acc   = AdminClient.getContext();
-    String             label = acc.getMessage("dso.roots");
-    RootsPanel         panel = new RootsPanel(cc, m_roots);
+    AdminClientContext acc = AdminClient.getContext();
+    String label = acc.getMessage("dso.roots");
+    RootsPanel panel = new RootsPanel(cc, m_roots);
 
     panel.setNode(this);
     setLabel(label);
     setComponent(panel);
 
-    for(int i = 0; i < m_roots.length; i++) {
+    for (int i = 0; i < m_roots.length; i++) {
       insert(new RootNode(cc, m_roots[i]), i);
     }
 
-    try {
-      ObjectName dso = DSOHelper.getHelper().getDSOMBean(m_cc);
-      m_cc.addNotificationListener(dso, this);
-    }
-    catch(Exception e) {
-      acc.log(e);
-    }
+    ObjectName dso = DSOHelper.getHelper().getDSOMBean(m_cc);
+    m_cc.addNotificationListener(dso, this);
   }
 
-  public DSORoot[] getRoots() {
-    DSORoot[] roots;
-
-    try {
-      roots = RootsHelper.getHelper().getRoots(m_cc);
-    }
-    catch(Exception e) {
-      AdminClient.getContext().log(e);
-      roots = new DSORoot[]{};
-    }
-
-    return roots;
+  public DSORoot[] getRoots() throws Exception {
+    return RootsHelper.getHelper().getRoots(m_cc);
   }
 
   public DSORoot getRoot(int index) {
@@ -102,21 +85,21 @@ public class RootsNode extends ComponentNode
     return RootsHelper.getHelper().getRootsIcon();
   }
 
-  public void refresh() {
-    AdminClientContext acc      = AdminClient.getContext();
-    boolean            expanded = acc.controller.isExpanded(this);
+  public void refresh() throws Exception {
+    AdminClientContext acc = AdminClient.getContext();
+    boolean expanded = acc.controller.isExpanded(this);
 
     tearDownChildren();
 
     m_roots = getRoots();
-    for(int i = 0; i < m_roots.length; i++) {
+    for (int i = 0; i < m_roots.length; i++) {
       m_roots[i].refresh();
       insert(new RootNode(m_cc, m_roots[i]), i);
     }
-    ((RootsPanel)getComponent()).setRoots(m_roots);
+    ((RootsPanel) getComponent()).setRoots(m_roots);
 
     getModel().nodeStructureChanged(this);
-    if(expanded) {
+    if (expanded) {
       acc.controller.expand(this);
     }
   }
@@ -138,9 +121,8 @@ public class RootsNode extends ComponentNode
 
       try {
         refresh();
-      }
-      catch(Throwable t) {
-        t.printStackTrace();
+      } catch (Exception e) {
+        AdminClient.getContext().log(e);
       }
 
       acc.controller.unblock();
@@ -155,28 +137,45 @@ public class RootsNode extends ComponentNode
   public void handleNotification(final Notification notice, Object handback) {
     String type = notice.getType();
 
-    if(DSOMBean.ROOT_ADDED.equals(type)) {
+    if (DSOMBean.ROOT_ADDED.equals(type)) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           AdminClientContext acc = AdminClient.getContext();
 
           acc.setStatus(acc.getMessage("dso.root.retrieving"));
 
-          ObjectName rootObjectName = (ObjectName)notice.getSource();
-          DSORoot    root           = new DSORoot(m_cc, rootObjectName);
-          ArrayList  list           = new ArrayList(Arrays.asList(m_roots));
+          ObjectName rootObjectName = (ObjectName) notice.getSource();
+          DSORoot root = new DSORoot(m_cc, rootObjectName);
+          ArrayList list = new ArrayList(Arrays.asList(m_roots));
 
           list.add(root);
-          m_roots = (DSORoot[])list.toArray(new DSORoot[]{});
+          m_roots = (DSORoot[]) list.toArray(new DSORoot[] {});
 
           RootNode rn = new RootNode(m_cc, root);
           getModel().insertNodeInto(rn, RootsNode.this, getChildCount());
 
-          ((RootsPanel)getComponent()).add(root);
+          ((RootsPanel) getComponent()).add(root);
 
           acc.setStatus(acc.getMessage("dso.root.new") + root);
         }
       });
     }
+  }
+
+  public void tearDown() {
+    try {
+      ObjectName dso = DSOHelper.getHelper().getDSOMBean(m_cc);
+      if (dso != null) {
+        m_cc.removeNotificationListener(dso, this);
+      }
+    } catch (Exception e) {/**/
+    }
+
+    m_cc = null;
+    m_roots = null;
+    m_popupMenu = null;
+    m_refreshAction = null;
+
+    super.tearDown();
   }
 }

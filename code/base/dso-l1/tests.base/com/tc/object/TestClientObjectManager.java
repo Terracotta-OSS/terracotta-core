@@ -5,6 +5,8 @@ package com.tc.object;
 
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCNonPortableObjectError;
+import com.tc.object.appevent.ApplicationEvent;
+import com.tc.object.appevent.ApplicationEventContext;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.tx.ClientTransactionManager;
@@ -233,4 +235,17 @@ public class TestClientObjectManager implements ClientObjectManager {
   public Object createOrReplaceRoot(String rootName, Object r) {
     throw new ImplementMe();
   }
+
+  public void storeObjectHierarchy(Object pojo, ApplicationEventContext context) {
+    throw new ImplementMe();
+  }
+  
+  public void sendApplicationEvent(Object pojo, ApplicationEvent event) {
+    throw new ImplementMe();
+  }
+
+  public Object cloneAndInvokeLogicalOperation(Object pojo, String methodName, Object[] parameters) {
+    throw new ImplementMe();    
+  }
 }
+

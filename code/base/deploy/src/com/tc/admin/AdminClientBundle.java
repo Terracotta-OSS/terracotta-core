@@ -220,5 +220,18 @@ public class AdminClientBundle extends ListResourceBundle {
      
     {"update-checker.last.checked.msg",
      "Last checked: {0}"},
+     
+    {"version.check.enable.label",
+     "Check Server Version"},
+
+    {"version.check.disable.label",
+     "Disable version checks"},
+     
+    {"version.check.message",
+     "<html><h3>Version mismatch for {0}.</h3><br>"
+       + "<table border=1 cellspacing=1><tr><td align=right>Terracotta Server Version:</td><td>{1}"
+       + "</tr><tr><td align=right>AdminConsole Version:</td><td>{2}"
+       + "</td></tr></table><h3>Continue?</h3></html>"
+    }
   };
 }

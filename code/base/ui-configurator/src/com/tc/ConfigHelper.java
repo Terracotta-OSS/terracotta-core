@@ -112,7 +112,8 @@ public class ConfigHelper {
       try {
         config = load();
       } catch (Exception e) {
-        m_config = TcConfig.Factory.newInstance();
+    	  e.printStackTrace();
+        m_config = config = TcConfig.Factory.newInstance();
       }
     }
 

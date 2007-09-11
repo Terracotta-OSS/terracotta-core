@@ -120,7 +120,9 @@ public class ModulesLoader {
   }
 
   private static void shutdown(final EmbeddedOSGiRuntime osgiRuntime) {
-    osgiRuntime.shutdown();
+    if(osgiRuntime != null) {
+      osgiRuntime.shutdown();
+    }
   }
 
   private static void initModules(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper,

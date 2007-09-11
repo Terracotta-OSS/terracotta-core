@@ -289,6 +289,13 @@
                id="workbenchHelperHandlerAction">
          </action>
          <action
+               id="reportDefectAction"
+               label="Report Defect/Request Feature"
+               menubarPath="org.terracotta.dso.workbenchActionSetMenu/group4"
+               class="org.terracotta.dso.actions.ReportDefectAction"
+               enablesFor="*">
+         </action>
+         <action
                id="contactSupportAction"
                label="Contact Terracotta Technical Support"
                menubarPath="org.terracotta.dso.workbenchActionSetMenu/group4"

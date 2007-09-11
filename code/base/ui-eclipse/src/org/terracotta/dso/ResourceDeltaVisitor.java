@@ -3,16 +3,39 @@
  */
 package org.terracotta.dso;
 
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.IResourceDeltaVisitor;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.debug.core.DebugException;
+import org.eclipse.debug.core.DebugPlugin;
+import org.eclipse.debug.core.ILaunch;
+import org.eclipse.debug.core.ILaunchConfiguration;
+import org.eclipse.debug.core.ILaunchConfigurationType;
+import org.eclipse.debug.core.ILaunchManager;
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Shell;
+import org.terracotta.dso.actions.ManageServerAction;
+
+import com.tc.server.ServerConstants;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Invoked when a project resource change occurs.  First test to see if
@@ -59,18 +82,26 @@ public class ResourceDeltaVisitor implements IResourceDeltaVisitor {
                 return false;
               }
               if(plugin.getConfigurationFile(project).equals(res)) {
+                final boolean wasIgnoringChange = fIgnoreNextConfigChange;
                 if(fIgnoreNextConfigChange) {
                   fIgnoreNextConfigChange = false;
-                } else {
-                  try {
+                }
+                try {
+                  if(!wasIgnoringChange) {
                     new Job("Reloading DSO Configuration") {
                       public IStatus run(IProgressMonitor monitor) {
                         plugin.reloadConfiguration(project);
                         return Status.OK_STATUS;
                       }
                     }.schedule();
-                  } catch(Exception e) {/**/}
-                }
+                  }
+                  new Job("Restart?") {
+                    public IStatus run(IProgressMonitor monitor) {
+                      queryRelaunchAll(project);
+                      return Status.OK_STATUS;
+                    }
+                  }.schedule();
+                } catch(Exception e) {/**/}
                 return false;
               }
             }
@@ -104,6 +135,90 @@ public class ResourceDeltaVisitor implements IResourceDeltaVisitor {
     }
     
     return true;
+  }
+  
+  private void queryRelaunchAll(final IProject project) {
+    ILaunchManager launchManager = DebugPlugin.getDefault().getLaunchManager();
+    final List<ILaunch> launches = new ArrayList<ILaunch>();
+    final Map<String, ILaunch> serverLaunches = new HashMap<String, ILaunch>();
+    
+    for (ILaunch launch : launchManager.getLaunches()) {
+      if (launch.isTerminated()) continue;
+      ILaunchConfiguration launchConfig = launch.getLaunchConfiguration();
+      try {
+        String mainClass = launchConfig.getAttribute(IJavaLaunchConfigurationConstants.ATTR_MAIN_TYPE_NAME, (String)null);
+        if(mainClass.equals(ServerConstants.SERVER_MAIN_CLASS_NAME)) {
+          String serverLaunchName = launchConfig.getName();
+          String[] launchNameElems = StringUtils.split(serverLaunchName, ".");
+          String projName = launchNameElems[0];
+          String serverName = launchNameElems[1];
+          if(projName.equals(project.getName())) {
+            serverLaunches.put(serverName, launch);
+          }
+        } else {
+          ILaunchConfigurationType launchConfigType = launchConfig.getType();
+          String id = launchConfigType.getIdentifier();
+          if (id.equals("launch.configurationDelegate")) {
+            String projName = launchConfig.getAttribute(IJavaLaunchConfigurationConstants.ATTR_PROJECT_NAME,
+                (String) null);
+            if (projName != null && projName.equals(project.getName())) {
+              launches.add(launch);
+            }
+          }
+        }
+      } catch (CoreException ce) {/**/
+      }
+    }
+
+    if(launches.size() > 0 || serverLaunches.size() > 0) {
+      Display display = Display.getDefault();
+      display.syncExec(new Runnable() {
+        public void run() {
+          Shell shell = Display.getCurrent().getActiveShell();
+          String title = "Terracotta";
+          String msg = "The configuration file changed. Relaunch all related launch targets?";
+          if(MessageDialog.openQuestion(shell, title, msg)) {
+            new Job("Restarting Terracotta") {
+              public IStatus run(IProgressMonitor monitor) {
+                if(monitor == null) monitor = new NullProgressMonitor();
+                
+                ArrayList<ILaunch> allLaunches = new ArrayList<ILaunch>(launches);
+                allLaunches.addAll(serverLaunches.values());
+                for(ILaunch launch : allLaunches) {
+                  safeTerminateLaunch(launch);
+                }
+
+                for(Iterator<String> iter = serverLaunches.keySet().iterator(); iter.hasNext();) {
+                  try {
+                    ManageServerAction msa = new ManageServerAction(JavaCore.create(project), iter.next());
+                    msa.performAction();
+                  } catch(Exception e) {
+                    e.printStackTrace();
+                  }
+                }
+                for(ILaunch launch : launches) {
+                  ILaunchConfiguration launchConfig = launch.getLaunchConfiguration();
+                  try {
+                    launchConfig.launch(launch.getLaunchMode(), monitor);
+                  } catch(CoreException ce) {
+                    ce.printStackTrace();
+                  }
+                }
+                return Status.OK_STATUS;
+              }
+            }.schedule();
+          }
+        }
+      });
+    }
+  }
+  
+  private static void safeTerminateLaunch(ILaunch launch) {
+    try {
+      launch.terminate();
+    } catch(DebugException de) {
+      /**/
+    }
   }
   
   private void dump(IResourceDelta delta) {

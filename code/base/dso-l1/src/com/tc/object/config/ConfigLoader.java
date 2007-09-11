@@ -213,10 +213,11 @@ public class ConfigLoader {
     if (lockLevel == null || LockLevel.WRITE.equals(lockLevel)) {
       return autoSynchronized ? ConfigLockLevel.AUTO_SYNCHRONIZED_WRITE : ConfigLockLevel.WRITE;
     } else if (LockLevel.CONCURRENT.equals(lockLevel)) {
-      return ConfigLockLevel.CONCURRENT;
+      return autoSynchronized ? ConfigLockLevel.AUTO_SYNCHRONIZED_CONCURRENT : ConfigLockLevel.CONCURRENT;
     } else if (LockLevel.READ.equals(lockLevel)) {
       return autoSynchronized ? ConfigLockLevel.AUTO_SYNCHRONIZED_READ : ConfigLockLevel.READ;
-    } else if (LockLevel.SYNCHRONOUS_WRITE.equals(lockLevel)) { return ConfigLockLevel.SYNCHRONOUS_WRITE; }
+    } else if (LockLevel.SYNCHRONOUS_WRITE.equals(lockLevel)) { return autoSynchronized ? ConfigLockLevel.AUTO_SYNCHRONIZED_SYNCHRONOUS_WRITE
+        : ConfigLockLevel.SYNCHRONOUS_WRITE; }
     throw Assert.failure("Unknown lock level " + lockLevel);
   }
 

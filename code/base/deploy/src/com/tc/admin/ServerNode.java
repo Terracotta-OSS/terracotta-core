@@ -6,6 +6,8 @@ package com.tc.admin;
 
 import org.dijon.AbstractTreeCellRenderer;
 
+import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
+
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.common.StatusView;
 import com.tc.admin.common.XAbstractAction;
@@ -37,6 +39,7 @@ import javax.naming.ServiceUnavailableException;
 import javax.swing.Icon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
 import javax.swing.JTree;
@@ -58,6 +61,7 @@ public class ServerNode extends ComponentNode
   private Exception               m_connectException;
   private ServerPanel             m_serverPanel;
   private ConnectDialog           m_connectDialog;
+  private JDialog                 m_versionMismatchDialog;
   private JPopupMenu              m_popupMenu;
   private ConnectAction           m_connectAction;
   private DisconnectAction        m_disconnectAction;
@@ -239,31 +243,44 @@ public class ServerNode extends ComponentNode
     m_autoConnectMenuItem.setSelected(autoConnect);
   }
   
+  void setVersionMismatchDialog(JDialog dialog) {
+    m_versionMismatchDialog = dialog;
+  }
+  
   private void setConnected(boolean connected) {
     if (m_acc == null) { return; }
     if (connected) {
+      if (m_versionMismatchDialog != null) return;
       if (!m_serverPanel.isRuntimeInfoShowing() && !m_acc.controller.testServerMatch(this)) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            disconnect();
+            if(m_connectManager.isConnected()) {
+              disconnect();
+            }
           }
         });
         return;
       }
       m_acc.controller.block();
       m_connectException = null;
-      if (m_connectManager.isActive()) {
-        handleActivation();
-      } else if(m_connectManager.isPassiveStandby()) {
-        handlePassiveStandby();        
-      } else if(m_connectManager.isPassiveUninitialized()) {
-        handlePassiveUninitialized();
-      } else if (m_connectManager.isStarted()) {
-        handleStarting();
+      if(m_connectManager.isConnected()) { 
+        if (m_connectManager.isActive()) {
+          handleActivation();
+        } else if(m_connectManager.isPassiveStandby()) {
+          handlePassiveStandby();        
+        } else if(m_connectManager.isPassiveUninitialized()) {
+          handlePassiveUninitialized();
+        } else if (m_connectManager.isStarted()) {
+          handleStarting();
+        }
+      } else {
+        handleDisconnect();
       }
-
       m_acc.controller.unblock();
     } else {
+      if(m_versionMismatchDialog != null) {
+        m_versionMismatchDialog.setVisible(false);
+      }
       handleDisconnect();
     }
 
@@ -570,18 +587,25 @@ public class ServerNode extends ComponentNode
     m_shutdownAction.setEnabled(false);
   }
 
-  void tryAddDSONode() {
-    if (getChildCount() == 0) {
-      ConnectionContext cntx = getConnectionContext();
-
-      if (DSOHelper.getHelper().getDSOMBean(cntx) != null) {
-        DSONode dsoNode = null;
-
-        add(dsoNode = new DSONode(cntx));
-        m_acc.controller.nodeStructureChanged(this);
-        m_acc.controller.expand(dsoNode);
-      } else {
-        try {
+  SynchronizedBoolean m_tryAddingDSONode = new SynchronizedBoolean(false);
+  
+  void tryAddDSONode() throws Exception{
+    if(m_tryAddingDSONode.get()) {
+      return;
+    }
+    
+    try {
+      m_tryAddingDSONode.set(true);
+      if (getChildCount() == 0) {
+        ConnectionContext cntx = getConnectionContext();
+  
+        if (DSOHelper.getHelper().getDSOMBean(cntx) != null) {
+          DSONode dsoNode = null;
+  
+          add(dsoNode = new DSONode(cntx));
+          m_acc.controller.nodeStructureChanged(this);
+          m_acc.controller.expand(dsoNode);
+        } else {
           ObjectName mbsd = cntx.queryName("JMImplementation:type=MBeanServerDelegate");
           if(mbsd != null) {
             try {
@@ -589,24 +613,42 @@ public class ServerNode extends ComponentNode
             } catch(Exception e) {/**/}
             cntx.addNotificationListener(mbsd, this);
           }
-        } catch(Exception ioe) {
-          ioe.printStackTrace();
         }
       }
+      m_acc.controller.nodeChanged(ServerNode.this);
+    } finally {
+      m_tryAddingDSONode.set(false);
     }
-    m_acc.controller.nodeChanged(ServerNode.this);
   }
   
   void handlePassiveUninitialized() {
-    tryAddDSONode();
-    m_serverPanel.passiveUninitialized();
-    m_shutdownAction.setEnabled(false);
+    try {
+      tryAddDSONode();
+      m_serverPanel.passiveUninitialized();
+      m_shutdownAction.setEnabled(false);
+    } catch(Exception e) {
+      // just wait for disconnect message to come in
+    }
   }
 
   void handlePassiveStandby() {
-    tryAddDSONode();
-    m_serverPanel.passiveStandby();
-    m_shutdownAction.setEnabled(true);
+    try {
+      tryAddDSONode();
+      m_serverPanel.passiveStandby();
+      m_shutdownAction.setEnabled(true);
+    } catch (Exception e) {
+      // just wait for disconnect message to come in
+    }
+  }
+
+  void handleActivation() {
+    try {
+      tryAddDSONode();
+      m_serverPanel.activated();
+      m_shutdownAction.setEnabled(true);
+    } catch (Exception e) {
+      // just wait for disconnect message to come in
+    }
   }
 
   static ObjectName getServerInfo(ConnectionContext cntx) throws Exception {
@@ -661,12 +703,6 @@ public class ServerNode extends ComponentNode
     }
   }
 
-  void handleActivation() {
-    tryAddDSONode();
-    m_serverPanel.activated();
-    m_shutdownAction.setEnabled(true);
-  }
-
   public void handleNotification(Notification notification, Object handback) {
     if(notification instanceof MBeanServerNotification) {
       MBeanServerNotification mbsn = (MBeanServerNotification)notification;
@@ -677,12 +713,16 @@ public class ServerNode extends ComponentNode
         if(name.getCanonicalName().equals(L2MBeanNames.DSO.getCanonicalName())) {
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-              DSONode dsoNode = new DSONode(getConnectionContext());
+              try {
+                DSONode dsoNode = new DSONode(getConnectionContext());
 
-              add(dsoNode);
-              m_acc.controller.nodeStructureChanged(ServerNode.this);
-              m_acc.controller.expand(dsoNode);
-              m_acc.controller.nodeChanged(ServerNode.this);
+                add(dsoNode);
+                m_acc.controller.nodeStructureChanged(ServerNode.this);
+                m_acc.controller.expand(dsoNode);
+                m_acc.controller.nodeChanged(ServerNode.this);
+              } catch(Exception e) {
+                // just wait for disconnect message to come in
+              }
             }
           });
         }

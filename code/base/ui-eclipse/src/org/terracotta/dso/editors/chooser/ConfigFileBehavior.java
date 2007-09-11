@@ -7,6 +7,8 @@ package org.terracotta.dso.editors.chooser;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
@@ -21,6 +23,7 @@ public class ConfigFileBehavior extends FileBehavior {
   }
 
   protected boolean filterSelect(Viewer viewer, Object parentElement, Object element) {
+    if (element instanceof IPackageFragment || element instanceof IPackageFragmentRoot) return false;
     boolean result = super.filterSelect(viewer, parentElement, element);
     if (result && element instanceof IFile) {
       result = "xml".equals(((IFile) element).getFileExtension());

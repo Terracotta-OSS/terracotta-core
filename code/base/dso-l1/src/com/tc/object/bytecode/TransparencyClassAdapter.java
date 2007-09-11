@@ -279,7 +279,9 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
 
     ConfigLockLevel lockLevel = ld.getLockLevel();
     return ConfigLockLevel.AUTO_SYNCHRONIZED_READ.equals(lockLevel)
-           || ConfigLockLevel.AUTO_SYNCHRONIZED_WRITE.equals(lockLevel);
+           || ConfigLockLevel.AUTO_SYNCHRONIZED_WRITE.equals(lockLevel)
+           || ConfigLockLevel.AUTO_SYNCHRONIZED_CONCURRENT.equals(lockLevel)
+           || ConfigLockLevel.AUTO_SYNCHRONIZED_SYNCHRONOUS_WRITE.equals(lockLevel);
   }
 
   // protected void basicVisitEnd() {

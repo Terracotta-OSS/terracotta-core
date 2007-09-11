@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanException;
+import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.swing.Icon;
@@ -83,7 +84,8 @@ public class RootsHelper extends BaseHelper {
            AttributeNotFoundException,
            InstanceNotFoundException,
            ReflectionException,
-           IOException
+           IOException,
+           MalformedObjectNameException
   {
     ObjectName[] rootNames = getRootNames(cc);
     int          count     = (rootNames != null) ? rootNames.length : 0;
@@ -101,7 +103,8 @@ public class RootsHelper extends BaseHelper {
            AttributeNotFoundException,
            InstanceNotFoundException,
            ReflectionException,
-           IOException
+           IOException,
+           MalformedObjectNameException
   {
     ObjectName dso = DSOHelper.getHelper().getDSOMBean(cc);
     return (ObjectName[])cc.getAttribute(dso, "Roots");

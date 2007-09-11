@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<domain-info javahome="C:\bea\jdk150_10" appdir="">
+
+<domain-component-info>
+
+  <identification
+    version="9.2.1.0"
+    name="WebLogic Server (Required)"
+    description="Basic Weblogic Server Domain"
+    iconName="template.gif"/>
+
+<domain-template-info>
+
+  <identification
+    version="9.0.0.0"
+    type="Domain Template"
+    name="Basic WebLogic Server Domain"
+    author="BEA Systems, Inc."
+    description="Create a basic WebLogic Server domain without installing sample applications."
+    iconName="wls.gif"/>
+
+  <category>BEA</category>
+
+</domain-template-info>
+
+
+</domain-component-info>
+
+
+</domain-info>
+

@@ -18,6 +18,7 @@ import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.launching.IVMInstall;
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
@@ -158,7 +159,7 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
   }
   
   private static String toOSString(IPath path) {
-    return path.makeAbsolute().toOSString();
+    return path != null ? path.makeAbsolute().toOSString() : "";
   }
   
   private void testEnsureBootJar(
@@ -191,7 +192,7 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
           public void run() {
             BuildBootJarAction bbja = new BuildBootJarAction(javaProject);
             bbja.setJREContainerPath(jreContainerPath);
-            bbja.run(null);
+            bbja.run((IAction)null);
           }
         });
       }
@@ -202,7 +203,7 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
     IJavaProject javaProject = fLaunchDelegate.getJavaProject(wc);
     IProject project = javaProject.getProject();
     IFile configFile = TcPlugin.getDefault().getConfigurationFile(project);
-    IPath configPath = configFile.getLocation();
+    IPath configPath = configFile != null ? configFile.getLocation() : null;
     String configSpec;
     
     if((configSpec = wc.getAttribute(ID_CONFIG_SERVER_SPEC, (String)null)) == null) {

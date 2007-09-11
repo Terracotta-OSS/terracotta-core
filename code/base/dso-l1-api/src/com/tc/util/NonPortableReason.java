@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
@@ -18,7 +19,7 @@ public class NonPortableReason implements Serializable {
 
   private static final long serialVersionUID                    = 8149536931286184441L;
 
-  public static final byte         UNDEFINED                           = 0x00;
+  public static final byte  UNDEFINED                           = 0x00;
 
   public static final byte  CLASS_NOT_ADAPTABLE                 = 0x01;
   public static final byte  SUPER_CLASS_NOT_ADAPTABLE           = 0x02;
@@ -149,19 +150,19 @@ public class NonPortableReason implements Serializable {
         }
         boolean plural = (this.bootJarClasses.size() + this.nonBootJarClasses.size()) > 1;
         sb.append(plural ? " super-classes" : " a super-class");
-        sb.append(" that" + (plural ? " are" : " is") + " uninstrumented." +
-            "  Subclasses of uninstrumented classes cannot be shared.");
-        if (! this.bootJarClasses.isEmpty()) {
+        sb.append(" that" + (plural ? " are" : " is") + " uninstrumented."
+                  + "  Subclasses of uninstrumented classes cannot be shared.");
+        if (!this.bootJarClasses.isEmpty()) {
           sb.append("  Please");
           if (this.bootJarClasses.size() > 1) {
-            sb.append(" add the relevant super-classes to the boot jar configuration and re-create" +
-                " the DSO boot jar.");
-          }else {
-            sb.append(" add the relevant super-class to the boot jar configuration and re-create" +
-                " the DSO boot jar.");
+            sb.append(" add the relevant super-classes to the boot jar configuration and re-create"
+                      + " the DSO boot jar.");
+          } else {
+            sb.append(" add the relevant super-class to the boot jar configuration and re-create"
+                      + " the DSO boot jar.");
           }
         }
-        if (! this.nonBootJarClasses.isEmpty()) {
+        if (!this.nonBootJarClasses.isEmpty()) {
           sb.append("  Please");
           if (this.nonBootJarClasses.size() > 1) {
             sb.append(" add the relevant super-classes to the <includes> section of the configuration file.");
@@ -171,10 +172,10 @@ public class NonPortableReason implements Serializable {
         }
 
         addDetail("Unshareable class", className);
-        if (! this.bootJarClasses.isEmpty()) {
+        if (!this.bootJarClasses.isEmpty()) {
           addDetail("Classes to add to boot jar", csvList(bootJarClasses));
         }
-        if (! this.nonBootJarClasses.isEmpty()) {
+        if (!this.nonBootJarClasses.isEmpty()) {
           addDetail("Classes to add to the <includes> configuration", csvList(nonBootJarClasses));
         }
         break;
@@ -222,11 +223,7 @@ public class NonPortableReason implements Serializable {
         break;
       default:
         throw new AssertionError("Unknown reason: " + reason);
-    }    
-    
-    sb.append("\n\nFor more information on this issue, please visit our Troubleshooting Guide at:\n");    
-    sb.append("http://terracotta.org/kit/troubleshooting\n");
-    
+    }
     return sb.toString();
   }
 
@@ -238,7 +235,7 @@ public class NonPortableReason implements Serializable {
         List classes = new ArrayList();
         classes.addAll(bootJarClasses);
         classes.add(this.className);
-        
+
         sb.append("\nTypical steps to resolve this are:\n\n");
         sb.append("* edit your tc-config.xml file\n");
         sb.append("* locate the <dso> tag\n");
@@ -250,15 +247,16 @@ public class NonPortableReason implements Serializable {
           sb.append("</include>\n");
         }
         sb.append("  </additional-boot-jar-classes>\n\n");
-        sb.append("* if there's already an <additional-boot-jar-classes> tag present, simply add\n  the new includes to the existing one\n");
+        sb
+            .append("* if there's already an <additional-boot-jar-classes> tag present, simply add\n  the new includes to the existing one\n");
         sb.append("\n");
-        sb.append("It's possible that this class is truly not-portable, the solution is then to\nmark the referring field as transient.\n");
+        sb
+            .append("It's possible that this class is truly not-portable, the solution is then to\nmark the referring field as transient.\n");
         break;
       case TEST_REASON:
         sb.append("instructions");
         break;
     }
-    
     return sb.toString();
   }
 
@@ -340,7 +338,7 @@ public class NonPortableReason implements Serializable {
 
   public void accept(NonPortableReasonFormatter formatter) {
     formatter.formatReasonText(getDetailedReason());
-    //formatter.formatReasonText("Actions to take:");
+    // formatter.formatReasonText("Actions to take:");
     for (Iterator i = details.iterator(); i.hasNext();) {
       formatter.formatDetail((NonPortableDetail) i.next());
     }

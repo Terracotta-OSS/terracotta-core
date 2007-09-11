@@ -12,6 +12,8 @@ import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
 import com.tc.object.TCClass;
 import com.tc.object.TCObject;
+import com.tc.object.appevent.ApplicationEvent;
+import com.tc.object.appevent.ApplicationEventContext;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.loaders.StandardClassProvider;
@@ -87,6 +89,10 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
+    public void checkReadAccess(Object context) {
+      throw new ImplementMe();
+    }
+    
     public void checkWriteAccess(Object context) {
       throw new ImplementMe();
     }
@@ -324,6 +330,18 @@ public class ManagerImplTest extends BaseDSOTestCase {
 
     public Object createOrReplaceRoot(String rootName, Object root) {
       throw new ImplementMe();
+    }
+    
+    public void storeObjectHierarchy(Object pojo, ApplicationEventContext context) {
+      throw new ImplementMe();
+    }
+
+    public void sendApplicationEvent(Object pojo, ApplicationEvent event) {
+      throw new ImplementMe();
+    }
+
+    public Object cloneAndInvokeLogicalOperation(Object pojo, String methodName, Object[] parameters) {
+      throw new ImplementMe();    
     }
   }
 

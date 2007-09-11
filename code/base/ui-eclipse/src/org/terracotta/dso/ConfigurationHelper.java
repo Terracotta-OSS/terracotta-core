@@ -1620,6 +1620,33 @@ public class ConfigurationHelper {
     return false;
   }
 
+  public XmlObject getLock(IMethod method) {
+    TcConfig config = getConfig();
+
+    if (config != null) {
+      MethodInfo methodInfo = m_patternHelper.getMethodInfo(method);
+      Locks locks = getLocks();
+
+      if (locks != null) {
+        for (int i = locks.sizeOfAutolockArray()-1; i >= 0 ; i--) {
+          Autolock autolock = locks.getAutolockArray(i);
+          String expr = autolock.getMethodExpression();
+
+          if (m_patternHelper.matchesMember(expr, methodInfo)) { return autolock; }
+        }
+        
+        for (int i = locks.sizeOfNamedLockArray()-1; i >= 0 ; i--) {
+          NamedLock namedLock = locks.getNamedLockArray(i);
+          String expr = namedLock.getMethodExpression();
+
+          if (m_patternHelper.matchesMember(expr, methodInfo)) { return namedLock; }
+        }
+      }
+    }
+
+    return null;
+  }
+  
   public boolean isAutolocked(IMethod method) {
     try {
       if (!method.getDeclaringType().isInterface()) {
@@ -1925,8 +1952,13 @@ public class ConfigurationHelper {
     }
   }
 
-  private void addNewNamedLock(final String name, final String expr, final LockLevel.Enum level,
-                               MultiChangeSignaller signaller) {
+  public NamedLock addNewNamedLock(final String name, final IMethod method, final LockLevel.Enum level,
+                                   MultiChangeSignaller signaller) throws JavaModelException {
+    return addNewNamedLock(name, PatternHelper.getJavadocSignature(method), level, signaller);
+  }
+
+  public NamedLock addNewNamedLock(final String name, final String expr, final LockLevel.Enum level,
+                                   MultiChangeSignaller signaller) {
     Locks locks = ensureLocks();
     NamedLock lock = locks.addNewNamedLock();
 
@@ -1942,6 +1974,8 @@ public class ConfigurationHelper {
         signaller.autolocksChanged = true;
       }
     }
+
+    return lock;
   }
 
   public void internalEnsureNameLocked(IMethod method, String name, LockLevel.Enum level, MultiChangeSignaller signaller) {
@@ -2100,17 +2134,28 @@ public class ConfigurationHelper {
 
   public void ensureAutolocked(IMethod method, MultiChangeSignaller signaller) {
     if (!isAutolocked(method)) {
-      internalEnsureAutolocked(method, signaller);
+      internalEnsureAutolocked(method, LockLevel.WRITE, signaller);
+    }
+  }
+
+  public void ensureAutolocked(IMethod method, LockLevel.Enum level, MultiChangeSignaller signaller) {
+    if (!isAutolocked(method)) {
+      internalEnsureAutolocked(method, level, signaller);
     }
   }
 
   public void internalEnsureAutolocked(IMethod method) {
     MultiChangeSignaller signaller = new MultiChangeSignaller();
-    internalEnsureAutolocked(method, signaller);
+    internalEnsureAutolocked(method, LockLevel.WRITE, signaller);
     signaller.signal(m_project);
   }
 
-  private void addNewAutolock(final String expr, final LockLevel.Enum level, MultiChangeSignaller signaller) {
+  public Autolock addNewAutolock(final IMethod method, final LockLevel.Enum level, MultiChangeSignaller signaller)
+      throws JavaModelException {
+    return addNewAutolock(PatternHelper.getJavadocSignature(method), level, signaller);
+  }
+
+  public Autolock addNewAutolock(final String expr, final LockLevel.Enum level, MultiChangeSignaller signaller) {
     Locks locks = ensureLocks();
     Autolock lock = locks.addNewAutolock();
     lock.setMethodExpression(expr);
@@ -2124,9 +2169,11 @@ public class ConfigurationHelper {
         signaller.namedLocksChanged = true;
       }
     }
+
+    return lock;
   }
 
-  public void internalEnsureAutolocked(IMethod method, MultiChangeSignaller signaller) {
+  public void internalEnsureAutolocked(IMethod method, final LockLevel.Enum level, MultiChangeSignaller signaller) {
     IType declaringType = method.getDeclaringType();
 
     if (!isAdaptable(declaringType)) {
@@ -2134,7 +2181,7 @@ public class ConfigurationHelper {
     }
 
     try {
-      addNewAutolock(PatternHelper.getJavadocSignature(method), LockLevel.WRITE, signaller);
+      addNewAutolock(PatternHelper.getJavadocSignature(method), level, signaller);
     } catch (JavaModelException jme) {
       openError("Error ensuring method '" + method.getElementName() + "' auto-locked", jme);
       return;
@@ -2983,7 +3030,7 @@ public class ConfigurationHelper {
     Modules modules = getModules();
     return modules != null && modules.sizeOfModuleArray() > 0;
   }
-  
+
   // Validation support
 
   public void validateAll() {
@@ -3590,16 +3637,16 @@ public class ConfigurationHelper {
   private Client ensureClient() {
     TcConfig config = getConfig();
     Client client = null;
-    
+
     if (config != null) {
-      if((client = config.getClients()) == null) {
+      if ((client = config.getClients()) == null) {
         client = config.addNewClients();
       }
     }
 
     return client;
   }
-  
+
   private Application getApplication() {
     TcConfig config = getConfig();
     return config != null ? config.getApplication() : null;
@@ -3743,7 +3790,7 @@ public class ConfigurationHelper {
   private Modules getModules() {
     return ensureClient().getModules();
   }
-  
+
   private AdditionalBootJarClasses getAdditionalBootJarClasses() {
     return ensureDsoApplication().getAdditionalBootJarClasses();
   }

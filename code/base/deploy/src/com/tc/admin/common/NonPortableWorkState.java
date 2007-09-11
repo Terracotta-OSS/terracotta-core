@@ -4,36 +4,18 @@
  */
 package com.tc.admin.common;
 
+import com.tc.object.appevent.ApplicationEventContext;
 import com.tc.object.appevent.NonPortableEventContext;
 import com.tc.object.appevent.NonPortableObjectState;
 import com.tc.object.appevent.NonPortableRootContext;
 
 import java.util.List;
 
-public class NonPortableWorkState {
-  private NonPortableObjectState        fObjectState;
-  private NonPortableResolutionAction[] fResolutionActions;
+public class NonPortableWorkState extends AbstractWorkState {
+  private NonPortableObjectState fObjectState;
 
   public NonPortableWorkState(NonPortableObjectState objectState) {
     fObjectState = objectState;
-  }
-
-  public void setActions(NonPortableResolutionAction[] actions) {
-    fResolutionActions = actions;
-  }
-
-  public NonPortableResolutionAction[] getActions() {
-    return fResolutionActions;
-  }
-
-  public boolean hasSelectedActions() {
-    if (fResolutionActions != null && fResolutionActions.length > 0) {
-      for (int i = 0; i < fResolutionActions.length; i++) {
-        if (fResolutionActions[i].isSelected()) { return true; }
-      }
-    }
-
-    return false;
   }
 
   public boolean isPortable() {
@@ -193,11 +175,13 @@ public class NonPortableWorkState {
     return false;
   }
 
-  public String descriptionFor(final NonPortableEventContext context) {
+  public String descriptionFor(final ApplicationEventContext context) {
+    if(!(context instanceof NonPortableEventContext)) return "";
+    
     String explaination = getExplaination();
     if (explaination != null) { return explaination; }
 
-    boolean isRoot = isRoot(context);
+    boolean isRoot = isRoot((NonPortableEventContext)context);
     StringBuffer sb = new StringBuffer();
     if (isTransient()) {
       sb.append(TRANSIENT_FIELD_MSG);

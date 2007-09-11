@@ -100,7 +100,7 @@ public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
     m_resetOptionsButton.setText(RESET);
     SWTUtil.applyDefaultButtonSize(m_resetOptionsButton);
     gd = (GridData)m_resetOptionsButton.getLayoutData();
-    gd.verticalAlignment = gd.horizontalAlignment = SWT.BEGINNING;
+    gd.verticalAlignment = SWT.BEGINNING;
     m_resetOptionsButton.addSelectionListener(new SelectionAdapter() {
       public void widgetSelected(SelectionEvent e) {
         m_serverOptionsField.setText(DEFAULT_SERVER_OPTIONS);

@@ -18,7 +18,7 @@ import javax.management.ObjectName;
 import javax.swing.SwingConstants;
 
 public class DSONode extends ComponentNode {
-  public DSONode(ConnectionContext cc) {
+  public DSONode(ConnectionContext cc) throws Exception {
     super();
 
     AdminClientContext acc = AdminClient.getContext();

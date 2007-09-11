@@ -9,6 +9,7 @@ import org.eclipse.jdt.core.ICodeAssist;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IType;
@@ -20,6 +21,8 @@ import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.texteditor.ITextEditor;
+
+import java.util.ArrayList;
 
 public class JdtUtils {
   private static final IJavaElement[] EMPTY_RESULT= new IJavaElement[0];
@@ -71,6 +74,15 @@ public class JdtUtils {
         return type;
     }
     return null;
+  }
+  
+  public static IMethod[] findMethods(IType type, String name) throws JavaModelException {
+    ArrayList list = new ArrayList();
+    IMethod[] methods = type.getMethods();
+    for (int i= 0; i < methods.length; i++) {
+      if(methods[i].getElementName().equals(name)) list.add(methods[i]);
+    }
+    return (IMethod[])list.toArray(new IMethod[0]);
   }
   
   private static IType findType(ICompilationUnit cu, String fullyQualifiedName) throws JavaModelException{
@@ -190,7 +202,7 @@ public class JdtUtils {
   /**
    * Resolve refTypeSig in context of declaringType.
    */
-  public static String resolveTypeName(String refTypeSig, IType declaringType) throws JavaModelException {
+  public static String resolveTypeName(String refTypeSig, IType declaringType) {
     int arrayCount= Signature.getArrayCount(refTypeSig);
     char type= refTypeSig.charAt(arrayCount);
     if (type == Signature.C_UNRESOLVED) {
@@ -212,8 +224,6 @@ public class JdtUtils {
         }
         else {
           return "java.lang.Object";
-//        throw new JavaModelException(new Exception(name + " not resolvable"),
-//                                     IJavaModelStatusConstants.EVALUATION_ERROR);
         }
       } catch(JavaModelException jme) {
         return name;
@@ -226,9 +236,7 @@ public class JdtUtils {
   /**
    * Resolve refTypeSig in context of declaringType into sb.
    */
-  public static void resolveTypeName(String refTypeSig, IType declaringType, StringBuffer sb)
-    throws JavaModelException
-  {
+  public static void resolveTypeName(String refTypeSig, IType declaringType, StringBuffer sb) {
     if(isTypeNameUnresolved(refTypeSig)) {
       sb.append(refTypeSig.substring(0, refTypeSig.indexOf(Signature.C_UNRESOLVED)));
       sb.append('L');

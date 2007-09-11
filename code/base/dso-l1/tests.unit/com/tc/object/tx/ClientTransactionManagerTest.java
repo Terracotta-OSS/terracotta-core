@@ -14,6 +14,7 @@ import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.TestLockManager;
 import com.tc.object.lockmanager.impl.ThreadLockManagerImpl;
 import com.tc.object.logging.NullRuntimeLogger;
+import com.tc.object.util.ReadOnlyException;
 
 import junit.framework.TestCase;
 
