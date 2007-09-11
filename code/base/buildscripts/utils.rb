@@ -29,7 +29,13 @@ def loud_message(message)
   puts(banner_char)
   puts(banner_char * 80)
 end
-  
+
+def time
+  start = Time.now
+  yield
+  Time.now - start
+end
+
 module CallWithVariableArguments
     # A method to call a procedure that may take variable arguments, but
     # which issues much nicer error messages when something fails than
