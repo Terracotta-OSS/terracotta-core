@@ -15,6 +15,10 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Encapsulate why something is non-portable and build nice error messages 
+ * for printing when that occurs.
+ */
 public class NonPortableReason implements Serializable {
 
   private static final long serialVersionUID                    = 8149536931286184441L;
@@ -41,22 +45,36 @@ public class NonPortableReason implements Serializable {
   private String            message;
   private String            ultimateNonPortableFieldName;
 
+  /**
+   * @param clazz The class that is non-portable
+   * @param reasonCode The reason why it is non-portable
+   */
   public NonPortableReason(Class clazz, byte reasonCode) {
     this.reason = reasonCode;
     this.className = clazz.getName();
     this.details = new LinkedList();
   }
 
+  /**
+   * @param className The class that is non-portable
+   * @param reasonCode The reason why it is non-portable
+   */
   public NonPortableReason(String className, byte reasonCode) {
     this.className = className;
     this.reason = reasonCode;
     this.details = new LinkedList();
   }
 
+  /**
+   * @return Class name
+   */
   public String getClassName() {
     return className;
   }
 
+  /**
+   * @return Detailed reason why something is non-portable
+   */
   public synchronized String getDetailedReason() {
     if (detailedReason == null) {
       detailedReason = constructDetailedReason();
@@ -64,6 +82,9 @@ public class NonPortableReason implements Serializable {
     return detailedReason;
   }
 
+  /**
+   * @return Instructions on how to correct the problem
+   */
   public synchronized String getInstructions() {
     if (instructions == null) {
       instructions = constructInstructions();
@@ -76,6 +97,11 @@ public class NonPortableReason implements Serializable {
     out.defaultWriteObject();
   }
 
+  /**
+   * Add detail to the reason
+   * @param label The label
+   * @param value The value
+   */
   public void addDetail(String label, String value) {
     this.details.add(new NonPortableDetail(label, value));
   }
@@ -260,15 +286,26 @@ public class NonPortableReason implements Serializable {
     return sb.toString();
   }
 
+  /**
+   * Check whether this reason knows the field name referring to the non-portable object.
+   * @return True if has field name
+   */
   public boolean hasUltimateNonPortableFieldName() {
     return this.ultimateNonPortableFieldName != null;
   }
 
+  /**
+   * Set the name of the field holding the nonportable object.
+   * @param name Name of the field
+   */
   public void setUltimateNonPortableFieldName(String name) {
     addDetail("Referring field", name);
     this.ultimateNonPortableFieldName = name;
   }
 
+  /**
+   * @return the field holding the non-portable object.
+   */
   public String getUltimateNonPortableFieldName() {
     return this.ultimateNonPortableFieldName;
   }
@@ -304,10 +341,17 @@ public class NonPortableReason implements Serializable {
     }
   }
 
+  /**
+   * @return Reason code
+   */
   public byte getReason() {
     return reason;
   }
 
+  /**
+   * Add erroneous super class
+   * @param superClass Super class that is non-portable
+   */
   public void addErroneousSuperClass(Class superClass) {
     if (superClass.getClassLoader() == null) {
       bootJarClasses.add(superClass.getName());
@@ -316,10 +360,16 @@ public class NonPortableReason implements Serializable {
     }
   }
 
+  /**
+   * @return All erroneous super classes not in the boot jar
+   */
   public List getErroneousSuperClasses() {
     return nonBootJarClasses;
   }
 
+  /**
+   * @return All erroneous super classes in the boot jar
+   */
   public List getErroneousBootJarSuperClasses() {
     return bootJarClasses;
   }
@@ -328,14 +378,25 @@ public class NonPortableReason implements Serializable {
     return getDetailedReason();
   }
 
+  /**
+   * @param msg The message
+   */
   public void setMessage(String msg) {
     this.message = msg;
   }
 
+  /**
+   * @return The message
+   */
   public String getMessage() {
     return message;
   }
 
+  /**
+   * Accept a formatter for message formatting.  This method will walk 
+   * the reason text, details, and instructions.
+   * @param formatter Formatter to help formatting the reason
+   */
   public void accept(NonPortableReasonFormatter formatter) {
     formatter.formatReasonText(getDetailedReason());
     // formatter.formatReasonText("Actions to take:");

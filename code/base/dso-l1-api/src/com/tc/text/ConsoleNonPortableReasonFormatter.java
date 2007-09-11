@@ -11,6 +11,9 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+/**
+ * Format a {@link com.tc.util.NonPortableReason} to a PrintWriter, such as System.out or System.err.
+ */
 public class ConsoleNonPortableReasonFormatter implements NonPortableReasonFormatter {
 
   private final PrintWriter        out;
@@ -21,6 +24,12 @@ public class ConsoleNonPortableReasonFormatter implements NonPortableReasonForma
   private final String             separator;
   private final ParagraphFormatter paragraphFormatter;
 
+  /**
+   * @param out Writer to format to
+   * @param separator Separator character to use in details between label and value
+   * @param stringFormatter Can format strings with padding and such
+   * @param paragraphFormatter Can format paragraphs nicely (word wrap, etc)
+   */
   public ConsoleNonPortableReasonFormatter(PrintWriter out, String separator, StringFormatter stringFormatter,
                                            ParagraphFormatter paragraphFormatter) {
     this.out = out;
