@@ -14,11 +14,17 @@ import com.tc.util.Assert;
 
 import java.util.Map;
 
+/**
+ * This class provides facilities for use in implementing applicators.
+ */
 public abstract class BaseApplicator implements ChangeApplicator {
 
   private static final TCLogger       logger   = TCLogging.getLogger(BaseApplicator.class);
   private static final LiteralValues literals = createLiteralValuesInstance();
 
+  /**
+   * The encoding to use when reading/writing DNA
+   */
   protected final DNAEncoding        encoding;
 
   private static final LiteralValues createLiteralValuesInstance() {
@@ -34,10 +40,20 @@ public abstract class BaseApplicator implements ChangeApplicator {
     }
   }
 
+  /** 
+   * Construct a BaseApplicator with an encoding to use when reading/writing DNA
+   * @param encoding DNA encoding to use
+   */
   protected BaseApplicator(DNAEncoding encoding) {
     this.encoding = encoding;
   }
 
+  /**
+   * Get an ObjectID or literal value for the given pojo
+   * @param pojo Object instance
+   * @param objectManager Client-side object manager
+   * @return ObjectID representing pojo, or the pojo itself if its a literal, or null if it's a non-portable object
+   */
   protected final Object getDehydratableObject(Object pojo, ClientObjectManager objectManager) {
     if (pojo == null) {
       return ObjectID.NULL_ID;
@@ -56,18 +72,43 @@ public abstract class BaseApplicator implements ChangeApplicator {
     }
   }
 
+  /**
+   * Determine whether the pojo is a literal instance
+   * @param pojo Object to examine
+   * @return True if literal
+   */
   protected final boolean isLiteralInstance(Object pojo) {
     return literals.isLiteralInstance(pojo);
   }
 
+  /**
+   * Determine whether this class is portable
+   * @param c The class
+   * @return True if portable
+   */
   protected boolean isPortableReference(Class c) {
     return !literals.isLiteral(c.getName());
   }
 
+  /**
+   * For an inner object, create or find the containing parent instance.  
+   * @param visited Map of those objects that have been visited so far
+   * @param objectManager Client-side object manager
+   * @param cloned Map of those objects that have been cloned already (key=obj, value=clone)
+   * @param v The object
+   * @return The new or existing parent object clone
+   */
   protected Object createParentIfNecessary(Map visited, ClientObjectManager objectManager, Map cloned, Object v) {
     return objectManager.createParentCopyInstanceIfNecessary(visited, cloned, v);
   }
 
+  /**
+   * Create or use existing copy of originalValue
+   * @param objectManager Client-side object manager
+   * @param visited Already visited objects and their clones (key=obj, value=clone)
+   * @param originalValue The original value
+   * @return The clone, may be new or may be copy
+   */
   protected Object createCopyIfNecessary(ClientObjectManager objectManager, Map visited, Map cloned, Object originalValue) {
     Object copyKey;
     if (originalValue == null || isLiteralInstance(originalValue)) {

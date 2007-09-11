@@ -12,6 +12,13 @@ import com.tc.exception.ExceptionWrapperImpl;
 import java.util.Map;
 import java.util.WeakHashMap;
 
+/**
+ * This class extends WeakHashMap but uses reference identity semantics.  A key thing is that this
+ * class relies on extending the instrumented version of WeakHashMap supplied by Terracotta in the 
+ * boot jar.  When this class is initialized, a test will be run to verify that the WeakHashMap
+ * that is loaded is indeed the instrumented version and if it is not, an AssertionError will be 
+ * thrown indicating the reason.
+ */
 public class IdentityWeakHashMap extends WeakHashMap {
 
   private static class TestKey {

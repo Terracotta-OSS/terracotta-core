@@ -3,8 +3,14 @@
  */
 package com.tc.object.msg;
 
+/**
+ * Constants for lock requests
+ */
 public interface LockRequestMessageConsts {
 
+  /**
+   * Uninitialized time to wait (value=-1)
+   */
   public final static int UNITIALIZED_WAIT_TIME = -1;
 
 }
