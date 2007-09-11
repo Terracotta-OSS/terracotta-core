@@ -50,7 +50,7 @@ public class ClassUtils {
    * @throws NullPointerException If arrayClass is null
    * @throws IllegalArgumentException If arrayClass is not an array class
    */
-  public static Class baseComponetType(Class c) {
+  public static Class baseComponentType(Class c) {
     verifyIsArray(c);   // guarantees c is non-null and an array class
     while (c.isArray()) {
       c = c.getComponentType();
