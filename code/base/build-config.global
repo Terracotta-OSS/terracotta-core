@@ -12,6 +12,8 @@ tc.tests.configuration.reuse_boot_jars=true
 # for container tests, you can also specify 'appserver=xxxx' on command line
 appserver=tomcat-5.5.23
 
+#appserver=tomcat-6.0.14
+#appserver=tomcat-5.5.25
 #appserver=weblogic-9.2.mp2
 #appserver=jetty-6.1.4
 #appserver=websphere-6.1.0.7

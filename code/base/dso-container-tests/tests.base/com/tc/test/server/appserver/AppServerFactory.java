@@ -75,7 +75,8 @@ public abstract class AppServerFactory {
     int appId = getAppServerId(factoryName);
     switch (appId) {
       case TOMCAT:
-        if ("5".equals(majorVersion)) return new Tomcat5xAppServerFactory(new ProtectedKey(), config);
+        if ("5".equals(majorVersion) ||
+            "6".equals(majorVersion)) return new Tomcat5xAppServerFactory(new ProtectedKey(), config);
       case WEBLOGIC:
         if ("8".equals(majorVersion)) return new Weblogic8xAppServerFactory(new ProtectedKey(), config);
         if ("9".equals(majorVersion)) return new Weblogic9xAppServerFactory(new ProtectedKey(), config);

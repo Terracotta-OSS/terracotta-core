@@ -16,6 +16,10 @@ tomcat-5.5.*:
     min_version: 1.5.0
     max_version: 999.999.999_999    
 
+tomcat-6.*: 
+    min_version: 1.5.0
+    max_version: 999.999.999_999  
+    
 weblogic-8.1.*: 
     min_version: 1.4.2_11
     max_version: 1.4.999_999
