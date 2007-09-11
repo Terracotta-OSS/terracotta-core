@@ -29,10 +29,6 @@ public class HashtableAutoLockTest extends TCTestCase {
   private TestClientObjectManager testClientObjectManager;
   private MockTransactionManager testTransactionManager;
 
-  public HashtableAutoLockTest() {
-    disableAllUntil("2007-10-01");
-  }
-  
   protected void setUp() throws Exception {
     ClassLoader loader = getClass().getClassLoader();
     InvocationHandler handler = new InvocationHandler() {
