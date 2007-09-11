@@ -69,6 +69,7 @@ public final class CargoJava extends Java {
     }
 
     java.setOutput(new File(logFile));
+    java.setAppend(true);
     java.setFailonerror(true);
 
     assignWrappedArgs(linkArgs);

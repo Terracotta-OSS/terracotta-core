@@ -131,16 +131,6 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
         // bumped up because ContainerHibernateTest was failing with WL 9
         parameters.appendJvmArgs("-XX:MaxPermSize=128m");
         parameters.appendJvmArgs("-Xms128m -Xmx256m");
-
-        if ("9".equals(AppServerFactory.getCurrentAppServerMajorVersion())) {
-          Banner.warnBanner("Enabling debug for weblogic 9 -- This should be removed at some point");
-          parameters.appendSysProp("weblogic.kernel.debug", true);
-          parameters.appendSysProp("weblogic.debug.DebugConnection", true);
-
-          // This property enables a class adapter in StandardDSOClientConfigHelper.addWeblogicCustomAdapters()
-          parameters.appendSysProp("com.tc.weblogic.rjvm.debug", true);
-        }
-
         break;
     }
 
@@ -265,8 +255,19 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     try {
       result = server.start(parameters);
     } catch (Exception e) {
-      ThreadDump.dumpProcessGroup();
-      throw e;
+      dumpThreadsAndRethrow(e);
+    }
+  }
+
+  private void dumpThreadsAndRethrow(Exception e) throws Exception {
+    try {
+      if (!Os.isWindows()) {
+        ThreadDump.dumpProcessGroup();
+      }
+    } catch (Throwable t) {
+      t.printStackTrace();
+    } finally {
+      if (true) throw e; // if (true) used to silence warning
     }
   }
 
@@ -274,8 +275,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     try {
       server.stop();
     } catch (Exception e) {
-      ThreadDump.dumpProcessGroup();
-      throw e;
+      dumpThreadsAndRethrow(e);
     }
   }
 
