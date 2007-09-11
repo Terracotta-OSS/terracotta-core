@@ -373,8 +373,7 @@ class SubtreeTestRun
                 boot_jar_dir = FilePath.new(boot_jar_base_dir, subdir)
               end
 
-              boot_jar = BootJar.new(@build_results, tests_jvm, boot_jar_dir, module_set,
-                                     boot_jar_config_file.to_s)
+              boot_jar = BootJar.new(tests_jvm, boot_jar_dir, module_set, boot_jar_config_file.to_s)
 
               reuse_boot_jars = (@config_source[STATIC_PROPERTIES_PREFIX + 'reuse_boot_jars'] =~ /true/i) ? true : false
               if reuse_boot_jars && boot_jar.exist?

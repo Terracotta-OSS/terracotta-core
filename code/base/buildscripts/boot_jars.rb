@@ -45,8 +45,8 @@ class BootJar
   # to pass in the build results (so we can get at the Terracotta classes that are used
   # to find and build boot JARs), the module set (ditto), ant (so we can actually run Java
   # to build the boot JAR), and the platform (ditto).
-  def initialize(build_results, jvm, directory, module_set, config_file)
-    @build_results = build_results
+  def initialize(jvm, directory, module_set, config_file)
+    @build_results = Registry[:build_results]
     @jvm           = jvm
     @directory     = directory
     @module_set    = module_set
