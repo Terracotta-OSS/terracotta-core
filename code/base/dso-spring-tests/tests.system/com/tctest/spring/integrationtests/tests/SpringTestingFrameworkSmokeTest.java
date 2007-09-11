@@ -4,16 +4,11 @@
  */
 package com.tctest.spring.integrationtests.tests;
 
-import com.tc.config.schema.builder.SpringApplicationConfigBuilder;
-import com.tc.config.schema.builder.SpringApplicationContextConfigBuilder;
-import com.tc.config.schema.builder.SpringConfigBuilder;
 import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.Server;
 import com.tc.test.server.appserver.deployment.ServerTestSetup;
-import com.tc.test.server.appserver.deployment.SpringTerracottaAppServerConfig;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
-import com.tc.test.server.tcconfig.StandardTerracottaAppServerConfig;
 import com.tctest.spring.bean.ISingleton;
 import com.tctest.spring.integrationtests.SpringDeploymentTest;
 
@@ -106,21 +101,5 @@ public class SpringTestingFrameworkSmokeTest extends SpringDeploymentTest {
     builder.addDirectoryContainingResource(CONFIG_FILE_FOR_TEST);
 
     return builder.makeDeployment();
-  }
-
-  public StandardTerracottaAppServerConfig buildTCConfig() throws Exception {
-    StandardTerracottaAppServerConfig tcConfigBuilder = new SpringTerracottaAppServerConfig(getServerManager()
-        .getTcConfigFile(CONFIG_FILE_FOR_TEST).getFile());
-    SpringConfigBuilder springConfigBuilder = tcConfigBuilder.getConfigBuilder().getApplication().getSpring();
-
-    SpringApplicationConfigBuilder application = springConfigBuilder.getApplications()[0];
-    application.setName(APP_NAME);
-
-    SpringApplicationContextConfigBuilder applicationContext = application.getApplicationContexts()[0];
-    applicationContext.setPaths(new String[] { "*.xml" });
-    applicationContext.addBean("singleton");
-    tcConfigBuilder.build();
-    logger.debug(tcConfigBuilder.toString());
-    return tcConfigBuilder;
   }
 }
