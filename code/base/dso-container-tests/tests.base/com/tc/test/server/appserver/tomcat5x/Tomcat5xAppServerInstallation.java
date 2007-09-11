@@ -6,16 +6,11 @@ package com.tc.test.server.appserver.tomcat5x;
 import com.tc.test.server.appserver.AbstractAppServerInstallation;
 
 import java.io.File;
-import java.net.URL;
 
 /**
  * Defines the appserver name used by the installation process.
  */
 public final class Tomcat5xAppServerInstallation extends AbstractAppServerInstallation {
-
-  public Tomcat5xAppServerInstallation(URL host, File serverDir, File workingDir, String majorVersion, String minorVersion) throws Exception {
-    super(host, serverDir, workingDir, majorVersion, minorVersion);
-  }
   
   public Tomcat5xAppServerInstallation(File home, File workingDir, String majorVersion, String minorVersion) throws Exception {
     super(home, workingDir, majorVersion, minorVersion);

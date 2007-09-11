@@ -18,13 +18,11 @@ import com.tc.test.server.appserver.was6x.Was6xAppServerFactory;
 import com.tc.test.server.appserver.wasce1x.Wasce1xAppServerFactory;
 import com.tc.test.server.appserver.weblogic8x.Weblogic8xAppServerFactory;
 import com.tc.test.server.appserver.weblogic9x.Weblogic9xAppServerFactory;
-import com.tc.test.server.tcconfig.StandardTerracottaAppServerConfig;
 import com.tc.util.Assert;
 import com.tc.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.Properties;
 
 /**
@@ -60,13 +58,9 @@ public abstract class AppServerFactory {
 
   public abstract AppServer createAppServer(AppServerInstallation installation);
 
-  public abstract AppServerInstallation createInstallation(URL host, File serverDir, File workingDir) throws Exception;
-
   public abstract AppServerInstallation createInstallation(File home, File workingDir) throws Exception;
 
-  public abstract War createWar(String appName);
-
-  public abstract StandardTerracottaAppServerConfig createTcConfig(File baseDir);
+  public abstract War createWar(String appName);  
 
   public static final AppServerFactory createFactoryFromProperties(TestConfigObject config) {
     Assert.assertNotNull(config);

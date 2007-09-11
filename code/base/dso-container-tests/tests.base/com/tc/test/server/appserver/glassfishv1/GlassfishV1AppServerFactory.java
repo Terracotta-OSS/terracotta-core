@@ -15,17 +15,16 @@ import org.w3c.dom.NodeList;
 
 import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.AppServer;
+import com.tc.test.server.appserver.AppServerFactory;
 import com.tc.test.server.appserver.AppServerInstallation;
 import com.tc.test.server.appserver.AppServerParameters;
-import com.tc.test.server.appserver.AppServerFactory;
+import com.tc.test.server.appserver.StandardAppServerParameters;
 import com.tc.test.server.appserver.war.DtdWar;
 import com.tc.test.server.appserver.war.War;
-import com.tc.test.server.tcconfig.StandardTerracottaAppServerConfig;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.net.URL;
 import java.util.Properties;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -47,18 +46,11 @@ public final class GlassfishV1AppServerFactory extends AppServerFactory {
   }
 
   public AppServerParameters createParameters(String instanceName, Properties props) {
-    return new GlassfishV1AppServerParameters(instanceName, props, config.sessionClasspath());
+    return new StandardAppServerParameters(instanceName, props);
   }
 
   public AppServer createAppServer(AppServerInstallation installation) {
     return new GlassfishV1AppServer((GlassfishV1AppServerInstallation) installation);
-  }
-
-  public AppServerInstallation createInstallation(URL host, File serverDir, File workingDir) throws Exception {
-    GlassfishV1AppServerInstallation install = new GlassfishV1AppServerInstallation(host, serverDir, workingDir, config
-        .appserverMajorVersion(), config.appserverMinorVersion());
-    doSetup(install);
-    return install;
   }
 
   private void doSetup(GlassfishV1AppServerInstallation install) throws IOException, Exception {        
@@ -148,9 +140,5 @@ public final class GlassfishV1AppServerFactory extends AppServerFactory {
 
   public War createWar(String appName) {
     return new DtdWar(appName);
-  }
-
-  public StandardTerracottaAppServerConfig createTcConfig(File baseDir) {
-    return new GlassfishV1AppServerConfig(baseDir);
   }
 }

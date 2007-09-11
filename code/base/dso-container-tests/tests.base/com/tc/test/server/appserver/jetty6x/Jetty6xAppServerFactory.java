@@ -6,15 +6,14 @@ package com.tc.test.server.appserver.jetty6x;
 
 import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.AppServer;
+import com.tc.test.server.appserver.AppServerFactory;
 import com.tc.test.server.appserver.AppServerInstallation;
 import com.tc.test.server.appserver.AppServerParameters;
-import com.tc.test.server.appserver.AppServerFactory;
+import com.tc.test.server.appserver.StandardAppServerParameters;
 import com.tc.test.server.appserver.war.DtdWar;
 import com.tc.test.server.appserver.war.War;
-import com.tc.test.server.tcconfig.StandardTerracottaAppServerConfig;
 
 import java.io.File;
-import java.net.URL;
 import java.util.Properties;
 
 /**
@@ -29,17 +28,11 @@ public final class Jetty6xAppServerFactory extends AppServerFactory {
   }
 
   public AppServerParameters createParameters(String instanceName, Properties props) {
-    return new Jetty6xAppServerParameters(instanceName, props, config.sessionClasspath());
+    return new StandardAppServerParameters(instanceName, props);
   }
 
   public AppServer createAppServer(AppServerInstallation installation) {
     return new Jetty6xAppServer((Jetty6xAppServerInstallation) installation);
-  }
-
-  public AppServerInstallation createInstallation(URL host, File serverDir, File workingDir) throws Exception {
-    Jetty6xAppServerInstallation install = new Jetty6xAppServerInstallation(host, serverDir, workingDir, config
-        .appserverMajorVersion(), config.appserverMinorVersion());
-    return install;
   }
 
   public AppServerInstallation createInstallation(File home, File workingDir) throws Exception {
@@ -49,9 +42,5 @@ public final class Jetty6xAppServerFactory extends AppServerFactory {
 
   public War createWar(String appName) {
     return new DtdWar(appName);
-  }
-
-  public StandardTerracottaAppServerConfig createTcConfig(File baseDir) {
-    return new Jetty6xAppServerConfig(baseDir);
   }
 }

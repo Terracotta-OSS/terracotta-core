@@ -6,7 +6,6 @@ package com.tc.test.server.appserver;
 
 import org.apache.commons.io.IOUtils;
 
-import com.tc.test.server.tcconfig.TerracottaServerConfigGenerator;
 import com.tc.util.runtime.Os;
 
 import java.io.File;
@@ -25,14 +24,12 @@ public class StandardAppServerParameters implements AppServerParameters {
   private final Map        wars      = new HashMap();
   private final String     instanceName;
   private final Properties props;
-  private final String     tcSessionClasspath;
   private String           jvmArgs   = "";
   private String           classpath = "";
 
-  public StandardAppServerParameters(String instanceName, Properties props, String tcSessionClasspath) {
+  public StandardAppServerParameters(String instanceName, Properties props) {
     this.instanceName = instanceName;
     this.props = props;
-    this.tcSessionClasspath = tcSessionClasspath;
   }
 
   public void addWar(String context, File file) {
@@ -70,22 +67,6 @@ public class StandardAppServerParameters implements AppServerParameters {
 
   public final Properties properties() {
     return props;
-  }
-
-  public final void enableDSO(TerracottaServerConfigGenerator dsoConfig, File bootJar) {
-    StringBuffer sb = new StringBuffer();
-    sb.append("-Dtc.config='" + dsoConfig.configPath() + "'");
-    sb.append(' ');
-    sb.append("-Xbootclasspath/p:'" + bootJar + "'");
-    sb.append(' ');
-    sb.append("-Dtc.classpath='file://" + writeTerracottaClassPathFile() + "'");
-    sb.append(' ');
-    sb.append("-Dtc.session.classpath='" + tcSessionClasspath + "'");
-    sb.append(' ');
-    sb
-        .append("-Dtc.tests.configuration.modules.url='" + System.getProperty("tc.tests.configuration.modules.url")
-                + "'");
-    appendJvmArgs(sb.toString());
   }
 
   public String writeTerracottaClassPathFile() {

@@ -6,17 +6,11 @@ package com.tc.test.server.appserver.jetty6x;
 import com.tc.test.server.appserver.AbstractAppServerInstallation;
 
 import java.io.File;
-import java.net.URL;
 
 /**
  * Defines the appserver name used by the installation process.
  */
 public final class Jetty6xAppServerInstallation extends AbstractAppServerInstallation {
-
-  public Jetty6xAppServerInstallation(URL host, File serverDir, File workingDir, String majorVersion,
-                                      String minorVersion) throws Exception {
-    super(host, serverDir, workingDir, majorVersion, minorVersion);
-  }
 
   public Jetty6xAppServerInstallation(File home, File workingDir, String majorVersion, String minorVersion)
       throws Exception {
