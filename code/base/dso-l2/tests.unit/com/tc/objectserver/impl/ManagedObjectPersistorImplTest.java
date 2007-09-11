@@ -124,6 +124,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
   }
   
   public void testOidBitsArraySave() throws Exception {
+    managedObjectPersistor.resetBitsArrayMap(); 
     // publish data
     Collection objects = createRandomObjects(15050);
     PersistenceTransaction ptx = persistenceTransactionProvider.newTransaction();
@@ -141,6 +142,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
    }
   
   public void testOidBitsArrayDeleteHalf() throws Exception {
+    managedObjectPersistor.resetBitsArrayMap(); 
     // publish data
     Collection objects = createRandomObjects(15050);
     PersistenceTransaction ptx = persistenceTransactionProvider.newTransaction();
@@ -163,6 +165,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
   }
   
   public void testOidBitsArrayDeleteAll() throws Exception {
+    managedObjectPersistor.resetBitsArrayMap(); 
     // publish data
     Collection objects = createRandomObjects(15050);
     PersistenceTransaction ptx = persistenceTransactionProvider.newTransaction();
