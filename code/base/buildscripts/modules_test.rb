@@ -358,7 +358,7 @@ class SubtreeTestRun
         boot_jar = nil
         if @needs_dso_boot_jar
             if @config_source['boot_jar_path']
-              loud_message("Using user specified bootjar at #{@config_source['boot_jar_path']}")
+              loud_message("Using user specified boot JAR at #{@config_source['boot_jar_path']}")
               boot_jar = UserBootJar.new(@config_source['boot_jar_path'])
             else
               module_set = @subtree.build_module.module_set
@@ -376,19 +376,23 @@ class SubtreeTestRun
               boot_jar = BootJar.new(tests_jvm, boot_jar_dir, module_set, boot_jar_config_file.to_s)
 
               reuse_boot_jars = (@config_source[STATIC_PROPERTIES_PREFIX + 'reuse_boot_jars'] =~ /true/i) ? true : false
-              if reuse_boot_jars && boot_jar.exist?
+              boot_jar_up_to_date = boot_jar.exist? &&
+                                    (File.mtime(boot_jar.path.to_s) > File.mtime(boot_jar_config_file.to_s))
+              if reuse_boot_jars && boot_jar_up_to_date
                 puts("Using existing boot JAR at #{boot_jar.path}")
               else
-                puts "This subtree requires a DSO boot JAR to run tests. Building one."
+                puts("This subtree requires a DSO boot JAR to run tests. Building boot JAR using config file #{boot_jar_config_file}")
                 begin
-                  boot_jar.ensure_created(:delete_existing => !reuse_boot_jars)
+                  boot_jar_create_time =  time do boot_jar.ensure_created(:delete_existing => !reuse_boot_jars) end
+                  puts("Boot JAR creation took #{boot_jar_create_time} seconds")
                 rescue => e
-                  error_msg = "Failed to create bootjar for: #{@test_patterns.join(", ")} under module " +
+                  error_msg = "Failed to create boot JAR for: #{@test_patterns.join(", ")} under module " +
                               @subtree.build_module.name + ".  Exception: #{e}"
                   STDERR.puts(error_msg)
                   raise(error_msg)
                 end
-              end
+              end 
+              FileUtils.copy(boot_jar.path.to_s, @testrun_results.boot_jar_directory(@subtree).ensure_directory.to_s)
             end
         end
 
