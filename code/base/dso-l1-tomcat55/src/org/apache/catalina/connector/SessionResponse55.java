@@ -1,7 +1,10 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.apache.catalina.connector;
+
+import org.apache.coyote.Response;
 
 import com.terracotta.session.SessionResponse;
 
@@ -12,12 +15,13 @@ import java.util.Locale;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.Cookie;
 
-public class SessionResponse55 extends Response {
-  private final Response         valveRes;
-  private final SessionRequest55 sessReq;
-  private final SessionResponse  sessRes;
+public class SessionResponse55 extends org.apache.catalina.connector.Response {
+  private final org.apache.catalina.connector.Response valveRes;
+  private final SessionRequest55                       sessReq;
+  private final SessionResponse                        sessRes;
 
-  public SessionResponse55(Response valveRes, SessionRequest55 sessReq, SessionResponse sessRes) {
+  public SessionResponse55(org.apache.catalina.connector.Response valveRes, SessionRequest55 sessReq,
+                           SessionResponse sessRes) {
     this.valveRes = valveRes;
     this.sessRes = sessRes;
     this.sessReq = sessReq;
@@ -298,6 +302,18 @@ public class SessionResponse55 extends Response {
 
   public void setSuspended(boolean suspended) {
     valveRes.setSuspended(suspended);
+  }
+
+  public long getContentCountLong() {
+    return valveRes.getContentCountLong();
+  }
+
+  public Response getCoyoteResponse() {
+    return valveRes.getCoyoteResponse();
+  }
+
+  public void setCoyoteResponse(Response coyoteResponse) {
+    valveRes.setCoyoteResponse(coyoteResponse);
   }
 
 }

@@ -6,11 +6,11 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1-session"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
-	<classpathentry kind="lib" path="/dependencies/lib/tomcat-coyote-x.jar"/>
+	<classpathentry kind="lib" path="/dependencies/lib/tomcat-coyote-5.5.25.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/servlet-api-2.4.jar"/>
-	<classpathentry kind="lib" path="/dependencies/lib/tomcat-util-x.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/catalina-x.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/catalina-cluster-5.5.20.jar"/>
+	<classpathentry kind="lib" path="/dependencies/lib/tomcat-util-5.5.25.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/catalina-5.5.25.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/catalina-cluster-5.5.25.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1-api"/>
 	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
 </classpath>
