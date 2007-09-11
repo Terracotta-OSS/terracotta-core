@@ -95,7 +95,7 @@ public class PrintVisitor implements Visitor {
     int dim = 0;
     if (c.isArray()) {
       dim = ClassUtils.arrayDimensions(c);
-      type = ClassUtils.baseComponetType(c).getName();
+      type = ClassUtils.baseComponentType(c).getName();
     }
 
     if (type.startsWith(JAVA_LANG) && type.lastIndexOf('.') + 1 == JAVA_LANG_LEN) {

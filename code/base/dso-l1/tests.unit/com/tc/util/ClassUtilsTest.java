@@ -40,18 +40,18 @@ public class ClassUtilsTest extends TestCase {
   }
 
   public void testArrayMethods() {
-    assertEquals(int.class, ClassUtils.baseComponetType(int[][][][][].class));
-    assertEquals(Object.class, ClassUtils.baseComponetType(Object[].class));
+    assertEquals(int.class, ClassUtils.baseComponentType(int[][][][][].class));
+    assertEquals(Object.class, ClassUtils.baseComponentType(Object[].class));
 
     try {
-      ClassUtils.baseComponetType(null);
+      ClassUtils.baseComponentType(null);
       fail();
     } catch (NullPointerException e) {
       // expected
     }
 
     try {
-      ClassUtils.baseComponetType(int.class);
+      ClassUtils.baseComponentType(int.class);
       fail();
     } catch (IllegalArgumentException e) {
       // expected
