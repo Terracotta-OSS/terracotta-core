@@ -38,6 +38,7 @@ import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.ClassAdapterBase;
 import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.DSOUnsafeAdapter;
+import com.tc.object.bytecode.DelegateMethodAdapter;
 import com.tc.object.bytecode.JavaLangReflectArrayAdapter;
 import com.tc.object.bytecode.JavaLangReflectFieldAdapter;
 import com.tc.object.bytecode.ManagerHelper;
@@ -77,7 +78,6 @@ import com.tc.weblogic.transform.FilterManagerAdapter;
 import com.tc.weblogic.transform.GenericClassLoaderAdapter;
 import com.tc.weblogic.transform.ServerAdapter;
 import com.tc.weblogic.transform.ServletResponseImplAdapter;
-import com.tc.weblogic.transform.TerracottaServletResponseImplAdapter;
 import com.tc.weblogic.transform.WebAppServletContextAdapter;
 import com.tcclient.util.DSOUnsafe;
 import com.terracottatech.config.DsoApplication;
@@ -146,7 +146,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
                                                                                         .synchronizedMap(new HashMap());
 
   private final Map                              customAdapters                     = new ConcurrentHashMap();
-  
+
   private final ClassReplacementMapping          classReplacements                  = new ClassReplacementMappingImpl();
 
   private final Map                              classResources                     = new ConcurrentHashMap();
@@ -175,7 +175,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   public StandardDSOClientConfigHelperImpl(boolean initializedModulesOnlyOnce,
-                                       L1TVSConfigurationSetupManager configSetupManager)
+                                           L1TVSConfigurationSetupManager configSetupManager)
       throws ConfigurationSetupException {
     this(configSetupManager, true);
     if (initializedModulesOnlyOnce) {
@@ -229,7 +229,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     addPermanentExcludePattern("java.util.logging.SocketHandler");
 
     // Fix for CDV-357: Getting verifier errors when instrumenting obfuscated classes
-    // These classes are obfuscated and as such can't be instrumented. 
+    // These classes are obfuscated and as such can't be instrumented.
     addPermanentExcludePattern("com.sun.crypto.provider..*");
 
     addUnsupportedJavaUtilConcurrentTypes();
@@ -321,7 +321,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   public LockDefinition createLockDefinition(String name, ConfigLockLevel level) {
     return new LockDefinitionImpl(name, level);
   }
-  
+
   private void addNonportablePattern(String pattern) {
     nonportablesMatcher.add(new ClassExpressionMatcherImpl(expressionHelper, pattern));
   }
@@ -409,9 +409,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     LockDefinition ld = null;
 
     // ------------------------------------------------------------------
-    // NOTE: AWT and Swing models intsrumentation moved to StandardConfig 
+    // NOTE: AWT and Swing models intsrumentation moved to StandardConfig
     // config bundle configurator.
-    
+
     // ---------------------------
     // Color
     addIncludePattern("java.awt.Color", true);
@@ -423,43 +423,34 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     getOrCreateSpec("javax.swing.tree.TreePath");
 
     // DefaultMutableTreeNode
-    addIncludePattern("javax.swing.tree.DefaultMutableTreeNode",
-          false);
+    addIncludePattern("javax.swing.tree.DefaultMutableTreeNode", false);
     getOrCreateSpec("javax.swing.tree.DefaultMutableTreeNode");
 
     // DefaultTreeModel
     spec = getOrCreateSpec("javax.swing.tree.DefaultTreeModel");
-    ld = createLockDefinition(
-          "tcdefaultTreeLock", ConfigLockLevel.WRITE);
+    ld = createLockDefinition("tcdefaultTreeLock", ConfigLockLevel.WRITE);
     ld.commit();
     addLock("* javax.swing.tree.DefaultTreeModel.get*(..)", ld);
     addLock("* javax.swing.tree.DefaultTreeModel.set*(..)", ld);
     addLock("* javax.swing.tree.DefaultTreeModel.insert*(..)", ld);
     spec.addTransient("listenerList");
     spec.addDistributedMethodCall("fireTreeNodesChanged",
-          "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V",
-          false);
+                                  "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V", false);
     spec.addDistributedMethodCall("fireTreeNodesInserted",
-          "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V",
-          false);
+                                  "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V", false);
     spec.addDistributedMethodCall("fireTreeNodesRemoved",
-          "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V",
-          false);
+                                  "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V", false);
     spec.addDistributedMethodCall("fireTreeStructureChanged",
-          "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V",
-          false);
-    spec.addDistributedMethodCall("fireTreeStructureChanged",
-          "(Ljava/lang/Object;Ljavax/swing/tree/TreePath;)V", false);
+                                  "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V", false);
+    spec
+        .addDistributedMethodCall("fireTreeStructureChanged", "(Ljava/lang/Object;Ljavax/swing/tree/TreePath;)V", false);
 
     // AbstractListModel
     spec = getOrCreateSpec("javax.swing.AbstractListModel");
     spec.addTransient("listenerList");
-    spec.addDistributedMethodCall("fireContentsChanged",
-          "(Ljava/lang/Object;II)V", false);
-    spec.addDistributedMethodCall("fireIntervalAdded",
-          "(Ljava/lang/Object;II)V", false);
-    spec.addDistributedMethodCall("fireIntervalRemoved",
-          "(Ljava/lang/Object;II)V", false);
+    spec.addDistributedMethodCall("fireContentsChanged", "(Ljava/lang/Object;II)V", false);
+    spec.addDistributedMethodCall("fireIntervalAdded", "(Ljava/lang/Object;II)V", false);
+    spec.addDistributedMethodCall("fireIntervalRemoved", "(Ljava/lang/Object;II)V", false);
 
     // MouseMotionAdapter, MouseAdapter
     getOrCreateSpec("java.awt.event.MouseMotionAdapter");
@@ -493,58 +484,53 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     // java.awt.geom.Path2D
     if (Vm.isJDK16Compliant()) {
-       getOrCreateSpec("java.awt.geom.Path2D");
-       getOrCreateSpec("java.awt.geom.Path2D$Double");
-       getOrCreateSpec("java.awt.geom.Path2D$Float");
+      getOrCreateSpec("java.awt.geom.Path2D");
+      getOrCreateSpec("java.awt.geom.Path2D$Double");
+      getOrCreateSpec("java.awt.geom.Path2D$Float");
     }
 
     // GeneralPath
     getOrCreateSpec("java.awt.geom.GeneralPath");
-    // 
+    //
     // BasicStroke
     getOrCreateSpec("java.awt.BasicStroke");
 
     // Dimension
     getOrCreateSpec("java.awt.Dimension");
     getOrCreateSpec("java.awt.geom.Dimension2D");
-    
+
     // ==================================================================
     // TableModelEvent
     addIncludePattern("javax.swing.event.TableModelEvent", true);
     getOrCreateSpec("javax.swing.event.TableModelEvent");
 
     // AbstractTableModel
-    addIncludePattern("javax.swing.table.AbstractTableModel",
-          true);
+    addIncludePattern("javax.swing.table.AbstractTableModel", true);
     spec = getOrCreateSpec("javax.swing.table.AbstractTableModel");
-    spec.addDistributedMethodCall("fireTableChanged",
-          "(Ljavax/swing/event/TableModelEvent;)V", false);
+    spec.addDistributedMethodCall("fireTableChanged", "(Ljavax/swing/event/TableModelEvent;)V", false);
     spec.addTransient("listenerList");
 
     // DefaultTableModel
     spec = getOrCreateSpec("javax.swing.table.DefaultTableModel");
     spec.setCallConstructorOnLoad(true);
-    ld = createLockDefinition(
-          "tcdefaultTableLock", ConfigLockLevel.WRITE);
+    ld = createLockDefinition("tcdefaultTableLock", ConfigLockLevel.WRITE);
     ld.commit();
     addLock("* javax.swing.table.DefaultTableModel.set*(..)", ld);
     addLock("* javax.swing.table.DefaultTableModel.insert*(..)", ld);
     addLock("* javax.swing.table.DefaultTableModel.move*(..)", ld);
     addLock("* javax.swing.table.DefaultTableModel.remove*(..)", ld);
-    ld = createLockDefinition("tcdefaultTableLock",
-          ConfigLockLevel.READ);
+    ld = createLockDefinition("tcdefaultTableLock", ConfigLockLevel.READ);
     ld.commit();
     addLock("* javax.swing.table.DefaultTableModel.get*(..)", ld);
 
     // DefaultListModel
     spec = getOrCreateSpec("javax.swing.DefaultListModel");
     spec.setCallConstructorOnLoad(true);
-    ld = createLockDefinition("tcdefaultListLock",
-          ConfigLockLevel.WRITE);
+    ld = createLockDefinition("tcdefaultListLock", ConfigLockLevel.WRITE);
     ld.commit();
     addLock("* javax.swing.DefaultListModel.*(..)", ld);
     // ====================================================
-    
+
     //
     spec = getOrCreateSpec("java.util.Arrays");
     spec.addDoNotInstrument("copyOfRange");
@@ -688,7 +674,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     // spec.generateNonStaticTCFields(false);
 
     // -----------------------------------------------------------
-    // NOTE: Java Exception intrumentation moved to StandardConfig 
+    // NOTE: Java Exception intrumentation moved to StandardConfig
     // config bundle configurator.
     // -----------------------------------------------------------
     spec = getOrCreateSpec("java.lang.Exception");
@@ -1094,6 +1080,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     addCustomAdapter("org.apache.catalina.startup.Catalina", new CatalinaAdapter());
     addCustomAdapter("org.apache.catalina.startup.Bootstrap", new BootstrapAdapter());
     addCustomAdapter("org.apache.catalina.core.ContainerBase", new ContainerBaseAdapter());
+    addCustomAdapter("org.apache.catalina.connector.SessionRequest55",
+                     new DelegateMethodAdapter("org.apache.catalina.connector.Request", "valveReq"));
+    addCustomAdapter("org.apache.catalina.connector.SessionResponse55",
+                     new DelegateMethodAdapter("org.apache.catalina.connector.Response", "valveRes"));
   }
 
   private void removeTomcatAdapters() {
@@ -1112,7 +1102,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     addCustomAdapter("weblogic.servlet.internal.FilterManager", new FilterManagerAdapter());
     addCustomAdapter("weblogic.servlet.internal.ServletResponseImpl", new ServletResponseImplAdapter());
     addCustomAdapter("weblogic.servlet.internal.TerracottaServletResponseImpl",
-                     new TerracottaServletResponseImplAdapter());
+                     new DelegateMethodAdapter("weblogic.servlet.internal.ServletResponseImpl", "nativeResponse"));
   }
 
   public boolean removeCustomAdapter(String name) {
@@ -1130,7 +1120,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       Assert.assertNull(prev);
     }
   }
-  
+
   public void addClassReplacement(final String originalClassName, final String replacementClassName,
                                   final URL replacementResource) {
     synchronized (classReplacements) {

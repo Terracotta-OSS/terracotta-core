@@ -17,7 +17,7 @@ import javax.servlet.http.Cookie;
 
 /**
  * The whole point of this class is to remain type compatible with weblogic's internal response types. There are places
- * in their container where the concrete type of the resposne needs to be instanceof compatible with their type. This
+ * in their container where the concrete type of the response needs to be instanceof compatible with their type. This
  * class also must reside in the weblogic package such that it can override and delegate package private methods. This
  * class is instrumented at runtime to override all non-private methods of ServletResponseImpl and delegate the
  * nativeResponse instance
