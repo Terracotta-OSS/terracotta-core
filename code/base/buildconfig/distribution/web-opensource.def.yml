@@ -38,7 +38,6 @@ bundled_components:
         - thirdparty-api
         - ui-eclipse:
             exclude-runtime-libraries: true
-        - ui-configurator
   - eclipse-plugin: 
       install_directory: eclipse
   - eclipse-update-site: 
