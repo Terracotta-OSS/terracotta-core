@@ -28,6 +28,7 @@ bundled_components:
         - dso-l1-api
         - dso-l1-jdk15
         - dso-l2
+        - dso-l2-common
         - dso-spring:
             exclude-runtime-libraries: true
         - linked-child-process
@@ -37,6 +38,7 @@ bundled_components:
         - thirdparty-api
         - ui-eclipse:
             exclude-runtime-libraries: true
+        - ui-configurator
   - eclipse-plugin: 
       install_directory: eclipse
   - eclipse-update-site: 
@@ -61,6 +63,7 @@ bundled_modules:
         - clustered-surefire-2.3
         - clustered-websphere-6.1.0.7
         - clustered-wicket-1.3
+        - standard-config
         - modules-common
 packaging:
   - tar
