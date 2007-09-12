@@ -1,21 +1,16 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package weblogic.servlet.internal;
 
+import com.tc.object.util.OverrideCheck;
 import com.terracotta.session.TerracottaRequest;
 import com.terracotta.session.TerracottaResponse;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.Cookie;
@@ -28,6 +23,11 @@ import javax.servlet.http.Cookie;
  * nativeResponse instance
  */
 public final class TerracottaServletResponseImpl extends ServletResponseImpl implements TerracottaResponse {
+
+  static {
+    OverrideCheck.check(ServletResponseImpl.class, TerracottaServletResponseImpl.class);
+  }
+
   private final TerracottaRequest   req;
   private final ServletResponseImpl nativeResponse;
 
@@ -162,54 +162,6 @@ public final class TerracottaServletResponseImpl extends ServletResponseImpl imp
 
   public void setStatus(int arg0) {
     nativeResponse.setStatus(arg0);
-  }
-
-  static {
-    Set superMethods = methodsFor(ServletResponseImpl.class);
-    Set thisMethods = methodsFor(TerracottaServletResponseImpl.class);
-
-    List missing = new ArrayList();
-
-    for (Iterator i = superMethods.iterator(); i.hasNext();) {
-      String method = (String) i.next();
-
-      if (!thisMethods.contains(method)) {
-        // This class should be overriding all methods on the super class
-        missing.add(method);
-      }
-    }
-
-    if (!missing.isEmpty()) { throw new RuntimeException("Missing overrides:\n" + missing); }
-  }
-
-  private static Set methodsFor(Class c) {
-    Method[] methods = c.getDeclaredMethods();
-
-    Set set = new HashSet();
-    for (int i = 0; i < methods.length; i++) {
-      Method m = methods[i];
-
-      int access = m.getModifiers();
-
-      if (Modifier.isAbstract(access) || Modifier.isStatic(access) || Modifier.isPrivate(access)) {
-        continue;
-      }
-
-      StringBuffer sig = new StringBuffer();
-      sig.append(m.getName()).append('(');
-
-      Class[] parameterTypes = m.getParameterTypes();
-      for (int j = 0; j < parameterTypes.length; j++) {
-        sig.append(parameterTypes[j].getName());
-        if (j < (parameterTypes.length - 1)) {
-          sig.append(',');
-        }
-      }
-      sig.append(')');
-
-      set.add(sig.toString());
-    }
-    return set;
   }
 
 }

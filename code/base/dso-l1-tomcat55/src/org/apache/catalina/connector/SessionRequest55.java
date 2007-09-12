@@ -13,6 +13,7 @@ import org.apache.tomcat.util.buf.B2CConverter;
 import org.apache.tomcat.util.buf.MessageBytes;
 import org.apache.tomcat.util.http.mapper.MappingData;
 
+import com.tc.object.util.OverrideCheck;
 import com.tc.tomcat.session.SessionInternal;
 import com.terracotta.session.TerracottaRequest;
 
@@ -33,6 +34,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 public class SessionRequest55 extends Request {
+
+  static {
+    OverrideCheck.check(Request.class, SessionRequest55.class);
+  }
+
   private final Request           valveReq;
   private final TerracottaRequest sessionReq;
   private final Realm             realm;

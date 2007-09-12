@@ -6,6 +6,7 @@ package org.apache.catalina.connector;
 
 import org.apache.coyote.Response;
 
+import com.tc.object.util.OverrideCheck;
 import com.terracotta.session.SessionResponse;
 
 import java.io.IOException;
@@ -16,6 +17,10 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.Cookie;
 
 public class SessionResponse55 extends org.apache.catalina.connector.Response {
+  static {
+    OverrideCheck.check(org.apache.catalina.connector.Response.class, SessionResponse55.class);
+  }
+
   private final org.apache.catalina.connector.Response valveRes;
   private final SessionRequest55                       sessReq;
   private final SessionResponse                        sessRes;
@@ -314,6 +319,10 @@ public class SessionResponse55 extends org.apache.catalina.connector.Response {
 
   public void setCoyoteResponse(Response coyoteResponse) {
     valveRes.setCoyoteResponse(coyoteResponse);
+  }
+
+  protected String toEncoded(String url, String sessionId) {
+    return valveRes.toEncoded(url, sessionId);
   }
 
 }
