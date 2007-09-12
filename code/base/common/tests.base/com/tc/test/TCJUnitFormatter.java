@@ -45,6 +45,7 @@ public class TCJUnitFormatter implements JUnitResultFormatter {
     }
 
     this.currentExceptions.clear();
+    System.out.println(" --- TEST FINISHED ---");
   }
 
   public void setOutput(OutputStream theStream) {
