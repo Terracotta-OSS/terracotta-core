@@ -19,6 +19,7 @@ import com.tc.exception.ImplementMe;
 import com.terracottatech.config.Ha;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
+import com.terracottatech.config.UpdateCheck;
 
 import java.io.File;
 import java.io.InputStream;
@@ -280,11 +281,29 @@ public class MockServers implements Servers {
 
   public void setHa(Ha arg0) {
     throw new ImplementMe();
-
   }
 
   public void unsetHa() {
     throw new ImplementMe();
+  }
+  
+  public UpdateCheck addNewUpdateCheck() {
+    throw new ImplementMe();    
+  }
+  
+  public UpdateCheck getUpdateCheck() {
+    throw new ImplementMe();    
+  }
 
+  public boolean isSetUpdateCheck() {
+    throw new ImplementMe();    
+  }
+  
+  public void setUpdateCheck(UpdateCheck arg0) {
+    throw new ImplementMe();    
+  }
+
+  public void unsetUpdateCheck() {
+    throw new ImplementMe();    
   }
 }

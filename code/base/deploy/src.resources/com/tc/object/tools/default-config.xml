@@ -15,6 +15,9 @@
             <data>%(user.home)/terracotta/server-data</data>
             <logs>%(user.home)/terracotta/server-logs</logs>
         </server>
+        <update-check>
+            <enabled>true</enabled>
+        </update-check>
     </servers>
 
   <clients>

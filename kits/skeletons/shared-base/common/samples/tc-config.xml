@@ -19,5 +19,8 @@
       <data>%(user.home)/terracotta/demo-server/server-data</data>
       <logs>%(user.home)/terracotta/demo-server/server-logs</logs>
     </server>
+    <update-check>
+      <enabled>true</enabled>
+    </update-check>
   </servers>
 </tc:tc-config>

@@ -58,9 +58,11 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.ConnectException;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Properties;
@@ -792,6 +794,8 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
 
       sb.append(defaultPropsUrl.equals(propsUrl) ? '&' : '?');
 
+      sb.append("id=");
+      sb.append(URLEncoder.encode(Integer.toString(getIpAddress())));
       sb.append("os-name=");
       sb.append(URLEncoder.encode(System.getProperty("os.name")));
       sb.append("&jvm-name=");
@@ -804,8 +808,17 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       sb.append(URLEncoder.encode(productInfo.getVersion()));
       sb.append("&tc-product=");
       sb.append(productInfo.getLicense().equals(ProductInfo.DEFAULT_LICENSE) ? "oss" : "ee");
+      sb.append("&source=console");
 
       return new URL(sb.toString());
+    }
+
+    private int getIpAddress() {
+      try {
+        return InetAddress.getLocalHost().hashCode();
+      } catch (UnknownHostException uhe) {
+        return 0;
+      }
     }
 
     void showMessage(String msg) {

@@ -16,6 +16,8 @@ import com.tc.config.schema.NewHaConfig;
 import com.tc.config.schema.NewHaConfigObject;
 import com.tc.config.schema.NewSystemConfig;
 import com.tc.config.schema.NewSystemConfigObject;
+import com.tc.config.schema.UpdateCheckConfig;
+import com.tc.config.schema.UpdateCheckConfigObject;
 import com.tc.config.schema.defaults.DefaultValueProvider;
 import com.tc.config.schema.repository.ChildBeanFetcher;
 import com.tc.config.schema.repository.ChildBeanRepository;
@@ -33,6 +35,7 @@ import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.System;
 import com.terracottatech.config.TcConfigDocument;
+import com.terracottatech.config.UpdateCheck;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -58,7 +61,8 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
   private NewSystemConfig            systemConfig;
   private final Map                  l2ConfigData;
   private final NewHaConfig          haConfig;
-
+  private final UpdateCheckConfig    updateCheckConfig;
+  
   private final String               thisL2Identifier;
   private L2ConfigData               myConfigData;
 
@@ -78,7 +82,8 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     this.systemConfig = null;
     this.l2ConfigData = new HashMap();
     this.haConfig = getHaConfig();
-
+    this.updateCheckConfig = getUpdateCheckConfig();
+    
     this.thisL2Identifier = thisL2Identifier;
     this.myConfigData = null;
 
@@ -99,6 +104,17 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     return new NewHaConfigObject(createContext(beanRepository, configurationCreator.directoryConfigurationLoadedFrom()));
   }
 
+  private UpdateCheckConfig getUpdateCheckConfig() {
+    ChildBeanRepository beanRepository = new ChildBeanRepository(serversBeanRepository(), UpdateCheck.class,
+        new ChildBeanFetcher() {
+          public XmlObject getChild(XmlObject parent) {
+            return ((Servers) parent).getUpdateCheck();
+          }
+        });
+
+    return new UpdateCheckConfigObject(createContext(beanRepository, configurationCreator.directoryConfigurationLoadedFrom()));
+  }
+  
   private class L2ConfigData {
     private final String              name;
     private final ChildBeanRepository beanRepository;
@@ -311,6 +327,10 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     return haConfig;
   }
 
+  public UpdateCheckConfig updateCheckConfig() {
+    return updateCheckConfig;
+  }
+  
   public String[] allCurrentlyKnownServers() {
     Servers serversBean = (Servers) serversBeanRepository().bean();
     Server[] l2s = serversBean == null ? null : serversBean.getServerArray();

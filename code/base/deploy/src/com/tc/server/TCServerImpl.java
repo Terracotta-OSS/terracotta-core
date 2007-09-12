@@ -275,9 +275,23 @@ public class TCServerImpl extends SEDA implements TCServer {
       if (activationListener != null) {
         activationListener.serverActivated();
       }
+
+      if(updateCheckEnabled()) {
+        UpdateCheckAction.start(TCServerImpl.this, updateCheckPeriodDays());
+      }
     }
   }
 
+  private boolean updateCheckEnabled() {
+    String s = System.getenv("TC_UPDATE_CHECK_ENABLED");
+    boolean checkEnabled = (s == null) || Boolean.parseBoolean(s);
+    return checkEnabled && configurationSetupManager.updateCheckConfig().isEnabled().getBoolean();
+  }
+
+  private int updateCheckPeriodDays() {
+    return configurationSetupManager.updateCheckConfig().periodDays().getInt();
+  }
+  
   protected void startServer() throws Exception {
     new StartupHelper(getThreadGroup(), new StartAction()).startUp();
   }

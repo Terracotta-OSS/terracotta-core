@@ -8,6 +8,7 @@ import com.tc.exception.ImplementMe;
 import com.terracottatech.config.Ha;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
+import com.terracottatech.config.UpdateCheck;
 
 public class TestL2S extends TestXmlObject implements Servers {
 
@@ -71,12 +72,29 @@ public class TestL2S extends TestXmlObject implements Servers {
 
   public void setHa(Ha arg0) {
     throw new ImplementMe();
-
   }
 
   public void unsetHa() {
     throw new ImplementMe();
-
   }
 
+  public UpdateCheck addNewUpdateCheck() {
+    throw new ImplementMe();    
+  }
+  
+  public UpdateCheck getUpdateCheck() {
+    throw new ImplementMe();    
+  }
+
+  public boolean isSetUpdateCheck() {
+    throw new ImplementMe();    
+  }
+  
+  public void setUpdateCheck(UpdateCheck arg0) {
+    throw new ImplementMe();    
+  }
+
+  public void unsetUpdateCheck() {
+    throw new ImplementMe();    
+  }
 }

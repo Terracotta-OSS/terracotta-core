@@ -10,6 +10,7 @@ import com.tc.cluster.Cluster;
 import com.tc.config.schema.NewCommonL2Config;
 import com.tc.config.schema.NewHaConfig;
 import com.tc.config.schema.NewSystemConfig;
+import com.tc.config.schema.UpdateCheckConfig;
 import com.tc.config.schema.dynamic.BooleanConfigItem;
 import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.dynamic.ConfigItemListener;
@@ -423,6 +424,10 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
       return realConfig.haConfig();
     }
 
+    public UpdateCheckConfig updateCheckConfig() {
+      return realConfig.updateCheckConfig();
+    }
+    
     private static class L2ConfigOverride implements NewL2DSOConfig {
 
       private final NewL2DSOConfig config;

@@ -13,6 +13,9 @@
        default port (9510). -->
   <servers>
     <server host="%i" name="sample"/>
+    <update-check>
+      <enabled>true</enabled>
+    </update-check>
   </servers>
 
   <!-- Tell DSO where to put the generated client logs

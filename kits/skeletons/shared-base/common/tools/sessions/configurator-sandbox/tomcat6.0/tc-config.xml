@@ -20,6 +20,9 @@
       <data>data/server-data</data>
       <logs>logs/server-logs</logs>
     </server>
+    <update-check>
+      <enabled>true</enabled>
+    </update-check>
   </servers>
 
   <!-- Tell DSO where to put the generated client logs

@@ -264,6 +264,32 @@
         <election-time>5</election-time>
       </networked-active-passive>
     </ha>
+
+    <!-- This element lets you control if and how often the Terracotta server
+       will check for update versions of the Terracotta platform.
+
+    -->
+    <update-check>
+      <!-- This element determines if the server will check for updates
+         to the version of the Terracotta platform your are using. The server
+         will contact the terracotta.org website and compare the version of
+         your software with a registry of current releases. Information about
+         new versions will be logged and displayed on the server's standard
+         output.
+
+         Default: 'false'
+      -->
+      <enabled>true</enabled>
+      
+      <!-- This element controls the period, in days, between update checks
+         given that update checking is enabled. When checking is enabled, each
+         time the server starts an update check is performed as well as at
+         subsequent intervals, according to this value.
+
+         Default: 7
+      -->
+      <period-days>10</period-days>
+    </update=check>
   </servers>
 
   <!-- This section contains settings that affect all clients that connect to the

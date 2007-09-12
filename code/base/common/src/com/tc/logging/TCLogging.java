@@ -366,7 +366,12 @@ public class TCLogging {
       Logger consoleLogger = Logger.getLogger(CONSOLE_LOGGER_NAME);
       Logger benchLogger = Logger.getLogger(BENCH_LOGGER_NAME);
 
-      allLoggers = new Logger[] { internalLogger, customerLogger, consoleLogger, benchLogger };
+      /**
+       * Don't add consoleLogger to allLoggers because it's a child of customerLogger,
+       * so it shouldn't get any appenders. If you DO add consoleLogger here, you'll
+       * see duplicate messages in the log file.
+       */
+      allLoggers = new Logger[] { internalLogger, customerLogger, benchLogger };
 
       console = new TCLoggerImpl(CONSOLE_LOGGER_NAME);
 
