@@ -719,16 +719,21 @@ END
     
     # get the original sinner who broke the build
     sinnerList = File.join(ENV['HOME'], ".tc", "sinner.txt")
-    sinners = []
+    sinners = Set.new
     
-    File.open(sinnerList, "a+") do |f|
-      sinners.concat(f.readlines)
-      f.puts(@build_environment.last_changed_author)
-    end      
+    if File.exist?(sinnerList)
+      File.open(sinnerList, "r") do |f|
+        sinners = Marshal.load(f)
+      end      
+    end
     
     sinners << @build_environment.last_changed_author
-    
-    STDERR.puts("Please let #{sinners.to_set.to_a} know.")
+
+    File.open(sinnerList, "w") do |f|
+       Marshal.dump(sinners, f)
+    end      
+
+    STDERR.puts("Please let #{sinners.to_a.join(', ')} know.")
   end
 
   # The full path to the build archive, including directory.
