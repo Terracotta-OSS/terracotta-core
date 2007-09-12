@@ -84,7 +84,7 @@ public final class HibernateTerracottaConfigurator extends TerracottaConfigurato
     final Dictionary serviceProps = new Hashtable();
     serviceProps.put(Constants.SERVICE_VENDOR, "Terracotta, Inc.");
     serviceProps.put(Constants.SERVICE_DESCRIPTION, "Hibernate Plugin Spec");
-    serviceProps.put(Constants.SERVICE_RANKING, ModuleSpec.HIGN_RANK);
+    serviceProps.put(Constants.SERVICE_RANKING, ModuleSpec.HIGH_RANK);
     context.registerService(ModuleSpec.class.getName(), new HibernateModuleSpec(new HibernateChangeApplicatorSpec(getClass().getClassLoader())), serviceProps);
   }
 
