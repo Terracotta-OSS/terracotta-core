@@ -10,9 +10,6 @@ import com.tc.test.server.appserver.AppServerFactory;
 import com.tc.test.server.appserver.AppServerInstallation;
 import com.tc.test.server.appserver.AppServerParameters;
 import com.tc.test.server.appserver.StandardAppServerParameters;
-import com.tc.test.server.appserver.war.DescriptorXml;
-import com.tc.test.server.appserver.war.DtdWar;
-import com.tc.test.server.appserver.war.War;
 
 import java.io.File;
 import java.util.Properties;
@@ -39,12 +36,5 @@ public final class Weblogic9xAppServerFactory extends AppServerFactory {
   public AppServerInstallation createInstallation(File home, File workingDir) throws Exception {
     return new Weblogic9xAppServerInstallation(home, workingDir, config.appserverMajorVersion(), config
         .appserverMinorVersion());
-  }
-
-  public War createWar(String appName) {
-    War war = new DtdWar(appName);
-    DescriptorXml weblogicWar = new Weblogic9xDescriptorXml();
-    war.addContainerSpecificXml(weblogicWar.getFileName(), weblogicWar.getBytes());
-    return war;
   }
 }

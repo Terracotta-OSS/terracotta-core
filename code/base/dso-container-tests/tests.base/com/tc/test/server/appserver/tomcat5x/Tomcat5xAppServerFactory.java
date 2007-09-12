@@ -10,8 +10,6 @@ import com.tc.test.server.appserver.AppServerFactory;
 import com.tc.test.server.appserver.AppServerInstallation;
 import com.tc.test.server.appserver.AppServerParameters;
 import com.tc.test.server.appserver.StandardAppServerParameters;
-import com.tc.test.server.appserver.war.DtdWar;
-import com.tc.test.server.appserver.war.War;
 
 import java.io.File;
 import java.util.Properties;
@@ -38,9 +36,5 @@ public final class Tomcat5xAppServerFactory extends AppServerFactory {
   public AppServerInstallation createInstallation(File home, File workingDir) throws Exception {
     return new Tomcat5xAppServerInstallation(home, workingDir, config.appserverMajorVersion(), config
         .appserverMinorVersion());
-  }
-
-  public War createWar(String appName) {
-    return new DtdWar(appName);
   }
 }

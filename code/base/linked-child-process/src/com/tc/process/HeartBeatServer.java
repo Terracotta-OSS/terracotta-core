@@ -179,10 +179,6 @@ public class HeartBeatServer {
         while (true) {
           log("send pulse to client: " + clientName);
           out.println(PULSE);
-          if (out.checkError()) {            
-            out = new PrintWriter(socket.getOutputStream(), true);
-            log("checkError fails. Recreate PrintWriter...");
-          }
           try {
             String reply = in.readLine();
             if (reply == null) { throw new Exception("read-half of socket closed."); }

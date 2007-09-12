@@ -13,7 +13,6 @@ import com.tc.test.server.appserver.jboss3x.JBoss3xAppServerFactory;
 import com.tc.test.server.appserver.jboss4x.JBoss4xAppServerFactory;
 import com.tc.test.server.appserver.jetty6x.Jetty6xAppServerFactory;
 import com.tc.test.server.appserver.tomcat5x.Tomcat5xAppServerFactory;
-import com.tc.test.server.appserver.war.War;
 import com.tc.test.server.appserver.was6x.Was6xAppServerFactory;
 import com.tc.test.server.appserver.wasce1x.Wasce1xAppServerFactory;
 import com.tc.test.server.appserver.weblogic8x.Weblogic8xAppServerFactory;
@@ -59,8 +58,6 @@ public abstract class AppServerFactory {
   public abstract AppServer createAppServer(AppServerInstallation installation);
 
   public abstract AppServerInstallation createInstallation(File home, File workingDir) throws Exception;
-
-  public abstract War createWar(String appName);  
 
   public static final AppServerFactory createFactoryFromProperties(TestConfigObject config) {
     Assert.assertNotNull(config);

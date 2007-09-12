@@ -19,8 +19,6 @@ import com.tc.test.server.appserver.AppServerFactory;
 import com.tc.test.server.appserver.AppServerInstallation;
 import com.tc.test.server.appserver.AppServerParameters;
 import com.tc.test.server.appserver.StandardAppServerParameters;
-import com.tc.test.server.appserver.war.DtdWar;
-import com.tc.test.server.appserver.war.War;
 
 import java.io.File;
 import java.io.IOException;
@@ -136,9 +134,5 @@ public final class GlassfishV1AppServerFactory extends AppServerFactory {
         .appserverMinorVersion());
     doSetup(install);
     return install;
-  }
-
-  public War createWar(String appName) {
-    return new DtdWar(appName);
   }
 }
