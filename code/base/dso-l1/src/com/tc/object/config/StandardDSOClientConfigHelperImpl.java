@@ -689,7 +689,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     // =================================================================
 
     spec = getOrCreateSpec("java.util.EventObject");
-    spec.setHonorTransient(true);
 
     spec = getOrCreateSpec("com.tcclient.object.DistributedMethodCall");
 

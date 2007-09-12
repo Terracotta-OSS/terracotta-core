@@ -22,7 +22,7 @@ import java.util.Iterator;
 
 /**
  * Test case for <code>ApplicationEventPublisher</code>.
- * 
+ *
  * @see org.springframework.context.ApplicationEventPublisher#publishEvent(ApplicationEvent event)
  */
 public class AppContextEvents_Test extends TransparentTestBase {
@@ -31,7 +31,7 @@ public class AppContextEvents_Test extends TransparentTestBase {
   private static final int NODE_COUNT      = 2;
 
   public AppContextEvents_Test() {
-    //disableAllUntil("2007-10-01");
+    // disableAllUntil("2007-10-01");
   }
 
   protected void setUp() throws Exception {
@@ -65,7 +65,7 @@ public class AppContextEvents_Test extends TransparentTestBase {
         ctx1.publishEvent(new SingletonEvent("ctx1", "Test event1 " + getApplicationId()));
         moveToStageAndWait(2);
 
-        waitEvents(simpleListener, NODE_COUNT, 5000L);
+        waitEvents(simpleListener, NODE_COUNT, 20000L);
         assertEquals(NODE_COUNT, simpleListener.size());
 
         moveToStageAndWait(3);
@@ -73,7 +73,7 @@ public class AppContextEvents_Test extends TransparentTestBase {
         ctx2.publishEvent(new SingletonEvent("ctx2", "Test event2 " + getApplicationId()));
         moveToStageAndWait(4);
 
-        waitEvents(simpleListener, NODE_COUNT * 2, 5000L);
+        waitEvents(simpleListener, NODE_COUNT * 2, 20000L);
 
         int ctx2Count = 0;
         for (Iterator it = simpleListener.takeEvents().iterator(); it.hasNext();) {
