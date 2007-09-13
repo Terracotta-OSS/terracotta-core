@@ -91,4 +91,8 @@ public class TestRequestManagedObjectMessage implements RequestManagedObjectMess
   public void recycle() {
     return;
   }
+
+  public String getRequestingThreadName() {
+    return "TestThreadDummy";
+  }
 }

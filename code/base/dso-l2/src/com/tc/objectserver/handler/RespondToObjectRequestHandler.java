@@ -132,7 +132,8 @@ public class RespondToObjectRequestHandler extends AbstractEventHandler {
     }
     if (oids.size() <= MAX_OBJECTS_TO_LOOKUP) {
       this.managedObjectRequestSink.add(new ManagedObjectRequestContext(morc.getChannelID(), morc.getRequestID(), oids,
-                                                                        -1, morc.getSink()));
+                                                                        -1, morc.getSink(),
+                                                                        "RespondToObjectRequestHandler"));
     } else {
       // split into multiple request
       Set split = new HashSet(MAX_OBJECTS_TO_LOOKUP);
@@ -140,7 +141,8 @@ public class RespondToObjectRequestHandler extends AbstractEventHandler {
         split.add(i.next());
         if (split.size() >= MAX_OBJECTS_TO_LOOKUP) {
           this.managedObjectRequestSink.add(new ManagedObjectRequestContext(morc.getChannelID(), morc.getRequestID(),
-                                                                            split, -1, morc.getSink()));
+                                                                            split, -1, morc.getSink(),
+                                                                            "RespondToObjectRequestHandler"));
           if (i.hasNext()) split = new THashSet(maxRequestDepth);
         }
       }

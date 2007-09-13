@@ -21,23 +21,22 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-/**
- * @author steve
- */
 public class RequestManagedObjectMessageImpl extends DSOMessageBase implements EventContext,
     RequestManagedObjectMessage {
   private final static byte MANAGED_OBJECT_ID          = 1;
   private final static byte MANAGED_OBJECTS_REMOVED_ID = 2;
   private final static byte REQUEST_ID                 = 4;
   private final static byte REQUEST_DEPTH_ID           = 5;
+  private final static byte REQUESTING_THREAD_NAME     = 6;
 
   private Set               objectIDs                  = new HashSet();
   private Set               removed                    = new HashSet();
   private ObjectRequestID   requestID;
   private int               requestDepth;
+  private String            threadName;
 
-  public RequestManagedObjectMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
-                                         TCMessageType type) {
+  public RequestManagedObjectMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out,
+                                         MessageChannel channel, TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 
@@ -58,6 +57,7 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
     }
     putNVPair(REQUEST_ID, requestID.toLong());
     putNVPair(REQUEST_DEPTH_ID, requestDepth);
+    putNVPair(REQUESTING_THREAD_NAME, threadName);
   }
 
   protected boolean hydrateValue(byte name) throws IOException {
@@ -73,6 +73,9 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
         return true;
       case REQUEST_DEPTH_ID:
         this.requestDepth = getIntValue();
+        return true;
+      case REQUESTING_THREAD_NAME:
+        this.threadName = getStringValue();
         return true;
       default:
         return false;
@@ -96,9 +99,14 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
     this.objectIDs.addAll(oids);
     this.removed = removedIDs;
     this.requestDepth = ctxt.getRequestDepth();
+    this.threadName = Thread.currentThread().getName();
   }
 
   public int getRequestDepth() {
     return requestDepth;
+  }
+
+  public String getRequestingThreadName() {
+    return threadName;
   }
 }

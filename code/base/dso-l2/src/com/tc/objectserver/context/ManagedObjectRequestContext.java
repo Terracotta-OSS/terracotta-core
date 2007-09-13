@@ -28,17 +28,19 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
   private final Set             requestedObjectIDs;
   private Map                   objects;
   private final ObjectRequestID requestID;
-  private boolean               moreObjects = false;
-  private int                   batchCount  = 0;
+  private boolean               moreObjects    = false;
+  private int                   batchCount     = 0;
   private Set                   lookupPendingObjectIDs;
   private final int             maxRequestDepth;
   private final Sink            sink;
   private final Set             missingObjects = new HashSet();
+  private final String          requestingThreadName;
 
   public ManagedObjectRequestContext(ChannelID channelID, ObjectRequestID requestID, Set ids, int maxRequestDepth,
-                                     Sink sink) {
+                                     Sink sink, String requestingThreadName) {
     this.maxRequestDepth = maxRequestDepth;
     this.sink = sink;
+    this.requestingThreadName = requestingThreadName;
     this.timestamp = System.currentTimeMillis();
     this.channelID = channelID;
     this.requestID = requestID;
@@ -90,7 +92,7 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
 
   public String toString() {
     return "ManagedObjectRequestContext@" + System.identityHashCode(this) + " [ " + channelID + " , " + requestID
-           + " , " + requestedObjectIDs + "]";
+           + " , " + requestedObjectIDs + ", requestingThread = " + requestingThreadName + " ]";
   }
 
   public void setResults(ObjectManagerLookupResults results) {
@@ -108,7 +110,7 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
   }
 
   public void missingObject(ObjectID oid) {
-    missingObjects .add(oid);
+    missingObjects.add(oid);
   }
 
   public Set getMissingObjectIDs() {

@@ -540,6 +540,10 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
       return;
     }
 
+    public String getRequestingThreadName() {
+      return "TestThreadDummy";
+    }
+
   }
 
 }

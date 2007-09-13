@@ -95,7 +95,8 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
     if (numObjectsRequested > 0) {
       ManagedObjectRequestContext reqContext = new ManagedObjectRequestContext(channelID, rmom.getRequestID(),
                                                                                requestedIDs, maxRequestDepth,
-                                                                               this.respondObjectRequestSink);
+                                                                               this.respondObjectRequestSink, rmom
+                                                                                   .getRequestingThreadName());
       objectRequestManager.requestObjects(reqContext, maxRequestDepth);
     }
   }

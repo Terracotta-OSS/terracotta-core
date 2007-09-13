@@ -18,6 +18,8 @@ public interface RequestManagedObjectMessage extends Recyclable {
   public Set getObjectIDs();
 
   public Set getRemoved();
+  
+  public String getRequestingThreadName();
 
   public void initialize(ObjectRequestContext ctxt, Set objectIDs, Set removedIDs);
 
