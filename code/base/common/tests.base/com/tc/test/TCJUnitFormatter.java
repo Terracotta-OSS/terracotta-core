@@ -7,8 +7,6 @@ import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.taskdefs.optional.junit.JUnitResultFormatter;
 import org.apache.tools.ant.taskdefs.optional.junit.JUnitTest;
 
-import com.tc.text.Banner;
-
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -57,7 +55,11 @@ public class TCJUnitFormatter implements JUnitResultFormatter {
   }
 
   public void startTestSuite(JUnitTest theTest) throws BuildException {
-    Banner.infoBanner("STARTING TESTSUITE: " + theTest.getName() + "...");
+    String decor = "****************************************************************************";
+    System.out.println();
+    System.out.println(decor);
+    System.out.println("* STARTING TESTSUITE: " + theTest.getName());
+    System.out.println(decor);
   }
 
   public void addError(Test arg0, Throwable arg1) {
