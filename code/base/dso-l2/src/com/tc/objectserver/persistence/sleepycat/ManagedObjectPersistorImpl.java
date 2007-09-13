@@ -678,7 +678,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
         if (bits.isZero()) {
           status = this.oidDB.delete(pt2nt(tx), key);
           if (!OperationStatus.SUCCESS.equals(status)) 
-                throw new TCDatabaseException("Failed to delete");
+                logger.warn("Delete non-exist on-disk oid array "+bits.getKey());
         } else {
           DatabaseEntry value = new DatabaseEntry();
           value.setData(bits.arrayToBytes());
