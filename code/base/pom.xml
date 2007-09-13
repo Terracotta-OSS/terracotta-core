@@ -6,11 +6,11 @@
   <groupId>org.terracotta</groupId>
   <artifactId>parent</artifactId>
   <packaging>pom</packaging>
-  <version>2.3-SNAPSHOT</version>
+  <version>2.5-SNAPSHOT</version>
   <name>terracotta base</name>
 
   <properties>
-    <tcVersion>2.3-SNAPSHOT</tcVersion>
+    <tcVersion>2.5-SNAPSHOT</tcVersion>
   </properties>
 
   <scm>
