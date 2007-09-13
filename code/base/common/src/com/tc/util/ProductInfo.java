@@ -62,7 +62,7 @@ public final class ProductInfo {
       }
     }
 
-    this.version = getProperty(properties, BUILD_DATA_VERSION_KEY, "2.3.0");
+    this.version = getProperty(properties, BUILD_DATA_VERSION_KEY, UNKNOWN_VALUE);
     this.edition = getProperty(properties, BUILD_DATA_EDITION_KEY, "opensource");
 
     String timestampString = getProperty(properties, BUILD_DATA_TIMESTAMP_KEY, null);
