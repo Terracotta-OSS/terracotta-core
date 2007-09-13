@@ -72,6 +72,7 @@ import com.tc.object.msg.LockResponseMessage;
 import com.tc.object.msg.MessageRecycler;
 import com.tc.object.msg.ObjectIDBatchRequestMessage;
 import com.tc.object.msg.ObjectIDBatchRequestResponseMessage;
+import com.tc.object.msg.ObjectsNotFoundMessage;
 import com.tc.object.msg.RequestManagedObjectMessageImpl;
 import com.tc.object.msg.RequestManagedObjectResponseMessage;
 import com.tc.object.msg.RequestRootMessageImpl;
@@ -328,16 +329,13 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
       SerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
       persistor = new SleepycatPersistor(TCLogging.getLogger(SleepycatPersistor.class), dbenv,
                                          serializationAdapterFactory);
-      /* This commented code is for replacing SleepyCat with MemoryDataStore as an in-memory DB for testing purpose.
-       * You need to include MemoryDataStore in tc.jar and enable with tc.properties l2.memorystore.enabled=true.
-      boolean useMemoryStore = false;
-      if (l2Properties.getProperty("memorystore.enabled", false) != null) {
-        useMemoryStore = l2Properties.getBoolean("memorystore.enabled");
-      }
-      if (useMemoryStore) {
-        persistor = new MemoryStorePersistor(TCLogging.getLogger(MemoryStorePersistor.class));
-      } 
-      */
+      /*
+       * This commented code is for replacing SleepyCat with MemoryDataStore as an in-memory DB for testing purpose. You
+       * need to include MemoryDataStore in tc.jar and enable with tc.properties l2.memorystore.enabled=true. boolean
+       * useMemoryStore = false; if (l2Properties.getProperty("memorystore.enabled", false) != null) { useMemoryStore =
+       * l2Properties.getBoolean("memorystore.enabled"); } if (useMemoryStore) { persistor = new
+       * MemoryStorePersistor(TCLogging.getLogger(MemoryStorePersistor.class)); }
+       */
 
       String cachePolicy = l2Properties.getProperty("objectmanager.cachePolicy").toUpperCase();
       if (cachePolicy.equals("LRU")) {
@@ -478,7 +476,6 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     TransactionBatchManager transactionBatchManager = new TransactionBatchManagerImpl();
     SampledCounter globalTxnCounter = sampledCounterManager.createCounter(new SampledCounterConfig(1, 300, true, 0L));
 
-    
     final TransactionStore transactionStore = new TransactionStoreImpl(transactionPersistor,
                                                                        globalTransactionIDSequence);
     ServerGlobalTransactionManager gtxm = new ServerGlobalTransactionManagerImpl(sequenceValidator, transactionStore,
@@ -514,7 +511,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     int commitThreads = (persistent ? l2Properties.getInt("seda.commitstage.threads") : 1);
     stageManager.createStage(ServerConfigurationContext.COMMIT_CHANGES_STAGE,
                              new CommitTransactionChangeHandler(transactionStorePTP), commitThreads, maxStageSize);
-    
+
     txnStageCoordinator.lookUpSinks();
 
     Stage processTx = stageManager.createStage(ServerConfigurationContext.PROCESS_TRANSACTION_STAGE,
@@ -578,6 +575,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     l1Listener.addClassMapping(TCMessageType.REQUEST_MANAGED_OBJECT_MESSAGE, RequestManagedObjectMessageImpl.class);
     l1Listener.addClassMapping(TCMessageType.REQUEST_MANAGED_OBJECT_RESPONSE_MESSAGE,
                                RequestManagedObjectResponseMessage.class);
+    l1Listener.addClassMapping(TCMessageType.OBJECTS_NOT_FOUND_RESPONSE_MESSAGE, ObjectsNotFoundMessage.class);
     l1Listener.addClassMapping(TCMessageType.BROADCAST_TRANSACTION_MESSAGE, BroadcastTransactionMessageImpl.class);
     l1Listener.addClassMapping(TCMessageType.OBJECT_ID_BATCH_REQUEST_MESSAGE, ObjectIDBatchRequestMessage.class);
     l1Listener.addClassMapping(TCMessageType.OBJECT_ID_BATCH_REQUEST_RESPONSE_MESSAGE,
@@ -668,8 +666,9 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
 
   public boolean isBlocking() {
     return startupLock != null && startupLock.isBlocking();
-  
+
   }
+
   private Node[] makeAllNodes() {
     String[] l2s = configSetupManager.allCurrentlyKnownServers();
     Node[] rv = new Node[l2s.length];

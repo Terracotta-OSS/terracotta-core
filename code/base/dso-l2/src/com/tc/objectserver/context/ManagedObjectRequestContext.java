@@ -6,6 +6,7 @@ package com.tc.objectserver.context;
 
 import com.tc.async.api.Sink;
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.object.ObjectID;
 import com.tc.object.ObjectRequestID;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
 import com.tc.text.PrettyPrintable;
@@ -14,11 +15,12 @@ import com.tc.text.PrettyPrinter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * @author steve This is the context needed to make a request to the server for a specific Managed root.
+ * This is the context needed to make a request to the server for a specific Managed root.
  */
 public class ManagedObjectRequestContext implements ObjectManagerResultsContext, PrettyPrintable {
   private final long            timestamp;
@@ -31,6 +33,7 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
   private Set                   lookupPendingObjectIDs;
   private final int             maxRequestDepth;
   private final Sink            sink;
+  private final Set             missingObjects = new HashSet();
 
   public ManagedObjectRequestContext(ChannelID channelID, ObjectRequestID requestID, Set ids, int maxRequestDepth,
                                      Sink sink) {
@@ -102,6 +105,14 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
 
   public Set getNewObjectIDs() {
     return Collections.EMPTY_SET;
+  }
+
+  public void missingObject(ObjectID oid) {
+    missingObjects .add(oid);
+  }
+
+  public Set getMissingObjectIDs() {
+    return missingObjects;
   }
 
 }

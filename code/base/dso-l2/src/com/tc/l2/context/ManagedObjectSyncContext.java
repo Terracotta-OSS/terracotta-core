@@ -7,6 +7,7 @@ package com.tc.l2.context;
 import com.tc.async.api.Sink;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.net.groups.NodeID;
+import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
@@ -106,6 +107,15 @@ public class ManagedObjectSyncContext implements ObjectManagerResultsContext {
   public long getSequenceID() {
     Assert.assertTrue(this.sequenceID > 0);
     return this.sequenceID;
+  }
+
+  public void missingObject(ObjectID oid) {
+    throw new AssertionError("Syncing missing Object : " + oid + " " + this);
+  }
+
+  public String toString() {
+    return "ManagedObjectSyncContext [" + nodeID + " , oids = " + oids + " ,  rootsMap = " + rootsMap + " , more = "
+           + more + "]";
   }
 
 }

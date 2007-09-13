@@ -454,6 +454,10 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       return newOids;
     }
 
+    public void missingObject(ObjectID oid) {
+      throw new AssertionError("Lookup for non-exisistent Object : " + oid + " lookup context is : " + this);
+    }
+
   }
 
   private static final class PendingList {

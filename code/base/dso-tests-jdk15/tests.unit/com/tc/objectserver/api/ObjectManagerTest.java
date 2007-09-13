@@ -1556,6 +1556,10 @@ public class ObjectManagerTest extends BaseDSOTestCase {
       return newIDS;
     }
 
+    public void missingObject(ObjectID oid) {
+      throw new AssertionError("Missing Object : " + oid);
+    }
+
   }
 
   private static class TestPhysicalDNA implements DNA {
@@ -1803,11 +1807,10 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     public void notifyGCComplete() {
       return;
     }
-    
+
     public void notifyGCDeleteStarted() {
       return;
     }
-
 
     public void blockUntilReadyToGC() {
       return;

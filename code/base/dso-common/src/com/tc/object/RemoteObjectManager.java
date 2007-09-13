@@ -7,9 +7,10 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.session.SessionID;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
- * @author steve local representation of the remote object manager
+ * Local representation of the remote object manager
  */
 public interface RemoteObjectManager {
 
@@ -22,6 +23,8 @@ public interface RemoteObjectManager {
   public void addRoot(String name, ObjectID id);
 
   public void addAllObjects(SessionID sessionID, long batchID, Collection dnas);
+
+  public void objectsNotFoundFor(SessionID sessionID, long batchID, Set missingObjectIDs);
 
   public void removed(ObjectID id);
 

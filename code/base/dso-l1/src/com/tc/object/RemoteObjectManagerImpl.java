@@ -35,8 +35,6 @@ import java.util.Map.Entry;
 /**
  * This class is a kludge but I think it will do the trick for now. It is responsible for any communications to the
  * server for object retrieval and removal
- * 
- * @author steve
  */
 public class RemoteObjectManagerImpl implements RemoteObjectManager {
 
@@ -48,6 +46,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
   private final Map                                dnaRequests               = new THashMap();
   private final Map                                outstandingObjectRequests = new THashMap();
   private final Map                                outstandingRootRequests   = new THashMap();
+  private final Set                                missingObjectIDs          = new HashSet();
   private long                                     objectRequestIDCounter    = 0;
   private final ObjectRequestMonitor               requestMonitor;
   private final ChannelIDProvider                  cip;
@@ -153,9 +152,11 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
 
     ObjectRequestContext ctxt = new ObjectRequestContextImpl(this.cip.getChannelID(),
                                                              new ObjectRequestID(objectRequestIDCounter++), id, depth);
-    while (!dnaRequests.containsKey(id) || dnaRequests.get(id) == null) {
+    while (!dnaRequests.containsKey(id) || dnaRequests.get(id) == null || missingObjectIDs.contains(id)) {
       waitUntilRunning();
-      if (!dnaRequests.containsKey(id)) {
+      if (missingObjectIDs.contains(id)) {
+        throw new AssertionError("Requested Object is missing : " + id + " Missing Oids = " + missingObjectIDs);
+      } else if (!dnaRequests.containsKey(id)) {
         sendRequest(ctxt);
       } else if (!outstandingObjectRequests.containsKey(id)) {
         outstandingObjectRequests.put(id, ctxt);
@@ -262,6 +263,18 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
       }
       basicAddObject(dna);
     }
+    notifyAll();
+  }
+
+  public synchronized void objectsNotFoundFor(SessionID sessionID, long batchID, Set missingOIDs) {
+    waitUntilRunning();
+    if (!sessionManager.isCurrentSession(sessionID)) {
+      logger.warn("Ignoring Missing Object IDs " + missingOIDs + " from a different session: " + sessionID + ", "
+                  + sessionManager);
+      return;
+    }
+    logger.warn("Received Missing Object IDs from server : " + missingOIDs);
+    missingObjectIDs.addAll(missingOIDs);
     notifyAll();
   }
 

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
@@ -9,6 +10,7 @@ import com.tc.object.session.SessionID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.Collection;
+import java.util.Set;
 
 public class TestRemoteObjectManager implements RemoteObjectManager {
 
@@ -67,6 +69,10 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
   }
 
   public DNA retrieve(ObjectID id, int depth) {
+    throw new ImplementMe();
+  }
+
+  public void objectsNotFoundFor(SessionID sessionID, long batchID, Set missingObjectIDs) {
     throw new ImplementMe();
   }
 

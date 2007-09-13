@@ -239,6 +239,10 @@ public class ClientHandshakeManagerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
+    public void objectsNotFoundFor(SessionID sessionID, long batchID, Set missingObjectIDs) {
+      throw new ImplementMe();
+    }
+
   }
 
   private static class TestClientHandshakeMessageFactory implements ClientHandshakeMessageFactory {

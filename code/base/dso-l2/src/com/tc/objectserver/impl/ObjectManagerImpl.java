@@ -181,11 +181,10 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     syncAssertNotInShutdown();
 
     if (collector.isPausingOrPaused()) {
-      makePending(channelID, new ObjectManagerLookupContext(responseContext, false, false), maxReachableObjects);
+      makePending(channelID, new ObjectManagerLookupContext(responseContext, false), maxReachableObjects);
       return false;
     }
-    return basicLookupObjectsFor(channelID, new ObjectManagerLookupContext(responseContext, false, false),
-                                 maxReachableObjects);
+    return basicLookupObjectsFor(channelID, new ObjectManagerLookupContext(responseContext, false), maxReachableObjects);
   }
 
   public Iterator getRoots() {
@@ -215,8 +214,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private ManagedObject lookup(ObjectID id, boolean missingOk) {
     syncAssertNotInShutdown();
 
-    WaitForLookupContext waitContext = new WaitForLookupContext(id);
-    ObjectManagerLookupContext context = new ObjectManagerLookupContext(waitContext, missingOk, true);
+    WaitForLookupContext waitContext = new WaitForLookupContext(id, missingOk);
+    ObjectManagerLookupContext context = new ObjectManagerLookupContext(waitContext, true);
     basicLookupObjectsFor(ChannelID.NULL_ID, context, -1);
 
     ManagedObject mo = waitContext.getLookedUpObject();
@@ -259,8 +258,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
     if (rv == null) {
       // Request Faulting in a different stage and give back a "Referenced" proxy
-      ManagedObjectFaultingContext mofc = new ManagedObjectFaultingContext(id, context.removeOnRelease(), context
-          .isMissingOK());
+      ManagedObjectFaultingContext mofc = new ManagedObjectFaultingContext(id, context.removeOnRelease());
       faultSink.add(mofc);
 
       // don't account for a cache "miss" unless this was a real request
@@ -272,8 +270,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       FaultingManagedObjectReference fmr = (FaultingManagedObjectReference) rv;
       if (!fmr.isFaultingInProgress()) {
         references.remove(id);
-        if (context.isMissingOK()) { return null; }
-        throw new AssertionError("Request for a non-existent object: " + id + " context: " + context);
+        logger.warn("Request for non-exisitent object : " + id + " context = " + context);
+        context.missingObject(id);
+        return null;
       }
       if (context.isNewRequest()) stats.cacheMiss();
     } else {
@@ -396,10 +395,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       // 2) to Fault objects that are not available
       ManagedObjectReference reference = getOrLookupReference(context, id);
       if (reference == null) {
-        Assert.assertTrue(context.isMissingOK());
         continue;
-      }
-      if (available && reference.isReferenced()) {
+      } else if (available && reference.isReferenced()) {
         available = false;
         // Setting only the first referenced object to process Pending. If objects are being faulted in, then this
         // will ensure that we don't run processPending multiple times unnecessarily.
@@ -813,14 +810,11 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private static class ObjectManagerLookupContext implements ObjectManagerResultsContext {
 
     private final ObjectManagerResultsContext responseContext;
-    private final boolean                     missingOK;
     private final boolean                     removeOnRelease;
     private int                               processedCount = 0;
 
-    public ObjectManagerLookupContext(ObjectManagerResultsContext responseContext, boolean missingOK,
-                                      boolean removeOnRelease) {
+    public ObjectManagerLookupContext(ObjectManagerResultsContext responseContext, boolean removeOnRelease) {
       this.responseContext = responseContext;
-      this.missingOK = missingOK;
       this.removeOnRelease = removeOnRelease;
     }
 
@@ -834,10 +828,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
     public boolean isNewRequest() {
       return processedCount == 0;
-    }
-
-    public boolean isMissingOK() {
-      return missingOK;
     }
 
     public boolean removeOnRelease() {
@@ -856,6 +846,10 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       responseContext.setResults(results);
     }
 
+    public void missingObject(ObjectID oid) {
+      responseContext.missingObject(oid);
+    }
+
     public String toString() {
       return "ObjectManagerLookupContext : [ processed count = " + processedCount + ", responseContext = "
              + responseContext + "] ";
@@ -865,12 +859,14 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private static class WaitForLookupContext implements ObjectManagerResultsContext {
 
     private final ObjectID lookupID;
+    private final boolean  missingOk;
     private final Set      lookupIDs = new HashSet();
     private boolean        resultSet = false;
     private ManagedObject  result;
 
-    public WaitForLookupContext(ObjectID id) {
+    public WaitForLookupContext(ObjectID id, boolean missingOk) {
       this.lookupID = id;
+      this.missingOk = missingOk;
       lookupIDs.add(id);
     }
 
@@ -902,6 +898,14 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         Assert.assertNotNull(result);
       }
       notifyAll();
+    }
+
+    public void missingObject(ObjectID oid) {
+      if (!missingOk) { throw new AssertionError("Lookup of non-exisiting object : " + oid + " " + this); }
+    }
+
+    public String toString() {
+      return "WaitForLookupContext [ " + lookupID + ", missingOK = " + missingOk + "]";
     }
 
   }

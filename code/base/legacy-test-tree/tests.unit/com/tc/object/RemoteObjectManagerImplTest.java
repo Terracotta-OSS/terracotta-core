@@ -4,6 +4,8 @@
  */
 package com.tc.object;
 
+import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
+
 import com.tc.exception.ImplementMe;
 import com.tc.logging.NullTCLogger;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -14,9 +16,11 @@ import com.tc.object.msg.RequestManagedObjectMessageFactory;
 import com.tc.object.msg.RequestRootMessage;
 import com.tc.object.msg.RequestRootMessageFactory;
 import com.tc.object.session.NullSessionManager;
+import com.tc.object.session.SessionID;
 import com.tc.objectserver.core.api.TestDNA;
 import com.tc.test.TCTestCase;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -48,6 +52,32 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     manager = new RemoteObjectManagerImpl(new NullTCLogger(), channelIDProvider, rrmf, rmomf,
                                           new NullObjectRequestMonitor(), 500, new NullSessionManager());
     rt = new RetrieverThreads(Thread.currentThread().getThreadGroup(), manager);
+  }
+
+  public void testMissingObjectIDsThrowsError() throws Exception {
+    final CyclicBarrier barrier = new CyclicBarrier(2);
+    Thread thread = new Thread("Test Thread Saro") {
+      public void run() {
+        System.err.println("Doing a bogus lookup");
+        try {
+          manager.retrieve(new ObjectID(Long.MAX_VALUE));
+          System.err.println("Didnt throw assertion : Not calling barrier()");
+        } catch (AssertionError e) {
+          System.err.println("Got assertion as expected : " + e);
+          try {
+            barrier.barrier();
+          } catch (Exception e1) {
+            e1.printStackTrace();
+          }
+        }
+      }
+    };
+    thread.start();
+    ThreadUtil.reallySleep(5000);
+    Set missingSet = new HashSet();
+    missingSet.add(new ObjectID(Long.MAX_VALUE));
+    manager.objectsNotFoundFor(SessionID.NULL_ID, 1, missingSet);
+    barrier.barrier();
   }
 
   public void testRequestOutstandingRequestRootMessages() throws Exception {

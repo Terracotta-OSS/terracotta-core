@@ -1,17 +1,16 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.api;
 
+import com.tc.object.ObjectID;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author steve
- */
 public class TestObjectManagerResultsContext implements ObjectManagerResultsContext {
 
   private final Map results;
@@ -38,5 +37,8 @@ public class TestObjectManagerResultsContext implements ObjectManagerResultsCont
     return Collections.EMPTY_SET;
   }
 
+  public void missingObject(ObjectID oid) {
+    throw new AssertionError("Missing Object : " + oid);
+  }
 
 }
