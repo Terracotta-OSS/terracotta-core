@@ -16,19 +16,7 @@ import java.util.List;
 public class MemoryPoolsTest extends TCTestCase {
 
   public MemoryPoolsTest() {
-    if (Vm.isIBM()) {
-      // IBM doesn't have these beans
-      disableAllUntil(new Date(Long.MAX_VALUE));
-      
-      // make sure that these beans are actually not present in the IBM JDK,
-      // in case this changes in later revisions
-      try {
-        new TCMemoryManagerJdk15PoolMonitor();
-        fail("Expecting AssertionError");
-      } catch (AssertionError e) {
-        assertNotNull(e);
-      }
-    }
+    //
   }
 
   public void testMemoryPools() throws Exception {
