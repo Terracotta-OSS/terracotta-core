@@ -32,20 +32,16 @@ public class TCJUnitFormatter implements JUnitResultFormatter {
     boolean passed = (theTest.errorCount() == 0 && theTest.failureCount() == 0);
 
     if (!passed) {
-      System.err.println("*** " + theTest.getName() + " FAILED: " + this.currentExceptions.size() + " exceptions:");
+      System.out.println("*** " + theTest.getName() + " has " + this.currentExceptions.size() + " exceptions:");
       Iterator iter = this.currentExceptions.iterator();
       while (iter.hasNext()) {
-        System.err.println(iter.next().toString());
-        System.err.println("");
-        System.err.flush();
+        System.out.println(iter.next().toString());
+        System.out.println();        
       }
-    } else {
-      System.out.println("*** " + theTest.getName() + " PASSED.");
-      System.out.println();
-    }
-
+    } 
+    
     this.currentExceptions.clear();
-    System.out.println(" --- TEST FINISHED ---");
+    System.out.println(" --- TEST FINISHED: " + (passed ? "PASSED" : "FAILED") + " ---");
   }
 
   public void setOutput(OutputStream theStream) {
