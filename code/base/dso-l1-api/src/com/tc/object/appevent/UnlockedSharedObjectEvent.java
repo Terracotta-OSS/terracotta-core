@@ -4,6 +4,10 @@
  */
 package com.tc.object.appevent;
 
+/**
+ * Event is fired when there is an attempt to access a shared object outside the scope of
+ * a shared lock.
+ */
 public class UnlockedSharedObjectEvent extends AbstractLockEvent {
 
   private static final long serialVersionUID = 1223477247234324L;
@@ -12,6 +16,9 @@ public class UnlockedSharedObjectEvent extends AbstractLockEvent {
     super(context);
   }
 
+  /**
+   * @return Get context specific to this event
+   */
   public UnlockedSharedObjectEventContext getUnlockedSharedObjectEventContext() {
     return (UnlockedSharedObjectEventContext) getApplicationEventContext();
   }

@@ -6,6 +6,9 @@ package com.tc.object.appevent;
 
 import com.tc.object.tx.UnlockedSharedObjectException;
 
+/**
+ * Event context for {@link UnlockedSharedObjectEvent}
+ */
 public class UnlockedSharedObjectEventContext extends AbstractLockEventContext {
 
   private static final long serialVersionUID = 4788562594133534828L;

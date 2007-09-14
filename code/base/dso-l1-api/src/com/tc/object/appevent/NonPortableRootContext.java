@@ -5,6 +5,9 @@ package com.tc.object.appevent;
 
 import com.tc.util.NonPortableReason;
 
+/**
+ * Context when a non-portable object is set as a root
+ */
 public class NonPortableRootContext extends NonPortableEventContext {
 
   private static final long serialVersionUID = -556002400100752261L;
@@ -16,10 +19,16 @@ public class NonPortableRootContext extends NonPortableEventContext {
     this.rootName = rootName;
   }
 
+  /**
+   * @return Get root field name
+   */
   public String getFieldName() {
     return rootName;
   }
 
+  /**
+   * @return Get root field value being set
+   */
   public Object getFieldValue() {
     return getPojo();
   }

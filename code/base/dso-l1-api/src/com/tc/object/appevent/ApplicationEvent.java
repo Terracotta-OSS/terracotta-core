@@ -11,7 +11,13 @@ import java.io.Serializable;
  * unlocked shared object modification.
  */
 public interface ApplicationEvent extends Serializable {
+  /**
+   * @return The context in which this event occurred
+   */
   ApplicationEventContext getApplicationEventContext();
 
+  /**
+   * @return The event message
+   */
   String getMessage();
 }

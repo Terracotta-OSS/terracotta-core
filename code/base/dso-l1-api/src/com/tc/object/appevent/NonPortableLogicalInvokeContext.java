@@ -5,6 +5,9 @@ package com.tc.object.appevent;
 
 import com.tc.util.NonPortableReason;
 
+/**
+ * Event context for a non-portable event on a logical invoke.
+ */
 public class NonPortableLogicalInvokeContext extends NonPortableEventContext {
 
   private static final long serialVersionUID = -7205127466022191118L;
@@ -21,14 +24,23 @@ public class NonPortableLogicalInvokeContext extends NonPortableEventContext {
     this.paramIndex = index;
   }
 
+  /**
+   * @return Get logical method being called
+   */
   public String getLogicalMethod() {
     return logicalMethod;
   }
 
+  /**
+   * @return Get parameters being passed on method call
+   */
   public Object[] getParameters() {
     return params;
   }
   
+  /**
+   * @return Get parameter index that was non-portable
+   */
   public int getParameterIndex() {
     return paramIndex;
   }

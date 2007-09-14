@@ -4,6 +4,10 @@
  */
 package com.tc.object.appevent;
 
+/**
+ * This event is fired when a transaction with read-only access is attempting
+ * to modify a shared object.
+ */
 public class ReadOnlyObjectEvent extends AbstractLockEvent {
 
   private static final long serialVersionUID = 1223477247234324L;
@@ -12,6 +16,9 @@ public class ReadOnlyObjectEvent extends AbstractLockEvent {
     super(context);
   }
 
+  /**
+   * @return Get event context specific to this event
+   */
   public ReadOnlyObjectEventContext getReadOnlyObjectEventContext() {
     return (ReadOnlyObjectEventContext) getAbstractLockEventContext();
   }

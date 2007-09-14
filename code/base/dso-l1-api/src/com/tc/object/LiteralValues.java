@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Responsible for handling literals
+ * Responsible for handling literal values
  */
 public class LiteralValues {
 
