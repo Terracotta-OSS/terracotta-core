@@ -11,9 +11,20 @@ import com.tc.aspectwerkz.definition.deployer.AspectModuleDeployer;
 public class SessionAspectModule implements AspectModule {
 
   public void deploy(AspectModuleDeployer deployer) {
-    // Only one of these will actually find something to change
-    addWL8Aspect(deployer);
-    addWL9Aspect(deployer);
+    if(isWL9()) {
+      addWL9Aspect(deployer);
+    } else {
+      addWL8Aspect(deployer);
+    }
+  }
+  
+  private boolean isWL9() {
+    try {
+        Class.forName("weblogic.kernel.KernelInitializer", false, ClassLoader.getSystemClassLoader());
+    } catch(ClassNotFoundException e) {
+        return false;
+    }
+    return true;
   }
 
   private void addWL8Aspect(AspectModuleDeployer deployer) {
