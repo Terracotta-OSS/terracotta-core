@@ -283,6 +283,11 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
     if (!removeObjects.contains(dna.getObjectID())) basicAddObject(dna);
     notifyAll();
   }
+  
+//Used only for testing
+  synchronized int getDNACacheSize() {
+    return lruDNA.size();
+  }
 
   private void basicAddObject(DNA dna) {
     dnaRequests.put(dna.getObjectID(), dna);

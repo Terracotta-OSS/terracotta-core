@@ -5,11 +5,9 @@
 package com.tc.runtime;
 
 import com.tc.test.TCTestCase;
-import com.tc.util.runtime.Vm;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 

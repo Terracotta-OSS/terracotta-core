@@ -11,6 +11,7 @@ import com.tc.logging.NullTCLogger;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TestChannelIDProvider;
+import com.tc.object.dna.api.DNA;
 import com.tc.object.msg.RequestManagedObjectMessage;
 import com.tc.object.msg.RequestManagedObjectMessageFactory;
 import com.tc.object.msg.RequestRootMessage;
@@ -22,6 +23,7 @@ import com.tc.test.TCTestCase;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.concurrent.ThreadUtil;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,6 +54,24 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     manager = new RemoteObjectManagerImpl(new NullTCLogger(), channelIDProvider, rrmf, rmomf,
                                           new NullObjectRequestMonitor(), 500, new NullSessionManager());
     rt = new RetrieverThreads(Thread.currentThread().getThreadGroup(), manager);
+  }
+
+  public void testDNACacheClearing() {
+    Collection dnas;
+    int dnaCollectionCount = 4;
+    for (int i = 0; i < dnaCollectionCount; i++) {
+      dnas = new ArrayList();
+      dnas.add(new TestDNA(new ObjectID(i)));
+      manager.addAllObjects(new SessionID(i), i, dnas);
+    }
+    assertEquals(dnaCollectionCount, manager.getDNACacheSize());
+    DNA dna = manager.retrieve(new ObjectID(0));
+    assertNotNull(dna);
+    assertEquals(dnaCollectionCount - 1, manager.getDNACacheSize());
+    manager.pause();
+    manager.starting();
+    manager.clear();
+    assertEquals(0, manager.getDNACacheSize());
   }
 
   public void testMissingObjectIDsThrowsError() throws Exception {
