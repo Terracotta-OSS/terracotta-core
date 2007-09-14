@@ -681,6 +681,11 @@ class TestRunRecord
         @end_time
     end
 
+    # Where should we put the list of classes that have failed tests?
+    def failed_test_classnames_file
+        FilePath.new(@testrun_directory, "failed-tests.txt")
+    end
+      
     private
     # If marshalling is enabled, and there's no marshalled version of this object on disk
     # yet, puts a copy there.
@@ -703,11 +708,6 @@ class TestRunRecord
         end
     end
 
-    # Where should we put the list of classes that have failed tests?
-    def failed_test_classnames_file
-        FilePath.new(@testrun_directory, "failed-tests.txt")
-    end
-    
     # Turns a date and time (a Ruby Time object) into a human-readable string. Can handle nil
     # input values, as well.
     def time_string(time)

@@ -807,7 +807,10 @@ END
         end, testrun_record)
       ensure
         testrun_record.tearDown
-
+        # copy failed-tests.txt file to the aggreation directory
+        if monkey?
+          FileUtils.cp(testrun_record.failed_test_classnames_file.to_s, tests_aggregation_directory.to_s)
+        end
         puts "\n\n"
         puts "========================================================================"
         puts "Test Results:\n\n"
