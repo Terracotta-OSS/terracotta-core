@@ -268,6 +268,10 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, WaitTimer
                                         Collection pendingLockContexts, Collection pendingTryLockContexts,
                                         Sink lockResponseSink) {
     assertNotStarting();
+    if (!channelManager.isActiveID(cid)) {
+      logger.warn("Ignoring Recall Commit message from disconnected client : " + cid + " : Lock ID : " + lid);
+      return;
+    }
     Lock lock = (Lock) this.locks.get(lid);
     Assert.assertNotNull(lock);
 
