@@ -19,6 +19,10 @@ import com.terracotta.session.util.SessionCookieWriter;
 import com.terracotta.session.util.SessionIdGenerator;
 import com.terracotta.session.util.Timestamp;
 
+import java.util.Collections;
+import java.util.Set;
+import java.util.TreeSet;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -39,6 +43,8 @@ public class TerracottaSessionManager implements SessionManager {
   private final int                    debugServerHopsInterval;
   private int                          serverHopsDetected = 0;
   private final boolean                debugInvalidate;
+
+  private static final Set             excludedVHosts     = loadExcludedVHosts();
 
   public TerracottaSessionManager(SessionIdGenerator sig, SessionCookieWriter scw, LifecycleEventMgr eventMgr,
                                   ContextMgr contextMgr, RequestResponseFactory factory, ConfigProperties cp) {
@@ -95,6 +101,26 @@ public class TerracottaSessionManager implements SessionManager {
     this.debugServerHops = cp.isDebugServerHops();
     this.debugServerHopsInterval = cp.getDebugServerHopsInterval();
     this.debugInvalidate = cp.isDebugSessionInvalidate();
+  }
+
+  private static Set loadExcludedVHosts() {
+    String list = ManagerUtil.getTCProperties().getProperty("session.vhosts.excluded", true);
+    list = (list == null) ? "" : list.replaceAll("\\s", "");
+
+    Set set = new TreeSet();
+    String[] vhosts = list.split(",");
+    for (int i = 0; i < vhosts.length; i++) {
+      String vhost = vhosts[i];
+      if (vhost != null && vhost.length() > 0) {
+        set.add(vhost);
+      }
+    }
+
+    if (set.size() > 0) {
+      ManagerUtil.getLogger("com.tc.TerracottaSessionManager").warn("Excluded vhosts for sessions: " + set);
+    }
+
+    return Collections.unmodifiableSet(set);
   }
 
   public TerracottaRequest preprocess(HttpServletRequest req, HttpServletResponse res) {
@@ -417,6 +443,12 @@ public class TerracottaSessionManager implements SessionManager {
   // XXX: move this method?
   public static boolean isDsoSessionApp(HttpServletRequest request) {
     Assert.pre(request != null);
+
+    if (excludedVHosts.contains(request.getServerName())) { return false; }
+
+    String hostHeader = request.getHeader("Host");
+    if (hostHeader != null && excludedVHosts.contains(hostHeader)) { return false; }
+
     final String appName = DefaultContextMgr.computeAppName(request);
     return ClassProcessorHelper.isDSOSessions(appName);
   }
