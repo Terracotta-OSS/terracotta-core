@@ -32,14 +32,11 @@ public interface EventHandler {
    * 
    * @param context
    */
-  public void initialize(ConfigurationContext context);
+  public void initializeContext(ConfigurationContext context);
 
   /**
    * Shut down the stage
    */
   public void destroy();
 
-  public void logOnEnter(EventContext context);
-  
-  public void logOnExit(EventContext context);
 }

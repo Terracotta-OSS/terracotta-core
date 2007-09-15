@@ -22,8 +22,10 @@ import java.util.Set;
  * transaction.
  */
 public class TransactionAccountImpl implements TransactionAccount {
-  final ChannelID   clientID;
-  private final Map waitees = Collections.synchronizedMap(new HashMap());
+  final ChannelID            clientID;
+  private final Map          waitees = Collections.synchronizedMap(new HashMap());
+  private boolean            dead    = false;
+  private CallBackOnComplete callBack;
 
   public TransactionAccountImpl(ChannelID clientID) {
     this.clientID = clientID;
@@ -38,6 +40,7 @@ public class TransactionAccountImpl implements TransactionAccount {
   }
 
   public void incommingTransactions(Set txnIDs) {
+    Assert.assertFalse(dead);
     for (Iterator i = txnIDs.iterator(); i.hasNext();) {
       ServerTransactionID stxnID = (ServerTransactionID) i.next();
       createRecord(stxnID.getClientTransactionID());
@@ -58,7 +61,7 @@ public class TransactionAccountImpl implements TransactionAccount {
     if (transactionRecord == null) return false;
     synchronized (transactionRecord) {
       transactionRecord.remove(waitee);
-      return checkCompleted(requestID, transactionRecord);
+      return checkCompletedAndRemove(requestID, transactionRecord);
     }
   }
 
@@ -78,33 +81,23 @@ public class TransactionAccountImpl implements TransactionAccount {
     TransactionRecord transactionRecord = getRecord(requestID);
     synchronized (transactionRecord) {
       transactionRecord.applyAndCommitSkipped();
-      return checkCompleted(requestID, transactionRecord);
+      return checkCompletedAndRemove(requestID, transactionRecord);
     }
   }
 
   public boolean applyCommitted(TransactionID requestID) {
-    TransactionRecord transactionRecord = getRecord(requestID);// (TransactionRecord) waitees.get(requestID);
-    if (transactionRecord == null) {
-      // this can happen when a client crashes and there are still some unprocessed apply messages in the
-      // queue. We dont want to try to send acks for such scenario.
-      return false;
-    }
+    TransactionRecord transactionRecord = getRecord(requestID);
     synchronized (transactionRecord) {
       transactionRecord.applyCommitted();
-      return checkCompleted(requestID, transactionRecord);
+      return checkCompletedAndRemove(requestID, transactionRecord);
     }
   }
 
   public boolean broadcastCompleted(TransactionID requestID) {
-    TransactionRecord transactionRecord = getRecord(requestID);// (TransactionRecord) waitees.get(requestID);
-    if (transactionRecord == null) {
-      // this could happen when a client crashes and there are still some unprocessed apply messages in the
-      // queue. We dont want to try to send acks for such scenario.
-      return false;
-    }
+    TransactionRecord transactionRecord = getRecord(requestID);
     synchronized (transactionRecord) {
       transactionRecord.broadcastCompleted();
-      return checkCompleted(requestID, transactionRecord);
+      return checkCompletedAndRemove(requestID, transactionRecord);
     }
   }
 
@@ -112,7 +105,7 @@ public class TransactionAccountImpl implements TransactionAccount {
     TransactionRecord transactionRecord = getRecord(requestID);
     synchronized (transactionRecord) {
       transactionRecord.relayTransactionComplete();
-      return checkCompleted(requestID, transactionRecord);
+      return checkCompletedAndRemove(requestID, transactionRecord);
     }
   }
 
@@ -129,7 +122,6 @@ public class TransactionAccountImpl implements TransactionAccount {
     synchronized (waitees) {
       for (Iterator i = new HashSet(waitees.keySet()).iterator(); i.hasNext();) {
         TransactionID requester = (TransactionID) i.next();
-        // if (((Set) waitees.get(requester)).contains(waitee))
         if (getRecord(requester).contains(waitee)) {
           requesters.add(requester);
         }
@@ -138,12 +130,15 @@ public class TransactionAccountImpl implements TransactionAccount {
     return requesters;
   }
 
-  private boolean checkCompleted(TransactionID requestID, TransactionRecord record) {
-    if (record.isComplete()) {
-      waitees.remove(requestID);
-      return true;
+  private boolean checkCompletedAndRemove(TransactionID requestID, TransactionRecord record) {
+    synchronized (waitees) {
+      if (record.isComplete()) {
+        waitees.remove(requestID);
+        invokeCallBackOnCompleteIfNecessary();
+        return !dead;
+      }
+      return false;
     }
-    return false;
   }
 
   public void addAllPendingServerTransactionIDsTo(HashSet txnIDs) {
@@ -152,6 +147,20 @@ public class TransactionAccountImpl implements TransactionAccount {
         TransactionID txnID = (TransactionID) i.next();
         txnIDs.add(new ServerTransactionID(clientID, txnID));
       }
+    }
+  }
+
+  public void clientDead(CallBackOnComplete cb) {
+    synchronized (waitees) {
+      this.callBack = cb;
+      this.dead = true;
+      invokeCallBackOnCompleteIfNecessary();
+    }
+  }
+
+  private void invokeCallBackOnCompleteIfNecessary() {
+    if (dead && waitees.isEmpty()) {
+      callBack.onComplete(clientID);
     }
   }
 

@@ -68,4 +68,8 @@ public class PassiveTransactionAccount implements TransactionAccount {
   public void incommingTransactions(Set serverTxnsIDs) {
     txnIDs.addAll(serverTxnsIDs);
   }
+
+  public void clientDead(CallBackOnComplete callBack) {
+    throw new AssertionError("This should never be called.");
+  }
 }

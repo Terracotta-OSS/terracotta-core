@@ -10,6 +10,7 @@ import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Source;
+import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.api.Stage;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
@@ -51,7 +52,7 @@ public class StageImpl implements Stage {
   }
 
   public void start(ConfigurationContext context) {
-    handler.initialize(context);
+    handler.initializeContext(context);
     startThreads();
   }
 
@@ -135,11 +136,10 @@ public class StageImpl implements Stage {
               }
             }
           } else if (ctxt != null) {
-            handler.logOnEnter(ctxt);
-            try {
+            if (ctxt instanceof SpecializedEventContext) {
+              ((SpecializedEventContext) ctxt).execute();
+            } else {
               handler.handleEvent(ctxt);
-            } finally {
-              handler.logOnExit(ctxt);
             }
           }
         } catch (InterruptedException ie) {

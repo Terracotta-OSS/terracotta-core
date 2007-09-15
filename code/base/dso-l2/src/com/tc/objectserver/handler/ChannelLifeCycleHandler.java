@@ -8,6 +8,7 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
+import com.tc.async.impl.InBandMoveToNextSink;
 import com.tc.logging.TCLogger;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.CommunicationsManager;
@@ -20,17 +21,16 @@ import com.tc.objectserver.context.ChannelStateEventContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionBatchManager;
-import com.tc.util.concurrent.ThreadUtil;
 
-/**
- * @author steve
- */
-public class ChannelLifeCycleHandler extends AbstractEventHandler {
+public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSOChannelManagerEventListener {
   private final ServerTransactionManager transactionManager;
   private final TransactionBatchManager  transactionBatchManager;
   private TCLogger                       logger;
   private final CommunicationsManager    commsManager;
   private final DSOChannelManager        channelMgr;
+  private Sink                           channelSink;
+  private Sink hydrateSink;
+  private Sink processTransactionSink;
 
   public ChannelLifeCycleHandler(CommunicationsManager commsManager, ServerTransactionManager transactionManager,
                                  TransactionBatchManager transactionBatchManager, DSOChannelManager channelManager) {
@@ -59,23 +59,21 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler {
   }
 
   private void channelRemoved(ChannelID channelID) {
-    broadcastClusterMemebershipMessage(ClusterMembershipMessage.EventType.NODE_DISCONNECTED, channelID);
+    broadcastClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_DISCONNECTED, channelID);
     if (commsManager.isInShutdown()) {
       logger.info("Ignoring transport disconnect for " + channelID + " while shutting down.");
     } else {
-      // Giving 0.5 sec for the server to catch up with any pending transactions. Not a fool prove mechanism.
-      ThreadUtil.reallySleep(500);
-      logger.info("Received transport disconnect.  Killing client " + channelID);
+      logger.info("Received transport disconnect.  Shutting down client " + channelID);
       transactionManager.shutdownClient(channelID);
       transactionBatchManager.shutdownClient(channelID);
     }
   }
 
   private void channelCreated(ChannelID channelID) {
-    broadcastClusterMemebershipMessage(ClusterMembershipMessage.EventType.NODE_CONNECTED, channelID);
+    broadcastClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_CONNECTED, channelID);
   }
 
-  private void broadcastClusterMemebershipMessage(int eventType, ChannelID channelID) {
+  private void broadcastClusterMembershipMessage(int eventType, ChannelID channelID) {
     MessageChannel[] channels = channelMgr.getActiveChannels();
     for (int i = 0; i < channels.length; i++) {
       MessageChannel channel = channels[i];
@@ -93,24 +91,23 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler {
     super.initialize(context);
     ServerConfigurationContext scc = (ServerConfigurationContext) context;
     this.logger = scc.getLogger(ChannelLifeCycleHandler.class);
+    channelSink = scc.getStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE).getSink();
+    hydrateSink =  scc.getStage(ServerConfigurationContext.HYDRATE_MESSAGE_SINK).getSink();
+    processTransactionSink =  scc.getStage(ServerConfigurationContext.PROCESS_TRANSACTION_STAGE).getSink();
   }
 
-  public static class EventListener implements DSOChannelManagerEventListener {
+  public void channelCreated(MessageChannel channel) {
+    channelSink.add(new ChannelStateEventContext(ChannelStateEventContext.CREATE, channel.getChannelID()));
+  }
 
-    private final Sink sink;
-
-    public EventListener(Sink sink) {
-      this.sink = sink;
-    }
-
-    public void channelCreated(MessageChannel channel) {
-      sink.add(new ChannelStateEventContext(ChannelStateEventContext.CREATE, channel.getChannelID()));
-    }
-
-    public void channelRemoved(MessageChannel channel) {
-      sink.add(new ChannelStateEventContext(ChannelStateEventContext.REMOVE, channel.getChannelID()));
-    }
-
+  
+  public void channelRemoved(MessageChannel channel) {
+    // We want all the messages in the system from this client to reach its destinations before processing this request.
+    // esp. hydrate stage and process transaction stage. This goo is for that.
+    final ChannelStateEventContext disconnectEvent = new ChannelStateEventContext(ChannelStateEventContext.REMOVE, channel.getChannelID());
+    InBandMoveToNextSink context1 = new InBandMoveToNextSink(disconnectEvent, channelSink);
+    InBandMoveToNextSink context2 = new InBandMoveToNextSink(context1, processTransactionSink);
+    hydrateSink.add(context2);
   }
 
 }

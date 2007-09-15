@@ -528,11 +528,13 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
                              new RespondToRequestLockHandler(), 1, maxStageSize);
     Stage requestLock = stageManager.createStage(ServerConfigurationContext.REQUEST_LOCK_STAGE,
                                                  new RequestLockUnLockHandler(), 1, maxStageSize);
-    Stage channelLifecycleStage = stageManager
-        .createStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE,
-                     new ChannelLifeCycleHandler(communicationsManager, transactionManager, transactionBatchManager,
-                                                 channelManager), 1, maxStageSize);
-    channelManager.addEventListener(new ChannelLifeCycleHandler.EventListener(channelLifecycleStage.getSink()));
+    ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(communicationsManager,
+                                                                                  transactionManager,
+                                                                                  transactionBatchManager,
+                                                                                  channelManager);
+    stageManager.createStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE, channelLifeCycleHandler, 1,
+                             maxStageSize);
+    channelManager.addEventListener(channelLifeCycleHandler);
 
     SampledCounter globalObjectFaultCounter = sampledCounterManager.createCounter(new SampledCounterConfig(1, 300,
                                                                                                            true, 0L));
