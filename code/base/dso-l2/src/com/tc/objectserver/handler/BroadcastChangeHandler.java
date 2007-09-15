@@ -138,8 +138,7 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
     return 0;
   }
 
-  public void initialize(ConfigurationContext context) {
-    super.initialize(context);
+  protected void initialize(ConfigurationContext context) {
     ServerConfigurationContext scc = (ServerConfigurationContext) context;
     this.channelManager = scc.getChannelManager();
     this.clientStateManager = scc.getClientStateManager();

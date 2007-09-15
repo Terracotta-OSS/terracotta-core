@@ -68,7 +68,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     context.addStage(ServerConfigurationContext.COMMIT_CHANGES_STAGE, stageCo);
     context.lockManager = lockManager;
 
-    handler.initialize(context);
+    handler.initializeContext(context);
   }
 
   public void testLockManagerNotifyIsCalled() throws Exception {

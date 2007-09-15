@@ -20,12 +20,12 @@ import java.util.Set;
 
 public class TestClientStateManager implements ClientStateManager {
 
-  public boolean    shutdownClientCalled = false;
-  public Collection allClientIDs         = new HashSet();
-  public List       addReferenceCalls    = new ArrayList();
+  public ChannelID  shutdownClient    = null;
+  public Collection allClientIDs      = new HashSet();
+  public List       addReferenceCalls = new ArrayList();
 
   public void shutdownClient(ChannelID deadClient) {
-    this.shutdownClientCalled = true;
+    this.shutdownClient = deadClient;
   }
 
   public void addReference(ChannelID clientID, ObjectID objectID) {

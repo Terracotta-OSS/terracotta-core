@@ -78,7 +78,7 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
     l2Coordinator = new L2HADisabledCooridinator();
     cctxt = new TestServerConfigurationContext();
     batchReader = new SynchronizedRef(null);
-    handler.initialize(cctxt);
+    handler.initializeContext(cctxt);
   }
 
   public void tests() throws Exception {

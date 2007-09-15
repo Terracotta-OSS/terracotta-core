@@ -309,7 +309,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     assertTrue(action.clientID == null && action.txID == null);
     assertTrue(transactionManager.isWaiting(cid1, tid3));
     transactionManager.shutdownClient(cid3);
-    assertTrue(this.clientStateManager.shutdownClientCalled);
+    assertEquals(cid3, this.clientStateManager.shutdownClient);
     assertTrue(transactionManager.isWaiting(cid1, tid3));
     transactionManager.acknowledgement(cid1, tid3, cid2);
     doStages(cid1, txns);
@@ -321,6 +321,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     gtxm.clear();
     txns.clear();
     txnIDs.clear();
+    clientStateManager.shutdownClient = null;
 
     sequenceID = new SequenceID(4);
     ServerTransaction tx4 = new ServerTransactionImpl(gtxm, new TxnBatchID(4), tid4, sequenceID, lockIDs, cid1, dnas,
@@ -333,7 +334,35 @@ public class ServerTransactionManagerImplTest extends TestCase {
     transactionManager.addWaitingForAcknowledgement(cid1, tid4, cid3);
     transactionManager.shutdownClient(cid1);
     assertTrue(action.clientID == null && action.txID == null);
+    // It should still be waiting, since we only do cleans ups on completion of all transactions.
+    assertNull(clientStateManager.shutdownClient);
+    assertTrue(transactionManager.isWaiting(cid1, tid4));
+
+    // adding new transactions should throw an error
+    boolean failed = false;
+    try {
+      transactionManager.incomingTransactions(cid1, txnIDs, txns, false, Collections.EMPTY_LIST);
+      failed = true;
+    } catch (Throwable t) {
+      // failed as expected.
+    }
+    if (failed) {
+      //
+      throw new Exception("Calling incomingTransaction after client shutdown didnt throw an error as excepted!!! ;(");
+    }
+    transactionManager.acknowledgement(cid1, tid4, cid2);
+    assertTrue(transactionManager.isWaiting(cid1, tid4));
+    transactionManager.acknowledgement(cid1, tid4, cid3);
     assertFalse(transactionManager.isWaiting(cid1, tid4));
+
+    // shutdown is not called yet since apply commit and broadcast need to complete.
+    assertNull(clientStateManager.shutdownClient);
+    List serverTids = new ArrayList();
+    serverTids.add(new ServerTransactionID(cid1, tid4));
+    transactionManager.commit(ptxp, Collections.EMPTY_SET, Collections.EMPTY_MAP, serverTids, Collections.EMPTY_SET);
+    assertNull(clientStateManager.shutdownClient);
+    transactionManager.broadcasted(cid1, tid4);
+    assertEquals(cid1, clientStateManager.shutdownClient);
 
     // Test with 2 waiters on different tx's
     action.clear();

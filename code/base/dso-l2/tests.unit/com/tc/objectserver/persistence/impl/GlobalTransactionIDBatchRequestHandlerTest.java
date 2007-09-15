@@ -29,7 +29,7 @@ public class GlobalTransactionIDBatchRequestHandlerTest extends TCTestCase {
     
     TestServerConfigurationContext scc = new TestServerConfigurationContext();
     scc.l2Coordinator = new L2HADisabledCooridinator();
-    provider.initialize(scc);
+    provider.initializeContext(scc);
 
     receiver = new TestBatchSequenceReceiver();
   }

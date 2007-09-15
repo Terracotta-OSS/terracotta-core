@@ -78,7 +78,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     context.addStage(ServerConfigurationContext.RESPOND_TO_OBJECT_REQUEST_STAGE, stageRTO);
     context.lockManager = lockManager;
 
-    handler.initialize(context);
+    handler.initializeContext(context);
   }
 
   public void testBatchAccounting() throws Exception {

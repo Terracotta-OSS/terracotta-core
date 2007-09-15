@@ -119,19 +119,23 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
    * Shutdown clients are not cleared immediately. Only on completing of all txns this is processed.
    */
   public void shutdownClient(final ChannelID waitee) {
+    boolean callBackAdded = false;
     synchronized (transactionAccounts) {
       TransactionAccount deadClientTA = (TransactionAccount) transactionAccounts.get(waitee);
-      deadClientTA.clientDead(new TransactionAccount.CallBackOnComplete() {
-        public void onComplete(ChannelID dead) {
-          synchronized (ServerTransactionManagerImpl.this.transactionAccounts) {
-            transactionAccounts.remove(waitee);
+      if (deadClientTA != null) {
+        deadClientTA.clientDead(new TransactionAccount.CallBackOnComplete() {
+          public void onComplete(ChannelID dead) {
+            synchronized (ServerTransactionManagerImpl.this.transactionAccounts) {
+              transactionAccounts.remove(waitee);
+            }
+            stateManager.shutdownClient(waitee);
+            lockManager.clearAllLocksFor(waitee);
+            gtxm.shutdownClient(waitee);
+            fireClientDisconnectedEvent(waitee);
           }
-          stateManager.shutdownClient(waitee);
-          lockManager.clearAllLocksFor(waitee);
-          gtxm.shutdownClient(waitee);
-          fireClientDisconnectedEvent(waitee);
-        }
-      });
+        });
+        callBackAdded = true;
+      }
 
       for (Iterator i = transactionAccounts.entrySet().iterator(); i.hasNext();) {
         Entry entry = (Entry) i.next();
@@ -142,6 +146,13 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
           acknowledgement(client.getClientID(), reqID, waitee);
         }
       }
+    }
+
+    if (!callBackAdded) {
+      stateManager.shutdownClient(waitee);
+      lockManager.clearAllLocksFor(waitee);
+      gtxm.shutdownClient(waitee);
+      fireClientDisconnectedEvent(waitee);
     }
   }
 

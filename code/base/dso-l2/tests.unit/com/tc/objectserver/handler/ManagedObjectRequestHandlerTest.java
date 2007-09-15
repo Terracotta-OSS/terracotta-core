@@ -41,7 +41,7 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
 
     ManagedObjectRequestHandler handler = new ManagedObjectRequestHandler(requestCounter, removeCounter,
                                                                           new TestObjectRequestManager());
-    handler.initialize(context);
+    handler.initializeContext(context);
 
     TestRequestManagedObjectMessage msg = new TestRequestManagedObjectMessage();
     HashSet s = new HashSet();
