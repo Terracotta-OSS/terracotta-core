@@ -2155,6 +2155,13 @@ public class ConfigurationHelper {
     return addNewAutolock(PatternHelper.getJavadocSignature(method), level, signaller);
   }
 
+  public Autolock addNewAutolock(final String expr, final LockLevel.Enum level) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    Autolock lock = addNewAutolock(expr, level, signaller);
+    signaller.signal(m_project);
+    return lock;
+  }
+  
   public Autolock addNewAutolock(final String expr, final LockLevel.Enum level, MultiChangeSignaller signaller) {
     Locks locks = ensureLocks();
     Autolock lock = locks.addNewAutolock();

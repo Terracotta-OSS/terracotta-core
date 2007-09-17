@@ -8,7 +8,7 @@ import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Shell;
 import org.terracotta.dso.PatternHelper;
-import org.terracotta.dso.dialogs.LockAttributesDialog;
+import org.terracotta.dso.dialogs.NamedLockDialog;
 
 import com.tc.util.event.UpdateEvent;
 import com.tc.util.event.UpdateEventListener;
@@ -38,7 +38,7 @@ public class NameLockedAction extends BaseAction {
   public void performAction(Event event) {
     if (isChecked()) {
       Shell shell = ActionUtil.findSelectedEditorPart().getSite().getShell();
-      LockAttributesDialog dialog = new LockAttributesDialog(shell, PatternHelper.getExecutionPattern(m_element));
+      NamedLockDialog dialog = new NamedLockDialog(shell, PatternHelper.getExecutionPattern(m_element));
       dialog.addValueListener(new UpdateEventListener() {
         public void handleUpdate(UpdateEvent e) {
           Object[] values = (Object[]) e.data;
