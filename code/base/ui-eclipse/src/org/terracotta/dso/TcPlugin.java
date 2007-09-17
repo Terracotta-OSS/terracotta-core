@@ -92,6 +92,7 @@ import org.terracotta.dso.decorator.NameLockedDecorator;
 import org.terracotta.dso.decorator.RootDecorator;
 import org.terracotta.dso.decorator.ServerRunningDecorator;
 import org.terracotta.dso.decorator.TransientDecorator;
+import org.terracotta.dso.dialogs.ConfigProblemsDialog;
 import org.terracotta.dso.editors.ConfigurationEditor;
 import org.terracotta.dso.wizards.ProjectWizard;
 
@@ -155,11 +156,13 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
   private BootClassHelper           m_bootClassHelper;
   private ConfigurationEventManager m_configurationEventManager;
 
-  public static final String        PLUGIN_ID                        = "org.terracotta.dso";
+  public static final String        PLUGIN_ID                           = "org.terracotta.dso";
 
-  public static final String        DEFAULT_CONFIG_FILENAME          = "tc-config.xml";
-  public static final String        DEFAULT_SERVER_OPTIONS           = "-Xms256m -Xmx256m";
-  public static final boolean       DEFAULT_AUTO_START_SERVER_OPTION = false;
+  public static final String        DEFAULT_CONFIG_FILENAME             = "tc-config.xml";
+  public static final String        DEFAULT_SERVER_OPTIONS              = "-Xms256m -Xmx256m";
+  public static final boolean       DEFAULT_AUTO_START_SERVER_OPTION    = false;
+  public static final boolean       DEFAULT_WARN_CONFIG_PROBLEMS_OPTION = true;
+  public static final boolean       DEFAULT_QUERY_RESTART_OPTION        = true;
 
   public TcPlugin() {
     super();
@@ -1123,7 +1126,25 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
 
   public boolean getAutoStartServerOption(IProject project) {
     String option = getPersistentProperty(project, AUTO_START_SERVER_OPTION);
-    return option != null && Boolean.parseBoolean(option);
+    return option != null ? Boolean.parseBoolean(option) : DEFAULT_AUTO_START_SERVER_OPTION;
+  }
+
+  public void setWarnConfigProblemsOption(IProject project, boolean warnConfigProblems) {
+    setPersistentProperty(project, WARN_CONFIG_PROBLEMS_OPTION, Boolean.toString(warnConfigProblems));
+  }
+
+  public boolean getWarnConfigProblemsOption(IProject project) {
+    String option = getPersistentProperty(project, WARN_CONFIG_PROBLEMS_OPTION);
+    return option != null ? Boolean.parseBoolean(option) : DEFAULT_WARN_CONFIG_PROBLEMS_OPTION;
+  }
+
+  public void setQueryRestartOption(IProject project, boolean queryRestart) {
+    setPersistentProperty(project, QUERY_RESTART_OPTION, Boolean.toString(queryRestart));
+  }
+
+  public boolean getQueryRestartOption(IProject project) {
+    String option = getPersistentProperty(project, QUERY_RESTART_OPTION);
+    return option != null ? Boolean.parseBoolean(option) : DEFAULT_QUERY_RESTART_OPTION;
   }
 
   public boolean hasTerracottaNature(IJavaElement element) {
@@ -1363,14 +1384,13 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
 
     setSessionProperty(project, CONFIG_PROBLEM_CONTINUE, null);
 
-    if (hasProblemMarkers(configFile)) {
+    if (getWarnConfigProblemsOption(project) && hasProblemMarkers(configFile)) {
       Display.getDefault().syncExec(new Runnable() {
         public void run() {
           Shell shell = Display.getDefault().getActiveShell();
-          String title = "Terracotta";
-          String msg = "The are problems with the Terracotta configuration. Continue?";
+          ConfigProblemsDialog dialog = new ConfigProblemsDialog(shell, project);
 
-          if (MessageDialog.openConfirm(shell, title, msg)) {
+          if (dialog.open() == IDialogConstants.OK_ID) {
             setSessionProperty(project, CONFIG_PROBLEM_CONTINUE, Boolean.TRUE);
           }
         }

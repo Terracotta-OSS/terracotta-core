@@ -3,7 +3,6 @@
  */
 package org.terracotta.dso;
 
-import org.apache.commons.lang.StringUtils;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -24,12 +23,13 @@ import org.eclipse.debug.core.ILaunchConfigurationType;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.terracotta.dso.actions.ManageServerAction;
+import org.terracotta.dso.dialogs.RelaunchDialog;
 
 import com.tc.server.ServerConstants;
+import com.tc.util.Assert;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -78,30 +78,39 @@ public class ResourceDeltaVisitor implements IResourceDeltaVisitor {
             String ext  = path.getFileExtension();
             
             if(ext.equals("xml")) {
-              if((flags & IResourceDelta.MARKERS) != 0) {
-                return false;
-              }
+//              if((flags & IResourceDelta.MARKERS) != 0) {
+//                return false;
+//              }
               if(plugin.getConfigurationFile(project).equals(res)) {
+                final boolean queryRestart = plugin.getQueryRestartOption(project);
                 final boolean wasIgnoringChange = fIgnoreNextConfigChange;
                 if(fIgnoreNextConfigChange) {
                   fIgnoreNextConfigChange = false;
                 }
                 try {
                   if(!wasIgnoringChange) {
-                    new Job("Reloading DSO Configuration") {
+                    Job job = new Job("Reloading DSO Configuration") {
                       public IStatus run(IProgressMonitor monitor) {
                         plugin.reloadConfiguration(project);
+                        if(queryRestart) {
+                          queryRelaunchAll(project);
+                        }
                         return Status.OK_STATUS;
                       }
-                    }.schedule();
+                    };
+                    job.schedule();
+                  } else if(queryRestart){
+                    Job job = new Job("Restart?") {
+                      public IStatus run(IProgressMonitor monitor) {
+                        queryRelaunchAll(project);
+                        return Status.OK_STATUS;
+                      }
+                    };
+                    job.schedule();
                   }
-                  new Job("Restart?") {
-                    public IStatus run(IProgressMonitor monitor) {
-                      queryRelaunchAll(project);
-                      return Status.OK_STATUS;
-                    }
-                  }.schedule();
-                } catch(Exception e) {/**/}
+                } catch(Exception e) {
+                  e.printStackTrace();
+                }
                 return false;
               }
             }
@@ -149,7 +158,7 @@ public class ResourceDeltaVisitor implements IResourceDeltaVisitor {
         String mainClass = launchConfig.getAttribute(IJavaLaunchConfigurationConstants.ATTR_MAIN_TYPE_NAME, (String)null);
         if(mainClass.equals(ServerConstants.SERVER_MAIN_CLASS_NAME)) {
           String serverLaunchName = launchConfig.getName();
-          String[] launchNameElems = StringUtils.split(serverLaunchName, ".");
+          String[] launchNameElems = decomposeServerLaunchName(serverLaunchName);
           String projName = launchNameElems[0];
           String serverName = launchNameElems[1];
           if(projName.equals(project.getName())) {
@@ -175,42 +184,61 @@ public class ResourceDeltaVisitor implements IResourceDeltaVisitor {
       display.syncExec(new Runnable() {
         public void run() {
           Shell shell = Display.getCurrent().getActiveShell();
-          String title = "Terracotta";
-          String msg = "The configuration file changed. Relaunch all related launch targets?";
-          if(MessageDialog.openQuestion(shell, title, msg)) {
-            new Job("Restarting Terracotta") {
-              public IStatus run(IProgressMonitor monitor) {
-                if(monitor == null) monitor = new NullProgressMonitor();
-                
-                ArrayList<ILaunch> allLaunches = new ArrayList<ILaunch>(launches);
-                allLaunches.addAll(serverLaunches.values());
-                for(ILaunch launch : allLaunches) {
-                  safeTerminateLaunch(launch);
-                }
+          RelaunchDialog relaunchDialog = new RelaunchDialog(shell, project, serverLaunches, launches);
+          final int returnCode = relaunchDialog.open();
+          if(returnCode == RelaunchDialog.CONTINUE_ID) {
+            return;
+          }
+          new Job("Restarting Terracotta") {
+            public IStatus run(IProgressMonitor monitor) {
+              if(monitor == null) {
+                monitor = new NullProgressMonitor();
+              }
+              
+              ArrayList<ILaunch> allLaunches = new ArrayList<ILaunch>(launches);
+              allLaunches.addAll(serverLaunches.values());
+              for(ILaunch launch : allLaunches) {
+                safeTerminateLaunch(launch);
+              }
 
-                for(Iterator<String> iter = serverLaunches.keySet().iterator(); iter.hasNext();) {
-                  try {
-                    ManageServerAction msa = new ManageServerAction(JavaCore.create(project), iter.next());
-                    msa.performAction();
-                  } catch(Exception e) {
-                    e.printStackTrace();
-                  }
-                }
-                for(ILaunch launch : launches) {
-                  ILaunchConfiguration launchConfig = launch.getLaunchConfiguration();
-                  try {
-                    launchConfig.launch(launch.getLaunchMode(), monitor);
-                  } catch(CoreException ce) {
-                    ce.printStackTrace();
-                  }
-                }
+              if(returnCode == RelaunchDialog.TERMINATE_ID) {
                 return Status.OK_STATUS;
               }
-            }.schedule();
-          }
+              
+              for(Iterator<String> iter = serverLaunches.keySet().iterator(); iter.hasNext();) {
+                try {
+                  ManageServerAction msa = new ManageServerAction(JavaCore.create(project), iter.next());
+                  msa.run(monitor);
+                } catch(Exception e) {
+                  e.printStackTrace();
+                }
+              }
+              for(ILaunch launch : launches) {
+                ILaunchConfiguration launchConfig = launch.getLaunchConfiguration();
+                try {
+                  launchConfig.launch(launch.getLaunchMode(), monitor);
+                } catch(CoreException ce) {
+                  ce.printStackTrace();
+                }
+              }
+              return Status.OK_STATUS;
+            }
+          }.schedule();
         }
       });
     }
+  }
+  
+  /*
+   * Terracotta server launch configuration names are of the form projectName.serverName.
+   * result[0] -> projectName
+   * result[1] -> serverName
+   */
+  private static String[] decomposeServerLaunchName(String launchName) {
+    Assert.assertNotNull("Server launch name is null", launchName);
+    int separator = launchName.indexOf('.');
+    Assert.assertTrue("Server launch name doesn't include dot separator", separator != -1);
+    return new String[] {launchName.substring(0, separator), launchName.substring(separator+1)};
   }
   
   private static void safeTerminateLaunch(ILaunch launch) {

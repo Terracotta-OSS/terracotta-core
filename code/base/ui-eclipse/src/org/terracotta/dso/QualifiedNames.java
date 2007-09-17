@@ -70,5 +70,15 @@ public interface QualifiedNames {
   public static final QualifiedName
     CONFIG_PROBLEM_CONTINUE =
       new QualifiedName(TERRACOTTA_QUALIFIER,
-                        "ConfigProblemContinue");
+                        "ConfigProblemContinueOption");
+
+  public static final QualifiedName
+    WARN_CONFIG_PROBLEMS_OPTION =
+      new QualifiedName(TERRACOTTA_QUALIFIER,
+                        "WarnConfigProblemsOption");
+  
+  public static final QualifiedName
+    QUERY_RESTART_OPTION =
+      new QualifiedName(TERRACOTTA_QUALIFIER,
+                        "QueryRestartOption");
 }

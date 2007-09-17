@@ -80,9 +80,7 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
       String         vmArgs     = wc.getAttribute(ATTR_VM_ARGUMENTS, "");
       IPath          libDirPath = plugin.getLibDirPath();
       
-      if(!plugin.continueWithConfigProblems(project)) {
-        return null;
-      }
+      if (!plugin.continueWithConfigProblems(project)) { return null; }
   
       String serverProp = wc.getAttribute(ID_SERVER_SPEC, (String)null);
       if(serverProp == null || (serverProp = serverProp.trim()) == null || serverProp.length() == 0) {

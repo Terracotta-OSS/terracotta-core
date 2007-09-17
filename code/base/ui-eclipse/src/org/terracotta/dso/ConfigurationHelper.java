@@ -3134,7 +3134,7 @@ public class ConfigurationHelper {
       IType fieldType = getFieldType(field);
 
       if (fieldType != null && !isInterface(fieldType) && !isPrimitive(fieldType) && !isAdaptable(fieldType)
-          && !isBootJarClass(fieldType)) {
+          && !isBootJarClass(fieldType) && !m_plugin.isBootClass(fieldType)) {
         String fullName = PatternHelper.getFullyQualifiedName(fieldType);
         msg = "Root type '" + fullName + "' not instrumented";
       }
