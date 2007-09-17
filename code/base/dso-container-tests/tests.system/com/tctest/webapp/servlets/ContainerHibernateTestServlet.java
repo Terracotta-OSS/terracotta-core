@@ -6,6 +6,8 @@ package com.tctest.webapp.servlets;
 
 import org.hibernate.LockMode;
 import org.hibernate.Session;
+import org.hibernate.stat.QueryStatistics;
+import org.hibernate.stat.Statistics;
 
 import com.tc.util.Assert;
 import com.tctest.domain.Event;
@@ -103,6 +105,9 @@ public final class ContainerHibernateTestServlet extends HttpServlet {
     // List events = (List) httpSession.getAttribute("events");
 
     EventManager mgr = new EventManager();
+    Statistics stats = HibernateUtil.getSessionFactory().getStatistics();
+    stats.setStatisticsEnabled(true);
+    
     // this will get the data from ehcache
     List events = mgr.listEvents();
 
@@ -146,5 +151,10 @@ public final class ContainerHibernateTestServlet extends HttpServlet {
     session.getTransaction().commit();
     HibernateUtil.getSessionFactory().close();
     System.out.println("DONE!");
+    
+    QueryStatistics queryStats = stats.getQueryStatistics("from Event");
+    System.out.println("Event query cache hit: " + queryStats.getCacheHitCount());
+    
+    Assert.assertEquals(1, queryStats.getCacheHitCount());
   }
 }
