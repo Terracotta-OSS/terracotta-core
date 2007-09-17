@@ -2296,6 +2296,9 @@ public class BootJarTool {
     if (mode.equals(MAKE_MODE)) {
       boolean makeItAnyway = commandLine.hasOption("w");
       if (makeItAnyway || !targetFile.exists() || (targetFile.exists() && !bjTool.isBootJarComplete(targetFile))) {
+        // Don't reuse boot jar tool instance since its config might have been mutated by isBootJarComplete()
+        bjTool = new BootJarTool(new StandardDSOClientConfigHelperImpl(config, false), targetFile, systemLoader,
+                                 !verbose);
         bjTool.generateJar();
       }
       bjTool.verifyJar(targetFile);
