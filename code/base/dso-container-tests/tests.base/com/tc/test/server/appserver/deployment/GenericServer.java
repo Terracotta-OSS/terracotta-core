@@ -52,6 +52,11 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
   private static final String               SERVER          = "server_";
   private static final boolean              GC_LOGGGING     = true;
   private static final boolean              ENABLE_DEBUGGER = false;
+  private static final ThreadLocal          dsoEnabled      = new ThreadLocal() {
+                                                              protected Object initialValue() {
+                                                                return Boolean.TRUE;
+                                                              }
+                                                            };
 
   private final int                         jmxRemotePort;
   private final int                         rmiRegistryPort;
@@ -84,11 +89,12 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     File tcConfigFile = new File(tempDir, "tc-config.xml");
     tcConfigbuilder.saveToFile(tcConfigFile);
 
-    // enable DSO
-    parameters.appendSysProp("tc.config", tcConfigFile.getAbsolutePath());
-    parameters.appendJvmArgs("-Xbootclasspath/p:" + bootJarFile.getAbsolutePath());
-    parameters.appendSysProp("tc.classpath", "file://" + writeTerracottaClassPathFile());
-    parameters.appendSysProp("tc.session.classpath", config.sessionClasspath());
+    if (dsoEnabled()) {
+      parameters.appendSysProp("tc.config", tcConfigFile.getAbsolutePath());
+      parameters.appendJvmArgs("-Xbootclasspath/p:" + bootJarFile.getAbsolutePath());
+      parameters.appendSysProp("tc.classpath", "file://" + writeTerracottaClassPathFile());
+      parameters.appendSysProp("tc.session.classpath", config.sessionClasspath());
+    }
 
     if (!Vm.isIBM() && !(Os.isMac() && Vm.isJDK14())) {
       parameters.appendJvmArgs("-XX:+HeapDumpOnOutOfMemoryError");
@@ -136,6 +142,14 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
 
     proxyBuilderMap.put(RmiServiceExporter.class, new RMIProxyBuilder());
     proxyBuilderMap.put(HttpInvokerServiceExporter.class, new HttpInvokerProxyBuilder());
+  }
+
+  private static boolean dsoEnabled() {
+    return ((Boolean) dsoEnabled.get()).booleanValue();
+  }
+
+  public static void setDsoEnabled(boolean b) {
+    dsoEnabled.set(Boolean.valueOf(b));
   }
 
   public StandardAppServerParameters getServerParameters() {

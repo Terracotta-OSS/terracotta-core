@@ -76,6 +76,7 @@ public final class Weblogic9xAppServer extends CargoAppServer {
       java.createArg().setValue(createShutdownScript().getAbsolutePath());
       AntContainerExecutorThread webLogicRunner = new AntContainerExecutorThread(java);
       webLogicRunner.start();
+      webLogicRunner.join();
     }
 
     private File createShutdownScript() throws IOException {
@@ -94,6 +95,7 @@ public final class Weblogic9xAppServer extends CargoAppServer {
         String connect = "connect(url='t3://localhost:" + port + "',adminServerName='AdminServer',username='" + user
                          + "',password='" + passwd + "')\n";
         out.write(connect.getBytes("UTF-8"));
+        out.write("dumpStack()\n".getBytes("UTF-8"));
         out.write("shutdown(name='AdminServer',entityType='Server',force='true',block='true')\n".getBytes("UTF-8"));
         out.write("exit()\n".getBytes("UTF-8"));
         out.flush();
