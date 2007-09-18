@@ -140,7 +140,7 @@ public class ConfigPropertiesTest extends TestCase {
     assertEquals(ConfigProperties.defaultCookieDomain, cp.getCookieDomain());
     assertEquals(ConfigProperties.defaultCookieMaxAge, cp.getCookieMaxAgeSeconds());
     assertEquals(ConfigProperties.defaultCookieName, cp.getCookieName());
-    assertEquals(ConfigProperties.defaultCookiePath, cp.getCookiePath());
+    assertEquals(null, cp.getCookiePath());
     assertEquals(ConfigProperties.defaultCookieSecure, cp.getCookieSecure());
     assertEquals(ConfigProperties.defaultIdLength, cp.getSessionIdLength());
     assertEquals(ConfigProperties.defaultServerId, cp.getServerId());

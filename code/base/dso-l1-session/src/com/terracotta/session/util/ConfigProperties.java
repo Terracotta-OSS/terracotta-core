@@ -147,7 +147,7 @@ public class ConfigProperties {
 
   public String getCookiePath() {
     final String wacVal = wac == null ? null : wac.__tc_session_getCookiePath();
-    return getStringVal(COOKIE_PATH, wacVal, defaultCookiePath);
+    return getStringVal(COOKIE_PATH, wacVal, null);
   }
 
   public boolean getCookieSecure() {
