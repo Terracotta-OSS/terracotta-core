@@ -186,7 +186,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
       String rmiURL = "rmi://localhost:" + rmiRegistryPort + "/" + url;
       logger.debug("Getting proxy for: " + rmiRegistryPort + " on " + result.serverPort());
       Exception e = null;
-      for (int i = 5; i >= 0; i++) {
+      for (int i = 5; i > 0; i--) {
         try {
           RmiProxyFactoryBean prfb = new RmiProxyFactoryBean();
           prfb.setServiceUrl(rmiURL);
