@@ -22,6 +22,7 @@ import com.tc.util.TCTimerImpl;
 import com.tc.util.diff.Difference;
 import com.tc.util.diff.DifferenceBuilder;
 import com.tc.util.diff.Differenceable;
+import com.tc.util.runtime.Os;
 import com.tc.util.runtime.ThreadDump;
 
 import java.io.ByteArrayInputStream;
@@ -545,7 +546,11 @@ public class TCTestCase extends TestCase {
   }
 
   private void doThreadDump() {
-    ThreadDump.dumpThreadsMany(numThreadDumps, dumpInterval);
+    if (!Os.isUnix()) {
+      ThreadDump.dumpThreadsMany(numThreadDumps, dumpInterval);
+    } else {
+      ThreadDump.dumpProcessGroupMany(numThreadDumps, dumpInterval);
+    }
   }
 
   /**

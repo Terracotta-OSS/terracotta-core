@@ -90,6 +90,14 @@ public class ThreadDump {
     if (!Os.isUnix()) { throw new AssertionError("unix only"); }
     doUnixDump(0);
   }
+  
+  public static void dumpProcessGroupMany(int iterations, long delay) {
+    for (int i = 0; i < iterations; i++) {
+      dumpProcessGroup();
+      
+      ThreadUtil.reallySleep(delay);
+    }
+  }
 
   private static void doUnixDump(int pid) {
     doSignal(new String[] { "-QUIT" }, pid);
