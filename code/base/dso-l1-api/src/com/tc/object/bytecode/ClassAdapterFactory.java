@@ -7,8 +7,17 @@ package com.tc.object.bytecode;
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
 
+/**
+ * A factory for class adapters
+ */
 public interface ClassAdapterFactory {
 
+  /**
+   * Create an adapter
+   * @param visitor ASM class visitor
+   * @param loader Class loader to use
+   * @return Adapter that can modify classes
+   */
   ClassAdapter create(ClassVisitor visitor, ClassLoader loader);
 
 }

@@ -5,9 +5,13 @@ package com.tc.object.bytecode;
 
 import com.tc.asm.MethodVisitor;
 
+/**
+ * Helper that can add instructions to call the Manager
+ */
 public interface ManagerHelper {
+  
   /**
-   * Call the given Manager method.
+   * Add instructions to call the given Manager method.
    *
    * @param methodName The method to call
    * @param mv CodeVisitor for the current method that wants to make the Manager call

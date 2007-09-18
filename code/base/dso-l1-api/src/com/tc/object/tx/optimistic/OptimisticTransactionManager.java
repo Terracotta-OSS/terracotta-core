@@ -39,6 +39,7 @@ public interface OptimisticTransactionManager {
 
   /**
    * Commit the transaction for the current thread.
+   * @throws ClassNotFoundException If class not found while faulting in object
    */
   public void commit() throws ClassNotFoundException;
 

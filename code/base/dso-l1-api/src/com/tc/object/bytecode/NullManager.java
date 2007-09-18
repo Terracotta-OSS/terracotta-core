@@ -14,6 +14,9 @@ import com.tc.properties.TCProperties;
 
 import java.lang.reflect.Field;
 
+/**
+ * Null implementation of the manager.
+ */
 public final class NullManager implements Manager {
 
   public static final String   CLASS    = "com/tc/object/bytecode/NullManager";
@@ -21,6 +24,10 @@ public final class NullManager implements Manager {
 
   private static final Manager INSTANCE = new NullManager();
 
+  /**
+   * Get instance of the null manager
+   * @return NullManager
+   */
   public static Manager getInstance() {
     return INSTANCE;
   }

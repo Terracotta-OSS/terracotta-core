@@ -9,5 +9,10 @@ import com.tc.asm.ClassVisitor;
  * Interface for adding in a class level object with responisbilites for creating support methods
  */
 public interface MethodCreator {
+  
+  /**
+   * Create methods in the class
+   * @param classVisitor Class visitor
+   */
   public void createMethods(ClassVisitor classVisitor);
 }

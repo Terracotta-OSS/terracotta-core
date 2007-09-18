@@ -304,7 +304,7 @@ public interface ClientObjectManager {
   public boolean hasPendingCreateObjects();
 
   /**
-   * Create or replace a root value
+   * Create or replace a root value, typically used for replacable roots.
    * @param rootName Root name
    * @param root New root value
    */

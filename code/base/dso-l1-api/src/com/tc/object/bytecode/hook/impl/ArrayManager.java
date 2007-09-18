@@ -38,6 +38,13 @@ public class ArrayManager {
     // not to be instantiated
   }
 
+  /**
+   * Register an array with its TCO.  It is an error to register an array that has already
+   * been registered.
+   * @param array Array
+   * @param tco TCObject
+   * @throws NullPointerException if array or tco are null
+   */
   public static void register(Object array, TCObject tco) {
     if ((array == null) || (tco == null)) { throw new NullPointerException(); }
 
@@ -60,6 +67,11 @@ public class ArrayManager {
     if (prev != null) { throw new AssertionError("replaced mapping for " + array); }
   }
 
+  /**
+   * Get the TCO for an array
+   * @param array The array instance
+   * @return The TCObject 
+   */
   public static TCObject getObject(Object array) {
     final int hash = array.hashCode();
     final int index = hash % NUM_MAPS;
@@ -80,11 +92,23 @@ public class ArrayManager {
     }
   }
 
+  /**
+   * Get TCObject for a cloned array
+   * @param array Array
+   * @return TCObject
+   */
   public static TCObject getCloneObject(Object array) {
     return getObject(array);
   }
 
-  // For java.lang.reflect.Array.get()
+  /**
+   * For java.lang.reflect.Array.get()
+   * @param array The array
+   * @param index Index into the array
+   * @return Item in array at index, boxed to Object if primitive array
+   * @throws NullPointerException If array is null
+   * @throws IllegalArgumentException If array is not an array type
+   */ 
   public static Object get(Object array, int index) {
     if (array == null) throw new NullPointerException();
 
@@ -113,6 +137,12 @@ public class ArrayManager {
 
   }
 
+  /**
+   * Indicate that object in array changed
+   * @param array The array
+   * @param index The index into array
+   * @param value The new value
+   */
   public static void objectArrayChanged(Object[] array, int index, Object value) {
     Object existingObj = array[index]; // do array operation first (fail fast, NPE and array index out of bounds)
     if (false && existingObj != existingObj) Assert.fail(); // silence compiler warning
@@ -124,6 +154,12 @@ public class ArrayManager {
     array[index] = value;
   }
 
+  /**
+   * Indicate that short in array changed
+   * @param array The array
+   * @param index The index into array
+   * @param value The new value
+   */
   public static void shortArrayChanged(short[] array, int index, short value) {
     short existingVal = array[index]; // do array operation first (fail fast, NPE and array index out of bounds)
     if (false && existingVal != existingVal) Assert.fail(); // silence compiler warning
@@ -135,6 +171,12 @@ public class ArrayManager {
     array[index] = value;
   }
 
+  /**
+   * Indicate that long in array changed
+   * @param array The array
+   * @param index The index into array
+   * @param value The new value
+   */
   public static void longArrayChanged(long[] array, int index, long value) {
     long existingVal = array[index]; // do array operation first (fail fast, NPE and array index out of bounds)
     if (false && existingVal != existingVal) Assert.fail(); // silence compiler warning
@@ -146,6 +188,12 @@ public class ArrayManager {
     array[index] = value;
   }
 
+  /**
+   * Indicate that int in array changed
+   * @param array The array
+   * @param index The index into array
+   * @param value The new value
+   */
   public static void intArrayChanged(int[] array, int index, int value) {
     int existingVal = array[index]; // do array operation first (fail fast, NPE and array index out of bounds)
     if (false && existingVal != existingVal) Assert.fail(); // silence compiler warning
@@ -157,6 +205,12 @@ public class ArrayManager {
     array[index] = value;
   }
 
+  /**
+   * Indicate that float in array changed
+   * @param array The array
+   * @param index The index into array
+   * @param value The new value
+   */
   public static void floatArrayChanged(float[] array, int index, float value) {
     float existingVal = array[index]; // do array operation first (fail fast, NPE and array index out of bounds)
     if (false && existingVal != existingVal) Assert.fail(); // silence compiler warning
@@ -168,6 +222,12 @@ public class ArrayManager {
     array[index] = value;
   }
 
+  /**
+   * Indicate that double in array changed
+   * @param array The array
+   * @param index The index into array
+   * @param value The new value
+   */
   public static void doubleArrayChanged(double[] array, int index, double value) {
     double existingVal = array[index]; // do array operation first (fail fast, NPE and array index out of bounds)
     if (false && existingVal != existingVal) Assert.fail(); // silence compiler warning
@@ -179,7 +239,13 @@ public class ArrayManager {
     array[index] = value;
   }
 
-  public static void charArrayChanged(char[] array, int index, char value) {
+  /**
+   * Indicate that char in array changed
+   * @param array The array
+   * @param index The index into array
+   * @param value The new value
+   */
+ public static void charArrayChanged(char[] array, int index, char value) {
     char existingVal = array[index]; // do array operation first (fail fast, NPE and array index out of bounds)
     if (false && existingVal != existingVal) Assert.fail(); // silence compiler warning
 
@@ -190,6 +256,12 @@ public class ArrayManager {
     array[index] = value;
   }
 
+ /**
+  * Indicate that byte or boolean in array changed
+  * @param array The array
+  * @param index The index into array
+  * @param value The new value
+  */
   public static void byteOrBooleanArrayChanged(Object array, int index, byte value) {
     if (array == null) { throw new NullPointerException(); }
 
@@ -220,6 +292,15 @@ public class ArrayManager {
     }
   }
 
+  /**
+   * Handle System.arraycopy() semantics with managed arrays
+   * @param src Source array
+   * @param srcPos Start index in source 
+   * @param dest Destination array
+   * @param destPos Destination start index
+   * @param length Number of items to copy
+   * @throws NullPointerException If src or dest is null
+   */
   public static void arraycopy(final Object src, final int srcPos, final Object dest, final int destPos,
                                final int length) {
     // preserve behavior of System.arraycopy()
@@ -374,6 +455,16 @@ public class ArrayManager {
     System.arraycopy(l2subset, 0, dest, destPos, length);
   }
 
+  /**
+   * Copy char[]
+   * @param src Source array
+   * @param srcPos Start in src
+   * @param dest Destination array
+   * @param destPos Start in dest
+   * @param length Number of items to copy
+   * @param tcDest TCObject for dest array
+   * 
+   */
   public static void charArrayCopy(char[] src, int srcPos, char[] dest, int destPos, int length, TCObject tcDest) {
     if ((srcPos < 0) || (destPos < 0) || (length < 0) || (srcPos + length > src.length)
         || (destPos + length > dest.length)) throw new ArrayIndexOutOfBoundsException();

@@ -21,6 +21,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Utility methods for working with byte code.
+ */
 public class ByteCodeUtil implements Opcodes {
   private static final String AUTOLOCK_PREFIX                   = "@";
   private static final String NAMED_LOCK_PREFIX                 = "^";
@@ -51,6 +54,12 @@ public class ByteCodeUtil implements Opcodes {
   public static final String  WEBAPPCONFIG_CLASS                = "com/terracotta/session/WebAppConfig";
   public static final String  WEBAPPCONFIG_TYPE                 = "L" + WEBAPPCONFIG_CLASS + ";";
 
+  /**
+   * Given a set of existing interfaces, add some more (without duplicates)
+   * @param existing The existing interfaces
+   * @param toAdd The interfaces to add
+   * @return A set of interfaces containing all of existing and toAdd with no dups
+   */
   public static String[] addInterfaces(String[] existing, String[] toAdd) {
     if (existing == null) { return toAdd; }
     if (toAdd == null) { return existing; }
@@ -67,6 +76,11 @@ public class ByteCodeUtil implements Opcodes {
     return (String[]) newList.toArray(new String[newList.size()]);
   }
 
+  /**
+   * Check whether the type is a primitve
+   * @param t The ASM type
+   * @return True if primitive
+   */
   public static boolean isPrimitive(Type t) {
     final int sort = t.getSort();
     switch (sort) {
@@ -86,6 +100,11 @@ public class ByteCodeUtil implements Opcodes {
     // unreachable
   }
 
+  /**
+   * Map from primite type to wrapper class type
+   * @param sort Kind of primitve type as in {@link com.tc.asm.Type#getSort()}
+   * @return Wrapper class name, like "java/lang/Boolean"
+   */
   public static String sortToWrapperName(int sort) {
     switch (sort) {
       case Type.BOOLEAN: // '\001'
@@ -117,6 +136,11 @@ public class ByteCodeUtil implements Opcodes {
 
   }
 
+  /**
+   * Translate type code to type name
+   * @param typeCode Code from bytecode like B, C, etc
+   * @return Primitive type name: "byte", "char", etc
+   */
   public static String codeToName(String typeCode) {
     if ((typeCode == null) || (typeCode.length() != 1)) { throw new IllegalArgumentException("invalid type code: "
                                                                                              + typeCode); }
@@ -155,10 +179,21 @@ public class ByteCodeUtil implements Opcodes {
     }
   }
 
+  /**
+   * Determine whether a lock is an autolock based on its name
+   * @param lockName The lock name
+   * @return True if an autolock
+   */
   public static boolean isAutolockName(String lockName) {
     return lockName == null ? false : lockName.startsWith(AUTOLOCK_PREFIX);
   }
 
+  /**
+   * Get lock ID from autolock name
+   * @param lockName The lock name
+   * @return Lock ID
+   * @throws IllegalArgumentException If not an autolock
+   */
   public static long objectIdFromLockName(String lockName) {
     if (lockName == null || (!lockName.startsWith(AUTOLOCK_PREFIX))) {
       // make formatter sane
@@ -168,36 +203,81 @@ public class ByteCodeUtil implements Opcodes {
 
   }
 
+  /**
+   * Determine whether a field is synthetic
+   * @param fieldName The field name
+   * @return True if synthetic
+   */
   public static boolean isSynthetic(String fieldName) {
     return fieldName.indexOf("$") >= 0;
   }
 
+  /**
+   * Determine whether a field is synthetic and was added by Terracotta
+   * @param fieldName The field name
+   * @return True if synthetic and added by Terracotta
+   */
   public static boolean isTCSynthetic(String fieldName) {
     return fieldName.startsWith(TC_FIELD_PREFIX) || isParent(fieldName);
   }
 
+  /** 
+   * Determine whether an access modifier code indicates synthetic
+   * @param access Access modifier code
+   * @return True if synthetic flag is set
+   */
   public static boolean isSynthetic(int access) {
     return (ACC_SYNTHETIC & access) > 0;
   }
 
+  /**
+   * Check whether the field name indicates that this is an inner classes synthetic
+   * field referring to the parent "this" reference.  
+   * @param fieldName The field name
+   * @return True if this field refers to the parent this
+   */
   public static boolean isParent(String fieldName) {
     return fieldName.matches("^this\\$\\d+$");
 
     // return SERIALIZATION_UTIL.isParent(fieldName);
   }
 
+  /**
+   * Add instruction to retrieve "this" from the local vars and load onto the stack
+   * @param c The current method visitor
+   */
   public static void pushThis(MethodVisitor c) {
     c.visitVarInsn(ALOAD, 0);
   }
 
+  /**
+   * Add instruction to retrieve specified field in the object on the stack and replace
+   * with the field value.
+   * @param c Current method visitor
+   * @param className The field class
+   * @param fieldName The field name
+   * @param description The field type
+   */
   public static void pushInstanceVariable(MethodVisitor c, String className, String fieldName, String description) {
     c.visitFieldInsn(GETFIELD, className, fieldName, description);
   }
 
+  /**
+   * Add instructions to convert the local variables typed with parameters into an array 
+   * assuming values start at local variable offset of 1
+   * @param c Method visitor
+   * @param parameters Paramater to convert
+   */
   public static void createParametersToArrayByteCode(MethodVisitor c, Type[] parameters) {
     createParametersToArrayByteCode(c, parameters, 1);
   }
 
+  /**
+   * Add instructions to convert the parameters into an array
+   * @param c Method visitor
+   * @param parameters Paramater types to convert
+   * @param offset Offset into local variables for values
+   */
   public static void createParametersToArrayByteCode(MethodVisitor c, Type[] parameters, int offset) {
     c.visitLdcInsn(new Integer(parameters.length));
     c.visitTypeInsn(ANEWARRAY, "java/lang/Object");
@@ -210,6 +290,13 @@ public class ByteCodeUtil implements Opcodes {
     }
   }
 
+  /**
+   * Add instructions to load type-specific value from local variable onto stack.  Primitve
+   * values are wrapped into their wrapper object.
+   * @param c Method visitor
+   * @param type The type of the variable
+   * @param offset The local variable offset
+   */
   public static void addTypeSpecificParameterLoad(MethodVisitor c, Type type, int offset) {
 
     switch (type.getSort()) {
@@ -270,6 +357,12 @@ public class ByteCodeUtil implements Opcodes {
     }
   }
 
+  /**
+   * Add instructions to load method args into the stack
+   * @param callingMethodModifier Calling method modifier
+   * @param desc Method descriptor
+   * @param c Current method visitor
+   */
   public static void pushMethodArguments(int callingMethodModifier, String desc, MethodVisitor c) {
     int localVariableOffset = getLocalVariableOffset(callingMethodModifier);
     Type[] args = Type.getArgumentTypes(desc);
@@ -281,6 +374,12 @@ public class ByteCodeUtil implements Opcodes {
     }
   }
 
+  /**
+   * Get offset of first local variable after method args
+   * @param callingMethodModifier Calling method modifier
+   * @param desc Method descriptor
+   * @return First local variable offset
+   */
   public static int getFirstLocalVariableOffset(int callingMethodModifier, String desc) {
     int localVariableOffset = getLocalVariableOffset(callingMethodModifier);
     Type[] args = Type.getArgumentTypes(desc);
@@ -290,6 +389,12 @@ public class ByteCodeUtil implements Opcodes {
     return localVariableOffset;
   }
 
+  /**
+   * Push this (if not static) and all method args onto stack
+   * @param callingMethodModifier Calling method modifier
+   * @param desc Method descriptor
+   * @param c Calling method visitor
+   */
   public static void prepareStackForMethodCall(int callingMethodModifier, String desc, MethodVisitor c) {
     if (!Modifier.isStatic(callingMethodModifier)) {
       pushThis(c);
@@ -299,21 +404,39 @@ public class ByteCodeUtil implements Opcodes {
 
   /**
    * Returns 0 if the method is static. 1 If the method is not.
+   * @param methodModifier
+   * @return 0 if static, 1 if not
    */
   public static int getLocalVariableOffset(int methodModifier) {
     return Modifier.isStatic(methodModifier) ? 0 : 1;
   }
 
+  /**
+   * Get volatile lock name
+   * @param id Object identifier
+   * @param field Volatile field
+   * @return Lock name
+   */
   public static String generateVolatileLockName(ObjectID id, String fieldName) {
     Assert.assertNotNull(id);
     return AUTOLOCK_PREFIX + id.toLong() + fieldName;
   }
 
+  /**
+   * Get auto lock name for object identifier
+   * @param id Identifier
+   * @return Auto lock name
+   */
   public static String generateAutolockName(ObjectID id) {
     Assert.assertNotNull(id);
     return generateAutolockName(id.toLong());
   }
 
+  /**
+   * Get named lock name for the lock object
+   * @param obj Lock object
+   * @return Named lock name
+   */
   public static String generateNamedLockName(Object obj) {
     Assert.assertNotNull(obj);
     return NAMED_LOCK_PREFIX + obj;
@@ -322,6 +445,8 @@ public class ByteCodeUtil implements Opcodes {
   /**
    * The first argument should be "(new LiteralValues()).valueFor(obj)", but I didn't want to slurp in a whole mess of
    * classes into the boot jar by including LiteralValues. It's gross, but ManagerImpl just makes the call itself.
+   * @param literalValuesValueFor Literal value code
+   * @param obj The lock object
    */
   public static String generateLiteralLockName(int literalValuesValueFor, Object obj) {
     Assert.assertNotNull(obj);
@@ -332,12 +457,23 @@ public class ByteCodeUtil implements Opcodes {
     return AUTOLOCK_PREFIX + objectId;
   }
 
+  /**
+   * Strip generated lock header from lock name
+   * @param lockName Lock name
+   * @return Real lock name
+   */
   public static String stripGeneratedLockHeader(String lockName) {
     int index = lockName.indexOf(LITERAL_LOCK_PREFIX);
     index = index < 0 ? 1 : index;
     return lockName.substring(index);
   }
 
+  /**
+   * Convert from {@link com.tc.asm.Type#getSort()} to a primitive method
+   * name like "booleanValue".
+   * @param Type kind
+   * @return Primitive method name
+   */
   public static String sortToPrimitiveMethodName(int sort) {
     switch (sort) {
       case Type.BOOLEAN: // '\001'
@@ -368,11 +504,21 @@ public class ByteCodeUtil implements Opcodes {
     }
   }
 
+  /**
+   * Get return type (class name) from method descriptor
+   * @param desc Method descriptor
+   * @return Return type class name
+   */
   public static String methodDescriptionToReturnType(String desc) {
     Type type = Type.getReturnType(desc);
     return type.getClassName();
   }
 
+  /**
+   * Turn method description with byte code types into a readable signature
+   * @param desc The bytecode description
+   * @return The method argument form
+   */
   public static String methodDescriptionToMethodArgument(String desc) {
     Type[] types = Type.getArgumentTypes(desc);
     StringBuffer sb = new StringBuffer("(");
@@ -386,24 +532,50 @@ public class ByteCodeUtil implements Opcodes {
     return sb.toString();
   }
 
+  /**
+   * Get name of synthetic field getter method added by Terracotta
+   * @param fieldName The field name
+   * @return Getter method name
+   */
   public static String fieldGetterMethod(String fieldName) {
     return TC_METHOD_PREFIX + "get" + fieldName;
   }
 
+  /**
+   * Get name of synthetic field setter method added by Terracotta
+   * @param fieldName The field name
+   * @return Setter method name
+   */
   public static String fieldSetterMethod(String fieldName) {
     return TC_METHOD_PREFIX + "set" + fieldName;
   }
 
+  /**
+   * Add instructions to print msg to System.out
+   * @param mv Method visitor
+   * @param msg Message to print
+   */
   public static void systemOutPrintln(MethodVisitor mv, String msg) {
     mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
     mv.visitLdcInsn(msg);
     mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V");
   }
   
+  /**
+   * Translate class name to file name
+   * @param className The class name "java.lang.String"
+   * @return The file name on the classpath: "java/lang/String.class"
+   */
   public static final String classNameToFileName(String className) {
     return className.replace('.', '/') + ".class";
   }
   
+  /** 
+   * Read the bytes defining the class
+   * @param className The class
+   * @param loader The classloader
+   * @return The underlying bytes
+   */
   public static final byte[] getBytesForClass(String className, ClassLoader loader) throws ClassNotFoundException {
     String resource = classNameToFileName(className);
     InputStream is = loader.getResourceAsStream(resource);
@@ -415,6 +587,12 @@ public class ByteCodeUtil implements Opcodes {
     }
   }
 
+  /**
+   * Read input stream into a byte array using a 4k buffer.  Close stream when done.
+   * @param is Input stream
+   * @return Bytes read from stream
+   * @throws IOException If there is an error reading the stream
+   */
   public static final byte[] getBytesForInputstream(InputStream is) throws IOException {
     final int size = 4096;
     byte[] buffer = new byte[size];

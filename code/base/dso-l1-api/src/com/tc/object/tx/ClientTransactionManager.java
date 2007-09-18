@@ -63,12 +63,23 @@ public interface ClientTransactionManager {
 
   public void receivedBatchAcknowledgement(TxnBatchID batchID);
 
+  /**
+   * Check whether current transaction has write access
+   * @param context The object  context
+   * @throws com.tc.object.util.ReadOnlyException If in read-only transaction
+   */
   public void checkWriteAccess(Object context);
 
   public void addReference(TCObject tco);
 
   public ChannelIDProvider getChannelIDProvider();
 
+  /**
+   * Check whether the lock wih this name in this thread is holding the lock at this level
+   * @param lockName Lock name
+   * @param lockLevel Lock level
+   * @return True if this lock is held by this thread at lockLevel
+   */
   public boolean isLocked(String lockName, int lockLevel);
 
   public void lock(String lockName, int lockLevel);
