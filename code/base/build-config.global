@@ -10,19 +10,19 @@ tc.tests.configuration.variants.selected.spring=20
 tc.tests.configuration.reuse_boot_jars=true
 
 # for container tests, you can also specify 'appserver=xxxx' on command line
-appserver=tomcat-5.5.23
+appserver=tomcat-5.5.25
 
 #appserver=tomcat-6.0.14
 #appserver=tomcat-5.5.25
+#appserver=tomcat-5.0.28
 #appserver=weblogic-9.2.mp2
-#appserver=jetty-6.1.4
-#appserver=websphere-6.1.0.7
-#appserver=glassfish-v1.ur1-p01-b02
 #appserver=weblogic-8.1.sp6
 #appserver=jboss-4.0.5
 #appserver=jboss-3.2.8.sp1
+#appserver=jetty-6.1.5
+#appserver=websphere-6.1.0.7
+#appserver=glassfish-v1.ur1-p01-b02
 #appserver=wasce-1.0.1.2
-#appserver=tomcat-5.0.28
 
 # you only need one of these specified to run containter tests
 # if both specified, appserver.home takes precedent
