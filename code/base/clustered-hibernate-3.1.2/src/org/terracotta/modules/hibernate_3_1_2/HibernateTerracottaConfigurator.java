@@ -4,6 +4,7 @@
  */
 package org.terracotta.modules.hibernate_3_1_2;
 
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.terracotta.modules.configuration.TerracottaConfiguratorModule;
@@ -78,6 +79,9 @@ public final class HibernateTerracottaConfigurator extends TerracottaConfigurato
     factory = new EhcacheProviderClassAdapter();
     spec = configHelper.getOrCreateSpec("org.hibernate.cache.EhCacheProvider");
     spec.setCustomClassAdapter(factory);
+    
+    Bundle thisBundle = getExportedBundle(context, "org.terracotta.modules.clustered-hibernate-3.1.2");
+    addExportedBundleClass(configHelper, thisBundle, "org.terracotta.modules.hibernate_3_1_2.util.HibernateUtil");
   }
   
   protected final void registerModuleSpec(final BundleContext context) {
@@ -86,6 +90,19 @@ public final class HibernateTerracottaConfigurator extends TerracottaConfigurato
     serviceProps.put(Constants.SERVICE_DESCRIPTION, "Hibernate Plugin Spec");
     serviceProps.put(Constants.SERVICE_RANKING, ModuleSpec.HIGH_RANK);
     context.registerService(ModuleSpec.class.getName(), new HibernateModuleSpec(new HibernateChangeApplicatorSpec(getClass().getClassLoader())), serviceProps);
+  }
+  
+  private Bundle getExportedBundle(final BundleContext context, String targetBundleName) {
+    // find the bundle that contains the replacement classes
+    Bundle[] bundles = context.getBundles();
+    Bundle bundle = null;
+    for (int i = 0; i < bundles.length; i++) {
+      if (targetBundleName.equals(bundles[i].getSymbolicName())) {
+        bundle = bundles[i];
+        break;
+      }
+    }  
+    return bundle;
   }
 
 }

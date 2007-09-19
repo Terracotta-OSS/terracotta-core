@@ -86,6 +86,7 @@ public class ContainerHibernateTest extends AbstractTwoServerDeploymentTest {
       builder.addResource("/com/tctest/server/appserver/unit", "Event.hbm.xml", "WEB-INF/classes");
       builder.addResource("/com/tctest/server/appserver/unit", "Person.hbm.xml", "WEB-INF/classes");
       builder.addResource("/com/tctest/server/appserver/unit", "PhoneNumber.hbm.xml", "WEB-INF/classes");
+      builder.addResource("/com/tctest/server/appserver/unit", "Account.hbm.xml", "WEB-INF/classes");
 
       builder.addResource("/com/tctest/server/appserver/unit/containerhibernatetest", "jboss-web.xml", "WEB-INF");
 

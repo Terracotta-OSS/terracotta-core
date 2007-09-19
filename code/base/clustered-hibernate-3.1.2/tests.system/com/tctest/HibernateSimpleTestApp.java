@@ -145,7 +145,7 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
     barrier.barrier();
 
     if (index == 1) {
-      commitTransaction();
+      //commitTransaction();
       synchronized (cus) {
         cus.setEmailAddress("asi@yahoo.com");
       }
@@ -262,6 +262,7 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
     Assert.assertEquals("asi@gmail.com", customer.getEmailAddress());
     Assert.assertEquals("Antonio", customer.getFirstName());
     Assert.assertEquals("Si", customer.getLastName());
+    Assert.assertEquals(2, customer.getProducts().size());
   }
 
   private void insertData(int index) throws Exception {

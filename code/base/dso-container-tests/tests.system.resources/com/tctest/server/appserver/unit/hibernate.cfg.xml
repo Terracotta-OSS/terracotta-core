@@ -58,6 +58,7 @@
 		<mapping resource="Event.hbm.xml" />
 		<mapping resource="Person.hbm.xml" />
 		<mapping resource="PhoneNumber.hbm.xml" />
+		<mapping resource="Account.hbm.xml" />
 
 	</session-factory>
 

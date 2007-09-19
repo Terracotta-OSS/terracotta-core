@@ -81,6 +81,29 @@ public class EventManager {
 
     session.getTransaction().commit();
   }
+  
+  public Long addPersonToAccount(Long personId, Account account) {
+    Session session = HibernateUtil.getSessionFactory().getCurrentSession();
+    session.beginTransaction();
+
+    Person aPerson = (Person) session.load(Person.class, personId);
+    account.setPerson(aPerson);
+    
+    Long accountId = (Long) session.save(account);
+
+    session.getTransaction().commit();
+    return accountId;
+  }
+  
+  public Account getAccount(Long accountId) {
+    Session session = HibernateUtil.getSessionFactory().getCurrentSession();
+    session.beginTransaction();
+
+    Account account = (Account) session.load(Account.class, accountId);
+    
+    session.getTransaction().commit();
+    return account;
+  }
 
   public void addEmailToPerson(Long personId, String emailAddress) {
 
