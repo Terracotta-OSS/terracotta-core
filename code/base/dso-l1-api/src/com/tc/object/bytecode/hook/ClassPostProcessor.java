@@ -3,8 +3,16 @@
  */
 package com.tc.object.bytecode.hook;
 
+/**
+ * Modify class after being loaded
+ */
 public interface ClassPostProcessor {
 
+  /**
+   * Post-process the class
+   * @param clazz The class
+   * @param caller The classloader loading the class
+   */
   public void postProcess(Class clazz, ClassLoader caller);
 
 }

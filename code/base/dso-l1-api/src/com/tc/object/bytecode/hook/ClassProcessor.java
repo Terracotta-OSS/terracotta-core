@@ -3,6 +3,9 @@
  */
 package com.tc.object.bytecode.hook;
 
+/**
+ * Allows implementors to either pre- or post-process classes as they are loaded.
+ */
 public interface ClassProcessor extends ClassPreProcessor, ClassPostProcessor {
   // nothing extra to add here (yet)
 }
