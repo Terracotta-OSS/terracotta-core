@@ -20,6 +20,7 @@ bundled_components:
               - dso-l1
               - legacy-test-tree
               - simulator
+              - dso-system-tests
 packaging:
   - mvn
 postscripts:
