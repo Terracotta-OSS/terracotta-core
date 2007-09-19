@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 
 package com.tc.aspectwerkz.definition.deployer;
@@ -7,19 +8,17 @@ package com.tc.aspectwerkz.definition.deployer;
 import com.tc.aspectwerkz.DeploymentModel;
 import com.tc.aspectwerkz.definition.SystemDefinition;
 import com.tc.aspectwerkz.definition.SystemDefinitionContainer;
+import com.tc.aspectwerkz.exception.WrappedRuntimeException;
 import com.tc.aspectwerkz.transform.Properties;
 import com.tc.aspectwerkz.util.Strings;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
-// import com.tc.object.loaders.NamedClassLoader;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * TODO document class
@@ -28,18 +27,17 @@ import java.util.Set;
  */
 public class StandardAspectModuleDeployer implements AspectModuleDeployer {
 
-  public static final String[] ASPECT_MODULES;
+  public static final String[]   ASPECT_MODULES;
   static {
     ASPECT_MODULES = Strings.splitString(Properties.ASPECT_MODULES, ",");
   }
 
-  private final static Map modules = new HashMap();
-  private final static TCLogger logger = CustomerLogging.getDSOInstrumentationLogger();
+  private final static Map       modules    = new HashMap();
+  private final static TCLogger  logger     = CustomerLogging.getDSOInstrumentationLogger();
 
-  private final List m_builders = new ArrayList();
+  private final List             m_builders = new ArrayList();
   private final SystemDefinition m_systemDef;
-  private final ClassLoader m_loader;
-
+  private final ClassLoader      m_loader;
 
   /**
    * Loads all registered aspect modules, builds and deploy them in the class loader specified.
@@ -54,47 +52,58 @@ public class StandardAspectModuleDeployer implements AspectModuleDeployer {
   }
 
   public static void deploy(final ClassLoader loader, String moduleName) {
-    synchronized(modules) {
-      // TODO loaders collection should use weak refs to class loaders
-      Set loaders = (Set) modules.get(moduleName);
-      if(loaders==null) {
-        loaders = new HashSet();
-        modules.put(moduleName, loaders);
-      }
+    final Map loaders;
 
-      if(!loaders.contains(loader)) {
-        logger.info("Loading aspect module [" + moduleName + "] in loader " + getLoaderName(loader));
-        new StandardAspectModuleDeployer(loader).doDeploy(moduleName);
-        loaders.add(loader);
+    synchronized (modules) {
+      // TODO loaders collection should use weak refs to class loaders
+      Map tmp = (Map) modules.get(moduleName);
+      if (tmp == null) {
+        tmp = new HashMap();
+        modules.put(moduleName, tmp);
       }
+      loaders = tmp;
+    }
+
+    final DeployedLoader deployedLoader;
+
+    synchronized (loaders) {
+      DeployedLoader d = (DeployedLoader) loaders.get(loader);
+      if (d == null) {
+        d = new DeployedLoader(loader, moduleName);
+        loaders.put(loader, d);
+      }
+      deployedLoader = d;
+    }
+
+    try {
+      deployedLoader.doDeployIfNeeded();
+    } catch (InterruptedException e) {
+      throw new WrappedRuntimeException(e);
     }
   }
 
   private static String getLoaderName(final ClassLoader loader) {
     // XXX: Dependency on DSO L1 code from AW. This isn't kosher at the moment
-    //    if(loader instanceof NamedClassLoader) {
-    //      return ((NamedClassLoader) loader).__tc_getClassLoaderName();
-    //    }
-    return loader.getClass().getName()+"@"+System.identityHashCode(loader);
+    // if(loader instanceof NamedClassLoader) {
+    // return ((NamedClassLoader) loader).__tc_getClassLoaderName();
+    // }
+    return loader.getClass().getName() + "@" + System.identityHashCode(loader);
   }
 
-
   /**
-   * Creates, registers and returns an aspect definition builder.
-   * Use-case: Get an aspect builder and then use it to add advice and pointcut builders to build up a full aspect
-   * definintion programatically.
+   * Creates, registers and returns an aspect definition builder. Use-case: Get an aspect builder and then use it to add
+   * advice and pointcut builders to build up a full aspect definintion programatically.
    *
    * @param aspectClass
    * @param scope
    * @param containerClassName
    * @return a newly registered aspect builder
    */
-  public synchronized AspectDefinitionBuilder newAspectBuilder(final String aspectClass,
-                                                               final DeploymentModel scope,
+  public synchronized AspectDefinitionBuilder newAspectBuilder(final String aspectClass, final DeploymentModel scope,
                                                                final String containerClassName) {
-    AspectDefinitionBuilder aspectDefinitionBuilder = new AspectDefinitionBuilder(
-            aspectClass, scope, containerClassName, m_systemDef, m_loader
-    );
+    AspectDefinitionBuilder aspectDefinitionBuilder = new AspectDefinitionBuilder(aspectClass, scope,
+                                                                                  containerClassName, m_systemDef,
+                                                                                  m_loader);
     m_builders.add(aspectDefinitionBuilder);
     return aspectDefinitionBuilder;
   }
@@ -106,11 +115,10 @@ public class StandardAspectModuleDeployer implements AspectModuleDeployer {
    * @param deploymentModel
    * @param pointcut
    */
-  public synchronized void addMixin(final String aspectClass,
-                                    final DeploymentModel deploymentModel,
-                                    final String pointcut,
-                                    final boolean isTransient) {
-    m_builders.add(new MixinDefinitionBuilder(aspectClass, deploymentModel, pointcut, isTransient, m_systemDef, m_loader));
+  public synchronized void addMixin(final String aspectClass, final DeploymentModel deploymentModel,
+                                    final String pointcut, final boolean isTransient) {
+    m_builders.add(new MixinDefinitionBuilder(aspectClass, deploymentModel, pointcut, isTransient, m_systemDef,
+                                              m_loader));
   }
 
   public ClassLoader getClassLoader() {
@@ -139,7 +147,8 @@ public class StandardAspectModuleDeployer implements AspectModuleDeployer {
       AspectModule aspectModule = (AspectModule) aspectModuleClass.newInstance();
       aspectModule.deploy(this);
     } catch (Throwable e) {
-      logger.error("Aspect module [" + moduleName + "] could not be deployed in "+getLoaderName(m_loader)+"; "+e.toString(), e);
+      logger.error("Aspect module [" + moduleName + "] could not be deployed in " + getLoaderName(m_loader) + "; "
+                   + e.toString(), e);
     }
   }
 
@@ -149,5 +158,60 @@ public class StandardAspectModuleDeployer implements AspectModuleDeployer {
     }
   }
 
-}
+  private static class DeployedLoader {
+    private static final int  NOT_DEPLOYED = 1;
+    private static final int  DEPLOYING    = 2;
+    private static final int  DEPLOYED     = 3;
 
+    private int               state        = NOT_DEPLOYED;
+
+    private final ClassLoader loader;
+    private final String      moduleName;
+
+    DeployedLoader(ClassLoader loader, String moduleName) {
+      this.loader = loader;
+      this.moduleName = moduleName;
+    }
+
+    void doDeployIfNeeded() throws InterruptedException {
+      boolean doDeploy = false;
+      boolean wait = false;
+
+      synchronized (this) {
+        switch (state) {
+          case NOT_DEPLOYED: {
+            state = DEPLOYING;
+            doDeploy = true;
+            break;
+          }
+          case DEPLOYING: {
+            wait = true;
+            break;
+          }
+          case DEPLOYED: {
+            // no action required
+            break;
+          }
+          default: {
+            throw new AssertionError("unknown state: " + state);
+          }
+        }
+      }
+
+      if (doDeploy) {
+        logger.info("Loading aspect module [" + moduleName + "] in loader " + getLoaderName(loader));
+        new StandardAspectModuleDeployer(loader).doDeploy(moduleName);
+        synchronized (this) {
+          state = DEPLOYED;
+          notifyAll();
+        }
+      } else if (wait) {
+        synchronized (this) {
+          while (state != DEPLOYED) {
+            wait();
+          }
+        }
+      }
+    }
+  }
+}
