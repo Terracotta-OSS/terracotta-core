@@ -313,9 +313,7 @@ public class ClassProcessorHelper {
 
     String tcClasspath = System.getProperty(TC_CLASSPATH_SYSPROP);
     if (tcClasspath.startsWith("file:/")) {
-      System.out.println("@@@@@@@@: " + tcClasspath);
       tcClasspath = slurpFile(tcClasspath);      
-      System.out.println("@@@@@@@@: " + tcClasspath);
     }
 
     String[] parts = tcClasspath.split(File.pathSeparator);
