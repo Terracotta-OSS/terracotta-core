@@ -92,7 +92,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     if (dsoEnabled()) {
       parameters.appendSysProp("tc.config", tcConfigFile.getAbsolutePath());
       parameters.appendJvmArgs("-Xbootclasspath/p:" + bootJarFile.getAbsolutePath());
-      parameters.appendSysProp("tc.classpath", "file://" + writeTerracottaClassPathFile());
+      parameters.appendSysProp("tc.classpath", writeTerracottaClassPathFile());
       parameters.appendSysProp("tc.session.classpath", config.sessionClasspath());
     }
 
@@ -360,12 +360,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
       fos = new FileOutputStream(tempFile);
       fos.write(System.getProperty("java.class.path").getBytes());
 
-      String rv = tempFile.getAbsolutePath();
-      if (Os.isWindows()) {
-        rv = "/" + rv;
-      }
-
-      return rv;
+      return tempFile.toURI().toString();
     } catch (IOException ioe) {
       throw new AssertionError(ioe);
     } finally {

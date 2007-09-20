@@ -20,7 +20,6 @@ import com.tc.text.Banner;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -281,11 +280,11 @@ public class ClassProcessorHelper {
   }
 
   private static String slurpFile(String path) throws IOException {
-    FileInputStream in = new FileInputStream(path);
+    URL url = new URL(path);    
+    InputStream in = url.openStream();
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
     try {
-      in = new FileInputStream(path);
       byte[] buf = new byte[1024];
       int len;
       while ((len = in.read(buf, 0, buf.length)) >= 0) {
@@ -313,8 +312,10 @@ public class ClassProcessorHelper {
     // here and not bother creating a tc.jar every time you change some source
 
     String tcClasspath = System.getProperty(TC_CLASSPATH_SYSPROP);
-    if (tcClasspath.startsWith("file:///")) {
-      tcClasspath = slurpFile(tcClasspath.substring("file://".length()));
+    if (tcClasspath.startsWith("file:/")) {
+      System.out.println("@@@@@@@@: " + tcClasspath);
+      tcClasspath = slurpFile(tcClasspath);      
+      System.out.println("@@@@@@@@: " + tcClasspath);
     }
 
     String[] parts = tcClasspath.split(File.pathSeparator);
