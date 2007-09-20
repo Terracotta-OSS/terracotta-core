@@ -6,6 +6,7 @@ package com.tcclient.cache;
 
 import com.tc.config.lock.LockLevel;
 import com.tc.exception.TCRuntimeException;
+import com.tc.logging.TCLogger;
 import com.tc.object.bytecode.Clearable;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.TCMap;
@@ -23,8 +24,10 @@ import java.util.Map;
 import java.util.Set;
 
 public class CacheDataStore implements Serializable {
-  private final Map[]                        store;                  // <Data>
-  private final Map[]                        dtmStore;               // <Timestamp>
+  private final static TCLogger              logger = ManagerUtil.getLogger("com.tc.cache.CacheDataStore");
+
+  private final Map[]                        store;                                                        // <Data>
+  private final Map[]                        dtmStore;                                                     // <Timestamp>
   private final String                       cacheName;
   private final long                         maxIdleTimeoutSeconds;
   private final long                         maxTTLSeconds;
@@ -35,13 +38,13 @@ public class CacheDataStore implements Serializable {
   private int                                evictorPoolSize;
   private boolean                            globalEvictionEnabled;
   private int                                globalEvictionFrequency;
+  private transient boolean                  isLoggingEnabled;
   private transient CacheParticipants        cacheParticipants;
   private transient int                      hitCount;
   private transient int                      missCountExpired;
   private transient int                      missCountNotFound;
   private transient CacheInvalidationTimer[] cacheInvalidationTimer;
-  
-  
+
   private static int hash(int h) {
     h += ~(h << 9);
     h ^= (h >>> 14);
@@ -138,6 +141,13 @@ public class CacheDataStore implements Serializable {
       cacheInvalidationTimer[i].schedule(true);
       startEvitionIndex = lastEvitionIndex;
     }
+
+    TCProperties loggingPropreties = ManagerUtil.getTCProperties().getPropertiesFor("ehcache.logging");
+    if (loggingPropreties != null) {
+      this.isLoggingEnabled = loggingPropreties.getBoolean("enabled");
+    } else {
+      this.isLoggingEnabled = false;
+    }
   }
 
   /**
@@ -157,6 +167,7 @@ public class CacheDataStore implements Serializable {
   }
 
   public Object put(final Object key, final Object value) {
+    logDebug("Put [" + key + ", " + value + "]");
     Assert.pre(key != null);
     Assert.pre(value != null);
 
@@ -181,6 +192,7 @@ public class CacheDataStore implements Serializable {
   }
 
   public Object get(final Object key) {
+    logDebug("Get [" + key + "]");
     Assert.pre(key != null);
 
     CacheData cd = null;
@@ -359,6 +371,18 @@ public class CacheDataStore implements Serializable {
     this.missCountNotFound = 0;
   }
 
+  private void logDebug(String msg) {
+    if (isLoggingEnabled) {
+      logger.debug(msg);
+    }
+  }
+
+  private void logError(String msg, Throwable t) {
+    if (isLoggingEnabled) {
+      logger.error(msg, t);
+    }
+  }
+
   private Collection getAllLocalEntries(int startEvictionIndex, int lastEvictionIndex) {
     Collection allLocalEntries = new ArrayList();
     for (int i = startEvictionIndex; i < lastEvictionIndex; i++) {
@@ -440,7 +464,7 @@ public class CacheDataStore implements Serializable {
       } catch (Throwable t) {
         errors++;
         t.printStackTrace(System.err);
-        // logger.error("Unhandled exception inspecting session " + key + " for invalidation", t);
+        logError("Unhandled exception inspecting session " + timestampEntry.getKey() + " for invalidation", t);
       } finally {
         if (isGlobalInvalidation) {
           if ((totalCnt % numOfObjectsPerChunk) == 0) {
@@ -456,6 +480,9 @@ public class CacheDataStore implements Serializable {
   }
 
   private class CacheEntryInvalidator implements Runnable {
+    private final TCLogger     logger              = ManagerUtil
+                                                       .getLogger("com.tc.cache.CacheDataStore$CacheEntryInvalidator");
+
     private final Lock         globalInvalidationLock;
     private final Lock         localInvalidationLock;
     private boolean            isGlobalInvalidator = false;
@@ -465,6 +492,7 @@ public class CacheDataStore implements Serializable {
     private final int          startEvictionIndex;
     private final int          lastEvictionIndex;
     private int                numOfLocalEvictionOccurred;
+    private final boolean      isLoggingEnabled;
 
     public CacheEntryInvalidator(GlobalKeySet globalKeySet, boolean globalEvictionEnabled, int globalEvictionFrequency,
                                  int startEvitionIndex, int lastEvitionIndex) {
@@ -479,6 +507,12 @@ public class CacheDataStore implements Serializable {
       this.globalEvictionFrequency = globalEvictionFrequency;
       this.startEvictionIndex = startEvitionIndex;
       this.lastEvictionIndex = lastEvitionIndex;
+      TCProperties loggingProperty = ManagerUtil.getTCProperties().getPropertiesFor("ehcache.evictor.logging");
+      if (loggingProperty != null) {
+        this.isLoggingEnabled = loggingProperty.getBoolean("enabled");
+      } else {
+        this.isLoggingEnabled = false;
+      }
     }
 
     public void run() {
@@ -500,7 +534,9 @@ public class CacheDataStore implements Serializable {
     }
 
     protected void evictLocalElements() {
+      log("Local eviction started");
       evictExpiredElements(this.startEvictionIndex, this.lastEvictionIndex);
+      log("Local eviction finished");
     }
 
     private void globalEvictionIfNecessary() {
@@ -513,7 +549,7 @@ public class CacheDataStore implements Serializable {
               globalEvictionStarted();
               evictAllExpiredElements(globalKeySet.allGlobalKeys(), startEvictionIndex, lastEvictionIndex);
             } finally {
-              globalKeySet.globalEvictionEnd();
+              globalEvictionEnded();
             }
           } else {
             waitForGlobalEviction();
@@ -535,7 +571,13 @@ public class CacheDataStore implements Serializable {
     }
 
     private void globalEvictionStarted() {
+      log("Global eviction started");
       globalKeySet.globalEvictionStart(cacheParticipants.getNodeId(), cacheParticipants.getCacheParticipants());
+    }
+
+    private void globalEvictionEnded() {
+      log("Global eviction finished");
+      globalKeySet.globalEvictionEnd();
     }
 
     public void postRun() {
@@ -556,12 +598,18 @@ public class CacheDataStore implements Serializable {
 
     private void tryToBeGlobalInvalidator() {
       if (isGlobalEvictionEnabled() && !isGlobalInvalidator) {
+        log("CacheEntryInvalidator try to get the global invalidation lock.");
         if (globalInvalidationLock.tryWriteLock()) {
           isGlobalInvalidator = true;
         }
       }
     }
 
+    private void log(String msg) {
+      if (isLoggingEnabled) {
+        logger.info(msg);
+      }
+    }
   }
 
   private class CacheInvalidationTimer implements Runnable {

@@ -11,7 +11,6 @@ import com.tc.asm.Label;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.asm.Type;
-import com.tc.asm.commons.LocalVariablesSorter;
 import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
@@ -142,59 +141,6 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
     return basicVisitField(access, name, desc, signature, value);
   }
 
-  /**
-   * This MethodAdapter is to instrument the constructor for a subclass of Logical class which contains one or more
-   * field. In such situation, we need to instantiate the added delegate field in the constructor.
-   */
-  private class LogicalInitMethodAdapter extends LocalVariablesSorter implements Opcodes {
-    private boolean methodEnter = false;
-    private int[]   localVariablesForMethodCall;
-
-    public LogicalInitMethodAdapter(int access, String methodDesc, MethodVisitor mv) {
-      super(access, methodDesc, mv);
-    }
-
-    private void storeStackValuesToLocalVariables(String methodInsnDesc) {
-      Type[] types = Type.getArgumentTypes(methodInsnDesc);
-      localVariablesForMethodCall = new int[types.length];
-      for (int i = 0; i < types.length; i++) {
-        localVariablesForMethodCall[i] = newLocal(types[i]);
-      }
-      for (int i = types.length - 1; i >= 0; i--) {
-        super.visitVarInsn(types[i].getOpcode(ISTORE), localVariablesForMethodCall[i]);
-      }
-    }
-
-    private void loadLocalVariables(String methodInsnDesc) {
-      Type[] types = Type.getArgumentTypes(methodInsnDesc);
-      for (int i = 0; i < types.length; i++) {
-        super.visitVarInsn(types[i].getOpcode(ILOAD), localVariablesForMethodCall[i]);
-      }
-    }
-
-    public void visitMethodInsn(int opcode, String owner, String name, String desc) {
-      String superClassNameSlashes = spec.getSuperClassNameSlashes();
-      if (!methodEnter && INVOKESPECIAL == opcode && owner.equals(superClassNameSlashes) && "<init>".equals(name)) {
-        methodEnter = true;
-        storeStackValuesToLocalVariables(desc);
-        loadLocalVariables(desc);
-        super.visitMethodInsn(opcode, owner, name, desc);
-        super.visitVarInsn(ALOAD, 0);
-        super.visitTypeInsn(NEW, spec.getSuperClassNameSlashes());
-        super.visitInsn(DUP);
-        loadLocalVariables(desc);
-
-        String delegateFieldName = getDelegateFieldName(superClassNameSlashes);
-        super.visitMethodInsn(INVOKESPECIAL, superClassNameSlashes, "<init>", desc);
-        super.visitMethodInsn(INVOKESPECIAL, spec.getClassNameSlashes(), ByteCodeUtil
-            .fieldSetterMethod(delegateFieldName), "(L" + superClassNameSlashes + ";)V");
-
-      } else {
-        super.visitMethodInsn(opcode, owner, name, desc);
-      }
-    }
-  }
-
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
     spec.shouldProceedInstrumentation(access, name, desc);
 
@@ -212,10 +158,6 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
       }
     } else {
       mv = super.visitMethod(access, name, desc, signature, exceptions);
-    }
-
-    if (spec.hasDelegatedToLogicalClass() && "<init>".equals(name)) {
-      mv = new LogicalInitMethodAdapter(access, desc, mv);
     }
 
     return mv;

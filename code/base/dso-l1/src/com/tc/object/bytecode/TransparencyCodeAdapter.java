@@ -34,9 +34,8 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
   private final TransparencyCodeSpec codeSpec;
   private final Label                labelZero = new Label();
 
-  private int[]                      localVariablesForMethodCall;
-
   private boolean                    visitInit = false;
+  private boolean                    logicalInitVisited = false;
 
   public TransparencyCodeAdapter(InstrumentationSpec spec, boolean isAutolock, int autoLockType, MethodVisitor mv,
                                  MemberInfo memberInfo, String originalName) {
@@ -56,25 +55,56 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     }
   }
 
-  private void storeStackValuesToLocalVariables(String methodInsnDesc) {
+  private int[] storeStackValuesToLocalVariables(String methodInsnDesc) {
     Type[] types = Type.getArgumentTypes(methodInsnDesc);
-    localVariablesForMethodCall = new int[types.length];
+    int[] localVariablesForMethodCall = new int[types.length];
     for (int i = 0; i < types.length; i++) {
       localVariablesForMethodCall[i] = newLocal(types[i]);
     }
     for (int i = types.length - 1; i >= 0; i--) {
       super.visitVarInsn(types[i].getOpcode(ISTORE), localVariablesForMethodCall[i]);
     }
+    return localVariablesForMethodCall;
   }
 
-  private void loadLocalVariables(String methodInsnDesc) {
+  private void loadLocalVariables(String methodInsnDesc, int[] localVariablesForMethodCall) {
     Type[] types = Type.getArgumentTypes(methodInsnDesc);
     for (int i = 0; i < types.length; i++) {
       super.visitVarInsn(types[i].getOpcode(ILOAD), localVariablesForMethodCall[i]);
     }
   }
+  
+  public void visitMethodInsn(int opcode, String owner, String name, String desc) {
+    if (spec.hasDelegatedToLogicalClass() && isConstructor) {
+      logicalInitVisitMethodInsn(opcode, owner, name, desc);
+    } else {
+      basicVisitMethodInsn(opcode, owner, name, desc);
+    }
+  }
+  
+  private void logicalInitVisitMethodInsn(int opcode, String owner, String name, String desc) {
+    String superClassNameSlashes = spec.getSuperClassNameSlashes();
+    if (!logicalInitVisited && INVOKESPECIAL == opcode && owner.equals(superClassNameSlashes) && "<init>".equals(name)) {
+      logicalInitVisited = true;
+      int[] localVariablesForMethodCall = storeStackValuesToLocalVariables(desc);
+      loadLocalVariables(desc, localVariablesForMethodCall);
+      super.visitMethodInsn(opcode, owner, name, desc);
+      super.visitVarInsn(ALOAD, 0);
+      super.visitTypeInsn(NEW, spec.getSuperClassNameSlashes());
+      super.visitInsn(DUP);
+      loadLocalVariables(desc, localVariablesForMethodCall);
 
-  public void visitMethodInsn(int opcode, String classname, String theMethodName, String desc) {
+      String delegateFieldName = ClassAdapterBase.getDelegateFieldName(superClassNameSlashes);
+      super.visitMethodInsn(INVOKESPECIAL, superClassNameSlashes, "<init>", desc);
+      super.visitMethodInsn(INVOKESPECIAL, spec.getClassNameSlashes(), ByteCodeUtil
+          .fieldSetterMethod(delegateFieldName), "(L" + superClassNameSlashes + ";)V");
+
+    } else {
+      basicVisitMethodInsn(opcode, owner, name, desc);
+    }
+  }
+
+  private void basicVisitMethodInsn(int opcode, String classname, String theMethodName, String desc) {
     if (handleSubclassOfLogicalClassMethodInsn(opcode, classname, theMethodName, desc)) { return; }
     if (codeSpec.isArraycopyInstrumentationReq(classname, theMethodName)) {
       rewriteArraycopy();
@@ -90,10 +120,10 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     String logicalExtendingClassName = spec.getSuperClassNameSlashes();
     if (INVOKESPECIAL == opcode && !spec.getClassNameSlashes().equals(classname) && !"<init>".equals(theMethodName)) {
       spec.shouldProceedInstrumentation(memberInfo.getModifiers(), theMethodName, desc);
-      storeStackValuesToLocalVariables(desc);
+      int[] localVariablesForMethodCall = storeStackValuesToLocalVariables(desc);
       super.visitMethodInsn(INVOKESPECIAL, spec.getClassNameSlashes(), ByteCodeUtil.fieldGetterMethod(ClassAdapterBase
           .getDelegateFieldName(logicalExtendingClassName)), "()L" + logicalExtendingClassName + ";");
-      loadLocalVariables(desc);
+      loadLocalVariables(desc, localVariablesForMethodCall);
       super.visitMethodInsn(INVOKEVIRTUAL, logicalExtendingClassName, theMethodName, desc);
       return true;
     }
