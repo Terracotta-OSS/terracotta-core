@@ -11,8 +11,12 @@ import com.tc.io.TCSerializable;
 
 import java.io.IOException;
 
+/**
+ * Stores info on a cluster-wide notify / notifyAll.
+ */
 public class Notify implements TCSerializable {
 
+  /** Null instance of Notify */
   public static final Notify NULL = new Notify(true);
 
   private LockID             lockID;
@@ -22,19 +26,35 @@ public class Notify implements TCSerializable {
   private int                hashCode;
   private final boolean      isNull;
 
+  /**
+   * New initialized
+   * @param lockID Lock identifier
+   * @param threadID Thread identifier
+   * @param all Whether notify or notifyAll
+   */
   public Notify(LockID lockID, ThreadID threadID, boolean all) {
     isNull = false;
     initialize(lockID, threadID, all);
   }
 
+  /** 
+   * New uninitialized
+   */
   public Notify() {
     isNull = false;
   }
 
+  /**
+   * New null instance
+   */
   private Notify(boolean isNull) {
     this.isNull = isNull;
   }
 
+  /**
+   * @return True if this is the null instance
+   * 
+   */
   public boolean isNull() {
     return this.isNull;
   }
@@ -48,6 +68,10 @@ public class Notify implements TCSerializable {
     initialized = true;
   }
 
+  /**
+   * Serialize Notify to output
+   * @param out Output stream
+   */
   public void serializeTo(TCByteBufferOutput out) {
     if (!initialized) throw new AssertionError("Attempt to serialize an uninitialized Notify.");
     out.writeString(this.lockID.asString());
@@ -55,6 +79,12 @@ public class Notify implements TCSerializable {
     out.writeBoolean(this.all);
   }
 
+  /**
+   * Deserialize Notify from in
+   * @param in Input stream
+   * @return This object
+   * @throws IOException If error reading in
+   */
   public Object deserializeFrom(TCByteBufferInputStream in) throws IOException {
     initialize(new LockID(in.readString()), new ThreadID(in.readLong()), in.readBoolean());
     return this;
@@ -75,14 +105,23 @@ public class Notify implements TCSerializable {
     return getClass().getName() + "[" + lockID + ", " + threadID + ", " + "all: " + all + "]";
   }
 
+  /**
+   * @return Thread identfier
+   */
   public ThreadID getThreadID() {
     return this.threadID;
   }
 
+  /**
+   * @return Lock identifier
+   */
   public LockID getLockID() {
     return this.lockID;
   }
 
+  /**
+   * @return flag frorm using notify() vs notifyall().
+   */
   public boolean getIsAll() {
     return this.all;
   }

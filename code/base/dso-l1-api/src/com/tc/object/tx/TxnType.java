@@ -17,6 +17,11 @@ public class TxnType {
   public static final TxnType NORMAL          = new TxnType(TYPE_NORMAL);
   public static final TxnType CONCURRENT      = new TxnType(TYPE_CONCURRENT);
 
+  /**
+   * Map type to enumerated value
+   * @param type Type code
+   * @return Type instance
+   */
   public static TxnType typeFor(byte type) {
     switch (type) {
       case TYPE_RO: {
@@ -34,6 +39,9 @@ public class TxnType {
     }
   }
 
+  /**
+   * @return True if concurrent
+   */
   public boolean isConcurrent() {
     return this == CONCURRENT;
   }
@@ -52,6 +60,9 @@ public class TxnType {
     this.type = type;
   }
 
+  /**
+   * @return Type code
+   */
   public byte getType() {
     return type;
   }

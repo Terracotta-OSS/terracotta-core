@@ -22,15 +22,26 @@ import java.util.Set;
 public interface ClientTransactionManager {
 
   /**
-   * begin a thread local transaction Probably change this from class Object to something more specific but it is still
-   * early and I'm not sure what I want here
+   * Begin a thread local transaction 
+   * @param lock Lock name
+   * @param lockLevel Lock level
+   * @return If begun
    */
   public boolean begin(String lock, int lockLevel);
 
+  /**
+   * Try with wait() to begin a thread local transaction.
+   * @param lock Lock name
+   * @param timeout Specification of wait() 
+   * @param lockLevel Lock level
+   * @return If begun
+   */
   public boolean tryBegin(String lock, WaitInvocation timeout, int lockLevel);
 
   /**
-   * commit a thread local current transaction
+   * Commit a thread local current transaction
+   * @param lockName Lock name
+   * @throws UnlockedSharedObjectException If a shared object is being accessed from outside a shared transaction
    */
   public void commit(String lockName) throws UnlockedSharedObjectException;
 
@@ -39,28 +50,90 @@ public interface ClientTransactionManager {
    * we can't apply any changes while we are in any transaction. The first version will not allow apply to happen while
    * ANY tx is in progress. This is probably not exceptable. We will probably figure something out with the lock manager
    * where we can accuire a read lock if a field is accessed in a transaction
+   * @param txType Transaction type
+   * @param lockIDs Locks involved in the transaction
+   * @param objectChanges Collection of DNA indicating changes
+   * @param lookupObjectIDs ObjectIDs 
+   * @param newRoots Map of new roots, Root name -> ObjectID 
    */
   public void apply(TxnType txType, List lockIDs, Collection objectChanges, Set lookupObjectIDs, Map newRoots);
 
+  /**
+   * Add new managed object to current transaction
+   * @param source TCObject
+   */
   public void createObject(TCObject source);
 
+  /**
+   * Add new root to current transaction
+   * @param name Root name
+   * @param id Object identifier
+   */
   public void createRoot(String name, ObjectID id);
 
+  /**
+   * Record change in literal value in current transaction
+   * @param source TCObject for literal value
+   * @param newValue New value
+   * @param oldValue Old value
+   */
   public void literalValueChanged(TCObject source, Object newValue, Object oldValue);
 
+  /**
+   * Record field change in current transaction 
+   * @param source TCObject for field
+   * @param classname Class name
+   * @param fieldname Field name
+   * @param newValue New object
+   * @param index Into array if field is an array
+   */
   public void fieldChanged(TCObject source, String classname, String fieldname, Object newValue, int index);
 
+  /**
+   * Record a logical method invocation
+   * @param source TCObject for object
+   * @param method Method constant from SerializationUtil
+   * @param methodName Method name
+   * @param parameters Parameter values in call
+   */
   public void logicalInvoke(TCObject source, int method, String methodName, Object[] parameters);
 
+  /**
+   * Record wait() call on object in current transaction
+   * @param lockName Lock name
+   * @param call wait() call information
+   * @param object Object being locked
+   * @throws UnlockedSharedObjectException If shared object accessed outside lock
+   * @throws InterruptedException If thread interrupted
+   */
   public void wait(String lockName, WaitInvocation call, Object object) throws UnlockedSharedObjectException,  InterruptedException;
 
+  /**
+   * Record notify() or notifyAll() call on object in current transaction
+   * @param lockName Lock name
+   * @param all True if notifyAll()
+   * @param object Object notify called on
+   * @throws UnlockedSharedObjectException If shared object accessed outside lock
+   */
   public void notify(String lockName, boolean all, Object object) throws UnlockedSharedObjectException;
 
-  // For optimistic stuff
+  /**
+   * For optimistic stuff
+   * @return Transaction
+   */
   public ClientTransaction getTransaction() throws UnlockedSharedObjectException;
 
+  /**
+   * Record acknowledgement
+   * @param sessionID Session identifier
+   * @param requestID Transaction identifier
+   */
   public void receivedAcknowledgement(SessionID sessionID, TransactionID requestID);
 
+  /**
+   * Record batch acknowledgement
+   * @param batchID Transaction batch identifier
+   */
   public void receivedBatchAcknowledgement(TxnBatchID batchID);
 
   /**
@@ -70,8 +143,16 @@ public interface ClientTransactionManager {
    */
   public void checkWriteAccess(Object context);
 
+  /**
+   * Add reference to tco in current transaction
+   * @param tco TCObject
+   */
   public void addReference(TCObject tco);
 
+  /**
+   * Get channel provider for this txn manager
+   * @return Provider
+   */
   public ChannelIDProvider getChannelIDProvider();
 
   /**
@@ -82,26 +163,76 @@ public interface ClientTransactionManager {
    */
   public boolean isLocked(String lockName, int lockLevel);
 
+  /**
+   * Lock this lock at this level
+   * @param lockName Lock name
+   * @param lockLevel Lock level
+   */
   public void lock(String lockName, int lockLevel);
 
+  /**
+   * Unlock the lock
+   * @param Lock name
+   */
   public void unlock(String lockName);
   
+  /**
+   * Get number of threads holding this lock
+   * @param lockName Lock name
+   * @param lockLevel Lock level
+   * @return Count
+   */
   public int localHeldCount(String lockName, int lockLevel);
 
+  /**
+   * Check whether the current thread holds this lock
+   * @param lockName Lock name
+   * @param lockLevel Lock level
+   */
   public boolean isHeldByCurrentThread(String lockName, int lockLevel);
 
+  /**
+   * Get current queue length on this lock
+   * @param lockName Lock name
+   */
   public int queueLength(String lockName);
 
+  /**
+   * Get wait() length on this lock 
+   * @param lockName Lock name
+   * @return Wait length
+   */
   public int waitLength(String lockName);
 
+  /**
+   * Enable transaction logging
+   */
   public void enableTransactionLogging();
 
+  /**
+   * Disable transaction logging
+   */
   public void disableTransactionLogging();
 
+  /**
+   * Check whether transaction logging is disabled
+   * @return True if disabled, false if enabled
+   */
   public boolean isTransactionLoggingDisabled();
 
+  /**
+   * Record an array change in the current transaction
+   * @param src The TCObject for the array
+   * @param startPos Start index in the array
+   * @param array The new partial array or value
+   * @param length Partial array length
+   */
   public void arrayChanged(TCObject src, int startPos, Object array, int length);
   
+  /**
+   * Add distributed method call descriptor to current transaction
+   * @param d Descriptor
+   */
   public void addDmiDescriptor(DmiDescriptor d);
 
 }

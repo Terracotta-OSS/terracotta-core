@@ -13,22 +13,36 @@ import com.tc.util.Assert;
  * @author steve
  */
 public class LockID implements Serializable {
+  /** Indicates no lock identifier */
   public final static LockID NULL_ID = new LockID("null id");
   private final String       id;
-
+  
+  /**
+   * New id
+   * @param id ID value
+   */
   public LockID(String id) {
     Assert.eval(id != null);
     this.id = id;
   }
 
+  /**
+   * @return True if is null identifier
+   */
   public boolean isNull() {
     return this == NULL_ID;
   }
 
+  /**
+   * @return ID type
+   */
   public String getIdentifierType() {
     return "LockID";
   }
 
+  /**
+   * @return String value of id value
+   */
   public String asString() {
     return id;
   }

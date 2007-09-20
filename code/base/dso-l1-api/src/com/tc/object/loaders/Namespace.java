@@ -4,6 +4,9 @@
  */
 package com.tc.object.loaders;
 
+/**
+ * Manage classloader namespaces
+ */
 public class Namespace {
 
   // The separator is . coz classes are generated in the server with these as a part of the package name
@@ -28,42 +31,78 @@ public class Namespace {
   private static final String EXT_LOADER_NAME                 = STANDARD_NAMESPACE + "ext";
   private static final String BOOT_LOADER_NAME                = STANDARD_NAMESPACE + "bootstrap";
 
+  /**
+   * @return Normal system class loader name 
+   */
   public static String getStandardSystemLoaderName() {
     return SYSTEM_LOADER_NAME;
   }
 
+  /**
+   * @return Extensions class loader name
+   */
   public static String getStandardExtensionsLoaderName() {
     return EXT_LOADER_NAME;
   }
 
+  /**
+   * @return Boot class loader name
+   */
   public static String getStandardBootstrapLoaderName() {
     return BOOT_LOADER_NAME;
   }
 
+  /**
+   * @return Separator between loader and class name
+   */
   public static String getClassNameAndLoaderSeparator() {
     return CLASS_NAME_LOADER_SEPARATOR;
   }
 
+  /**
+   * @return Separator in logical class extension
+   */
   public static String getLogicalClassExtendsSeparator() {
     return LOGICAL_CLASS_EXTENDS_SEPARATOR;
   }
 
+  /**
+   * Create logical extending class name by combining class names
+   * @param className Class name
+   * @param superClassName Logical super class name
+   */
   public static String createLogicalExtendingClassName(String className, String superClassName) {
     return className + LOGICAL_CLASS_EXTENDS_SEPARATOR + superClassName;
   }
 
+  /**
+   * Parse class name out of logical extending class name
+   * @param className Logical extending name, as returned by {@link #createLogicalExtendingClassName(String, String)}
+   * @return Extending class name
+   */
   public static String parseClassNameIfNecessary(String className) {
     int separatorIndex = className.indexOf(LOGICAL_CLASS_EXTENDS_SEPARATOR);
     if (separatorIndex == -1) { return className; }
     return className.substring(0, separatorIndex);
   }
 
+  /**
+   * Parse super class name out of logical extending class name
+   * @param className Logical extending name, as returned by {@link #createLogicalExtendingClassName(String, String)}
+   * @return Logical super class name
+   */
   public static String parseLogicalNameIfNeceesary(String className) {
     int separatorIndex = className.indexOf(LOGICAL_CLASS_EXTENDS_SEPARATOR);
     if (separatorIndex == -1) { return null; }
     return className.substring(separatorIndex + LOGICAL_CLASS_EXTENDS_SEPARATOR.length());
   }
 
+  /**
+   * Create a loader name based on a toplevel loader name and a subname
+   * @param topLevel Top level name
+   * @param subName Sub level name
+   * @return Classloader name
+   */
   public static String createLoaderName(String topLevel, String subName) {
     if (topLevel == null) { throw new IllegalArgumentException("topLevel space is null"); }
     if (subName == null) { throw new IllegalArgumentException("subName is null"); }

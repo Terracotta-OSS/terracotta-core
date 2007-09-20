@@ -7,15 +7,13 @@ import com.tc.exception.ExceptionWrapper;
 import com.tc.exception.ExceptionWrapperImpl;
 
 /**
+ * Thrown when there is an attempt to access a shared object outside the scope of
+ * a shared lock.
  * @author steve
  */
 public class UnlockedSharedObjectException extends RuntimeException {
   
   private static final ExceptionWrapper wrapper = new ExceptionWrapperImpl();
-  
-  private UnlockedSharedObjectException() {
-    super();
-  }
   
   private UnlockedSharedObjectException(String message) {
     super(wrapper.wrap(message));

@@ -9,8 +9,16 @@ package com.tc.object.loaders;
  */
 public interface NamedClassLoader {
 
+  /**
+   * Get classloader name
+   * @return name
+   */
   public String __tc_getClassLoaderName();
 
+  /**
+   * Set classloader name
+   * @param name Name
+   */
   public void __tc_setClassLoaderName(String name);
 
 }

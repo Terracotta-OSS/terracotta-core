@@ -10,6 +10,10 @@ import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Standard ClassProvider, using named classloaders and aware of boot, extension, and system
+ * classloaders.
+ */
 public class StandardClassProvider implements ClassProvider {
 
   private static final String BOOT         = Namespace.getStandardBootstrapLoaderName();
