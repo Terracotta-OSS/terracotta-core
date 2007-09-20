@@ -6,12 +6,20 @@ package com.tc.object.dmi;
 
 import com.tc.util.Assert;
 
+/**
+ * Specify class for DMI
+ */
 public class DmiClassSpec {
 
   private final String classLoaderDesc;
   private final String className;
   private final String spec;
 
+  /**
+   * Construct new spec
+   * @param classLoaderDesc Classloader name
+   * @param className Class name
+   */
   public DmiClassSpec(final String classLoaderDesc, final String className) {
     Assert.pre(classLoaderDesc != null);
     Assert.pre(className != null);
@@ -20,10 +28,16 @@ public class DmiClassSpec {
     this.spec = classLoaderDesc + "-" + className;
   }
 
+  /**
+   * @return Classloader name
+   */
   public String getClassLoaderDesc() {
     return classLoaderDesc;
   }
 
+  /**
+   * @return Class name
+   */
   public String getClassName() {
     return className;
   }

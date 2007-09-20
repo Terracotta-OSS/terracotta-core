@@ -25,11 +25,21 @@ public class DmiDescriptor implements TCSerializable, EventContext {
   private DmiClassSpec[]              classSpecs;
   private boolean                     faultReceiver;
 
+  /**
+   * New empty descriptor
+   */
   public DmiDescriptor() {
     receiverId = null;
     dmiCallId = null;
   }
 
+  /**
+   * New descriptor
+   * @param receiverId Receiver object identifier
+   * @param dmiCallId DMI call identifier
+   * @param classSpecs Classes
+   * @param faultReceiver True if should use  local fault receiver
+   */
   public DmiDescriptor(ObjectID receiverId, ObjectID dmiCallId, DmiClassSpec[] classSpecs, boolean faultReceiver) {
     Assert.pre(receiverId != null);
     Assert.pre(dmiCallId != null);
@@ -41,18 +51,30 @@ public class DmiDescriptor implements TCSerializable, EventContext {
     this.faultReceiver = faultReceiver;
   }
 
+  /**
+   * @return Receiver ID
+   */
   public ObjectID getReceiverId() {
     return receiverId;
   }
 
+  /**
+   * @return DMI call ID
+   */
   public ObjectID getDmiCallId() {
     return dmiCallId;
   }
 
+  /**
+   * @return Classes 
+   */
   public DmiClassSpec[] getClassSpecs() {
     return classSpecs;
   }
 
+  /**
+   * @return True if should use fault receiver
+   */
   public boolean isFaultReceiver() {
     return faultReceiver;
   }
@@ -62,6 +84,11 @@ public class DmiDescriptor implements TCSerializable, EventContext {
            + DmiClassSpec.toString(classSpecs) + "}";
   }
 
+  /**
+   * Deserialize descriptor from input stream into this object
+   * @param in Input stream
+   * @return this
+   */
   public Object deserializeFrom(TCByteBufferInputStream in) throws IOException {
     receiverId = new ObjectID(in.readLong());
     dmiCallId = new ObjectID(in.readLong());
@@ -76,6 +103,10 @@ public class DmiDescriptor implements TCSerializable, EventContext {
     return this;
   }
 
+  /**
+   * Serialize this descriptor to out
+   * @param out Output stream
+   */
   public void serializeTo(TCByteBufferOutput out) {
     out.writeLong(receiverId.toLong());
     out.writeLong(dmiCallId.toLong());

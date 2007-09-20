@@ -125,6 +125,12 @@ public class ClassProcessorHelper {
     return new URLClassLoader(tcClassPath, null);
   }
 
+  /**
+   * Get resource URL
+   * @param name Resource name
+   * @param cl Loading classloader
+   * @return URL to load resource from
+   */
   public static URL getTCResource(String name, ClassLoader cl) {
     String className = null;
     if (name.endsWith(CLASS_SUFFIX)) {
@@ -146,6 +152,13 @@ public class ClassProcessorHelper {
     return resource;
   }
 
+  /**
+   * Get TC class definition
+   * @param name Class name
+   * @param cl Classloader
+   * @return Class bytes
+   * @throws ClassNotFoundException If class not found
+   */
   public static byte[] getTCClass(String name, ClassLoader cl) throws ClassNotFoundException {
     URL resource = getClassResource(name, cl);
 
@@ -406,6 +419,9 @@ public class ClassProcessorHelper {
     globalProvider.registerNamedLoader(loader);
   }
 
+  /**
+   * Shut down the ClassProcessorHelper
+   */
   public static void shutdown() {
     if (!USE_GLOBAL_CONTEXT) { throw new IllegalStateException("Not global DSO mode"); }
     try {
@@ -417,6 +433,11 @@ public class ClassProcessorHelper {
     }
   }
 
+  /**
+   * Check whether this web app is using DSO sessions
+   * @param appName Web app name
+   * @return True if DSO sessions enabled
+   */
   public static boolean isDSOSessions(String appName) {
     appName = ("/".equals(appName)) ? "ROOT" : appName;
     init();
@@ -430,7 +451,11 @@ public class ClassProcessorHelper {
     }
   }
 
-  // used by test framework only
+  /**
+   * WARNING: Used by test framework only
+   * @param loader Loader
+   * @param context DSOContext
+   */ 
   public static void setContext(ClassLoader loader, DSOContext context) {
     if (USE_GLOBAL_CONTEXT) { throw new IllegalStateException("DSO Context is global in this VM"); }
 
@@ -444,7 +469,9 @@ public class ClassProcessorHelper {
     }
   }
 
-  // used by test framework only
+  /**
+   * WARNING: used by test framework only
+   */
   public static Manager getManager(ClassLoader caller) {
     if (USE_GLOBAL_CONTEXT) { return gloalContext.getManager(); }
 
@@ -456,6 +483,11 @@ public class ClassProcessorHelper {
     return context.getManager();
   }
 
+  /**
+   * Get the DSOContext for this classloader
+   * @param cl Loader
+   * @return Context
+   */
   public static DSOContext getContext(ClassLoader cl) {
     if (USE_GLOBAL_CONTEXT) return gloalContext;
 
@@ -482,6 +514,14 @@ public class ClassProcessorHelper {
    * XXX::NOTE:: Donot optimize to return same input byte array if the class is instrumented (I cant imagine why we
    * would). ClassLoader checks the returned byte array to see if the class is instrumented or not to maintain the
    * offset.
+   * 
+   * @param caller Loader defining class
+   * @param name Class name
+   * @param b Data
+   * @param off Offset into b
+   * @param len Length of class data
+   * @param pd Protection domain for class
+   * @return Modified class array
    * 
    * @see ClassLoaderPreProcessorImpl
    */
@@ -512,6 +552,11 @@ public class ClassProcessorHelper {
     return (caller == tcLoader);
   }
 
+  /**
+   * Post process class during definition
+   * @param clazz Class being defined
+   * @param caller Classloader doing definition
+   */
   public static void defineClass0Post(Class clazz, ClassLoader caller) {
     if (inStaticInitializer()) { return; }
 
@@ -529,6 +574,9 @@ public class ClassProcessorHelper {
     return inStaticInitializer.get() != null;
   }
 
+  /**
+   * @return Global Manager
+   */
   public static Manager getGlobalManager() {
     return gloalContext.getManager();
   }
@@ -549,6 +597,11 @@ public class ClassProcessorHelper {
     }
   }
 
+  /**
+   * Check whether this is an AspectWerkz dependency
+   * @param className Class name
+   * @return True if AspectWerkz dependency
+   */
   public static boolean isAWDependency(final String className) {
     return (className == null)
            || className.endsWith("_AWFactory")// TODO AVF refactor
@@ -559,6 +612,11 @@ public class ClassProcessorHelper {
            || className.startsWith("sun.reflect.Generated"); // issue on J2SE 5 reflection - AW-245
   }
 
+  /**
+   * Check whether this is a DSO dependency
+   * @param className Class name
+   * @return True if DSO dependency
+   */
   public static boolean isDSODependency(final String className) {
     return false;
     // return (className == null) || className.startsWith("DO_NOT_USE.") || className.startsWith("com.tc.")
@@ -568,6 +626,11 @@ public class ClassProcessorHelper {
     // || className.startsWith("org.apache.xmlbeans.") || className.startsWith("org.apache.xerces.");
   }
 
+  /**
+   * Get type of lock used by sessions
+   * @param appName Web app context
+   * @return Lock type
+   */
   public static int getSessionLockType(String appName) {
     return gloalContext.getSessionLockType(appName);
   }
@@ -586,12 +649,18 @@ public class ClassProcessorHelper {
     TRACE_STREAM.flush();
   }
 
+  /**
+   * File filter for JAR files
+   */
   public static class JarFilter implements FileFilter {
     public boolean accept(File pathname) {
       return pathname.isFile() && pathname.getAbsolutePath().toLowerCase().endsWith(".jar");
     }
   }
 
+  /**
+   * ClassProcessorHelper initialization state
+   */
   public static class State {
     private final int NOT_INTIALIZED = 0;
     private final int INITIALIZING   = 1;
