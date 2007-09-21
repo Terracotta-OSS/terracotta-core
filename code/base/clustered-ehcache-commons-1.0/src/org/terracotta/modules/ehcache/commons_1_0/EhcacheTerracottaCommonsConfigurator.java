@@ -6,13 +6,12 @@ import org.terracotta.modules.configuration.TerracottaConfiguratorModule;
 
 import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.config.ConfigLockLevel;
-import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 
 public abstract class EhcacheTerracottaCommonsConfigurator extends TerracottaConfiguratorModule implements IConstants {
 
-  protected void addInstrumentation(final BundleContext context, final StandardDSOClientConfigHelper configHelper) {
-		super.addInstrumentation(context, configHelper);
+  protected void addInstrumentation(final BundleContext context) {
+		super.addInstrumentation(context);
 
     // find the bundle that contains the replacement classes
     Bundle bundle = getExportedBundle(context, getExportedBundleName());
@@ -22,23 +21,23 @@ public abstract class EhcacheTerracottaCommonsConfigurator extends TerracottaCon
     }
     
     // setup the replacement classes
-    addClassReplacement(configHelper, bundle, CACHE_CLASS_NAME_DOTS, CACHETC_CLASS_NAME_DOTS);
-    addClassReplacement(configHelper, bundle, MEMORYSTOREEVICTIONPOLICY_CLASS_NAME_DOTS, MEMORYSTOREEVICTIONPOLICYTC_CLASS_NAME_DOTS);
+    addClassReplacement(bundle, CACHE_CLASS_NAME_DOTS, CACHETC_CLASS_NAME_DOTS);
+    addClassReplacement(bundle, MEMORYSTOREEVICTIONPOLICY_CLASS_NAME_DOTS, MEMORYSTOREEVICTIONPOLICYTC_CLASS_NAME_DOTS);
 
     // setup the class resources
-    addExportedBundleClass(configHelper, thisBundle, "net.sf.ehcache.store.TimeExpiryMemoryStore");
-    addExportedBundleClass(configHelper, thisBundle, "net.sf.ehcache.store.TimeExpiryMemoryStore$SpoolingTimeExpiryMap");
-    addExportedBundleClass(configHelper, thisBundle, "org.terracotta.modules.ehcache.commons_1_0.util.Util");
-    addExportedTcJarClass(configHelper, "com.tcclient.ehcache.TimeExpiryMap");
-    addExportedTcJarClass(configHelper, "com.tcclient.cache.CacheData");
-    addExportedTcJarClass(configHelper, "com.tcclient.cache.CacheDataStore");
-    addExportedTcJarClass(configHelper, "com.tcclient.cache.CacheDataStore$CacheEntryInvalidator");
-    addExportedTcJarClass(configHelper, "com.tcclient.cache.CacheDataStore$CacheInvalidationTimer");
-    addExportedTcJarClass(configHelper, "com.tcclient.cache.Expirable");
-    addExportedTcJarClass(configHelper, "com.tcclient.cache.Lock");
-    addExportedTcJarClass(configHelper, "com.tcclient.cache.Timestamp");
-    addExportedTcJarClass(configHelper, "com.tcclient.cache.GlobalKeySet");
-    addExportedTcJarClass(configHelper, "com.tcclient.cache.CacheParticipants");
+    addExportedBundleClass(thisBundle, "net.sf.ehcache.store.TimeExpiryMemoryStore");
+    addExportedBundleClass(thisBundle, "net.sf.ehcache.store.TimeExpiryMemoryStore$SpoolingTimeExpiryMap");
+    addExportedBundleClass(thisBundle, "org.terracotta.modules.ehcache.commons_1_0.util.Util");
+    addExportedTcJarClass("com.tcclient.ehcache.TimeExpiryMap");
+    addExportedTcJarClass("com.tcclient.cache.CacheData");
+    addExportedTcJarClass("com.tcclient.cache.CacheDataStore");
+    addExportedTcJarClass("com.tcclient.cache.CacheDataStore$CacheEntryInvalidator");
+    addExportedTcJarClass("com.tcclient.cache.CacheDataStore$CacheInvalidationTimer");
+    addExportedTcJarClass("com.tcclient.cache.Expirable");
+    addExportedTcJarClass("com.tcclient.cache.Lock");
+    addExportedTcJarClass("com.tcclient.cache.Timestamp");
+    addExportedTcJarClass("com.tcclient.cache.GlobalKeySet");
+    addExportedTcJarClass("com.tcclient.cache.CacheParticipants");
     
     // explicitly excluding autolocking
     configHelper.addAutoLockExcludePattern("* com.tcclient.cache.CacheData.*(..)");

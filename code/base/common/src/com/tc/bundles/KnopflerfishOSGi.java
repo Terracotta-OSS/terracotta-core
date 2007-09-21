@@ -66,6 +66,7 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
   }
 
   private void startBundle(final long id, final EmbeddedOSGiEventHandler handler) throws BundleException {
+    Assert.assertNotNull(handler);
     final Bundle bundle = framework.bundles.getBundle(id);
     final boolean isStarting = ((bundle.getState() & Bundle.STARTING) == Bundle.STARTING);
     final boolean isActive = ((bundle.getState() & Bundle.ACTIVE) == Bundle.ACTIVE);
@@ -75,10 +76,10 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
       return;
     }
 
-    info(Message.STARTING_BUNDLE, new Object[] { bundle.getSymbolicName() });
+    info(Message.STARTING_BUNDLE, new Object[] { bundle.getSymbolicName() });    
     framework.startBundle(bundle.getBundleId());
     info(Message.BUNDLE_STARTED, new Object[] { bundle.getSymbolicName() });
-    Assert.assertNotNull(handler);
+    Assert.assertEquals(bundle.getState() & Bundle.ACTIVE, bundle.getState());
     handler.callback(bundle);
   }
 

@@ -3,15 +3,16 @@
  */
 package com.tc.object.config;
 
+import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
+
 import com.tc.aspectwerkz.reflect.ClassInfo;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
 public class CompoundExpressionMatcher implements ClassExpressionMatcher {
 
-  private final Collection matchers = new ArrayList();
+  private final Collection matchers = new CopyOnWriteArrayList();
   
   public boolean match(ClassInfo classInfo) {
     for(Iterator i = matchers.iterator(); i.hasNext();) {

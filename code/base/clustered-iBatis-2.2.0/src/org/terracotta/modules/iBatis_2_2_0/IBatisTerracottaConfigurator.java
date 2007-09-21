@@ -14,14 +14,13 @@ import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.ModuleSpec;
-import com.tc.object.config.StandardDSOClientConfigHelper;
 
 import java.sql.SQLException;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
 public final class IBatisTerracottaConfigurator extends TerracottaConfiguratorModule {
-  protected final void addInstrumentation(final BundleContext context, final StandardDSOClientConfigHelper configHelper) {
+  protected final void addInstrumentation(final BundleContext context) {
     configHelper.addAutolock("* java.util.Collections$SynchronizedList.*(..)", ConfigLockLevel.WRITE);
     
     ClassAdapterFactory factory = new IBatisClassAdapter();

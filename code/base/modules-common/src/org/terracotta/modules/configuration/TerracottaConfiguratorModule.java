@@ -13,85 +13,101 @@ import org.osgi.framework.BundleException;
 import org.osgi.framework.ServiceReference;
 
 import com.tc.object.bytecode.ByteCodeUtil;
+import com.tc.object.config.LockDefinition;
 import com.tc.object.config.StandardDSOClientConfigHelper;
+import com.tc.object.config.TransparencyClassSpec;
+import com.tc.util.Assert;
 
-public abstract class TerracottaConfiguratorModule implements BundleActivator {
+public abstract class TerracottaConfiguratorModule
+      implements BundleActivator {
 
-	protected ServiceReference getConfigHelperReference(BundleContext context)
-			throws Exception {
-		final String CONFIGHELPER_CLASS_NAME = "com.tc.object.config.StandardDSOClientConfigHelperImpl";
-		final ServiceReference configHelperRef = context
-				.getServiceReference(CONFIGHELPER_CLASS_NAME);
-		if (configHelperRef == null) {
-			throw new BundleException("Expected the " + CONFIGHELPER_CLASS_NAME
-					+ " service to be registered, was unable to find it");
-		}
-		return configHelperRef;
-	}
+   protected StandardDSOClientConfigHelper configHelper;
 
-	public void start(final BundleContext context) throws Exception {
-		final ServiceReference configHelperRef = getConfigHelperReference(context);
-		final StandardDSOClientConfigHelper configHelper = (StandardDSOClientConfigHelper) context
-				.getService(configHelperRef);
-		addInstrumentation(context, configHelper);
-		context.ungetService(configHelperRef);
-		registerModuleSpec(context);
-	}
+   protected ServiceReference getConfigHelperReference(BundleContext context)
+         throws Exception {
+      final String CONFIGHELPER_CLASS_NAME = "com.tc.object.config.StandardDSOClientConfigHelperImpl";
+      final ServiceReference configHelperRef = context
+            .getServiceReference(CONFIGHELPER_CLASS_NAME);
+      if (configHelperRef == null) {
+         throw new BundleException("Expected the " + CONFIGHELPER_CLASS_NAME
+               + " service to be registered, was unable to find it");
+      }
+      return configHelperRef;
+   }
 
-	public void stop(final BundleContext context) throws Exception {
-		// Ignore this, we don't need to stop anything
-	}
+   public final void start(final BundleContext context)
+         throws Exception {
+      final ServiceReference configHelperRef = getConfigHelperReference(context);
+      configHelper = (StandardDSOClientConfigHelper) context
+            .getService(configHelperRef);
+      Assert.assertNotNull(configHelper);
+      addInstrumentation(context);
+      context.ungetService(configHelperRef);
+      registerModuleSpec(context);
+   }
 
-	protected void addInstrumentation(final BundleContext context,
-			final StandardDSOClientConfigHelper configHelper) {
-		// default empty body
-	}
+   public void stop(final BundleContext context)
+         throws Exception {
+      // Ignore this, we don't need to stop anything
+   }
 
-	protected void registerModuleSpec(final BundleContext context) {
-		// default empty body
-	}
+   protected void addInstrumentation(final BundleContext context) {
+      // default empty body
+   }
 
-	protected final String getBundleJarUrl(final Bundle bundle) {
-		return "jar:" + bundle.getLocation() + "!/";
-	}
+   protected void registerModuleSpec(final BundleContext context) {
+      // default empty body
+   }
 
-	protected final void addClassReplacement(
-			final StandardDSOClientConfigHelper configHelper,
-			final Bundle bundle, final String originalClassName,
-			final String replacementClassName) {
-		String url = getBundleJarUrl(bundle)
-				+ ByteCodeUtil.classNameToFileName(replacementClassName);
-		try {
-			configHelper.addClassReplacement(originalClassName,
-					replacementClassName, new URL(url));
-		} catch (MalformedURLException e) {
-			throw new RuntimeException(
-					"Unexpected error while constructing the URL '" + url + "'",
-					e);
-		}
-	}
+   protected final String getBundleJarUrl(final Bundle bundle) {
+      return "jar:" + bundle.getLocation() + "!/";
+   }
 
-	protected final void addExportedBundleClass(
-			final StandardDSOClientConfigHelper configHelper,
-			final Bundle bundle, final String classname) {
-		String url = getBundleJarUrl(bundle)
-				+ ByteCodeUtil.classNameToFileName(classname);
-		try {
-			configHelper.addClassResource(classname, new URL(url));
-		} catch (MalformedURLException e) {
-			throw new RuntimeException(
-					"Unexpected error while constructing the URL '" + url + "'",
-					e);
-		}
-	}
+   protected final void addClassReplacement(final Bundle bundle,
+         final String originalClassName, final String replacementClassName) {
+      String url = getBundleJarUrl(bundle)
+            + ByteCodeUtil.classNameToFileName(replacementClassName);
+      try {
+         configHelper.addClassReplacement(originalClassName,
+               replacementClassName, new URL(url));
+      } catch (MalformedURLException e) {
+         throw new RuntimeException(
+               "Unexpected error while constructing the URL '" + url + "'", e);
+      }
+   }
 
-	protected final void addExportedTcJarClass(
-			final StandardDSOClientConfigHelper configHelper,
-			final String classname) {
-		configHelper.addClassResource(classname,
-				TerracottaConfiguratorModule.class.getClassLoader()
-						.getResource(
-								ByteCodeUtil.classNameToFileName(classname)));
-	}
+   protected final void addExportedBundleClass(final Bundle bundle,
+         final String classname) {
+      String url = getBundleJarUrl(bundle)
+            + ByteCodeUtil.classNameToFileName(classname);
+      try {
+         configHelper.addClassResource(classname, new URL(url));
+      } catch (MalformedURLException e) {
+         throw new RuntimeException(
+               "Unexpected error while constructing the URL '" + url + "'", e);
+      }
+   }
+
+   protected final void addExportedTcJarClass(final String classname) {
+      configHelper.addClassResource(classname,
+            TerracottaConfiguratorModule.class.getClassLoader().getResource(
+                  ByteCodeUtil.classNameToFileName(classname)));
+   }
+
+   protected TransparencyClassSpec getOrCreateSpec(final String expr,
+         final boolean markAsPreInstrumented) {
+      final TransparencyClassSpec spec = configHelper.getOrCreateSpec(expr);
+      if (markAsPreInstrumented)
+         spec.markPreInstrumented();
+      return spec;
+   }
+   
+   protected TransparencyClassSpec getOrCreateSpec(final String expr) {
+      return getOrCreateSpec(expr, true);
+   }
+
+   protected void addLock(final String expr, final LockDefinition ld) {
+      configHelper.addLock(expr, ld);
+   }
 
 }

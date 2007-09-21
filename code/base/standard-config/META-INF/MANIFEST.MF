@@ -1,6 +1,5 @@
 Manifest-Version: 1.0
-Terracotta-Configuration: exceptions
-Bundle-Activator: org.terracotta.modules.StandardConfigConfigurator
+Bundle-Activator: org.terracotta.modules.StandardConfiguration
 Bundle-Category: terracotta
 Bundle-Copyright: Terracotta, Inc. (c) 2003-2007
 Bundle-Description: Core configuration for Terracotta L1's

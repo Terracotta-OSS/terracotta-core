@@ -53,6 +53,38 @@ modules:
       dependencies:
         - common-api
         - dso-l1-api
+  - excludes-config:
+      options:
+        jdk: J2SE-1.4
+        module: true
+      dependencies:
+        - modules-common
+        - dso-l1-api
+        - common-api
+  - guimodels-config:
+      options:
+        jdk: J2SE-1.4
+        module: true
+      dependencies:
+        - modules-common
+        - dso-l1-api
+        - common-api
+  - jdk15-preinst-config:
+      options:
+        jdk: J2SE-1.4
+        module: true
+      dependencies:
+        - modules-common
+        - dso-l1-api
+        - common-api
+  - spring-config:
+      options:
+        jdk: J2SE-1.4
+        module: true
+      dependencies:
+        - modules-common
+        - dso-l1-api
+        - common-api
   - standard-config:
       options:
         jdk: J2SE-1.4
@@ -840,6 +872,10 @@ module-groups:
     - clustered-hibernate-3.1.2
     - clustered-websphere-6.1.0.7
     - clustered-wicket-1.3
+    - excludes-config
+    - guimodels-config
+    - jdk15-preinst-config
+    - spring-config
     - standard-config
     - modules-common
   gui:

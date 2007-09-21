@@ -84,7 +84,11 @@ public class ModulesLoader {
     EmbeddedOSGiRuntime osgiRuntime = null;
     synchronized (lock) {
       final Modules modules = configHelper.getModulesForInitialization();
-      if (modules == null) return;
+      if (modules == null) {
+        consoleLogger.warn("Modules configuration might not have been properly initialized.");
+        return;
+      }
+      
       try {
         osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
         initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), forBootJar);

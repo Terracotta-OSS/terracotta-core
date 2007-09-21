@@ -34,14 +34,16 @@ import java.util.Set;
  * Describe the Custom adaption of a class
  */
 public class TransparencyClassSpecImpl implements TransparencyClassSpec {
-  
+
   private static final Object         HONOR_TRANSIENT_KEY        = "honor-transient";
   private static final Object         HONOR_VOLATILE_KEY         = "honor-volatile";
 
+  /**
   public static final byte            NOT_SET                    = 0x00;
   public static final byte            NOT_ADAPTABLE              = 0x01;
   public static final byte            ADAPTABLE                  = 0x02;
   public static final byte            PORTABLE                   = 0x03;
+  */
 
   private final DSOClientConfigHelper configuration;
   private final String                className;

@@ -10,9 +10,15 @@ import java.net.URL;
 
 public interface StandardDSOClientConfigHelper {
 
+  public static final String UNSAFE_CLASSADAPTER_FACTORY    = "com.tc.object.bytecode.UnsafeAdapter";
+
+  public static final String DSOUNSAFE_CLASSADAPTER_FACTORY = "com.tc.object.bytecode.DSOUnsafeAdapter";
+
   // HACK: available only in StandardDSOClientConfigHelper
 
   void allowCGLIBInstrumentation();
+
+  void addAspectModule(String pattern, String moduleName);
 
   // HACK: duplicated from DSOApplicationConfig
 
@@ -25,20 +31,24 @@ public interface StandardDSOClientConfigHelper {
   void addReadAutolock(String methodPattern);
 
   void addIncludePattern(String classname, boolean honorTransient);
-  
+
   void addAutoLockExcludePattern(String expression);
 
   void addPermanentExcludePattern(String pattern);
-  
+
+  void addNonportablePattern(String pattern);
+
   LockDefinition createLockDefinition(String name, ConfigLockLevel level);
-  
+
   void addLock(String methodPattern, LockDefinition lockDefinition);
-  
+
   // HACK: duplicated from DSOClientConfigHelper
 
   TransparencyClassSpec getOrCreateSpec(String className);
 
   TransparencyClassSpec getOrCreateSpec(String className, String applicator);
+
+  void addCustomAdapter(String name, String factoryName);
 
   void addCustomAdapter(String name, ClassAdapterFactory adapterFactory);
 

@@ -9,21 +9,70 @@ import org.terracotta.modules.configuration.TerracottaConfiguratorModule;
 
 import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.LockDefinition;
-import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.util.runtime.Vm;
 
-public class StandardConfigConfigurator
+public class GUIModelsConfiguration
       extends TerracottaConfiguratorModule {
 
-   private StandardDSOClientConfigHelper configHelper;
-
-   protected void addInstrumentation(final BundleContext context,
-         final StandardDSOClientConfigHelper configHelper) {
-      super.addInstrumentation(context, configHelper);
-      this.configHelper = configHelper;
+   protected void addInstrumentation(final BundleContext context) {
+      super.addInstrumentation(context);
+      configAWTModels();
       configSwingModels();
-      configAwtModels();
+   }
+
+   private void configAWTModels() {
+      // Color
+      configHelper.addIncludePattern("java.awt.Color", true);
+      TransparencyClassSpec spec = getOrCreateSpec("java.awt.Color");
+      spec.addTransient("cs");
+
+      // MouseMotionAdapter, MouseAdapter
+      getOrCreateSpec("java.awt.event.MouseMotionAdapter");
+      getOrCreateSpec("java.awt.event.MouseAdapter");
+
+      // Point
+      getOrCreateSpec("java.awt.Point");
+      getOrCreateSpec("java.awt.geom.Point2D");
+      getOrCreateSpec("java.awt.geom.Point2D$Double");
+      getOrCreateSpec("java.awt.geom.Point2D$Float");
+
+      // Line
+      getOrCreateSpec("java.awt.geom.Line2D");
+      getOrCreateSpec("java.awt.geom.Line2D$Double");
+      getOrCreateSpec("java.awt.geom.Line2D$Float");
+
+      // Rectangle
+      getOrCreateSpec("java.awt.Rectangle");
+      getOrCreateSpec("java.awt.geom.Rectangle2D");
+      getOrCreateSpec("java.awt.geom.RectangularShape");
+      getOrCreateSpec("java.awt.geom.Rectangle2D$Double");
+      getOrCreateSpec("java.awt.geom.Rectangle2D$Float");
+      getOrCreateSpec("java.awt.geom.RoundRectangle2D");
+      getOrCreateSpec("java.awt.geom.RoundRectangle2D$Double");
+      getOrCreateSpec("java.awt.geom.RoundRectangle2D$Float");
+
+      // Ellipse2D
+      getOrCreateSpec("java.awt.geom.Ellipse2D");
+      getOrCreateSpec("java.awt.geom.Ellipse2D$Double");
+      getOrCreateSpec("java.awt.geom.Ellipse2D$Float");
+
+      // java.awt.geom.Path2D
+      if (Vm.isJDK16Compliant()) {
+         getOrCreateSpec("java.awt.geom.Path2D");
+         getOrCreateSpec("java.awt.geom.Path2D$Double");
+         getOrCreateSpec("java.awt.geom.Path2D$Float");
+      }
+
+      // GeneralPath
+      getOrCreateSpec("java.awt.geom.GeneralPath");
+      // 
+      // BasicStroke
+      getOrCreateSpec("java.awt.BasicStroke");
+
+      // Dimension
+      getOrCreateSpec("java.awt.Dimension");
+      getOrCreateSpec("java.awt.geom.Dimension2D");
    }
 
    private void configSwingModels() {
@@ -105,69 +154,4 @@ public class StandardConfigConfigurator
       spec.addDistributedMethodCall("fireIntervalRemoved",
             "(Ljava/lang/Object;II)V", false);
    }
-
-   private void configAwtModels() {
-      // Color
-      configHelper.addIncludePattern("java.awt.Color", true);
-      TransparencyClassSpec spec = getOrCreateSpec("java.awt.Color");
-      spec.addTransient("cs");
-
-      // MouseMotionAdapter, MouseAdapter
-      getOrCreateSpec("java.awt.event.MouseMotionAdapter");
-      getOrCreateSpec("java.awt.event.MouseAdapter");
-
-      // Point
-      getOrCreateSpec("java.awt.Point");
-      getOrCreateSpec("java.awt.geom.Point2D");
-      getOrCreateSpec("java.awt.geom.Point2D$Double");
-      getOrCreateSpec("java.awt.geom.Point2D$Float");
-
-      // Line
-      getOrCreateSpec("java.awt.geom.Line2D");
-      getOrCreateSpec("java.awt.geom.Line2D$Double");
-      getOrCreateSpec("java.awt.geom.Line2D$Float");
-
-      // Rectangle
-      getOrCreateSpec("java.awt.Rectangle");
-      getOrCreateSpec("java.awt.geom.Rectangle2D");
-      getOrCreateSpec("java.awt.geom.RectangularShape");
-      getOrCreateSpec("java.awt.geom.Rectangle2D$Double");
-      getOrCreateSpec("java.awt.geom.Rectangle2D$Float");
-      getOrCreateSpec("java.awt.geom.RoundRectangle2D");
-      getOrCreateSpec("java.awt.geom.RoundRectangle2D$Double");
-      getOrCreateSpec("java.awt.geom.RoundRectangle2D$Float");
-
-      // Ellipse2D
-      getOrCreateSpec("java.awt.geom.Ellipse2D");
-      getOrCreateSpec("java.awt.geom.Ellipse2D$Double");
-      getOrCreateSpec("java.awt.geom.Ellipse2D$Float");
-
-      // java.awt.geom.Path2D
-      if (Vm.isJDK16Compliant()) {
-         getOrCreateSpec("java.awt.geom.Path2D");
-         getOrCreateSpec("java.awt.geom.Path2D$Double");
-         getOrCreateSpec("java.awt.geom.Path2D$Float");
-      }
-
-      // GeneralPath
-      getOrCreateSpec("java.awt.geom.GeneralPath");
-      // 
-      // BasicStroke
-      getOrCreateSpec("java.awt.BasicStroke");
-
-      // Dimension
-      getOrCreateSpec("java.awt.Dimension");
-      getOrCreateSpec("java.awt.geom.Dimension2D");
-   }
-
-   private TransparencyClassSpec getOrCreateSpec(final String expr) {
-      final TransparencyClassSpec spec = configHelper.getOrCreateSpec(expr);
-      spec.markPreInstrumented();
-      return spec;
-   }
-
-   private synchronized void addLock(final String expr, final LockDefinition ld) {
-      configHelper.addLock(expr, ld);
-   }
-
 }

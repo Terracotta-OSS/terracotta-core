@@ -123,6 +123,7 @@ class BootJar
                              :value => value.xml_escape(true))
           end
 
+          @ant.arg(:value => 'make')
           @ant.arg(:value => '-o')
           @ant.arg(:value => @directory.ensure_directory)
           @ant.arg(:value => '-f')

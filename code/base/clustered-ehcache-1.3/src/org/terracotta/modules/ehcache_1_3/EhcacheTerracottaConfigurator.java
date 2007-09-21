@@ -9,7 +9,7 @@ import com.tc.object.config.TransparencyClassSpec;
 
 public class EhcacheTerracottaConfigurator extends EhcacheTerracottaCommonsConfigurator {
   protected void addInstrumentation(BundleContext context, StandardDSOClientConfigHelper configHelper) {
-    super.addInstrumentation(context, configHelper);
+    super.addInstrumentation(context);
 
     ClassAdapterFactory factory = new EhcacheCacheManagerClassAdapter();
     TransparencyClassSpec spec = configHelper.getOrCreateSpec(CACHE_MANAGER_CLASS_NAME_DOTS);
