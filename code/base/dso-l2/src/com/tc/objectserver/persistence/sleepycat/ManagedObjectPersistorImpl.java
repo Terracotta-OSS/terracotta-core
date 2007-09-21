@@ -86,6 +86,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   private final int                            BitsPerLong        = OidLongArray.BitsPerLong;
   private final String LONGS_PER_DISK_ENTRY = "l2.objectmanager.loadObjectID.longsPerDiskEntry";
   private final String LONGS_PER_MEMORY_ENTRY = "l2.objectmanager.loadObjectID.longsPerMemoryEntry";
+  private final boolean paranoid;
 
 
   public ManagedObjectPersistorImpl(TCLogger logger, ClassCatalog classCatalog,
@@ -93,7 +94,8 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
                                     Database oidDB, CursorConfig oidDBCursorConfig, MutableSequence objectIDSequence,
                                     Database rootDB, CursorConfig rootDBCursorConfig,
                                     PersistenceTransactionProvider ptp,
-                                    SleepycatCollectionsPersistor collectionsPersistor) {
+                                    SleepycatCollectionsPersistor collectionsPersistor,
+                                    boolean paranoid) {
     this.logger = logger;
     this.classCatalog = classCatalog;
     this.saf = serializationAdapterFactory;
@@ -105,12 +107,17 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
     this.rootDBCursorConfig = rootDBCursorConfig;
     this.ptp = ptp;
     this.collectionsPersistor = collectionsPersistor;
+    this.paranoid = paranoid;
     
     isPopulating = false;
     
-    oidBitsArrayMap = new OidBitsArrayMap(
+    if (!this.paranoid) {
+      oidBitsArrayMap = null;
+    } else {
+      oidBitsArrayMap = new OidBitsArrayMap(
             TCPropertiesImpl.getProperties().getInt(LONGS_PER_MEMORY_ENTRY),
             TCPropertiesImpl.getProperties().getInt(LONGS_PER_DISK_ENTRY));
+    }
   }
 
   public long nextObjectIDBatch(int batchSize) {
@@ -180,10 +187,12 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
 
   public SyncObjectIdSet getAllObjectIDs() {
     SyncObjectIdSet rv = new SyncObjectIdSetImpl();
-    rv.startPopulating();
-    Thread t = new Thread(new ObjectIdReader(rv), "ObjectIdReaderThread");
-    t.setDaemon(true);
-    t.start();
+    if(paranoid) {
+      rv.startPopulating();
+      Thread t = new Thread(new ObjectIdReader(rv), "ObjectIdReaderThread");
+      t.setDaemon(true);
+      t.start();
+    }
     return rv;
   }
 
@@ -268,7 +277,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
     OperationStatus status = null;
     try {
       status = basicSaveObject(persistenceTransaction, managedObject);
-      if (OperationStatus.SUCCESS.equals(status)) {
+      if (paranoid && OperationStatus.SUCCESS.equals(status)) {
         status = oidPut(persistenceTransaction, managedObject.getID());
       }
     } catch (DBException e) {
@@ -349,12 +358,12 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
         }
         
         // record new object-IDs to be written to persistent store later.
-        synchronized(oidBitsArrayMap) {
+        if(paranoid) synchronized(oidBitsArrayMap) {
           oidPrePut(sortedOidList, managedObject.getID());
         }
       }
       // write all new Object-IDs to persistor
-      synchronized(oidBitsArrayMap) {
+      if(paranoid) synchronized(oidBitsArrayMap) {
         if(!OperationStatus.SUCCESS.equals(oidPutAll(persistenceTransaction, sortedOidList))) {
           throw new DBException("Failed to save Object-IDs");
         }
@@ -409,12 +418,12 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
       ObjectID objectId = (ObjectID) i.next();
       deleteObjectByID(tx, objectId);
       // record deleted object-IDs to be written to persistent store later.
-      synchronized(oidBitsArrayMap) {
+      if(paranoid) synchronized(oidBitsArrayMap) {
         oidPreDelete(sortedOidList, objectId);
       }
     }
     
-    synchronized(oidBitsArrayMap) {
+    if(paranoid) synchronized(oidBitsArrayMap) {
       try {
         oidDeleteAll(tx, sortedOidList);
       } catch (TCDatabaseException de){
@@ -479,6 +488,8 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
     }
 
     public void run() {
+      Assert.assertTrue("Shall be in persistent mode to refresh Object IDs at startup", paranoid);
+      
       ObjectIDSet2 tmp = new ObjectIDSet2();
       PersistenceTransaction tx = null;
       Cursor cursor = null;
@@ -678,7 +689,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
         if (bits.isZero()) {
           status = this.oidDB.delete(pt2nt(tx), key);
           if (!OperationStatus.SUCCESS.equals(status)) 
-                logger.warn("Delete non-exist on-disk oid array "+bits.getKey());
+            throw new TCDatabaseException("Delete non-exist on-disk oid array "+bits.getKey());
         } else {
           DatabaseEntry value = new DatabaseEntry();
           value.setData(bits.arrayToBytes());

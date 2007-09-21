@@ -83,7 +83,8 @@ public class SleepycatPersistor implements Persistor {
                                                                                            .getObjectIDDB()), env
                                                                      .getRootDatabase(), rootDBCursorConfig,
                                                                  this.persistenceTransactionProvider,
-                                                                 this.sleepycatCollectionsPersistor);
+                                                                 this.sleepycatCollectionsPersistor,
+                                                                 env.isParanoidMode());
     this.clientStatePersistor = new ClientStatePersistorImpl(logger, this.persistenceTransactionProvider,
                                                              new SleepycatSequence(this.persistenceTransactionProvider,
                                                                                    logger, 1, 0, env

@@ -15,7 +15,6 @@ import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet2;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -143,7 +142,7 @@ public class InMemoryManagedObjectStore implements ManagedObjectStore {
   }
 
   public Map getRootNamesToIDsMap() {
-    return Collections.unmodifiableMap(roots);
+    return roots;
   }
 
 }

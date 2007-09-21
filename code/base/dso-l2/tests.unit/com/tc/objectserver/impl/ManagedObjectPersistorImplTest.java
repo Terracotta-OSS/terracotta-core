@@ -60,7 +60,8 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
                                                             env.getRootDatabase(),
                                                             rootDBCursorConfig,
                                                             persistenceTransactionProvider,
-                                                            sleepycatCollectionsPersistor
+                                                            sleepycatCollectionsPersistor,
+                                                            env.isParanoidMode()
                                                             );
     map = new HashMap();
     persistor = new TestManagedObjectPersistor(map);

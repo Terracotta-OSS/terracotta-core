@@ -124,6 +124,10 @@ public class DBEnvironment {
     this.envHome = envHome;
     FileUtils.forceMkdir(this.envHome);
   }
+  
+  public boolean isParanoidMode() {
+    return paranoid;
+  }
 
   public synchronized DatabaseOpenResult open() throws TCDatabaseException {
     assertInit();
