@@ -138,12 +138,10 @@ public class DistributedTestRunner implements ResultsListener {
   protected TCServer instantiateTCServer() {
     try {
       Class tcServerClass = Class.forName("com.tc.server.TCServerImpl");
-      Class[] constructorParameterTypes = {L2TVSConfigurationSetupManager.class, TCThreadGroup.class};
-      Constructor tcServerConstructor = tcServerClass.getConstructor(constructorParameterTypes); 
-      Object[] tcServerConstructorArgs = {
-              configFactory.createL2TVSConfigurationSetupManager(null),
-              new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(TCServer.class)))
-      };
+      Class[] constructorParameterTypes = { L2TVSConfigurationSetupManager.class, TCThreadGroup.class };
+      Constructor tcServerConstructor = tcServerClass.getConstructor(constructorParameterTypes);
+      Object[] tcServerConstructorArgs = { configFactory.createL2TVSConfigurationSetupManager(null),
+          new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(TCServer.class))) };
       return (TCServer) tcServerConstructor.newInstance(tcServerConstructorArgs);
     } catch (Exception e) {
       throw new RuntimeException("Error while instantiating TCServerImpl from DistributedTestRunner", e);
@@ -183,19 +181,29 @@ public class DistributedTestRunner implements ResultsListener {
     }
   }
 
-  public void run() {
+  public void startServer() {
     try {
-
-      debugPrintln("***** control=[" + control.toString() + "]");
-
-      Thread statsOutputPrinterThread = new Thread(this.statsOutputPrinter);
-      statsOutputPrinterThread.setDaemon(true);
-      statsOutputPrinterThread.start();
-
+      startStatsOutputPrinterThread();
       visitApplicationClassLoaderConfig();
       if (this.startServer) {
         this.server.start();
       }
+    } catch (Throwable t) {
+      notifyError(new ErrorContext(t));
+    } finally {
+      if (false && this.startServer) this.server.stop();
+    }
+  }
+
+  private void startStatsOutputPrinterThread() {
+    Thread statsOutputPrinterThread = new Thread(this.statsOutputPrinter);
+    statsOutputPrinterThread.setDaemon(true);
+    statsOutputPrinterThread.start();
+  }
+
+  public void run() {
+    try {
+      debugPrintln("***** control=[" + control.toString() + "]");
 
       for (int i = 0; i < containers.length; i++) {
         new Thread(containers[i]).start();

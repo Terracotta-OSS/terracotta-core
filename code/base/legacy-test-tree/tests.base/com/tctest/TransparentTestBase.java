@@ -443,6 +443,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       }
       // NOTE: for crash tests the server needs to be started by the ServerCrasher.. timing issue
 
+      this.runner.startServer();
       if (canRunProxyConnect()) {
         ProxyConnectManagerImpl.getManager().proxyUp();
         ProxyConnectManagerImpl.getManager().startProxyTest();
