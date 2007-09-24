@@ -857,6 +857,7 @@ module-groups:
     - dso-system-tests
     - dso-alt-boot-jar-tests
     - dso-tests-jdk15
+    - dso-crash-tests
     - management
     - dso-memory-datastore
   framework:
