@@ -173,8 +173,26 @@ public class ClassLoaderPreProcessorImpl {
       } else if (CLASSLOADER_CLASS_NAME.equals(className) && "getResource".equals(name)
                  && "(Ljava/lang/String;)Ljava/net/URL;".equals(desc)) {
         return new GetResourceVisitor(mv);
+      } else if ("initSystemClassLoader".equals(name)) {
+        return new SclSetAdapter(mv);
       } else {
         return new ProcessingVisitor(mv, access, desc);
+      }
+    }
+  }
+
+  private static class SclSetAdapter extends MethodAdapter implements Opcodes {
+
+    public SclSetAdapter(MethodVisitor mv) {
+      super(mv);
+    }
+
+    public void visitFieldInsn(int opcode, String owner, String name, String desc) {
+      super.visitFieldInsn(opcode, owner, name, desc);
+
+      if ("sclSet".equals(name) && (PUTSTATIC == opcode)) {
+        super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/ClassProcessorHelper",
+                              "systemLoaderInitialized", "()V");
       }
     }
   }

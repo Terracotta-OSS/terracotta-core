@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tcverify;
 
@@ -28,6 +29,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A quick/shallow test that uses the DSOVerifier client program
@@ -36,7 +41,7 @@ public class DSOVerifierTest extends TCTestCase {
 
   TCServerImpl server;
 
-  public final static void main(String[] args) throws Exception {
+  public static void main(String[] args) throws Exception {
     DSOVerifierTest t = new DSOVerifierTest();
     t.setUp();
     t.test();
@@ -44,9 +49,9 @@ public class DSOVerifierTest extends TCTestCase {
   }
 
   public DSOVerifierTest() {
-    //disableAllUntil("2007-09-11");    
+    // disableAllUntil("2007-09-11");
   }
-  
+
   protected void setUp() throws Exception {
     super.setUp();
 
@@ -80,23 +85,11 @@ public class DSOVerifierTest extends TCTestCase {
   }
 
   public void test() throws Exception {
-    String bootclasspath = "-Xbootclasspath/p:" + TestConfigObject.getInstance().normalBootJar();
+    LinkedJavaProcess p1 = new LinkedJavaProcess(getMainClass(), new String[] { "1", "2" });
+    p1.setJavaArguments(getJvmArgs());
 
-    System.out.println("Bootclasspath:" + bootclasspath);
-
-    String[] jvmArgs = new String[] {
-        bootclasspath,
-        "-D" + TVSConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME + "=localhost:"
-            + server.getDSOListenPort() };
-    System.out.println("JVM args: " + ArrayUtils.toString(jvmArgs));
-
-    LinkedJavaProcess p1 = new LinkedJavaProcess(DSOVerifier.class.getName(), new String[] { "1", "2" });
-    p1.setJavaArguments(jvmArgs);
-    p1.setDSOTarget(true);
-
-    LinkedJavaProcess p2 = new LinkedJavaProcess(DSOVerifier.class.getName(), new String[] { "2", "1" });
-    p2.setJavaArguments(jvmArgs);
-    p2.setDSOTarget(true);
+    LinkedJavaProcess p2 = new LinkedJavaProcess(getMainClass(), new String[] { "2", "1" });
+    p2.setJavaArguments(getJvmArgs());
 
     p1.start();
     p2.start();
@@ -137,6 +130,29 @@ public class DSOVerifierTest extends TCTestCase {
     if (!verifyOutput(p2Out, output)) {
       fail(compound);
     }
+  }
+
+  protected String getMainClass() {
+    return DSOVerifier.class.getName();
+  }
+
+  protected String[] getJvmArgs() {
+    String bootclasspath = "-Xbootclasspath/p:" + TestConfigObject.getInstance().normalBootJar();
+
+    List<String> args = new ArrayList<String>();
+    args.add(bootclasspath);
+    args.add("-D" + TVSConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME + "=localhost:"
+             + server.getDSOListenPort());
+
+    args.addAll(getExtraJvmArgs());
+
+    String[] rv = args.toArray(new String[args.size()]);
+    System.out.println("JVM args: " + ArrayUtils.toString(rv));
+    return rv;
+  }
+
+  protected Collection<String> getExtraJvmArgs() {
+    return Collections.EMPTY_LIST;
   }
 
   private File writeConfigFile() throws IOException {

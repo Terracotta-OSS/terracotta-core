@@ -1,13 +1,13 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tcverify;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.util.Assert;
 import com.tc.verify.VerificationException;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,16 +16,16 @@ import java.util.Map;
  */
 public class DSOVerifier {
 
-  private static final TCLogger logger      = TCLogging.getTestingLogger(DSOVerifier.class);
+  private static final boolean       DEBUG       = false;
 
-  private static final long     TIMEOUT     = 1 * 60 * 1000;                                // 1 minute
-  private static final long     POLL_PERIOD = 1 * 1000;                                     // 1 second
+  private static final long          TIMEOUT     = 1 * 60 * 1000;                 // 1 minute
+  private static final long          POLL_PERIOD = 1 * 1000;                      // 1 second
 
-  private final int             myID;
-  private final int             otherID;
-  private Map                   verifierMap = new HashMap();
-  private final Integer         myIDInteger;
-  private final Integer         otherIDInteger;
+  private final int                  myID;
+  private final int                  otherID;
+  private final Map<Integer, String> verifierMap = new HashMap<Integer, String>();
+  private final Integer              myIDInteger;
+  private final Integer              otherIDInteger;
 
   public DSOVerifier(int myID, int otherID) {
     Assert.eval(myID != otherID);
@@ -35,6 +35,12 @@ public class DSOVerifier {
     this.otherIDInteger = new Integer(this.otherID);
   }
 
+  private static void debug(String message) {
+    if (DEBUG) {
+      System.err.println(new Date() + ": " + message);
+    }
+  }
+
   public void verify() throws VerificationException {
     setValue(this.myID);
 
@@ -42,9 +48,9 @@ public class DSOVerifier {
     boolean correct = false;
 
     while ((System.currentTimeMillis() - startTime) < TIMEOUT) {
-      logger.debug(myID + ": Fetching value from map.");
-      String value = (String) getValue(this.otherID);
-      logger.debug(myID + ": Got: " + value);
+      debug(myID + ": Fetching value from map.");
+      String value = getValue(this.otherID);
+      debug(myID + ": Got: " + value);
       if (value != null) {
         if (value.equals("PRESENT-" + otherID)) {
           correct = true;
@@ -61,18 +67,18 @@ public class DSOVerifier {
       }
     }
 
-    logger.debug("All done. Correct? " + correct);
+    debug("All done. Correct? " + correct);
     if (!correct) throw new VerificationException("Waited " + (System.currentTimeMillis() - startTime)
                                                   + " milliseconds, but didn't get other VM's signal. Is DSO broken?");
   }
 
-  private Object getValue(int id) {
-    logger.debug("Returning value for " + id);
+  private String getValue(int id) {
+    debug("Returning value for " + id);
     return verifierMap.get(otherIDInteger);
   }
 
   private void setValue(int id) {
-    logger.debug("Setting value for " + id + " to " + id);
+    debug("Setting value for " + id + " to " + id);
     verifierMap.put(myIDInteger, "PRESENT-" + this.myID);
   }
 

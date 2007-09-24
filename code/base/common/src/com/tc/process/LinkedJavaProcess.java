@@ -43,7 +43,6 @@ public class LinkedJavaProcess {
   private String[]       environment;
   private File           directory;
   private File           javaExecutable;
-  private boolean        isDSO   = false;
 
   private Process        process;
   private boolean        running;
@@ -92,10 +91,6 @@ public class LinkedJavaProcess {
 
   public void setDirectory(File directory) {
     this.directory = directory;
-  }
-
-  public void setDSOTarget(boolean isDSO) {
-    this.isDSO = isDSO;
   }
 
   public synchronized void destroy() {
@@ -150,7 +145,7 @@ public class LinkedJavaProcess {
 
     fullCommandList.add(this.javaExecutable.getAbsolutePath());
     fullCommandList.addAll(allJavaArguments);
-    fullCommandList.add(isDSO ? DSOLinkedJavaProcessStarter.class.getName() : LinkedJavaProcessStarter.class.getName());
+    fullCommandList.add(LinkedJavaProcessStarter.class.getName());
     fullCommandList.add(Integer.toString(socketPort));
     fullCommandList.add(this.mainClassName);
     if (this.arguments != null) fullCommandList.addAll(Arrays.asList(this.arguments));
@@ -238,7 +233,7 @@ public class LinkedJavaProcess {
   public void mergeSTDERR() {
     mergeSTDERR(null);
   }
-  
+
   public void mergeSTDERR(String identifier) {
     mergeStream(STDERR(), System.err, identifier);
   }

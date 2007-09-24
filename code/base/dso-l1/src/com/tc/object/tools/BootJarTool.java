@@ -75,6 +75,7 @@ import com.tc.object.bytecode.JavaUtilTreeMapAdapter;
 import com.tc.object.bytecode.JavaUtilWeakHashMapAdapter;
 import com.tc.object.bytecode.LinkedHashMapClassAdapter;
 import com.tc.object.bytecode.LinkedListAdapter;
+import com.tc.object.bytecode.LogManagerAdapter;
 import com.tc.object.bytecode.LogicalClassSerializationAdapter;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.Manager;
@@ -102,8 +103,8 @@ import com.tc.object.bytecode.hook.impl.Util;
 import com.tc.object.cache.Cacheable;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.DSOSpringConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.dna.impl.ProxyInstance;
 import com.tc.object.field.TCField;
 import com.tc.object.loaders.BytecodeProvider;
@@ -438,6 +439,7 @@ public class BootJarTool {
       loadTerracottaClass(TCLogger.class.getName());
       loadTerracottaClass(Banner.class.getName());
       loadTerracottaClass(StandardClassProvider.class.getName());
+      loadTerracottaClass(StandardClassProvider.SystemLoaderHolder.class.getName());
       loadTerracottaClass(Namespace.class.getName());
       loadTerracottaClass(ClassProcessorHelper.class.getName());
       loadTerracottaClass(ClassProcessorHelperJDK15.class.getName());
@@ -487,6 +489,7 @@ public class BootJarTool {
 
       addRuntimeClasses();
 
+      addInstrumentedLogManager();
       addSunStandardLoaders();
       addInstrumentedAccessibleObject();
       addInstrumentedJavaLangThrowable();
@@ -1532,6 +1535,21 @@ public class BootJarTool {
     TransparencyClassSpec spec = config.getOrCreateSpec(className);
     bytes = doDSOTransform(spec.getClassName(), bytes);
     bootJar.loadClassIntoJar(className, bytes, true);
+  }
+
+  private final void addInstrumentedLogManager() {
+    String className = "java.util.logging.LogManager";
+    byte[] bytes = getSystemBytes(className);
+
+    ClassReader cr = new ClassReader(bytes);
+    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+
+    ClassVisitor cv = new LogManagerAdapter(cw);
+    cr.accept(cv, ClassReader.SKIP_FRAMES);
+
+    bytes = cw.toByteArray();
+
+    bootJar.loadClassIntoJar(className, bytes, false);
   }
 
   private final void addInstrumentedJavaLangString() {

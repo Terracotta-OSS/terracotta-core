@@ -11,24 +11,22 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Standard ClassProvider, using named classloaders and aware of boot, extension, and system
- * classloaders.
+ * Standard ClassProvider, using named classloaders and aware of boot, extension, and system classloaders.
  */
 public class StandardClassProvider implements ClassProvider {
 
-  private static final String BOOT         = Namespace.getStandardBootstrapLoaderName();
-  private static final String EXT          = Namespace.getStandardExtensionsLoaderName();
-  private static final String SYSTEM       = Namespace.getStandardSystemLoaderName();
+  private static final String BOOT    = Namespace.getStandardBootstrapLoaderName();
+  private static final String EXT     = Namespace.getStandardExtensionsLoaderName();
+  private static final String SYSTEM  = Namespace.getStandardSystemLoaderName();
 
-  private final ClassLoader   systemLoader = ClassLoader.getSystemClassLoader();
-  private final Map           loaders      = new HashMap();
+  private final Map           loaders = new HashMap();
 
   public StandardClassProvider() {
     //
   }
 
   public ClassLoader getClassLoader(String desc) {
-    if (isStandardLoader(desc)) { return systemLoader; }
+    if (isStandardLoader(desc)) { return SystemLoaderHolder.loader; }
 
     ClassLoader rv = lookupLoader(desc);
     if (rv == null) { throw new AssertionError("No registered loader for description: " + desc); }
@@ -39,7 +37,7 @@ public class StandardClassProvider implements ClassProvider {
     final ClassLoader loader;
 
     if (isStandardLoader(desc)) {
-      loader = systemLoader;
+      loader = SystemLoaderHolder.loader;
     } else {
       loader = lookupLoader(desc);
       if (loader == null) { throw new ClassNotFoundException("No registered loader for description: " + desc
@@ -111,4 +109,9 @@ public class StandardClassProvider implements ClassProvider {
     }
     return rv;
   }
+
+  public static class SystemLoaderHolder {
+    final static ClassLoader loader = ClassLoader.getSystemClassLoader();
+  }
+
 }

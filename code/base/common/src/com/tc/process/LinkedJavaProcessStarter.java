@@ -12,7 +12,7 @@ import java.lang.reflect.Method;
  */
 public class LinkedJavaProcessStarter {
 
-  public static void main(String args[], boolean useSystemClassLoader) throws Exception {
+  public static void main(String args[]) throws Exception {
     int pingPort = Integer.parseInt(args[0]);
     String childClass = args[1];
 
@@ -21,20 +21,12 @@ public class LinkedJavaProcessStarter {
 
     HeartBeatService.registerForHeartBeat(pingPort, childClass);
 
-    final Class mainClass;
-    if (useSystemClassLoader) {
-      mainClass = ClassLoader.getSystemClassLoader().loadClass(childClass);
-    } else {
-      mainClass = Class.forName(childClass);
-    }
+    final Class mainClass = Class.forName(childClass);
 
     Method mainMethod = mainClass.getMethod("main", new Class[] { String[].class });
     mainMethod.invoke(null, new Object[] { realArgs });
 
   }
 
-  public static void main(String[] args) throws Exception {
-    main(args, false);
-  }
 
 }
