@@ -45,7 +45,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
   
   protected void setUp() throws Exception {
     super.setUp();
-    boolean paranoid = false;
+    boolean paranoid = true;
     env = newDBEnvironment(paranoid);
     env.open();
     CursorConfig dbCursorConfig = new CursorConfig();
