@@ -40,7 +40,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
   DBEnvironment env;
   
   public ManagedObjectPersistorImplTest() {
-    this.disableAllUntil("2007-09-30");
+    //this.disableAllUntil("2007-09-30");
   }
   
   protected void setUp() throws Exception {
