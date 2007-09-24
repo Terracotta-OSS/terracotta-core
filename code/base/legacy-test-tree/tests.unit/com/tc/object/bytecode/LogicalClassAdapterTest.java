@@ -37,7 +37,7 @@ public class LogicalClassAdapterTest extends ClassAdapterTestBase {
   private Object[]                params;
 
   public LogicalClassAdapterTest() {
-    // this.disableAllUntil("2007-04-18");
+    this.disableAllUntil("2007-09-30");
   }
 
   public void setUp() throws Exception {
