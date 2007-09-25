@@ -5,6 +5,7 @@ package com.tc.object.bytecode;
 
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
+import com.tc.asm.Label;
 import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
@@ -35,20 +36,29 @@ public class JavaLangThrowableDebugClassAdapter extends ClassAdapter implements 
       super(mv);
     }
 
-    public void visitCode() {
-      mv.visitTypeInsn(NEW, "java/lang/StringBuffer");
-      mv.visitInsn(DUP);
-      mv.visitVarInsn(ALOAD, 0);
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "getName", "()Ljava/lang/String;");
-      mv.visitMethodInsn(INVOKESTATIC, "java/lang/String", "valueOf", "(Ljava/lang/Object;)Ljava/lang/String;");
-      mv.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuffer", "<init>", "(Ljava/lang/String;)V");
-      mv.visitLdcInsn("\n");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append", "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "toString", "()Ljava/lang/String;");
-      mv.visitMethodInsn(INVOKESTATIC, "sun/misc/MessageUtils", "toStderr", "(Ljava/lang/String;)V");
+    public void visitInsn(int opcode) {
+      if (RETURN == opcode) {
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;");
+        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "getName", "()Ljava/lang/String;");
+        mv.visitMethodInsn(INVOKESTATIC, "sun/misc/MessageUtils", "toStderr", "(Ljava/lang/String;)V");
+
+        Label label_nomsg = new Label();
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Throwable", "getMessage", "()Ljava/lang/String;");
+        mv.visitJumpInsn(IFNULL, label_nomsg);
+        mv.visitLdcInsn(": ");
+        mv.visitMethodInsn(INVOKESTATIC, "sun/misc/MessageUtils", "toStderr", "(Ljava/lang/String;)V");
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Throwable", "getMessage", "()Ljava/lang/String;");
+        mv.visitMethodInsn(INVOKESTATIC, "sun/misc/MessageUtils", "toStderr", "(Ljava/lang/String;)V");
+
+        mv.visitLabel(label_nomsg);
+        mv.visitLdcInsn("\n");
+        mv.visitMethodInsn(INVOKESTATIC, "sun/misc/MessageUtils", "toStderr", "(Ljava/lang/String;)V");
+      }
       
-      super.visitCode();
+      super.visitInsn(opcode);
     }
   }
 }
