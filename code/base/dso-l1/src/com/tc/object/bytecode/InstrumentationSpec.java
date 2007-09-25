@@ -16,7 +16,6 @@ import com.tc.exception.TCLogicalSubclassNotPortableException;
 import com.tc.object.LiteralValues;
 import com.tc.object.Portability;
 import com.tc.object.config.TransparencyClassSpec;
-import com.tc.object.config.TransparencyClassSpecImpl;
 import com.tc.object.config.TransparencyClassSpecUtil;
 import com.tc.util.Assert;
 
@@ -36,7 +35,7 @@ class InstrumentationSpec {
 
   private static final LiteralValues  literalValues               = new LiteralValues();
 
-  private byte                        instrumentationAction       = TransparencyClassSpecImpl.NOT_ADAPTABLE;
+  private byte                        instrumentationAction       = TransparencyClassSpec.NOT_ADAPTABLE;
 
   private byte                        managedMethods              = IS_NOT_NEEDED;
   private byte                        valuesGetterMethod          = IS_NOT_NEEDED;
@@ -107,7 +106,7 @@ class InstrumentationSpec {
     return classInfo;
   }
 
-  // XXX no need to initialize because these values are in the classInfo
+  // XXX: Most of this info is already in ClassInfo -- but not class verison ;-)
   void initialize(int version, int access, String name, String signature, String superName, String[] interfaces,
                   Portability portability) {
     this.classNameSlashes = name;
@@ -197,25 +196,25 @@ class InstrumentationSpec {
     this.isInterface = Modifier.isInterface(classAccess);
 
     if (isInterface) {
-      this.instrumentationAction = TransparencyClassSpecImpl.NOT_ADAPTABLE;
-    } else if (spec.getInstrumentationAction() == TransparencyClassSpecImpl.PORTABLE) {
-      this.instrumentationAction = TransparencyClassSpecImpl.PORTABLE;
-    } else if (spec.getInstrumentationAction() == TransparencyClassSpecImpl.ADAPTABLE) {
-      this.instrumentationAction = TransparencyClassSpecImpl.ADAPTABLE;
+      this.instrumentationAction = TransparencyClassSpec.NOT_ADAPTABLE;
+    } else if (spec.getInstrumentationAction() == TransparencyClassSpec.PORTABLE) {
+      this.instrumentationAction = TransparencyClassSpec.PORTABLE;
+    } else if (spec.getInstrumentationAction() == TransparencyClassSpec.ADAPTABLE) {
+      this.instrumentationAction = TransparencyClassSpec.ADAPTABLE;
     } else if (spec.isLogical() || spec.ignoreChecks()) {
       // Logically managed classes need not have all super classes instrumented.
-      // currently THashMap and THashSet are not in bootjar and are instrumented during runtime.
-      this.instrumentationAction = TransparencyClassSpecImpl.PORTABLE;
+      // currently THashMap and THashSet are not in boot jar and are instrumented during runtime.
+      this.instrumentationAction = TransparencyClassSpec.PORTABLE;
     } else if (superClassChecks(portability)) {
-      this.instrumentationAction = TransparencyClassSpecImpl.ADAPTABLE;
+      this.instrumentationAction = TransparencyClassSpec.ADAPTABLE;
     } else {
-      this.instrumentationAction = TransparencyClassSpecImpl.PORTABLE;
+      this.instrumentationAction = TransparencyClassSpec.PORTABLE;
     }
     decideOnInstrumentationsToDo(portability);
   }
 
   private void decideOnInstrumentationsToDo(Portability portability) {
-    if (this.instrumentationAction == TransparencyClassSpecImpl.PORTABLE) {
+    if (this.instrumentationAction == TransparencyClassSpec.PORTABLE) {
       if (!isLogical()) {
         valuesGetterMethod = IS_NEEDED;
         valuesSetterMethod = IS_NEEDED;
@@ -265,15 +264,15 @@ class InstrumentationSpec {
   }
 
   boolean isClassNotAdaptable() {
-    return this.instrumentationAction == TransparencyClassSpecImpl.NOT_ADAPTABLE;
+    return this.instrumentationAction == TransparencyClassSpec.NOT_ADAPTABLE;
   }
 
   boolean isClassAdaptable() {
-    return this.instrumentationAction == TransparencyClassSpecImpl.ADAPTABLE;
+    return this.instrumentationAction == TransparencyClassSpec.ADAPTABLE;
   }
 
   boolean isClassPortable() {
-    return this.instrumentationAction == TransparencyClassSpecImpl.PORTABLE;
+    return this.instrumentationAction == TransparencyClassSpec.PORTABLE;
   }
 
   boolean isSubclassofLogicalClass() {
@@ -449,10 +448,6 @@ class InstrumentationSpec {
 
   boolean isPhysical() {
     return spec.isPhysical();
-  }
-
-  boolean generateNonStaticTCFields() {
-    return spec.generateNonStaticTCFields();
   }
 
   Collection getShouldOverrideMethods() {

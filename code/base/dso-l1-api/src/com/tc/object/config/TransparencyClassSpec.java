@@ -32,7 +32,7 @@ public interface TransparencyClassSpec {
    */
   public boolean hasPhysicallyPortableSpecs(ClassInfo classInfo);
 
-  /** 
+  /**
    * Add root field
    * @param variableName Field name
    * @param rootName Root name
@@ -40,7 +40,7 @@ public interface TransparencyClassSpec {
    */
   public TransparencyClassSpec addRoot(String variableName, String rootName);
 
-  /** 
+  /**
    * Add root field
    * @param variableName Field name
    * @param rootName Root name
@@ -261,13 +261,13 @@ public interface TransparencyClassSpec {
   public void moveToLogical(TransparencyClassSpec superClassSpec);
 
   /**
-   * Add logical method adapter to always log access to method 
+   * Add logical method adapter to always log access to method
    * @param name Method signature
    */
   public void addAlwaysLogSpec(String name);
 
   /**
-   * Add logical method adapter to log if method returns true 
+   * Add logical method adapter to log if method returns true
    * @param name Method signature
    */
   public void addIfTrueLogSpec(String name);
@@ -333,7 +333,7 @@ public interface TransparencyClassSpec {
   public void addTHashRemoveAtLogSpec(String name);
 
   /**
-   * Add logical method adapter to log calls to THashSet.removeAt() 
+   * Add logical method adapter to log calls to THashSet.removeAt()
    * @param name Method signature
    */
   public void addTHashSetRemoveAtLogSpec(String name);
@@ -498,16 +498,6 @@ public interface TransparencyClassSpec {
    */
   public void setUseNonDefaultConstructor(boolean useNonDefaultConstructor);
 
-  /**
-   * Set flag indicating whether to generate non-static TC fields
-   * @param b Flag
-   */
-  public void generateNonStaticTCFields(boolean b);
-
-  /**
-   * @return True if non static TC fields should be generated
-   */
-  public boolean generateNonStaticTCFields();
 
   /**
    * Set instrumentation action

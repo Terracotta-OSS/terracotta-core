@@ -59,7 +59,6 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   private boolean                     preInstrumented;
 
   private boolean                     useNonDefaultConstructor   = false;
-  private boolean                     generateNonStaticTCFields  = true;
   private boolean                     honorJDKSubVersionSpecific = false;
 
   private byte                        instrumentationAction      = NOT_SET;
@@ -469,14 +468,6 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     this.useNonDefaultConstructor = useNonDefaultConstructor;
   }
 
-  public void generateNonStaticTCFields(boolean b) {
-    this.generateNonStaticTCFields = b;
-  }
-
-  public boolean generateNonStaticTCFields() {
-    return this.generateNonStaticTCFields;
-  }
-
   public void setInstrumentationAction(byte action) {
     this.instrumentationAction = action;
   }
@@ -520,5 +511,5 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   public String getChangeApplicatorClassName() {
     return this.changeApplicatorClassName;
   }
-  
+
 }

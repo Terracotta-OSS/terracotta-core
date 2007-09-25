@@ -196,7 +196,7 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
     addSetManagedValueMethod();
 
     // Condition for generating __tc_managed() method and $__tc_managed field should be the same.
-    if (spec.isManagedFieldNeeded() && spec.generateNonStaticTCFields()) {
+    if (spec.isManagedFieldNeeded()) {
       addCachedManagedMethods();
 
       visitField(ACC_PRIVATE | ACC_VOLATILE | ACC_TRANSIENT | ACC_SYNTHETIC, MANAGED_FIELD_NAME, MANAGED_FIELD_TYPE,
@@ -283,49 +283,32 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
     if (spec.isManagedMethodsNeeded()) {
       // add getter
       MethodVisitor mv = visitMethod(ACC_PUBLIC | ACC_SYNTHETIC, MANAGED_METHOD, "()" + MANAGED_FIELD_TYPE, null, null);
-      if (spec.generateNonStaticTCFields()) {
-        mv.visitVarInsn(ALOAD, 0);
-        mv.visitFieldInsn(GETFIELD, spec.getClassNameSlashes(), MANAGED_FIELD_NAME, MANAGED_FIELD_TYPE);
-        mv.visitInsn(ARETURN);
-        mv.visitMaxs(0, 0);
-      } else {
-        mv.visitInsn(ACONST_NULL);
-        mv.visitInsn(ARETURN);
-        mv.visitMaxs(0, 0);
-      }
+      mv.visitVarInsn(ALOAD, 0);
+      mv.visitFieldInsn(GETFIELD, spec.getClassNameSlashes(), MANAGED_FIELD_NAME, MANAGED_FIELD_TYPE);
+      mv.visitInsn(ARETURN);
+      mv.visitMaxs(0, 0);
 
       // add setter
       mv = visitMethod(ACC_PUBLIC | ACC_SYNTHETIC, MANAGED_METHOD, "(" + MANAGED_FIELD_TYPE + ")V", null, null);
-      if (spec.generateNonStaticTCFields()) {
-        mv.visitVarInsn(ALOAD, 0);
-        mv.visitVarInsn(ALOAD, 1);
-        mv.visitFieldInsn(PUTFIELD, spec.getClassNameSlashes(), MANAGED_FIELD_NAME, MANAGED_FIELD_TYPE);
-        mv.visitInsn(RETURN);
-        mv.visitMaxs(0, 0);
-      } else {
-        mv.visitInsn(RETURN);
-        mv.visitMaxs(0, 0);
-      }
+      mv.visitVarInsn(ALOAD, 0);
+      mv.visitVarInsn(ALOAD, 1);
+      mv.visitFieldInsn(PUTFIELD, spec.getClassNameSlashes(), MANAGED_FIELD_NAME, MANAGED_FIELD_TYPE);
+      mv.visitInsn(RETURN);
+      mv.visitMaxs(0, 0);
 
       // add isManaged() method
       // XXX::FIXME:: This method need to handle TCClonableObjects and TCNonDistributableObjects
       mv = visitMethod(ACC_PUBLIC | ACC_SYNTHETIC, IS_MANAGED_METHOD, IS_MANAGED_DESCRIPTION, null, null);
-      if (spec.generateNonStaticTCFields()) {
-        mv.visitVarInsn(ALOAD, 0);
-        mv.visitFieldInsn(GETFIELD, spec.getClassNameSlashes(), MANAGED_FIELD_NAME, MANAGED_FIELD_TYPE);
-        Label l1 = new Label();
-        mv.visitJumpInsn(IFNULL, l1);
-        mv.visitInsn(ICONST_1);
-        mv.visitInsn(IRETURN);
-        mv.visitLabel(l1);
-        mv.visitInsn(ICONST_0);
-        mv.visitInsn(IRETURN);
-        mv.visitMaxs(1, 1);
-      } else {
-        mv.visitInsn(ICONST_0);
-        mv.visitInsn(IRETURN);
-        mv.visitMaxs(1, 1);
-      }
+      mv.visitVarInsn(ALOAD, 0);
+      mv.visitFieldInsn(GETFIELD, spec.getClassNameSlashes(), MANAGED_FIELD_NAME, MANAGED_FIELD_TYPE);
+      Label l1 = new Label();
+      mv.visitJumpInsn(IFNULL, l1);
+      mv.visitInsn(ICONST_1);
+      mv.visitInsn(IRETURN);
+      mv.visitLabel(l1);
+      mv.visitInsn(ICONST_0);
+      mv.visitInsn(IRETURN);
+      mv.visitMaxs(1, 1);
     }
   }
 
