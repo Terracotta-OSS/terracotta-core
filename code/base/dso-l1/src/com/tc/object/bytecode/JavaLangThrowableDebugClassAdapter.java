@@ -1,0 +1,54 @@
+/*
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ */
+package com.tc.object.bytecode;
+
+import com.tc.asm.ClassAdapter;
+import com.tc.asm.ClassVisitor;
+import com.tc.asm.MethodAdapter;
+import com.tc.asm.MethodVisitor;
+import com.tc.asm.Opcodes;
+
+/**
+ * Class adaptor for Throwable that prints out the exception class at the
+ * beginning of the constructors.
+ * Ie.:
+ * sun.misc.MessageUtils.toStderr(this.getClass().getName());
+ */
+public class JavaLangThrowableDebugClassAdapter extends ClassAdapter implements Opcodes {
+
+  public JavaLangThrowableDebugClassAdapter(ClassVisitor cv) {
+    super(cv);
+  }
+
+  public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+    MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
+    if ("<init>".equals(name)) {
+      mv = new DebugConstructorMethodVisitor(mv);
+    }
+
+    return mv;
+  }
+  
+  private static class DebugConstructorMethodVisitor extends MethodAdapter implements Opcodes {
+    public DebugConstructorMethodVisitor(MethodVisitor mv) {
+      super(mv);
+    }
+
+    public void visitCode() {
+      mv.visitTypeInsn(NEW, "java/lang/StringBuffer");
+      mv.visitInsn(DUP);
+      mv.visitVarInsn(ALOAD, 0);
+      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;");
+      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "getName", "()Ljava/lang/String;");
+      mv.visitMethodInsn(INVOKESTATIC, "java/lang/String", "valueOf", "(Ljava/lang/Object;)Ljava/lang/String;");
+      mv.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuffer", "<init>", "(Ljava/lang/String;)V");
+      mv.visitLdcInsn("\n");
+      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append", "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
+      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "toString", "()Ljava/lang/String;");
+      mv.visitMethodInsn(INVOKESTATIC, "sun/misc/MessageUtils", "toStderr", "(Ljava/lang/String;)V");
+      
+      super.visitCode();
+    }
+  }
+}

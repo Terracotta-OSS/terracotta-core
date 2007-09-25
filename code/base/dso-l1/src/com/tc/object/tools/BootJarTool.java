@@ -64,6 +64,7 @@ import com.tc.object.bytecode.DuplicateMethodAdapter;
 import com.tc.object.bytecode.HashtableClassAdapter;
 import com.tc.object.bytecode.JavaLangReflectProxyClassAdapter;
 import com.tc.object.bytecode.JavaLangStringAdapter;
+import com.tc.object.bytecode.JavaLangThrowableDebugClassAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentCyclicBarrierDebugClassAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentHashMapAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentHashMapSegmentAdapter;
@@ -166,6 +167,8 @@ import java.util.Set;
  * Tool for creating the DSO boot jar
  */
 public class BootJarTool {
+  public static final String          TC_DEBUG_THROWABLE_CONSTRUCTION = "tc.debug.throwable.construction";
+  
   private static final String         EXCESS_CLASSES               = "excess";
   private static final String         MISSING_CLASSES              = "missing";
 
@@ -1582,13 +1585,21 @@ public class BootJarTool {
 
   private final void addInstrumentedJavaLangThrowable() {
     String className = "java.lang.Throwable";
-    byte[] orig = getSystemBytes(className);
+    byte[] bytes = getSystemBytes(className);
+
+    if (System.getProperty(TC_DEBUG_THROWABLE_CONSTRUCTION) != null) {
+      ClassReader cr = new ClassReader(bytes);
+      ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+      ClassVisitor cv = new JavaLangThrowableDebugClassAdapter(cw);
+      cr.accept(cv, ClassReader.SKIP_FRAMES);
+      bytes = cw.toByteArray();
+    }
 
     TransparencyClassSpec spec = config.getOrCreateSpec(className);
     spec.markPreInstrumented();
     spec.setHonorTransient(true);
 
-    byte[] instrumented = doDSOTransform(className, orig);
+    byte[] instrumented = doDSOTransform(className, bytes);
 
     bootJar.loadClassIntoJar(className, instrumented, spec.isPreInstrumented());
   }
