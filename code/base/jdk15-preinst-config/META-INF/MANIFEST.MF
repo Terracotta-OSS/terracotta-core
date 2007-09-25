@@ -8,6 +8,6 @@ Bundle-Name: JDK15 PreInstrumented Configuration
 Bundle-RequiredExecutionEnvironment: J2SE-1.4
 Bundle-SymbolicName: org.terracotta.modules.jdk15_preinst_config
 Bundle-Vendor: Terracotta, Inc.
-Bundle-Version: 1.0.0-SNAPSHOT
+Bundle-Version: 1.0.0
 Import-Package: org.terracotta.modules.configuration
 Require-Bundle: org.terracotta.modules.modules_common
