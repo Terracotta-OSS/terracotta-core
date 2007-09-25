@@ -111,11 +111,11 @@ bundled_modules:
         - clustered-surefire-2.3
         - clustered-websphere-6.1.0.7
         - clustered-wicket-1.3
-        - dso-excludes-config
-        - dso-guimodels-config
-        - dso-jdk15-preinst-config
-        - dso-spring-config
-        - dso-standard-config
+        - excludes-config
+        - guimodels-config
+        - jdk15-preinst-config
+        - spring-config
+        - standard-config
         - modules-common
 packaging:
   - tar:
