@@ -31,7 +31,6 @@ import java.util.Set;
 class InstrumentationSpec {
   public static final byte            IS_NOT_NEEDED               = 0x04;
   public static final byte            IS_NEEDED                   = 0x05;
-  public static final byte            IS_PRESENT                  = 0x06;
 
   private static final LiteralValues  literalValues               = new LiteralValues();
 
@@ -354,27 +353,14 @@ class InstrumentationSpec {
   }
 
   void recordExistingFields(String name, String desc, String signature) {
-    if (ClassAdapterBase.MANAGED_FIELD_NAME.equals(name)) {
-      managedField = IS_PRESENT;
-    } else if (ByteCodeUtil.isParent(name)) {
+    if (ByteCodeUtil.isParent(name)) {
       Assert.assertNull(parentClassInfo);
       this.parentClassInfo = new ParentClassInfo(name, desc);
     }
-
   }
 
   void recordExistingMethods(String name, String desc, String signature) {
-    if (ClassAdapterBase.MANAGED_METHOD.equals(name)) {
-      managedMethods = IS_PRESENT;
-    } else if (ClassAdapterBase.VALUES_GETTER.endsWith(name)) {
-      valuesGetterMethod = IS_PRESENT;
-    } else if (ClassAdapterBase.VALUES_SETTER.endsWith(name)) {
-      valuesSetterMethod = IS_PRESENT;
-    } else if (ClassAdapterBase.MANAGED_VALUES_GETTER.endsWith(name)) {
-      managedValuesGetterMethod = IS_PRESENT;
-    } else if (ClassAdapterBase.MANAGED_VALUES_SETTER.endsWith(name)) {
-      managedValuesSetterMethod = IS_PRESENT;
-    } else if (LogicalClassSerializationAdapter.READ_OBJECT_SIGNATURE.equals(name + desc)) {
+    if (LogicalClassSerializationAdapter.READ_OBJECT_SIGNATURE.equals(name + desc)) {
       readObjectSerializedMethod = IS_NOT_NEEDED;
     } else if (LogicalClassSerializationAdapter.WRITE_OBJECT_SIGNATURE.equals(name + desc)) {
       writeObjectSerializedMethod = IS_NOT_NEEDED;
