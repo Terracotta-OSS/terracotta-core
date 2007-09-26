@@ -99,20 +99,6 @@ public class TestConfigObject {
 
   private static final String     SYSTEM_PROPERTIES_RESOURCE_NAME   = "/test-system-properties.properties";
 
-  private static final String     ACTIVE_PASSIVE_PREFIX             = STATIC_PROPERTIES_PREFIX + "active-passive.";
-
-  private static final String     ACTIVE_PASSIVE_SERVER_COUNT       = ACTIVE_PASSIVE_PREFIX + "server.count";
-
-  private static final String     ACTIVE_PASSIVE_SERVER_CRASH_MODE  = ACTIVE_PASSIVE_PREFIX + "server.crash.mode";
-
-  private static final String     ACTIVE_PASSIVE_SERVER_CRASH_TYPE  = ACTIVE_PASSIVE_PREFIX + "server.crash.type";
-
-  private static final String     ACTIVE_PASSIVE_SERVER_CRASH_WAIT  = ACTIVE_PASSIVE_PREFIX + "server.crash.wait";
-
-  private static final String     ACTIVE_PASSIVE_SERVER_PERSISTENCE = ACTIVE_PASSIVE_PREFIX + "server.persistence";
-
-  private static final String     ACTIVE_PASSIVE_SERVER_DISKLESS    = ACTIVE_PASSIVE_PREFIX + "server.diskless";
-
   private static final String     L2_STARTUP_PREFIX                 = DYNAMIC_PROPERTIES_PREFIX + "l2.startup.";
   public static final String      L2_STARTUP_MODE                   = L2_STARTUP_PREFIX + "mode";
   public static final String      L2_STARTUP_JAVA_HOME              = L2_STARTUP_PREFIX + "jvm";
@@ -237,42 +223,6 @@ public class TestConfigObject {
     this.properties.putAll(System.getProperties());
 
     logger.info("Loaded test configuration from " + loadedFrom.toString());
-  }
-
-  public int getActivePassiveServerCount() {
-    String count = this.properties.getProperty(ACTIVE_PASSIVE_SERVER_COUNT);
-    Assert.assertNotBlank(count);
-    return Integer.parseInt(count);
-  }
-
-  public String getActivePassiveServerCrashMode() {
-    String out = this.properties.getProperty(ACTIVE_PASSIVE_SERVER_CRASH_MODE);
-    Assert.assertNotBlank(out);
-    return out;
-  }
-
-  public String getActivePassiveServerCrashType() {
-    String out = this.properties.getProperty(ACTIVE_PASSIVE_SERVER_CRASH_TYPE);
-    Assert.assertNotBlank(out);
-    return out;
-  }
-
-  public int getActivePassiveServerCrashWaitTime() {
-    String seconds = this.properties.getProperty(ACTIVE_PASSIVE_SERVER_CRASH_WAIT);
-    Assert.assertNotBlank(seconds);
-    return Integer.parseInt(seconds);
-  }
-
-  public String getActivePassiveServerPersistence() {
-    String out = this.properties.getProperty(ACTIVE_PASSIVE_SERVER_PERSISTENCE);
-    Assert.assertNotBlank(out);
-    return out;
-  }
-
-  public boolean getActivePassiveServerDiskless() {
-    String out = this.properties.getProperty(ACTIVE_PASSIVE_SERVER_DISKLESS);
-    Assert.assertNotBlank(out);
-    return Boolean.valueOf(out).booleanValue();
   }
 
   public String getL2StartupMode() {
