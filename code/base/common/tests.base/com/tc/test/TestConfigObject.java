@@ -191,17 +191,7 @@ public class TestConfigObject {
     // properties here can make our lives very difficult.
 
     String[] components = {};
-    if (System.getProperty(PROPERTY_FILE_LIST_PROPERTY_NAME) == null) {
-      /*
-      throw new IOException(
-        "You must set the system property '" + PROPERTY_FILE_LIST_PROPERTY_NAME
-            + "' to point to the appropriate test properties file for this set of tests. If you're running "
-            + "from Eclipse, you can do this by running 'ant test.setup', which will generate a properties "
-            + "file in build/<module>/tests.<type>.configuration, and then setting the above system "
-            + "property to point to it.");
-      */
-    }
-    else {
+    if (System.getProperty(PROPERTY_FILE_LIST_PROPERTY_NAME) != null) {
       components = System.getProperty(PROPERTY_FILE_LIST_PROPERTY_NAME).split(File.pathSeparator);
     }
 
