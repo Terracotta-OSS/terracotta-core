@@ -78,6 +78,7 @@ public class TestConfigObject {
 
   private static final String     JUNIT_TEST_TIMEOUT_INSECONDS      = DYNAMIC_PROPERTIES_PREFIX
                                                                         + "junit-test-timeout-inseconds";
+  private static final int        DEFAULT_TEST_TIMEOUT_IN_SECONDS   = 15 * 60;
 
   public static final String      APP_SERVER_REPOSITORY_URL_BASE    = STATIC_PROPERTIES_PREFIX + "appserver.repository";
 
@@ -203,14 +204,20 @@ public class TestConfigObject {
     // build team. Hardcoding
     // properties here can make our lives very difficult.
 
-    if (System.getProperty(PROPERTY_FILE_LIST_PROPERTY_NAME) == null) { throw new IOException(
+    String[] components = {};
+    if (System.getProperty(PROPERTY_FILE_LIST_PROPERTY_NAME) == null) {
+      /*
+      throw new IOException(
         "You must set the system property '" + PROPERTY_FILE_LIST_PROPERTY_NAME
             + "' to point to the appropriate test properties file for this set of tests. If you're running "
             + "from Eclipse, you can do this by running 'ant test.setup', which will generate a properties "
             + "file in build/<module>/tests.<type>.configuration, and then setting the above system "
-            + "property to point to it."); }
-
-    String[] components = System.getProperty(PROPERTY_FILE_LIST_PROPERTY_NAME).split(File.pathSeparator);
+            + "property to point to it.");
+      */
+    }
+    else {
+      components = System.getProperty(PROPERTY_FILE_LIST_PROPERTY_NAME).split(File.pathSeparator);
+    }
 
     for (int i = components.length - 1; i >= 0; --i) {
       File thisFile = new File(components[i]);
@@ -440,8 +447,12 @@ public class TestConfigObject {
 
   public int getJunitTimeoutInSeconds() {
     String seconds = this.properties.getProperty(JUNIT_TEST_TIMEOUT_INSECONDS);
-    Assert.assertNotBlank(seconds);
-    return Integer.parseInt(seconds);
+    if (seconds == null) {
+      return DEFAULT_TEST_TIMEOUT_IN_SECONDS;
+    }
+    else {
+      return Integer.parseInt(seconds);
+    }
   }
 
   public static final String    TRANSPARENT_TESTS_MODE_NORMAL         = "normal";
