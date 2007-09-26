@@ -19,7 +19,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 
 /**
@@ -36,7 +37,7 @@ public class TCPProxy {
   private ServerSocket              serverSocket;
   private Thread                    acceptThread;
   private volatile boolean          stop;
-  private final Set                 connections = new HashSet();
+  private final Set                 connections  = new HashSet();
   private final File                logDir;
   private final boolean             logData;
   private boolean                   reuseAddress = false;
@@ -49,31 +50,41 @@ public class TCPProxy {
    * If multiple endpoints are used, then the proxy will round robin between them.
    */
   public TCPProxy(int listenPort, InetSocketAddress[] endpoints, long delay, boolean logData, File logDir) {
-    roundRobinSequence = 0;
-    debug = false;
-    stop = false;
+    this.roundRobinSequence = 0;
+    this.debug = false;
+    this.stop = false;
     this.listenPort = listenPort;
     this.endpoints = endpoints;
     this.logData = logData;
     this.logDir = logDir;
     setDelay(delay);
+
+    verifyEndpoints();
   }
-   
+
+  private void verifyEndpoints() {
+    for (int i = 0; i < endpoints.length; i++) {
+      InetSocketAddress addr = endpoints[i];
+      if (addr.getAddress() == null) {
+        //
+        throw new RuntimeException("Cannot resolve address for host " + addr.getHostName());
+      }
+    }
+  }
+
   public void setReuseAddress(boolean reuse) {
     reuseAddress = reuse;
   }
 
   /*
-   * Probe if backend is ready for connection.
-   * Make sure L2 is ready before calling start().
+   * Probe if backend is ready for connection. Make sure L2 is ready before calling start().
    */
   public boolean probeBackendConnection() {
     Socket connectedSocket = null;
     for (int pos = 0; connectedSocket == null && pos < endpoints.length; ++pos) {
       final int roundRobinOffset = (pos + roundRobinSequence) % endpoints.length;
       try {
-        connectedSocket = new Socket(endpoints[roundRobinOffset].getAddress(),
-                                     endpoints[roundRobinOffset].getPort());
+        connectedSocket = new Socket(endpoints[roundRobinOffset].getAddress(), endpoints[roundRobinOffset].getPort());
         break;
       } catch (IOException ioe) {
         //
@@ -85,11 +96,9 @@ public class TCPProxy {
       } catch (Exception e) {
         //
       }
-      return(true);
-    }
-    else return(false);
+      return (true);
+    } else return (false);
   }
-
 
   public synchronized void start() throws IOException {
     stop();
@@ -97,19 +106,18 @@ public class TCPProxy {
     log("Starting listener on port " + listenPort + ", proxying to " + StringUtil.toString(endpoints, ", ", "[", "]")
         + " with " + getDelay() + "ms delay");
 
-    if(!reuseAddress) {
+    if (!reuseAddress) {
       serverSocket = new ServerSocket(listenPort);
     } else {
       serverSocket = new ServerSocket();
-      serverSocket.setReuseAddress(true);   
+      serverSocket.setReuseAddress(true);
       try {
-        serverSocket.bind(new InetSocketAddress((InetAddress)null, listenPort), 50);
-      } catch(IOException e) {
+        serverSocket.bind(new InetSocketAddress((InetAddress) null, listenPort), 50);
+      } catch (IOException e) {
         serverSocket.close();
         throw e;
       }
     }
-
 
     stop = false;
 
@@ -121,11 +129,9 @@ public class TCPProxy {
     }, "Accept thread (port " + listenPort + ")");
     acceptThread.start();
   }
-  
+
   /*
-   * Stop without joing dead threads.
-   * This is to workaround the issue of taking
-   * too long to stop proxy which longer than
+   * Stop without joing dead threads. This is to workaround the issue of taking too long to stop proxy which longer than
    * OOO's L1 reconnect timeout.
    */
   public synchronized void fastStop() {
@@ -135,7 +141,7 @@ public class TCPProxy {
   public synchronized void stop() {
     subStop(true);
   }
-  
+
   synchronized void subStop(boolean waitDeadThread) {
     stop = true;
 
@@ -148,20 +154,18 @@ public class TCPProxy {
     } finally {
       serverSocket = null;
     }
-    
+
     /*
-     * Observed on windows-xp.
-     * The ServerSocket is still hanging around after "close()",
-     * until someone makes a new connection.
-     * To make sure the old ServerSocket and accept thread go away for good,
-     * fake a connection to the old socket.
+     * Observed on windows-xp. The ServerSocket is still hanging around after "close()", until someone makes a new
+     * connection. To make sure the old ServerSocket and accept thread go away for good, fake a connection to the old
+     * socket.
      */
     try {
-      Socket sk = new Socket("localhost",listenPort);
+      Socket sk = new Socket("localhost", listenPort);
       sk.close();
     } catch (Exception x) {
       // that's fine for fake connection.
-    } 
+    }
 
     try {
       if (acceptThread != null) {
@@ -560,7 +564,7 @@ public class TCPProxy {
 
           try {
             dest.write(buffer, 0, bytesRead);
-	    dest.flush();
+            dest.flush();
           } catch (IOException ioe) {
             close(true);
             return;
