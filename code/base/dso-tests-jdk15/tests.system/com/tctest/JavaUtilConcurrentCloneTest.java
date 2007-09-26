@@ -6,6 +6,10 @@ package com.tctest;
 
 public class JavaUtilConcurrentCloneTest extends TransparentTestBase {
 
+  public JavaUtilConcurrentCloneTest() {
+    disableAllUntil("2007-10-05");
+  }
+  
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(JavaUtilConcurrentCloneTestApp.NODE_COUNT)
         .setApplicationInstancePerClientCount(1).setIntensity(1);
