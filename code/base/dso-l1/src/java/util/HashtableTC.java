@@ -203,7 +203,6 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
   
   public synchronized Collection __tc_getAllEntriesSnapshot() {
     Set entrySet = super.entrySet();
-    Object[] tmp = entrySet.toArray(new Object[entrySet.size()]);
     return new ArrayList(entrySet);
   }
   
