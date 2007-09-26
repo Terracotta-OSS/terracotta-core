@@ -201,7 +201,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     /**
     // ----------------------------
-    // implicit config-bundle - JAG 
+    // implicit config-bundle - JAG
     // ----------------------------
     addPermanentExcludePattern("java.awt.Component");
     addPermanentExcludePattern("java.lang.Thread");
@@ -236,14 +236,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     /**
     // ----------------------------
-    // implicit config-bundle - JAG 
+    // implicit config-bundle - JAG
     // ----------------------------
     addUnsupportedJavaUtilConcurrentTypes();
     */
 
     /**
     // ----------------------------
-    // implicit config-bundle - JAG 
+    // implicit config-bundle - JAG
     // ----------------------------
     addAutoLockExcludePattern("* java.lang.Throwable.*(..)");
     */
@@ -251,7 +251,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     nonportablesMatcher = new CompoundExpressionMatcher();
     /**
     // ----------------------------
-    // implicit config-bundle - JAG 
+    // implicit config-bundle - JAG
     // ----------------------------
     //addNonportablePattern("javax.servlet.GenericServlet");
     */
@@ -289,7 +289,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   /**
   // ----------------------------
-  // implicit config-bundle - JAG 
+  // implicit config-bundle - JAG
   // ----------------------------
   private void addUnsupportedJavaUtilConcurrentTypes() {
     addPermanentExcludePattern("java.util.concurrent.AbstractExecutorService");
@@ -426,10 +426,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   public DSOInstrumentationLoggingOptions instrumentationLoggingOptions() {
     return this.configSetupManager.dsoL1Config().instrumentationLoggingOptions();
   }
-  
+
   /**
   // ----------------------------
-  // implicit config-bundle - JAG 
+  // implicit config-bundle - JAG
   // ----------------------------
   private void addSwingAndAWTConfig() {
     TransparencyClassSpec spec = null;
@@ -558,18 +558,17 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   private void doPreInstrumentedAutoconfig(boolean interrogateBootJar) {
     /**
     // ----------------------------
-    // implicit config-bundle - JAG 
+    // implicit config-bundle - JAG
     // ----------------------------
     addSwingAndAWTConfig();
     */
-    
+
 
     TransparencyClassSpec spec = null;
-    LockDefinition ld = null;
-    
+
     /**
     // ----------------------------
-    // implicit config-bundle - JAG 
+    // implicit config-bundle - JAG
     // ----------------------------
     spec = getOrCreateSpec("java.util.Arrays");
     spec.addDoNotInstrument("copyOfRange");
@@ -601,7 +600,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
      * spec.addMethodAdapter("keySet()Ljava/util/Set;", new HashtableAdapter.KeySetAdapter());
      * spec.addMethodAdapter("values()Ljava/util/Collection;", new HashtableAdapter.ValuesAdapter());
      */
-    
+
     /**
      * addWriteAutolock("synchronized * java.util.Hashtable.*(..)");
      * addReadAutolock(new String[] { "synchronized * java.util.Hashtable.get(..)",
@@ -620,7 +619,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     spec.addAlwaysLogSpec(SerializationUtil.REMOVE_KEY_SIGNATURE);
     spec.addAlwaysLogSpec(SerializationUtil.CLEAR_SIGNATURE);
 
-    
+
     spec = getOrCreateSpec("java.util.BitSet");
     spec.setHonorTransient(false);
 
@@ -696,17 +695,17 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     // We dont want them to get tc fields, TransparentAccess interfaces etc. but we do want them
     // to be instrumented for Array manipulations, clone(), wait(), notify() calls etc.
     spec = getOrCreateSpec("java.util.AbstractCollection");
-    spec.setInstrumentationAction(TransparencyClassSpecImpl.ADAPTABLE);
+    spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
     spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
     spec = getOrCreateSpec("java.util.AbstractList");
     spec.setHonorTransient(true);
-    spec.setInstrumentationAction(TransparencyClassSpecImpl.ADAPTABLE);
+    spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
     spec.addSupportMethodCreator(new AbstractListMethodCreator());
     spec = getOrCreateSpec("java.util.AbstractSet");
     spec = getOrCreateSpec("java.util.AbstractSequentialList");
-    spec.setInstrumentationAction(TransparencyClassSpecImpl.ADAPTABLE);
+    spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
     spec = getOrCreateSpec("java.util.Dictionary");
-    spec.setInstrumentationAction(TransparencyClassSpecImpl.ADAPTABLE);
+    spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
 
     // AbstractMap is special because it actually has some fields so it needs to be instrumented and not just ADAPTABLE
     spec = getOrCreateSpec("java.util.AbstractMap");
@@ -719,7 +718,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     /**
     // ----------------------------
-    // implicit config-bundle - JAG 
+    // implicit config-bundle - JAG
     // ----------------------------
     spec = getOrCreateSpec("java.lang.Exception");
     spec = getOrCreateSpec("java.lang.RuntimeException");
@@ -735,7 +734,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     /**
     // ----------------------------
-    // implicit config-bundle - JAG 
+    // implicit config-bundle - JAG
     // ----------------------------
     spec = getOrCreateSpec("java.util.EventObject");
     */
@@ -744,7 +743,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     /**
     // ----------------------------
-    // implicit config-bundle - JAG 
+    // implicit config-bundle - JAG
     // ----------------------------
     spec = getOrCreateSpec("java.io.File");
     spec.setHonorTransient(true);
@@ -767,7 +766,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     /**
     // ----------------------------
-    // implicit config-bundle - JAG 
+    // implicit config-bundle - JAG
     // ----------------------------
     addPermanentExcludePattern("java.util.WeakHashMap+");
     addPermanentExcludePattern("java.lang.ref.*");
@@ -776,27 +775,27 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     /**
     // ----------------------------
-    // implicit config-bundle - JAG 
+    // implicit config-bundle - JAG
     // ----------------------------
     */
     // addJDK15PreInstrumentedSpec();
 
     // This section of spec are specified in the BootJarTool also
-    // They are placed again so that the honorTransient 
-    // flag will be honored during runtime. 
+    // They are placed again so that the honorTransient
+    // flag will be honored during runtime.
     // SECTION BEGINS
     if (Vm.getMegaVersion() >= 1 && Vm.getMajorVersion() > 4) {
       addJavaUtilConcurrentHashMapSpec();           // should be in jdk15-preinst-config bundle
-      addLogicalAdaptedLinkedBlockingQueueSpec();   // should be in jdk15-preinst-config bundle 
+      addLogicalAdaptedLinkedBlockingQueueSpec();   // should be in jdk15-preinst-config bundle
     }
     // SECTION ENDS
-    
+
     markAllSpecsPreInstrumented();
   }
-  
+
   private void doAutoconfig(boolean interrogateBootJar) {
     TransparencyClassSpec spec;
-    
+
     addJDK15InstrumentedSpec();
 
     // Generic Session classes
@@ -838,7 +837,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     spec = getOrCreateSpec("javax.servlet.GenericServlet");
     spec.setHonorTransient(true);
-    spec.setInstrumentationAction(TransparencyClassSpecImpl.ADAPTABLE);
+    spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
 
     // BEGIN: weblogic stuff
     addAspectModule("weblogic.servlet.internal", "com.tc.weblogic.SessionAspectModule");
@@ -871,7 +870,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     /**
     // ----------------------------
-    // implicit config-bundle - JAG 
+    // implicit config-bundle - JAG
     // ----------------------------
     // doAutoconfigForSpring();
     // doAutoconfigForSpringWebFlow();
@@ -910,7 +909,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   /**
   // ----------------------------
-  // implicit config-bundle - JAG 
+  // implicit config-bundle - JAG
   // ----------------------------
   private void doAutoconfigForSpring() {
     addIncludePattern("org.springframework.context.ApplicationEvent", false, false, false);
@@ -962,7 +961,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   /**
   // ----------------------------
-  // implicit config-bundle - JAG 
+  // implicit config-bundle - JAG
   // ----------------------------
   private void doAutoconfigForSpringWebFlow() {
     addAspectModule("org.springframework.webflow", "com.tc.object.config.SpringWebFlowAspectModule");
@@ -1094,7 +1093,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   /**
   // ----------------------------
-  // implicit config-bundle - JAG 
+  // implicit config-bundle - JAG
   // ----------------------------
   private void addJDK15PreInstrumentedSpec() {
     if (Vm.getMegaVersion() >= 1 && Vm.getMajorVersion() > 4) {
@@ -1112,7 +1111,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
        // This section of spec are specified in the BootJarTool also. They are placed again so that the honorTransient *
        // flag will be honored during runtime. *
-     
+
       addJavaUtilConcurrentHashMapSpec();
       addLogicalAdaptedLinkedBlockingQueueSpec();
 
@@ -1130,7 +1129,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   /**
   // ----------------------------
-  // implicit config-bundle - JAG 
+  // implicit config-bundle - JAG
   // ----------------------------
   private void addJavaUtilConcurrentFutureTaskSpec() {
     if (Vm.getMegaVersion() >= 1 && Vm.getMajorVersion() >= 6) {
@@ -1147,7 +1146,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     getOrCreateSpec("java.util.concurrent.Executors$RunnableAdapter");
   }
   */
-  
+
   private void addJavaUtilConcurrentHashMapSpec() {
     TransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.ConcurrentHashMap",
                                                  "com.tc.object.applicator.ConcurrentHashMapApplicator");
@@ -1161,7 +1160,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   private void addLogicalAdaptedLinkedBlockingQueueSpec() {
     TransparencyClassSpec spec = getOrCreateSpec("java.util.AbstractQueue");
-    spec.setInstrumentationAction(TransparencyClassSpecImpl.ADAPTABLE);
+    spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
 
     spec = getOrCreateSpec("java.util.concurrent.LinkedBlockingQueue",
                            "com.tc.object.applicator.LinkedBlockingQueueApplicator");
@@ -1660,8 +1659,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     spec.setHonorTransient(honorTransient);
 
     if (forcePortable) {
-      if (spec.getInstrumentationAction() == TransparencyClassSpecImpl.NOT_SET) {
-        spec.setInstrumentationAction(TransparencyClassSpecImpl.PORTABLE);
+      if (spec.getInstrumentationAction() == TransparencyClassSpec.NOT_SET) {
+        spec.setInstrumentationAction(TransparencyClassSpec.PORTABLE);
       } else {
         logger.info("Not making " + className + " forcefully portable");
       }
@@ -1686,8 +1685,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       TransparencyClassSpec spec = getOrCreateSpec(classInfo.getName());
 
       if (forcePortable) {
-        if (spec.getInstrumentationAction() == TransparencyClassSpecImpl.NOT_SET) {
-          spec.setInstrumentationAction(TransparencyClassSpecImpl.PORTABLE);
+        if (spec.getInstrumentationAction() == TransparencyClassSpec.NOT_SET) {
+          spec.setInstrumentationAction(TransparencyClassSpec.PORTABLE);
         } else {
           logger.info("Not making " + classInfo.getName() + " forcefully portable");
         }
