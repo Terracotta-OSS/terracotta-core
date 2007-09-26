@@ -222,6 +222,10 @@ public class TestConfigObject {
     return result;
   }
 
+  private String getProperty(String key) {
+    return getProperty(key, null);
+  }
+
   public String getL2StartupMode() {
     return this.properties.getProperty(L2_STARTUP_MODE);
   }
@@ -269,7 +273,7 @@ public class TestConfigObject {
   }
 
   public String osName() {
-    return this.properties.getProperty(OS_NAME);
+    return getProperty(OS_NAME);
   }
 
   public String platform() {
@@ -304,10 +308,6 @@ public class TestConfigObject {
     String out = this.properties.getProperty(TEMP_DIRECTORY_ROOT);
     Assert.assertNotBlank(out);
     return out;
-  }
-
-  public String appserverURLBase() {
-    return this.properties.getProperty(APP_SERVER_REPOSITORY_URL_BASE);
   }
 
   public String appserverHome() {
