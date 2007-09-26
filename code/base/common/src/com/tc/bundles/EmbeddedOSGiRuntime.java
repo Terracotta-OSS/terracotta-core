@@ -105,7 +105,7 @@ public interface EmbeddedOSGiRuntime {
       if (System.getProperty("tc.install-root") == null) return;
       final File installRoot = Directories.getInstallationRoot();
       if (!installRoot.toString().endsWith("build")) {
-        final File testRepository = new File(Directories.getInstallationRoot(), "build");
+        final File testRepository = new File(installRoot, "build");
         prependLocations.add(new File(testRepository, "modules").toURL());
       }
     }
