@@ -36,7 +36,8 @@ import java.util.ResourceBundle;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
-public class Resolver {
+public class Resolver
+ {
 
   private static final String BUNDLE_VERSION            = "Bundle-Version";
   private static final String BUNDLE_SYMBOLICNAME       = "Bundle-SymbolicName";
@@ -54,6 +55,10 @@ public class Resolver {
 
   public Resolver(final URL[] repositories) {
     this.repositories = repositories;
+    System.out.println("[xxx] repositories: " + repositories.length);
+    for(int i=0; i<repositories.length; i++) {
+      System.out.println("[xxx] " + i + ": " + repositories[i]);
+    }
   }
   
   public final URL[] resolve(Module[] modules) throws BundleException {

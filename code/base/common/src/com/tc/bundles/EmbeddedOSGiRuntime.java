@@ -49,57 +49,54 @@ public interface EmbeddedOSGiRuntime {
 
     private static final TCLogger logger = TCLogging.getLogger(EmbeddedOSGiRuntime.class);
 
-    private static final void injectDefaultRepository(final List prependLocations) throws FileNotFoundException,
-        MalformedURLException {
+    private static final void injectDefaultRepository(final List prependLocations) throws FileNotFoundException, MalformedURLException {
       if (System.getProperty("tc.install-root") == null) return;
-      final URL defaultRepository = new File(Directories.getInstallationRoot(), "modules").toURL();
-      logger.debug("Prepending default bundle repository: '" + defaultRepository.toString() + "'");
+
+      final String defaultRepository = new File(Directories.getInstallationRoot(), "modules").toURL().toString();
+      if (prependLocations.contains(defaultRepository)) return;
+
+      logger.debug("Prepending default bundle repository: '" + defaultRepository + "'");
       prependLocations.add(defaultRepository);
     }
 
-    private static final void injectTestRepository(final List prependLocations) throws MalformedURLException, FileNotFoundException {
-      final String repos = System.getProperty(TESTS_CONFIG_MODULE_REPOSITORIES);
-      if (repos != null) {
-        final URL testRepository = new URL(repos);
-        prependLocations.add(testRepository);
+    private static final void injectTestRepository(final List prependLocations) throws FileNotFoundException, MalformedURLException  {
+      String testRepository = System.getProperty(TESTS_CONFIG_MODULE_REPOSITORIES);
+      if ((testRepository != null) && !prependLocations.contains(testRepository)) {
         logger.debug("Prepending test bundle repository: '" + testRepository.toString() + "'");
         prependLocations.add(testRepository);
       }
-      
+
       // HACK - until we can propagate TESTS_CONFIG_MODULE_REPOSITORIES across VMs during test
       if (System.getProperty("tc.install-root") == null) return;
+      
       final File installRoot = Directories.getInstallationRoot();
-      if (!installRoot.toString().endsWith("build")) {
-        final File testRepository = new File(installRoot, "build");
-        prependLocations.add(new File(testRepository, "modules").toURL());
-      }
+      if (installRoot.toString().endsWith("build")) return;
+
+      final File buildRoot = new File(Directories.getInstallationRoot(), "build");
+      testRepository = new File(buildRoot, "modules").toURL().toString();
+      
+      if (prependLocations.contains(testRepository)) return;
+      prependLocations.add(testRepository);
     }
 
     public static EmbeddedOSGiRuntime createOSGiRuntime(final Modules modules) throws BundleException, Exception {
-      // TODO: THIS ISN'T VERY ACCURATE, WE NEED A MORE EXPLICIT WAY OF TELLING OUR CODE
-      // THAT WE'RE RUNNING IN TEST MODE
-      // final boolean excludeDefaults = (System.getProperty("tc.install-root") == null)
-      // || (System.getProperty(TESTS_CONFIG_MODULE_REPOSITORIES) != null);
       final List prependLocations = new ArrayList();
       try {
-        // There are two repositories that we [optionally] prepend: a system property (used by tests)
-        // and the installation root (which is not set when running tests)
+        // XXX We shouldn't even worry about injecting 'test' repositories... 
         injectTestRepository(prependLocations);
         injectDefaultRepository(prependLocations);
 
-        final URL[] prependURLs = new URL[prependLocations.size()];
+        final String[] prependURLs = new String[prependLocations.size()];
         prependLocations.toArray(prependURLs);
         final URL[] bundleRepositories = new URL[modules.sizeOfRepositoryArray() + prependURLs.length];
         for (int pos = 0; pos < prependURLs.length; pos++) {
-          bundleRepositories[pos] = prependURLs[pos];
+          bundleRepositories[pos] = new URL(prependURLs[pos]);
         }
 
-        if (prependURLs.length > 0) logger.info("OSGi Bundle Repositories:");
         for (int pos = prependURLs.length; pos < bundleRepositories.length; pos++) {
           bundleRepositories[pos] = new URL(modules.getRepositoryArray(pos - prependURLs.length));
-          logger.info("\t" + bundleRepositories[pos]);
+          logger.info("OSGi Bundle Repository: " + bundleRepositories[pos]);
         }
-
         return new KnopflerfishOSGi(bundleRepositories);
       } catch (MalformedURLException muex) {
         throw new BundleException(muex.getMessage());
