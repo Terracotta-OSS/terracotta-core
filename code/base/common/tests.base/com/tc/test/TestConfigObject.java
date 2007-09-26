@@ -253,22 +253,19 @@ public class TestConfigObject {
     return selected;
   }
 
+  /**
+   * Returns the version string for the current JVM.  Equivalent to
+   * <code>System.getProperty("java.runtime.version")</code>.
+   */
   public String jvmVersion() {
-    String out = this.properties.getProperty(JVM_VERSION);
-    Assert.assertNotBlank(out);
-    return out;
+    return System.getProperty("java.runtime.version");
   }
 
+  /**
+   * Returns the type of the current JVM.  Equivalent to <code>System.getProperty("java.vm.name")</code>.
+   */
   public String jvmType() {
-    String out = this.properties.getProperty(JVM_TYPE);
-    Assert.assertNotBlank(out);
-    return out;
-  }
-
-  public String jvmMode() {
-    String out = this.properties.getProperty(JVM_MODE);
-    Assert.assertNotBlank(out);
-    return out;
+    return System.getProperty("java.vm.name");
   }
 
   public String osName() {
