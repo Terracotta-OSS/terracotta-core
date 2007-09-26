@@ -24,6 +24,7 @@ public class SessionsHelper {
     //
   }
 
+  // TODO those classes probably should be exported trough generic classloading mechanism 
   private static String[] getSessionsPaths() {
     List classPaths = new ArrayList();
 
@@ -33,13 +34,17 @@ public class SessionsHelper {
       String[] paths = tcSessionCP.split(File.pathSeparator);
       for (int i = 0; i < paths.length; i++) {
         String path = paths[i];
-        if (!path.endsWith("/")) {
-          path += "/";
+        if(path.endsWith(".jar")) {
+          classPaths.add(path);
+        } else {
+          if (!path.endsWith("/")) {
+            path += "/";
+          }
+          if (!path.startsWith("/")) {
+            path = "/" + path;
+          }
+          classPaths.add(path);
         }
-        if (!path.startsWith("/")) {
-          path = "/" + path;
-        }
-        classPaths.add(path);
       }
     } else {
       File installRoot = ClassProcessorHelper.getTCInstallDir(false);
