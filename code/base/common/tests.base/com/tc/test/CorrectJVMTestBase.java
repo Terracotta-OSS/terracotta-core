@@ -27,8 +27,6 @@ public class CorrectJVMTestBase extends TCTestCase {
 
     Matcher matcher = VERSION_PATTERN.matcher(actualVersion);
 
-    System.err.println("Actual JVM version: '" + actualVersion + "'; expected JVM version: '" + expectedVersion + "'");
-
     assertTrue("Actual version of '" + actualVersion + "' matches pattern", matcher.matches());
     assertEquals(expectedVersion, matcher.group(1));
   }
@@ -36,8 +34,6 @@ public class CorrectJVMTestBase extends TCTestCase {
   public void testType() throws Exception {
     String vmName = System.getProperty("java.vm.name").toLowerCase();
     String expectedType = TestConfigObject.getInstance().jvmType().trim().toLowerCase();
-
-    System.err.println("Actual JVM type: '" + vmName + "'; expected JVM type: '" + expectedType + "'");
 
     assertTrue("Actual type of '" + vmName + "' includes expected type of '" + expectedType + "'", vmName
         .indexOf(expectedType) >= 0);
