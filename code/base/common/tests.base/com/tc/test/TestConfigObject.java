@@ -156,32 +156,22 @@ public class TestConfigObject {
     }
   }
 
-  // this is a hack
-  private static void loadEnv() {
-    File userDir = new File(System.getProperty("user.dir"));
-    String baseDirProp = System.getProperty(TC_BASE_DIR);
-    if (baseDirProp == null || baseDirProp.trim().equals("")) invalidBaseDir();
-    String[] baseDirParts = baseDirProp.split("[/\\\\]");
-    String baseDir = null;
-    int count = baseDirParts.length - 1;
-    File parent = null;
-
-    while (true) {
-      if (userDir.getName().equals(baseDirParts[count])) {
-        if (count == baseDirParts.length - 1) baseDir = userDir.getPath();
-        if (--count == -1) break;
-      }
-      if ((parent = userDir.getParentFile()) != null) userDir = parent;
-      else break;
-    }
-
-    if (baseDir == null || baseDir.trim().equals("")) invalidBaseDir();
+  private static void loadEnv() throws IOException {
+    File baseDir = getBaseDir();
 
     if (StringUtils.isBlank(System.getProperty(Directories.TC_INSTALL_ROOT_PROPERTY_NAME))) {
-      System.setProperty(Directories.TC_INSTALL_ROOT_PROPERTY_NAME, baseDir);
+      System.setProperty(Directories.TC_INSTALL_ROOT_PROPERTY_NAME, baseDir.getCanonicalPath());
       System.setProperty(Directories.TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME, "true");
     }
-    System.setProperty(Directories.TC_LICENSE_LOCATION_PROPERTY_NAME, baseDir);
+    System.setProperty(Directories.TC_LICENSE_LOCATION_PROPERTY_NAME, baseDir.getCanonicalPath());
+  }
+
+  private static File getBaseDir() throws IOException {
+    String baseDirProp = System.getProperty(TC_BASE_DIR);
+    if (baseDirProp == null || baseDirProp.trim().equals("")) invalidBaseDir();
+    File baseDir = new File(baseDirProp);
+    if (!baseDir.isDirectory()) invalidBaseDir();
+    return baseDir.getCanonicalFile();
   }
 
   private static void invalidBaseDir() {
