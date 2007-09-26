@@ -268,7 +268,7 @@ public class TestConfigObject {
   /**
    * Returns the type of the current JVM.  Equivalent to <code>System.getProperty("java.vm.name")</code>.
    */
-  public String jvmType() {
+  public String jvmName() {
     return System.getProperty("java.vm.name");
   }
 
