@@ -78,7 +78,6 @@ public class TestConfigObject {
 
   private static final String     JUNIT_TEST_TIMEOUT_INSECONDS      = DYNAMIC_PROPERTIES_PREFIX
                                                                         + "junit-test-timeout-inseconds";
-  private static final int        DEFAULT_TEST_TIMEOUT_IN_SECONDS   = 15 * 60;
 
   public static final String      APP_SERVER_REPOSITORY_URL_BASE    = STATIC_PROPERTIES_PREFIX + "appserver.repository";
 
@@ -213,6 +212,14 @@ public class TestConfigObject {
     this.properties.putAll(System.getProperties());
 
     logger.info("Loaded test configuration from " + loadedFrom.toString());
+  }
+
+  private String getProperty(String key, String defaultValue) {
+    String result = this.properties.getProperty(key);
+    if (result == null) {
+      result = defaultValue;
+    }
+    return result;
   }
 
   public String getL2StartupMode() {
@@ -386,13 +393,7 @@ public class TestConfigObject {
   }
 
   public int getJunitTimeoutInSeconds() {
-    String seconds = this.properties.getProperty(JUNIT_TEST_TIMEOUT_INSECONDS);
-    if (seconds == null) {
-      return DEFAULT_TEST_TIMEOUT_IN_SECONDS;
-    }
-    else {
-      return Integer.parseInt(seconds);
-    }
+    return Integer.parseInt(getProperty(JUNIT_TEST_TIMEOUT_INSECONDS, "900"));
   }
 
   public static final String    TRANSPARENT_TESTS_MODE_NORMAL         = "normal";
