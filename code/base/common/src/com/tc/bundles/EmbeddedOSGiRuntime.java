@@ -11,9 +11,6 @@ import org.osgi.framework.ServiceReference;
 import com.tc.config.Directories;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.properties.TCProperties;
-import com.tc.properties.TCPropertiesImpl;
-import com.terracottatech.config.Module;
 import com.terracottatech.config.Modules;
 
 import java.io.File;
@@ -52,38 +49,6 @@ public interface EmbeddedOSGiRuntime {
 
     private static final TCLogger logger = TCLogging.getLogger(EmbeddedOSGiRuntime.class);
 
-    private static final void injectDefaultModules(final Modules modules) {
-      if ((System.getProperty("tc.install-root") == null)
-          && (System.getProperty(TESTS_CONFIG_MODULE_REPOSITORIES) == null)) {
-        System.out.println("[xxx] No implicit modules were loaded because neither the tc.install-root or the "
-            + "tc.tests.configuration.modules.url property was set.");
-        logger.debug("No implicit modules were loaded because neither the tc.install-root or the "
-            + "tc.tests.configuration.modules.url property was set.");
-        return;
-      }
-
-      final TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor("l1.configbundles");
-      final String[] entries = props.getProperty("default").split(";");
-
-      if (entries.length == 0) {
-        System.out.println("[xxx] No implicit modules were loaded because the l1.configbundles.default property "
-            + "in tc.properties file was not set.");
-        logger.debug("No implicit modules were loaded because the l1.configbundles.default property "
-            + "in tc.properties file was not set.");
-        return;
-      }
-
-      for (int i = 0; i < entries.length; i++) {
-        final String[] entry = entries[i].trim().split(",");
-        final String name = entry[0].trim();
-        final String version = entry.length > 1 ? entry[1].trim() : "1.0.0";
-        final Module module = modules.addNewModule();
-        module.setName(name);
-        module.setVersion(version);
-        logger.debug("Prepending default bundle: '" + name + "', version '" + version + "'");
-      }
-    }
-
     private static final void injectDefaultRepository(final List prependLocations) throws FileNotFoundException,
         MalformedURLException {
       if (System.getProperty("tc.install-root") == null) return;
@@ -121,7 +86,6 @@ public interface EmbeddedOSGiRuntime {
         // and the installation root (which is not set when running tests)
         injectTestRepository(prependLocations);
         injectDefaultRepository(prependLocations);
-        injectDefaultModules(modules);
 
         final URL[] prependURLs = new URL[prependLocations.size()];
         prependLocations.toArray(prependURLs);

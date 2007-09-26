@@ -11,6 +11,8 @@ import com.tc.bundles.exception.InvalidBundleManifestException;
 import com.tc.bundles.exception.MissingBundleException;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
+import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesImpl;
 import com.terracottatech.config.Module;
 
 import java.io.File;
@@ -23,7 +25,9 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -53,16 +57,58 @@ public class Resolver {
   }
   
   public final URL[] resolve(Module[] modules) throws BundleException {
-    for (int i = 0; i < modules.length; i++) {
-      final URL location = resolveLocation(modules[i]);
+    ArrayList allModules = new ArrayList();
+    allModules.addAll(getDefaultModules());
+    allModules.addAll(Arrays.asList(modules));
+    
+    for (Iterator it = allModules.iterator(); it.hasNext();) {
+      Module module = (Module) it.next();
+      
+      final URL location = resolveLocation(module);
       if (location == null) {
-        final String msg = error(Message.ERROR_BUNDLE_UNRESOLVED, new Object[] { modules[i].getName(),
-            modules[i].getVersion(), modules[i].getGroupId(), repositoriesToString() });
+        String msg = error(Message.ERROR_BUNDLE_UNRESOLVED, new Object[] { module.getName(), module.getVersion(),
+            module.getGroupId(), repositoriesToString() });
         throw new MissingBundleException(msg);
       }
       resolveDependencies(location);
     }
+
     return getResolvedUrls();
+  }
+  
+  private List getDefaultModules() {
+//    if ((System.getProperty("tc.install-root") == null)
+//        && (System.getProperty(EmbeddedOSGiRuntime.TESTS_CONFIG_MODULE_REPOSITORIES) == null)) {
+//      System.out.println("[xxx] No implicit modules were loaded because neither the tc.install-root or the "
+//          + "tc.tests.configuration.modules.url property was set.");
+//      logger.debug("No implicit modules were loaded because neither the tc.install-root or the "
+//          + "tc.tests.configuration.modules.url property was set.");
+//      return Collections.EMPTY_LIST;
+//    }
+
+    final TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor("l1.configbundles");
+    final String[] entries = props.getProperty("default").split(";");
+
+    if (entries.length == 0) {
+      System.out.println("[xxx] No implicit modules were loaded because the l1.configbundles.default property "
+          + "in tc.properties file was not set.");
+      logger.debug("No implicit modules were loaded because the l1.configbundles.default property "
+          + "in tc.properties file was not set.");
+      return Collections.EMPTY_LIST;
+    }
+
+    List modules = new ArrayList();
+    for (int i = 0; i < entries.length; i++) {
+      final String[] entry = entries[i].trim().split(",");
+      final String name = entry[0].trim();
+      final String version = entry.length > 1 ? entry[1].trim() : "1.0.0";
+      final Module module = Module.Factory.newInstance();
+      module.setName(name);
+      module.setVersion(version);
+      logger.debug("Prepending default bundle: '" + name + "', version '" + version + "'");
+      modules.add(module);
+    }
+    return modules;
   }
   
   private final String repositoriesToString() {
