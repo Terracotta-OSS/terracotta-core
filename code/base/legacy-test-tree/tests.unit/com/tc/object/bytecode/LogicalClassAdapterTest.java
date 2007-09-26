@@ -37,7 +37,7 @@ public class LogicalClassAdapterTest extends ClassAdapterTestBase {
   private Object[]                params;
 
   public LogicalClassAdapterTest() {
-    this.disableAllUntil("2007-09-30");
+    //
   }
 
   public void setUp() throws Exception {
@@ -53,6 +53,12 @@ public class LogicalClassAdapterTest extends ClassAdapterTestBase {
 
     ClassProcessorHelper.setContext(Thread.currentThread().getContextClassLoader(), context);
   }
+
+  protected void tearDown() throws Exception {
+    super.tearDown();
+    objManager.setIsManaged(false);
+  }
+
 
   public void testHashtable() throws Exception {
     clazz = Hashtable.class;

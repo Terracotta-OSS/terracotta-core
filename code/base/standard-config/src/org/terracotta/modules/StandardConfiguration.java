@@ -7,10 +7,7 @@ package org.terracotta.modules;
 import org.osgi.framework.BundleContext;
 import org.terracotta.modules.configuration.TerracottaConfiguratorModule;
 
-import com.tc.object.config.ConfigLockLevel;
-import com.tc.object.config.LockDefinition;
 import com.tc.object.config.TransparencyClassSpec;
-import com.tc.util.runtime.Vm;
 
 public class StandardConfiguration
       extends TerracottaConfiguratorModule {
@@ -22,22 +19,21 @@ public class StandardConfiguration
       configExceptionTypes();
       configArrayTypes();
    }
-   
+
    private void configArrayTypes() {
       final TransparencyClassSpec spec = getOrCreateSpec("java.util.Arrays");
       spec.addDoNotInstrument("copyOfRange");
       spec.addDoNotInstrument("copyOf");
       getOrCreateSpec("java.util.Arrays$ArrayList");
    }
-   
+
    private void configFileTypes() {
       final TransparencyClassSpec spec = getOrCreateSpec("java.io.File");
       spec.setHonorTransient(true);
    }
-   
+
    private void configEventTypes() {
-      final TransparencyClassSpec spec = getOrCreateSpec("java.util.EventObject");
-      spec.setHonorTransient(true);
+      getOrCreateSpec("java.util.EventObject");
    }
 
    private void configExceptionTypes() {
