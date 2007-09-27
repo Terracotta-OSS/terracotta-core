@@ -100,7 +100,7 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
       if (!channelIdToJmxConnector.containsKey(channel.getChannelID())) {
         JMXServiceURL serviceURL;
         try {
-          serviceURL = new JMXServiceURL("terracotta", remoteAddress.getAddress().getHostName(), remoteAddress
+          serviceURL = new JMXServiceURL("terracotta", remoteAddress.getAddress().getHostAddress(), remoteAddress
               .getPort());
         } catch (MalformedURLException murle) {
           logger.error("Unable to construct a JMX service URL using DSO client channel from host["
