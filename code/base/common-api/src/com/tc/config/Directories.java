@@ -79,13 +79,6 @@ public class Directories {
     if (System.getProperty(TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME) == null) {
       String absolutePath = theFile.getAbsolutePath();
 
-      if (!theFile.exists()) {
-        // formatting
-        throw new FileNotFoundException("The specified Terracotta installation directory, '" + absolutePath
-                                        + "', located via the value of the system property '"
-                                        + TC_INSTALL_ROOT_PROPERTY_NAME + "', does not actually exist.");
-      }
-
       if (!theFile.isDirectory()) {
         // formatting
         throw new FileNotFoundException("The specified Terracotta installation directory, '" + absolutePath
