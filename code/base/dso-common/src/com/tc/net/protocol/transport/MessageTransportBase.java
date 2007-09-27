@@ -83,10 +83,8 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
 
   protected final void receiveToReceiveLayer(WireProtocolMessage message) {
     Assert.assertNotNull(receiveLayer);
-    Assert.eval("Wrong handshake message from: "+message.getSource(),!(message instanceof TransportHandshakeMessage));
-
-    if (message.getWireProtocolHeader().getProtocol() == WireProtocolHeader.PROTOCOL_TRANSPORT_HANDSHAKE) {
-      this.handleHandshakeError(new TransportHandshakeErrorContext("Received inappropriate handshake message!"));
+    if (message instanceof TransportHandshakeMessage) {
+      throw new AssertionError("Wrong handshake message from: " + message.getSource());
     }
 
     this.receiveLayer.receive(message.getPayload());
