@@ -111,10 +111,10 @@ public class ExtraProcessServerControl extends ServerControlBase {
   }
 
   // only called by constructors in this class
-  public ExtraProcessServerControl(DebugParams debugParams, String host, int dsoPort, int adminPort,
-                                   String configFileLoc, File runningDirectory, File installationRoot,
-                                   boolean mergeOutput, String serverName, List additionalJvmArgs, String undefString,
-                                   File javaHome, boolean useIdentifier) {
+  protected ExtraProcessServerControl(DebugParams debugParams, String host, int dsoPort, int adminPort,
+                                      String configFileLoc, File runningDirectory, File installationRoot,
+                                      boolean mergeOutput, String serverName, List additionalJvmArgs, String undefString,
+                                      File javaHome, boolean useIdentifier) {
     super(host, dsoPort, adminPort);
     this.useIdentifier = useIdentifier;
     this.javaHome = javaHome;
