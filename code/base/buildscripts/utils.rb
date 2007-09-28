@@ -36,6 +36,27 @@ def time
   Time.now - start
 end
 
+class Hash
+  def boolean(key, default = false)
+    if has_key?(key)
+      value = self[key]
+      if value.is_a?(String)
+        case value.downcase.strip
+        when /^true$/: true
+        when /^false$/: false
+        when "": default
+        else
+          raise("Cannot convert value for key '#{key}' to boolean: #{value}")
+        end
+      else
+        value ? true : false
+      end
+    else
+      default
+    end
+  end
+end
+
 module CallWithVariableArguments
     # A method to call a procedure that may take variable arguments, but
     # which issues much nicer error messages when something fails than
