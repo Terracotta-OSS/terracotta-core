@@ -102,7 +102,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     ClientID clientID = new ClientID(new ChannelID(100));
 
     existingUnconnectedClients.add(clientID);
-    existingUnconnectedClients.add(new ChannelID(101));
+    existingUnconnectedClients.add(new ClientID(new ChannelID(101)));
 
     initHandshakeManager();
 
@@ -119,15 +119,15 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     scc.task.run();
     assertEquals(1, timer.cancelCalls.size());
     assertEquals(1, channelManager.closeAllChannelIDs.size());
-    assertEquals(new ChannelID(101), channelManager.closeAllChannelIDs.get(0));
+    assertEquals(new ClientID(new ChannelID(101)), channelManager.closeAllChannelIDs.get(0));
 
     // make sure everything is started properly
     assertStarted();
   }
 
   public void testNotifyTimeout() throws Exception {
-    ChannelID channelID1 = new ChannelID(1);
-    ChannelID channelID2 = new ChannelID(2);
+    ClientID channelID1 = new ClientID(new ChannelID(1));
+    ClientID channelID2 = new ClientID(new ChannelID(2));
 
     existingUnconnectedClients.add(channelID1);
     existingUnconnectedClients.add(channelID2);
