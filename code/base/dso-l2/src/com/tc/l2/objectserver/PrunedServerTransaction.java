@@ -4,7 +4,7 @@
  */
 package com.tc.l2.objectserver;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -47,8 +47,8 @@ public class PrunedServerTransaction implements ServerTransaction {
     return prunedChanges;
   }
 
-  public ChannelID getChannelID() {
-    return orgTxn.getChannelID();
+  public NodeID getSourceID() {
+    return orgTxn.getSourceID();
   }
 
   public DmiDescriptor[] getDmiDescriptors() {

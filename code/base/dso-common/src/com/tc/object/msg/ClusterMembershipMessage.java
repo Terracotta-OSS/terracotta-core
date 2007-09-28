@@ -6,7 +6,7 @@ package com.tc.object.msg;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutput;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -32,13 +32,9 @@ public class ClusterMembershipMessage extends DSOMessageBase {
     super(sessionID, monitor, channel, header, data);
   }
 
-  public void initialize(int et, ChannelID cid, MessageChannel[] channels) {
+  public void initialize(int et, NodeID nodeID2, MessageChannel[] channels) {
     eventType = et;
-    nodeId = toString(cid);
-  }
-
-  private String toString(ChannelID cid) {
-    return String.valueOf(cid.toLong());
+    nodeId = nodeID2.toString();
   }
 
   protected void dehydrateValues() {

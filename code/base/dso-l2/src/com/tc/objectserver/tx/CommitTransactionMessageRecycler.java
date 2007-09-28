@@ -4,7 +4,7 @@
  */
 package com.tc.objectserver.tx;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.msg.MessageRecyclerImpl;
 import com.tc.object.tx.ServerTransactionID;
 
@@ -25,7 +25,7 @@ public class CommitTransactionMessageRecycler extends MessageRecyclerImpl implem
     return;
   }
 
-  public void incomingTransactions(ChannelID cid, Set serverTxnIDs) {
+  public void incomingTransactions(NodeID source, Set serverTxnIDs) {
     return;
   }
 
@@ -33,7 +33,7 @@ public class CommitTransactionMessageRecycler extends MessageRecyclerImpl implem
     return;
   }
 
-  public void clearAllTransactionsFor(ChannelID killedClient) {
+  public void clearAllTransactionsFor(NodeID deadNode) {
     return;
   }
 

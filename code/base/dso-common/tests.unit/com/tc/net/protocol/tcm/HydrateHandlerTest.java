@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.tcm;
 
@@ -8,6 +9,7 @@ import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.exception.ImplementMe;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.object.session.SessionID;
@@ -71,7 +73,7 @@ public class HydrateHandlerTest extends TCTestCase {
 
     public void enableStatsCollection(boolean enable) {
       throw new ImplementMe();
-      
+
     }
 
     public Stats getStats(long frequency) {
@@ -176,8 +178,8 @@ public class HydrateHandlerTest extends TCTestCase {
       return channel;
     }
 
-    public ChannelID getChannelID() {
-      return channel.getChannelID();
+    public ClientID getClientID() {
+      return new ClientID(channel.getChannelID());
     }
 
     public SessionID getLocalSessionID() {

@@ -4,6 +4,8 @@
  */
 package com.tc.object.net;
 
+import com.tc.net.groups.ClientID;
+import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
@@ -19,24 +21,26 @@ public interface DSOChannelManager {
 
   public void closeAll(Collection channelIDs);
 
-  public MessageChannel getActiveChannel(ChannelID id) throws NoSuchChannelException;
+  public MessageChannel getActiveChannel(NodeID id) throws NoSuchChannelException;
 
   public MessageChannel[] getActiveChannels();
 
-  public boolean isActiveID(ChannelID channelID);
+  public boolean isActiveID(NodeID nodeID);
 
-  public String getChannelAddress(ChannelID channelID);
+  public String getChannelAddress(NodeID nid);
 
-  public Set getAllActiveChannelIDs();
+  public Set getAllActiveClientIDs();
 
   public void addEventListener(DSOChannelManagerEventListener listener);
 
-  public BatchTransactionAcknowledgeMessage newBatchTransactionAcknowledgeMessage(ChannelID channelID)
+  public BatchTransactionAcknowledgeMessage newBatchTransactionAcknowledgeMessage(NodeID nid)
       throws NoSuchChannelException;
 
-  public Set getRawChannelIDs();
+  public Set getAllClientIDs();
 
-  public void makeChannelActive(ChannelID channelID, long startIDs, long endIDs, boolean persistent);
+  public void makeChannelActive(ClientID clientID, long startIDs, long endIDs, boolean persistent);
 
   public void makeChannelActiveNoAck(MessageChannel channel);
+
+  public ClientID getClientIDFor(ChannelID channelID);
 }

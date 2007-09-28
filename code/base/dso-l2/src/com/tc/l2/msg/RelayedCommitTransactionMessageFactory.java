@@ -17,7 +17,7 @@ public class RelayedCommitTransactionMessageFactory {
   public static RelayedCommitTransactionMessage createRelayedCommitTransactionMessage(
                                                                                       CommitTransactionMessage commitMsg,
                                                                                       Collection txns, long seqID) {
-    RelayedCommitTransactionMessage msg = new RelayedCommitTransactionMessage(commitMsg.getChannelID(), commitMsg
+    RelayedCommitTransactionMessage msg = new RelayedCommitTransactionMessage(commitMsg.getClientID(), commitMsg
         .getBatchData(), commitMsg.getSerializer(), getGlobalTransactionIDMapping(txns), commitMsg
         .getAcknowledgedTransactionIDs(), seqID);
     return msg;

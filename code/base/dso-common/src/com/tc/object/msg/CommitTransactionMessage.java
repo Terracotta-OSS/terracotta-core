@@ -4,7 +4,7 @@
 package com.tc.object.msg;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.ClientID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.tx.TransactionBatch;
 
@@ -25,5 +25,6 @@ public interface CommitTransactionMessage {
 
   public void send();
   
-  public ChannelID getChannelID();
+  public ClientID getClientID();
+  
 }

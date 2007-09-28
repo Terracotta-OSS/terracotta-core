@@ -1,12 +1,15 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.tcm;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
+import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.AbstractTCNetworkMessage;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
@@ -17,14 +20,14 @@ import java.io.IOException;
  * @author teck
  */
 public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements TCMessage {
-  
+
   private final MessageMonitor    monitor;
   private final SetOnceFlag       processed = new SetOnceFlag();
   private final SetOnceFlag       isSent    = new SetOnceFlag();
   private final TCMessageType     type;
   private final MessageChannel    channel;
   private int                     nvCount;
-  
+
   private TCByteBufferOutput      out;
   private TCByteBufferInputStream bbis;
   private int                     messageVersion;
@@ -47,7 +50,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
 
   /**
    * Creates a new TCMessage object backed by the given data array (used when messages are read from the network)
-   *
+   * 
    * @param header
    * @param data
    */
@@ -73,7 +76,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   }
 
   // use me to read directly from the message data (as opposed to using the name-value mechanism)
-  protected TCByteBufferInputStream getInputStream() {
+  protected TCByteBufferInput getInputStream() {
     return this.bbis;
   }
 
@@ -110,15 +113,15 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
         throw new RuntimeException(t);
       } finally {
         this.out.close();
-        if(! isOutputStreamRecycled()) this.out = null;
+        if (!isOutputStreamRecycled()) this.out = null;
       }
     }
   }
 
   /**
    * Reads the payload byte buffer data and sets instance data. This should be called after the message is read from the
-   * network before it is released to the client for use.
-   * XXX:: This synchronization is there to create proper memory boundary.
+   * network before it is released to the client for use. XXX:: This synchronization is there to create proper memory
+   * boundary.
    */
   public synchronized void hydrate() throws IOException, UnknownNameException {
     if (processed.attemptSet()) {
@@ -129,7 +132,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
         for (int i = 0; i < count; i++) {
           final byte name = bbis.readByte();
           if (!hydrateValue(name)) {
-            logger.error(" Hydrate Error - " + toString()); 
+            logger.error(" Hydrate Error - " + toString());
             throw new UnknownNameException(getClass(), name);
           }
         }
@@ -141,19 +144,19 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
       monitor.newIncomingMessage(this);
     }
   }
-  
+
   // Can be overloaded by sub classes to decide when to recycle differently.
   public void doRecycleOnRead() {
     recycle();
   }
-  
+
   // if a subclass calls recycleOutputStream, then they need to override this method to return true
   protected boolean isOutputStreamRecycled() {
     return false;
   }
 
   protected void recycleOutputStream() {
-    if(out != null) {
+    if (out != null) {
       out.recycle();
     }
   }
@@ -161,7 +164,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   /**
    * Subclasses *really* must implement this to set appropriate instance variables with the value of the given name.
    * Return false if the given name is unknown to your message class
-   *
+   * 
    * @param name
    */
   protected boolean hydrateValue(byte name) throws IOException {
@@ -207,6 +210,18 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
 
   protected String getStringValue() throws IOException {
     return bbis.readString();
+  }
+
+  protected byte[] getBytesArray() throws IOException {
+    int length = bbis.readInt();
+    byte bytes[] = new byte[length];
+    int off = 0;
+    while (length > 0) {
+      int read = bbis.read(bytes, off, length);
+      length -= read;
+      off += read;
+    }
+    return bytes;
   }
 
   protected void putNVPair(byte name, boolean value) {
@@ -275,6 +290,12 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
     out.write(data);
   }
 
+  protected void putNVPair(byte name, byte[] bytes) {
+    nvCount++;
+    out.writeInt(bytes.length);
+    out.write(bytes);
+  }
+
   public ChannelID getChannelID() {
     return channel.getChannelID();
   }
@@ -285,7 +306,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
 
   /*
    * (non-Javadoc)
-   *
+   * 
    * @see com.tc.net.protocol.tcm.ApplicationMessage#send()
    */
   public void send() {
@@ -298,5 +319,12 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   private void basicSend() {
     channel.send(this);
     monitor.newOutgoingMessage(this);
+  }
+
+  // FIXME:: This is here till them tc-comms merge.
+  // TODO:: Remove this method once getSourceID and getDestinationID is merged into truck. You can use those methods
+  // instead.
+  public ClientID getClientID() {
+    return new ClientID(getChannelID());
   }
 }

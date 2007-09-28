@@ -1,9 +1,10 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.lockmanager.api;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.lockmanager.api.LockContext;
 
 import java.util.Collections;
@@ -28,29 +29,28 @@ public class NotifiedWaiters {
 
   public void addNotification(LockContext context) {
     synchronized (notifiedSets) {
-      getOrCreateSetFor(context.getChannelID()).add(context);
+      getOrCreateSetFor(context.getNodeID()).add(context);
     }
   }
 
-  public Set getNotifiedFor(ChannelID channelID) {
+  public Set getNotifiedFor(NodeID nodeID) {
     synchronized (notifiedSets) {
-      Set rv = getSetFor(channelID);
+      Set rv = getSetFor(nodeID);
       return (rv == null) ? Collections.EMPTY_SET : rv;
     }
   }
 
-  private Set getSetFor(ChannelID channelID) {
-    return (Set) notifiedSets.get(channelID);
+  private Set getSetFor(NodeID nodeID) {
+    return (Set) notifiedSets.get(nodeID);
   }
 
-  private Set getOrCreateSetFor(ChannelID channelID) {
-    Set rv = getSetFor(channelID);
+  private Set getOrCreateSetFor(NodeID nodeID) {
+    Set rv = getSetFor(nodeID);
     if (rv == null) {
       rv = new HashSet();
-      notifiedSets.put(channelID, rv);
+      notifiedSets.put(nodeID, rv);
     }
     return rv;
   }
-
 
 }

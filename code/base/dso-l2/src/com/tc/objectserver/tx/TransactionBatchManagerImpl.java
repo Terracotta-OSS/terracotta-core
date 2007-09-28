@@ -6,7 +6,7 @@ package com.tc.objectserver.tx;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.util.Assert;
@@ -20,48 +20,48 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager {
 
   private final Map             map    = new HashMap();
 
-  public synchronized void defineBatch(ChannelID channelID, TxnBatchID batchID, int numTxns) {
-    BatchStats batchStats = getOrCreateStats(channelID);
+  public synchronized void defineBatch(NodeID nid, TxnBatchID batchID, int numTxns) {
+    BatchStats batchStats = getOrCreateStats(nid);
     batchStats.defineBatch(batchID, numTxns);
   }
 
-  private BatchStats getOrCreateStats(ChannelID channelID) {
-    BatchStats bs = (BatchStats) map.get(channelID);
+  private BatchStats getOrCreateStats(NodeID nid) {
+    BatchStats bs = (BatchStats) map.get(nid);
     if (bs == null) {
-      bs = new BatchStats(channelID);
-      map.put(channelID, bs);
+      bs = new BatchStats(nid);
+      map.put(nid, bs);
     }
     return bs;
   }
 
-  public synchronized boolean batchComponentComplete(ChannelID channelID, TxnBatchID batchID, TransactionID txnID) {
-    BatchStats bs = (BatchStats) map.get(channelID);
+  public synchronized boolean batchComponentComplete(NodeID nid, TxnBatchID batchID, TransactionID txnID) {
+    BatchStats bs = (BatchStats) map.get(nid);
     Assert.assertNotNull(bs);
     return bs.batchComplete(batchID, txnID);
   }
 
-  public synchronized void shutdownClient(ChannelID channelID) {
-    BatchStats bs = (BatchStats) map.get(channelID);
+  public synchronized void shutdownNode(NodeID nodeID) {
+    BatchStats bs = (BatchStats) map.get(nodeID);
     if (bs != null) {
-      bs.shutdownClient();
+      bs.shutdownNode();
     }
   }
 
-  private void cleanUp(ChannelID channelID) {
-    map.remove(channelID);
+  private void cleanUp(NodeID nodeID) {
+    map.remove(nodeID);
   }
 
   public class BatchStats {
-    private final ChannelID channelID;
+    private final NodeID nodeID;
 
-    private int             batchCount;
-    private int             txnCount;
-    private float           avg;
+    private int          batchCount;
+    private int          txnCount;
+    private float        avg;
 
-    private boolean         killed = false;
+    private boolean      killed = false;
 
-    public BatchStats(ChannelID channelID) {
-      this.channelID = channelID;
+    public BatchStats(NodeID nid) {
+      this.nodeID = nid;
     }
 
     public void defineBatch(TxnBatchID batchID, int numTxns) {
@@ -73,13 +73,13 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager {
     }
 
     private void log_stats() {
-      logger.info(channelID + " : Batch Stats : batch count = " + batchCount + " txnCount = " + txnCount + " avg = "
-                  + avg);
+      logger
+          .info(nodeID + " : Batch Stats : batch count = " + batchCount + " txnCount = " + txnCount + " avg = " + avg);
     }
 
     private void log_stats(float thresh) {
-      logger.info(channelID + " : Batch Stats : batch count = " + batchCount + " txnCount = " + txnCount + " avg = "
-                  + avg + " threshold = " + thresh);
+      logger.info(nodeID + " : Batch Stats : batch count = " + batchCount + " txnCount = " + txnCount + " avg = " + avg
+                  + " threshold = " + thresh);
     }
 
     public boolean batchComplete(TxnBatchID batchID, TransactionID txnID) {
@@ -87,7 +87,7 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager {
       if (killed) {
         // return true only when all txns are acked. Note new batches may still be in network read queue
         if (txnCount == 0) {
-          cleanUp(channelID);
+          cleanUp(nodeID);
           return true;
         } else {
           return false;
@@ -105,10 +105,10 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager {
       }
     }
 
-    public void shutdownClient() {
+    public void shutdownNode() {
       this.killed = true;
-      if(txnCount == 0) {
-        cleanUp(channelID);
+      if (txnCount == 0) {
+        cleanUp(nodeID);
       }
     }
   }

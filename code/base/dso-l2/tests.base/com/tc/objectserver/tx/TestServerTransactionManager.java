@@ -5,7 +5,7 @@
 package com.tc.objectserver.tx;
 
 import com.tc.exception.ImplementMe;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.managedobject.BackReferences;
@@ -32,20 +32,20 @@ public class TestServerTransactionManager implements ServerTransactionManager {
   public final List                   incomingTxns        = new ArrayList();
   public final Set                    completedTxns       = new HashSet();
 
-  public void shutdownClient(ChannelID deadClient) {
+  public void shutdownNode(NodeID deadClient) {
     shutdownClientCalls.put(deadClient);
   }
 
-  public void addWaitingForAcknowledgement(ChannelID waiter, TransactionID requestID, ChannelID waitee) {
+  public void addWaitingForAcknowledgement(NodeID waiter, TransactionID requestID, NodeID waitee) {
     throw new ImplementMe();
 
   }
 
-  public boolean isWaiting(ChannelID waiter, TransactionID requestID) {
+  public boolean isWaiting(NodeID waiter, TransactionID requestID) {
     throw new ImplementMe();
   }
 
-  public void acknowledgement(ChannelID waiter, TransactionID requestID, ChannelID waitee) {
+  public void acknowledgement(NodeID waiter, TransactionID requestID, NodeID waitee) {
     throw new ImplementMe();
   }
 
@@ -53,7 +53,7 @@ public class TestServerTransactionManager implements ServerTransactionManager {
     throw new ImplementMe();
   }
 
-  public void broadcasted(ChannelID waiter, TransactionID requestID) {
+  public void broadcasted(NodeID waiter, TransactionID requestID) {
     // NOP
   }
 
@@ -73,14 +73,13 @@ public class TestServerTransactionManager implements ServerTransactionManager {
     // NOP
   }
 
-  public void incomingTransactions(ChannelID channelID, Set txnIDs, Collection txns, boolean relayed,
-                                   Collection cmpltedTxns) {
-    incomingTxnContexts.add(new Object[] { channelID, txnIDs, Boolean.valueOf(relayed) });
+  public void incomingTransactions(NodeID nodeID, Set txnIDs, Collection txns, boolean relayed, Collection cmpltedTxns) {
+    incomingTxnContexts.add(new Object[] { nodeID, txnIDs, Boolean.valueOf(relayed) });
     incomingTxns.addAll(txns);
     completedTxns.addAll(cmpltedTxns);
   }
 
-  public void transactionsRelayed(ChannelID channelID, Set serverTxnIDs) {
+  public void transactionsRelayed(NodeID node, Set serverTxnIDs) {
     throw new ImplementMe();
   }
 
@@ -89,7 +88,7 @@ public class TestServerTransactionManager implements ServerTransactionManager {
     // NOP
   }
 
-  public void setResentTransactionIDs(ChannelID channelID, Collection transactionIDs) {
+  public void setResentTransactionIDs(NodeID source, Collection transactionIDs) {
     // NOP
   }
 

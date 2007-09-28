@@ -11,6 +11,7 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.object.ObjectID;
@@ -21,8 +22,8 @@ import com.tc.object.cache.NullCache;
 import com.tc.object.cache.TestCacheStats;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.LiteralAction;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
@@ -255,7 +256,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     ids.add((id1 = new ObjectID(1)));
     ObjectID id2;
     ids.add((id2 = new ObjectID(2)));
-    ChannelID key = new ChannelID(0);
+    ClientID key = new ClientID(new ChannelID(0));
 
     TestResultsContext results = new TestResultsContext(ids, ids);
     this.objectManager.lookupObjectsFor(key, results);
@@ -641,7 +642,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     ObjectID id = new ObjectID(1);
     Set ids = new HashSet();
     ids.add(id);
-    ChannelID key = new ChannelID(0);
+    ClientID key = new ClientID(new ChannelID(0));
 
     TestResultsContext responseContext = new TestResultsContext(ids, ids);
     Map lookedUpObjects = responseContext.objects;
@@ -1055,7 +1056,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     objectManager.createObject(mo2);
     objectManager.createObject(mo3);
 
-    ChannelID cid1 = new ChannelID(1);
+    ClientID cid1 = new ClientID(new ChannelID(1));
     clientStateManager.addReference(cid1, root.getID());
     clientStateManager.addReference(cid1, mo1.getID());
     clientStateManager.addReference(cid1, mo2.getID());

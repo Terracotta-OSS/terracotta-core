@@ -1,10 +1,11 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.lockmanager.impl;
 
 import com.tc.async.api.Sink;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.ThreadID;
@@ -14,7 +15,7 @@ import com.tc.util.Assert;
 public class Holder implements LockAwardContext {
   private final ServerThreadContext threadContext;
   private final LockID              lockID;
-  private final ChannelID           channelID;
+  private final NodeID              nodeID;
   private final ThreadID            threadID;
   private final long                timeout;
   private final long                timestamp;
@@ -25,7 +26,7 @@ public class Holder implements LockAwardContext {
     this.timestamp = System.currentTimeMillis();
     this.lockID = lockID;
     this.threadContext = txn;
-    this.channelID = txn.getId().getChannelID();
+    this.nodeID = txn.getId().getNodeID();
     this.threadID = txn.getId().getClientThreadID();
     this.timeout = timeout;
     this.lockLevel = LockLevel.NIL_LOCK_LEVEL;
@@ -51,8 +52,8 @@ public class Holder implements LockAwardContext {
     return this.lockLevel;
   }
 
-  public ChannelID getChannelID() {
-    return channelID;
+  public NodeID getNodeID() {
+    return nodeID;
   }
 
   public LockID getLockID() {
@@ -76,7 +77,7 @@ public class Holder implements LockAwardContext {
   }
 
   public String toString() {
-    return "Holder" + "@" + System.identityHashCode(this) + "[" + channelID + "," + threadID + ",level="
+    return "Holder" + "@" + System.identityHashCode(this) + "[" + nodeID + "," + threadID + ",level="
            + LockLevel.toString(getLockLevel()) + ",timeout=" + timeout + "]";
   }
 

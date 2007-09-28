@@ -8,6 +8,7 @@ import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 import com.tc.exception.ImplementMe;
 import com.tc.logging.NullTCLogger;
+import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TestChannelIDProvider;
@@ -36,23 +37,24 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
 
   RemoteObjectManagerImpl                        manager;
   ThreadGroup                                    threadGroup;
-  private TestChannelIDProvider                  channelIDProvider;
+  private ClientIDProvider                       cidProvider;
   private TestRequestRootMessageFactory          rrmf;
   private TestRequestManagedObjectMessageFactory rmomf;
   private RetrieverThreads                       rt;
 
   protected void setUp() throws Exception {
     super.setUp();
-    this.channelIDProvider = new TestChannelIDProvider();
-    this.channelIDProvider.channelID = new ChannelID(1);
+    TestChannelIDProvider channelIDProvider = new TestChannelIDProvider();
+    channelIDProvider.channelID = new ChannelID(1);
+    this.cidProvider = new ClientIDProviderImpl(channelIDProvider);
     this.rmomf = new TestRequestManagedObjectMessageFactory();
     newRmom();
     this.rrmf = new TestRequestRootMessageFactory();
     newRrm();
 
     this.threadGroup = new ThreadGroup(getClass().getName());
-    manager = new RemoteObjectManagerImpl(new NullTCLogger(), channelIDProvider, rrmf, rmomf,
-                                          new NullObjectRequestMonitor(), 500, new NullSessionManager());
+    manager = new RemoteObjectManagerImpl(new NullTCLogger(), cidProvider, rrmf, rmomf, new NullObjectRequestMonitor(),
+                                          500, new NullSessionManager());
     rt = new RetrieverThreads(Thread.currentThread().getThreadGroup(), manager);
   }
 
@@ -376,7 +378,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     oids.add(objectID);
     assertTrue(rmom.initializeQueue.isEmpty());
     ObjectRequestContext ctxt = (ObjectRequestContext) initArgs[0];
-    assertEquals(this.channelIDProvider.channelID, ctxt.getChannelID());
+    assertEquals(cidProvider.getClientID(), ctxt.getClientID());
     assertEquals(oids, ctxt.getObjectIDs());
     // The object id in the request
     assertEquals(oids, initArgs[1]);
@@ -494,7 +496,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
       sendQueue.put(new Object());
     }
 
-    public ChannelID getChannelID() {
+    public ClientID getClientID() {
       throw new ImplementMe();
     }
 
@@ -548,7 +550,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public ChannelID getChannelID() {
+    public ClientID getClientID() {
       throw new ImplementMe();
     }
 

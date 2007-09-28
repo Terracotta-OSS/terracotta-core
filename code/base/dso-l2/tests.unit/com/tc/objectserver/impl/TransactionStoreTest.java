@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.impl;
 
+import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
@@ -39,7 +40,7 @@ public class TransactionStoreTest extends TCTestCase {
     store = new TransactionStoreImpl(persistor, persistor);
     List gtxs = new LinkedList();
     for (int i = 0; i < 100; i++) {
-      ServerTransactionID sid1 = new ServerTransactionID(new ChannelID(i), new TransactionID(i));
+      ServerTransactionID sid1 = new ServerTransactionID(new ClientID(new ChannelID(i)), new TransactionID(i));
       store.getOrCreateTransactionDescriptor(sid1);
       store.commitTransactionDescriptor(null, sid1);
       GlobalTransactionDescriptor desc = store.getTransactionDescriptor(sid1);
@@ -84,7 +85,7 @@ public class TransactionStoreTest extends TCTestCase {
 
     assertEquals(GlobalTransactionID.NULL_ID, store.getLeastGlobalTransactionID());
 
-    ServerTransactionID stx1 = new ServerTransactionID(new ChannelID(1), new TransactionID(1));
+    ServerTransactionID stx1 = new ServerTransactionID(new ClientID(new ChannelID(1)), new TransactionID(1));
 
     GlobalTransactionDescriptor gtx1 = store.getOrCreateTransactionDescriptor(stx1);
     assertNotEquals(GlobalTransactionID.NULL_ID, store.getLeastGlobalTransactionID());
@@ -96,7 +97,7 @@ public class TransactionStoreTest extends TCTestCase {
     int min = 100;
     int max = 200;
     for (int i = min; i < max; i++) {
-      ServerTransactionID stxid = new ServerTransactionID(new ChannelID(i), new TransactionID(i));
+      ServerTransactionID stxid = new ServerTransactionID(new ClientID(new ChannelID(i)), new TransactionID(i));
       store.getOrCreateTransactionDescriptor(stxid);
       store.commitTransactionDescriptor(null, stxid);
     }
@@ -107,7 +108,7 @@ public class TransactionStoreTest extends TCTestCase {
     // now remove some from the the middle
     Set toDelete = new HashSet();
     for (int i = min + 25; i < max - 50; i++) {
-      ServerTransactionID stxid = new ServerTransactionID(new ChannelID(i), new TransactionID(i));
+      ServerTransactionID stxid = new ServerTransactionID(new ClientID(new ChannelID(i)), new TransactionID(i));
       toDelete.add(stxid);
     }
     store.removeAllByServerTransactionID(null, toDelete);
@@ -118,7 +119,7 @@ public class TransactionStoreTest extends TCTestCase {
     // now remove some from the beginning
     toDelete.clear();
     for (int i = min; i < min + 25; i++) {
-      ServerTransactionID stxid = new ServerTransactionID(new ChannelID(i), new TransactionID(i));
+      ServerTransactionID stxid = new ServerTransactionID(new ClientID(new ChannelID(i)), new TransactionID(i));
       toDelete.add(stxid);
     }
     toDelete.add(stx1);
@@ -139,7 +140,7 @@ public class TransactionStoreTest extends TCTestCase {
     // now remove some from the the middle
     toDelete.clear();
     for (int i = min + 75; i < max; i++) {
-      ServerTransactionID stxid = new ServerTransactionID(new ChannelID(i), new TransactionID(i));
+      ServerTransactionID stxid = new ServerTransactionID(new ClientID(new ChannelID(i)), new TransactionID(i));
       toDelete.add(stxid);
     }
     store.removeAllByServerTransactionID(null, toDelete);
@@ -150,7 +151,7 @@ public class TransactionStoreTest extends TCTestCase {
     // now remove each of the remaining ones
     for (int i = min + 50; i < max - 25; i++) {
       toDelete.clear();
-      ServerTransactionID stxid = new ServerTransactionID(new ChannelID(i), new TransactionID(i));
+      ServerTransactionID stxid = new ServerTransactionID(new ClientID(new ChannelID(i)), new TransactionID(i));
       toDelete.add(stxid);
       store.removeAllByServerTransactionID(null, toDelete);
     }
@@ -172,7 +173,7 @@ public class TransactionStoreTest extends TCTestCase {
     persistor = new TestTransactionPersistor();
     for (int i = initialMin; i < initialMax; i++) {
       sequence++;
-      ServerTransactionID stxid = new ServerTransactionID(new ChannelID(i % 2), new TransactionID(i));
+      ServerTransactionID stxid = new ServerTransactionID(new ClientID(new ChannelID(i % 2)), new TransactionID(i));
       persistor.persisted.put(stxid, new GlobalTransactionDescriptor(stxid, new GlobalTransactionID(persistor.next())));
     }
     store = new TransactionStoreImpl(persistor, persistor);
@@ -180,7 +181,7 @@ public class TransactionStoreTest extends TCTestCase {
 
     // create more
     for (int i = initialMax; i < laterMax; i++) {
-      ServerTransactionID stxid = new ServerTransactionID(new ChannelID(i % 2), new TransactionID(i));
+      ServerTransactionID stxid = new ServerTransactionID(new ClientID(new ChannelID(i % 2)), new TransactionID(i));
       store.getOrCreateTransactionDescriptor(stxid);
       store.commitTransactionDescriptor(null, stxid);
     }
@@ -188,12 +189,12 @@ public class TransactionStoreTest extends TCTestCase {
 
     assertEquals(lowmk1, lowmk2);
 
-    ChannelID channel0 = new ChannelID(0);
-    store.shutdownClient(null, channel0);
+    ClientID cid0 = new ClientID(new ChannelID(0));
+    store.shutdownNode(null, cid0);
 
     // Check if all channel1 IDs are gone
     for (int i = initialMin; i < laterMax; i++) {
-      ServerTransactionID stxid = new ServerTransactionID(new ChannelID(i % 2), new TransactionID(i));
+      ServerTransactionID stxid = new ServerTransactionID(new ClientID(new ChannelID(i % 2)), new TransactionID(i));
       if (i % 2 == 0) {
         assertNull(store.getTransactionDescriptor(stxid));
       } else {
@@ -207,7 +208,7 @@ public class TransactionStoreTest extends TCTestCase {
     int initialMax = 300;
     persistor = new TestTransactionPersistor();
     for (int i = initialMin; i < initialMax; i++) {
-      ServerTransactionID stxid = new ServerTransactionID(new ChannelID(i), new TransactionID(i));
+      ServerTransactionID stxid = new ServerTransactionID(new ClientID(new ChannelID(i)), new TransactionID(i));
       persistor.persisted.put(stxid, new GlobalTransactionDescriptor(stxid, new GlobalTransactionID(persistor.next())));
     }
     store = new TransactionStoreImpl(persistor, persistor);
@@ -216,7 +217,7 @@ public class TransactionStoreTest extends TCTestCase {
     // constructor.
 
     for (int i = initialMin; i < initialMax; i++) {
-      ServerTransactionID stxid = new ServerTransactionID(new ChannelID(i), new TransactionID(i));
+      ServerTransactionID stxid = new ServerTransactionID(new ClientID(new ChannelID(i)), new TransactionID(i));
       assertNotNull(store.getTransactionDescriptor(stxid));
     }
 
@@ -224,8 +225,8 @@ public class TransactionStoreTest extends TCTestCase {
     ChannelID channel2 = new ChannelID(2);
     TransactionID tx1 = new TransactionID(1);
     TransactionID tx2 = new TransactionID(2);
-    ServerTransactionID stxid1 = new ServerTransactionID(channel1, tx1);
-    ServerTransactionID stxid2 = new ServerTransactionID(channel2, tx2);
+    ServerTransactionID stxid1 = new ServerTransactionID(new ClientID(channel1), tx1);
+    ServerTransactionID stxid2 = new ServerTransactionID(new ClientID(channel2), tx2);
 
     assertNull(store.getTransactionDescriptor(stxid1));
     GlobalTransactionDescriptor gtx1 = store.getOrCreateTransactionDescriptor(stxid1);
@@ -259,7 +260,7 @@ public class TransactionStoreTest extends TCTestCase {
     store = new TransactionStoreImpl(persistor, persistor);
     Map sid2Gid = new HashMap();
     for (int i = initialMin; i < initialMax; i++) {
-      ServerTransactionID stxid = new ServerTransactionID(new ChannelID(i % 2), new TransactionID(i));
+      ServerTransactionID stxid = new ServerTransactionID(new ClientID(new ChannelID(i % 2)), new TransactionID(i));
       GlobalTransactionDescriptor desc = store.getOrCreateTransactionDescriptor(stxid);
       store.commitTransactionDescriptor(null, stxid);
       assertEquals(stxid, desc.getServerTransactionID());
@@ -272,7 +273,7 @@ public class TransactionStoreTest extends TCTestCase {
     // test if we get the same gid
     GlobalTransactionID maxID = GlobalTransactionID.NULL_ID;
     for (int i = initialMin; i < initialMax; i++) {
-      ServerTransactionID stxid = new ServerTransactionID(new ChannelID(i % 2), new TransactionID(i));
+      ServerTransactionID stxid = new ServerTransactionID(new ClientID(new ChannelID(i % 2)), new TransactionID(i));
       GlobalTransactionDescriptor desc = (GlobalTransactionDescriptor) sid2Gid.get(stxid);
       assertEquals(desc, store.getTransactionDescriptor(stxid));
       if (desc.getGlobalTransactionID().toLong() > maxID.toLong()) {
@@ -282,7 +283,7 @@ public class TransactionStoreTest extends TCTestCase {
 
     // create more
     for (int i = initialMax; i < laterMax; i++) {
-      ServerTransactionID stxid = new ServerTransactionID(new ChannelID(i % 2), new TransactionID(i));
+      ServerTransactionID stxid = new ServerTransactionID(new ClientID(new ChannelID(i % 2)), new TransactionID(i));
       GlobalTransactionDescriptor desc;
       desc = store.getOrCreateTransactionDescriptor(stxid);
       store.commitTransactionDescriptor(null, stxid);

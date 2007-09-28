@@ -4,18 +4,18 @@
  */
 package com.tc.net.groups;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.io.TCByteBufferInput;
+import com.tc.io.TCByteBufferOutput;
 import com.tc.util.Assert;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
 
-public class NodeID implements Externalizable {
+public class NodeIDImpl implements NodeID {
 
-  public static final NodeID  NULL_ID       = new NodeID("NULL-ID", new byte[0]);
+  public static final NodeID  NULL_ID       = new NodeIDImpl("NULL-ID", new byte[0]);
 
   private static final String UNINITIALIZED = "Uninitialized";
 
@@ -24,12 +24,12 @@ public class NodeID implements Externalizable {
 
   private transient int       hash;
 
-  public NodeID() {
+  public NodeIDImpl() {
     // satisfy serialization
     this.name = UNINITIALIZED;
   }
 
-  public NodeID(String name, byte[] uid) {
+  public NodeIDImpl(String name, byte[] uid) {
     this.name = name;
     this.uid = uid;
   }
@@ -46,8 +46,8 @@ public class NodeID implements Externalizable {
   }
 
   public boolean equals(Object o) {
-    if (o instanceof NodeID) {
-      NodeID that = (NodeID) o;
+    if (o instanceof NodeIDImpl) {
+      NodeIDImpl that = (NodeIDImpl) o;
       return Arrays.equals(that.uid, this.uid);
     }
     return false;
@@ -56,7 +56,7 @@ public class NodeID implements Externalizable {
   public byte[] getUID() {
     return uid;
   }
-  
+
   public String getName() {
     Assert.assertTrue(this.name != UNINITIALIZED);
     return name;
@@ -70,12 +70,19 @@ public class NodeID implements Externalizable {
     return NULL_ID.equals(this);
   }
 
+  /**
+   * FIXME::Two difference serialization mechanisms are implemented since these classes are used with two different
+   * implementation of comms stack.
+   */
   public void readExternal(ObjectInput in) throws IOException {
     this.name = in.readUTF();
     int length = in.readInt();
     this.uid = new byte[length];
-    for (int i = length - 1; i >= 0; i--) {
-      uid[i] = in.readByte();
+    int off = 0;
+    while (length > 0) {
+      int read = in.read(this.uid, off, length);
+      off += read;
+      length -= read;
     }
   }
 
@@ -84,17 +91,31 @@ public class NodeID implements Externalizable {
     out.writeUTF(this.name);
     int length = this.uid.length;
     out.writeInt(length);
-    for (int i = length - 1; i >= 0; i--) {
-      out.writeByte(this.uid[i]);
-    }
+    out.write(this.uid);
   }
 
   /**
-   * HACK::FIXME::TODO This method is a quick hack to bridge NodeIDs to ChannelIDs. This mapping is only valid for the
-   * current VM. The ChannelIDs are given out in the range -100 to Integer.MIN_VALUE to not clash with the regular
-   * client channelID. This definitely needs some cleanup
+   * FIXME::Two difference serialization mechanisms are implemented since these classes are used with two different
+   * implementation of comms stack.
    */
-  public ChannelID toChannelID() {
-    return NodeIDChannelIDConverter.getChannelIDFor(this);
+  public Object deserializeFrom(TCByteBufferInput in) throws IOException {
+    this.name = in.readString();
+    int length = in.readInt();
+    this.uid = new byte[length];
+    int off = 0;
+    while (length > 0) {
+      int read = in.read(this.uid, off, length);
+      off += read;
+      length -= read;
+    }
+    return this;
+  }
+
+  public void serializeTo(TCByteBufferOutput out) {
+    Assert.assertTrue(this.name != UNINITIALIZED);
+    out.writeString(this.name);
+    int length = this.uid.length;
+    out.writeInt(length);
+    out.write(this.uid);
   }
 }

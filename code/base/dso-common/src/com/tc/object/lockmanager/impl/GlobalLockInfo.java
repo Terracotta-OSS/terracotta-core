@@ -4,7 +4,7 @@
  */
 package com.tc.object.lockmanager.impl;
 
-import com.tc.io.TCByteBufferInputStream;
+import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
 import com.tc.object.lockmanager.api.LockID;
@@ -90,7 +90,7 @@ public class GlobalLockInfo implements TCSerializable {
     }
   }
 
-  public Object deserializeFrom(TCByteBufferInputStream serialInput) throws IOException {
+  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     this.lockID = new LockID(serialInput.readString());
     this.level = serialInput.readInt();
     this.lockRequestQueueLength = serialInput.readInt();

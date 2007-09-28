@@ -6,7 +6,7 @@ package com.tc.objectserver.gtx;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.gtx.GlobalTransactionManager;
 import com.tc.object.tx.ServerTransactionID;
@@ -59,10 +59,10 @@ public class GlobalTransactionIDLowWaterMarkProvider implements GlobalTransactio
     resentTxns.addAll(stxIDs);
   }
 
-  public synchronized void clearAllTransactionsFor(ChannelID killedClient) {
+  public synchronized void clearAllTransactionsFor(NodeID deadNode) {
     for (Iterator i = resentTxns.iterator(); i.hasNext();) {
       ServerTransactionID sid = (ServerTransactionID) i.next();
-      if (sid.getChannelID().equals(killedClient)) {
+      if (sid.getSourceID().equals(deadNode)) {
         i.remove();
       }
     }
@@ -77,7 +77,7 @@ public class GlobalTransactionIDLowWaterMarkProvider implements GlobalTransactio
     }
   }
 
-  public void incomingTransactions(ChannelID cid, Set serverTxnIDs) {
+  public void incomingTransactions(NodeID source, Set serverTxnIDs) {
     // NOP
   }
 
@@ -99,7 +99,7 @@ public class GlobalTransactionIDLowWaterMarkProvider implements GlobalTransactio
   private void removeAllExceptFrom(Set cids) {
     for (Iterator i = resentTxns.iterator(); i.hasNext();) {
       ServerTransactionID sid = (ServerTransactionID) i.next();
-      if (!cids.contains(sid.getChannelID())) {
+      if (!cids.contains(sid.getSourceID())) {
         i.remove();
       }
     }

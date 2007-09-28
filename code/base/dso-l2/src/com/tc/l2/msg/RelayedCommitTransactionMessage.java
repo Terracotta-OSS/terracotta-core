@@ -7,7 +7,8 @@ package com.tc.l2.msg;
 import com.tc.async.api.OrderedEventContext;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.net.groups.AbstractGroupMessage;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
+import com.tc.net.groups.NodeIDSerializer;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.gtx.GlobalTransactionIDGenerator;
@@ -34,7 +35,7 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
   private TCByteBuffer[]         batchData;
   private ObjectStringSerializer serializer;
   private Map                    sid2gid;
-  private ChannelID              channelID;
+  private NodeID               nodeID;
   private Collection             ackedTransactionIDs;
   private long                   sequenceID;
 
@@ -43,11 +44,11 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
     super(-1);
   }
 
-  public RelayedCommitTransactionMessage(ChannelID channelID, TCByteBuffer[] batchData,
+ public RelayedCommitTransactionMessage(NodeID nodeID, TCByteBuffer[] batchData,
                                          ObjectStringSerializer serializer, Map sid2gid,
                                          Collection ackedTransactionIDs, long seqID) {
     super(RELAYED_COMMIT_TXN_MSG_TYPE);
-    this.channelID = channelID;
+    this.nodeID = nodeID;
     this.batchData = batchData;
     this.serializer = serializer;
     this.sid2gid = sid2gid;
@@ -55,8 +56,8 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
     this.sequenceID = seqID;
   }
 
-  public ChannelID getChannelID() {
-    return channelID;
+  public NodeID getClientID() {
+    return nodeID;
   }
 
   public TCByteBuffer[] getBatchData() {
@@ -67,9 +68,9 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
     return serializer;
   }
 
-  protected void basicReadExternal(int msgType, ObjectInput in) throws IOException {
+  protected void basicReadExternal(int msgType, ObjectInput in) throws IOException, ClassNotFoundException {
     Assert.assertEquals(RELAYED_COMMIT_TXN_MSG_TYPE, msgType);
-    this.channelID = new ChannelID(in.readLong());
+    this.nodeID = NodeIDSerializer.readNodeID(in);
     this.serializer = readObjectStringSerializer(in);
     this.batchData = readByteBuffers(in);
     this.sid2gid = readServerTxnIDglobalTxnIDMapping(in);
@@ -89,7 +90,7 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
   private Map readServerTxnIDglobalTxnIDMapping(ObjectInput in) throws IOException {
     int size = in.readInt();
     Map mapping = new HashMap();
-    ChannelID cid = channelID;
+    NodeID cid = nodeID;
     for (int i = 0; i < size; i++) {
       TransactionID txnid = new TransactionID(in.readLong());
       GlobalTransactionID gid = new GlobalTransactionID(in.readLong());
@@ -100,7 +101,7 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
 
   protected void basicWriteExternal(int msgType, ObjectOutput out) throws IOException {
     Assert.assertEquals(RELAYED_COMMIT_TXN_MSG_TYPE, msgType);
-    out.writeLong(channelID.toLong());
+    NodeIDSerializer.writeNodeID(nodeID, out);
     writeObjectStringSerializer(out, serializer);
     writeByteBuffers(out, batchData);
     writeServerTxnIDGlobalTxnIDMapping(out);
@@ -118,11 +119,11 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
 
   private void writeServerTxnIDGlobalTxnIDMapping(ObjectOutput out) throws IOException {
     out.writeInt(sid2gid.size());
-    ChannelID cid = channelID;
+    NodeID cid = nodeID;
     for (Iterator i = sid2gid.entrySet().iterator(); i.hasNext();) {
       Entry e = (Entry) i.next();
       ServerTransactionID sid = (ServerTransactionID) e.getKey();
-      Assert.assertEquals(cid, sid.getChannelID());
+      Assert.assertEquals(cid, sid.getSourceID());
       out.writeLong(sid.getClientTransactionID().toLong());
       GlobalTransactionID gid = (GlobalTransactionID) e.getValue();
       out.writeLong(gid.toLong());

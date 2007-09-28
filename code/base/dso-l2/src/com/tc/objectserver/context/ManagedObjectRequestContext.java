@@ -5,7 +5,7 @@
 package com.tc.objectserver.context;
 
 import com.tc.async.api.Sink;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.ClientID;
 import com.tc.object.ObjectID;
 import com.tc.object.ObjectRequestID;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
@@ -24,7 +24,7 @@ import java.util.Set;
  */
 public class ManagedObjectRequestContext implements ObjectManagerResultsContext, PrettyPrintable {
   private final long            timestamp;
-  private final ChannelID       channelID;
+  private final ClientID        clientID;
   private final Set             requestedObjectIDs;
   private Map                   objects;
   private final ObjectRequestID requestID;
@@ -36,13 +36,13 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
   private final Set             missingObjects = new HashSet();
   private final String          requestingThreadName;
 
-  public ManagedObjectRequestContext(ChannelID channelID, ObjectRequestID requestID, Set ids, int maxRequestDepth,
+  public ManagedObjectRequestContext(ClientID clientID, ObjectRequestID requestID, Set ids, int maxRequestDepth,
                                      Sink sink, String requestingThreadName) {
     this.maxRequestDepth = maxRequestDepth;
     this.sink = sink;
     this.requestingThreadName = requestingThreadName;
     this.timestamp = System.currentTimeMillis();
-    this.channelID = channelID;
+    this.clientID = clientID;
     this.requestID = requestID;
     this.requestedObjectIDs = ids;
   }
@@ -55,8 +55,8 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
     return moreObjects;
   }
 
-  public ChannelID getChannelID() {
-    return channelID;
+  public ClientID getRequestedNodeID() {
+    return clientID;
   }
 
   public int getBatchCount() {
@@ -84,14 +84,14 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
     PrettyPrinter rv = out;
     out = out.duplicateAndIndent();
     out.indent().println(new Date(timestamp));
-    out.indent().println("channelID: " + channelID);
+    out.indent().println("channelID: " + clientID);
     out.indent().println("requestID: " + requestID);
     out.indent().print("requestedObjectIDs: ").println(requestedObjectIDs);
     return rv;
   }
 
   public String toString() {
-    return "ManagedObjectRequestContext@" + System.identityHashCode(this) + " [ " + channelID + " , " + requestID
+    return "ManagedObjectRequestContext@" + System.identityHashCode(this) + " [ " + clientID + " , " + requestID
            + " , " + requestedObjectIDs + ", requestingThread = " + requestingThreadName + " ]";
   }
 

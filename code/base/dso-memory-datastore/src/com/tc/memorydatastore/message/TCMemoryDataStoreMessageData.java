@@ -3,7 +3,7 @@
  */
 package com.tc.memorydatastore.message;
 
-import com.tc.io.TCByteBufferInputStream;
+import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
 
@@ -77,7 +77,7 @@ public class TCMemoryDataStoreMessageData implements TCSerializable {
     }
   }
 
-  public Object deserializeFrom(TCByteBufferInputStream serialInput) throws IOException {
+  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     int length = 0;
     switch (type) {
     case MemoryDataStoreRequestMessage.PUT:

@@ -4,10 +4,10 @@
  */
 package com.tc.objectserver.handler;
 
-
 import com.tc.async.impl.MockSink;
 import com.tc.async.impl.MockStage;
 import com.tc.l2.ha.L2HADisabledCooridinator;
+import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -75,7 +75,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     TxnBatchID batchID = new TxnBatchID(1);
     TransactionID txID = new TransactionID(1);
     LockID[] lockIDs = new LockID[] { new LockID("1") };
-    ChannelID channelID = new ChannelID(1);
+    ClientID cid = new ClientID(new ChannelID(1));
     List dnas = Collections.unmodifiableList(new LinkedList());
     ObjectStringSerializer serializer = null;
     Map newRoots = Collections.unmodifiableMap(new HashMap());
@@ -86,8 +86,8 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
       notifies.add(new Notify(new LockID("" + i), new ThreadID(i), i % 2 == 0));
     }
     SequenceID sequenceID = new SequenceID(1);
-    ServerTransaction tx = new ServerTransactionImpl(gtxm, batchID, txID, sequenceID, lockIDs, channelID, dnas,
-                                                     serializer, newRoots, txnType, notifies, DmiDescriptor.EMPTY_ARRAY);
+    ServerTransaction tx = new ServerTransactionImpl(gtxm, batchID, txID, sequenceID, lockIDs, cid, dnas, serializer,
+                                                     newRoots, txnType, notifies, DmiDescriptor.EMPTY_ARRAY);
     // call handleEvent with the global transaction reporting that it doesn't need an apply...
     assertTrue(lockManager.notifyCalls.isEmpty());
     assertTrue(broadcastSink.queue.isEmpty());
@@ -106,7 +106,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
       Notify notify = (Notify) i.next();
       Object[] args = (Object[]) lockManager.notifyCalls.remove(0);
       assertEquals(notify.getLockID(), args[0]);
-      assertEquals(channelID, args[1]);
+      assertEquals(cid, args[1]);
       assertEquals(notify.getThreadID(), args[2]);
       assertEquals(new Boolean(notify.getIsAll()), args[3]);
       if (notifiedWaiters == null) {

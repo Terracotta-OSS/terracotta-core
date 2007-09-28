@@ -198,7 +198,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
    */
   private static NodeID makeNodeIDFrom(Member member) {
     if (useMcast) {
-      return new NodeID(member.getName(), member.getUniqueId());
+      return new NodeIDImpl(member.getName(), member.getUniqueId());
     } else {
       byte[] host = member.getHost();
       int port = member.getPort();
@@ -214,7 +214,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       byte uid[] = new byte[length + 4];
       System.arraycopy(host, 0, uid, 0, length);
       Conversion.writeInt(port, uid, length);
-      return new NodeID(member.getName(), uid);
+      return new NodeIDImpl(member.getName(), uid);
     }
   }
 
@@ -378,8 +378,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
 
   private void fireNodeEvent(NodeID newNode, boolean joined) {
     if (debug) {
-      logger.info("fireNodeEvent: joined=" + joined + ", name=" + newNode.getName() + ", uid="
-                  + Conversion.bytesToHex(newNode.getUID()));
+      logger.info("fireNodeEvent: joined = " + joined + ", node = " + newNode);
     }
     Iterator<GroupEventsListener> i = groupListeners.iterator();
     while (i.hasNext()) {
@@ -459,8 +458,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
 
   public void sendTo(NodeID node, GroupMessage msg) throws GroupException {
     if (debug) {
-      logger.info(this.thisNodeID + " : Sending to : " + node + " msg " + msg.getMessageID() + " node.name="
-                  + node.getName() + ", node.uid=" + Conversion.bytesToHex(node.getUID()));
+      logger.info(this.thisNodeID + " : Sending to : " + node + " msg " + msg.getMessageID());
     }
     MemberNode inode = (MemberNode) nodes.get(node);
     if (inode != null) {

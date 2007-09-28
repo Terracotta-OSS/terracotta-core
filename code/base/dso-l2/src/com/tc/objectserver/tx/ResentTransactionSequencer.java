@@ -6,7 +6,7 @@ package com.tc.objectserver.tx;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
@@ -105,7 +105,7 @@ public class ResentTransactionSequencer implements ServerTransactionListener {
   private void removeAllExceptFrom(Set cids) {
     for (Iterator i = resentTxns.iterator(); i.hasNext();) {
       TransactionDesc desc = (TransactionDesc) i.next();
-      if (!cids.contains(desc.getServerTransactionID().getChannelID())) {
+      if (!cids.contains(desc.getServerTransactionID().getSourceID())) {
         logger.warn("Removing " + desc + " because not in startup set " + cids);
         i.remove();
       }
@@ -164,18 +164,18 @@ public class ResentTransactionSequencer implements ServerTransactionListener {
     i.add(toAdd);
   }
 
-  public synchronized void clearAllTransactionsFor(ChannelID killedClient) {
+  public synchronized void clearAllTransactionsFor(NodeID deadNode) {
     for (Iterator i = resentTxns.iterator(); i.hasNext();) {
       TransactionDesc desc = (TransactionDesc) i.next();
-      if (desc.getServerTransactionID().getChannelID().equals(killedClient)) {
-        logger.warn("Removing " + desc + " because " + killedClient + " is dead");
+      if (desc.getServerTransactionID().getSourceID().equals(deadNode)) {
+        logger.warn("Removing " + desc + " because " + deadNode + " is dead");
         i.remove();
       }
     }
     moveToPassThruIfPossible();
   }
 
-  public void incomingTransactions(ChannelID cid, Set serverTxnIDs) {
+  public void incomingTransactions(NodeID source, Set serverTxnIDs) {
     return;
   }
 

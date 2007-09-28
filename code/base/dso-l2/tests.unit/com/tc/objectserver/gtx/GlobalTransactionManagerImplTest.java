@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.gtx;
 
+import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
@@ -37,8 +38,9 @@ public class GlobalTransactionManagerImplTest extends TestCase {
   }
 
   public void testStartAndCommitApply() throws Exception {
-    ServerTransactionID stxID1 = new ServerTransactionID(new ChannelID(1), new TransactionID(1));
-    ServerTransactionID stxID2 = new ServerTransactionID(new ChannelID(1), new TransactionID(2));
+    ClientID cid = new ClientID(new ChannelID(1));
+    ServerTransactionID stxID1 = new ServerTransactionID(cid, new TransactionID(1));
+    ServerTransactionID stxID2 = new ServerTransactionID(cid, new TransactionID(2));
 
     GlobalTransactionID gtxID1 = gtxm.getOrCreateGlobalTransactionID(stxID1);
     GlobalTransactionID gtxID2 = gtxm.getOrCreateGlobalTransactionID(stxID2);
@@ -72,7 +74,7 @@ public class GlobalTransactionManagerImplTest extends TestCase {
   public void testReapplyTransactionsAcrossRestart() throws Exception {
     ChannelID channel1 = new ChannelID(1);
     TransactionID tx1 = new TransactionID(1);
-    ServerTransactionID stxid = new ServerTransactionID(channel1, tx1);
+    ServerTransactionID stxid = new ServerTransactionID(new ClientID(channel1), tx1);
 
     GlobalTransactionID gid1 = gtxm.getOrCreateGlobalTransactionID(stxid);
     assertNextGlobalTXWasCalled(stxid);
@@ -125,7 +127,7 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     assertNextGlobalTxNotCalled();
 
     // APPLY A NEW TRANSACTION
-    ServerTransactionID stxid2 = new ServerTransactionID(channel1, new TransactionID(2));
+    ServerTransactionID stxid2 = new ServerTransactionID(new ClientID(channel1), new TransactionID(2));
     GlobalTransactionID gid4 = gtxm.getOrCreateGlobalTransactionID(stxid2);
     assertNextGlobalTXWasCalled(stxid2);
     assertNotSame(gid3, gid4);

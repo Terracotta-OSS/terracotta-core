@@ -10,14 +10,15 @@ import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.impl.InBandMoveToNextSink;
 import com.tc.logging.TCLogger;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.ClientID;
+import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.msg.ClusterMembershipMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
-import com.tc.objectserver.context.ChannelStateEventContext;
+import com.tc.objectserver.context.NodeStateEventContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionBatchManager;
@@ -29,8 +30,8 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSO
   private final CommunicationsManager    commsManager;
   private final DSOChannelManager        channelMgr;
   private Sink                           channelSink;
-  private Sink hydrateSink;
-  private Sink processTransactionSink;
+  private Sink                           hydrateSink;
+  private Sink                           processTransactionSink;
 
   public ChannelLifeCycleHandler(CommunicationsManager commsManager, ServerTransactionManager transactionManager,
                                  TransactionBatchManager transactionBatchManager, DSOChannelManager channelManager) {
@@ -41,15 +42,15 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSO
   }
 
   public void handleEvent(EventContext context) {
-    ChannelStateEventContext event = (ChannelStateEventContext) context;
+    NodeStateEventContext event = (NodeStateEventContext) context;
 
     switch (event.getType()) {
-      case ChannelStateEventContext.CREATE: {
-        channelCreated(event.getChannelID());
+      case NodeStateEventContext.CREATE: {
+        channelCreated(event.getNodeID());
         break;
       }
-      case ChannelStateEventContext.REMOVE: {
-        channelRemoved(event.getChannelID());
+      case NodeStateEventContext.REMOVE: {
+        channelRemoved(event.getNodeID());
         break;
       }
       default: {
@@ -58,30 +59,30 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSO
     }
   }
 
-  private void channelRemoved(ChannelID channelID) {
-    broadcastClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_DISCONNECTED, channelID);
+  private void channelRemoved(NodeID nodeID) {
+    broadcastClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_DISCONNECTED, nodeID);
     if (commsManager.isInShutdown()) {
-      logger.info("Ignoring transport disconnect for " + channelID + " while shutting down.");
+      logger.info("Ignoring transport disconnect for " + nodeID + " while shutting down.");
     } else {
-      logger.info("Received transport disconnect.  Shutting down client " + channelID);
-      transactionManager.shutdownClient(channelID);
-      transactionBatchManager.shutdownClient(channelID);
+      logger.info("Received transport disconnect.  Shutting down client " + nodeID);
+      transactionManager.shutdownNode(nodeID);
+      transactionBatchManager.shutdownNode(nodeID);
     }
   }
 
-  private void channelCreated(ChannelID channelID) {
-    broadcastClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_CONNECTED, channelID);
+  private void channelCreated(NodeID nodeID) {
+    broadcastClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_CONNECTED, nodeID);
   }
 
-  private void broadcastClusterMembershipMessage(int eventType, ChannelID channelID) {
+  private void broadcastClusterMembershipMessage(int eventType, NodeID nodeID) {
     MessageChannel[] channels = channelMgr.getActiveChannels();
     for (int i = 0; i < channels.length; i++) {
       MessageChannel channel = channels[i];
 
-      if (!channel.getChannelID().equals(channelID)) {
+      if (!channelMgr.getClientIDFor(channel.getChannelID()).equals(nodeID)) {
         ClusterMembershipMessage cmm = (ClusterMembershipMessage) channel
             .createMessage(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE);
-        cmm.initialize(eventType, channelID, channels);
+        cmm.initialize(eventType, nodeID, channels);
         cmm.send();
       }
     }
@@ -92,19 +93,19 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSO
     ServerConfigurationContext scc = (ServerConfigurationContext) context;
     this.logger = scc.getLogger(ChannelLifeCycleHandler.class);
     channelSink = scc.getStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE).getSink();
-    hydrateSink =  scc.getStage(ServerConfigurationContext.HYDRATE_MESSAGE_SINK).getSink();
-    processTransactionSink =  scc.getStage(ServerConfigurationContext.PROCESS_TRANSACTION_STAGE).getSink();
+    hydrateSink = scc.getStage(ServerConfigurationContext.HYDRATE_MESSAGE_SINK).getSink();
+    processTransactionSink = scc.getStage(ServerConfigurationContext.PROCESS_TRANSACTION_STAGE).getSink();
   }
 
   public void channelCreated(MessageChannel channel) {
-    channelSink.add(new ChannelStateEventContext(ChannelStateEventContext.CREATE, channel.getChannelID()));
+    channelSink.add(new NodeStateEventContext(NodeStateEventContext.CREATE, new ClientID(channel.getChannelID())));
   }
 
-  
   public void channelRemoved(MessageChannel channel) {
     // We want all the messages in the system from this client to reach its destinations before processing this request.
     // esp. hydrate stage and process transaction stage. This goo is for that.
-    final ChannelStateEventContext disconnectEvent = new ChannelStateEventContext(ChannelStateEventContext.REMOVE, channel.getChannelID());
+    final NodeStateEventContext disconnectEvent = new NodeStateEventContext(NodeStateEventContext.REMOVE,
+                                                                            new ClientID(channel.getChannelID()));
     InBandMoveToNextSink context1 = new InBandMoveToNextSink(disconnectEvent, channelSink);
     InBandMoveToNextSink context2 = new InBandMoveToNextSink(context1, processTransactionSink);
     hydrateSink.add(context2);

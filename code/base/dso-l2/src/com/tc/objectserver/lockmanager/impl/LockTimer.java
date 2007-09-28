@@ -162,7 +162,7 @@ public class LockTimer implements LockEventListener {
 
     private LockTimeoutTask(LockAwardContext ctxt) {
       Assert.assertNotNull(ctxt);
-      Assert.assertNotNull(ctxt.getChannelID());
+      Assert.assertNotNull(ctxt.getNodeID());
       this.awardContext = ctxt;
     }
 
@@ -173,13 +173,13 @@ public class LockTimer implements LockEventListener {
     public void run() {
       logger.warn("Lock timeout: " + this.awardContext);
       try {
-        MessageChannel channel = channelManager.getActiveChannel(this.awardContext.getChannelID());
+        MessageChannel channel = channelManager.getActiveChannel(this.awardContext.getNodeID());
         logger.warn("Closing channel because of lock timeout.  Award context: " + this.awardContext + "; channel: "
                     + channel);
         channel.close();
       } catch (NoSuchChannelException e) {
         logger.warn("Attempting to close channel because of lock timeout.  Couldn't find channel by channel id: "
-                    + this.awardContext.getChannelID());
+                    + this.awardContext.getNodeID());
       }
     }
   }

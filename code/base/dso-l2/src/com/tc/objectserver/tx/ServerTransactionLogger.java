@@ -5,7 +5,7 @@
 package com.tc.objectserver.tx;
 
 import com.tc.logging.TCLogger;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.tx.ServerTransactionID;
 
 import java.util.Collection;
@@ -28,16 +28,16 @@ public class ServerTransactionLogger implements ServerTransactionListener {
     logger.info("addResentTransactions: " + stxIDs);
   }
 
-  public void clearAllTransactionsFor(ChannelID killedClient) {
-    logger.info("clearAllTransactionsFor: " + killedClient);
+  public void clearAllTransactionsFor(NodeID deadNode) {
+    logger.info("clearAllTransactionsFor: " + deadNode);
   }
 
   public void transactionManagerStarted(Set cids) {
     logger.info("trasactionManagerStarted: " + cids);
   }
 
-  public void incomingTransactions(ChannelID cid, Set serverTxnIDs) {
-    if (config.isVerboseLogging()) logger.info("incomingTransactions: " + cid + ", " + serverTxnIDs);
+  public void incomingTransactions(NodeID source, Set serverTxnIDs) {
+    if (config.isVerboseLogging()) logger.info("incomingTransactions: " + source + ", " + serverTxnIDs);
     incrementOutStandingTxns(serverTxnIDs.size());
   }
 

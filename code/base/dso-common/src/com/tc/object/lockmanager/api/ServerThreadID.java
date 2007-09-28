@@ -1,29 +1,31 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.lockmanager.api;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.ClientID;
+import com.tc.net.groups.NodeID;
 
 public class ServerThreadID {
-  public static final ServerThreadID NULL_ID = new ServerThreadID(ChannelID.NULL_ID, ThreadID.NULL_ID);
+  public static final ServerThreadID NULL_ID = new ServerThreadID(ClientID.NULL_ID, ThreadID.NULL_ID);
 
-  private final ChannelID            channelID;
+  private final NodeID               nodeID;
   private final ThreadID             threadID;
   private final int                  hashCode;
 
-  public ServerThreadID(ChannelID channelID, ThreadID threadID) {
-    this.channelID = channelID;
+  public ServerThreadID(NodeID nid, ThreadID threadID) {
+    this.nodeID = nid;
     this.threadID = threadID;
 
     int hash = 31;
-    hash = (37 * hash) + channelID.hashCode();
+    hash = (37 * hash) + nid.hashCode();
     hash = (37 * hash) + threadID.hashCode();
     this.hashCode = hash;
   }
 
-  public ChannelID getChannelID() {
-    return channelID;
+  public NodeID getNodeID() {
+    return nodeID;
   }
 
   public ThreadID getClientThreadID() {
@@ -31,7 +33,7 @@ public class ServerThreadID {
   }
 
   public String toString() {
-    return new StringBuffer().append("ServerThreadID{").append(channelID).append(',').append(threadID).append('}')
+    return new StringBuffer().append("ServerThreadID{").append(nodeID).append(',').append(threadID).append('}')
         .toString();
   }
 
@@ -42,7 +44,7 @@ public class ServerThreadID {
   public boolean equals(Object obj) {
     if (obj instanceof ServerThreadID) {
       ServerThreadID other = (ServerThreadID) obj;
-      return this.channelID.equals(other.channelID) && this.threadID.equals(other.threadID);
+      return this.nodeID.equals(other.nodeID) && this.threadID.equals(other.threadID);
     }
     return false;
   }

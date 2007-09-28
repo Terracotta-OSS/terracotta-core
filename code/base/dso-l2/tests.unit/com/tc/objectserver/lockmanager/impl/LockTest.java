@@ -1,11 +1,13 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.lockmanager.impl;
 
-
 import com.tc.async.api.Sink;
 import com.tc.async.impl.MockSink;
+import com.tc.net.groups.ClientID;
+import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
@@ -51,14 +53,14 @@ public class LockTest extends TestCase {
   }
 
   public void testUpgrade() throws Exception {
-    ChannelID channelId1 = new ChannelID(1);
+    ClientID cid1 = new ClientID(new ChannelID(1));
     ThreadID txnId1 = new ThreadID(1);
     ThreadID txnId2 = new ThreadID(2);
     ThreadID txnId3 = new ThreadID(3);
 
-    ServerThreadContext thread1 = makeTxn(channelId1, txnId1);
-    ServerThreadContext thread2 = makeTxn(channelId1, txnId2);
-    ServerThreadContext thread3 = makeTxn(channelId1, txnId3);
+    ServerThreadContext thread1 = makeTxn(cid1, txnId1);
+    ServerThreadContext thread2 = makeTxn(cid1, txnId2);
+    ServerThreadContext thread3 = makeTxn(cid1, txnId3);
 
     Lock lock = new Lock(new LockID("timmy"), 0, new LockEventListener[] {});
     lock.requestLock(thread1, LockLevel.READ, sink);
@@ -86,7 +88,7 @@ public class LockTest extends TestCase {
     assertEquals(0, lock.getPendingUpgradeCount());
     assertEquals(1, lock.getHoldersCount());
     Holder holder = (Holder) lock.getHoldersCollection().toArray()[0];
-    assertEquals(channelId1, holder.getChannelID());
+    assertEquals(cid1, holder.getNodeID());
     assertEquals(txnId1, holder.getThreadID());
     assertTrue(holder.isUpgrade());
 
@@ -105,7 +107,7 @@ public class LockTest extends TestCase {
 
     for (int i = 0; i < 2; i++) {
       Holder h = holders[i];
-      assertEquals(channelId1, h.getChannelID());
+      assertEquals(cid1, h.getNodeID());
       if (h.getThreadID().equals(txnId1)) {
         assertFalse(tx1);
         tx1 = true;
@@ -133,20 +135,20 @@ public class LockTest extends TestCase {
     assertEquals(0, lock.getPendingCount());
     assertEquals(1, lock.getHoldersCount());
     holder = (Holder) lock.getHoldersCollection().toArray()[0];
-    assertEquals(channelId1, holder.getChannelID());
+    assertEquals(cid1, holder.getNodeID());
     assertEquals(txnId3, holder.getThreadID());
     assertEquals(LockLevel.WRITE, holder.getLockLevel());
   }
 
-  private static ServerThreadContext makeTxn(ChannelID cid, ThreadID threadID) {
+  private static ServerThreadContext makeTxn(ClientID cid, ThreadID threadID) {
     return new ServerThreadContext(cid, threadID);
   }
 
   public void testMonitorStateAssertions() throws Exception {
-    ChannelID channelId1 = new ChannelID(1);
+    ClientID cid1 = new ClientID(new ChannelID(1));
     ThreadID txnId1 = new ThreadID(1);
 
-    ServerThreadContext thread1 = makeTxn(channelId1, txnId1);
+    ServerThreadContext thread1 = makeTxn(cid1, txnId1);
 
     Lock lock = new Lock(new LockID("timmy"), 0, new LockEventListener[] {});
     lock.requestLock(thread1, LockLevel.WRITE, sink);
@@ -173,14 +175,14 @@ public class LockTest extends TestCase {
   }
 
   public void testIllegalMonitorState() {
-    ChannelID goodChannelID = new ChannelID(1);
+    ClientID goodClientID = new ClientID(new ChannelID(1));
     ThreadID goodTxnId = new ThreadID(1);
 
-    ChannelID badChannelID = new ChannelID(2);
+    ClientID badDClientID = new ClientID(new ChannelID(2));
     ThreadID badTxnId = new ThreadID(2);
 
-    ServerThreadContext good = makeTxn(goodChannelID, goodTxnId);
-    ServerThreadContext bad = makeTxn(badChannelID, badTxnId);
+    ServerThreadContext good = makeTxn(goodClientID, goodTxnId);
+    ServerThreadContext bad = makeTxn(badDClientID, badTxnId);
 
     Lock lock = new Lock(new LockID("timmy"), 0, new LockEventListener[] {});
     lock.requestLock(good, LockLevel.WRITE, sink);
@@ -259,12 +261,12 @@ public class LockTest extends TestCase {
   }
 
   public void testTimedWaitWithNotify() throws Exception {
-    ChannelID channelId1 = new ChannelID(1);
+    ClientID cid1 = new ClientID(new ChannelID(1));
     ThreadID txnId1 = new ThreadID(1);
     ThreadID txnId2 = new ThreadID(2);
 
-    ServerThreadContext thread1 = makeTxn(channelId1, txnId1);
-    ServerThreadContext thread2 = makeTxn(channelId1, txnId2);
+    ServerThreadContext thread1 = makeTxn(cid1, txnId1);
+    ServerThreadContext thread2 = makeTxn(cid1, txnId2);
 
     Lock lock = new Lock(new LockID("timmy"), 0, new LockEventListener[] {});
     lock.requestLock(thread1, LockLevel.WRITE, sink);
@@ -293,11 +295,11 @@ public class LockTest extends TestCase {
 
   public void testTimedWait2() throws Exception {
     // excercise the 2 arg version of wait
-    ChannelID channelId1 = new ChannelID(1);
+    ClientID cid1 = new ClientID(new ChannelID(1));
     ThreadID txnId1 = new ThreadID(1);
     lockMgr.start();
 
-    ServerThreadContext thread1 = makeTxn(channelId1, txnId1);
+    ServerThreadContext thread1 = makeTxn(cid1, txnId1);
 
     Lock lock = new Lock(new LockID("timmy"), 0, new LockEventListener[] {});
     lock.requestLock(thread1, LockLevel.WRITE, sink);
@@ -312,24 +314,24 @@ public class LockTest extends TestCase {
     // assertEquals(1, lock.getWaiterCount());
     // assertFalse(lock.hasPending());
 
-    while(lock.getHoldersCount() != 1) {
+    while (lock.getHoldersCount() != 1) {
       ThreadUtil.reallySleep(100);
     }
     long t2 = System.currentTimeMillis();
-    assertTrue(t2-t1 >= 2000);
-    
+    assertTrue(t2 - t1 >= 2000);
+
     assertEquals(1, lock.getHoldersCount());
     assertEquals(0, lock.getWaiterCount());
     assertFalse(lock.hasPending());
   }
 
   public void testTimedWaitsDontFireWhenLockManagerIsStopped() throws Exception {
-    ChannelID channelId1 = new ChannelID(1);
+    ClientID cid1 = new ClientID(new ChannelID(1));
     ThreadID txnId1 = new ThreadID(1);
     lockMgr.start();
 
     // Test that a wait() timeout will obtain an uncontended lock
-    ServerThreadContext thread1 = makeTxn(channelId1, txnId1);
+    ServerThreadContext thread1 = makeTxn(cid1, txnId1);
 
     Lock lock = new Lock(new LockID("timmy"), 0, new LockEventListener[] {});
     lock.requestLock(thread1, LockLevel.WRITE, sink);
@@ -362,13 +364,13 @@ public class LockTest extends TestCase {
   }
 
   public void testTimedWaits() throws Exception {
-    ChannelID channelId1 = new ChannelID(1);
+    ClientID cid1 = new ClientID(new ChannelID(1));
     ThreadID txnId1 = new ThreadID(1);
     ThreadID txnId2 = new ThreadID(2);
     lockMgr.start();
     {
       // Test that a wait() timeout will obtain an uncontended lock
-      ServerThreadContext thread1 = makeTxn(channelId1, txnId1);
+      ServerThreadContext thread1 = makeTxn(cid1, txnId1);
 
       Lock lock = new Lock(new LockID("timmy"), 0, new LockEventListener[] {});
       lock.requestLock(thread1, LockLevel.WRITE, sink);
@@ -383,24 +385,24 @@ public class LockTest extends TestCase {
       // assertEquals(1, lock.getWaiterCount());
       // assertFalse(lock.hasPending());
 
-      while(lock.getHoldersCount() != 1) {
+      while (lock.getHoldersCount() != 1) {
         ThreadUtil.reallySleep(100);
       }
       long t2 = System.currentTimeMillis();
-      assertTrue(t2-t1 >= 1000);
-      
+      assertTrue(t2 - t1 >= 1000);
+
       assertEquals(1, lock.getHoldersCount());
       assertEquals(0, lock.getWaiterCount());
       assertFalse(lock.hasPending());
-      
+
     }
 
     {
       // this time the wait timeout will cause the waiter to be put in the
       // pending
       // list (instead of instantly getting the lock)
-      ServerThreadContext thread1 = makeTxn(channelId1, txnId1);
-      ServerThreadContext thread2 = makeTxn(channelId1, txnId2);
+      ServerThreadContext thread1 = makeTxn(cid1, txnId1);
+      ServerThreadContext thread2 = makeTxn(cid1, txnId2);
       Lock lock = new Lock(new LockID("timmy"), 0, new LockEventListener[] {});
       lock.requestLock(thread1, LockLevel.WRITE, sink);
       assertEquals(1, lock.getHoldersCount());
@@ -437,10 +439,10 @@ public class LockTest extends TestCase {
   }
 
   public void testWait() throws Exception {
-    ChannelID channelID1 = new ChannelID(1);
+    ClientID cid1 = new ClientID(new ChannelID(1));
     ThreadID txnId1 = new ThreadID(1);
 
-    ServerThreadContext thread1 = makeTxn(channelID1, txnId1);
+    ServerThreadContext thread1 = makeTxn(cid1, txnId1);
 
     Lock lock = new Lock(new LockID("timmy"), 0, new LockEventListener[] {});
     lock.requestLock(thread1, LockLevel.WRITE, sink);
@@ -456,10 +458,10 @@ public class LockTest extends TestCase {
   }
 
   public void testWaitOnUpgradedLock() throws Exception {
-    ChannelID channelID1 = new ChannelID(1);
+    ClientID cid1 = new ClientID(new ChannelID(1));
 
-    ServerThreadContext thread1 = makeTxn(channelID1, new ThreadID(1));
-    ServerThreadContext thread2 = makeTxn(channelID1, new ThreadID(2));
+    ServerThreadContext thread1 = makeTxn(cid1, new ThreadID(1));
+    ServerThreadContext thread2 = makeTxn(cid1, new ThreadID(2));
 
     Lock lock = new Lock(new LockID("timmy"), 0, new LockEventListener[] {});
     lock.requestLock(thread1, LockLevel.READ, sink);
@@ -516,7 +518,7 @@ public class LockTest extends TestCase {
     assertEquals(100, lock.getWaiterCount());
     assertEquals(0, lock.getPendingCount());
 
-    ServerThreadContext notifier = makeTxn(getUniqueChannelID(), getUniqueTransactionID());
+    ServerThreadContext notifier = makeTxn(getUniqueClientID(), getUniqueTransactionID());
     lock.requestLock(notifier, LockLevel.WRITE, sink);
     lock.notify(notifier, true, notifiedWaiters);
     assertEquals(1, lock.getHoldersCount());
@@ -537,7 +539,7 @@ public class LockTest extends TestCase {
     assertEquals(3, lock.getWaiterCount());
     assertEquals(0, lock.getPendingCount());
 
-    ServerThreadContext notifier = makeTxn(getUniqueChannelID(), getUniqueTransactionID());
+    ServerThreadContext notifier = makeTxn(getUniqueClientID(), getUniqueTransactionID());
     lock.requestLock(notifier, LockLevel.WRITE, sink);
     lock.notify(notifier, false, notifiedWaiters);
     assertEquals(1, lock.getHoldersCount());
@@ -567,8 +569,8 @@ public class LockTest extends TestCase {
     assertEquals(2, lock.getPendingCount());
   }
 
-  private ChannelID getUniqueChannelID() {
-    return new ChannelID(uniqueId++);
+  private ClientID getUniqueClientID() {
+    return new ClientID(new ChannelID(uniqueId++));
   }
 
   private ThreadID getUniqueTransactionID() {
@@ -581,7 +583,7 @@ public class LockTest extends TestCase {
     for (int i = 0; i < numWaits; i++) {
       int before = lock.getWaiterCount();
 
-      ServerThreadContext me = makeTxn(getUniqueChannelID(), getUniqueTransactionID());
+      ServerThreadContext me = makeTxn(getUniqueClientID(), getUniqueTransactionID());
       lock.requestLock(me, LockLevel.WRITE, sink);
       lock.wait(me, waitTimer, new WaitInvocation(), lockMgr, sink);
       assertEquals(before + 1, lock.getWaiterCount());
@@ -598,8 +600,8 @@ public class LockTest extends TestCase {
     LockEventMonitor monitor = new LockEventMonitor();
     Lock lock = new Lock(new LockID("yo"), 0, new LockEventListener[] { monitor });
 
-    ServerThreadContext thread1 = makeTxn(getUniqueChannelID(), getUniqueTransactionID());
-    ServerThreadContext thread2 = makeTxn(getUniqueChannelID(), getUniqueTransactionID());
+    ServerThreadContext thread1 = makeTxn(getUniqueClientID(), getUniqueTransactionID());
+    ServerThreadContext thread2 = makeTxn(getUniqueClientID(), getUniqueTransactionID());
 
     lock.requestLock(thread1, LockLevel.WRITE, sink);
     lock.requestLock(thread2, LockLevel.WRITE, sink);
@@ -620,15 +622,15 @@ public class LockTest extends TestCase {
                                                              Collection holders) throws Exception {
     for (Iterator iter = holders.iterator(); iter.hasNext();) {
       Holder holder = (Holder) iter.next();
-      checkCallContext(monitor.waitForNotifyAddPending(0), lock.getLockID(), holder.getChannelID(), waiterCount);
+      checkCallContext(monitor.waitForNotifyAddPending(0), lock.getLockID(), holder.getNodeID(), waiterCount);
     }
   }
 
-  private void checkCallContext(CallContext cc, LockID theLockId, ChannelID theChannelId, int waiterCount) {
+  private void checkCallContext(CallContext cc, LockID theLockId, NodeID nodeID, int waiterCount) {
     assertNotNull(cc);
     LockAwardContext ac = cc.ctxt;
     assertEquals(theLockId, ac.getLockID());
-    assertEquals(theChannelId, ac.getChannelID());
+    assertEquals(nodeID, ac.getNodeID());
     assertEquals(waiterCount, cc.waiterCount);
   }
 

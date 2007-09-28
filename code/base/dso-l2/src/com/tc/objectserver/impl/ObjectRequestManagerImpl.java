@@ -6,7 +6,7 @@ package com.tc.objectserver.impl;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectRequestManager;
@@ -65,7 +65,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
         return;
       }
     }
-    objectManager.lookupObjectsAndSubObjectsFor(responseContext.getChannelID(), responseContext, maxReachableObjects);
+    objectManager.lookupObjectsAndSubObjectsFor(responseContext.getRequestedNodeID(), responseContext, maxReachableObjects);
   }
 
   public synchronized void addResentServerTransactionIDs(Collection sTxIDs) {
@@ -79,15 +79,15 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
     return;
   }
 
-  public void incomingTransactions(ChannelID cid, Set serverTxnIDs) {
+  public void incomingTransactions(NodeID source, Set serverTxnIDs) {
     return;
   }
 
-  public synchronized void clearAllTransactionsFor(ChannelID client) {
+  public synchronized void clearAllTransactionsFor(NodeID client) {
     if (state == STARTED) return;
     for (Iterator iter = resentTransactionIDs.iterator(); iter.hasNext();) {
       ServerTransactionID stxID = (ServerTransactionID) iter.next();
-      if (stxID.getChannelID().equals(client)) {
+      if (stxID.getSourceID().equals(client)) {
         iter.remove();
       }
     }
@@ -99,7 +99,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
     for (Iterator iter = pendingRequests.iterator(); iter.hasNext();) {
       PendingRequest request = (PendingRequest) iter.next();
       logger.info("Processing pending Looking up : " + request.getResponseContext());
-      objectManager.lookupObjectsAndSubObjectsFor(request.getResponseContext().getChannelID(), request
+      objectManager.lookupObjectsAndSubObjectsFor(request.getResponseContext().getRequestedNodeID(), request
           .getResponseContext(), request.getMaxReachableObjects());
     }
   }

@@ -4,7 +4,7 @@
  */
 package com.tc.objectserver.tx;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -37,7 +37,7 @@ public class ServerTransactionImpl implements ServerTransaction {
   private final LockID[]               lockIDs;
   private final TransactionID          txID;
   private final Map                    newRoots;
-  private final ChannelID              channelID;
+  private final NodeID                 sourceID;
   private final TxnType                transactionType;
   private final ObjectStringSerializer serializer;
   private final Collection             notifies;
@@ -48,7 +48,7 @@ public class ServerTransactionImpl implements ServerTransaction {
   private final GlobalTransactionID    globalTxnID;
 
   public ServerTransactionImpl(GlobalTransactionIDGenerator gtxm, TxnBatchID batchID, TransactionID txID,
-                               SequenceID sequenceID, LockID[] lockIDs, ChannelID channelID, List dnas,
+                               SequenceID sequenceID, LockID[] lockIDs, NodeID source, List dnas,
                                ObjectStringSerializer serializer, Map newRoots, TxnType transactionType,
                                Collection notifies, DmiDescriptor[] dmis) {
     this.batchID = batchID;
@@ -56,8 +56,8 @@ public class ServerTransactionImpl implements ServerTransaction {
     this.seqID = sequenceID;
     this.lockIDs = lockIDs;
     this.newRoots = newRoots;
-    this.channelID = channelID;
-    this.serverTxID = new ServerTransactionID(channelID, txID);
+    this.sourceID = source;
+    this.serverTxID = new ServerTransactionID(source, txID);
     // NOTE::XXX:: GlobalTransactionID is assigned in the process transaction stage. The transaction could be
     // re-ordered before apply. This is not a problem because for an transaction to be re-ordered, it should not
     // have any common objects between them. hence if g1 is the first txn and g2 is the second txn, g2 will be applied
@@ -91,8 +91,8 @@ public class ServerTransactionImpl implements ServerTransaction {
     return lockIDs;
   }
 
-  public ChannelID getChannelID() {
-    return channelID;
+  public NodeID getSourceID() {
+    return sourceID;
   }
 
   public TransactionID getTransactionID() {
@@ -132,7 +132,7 @@ public class ServerTransactionImpl implements ServerTransaction {
   }
 
   public String toString() {
-    return "ServerTransaction[" + seqID + " , " + txID + "," + channelID + "," + transactionType + "] = { changes = "
+    return "ServerTransaction[" + seqID + " , " + txID + "," + sourceID + "," + transactionType + "] = { changes = "
            + changes.size() + ", notifies = " + notifies.size() + ", newRoots = " + newRoots.size() + "}";
   }
 

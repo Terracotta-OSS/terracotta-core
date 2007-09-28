@@ -5,18 +5,18 @@
 package com.tc.objectserver.context;
 
 import com.tc.async.api.EventContext;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 
-public class ChannelStateEventContext implements EventContext {
+public class NodeStateEventContext implements EventContext {
   public static final int CREATE = 0;
   public static final int REMOVE = 1;
 
   private final int       type;
-  private final ChannelID channelID;
+  private final NodeID    nodeID;
 
-  public ChannelStateEventContext(int type, ChannelID channelID) {
+  public NodeStateEventContext(int type, NodeID nodeID) {
     this.type = type;
-    this.channelID = channelID;
+    this.nodeID = nodeID;
     if ((type != CREATE) && (type != REMOVE)) { throw new IllegalArgumentException("invalid type: " + type); }
   }
 
@@ -24,7 +24,7 @@ public class ChannelStateEventContext implements EventContext {
     return type;
   }
 
-  public ChannelID getChannelID() {
-    return channelID;
+  public NodeID getNodeID() {
+    return nodeID;
   }
 }

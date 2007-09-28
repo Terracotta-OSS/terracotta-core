@@ -3,9 +3,9 @@
  */
 package com.tc.object.lockmanager.api;
 
-import com.tc.io.TCByteBufferInputStream;
+import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.ClientID;
 import com.tc.object.tx.WaitInvocation;
 import com.tc.object.tx.WaitInvocationFactory;
 
@@ -20,8 +20,8 @@ public class WaitContext extends LockContext {
 
   private WaitInvocation                     waitInvocation;
 
-  public WaitContext(LockID lockID, ChannelID channelID, ThreadID threadID, int lockLevel, WaitInvocation waitInvocation) {
-    super(lockID, channelID, threadID, lockLevel);
+  public WaitContext(LockID lockID, ClientID cid, ThreadID threadID, int lockLevel, WaitInvocation waitInvocation) {
+    super(lockID, cid, threadID, lockLevel);
     this.waitInvocation = waitInvocation;
   }
 
@@ -40,7 +40,7 @@ public class WaitContext extends LockContext {
     output.writeInt(waitInvocation.getNanos());
   }
 
-  public Object deserializeFrom(TCByteBufferInputStream input) throws IOException {
+  public Object deserializeFrom(TCByteBufferInput input) throws IOException {
     super.deserializeFrom(input);
     waitInvocation = waitInvocationFactory.newWaitInvocation(input.readByte(), input.readLong(), input.readInt());
     return this;

@@ -1,14 +1,14 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
-import com.tc.exception.ImplementMe;
 import com.tc.logging.TCLogger;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.msg.LockResponseMessage;
@@ -27,7 +27,7 @@ public class RespondToRequestLockHandler extends AbstractEventHandler {
   public void handleEvent(EventContext context) {
     LockResponseContext lrc = (LockResponseContext) context;
 
-    ChannelID cid = lrc.getChannelID();
+    NodeID cid = lrc.getNodeID();
     try {
       MessageChannel channel = channelManager.getActiveChannel(cid);
 
@@ -47,10 +47,10 @@ public class RespondToRequestLockHandler extends AbstractEventHandler {
         responseMessage.initializeLockWaitTimeout(lrc.getLockID(), lrc.getThreadID(), lrc.getLockLevel());
       } else if (lrc.isLockInfo()) {
         responseMessage = (LockResponseMessage) channel.createMessage(TCMessageType.LOCK_QUERY_RESPONSE_MESSAGE);
-        responseMessage.initializeLockInfo(lrc.getLockID(), lrc.getThreadID(), lrc.getLockLevel(), lrc.getGlobalLockInfo());
+        responseMessage.initializeLockInfo(lrc.getLockID(), lrc.getThreadID(), lrc.getLockLevel(), lrc
+            .getGlobalLockInfo());
       } else {
-        // XXX: what kind of response context is this?
-        throw new ImplementMe();
+        throw new AssertionError("Unknown lock response context : " + lrc);
       }
 
       responseMessage.send();

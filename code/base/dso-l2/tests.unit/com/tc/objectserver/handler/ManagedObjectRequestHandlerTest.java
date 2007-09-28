@@ -6,7 +6,7 @@ package com.tc.objectserver.handler;
 
 import com.tc.async.impl.MockStage;
 import com.tc.exception.ImplementMe;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ObjectID;
 import com.tc.object.TestRequestManagedObjectMessage;
@@ -80,7 +80,7 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
       throw new RuntimeException(name);
     }
 
-    public void notifyTransaction(ChannelID channelID) {
+    public void notifyTransaction(NodeID nodeID) {
       throw new ImplementMe();
 
     }

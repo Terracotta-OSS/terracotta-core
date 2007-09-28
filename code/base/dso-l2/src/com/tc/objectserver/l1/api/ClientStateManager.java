@@ -3,7 +3,7 @@
  */
 package com.tc.objectserver.l1.api;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.managedobject.BackReferences;
 import com.tc.text.PrettyPrintable;
@@ -22,37 +22,36 @@ public interface ClientStateManager extends PrettyPrintable {
   /**
    * Initializes the internal datastructures for newly connected client
    */
-  public void startupClient(ChannelID channelID);
+  public void startupNode(NodeID nodeID);
   
   /**
-   * Used to recover from client crashes this will acknowledge any waiter waiting for a downed client
+   * Clears internal data structures for disconnected clients
    *
-   * @param waitee
    */
-  public void shutdownClient(ChannelID deadClient);
+  public void shutdownNode(NodeID deadNode);
 
   /**
    * The the server representation of the client's state now knows that clientID has a reference to objectID
    */
-  public void addReference(ChannelID clientID, ObjectID objectID);
+  public void addReference(NodeID nodeID, ObjectID objectID);
 
   /**
    * For the local state of the l1 named clientID remove all the objectIDs that are references
    */
-  public void removeReferences(ChannelID clientID, Set removed);
+  public void removeReferences(NodeID nodeID, Set removed);
 
-  public boolean hasReference(ChannelID clientID, ObjectID objectID);
+  public boolean hasReference(NodeID nodeID, ObjectID objectID);
 
   /**
    * Prunes the changes list down to include only changes for objects the given client has.
    * @param objectIDs TODO
    */
-  public List createPrunedChangesAndAddObjectIDTo(Collection changes, BackReferences references, ChannelID clientID, Set objectIDs);
+  public List createPrunedChangesAndAddObjectIDTo(Collection changes, BackReferences references, NodeID clientID, Set objectIDs);
   
   public void addAllReferencedIdsTo(Set rescueIds);
 
-  public void removeReferencedFrom(ChannelID channelID, Set secondPass);
+  public void removeReferencedFrom(NodeID nodeID, Set secondPass);
 
-  public Set addReferences(ChannelID channelID, Set oids);
+  public Set addReferences(NodeID nodeID, Set oids);
 
 }

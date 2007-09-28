@@ -13,6 +13,7 @@ import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.L2HADisabledCooridinator;
 import com.tc.l2.msg.RelayedCommitTransactionMessage;
 import com.tc.logging.TCLogger;
+import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -84,13 +85,13 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
   public void tests() throws Exception {
 
     TestTransactionBatchReader batch = new TestTransactionBatchReader();
-    batch.channelID = new ChannelID(1);
+    batch.clientID = new ClientID(new ChannelID(1));
     batch.batchID = new TxnBatchID(1);
 
     final List dnaList = Collections.EMPTY_LIST;
     final Map newRootsMap = Collections.EMPTY_MAP;
     ServerTransaction serverTransaction = new ServerTransactionImpl(gtxm, batch.batchID, new TransactionID(1),
-                                                                    new SequenceID(1), new LockID[0], batch.channelID,
+                                                                    new SequenceID(1), new LockID[0], batch.clientID,
                                                                     dnaList, new ObjectStringSerializer(), newRootsMap,
                                                                     TxnType.NORMAL, new LinkedList(),
                                                                     DmiDescriptor.EMPTY_ARRAY);
@@ -111,7 +112,7 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
     handler.handleEvent(null);
     // make sure defineBatch was called on the transaction manager.
     Object[] args = (Object[]) transactionBatchManager.defineBatchContexts.take();
-    assertEquals(batch.channelID, args[0]);
+    assertEquals(batch.clientID, args[0]);
     assertEquals(batch.batchID, args[1]);
     assertEquals(new Integer(1), args[2]);
     // there shouldn't be any more calls in the queue
@@ -128,13 +129,13 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
 
     // send another txn and see that an event context is added again to the stage
     batch = new TestTransactionBatchReader();
-    batch.channelID = new ChannelID(1);
+    batch.clientID = new ClientID(new ChannelID(1));
     batch.batchID = new TxnBatchID(2);
 
     serverTransaction = new ServerTransactionImpl(gtxm, batch.batchID, new TransactionID(2), new SequenceID(2),
-                                                  new LockID[0], batch.channelID, dnaList,
-                                                  new ObjectStringSerializer(), newRootsMap, TxnType.NORMAL,
-                                                  new LinkedList(), DmiDescriptor.EMPTY_ARRAY);
+                                                  new LockID[0], batch.clientID, dnaList, new ObjectStringSerializer(),
+                                                  newRootsMap, TxnType.NORMAL, new LinkedList(),
+                                                  DmiDescriptor.EMPTY_ARRAY);
     completedTransactionIDs = new HashSet();
     for (int i = 11; i < 20; i++) {
       completedTransactionIDs.add(new GlobalTransactionID(i));
@@ -162,7 +163,7 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
 
     public final Collection acknowledged = new HashSet();
     public TxnBatchID       batchID;
-    public ChannelID        channelID;
+    public ClientID         clientID;
     public final List       transactions = new LinkedList();
     int                     current      = 0;
 
@@ -182,8 +183,8 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
       return transactions.size();
     }
 
-    public ChannelID getChannelID() {
-      return channelID;
+    public ClientID getNodeID() {
+      return clientID;
     }
 
     public Collection addAcknowledgedTransactionIDsTo(Collection c) {

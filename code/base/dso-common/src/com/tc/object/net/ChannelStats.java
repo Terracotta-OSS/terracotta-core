@@ -3,7 +3,7 @@
  */
 package com.tc.object.net;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.stats.counter.Counter;
 
@@ -14,5 +14,5 @@ public interface ChannelStats {
 
   public Counter getCounter(MessageChannel channel, String name);
 
-  public void notifyTransaction(ChannelID channelID);
+  public void notifyTransaction(NodeID nodeID);
 }

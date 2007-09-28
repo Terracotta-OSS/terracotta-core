@@ -4,7 +4,7 @@
  */
 package com.tc.objectserver.api;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.core.api.GarbageCollector;
@@ -57,24 +57,23 @@ public interface ObjectManager extends ManagedObjectProvider, PrettyPrintable {
    * available it calls setResult() o ObjectManagerResultsContext. If not then it calls makesPending on
    * ObjectManagerResultsContext and hangs on to the request until it can be fullfilled.
    * 
-   * @param channelID - channelID of the client that is interested in lookup
+   * @param nodeID - nodeID of the client that is interested in lookup
    * @param maxCount - max number of objects reachable from the requested objects that should be looked up
    * @param context - ResultContext that gets notifications.
    * @return true if all the objects are successfully looked up.
    */
-  public boolean lookupObjectsAndSubObjectsFor(ChannelID channelID, ObjectManagerResultsContext responseContext,
-                                               int maxCount);
+  public boolean lookupObjectsAndSubObjectsFor(NodeID nodeID, ObjectManagerResultsContext responseContext, int maxCount);
 
   /**
    * Looks up the objects associated with the transaction. What it does is if all the objects are available to be
    * updated it calls setResult() on ObjectManagerResultsContext. If not then it calls makesPending on
    * ObjectManagerResultsContext and hangs on to the request until it can be fullfilled.
    * 
-   * @param channelID - channelID of the client that is interested in lookup
+   * @param nodeID - nodeID of the client that is interested in lookup
    * @param context - ResultContext that gets notifications.
    * @return true if all the objects are successfully looked up.
    */
-  public boolean lookupObjectsFor(ChannelID channelID, ObjectManagerResultsContext context);
+  public boolean lookupObjectsFor(NodeID nodeID, ObjectManagerResultsContext context);
 
   /**
    * The list of rootnames
@@ -82,13 +81,13 @@ public interface ObjectManager extends ManagedObjectProvider, PrettyPrintable {
    * @return
    */
   public Iterator getRoots();
-  
+
   public Map getRootNamesToIDsMap();
 
   public void createRoot(String name, ObjectID id);
 
   public ObjectID lookupRootID(String name);
-  
+
   public GarbageCollector getGarbageCollector();
 
   public void setGarbageCollector(GarbageCollector gc);

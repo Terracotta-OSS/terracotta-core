@@ -11,10 +11,8 @@ import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
-import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
@@ -81,15 +79,11 @@ class TransactionPersistorImpl extends SleepycatPersistorBase implements Transac
   }
 
   private byte[] serverTxnID2Bytes(ServerTransactionID serverTransactionID) {
-    byte b[] = new byte[16];
-    Conversion.writeLong(serverTransactionID.getChannelID().toLong(), b, 0);
-    Conversion.writeLong(serverTransactionID.getClientTransactionID().toLong(), b, 8);
-    return b;
+    return serverTransactionID.getBytes();
   }
 
   private ServerTransactionID bytes2ServerTxnID(byte[] data) {
-    return new ServerTransactionID(new ChannelID(Conversion.bytes2Long(data, 0)), new TransactionID(Conversion
-        .bytes2Long(data, 8)));
+    return ServerTransactionID.createFrom(data);
   }
 
   public void deleteAllByServerTransactionID(PersistenceTransaction tx, Collection toDelete) {

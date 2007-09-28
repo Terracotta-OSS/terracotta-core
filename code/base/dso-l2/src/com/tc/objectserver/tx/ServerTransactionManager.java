@@ -4,7 +4,7 @@
  */
 package com.tc.objectserver.tx;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.managedobject.BackReferences;
@@ -17,11 +17,10 @@ import java.util.Set;
 public interface ServerTransactionManager {
 
   /**
-   * Used to recover from client crashes this will acknowledge any waiter waiting for a downed client
+   * called when a Node (Client or Server) leaves.
    * 
-   * @param waitee
    */
-  public void shutdownClient(ChannelID deadClient);
+  public void shutdownNode(NodeID nodeID);
 
   /**
    * Add "waiter/requestID" is waiting for clientID "waitee" to respond to my message send
@@ -30,7 +29,7 @@ public interface ServerTransactionManager {
    * @param requestID - The id of the request sent by the channel ID that is waiting for a response
    * @param waitee - the channelID that waiter is waiting for a response from
    */
-  public void addWaitingForAcknowledgement(ChannelID waiter, TransactionID requestID, ChannelID waitee);
+  public void addWaitingForAcknowledgement(NodeID waiter, TransactionID requestID, NodeID waitee);
 
   /**
    * Is the waiter done waiting or does it need to continue waiting?
@@ -39,18 +38,18 @@ public interface ServerTransactionManager {
    * @param requestID - The id of the request sent by the channel ID that is waiting for a response
    * @return
    */
-  public boolean isWaiting(ChannelID waiter, TransactionID requestID);
+  public boolean isWaiting(NodeID waiter, TransactionID requestID);
 
   /**
    * received an acknowledgement from the client that the changes in the given transaction have been applied. This could
    * potentially trigger an acknowledgement to the orginating client.
    * 
-   * @param waiter - ChannelID of the sender of the message that is waiting for a response
+   * @param waiter - NodeID of the sender of the message that is waiting for a response
    * @param requesterID - The id of the request sent by the channel ID that is waiting for a response
    * @param gtxID - The GlobalTransactionID associated with the transaction.
    * @param waitee - the channelID that waiter is waiting for a response from
    */
-  public void acknowledgement(ChannelID waiter, TransactionID requestID, ChannelID waitee);
+  public void acknowledgement(NodeID waiter, TransactionID requestID, NodeID waitee);
 
   /**
    * Apply the changes in the given transaction to the given set of checked out objects.
@@ -69,7 +68,7 @@ public interface ServerTransactionManager {
   /**
    * The broadcast stage is completed. This could potentially trigger an acknowledgement to the orginating client.
    */
-  public void broadcasted(ChannelID waiter, TransactionID requestID);
+  public void broadcasted(NodeID waiter, TransactionID requestID);
 
   public void dump();
 
@@ -84,12 +83,12 @@ public interface ServerTransactionManager {
   
   public void callBackOnTxnsInSystemCompletion(TxnsInSystemCompletionLister l);
 
-  public void incomingTransactions(ChannelID channelID, Set txnIDs, Collection txns, boolean relayed,
+  public void incomingTransactions(NodeID nodeID, Set txnIDs, Collection txns, boolean relayed,
                                    Collection completedTxnIds);
 
-  public void transactionsRelayed(ChannelID channelID, Set serverTxnIDs);
+  public void transactionsRelayed(NodeID node, Set serverTxnIDs);
   
-  public void setResentTransactionIDs(ChannelID channelID, Collection transactionIDs);
+  public void setResentTransactionIDs(NodeID source, Collection transactionIDs);
 
   public void start(Set cids);
   

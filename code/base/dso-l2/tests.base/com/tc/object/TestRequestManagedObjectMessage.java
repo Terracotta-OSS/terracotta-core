@@ -5,7 +5,7 @@
 package com.tc.object;
 
 import com.tc.async.api.EventContext;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.msg.RequestManagedObjectMessage;
@@ -16,7 +16,6 @@ public class TestRequestManagedObjectMessage implements RequestManagedObjectMess
 
   private ObjectRequestID requestID;
   private Set             removed;
-  private ChannelID       channelID;
   private MessageChannel  channel;
   private Set             objectIDs;
 
@@ -76,8 +75,8 @@ public class TestRequestManagedObjectMessage implements RequestManagedObjectMess
     return this.channel;
   }
 
-  public ChannelID getChannelID() {
-    return this.channelID;
+  public ClientID getClientID() {
+    return new ClientID(this.channel.getChannelID());
   }
 
   public int getTotalLength() {

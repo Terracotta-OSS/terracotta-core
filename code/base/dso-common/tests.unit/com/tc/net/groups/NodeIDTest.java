@@ -21,10 +21,10 @@ public class NodeIDTest extends TestCase {
     byte[] b3 = new byte[] { 43, 5, 127 , (byte) 255, -87, 9 };
     byte[] b4 = new byte[] { 4};
     
-    NodeID n1 = new NodeID("node1", b1);
-    NodeID n2 = new NodeID("node2", b2);
-    NodeID n3 = new NodeID("node3", b3);
-    NodeID n4 = new NodeID("node4", b4);
+    NodeID n1 = new NodeIDImpl("node1", b1);
+    NodeID n2 = new NodeIDImpl("node2", b2);
+    NodeID n3 = new NodeIDImpl("node3", b3);
+    NodeID n4 = new NodeIDImpl("node4", b4);
     
     assertFalse(n1.equals(n2));
     assertTrue(n1.equals(n1));
@@ -56,8 +56,8 @@ public class NodeIDTest extends TestCase {
     System.err.println("Written : " + n3);
     oo.writeObject(n4);
     System.err.println("Written : " + n3);
-    oo.writeObject(NodeID.NULL_ID);
-    System.err.println("Written : " + NodeID.NULL_ID);
+    oo.writeObject(NodeIDImpl.NULL_ID);
+    System.err.println("Written : " + NodeIDImpl.NULL_ID);
     
     ByteArrayInputStream bi = new ByteArrayInputStream(bo.toByteArray());
     ObjectInput oi = new ObjectInputStream(bi);
@@ -75,7 +75,7 @@ public class NodeIDTest extends TestCase {
     assertEquals(n4, r4);
     NodeID r5 = (NodeID) oi.readObject();
     System.err.println("Read : " + r5);
-    assertEquals(NodeID.NULL_ID, r5);
+    assertEquals(NodeIDImpl.NULL_ID, r5);
 
 
   }

@@ -4,7 +4,7 @@
  */
 package com.tc.objectserver.tx;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionIDGenerator;
@@ -21,7 +21,7 @@ public final class ActiveServerTransactionFactory implements ServerTransactionFa
 
   public ServerTransaction createServerTransaction(GlobalTransactionIDGenerator gtxm, TxnBatchID batchID,
                                                    TransactionID txnID, SequenceID sequenceID, LockID[] locks,
-                                                   ChannelID source, List dnas, ObjectStringSerializer serializer,
+                                                   NodeID source, List dnas, ObjectStringSerializer serializer,
                                                    Map newRoots, TxnType txnType, List notifies, DmiDescriptor[] dmis) {
     return new ServerTransactionImpl(gtxm, batchID, txnID, sequenceID, locks, source, dnas, serializer, newRoots,
                                      txnType, notifies, dmis);

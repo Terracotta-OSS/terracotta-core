@@ -5,7 +5,7 @@
 package com.tc.objectserver.tx;
 
 import com.tc.exception.ImplementMe;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -48,8 +48,8 @@ public final class TestServerTransaction implements ServerTransaction {
     throw new ImplementMe();
   }
 
-  public ChannelID getChannelID() {
-    return sid.getChannelID();
+  public NodeID getSourceID() {
+    return sid.getSourceID();
   }
 
   public TransactionID getTransactionID() {

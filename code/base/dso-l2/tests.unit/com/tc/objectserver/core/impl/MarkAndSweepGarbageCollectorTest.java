@@ -5,7 +5,7 @@
 package com.tc.objectserver.core.impl;
 
 import com.tc.exception.ImplementMe;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerStatsListener;
@@ -237,12 +237,12 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
     throw new ImplementMe();
   }
 
-  public boolean lookupObjectsAndSubObjectsFor(ChannelID channelID, ObjectManagerResultsContext responseContext,
+  public boolean lookupObjectsAndSubObjectsFor(NodeID nodeID, ObjectManagerResultsContext responseContext,
                                                int maxCount) {
     throw new ImplementMe();
   }
 
-  public boolean lookupObjectsFor(ChannelID channelID, ObjectManagerResultsContext context) {
+  public boolean lookupObjectsFor(NodeID nodeID, ObjectManagerResultsContext context) {
     throw new ImplementMe();
   }
 

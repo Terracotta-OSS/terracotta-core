@@ -12,4 +12,5 @@ public interface ChannelIDProvider {
    * @return The channel ID
    */
   public ChannelID getChannelID();
+  
 }

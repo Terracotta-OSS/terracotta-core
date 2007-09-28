@@ -3,7 +3,7 @@
  */
 package com.tc.object.gtx;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.lockmanager.api.LockFlushCallback;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.tx.TransactionID;
@@ -27,7 +27,7 @@ public interface ClientGlobalTransactionManager extends GlobalTransactionManager
   
   public Collection getResentTransactionIDs();
 
-  public boolean startApply(ChannelID committerID, TransactionID transactionID, GlobalTransactionID globalTransactionID);
+  public boolean startApply(NodeID nodeID, TransactionID transactionID, GlobalTransactionID globalTransactionID);
 
   /**
    * Returns the number of transactions currently being accounted for.

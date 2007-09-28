@@ -5,6 +5,8 @@
 package com.tc.object.net;
 
 import com.tc.exception.ImplementMe;
+import com.tc.net.groups.ClientID;
+import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
@@ -28,7 +30,7 @@ public class TestDSOChannelManager implements DSOChannelManager {
     throw new ImplementMe();
   }
 
-  public String getChannelAddress(ChannelID channelID) {
+  public String getChannelAddress(NodeID nid) {
     throw new ImplementMe();
   }
 
@@ -40,7 +42,7 @@ public class TestDSOChannelManager implements DSOChannelManager {
     throw new ImplementMe();
   }
 
-  public BatchTransactionAcknowledgeMessage newBatchTransactionAcknowledgeMessage(ChannelID channelID) {
+  public BatchTransactionAcknowledgeMessage newBatchTransactionAcknowledgeMessage(NodeID nid) {
     throw new ImplementMe();
   }
 
@@ -48,7 +50,7 @@ public class TestDSOChannelManager implements DSOChannelManager {
     throw new ImplementMe();
   }
 
-  public MessageChannel getActiveChannel(ChannelID id) {
+  public MessageChannel getActiveChannel(NodeID id) {
     throw new ImplementMe();
   }
 
@@ -56,19 +58,19 @@ public class TestDSOChannelManager implements DSOChannelManager {
     return allChannels;
   }
 
-  public Set getAllActiveChannelIDs() {
+  public Set getAllActiveClientIDs() {
     throw new ImplementMe();
   }
 
-  public Set getRawChannelIDs() {
+  public Set getAllClientIDs() {
     throw new ImplementMe();
   }
 
-  public boolean isActiveID(ChannelID channelID) {
+  public boolean isActiveID(NodeID nodeID) {
     throw new ImplementMe();
   }
 
-  public void makeChannelActive(ChannelID channelID, long startIDs, long endIDs, boolean persistent) {
+  public void makeChannelActive(ClientID clientID, long startIDs, long endIDs, boolean persistent) {
     throw new ImplementMe();
   }
 
@@ -76,4 +78,7 @@ public class TestDSOChannelManager implements DSOChannelManager {
     throw new ImplementMe();
   }
 
+  public ClientID getClientIDFor(ChannelID channelID) {
+    return new ClientID(channelID);
+  }
 }

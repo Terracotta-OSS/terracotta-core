@@ -7,7 +7,6 @@ package com.tc.l2.objectserver;
 import com.tc.exception.ImplementMe;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.net.groups.NodeID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.objectserver.tx.ServerTransaction;
 
 import java.util.Collection;
@@ -15,7 +14,7 @@ import java.util.Set;
 
 public class NonReplicatedTransactionManager implements ReplicatedTransactionManager {
 
-  public void addCommitedTransactions(ChannelID channelID, Set txnIDs, Collection txns, Collection completedTxnIDs) {
+  public void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns, Collection completedTxnIDs) {
     throw new ImplementMe();
   }
 

@@ -27,7 +27,7 @@ public interface MessageChannel {
   public void addListener(ChannelEventListener listener);
 
   public ChannelID getChannelID();
-
+  
   public boolean isOpen();
 
   public boolean isClosed();

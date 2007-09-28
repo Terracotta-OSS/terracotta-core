@@ -3,7 +3,7 @@
  */
 package com.tc.objectserver.persistence.api;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
@@ -26,7 +26,7 @@ public interface TransactionStore {
    */
   public void removeAllByServerTransactionID(PersistenceTransaction transaction, Collection collection);
 
-  public void shutdownClient(PersistenceTransaction transaction, ChannelID client);
+  public void shutdownNode(PersistenceTransaction transaction, NodeID nid);
 
   public void shutdownAllClientsExcept(PersistenceTransaction tx, Set cids);
   

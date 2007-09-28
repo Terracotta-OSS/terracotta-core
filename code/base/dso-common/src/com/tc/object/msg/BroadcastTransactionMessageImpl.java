@@ -5,10 +5,11 @@
 package com.tc.object.msg;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.io.TCByteBufferInputStream;
+import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
+import com.tc.net.groups.NodeIDSerializer;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -66,7 +67,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
 
   private long                   changeID;
   private TransactionID          transactionID;
-  private ChannelID              committerID;
+  private NodeID              committerID;
   private TxnType                transactionType;
   private GlobalTransactionID    globalTransactionID;
   private GlobalTransactionID    lowWatermark;
@@ -98,7 +99,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
 
     putNVPair(CHANGE_ID, changeID);
     putNVPair(TRANSACTION_ID, transactionID.toLong());
-    putNVPair(COMMITTER_ID, committerID.toLong());
+    putNVPair(COMMITTER_ID, new NodeIDSerializer(committerID));
     putNVPair(GLOBAL_TRANSACTION_ID, globalTransactionID.toLong());
     putNVPair(LOW_WATERMARK, lowWatermark.toLong());
 
@@ -148,7 +149,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
         this.transactionID = new TransactionID(getLongValue());
         return true;
       case COMMITTER_ID:
-        this.committerID = new ChannelID(getLongValue());
+        this.committerID = ((NodeIDSerializer)getObject(new NodeIDSerializer())).getNodeID();
         return true;
       case GLOBAL_TRANSACTION_ID:
         this.globalTransactionID = new GlobalTransactionID(getLongValue());
@@ -173,7 +174,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   }
 
   public void initialize(List chges, Set objectIDs, ObjectStringSerializer aSerializer, LockID[] lids, long cid,
-                         TransactionID txID, ChannelID commitID, GlobalTransactionID gtx, TxnType txnType,
+                         TransactionID txID, NodeID client, GlobalTransactionID gtx, TxnType txnType,
                          GlobalTransactionID lowGlobalTransactionIDWatermark, Collection theNotifies, Map roots,
                          DmiDescriptor[] dmiDescs) {
     Assert.eval(lids.length > 0);
@@ -183,7 +184,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     this.lockIDs = Arrays.asList(lids);
     this.changeID = cid;
     this.transactionID = txID;
-    this.committerID = commitID;
+    this.committerID = client;
     this.transactionType = txnType;
     this.globalTransactionID = gtx;
     this.lowWatermark = lowGlobalTransactionIDWatermark;
@@ -225,7 +226,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     return transactionID;
   }
 
-  public ChannelID getCommitterID() {
+  public NodeID getCommitterID() {
     return committerID;
   }
 
@@ -279,7 +280,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
 
     }
 
-    public Object deserializeFrom(TCByteBufferInputStream serialInput) throws IOException {
+    public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
       this.rootName = serialInput.readString();
       this.rootID = new ObjectID(serialInput.readLong());
       return this;

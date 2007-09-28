@@ -5,7 +5,7 @@
 package com.tc.objectserver.tx;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.ClientID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.msg.CommitTransactionMessage;
 import com.tc.object.tx.TransactionBatch;
@@ -23,10 +23,10 @@ public class TestCommitTransactionMessage implements CommitTransactionMessage {
   public ObjectStringSerializer serializer;
   private Collection            atids            = new ArrayList();
   private List                  tcByteBufferList = new ArrayList();
-  private ChannelID             channelID        = ChannelID.NULL_ID;
+  private ClientID              clientID         = ClientID.NULL_ID;
 
-  public void setChannelID(ChannelID channelID) {
-    this.channelID = channelID;
+  public void setChannelID(ClientID clientID) {
+    this.clientID = clientID;
   }
 
   public void setBatch(TransactionBatch batch, ObjectStringSerializer serializer) {
@@ -61,8 +61,8 @@ public class TestCommitTransactionMessage implements CommitTransactionMessage {
     return atids;
   }
 
-  public ChannelID getChannelID() {
-    return channelID;
+  public ClientID getClientID() {
+    return clientID;
   }
 
 }

@@ -29,18 +29,17 @@ import java.io.ObjectOutput;
 import java.util.Random;
 
 public class StateManagerTest extends TCTestCase {
-  
-  private static final TCLogger logger = TCLogging.getLogger(StateManagerImpl.class);
-  private static short portnum = 0;
+
+  private static final TCLogger logger  = TCLogging.getLogger(StateManagerImpl.class);
+  private static short          portnum = 0;
 
   public StateManagerTest() {
     // disableAllUntil("2007-05-23");
     useRandomMcastPort();
   }
-  
+
   /*
-   * Choose a random mcast port number to avoid conflict with other LAN machines.
-   * Must be called before joinMcast.
+   * Choose a random mcast port number to avoid conflict with other LAN machines. Must be called before joinMcast.
    */
   public void useRandomMcastPort() {
     if (portnum == 0) {
@@ -49,11 +48,10 @@ public class StateManagerTest extends TCTestCase {
       r.setSeed(System.currentTimeMillis());
       portnum = (short) (r.nextInt(Short.MAX_VALUE - 1025) + 1024);
     }
-    
-    TCPropertiesImpl.setProperty("l2.nha.tribes.mcast.mcastPort", String.valueOf(portnum));
-    logger.info("McastService uses random mcast port: "+portnum);
-  }
 
+    TCPropertiesImpl.setProperty("l2.nha.tribes.mcast.mcastPort", String.valueOf(portnum));
+    logger.info("McastService uses random mcast port: " + portnum);
+  }
 
   public void testStateManagerTwoServers() throws Exception {
     // 2 nodes join concurrently
@@ -220,7 +218,7 @@ public class StateManagerTest extends TCTestCase {
       if (active) ++activeCount;
       System.out.println("*** Server[" + i + "] state is " + sinks[i]);
     }
-    assertEquals("Active coordinator",1, activeCount);
+    assertEquals("Active coordinator", 1, activeCount);
 
     shutdown(groupMgr, msgStage);
   }
@@ -236,7 +234,7 @@ public class StateManagerTest extends TCTestCase {
         groupMgr[i].stop();
         msgStage[i].requestStop();
       } catch (Exception ex) {
-        System.out.println("*** Failed to stop Server[" + i + "] "+ groupMgr[i] + " " + ex);
+        System.out.println("*** Failed to stop Server[" + i + "] " + groupMgr[i] + " " + ex);
       }
     }
     System.out.println("*** shutdown done");
@@ -284,7 +282,7 @@ public class StateManagerTest extends TCTestCase {
       if (active) ++activeCount;
       System.out.println("*** Server[" + i + "] state is " + sinks[i]);
     }
-    assertEquals("Active coordinator",1, activeCount);
+    assertEquals("Active coordinator", 1, activeCount);
 
     shutdown(groupMgr, msgStage);
   }
@@ -320,7 +318,7 @@ public class StateManagerTest extends TCTestCase {
     // move following join nodes to passive-standby
     groupMgr[0].registerForGroupEvents(new MyGroupEventListener() {
       public void nodeJoined(NodeID nodeID) {
-        System.out.println("*** moveNodeToPassiveStandby -> " + nodeID.getName());
+        System.out.println("*** moveNodeToPassiveStandby -> " + nodeID);
         managers[0].moveNodeToPassiveStandby(nodeID);
         // managers[0].publishActiveState(nodeID);
       }
@@ -339,8 +337,8 @@ public class StateManagerTest extends TCTestCase {
       if (active) ++activeCount;
       System.out.println("*** Server[" + i + "] state is " + sinks[i]);
     }
-    assertEquals("Active coordinator",1, activeCount);
-    assertTrue("Node-0 must be active coordinator",managers[0].isActiveCoordinator());
+    assertEquals("Active coordinator", 1, activeCount);
+    assertTrue("Node-0 must be active coordinator", managers[0].isActiveCoordinator());
 
     // check API
     try {
@@ -353,7 +351,7 @@ public class StateManagerTest extends TCTestCase {
 
     System.out.println("*** Stop active and re-elect");
     // stop active node
-    shutdown(groupMgr, msgStage,0,1);
+    shutdown(groupMgr, msgStage, 0, 1);
 
     ElectionIfNecessaryThread reElectThreads[] = new ElectionIfNecessaryThread[nodes];
     for (int i = 1; i < nodes; ++i) {
@@ -374,7 +372,7 @@ public class StateManagerTest extends TCTestCase {
       if (active) ++activeCount;
       System.out.println("*** Server[" + i + "] (" + (active ? "active" : "non-active") + ")state is " + sinks[i]);
     }
-    assertEquals("Active coordinator",1, activeCount);
+    assertEquals("Active coordinator", 1, activeCount);
 
     // shut them down
     shutdown(groupMgr, msgStage, 1, nodes);
@@ -392,7 +390,8 @@ public class StateManagerTest extends TCTestCase {
     sinks[localIndex] = new ChangeSink(localIndex);
     MyStateManagerConfig config = new MyStateManagerConfig();
     config.electionTime = 5;
-    StateManager mgr = new StateManagerImpl(logger, gm, sinks[localIndex], config, WeightGeneratorFactory.createDefaultFactory());
+    StateManager mgr = new StateManagerImpl(logger, gm, sinks[localIndex], config, WeightGeneratorFactory
+        .createDefaultFactory());
     messageStage[localIndex] = new L2StateMessageStage(mgr);
     gm.routeMessages(L2StateMessage.class, messageStage[localIndex].getSink());
     messageStage[localIndex].start();
@@ -503,12 +502,12 @@ public class StateManagerTest extends TCTestCase {
     private NodeID lastNodeLeft;
 
     public void nodeJoined(NodeID nodeID) {
-      System.err.println("\n### nodeJoined -> " + nodeID.getName());
+      System.err.println("\n### nodeJoined -> " + nodeID);
       lastNodeJoined = nodeID;
     }
 
     public void nodeLeft(NodeID nodeID) {
-      System.err.println("\n### nodeLeft -> " + nodeID.getName());
+      System.err.println("\n### nodeLeft -> " + nodeID);
       lastNodeLeft = nodeID;
     }
 

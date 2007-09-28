@@ -6,7 +6,6 @@ package com.tc.object.msg;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutput;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -34,8 +33,8 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
   private String            thisNodeId;
   private String            serverVersion;
 
-  public ClientHandshakeAckMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
-                                       TCMessageType type) {
+  public ClientHandshakeAckMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out,
+                                       MessageChannel channel, TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 
@@ -82,16 +81,13 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
     }
   }
 
-  public void initialize(long start, long end, boolean persistent, MessageChannel[] channels, String sv) {
+  public void initialize(long start, long end, boolean persistent, Set allNodeIDs, String thisNodeID, String sv) {
     this.oidStart = start;
     this.oidEnd = end;
     this.persistentServer = persistent;
+    this.allNodes.addAll(allNodeIDs);
 
-    for (int i = 0; i < channels.length; i++) {
-      allNodes.add(toString(channels[i].getChannelID()));
-    }
-
-    this.thisNodeId = toString(getChannelID());
+    this.thisNodeId = thisNodeID;
     this.serverVersion = sv;
   }
 
@@ -113,10 +109,6 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
 
   public String getThisNodeId() {
     return thisNodeId;
-  }
-
-  private static String toString(ChannelID cid) {
-    return String.valueOf(cid.toLong());
   }
 
   public String getServerVersion() {

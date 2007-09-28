@@ -19,7 +19,6 @@ import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupMessage;
 import com.tc.net.groups.GroupMessageListener;
 import com.tc.net.groups.NodeID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.impl.VersionizedDNAWrapper;
@@ -77,9 +76,9 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     }
   }
 
-  public synchronized void addCommitedTransactions(ChannelID channelID, Set txnIDs, Collection txns,
+  public synchronized void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns,
                                                    Collection completedTxnIDs) {
-    delegate.addCommitedTransactions(channelID, txnIDs, txns, completedTxnIDs);
+    delegate.addCommitedTransactions(nodeID, txnIDs, txns, completedTxnIDs);
   }
 
   public synchronized void addObjectSyncTransaction(ServerTransaction txn) {
@@ -134,15 +133,15 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     }
   }
 
-  private void addIncommingTransactions(ChannelID channelID, Set txnIDs, Collection txns, Collection completedTxnIDs) {
-    transactionManager.incomingTransactions(channelID, txnIDs, txns, false, completedTxnIDs);
+  private void addIncommingTransactions(NodeID nodeID, Set txnIDs, Collection txns, Collection completedTxnIDs) {
+    transactionManager.incomingTransactions(nodeID, txnIDs, txns, false, completedTxnIDs);
   }
 
   private final class NullPassiveTransactionManager implements PassiveTransactionManager {
 
-    public void addCommitedTransactions(ChannelID channelID, Set txnIDs, Collection txns, Collection completedTxnIDs) {
+    public void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns, Collection completedTxnIDs) {
       // There could still be some messages in the queue that arrives after the node becomes ACTIVE
-      logger.warn("NullPassiveTransactionManager :: Ignoring commit Txn Messages from " + channelID);
+      logger.warn("NullPassiveTransactionManager :: Ignoring commit Txn Messages from " + nodeID);
     }
 
     public void addObjectSyncTransaction(ServerTransaction txn) {
@@ -152,8 +151,8 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
 
   private final class PassiveStandbyTransactionManager implements PassiveTransactionManager {
 
-    public void addCommitedTransactions(ChannelID channelID, Set txnIDs, Collection txns, Collection completedTxnIDs) {
-      addIncommingTransactions(channelID, txnIDs, txns, completedTxnIDs);
+    public void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns, Collection completedTxnIDs) {
+      addIncommingTransactions(nodeID, txnIDs, txns, completedTxnIDs);
     }
 
     public void addObjectSyncTransaction(ServerTransaction txn) {
@@ -173,12 +172,12 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     ObjectIDSet2          existingOIDs = new ObjectIDSet2();
     PendingChangesAccount pca          = new PendingChangesAccount();
 
-    public void addCommitedTransactions(ChannelID channelID, Set txnIDs, Collection txns, Collection completedTxnIDs) {
+    public void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns, Collection completedTxnIDs) {
       pca.clearCompleted(completedTxnIDs);
       Assert.assertEquals(txnIDs.size(), txns.size());
       LinkedHashMap prunedTransactionsMap = pruneTransactions(txns);
       Collection prunedTxns = prunedTransactionsMap.values();
-      addIncommingTransactions(channelID, prunedTransactionsMap.keySet(), prunedTxns, completedTxnIDs);
+      addIncommingTransactions(nodeID, prunedTransactionsMap.keySet(), prunedTxns, completedTxnIDs);
     }
 
     // TODO::Recycle msg after use. Messgaes may have to live longer than Txn acks.
@@ -245,7 +244,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
       ServerTransaction newTxn = createCompoundTransactionFrom(txn);
       if (newTxn != null) {
         txns.put(txn.getServerTransactionID(), newTxn);
-        addIncommingTransactions(ChannelID.L2_SERVER_ID, txns.keySet(), txns.values(), Collections.EMPTY_LIST);
+        addIncommingTransactions(txn.getSourceID(), txns.keySet(), txns.values(), Collections.EMPTY_LIST);
       } else {
         logger.warn("Not add Txn " + txn + " to queue since all changes are ignored");
       }

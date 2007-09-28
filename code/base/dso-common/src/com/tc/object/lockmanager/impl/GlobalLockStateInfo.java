@@ -1,11 +1,14 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.lockmanager.impl;
 
-import com.tc.io.TCByteBufferInputStream;
-import com.tc.io.TCDataOutput;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.io.TCByteBufferInput;
+import com.tc.io.TCByteBufferOutput;
+import com.tc.io.TCSerializable;
+import com.tc.net.groups.NodeID;
+import com.tc.net.groups.NodeIDSerializer;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.ThreadID;
 
@@ -14,30 +17,30 @@ import java.io.IOException;
 /**
  * This class is used to hold the global holder/waiter information of a lock.
  */
-public class GlobalLockStateInfo {
-  private LockID    lockID;
-  private ChannelID channelID;
-  private ThreadID  threadID;
-  private long      timeout;
-  private long      timestamp;
-  private int       lockLevel;
+public class GlobalLockStateInfo implements TCSerializable {
+  private LockID   lockID;
+  private NodeID   nodeID;
+  private ThreadID threadID;
+  private long     timeout;
+  private long     timestamp;
+  private int      lockLevel;
 
   public GlobalLockStateInfo() {
     super();
   }
 
-  public GlobalLockStateInfo(LockID lockID, ChannelID channelID, ThreadID threadID, long timestamp, long timeout,
+  public GlobalLockStateInfo(LockID lockID, NodeID nodeID, ThreadID threadID, long timestamp, long timeout,
                              int lockLevel) {
     this.lockID = lockID;
-    this.channelID = channelID;
+    this.nodeID = nodeID;
     this.threadID = threadID;
     this.timestamp = timestamp;
     this.timeout = timeout;
     this.lockLevel = lockLevel;
   }
 
-  public ChannelID getChannelID() {
-    return channelID;
+  public NodeID getNodeID() {
+    return nodeID;
   }
 
   public LockID getLockID() {
@@ -60,19 +63,22 @@ public class GlobalLockStateInfo {
     return threadID;
   }
 
-  public void serializeTo(TCDataOutput serialOutput) {
+  public void serializeTo(TCByteBufferOutput serialOutput) {
     serialOutput.writeLong(timestamp);
     serialOutput.writeString(lockID.asString());
-    serialOutput.writeLong(channelID.toLong());
+    NodeIDSerializer ns = new NodeIDSerializer(nodeID);
+    ns.serializeTo(serialOutput);
     serialOutput.writeLong(threadID.toLong());
     serialOutput.writeLong(timeout);
     serialOutput.writeInt(lockLevel);
   }
 
-  public Object deserializeFrom(TCByteBufferInputStream serialInput) throws IOException {
+  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     this.timestamp = serialInput.readLong();
     this.lockID = new LockID(serialInput.readString());
-    this.channelID = new ChannelID(serialInput.readLong());
+    NodeIDSerializer ns = new NodeIDSerializer();
+    ns.deserializeFrom(serialInput);
+    this.nodeID = ns.getNodeID();
     this.threadID = new ThreadID(serialInput.readLong());
     this.timeout = serialInput.readLong();
     this.lockLevel = serialInput.readInt();

@@ -4,7 +4,7 @@
  */
 package com.tc.object.msg;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -20,7 +20,7 @@ import java.util.Set;
 public interface BroadcastTransactionMessage {
 
   public void initialize(List chges, Set lookupObjectIDs, ObjectStringSerializer aSerializer, LockID[] lids, long cid,
-                         TransactionID txID, ChannelID commitID, GlobalTransactionID gtx, TxnType txnType,
+                        TransactionID txID, NodeID commitID, GlobalTransactionID gtx, TxnType txnType,
                          GlobalTransactionID lowGlobalTransactionIDWatermark, Collection notifies, Map newRoots,
                          DmiDescriptor[] dmis);
 
@@ -36,7 +36,7 @@ public interface BroadcastTransactionMessage {
 
   public TransactionID getTransactionID();
 
-  public ChannelID getCommitterID();
+  public NodeID getCommitterID();
 
   public GlobalTransactionID getGlobalTransactionID();
 

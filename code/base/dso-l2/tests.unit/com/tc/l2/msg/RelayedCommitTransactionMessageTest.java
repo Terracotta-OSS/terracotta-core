@@ -6,6 +6,7 @@ package com.tc.l2.msg;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -45,13 +46,14 @@ public class RelayedCommitTransactionMessageTest extends TestCase {
         .newCommitTransactionMessage();
     testCommitTransactionMessage.setBatch(new TestTransactionBatch(new TCByteBuffer[] { TCByteBufferFactory
         .getInstance(false, 3452) }, acknowledged), new ObjectStringSerializer());
-    testCommitTransactionMessage.setChannelID(new ChannelID(channelId));
+    testCommitTransactionMessage.setChannelID(new ClientID(new ChannelID(channelId)));
 
     serverTransactionIDs = new ArrayList();
-    ServerTransactionID stid1 = new ServerTransactionID(new ChannelID(channelId), new TransactionID(4234));
-    ServerTransactionID stid2 = new ServerTransactionID(new ChannelID(channelId), new TransactionID(6543));
-    ServerTransactionID stid3 = new ServerTransactionID(new ChannelID(channelId), new TransactionID(1654));
-    ServerTransactionID stid4 = new ServerTransactionID(new ChannelID(channelId), new TransactionID(3460));
+    ClientID cid = new ClientID(new ChannelID(channelId));
+    ServerTransactionID stid1 = new ServerTransactionID(cid, new TransactionID(4234));
+    ServerTransactionID stid2 = new ServerTransactionID(cid, new TransactionID(6543));
+    ServerTransactionID stid3 = new ServerTransactionID(cid, new TransactionID(1654));
+    ServerTransactionID stid4 = new ServerTransactionID(cid, new TransactionID(3460));
     serverTransactionIDs.add(stid1);
     serverTransactionIDs.add(stid2);
     serverTransactionIDs.add(stid3);
@@ -76,7 +78,7 @@ public class RelayedCommitTransactionMessageTest extends TestCase {
     assertEquals(rctm.inResponseTo(), rctm1.inResponseTo());
     assertEquals(rctm.messageFrom(), rctm1.messageFrom());
 
-    assertEquals(rctm.getChannelID(), rctm1.getChannelID());
+    assertEquals(rctm.getClientID(), rctm1.getClientID());
 
     Collection acknowledged = rctm.getAcknowledgedTransactionIDs();
     Collection acknowledged1 = rctm1.getAcknowledgedTransactionIDs();

@@ -4,7 +4,7 @@
  */
 package com.tc.objectserver.tx;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
@@ -22,21 +22,21 @@ import java.util.Set;
  * transaction.
  */
 public class TransactionAccountImpl implements TransactionAccount {
-  final ChannelID            clientID;
+  final NodeID               sourceID;
   private final Map          waitees = Collections.synchronizedMap(new HashMap());
   private boolean            dead    = false;
   private CallBackOnComplete callBack;
 
-  public TransactionAccountImpl(ChannelID clientID) {
-    this.clientID = clientID;
+  public TransactionAccountImpl(NodeID source) {
+    this.sourceID = source;
   }
 
   public String toString() {
-    return "TransactionAccount[" + clientID + ": waitees=" + waitees + "]\n";
+    return "TransactionAccount[" + sourceID + ": waitees=" + waitees + "]\n";
   }
 
-  public ChannelID getClientID() {
-    return clientID;
+  public NodeID getNodeID() {
+    return sourceID;
   }
 
   public void incommingTransactions(Set txnIDs) {
@@ -55,7 +55,7 @@ public class TransactionAccountImpl implements TransactionAccount {
   /*
    * returns true if completed, false if not completed or if the client has sent a duplicate ACK.
    */
-  public boolean removeWaitee(ChannelID waitee, TransactionID requestID) {
+  public boolean removeWaitee(NodeID waitee, TransactionID requestID) {
     TransactionRecord transactionRecord = getRecord(requestID);
 
     if (transactionRecord == null) return false;
@@ -65,7 +65,7 @@ public class TransactionAccountImpl implements TransactionAccount {
     }
   }
 
-  public void addWaitee(ChannelID waitee, TransactionID requestID) {
+  public void addWaitee(NodeID waitee, TransactionID requestID) {
     TransactionRecord record = getRecord(requestID);
     synchronized (record) {
       boolean added = record.addWaitee(waitee);
@@ -117,7 +117,7 @@ public class TransactionAccountImpl implements TransactionAccount {
     }
   }
 
-  public Set requestersWaitingFor(ChannelID waitee) {
+  public Set requestersWaitingFor(NodeID waitee) {
     Set requesters = new HashSet();
     synchronized (waitees) {
       for (Iterator i = new HashSet(waitees.keySet()).iterator(); i.hasNext();) {
@@ -145,12 +145,12 @@ public class TransactionAccountImpl implements TransactionAccount {
     synchronized (waitees) {
       for (Iterator i = waitees.keySet().iterator(); i.hasNext();) {
         TransactionID txnID = (TransactionID) i.next();
-        txnIDs.add(new ServerTransactionID(clientID, txnID));
+        txnIDs.add(new ServerTransactionID(sourceID, txnID));
       }
     }
   }
 
-  public void clientDead(CallBackOnComplete cb) {
+  public void nodeDead(CallBackOnComplete cb) {
     synchronized (waitees) {
       this.callBack = cb;
       this.dead = true;
@@ -160,7 +160,7 @@ public class TransactionAccountImpl implements TransactionAccount {
 
   private void invokeCallBackOnCompleteIfNecessary() {
     if (dead && waitees.isEmpty()) {
-      callBack.onComplete(clientID);
+      callBack.onComplete(sourceID);
     }
   }
 

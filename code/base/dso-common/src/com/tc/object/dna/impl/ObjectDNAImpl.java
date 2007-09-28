@@ -3,7 +3,7 @@
  */
 package com.tc.object.dna.impl;
 
-import com.tc.io.TCByteBufferInputStream;
+import com.tc.io.TCByteBufferInput;
 
 import java.io.IOException;
 
@@ -15,7 +15,7 @@ public class ObjectDNAImpl extends DNAImpl {
     super(serializer, createOutput);
   }
   
-  public Object deserializeFrom(TCByteBufferInputStream serialInput) throws IOException {
+  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     super.deserializeFrom(serialInput);
     objectversion = this.input.readLong();
     return this;

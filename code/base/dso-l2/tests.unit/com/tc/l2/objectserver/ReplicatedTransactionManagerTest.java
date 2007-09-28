@@ -7,6 +7,7 @@ package com.tc.l2.objectserver;
 import com.tc.async.impl.MockSink;
 import com.tc.async.impl.OrderedSink;
 import com.tc.logging.TCLogging;
+import com.tc.net.groups.ClientID;
 import com.tc.net.groups.SingleNodeGroupManager;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ObjectID;
@@ -44,10 +45,10 @@ public class ReplicatedTransactionManagerTest extends TestCase {
   SingleNodeGroupManager           grpMgr;
   TestServerTransactionManager     txnMgr;
   TestGlobalTransactionManager     gtxm;
-  ChannelID                        channelID;
+  ClientID                         clientID;
 
   public void setUp() throws Exception {
-    channelID = new ChannelID(1);
+    clientID = new ClientID(new ChannelID(1));
     grpMgr = new SingleNodeGroupManager();
     txnMgr = new TestServerTransactionManager();
     gtxm = new TestGlobalTransactionManager();
@@ -68,37 +69,37 @@ public class ReplicatedTransactionManagerTest extends TestCase {
     rtm.init(knownIds);
 
     LinkedHashMap txns = createTxns(1, 1, 2, false);
-    rtm.addCommitedTransactions(channelID, txns.keySet(), txns.values(), Collections.EMPTY_LIST);
+    rtm.addCommitedTransactions(clientID, txns.keySet(), txns.values(), Collections.EMPTY_LIST);
 
     // Since both are know oids, transactions should pass thru
     assertAndClear(txns.values());
 
     // create a txn containing a new Object (OID 3)
     txns = createTxns(1, 3, 1, true);
-    rtm.addCommitedTransactions(channelID, txns.keySet(), txns.values(), Collections.EMPTY_LIST);
+    rtm.addCommitedTransactions(clientID, txns.keySet(), txns.values(), Collections.EMPTY_LIST);
 
     // Should go thru too
     assertAndClear(txns.values());
 
     // Now create a txn with all three objects
     txns = createTxns(1, 1, 3, false);
-    rtm.addCommitedTransactions(channelID, txns.keySet(), txns.values(), Collections.EMPTY_LIST);
+    rtm.addCommitedTransactions(clientID, txns.keySet(), txns.values(), Collections.EMPTY_LIST);
 
     // Since all are known oids, transactions should pass thru
     assertAndClear(txns.values());
 
     // Now create a txn with all unknown ObjectIDs (4,5,6)
     txns = createTxns(1, 4, 3, false);
-    rtm.addCommitedTransactions(channelID, txns.keySet(), txns.values(), Collections.EMPTY_LIST);
+    rtm.addCommitedTransactions(clientID, txns.keySet(), txns.values(), Collections.EMPTY_LIST);
 
     // None should be sent thru
     assertTrue(txnMgr.incomingTxns.isEmpty());
 
     // Create more txns with all unknown ObjectIDs (7,8,9)
     LinkedHashMap txns1 = createTxns(1, 7, 1, false);
-    rtm.addCommitedTransactions(channelID, txns1.keySet(), txns1.values(), Collections.EMPTY_LIST);
+    rtm.addCommitedTransactions(clientID, txns1.keySet(), txns1.values(), Collections.EMPTY_LIST);
     LinkedHashMap txns2 = createTxns(1, 8, 2, false);
-    rtm.addCommitedTransactions(channelID, txns2.keySet(), txns2.values(), Collections.EMPTY_LIST);
+    rtm.addCommitedTransactions(clientID, txns2.keySet(), txns2.values(), Collections.EMPTY_LIST);
 
     // None should be sent thru
     assertTrue(txnMgr.incomingTxns.isEmpty());
@@ -117,7 +118,7 @@ public class ReplicatedTransactionManagerTest extends TestCase {
 
     // Now send transaction complete for txn2, with new Objects (10), this should clear pending changes for 8,9
     txns = createTxns(1, 10, 1, true);
-    rtm.addCommitedTransactions(channelID, txns.keySet(), txns.values(), txns2.keySet());
+    rtm.addCommitedTransactions(clientID, txns.keySet(), txns.values(), txns2.keySet());
     assertAndClear(txns.values(), txns2.keySet());
 
     // Now create Object Sync txn for 7,8,9
@@ -208,7 +209,7 @@ public class ReplicatedTransactionManagerTest extends TestCase {
       for (int j = oidStart; j < oidStart + objectCount; j++) {
         dnas.add(new TestDNA(new ObjectID(j), !newObjects));
       }
-      ServerTransaction tx = new ServerTransactionImpl(gtxm, batchID, txID, sequenceID, lockIDs, channelID, dnas,
+      ServerTransaction tx = new ServerTransactionImpl(gtxm, batchID, txID, sequenceID, lockIDs, clientID, dnas,
                                                        serializer, newRoots, txnType, notifies,
                                                        DmiDescriptor.EMPTY_ARRAY);
       map.put(tx.getServerTransactionID(), tx);

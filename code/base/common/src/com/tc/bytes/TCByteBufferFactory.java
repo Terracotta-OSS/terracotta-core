@@ -39,11 +39,11 @@ public class TCByteBufferFactory {
   private static final TCLogger       logger             = TCLogging.getLogger(TCByteBufferFactory.class);
   private static final TCLogger       lossyLogger        = new LossyTCLogger(logger);
 
-  private static final TCByteBuffer   ZERO_BYTE_BUFFER   = TCByteBuffer.wrap(new byte[0]);
+  private static final TCByteBuffer   ZERO_BYTE_BUFFER   = TCByteBufferImpl.wrap(new byte[0]);
 
   private static TCByteBuffer createNewInstance(boolean direct, int capacity, int index, int totalCount) {
     try {
-      TCByteBuffer rv = new TCByteBuffer(capacity, direct);
+      TCByteBuffer rv = new TCByteBufferImpl(capacity, direct);
       // Assert.assertEquals(0, rv.position());
       // Assert.assertEquals(capacity, rv.capacity());
       // Assert.assertEquals(capacity, rv.limit());
@@ -200,7 +200,7 @@ public class TCByteBufferFactory {
   }
 
   public static TCByteBuffer wrap(byte[] buf) {
-    return TCByteBuffer.wrap(buf);
+    return TCByteBufferImpl.wrap(buf);
   }
 
   public static TCByteBuffer copyAndWrap(byte[] buf) {

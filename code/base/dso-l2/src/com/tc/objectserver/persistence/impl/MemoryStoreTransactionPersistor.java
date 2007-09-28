@@ -6,10 +6,8 @@ package com.tc.objectserver.persistence.impl;
 
 import com.tc.memorydatastore.client.MemoryDataStoreClient;
 import com.tc.memorydatastore.message.TCByteArrayKeyValuePair;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
-import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.TransactionPersistor;
@@ -51,15 +49,11 @@ class MemoryStoreTransactionPersistor implements TransactionPersistor {
   }
 
   private byte[] serverTxnID2Bytes(ServerTransactionID serverTransactionID) {
-    byte b[] = new byte[16];
-    Conversion.writeLong(serverTransactionID.getChannelID().toLong(), b, 0);
-    Conversion.writeLong(serverTransactionID.getClientTransactionID().toLong(), b, 8);
-    return b;
+    return serverTransactionID.getBytes();
   }
 
   private ServerTransactionID bytes2ServerTxnID(byte[] data) {
-    return new ServerTransactionID(new ChannelID(Conversion.bytes2Long(data, 0)), new TransactionID(Conversion
-        .bytes2Long(data, 8)));
+    return ServerTransactionID.createFrom(data);
   }
 
   public void deleteAllByServerTransactionID(PersistenceTransaction tx, Collection toDelete) {

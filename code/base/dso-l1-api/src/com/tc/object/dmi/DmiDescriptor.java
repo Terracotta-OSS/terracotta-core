@@ -5,7 +5,7 @@
 package com.tc.object.dmi;
 
 import com.tc.async.api.EventContext;
-import com.tc.io.TCByteBufferInputStream;
+import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
 import com.tc.object.ObjectID;
@@ -35,10 +35,11 @@ public class DmiDescriptor implements TCSerializable, EventContext {
 
   /**
    * New descriptor
+   * 
    * @param receiverId Receiver object identifier
    * @param dmiCallId DMI call identifier
    * @param classSpecs Classes
-   * @param faultReceiver True if should use  local fault receiver
+   * @param faultReceiver True if should use local fault receiver
    */
   public DmiDescriptor(ObjectID receiverId, ObjectID dmiCallId, DmiClassSpec[] classSpecs, boolean faultReceiver) {
     Assert.pre(receiverId != null);
@@ -66,7 +67,7 @@ public class DmiDescriptor implements TCSerializable, EventContext {
   }
 
   /**
-   * @return Classes 
+   * @return Classes
    */
   public DmiClassSpec[] getClassSpecs() {
     return classSpecs;
@@ -86,10 +87,11 @@ public class DmiDescriptor implements TCSerializable, EventContext {
 
   /**
    * Deserialize descriptor from input stream into this object
+   * 
    * @param in Input stream
    * @return this
    */
-  public Object deserializeFrom(TCByteBufferInputStream in) throws IOException {
+  public Object deserializeFrom(TCByteBufferInput in) throws IOException {
     receiverId = new ObjectID(in.readLong());
     dmiCallId = new ObjectID(in.readLong());
     faultReceiver = in.readBoolean();
@@ -105,6 +107,7 @@ public class DmiDescriptor implements TCSerializable, EventContext {
 
   /**
    * Serialize this descriptor to out
+   * 
    * @param out Output stream
    */
   public void serializeTo(TCByteBufferOutput out) {

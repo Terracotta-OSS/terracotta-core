@@ -1,11 +1,12 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.msg;
 
 import com.tc.exception.ImplementMe;
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
@@ -32,7 +33,8 @@ public class RequestManagedObjectMessageImplTest extends TCTestCase {
       removedIDs.add(new ObjectID(i));
     }
 
-    RequestManagedObjectMessageImpl msg = new RequestManagedObjectMessageImpl(new SessionID(0), new NullMessageMonitor(),
+    RequestManagedObjectMessageImpl msg = new RequestManagedObjectMessageImpl(new SessionID(0),
+                                                                              new NullMessageMonitor(),
                                                                               new TCByteBufferOutputStream(4, 4096,
                                                                                                            false),
                                                                               channel, type);
@@ -62,12 +64,12 @@ public class RequestManagedObjectMessageImplTest extends TCTestCase {
   }
 
   private static class TestObjectRequestContext implements ObjectRequestContext {
-    
+
     public ObjectRequestID getRequestID() {
       return new ObjectRequestID(1);
     }
 
-    public ChannelID getChannelID() {
+    public ClientID getClientID() {
       throw new ImplementMe();
     }
 

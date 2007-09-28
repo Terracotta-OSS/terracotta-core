@@ -10,6 +10,7 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.l2.context.ManagedObjectSyncContext;
 import com.tc.net.groups.NodeID;
+import com.tc.net.groups.NodeIDImpl;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 
@@ -32,7 +33,7 @@ public class ObjectSyncMessageTest extends TestCase {
   private final int                dnaCount = 56;
 
   public void setUp() {
-    NodeID nodeID = new NodeID("foo", "foobar".getBytes());
+    NodeID nodeID = new NodeIDImpl("foo", "foobar".getBytes());
     HashMap rootsMap = new HashMap();
     rootsMap.put("root1", new ObjectID(1));
     rootsMap.put("root2", new ObjectID(2));

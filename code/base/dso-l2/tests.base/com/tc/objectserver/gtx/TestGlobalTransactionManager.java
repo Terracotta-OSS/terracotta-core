@@ -5,7 +5,7 @@
 package com.tc.objectserver.gtx;
 
 import com.tc.exception.ImplementMe;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
@@ -39,7 +39,7 @@ public final class TestGlobalTransactionManager implements ServerGlobalTransacti
     completeTransactionsContexts.put(collection);
   }
 
-  public void shutdownClient(ChannelID channelID) {
+  public void shutdownNode(NodeID nodeID) {
     return;
   }
 

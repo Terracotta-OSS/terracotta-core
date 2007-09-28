@@ -5,7 +5,7 @@
 package com.tc.object.msg;
 
 import com.tc.exception.ImplementMe;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.TestMessageChannel;
@@ -25,7 +25,7 @@ public class TestClientHandshakeMessage implements ClientHandshakeMessage {
   public Set                    clientObjectIds                = new HashSet();
   public Set                    waitContexts                   = new HashSet();
   public NoExceptionLinkedQueue sendCalls                      = new NoExceptionLinkedQueue();
-  public ChannelID              channelID;
+  public ClientID               clientID;
   public List                   lockContexts                   = new ArrayList();
   public List                   pendingLockContexts            = new ArrayList();
   public boolean                isChangeListener;
@@ -49,15 +49,15 @@ public class TestClientHandshakeMessage implements ClientHandshakeMessage {
     synchronized (this) {
       if (channel == null) {
         channel = new TestMessageChannel();
-        channel.channelID = channelID;
+        channel.channelID = clientID.getChannelID();
       }
 
       return channel;
     }
   }
 
-  public ChannelID getChannelID() {
-    return this.channelID;
+  public ClientID getClientID() {
+    return this.clientID;
   }
 
   public Set getObjectIDs() {

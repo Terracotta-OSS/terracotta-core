@@ -4,13 +4,13 @@
 package com.tc.objectserver.lockmanager.api;
 
 import com.tc.async.api.Sink;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.tx.WaitInvocation;
 
 public interface LockWaitContext {
 
-  public ChannelID getChannelID();
+  public NodeID getNodeID();
 
   public ThreadID getThreadID();
 

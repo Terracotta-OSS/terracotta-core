@@ -1,10 +1,12 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.lockmanager.api;
 
 import com.tc.async.api.Sink;
 import com.tc.exception.ImplementMe;
+import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.LockID;
@@ -23,36 +25,36 @@ public class TestLockManager implements LockManager {
   public final List startCalls           = new ArrayList();
   public final List notifyCalls          = new ArrayList();
 
-  public void notify(LockID lid, ChannelID cid, ThreadID tid, boolean all, NotifiedWaiters addNotifiedWaitersTo) {
+  public void notify(LockID lid, NodeID cid, ThreadID tid, boolean all, NotifiedWaiters addNotifiedWaitersTo) {
     notifyCalls.add(new Object[] { lid, cid, tid, new Boolean(all), addNotifiedWaitersTo });
   }
 
-  public void wait(LockID lid, ChannelID cid, ThreadID tid, WaitInvocation waitInvocation, Sink lockResponseSink) {
+  public void wait(LockID lid, NodeID cid, ThreadID tid, WaitInvocation waitInvocation, Sink lockResponseSink) {
     throw new ImplementMe();
   }
 
   public static final class WaitCallContext {
     public final LockID         lockID;
-    public final ChannelID      channelID;
+    public final NodeID         nid;
     public final ThreadID       threadID;
     public final WaitInvocation waitInvocation;
     public final Sink           lockResponseSink;
 
-    private WaitCallContext(LockID lockID, ChannelID channelID, ThreadID tid, int level, WaitInvocation waitInvocation,
+    private WaitCallContext(LockID lockID, NodeID cid, ThreadID tid, int level, WaitInvocation waitInvocation,
                             Sink lockResponseSink) {
       this.lockID = lockID;
-      this.channelID = channelID;
+      this.nid = cid;
       this.threadID = tid;
       this.waitInvocation = waitInvocation;
       this.lockResponseSink = lockResponseSink;
     }
   }
 
-  public boolean requestLock(LockID lockID, ChannelID channelID, ThreadID source, int level, Sink awardLockSink) {
+  public boolean requestLock(LockID lockID, NodeID channelID, ThreadID source, int level, Sink awardLockSink) {
     throw new ImplementMe();
   }
 
-  public void unlock(LockID id, ChannelID receiverID, ThreadID threadID) {
+  public void unlock(LockID id, NodeID receiverID, ThreadID threadID) {
     throw new ImplementMe();
   }
 
@@ -64,7 +66,7 @@ public class TestLockManager implements LockManager {
     throw new ImplementMe();
   }
 
-  public void clearAllLocksFor(ChannelID channelID) {
+  public void clearAllLocksFor(NodeID cid) {
     return;
   }
 
@@ -88,12 +90,12 @@ public class TestLockManager implements LockManager {
     throw new ImplementMe();
   }
 
-  public void reestablishWait(LockID lid, ChannelID cid, ThreadID tid, int level, WaitInvocation waitInvocation,
+  public void reestablishWait(LockID lid, NodeID cid, ThreadID tid, int level, WaitInvocation waitInvocation,
                               Sink lockResponseSink) {
     reestablishWaitCalls.add(new WaitCallContext(lid, cid, tid, level, waitInvocation, lockResponseSink));
   }
 
-  public void reestablishLock(LockID lid, ChannelID cid, ThreadID tid, int level, Sink lockResponseSink) {
+  public void reestablishLock(LockID lid, NodeID cid, ThreadID tid, int level, Sink lockResponseSink) {
     reestablishLockCalls.add(new ReestablishLockContext(new LockContext(lid, cid, tid, level), lockResponseSink));
   }
 
@@ -116,19 +118,21 @@ public class TestLockManager implements LockManager {
     throw new ImplementMe();
   }
 
-  public void queryLock(LockID lockID, ChannelID channelID, ThreadID threadID, Sink lockResponseSink) {
+  public void queryLock(LockID lockID, NodeID cid, ThreadID threadID, Sink lockResponseSink) {
     throw new ImplementMe();
   }
 
-  public void interrupt(LockID lockID, ChannelID channelID, ThreadID threadID) {
+  public void interrupt(LockID lockID, NodeID cid, ThreadID threadID) {
     throw new ImplementMe();
   }
 
-  public boolean tryRequestLock(LockID lockID, ChannelID channelID, ThreadID threadID, int level, WaitInvocation timeout, Sink awardLockSink) {
+  public boolean tryRequestLock(LockID lockID, NodeID channelID, ThreadID threadID, int level, WaitInvocation timeout,
+                                Sink awardLockSink) {
     throw new ImplementMe();
   }
 
-  public void recallCommit(LockID lid, ChannelID cid, Collection lockContexts, Collection waitContexts, Collection pendingLockContexts, Collection pendingTryLockContexts, Sink lockResponseSink) {
+  public void recallCommit(LockID lid, NodeID cid, Collection lockContexts, Collection waitContexts,
+                           Collection pendingLockContexts, Collection pendingTryLockContexts, Sink lockResponseSink) {
     throw new ImplementMe();
   }
 }

@@ -67,10 +67,10 @@ public class RespondToObjectRequestHandler extends AbstractEventHandler {
     }
 
     try {
-      MessageChannel channel = channelManager.getActiveChannel(morc.getChannelID());
+      MessageChannel channel = channelManager.getActiveChannel(morc.getRequestedNodeID());
 
       // Only send objects that are NOT already there in the client. Look at the comment below.
-      Set newIds = stateManager.addReferences(morc.getChannelID(), ids);
+      Set newIds = stateManager.addReferences(morc.getRequestedNodeID(), ids);
       int sendCount = 0;
       int batches = 0;
       ObjectStringSerializer serializer = new ObjectStringSerializer();
@@ -113,7 +113,7 @@ public class RespondToObjectRequestHandler extends AbstractEventHandler {
       }
 
     } catch (NoSuchChannelException e) {
-      logger.info("Not sending response because channel is disconnected: " + morc.getChannelID()
+      logger.info("Not sending response because channel is disconnected: " + morc.getRequestedNodeID()
                   + ".  Releasing all checked-out objects...", e);
       for (Iterator i = objectsInOrder.iterator(); i.hasNext();) {
         objectManager.releaseReadOnly((ManagedObject) i.next());
@@ -127,11 +127,11 @@ public class RespondToObjectRequestHandler extends AbstractEventHandler {
     if (oids.isEmpty()) { return; }
     int maxRequestDepth = morc.getMaxRequestDepth();
     if (logger.isDebugEnabled()) {
-      logger.debug("Creating Server initiated requests for : " + morc.getChannelID() + " org request Id length = "
+      logger.debug("Creating Server initiated requests for : " + morc.getRequestedNodeID() + " org request Id length = "
                    + morc.getLookupIDs().size() + "  Reachable object(s) to be looked up  length = " + oids.size());
     }
     if (oids.size() <= MAX_OBJECTS_TO_LOOKUP) {
-      this.managedObjectRequestSink.add(new ManagedObjectRequestContext(morc.getChannelID(), morc.getRequestID(), oids,
+      this.managedObjectRequestSink.add(new ManagedObjectRequestContext(morc.getRequestedNodeID(), morc.getRequestID(), oids,
                                                                         -1, morc.getSink(),
                                                                         "RespondToObjectRequestHandler"));
     } else {
@@ -140,7 +140,7 @@ public class RespondToObjectRequestHandler extends AbstractEventHandler {
       for (Iterator i = oids.iterator(); i.hasNext();) {
         split.add(i.next());
         if (split.size() >= MAX_OBJECTS_TO_LOOKUP) {
-          this.managedObjectRequestSink.add(new ManagedObjectRequestContext(morc.getChannelID(), morc.getRequestID(),
+          this.managedObjectRequestSink.add(new ManagedObjectRequestContext(morc.getRequestedNodeID(), morc.getRequestID(),
                                                                             split, -1, morc.getSink(),
                                                                             "RespondToObjectRequestHandler"));
           if (i.hasNext()) split = new THashSet(maxRequestDepth);

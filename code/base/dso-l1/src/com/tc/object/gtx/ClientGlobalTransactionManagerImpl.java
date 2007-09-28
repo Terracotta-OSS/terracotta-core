@@ -6,7 +6,7 @@ package com.tc.object.gtx;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.lockmanager.api.LockFlushCallback;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.tx.RemoteTransactionManager;
@@ -49,7 +49,7 @@ public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransacti
     return ALLOWED_LWM_DELTA;
   }
 
-  public synchronized boolean startApply(ChannelID committerID, TransactionID transactionID, GlobalTransactionID gtxID) {
+  public synchronized boolean startApply(NodeID committerID, TransactionID transactionID, GlobalTransactionID gtxID) {
     if (gtxID.lessThan(getLowGlobalTransactionIDWatermark())) {
       // formatting
       throw new UnknownTransactionError("Attempt to apply a transaction lower than the low watermark: gtxID=" + gtxID

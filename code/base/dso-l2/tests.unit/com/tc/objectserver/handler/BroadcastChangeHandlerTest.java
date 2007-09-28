@@ -8,6 +8,8 @@ import com.tc.async.api.EventContext;
 import com.tc.async.impl.MockStage;
 import com.tc.exception.ImplementMe;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.groups.ClientID;
+import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.tcm.ChannelEventListener;
@@ -86,15 +88,14 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     TxnBatchID batchID = new TxnBatchID(1);
     TransactionID txID = new TransactionID(1);
     LockID[] lockIDs = new LockID[0];
-    ChannelID channelID = new ChannelID(1);
+    ClientID cid = new ClientID(new ChannelID(1));
     List dnas = Collections.unmodifiableList(new LinkedList());
     ObjectStringSerializer serializer = null;
     Map newRoots = Collections.unmodifiableMap(new HashMap());
     TxnType txnType = TxnType.NORMAL;
     SequenceID sequenceID = new SequenceID(1);
-    ServerTransaction tx = new ServerTransactionImpl(gtxm, batchID, txID, sequenceID, lockIDs, channelID, dnas,
-                                                     serializer, newRoots, txnType, new LinkedList(),
-                                                     DmiDescriptor.EMPTY_ARRAY);
+    ServerTransaction tx = new ServerTransactionImpl(gtxm, batchID, txID, sequenceID, lockIDs, cid, dnas, serializer,
+                                                     newRoots, txnType, new LinkedList(), DmiDescriptor.EMPTY_ARRAY);
 
     assertTrue(transactionBatchManager.batchComponentCompleteCalls.isEmpty());
     assertFalse(transactionBatchManager.isBatchComponentComplete.get());
@@ -103,7 +104,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     handler.handleEvent(getBroadcastTxnContext(tx));
 
     // make sure it called batchComponentComplete on TransactionBatchManager.
-    assertBatchComponentCompleteCalled(batchID, txID, channelID);
+    assertBatchComponentCompleteCalled(batchID, txID, cid);
 
     // make sure it didn't try to send a message
     assertTrue(channelManager.newBatchTransactionAcknowledgeMessageCalls.isEmpty());
@@ -113,10 +114,10 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     channelManager.btamsg = new TestBatchTransactionAcknowledgeMessage();
     assertNotNull(channelManager.btamsg);
     handler.handleEvent(getBroadcastTxnContext(tx));
-    assertBatchComponentCompleteCalled(batchID, txID, channelID);
+    assertBatchComponentCompleteCalled(batchID, txID, cid);
 
     // make sure it sent a message
-    assertEquals(channelID, channelManager.newBatchTransactionAcknowledgeMessageCalls.poll(1));
+    assertEquals(cid, channelManager.newBatchTransactionAcknowledgeMessageCalls.poll(1));
     assertEquals(batchID, channelManager.btamsg.initializeCalls.poll(1));
     assertNotNull(channelManager.btamsg.sendCalls.poll(1));
 
@@ -137,11 +138,11 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
                                       new BackReferences());
   }
 
-  private void assertBatchComponentCompleteCalled(TxnBatchID batchID, TransactionID txID, ChannelID channelID) {
+  private void assertBatchComponentCompleteCalled(TxnBatchID batchID, TransactionID txID, ClientID cid) {
     Object[] args = (Object[]) transactionBatchManager.batchComponentCompleteCalls.poll(1);
     assertTrue(transactionBatchManager.batchComponentCompleteCalls.isEmpty());
     assertNotNull(args);
-    assertEquals(channelID, args[0]);
+    assertEquals(cid, args[0]);
     assertEquals(batchID, args[1]);
     assertEquals(txID, args[2]);
   }
@@ -179,7 +180,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public MessageChannel getActiveChannel(ChannelID id) {
+    public MessageChannel getActiveChannel(NodeID id) {
       return (MessageChannel) allChannels.get(id);
     }
 
@@ -187,11 +188,11 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       return (MessageChannel[]) allChannels.values().toArray(new MessageChannel[0]);
     }
 
-    public boolean isActiveID(ChannelID channelID) {
+    public boolean isActiveID(NodeID nodeID) {
       throw new ImplementMe();
     }
 
-    public String getChannelAddress(ChannelID channelID) {
+    public String getChannelAddress(NodeID nid) {
       throw new ImplementMe();
     }
 
@@ -199,14 +200,14 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     public TestBatchTransactionAcknowledgeMessage btamsg;
     public boolean                                shouldThrowNoSuchChannelException          = false;
 
-    public BatchTransactionAcknowledgeMessage newBatchTransactionAcknowledgeMessage(ChannelID channelID)
+    public BatchTransactionAcknowledgeMessage newBatchTransactionAcknowledgeMessage(NodeID nid)
         throws NoSuchChannelException {
-      this.newBatchTransactionAcknowledgeMessageCalls.put(channelID);
+      this.newBatchTransactionAcknowledgeMessageCalls.put(nid);
       if (shouldThrowNoSuchChannelException) { throw new NoSuchChannelException(); }
       return btamsg;
     }
 
-    public Set getAllActiveChannelIDs() {
+    public Set getAllActiveClientIDs() {
       throw new ImplementMe();
     }
 
@@ -214,17 +215,22 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public void makeChannelActive(ChannelID channelID, long startIDs, long endIDs, boolean persistent) {
+    public void makeChannelActive(ClientID clientID, long startIDs, long endIDs, boolean persistent) {
       throw new ImplementMe();
     }
 
-    public Set getRawChannelIDs() {
+    public Set getAllClientIDs() {
       throw new ImplementMe();
     }
 
     public void makeChannelActiveNoAck(MessageChannel channel) {
       throw new ImplementMe();
     }
+
+    public ClientID getClientIDFor(ChannelID channelID) {
+      return new ClientID(channelID);
+    }
+
   }
 
   private static final class TestMessageChannel implements MessageChannel {

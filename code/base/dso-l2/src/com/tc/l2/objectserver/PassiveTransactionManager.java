@@ -3,7 +3,7 @@
  */
 package com.tc.l2.objectserver;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.objectserver.tx.ServerTransaction;
 
 import java.util.Collection;
@@ -11,7 +11,7 @@ import java.util.Set;
 
 public interface PassiveTransactionManager {
 
-  public void addCommitedTransactions(ChannelID channelID, Set txnIDs, Collection txns, Collection completedTxnIDs);
+  public void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns, Collection completedTxnIDs);
 
   public void addObjectSyncTransaction(ServerTransaction txn);
 

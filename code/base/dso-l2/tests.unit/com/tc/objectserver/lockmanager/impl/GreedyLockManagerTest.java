@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.lockmanager.impl;
 
@@ -9,6 +10,8 @@ import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
 import com.tc.exception.ImplementMe;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.groups.ClientID;
+import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.tcm.ChannelEventListener;
@@ -95,9 +98,9 @@ public class GreedyLockManagerTest extends TestCase {
     final MessageChannel channel = new TestMessageChannel();
 
     final long start = System.currentTimeMillis();
-    final ChannelID cid1 = new ChannelID(1);
-    ChannelID cid2 = new ChannelID(2);
-    ChannelID cid3 = new ChannelID(3);
+    final ClientID cid1 = new ClientID(new ChannelID(1));
+    ClientID cid2 = new ClientID(new ChannelID(2));
+    ClientID cid3 = new ClientID(new ChannelID(3));
     LockID lid1 = new LockID("1");
     LockID lid2 = new LockID("2");
     LockID lid3 = new LockID("3");
@@ -110,8 +113,8 @@ public class GreedyLockManagerTest extends TestCase {
         return null;
       }
 
-      public String getChannelAddress(ChannelID channelID) {
-        if (cid1.equals(channelID)) { return "127.0.0.1:6969"; }
+      public String getChannelAddress(NodeID nid) {
+        if (cid1.equals(nid)) { return "127.0.0.1:6969"; }
         return "no longer connected";
       }
     });
@@ -160,7 +163,7 @@ public class GreedyLockManagerTest extends TestCase {
     LockHolder holder = holders[0];
     assertEquals(LockLevel.toString(LockLevel.WRITE), holder.getLockLevel());
     assertTrue(holder.getTimeAcquired() >= time);
-    assertEquals(new ChannelID(1), holder.getChannelID());
+    assertEquals(new ClientID(new ChannelID(1)), holder.getNodeID());
     assertEquals("127.0.0.1:6969", holder.getChannelAddr());
     assertEquals(ThreadID.VM_ID, holder.getThreadID());
 
@@ -179,31 +182,31 @@ public class GreedyLockManagerTest extends TestCase {
     LockHolder holder = holders[0];
     assertEquals(LockLevel.toString(LockLevel.READ), holder.getLockLevel());
     assertTrue(holder.getTimeAcquired() >= time);
-    if (new ChannelID(1).equals(holder.getChannelID())) {
+    if ((new ClientID(new ChannelID(1))).equals(holder.getNodeID())) {
       assertEquals("127.0.0.1:6969", holder.getChannelAddr());
-    } else if (new ChannelID(2).equals(holder.getChannelID())) {
+    } else if ((new ClientID(new ChannelID(2))).equals(holder.getNodeID())) {
       assertEquals("no longer connected", holder.getChannelAddr());
     } else {
-      fail("Invalid Channel number ! " + holder.getChannelID());
+      fail("Invalid Channel number ! " + holder.getNodeID());
     }
     assertEquals(ThreadID.VM_ID, holder.getThreadID());
 
     holder = holders[1];
     assertEquals(LockLevel.toString(LockLevel.READ), holder.getLockLevel());
     assertTrue(holder.getTimeAcquired() >= time);
-    if (new ChannelID(1).equals(holder.getChannelID())) {
+    if ((new ClientID(new ChannelID(1))).equals(holder.getNodeID())) {
       assertEquals("127.0.0.1:6969", holder.getChannelAddr());
-    } else if (new ChannelID(2).equals(holder.getChannelID())) {
+    } else if ((new ClientID(new ChannelID(2))).equals(holder.getNodeID())) {
       assertEquals("no longer connected", holder.getChannelAddr());
     } else {
-      fail("Invalid Channel number ! " + holder.getChannelID());
+      fail("Invalid Channel number ! " + holder.getNodeID());
     }
     assertEquals(ThreadID.VM_ID, holder.getThreadID());
 
     ServerLockRequest req = reqs[0];
     assertEquals(LockLevel.toString(LockLevel.WRITE), req.getLockLevel());
     assertTrue(req.getRequestTime() >= time);
-    assertEquals(new ChannelID(3), req.getChannelID());
+    assertEquals(new ClientID(new ChannelID(3)), req.getNodeID());
     assertEquals("no longer connected", req.getChannelAddr());
     assertEquals(new ThreadID(1), req.getThreadID());
   }
@@ -221,14 +224,14 @@ public class GreedyLockManagerTest extends TestCase {
     LockHolder holder = holders[0];
     assertEquals(LockLevel.toString(LockLevel.WRITE), holder.getLockLevel());
     assertTrue(holder.getTimeAcquired() >= time);
-    assertEquals(new ChannelID(1), holder.getChannelID());
+    assertEquals(new ClientID(new ChannelID(1)), holder.getNodeID());
     assertEquals(ThreadID.VM_ID, holder.getThreadID());
     assertEquals("127.0.0.1:6969", holder.getChannelAddr());
 
     ServerLockRequest req = reqs[0];
     assertEquals(LockLevel.toString(LockLevel.WRITE), req.getLockLevel());
     assertTrue(req.getRequestTime() >= time);
-    assertEquals(new ChannelID(2), req.getChannelID());
+    assertEquals(new ClientID(new ChannelID(2)), req.getNodeID());
     assertEquals("no longer connected", req.getChannelAddr());
     assertEquals(new ThreadID(1), req.getThreadID());
   }
@@ -255,7 +258,7 @@ public class GreedyLockManagerTest extends TestCase {
 
   public void testReestablishWait() throws Exception {
     LockID lockID1 = new LockID("my lock");
-    ChannelID channel1 = new ChannelID(1);
+    ClientID cid1 = new ClientID(new ChannelID(1));
     ThreadID tx1 = new ThreadID(1);
     ThreadID tx2 = new ThreadID(2);
 
@@ -266,15 +269,15 @@ public class GreedyLockManagerTest extends TestCase {
       WaitInvocation waitCall2 = new WaitInvocation(waitTime * 2);
       TestSink responseSink = new TestSink();
       long t0 = System.currentTimeMillis();
-      lockManager.reestablishWait(lockID1, channel1, tx1, LockLevel.WRITE, waitCall1, responseSink);
-      lockManager.reestablishWait(lockID1, channel1, tx2, LockLevel.WRITE, waitCall2, responseSink);
+      lockManager.reestablishWait(lockID1, cid1, tx1, LockLevel.WRITE, waitCall1, responseSink);
+      lockManager.reestablishWait(lockID1, cid1, tx2, LockLevel.WRITE, waitCall2, responseSink);
       lockManager.start();
 
       // Wait timeout
       LockResponseContext ctxt = (LockResponseContext) responseSink.take();
       assertTrue(System.currentTimeMillis() - t0 >= waitTime);
       assertTrue(ctxt.isLockWaitTimeout());
-      assertResponseContext(lockID1, channel1, tx1, LockLevel.WRITE, ctxt);
+      assertResponseContext(lockID1, cid1, tx1, LockLevel.WRITE, ctxt);
 
       // Award - but should not give it as Greedy
       LockResponseContext ctxt1 = (LockResponseContext) responseSink.take();
@@ -289,7 +292,7 @@ public class GreedyLockManagerTest extends TestCase {
         assertAwardNotGreedy(ctxt2, lockID1, tx1);
       }
 
-      lockManager.unlock(lockID1, channel1, tx1);
+      lockManager.unlock(lockID1, cid1, tx1);
 
       // Award - Greedy
       ctxt = (LockResponseContext) responseSink.take();
@@ -322,7 +325,7 @@ public class GreedyLockManagerTest extends TestCase {
 
   public void testReestablishLockAfterReestablishWait() throws Exception {
     LockID lockID1 = new LockID("my lock");
-    ChannelID channel1 = new ChannelID(1);
+    ClientID cid1 = new ClientID(new ChannelID(1));
     ThreadID tx1 = new ThreadID(1);
     ThreadID tx2 = new ThreadID(2);
     int requestedLevel = LockLevel.WRITE;
@@ -330,13 +333,13 @@ public class GreedyLockManagerTest extends TestCase {
     try {
       TestSink responseSink = new TestSink();
       assertEquals(0, lockManager.getLockCount());
-      lockManager.reestablishWait(lockID1, channel1, tx1, LockLevel.WRITE, waitCall, responseSink);
+      lockManager.reestablishWait(lockID1, cid1, tx1, LockLevel.WRITE, waitCall, responseSink);
       assertEquals(1, lockManager.getLockCount());
       assertEquals(0, responseSink.getInternalQueue().size());
 
       // now try to award the lock to the same client-transaction
       try {
-        lockManager.reestablishLock(lockID1, channel1, tx1, requestedLevel, responseSink);
+        lockManager.reestablishLock(lockID1, cid1, tx1, requestedLevel, responseSink);
         fail("Should have thrown an AssertionError.");
       } catch (AssertionError e) {
         // expected
@@ -344,7 +347,7 @@ public class GreedyLockManagerTest extends TestCase {
       // now try to reestablish the same lock from a different transaction. It
       // sould succeed
       assertEquals(1, lockManager.getLockCount());
-      lockManager.reestablishLock(lockID1, channel1, tx2, requestedLevel, responseSink);
+      lockManager.reestablishLock(lockID1, cid1, tx2, requestedLevel, responseSink);
     } finally {
       lockManager = null;
       resetLockManager();
@@ -353,7 +356,7 @@ public class GreedyLockManagerTest extends TestCase {
 
   public void testReestablishReadLock() throws Exception {
     LockID lockID1 = new LockID("my lock");
-    ChannelID channel1 = new ChannelID(1);
+    ClientID cid1 = new ClientID(new ChannelID(1));
     ThreadID tx1 = new ThreadID(1);
     ThreadID tx2 = new ThreadID(2);
     ThreadID tx3 = new ThreadID(3);
@@ -363,19 +366,19 @@ public class GreedyLockManagerTest extends TestCase {
       TestSink responseSink = new TestSink();
       assertEquals(0, lockManager.getLockCount());
 
-      lockManager.reestablishLock(lockID1, channel1, tx1, requestedLevel, responseSink);
+      lockManager.reestablishLock(lockID1, cid1, tx1, requestedLevel, responseSink);
       assertEquals(1, lockManager.getLockCount());
 
       // now reestablish the same read lock in another transaction. It should
       // succeed.
       responseSink = new TestSink();
-      lockManager.reestablishLock(lockID1, channel1, tx2, requestedLevel, responseSink);
+      lockManager.reestablishLock(lockID1, cid1, tx2, requestedLevel, responseSink);
       assertEquals(1, lockManager.getLockCount());
 
       // now reestablish the the same write lock. It should fail.
       responseSink = new TestSink();
       try {
-        lockManager.reestablishLock(lockID1, channel1, tx3, LockLevel.WRITE, responseSink);
+        lockManager.reestablishLock(lockID1, cid1, tx3, LockLevel.WRITE, responseSink);
         fail("Should have thrown a LockManagerError.");
       } catch (AssertionError e) {
         //
@@ -390,13 +393,13 @@ public class GreedyLockManagerTest extends TestCase {
     try {
       TestSink responseSink = new TestSink();
       assertEquals(0, lockManager.getLockCount());
-      lockManager.reestablishLock(lockID1, channel1, tx1, LockLevel.WRITE, responseSink);
+      lockManager.reestablishLock(lockID1, cid1, tx1, LockLevel.WRITE, responseSink);
       assertEquals(1, lockManager.getLockCount());
 
       // now reestablish a read lock. This should fail.
       responseSink = new TestSink();
       try {
-        lockManager.reestablishLock(lockID1, channel1, tx2, LockLevel.READ, responseSink);
+        lockManager.reestablishLock(lockID1, cid1, tx2, LockLevel.READ, responseSink);
         fail("Should have thrown a LockManagerError");
       } catch (Error e) {
         //
@@ -412,8 +415,8 @@ public class GreedyLockManagerTest extends TestCase {
 
     LockID lockID1 = new LockID("my lock");
     LockID lockID2 = new LockID("my other lock");
-    ChannelID channel1 = new ChannelID(1);
-    ChannelID channel2 = new ChannelID(2);
+    ClientID cid1 = new ClientID(new ChannelID(1));
+    ClientID cid2 = new ClientID(new ChannelID(2));
     ThreadID tx1 = new ThreadID(1);
     ThreadID tx2 = new ThreadID(2);
     int requestedLevel = LockLevel.WRITE;
@@ -421,24 +424,24 @@ public class GreedyLockManagerTest extends TestCase {
     try {
       TestSink responseSink = new TestSink();
       assertEquals(0, lockManager.getLockCount());
-      lockManager.reestablishLock(lockID1, channel1, tx1, requestedLevel, responseSink);
+      lockManager.reestablishLock(lockID1, cid1, tx1, requestedLevel, responseSink);
       assertEquals(1, lockManager.getLockCount());
 
       try {
-        lockManager.reestablishLock(lockID1, channel2, tx2, requestedLevel, responseSink);
+        lockManager.reestablishLock(lockID1, cid2, tx2, requestedLevel, responseSink);
         fail("Expected a LockManagerError!");
       } catch (AssertionError e) {
         //
       }
 
       // try to reestablish another lock. It should succeed.
-      lockManager.reestablishLock(lockID2, channel1, tx1, requestedLevel, responseSink);
+      lockManager.reestablishLock(lockID2, cid1, tx1, requestedLevel, responseSink);
 
       lockManager.start();
       // you shouldn't be able to call reestablishLock after the lock manager
       // has started.
       try {
-        lockManager.reestablishLock(lockID1, channel1, tx1, requestedLevel, null);
+        lockManager.reestablishLock(lockID1, cid1, tx1, requestedLevel, null);
         fail("Should have thrown a LockManagerError");
       } catch (Error e) {
         //
@@ -458,23 +461,23 @@ public class GreedyLockManagerTest extends TestCase {
   // assertResponseContext(lockID, channel, tx, requestedLevel, ctxt);
   // }
 
-  private void assertResponseContext(LockID lockID, ChannelID channel, ThreadID tx1, int requestedLevel,
+  private void assertResponseContext(LockID lockID, NodeID nid, ThreadID tx1, int requestedLevel,
                                      LockResponseContext ctxt) {
     assertEquals(lockID, ctxt.getLockID());
-    assertEquals(channel, ctxt.getChannelID());
+    assertEquals(nid, ctxt.getNodeID());
     assertEquals(tx1, ctxt.getThreadID());
     assertEquals(requestedLevel, ctxt.getLockLevel());
   }
 
   public void testWaitTimeoutsIgnoredDuringStartup() throws Exception {
     LockID lockID = new LockID("my lcok");
-    ChannelID channel1 = new ChannelID(1);
+    ClientID cid1 = new ClientID(new ChannelID(1));
     ThreadID tx1 = new ThreadID(1);
     try {
       long waitTime = 1000;
       WaitInvocation waitInvocation = new WaitInvocation(waitTime);
       TestSink responseSink = new TestSink();
-      lockManager.reestablishWait(lockID, channel1, tx1, LockLevel.WRITE, waitInvocation, responseSink);
+      lockManager.reestablishWait(lockID, cid1, tx1, LockLevel.WRITE, waitInvocation, responseSink);
 
       LockResponseContext ctxt = (LockResponseContext) responseSink.waitForAdd(waitTime * 2);
       assertNull(ctxt);
@@ -490,7 +493,7 @@ public class GreedyLockManagerTest extends TestCase {
 
   public void testOffDoesNotBlockUntilNoOutstandingLocksViaUnlock() throws Exception {
     List queue = sink.getInternalQueue();
-    ChannelID channel1 = new ChannelID(1);
+    ClientID cid1 = new ClientID(new ChannelID(1));
     LockID lock1 = new LockID("1");
     ThreadID tx1 = new ThreadID(1);
 
@@ -498,7 +501,7 @@ public class GreedyLockManagerTest extends TestCase {
     ShutdownThread shutdown = new ShutdownThread(shutdownSteps);
     try {
       lockManager.start();
-      lockManager.requestLock(lock1, channel1, tx1, LockLevel.WRITE, sink);
+      lockManager.requestLock(lock1, cid1, tx1, LockLevel.WRITE, sink);
       assertEquals(1, queue.size());
 
       shutdown.start();
@@ -513,38 +516,38 @@ public class GreedyLockManagerTest extends TestCase {
 
   public void testOffStopsGrantingNewLocks() throws Exception {
     List queue = sink.getInternalQueue();
-    ChannelID channelID = new ChannelID(1);
+    ClientID cid = new ClientID(new ChannelID(1));
     LockID lockID = new LockID("1");
     ThreadID txID = new ThreadID(1);
     try {
       // Test that the normal case works as expected...
       lockManager.start();
-      lockManager.requestLock(lockID, channelID, txID, LockLevel.WRITE, sink);
+      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, sink);
       assertEquals(1, queue.size());
       assertAwardGreedy((LockResponseContext) queue.get(0), lockID);
       queue.clear();
-      lockManager.unlock(lockID, channelID, ThreadID.VM_ID);
+      lockManager.unlock(lockID, cid, ThreadID.VM_ID);
 
-      lockManager.requestLock(lockID, channelID, txID, LockLevel.WRITE, sink);
+      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, sink);
       assertEquals(1, queue.size());
       assertAwardGreedy((LockResponseContext) queue.get(0), lockID);
       queue.clear();
-      lockManager.unlock(lockID, channelID, ThreadID.VM_ID);
+      lockManager.unlock(lockID, cid, ThreadID.VM_ID);
 
       // Call shutdown and make sure that the lock isn't granted via the
       // "requestLock" method
       queue.clear();
       lockManager.stop();
-      lockManager.requestLock(lockID, channelID, txID, LockLevel.WRITE, sink);
+      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, sink);
       assertEquals(0, queue.size());
     } finally {
-      lockManager.clearAllLocksFor(channelID);
+      lockManager.clearAllLocksFor(cid);
     }
   }
 
   public void testRequestDoesntGrantPendingLocks() throws Exception {
     List queue = sink.getInternalQueue();
-    ChannelID channelID = new ChannelID(1);
+    ClientID cid = new ClientID(new ChannelID(1));
     LockID lockID = new LockID("1");
     ThreadID txID = new ThreadID(1);
 
@@ -552,15 +555,15 @@ public class GreedyLockManagerTest extends TestCase {
       lockManager.start();
       // now try stacking locks and make sure that calling unlock doesn't grant
       // the pending locks but instead a recall is issued
-      lockManager.requestLock(lockID, channelID, txID, LockLevel.WRITE, sink);
+      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, sink);
       queue.clear();
-      lockManager.requestLock(lockID, new ChannelID(2), new ThreadID(2), LockLevel.WRITE, sink);
+      lockManager.requestLock(lockID, new ClientID(new ChannelID(2)), new ThreadID(2), LockLevel.WRITE, sink);
       // the second lock should be pending but a recall should be issued.
       assertEquals(1, queue.size());
       LockResponseContext lrc = (LockResponseContext) sink.take();
       assertTrue(lrc.isLockRecall());
       assertEquals(lockID, lrc.getLockID());
-      assertEquals(channelID, lrc.getChannelID());
+      assertEquals(cid, lrc.getNodeID());
       assertEquals(ThreadID.VM_ID, lrc.getThreadID());
       assertEquals(LockLevel.WRITE, lrc.getLockLevel());
     } finally {
@@ -571,22 +574,22 @@ public class GreedyLockManagerTest extends TestCase {
 
   public void testUnlockIgnoredDuringShutdown() throws Exception {
     List queue = sink.getInternalQueue();
-    ChannelID channelID = new ChannelID(1);
+    ClientID cid = new ClientID(new ChannelID(1));
     LockID lockID = new LockID("1");
     ThreadID txID = new ThreadID(1);
     try {
       lockManager.start();
       // now try stacking locks and make sure that calling unlock doesn't grant
       // the pending locks but instead a recall is issued
-      lockManager.requestLock(lockID, channelID, txID, LockLevel.WRITE, sink);
+      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, sink);
       queue.clear();
-      lockManager.requestLock(lockID, new ChannelID(2), new ThreadID(2), LockLevel.WRITE, sink);
+      lockManager.requestLock(lockID, new ClientID(new ChannelID(2)), new ThreadID(2), LockLevel.WRITE, sink);
       // the second lock should be pending but a recall should be issued.
       assertEquals(1, queue.size());
       LockResponseContext lrc = (LockResponseContext) sink.take();
       assertTrue(lrc.isLockRecall());
       assertEquals(lockID, lrc.getLockID());
-      assertEquals(channelID, lrc.getChannelID());
+      assertEquals(cid, lrc.getNodeID());
       assertEquals(ThreadID.VM_ID, lrc.getThreadID());
       assertEquals(LockLevel.WRITE, lrc.getLockLevel());
 
@@ -595,7 +598,7 @@ public class GreedyLockManagerTest extends TestCase {
       lockManager.stop();
 
       // unlock the first lock
-      lockManager.unlock(lockID, channelID, txID);
+      lockManager.unlock(lockID, cid, txID);
       // the second lock should still be pending
       assertEquals(0, queue.size());
 
@@ -614,7 +617,7 @@ public class GreedyLockManagerTest extends TestCase {
 
     LockID l1 = new LockID("1");
     LockID l2 = new LockID("2");
-    ChannelID c1 = new ChannelID(1);
+    ClientID c1 = new ClientID(new ChannelID(1));
 
     ThreadID s1 = new ThreadID(1);
     ThreadID s2 = new ThreadID(2);
@@ -667,7 +670,7 @@ public class GreedyLockManagerTest extends TestCase {
     LockID l4 = new LockID("4");
     LockID l5 = new LockID("5");
 
-    ChannelID c1 = new ChannelID(1);
+    ClientID c1 = new ClientID(new ChannelID(1));
     ThreadID s1 = new ThreadID(1);
     ThreadID s2 = new ThreadID(2);
 
@@ -711,7 +714,7 @@ public class GreedyLockManagerTest extends TestCase {
     // Detect deadlock in competing upgrades
     LockID l1 = new LockID("L1");
 
-    ChannelID c0 = new ChannelID(0);
+    ClientID c0 = new ClientID(new ChannelID(0));
     ThreadID s1 = new ThreadID(1);
     ThreadID s2 = new ThreadID(2);
 
@@ -757,7 +760,7 @@ public class GreedyLockManagerTest extends TestCase {
     List threads = new ArrayList();
 
     for (int t = 0; t < numThreads; t++) {
-      ChannelID cid = txns[t].getChannelID();
+      NodeID cid = txns[t].getNodeID();
       ThreadID tid = txns[t].getClientThreadID();
 
       RandomRequest req = new RandomRequest(cid, tid);
@@ -783,15 +786,15 @@ public class GreedyLockManagerTest extends TestCase {
     assertEquals(0, results.chains.size());
 
     for (int i = 0; i < txns.length; i++) {
-      lockManager.clearAllLocksFor(txns[i].getChannelID());
+      lockManager.clearAllLocksFor(txns[i].getNodeID());
     }
   }
 
   private class RandomRequest implements Runnable {
-    private final ChannelID cid;
-    private final ThreadID  tid;
+    private final NodeID   cid;
+    private final ThreadID tid;
 
-    public RandomRequest(ChannelID cid, ThreadID tid) {
+    public RandomRequest(NodeID cid, ThreadID tid) {
       this.cid = cid;
       this.tid = tid;
     }
@@ -815,7 +818,7 @@ public class GreedyLockManagerTest extends TestCase {
   private ServerThreadID[] makeUniqueTxns(int num) {
     ServerThreadID[] rv = new ServerThreadID[num];
     for (int i = 0; i < num; i++) {
-      rv[i] = new ServerThreadID(new ChannelID(i), new ThreadID(i));
+      rv[i] = new ServerThreadID(new ClientID(new ChannelID(i)), new ThreadID(i));
     }
     return rv;
   }
@@ -852,7 +855,7 @@ public class GreedyLockManagerTest extends TestCase {
     LockID l1 = new LockID("L1");
     LockID l2 = new LockID("L2");
     LockID l3 = new LockID("L3");
-    ChannelID c0 = new ChannelID(0);
+    ClientID c0 = new ClientID(new ChannelID(0));
     ThreadID s1 = new ThreadID(1);
     ThreadID s2 = new ThreadID(2);
     ThreadID s3 = new ThreadID(3);

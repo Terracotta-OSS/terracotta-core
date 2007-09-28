@@ -5,6 +5,8 @@
 package com.tc.objectserver.lockmanager.impl;
 
 import com.tc.exception.ImplementMe;
+import com.tc.net.groups.ClientID;
+import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MockMessageChannel;
@@ -28,12 +30,13 @@ public class LockTimerTest extends TestCase {
   private LockAwardContext   lockAwardContext;
   private MockChannelManager channelManager;
   private MockMessageChannel channel;
-  private ChannelID          channelId;
+  private ClientID           clientID;
   private int                timeout;
 
   protected void setUp() throws Exception {
     super.setUp();
-    this.channelId = new ChannelID(101);
+    ChannelID channelId = new ChannelID(101);
+    this.clientID = new ClientID(channelId);
     this.channel = new MockMessageChannel(channelId);
     this.channelManager = new MockChannelManager();
     this.channelManager.addChannel(this.channel);
@@ -45,8 +48,8 @@ public class LockTimerTest extends TestCase {
         throw new ImplementMe();
       }
 
-      public ChannelID getChannelID() {
-        return channel.getChannelID();
+      public NodeID getNodeID() {
+        return clientID;
       }
 
       public long getTimeout() {
@@ -132,8 +135,8 @@ public class LockTimerTest extends TestCase {
         throw new ImplementMe();
       }
 
-      public ChannelID getChannelID() {
-        return new ChannelID(234709381274908237L);
+      public NodeID getNodeID() {
+        return new ClientID(new ChannelID(234709381274908237L));
       }
 
       public long getTimeout() {
@@ -207,11 +210,11 @@ public class LockTimerTest extends TestCase {
 
     public void addChannel(MessageChannel channel) {
       synchronized (channels) {
-        this.channels.put(channel.getChannelID(), channel);
+        this.channels.put(new ClientID(channel.getChannelID()), channel);
       }
     }
 
-    public MessageChannel getActiveChannel(ChannelID id) {
+    public MessageChannel getActiveChannel(NodeID id) {
       synchronized (channels) {
         return (MessageChannel) this.channels.get(id);
       }
@@ -221,7 +224,7 @@ public class LockTimerTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public boolean isActiveID(ChannelID channelID) {
+    public boolean isActiveID(NodeID nodeID) {
       throw new ImplementMe();
     }
 
@@ -229,15 +232,15 @@ public class LockTimerTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public String getChannelAddress(ChannelID channelID) {
+    public String getChannelAddress(NodeID nid) {
       return null;
     }
 
-    public BatchTransactionAcknowledgeMessage newBatchTransactionAcknowledgeMessage(ChannelID channelID) {
+    public BatchTransactionAcknowledgeMessage newBatchTransactionAcknowledgeMessage(NodeID nid) {
       throw new ImplementMe();
     }
 
-    public Set getAllActiveChannelIDs() {
+    public Set getAllActiveClientIDs() {
       throw new ImplementMe();
     }
 
@@ -245,16 +248,20 @@ public class LockTimerTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public void makeChannelActive(ChannelID channelID, long startIDs, long endIDs, boolean persistent) {
+    public void makeChannelActive(ClientID clientID, long startIDs, long endIDs, boolean persistent) {
       throw new ImplementMe();
     }
 
-    public Set getRawChannelIDs() {
+    public Set getAllClientIDs() {
       throw new ImplementMe();
     }
 
     public void makeChannelActiveNoAck(MessageChannel channel) {
       throw new ImplementMe();
+    }
+
+    public ClientID getClientIDFor(ChannelID channelID) {
+      return new ClientID(channelID);
     }
 
   }

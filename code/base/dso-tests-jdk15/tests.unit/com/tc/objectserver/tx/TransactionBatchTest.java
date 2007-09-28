@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.tx;
 
+import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.MockTCObject;
 import com.tc.object.ObjectID;
@@ -112,7 +113,7 @@ public class TransactionBatchTest extends TestCase {
     long sequence = 0;
     ObjectStringSerializer serializer = new ObjectStringSerializer();
     TestCommitTransactionMessageFactory mf = new TestCommitTransactionMessageFactory();
-    ChannelID channel = new ChannelID(69);
+    ClientID clientID = new ClientID(new ChannelID(69));
     TxnBatchID batchID = new TxnBatchID(42);
 
     List tx1Notifies = new LinkedList();
@@ -147,7 +148,7 @@ public class TransactionBatchTest extends TestCase {
     writer.addTransaction(txn2);
     writer.wait4AllTxns2Serialize();
 
-    TransactionBatchReaderImpl reader = new TransactionBatchReaderImpl(gidGenerator, writer.getData(), channel,
+    TransactionBatchReaderImpl reader = new TransactionBatchReaderImpl(gidGenerator, writer.getData(), clientID,
                                                                        new HashSet(), serializer,
                                                                        new ActiveServerTransactionFactory());
     assertEquals(2, reader.getNumTxns());
@@ -157,7 +158,7 @@ public class TransactionBatchTest extends TestCase {
     ServerTransaction txn;
     while ((txn = reader.getNextTransaction()) != null) {
       count++;
-      assertEquals(channel, txn.getChannelID());
+      assertEquals(clientID, txn.getSourceID());
       assertEquals(count, txn.getTransactionID().toLong());
 
       switch (count) {

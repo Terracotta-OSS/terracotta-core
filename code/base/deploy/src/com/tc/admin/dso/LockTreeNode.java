@@ -81,7 +81,7 @@ public class LockTreeNode extends XTreeNode {
 
     public String toString() {
       LockHolder holder = getHolder();
-      return holder.getChannelID() + "," + holder.getThreadID() +
+      return holder.getNodeID() + "," + holder.getThreadID() +
         ",level=" + holder.getLockLevel() + ",acquired=" + acquiredDate;
     }
   }
@@ -112,7 +112,7 @@ public class LockTreeNode extends XTreeNode {
 
     public String toString() {
       ServerLockRequest request = getRequest();
-      return request.getChannelID() + "," + request.getThreadID() +
+      return request.getNodeID() + "," + request.getThreadID() +
         ",level=" + request.getLockLevel() + ",requested=" + requestDate;
     }
   }
@@ -137,7 +137,7 @@ public class LockTreeNode extends XTreeNode {
 
     public String toString() {
       Waiter waiter = getWaiter();
-      return waiter.getChannelID() + "," + waiter.getThreadID() +
+      return waiter.getNodeID() + "," + waiter.getThreadID() +
         ",invocation=" + waiter.getWaitInvocation() + ",startTime=" + startDate;
     }
   }

@@ -7,6 +7,7 @@ package com.tc.objectserver.handshakemanager;
 import com.tc.async.api.Sink;
 import com.tc.async.impl.NullSink;
 import com.tc.logging.TCLogger;
+import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.object.lockmanager.api.LockContext;
@@ -83,11 +84,11 @@ public class ServerClientHandshakeManager {
   }
 
   public void notifyClientConnect(ClientHandshakeMessage handshake) throws ClientHandshakeException {
-    ChannelID channelID = handshake.getChannelID();
-    logger.info("Client connected " + channelID);
+    ClientID clientID = handshake.getClientID();
+    logger.info("Client connected " + clientID);
     synchronized (this) {
       logger.debug("Handling client handshake...");
-      clientStateManager.startupClient(channelID);
+      clientStateManager.startupNode(clientID);
       if (state == STARTED) {
         if (handshake.getObjectIDs().size() > 0) {
           //
@@ -103,74 +104,75 @@ public class ServerClientHandshakeManager {
           throw new ClientHandshakeException("Clients connected after startup should not resend transactions.");
         }
         if (handshake.isObjectIDsRequested()) {
-          logger.debug("Client " + channelID + " requested Object ID Sequences ");
-          clientsRequestingObjectIDSequence.add(channelID);
+          logger.debug("Client " + clientID + " requested Object ID Sequences ");
+          clientsRequestingObjectIDSequence.add(clientID);
         }
         // XXX: It would be better to not have two different code paths that both call sendAckMessageFor(..)
-        sendAckMessageFor(channelID);
+        sendAckMessageFor(clientID);
         return;
       }
 
       if (state == STARTING) {
         channelManager.makeChannelActiveNoAck(handshake.getChannel());
-        transactionManager.setResentTransactionIDs(channelID, handshake.getResentTransactionIDs());
+        transactionManager.setResentTransactionIDs(clientID, handshake
+            .getResentTransactionIDs());
       }
 
-      this.sequenceValidator.initSequence(handshake.getChannelID(), handshake.getTransactionSequenceIDs());
+      this.sequenceValidator.initSequence(clientID, handshake.getTransactionSequenceIDs());
 
-      clientStateManager.addReferences(channelID, handshake.getObjectIDs());
+      clientStateManager.addReferences(clientID, handshake.getObjectIDs());
 
       for (Iterator i = handshake.getLockContexts().iterator(); i.hasNext();) {
         LockContext ctxt = (LockContext) i.next();
-        lockManager.reestablishLock(ctxt.getLockID(), ctxt.getChannelID(), ctxt.getThreadID(), ctxt.getLockLevel(),
+        lockManager.reestablishLock(ctxt.getLockID(), ctxt.getNodeID(), ctxt.getThreadID(), ctxt.getLockLevel(),
                                     lockResponseSink);
       }
 
       for (Iterator i = handshake.getWaitContexts().iterator(); i.hasNext();) {
         WaitContext ctxt = (WaitContext) i.next();
-        lockManager.reestablishWait(ctxt.getLockID(), ctxt.getChannelID(), ctxt.getThreadID(), ctxt.getLockLevel(),
+        lockManager.reestablishWait(ctxt.getLockID(), ctxt.getNodeID(), ctxt.getThreadID(), ctxt.getLockLevel(),
                                     ctxt.getWaitInvocation(), lockResponseSink);
       }
 
       for (Iterator i = handshake.getPendingLockContexts().iterator(); i.hasNext();) {
         LockContext ctxt = (LockContext) i.next();
-        lockManager.requestLock(ctxt.getLockID(), ctxt.getChannelID(), ctxt.getThreadID(), ctxt.getLockLevel(),
+        lockManager.requestLock(ctxt.getLockID(), ctxt.getNodeID(), ctxt.getThreadID(), ctxt.getLockLevel(),
                                 lockResponseSink);
       }
 
       for (Iterator i = handshake.getPendingTryLockContexts().iterator(); i.hasNext();) {
         TryLockContext ctxt = (TryLockContext) i.next();
-        lockManager.tryRequestLock(ctxt.getLockID(), ctxt.getChannelID(), ctxt.getThreadID(), ctxt.getLockLevel(), ctxt
+        lockManager.tryRequestLock(ctxt.getLockID(), ctxt.getNodeID(), ctxt.getThreadID(), ctxt.getLockLevel(), ctxt
             .getWaitInvocation(), lockResponseSink);
       }
 
       if (handshake.isObjectIDsRequested()) {
-        logger.debug("Client " + channelID + " requested Object ID Sequences ");
-        clientsRequestingObjectIDSequence.add(channelID);
+        logger.debug("Client " + clientID + " requested Object ID Sequences ");
+        clientsRequestingObjectIDSequence.add(clientID);
       }
 
       if (state == STARTING) {
-        logger.debug("Removing client " + channelID + " from set of existing unconnected clients.");
-        existingUnconnectedClients.remove(channelID);
+        logger.debug("Removing client " + clientID + " from set of existing unconnected clients.");
+        existingUnconnectedClients.remove(clientID);
         if (existingUnconnectedClients.isEmpty()) {
-          logger.debug("Last existing unconnected client (" + channelID + ") now connected.  Cancelling timer");
+          logger.debug("Last existing unconnected client (" + clientID + ") now connected.  Cancelling timer");
           timer.cancel();
           start();
         }
       } else {
-        sendAckMessageFor(channelID);
+        sendAckMessageFor(clientID);
       }
     }
   }
 
-  private void sendAckMessageFor(ChannelID channelID) {
-    logger.debug("Sending handshake acknowledgement to " + channelID);
+  private void sendAckMessageFor(ClientID clientID) {
+    logger.debug("Sending handshake acknowledgement to " + clientID);
 
     final long startIDs;
     final long endIDs;
-    if (clientsRequestingObjectIDSequence.remove(channelID)) {
+    if (clientsRequestingObjectIDSequence.remove(clientID)) {
       final long ids = oidSequence.nextObjectIDBatch(BATCH_SEQUENCE_SIZE);
-      logger.debug("Giving out Object ID Sequences to " + channelID + " from " + ids + " to "
+      logger.debug("Giving out Object ID Sequences to " + clientID + " from " + ids + " to "
                    + (ids + BATCH_SEQUENCE_SIZE));
 
       startIDs = ids;
@@ -181,7 +183,7 @@ public class ServerClientHandshakeManager {
 
     // NOTE: handshake ack message initialize()/send() must be done atomically with making the channel active
     // and is thus done inside this channel manager call
-    channelManager.makeChannelActive(channelID, startIDs, endIDs, persistent);
+    channelManager.makeChannelActive(clientID, startIDs, endIDs, persistent);
   }
 
   public synchronized void notifyTimeout() {
@@ -190,8 +192,8 @@ public class ServerClientHandshakeManager {
                 + existingUnconnectedClients);
     this.channelManager.closeAll(existingUnconnectedClients);
     for (Iterator i = existingUnconnectedClients.iterator(); i.hasNext();) {
-      ChannelID deadClient = (ChannelID) i.next();
-      this.clientStateManager.shutdownClient(deadClient);
+      ClientID deadClient = (ClientID) i.next();
+      this.clientStateManager.shutdownNode(deadClient);
       i.remove();
     }
     logger.info("Reconnect window closed. All dead clients removed.");
@@ -202,11 +204,11 @@ public class ServerClientHandshakeManager {
   private void start() {
     logger.info("Starting DSO services...");
     lockManager.start();
-    Set cids = Collections.unmodifiableSet(channelManager.getRawChannelIDs());
+    Set cids = Collections.unmodifiableSet(channelManager.getAllClientIDs());
     transactionManager.start(cids);
     for (Iterator i = cids.iterator(); i.hasNext();) {
-      ChannelID channelID = (ChannelID) i.next();
-      sendAckMessageFor(channelID);
+      ClientID clientID = (ClientID) i.next();
+      sendAckMessageFor(clientID);
     }
     state = STARTED;
   }
@@ -218,9 +220,9 @@ public class ServerClientHandshakeManager {
       start();
     } else {
       for (Iterator i = existingConnections.iterator(); i.hasNext();) {
-        existingUnconnectedClients.add(new ChannelID(((ConnectionID) i.next()).getChannelID()));
+        existingUnconnectedClients.add(channelManager.getClientIDFor(new ChannelID(((ConnectionID) i.next()).getChannelID())));
       }
-      
+
       consoleLogger.info("Starting reconnect window: " + this.reconnectTimeout + " ms.");
       timer.schedule(reconnectTimerTask, this.reconnectTimeout);
     }

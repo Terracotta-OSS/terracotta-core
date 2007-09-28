@@ -11,8 +11,8 @@ import com.tc.async.api.Sink;
 import com.tc.l2.context.ManagedObjectSyncContext;
 import com.tc.l2.context.SyncObjectsRequest;
 import com.tc.l2.objectserver.L2ObjectStateManager;
+import com.tc.net.groups.ClientID;
 import com.tc.net.groups.NodeID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 
@@ -35,9 +35,8 @@ public class L2ObjectSyncRequestHandler extends AbstractEventHandler {
   private void doSyncObjectsRequest(SyncObjectsRequest request) {
     NodeID nodeID = request.getNodeID();
     ManagedObjectSyncContext lookupContext = l2ObjectStateMgr.getSomeObjectsToSyncContext(nodeID, 500, dehydrateSink);
-    // TODO:: Remove ChannelID from ObjectManager interface
     if (lookupContext != null) {
-      objectManager.lookupObjectsFor(ChannelID.NULL_ID, lookupContext);
+      objectManager.lookupObjectsFor(ClientID.NULL_ID, lookupContext);
     }
   }
 

@@ -25,7 +25,7 @@ public abstract class AbstractGroupMessage implements GroupMessage {
   private MessageID        id;
   private MessageID        requestID;
 
-  private transient NodeID messageOrginator = NodeID.NULL_ID;
+  private transient NodeID messageOrginator = NodeIDImpl.NULL_ID;
 
   protected AbstractGroupMessage(int type) {
     this.type = type;

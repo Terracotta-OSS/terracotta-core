@@ -10,7 +10,7 @@ import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.RequestManagedObjectMessage;
 import com.tc.object.net.ChannelStats;
@@ -70,7 +70,7 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
 
     MessageChannel channel = rmom.getChannel();
     Set requestedIDs = rmom.getObjectIDs();
-    ChannelID channelID = rmom.getChannelID();
+    ClientID clientID = rmom.getClientID();
     Set removedIDs = rmom.getRemoved();
     int maxRequestDepth = rmom.getRequestDepth();
 
@@ -87,13 +87,13 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
     }
 
     long t = System.currentTimeMillis();
-    stateManager.removeReferences(channelID, removedIDs);
+    stateManager.removeReferences(clientID, removedIDs);
     t = System.currentTimeMillis() - t;
     if (t > 1000 || numObjectsRemoved > 100000) {
       logger.warn("Time to Remove " + numObjectsRemoved + " is " + t + " ms");
     }
     if (numObjectsRequested > 0) {
-      ManagedObjectRequestContext reqContext = new ManagedObjectRequestContext(channelID, rmom.getRequestID(),
+      ManagedObjectRequestContext reqContext = new ManagedObjectRequestContext(clientID, rmom.getRequestID(),
                                                                                requestedIDs, maxRequestDepth,
                                                                                this.respondObjectRequestSink, rmom
                                                                                    .getRequestingThreadName());

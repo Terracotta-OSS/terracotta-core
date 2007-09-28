@@ -1,11 +1,12 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.msg;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.TCRuntimeException;
-import com.tc.io.TCByteBufferInputStream;
+import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -26,7 +27,8 @@ public class JMXMessage extends DSOMessageBase implements TCSerializable {
   private static final byte JMX_OBJECT = 0;
   private Object            jmxObject;
 
-  public JMXMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel, TCMessageType type) {
+  public JMXMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
+                    TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 
@@ -73,7 +75,7 @@ public class JMXMessage extends DSOMessageBase implements TCSerializable {
     }
   }
 
-  public Object deserializeFrom(TCByteBufferInputStream serialInput) throws IOException {
+  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     try {
       int length = serialInput.readInt();
       byte serializedObject[] = new byte[length];

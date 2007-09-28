@@ -25,10 +25,10 @@ public class TransactionAcknowledgeActionImpl implements TransactionAcknowledgeA
 
   public void acknowledgeTransaction(ServerTransactionID stxID) {
     try {
-      MessageChannel channel = channelManager.getActiveChannel(stxID.getChannelID());
+      MessageChannel channel = channelManager.getActiveChannel(stxID.getSourceID());
       AcknowledgeTransactionMessage m = (AcknowledgeTransactionMessage) channel
           .createMessage(TCMessageType.ACKNOWLEDGE_TRANSACTION_MESSAGE);
-      m.initialize(stxID.getChannelID(), stxID.getClientTransactionID());
+      m.initialize(stxID.getSourceID(), stxID.getClientTransactionID());
       m.send();
     } catch (NoSuchChannelException e) {
       logger.info("An attempt was made to send a commit ack but the client seems to have gone away:"

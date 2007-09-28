@@ -9,7 +9,7 @@ import com.tc.exception.ImplementMe;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
@@ -116,25 +116,25 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, WaitTimer
     return this.threadContextFactory.getCount();
   }
 
-  public synchronized void verify(ChannelID channelID, LockID[] lockIDs) {
+  public synchronized void verify(NodeID nodeID, LockID[] lockIDs) {
     if (!isStarted()) { return; }
     for (int i = 0; i < lockIDs.length; i++) {
       Lock lock = (Lock) locks.get(lockIDs[i]);
       if (lock == null) {
-        String errorMsg = " Lock is not held for " + lockIDs[i] + ". Not by " + channelID
+        String errorMsg = " Lock is not held for " + lockIDs[i] + ". Not by " + nodeID
                           + ". Not by anyone. uhm... Nada";
         logger.warn(errorMsg);
         throw new AssertionError(errorMsg);
       }
-      if (!lock.holdsSomeLock(channelID)) { throw new AssertionError(" Lock " + lockIDs[i]
-                                                                     + " is not held by anyone in " + channelID); }
+      if (!lock.holdsSomeLock(nodeID)) { throw new AssertionError(" Lock " + lockIDs[i]
+                                                                     + " is not held by anyone in " + nodeID); }
     }
   }
 
-  public synchronized void reestablishLock(LockID lockID, ChannelID channelID, ThreadID sourceID, int requestedLevel,
+  public synchronized void reestablishLock(LockID lockID, NodeID nid, ThreadID sourceID, int requestedLevel,
                                            Sink lockResponseSink) {
     assertStarting();
-    ServerThreadContext threadContext = threadContextFactory.getOrCreate(channelID, sourceID);
+    ServerThreadContext threadContext = threadContextFactory.getOrCreate(nid, sourceID);
     Lock lock = (Lock) this.locks.get(lockID);
 
     if (lock == null) {
@@ -151,30 +151,30 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, WaitTimer
      */
   }
 
-  public synchronized boolean tryRequestLock(LockID lockID, ChannelID channelID, ThreadID sourceID, int requestedLevel,
+  public synchronized boolean tryRequestLock(LockID lockID, NodeID nodeID, ThreadID sourceID, int requestedLevel,
                                              WaitInvocation timeout, Sink lockResponseSink) {
-    return requestLock(lockID, channelID, sourceID, requestedLevel, timeout, lockResponseSink, true);
+    return requestLock(lockID, nodeID, sourceID, requestedLevel, timeout, lockResponseSink, true);
   }
 
-  private synchronized boolean requestLock(LockID lockID, ChannelID channelID, ThreadID threadID, int requestedLevel,
+  private synchronized boolean requestLock(LockID lockID, NodeID nodeID, ThreadID threadID, int requestedLevel,
                                            WaitInvocation timeout, Sink lockResponseSink, boolean noBlock) {
-    if (!channelManager.isActiveID(channelID)) return false;
+    if (!channelManager.isActiveID(nodeID)) return false;
     if (isStarting()) {
-      queueRequestLock(lockID, channelID, threadID, requestedLevel, timeout, lockResponseSink, noBlock);
+      queueRequestLock(lockID, nodeID, threadID, requestedLevel, timeout, lockResponseSink, noBlock);
       return false;
     }
     if (!isStarted()) return false;
-    return basicRequestLock(lockID, channelID, threadID, requestedLevel, timeout, lockResponseSink, noBlock);
+    return basicRequestLock(lockID, nodeID, threadID, requestedLevel, timeout, lockResponseSink, noBlock);
   }
 
-  public synchronized boolean requestLock(LockID lockID, ChannelID channelID, ThreadID sourceID, int requestedLevel,
+  public synchronized boolean requestLock(LockID lockID, NodeID nodeID, ThreadID sourceID, int requestedLevel,
                                           Sink lockResponseSink) {
-    return requestLock(lockID, channelID, sourceID, requestedLevel, null, lockResponseSink, false);
+    return requestLock(lockID, nodeID, sourceID, requestedLevel, null, lockResponseSink, false);
   }
 
-  private boolean basicRequestLock(LockID lockID, ChannelID channelID, ThreadID threadID, int requestedLevel,
+  private boolean basicRequestLock(LockID lockID, NodeID nodeID, ThreadID threadID, int requestedLevel,
                                    WaitInvocation timeout, Sink lockResponseSink, boolean noBlock) {
-    ServerThreadContext threadContext = threadContextFactory.getOrCreate(channelID, threadID);
+    ServerThreadContext threadContext = threadContextFactory.getOrCreate(nodeID, threadID);
     Lock lock = (Lock) this.locks.get(lockID);
 
     if (lock != null) {
@@ -191,36 +191,36 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, WaitTimer
     }
   }
 
-  private void queueRequestLock(LockID lockID, ChannelID channelID, ThreadID threadID, int requestedLevel,
+  private void queueRequestLock(LockID lockID, NodeID nodeID, ThreadID threadID, int requestedLevel,
                                 WaitInvocation timeout, Sink lockResponseSink, boolean noBlock) {
     if (timeout == null) {
-      lockRequestQueue.add(new RequestLockContext(lockID, channelID, threadID, requestedLevel, lockResponseSink,
+      lockRequestQueue.add(new RequestLockContext(lockID, nodeID, threadID, requestedLevel, lockResponseSink,
                                                   noBlock));
     } else {
-      lockRequestQueue.add(new RequestLockContext(lockID, channelID, threadID, requestedLevel, timeout,
+      lockRequestQueue.add(new RequestLockContext(lockID, nodeID, threadID, requestedLevel, timeout,
                                                   lockResponseSink, noBlock));
     }
   }
 
-  public synchronized void queryLock(LockID lockID, ChannelID channelID, ThreadID threadID, Sink lockResponseSink) {
+  public synchronized void queryLock(LockID lockID, NodeID cid, ThreadID threadID, Sink lockResponseSink) {
     assertNotStarting();
     if (!isStarted()) return;
 
     Lock lock = getLockFor(lockID);
-    ServerThreadContext threadContext = threadContextFactory.getOrCreate(channelID, threadID);
+    ServerThreadContext threadContext = threadContextFactory.getOrCreate(cid, threadID);
     lock.queryLock(threadContext, lockResponseSink);
   }
 
-  public synchronized void interrupt(LockID lockID, ChannelID channelID, ThreadID threadID) {
+  public synchronized void interrupt(LockID lockID, NodeID cid, ThreadID threadID) {
     assertNotStarting();
     if (!isStarted()) return;
 
     Lock lock = getLockFor(lockID);
-    ServerThreadContext threadContext = threadContextFactory.getOrCreate(channelID, threadID);
+    ServerThreadContext threadContext = threadContextFactory.getOrCreate(cid, threadID);
     lock.interrupt(threadContext);
   }
 
-  public synchronized void unlock(LockID id, ChannelID channelID, ThreadID threadID) {
+  public synchronized void unlock(LockID id, NodeID channelID, ThreadID threadID) {
     assertNotStarting();
     if (!isStarted()) return;
 
@@ -233,7 +233,7 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, WaitTimer
     basicUnlock(l, threadContextFactory.getOrCreate(channelID, threadID));
   }
 
-  public synchronized void wait(LockID lid, ChannelID cid, ThreadID tid, WaitInvocation call, Sink lockResponseSink) {
+  public synchronized void wait(LockID lid, NodeID cid, ThreadID tid, WaitInvocation call, Sink lockResponseSink) {
     assertNotStopped();
     Lock lock = (Lock) this.locks.get(lid);
     if (lock != null) {
@@ -252,7 +252,7 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, WaitTimer
     }
   }
 
-  public synchronized void reestablishWait(LockID lid, ChannelID cid, ThreadID tid, int lockLevel, WaitInvocation call,
+  public synchronized void reestablishWait(LockID lid, NodeID cid, ThreadID tid, int lockLevel, WaitInvocation call,
                                            Sink lockResponseSink) {
     assertStarting();
     Lock lock = (Lock) this.locks.get(lid);
@@ -264,7 +264,7 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, WaitTimer
     lock.reestablishWait(threadContext, call, lockLevel, lockResponseSink);
   }
 
-  public synchronized void recallCommit(LockID lid, ChannelID cid, Collection lockContexts, Collection waitContexts,
+  public synchronized void recallCommit(LockID lid, NodeID cid, Collection lockContexts, Collection waitContexts,
                                         Collection pendingLockContexts, Collection pendingTryLockContexts,
                                         Sink lockResponseSink) {
     assertNotStarting();
@@ -322,7 +322,7 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, WaitTimer
     }
   }
 
-  public synchronized void notify(LockID lid, ChannelID cid, ThreadID tid, boolean all,
+  public synchronized void notify(LockID lid, NodeID cid, ThreadID tid, boolean all,
                                   NotifiedWaiters addNotifiedWaitersTo) {
     // assertStarted();
     if (!isStarted()) {
@@ -368,7 +368,7 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, WaitTimer
     return getLockFor(id).hasPending();
   }
 
-  public synchronized void clearAllLocksFor(ChannelID channelID) {
+  public synchronized void clearAllLocksFor(NodeID nid) {
     HashSet allLocks = new HashSet(locks.keySet());
 
     // NOTE: These loops might be too expensive as lock and threadContext sets grow large
@@ -379,13 +379,13 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, WaitTimer
       Lock lock = getLockFor(lid);
 
       if (!lock.isNull()) {
-        lock.clearStateForChannel(channelID);
+        lock.clearStateForNode(nid);
 
         // This gets the next pending lock (if any) awarded
         basicUnlock(lock, ServerThreadContext.NULL_CONTEXT);
       }
     }
-    threadContextFactory.clear(channelID);
+    threadContextFactory.clear(nid);
   }
 
   private Lock getLockFor(LockID id) {
@@ -445,7 +445,7 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, WaitTimer
 
       for (Iterator i = lockRequestQueue.iterator(); i.hasNext();) {
         RequestLockContext ctxt = (RequestLockContext) i.next();
-        requestLock(ctxt.lockID, ctxt.channelID, ctxt.threadID, ctxt.requestedLockLevel, ctxt.timeout,
+        requestLock(ctxt.lockID, ctxt.nodeID, ctxt.threadID, ctxt.requestedLockLevel, ctxt.timeout,
                     ctxt.lockResponseSink, ctxt.noBlock);
       }
       lockRequestQueue.clear();
@@ -552,17 +552,17 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, WaitTimer
 
   private static class RequestLockContext {
     final LockID         lockID;
-    final ChannelID      channelID;
+    final NodeID      nodeID;
     final ThreadID       threadID;
     final int            requestedLockLevel;
     final boolean        noBlock;
     final Sink           lockResponseSink;
     final WaitInvocation timeout;
 
-    private RequestLockContext(LockID lockID, ChannelID channelID, ThreadID threadID, int requestedLockLevel,
+    private RequestLockContext(LockID lockID, NodeID nodeID, ThreadID threadID, int requestedLockLevel,
                                Sink lockResponseSink, boolean noBlock) {
       this.lockID = lockID;
-      this.channelID = channelID;
+      this.nodeID = nodeID;
       this.threadID = threadID;
       this.requestedLockLevel = requestedLockLevel;
       this.lockResponseSink = lockResponseSink;
@@ -570,10 +570,10 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, WaitTimer
       this.timeout = null;
     }
 
-    private RequestLockContext(LockID lockID, ChannelID channelID, ThreadID threadID, int requestedLockLevel,
+    private RequestLockContext(LockID lockID, NodeID nodeID, ThreadID threadID, int requestedLockLevel,
                                WaitInvocation timeout, Sink lockResponseSink, boolean noBlock) {
       this.lockID = lockID;
-      this.channelID = channelID;
+      this.nodeID = nodeID;
       this.threadID = threadID;
       this.requestedLockLevel = requestedLockLevel;
       this.lockResponseSink = lockResponseSink;
@@ -582,7 +582,7 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, WaitTimer
     }
 
     public String toString() {
-      return "RequestLockContext [ " + lockID + "," + channelID + "," + threadID + ","
+      return "RequestLockContext [ " + lockID + "," + nodeID + "," + threadID + ","
              + LockLevel.toString(requestedLockLevel) + ", " + noBlock + ", " + timeout + " ]";
     }
   }

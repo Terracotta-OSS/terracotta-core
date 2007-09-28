@@ -15,7 +15,7 @@ public class ServerTransactionFactory {
   public static ServerTransaction createTxnFrom(ObjectSyncMessage syncMsg) {
     ObjectSyncServerTransaction txn = new ObjectSyncServerTransaction(getNextTransactionID(), syncMsg.getOids(),
                                                                       syncMsg.getDnaCount(), syncMsg.getDNAs(), syncMsg
-                                                                          .getRootsMap());
+                                                                          .getRootsMap(), syncMsg.messageFrom());
     return txn;
   }
 

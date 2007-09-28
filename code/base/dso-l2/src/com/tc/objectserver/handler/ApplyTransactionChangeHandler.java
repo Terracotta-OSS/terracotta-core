@@ -61,7 +61,7 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
 
     for (Iterator i = txn.getNotifies().iterator(); i.hasNext();) {
       Notify notify = (Notify) i.next();
-      lockManager.notify(notify.getLockID(), txn.getChannelID(), notify.getThreadID(), notify.getIsAll(),
+      lockManager.notify(notify.getLockID(), txn.getSourceID(), notify.getThreadID(), notify.getIsAll(),
                          notifiedWaiters);
     }
 

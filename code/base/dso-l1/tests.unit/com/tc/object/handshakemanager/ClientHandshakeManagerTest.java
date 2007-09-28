@@ -9,6 +9,8 @@ import com.tc.cluster.Cluster;
 import com.tc.exception.ImplementMe;
 import com.tc.logging.TCLogging;
 import com.tc.net.protocol.tcm.TestChannelIDProvider;
+import com.tc.object.ClientIDProvider;
+import com.tc.object.ClientIDProviderImpl;
 import com.tc.object.NullPauseListener;
 import com.tc.object.ObjectID;
 import com.tc.object.RemoteObjectManager;
@@ -54,7 +56,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
   private static final String                clientVersion = "x.y.z";
   private TestClientObjectManager            objectManager;
   private TestClientLockManager              lockManager;
-  private TestChannelIDProvider              cip;
+  private ClientIDProvider                   cip;
   private ClientHandshakeManager             mgr;
   private TestClientHandshakeMessageFactory  chmf;
   private TestRemoteObjectManager            remoteObjectManager;
@@ -67,7 +69,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     lockManager = new TestClientLockManager();
     rtxManager = new TestRemoteTransactionManager();
     gtxManager = new TestClientGlobalTransactionManager();
-    cip = new TestChannelIDProvider();
+    cip = new ClientIDProviderImpl(new TestChannelIDProvider());
     chmf = new TestClientHandshakeMessageFactory();
     mgr = new ClientHandshakeManager(TCLogging.getLogger(ClientHandshakeManager.class), cip, chmf, objectManager,
                                      remoteObjectManager, lockManager, rtxManager, gtxManager, new ArrayList(),

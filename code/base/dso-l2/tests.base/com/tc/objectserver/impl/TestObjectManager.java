@@ -8,7 +8,7 @@ import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCRuntimeException;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerEventListener;
@@ -47,23 +47,23 @@ public class TestObjectManager implements ObjectManager {
     throw new ImplementMe();
   }
 
-  public boolean lookupObjectsAndSubObjectsFor(ChannelID channelID, ObjectManagerResultsContext context, int maxCount) {
-    return basicLookup(channelID, context, maxCount);
+  public boolean lookupObjectsAndSubObjectsFor(NodeID nodeID, ObjectManagerResultsContext context, int maxCount) {
+    return basicLookup(nodeID, context, maxCount);
   }
 
   public LinkedQueue lookupObjectForCreateIfNecessaryContexts = new LinkedQueue();
 
-  public boolean lookupObjectsFor(ChannelID channelID, ObjectManagerResultsContext context) {
-    Object[] args = new Object[] { channelID, context };
+  public boolean lookupObjectsFor(NodeID nodeID, ObjectManagerResultsContext context) {
+    Object[] args = new Object[] { nodeID, context };
     try {
       lookupObjectForCreateIfNecessaryContexts.put(args);
     } catch (InterruptedException e) {
       throw new TCRuntimeException(e);
     }
-    return basicLookup(channelID, context, -1);
+    return basicLookup(nodeID, context, -1);
   }
 
-  private boolean basicLookup(ChannelID channelID, ObjectManagerResultsContext context, int i) {
+  private boolean basicLookup(NodeID nodeID, ObjectManagerResultsContext context, int i) {
     if (!makePending) {
       context.setResults(new ObjectManagerLookupResultsImpl(createLookResults(context.getLookupIDs())));
     }
@@ -71,7 +71,7 @@ public class TestObjectManager implements ObjectManager {
   }
 
   public void processPending(Object[] args) {
-    basicLookup((ChannelID) args[0], (ObjectManagerResultsContext) args[1], -1);
+    basicLookup((NodeID) args[0], (ObjectManagerResultsContext) args[1], -1);
   }
 
   private Map createLookResults(Collection ids) {

@@ -1,10 +1,11 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.gtx;
 
 import com.tc.exception.ImplementMe;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.lockmanager.api.LockFlushCallback;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.tx.TransactionID;
@@ -57,7 +58,7 @@ public class TestClientGlobalTransactionManager implements ClientGlobalTransacti
     return transactionSequenceIDs;
   }
 
-  public boolean startApply(ChannelID committerID, TransactionID transactionID, GlobalTransactionID globalTransactionID) {
+  public boolean startApply(NodeID nodeID, TransactionID transactionID, GlobalTransactionID globalTransactionID) {
     throw new ImplementMe();
   }
 
@@ -78,5 +79,4 @@ public class TestClientGlobalTransactionManager implements ClientGlobalTransacti
   public boolean isTransactionsForLockFlushed(LockID lockID, LockFlushCallback callback) {
     throw new ImplementMe();
   }
-
 }

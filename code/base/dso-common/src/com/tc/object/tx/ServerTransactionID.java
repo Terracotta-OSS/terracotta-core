@@ -4,31 +4,40 @@
  */
 package com.tc.object.tx;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.io.serializer.TCObjectInputStream;
+import com.tc.io.serializer.TCObjectOutputStream;
+import com.tc.net.groups.ClientID;
+import com.tc.net.groups.NodeID;
+import com.tc.net.groups.NodeIDImpl;
+import com.tc.net.groups.NodeIDSerializer;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 /**
  * A class that represents a particular client transaction from the server's perspective (ie. the combination of
- * ChannelID and a client TransactionID)
+ * NodeID and a client TransactionID)
  */
 public class ServerTransactionID {
-  public static final ServerTransactionID NULL_ID = new ServerTransactionID(ChannelID.NULL_ID, TransactionID.NULL_ID);
+  public static final ServerTransactionID NULL_ID = new ServerTransactionID(ClientID.NULL_ID, TransactionID.NULL_ID);
 
   private final TransactionID             txnID;
-  private final ChannelID                 channelID;
+  private final NodeID                    sourceID;
   private final int                       hashCode;
 
-  public ServerTransactionID(ChannelID channelID, TransactionID txnID) {
-    this.channelID = channelID;
+  public ServerTransactionID(NodeID source, TransactionID txnID) {
+    this.sourceID = source;
     this.txnID = txnID;
 
     int hash = 29;
-    hash = (37 * hash) + channelID.hashCode();
+    hash = (37 * hash) + source.hashCode();
     hash = (37 * hash) + txnID.hashCode();
     this.hashCode = hash;
   }
 
-  public ChannelID getChannelID() {
-    return channelID;
+  public NodeID getSourceID() {
+    return sourceID;
   }
 
   public TransactionID getClientTransactionID() {
@@ -36,15 +45,16 @@ public class ServerTransactionID {
   }
 
   public boolean isServerGeneratedTransaction() {
-    return channelID.equals(ChannelID.L2_SERVER_ID);
+    //TODO::Move this logic away from here
+    return (sourceID instanceof NodeIDImpl);
   }
 
   public boolean isNull() {
-    return channelID.isNull() && txnID.isNull();
+    return sourceID.isNull() && txnID.isNull();
   }
 
   public String toString() {
-    return new StringBuffer().append("ServerTransactionID{").append(channelID).append(',').append(txnID).append('}')
+    return new StringBuffer().append("ServerTransactionID{").append(sourceID).append(',').append(txnID).append('}')
         .toString();
   }
 
@@ -55,8 +65,37 @@ public class ServerTransactionID {
   public boolean equals(Object obj) {
     if (obj instanceof ServerTransactionID) {
       ServerTransactionID other = (ServerTransactionID) obj;
-      return this.channelID.equals(other.channelID) && this.txnID.equals(other.txnID);
+      return this.sourceID.equals(other.sourceID) && this.txnID.equals(other.txnID);
     }
     return false;
+  }
+  
+  /**
+   * Utility method for serialization.
+   */
+  public byte[] getBytes() {
+    try {
+      ByteArrayOutputStream baos = new ByteArrayOutputStream(64);
+      TCObjectOutputStream tco = new TCObjectOutputStream(baos);
+      NodeIDSerializer.writeNodeID(sourceID, tco);
+      tco.writeLong(txnID.toLong());
+      tco.close();
+      return baos.toByteArray();
+    } catch (IOException e) {
+      throw new AssertionError(e);
+    }
+  }
+
+  /**
+   * Utility method for deserialization.
+   */
+  public static ServerTransactionID createFrom(byte[] data) {
+    try {
+      ByteArrayInputStream bais = new ByteArrayInputStream(data);
+      TCObjectInputStream tci = new TCObjectInputStream(bais);
+      return new ServerTransactionID(NodeIDSerializer.readNodeID(tci), new TransactionID(tci.readLong()));
+    } catch (Exception e) {
+      throw new AssertionError(e);
+    }
   }
 }

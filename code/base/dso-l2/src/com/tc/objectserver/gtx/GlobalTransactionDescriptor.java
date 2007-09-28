@@ -4,7 +4,6 @@
  */
 package com.tc.objectserver.gtx;
 
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
@@ -54,10 +53,6 @@ public class GlobalTransactionDescriptor {
 
   public String toString() {
     return "GlobalTransactionDescriptor[" + stxn + "," + gid + "," + state + "," + completed + "]";
-  }
-
-  public ChannelID getChannelID() {
-    return stxn.getChannelID();
   }
 
   public TransactionID getClientTransactionID() {

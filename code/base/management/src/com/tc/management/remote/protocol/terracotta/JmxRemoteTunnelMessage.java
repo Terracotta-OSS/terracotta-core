@@ -3,17 +3,9 @@
  */
 package com.tc.management.remote.protocol.terracotta;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-
-import javax.management.remote.message.Message;
-
 import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.TCRuntimeException;
-import com.tc.io.TCByteBufferInputStream;
+import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -22,6 +14,14 @@ import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.msg.DSOMessageBase;
 import com.tc.object.session.SessionID;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
+import javax.management.remote.message.Message;
 
 public final class JmxRemoteTunnelMessage extends DSOMessageBase implements TCSerializable {
 
@@ -81,7 +81,7 @@ public final class JmxRemoteTunnelMessage extends DSOMessageBase implements TCSe
     }
   }
 
-  public synchronized Object deserializeFrom(TCByteBufferInputStream serialInput) throws IOException {
+  public synchronized Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     try {
       flag = serialInput.readByte();
       final int length = serialInput.readInt();

@@ -4,7 +4,6 @@
  */
 package com.tc.bytes;
 
-import com.tc.lang.Recyclable;
 import com.tc.util.Assert;
 import com.tc.util.State;
 
@@ -16,7 +15,7 @@ import java.nio.ByteBuffer;
 
 // XXX: Should we wrap the native java.nio overflow, underflow and readOnly exceptions with the TC versions?
 // This would make the TCByteBuffer interface consistent w.r.t. exceptions (whilst being blind to JDK13 vs JDK14)
-public class TCByteBuffer implements Recyclable {
+public class TCByteBufferImpl implements TCByteBuffer {
 
   private static final State INIT        = new State("INIT");
   private static final State CHECKED_OUT = new State("CHECKED_OUT");
@@ -26,7 +25,7 @@ public class TCByteBuffer implements Recyclable {
   private final TCByteBuffer root;
   private State              state       = INIT;
 
-  TCByteBuffer(int capacity, boolean direct) {
+  TCByteBufferImpl(int capacity, boolean direct) {
     if (direct) {
       buffer = ByteBuffer.allocateDirect(capacity);
     } else {
@@ -35,18 +34,18 @@ public class TCByteBuffer implements Recyclable {
     root = this;
   }
 
-  private TCByteBuffer(ByteBuffer buf) {
+  private TCByteBufferImpl(ByteBuffer buf) {
     buffer = buf;
     this.root = null;
   }
 
-  private TCByteBuffer(ByteBuffer buf, TCByteBuffer root) {
+  private TCByteBufferImpl(ByteBuffer buf, TCByteBuffer root) {
     buffer = buf;
     this.root = root;
   }
 
   static TCByteBuffer wrap(byte[] data) {
-    return new TCByteBuffer(ByteBuffer.wrap(data));
+    return new TCByteBufferImpl(ByteBuffer.wrap(data));
   }
 
   protected ByteBuffer getBuffer() {
@@ -277,7 +276,7 @@ public class TCByteBuffer implements Recyclable {
   }
 
   public TCByteBuffer duplicate() {
-    return new TCByteBuffer(buffer.duplicate(), root);
+    return new TCByteBufferImpl(buffer.duplicate(), root);
   }
 
   public TCByteBuffer put(TCByteBuffer src) {
@@ -286,7 +285,7 @@ public class TCByteBuffer implements Recyclable {
   }
 
   public TCByteBuffer slice() {
-    return new TCByteBuffer(buffer.slice(), root);
+    return new TCByteBufferImpl(buffer.slice(), root);
   }
 
   public int arrayOffset() {
@@ -294,7 +293,7 @@ public class TCByteBuffer implements Recyclable {
   }
 
   public TCByteBuffer asReadOnlyBuffer() {
-    return new TCByteBuffer(buffer.asReadOnlyBuffer(), root);
+    return new TCByteBufferImpl(buffer.asReadOnlyBuffer(), root);
   }
 
   public boolean isReadOnly() {
@@ -317,7 +316,7 @@ public class TCByteBuffer implements Recyclable {
     }
   }
 
-  private TCByteBuffer reInit() {
+  public TCByteBuffer reInit() {
     clear();
     return this;
   }

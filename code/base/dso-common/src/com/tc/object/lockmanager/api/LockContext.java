@@ -6,10 +6,12 @@ package com.tc.object.lockmanager.api;
 
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
-import com.tc.io.TCByteBufferInputStream;
+import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.ClientID;
+import com.tc.net.groups.NodeID;
+import com.tc.net.groups.NodeIDSerializer;
 import com.tc.util.Assert;
 
 import java.io.IOException;
@@ -21,33 +23,33 @@ import java.io.IOException;
  */
 public class LockContext implements TCSerializable {
 
-  private LockID    lockID;
-  private int       lockLevel;
-  private ChannelID channelID;
-  private ThreadID  threadID;
-  private int       hashCode;
+  private LockID   lockID;
+  private int      lockLevel;
+  private NodeID   nodeID;
+  private ThreadID threadID;
+  private int      hashCode;
 
   public LockContext() {
     return;
   }
 
-  public LockContext(LockID lockID, ChannelID channelID, ThreadID threadID, int lockLevel) {
+  public LockContext(LockID lockID, NodeID nodeID, ThreadID threadID, int lockLevel) {
     this.lockID = lockID;
-    this.channelID = channelID;
+    this.nodeID = nodeID;
     this.threadID = threadID;
     Assert.assertFalse(LockLevel.isSynchronous(lockLevel));
     this.lockLevel = lockLevel;
-    this.hashCode = new HashCodeBuilder(5503, 6737).append(lockID).append(channelID).append(threadID).append(lockLevel)
+    this.hashCode = new HashCodeBuilder(5503, 6737).append(lockID).append(nodeID).append(threadID).append(lockLevel)
         .toHashCode();
   }
 
   public String toString() {
-    return "LockContext [ " + lockID + ", " + LockLevel.toString(lockLevel) + ", " + channelID + ", " + threadID + ", "
+    return "LockContext [ " + lockID + ", " + LockLevel.toString(lockLevel) + ", " + nodeID + ", " + threadID + ", "
            + hashCode + "] ";
   }
 
-  public ChannelID getChannelID() {
-    return channelID;
+  public NodeID getNodeID() {
+    return nodeID;
   }
 
   public LockID getLockID() {
@@ -67,7 +69,7 @@ public class LockContext implements TCSerializable {
     if (!(o instanceof LockContext)) return false;
     LockContext cmp = (LockContext) o;
     return lockID.equals(cmp.lockID) && threadID.equals(cmp.threadID) && lockLevel == cmp.lockLevel
-           && channelID.equals(cmp.channelID);
+           && nodeID.equals(cmp.nodeID);
   }
 
   public int hashCode() {
@@ -76,14 +78,17 @@ public class LockContext implements TCSerializable {
 
   public void serializeTo(TCByteBufferOutput output) {
     output.writeString(lockID.asString());
-    output.writeLong(channelID.toLong());
+    NodeIDSerializer ns = new NodeIDSerializer(this.nodeID);
+    ns.serializeTo(output);
     output.writeLong(threadID.toLong());
     output.writeInt(lockLevel);
   }
 
-  public Object deserializeFrom(TCByteBufferInputStream input) throws IOException {
+  public Object deserializeFrom(TCByteBufferInput input) throws IOException {
     lockID = new LockID(input.readString());
-    channelID = new ChannelID(input.readLong());
+    NodeIDSerializer ns = new NodeIDSerializer();
+    ns.deserializeFrom(input);
+    nodeID = (ClientID) ns.getNodeID();
     threadID = new ThreadID(input.readLong());
     lockLevel = input.readInt();
     return this;

@@ -239,7 +239,6 @@ public class MockTCObject implements TCObject {
 
   public void logicalInvoke(int method, String methodSignature, Object[] params) {
     history.add(new MethodCall(method, params));
-    System.out.println("This:" + this + " logging:" + methodSignature + " params:" + params + " history:" + history);
   }
 
   public String getFieldNameByOffset(long fieldOffset) {

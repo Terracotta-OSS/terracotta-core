@@ -32,7 +32,7 @@ public class SingleNodeGroupManager implements GroupManager {
 
   public NodeID join(final Node thisN, final Node[] allNodes) throws GroupException {
     if (thisNode != null) { throw new GroupException("Already Joined !"); }
-    this.thisNode = new NodeID("CurrentNode", CURRENT_NODE_ID);
+    this.thisNode = new NodeIDImpl("CurrentNode", CURRENT_NODE_ID);
     return this.thisNode;
   }
 

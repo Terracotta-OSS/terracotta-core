@@ -4,7 +4,7 @@
  */
 package com.tc.objectserver.tx;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 
@@ -14,19 +14,20 @@ import java.util.Set;
 
 public class PassiveTransactionAccount implements TransactionAccount {
 
-  private final ChannelID clientID;
-  private final Set txnIDs = Collections.synchronizedSet(new HashSet());
+  private final NodeID nodeID;
+  private final Set    txnIDs = Collections.synchronizedSet(new HashSet());
 
-  public PassiveTransactionAccount(ChannelID clientID) {
-    this.clientID = clientID;
+  public PassiveTransactionAccount(NodeID source) {
+    this.nodeID = source;
   }
 
-  public void addWaitee(ChannelID waitee, TransactionID requestID) {
-    throw new AssertionError("Transactions should never be broadcasted in Passive Server");
+  public void addWaitee(NodeID waitee, TransactionID requestID) {
+    throw new AssertionError("Transactions should never be broadcasted in Passive Server : " + waitee + " , "
+                             + requestID);
   }
 
   public boolean applyCommitted(TransactionID requestID) {
-    txnIDs.remove(new ServerTransactionID(clientID,requestID));
+    txnIDs.remove(new ServerTransactionID(nodeID, requestID));
     return true;
   }
 
@@ -34,24 +35,24 @@ public class PassiveTransactionAccount implements TransactionAccount {
     throw new AssertionError("Transactions should never be broadcasted in Passive Server");
   }
 
-  public ChannelID getClientID() {
-    return clientID;
+  public NodeID getNodeID() {
+    return nodeID;
   }
 
   public boolean hasWaitees(TransactionID requestID) {
     return false;
   }
 
-  public boolean removeWaitee(ChannelID waitee, TransactionID requestID) {
+  public boolean removeWaitee(NodeID waitee, TransactionID requestID) {
     throw new AssertionError("Transactions should never be ACKED to Passive Server");
   }
 
-  public Set requestersWaitingFor(ChannelID waitee) {
+  public Set requestersWaitingFor(NodeID waitee) {
     return Collections.EMPTY_SET;
   }
 
   public boolean skipApplyAndCommit(TransactionID requestID) {
-    txnIDs.remove(new ServerTransactionID(clientID,requestID));
+    txnIDs.remove(new ServerTransactionID(nodeID, requestID));
     return true;
   }
 
@@ -69,7 +70,7 @@ public class PassiveTransactionAccount implements TransactionAccount {
     txnIDs.addAll(serverTxnsIDs);
   }
 
-  public void clientDead(CallBackOnComplete callBack) {
+  public void nodeDead(CallBackOnComplete callBack) {
     throw new AssertionError("This should never be called.");
   }
 }

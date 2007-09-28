@@ -12,7 +12,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TCByteBufferInputStream extends InputStream implements TCDataInput {
+public class TCByteBufferInputStream extends InputStream implements TCDataInput, TCByteBufferInput {
   private static final int            EOF                     = -1;
   private static final TCByteBuffer[] EMPTY_BYTE_BUFFER_ARRAY = new TCByteBuffer[] {};
 
@@ -80,7 +80,7 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput 
    * streams will have independent read positions. The read position of the result stream will initially be the same as
    * the source stream
    */
-  public TCByteBufferInputStream duplicate() {
+  public TCByteBufferInput duplicate() {
     checkClosed();
     return new TCByteBufferInputStream(data, available(), index);
   }
@@ -89,7 +89,7 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput 
    * Effectively the same thing as calling duplicate().limit(int), but potentially creating far less garbage (depending
    * on the size difference between the original stream and the slice you want)
    */
-  public TCByteBufferInputStream duplicateAndLimit(final int limit) {
+  public TCByteBufferInput duplicateAndLimit(final int limit) {
     checkClosed();
 
     if (limit > available()) { throw new IllegalArgumentException("Not enough data left in stream: " + limit + " > "

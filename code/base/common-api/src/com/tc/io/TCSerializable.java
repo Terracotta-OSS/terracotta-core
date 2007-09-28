@@ -12,5 +12,5 @@ import java.io.IOException;
 public interface TCSerializable {
   public void serializeTo(TCByteBufferOutput serialOutput);
 
-  public Object deserializeFrom(TCByteBufferInputStream serialInput) throws IOException;
+  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException;
 }

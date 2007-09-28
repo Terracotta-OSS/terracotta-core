@@ -11,7 +11,7 @@ import com.tc.logging.TCLogger;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ChannelEventType;
-import com.tc.net.protocol.tcm.ChannelIDProvider;
+import com.tc.object.ClientIDProvider;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
 import com.tc.object.PauseListener;
@@ -46,7 +46,7 @@ public class ClientHandshakeManager implements ChannelEventListener {
 
   private final ClientObjectManager            objectManager;
   private final ClientLockManager              lockManager;
-  private final ChannelIDProvider              cidp;
+  private final ClientIDProvider               cidp;
   private final ClientHandshakeMessageFactory  chmf;
   private final RemoteObjectManager            remoteObjectManager;
   private final ClientGlobalTransactionManager gtxManager;
@@ -63,14 +63,14 @@ public class ClientHandshakeManager implements ChannelEventListener {
   private boolean                              stagesPaused       = false;
   private boolean                              serverIsPersistent = false;
 
-  public ClientHandshakeManager(TCLogger logger, ChannelIDProvider cidp, ClientHandshakeMessageFactory chmf,
+  public ClientHandshakeManager(TCLogger logger, ClientIDProvider clientIDProvider, ClientHandshakeMessageFactory chmf,
                                 ClientObjectManager objectManager, RemoteObjectManager remoteObjectManager,
                                 ClientLockManager lockManager, RemoteTransactionManager remoteTransactionManager,
                                 ClientGlobalTransactionManager gtxManager, Collection stagesToPauseOnDisconnect,
                                 Sink pauseSink, SessionManager sessionManager, PauseListener pauseListener,
                                 BatchSequenceReceiver sequenceReceiver, Cluster cluster, String clientVersion) {
     this.logger = logger;
-    this.cidp = cidp;
+    this.cidp = clientIDProvider;
     this.chmf = chmf;
     this.objectManager = objectManager;
     this.remoteObjectManager = remoteObjectManager;
@@ -106,14 +106,14 @@ public class ClientHandshakeManager implements ChannelEventListener {
     logger.debug("Getting lock holders...");
     for (Iterator i = lockManager.addAllHeldLocksTo(new HashSet()).iterator(); i.hasNext();) {
       LockRequest request = (LockRequest) i.next();
-      LockContext ctxt = new LockContext(request.lockID(), cidp.getChannelID(), request.threadID(), request.lockLevel());
+      LockContext ctxt = new LockContext(request.lockID(), cidp.getClientID(), request.threadID(), request.lockLevel());
       handshakeMessage.addLockContext(ctxt);
     }
 
     logger.debug("Getting lock waiters...");
     for (Iterator i = lockManager.addAllWaitersTo(new HashSet()).iterator(); i.hasNext();) {
       WaitLockRequest request = (WaitLockRequest) i.next();
-      WaitContext ctxt = new WaitContext(request.lockID(), cidp.getChannelID(), request.threadID(),
+      WaitContext ctxt = new WaitContext(request.lockID(), cidp.getClientID(), request.threadID(),
                                          request.lockLevel(), request.getWaitInvocation());
       handshakeMessage.addWaitContext(ctxt);
     }
@@ -121,14 +121,14 @@ public class ClientHandshakeManager implements ChannelEventListener {
     logger.debug("Getting pending lock requests...");
     for (Iterator i = lockManager.addAllPendingLockRequestsTo(new HashSet()).iterator(); i.hasNext();) {
       LockRequest request = (LockRequest) i.next();
-      LockContext ctxt = new LockContext(request.lockID(), cidp.getChannelID(), request.threadID(), request.lockLevel());
+      LockContext ctxt = new LockContext(request.lockID(), cidp.getClientID(), request.threadID(), request.lockLevel());
       handshakeMessage.addPendingLockContext(ctxt);
     }
 
     logger.debug("Getting pending tryLock requests...");
     for (Iterator i = lockManager.addAllPendingTryLockRequestsTo(new HashSet()).iterator(); i.hasNext();) {
       TryLockRequest request = (TryLockRequest) i.next();
-      LockContext ctxt = new TryLockContext(request.lockID(), cidp.getChannelID(), request.threadID(), request
+      LockContext ctxt = new TryLockContext(request.lockID(), cidp.getClientID(), request.threadID(), request
           .lockLevel(), request.getWaitInvocation());
       handshakeMessage.addPendingTryLockContext(ctxt);
     }
@@ -163,7 +163,7 @@ public class ClientHandshakeManager implements ChannelEventListener {
     }
     // all the activities paused then can switch to new session
     sessionManager.newSession();
-    logger.info("ClientHandshakeManager moves to "+ sessionManager);
+    logger.info("ClientHandshakeManager moves to " + sessionManager);
   }
 
   public void unpause() {

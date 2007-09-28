@@ -4,7 +4,7 @@
  */
 package com.tc.l2.objectserver;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -25,18 +25,21 @@ import java.util.Set;
 
 public class ObjectSyncServerTransaction implements ServerTransaction {
 
-  private final TransactionID txnID;
-  private final Set           oids;
-  private final List          changes;
-  private ServerTransactionID serverTxnID;
-  private final Map           rootsMap;
+  private final TransactionID       txnID;
+  private final Set                 oids;
+  private final List                changes;
+  private final ServerTransactionID serverTxnID;
+  private final Map                 rootsMap;
+  private final NodeID              serverID;
 
-  public ObjectSyncServerTransaction(TransactionID txnID, Set oids, int dnaCount, List changes, Map rootsMap) {
+  public ObjectSyncServerTransaction(TransactionID txnID, Set oids, int dnaCount, List changes, Map rootsMap,
+                                     NodeID serverID) {
     this.txnID = txnID;
     this.oids = oids;
     this.changes = changes;
     this.rootsMap = rootsMap;
-    this.serverTxnID = new ServerTransactionID(ChannelID.L2_SERVER_ID, txnID);
+    this.serverID = serverID;
+    this.serverTxnID = new ServerTransactionID(serverID, txnID);
     Assert.assertEquals(dnaCount, oids.size());
     Assert.assertEquals(dnaCount, changes.size());
   }
@@ -53,8 +56,8 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
     return changes;
   }
 
-  public ChannelID getChannelID() {
-    return ChannelID.L2_SERVER_ID;
+  public NodeID getSourceID() {
+    return serverID;
   }
 
   public SequenceID getClientSequenceID() {

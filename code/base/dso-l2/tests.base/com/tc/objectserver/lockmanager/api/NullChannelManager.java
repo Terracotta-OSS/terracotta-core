@@ -4,6 +4,8 @@
  */
 package com.tc.objectserver.lockmanager.api;
 
+import com.tc.net.groups.ClientID;
+import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
@@ -14,16 +16,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-/**
- * @author steve
- */
 public class NullChannelManager implements DSOChannelManager {
 
-  public boolean isActiveID(ChannelID channelID) {
+  public boolean isActiveID(NodeID nodeID) {
     return true;
   }
 
-  public MessageChannel getActiveChannel(ChannelID id) {
+  public MessageChannel getActiveChannel(NodeID id) {
     throw new UnsupportedOperationException();
   }
 
@@ -35,15 +34,15 @@ public class NullChannelManager implements DSOChannelManager {
     return;
   }
 
-  public String getChannelAddress(ChannelID channelID) {
+  public String getChannelAddress(NodeID nid) {
     return "";
   }
 
-  public BatchTransactionAcknowledgeMessage newBatchTransactionAcknowledgeMessage(ChannelID channelID) {
+  public BatchTransactionAcknowledgeMessage newBatchTransactionAcknowledgeMessage(NodeID nid) {
     throw new UnsupportedOperationException();
   }
 
-  public Set getAllActiveChannelIDs() {
+  public Set getAllActiveClientIDs() {
     return Collections.EMPTY_SET;
   }
 
@@ -51,16 +50,20 @@ public class NullChannelManager implements DSOChannelManager {
     //
   }
 
-  public void makeChannelActive(ChannelID channelID, long startIDs, long endIDs, boolean persistent) {
+  public void makeChannelActive(ClientID clientID, long startIDs, long endIDs, boolean persistent) {
     //
   }
 
-  public Set getRawChannelIDs() {
+  public Set getAllClientIDs() {
     return Collections.EMPTY_SET;
   }
 
   public void makeChannelActiveNoAck(MessageChannel channel) {
     //
+  }
+
+  public ClientID getClientIDFor(ChannelID channelID) {
+    return new ClientID(channelID);
   }
 
 }

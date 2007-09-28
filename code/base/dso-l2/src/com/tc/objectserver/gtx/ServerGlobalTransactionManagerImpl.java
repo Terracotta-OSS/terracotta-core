@@ -4,7 +4,7 @@
  */
 package com.tc.objectserver.gtx;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
@@ -35,10 +35,10 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
     this.globalTransactionIDSequence = globalTransactionIDSequence;
   }
 
-  public void shutdownClient(ChannelID channelID) {
-    this.sequenceValidator.remove(channelID);
+  public void shutdownNode(NodeID nodeID) {
+    this.sequenceValidator.remove(nodeID);
     PersistenceTransaction tx = this.persistenceTransactionProvider.newTransaction();
-    transactionStore.shutdownClient(tx, channelID);
+    transactionStore.shutdownNode(tx, nodeID);
     tx.commit();
   }
 

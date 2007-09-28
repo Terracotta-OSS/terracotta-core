@@ -1,9 +1,10 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.lockmanager.impl;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.lockmanager.api.ServerThreadID;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.util.Assert;
@@ -27,8 +28,8 @@ class ServerThreadContext {
   private Lock                     waitingOn        = null;
   private final int                hashcode;
 
-  ServerThreadContext(ChannelID channelID, ThreadID threadID) {
-    this(new ServerThreadID(channelID, threadID));
+  ServerThreadContext(NodeID nid, ThreadID threadID) {
+    this(new ServerThreadID(nid, threadID));
   }
 
   ServerThreadContext(ServerThreadID id2) {
@@ -61,9 +62,7 @@ class ServerThreadContext {
 
   synchronized void addLock(Lock lock) {
     boolean added = locksHeld.add(lock);
-    if(!added) {
-      throw new AssertionError("Lock : " + lock + " is already held : " + this);
-    }
+    if (!added) { throw new AssertionError("Lock : " + lock + " is already held : " + this); }
     clearWaitingOn();
   }
 

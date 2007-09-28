@@ -5,14 +5,14 @@
 package com.tc.object.dna.impl;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.io.TCByteBufferInputStream;
+import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.LiteralAction;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
@@ -26,7 +26,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
   private final ObjectStringSerializer serializer;
   private final boolean                createOutput;
 
-  protected TCByteBufferInputStream    input;
+  protected TCByteBufferInput    input;
   protected TCByteBuffer[]             dataOut;
 
   private int                          actionCount          = 0;
@@ -208,7 +208,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
     serialOutput.write(dataOut);
   }
 
-  public Object deserializeFrom(TCByteBufferInputStream serialInput) throws IOException {
+  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     this.wasDeserialized = true;
 
     serialInput.mark();

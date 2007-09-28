@@ -8,7 +8,7 @@ import com.tc.async.api.EventContext;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.MessageID;
 import com.tc.net.groups.NodeID;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeIDSerializer;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
@@ -22,9 +22,9 @@ import java.util.Set;
 
 public class ServerTxnAckMessage extends AbstractGroupMessage implements EventContext {
 
-  public static final int   SERVER_TXN_ACK_MSG_TYPE = 0;
+  public static final int  SERVER_TXN_ACK_MSG_TYPE = 0;
 
-  private Set               serverTxnIDs;
+  private Set              serverTxnIDs;
 
   private transient NodeID nodeID;
 
@@ -42,20 +42,20 @@ public class ServerTxnAckMessage extends AbstractGroupMessage implements EventCo
   public Set getAckedServerTxnIDs() {
     return serverTxnIDs;
   }
-  
+
   public NodeID getDestinationID() {
     Assert.assertNotNull(nodeID);
     return nodeID;
   }
-  
-  protected void basicReadExternal(int msgType, ObjectInput in) throws IOException {
+
+  protected void basicReadExternal(int msgType, ObjectInput in) throws IOException, ClassNotFoundException {
     Assert.assertEquals(SERVER_TXN_ACK_MSG_TYPE, msgType);
     int size = in.readInt();
     serverTxnIDs = new HashSet(size);
     for (int i = 0; i < size; i++) {
-      long cid = in.readLong();
+      NodeID cid = NodeIDSerializer.readNodeID(in);
       long clientTxID = in.readLong();
-      serverTxnIDs.add(new ServerTransactionID(new ChannelID(cid), new TransactionID(clientTxID)));
+      serverTxnIDs.add(new ServerTransactionID(cid, new TransactionID(clientTxID)));
     }
   }
 
@@ -64,7 +64,7 @@ public class ServerTxnAckMessage extends AbstractGroupMessage implements EventCo
     out.writeInt(serverTxnIDs.size());
     for (Iterator i = serverTxnIDs.iterator(); i.hasNext();) {
       ServerTransactionID sTxID = (ServerTransactionID) i.next();
-      out.writeLong(sTxID.getChannelID().toLong());
+      NodeIDSerializer.writeNodeID(sTxID.getSourceID(), out);
       out.writeLong(sTxID.getClientTransactionID().toLong());
     }
   }

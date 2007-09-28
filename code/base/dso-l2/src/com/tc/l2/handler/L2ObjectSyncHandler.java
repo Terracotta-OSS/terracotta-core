@@ -74,7 +74,7 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
       while ((txn = reader.getNextTransaction()) != null) {
         txns.put(txn.getServerTransactionID(), txn);
       }
-      rTxnManager.addCommitedTransactions(reader.getChannelID(), txns.keySet(), txns.values(), reader
+      rTxnManager.addCommitedTransactions(reader.getNodeID(), txns.keySet(), txns.values(), reader
           .addAcknowledgedTransactionIDsTo(new HashSet()));
       return txns.keySet();
     } catch (IOException e) {

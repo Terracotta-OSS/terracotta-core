@@ -3,7 +3,7 @@
  */
 package com.tc.memorydatastore.message;
 
-import com.tc.io.TCByteBufferInputStream;
+import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
 
@@ -12,7 +12,7 @@ import java.io.IOException;
 public class TCByteArrayKeyValuePair implements TCSerializable {
   private byte[] key;
   private byte[] value;
-  
+
   public TCByteArrayKeyValuePair() {
     super();
   }
@@ -37,7 +37,7 @@ public class TCByteArrayKeyValuePair implements TCSerializable {
     serialOutput.write(value);
   }
 
-  public Object deserializeFrom(TCByteBufferInputStream serialInput) throws IOException {
+  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     int length = serialInput.readInt();
     this.key = new byte[length];
     serialInput.read(this.key);
@@ -45,7 +45,7 @@ public class TCByteArrayKeyValuePair implements TCSerializable {
     length = serialInput.readInt();
     this.value = new byte[length];
     serialInput.read(this.value);
-    
+
     return this;
   }
 }

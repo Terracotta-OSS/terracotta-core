@@ -3,12 +3,12 @@
  */
 package com.tc.objectserver.lockmanager.api;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.lockmanager.api.LockID;
 
 public interface LockAwardContext {
 
-  public ChannelID getChannelID();
+  public NodeID getNodeID();
 
   public LockID getLockID();
   

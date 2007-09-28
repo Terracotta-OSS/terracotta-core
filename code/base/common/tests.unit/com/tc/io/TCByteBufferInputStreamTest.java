@@ -190,7 +190,7 @@ public class TCByteBufferInputStreamTest extends TCTestCase {
       bbis.skip(start);
       int limit = random.nextInt(bbis.available());
 
-      TCByteBufferInputStream dupe = bbis.duplicateAndLimit(limit);
+      TCByteBufferInput dupe = bbis.duplicateAndLimit(limit);
       for (int n = 0; n < limit; n++) {
         int dupeByte = dupe.read();
         int origByte = bbis.read();
@@ -210,7 +210,7 @@ public class TCByteBufferInputStreamTest extends TCTestCase {
       TCByteBuffer[] data = getRandomData();
       TCByteBufferInputStream bbis = new TCByteBufferInputStream(data);
       bbis.read();
-      TCByteBufferInputStream dupe = bbis.duplicate();
+      TCByteBufferInput dupe = bbis.duplicate();
       assertEquals(bbis.available(), dupe.available());
       int read = bbis.read();
       if (read != -1) {

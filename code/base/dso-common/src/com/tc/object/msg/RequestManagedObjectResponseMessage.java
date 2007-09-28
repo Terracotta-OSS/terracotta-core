@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.msg;
 
@@ -38,13 +39,13 @@ public class RequestManagedObjectResponseMessage extends DSOMessageBase implemen
   private TCByteBuffer[]         dnaData;
   private int                    dnaCount;
 
-  public RequestManagedObjectResponseMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
-                                             TCMessageType type) {
+  public RequestManagedObjectResponseMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out,
+                                             MessageChannel channel, TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 
-  public RequestManagedObjectResponseMessage(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header,
-                                             TCByteBuffer[] data) {
+  public RequestManagedObjectResponseMessage(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,
+                                             TCMessageHeader header, TCByteBuffer[] data) {
     super(sessionID, monitor, channel, header, data);
   }
 
@@ -53,6 +54,10 @@ public class RequestManagedObjectResponseMessage extends DSOMessageBase implemen
   }
 
   public void initialize(TCByteBuffer[] dnas, int count, ObjectStringSerializer aSerializer, long bid, int tot) {
+    // System.err.println("SARO : dna count = " + count + " dnas[] = " + dnas.length + " tot = " + tot);
+    // for (int i = 0; i < dnas.length; i++) {
+    // System.err.println("SARO : "+ i + " : " + dnas[i].capacity());
+    // }
     this.dnaCount = count;
     this.dnaData = dnas;
     this.serializer = aSerializer;

@@ -18,6 +18,7 @@ import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupMessage;
 import com.tc.net.groups.NodeID;
+import com.tc.net.groups.NodeIDImpl;
 import com.tc.util.Assert;
 import com.tc.util.State;
 
@@ -36,7 +37,7 @@ public class StateManagerImpl implements StateManager {
   private final CopyOnWriteArrayList   listeners          = new CopyOnWriteArrayList();
   private final Object                 electionLock       = new Object();
 
-  private NodeID                       activeNode         = NodeID.NULL_ID;
+  private NodeID                       activeNode         = NodeIDImpl.NULL_ID;
   private volatile State               state              = START_STATE;
   private boolean                      electionInProgress = false;
 
@@ -209,7 +210,7 @@ public class StateManagerImpl implements StateManager {
 
   private synchronized void handleElectionResultMessage(L2StateMessage msg) throws GroupException {
     if (activeNode.equals(msg.getEnrollment().getNodeID())) {
-      Assert.assertFalse(NodeID.NULL_ID.equals(activeNode));
+      Assert.assertFalse(NodeIDImpl.NULL_ID.equals(activeNode));
       // This wouldnt normally happen, but we agree - so ack
       GroupMessage resultAgreed = L2StateMessageFactory.createResultAgreedMessage(msg, msg.getEnrollment());
       logger.info("Agreed with Election Result from " + msg.messageFrom() + " : " + resultAgreed);
@@ -274,7 +275,7 @@ public class StateManagerImpl implements StateManager {
     synchronized (this) {
       if (activeNode.equals(disconnectedNode)) {
         // ACTIVE Node is gone
-        activeNode = NodeID.NULL_ID;
+        activeNode = NodeIDImpl.NULL_ID;
       }
       if (state != PASSIVE_UNINTIALIZED && state != ACTIVE_COORDINATOR && activeNode.isNull()) {
         elect = true;

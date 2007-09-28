@@ -5,6 +5,7 @@
 package com.tc.objectserver.l1.api;
 
 import com.tc.logging.TCLogging;
+import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.TestDNA;
@@ -41,36 +42,38 @@ public class ClientStateManagerTest extends TestCase {
     Set testSet = new HashSet();
     Set lookupObjectIDs = new HashSet();
 
-    stateManager.startupClient(new ChannelID(50));
-    assertTrue(stateManager.createPrunedChangesAndAddObjectIDTo(changes, new BackReferences(), new ChannelID(50),
-                                                                lookupObjectIDs).size() == 0);
+    ClientID cid0 = new ClientID(new ChannelID(0));
+    ClientID cid1 = new ClientID(new ChannelID(1));
+    stateManager.startupNode(cid1);
+    assertTrue(stateManager.createPrunedChangesAndAddObjectIDTo(changes, new BackReferences(), cid1, lookupObjectIDs)
+        .size() == 0);
     assertEquals(0, lookupObjectIDs.size());
 
-    stateManager.startupClient(new ChannelID(0));
-    stateManager.addReference(new ChannelID(0), new ObjectID(4));
+    stateManager.startupNode(cid0);
+    stateManager.addReference(cid0, new ObjectID(4));
     stateManager.addAllReferencedIdsTo(testSet);
-    assertEquals(0, stateManager.createPrunedChangesAndAddObjectIDTo(changes, new BackReferences(), new ChannelID(50),
+    assertEquals(0, stateManager.createPrunedChangesAndAddObjectIDTo(changes, new BackReferences(), cid1,
                                                                      lookupObjectIDs).size());
     assertEquals(0, lookupObjectIDs.size());
     assertEquals(1, testSet.size());
 
     testSet = new HashSet();
-    stateManager.addReference(new ChannelID(0), new ObjectID(1));
+    stateManager.addReference(cid0, new ObjectID(1));
     stateManager.addAllReferencedIdsTo(testSet);
     assertEquals(2, testSet.size());
 
-    assertEquals(0, stateManager.createPrunedChangesAndAddObjectIDTo(changes, new BackReferences(), new ChannelID(50),
+    assertEquals(0, stateManager.createPrunedChangesAndAddObjectIDTo(changes, new BackReferences(), cid1,
                                                                      lookupObjectIDs).size());
     assertEquals(0, lookupObjectIDs.size());
-    assertEquals(0, stateManager.createPrunedChangesAndAddObjectIDTo(changes, new BackReferences(), new ChannelID(0),
+    assertEquals(0, stateManager.createPrunedChangesAndAddObjectIDTo(changes, new BackReferences(), cid0,
                                                                      lookupObjectIDs).size());
     assertEquals(0, lookupObjectIDs.size());
 
-    stateManager.addReference(new ChannelID(0), new ObjectID(0));
+    stateManager.addReference(cid0, new ObjectID(0));
     stateManager.addAllReferencedIdsTo(testSet);
     assertEquals(3, testSet.size());
 
-    assertEquals(1, stateManager.createPrunedChangesAndAddObjectIDTo(changes, new BackReferences(), new ChannelID(0),
+    assertEquals(1, stateManager.createPrunedChangesAndAddObjectIDTo(changes, new BackReferences(), cid0,
                                                                      lookupObjectIDs).size());
     assertEquals(0, lookupObjectIDs.size());
 
@@ -78,11 +81,11 @@ public class ClientStateManagerTest extends TestCase {
     backReferences.addBackReference(new ObjectID(2), new ObjectID(0));
     backReferences.addBackReference(new ObjectID(3), new ObjectID(0));
 
-    assertEquals(1, stateManager.createPrunedChangesAndAddObjectIDTo(changes, backReferences, new ChannelID(0),
-                                                                     lookupObjectIDs).size());
+    assertEquals(1, stateManager.createPrunedChangesAndAddObjectIDTo(changes, backReferences, cid0, lookupObjectIDs)
+        .size());
     assertEquals(2, lookupObjectIDs.size());
 
-    stateManager.shutdownClient(new ChannelID(50));
+    stateManager.shutdownNode(cid1);
 
   }
 }

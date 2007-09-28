@@ -3,7 +3,7 @@
  */
 package com.tc.objectserver.tx;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -41,11 +41,11 @@ public class TransactionRecord {
     return "TransactionRecord@" + System.identityHashCode(this) + " = " + state + "  :: waitees = " + waitees;
   }
 
-  public boolean addWaitee(ChannelID waitee) {
+  public boolean addWaitee(NodeID waitee) {
     return waitees.add(waitee);
   }
 
-  public boolean remove(ChannelID waitee) {
+  public boolean remove(NodeID waitee) {
     return waitees.remove(waitee);
   }
 
@@ -53,7 +53,7 @@ public class TransactionRecord {
     return waitees.isEmpty();
   }
 
-  public boolean contains(ChannelID waitee) {
+  public boolean contains(NodeID waitee) {
     return waitees.contains(waitee);
   }
 }

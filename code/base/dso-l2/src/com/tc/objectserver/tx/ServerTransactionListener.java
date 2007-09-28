@@ -3,7 +3,7 @@
  */
 package com.tc.objectserver.tx;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.tx.ServerTransactionID;
 
 import java.util.Collection;
@@ -11,7 +11,7 @@ import java.util.Set;
 
 public interface ServerTransactionListener {
   
-  public void incomingTransactions(ChannelID cid, Set serverTxnIDs);
+  public void incomingTransactions(NodeID source, Set serverTxnIDs);
   
   public void transactionApplied(ServerTransactionID stxID);
   
@@ -19,7 +19,7 @@ public interface ServerTransactionListener {
 
   public void addResentServerTransactionIDs(Collection stxIDs);
 
-  public void clearAllTransactionsFor(ChannelID killedClient);
+  public void clearAllTransactionsFor(NodeID deadNode);
 
   public void transactionManagerStarted(Set cids);
   

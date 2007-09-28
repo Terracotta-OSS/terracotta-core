@@ -1,8 +1,10 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.gtx;
 
+import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.tx.TestRemoteTransactionManager;
 import com.tc.object.tx.TransactionID;
@@ -21,16 +23,16 @@ public class ClientGlobalTransactionManagerTest extends TestCase {
     int max = 5;
     for (int i = 100; i <= max; i++) {
       GlobalTransactionID gtx1 = new GlobalTransactionID(i);
-      ChannelID channelID = new ChannelID(i);
+      ClientID cid = new ClientID(new ChannelID(i));
       TransactionID transactionID = new TransactionID(i);
       // start the apply
-      assertTrue(mgr.startApply(channelID, transactionID, gtx1));
+      assertTrue(mgr.startApply(cid, transactionID, gtx1));
       // a further call to startApply should return false, since the apply is already in progress or complete.
-      assertFalse(mgr.startApply(channelID, transactionID, gtx1));
+      assertFalse(mgr.startApply(cid, transactionID, gtx1));
 
       if (i > 2) {
         GlobalTransactionID lowWatermark = new GlobalTransactionID(i - 1);
-        ChannelID chIDBelowWatermark = new ChannelID(i - 2);
+        ClientID chIDBelowWatermark = new ClientID(new ChannelID(i - 2));
         TransactionID txIDBelowWatermark = new TransactionID(i - 2);
         GlobalTransactionID belowLowWatermark = new GlobalTransactionID(i - mgr.getAllowedLowWaterMarkDelta());
         mgr.setLowWatermark(lowWatermark);
@@ -46,25 +48,25 @@ public class ClientGlobalTransactionManagerTest extends TestCase {
   }
 
   public void testCleanup() throws Exception {
-    ChannelID channelID = new ChannelID(1);
+    ClientID cid = new ClientID(new ChannelID(1));
     TransactionID txID = new TransactionID(1);
     GlobalTransactionID gtxID1 = new GlobalTransactionID(1);
     GlobalTransactionID gtxID2 = new GlobalTransactionID(2);
     GlobalTransactionID gtxID3 = new GlobalTransactionID(3 + mgr.getAllowedLowWaterMarkDelta());
 
     assertEquals(0, mgr.size());
-    assertTrue(mgr.startApply(channelID, txID, gtxID1));
+    assertTrue(mgr.startApply(cid, txID, gtxID1));
     assertEquals(1, mgr.size());
 
     // calling startApply with a different GlobalTransactionID should have the same result as calling it with the
     // same GlobalTransactionID.
-    assertFalse(mgr.startApply(channelID, txID, gtxID1));
-    assertFalse(mgr.startApply(channelID, txID, gtxID2));
+    assertFalse(mgr.startApply(cid, txID, gtxID1));
+    assertFalse(mgr.startApply(cid, txID, gtxID2));
     assertEquals(1, mgr.size());
 
     // setting the low watermark to a gtxID equal to the lowest recorded for that pair should not remove that pair
     mgr.setLowWatermark(gtxID1);
-    assertFalse(mgr.startApply(channelID, txID, gtxID2));
+    assertFalse(mgr.startApply(cid, txID, gtxID2));
     assertEquals(1, mgr.size());
 
     // setting the low watermark to a gtxID above the highest recorded for that pair SHOULD remove that pair
@@ -79,6 +81,6 @@ public class ClientGlobalTransactionManagerTest extends TestCase {
     // happening properly
     // The mgr should have forgotten about the channel id and transaction id by setting the watermark above the highest
     // global transaction id recorded for that transaction.
-    assertTrue(mgr.startApply(channelID, txID, gtxID3));
+    assertTrue(mgr.startApply(cid, txID, gtxID3));
   }
 }

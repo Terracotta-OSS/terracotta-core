@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.msg;
 
@@ -37,13 +38,13 @@ public class CommitTransactionMessageImpl extends DSOMessageBase implements Even
   private TCByteBuffer[]         batchData;
   private final Set              acknowledgedTransactionIDs  = new HashSet();
 
-  public CommitTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
-                                      TCMessageType type) {
+  public CommitTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out,
+                                      MessageChannel channel, TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 
-  public CommitTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header,
-                                      TCByteBuffer[] data) {
+  public CommitTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,
+                                      TCMessageHeader header, TCByteBuffer[] data) {
     super(sessionID, monitor, channel, header, data);
   }
 

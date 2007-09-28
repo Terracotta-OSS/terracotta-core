@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.handler;
 
@@ -10,15 +11,12 @@ import com.tc.object.msg.AcknowledgeTransactionMessage;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.tx.ServerTransactionManager;
 
-/**
- * @author steve
- */
 public class TransactionAcknowledgementHandler extends AbstractEventHandler {
   private ServerTransactionManager transactionManager;
 
   public void handleEvent(EventContext context) {
     AcknowledgeTransactionMessage atm = (AcknowledgeTransactionMessage) context;
-    transactionManager.acknowledgement(atm.getRequesterID(), atm.getRequestID(), atm.getChannelID());
+    transactionManager.acknowledgement(atm.getRequesterID(), atm.getRequestID(), atm.getClientID());
   }
 
   public void initialize(ConfigurationContext context) {

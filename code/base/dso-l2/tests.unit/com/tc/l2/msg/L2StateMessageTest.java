@@ -7,7 +7,7 @@ package com.tc.l2.msg;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.state.Enrollment;
 import com.tc.l2.state.EnrollmentFactory;
-import com.tc.net.groups.NodeID;
+import com.tc.net.groups.NodeIDImpl;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -24,7 +24,7 @@ public class L2StateMessageTest extends TestCase {
   private L2StateMessage l2StateMessage;
 
   public void setUp() {
-    enrollment = EnrollmentFactory.createEnrollment(new NodeID("30001", new byte[] { 54, -125, 34, -4 }), true,
+    enrollment = EnrollmentFactory.createEnrollment(new NodeIDImpl("30001", new byte[] { 54, -125, 34, -4 }), true,
                                                     WeightGeneratorFactory.createDefaultFactory());
     l2StateMessage = new L2StateMessage();
   }

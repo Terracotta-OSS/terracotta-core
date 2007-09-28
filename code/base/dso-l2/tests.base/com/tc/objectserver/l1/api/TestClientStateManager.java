@@ -5,7 +5,7 @@
 package com.tc.objectserver.l1.api;
 
 import com.tc.exception.ImplementMe;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.managedobject.BackReferences;
 import com.tc.text.PrettyPrinter;
@@ -20,38 +20,38 @@ import java.util.Set;
 
 public class TestClientStateManager implements ClientStateManager {
 
-  public ChannelID  shutdownClient    = null;
+  public NodeID     shutdownClient    = null;
   public Collection allClientIDs      = new HashSet();
   public List       addReferenceCalls = new ArrayList();
 
-  public void shutdownClient(ChannelID deadClient) {
-    this.shutdownClient = deadClient;
+  public void shutdownNode(NodeID deadNode) {
+    this.shutdownClient = deadNode;
   }
 
-  public void addReference(ChannelID clientID, ObjectID objectID) {
-    addReferenceCalls.add(new AddReferenceContext(clientID, objectID));
+  public void addReference(NodeID nodeID, ObjectID objectID) {
+    addReferenceCalls.add(new AddReferenceContext(nodeID, objectID));
   }
 
   public static class AddReferenceContext {
-    public final ChannelID clientID;
-    public final ObjectID  objectID;
+    public final NodeID   nodeID;
+    public final ObjectID objectID;
 
-    private AddReferenceContext(ChannelID clientID, ObjectID objectID) {
-      this.clientID = clientID;
+    private AddReferenceContext(NodeID nodeID, ObjectID objectID) {
+      this.nodeID = nodeID;
       this.objectID = objectID;
     }
   }
 
-  public void removeReferences(ChannelID clientID, Set removed) {
+  public void removeReferences(NodeID nodeID, Set removed) {
     //
   }
 
-  public List createPrunedChangesAndAddObjectIDTo(Collection changes, BackReferences includeIDs, ChannelID clientID,
+  public List createPrunedChangesAndAddObjectIDTo(Collection changes, BackReferences includeIDs, NodeID clientID,
                                                   Set objectIDs) {
     return Collections.EMPTY_LIST;
   }
 
-  public boolean hasReference(ChannelID clientID, ObjectID objectID) {
+  public boolean hasReference(NodeID nodeID, ObjectID objectID) {
     // to be consistent with createPrunedChangesAndAddObjectIDTo, return false
     return false;
   }
@@ -74,20 +74,20 @@ public class TestClientStateManager implements ClientStateManager {
 
   }
 
-  public void removeReferencedFrom(ChannelID channelID, Set secondPass) {
+  public void removeReferencedFrom(NodeID nodeID, Set secondPass) {
     throw new ImplementMe();
 
   }
 
-  public Set addReferences(ChannelID channelID, Set oids) {
+  public Set addReferences(NodeID nodeID, Set oids) {
     for (Iterator i = oids.iterator(); i.hasNext();) {
       ObjectID oid = (ObjectID) i.next();
-      addReferenceCalls.add(new AddReferenceContext(channelID, oid));
+      addReferenceCalls.add(new AddReferenceContext(nodeID, oid));
     }
     return oids;
   }
 
-  public void startupClient(ChannelID channelID) {
+  public void startupNode(NodeID nodeID) {
     // NOP
   }
 

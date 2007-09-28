@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.handler;
 
@@ -8,9 +9,7 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.impl.NullSink;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.ClientID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.msg.LockRequestMessage;
@@ -23,17 +22,16 @@ import com.tc.objectserver.lockmanager.api.LockManager;
  * @author steve
  */
 public class RequestLockUnLockHandler extends AbstractEventHandler {
-  private static final TCLogger logger    = TCLogging.getLogger(RequestLockUnLockHandler.class);
-  public static final Sink      NULL_SINK = new NullSink();
+  public static final Sink NULL_SINK = new NullSink();
 
-  private LockManager           lockManager;
-  private Sink                  lockResponseSink;
+  private LockManager      lockManager;
+  private Sink             lockResponseSink;
 
   public void handleEvent(EventContext context) {
     LockRequestMessage lrm = (LockRequestMessage) context;
 
     LockID lid = lrm.getLockID();
-    ChannelID cid = lrm.getChannelID();
+    ClientID cid = lrm.getClientID();
     ThreadID tid = lrm.getThreadID();
     if (lrm.isObtainLockRequest()) {
       lockManager.requestLock(lid, cid, tid, lrm.getLockLevel(), lockResponseSink);
@@ -53,7 +51,7 @@ public class RequestLockUnLockHandler extends AbstractEventHandler {
     } else if (lrm.isInterruptWaitRequest()) {
       lockManager.interrupt(lid, cid, tid);
     } else {
-      logger.error("Unknown lock request message: " + lrm);
+      throw new AssertionError("Unknown lock request message: " + lrm);
     }
   }
 

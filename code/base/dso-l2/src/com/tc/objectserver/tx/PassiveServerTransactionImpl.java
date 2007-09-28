@@ -4,7 +4,7 @@
  */
 package com.tc.objectserver.tx;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionIDGenerator;
@@ -22,11 +22,10 @@ import java.util.Map;
 public class PassiveServerTransactionImpl extends ServerTransactionImpl implements ServerTransaction {
 
   public PassiveServerTransactionImpl(GlobalTransactionIDGenerator gtxm, TxnBatchID batchID, TransactionID txID,
-                                      SequenceID sequenceID, LockID[] lockIDs, ChannelID channelID, List dnas,
+                                      SequenceID sequenceID, LockID[] lockIDs, NodeID source, List dnas,
                                       ObjectStringSerializer serializer, Map newRoots, TxnType transactionType,
                                       Collection notifies, DmiDescriptor[] dmis) {
-    super(gtxm, batchID, txID, sequenceID, lockIDs, channelID, dnas, serializer, newRoots, transactionType, notifies,
-          dmis);
+    super(gtxm, batchID, txID, sequenceID, lockIDs, source, dnas, serializer, newRoots, transactionType, notifies, dmis);
   }
 
   public SequenceID getClientSequenceID() {

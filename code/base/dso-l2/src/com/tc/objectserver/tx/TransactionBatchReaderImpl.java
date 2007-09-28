@@ -6,7 +6,7 @@ package com.tc.objectserver.tx;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferInputStream;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.DNAImpl;
@@ -34,20 +34,20 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
 
   private final TCByteBufferInputStream      in;
   private final TxnBatchID                   batchID;
-  private final ChannelID                    source;
+  private final NodeID                     source;
   private int                                numTxns;
   private final Collection                   acknowledgedTransactionIDs;
   private ObjectStringSerializer             serializer;
   private final GlobalTransactionIDGenerator gtxm;
   private final ServerTransactionFactory     txnFactory;
 
-  public TransactionBatchReaderImpl(GlobalTransactionIDGenerator gtxm, TCByteBuffer[] data, ChannelID source,
+  public TransactionBatchReaderImpl(GlobalTransactionIDGenerator gtxm, TCByteBuffer[] data, NodeID nodeID,
                                     Collection acknowledgedTransactionIDs, ObjectStringSerializer serializer,
                                     ServerTransactionFactory txnFactory) throws IOException {
     this.gtxm = gtxm;
     this.txnFactory = txnFactory;
     this.in = new TCByteBufferInputStream(data);
-    this.source = source;
+    this.source = nodeID;
     this.batchID = new TxnBatchID(in.readLong());
     this.numTxns = in.readInt();
     Assert.assertNotNull(acknowledgedTransactionIDs);
@@ -55,7 +55,7 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     this.serializer = serializer;
   }
 
-  public ChannelID getChannelID() {
+  public NodeID getNodeID() {
     return this.source;
   }
 

@@ -1,9 +1,10 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.lockmanager.impl;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.lockmanager.api.ServerThreadID;
 import com.tc.object.lockmanager.api.ThreadID;
 
@@ -23,8 +24,8 @@ class ServerThreadContextFactory {
     return currentContexts.size();
   }
 
-  ServerThreadContext getOrCreate(ChannelID channelID, ThreadID threadID) {
-    ServerThreadID id = new ServerThreadID(channelID, threadID);
+  ServerThreadContext getOrCreate(NodeID nid, ThreadID threadID) {
+    ServerThreadID id = new ServerThreadID(nid, threadID);
 
     synchronized (currentContexts) {
       ServerThreadContext threadContext = (ServerThreadContext) this.currentContexts.get(id);
@@ -40,11 +41,11 @@ class ServerThreadContextFactory {
     return currentContexts.remove(context.getId());
   }
 
-  void clear(ChannelID channelID) {
+  void clear(NodeID nid) {
     synchronized (currentContexts) {
       for (Iterator i = currentContexts.values().iterator(); i.hasNext();) {
         ServerThreadContext threadContext = (ServerThreadContext) i.next();
-        if (threadContext.getId().getChannelID().equals(channelID)) {
+        if (threadContext.getId().getNodeID().equals(nid)) {
           i.remove();
         }
       }

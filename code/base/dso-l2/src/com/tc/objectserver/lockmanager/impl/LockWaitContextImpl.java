@@ -4,7 +4,7 @@
 package com.tc.objectserver.lockmanager.impl;
 
 import com.tc.async.api.Sink;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.ServerThreadID;
 import com.tc.object.lockmanager.api.ThreadID;
@@ -14,7 +14,7 @@ import com.tc.util.Assert;
 
 public class LockWaitContextImpl implements LockWaitContext {
   private final ServerThreadContext threadContext;
-  private final ChannelID           channelID;
+  private final NodeID           nodeID;
   private final ThreadID            threadID;
   private final Sink                lockResponseSink;
   private final WaitInvocation      call;
@@ -29,7 +29,7 @@ public class LockWaitContextImpl implements LockWaitContext {
     this.timestamp = System.currentTimeMillis();
     ServerThreadID id = threadContext.getId();
     this.threadContext = threadContext;
-    this.channelID = id.getChannelID();
+    this.nodeID = id.getNodeID();
     this.threadID = id.getClientThreadID();
     this.lockResponseSink = lockResponseSink;
     this.call = call;
@@ -49,12 +49,12 @@ public class LockWaitContextImpl implements LockWaitContext {
   }
 
   public String toString() {
-    return "LockWaitContex@" + System.identityHashCode(this) + "[" + channelID + "," + threadID + "," + call + ","
+    return "LockWaitContex@" + System.identityHashCode(this) + "[" + nodeID + "," + threadID + "," + call + ","
            + lock.getLockID() + "]";
   }
 
-  public ChannelID getChannelID() {
-    return channelID;
+  public NodeID getNodeID() {
+    return nodeID;
   }
 
   public ThreadID getThreadID() {

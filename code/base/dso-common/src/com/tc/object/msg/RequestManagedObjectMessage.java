@@ -4,7 +4,7 @@
 package com.tc.object.msg;
 
 import com.tc.lang.Recyclable;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ObjectRequestContext;
 import com.tc.object.ObjectRequestID;
@@ -27,7 +27,7 @@ public interface RequestManagedObjectMessage extends Recyclable {
 
   public MessageChannel getChannel();
 
-  public ChannelID getChannelID();
+  public ClientID getClientID();
 
   public int getRequestDepth();
 

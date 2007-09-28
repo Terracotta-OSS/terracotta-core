@@ -17,7 +17,6 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.NodeID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.tx.ServerTransactionManager;
@@ -49,7 +48,7 @@ public class TransactionRelayHandler extends AbstractEventHandler {
       NodeID nodeID = state.getNodeID();
       sendCommitTransactionMessage(nodeID, ict);
     }
-    transactionManager.transactionsRelayed(ict.getChannelID(), ict.getServerTransactionIDs());
+    transactionManager.transactionsRelayed(ict.getNodeID(), ict.getServerTransactionIDs());
   }
 
   private void sendCommitTransactionMessage(NodeID nodeID, IncomingTransactionContext ict) {
@@ -67,21 +66,19 @@ public class TransactionRelayHandler extends AbstractEventHandler {
     }
   }
 
-  private void reconsileWaitForNotification(NodeID nodeID, IncomingTransactionContext ict) {
-    ChannelID waitee = nodeID.toChannelID();
+  private void reconsileWaitForNotification(NodeID waitee, IncomingTransactionContext ict) {
     // TODO::avoid this loop and thus N lookups in transactionManager
     for (Iterator i = ict.getServerTransactionIDs().iterator(); i.hasNext();) {
       ServerTransactionID stxnID = (ServerTransactionID) i.next();
-      transactionManager.acknowledgement(ict.getChannelID(), stxnID.getClientTransactionID(), waitee);
+      transactionManager.acknowledgement(ict.getNodeID(), stxnID.getClientTransactionID(), waitee);
     }
   }
 
-  private void addWaitForNotification(NodeID nodeID, IncomingTransactionContext ict) {
-    ChannelID waitee = nodeID.toChannelID();
+  private void addWaitForNotification(NodeID waitee, IncomingTransactionContext ict) {
     // TODO::avoid this loop and thus N lookups in transactionManager
     for (Iterator i = ict.getServerTransactionIDs().iterator(); i.hasNext();) {
       ServerTransactionID stxnID = (ServerTransactionID) i.next();
-      transactionManager.addWaitingForAcknowledgement(ict.getChannelID(), stxnID.getClientTransactionID(), waitee);
+      transactionManager.addWaitingForAcknowledgement(ict.getNodeID(), stxnID.getClientTransactionID(), waitee);
     }
   }
 

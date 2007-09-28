@@ -4,7 +4,7 @@
  */
 package com.tc.objectserver.tx;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransaction;
@@ -33,7 +33,7 @@ public interface ServerTransaction extends GlobalTransaction {
 
   public LockID[] getLockIDs();
 
-  public ChannelID getChannelID();
+  public NodeID getSourceID();
 
   public TransactionID getTransactionID();
 

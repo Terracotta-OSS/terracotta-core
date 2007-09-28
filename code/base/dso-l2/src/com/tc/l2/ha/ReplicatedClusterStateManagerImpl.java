@@ -12,6 +12,7 @@ import com.tc.l2.msg.ClusterStateMessageFactory;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.groups.ClientID;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupMessage;
@@ -22,7 +23,7 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
-import com.tc.objectserver.context.ChannelStateEventContext;
+import com.tc.objectserver.context.NodeStateEventContext;
 import com.tc.util.Assert;
 import com.tc.util.UUID;
 
@@ -160,12 +161,12 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   private void sendChannelLifeCycleEventsIfNecessary(ClusterStateMessage msg) {
     if (msg.getType() == ClusterStateMessage.NEW_CONNECTION_CREATED) {
       // Not really needed, but just in case
-      channelLifeCycleSink.add(new ChannelStateEventContext(ChannelStateEventContext.CREATE, new ChannelID(msg
-          .getConnectionID().getChannelID())));
+      channelLifeCycleSink.add(new NodeStateEventContext(NodeStateEventContext.CREATE, new ClientID(new ChannelID(msg
+          .getConnectionID().getChannelID()))));
     } else if (msg.getType() == ClusterStateMessage.CONNECTION_DESTROYED) {
       // this is needed to clean up some data structures internally
-      channelLifeCycleSink.add(new ChannelStateEventContext(ChannelStateEventContext.REMOVE, new ChannelID(msg
-          .getConnectionID().getChannelID())));
+      channelLifeCycleSink.add(new NodeStateEventContext(NodeStateEventContext.REMOVE, new ClientID(new ChannelID(msg
+          .getConnectionID().getChannelID()))));
     }
   }
 
@@ -179,6 +180,6 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
 
   public void fireNodeLeftEvent(NodeID nodeID) {
     // this is needed to clean up some data structures internally
-    channelLifeCycleSink.add(new ChannelStateEventContext(ChannelStateEventContext.REMOVE, nodeID.toChannelID()));
+    channelLifeCycleSink.add(new NodeStateEventContext(NodeStateEventContext.REMOVE, nodeID));
   }
 }

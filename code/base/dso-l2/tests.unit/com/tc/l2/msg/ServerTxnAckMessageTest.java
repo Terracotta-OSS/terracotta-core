@@ -7,7 +7,9 @@ package com.tc.l2.msg;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.net.groups.AbstractGroupMessage;
+import com.tc.net.groups.ClientID;
 import com.tc.net.groups.NodeID;
+import com.tc.net.groups.NodeIDImpl;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -38,7 +40,7 @@ public class ServerTxnAckMessageTest extends TestCase {
   private AbstractGroupMessage relayedCommitTransactionMessage;
   private Set                  serverTransactionIDs;
   private final int            channelId = 2;
-  private final NodeID nodeID = new NodeID("foo", "foobar".getBytes());
+  private final NodeID         nodeID    = new NodeIDImpl("foo", "foobar".getBytes());
 
   public void setUp() {
     Collection acknowledged = new ArrayList();
@@ -48,13 +50,14 @@ public class ServerTxnAckMessageTest extends TestCase {
         .newCommitTransactionMessage();
     testCommitTransactionMessage.setBatch(new TestTransactionBatch(new TCByteBuffer[] { TCByteBufferFactory
         .getInstance(false, 3452) }, acknowledged), new ObjectStringSerializer());
-    testCommitTransactionMessage.setChannelID(new ChannelID(channelId));
+    testCommitTransactionMessage.setChannelID(new ClientID(new ChannelID(channelId)));
 
     serverTransactionIDs = new HashSet();
-    ServerTransactionID stid1 = new ServerTransactionID(new ChannelID(channelId), new TransactionID(4234));
-    ServerTransactionID stid2 = new ServerTransactionID(new ChannelID(channelId), new TransactionID(6543));
-    ServerTransactionID stid3 = new ServerTransactionID(new ChannelID(channelId), new TransactionID(1654));
-    ServerTransactionID stid4 = new ServerTransactionID(new ChannelID(channelId), new TransactionID(3460));
+    ClientID cid = new ClientID(new ChannelID(channelId));
+    ServerTransactionID stid1 = new ServerTransactionID(cid, new TransactionID(4234));
+    ServerTransactionID stid2 = new ServerTransactionID(cid, new TransactionID(6543));
+    ServerTransactionID stid3 = new ServerTransactionID(cid, new TransactionID(1654));
+    ServerTransactionID stid4 = new ServerTransactionID(cid, new TransactionID(3460));
     serverTransactionIDs.add(stid1);
     serverTransactionIDs.add(stid2);
     serverTransactionIDs.add(stid3);
@@ -91,7 +94,7 @@ public class ServerTxnAckMessageTest extends TestCase {
       acked1.remove(stid);
     }
     assertTrue(acked1.isEmpty());
-    
+
     assertEquals(stam.getDestinationID(), nodeID);
   }
 

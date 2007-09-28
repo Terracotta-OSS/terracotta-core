@@ -8,6 +8,7 @@ import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.EnvironmentConfig;
+import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
@@ -69,7 +70,7 @@ public class TransactionPersistorTest extends TCTestCase {
                                                                                                                                    .getEnvironment());
     final TransactionPersistorImpl tpl = new TransactionPersistorImpl(env.getTransactionDatabase(),
                                                                       persistenceTransactionProvider);
-    final ServerTransactionID sid = new ServerTransactionID(new ChannelID(9), new TransactionID(10));
+    final ServerTransactionID sid = new ServerTransactionID(new ClientID(new ChannelID(9)), new TransactionID(10));
     final GlobalTransactionDescriptor gtd = new GlobalTransactionDescriptor(sid, new GlobalTransactionID(909));
     final CyclicBarrier cb = new CyclicBarrier(2);
     final Exception ex[] = new Exception[2];

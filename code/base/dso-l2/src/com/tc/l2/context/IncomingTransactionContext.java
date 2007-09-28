@@ -5,7 +5,7 @@
 package com.tc.l2.context;
 
 import com.tc.async.api.EventContext;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.msg.CommitTransactionMessage;
 
 import java.util.Collection;
@@ -17,10 +17,10 @@ public class IncomingTransactionContext implements EventContext {
   private final CommitTransactionMessage ctm;
   private final Collection               txns;
   private final Set                      serverTxnIDs;
-  private final ChannelID                channelID;
+  private final NodeID                   nodeID;
 
-  public IncomingTransactionContext(ChannelID channelID, CommitTransactionMessage ctm, Map txnsMap) {
-    this.channelID = channelID;
+  public IncomingTransactionContext(NodeID nodeID, CommitTransactionMessage ctm, Map txnsMap) {
+    this.nodeID = nodeID;
     this.ctm = ctm;
     this.txns = txnsMap.values();
     this.serverTxnIDs = txnsMap.keySet();
@@ -38,8 +38,8 @@ public class IncomingTransactionContext implements EventContext {
     return txns;
   }
 
-  public ChannelID getChannelID() {
-    return channelID;
+  public NodeID getNodeID() {
+    return nodeID;
   }
 
 }

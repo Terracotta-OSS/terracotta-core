@@ -397,7 +397,7 @@ public class TribesGroupManagerTest extends TCTestCase {
       if (actual == null) {
         ThreadUtil.reallySleep(1 * 500);
       } else {
-        assertTrue(n1.equals(actual) || n1.getName().equals(actual.getName()));
+        assertTrue(n1.equals(actual) || ((NodeIDImpl) n1).getName().equals(((NodeIDImpl) actual).getName()));
         System.err.println("\n### [" + msg + "] it took " + (i * 500) + " millis to get " + event + " event");
         return true;
       }
@@ -412,7 +412,7 @@ public class TribesGroupManagerTest extends TCTestCase {
     NodeID             node;
 
     public SenderThread(ThreadGroup group, String name, TribesGroupManager mgr, Integer upbound) {
-      this(group, name, mgr, upbound, NodeID.NULL_ID);
+      this(group, name, mgr, upbound, NodeIDImpl.NULL_ID);
     }
 
     public SenderThread(ThreadGroup group, String name, TribesGroupManager mgr, Integer upbound, NodeID node) {
@@ -471,12 +471,12 @@ public class TribesGroupManagerTest extends TCTestCase {
     private NodeID lastNodeLeft;
 
     public void nodeJoined(NodeID nodeID) {
-      System.err.println("\n### nodeJoined -> " + nodeID.getName());
+      System.err.println("\n### nodeJoined -> " + nodeID);
       lastNodeJoined = nodeID;
     }
 
     public void nodeLeft(NodeID nodeID) {
-      System.err.println("\n### nodeLeft -> " + nodeID.getName());
+      System.err.println("\n### nodeLeft -> " + nodeID);
       lastNodeLeft = nodeID;
     }
 

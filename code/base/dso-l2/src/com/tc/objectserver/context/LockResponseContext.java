@@ -5,7 +5,7 @@
 package com.tc.objectserver.context;
 
 import com.tc.async.api.EventContext;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.ThreadID;
@@ -21,24 +21,24 @@ import java.util.Iterator;
 
 public class LockResponseContext implements EventContext {
 
-  public static final int      LOCK_AWARD             = 1;
-  public static final int      LOCK_RECALL            = 2;
-  public static final int      LOCK_WAIT_TIMEOUT      = 3;
-  public static final int      LOCK_INFO              = 4;
-  public static final int      LOCK_NOT_AWARDED       = 5;
+  public static final int      LOCK_AWARD        = 1;
+  public static final int      LOCK_RECALL       = 2;
+  public static final int      LOCK_WAIT_TIMEOUT = 3;
+  public static final int      LOCK_INFO         = 4;
+  public static final int      LOCK_NOT_AWARDED  = 5;
 
   private final LockID         lockID;
   private final ThreadID       threadID;
   private final int            level;
-  private final ChannelID      channelID;
+  private final NodeID         nodeID;
   private final int            responseType;
   private final GlobalLockInfo globalLockInfo;
 
-  public LockResponseContext(LockID lockID, ChannelID channelID, ThreadID threadID, int level,
-                             int lockRequestQueueLength, int lockUpgradeQueueLength, Collection greedyHolders,
-                             Collection holders, Collection waiters, int type) {
+  public LockResponseContext(LockID lockID, NodeID nodeID, ThreadID threadID, int level, int lockRequestQueueLength,
+                             int lockUpgradeQueueLength, Collection greedyHolders, Collection holders,
+                             Collection waiters, int type) {
     this.lockID = lockID;
-    this.channelID = channelID;
+    this.nodeID = nodeID;
     this.threadID = threadID;
     this.level = level;
     this.responseType = type;
@@ -49,9 +49,9 @@ public class LockResponseContext implements EventContext {
                       || responseType == LOCK_INFO || responseType == LOCK_NOT_AWARDED);
   }
 
-  public LockResponseContext(LockID lockID, ChannelID channelID, ThreadID sourceID, int level, int type) {
+  public LockResponseContext(LockID lockID, NodeID nodeID, ThreadID sourceID, int level, int type) {
     this.lockID = lockID;
-    this.channelID = channelID;
+    this.nodeID = nodeID;
     this.threadID = sourceID;
     this.level = level;
     this.responseType = type;
@@ -60,8 +60,8 @@ public class LockResponseContext implements EventContext {
                       || responseType == LOCK_INFO || responseType == LOCK_NOT_AWARDED);
   }
 
-  public ChannelID getChannelID() {
-    return channelID;
+  public NodeID getNodeID() {
+    return nodeID;
   }
 
   public int getType() {
@@ -79,7 +79,7 @@ public class LockResponseContext implements EventContext {
   public int getLockLevel() {
     return level;
   }
-  
+
   public GlobalLockInfo getGlobalLockInfo() {
     return globalLockInfo;
   }
@@ -103,10 +103,10 @@ public class LockResponseContext implements EventContext {
   public boolean isLockNotAwarded() {
     return (this.responseType == LOCK_NOT_AWARDED);
   }
-  
+
   public String toString() {
-    return "LockResponseContext(" + lockID + "," + channelID + "," + threadID + ", " + LockLevel.toString(level)
-           + " , " + toString(responseType) + ")";
+    return "LockResponseContext(" + lockID + "," + nodeID + "," + threadID + ", " + LockLevel.toString(level) + " , "
+           + toString(responseType) + ")";
   }
 
   private static String toString(int responseType2) {
@@ -130,7 +130,7 @@ public class LockResponseContext implements EventContext {
     Collection holdersInfo = new ArrayList();
     for (Iterator i = holderInfo.iterator(); i.hasNext();) {
       Holder holder = (Holder) i.next();
-      holdersInfo.add(new GlobalLockStateInfo(holder.getLockID(), holder.getChannelID(), holder.getThreadID(), holder
+      holdersInfo.add(new GlobalLockStateInfo(holder.getLockID(), holder.getNodeID(), holder.getThreadID(), holder
           .getTimestamp(), holder.getTimeout(), holder.getLockLevel()));
     }
     return holdersInfo;
@@ -140,7 +140,7 @@ public class LockResponseContext implements EventContext {
     Collection waitersInfo = new ArrayList();
     for (Iterator i = waiters.iterator(); i.hasNext();) {
       LockWaitContext lockWaitContext = (LockWaitContext) i.next();
-      waitersInfo.add(new GlobalLockStateInfo(id, lockWaitContext.getChannelID(), lockWaitContext.getThreadID(),
+      waitersInfo.add(new GlobalLockStateInfo(id, lockWaitContext.getNodeID(), lockWaitContext.getThreadID(),
                                               lockWaitContext.getTimestamp(), -1, lockWaitContext.lockLevel()));
     }
     return waitersInfo;

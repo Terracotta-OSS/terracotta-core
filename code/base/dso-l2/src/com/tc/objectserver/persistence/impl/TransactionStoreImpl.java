@@ -6,7 +6,7 @@ package com.tc.objectserver.persistence.impl;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
@@ -176,12 +176,12 @@ public class TransactionStoreImpl implements TransactionStore {
     }
   }
 
-  public void shutdownClient(PersistenceTransaction tx, ChannelID client) {
+  public void shutdownNode(PersistenceTransaction tx, NodeID nid) {
     Collection stxIDs = new HashSet();
     synchronized (this) {
       for (Iterator iter = serverTransactionIDMap.keySet().iterator(); iter.hasNext();) {
         ServerTransactionID stxID = (ServerTransactionID) iter.next();
-        if (stxID.getChannelID().equals(client)) {
+        if (stxID.getSourceID().equals(nid)) {
           stxIDs.add(stxID);
         }
       }
@@ -195,7 +195,7 @@ public class TransactionStoreImpl implements TransactionStore {
     synchronized (this) {
       for (Iterator iter = serverTransactionIDMap.keySet().iterator(); iter.hasNext();) {
         ServerTransactionID stxID = (ServerTransactionID) iter.next();
-        if (!cids.contains(stxID.getChannelID())) {
+        if (!cids.contains(stxID.getSourceID())) {
           stxIDs.add(stxID);
         }
       }

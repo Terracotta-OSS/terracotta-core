@@ -4,7 +4,7 @@
  */
 package com.tc.objectserver.gtx;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.gtx.GlobalTransactionIDGenerator;
 import com.tc.object.tx.ServerTransactionID;
@@ -39,7 +39,7 @@ public interface ServerGlobalTransactionManager extends GlobalTransactionIDGener
    */
   public void completeTransactions(PersistenceTransaction tx, Collection collection);
 
-  public void shutdownClient(ChannelID channelID);
+  public void shutdownNode(NodeID nodeID);
 
   public void shutdownAllClientsExcept(Set cids);
 

@@ -5,7 +5,7 @@ package com.tc.object.net;
 
 import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
@@ -59,9 +59,9 @@ public class ChannelStatsImpl implements ChannelStats {
     return (Map) channel.getAttachment(DSO_STATS_MAP);
   }
 
-  public void notifyTransaction(ChannelID channelID) {
+  public void notifyTransaction(NodeID nodeID) {
     try {
-      MessageChannel channel = channelManager.getActiveChannel(channelID);
+      MessageChannel channel = channelManager.getActiveChannel(nodeID);
       getCounter(channel, TXN_RATE).increment();
     } catch (NoSuchChannelException e) {
       //

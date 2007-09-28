@@ -7,6 +7,7 @@ package com.tc.object.msg;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCByteBufferOutputStream;
+import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
@@ -58,7 +59,7 @@ public class BroadcastTransactionMessageTest extends TestCase {
     LockID[] lockIDs = new LockID[] { new LockID("1") };
     long cid = 10;
     TransactionID txID = new TransactionID(1);
-    ChannelID channelID = new ChannelID(1);
+    ClientID clientID = new ClientID( new ChannelID(1));
     GlobalTransactionID gtx = new GlobalTransactionID(2);
     TxnType txnType = TxnType.NORMAL;
     GlobalTransactionID lowGlobalTransactionIDWatermark = new GlobalTransactionID(1);
@@ -66,10 +67,10 @@ public class BroadcastTransactionMessageTest extends TestCase {
     Collection notified = new LinkedList();
     Set lookupObjectIDs = new HashSet();
     for (int i = 0; i < 100; i++) {
-      notified.add(new LockContext(new LockID("" + (i + 1)), channelID, new ThreadID(i + 1), LockLevel.WRITE));
+      notified.add(new LockContext(new LockID("" + (i + 1)), clientID, new ThreadID(i + 1), LockLevel.WRITE));
       lookupObjectIDs.add(new ObjectID(i));
     }
-    msg.initialize(changes, lookupObjectIDs, serializer, lockIDs, cid, txID, channelID, gtx, txnType,
+    msg.initialize(changes, lookupObjectIDs, serializer, lockIDs, cid, txID, clientID, gtx, txnType,
                    lowGlobalTransactionIDWatermark, notified, new HashMap(), DmiDescriptor.EMPTY_ARRAY);
     msg.dehydrate();
 
