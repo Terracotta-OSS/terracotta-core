@@ -9,6 +9,9 @@ class MavenDeploy
     @repository_url = options[:repository_url] || MAVEN_REPO_LOCAL
     @repository_id = options[:repository_id]
     @snapshot = options[:snapshot]
+    if @snapshot.is_a?(String)
+      @snapshot = (@snapshot =~ /true/i)
+    end
   end
 
   def deploy_file(file, artifact_id, version, dry_run = false)
