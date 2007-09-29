@@ -191,6 +191,11 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
         .commonL1Config().modules() : Modules.Factory.newInstance());
 
     permanentExcludesMatcher = new CompoundExpressionMatcher();
+
+    // CDV-441 -- This exclude should come before any patterns that do matching that might
+    // mandate more class loading (e.g. a superclass/interface match (Foo+))
+    addPermanentExcludePattern("org.jboss.net.protocol..*");
+
     // TODO:: come back and add all possible non-portable/non-adaptable classes here. This is by no means exhaustive !
 
     // XXX:: There is a bug in aspectwerkz com.tc..* matches both com.tc and com.tctest classes. As a work around
@@ -200,61 +205,42 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     // addPermanentExcludePattern("com.terracottatech..*");
 
     /**
-    // ----------------------------
-    // implicit config-bundle - JAG
-    // ----------------------------
-    addPermanentExcludePattern("java.awt.Component");
-    addPermanentExcludePattern("java.lang.Thread");
-    addPermanentExcludePattern("java.lang.ThreadLocal");
-    addPermanentExcludePattern("java.lang.ThreadGroup");
-    addPermanentExcludePattern("java.lang.Process");
-    addPermanentExcludePattern("java.lang.ClassLoader");
-    addPermanentExcludePattern("java.lang.Runtime");
-    addPermanentExcludePattern("java.io.FileReader");
-    addPermanentExcludePattern("java.io.FileWriter");
-    addPermanentExcludePattern("java.io.FileDescriptor");
-    addPermanentExcludePattern("java.io.FileInputStream");
-    addPermanentExcludePattern("java.io.FileOutputStream");
-    addPermanentExcludePattern("java.net.DatagramSocket");
-    addPermanentExcludePattern("java.net.DatagramSocketImpl");
-    addPermanentExcludePattern("java.net.MulticastSocket");
-    addPermanentExcludePattern("java.net.ServerSocket");
-    addPermanentExcludePattern("java.net.Socket");
-    addPermanentExcludePattern("java.net.SocketImpl");
-    addPermanentExcludePattern("java.nio.channels.DatagramChannel");
-    addPermanentExcludePattern("java.nio.channels.FileChannel");
-    addPermanentExcludePattern("java.nio.channels.FileLock");
-    addPermanentExcludePattern("java.nio.channels.ServerSocketChannel");
-    addPermanentExcludePattern("java.nio.channels.SocketChannel");
-    addPermanentExcludePattern("java.util.logging.FileHandler");
-    addPermanentExcludePattern("java.util.logging.SocketHandler");
-
-    // Fix for CDV-357: Getting verifier errors when instrumenting obfuscated classes
-    // These classes are obfuscated and as such can't be instrumented.
-    addPermanentExcludePattern("com.sun.crypto.provider..*");
-    */
+     * // ---------------------------- // implicit config-bundle - JAG // ----------------------------
+     * addPermanentExcludePattern("java.awt.Component"); addPermanentExcludePattern("java.lang.Thread");
+     * addPermanentExcludePattern("java.lang.ThreadLocal"); addPermanentExcludePattern("java.lang.ThreadGroup");
+     * addPermanentExcludePattern("java.lang.Process"); addPermanentExcludePattern("java.lang.ClassLoader");
+     * addPermanentExcludePattern("java.lang.Runtime"); addPermanentExcludePattern("java.io.FileReader");
+     * addPermanentExcludePattern("java.io.FileWriter"); addPermanentExcludePattern("java.io.FileDescriptor");
+     * addPermanentExcludePattern("java.io.FileInputStream"); addPermanentExcludePattern("java.io.FileOutputStream");
+     * addPermanentExcludePattern("java.net.DatagramSocket"); addPermanentExcludePattern("java.net.DatagramSocketImpl");
+     * addPermanentExcludePattern("java.net.MulticastSocket"); addPermanentExcludePattern("java.net.ServerSocket");
+     * addPermanentExcludePattern("java.net.Socket"); addPermanentExcludePattern("java.net.SocketImpl");
+     * addPermanentExcludePattern("java.nio.channels.DatagramChannel");
+     * addPermanentExcludePattern("java.nio.channels.FileChannel");
+     * addPermanentExcludePattern("java.nio.channels.FileLock");
+     * addPermanentExcludePattern("java.nio.channels.ServerSocketChannel");
+     * addPermanentExcludePattern("java.nio.channels.SocketChannel");
+     * addPermanentExcludePattern("java.util.logging.FileHandler");
+     * addPermanentExcludePattern("java.util.logging.SocketHandler");
+     *  // Fix for CDV-357: Getting verifier errors when instrumenting obfuscated classes // These classes are
+     * obfuscated and as such can't be instrumented. addPermanentExcludePattern("com.sun.crypto.provider..*");
+     */
 
     /**
-    // ----------------------------
-    // implicit config-bundle - JAG
-    // ----------------------------
-    addUnsupportedJavaUtilConcurrentTypes();
-    */
+     * // ---------------------------- // implicit config-bundle - JAG // ----------------------------
+     * addUnsupportedJavaUtilConcurrentTypes();
+     */
 
     /**
-    // ----------------------------
-    // implicit config-bundle - JAG
-    // ----------------------------
-    addAutoLockExcludePattern("* java.lang.Throwable.*(..)");
-    */
+     * // ---------------------------- // implicit config-bundle - JAG // ----------------------------
+     * addAutoLockExcludePattern("* java.lang.Throwable.*(..)");
+     */
 
     nonportablesMatcher = new CompoundExpressionMatcher();
     /**
-    // ----------------------------
-    // implicit config-bundle - JAG
-    // ----------------------------
-    //addNonportablePattern("javax.servlet.GenericServlet");
-    */
+     * // ---------------------------- // implicit config-bundle - JAG // ----------------------------
+     * //addNonportablePattern("javax.servlet.GenericServlet");
+     */
 
     NewDSOApplicationConfig appConfig = configSetupManager
         .dsoApplicationConfigFor(TVSConfigurationSetupManagerFactory.DEFAULT_APPLICATION_NAME);
@@ -288,44 +274,41 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   /**
-  // ----------------------------
-  // implicit config-bundle - JAG
-  // ----------------------------
-  private void addUnsupportedJavaUtilConcurrentTypes() {
-    addPermanentExcludePattern("java.util.concurrent.AbstractExecutorService");
-    addPermanentExcludePattern("java.util.concurrent.ArrayBlockingQueue*");
-    addPermanentExcludePattern("java.util.concurrent.ConcurrentLinkedQueue*");
-    addPermanentExcludePattern("java.util.concurrent.ConcurrentSkipListMap*");
-    addPermanentExcludePattern("java.util.concurrent.ConcurrentSkipListSet*");
-    addPermanentExcludePattern("java.util.concurrent.CopyOnWriteArrayList*");
-    addPermanentExcludePattern("java.util.concurrent.CopyOnWriteArraySet*");
-    addPermanentExcludePattern("java.util.concurrent.CountDownLatch*");
-    addPermanentExcludePattern("java.util.concurrent.DelayQueue*");
-    addPermanentExcludePattern("java.util.concurrent.Exchanger*");
-    addPermanentExcludePattern("java.util.concurrent.ExecutorCompletionService*");
-    addPermanentExcludePattern("java.util.concurrent.LinkedBlockingDeque*");
-    addPermanentExcludePattern("java.util.concurrent.PriorityBlockingQueue*");
-    addPermanentExcludePattern("java.util.concurrent.ScheduledThreadPoolExecutor*");
-    addPermanentExcludePattern("java.util.concurrent.Semaphore*");
-    addPermanentExcludePattern("java.util.concurrent.SynchronousQueue*");
-    addPermanentExcludePattern("java.util.concurrent.ThreadPoolExecutor*");
-
-    addPermanentExcludePattern("java.util.concurrent.atomic.AtomicBoolean*");
-    addPermanentExcludePattern("java.util.concurrent.atomic.AtomicIntegerArray*");
-    addPermanentExcludePattern("java.util.concurrent.atomic.AtomicIntegerFieldUpdater*");
-    addPermanentExcludePattern("java.util.concurrent.atomic.AtomicLongArray*");
-    addPermanentExcludePattern("java.util.concurrent.atomic.AtomicLongFieldUpdater*");
-    addPermanentExcludePattern("java.util.concurrent.atomic.AtomicMarkableReference*");
-    addPermanentExcludePattern("java.util.concurrent.atomic.AtomicReference*");
-    addPermanentExcludePattern("java.util.concurrent.atomic.AtomicReferenceArray*");
-    addPermanentExcludePattern("java.util.concurrent.atomic.AtomicReferenceFieldUpdater*");
-    addPermanentExcludePattern("java.util.concurrent.atomic.AtomicStampedReference*");
-
-    addPermanentExcludePattern("java.util.concurrent.locks.AbstractQueuedLongSynchronizer*");
-    addPermanentExcludePattern("java.util.concurrent.locks.AbstractQueuedSynchronizer*");
-    addPermanentExcludePattern("java.util.concurrent.locks.LockSupport*");
-  }
-  */
+   * // ---------------------------- // implicit config-bundle - JAG // ---------------------------- private void
+   * addUnsupportedJavaUtilConcurrentTypes() {
+   * addPermanentExcludePattern("java.util.concurrent.AbstractExecutorService");
+   * addPermanentExcludePattern("java.util.concurrent.ArrayBlockingQueue*");
+   * addPermanentExcludePattern("java.util.concurrent.ConcurrentLinkedQueue*");
+   * addPermanentExcludePattern("java.util.concurrent.ConcurrentSkipListMap*");
+   * addPermanentExcludePattern("java.util.concurrent.ConcurrentSkipListSet*");
+   * addPermanentExcludePattern("java.util.concurrent.CopyOnWriteArrayList*");
+   * addPermanentExcludePattern("java.util.concurrent.CopyOnWriteArraySet*");
+   * addPermanentExcludePattern("java.util.concurrent.CountDownLatch*");
+   * addPermanentExcludePattern("java.util.concurrent.DelayQueue*");
+   * addPermanentExcludePattern("java.util.concurrent.Exchanger*");
+   * addPermanentExcludePattern("java.util.concurrent.ExecutorCompletionService*");
+   * addPermanentExcludePattern("java.util.concurrent.LinkedBlockingDeque*");
+   * addPermanentExcludePattern("java.util.concurrent.PriorityBlockingQueue*");
+   * addPermanentExcludePattern("java.util.concurrent.ScheduledThreadPoolExecutor*");
+   * addPermanentExcludePattern("java.util.concurrent.Semaphore*");
+   * addPermanentExcludePattern("java.util.concurrent.SynchronousQueue*");
+   * addPermanentExcludePattern("java.util.concurrent.ThreadPoolExecutor*");
+   *
+   * addPermanentExcludePattern("java.util.concurrent.atomic.AtomicBoolean*");
+   * addPermanentExcludePattern("java.util.concurrent.atomic.AtomicIntegerArray*");
+   * addPermanentExcludePattern("java.util.concurrent.atomic.AtomicIntegerFieldUpdater*");
+   * addPermanentExcludePattern("java.util.concurrent.atomic.AtomicLongArray*");
+   * addPermanentExcludePattern("java.util.concurrent.atomic.AtomicLongFieldUpdater*");
+   * addPermanentExcludePattern("java.util.concurrent.atomic.AtomicMarkableReference*");
+   * addPermanentExcludePattern("java.util.concurrent.atomic.AtomicReference*");
+   * addPermanentExcludePattern("java.util.concurrent.atomic.AtomicReferenceArray*");
+   * addPermanentExcludePattern("java.util.concurrent.atomic.AtomicReferenceFieldUpdater*");
+   * addPermanentExcludePattern("java.util.concurrent.atomic.AtomicStampedReference*");
+   *
+   * addPermanentExcludePattern("java.util.concurrent.locks.AbstractQueuedLongSynchronizer*");
+   * addPermanentExcludePattern("java.util.concurrent.locks.AbstractQueuedSynchronizer*");
+   * addPermanentExcludePattern("java.util.concurrent.locks.LockSupport*"); }
+   */
 
   public Portability getPortability() {
     return this.portability;
@@ -339,7 +322,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   public void addPermanentExcludePattern(String pattern) {
     permanentExcludesMatcher.add(new ClassExpressionMatcherImpl(expressionHelper, pattern));
- }
+  }
 
   public LockDefinition createLockDefinition(String name, ConfigLockLevel level) {
     return new LockDefinitionImpl(name, level);
@@ -428,154 +411,78 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   /**
-  // ----------------------------
-  // implicit config-bundle - JAG
-  // ----------------------------
-  private void addSwingAndAWTConfig() {
-    TransparencyClassSpec spec = null;
-    LockDefinition ld = null;
-
-    // Color
-    addIncludePattern("java.awt.Color", true);
-    spec = getOrCreateSpec("java.awt.Color");
-    spec.addTransient("cs");
-
-    // TreePath
-    addIncludePattern("javax.swing.tree.TreePath", false);
-    getOrCreateSpec("javax.swing.tree.TreePath");
-
-    // DefaultMutableTreeNode
-    addIncludePattern("javax.swing.tree.DefaultMutableTreeNode", false);
-    getOrCreateSpec("javax.swing.tree.DefaultMutableTreeNode");
-
-    // DefaultTreeModel
-    spec = getOrCreateSpec("javax.swing.tree.DefaultTreeModel");
-    ld = createLockDefinition("tcdefaultTreeLock", ConfigLockLevel.WRITE);
-    ld.commit();
-    addLock("* javax.swing.tree.DefaultTreeModel.get*(..)", ld);
-    addLock("* javax.swing.tree.DefaultTreeModel.set*(..)", ld);
-    addLock("* javax.swing.tree.DefaultTreeModel.insert*(..)", ld);
-    spec.addTransient("listenerList");
-    spec.addDistributedMethodCall("fireTreeNodesChanged",
-                                  "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V", false);
-    spec.addDistributedMethodCall("fireTreeNodesInserted",
-                                  "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V", false);
-    spec.addDistributedMethodCall("fireTreeNodesRemoved",
-                                  "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V", false);
-    spec.addDistributedMethodCall("fireTreeStructureChanged",
-                                  "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V", false);
-    spec
-        .addDistributedMethodCall("fireTreeStructureChanged", "(Ljava/lang/Object;Ljavax/swing/tree/TreePath;)V", false);
-
-    // AbstractListModel
-    spec = getOrCreateSpec("javax.swing.AbstractListModel");
-    spec.addTransient("listenerList");
-    spec.addDistributedMethodCall("fireContentsChanged", "(Ljava/lang/Object;II)V", false);
-    spec.addDistributedMethodCall("fireIntervalAdded", "(Ljava/lang/Object;II)V", false);
-    spec.addDistributedMethodCall("fireIntervalRemoved", "(Ljava/lang/Object;II)V", false);
-
-    // MouseMotionAdapter, MouseAdapter
-    getOrCreateSpec("java.awt.event.MouseMotionAdapter");
-    getOrCreateSpec("java.awt.event.MouseAdapter");
-
-    // Point
-    getOrCreateSpec("java.awt.Point");
-    getOrCreateSpec("java.awt.geom.Point2D");
-    getOrCreateSpec("java.awt.geom.Point2D$Double");
-    getOrCreateSpec("java.awt.geom.Point2D$Float");
-
-    // Line
-    getOrCreateSpec("java.awt.geom.Line2D");
-    getOrCreateSpec("java.awt.geom.Line2D$Double");
-    getOrCreateSpec("java.awt.geom.Line2D$Float");
-
-    // Rectangle
-    getOrCreateSpec("java.awt.Rectangle");
-    getOrCreateSpec("java.awt.geom.Rectangle2D");
-    getOrCreateSpec("java.awt.geom.RectangularShape");
-    getOrCreateSpec("java.awt.geom.Rectangle2D$Double");
-    getOrCreateSpec("java.awt.geom.Rectangle2D$Float");
-    getOrCreateSpec("java.awt.geom.RoundRectangle2D");
-    getOrCreateSpec("java.awt.geom.RoundRectangle2D$Double");
-    getOrCreateSpec("java.awt.geom.RoundRectangle2D$Float");
-
-    // Ellipse2D
-    getOrCreateSpec("java.awt.geom.Ellipse2D");
-    getOrCreateSpec("java.awt.geom.Ellipse2D$Double");
-    getOrCreateSpec("java.awt.geom.Ellipse2D$Float");
-
-    // java.awt.geom.Path2D
-    if (Vm.isJDK16Compliant()) {
-      getOrCreateSpec("java.awt.geom.Path2D");
-      getOrCreateSpec("java.awt.geom.Path2D$Double");
-      getOrCreateSpec("java.awt.geom.Path2D$Float");
-    }
-
-    // GeneralPath
-    getOrCreateSpec("java.awt.geom.GeneralPath");
-    //
-    // BasicStroke
-    getOrCreateSpec("java.awt.BasicStroke");
-
-    // Dimension
-    getOrCreateSpec("java.awt.Dimension");
-    getOrCreateSpec("java.awt.geom.Dimension2D");
-
-    // ==================================================================
-    // TableModelEvent
-    addIncludePattern("javax.swing.event.TableModelEvent", true);
-    getOrCreateSpec("javax.swing.event.TableModelEvent");
-
-    // AbstractTableModel
-    addIncludePattern("javax.swing.table.AbstractTableModel", true);
-    spec = getOrCreateSpec("javax.swing.table.AbstractTableModel");
-    spec.addDistributedMethodCall("fireTableChanged", "(Ljavax/swing/event/TableModelEvent;)V", false);
-    spec.addTransient("listenerList");
-
-    // DefaultTableModel
-    spec = getOrCreateSpec("javax.swing.table.DefaultTableModel");
-    spec.setCallConstructorOnLoad(true);
-    ld = createLockDefinition("tcdefaultTableLock", ConfigLockLevel.WRITE);
-    ld.commit();
-    addLock("* javax.swing.table.DefaultTableModel.set*(..)", ld);
-    addLock("* javax.swing.table.DefaultTableModel.insert*(..)", ld);
-    addLock("* javax.swing.table.DefaultTableModel.move*(..)", ld);
-    addLock("* javax.swing.table.DefaultTableModel.remove*(..)", ld);
-    ld = createLockDefinition("tcdefaultTableLock", ConfigLockLevel.READ);
-    ld.commit();
-    addLock("* javax.swing.table.DefaultTableModel.get*(..)", ld);
-
-    // DefaultListModel
-    spec = getOrCreateSpec("javax.swing.DefaultListModel");
-    spec.setCallConstructorOnLoad(true);
-    ld = createLockDefinition("tcdefaultListLock", ConfigLockLevel.WRITE);
-    ld.commit();
-    addLock("* javax.swing.DefaultListModel.*(..)", ld);
-    // ====================================================
-  }
-  */
+   * // ---------------------------- // implicit config-bundle - JAG // ---------------------------- private void
+   * addSwingAndAWTConfig() { TransparencyClassSpec spec = null; LockDefinition ld = null;
+   *  // Color addIncludePattern("java.awt.Color", true); spec = getOrCreateSpec("java.awt.Color");
+   * spec.addTransient("cs");
+   *  // TreePath addIncludePattern("javax.swing.tree.TreePath", false); getOrCreateSpec("javax.swing.tree.TreePath");
+   *  // DefaultMutableTreeNode addIncludePattern("javax.swing.tree.DefaultMutableTreeNode", false);
+   * getOrCreateSpec("javax.swing.tree.DefaultMutableTreeNode");
+   *  // DefaultTreeModel spec = getOrCreateSpec("javax.swing.tree.DefaultTreeModel"); ld =
+   * createLockDefinition("tcdefaultTreeLock", ConfigLockLevel.WRITE); ld.commit(); addLock("*
+   * javax.swing.tree.DefaultTreeModel.get*(..)", ld); addLock("* javax.swing.tree.DefaultTreeModel.set*(..)", ld);
+   * addLock("* javax.swing.tree.DefaultTreeModel.insert*(..)", ld); spec.addTransient("listenerList");
+   * spec.addDistributedMethodCall("fireTreeNodesChanged",
+   * "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V", false);
+   * spec.addDistributedMethodCall("fireTreeNodesInserted",
+   * "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V", false);
+   * spec.addDistributedMethodCall("fireTreeNodesRemoved",
+   * "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V", false);
+   * spec.addDistributedMethodCall("fireTreeStructureChanged",
+   * "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V", false); spec
+   * .addDistributedMethodCall("fireTreeStructureChanged", "(Ljava/lang/Object;Ljavax/swing/tree/TreePath;)V", false);
+   *  // AbstractListModel spec = getOrCreateSpec("javax.swing.AbstractListModel"); spec.addTransient("listenerList");
+   * spec.addDistributedMethodCall("fireContentsChanged", "(Ljava/lang/Object;II)V", false);
+   * spec.addDistributedMethodCall("fireIntervalAdded", "(Ljava/lang/Object;II)V", false);
+   * spec.addDistributedMethodCall("fireIntervalRemoved", "(Ljava/lang/Object;II)V", false);
+   *  // MouseMotionAdapter, MouseAdapter getOrCreateSpec("java.awt.event.MouseMotionAdapter");
+   * getOrCreateSpec("java.awt.event.MouseAdapter");
+   *  // Point getOrCreateSpec("java.awt.Point"); getOrCreateSpec("java.awt.geom.Point2D");
+   * getOrCreateSpec("java.awt.geom.Point2D$Double"); getOrCreateSpec("java.awt.geom.Point2D$Float");
+   *  // Line getOrCreateSpec("java.awt.geom.Line2D"); getOrCreateSpec("java.awt.geom.Line2D$Double");
+   * getOrCreateSpec("java.awt.geom.Line2D$Float");
+   *  // Rectangle getOrCreateSpec("java.awt.Rectangle"); getOrCreateSpec("java.awt.geom.Rectangle2D");
+   * getOrCreateSpec("java.awt.geom.RectangularShape"); getOrCreateSpec("java.awt.geom.Rectangle2D$Double");
+   * getOrCreateSpec("java.awt.geom.Rectangle2D$Float"); getOrCreateSpec("java.awt.geom.RoundRectangle2D");
+   * getOrCreateSpec("java.awt.geom.RoundRectangle2D$Double"); getOrCreateSpec("java.awt.geom.RoundRectangle2D$Float");
+   *  // Ellipse2D getOrCreateSpec("java.awt.geom.Ellipse2D"); getOrCreateSpec("java.awt.geom.Ellipse2D$Double");
+   * getOrCreateSpec("java.awt.geom.Ellipse2D$Float");
+   *  // java.awt.geom.Path2D if (Vm.isJDK16Compliant()) { getOrCreateSpec("java.awt.geom.Path2D");
+   * getOrCreateSpec("java.awt.geom.Path2D$Double"); getOrCreateSpec("java.awt.geom.Path2D$Float"); }
+   *  // GeneralPath getOrCreateSpec("java.awt.geom.GeneralPath"); // // BasicStroke
+   * getOrCreateSpec("java.awt.BasicStroke");
+   *  // Dimension getOrCreateSpec("java.awt.Dimension"); getOrCreateSpec("java.awt.geom.Dimension2D");
+   *  // ================================================================== // TableModelEvent
+   * addIncludePattern("javax.swing.event.TableModelEvent", true); getOrCreateSpec("javax.swing.event.TableModelEvent");
+   *  // AbstractTableModel addIncludePattern("javax.swing.table.AbstractTableModel", true); spec =
+   * getOrCreateSpec("javax.swing.table.AbstractTableModel"); spec.addDistributedMethodCall("fireTableChanged",
+   * "(Ljavax/swing/event/TableModelEvent;)V", false); spec.addTransient("listenerList");
+   *  // DefaultTableModel spec = getOrCreateSpec("javax.swing.table.DefaultTableModel");
+   * spec.setCallConstructorOnLoad(true); ld = createLockDefinition("tcdefaultTableLock", ConfigLockLevel.WRITE);
+   * ld.commit(); addLock("* javax.swing.table.DefaultTableModel.set*(..)", ld); addLock("*
+   * javax.swing.table.DefaultTableModel.insert*(..)", ld); addLock("* javax.swing.table.DefaultTableModel.move*(..)",
+   * ld); addLock("* javax.swing.table.DefaultTableModel.remove*(..)", ld); ld =
+   * createLockDefinition("tcdefaultTableLock", ConfigLockLevel.READ); ld.commit(); addLock("*
+   * javax.swing.table.DefaultTableModel.get*(..)", ld);
+   *  // DefaultListModel spec = getOrCreateSpec("javax.swing.DefaultListModel"); spec.setCallConstructorOnLoad(true);
+   * ld = createLockDefinition("tcdefaultListLock", ConfigLockLevel.WRITE); ld.commit(); addLock("*
+   * javax.swing.DefaultListModel.*(..)", ld); // ==================================================== }
+   */
 
   private void doPreInstrumentedAutoconfig(boolean interrogateBootJar) {
     /**
-    // ----------------------------
-    // implicit config-bundle - JAG
-    // ----------------------------
-    addSwingAndAWTConfig();
-    */
-
+     * // ---------------------------- // implicit config-bundle - JAG // ----------------------------
+     * addSwingAndAWTConfig();
+     */
 
     TransparencyClassSpec spec = null;
 
     /**
-    // ----------------------------
-    // implicit config-bundle - JAG
-    // ----------------------------
-    spec = getOrCreateSpec("java.util.Arrays");
-    spec.addDoNotInstrument("copyOfRange");
-    spec.addDoNotInstrument("copyOf");
-
-    spec = getOrCreateSpec("java.util.Arrays$ArrayList");
-    */
+     * // ---------------------------- // implicit config-bundle - JAG // ---------------------------- spec =
+     * getOrCreateSpec("java.util.Arrays"); spec.addDoNotInstrument("copyOfRange"); spec.addDoNotInstrument("copyOf");
+     *
+     * spec = getOrCreateSpec("java.util.Arrays$ArrayList");
+     */
 
     spec = getOrCreateSpec("java.util.TreeMap", "com.tc.object.applicator.TreeMapApplicator");
     spec.setUseNonDefaultConstructor(true);
@@ -602,12 +509,12 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
      */
 
     /**
-     * addWriteAutolock("synchronized * java.util.Hashtable.*(..)");
-     * addReadAutolock(new String[] { "synchronized * java.util.Hashtable.get(..)",
-     * "synchronized * java.util.Hashtable.hashCode(..)", "synchronized * java.util.Hashtable.contains*(..)",
-     * "synchronized * java.util.Hashtable.elements(..)", "synchronized * java.util.Hashtable.equals(..)",
-     * "synchronized * java.util.Hashtable.isEmpty(..)", "synchronized * java.util.Hashtable.keys(..)",
-     * "synchronized * java.util.Hashtable.size(..)", "synchronized * java.util.Hashtable.toString(..)" });
+     * addWriteAutolock("synchronized * java.util.Hashtable.*(..)"); addReadAutolock(new String[] { "synchronized *
+     * java.util.Hashtable.get(..)", "synchronized * java.util.Hashtable.hashCode(..)", "synchronized *
+     * java.util.Hashtable.contains*(..)", "synchronized * java.util.Hashtable.elements(..)", "synchronized *
+     * java.util.Hashtable.equals(..)", "synchronized * java.util.Hashtable.isEmpty(..)", "synchronized *
+     * java.util.Hashtable.keys(..)", "synchronized * java.util.Hashtable.size(..)", "synchronized *
+     * java.util.Hashtable.toString(..)" });
      */
     spec = getOrCreateSpec("java.util.Properties", "com.tc.object.applicator.PartialHashMapApplicator");
     addWriteAutolock("synchronized * java.util.Properties.*(..)");
@@ -618,7 +525,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     spec.addAlwaysLogSpec(SerializationUtil.PUT_SIGNATURE);
     spec.addAlwaysLogSpec(SerializationUtil.REMOVE_KEY_SIGNATURE);
     spec.addAlwaysLogSpec(SerializationUtil.CLEAR_SIGNATURE);
-
 
     spec = getOrCreateSpec("java.util.BitSet");
     spec.setHonorTransient(false);
@@ -717,37 +623,25 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     // spec.generateNonStaticTCFields(false);
 
     /**
-    // ----------------------------
-    // implicit config-bundle - JAG
-    // ----------------------------
-    spec = getOrCreateSpec("java.lang.Exception");
-    spec = getOrCreateSpec("java.lang.RuntimeException");
-    spec = getOrCreateSpec("java.lang.InterruptedException");
-    spec = getOrCreateSpec("java.awt.AWTException");
-    spec = getOrCreateSpec("java.io.IOException");
-    spec = getOrCreateSpec("java.io.FileNotFoundException");
-    spec = getOrCreateSpec("java.lang.Error");
-    spec = getOrCreateSpec("java.util.ConcurrentModificationException");
-    spec = getOrCreateSpec("java.util.NoSuchElementException");
-    */
+     * // ---------------------------- // implicit config-bundle - JAG // ---------------------------- spec =
+     * getOrCreateSpec("java.lang.Exception"); spec = getOrCreateSpec("java.lang.RuntimeException"); spec =
+     * getOrCreateSpec("java.lang.InterruptedException"); spec = getOrCreateSpec("java.awt.AWTException"); spec =
+     * getOrCreateSpec("java.io.IOException"); spec = getOrCreateSpec("java.io.FileNotFoundException"); spec =
+     * getOrCreateSpec("java.lang.Error"); spec = getOrCreateSpec("java.util.ConcurrentModificationException"); spec =
+     * getOrCreateSpec("java.util.NoSuchElementException");
+     */
     // =================================================================
-
     /**
-    // ----------------------------
-    // implicit config-bundle - JAG
-    // ----------------------------
-    spec = getOrCreateSpec("java.util.EventObject");
-    */
+     * // ---------------------------- // implicit config-bundle - JAG // ---------------------------- spec =
+     * getOrCreateSpec("java.util.EventObject");
+     */
 
     spec = getOrCreateSpec("com.tcclient.object.DistributedMethodCall");
 
     /**
-    // ----------------------------
-    // implicit config-bundle - JAG
-    // ----------------------------
-    spec = getOrCreateSpec("java.io.File");
-    spec.setHonorTransient(true);
-    */
+     * // ---------------------------- // implicit config-bundle - JAG // ---------------------------- spec =
+     * getOrCreateSpec("java.io.File"); spec.setHonorTransient(true);
+     */
 
     spec = getOrCreateSpec("java.util.Date", "com.tc.object.applicator.DateApplicator");
     spec.addAlwaysLogSpec(SerializationUtil.SET_TIME_SIGNATURE);
@@ -765,28 +659,22 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     spec.addAlwaysLogSpec(SerializationUtil.SET_NANOS_SIGNATURE);
 
     /**
-    // ----------------------------
-    // implicit config-bundle - JAG
-    // ----------------------------
-    addPermanentExcludePattern("java.util.WeakHashMap+");
-    addPermanentExcludePattern("java.lang.ref.*");
-    */
+     * // ---------------------------- // implicit config-bundle - JAG // ----------------------------
+     * addPermanentExcludePattern("java.util.WeakHashMap+"); addPermanentExcludePattern("java.lang.ref.*");
+     */
     addReflectionPreInstrumentedSpec();
 
     /**
-    // ----------------------------
-    // implicit config-bundle - JAG
-    // ----------------------------
-    */
+     * // ---------------------------- // implicit config-bundle - JAG // ----------------------------
+     */
     // addJDK15PreInstrumentedSpec();
-
     // This section of spec are specified in the BootJarTool also
     // They are placed again so that the honorTransient
     // flag will be honored during runtime.
     // SECTION BEGINS
     if (Vm.getMegaVersion() >= 1 && Vm.getMajorVersion() > 4) {
-      addJavaUtilConcurrentHashMapSpec();           // should be in jdk15-preinst-config bundle
-      addLogicalAdaptedLinkedBlockingQueueSpec();   // should be in jdk15-preinst-config bundle
+      addJavaUtilConcurrentHashMapSpec(); // should be in jdk15-preinst-config bundle
+      addLogicalAdaptedLinkedBlockingQueueSpec(); // should be in jdk15-preinst-config bundle
     }
     // SECTION ENDS
 
@@ -869,12 +757,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     addLock("* test.event.*.setTextArea(..)", ld);
 
     /**
-    // ----------------------------
-    // implicit config-bundle - JAG
-    // ----------------------------
-    // doAutoconfigForSpring();
-    // doAutoconfigForSpringWebFlow();
-    */
+     * // ---------------------------- // implicit config-bundle - JAG // ---------------------------- //
+     * doAutoconfigForSpring(); // doAutoconfigForSpringWebFlow();
+     */
 
     if (interrogateBootJar) {
       // pre-load specs from boot jar
@@ -908,115 +793,81 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   /**
-  // ----------------------------
-  // implicit config-bundle - JAG
-  // ----------------------------
-  private void doAutoconfigForSpring() {
-    addIncludePattern("org.springframework.context.ApplicationEvent", false, false, false);
-    addIncludePattern("com.tcspring.ApplicationContextEventProtocol", true, true, true);
-
-    addIncludePattern("com.tcspring.ComplexBeanId", true, true, true);
-    // addIncludePattern("com.tcspring.BeanContainer", true, true, true);
-    getOrCreateSpec("com.tcspring.BeanContainer").addTransient("isInitialized"); // .setHonorTransient(true);
-
-    // scoped beans
-    // addTransient("org.springframework.web.context.request.ServletRequestAttributes$DestructionCallbackBindingListener",
-    // "aw$MIXIN_0");
-    addIncludePattern("com.tcspring.SessionProtocol$DestructionCallbackBindingListener", true, true, true);
-    addIncludePattern("com.tcspring.ScopedBeanDestructionCallBack", true, true, true);
-
-    // Spring AOP introduction/mixin classes
-    addIncludePattern("org.springframework.aop.support.IntroductionInfoSupport", true, true, true);
-    addIncludePattern("org.springframework.aop.support.DelegatingIntroductionInterceptor", true, true, true);
-    addIncludePattern("org.springframework.aop.support.DefaultIntroductionAdvisor", true, true, true);
-    addIncludePattern("gnu.trove..*", false, false, true);
-    addIncludePattern("java.lang.reflect.Proxy", false, false, false);
-    addIncludePattern("com.tc.aspectwerkz.proxy..*", false, false, true);
-
-    // TODO remove if we find a better way using ProxyApplicator etc.
-    addIncludePattern("$Proxy..*", false, false, true);
-
-    // backport concurrent classes
-    addIncludePattern("edu.emory.mathcs.backport.java.util.AbstractCollection", false, false, false);
-    addIncludePattern("edu.emory.mathcs.backport.java.util.AbstractQueue", false, false, false);
-    addIncludePattern("edu.emory.mathcs.backport.java.util.concurrent.LinkedBlockingQueue", false, false, false);
-    addIncludePattern("edu.emory.mathcs.backport.java.util.concurrent.LinkedBlockingQueue$Node", false, false, false);
-    addIncludePattern("edu.emory.mathcs.backport.java.util.concurrent.FutureTask", false, false, false);
-
-    addIncludePattern("edu.emory.mathcs.backport.java.util.concurrent.ConcurrentLinkedQueue", false, false, false);
-    addIncludePattern("edu.emory.mathcs.backport.java.util.concurrent.PriorityBlockingQueue", false, false, false);
-    addIncludePattern("edu.emory.mathcs.backport.java.util.concurrent.ArrayBlockingQueue", false, false, false);
-    addIncludePattern("edu.emory.mathcs.backport.java.util.concurrent.CopyOnWriteArrayList", false, false, false);
-
-    LockDefinition ld = new LockDefinitionImpl("addApplicationListener", ConfigLockLevel.WRITE);
-    ld.commit();
-    addLock("* org.springframework.context.event.AbstractApplicationEventMulticaster.addApplicationListener(..)", ld);
-
-    // used by WebFlow
-    addIncludePattern("org.springframework.core.enums.*", false, false, false);
-    addIncludePattern("org.springframework.binding..*", true, false, false);
-    addIncludePattern("org.springframework.validation..*", true, false, false);
-  }
-  */
+   * // ---------------------------- // implicit config-bundle - JAG // ---------------------------- private void
+   * doAutoconfigForSpring() { addIncludePattern("org.springframework.context.ApplicationEvent", false, false, false);
+   * addIncludePattern("com.tcspring.ApplicationContextEventProtocol", true, true, true);
+   *
+   * addIncludePattern("com.tcspring.ComplexBeanId", true, true, true); //
+   * addIncludePattern("com.tcspring.BeanContainer", true, true, true);
+   * getOrCreateSpec("com.tcspring.BeanContainer").addTransient("isInitialized"); // .setHonorTransient(true);
+   *  // scoped beans //
+   * addTransient("org.springframework.web.context.request.ServletRequestAttributes$DestructionCallbackBindingListener", //
+   * "aw$MIXIN_0"); addIncludePattern("com.tcspring.SessionProtocol$DestructionCallbackBindingListener", true, true,
+   * true); addIncludePattern("com.tcspring.ScopedBeanDestructionCallBack", true, true, true);
+   *  // Spring AOP introduction/mixin classes
+   * addIncludePattern("org.springframework.aop.support.IntroductionInfoSupport", true, true, true);
+   * addIncludePattern("org.springframework.aop.support.DelegatingIntroductionInterceptor", true, true, true);
+   * addIncludePattern("org.springframework.aop.support.DefaultIntroductionAdvisor", true, true, true);
+   * addIncludePattern("gnu.trove..*", false, false, true); addIncludePattern("java.lang.reflect.Proxy", false, false,
+   * false); addIncludePattern("com.tc.aspectwerkz.proxy..*", false, false, true);
+   *  // TODO remove if we find a better way using ProxyApplicator etc. addIncludePattern("$Proxy..*", false, false,
+   * true);
+   *  // backport concurrent classes addIncludePattern("edu.emory.mathcs.backport.java.util.AbstractCollection", false,
+   * false, false); addIncludePattern("edu.emory.mathcs.backport.java.util.AbstractQueue", false, false, false);
+   * addIncludePattern("edu.emory.mathcs.backport.java.util.concurrent.LinkedBlockingQueue", false, false, false);
+   * addIncludePattern("edu.emory.mathcs.backport.java.util.concurrent.LinkedBlockingQueue$Node", false, false, false);
+   * addIncludePattern("edu.emory.mathcs.backport.java.util.concurrent.FutureTask", false, false, false);
+   *
+   * addIncludePattern("edu.emory.mathcs.backport.java.util.concurrent.ConcurrentLinkedQueue", false, false, false);
+   * addIncludePattern("edu.emory.mathcs.backport.java.util.concurrent.PriorityBlockingQueue", false, false, false);
+   * addIncludePattern("edu.emory.mathcs.backport.java.util.concurrent.ArrayBlockingQueue", false, false, false);
+   * addIncludePattern("edu.emory.mathcs.backport.java.util.concurrent.CopyOnWriteArrayList", false, false, false);
+   *
+   * LockDefinition ld = new LockDefinitionImpl("addApplicationListener", ConfigLockLevel.WRITE); ld.commit();
+   * addLock("* org.springframework.context.event.AbstractApplicationEventMulticaster.addApplicationListener(..)", ld);
+   *  // used by WebFlow addIncludePattern("org.springframework.core.enums.*", false, false, false);
+   * addIncludePattern("org.springframework.binding..*", true, false, false);
+   * addIncludePattern("org.springframework.validation..*", true, false, false); }
+   */
 
   /**
-  // ----------------------------
-  // implicit config-bundle - JAG
-  // ----------------------------
-  private void doAutoconfigForSpringWebFlow() {
-    addAspectModule("org.springframework.webflow", "com.tc.object.config.SpringWebFlowAspectModule");
-    addIncludePattern("com.tcspring.DSOConversationLock", false, false, false);
-
-    addIncludePattern("org.springframework.webflow..*", true, false, false);
-
-    addIncludePattern("org.springframework.webflow.conversation.impl.ConversationEntry", false, false, false);
-    addIncludePattern("org.springframework.webflow.core.collection.LocalAttributeMap", false, false, false);
-    addIncludePattern("org.springframework.webflow.conversation.impl.*", false, false, false);
-
-    // getOrCreateSpec("org.springframework.webflow.engine.impl.FlowSessionImpl").setHonorTransient(false).addTransient("flow");
-    // flow : Flow
-    // flowId : String
-    // state : State
-    // stateId : String
-    // .addTransient("parent") // : FlowSessionImpl
-    // .addTransient("scope") // : LocalAttributeMap
-    // .addTransient("status"); // : FlowSessionStatus
-
-    // all "transient" for all subclasses except "State.id"
-    // getOrCreateSpec("org.springframework.webflow.engine.State") //
-    // .addTransient("logger").addTransient("flow") //
-    // .addTransient("entryActionList") //
-    // .addTransient("exceptionHandlerSet"); //
-    // getOrCreateSpec("org.springframework.webflow.engine.EndState") //
-    // .addTransient("viewSelector") //
-    // .addTransient("outputMapper"); //
-    // getOrCreateSpec("org.springframework.webflow.engine.TransitionableState") // abstract
-    // .addTransient("transitions")
-    // .addTransient("exitActionList");
-    // getOrCreateSpec("org.springframework.webflow.engine.ActionState") //
-    // .addTransient("actionList");
-    // getOrCreateSpec("org.springframework.webflow.engine.SubflowState") //
-    // .addTransient("subflow") //
-    // .addTransient("attributeMapper"); //
-    // getOrCreateSpec("org.springframework.webflow.engine.ViewState") //
-    // .addTransient("viewSelector") //
-    // .addTransient("renderActionList");
-    // // getOrCreateSpec("org.springframework.webflow.engine.DecisionState"); no fields
-
-    // TODO investigate if better granularity of above classes is required
-    // org.springframework.webflow.execution.repository.support.DefaultFlowExecutionRepository
-    // org.springframework.webflow.execution.repository.support.AbstractConversationFlowExecutionRepository
-    // org.springframework.webflow.execution.repository.support.AbstractFlowExecutionRepository
-    // org.springframework.webflow.execution.repository.support.DefaultFlowExecutionRepositoryFactory
-    // org.springframework.webflow.execution.repository.support.DelegatingFlowExecutionRepositoryFactory
-    // org.springframework.webflow.execution.repository.support.FlowExecutionRepositoryServices
-    // org.springframework.webflow.execution.repository.support.SharedMapFlowExecutionRepositoryFactory
-    // org.springframework.webflow.execution.repository.conversation.impl.LocalConversationService
-    // org.springframework.webflow.util.RandomGuidUidGenerator
-    // org.springframework.webflow.registry.FlowRegistryImpl
-    // etc...
-  }
-  */
+   * // ---------------------------- // implicit config-bundle - JAG // ---------------------------- private void
+   * doAutoconfigForSpringWebFlow() { addAspectModule("org.springframework.webflow",
+   * "com.tc.object.config.SpringWebFlowAspectModule"); addIncludePattern("com.tcspring.DSOConversationLock", false,
+   * false, false);
+   *
+   * addIncludePattern("org.springframework.webflow..*", true, false, false);
+   *
+   * addIncludePattern("org.springframework.webflow.conversation.impl.ConversationEntry", false, false, false);
+   * addIncludePattern("org.springframework.webflow.core.collection.LocalAttributeMap", false, false, false);
+   * addIncludePattern("org.springframework.webflow.conversation.impl.*", false, false, false);
+   *  //
+   * getOrCreateSpec("org.springframework.webflow.engine.impl.FlowSessionImpl").setHonorTransient(false).addTransient("flow"); //
+   * flow : Flow // flowId : String // state : State // stateId : String // .addTransient("parent") // : FlowSessionImpl //
+   * .addTransient("scope") // : LocalAttributeMap // .addTransient("status"); // : FlowSessionStatus
+   *  // all "transient" for all subclasses except "State.id" //
+   * getOrCreateSpec("org.springframework.webflow.engine.State") // // .addTransient("logger").addTransient("flow") // //
+   * .addTransient("entryActionList") // // .addTransient("exceptionHandlerSet"); // //
+   * getOrCreateSpec("org.springframework.webflow.engine.EndState") // // .addTransient("viewSelector") // //
+   * .addTransient("outputMapper"); // // getOrCreateSpec("org.springframework.webflow.engine.TransitionableState") //
+   * abstract // .addTransient("transitions") // .addTransient("exitActionList"); //
+   * getOrCreateSpec("org.springframework.webflow.engine.ActionState") // // .addTransient("actionList"); //
+   * getOrCreateSpec("org.springframework.webflow.engine.SubflowState") // // .addTransient("subflow") // //
+   * .addTransient("attributeMapper"); // // getOrCreateSpec("org.springframework.webflow.engine.ViewState") // //
+   * .addTransient("viewSelector") // // .addTransient("renderActionList"); // //
+   * getOrCreateSpec("org.springframework.webflow.engine.DecisionState"); no fields
+   *  // TODO investigate if better granularity of above classes is required //
+   * org.springframework.webflow.execution.repository.support.DefaultFlowExecutionRepository //
+   * org.springframework.webflow.execution.repository.support.AbstractConversationFlowExecutionRepository //
+   * org.springframework.webflow.execution.repository.support.AbstractFlowExecutionRepository //
+   * org.springframework.webflow.execution.repository.support.DefaultFlowExecutionRepositoryFactory //
+   * org.springframework.webflow.execution.repository.support.DelegatingFlowExecutionRepositoryFactory //
+   * org.springframework.webflow.execution.repository.support.FlowExecutionRepositoryServices //
+   * org.springframework.webflow.execution.repository.support.SharedMapFlowExecutionRepositoryFactory //
+   * org.springframework.webflow.execution.repository.conversation.impl.LocalConversationService //
+   * org.springframework.webflow.util.RandomGuidUidGenerator // org.springframework.webflow.registry.FlowRegistryImpl //
+   * etc... }
+   */
 
   private void addReflectionPreInstrumentedSpec() {
     if (supportSharingThroughReflection) {
@@ -1092,60 +943,43 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   /**
-  // ----------------------------
-  // implicit config-bundle - JAG
-  // ----------------------------
-  private void addJDK15PreInstrumentedSpec() {
-    if (Vm.getMegaVersion() >= 1 && Vm.getMajorVersion() > 4) {
-      //TransparencyClassSpec spec = getOrCreateSpec("sun.misc.Unsafe");
-      //addCustomAdapter("sun.misc.Unsafe", new UnsafeAdapter());
-      //spec = getOrCreateSpec(DSOUnsafe.CLASS_DOTS);
-      //addCustomAdapter(DSOUnsafe.CLASS_DOTS, new DSOUnsafeAdapter());
-
-      //spec = getOrCreateSpec("java.util.concurrent.CyclicBarrier");
-
-      //spec = getOrCreateSpec("java.util.concurrent.CyclicBarrier$Generation");
-      //spec.setHonorJDKSubVersionSpecific(true);
-
-      //spec = getOrCreateSpec("java.util.concurrent.TimeUnit");
-
-       // This section of spec are specified in the BootJarTool also. They are placed again so that the honorTransient *
-       // flag will be honored during runtime. *
-
-      addJavaUtilConcurrentHashMapSpec();
-      addLogicalAdaptedLinkedBlockingQueueSpec();
-
-      addJavaUtilConcurrentFutureTaskSpec();
-
-      //spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantLock");
-      //spec.setHonorTransient(true);
-      //spec.setCallConstructorOnLoad(true);
-
-       // This section of spec are specified in the BootJarTool also. They are placed again so that the honorTransient *
-       // flag will be honored during runtime. *
-    }
-  }
-  */
+   * // ---------------------------- // implicit config-bundle - JAG // ---------------------------- private void
+   * addJDK15PreInstrumentedSpec() { if (Vm.getMegaVersion() >= 1 && Vm.getMajorVersion() > 4) { //TransparencyClassSpec
+   * spec = getOrCreateSpec("sun.misc.Unsafe"); //addCustomAdapter("sun.misc.Unsafe", new UnsafeAdapter()); //spec =
+   * getOrCreateSpec(DSOUnsafe.CLASS_DOTS); //addCustomAdapter(DSOUnsafe.CLASS_DOTS, new DSOUnsafeAdapter());
+   *
+   * //spec = getOrCreateSpec("java.util.concurrent.CyclicBarrier");
+   *
+   * //spec = getOrCreateSpec("java.util.concurrent.CyclicBarrier$Generation");
+   * //spec.setHonorJDKSubVersionSpecific(true);
+   *
+   * //spec = getOrCreateSpec("java.util.concurrent.TimeUnit");
+   *  // This section of spec are specified in the BootJarTool also. They are placed again so that the honorTransient * //
+   * flag will be honored during runtime. *
+   *
+   * addJavaUtilConcurrentHashMapSpec(); addLogicalAdaptedLinkedBlockingQueueSpec();
+   *
+   * addJavaUtilConcurrentFutureTaskSpec();
+   *
+   * //spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantLock"); //spec.setHonorTransient(true);
+   * //spec.setCallConstructorOnLoad(true);
+   *  // This section of spec are specified in the BootJarTool also. They are placed again so that the honorTransient * //
+   * flag will be honored during runtime. * } }
+   */
 
   /**
-  // ----------------------------
-  // implicit config-bundle - JAG
-  // ----------------------------
-  private void addJavaUtilConcurrentFutureTaskSpec() {
-    if (Vm.getMegaVersion() >= 1 && Vm.getMajorVersion() >= 6) {
-      getOrCreateSpec("java.util.concurrent.locks.AbstractOwnableSynchronizer");
-    }
-
-    TransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.FutureTask$Sync");
-    addWriteAutolock("* java.util.concurrent.FutureTask$Sync.*(..)");
-    spec.setHonorTransient(true);
-    spec.addDistributedMethodCall("managedInnerCancel", "()V", false);
-
-    getOrCreateSpec("java.util.concurrent.FutureTask");
-
-    getOrCreateSpec("java.util.concurrent.Executors$RunnableAdapter");
-  }
-  */
+   * // ---------------------------- // implicit config-bundle - JAG // ---------------------------- private void
+   * addJavaUtilConcurrentFutureTaskSpec() { if (Vm.getMegaVersion() >= 1 && Vm.getMajorVersion() >= 6) {
+   * getOrCreateSpec("java.util.concurrent.locks.AbstractOwnableSynchronizer"); }
+   *
+   * TransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.FutureTask$Sync"); addWriteAutolock("*
+   * java.util.concurrent.FutureTask$Sync.*(..)"); spec.setHonorTransient(true);
+   * spec.addDistributedMethodCall("managedInnerCancel", "()V", false);
+   *
+   * getOrCreateSpec("java.util.concurrent.FutureTask");
+   *
+   * getOrCreateSpec("java.util.concurrent.Executors$RunnableAdapter"); }
+   */
 
   private void addJavaUtilConcurrentHashMapSpec() {
     TransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.ConcurrentHashMap",
