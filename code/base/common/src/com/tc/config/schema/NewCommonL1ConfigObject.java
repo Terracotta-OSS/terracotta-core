@@ -6,6 +6,7 @@ package com.tc.config.schema;
 
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.dynamic.FileConfigItem;
+import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.util.Assert;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.Modules;
@@ -27,6 +28,11 @@ public class NewCommonL1ConfigObject extends BaseNewConfigObject implements NewC
     logsPath = this.context.substitutedFileItem("logs");
     final Client client = (Client) this.context.bean();
     modules = client != null && client.isSetModules() ? client.getModules() : null;
+    
+    for(int i = 0; i < modules.sizeOfRepositoryArray(); i++) {
+      String location = modules.getRepositoryArray(i);
+      modules.setRepositoryArray(i, ParameterSubstituter.substitute(location));
+    }
   }
 
   public FileConfigItem logsPath() {
