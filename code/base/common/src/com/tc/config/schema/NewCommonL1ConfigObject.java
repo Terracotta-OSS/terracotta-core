@@ -29,9 +29,11 @@ public class NewCommonL1ConfigObject extends BaseNewConfigObject implements NewC
     final Client client = (Client) this.context.bean();
     modules = client != null && client.isSetModules() ? client.getModules() : null;
     
-    for(int i = 0; i < modules.sizeOfRepositoryArray(); i++) {
-      String location = modules.getRepositoryArray(i);
-      modules.setRepositoryArray(i, ParameterSubstituter.substitute(location));
+    if(modules != null) {
+      for(int i = 0; i < modules.sizeOfRepositoryArray(); i++) {
+        String location = modules.getRepositoryArray(i);
+        modules.setRepositoryArray(i, ParameterSubstituter.substitute(location));
+      }
     }
   }
 
