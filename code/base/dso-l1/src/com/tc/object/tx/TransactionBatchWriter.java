@@ -6,6 +6,8 @@ package com.tc.object.tx;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.lang.Recyclable;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.object.change.TCChangeBuffer;
 import com.tc.object.dmi.DmiDescriptor;
@@ -15,6 +17,7 @@ import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.Notify;
 import com.tc.object.msg.CommitTransactionMessage;
 import com.tc.object.msg.CommitTransactionMessageFactory;
+import com.tc.util.DebugUtil;
 import com.tc.util.SequenceID;
 
 import java.util.ArrayList;
@@ -29,6 +32,7 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 public class TransactionBatchWriter implements ClientTransactionBatch {
+  private final static TCLogger logger = TCLogging.getLogger(TransactionBatchWriter.class);
 
   private final CommitTransactionMessageFactory commitTransactionMessageFactory;
   private final Set                             acknowledgedTransactionIDs = new HashSet();
@@ -139,6 +143,9 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     bytesWritten += out.getBytesWritten();
     transactionData.put(txn.getTransactionID(), new TransactionDescriptor(sequenceID, out.toArray(), txn
         .getReferencesOfObjectsInTxn()));
+    if (DebugUtil.DEBUG) {
+      logger.info("Add transaction " + txn.getTransactionID() + " sequenceID: " + sequenceID + " bytes written: " + out.getBytesWritten() + " aggregate bytes written: " + bytesWritten);
+    }
   }
 
   // Called from CommitTransactionMessageImpl
