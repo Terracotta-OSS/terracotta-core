@@ -5,6 +5,7 @@
 package java.util;
 
 import com.tc.object.ObjectID;
+import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Clearable;
 import com.tc.object.bytecode.Manageable;
@@ -24,7 +25,7 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
   // 3) Be careful about existing iterators. It shouldn't throw exception because of (2)
   // 4) When you do so, call markAccessed() to make the cache eviction correct
   // 5) Check write access before any shared changed
-  // 6) Call logical Invoke before changin internal state so that NonPortableExceptions dont modify state.
+  // 6) Call logical Invoke before changing internal state so that NonPortableExceptions don't modify state.
   //
 
   // TODO:: markAccessed()
@@ -51,7 +52,7 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
     if (__tc_isManaged()) {
       synchronized (__tc_managed().getResolveLock()) {
         ManagerUtil.checkWriteAccess(this);
-        ManagerUtil.logicalInvoke(this, "clear()V", new Object[0]);
+        ManagerUtil.logicalInvoke(this, SerializationUtil.CLEAR_SIGNATURE, new Object[0]);
         super.clear();
       }
     } else {
@@ -164,8 +165,7 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
           orgKey = kw.getOriginalKey();
         }
         if (sizeB4 != size()) {
-          ManagerUtil.logicalInvoke(this, "removeEntryForKey(Ljava/lang/Object;)Ljava/util/HashMap$Entry;",
-                                    new Object[] { orgKey });
+          ManagerUtil.logicalInvoke(this, SerializationUtil.REMOVE_ENTRY_FOR_KEY_SIGNATURE, new Object[] { orgKey });
         }
         return lookUpIfNecessary(val);
       }
@@ -209,8 +209,7 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
           orgKey = kw.getOriginalKey();
         }
         if (sizeB4 != size()) {
-          ManagerUtil.logicalInvoke(this, "removeEntryForKey(Ljava/lang/Object;)Ljava/util/HashMap$Entry;",
-                                    new Object[] { orgKey });
+          ManagerUtil.logicalInvoke(this, SerializationUtil.REMOVE_ENTRY_FOR_KEY_SIGNATURE, new Object[] { orgKey });
         }
       }
     } else {
@@ -281,8 +280,7 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
         HashMap.Entry e = getEntry(key);
         if (e == null) {
           // New mapping
-          ManagerUtil.logicalInvoke(this, "put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", new Object[] {
-              key, value });
+          ManagerUtil.logicalInvoke(this, SerializationUtil.PUT_SIGNATURE, new Object[] { key, value });
           return lookUpIfNecessary(super.put(key, value));
         } else {
           // without this, LinkedHashMap will not function properly
@@ -291,8 +289,7 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
           // Replacing old mapping
           Object old = lookUpIfNecessary(e.getValue());
           if (value != old) {
-            ManagerUtil.logicalInvoke(this, "put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-                                      new Object[] { e.getKey(), value });
+            ManagerUtil.logicalInvoke(this, SerializationUtil.PUT_SIGNATURE, new Object[] { e.getKey(), value });
             e.setValue(value);
           }
           return old;
@@ -484,8 +481,7 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
       if (__tc_isManaged()) {
         synchronized (__tc_managed().getResolveLock()) {
           ManagerUtil.checkWriteAccess(HashMapTC.this);
-          ManagerUtil.logicalInvoke(HashMapTC.this, "put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-                                    new Object[] { entry.getKey(), value });
+          ManagerUtil.logicalInvoke(HashMapTC.this, SerializationUtil.PUT_SIGNATURE, new Object[] { entry.getKey(), value });
           Object oldVal = entry.setValue(value);
           return lookUpIfNecessary(oldVal);
         }
@@ -695,8 +691,7 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
         synchronized (__tc_managed().getResolveLock()) {
           ManagerUtil.checkWriteAccess(HashMapTC.this);
           iterator.remove();
-          ManagerUtil.logicalInvoke(HashMapTC.this, "removeEntryForKey(Ljava/lang/Object;)Ljava/util/HashMap$Entry;",
-                                    new Object[] { currentEntry.getKey() });
+          ManagerUtil.logicalInvoke(HashMapTC.this, SerializationUtil.REMOVE_ENTRY_FOR_KEY_SIGNATURE, new Object[] { currentEntry.getKey() });
         }
       } else {
         iterator.remove();

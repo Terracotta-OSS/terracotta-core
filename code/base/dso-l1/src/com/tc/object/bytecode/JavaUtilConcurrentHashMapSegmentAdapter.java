@@ -46,34 +46,47 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
   }
 
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+    final MethodVisitor visitor;
     if (("get".equals(name) && "(Ljava/lang/Object;I)Ljava/lang/Object;".equals(desc)) ||
         ("containsKey".equals(name) && "(Ljava/lang/Object;I)Z".equals(desc))) {
-      return addWrapperMethod(access, name, desc, signature, exceptions);
+      visitor = addWrapperMethod(access, name, desc, signature, exceptions);
+    } else {
+      String description = desc;
+      if ("<init>".equals(name) && "(IF)V".equals(desc)) {
+        description = INIT_DESC;
+      }
+      
+      MethodVisitor mv = super.visitMethod(access, name, description, signature, exceptions);
+  
+      if ("put".equals(name) && "(Ljava/lang/Object;ILjava/lang/Object;Z)Ljava/lang/Object;".equals(desc)) {
+        visitor = new MulticastMethodVisitor(new MethodVisitor[] {
+          new PutMethodAdapter(mv),
+          // This creates the identical copy of the put() method of Segments except that it does not lock and does
+          // not invoke the instrumented version of the logicalInvoke(). The reason that it does not require
+          // locking is because it is called from the __tc_rehash() instrumented method and the lock is grabbed
+          // at the __tc_rehash() method already.
+          new RemoveLockUnlockMethodAdapter(super.visitMethod(ACC_SYNTHETIC, TC_PUT_METHOD_NAME, TC_PUT_METHOD_DESC, null, null))});
+      } else if ("clear".equals(name) && "()V".equals(desc)) {
+        visitor = new MulticastMethodVisitor(new MethodVisitor[] {
+          new ClearMethodAdapter(mv),
+          // Again, this method does not require locking as it is called by __tc_rehash() which grabs the lock already.
+          new RemoveLockUnlockMethodAdapter(super.visitMethod(ACC_SYNTHETIC, TC_CLEAR_METHOD_NAME, TC_CLEAR_METHOD_DESC, null, null))});
+      } else if ("remove".equals(name) && "(Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;".equals(desc)) {
+        visitor = new RemoveMethodAdapter(mv);
+      } else if ("replace".equals(name) && "(Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;".equals(desc)) {
+        visitor = new ReplaceMethodAdapter(mv);
+      } else if ("replace".equals(name) && "(Ljava/lang/Object;ILjava/lang/Object;Ljava/lang/Object;)Z".equals(desc)) {
+        visitor = new ReplaceIfValueEqualMethodAdapter(mv);
+      } else if ("<init>".equals(name) && "(IF)V".equals(desc)) {
+        visitor = new InitMethodAdapter(mv);
+      } else if ("readValueUnderLock".equals(name) && "(Ljava/util/concurrent/ConcurrentHashMap$HashEntry;)Ljava/lang/Object;".equals(desc)) {
+        visitor = new ReadValueUnderLockMethodAdapter(mv);
+      } else {
+        visitor = mv;
+      }
     }
     
-    String description = desc;
-    if ("<init>".equals(name) && "(IF)V".equals(desc)) {
-      description = INIT_DESC;
-    }
-    MethodVisitor mv = super.visitMethod(access, name, description, signature, exceptions);
-
-    if ("put".equals(name) && "(Ljava/lang/Object;ILjava/lang/Object;Z)Ljava/lang/Object;".equals(desc)) {
-      return new PutMethodAdapter(mv);
-    } else if ("clear".equals(name) && "()V".equals(desc)) {
-      return new ClearMethodAdapter(mv);
-    } else if ("remove".equals(name) && "(Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;".equals(desc)) {
-      return new RemoveMethodAdapter(mv);
-    } else if ("replace".equals(name) && "(Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;".equals(desc)) {
-      return new ReplaceMethodAdapter(mv);
-    } else if ("replace".equals(name) && "(Ljava/lang/Object;ILjava/lang/Object;Ljava/lang/Object;)Z".equals(desc)) {
-      return new ReplaceIfValueEqualMethodAdapter(mv);
-    } else if ("<init>".equals(name) && "(IF)V".equals(desc)) {
-      return new InitMethodAdapter(mv);
-    } else if ("readValueUnderLock".equals(name) && "(Ljava/util/concurrent/ConcurrentHashMap$HashEntry;)Ljava/lang/Object;".equals(desc)) {
-      return new ReadValueUnderLockMethodAdapter(mv);
-    } else {
-      return mv;
-    }
+    return new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, visitor);
   }
   
   private String getNewName(String methodName) {
@@ -151,8 +164,6 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
   public void visitEnd() {
     createDefaultConstructor();
     createInitTableMethod();
-    createTCPutMethod();
-    createTCClearMethod();
     createLockMethod();
     createUnlockMethod();
     createTCReadLockMethod();
@@ -201,193 +212,6 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
     mv.visitLocalVariable("this", "Ljava/util/concurrent/ConcurrentHashMap$Segment;",
                           "Ljava/util/concurrent/ConcurrentHashMap<TK;TV;>.Segment<TK;TV;>;", l0, l5, 0);
     mv.visitMaxs(2, 1);
-    mv.visitEnd();
-  }
-
-  // This is the identical copy of the put() method of Segments except that it does not lock and does
-  // not invoke the instrumented version of the logicalInvoke(). The reason that it does not require
-  // locking is because it is called from the __tc_rehash() instrumented method and the lock is grabed
-  // at the __tc_rehash() method already.
-  private void createTCPutMethod() {
-    MethodVisitor mv = super.visitMethod(0 + ACC_SYNTHETIC, TC_PUT_METHOD_NAME, TC_PUT_METHOD_DESC, null, null);
-    mv.visitCode();
-    Label l0 = new Label();
-    mv.visitLabel(l0);
-    mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, CONCURRENT_HASH_MAP_SEGMENT_SLASH, "count", "I");
-    mv.visitVarInsn(ISTORE, 5);
-    Label l1 = new Label();
-    mv.visitLabel(l1);
-    mv.visitVarInsn(ILOAD, 5);
-    mv.visitIincInsn(5, 1);
-    mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, CONCURRENT_HASH_MAP_SEGMENT_SLASH, "threshold", "I");
-    Label l2 = new Label();
-    mv.visitJumpInsn(IF_ICMPLE, l2);
-    mv.visitVarInsn(ALOAD, 0);
-    mv.visitMethodInsn(INVOKEVIRTUAL, CONCURRENT_HASH_MAP_SEGMENT_SLASH, "rehash", "()V");
-    mv.visitLabel(l2);
-    mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, CONCURRENT_HASH_MAP_SEGMENT_SLASH, "table",
-                      "[Ljava/util/concurrent/ConcurrentHashMap$HashEntry;");
-    mv.visitVarInsn(ASTORE, 6);
-    Label l3 = new Label();
-    mv.visitLabel(l3);
-    mv.visitVarInsn(ILOAD, 2);
-    mv.visitVarInsn(ALOAD, 6);
-    mv.visitInsn(ARRAYLENGTH);
-    mv.visitInsn(ICONST_1);
-    mv.visitInsn(ISUB);
-    mv.visitInsn(IAND);
-    mv.visitVarInsn(ISTORE, 7);
-    Label l4 = new Label();
-    mv.visitLabel(l4);
-    mv.visitVarInsn(ALOAD, 6);
-    mv.visitVarInsn(ILOAD, 7);
-    mv.visitInsn(AALOAD);
-    mv.visitVarInsn(ASTORE, 8);
-    Label l5 = new Label();
-    mv.visitLabel(l5);
-    mv.visitVarInsn(ALOAD, 8);
-    mv.visitVarInsn(ASTORE, 9);
-    Label l6 = new Label();
-    mv.visitLabel(l6);
-    Label l7 = new Label();
-    mv.visitJumpInsn(GOTO, l7);
-    Label l8 = new Label();
-    mv.visitLabel(l8);
-    mv.visitVarInsn(ALOAD, 9);
-    mv.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap$HashEntry", "next",
-                      "Ljava/util/concurrent/ConcurrentHashMap$HashEntry;");
-    mv.visitVarInsn(ASTORE, 9);
-    mv.visitLabel(l7);
-    mv.visitVarInsn(ALOAD, 9);
-    Label l9 = new Label();
-    mv.visitJumpInsn(IFNULL, l9);
-    mv.visitVarInsn(ALOAD, 9);
-    mv.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap$HashEntry", "hash", "I");
-    mv.visitVarInsn(ILOAD, 2);
-    mv.visitJumpInsn(IF_ICMPNE, l8);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitVarInsn(ALOAD, 9);
-    mv.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap$HashEntry", "key", "Ljava/lang/Object;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "equals", "(Ljava/lang/Object;)Z");
-    mv.visitJumpInsn(IFEQ, l8);
-    mv.visitLabel(l9);
-    mv.visitVarInsn(ALOAD, 9);
-    Label l10 = new Label();
-    mv.visitJumpInsn(IFNULL, l10);
-    Label l11 = new Label();
-    mv.visitLabel(l11);
-    mv.visitVarInsn(ALOAD, 9);
-    mv.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap$HashEntry", "value", "Ljava/lang/Object;");
-    mv.visitVarInsn(ASTORE, 10);
-    Label l12 = new Label();
-    mv.visitLabel(l12);
-    mv.visitVarInsn(ILOAD, 4);
-    Label l13 = new Label();
-    mv.visitJumpInsn(IFNE, l13);
-    Label l14 = new Label();
-    mv.visitLabel(l14);
-    mv.visitVarInsn(ALOAD, 9);
-    mv.visitVarInsn(ALOAD, 3);
-    mv.visitFieldInsn(PUTFIELD, "java/util/concurrent/ConcurrentHashMap$HashEntry", "value", "Ljava/lang/Object;");
-    mv.visitJumpInsn(GOTO, l13);
-    mv.visitLabel(l10);
-    mv.visitInsn(ACONST_NULL);
-    mv.visitVarInsn(ASTORE, 10);
-    Label l15 = new Label();
-    mv.visitLabel(l15);
-    mv.visitVarInsn(ALOAD, 0);
-    mv.visitInsn(DUP);
-    mv.visitFieldInsn(GETFIELD, CONCURRENT_HASH_MAP_SEGMENT_SLASH, "modCount", "I");
-    mv.visitInsn(ICONST_1);
-    mv.visitInsn(IADD);
-    mv.visitFieldInsn(PUTFIELD, CONCURRENT_HASH_MAP_SEGMENT_SLASH, "modCount", "I");
-    Label l16 = new Label();
-    mv.visitLabel(l16);
-    mv.visitVarInsn(ALOAD, 6);
-    mv.visitVarInsn(ILOAD, 7);
-    mv.visitTypeInsn(NEW, "java/util/concurrent/ConcurrentHashMap$HashEntry");
-    mv.visitInsn(DUP);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitVarInsn(ILOAD, 2);
-    mv.visitVarInsn(ALOAD, 8);
-    mv.visitVarInsn(ALOAD, 3);
-    mv.visitMethodInsn(INVOKESPECIAL, "java/util/concurrent/ConcurrentHashMap$HashEntry", "<init>",
-                       "(Ljava/lang/Object;ILjava/util/concurrent/ConcurrentHashMap$HashEntry;Ljava/lang/Object;)V");
-    mv.visitInsn(AASTORE);
-    Label l17 = new Label();
-    mv.visitLabel(l17);
-    mv.visitVarInsn(ALOAD, 0);
-    mv.visitVarInsn(ILOAD, 5);
-    mv.visitFieldInsn(PUTFIELD, CONCURRENT_HASH_MAP_SEGMENT_SLASH, "count", "I");
-    mv.visitLabel(l13);
-    mv.visitVarInsn(ALOAD, 10);
-    mv.visitInsn(ARETURN);
-    Label l18 = new Label();
-    mv.visitLabel(l18);
-    mv.visitMaxs(0, 0);
-    mv.visitEnd();
-  }
-
-  // Again, this method does not require lock as it is called by __tc_rehash() which grabs the
-  // lock already.
-  private void createTCClearMethod() {
-    MethodVisitor mv = super.visitMethod(0, TC_CLEAR_METHOD_NAME, TC_CLEAR_METHOD_DESC, null, null);
-    mv.visitCode();
-    Label l0 = new Label();
-    mv.visitLabel(l0);
-    mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, CONCURRENT_HASH_MAP_SEGMENT_SLASH, "count", "I");
-    Label l1 = new Label();
-    mv.visitJumpInsn(IFEQ, l1);
-    Label l2 = new Label();
-    mv.visitLabel(l2);
-    mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, CONCURRENT_HASH_MAP_SEGMENT_SLASH, "table",
-                      "[Ljava/util/concurrent/ConcurrentHashMap$HashEntry;");
-    mv.visitVarInsn(ASTORE, 1);
-    Label l3 = new Label();
-    mv.visitLabel(l3);
-    mv.visitInsn(ICONST_0);
-    mv.visitVarInsn(ISTORE, 2);
-    Label l4 = new Label();
-    mv.visitLabel(l4);
-    Label l5 = new Label();
-    mv.visitJumpInsn(GOTO, l5);
-    Label l6 = new Label();
-    mv.visitLabel(l6);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitVarInsn(ILOAD, 2);
-    mv.visitInsn(ACONST_NULL);
-    mv.visitInsn(AASTORE);
-    Label l7 = new Label();
-    mv.visitLabel(l7);
-    mv.visitIincInsn(2, 1);
-    mv.visitLabel(l5);
-    mv.visitVarInsn(ILOAD, 2);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitInsn(ARRAYLENGTH);
-    mv.visitJumpInsn(IF_ICMPLT, l6);
-    Label l8 = new Label();
-    mv.visitLabel(l8);
-    mv.visitVarInsn(ALOAD, 0);
-    mv.visitInsn(DUP);
-    mv.visitFieldInsn(GETFIELD, CONCURRENT_HASH_MAP_SEGMENT_SLASH, "modCount", "I");
-    mv.visitInsn(ICONST_1);
-    mv.visitInsn(IADD);
-    mv.visitFieldInsn(PUTFIELD, CONCURRENT_HASH_MAP_SEGMENT_SLASH, "modCount", "I");
-    Label l9 = new Label();
-    mv.visitLabel(l9);
-    mv.visitVarInsn(ALOAD, 0);
-    mv.visitInsn(ICONST_0);
-    mv.visitFieldInsn(PUTFIELD, CONCURRENT_HASH_MAP_SEGMENT_SLASH, "count", "I");
-    mv.visitLabel(l1);
-    mv.visitInsn(RETURN);
-    Label l10 = new Label();
-    mv.visitLabel(l10);
-    mv.visitMaxs(0, 0);
     mv.visitEnd();
   }
 
@@ -448,7 +272,7 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
     mv.visitMaxs(0, 0);
     mv.visitEnd();
   }
-
+  
   private static class InitMethodAdapter extends MethodAdapter implements Opcodes {
     public InitMethodAdapter(MethodVisitor mv) {
       super(mv);
@@ -456,11 +280,6 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
 
     public void visitInsn(int opcode) {
       if (RETURN == opcode) {
-        // ByteCodeUtil.pushThis(mv);
-        // mv.visitVarInsn(ALOAD, 1);
-        // mv.visitFieldInsn(PUTFIELD, CONCURRENT_HASH_MAP_SEGMENT_SLASH, INITIAL_CAPACITY_FIELD_NAME,
-        // INITIAL_CAPACITY_FIELD_TYPE);
-
         ByteCodeUtil.pushThis(mv);
         mv.visitVarInsn(ALOAD, 1);
         mv.visitFieldInsn(PUTFIELD, CONCURRENT_HASH_MAP_SEGMENT_SLASH,
@@ -491,13 +310,13 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
   }
 
   private static class PutMethodAdapter extends MethodAdapter implements Opcodes {
-
     public PutMethodAdapter(MethodVisitor mv) {
       super(mv);
     }
-
+    
     public void visitFieldInsn(int opcode, String owner, String name, String desc) {
       super.visitFieldInsn(opcode, owner, name, desc);
+      
       if (PUTFIELD == opcode && "java/util/concurrent/ConcurrentHashMap$HashEntry".equals(owner)
           && "value".equals(name) && "Ljava/lang/Object;".equals(desc)) {
         addFoundLogicalInvokePutMethodCall();
@@ -505,6 +324,37 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
                  && "count".equals(name) && "I".equals(desc)) {
         addNotFoundLogicalInvokePutMethodCall();
       }
+    }
+
+    private void addFoundLogicalInvokePutMethodCall() {
+      Label notManaged = new Label();
+      Label logicalInvokeLabel = new Label();
+
+      mv.visitLabel(logicalInvokeLabel);
+
+      ByteCodeUtil.pushThis(mv);
+      mv.visitFieldInsn(GETFIELD, CONCURRENT_HASH_MAP_SEGMENT_SLASH,
+                        PARENT_CONCURRENT_HASH_MAP_FIELD_NAME, "Ljava/util/concurrent/ConcurrentHashMap;");
+      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "isManaged", "(Ljava/lang/Object;)Z");
+      mv.visitJumpInsn(IFEQ, notManaged);
+      ByteCodeUtil.pushThis(mv);
+      mv.visitFieldInsn(GETFIELD, CONCURRENT_HASH_MAP_SEGMENT_SLASH,
+                        PARENT_CONCURRENT_HASH_MAP_FIELD_NAME, "Ljava/util/concurrent/ConcurrentHashMap;");
+      mv.visitLdcInsn(SerializationUtil.PUT_SIGNATURE);
+      mv.visitInsn(ICONST_2);
+      mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+      mv.visitInsn(DUP);
+      mv.visitInsn(ICONST_0);
+      mv.visitVarInsn(ALOAD, 9);
+      mv.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap$HashEntry", "key", "Ljava/lang/Object;");
+      mv.visitInsn(AASTORE);
+      mv.visitInsn(DUP);
+      mv.visitInsn(ICONST_1);
+      mv.visitVarInsn(ALOAD, 3);
+      mv.visitInsn(AASTORE);
+      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "logicalInvoke",
+                         "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
+      mv.visitLabel(notManaged);
     }
 
     private void addNotFoundLogicalInvokePutMethodCall() {
@@ -557,36 +407,23 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
                          "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
       mv.visitLabel(endBlock);
     }
+  }
 
-    private void addFoundLogicalInvokePutMethodCall() {
-      Label notManaged = new Label();
-      Label logicalInvokeLabel = new Label();
+  private static class RemoveLockUnlockMethodAdapter extends MethodAdapter implements Opcodes {
+    public RemoveLockUnlockMethodAdapter(MethodVisitor mv) {
+      super(mv);
+    }
 
-      mv.visitLabel(logicalInvokeLabel);
-
-      ByteCodeUtil.pushThis(mv);
-      mv.visitFieldInsn(GETFIELD, CONCURRENT_HASH_MAP_SEGMENT_SLASH,
-                        PARENT_CONCURRENT_HASH_MAP_FIELD_NAME, "Ljava/util/concurrent/ConcurrentHashMap;");
-      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "isManaged", "(Ljava/lang/Object;)Z");
-      mv.visitJumpInsn(IFEQ, notManaged);
-      ByteCodeUtil.pushThis(mv);
-      mv.visitFieldInsn(GETFIELD, CONCURRENT_HASH_MAP_SEGMENT_SLASH,
-                        PARENT_CONCURRENT_HASH_MAP_FIELD_NAME, "Ljava/util/concurrent/ConcurrentHashMap;");
-      mv.visitLdcInsn(SerializationUtil.PUT_SIGNATURE);
-      mv.visitInsn(ICONST_2);
-      mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
-      mv.visitInsn(DUP);
-      mv.visitInsn(ICONST_0);
-      mv.visitVarInsn(ALOAD, 9);
-      mv.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap$HashEntry", "key", "Ljava/lang/Object;");
-      mv.visitInsn(AASTORE);
-      mv.visitInsn(DUP);
-      mv.visitInsn(ICONST_1);
-      mv.visitVarInsn(ALOAD, 3);
-      mv.visitInsn(AASTORE);
-      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "logicalInvoke",
-                         "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
-      mv.visitLabel(notManaged);
+    public void visitMethodInsn(int opcode, String owner, String name, String desc) {
+      if (CONCURRENT_HASH_MAP_SEGMENT_SLASH.equals(owner)
+          && ("lock".equals(name) || "unlock".equals(name))
+          && "()V".equals(desc)) {
+        // insert a POP insertion instead, so that the reference to
+        // 'this' is removed from the stack
+        mv.visitInsn(POP);
+      } else {
+        super.visitMethodInsn(opcode, owner, name, desc);
+      }
     }
   }
 
@@ -680,25 +517,6 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
       super(mv);
     }
 
-    /*
-     * public void visitCode() { super.visitCode(); Label l0 = new Label(); mv.visitFieldInsn(GETSTATIC,
-     * "com/tc/util/DebugUtil", "DEBUG", "Z"); mv.visitJumpInsn(IFEQ, l0); Label l5 = new Label(); mv.visitLabel(l5);
-     * mv.visitLineNumber(479, l5); mv.visitFieldInsn(GETSTATIC, "java/lang/System", "err", "Ljava/io/PrintStream;");
-     * mv.visitTypeInsn(NEW, "java/lang/StringBuilder"); mv.visitInsn(DUP); mv.visitLdcInsn("Segment.remove: client id:
-     * "); mv.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuilder", "<init>", "(Ljava/lang/String;)V");
-     * mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "getClientID", "()Ljava/lang/String;");
-     * mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append",
-     * "(Ljava/lang/String;)Ljava/lang/StringBuilder;"); mv.visitLdcInsn(", key: "); mv.visitMethodInsn(INVOKEVIRTUAL,
-     * "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;"); mv.visitVarInsn(ALOAD, 1);
-     * mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append",
-     * "(Ljava/lang/Object;)Ljava/lang/StringBuilder;"); mv.visitLdcInsn(", hash: "); mv.visitMethodInsn(INVOKEVIRTUAL,
-     * "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;"); Label l6 = new Label();
-     * mv.visitLabel(l6); mv.visitLineNumber(480, l6); mv.visitVarInsn(ILOAD, 2); mv.visitMethodInsn(INVOKEVIRTUAL,
-     * "java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;"); mv.visitMethodInsn(INVOKEVIRTUAL,
-     * "java/lang/StringBuilder", "toString", "()Ljava/lang/String;"); Label l7 = new Label(); mv.visitLabel(l7);
-     * mv.visitLineNumber(479, l7); mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println",
-     * "(Ljava/lang/String;)V"); mv.visitLabel(l0); }
-     */
     public void visitFieldInsn(int opcode, String owner, String name, String desc) {
       super.visitFieldInsn(opcode, owner, name, desc);
       if (PUTFIELD == opcode && CONCURRENT_HASH_MAP_SEGMENT_SLASH.equals(owner) && "count".equals(name)

@@ -68,6 +68,7 @@ import com.tc.object.bytecode.JavaLangThrowableDebugClassAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentCyclicBarrierDebugClassAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentHashMapAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentHashMapSegmentAdapter;
+import com.tc.object.bytecode.JavaUtilConcurrentHashMapValueIteratorAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentLinkedBlockingQueueAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentLinkedBlockingQueueClassAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentLinkedBlockingQueueIteratorClassAdapter;
@@ -1630,6 +1631,7 @@ public class BootJarTool {
     loadTerracottaClass("com.tcclient.util.ConcurrentHashMapEntrySetWrapper");
     loadTerracottaClass("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$IteratorWrapper");
 
+    // java.util.concurrent.ConcurrentHashMap
     byte[] bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap");
 
     ClassReader cr = new ClassReader(bytes);
@@ -1646,6 +1648,7 @@ public class BootJarTool {
     bytes = doDSOTransform(spec.getClassName(), bytes);
     bootJar.loadClassIntoJar("java.util.concurrent.ConcurrentHashMap", bytes, true);
 
+    // java.util.concurrent.ConcurrentHashMap$Segment
     bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$Segment");
     cr = new ClassReader(bytes);
     cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
@@ -1661,6 +1664,22 @@ public class BootJarTool {
     bytes = doDSOTransform(spec.getClassName(), bytes);
     bootJar.loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$Segment", bytes, spec.isPreInstrumented());
 
+    // java.util.concurrent.ConcurrentHashMap$ValueIterator
+    bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$ValueIterator");
+    cr = new ClassReader(bytes);
+    cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+    cv = new JavaUtilConcurrentHashMapValueIteratorAdapter(cw);
+    cr.accept(cv, ClassReader.SKIP_FRAMES);
+
+    bytes = cw.toByteArray();
+
+    spec = config.getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$ValueIterator");
+    spec.setHonorTransient(true);
+    spec.markPreInstrumented();
+    bytes = doDSOTransform(spec.getClassName(), bytes);
+    bootJar.loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$ValueIterator", bytes, spec.isPreInstrumented());
+
+    // com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper
     bytes = getTerracottaBytes("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper");
     spec = config.getOrCreateSpec("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper");
     spec.markPreInstrumented();
@@ -1668,6 +1687,7 @@ public class BootJarTool {
     bootJar.loadClassIntoJar("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper", bytes, spec
         .isPreInstrumented());
 
+    // java.util.concurrent.ConcurrentHashMap$Values
     bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$Values");
     spec = config.getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$Values");
     spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
@@ -1675,6 +1695,7 @@ public class BootJarTool {
     bytes = doDSOTransform(spec.getClassName(), bytes);
     bootJar.loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$Values", bytes, spec.isPreInstrumented());
 
+    // java.util.concurrent.ConcurrentHashMap$KeySet
     bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$KeySet");
     spec = config.getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$KeySet");
     spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
@@ -1682,6 +1703,7 @@ public class BootJarTool {
     bytes = doDSOTransform(spec.getClassName(), bytes);
     bootJar.loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$KeySet", bytes, spec.isPreInstrumented());
 
+    // java.util.concurrent.ConcurrentHashMap$HashIterator
     bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$HashIterator");
     spec = config.getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$HashIterator");
     spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);

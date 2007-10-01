@@ -39,14 +39,14 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
   }
 
   /**
-   * We need to instrument the size(), isEmpty(), and containsValue() methods because the original implementation in jdk
+   * We need to instrument the size(), isEmpty(), and containsValue() methods because the original implementation in JDK
    * 1.5 has an optimization which uses a volatile variable and does not require locking of the segments. It resorts to
-   * locking only after several unsucessful attempts. For instance, the original implementation of the size() method
+   * locking only after several unsuccessful attempts. For instance, the original implementation of the size() method
    * looks at the count and mod_count volatile variables of each segment and makes sure that there is no update during
    * executing the size() method. If it detects any update while the size() method is being executed, it will resort to
    * locking. Since ConcurrentHashMap is supported logically, it is possible that while the application is obtaining the
    * size of the map while there are still pending updates. Therefore, when ConcurrentHashMap is shared, the
-   * instrumented code will always use an locking scheme to make sure all updates are applied before returing the size.
+   * instrumented code will always use an locking scheme to make sure all updates are applied before returning the size.
    * The same is true for isEmpty() and containsValue methods().
    */
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
@@ -75,6 +75,8 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
       mv = new SimpleReplaceMethodAdapter(mv);
     } else if ("replace".equals(name) && "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Z".equals(desc)) {
       mv = new ReplaceMethodAdapter(mv);
+    } else if ("writeObject".equals(name) && "(Ljava/io/ObjectOutputStream;)V".equals(desc)) {
+      mv = new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, mv);
     }
 
     return new ConcurrentHashMapMethodAdapter(access, desc, mv);
@@ -375,8 +377,12 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
   }
 
   private void createTCRehashMethod() {
-    MethodVisitor mv = super.visitMethod(ACC_PUBLIC + ACC_SYNTHETIC, TC_REHASH_METHOD_NAME, TC_REHASH_METHOD_DESC,
-                                         null, null);
+    int access = ACC_PUBLIC + ACC_SYNTHETIC;
+    String name = TC_REHASH_METHOD_NAME;
+    String desc = TC_REHASH_METHOD_DESC;
+    MethodVisitor mv = super.visitMethod(access, name, desc, null, null);
+    mv = new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, mv);
+    
     mv.visitCode();
     Label l0 = new Label();
     Label l1 = new Label();

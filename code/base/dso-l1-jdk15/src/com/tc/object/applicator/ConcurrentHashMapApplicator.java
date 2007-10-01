@@ -12,8 +12,8 @@ import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LiteralAction;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
@@ -36,7 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Apply a logical action to an object
  */
-public class ConcurrentHashMapApplicator extends HashMapApplicator {
+public class ConcurrentHashMapApplicator extends PartialHashMapApplicator {
   private static final String CONCURRENT_HASH_MAP_FIELD_NAME_PREFIX = ConcurrentHashMap.class.getName() + ".";
   private static final String SEGMENT_MASK_FIELD_NAME               = "segmentMask";
   private static final String SEGMENT_SHIFT_FIELD_NAME              = "segmentShift";
