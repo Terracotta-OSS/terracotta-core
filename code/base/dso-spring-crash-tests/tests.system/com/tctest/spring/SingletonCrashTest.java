@@ -18,6 +18,8 @@ import com.tctest.TransparentTestIface;
 import com.tctest.runner.AbstractTransparentApp;
 import com.tctest.spring.bean.CrashSingleton;
 
+import java.util.Date;
+
 /**
  * Spring singleton tests
  */
@@ -30,7 +32,7 @@ public class SingletonCrashTest extends TransparentTestBase {
   public SingletonCrashTest() {
     // DEV-755 MNK-259
     if (Vm.isIBM()) {
-      disableAllUntil("2007-10-01");
+      disableAllUntil(new Date(Long.MAX_VALUE));
     }
   }
   

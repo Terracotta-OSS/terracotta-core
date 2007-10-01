@@ -21,6 +21,7 @@ import com.tctest.spring.bean.MasterBean;
 import com.tctest.spring.bean.Singleton;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -34,7 +35,7 @@ public class MultipleContexts_Test extends TransparentTestBase {
 
   public MultipleContexts_Test() {
     if (Vm.isIBM()) {
-      this.disableAllUntil("2007-10-01");
+      disableAllUntil(new Date(Long.MAX_VALUE));
     }
   }
 

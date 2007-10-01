@@ -4,6 +4,7 @@
 package com.tctest.wicket;
 
 import java.util.Collections;
+import java.util.Date;
 
 import junit.framework.Test;
 
@@ -39,7 +40,7 @@ public class ContainerWicketTest extends AbstractTwoServerDeploymentTest {
 
   public ContainerWicketTest() {
     if (Vm.isIBM()) {
-      this.disableAllUntil("2007-10-01");
+      this.disableAllUntil(new Date(Long.MAX_VALUE));
     }
   }
 

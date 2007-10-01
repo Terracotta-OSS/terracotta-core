@@ -16,6 +16,7 @@ import com.tctest.TransparentTestBase;
 import com.tctest.runner.AbstractTransparentApp;
 import com.tctest.spring.bean.ActiveBean;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -28,7 +29,7 @@ public class ActiveBean_Test extends TransparentTestBase {
 
   public ActiveBean_Test() {
     if (Vm.isIBM()) {
-      this.disableAllUntil("2007-10-01");
+      this.disableAllUntil(new Date(Long.MAX_VALUE));
     }
   }
 

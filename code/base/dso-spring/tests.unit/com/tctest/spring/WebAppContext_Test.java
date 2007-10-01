@@ -29,6 +29,7 @@ import com.tctest.spring.bean.Singleton;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -49,7 +50,7 @@ public class WebAppContext_Test extends TransparentTestBase {
 
   public WebAppContext_Test() {
     if (Vm.isIBM()) {
-      this.disableAllUntil("2007-10-01");
+      disableAllUntil(new Date(Long.MAX_VALUE));
     }
   }
 

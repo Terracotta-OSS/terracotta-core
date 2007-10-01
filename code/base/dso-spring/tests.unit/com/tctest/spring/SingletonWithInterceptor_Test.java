@@ -16,6 +16,8 @@ import com.tctest.TransparentTestBase;
 import com.tctest.runner.AbstractTransparentApp;
 import com.tctest.spring.bean.FooService;
 
+import java.util.Date;
+
 /**
  * Spring singleton test
  */
@@ -26,7 +28,7 @@ public class SingletonWithInterceptor_Test extends TransparentTestBase {
 
   public SingletonWithInterceptor_Test() {
     if (Vm.isIBM()) {
-      this.disableAllUntil("2007-10-01");
+      disableAllUntil(new Date(Long.MAX_VALUE));
     }
   }
 
