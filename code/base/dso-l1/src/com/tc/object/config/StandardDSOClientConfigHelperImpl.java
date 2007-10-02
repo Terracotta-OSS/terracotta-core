@@ -1038,22 +1038,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  public void addCustomAdapter(final String name, final String factoryName) {
-    ClassAdapterFactory factory = null;
-    try {
-      final Class clazz = Class.forName(factoryName);
-      factory = (ClassAdapterFactory) clazz.newInstance();
-    } catch (ClassNotFoundException e) {
-      logger.fatal("Unable to create instance of ClassAdapterFactory: '" + factoryName + "'", e);
-    } catch (InstantiationException e) {
-      logger.fatal("Unable to create instance of ClassAdapterFactory: '" + factoryName + "'", e);
-    } catch (IllegalAccessException e) {
-      logger.fatal("Unable to create instance of ClassAdapterFactory: '" + factoryName + "'", e);
-    }
-    Assert.assertNotNull(factory);
-    addCustomAdapter(name, factory);
-  }
-
   public void addCustomAdapter(final String name, final ClassAdapterFactory factory) {
     synchronized (customAdapters) {
       if (customAdapters.containsKey(name)) { return; }

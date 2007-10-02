@@ -93,6 +93,7 @@ modules:
         - modules-common
         - dso-l1-api
         - common-api
+        - thirdparty-api
   - dso-common:
       options:
         jdk: J2SE-1.4

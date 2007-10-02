@@ -10,10 +10,6 @@ import java.net.URL;
 
 public interface StandardDSOClientConfigHelper {
 
-  public static final String UNSAFE_CLASSADAPTER_FACTORY    = "com.tc.object.bytecode.UnsafeAdapter";
-
-  public static final String DSOUNSAFE_CLASSADAPTER_FACTORY = "com.tc.object.bytecode.DSOUnsafeAdapter";
-
   // HACK: available only in StandardDSOClientConfigHelper
 
   void allowCGLIBInstrumentation();
@@ -47,8 +43,6 @@ public interface StandardDSOClientConfigHelper {
   TransparencyClassSpec getOrCreateSpec(String className);
 
   TransparencyClassSpec getOrCreateSpec(String className, String applicator);
-
-  void addCustomAdapter(String name, String factoryName);
 
   void addCustomAdapter(String name, ClassAdapterFactory adapterFactory);
 

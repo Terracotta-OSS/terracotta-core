@@ -1,13 +1,15 @@
 /*
  * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
-package com.tc.object.bytecode;
+package org.terracotta.modules;
 
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
+import com.tc.object.bytecode.ByteCodeUtil;
+import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tcclient.util.DSOUnsafe;
 
 import java.lang.reflect.Modifier;

@@ -8,7 +8,6 @@ import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
-import com.tc.asm.Label;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.object.bytecode.ClassAdapterFactory;
@@ -26,7 +25,7 @@ import java.util.Map;
 
 /**
  * Test to make sure custom adapted class and its inherited classes can be shared under DSO
- * 
+ *
  * @author hhuynh
  */
 public class CustomClassAdapterTestApp extends AbstractErrorCatchingTransparentApp {
@@ -40,6 +39,8 @@ public class CustomClassAdapterTestApp extends AbstractErrorCatchingTransparentA
 
   protected void runTest() throws Throwable {
     Foo foo = new Foo();
+    Assert.assertEquals(-1, foo.getVal());
+    Assert.assertEquals(0, foo.getRealVal());
     foo.setVal(100);
     Assert.assertEquals(-1, foo.getVal());
     Assert.assertEquals(100, foo.getRealVal());
@@ -84,7 +85,6 @@ public class CustomClassAdapterTestApp extends AbstractErrorCatchingTransparentA
     config.addIncludePattern(Foo.class.getName());
     config.addIncludePattern(FooKid.class.getName());
     config.addCustomAdapter("com.tctest.Foo", new FooAdapter());
-
   }
 
 }
@@ -117,8 +117,8 @@ class FooAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
     super(null);
   }
 
-  public FooAdapter(ClassVisitor arg0) {
-    super(arg0);
+  public FooAdapter(ClassVisitor cv) {
+    super(cv);
   }
 
   public FooAdapter(ClassVisitor visitor, ClassLoader loader) {
@@ -128,17 +128,11 @@ class FooAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
   public MethodVisitor visitMethod(final int access, final String name, final String desc, final String signature,
                                    final String[] exceptions) {
     if ("getVal".equals(name)) {
-      MethodVisitor mv = cv.visitMethod(ACC_PUBLIC, "getVal", "()I", null, null);
+      MethodVisitor mv = super.visitMethod(ACC_PUBLIC, "getVal", "()I", null, null);
       mv.visitCode();
-      Label l0 = new Label();
-      mv.visitLabel(l0);
-      mv.visitLineNumber(49, l0);
       mv.visitInsn(ICONST_M1);
       mv.visitInsn(IRETURN);
-      Label l1 = new Label();
-      mv.visitLabel(l1);
-      mv.visitLocalVariable("this", "Lcom/tctest/Foo;", null, l0, l1, 0);
-      mv.visitMaxs(1, 1);
+      mv.visitMaxs(0, 0);
       mv.visitEnd();
       return null;
     }
