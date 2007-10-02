@@ -1,7 +1,5 @@
 package com.tctest;
 
-import java.util.Iterator;
-
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Element;
@@ -13,12 +11,13 @@ import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
-import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
+
+import java.util.Iterator;
 
 public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
   static final int            EXPECTED_THREAD_COUNT = 2;
@@ -29,7 +28,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 
   /**
    * Test that Ehcache's CacheManger and Cache objects can be clustered.
-   * 
+   *
    * @param appId
    * @param cfg
    * @param listenerProvider
@@ -43,7 +42,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 
   /**
    * Inject Ehcache 1.2.4 configuration, and instrument this test class
-   * 
+   *
    * @param visitor
    * @param config
    */
@@ -126,7 +125,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 
   /**
    * Create many caches.
-   * 
+   *
    * @param count
    *          The number of caches to create
    * @throws Throwable
@@ -146,7 +145,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 
   /**
    * Verify that we have an expected number of caches created.
-   * 
+   *
    * @param expected
    * @throws Exception
    */
@@ -157,7 +156,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 
   /**
    * Verify many caches
-   * 
+   *
    * @param count
    * @throws Throwable
    */
@@ -170,7 +169,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 
   /**
    * Add a cache into the CacheManager.
-   * 
+   *
    * @param name
    *          The name of the cache to add
    * @param mustDelegate
@@ -194,7 +193,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 
   /**
    * Verify that the named cache exists and that it's contents can be retrieved.
-   * 
+   *
    * @param name
    *          The name of the cache to retrieve
    * @throws Exception
@@ -219,7 +218,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 
   /**
    * Remove the named cache
-   * 
+   *
    * @param name
    */
   private void removeCache(final String name) {
@@ -234,7 +233,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 
   /**
    * Verify that the named cache no longer exists.
-   * 
+   *
    * @param name
    * @throws Exception
    */
