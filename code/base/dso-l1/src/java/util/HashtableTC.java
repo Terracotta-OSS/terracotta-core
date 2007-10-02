@@ -12,12 +12,14 @@ import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.TCMap;
 import com.tc.object.bytecode.hook.impl.Util;
 
+import java.util.Collections.SynchronizedCollection;
+import java.util.Collections.SynchronizedSet;
 import java.util.Map.Entry;
 
 /*
  * This class will be merged with java.lang.Hashtable in the bootjar. This hashtable can store ObjectIDs instead of
  * Objects to save memory and transparently fault Objects as needed. It can also clear references. For General rules
- * 
+ *
  * @see HashMapTC class
  */
 public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearable {
@@ -200,17 +202,17 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
       super.remove(key);
     }
   }
-  
+
   public synchronized Collection __tc_getAllEntriesSnapshot() {
     Set entrySet = super.entrySet();
     return new ArrayList(entrySet);
   }
-  
+
   public synchronized Collection __tc_getAllLocalEntriesSnapshot() {
     Set entrySet = super.entrySet();
     int entrySetSize = entrySet.size();
     if (entrySetSize == 0) { return Collections.EMPTY_LIST; }
-    
+
     Object[] tmp = new Object[entrySetSize];
     int index = -1;
     for (Iterator i = entrySet.iterator(); i.hasNext();) {
@@ -220,10 +222,10 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
         tmp[index] = e;
       }
     }
-    
+
     if (index < 0) { return Collections.EMPTY_LIST; }
-    Object[] rv = new Object[index+1];
-    System.arraycopy(tmp, 0, rv, 0, index+1);
+    Object[] rv = new Object[index + 1];
+    System.arraycopy(tmp, 0, rv, 0, index + 1);
     return Arrays.asList(rv);
   }
 
@@ -240,7 +242,8 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
   }
 
   public Set keySet() {
-    return new KeySetWrapper(super.keySet());
+    Collections.SynchronizedSet ss = (SynchronizedSet) super.keySet();
+    return Collections.synchronizedSet(new KeySetWrapper((Set) ss.c), ss.mutex);
   }
 
   public synchronized Enumeration elements() {
@@ -252,11 +255,13 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
   }
 
   private Set nonOverridableEntrySet() {
-    return new EntrySetWrapper(super.entrySet());
+    Collections.SynchronizedSet ss = (SynchronizedSet) super.entrySet();
+    return Collections.synchronizedSet(new EntrySetWrapper((Set) ss.c), ss.mutex);
   }
 
   public Collection values() {
-    return new ValuesCollectionWrapper(super.values());
+    Collections.SynchronizedCollection sc = (SynchronizedCollection) super.values();
+    return Collections.synchronizedCollection(new ValuesCollectionWrapper(sc.c), sc.mutex);
   }
 
   /**
