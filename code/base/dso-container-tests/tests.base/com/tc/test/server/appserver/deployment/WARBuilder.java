@@ -55,6 +55,8 @@ public class WARBuilder implements DeploymentBuilder {
   private Set                    beanDefinitionFiles   = new HashSet();
 
   private Map                    contextParams         = new HashMap();
+  
+  private Map                    sessionConfig         = new HashMap();
 
   private List                   listeners             = new ArrayList();
 
@@ -292,6 +294,11 @@ public class WARBuilder implements DeploymentBuilder {
         writeContextParam(pw, (String) param.getKey(), (String) param.getValue());
       }
 
+      for (Iterator it = sessionConfig.entrySet().iterator(); it.hasNext();) {
+        Map.Entry entry = (Map.Entry) it.next();
+        writeSessionConfig(pw, (String) entry.getKey(), (String) entry.getValue());
+      }
+      
       for (Iterator it = filters.iterator(); it.hasNext();) {
         FilterDefinition definition = (FilterDefinition) it.next();
         writeFilter(pw, definition);
@@ -355,6 +362,13 @@ public class WARBuilder implements DeploymentBuilder {
     pw.println("    <param-name>" + name + "</param-name>");
     pw.println("    <param-value>" + value + "</param-value>");
     pw.println("  </context-param>");
+  }
+  
+  private void writeSessionConfig(PrintWriter pw, String name, String value) {
+    logger.debug("Writing session config[" + name + "/" + value + "]");
+    pw.println("  <session-config>");
+    pw.println("    <" + name + ">" + value + "</" + name + ">");
+    pw.println("  </session-config>");
   }
 
   private void writeListener(PrintWriter pw, String className) {
@@ -517,6 +531,11 @@ public class WARBuilder implements DeploymentBuilder {
     return this;
   }
 
+  public DeploymentBuilder addSessionConfig(String name, String value) {
+    sessionConfig.put(name, value);
+    return this;
+  }
+  
   public DeploymentBuilder addListener(Class listenerClass) {
     listeners.add(listenerClass);
     return this;

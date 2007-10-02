@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<weblogic-web-app>
+	<session-descriptor>
+		<session-param>
+			<param-name>CookieName</param-name>
+			<param-value>SESSIONID</param-value>
+		</session-param>
+		
+		<session-param>
+			<param-name>CookiePath</param-name>
+			<param-value>/WebAppConfigTest</param-value>
+		</session-param>
+
+		<session-param>
+			<param-name>CookieDomain</param-name>
+			<param-value>localhost</param-value>
+		</session-param>
+
+		<session-param>
+			<param-name>CookieComment</param-name>
+			<param-value>WTF</param-value>
+		</session-param>
+
+		<session-param>
+			<param-name>CookieMaxAgeSecs</param-name>
+			<param-value>3600</param-value>
+		</session-param>
+
+		<session-param>
+			<param-name>CookieSecure</param-name>
+			<param-value>false</param-value>
+		</session-param>
+	</session-descriptor>
+</weblogic-web-app>

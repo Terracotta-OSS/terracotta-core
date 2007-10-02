@@ -15,6 +15,7 @@ public interface DeploymentBuilder {
   public DeploymentBuilder addResourceFullpath(String location, String includes, String fullpath);
 
   public DeploymentBuilder addContextParameter(String name, String value);
+  public DeploymentBuilder addSessionConfig(String name, String value);
   public DeploymentBuilder addListener(Class listenerName);
   public DeploymentBuilder addServlet(String name, String mapping, Class servletClass, Map params, boolean loadOnStartup);
   public DeploymentBuilder addFilter(String name, String mapping, Class filterClass, Map params);
