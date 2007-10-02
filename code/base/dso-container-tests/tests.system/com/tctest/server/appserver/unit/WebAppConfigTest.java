@@ -102,6 +102,7 @@ public class WebAppConfigTest extends AbstractDeploymentTest {
         Date expectedDate = formatter.parse((String)expectedCookie.get(key));
         Date actualDate = formatter.parse((String)actualCookie.get(key));        
         assertTrue(Math.abs(actualDate.getTime() - expectedDate.getTime()) < 15 * 1000);
+        continue;
       }
       
       if (!key.endsWith("SESSIONID")) {
