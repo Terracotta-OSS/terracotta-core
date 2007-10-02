@@ -4,7 +4,6 @@
  */
 package com.tctest.server.appserver.unit;
 
-import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
 import com.tc.test.server.appserver.AppServerFactory;
 import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
@@ -76,12 +75,10 @@ public class WebAppConfigTest extends AbstractDeploymentTest {
     server1.addWarDeployment(deployment, CONTEXT);
     server1.start();
 
-    WebConversation conversation = new WebConversation();
-    WebResponse response0 = server0.ping("/" + CONTEXT + "/ok", conversation);
+    WebResponse response0 = server0.ping("/" + CONTEXT + "/ok");
     System.out.println("Cookie from server0 w/o DSO: " + response0.getHeaderField("Set-Cookie"));
     
-    conversation = new WebConversation();
-    WebResponse response1 = server1.ping("/" + CONTEXT + "/ok", conversation);
+    WebResponse response1 = server1.ping("/" + CONTEXT + "/ok");
     System.out.println("Cookie from server1 w/ DSO: " + response1.getHeaderField("Set-Cookie"));
     
     assertCookie(response0.getHeaderField("Set-Cookie"), response1.getHeaderField("Set-Cookie"));
