@@ -4,17 +4,14 @@ class MavenDeploy
 
   def initialize(options = {})
     @packaging = options[:packaging] || 'jar'
-    @generate_pom = options.has_key?(:generate_pom) ? options[:generate_pom] : true
+    @generate_pom = options.boolean(:generate_pom, true)
     @group_id = options[:group_id] || DEFAULT_GROUP_ID
     @repository_url = options[:repository_url] || MAVEN_REPO_LOCAL
     @repository_id = options[:repository_id]
-    @snapshot = options[:snapshot]
-    if @snapshot.is_a?(String)
-      @snapshot = (@snapshot =~ /true/i)
-    end
+    @snapshot = options.boolean(:snapshot)
   end
 
-  def deploy_file(file, artifact_id, version, dry_run = false)
+  def deploy_file(file, artifact_id, version, pom_file = nil, dry_run = false)
     unless File.exist?(file)
       raise("Bad 'file' argument passed to deploy_file.  File does not exist: #{file}")
     end
@@ -26,13 +23,18 @@ class MavenDeploy
 
     command_args = {
       'packaging' => @packaging,
-      'generatePom' => @generate_pom,
       'groupId' => @group_id,
       'artifactId' => artifact_id,
       'file' => file,
       'version' => version,
       'uniqueVersion' => false
     }
+
+    if pom_file
+      command_args['pomFile'] = pom_file
+    else
+      command_args['generatePom'] = @generate_pom
+    end
 
     if @repository_url.downcase == 'local'
       command << 'install:install-file'
@@ -49,6 +51,5 @@ class MavenDeploy
     unless system(*full_command)
       fail("deployment failed")
     end
-    #Registry[:platform].exec(full_command.first, *full_command[1..-1])
   end
 end

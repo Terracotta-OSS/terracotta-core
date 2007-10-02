@@ -21,7 +21,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
         artifact = arg['artifact']
         version = arg[MAVEN_VERSION_CONFIG_KEY] || config_source[MAVEN_VERSION_CONFIG_KEY] ||
                   config_source['version'] || build_environment.version
-        maven.deploy_file(file, artifact, version)
+        maven.deploy_file(file, artifact, version, arg['pom'])
       end
     end
   end

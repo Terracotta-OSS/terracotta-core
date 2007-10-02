@@ -31,5 +31,7 @@ postscripts:
       args:
         - artifact: tc-compile
           file: tc-compile-version-PREALPHA.jar
+          pom: poms/tc-compile-pom.xml
         - artifact: tc.test-compile
           file: tc.test-compile-version-PREALPHA.jar
+          pom: poms/tc.test-compile-pom.xml

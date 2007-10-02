@@ -140,7 +140,10 @@ postscripts:
       args:
         - artifact: terracotta
           file: lib/tc.jar
+          pom: poms/terracotta-pom.xml
         - artifact: tcconfig
           file: lib/tcconfig-xmlbeans-generated.jar
+          pom: poms/tcconfig-pom.xml
         - artifact: tc-session
           file: lib/session/tc-session.jar
+          pom: poms/tc-session-pom.xml
