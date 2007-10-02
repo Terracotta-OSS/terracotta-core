@@ -33,6 +33,13 @@ public class WebAppConfigTest extends AbstractDeploymentTest {
   private Deployment          deployment;
   private TcConfigBuilder     tcConfigBuilder;
 
+  public WebAppConfigTest() {
+    // DEV-984
+    if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.JBOSS) {
+      disableAllUntil(new Date(Long.MAX_VALUE));
+    }
+  }
+  
   public static Test suite() {
     return new ServerTestSetup(WebAppConfigTest.class);
   }
