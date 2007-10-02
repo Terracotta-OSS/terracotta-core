@@ -5,7 +5,7 @@
 		<cookie-path>/WebAppConfigTest</cookie-path>		 
 		<cookie-domain>localhost</cookie-domain>		
 		<cookie-comment>WTF</cookie-comment>
-		<cookie-secure>false</cookie-secure>
+		<cookie-secure>true</cookie-secure>
 		<cookie-max-age-secs>3600</cookie-max-age-secs>
 	</session-descriptor>
 </weblogic-web-app>

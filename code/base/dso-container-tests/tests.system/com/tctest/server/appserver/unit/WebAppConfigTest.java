@@ -64,24 +64,25 @@ public class WebAppConfigTest extends AbstractDeploymentTest {
   }
 
   public final void testCookie() throws Exception {
-    // server0 is enabled with DSO
+    // server0 is NOT enabled with DSO
+    GenericServer.setDsoEnabled(false);
     WebApplicationServer server0 = makeWebApplicationServer(tcConfigBuilder);
     server0.addWarDeployment(deployment, CONTEXT);
     server0.start();
 
-    // server1 is NOT enabled with DSO
-    GenericServer.setDsoEnabled(false);
+    // server1 is enabled with DSO
+    GenericServer.setDsoEnabled(true);
     WebApplicationServer server1 = makeWebApplicationServer(tcConfigBuilder);
     server1.addWarDeployment(deployment, CONTEXT);
     server1.start();
 
     WebConversation conversation = new WebConversation();
     WebResponse response0 = server0.ping("/" + CONTEXT + "/ok", conversation);
-    System.out.println("Cookie from server0 w/ DSO: " + response0.getHeaderField("Set-Cookie"));
+    System.out.println("Cookie from server0 w/o DSO: " + response0.getHeaderField("Set-Cookie"));
     
     conversation = new WebConversation();
     WebResponse response1 = server1.ping("/" + CONTEXT + "/ok", conversation);
-    System.out.println("Cookie from server1 w/o DSO: " + response1.getHeaderField("Set-Cookie"));
+    System.out.println("Cookie from server1 w/ DSO: " + response1.getHeaderField("Set-Cookie"));
     
     assertCookie(response0.getHeaderField("Set-Cookie"), response1.getHeaderField("Set-Cookie"));
   }
@@ -123,7 +124,6 @@ public class WebAppConfigTest extends AbstractDeploymentTest {
       } else {
         map.put(name_value[0], "");
       }
-      
     }
     return map;
   }

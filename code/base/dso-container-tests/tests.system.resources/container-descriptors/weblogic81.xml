@@ -28,7 +28,7 @@
 
 		<session-param>
 			<param-name>CookieSecure</param-name>
-			<param-value>false</param-value>
+			<param-value>true</param-value>
 		</session-param>
 	</session-descriptor>
 </weblogic-web-app>
