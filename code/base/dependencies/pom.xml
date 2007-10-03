@@ -65,7 +65,7 @@
     <dependency>
       <groupId>com.sun.jdmk</groupId>
       <artifactId>jmxtools</artifactId>
-      <version>1.2.1</version>
+      <version>1.2.8</version>
     </dependency>
     <dependency>
       <groupId>junit-addons</groupId>
