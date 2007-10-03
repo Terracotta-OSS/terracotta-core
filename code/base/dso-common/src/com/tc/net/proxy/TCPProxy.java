@@ -535,7 +535,8 @@ public class TCPProxy {
         } catch (SocketTimeoutException ste) {
           bytesRead = ste.bytesTransferred;
         } catch (IOException ioe) {
-          // ignore
+          parent.debug("IOException on " + (isClientHalf ? "client" : "proxy") + " connection", ioe);
+          return;
         } finally {
           if (bytesRead > 0) {
             try {
