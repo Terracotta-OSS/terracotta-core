@@ -21,11 +21,15 @@ public class StandardConfiguration extends TerracottaConfiguratorModule {
     }
 
     private void configUnsafe() {
-        getOrCreateSpec("sun.misc.Unsafe");
-        configHelper.addCustomAdapter("sun.misc.Unsafe", new UnsafeAdapter());
-        getOrCreateSpec("com.tcclient.util.DSOUnsafe");
-        configHelper.addCustomAdapter("com.tcclient.util.DSOUnsafe",
-                new DSOUnsafeAdapter());
+        TransparencyClassSpec spec;
+
+        spec = getOrCreateSpec("sun.misc.Unsafe");
+        spec.setCustomClassAdapter(new UnsafeAdapter());
+        spec.markPreInstrumented();
+
+        spec = getOrCreateSpec("com.tcclient.util.DSOUnsafe");
+        spec.setCustomClassAdapter(new DSOUnsafeAdapter());
+        spec.markPreInstrumented();
     }
 
     private void configArrayTypes() {

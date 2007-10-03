@@ -58,10 +58,13 @@ import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.ChangeClassNameHierarchyAdapter;
 import com.tc.object.bytecode.ChangeClassNameRootAdapter;
 import com.tc.object.bytecode.ChangePackageClassAdapter;
+import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.Clearable;
 import com.tc.object.bytecode.DataOutputStreamAdapter;
 import com.tc.object.bytecode.DuplicateMethodAdapter;
 import com.tc.object.bytecode.HashtableClassAdapter;
+import com.tc.object.bytecode.JavaLangReflectArrayAdapter;
+import com.tc.object.bytecode.JavaLangReflectFieldAdapter;
 import com.tc.object.bytecode.JavaLangReflectProxyClassAdapter;
 import com.tc.object.bytecode.JavaLangStringAdapter;
 import com.tc.object.bytecode.JavaLangThrowableDebugClassAdapter;
@@ -169,7 +172,7 @@ import java.util.Set;
  */
 public class BootJarTool {
   public static final String          TC_DEBUG_THROWABLE_CONSTRUCTION = "tc.debug.throwable.construction";
-  
+
   private static final String         EXCESS_CLASSES               = "excess";
   private static final String         MISSING_CLASSES              = "missing";
 
@@ -390,7 +393,10 @@ public class BootJarTool {
       addInstrumentedHashMap();
       addInstrumentedHashtable();
       addInstrumentedJavaUtilCollection();
+      addReflectionInstrumentation();
+
       addJdk15SpecificPreInstrumentedClasses();
+
 
       addInstrumentedWeakHashMap();
 
@@ -530,6 +536,28 @@ public class BootJarTool {
     }
 
   }
+
+  private void addReflectionInstrumentation() {
+    if (this.config.reflectionEnabled()) {
+      adaptAndLoad("java.lang.reflect.Field", new JavaLangReflectFieldAdapter());
+      adaptAndLoad("java.lang.reflect.Array", new JavaLangReflectArrayAdapter());
+    }
+  }
+
+  private void adaptAndLoad(String name, ClassAdapterFactory factory) {
+    byte[] bytes = getSystemBytes(name);
+
+    ClassReader cr = new ClassReader(bytes);
+    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+
+    ClassVisitor cv = factory.create(cw, null);
+    cr.accept(cv, ClassReader.SKIP_FRAMES);
+
+    bytes = cw.toByteArray();
+
+    bootJar.loadClassIntoJar(name, bytes, false);
+  }
+
 
   private final void addManagementClasses() {
     loadTerracottaClass(SessionMonitorMBean.class.getName());

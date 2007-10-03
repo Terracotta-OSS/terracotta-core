@@ -34,6 +34,7 @@ import com.tc.aspectwerkz.transform.inlining.weaver.MethodExecutionVisitor;
 import com.tc.aspectwerkz.transform.inlining.weaver.StaticInitializationVisitor;
 import com.tc.exception.TCLogicalSubclassNotPortableException;
 import com.tc.object.bytecode.ByteCodeUtil;
+import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.RenameClassesAdapter;
 import com.tc.object.bytecode.SafeSerialVersionUIDAdder;
 import com.tc.object.config.ClassReplacementMapping;
@@ -56,7 +57,7 @@ import java.util.Set;
 
 /**
  * A weaving strategy implementing a weaving scheme based on statical compilation, and no reflection.
- * 
+ *
  * @author <a href="mailto:jboner@codehaus.org">Jonas Bon&#233;r </a>
  * @author <a href="mailto:alex@gnilux.com">Alexandre Vasseur </a>
  */
@@ -85,7 +86,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
 
   /**
    * Performs the weaving of the target class.
-   * 
+   *
    * @param className
    * @param context
    */
@@ -124,16 +125,8 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
         return;
       }
 
-      // TODO VM option? rich AW subtype match or old DSO match?
-      // is DSO adaptable?
-      // final boolean subTypeMatch = false;
-      // final boolean isDsoAdaptable;
-      // if (subTypeMatch) {
-      // isDsoAdaptable = m_configHelper.isAdaptable(classInfo.getName());
-      // } else {
-      // isDsoAdaptable = m_configHelper.isAdaptable(className);
-      // }
       final boolean isDsoAdaptable = m_configHelper.shouldBeAdapted(classInfo);
+      final boolean hasCustomAdapter = m_configHelper.hasCustomAdapter(classInfo);
 
       // TODO match on (within, null, classInfo) should be equivalent to those ones.
       final Set definitions = context.getDefinitions();
@@ -149,7 +142,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
       // has AW aspects?
       final boolean isAdvisable = !classFilter(definitions, ctxs, classInfo);
 
-      if (!isAdvisable && !isDsoAdaptable) {
+      if (!isAdvisable && !isDsoAdaptable && !hasCustomAdapter) {
         context.setCurrentBytecode(context.getInitialBytecode());
         return;
       }
@@ -159,7 +152,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
       }
 
       // handle replacement classes
-      if (isDsoAdaptable) {
+      if (isDsoAdaptable || hasCustomAdapter) {
         ClassReplacementMapping mapping = m_configHelper.getClassReplacementMapping();
         String replacementClassName = mapping.getReplacementClassName(className);
 
@@ -304,6 +297,15 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
 
       // ------------------------------------------------
       // -- Phase DSO -- DSO clustering
+      if (hasCustomAdapter) {
+        ClassAdapterFactory factory = m_configHelper.getCustomAdapter(classInfo);
+        final ClassReader reader = new ClassReader(context.getCurrentBytecode());
+        final ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
+        ClassVisitor adapter = factory.create(writer, context.getLoader());
+        reader.accept(adapter, ClassReader.SKIP_FRAMES);
+        context.setCurrentBytecode(writer.toByteArray());
+      }
+
       if (isDsoAdaptable) {
         final ClassReader dsoReader = new ClassReader(context.getCurrentBytecode());
         final ClassWriter dsoWriter = new ClassWriter(dsoReader, ClassWriter.COMPUTE_MAXS);
@@ -346,7 +348,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
 
   /**
    * Filters out the classes that are not eligible for transformation.
-   * 
+   *
    * @param definitions the definitions
    * @param ctxs an array with the contexts
    * @param classInfo the class to filter
@@ -362,7 +364,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
 
   /**
    * Filters out the classes that are not eligible for transformation.
-   * 
+   *
    * @param definition the definition
    * @param ctxs an array with the contexts
    * @param classInfo the class to filter

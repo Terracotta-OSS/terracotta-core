@@ -10,6 +10,7 @@ import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
+import com.tc.exception.TCNonPortableObjectError;
 import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -68,6 +69,18 @@ public class CustomClassAdapterTestApp extends AbstractErrorCatchingTransparentA
     Assert.assertEquals(-1, fooKid.getVal());
     Assert.assertEquals(-2, sharedFooKid.getDoubleVal());
 
+    // also make sure a class that happens to have a custom adapter isn't also
+    // portable (ie. it must be included to be portable)
+    AdaptedButNotIncluded a = new AdaptedButNotIncluded();
+    Assert.assertEquals(-1, a.getVal()); // tests that adaption did happen
+    try {
+      synchronized (root) {
+        root.put("test", new AdaptedButNotIncluded());
+      }
+      throw new AssertionError("Type is portable");
+    } catch (TCNonPortableObjectError e) {
+      // expected
+    }
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
@@ -84,9 +97,19 @@ public class CustomClassAdapterTestApp extends AbstractErrorCatchingTransparentA
 
     config.addIncludePattern(Foo.class.getName());
     config.addIncludePattern(FooKid.class.getName());
-    config.addCustomAdapter("com.tctest.Foo", new FooAdapter());
+    config.addCustomAdapter(Foo.class.getName(), new GetValAdapter());
+
+    config.addCustomAdapter(AdaptedButNotIncluded.class.getName(), new GetValAdapter());
   }
 
+}
+
+class AdaptedButNotIncluded {
+  private int val;
+
+  public int getVal() {
+    return val;
+  }
 }
 
 class Foo {
@@ -111,17 +134,17 @@ class FooKid extends Foo {
   }
 }
 
-class FooAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
+class GetValAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
 
-  public FooAdapter() {
+  public GetValAdapter() {
     super(null);
   }
 
-  public FooAdapter(ClassVisitor cv) {
+  public GetValAdapter(ClassVisitor cv) {
     super(cv);
   }
 
-  public FooAdapter(ClassVisitor visitor, ClassLoader loader) {
+  public GetValAdapter(ClassVisitor visitor, ClassLoader loader) {
     super(visitor);
   }
 
@@ -140,6 +163,6 @@ class FooAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
   }
 
   public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
-    return new FooAdapter(visitor, loader);
+    return new GetValAdapter(visitor, loader);
   }
 }

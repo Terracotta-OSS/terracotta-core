@@ -38,8 +38,6 @@ import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.ClassAdapterBase;
 import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.DelegateMethodAdapter;
-import com.tc.object.bytecode.JavaLangReflectArrayAdapter;
-import com.tc.object.bytecode.JavaLangReflectFieldAdapter;
 import com.tc.object.bytecode.ManagerHelper;
 import com.tc.object.bytecode.ManagerHelperFactory;
 import com.tc.object.bytecode.SafeSerialVersionUIDAdder;
@@ -271,6 +269,11 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   public void allowCGLIBInstrumentation() {
     this.allowCGLIBInstrumentation = true;
+  }
+
+
+  public boolean reflectionEnabled() {
+    return this.supportSharingThroughReflection;
   }
 
   /**
@@ -662,7 +665,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
      * // ---------------------------- // implicit config-bundle - JAG // ----------------------------
      * addPermanentExcludePattern("java.util.WeakHashMap+"); addPermanentExcludePattern("java.lang.ref.*");
      */
-    addReflectionPreInstrumentedSpec();
 
     /**
      * // ---------------------------- // implicit config-bundle - JAG // ----------------------------
@@ -869,16 +871,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
    * etc... }
    */
 
-  private void addReflectionPreInstrumentedSpec() {
-    if (supportSharingThroughReflection) {
-      getOrCreateSpec("java.lang.reflect.Field");
-      addCustomAdapter("java.lang.reflect.Field", new JavaLangReflectFieldAdapter());
-
-      getOrCreateSpec("java.lang.reflect.Array");
-      addCustomAdapter("java.lang.reflect.Array", new JavaLangReflectArrayAdapter());
-    }
-  }
-
   private void addJDK15InstrumentedSpec() {
     if (Vm.getMegaVersion() >= 1 && Vm.getMajorVersion() > 4) {
       TransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock");
@@ -1043,6 +1035,18 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       if (customAdapters.containsKey(name)) { return; }
       Object prev = this.customAdapters.put(name, factory);
       Assert.assertNull(prev);
+    }
+  }
+
+  public boolean hasCustomAdapter(ClassInfo classInfo) {
+    synchronized (customAdapters) {
+      return customAdapters.containsKey(classInfo.getName());
+    }
+  }
+
+  public ClassAdapterFactory getCustomAdapter(ClassInfo classInfo) {
+    synchronized (customAdapters) {
+      return (ClassAdapterFactory) customAdapters.get(classInfo.getName());
     }
   }
 
@@ -1355,8 +1359,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     // If a root is defined then we automagically instrument
     if (classContainsAnyRoots(classInfo)) { return cacheIsAdaptable(fullClassName, true); }
-    // custom adapters trump config.
-    if (customAdapters.containsKey(fullClassName)) { return cacheIsAdaptable(fullClassName, true); }
+
     // existing class specs trump config
     if (hasSpec(fullClassName)) { return cacheIsAdaptable(fullClassName, true); }
 
@@ -1495,33 +1498,27 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   public ClassAdapter createClassAdapterFor(ClassWriter writer, ClassInfo classInfo, InstrumentationLogger lgr,
                                             ClassLoader caller, final boolean forcePortable) {
-    ClassAdapterFactory adapter = (ClassAdapterFactory) this.customAdapters.get(classInfo.getName());
-    if (adapter != null) {
-      return adapter.create(writer, caller);
-    } else {
-      ManagerHelper mgrHelper = mgrHelperFactory.createHelper();
-      TransparencyClassSpec spec = getOrCreateSpec(classInfo.getName());
+    ManagerHelper mgrHelper = mgrHelperFactory.createHelper();
+    TransparencyClassSpec spec = getOrCreateSpec(classInfo.getName());
 
-      if (forcePortable) {
-        if (spec.getInstrumentationAction() == TransparencyClassSpec.NOT_SET) {
-          spec.setInstrumentationAction(TransparencyClassSpec.PORTABLE);
-        } else {
-          logger.info("Not making " + classInfo.getName() + " forcefully portable");
-        }
-      }
-
-      ClassAdapter dsoAdapter = new TransparencyClassAdapter(classInfo, spec, writer, mgrHelper, lgr, caller,
-                                                             portability);
-      ClassAdapterFactory factory = spec.getCustomClassAdapter();
-      ClassVisitor cv;
-      if (factory == null) {
-        cv = dsoAdapter;
+    if (forcePortable) {
+      if (spec.getInstrumentationAction() == TransparencyClassSpec.NOT_SET) {
+        spec.setInstrumentationAction(TransparencyClassSpec.PORTABLE);
       } else {
-        cv = factory.create(dsoAdapter, caller);
+        logger.info("Not making " + classInfo.getName() + " forcefully portable");
       }
-
-      return new SafeSerialVersionUIDAdder(cv);
     }
+
+    ClassAdapter dsoAdapter = new TransparencyClassAdapter(classInfo, spec, writer, mgrHelper, lgr, caller, portability);
+    ClassAdapterFactory factory = spec.getCustomClassAdapter();
+    ClassVisitor cv;
+    if (factory == null) {
+      cv = dsoAdapter;
+    } else {
+      cv = factory.create(dsoAdapter, caller);
+    }
+
+    return new SafeSerialVersionUIDAdder(cv);
   }
 
   private TransparencyClassSpec basicGetOrCreateSpec(String className, String applicator, boolean rememberSpec) {
@@ -1831,5 +1828,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
     return LockLevel.WRITE;
   }
+
 
 }
