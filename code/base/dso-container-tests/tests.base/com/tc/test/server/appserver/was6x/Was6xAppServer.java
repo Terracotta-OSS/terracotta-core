@@ -58,7 +58,7 @@ public class Was6xAppServer extends AbstractAppServer {
   private File                  warDir;
   private File                  portDefFile;
   private File                  serverInstallDir;
-  private File extraScript;
+  private File                  extraScript;
 
   private Thread                serverThread;
 
