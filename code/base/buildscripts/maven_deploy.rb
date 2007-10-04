@@ -19,7 +19,9 @@ class MavenDeploy
     command = dry_run ? ['echo'] : []
     command << FilePath.new('mvn').batch_extension.to_s << '-B' << '-N'
 
-    version += '-SNAPSHOT' if @snapshot && version !~ /SNAPSHOT$/
+    if @snapshot
+      version.sub!(/.SNAPSHOT$/, '-SNAPSHOT') || version += '-SNAPSHOT'
+    end
 
     command_args = {
       'packaging' => @packaging,
