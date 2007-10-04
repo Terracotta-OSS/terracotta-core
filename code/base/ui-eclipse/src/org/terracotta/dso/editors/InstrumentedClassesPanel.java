@@ -649,15 +649,12 @@ public class InstrumentedClassesPanel extends ConfigurationEditorPanel {
   class TableDataListener implements Listener {
     public void handleEvent(Event event) {
       TableItem item = (TableItem) event.item;
-      XmlObject xmlObj = (XmlObject) item.getData();
-      final int index = m_layout.m_table.indexOf(item);
+      int index = m_layout.m_table.indexOf(item);
 
       if (event.index == Layout.RULE_COLUMN) {
-        removeListeners();
-        toggleRuleType(index);
-        addListeners();
-        m_layout.m_table.select(index);
+        toggleRuleTypeLater(index);
       } else {
+        XmlObject xmlObj = (XmlObject) item.getData();
         String text = item.getText(event.index).trim();
         
         if (xmlObj instanceof ClassExpression) {
@@ -682,6 +679,21 @@ public class InstrumentedClassesPanel extends ConfigurationEditorPanel {
           }
         }
       }
+    }
+ 
+    private void toggleRuleTypeLater(final int index) {
+      getDisplay().asyncExec(new Runnable() {
+        public void run() {
+          m_layout.m_table.setRedraw(false);
+          try {
+            toggleRuleType(index);
+            m_layout.m_table.setSelection(index);
+            handleTableSelection();
+          } finally {
+            m_layout.m_table.setRedraw(true);
+          }
+        }
+      });
     }
     
     private void removeRuleLater(final int index) {

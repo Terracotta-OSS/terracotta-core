@@ -179,7 +179,6 @@ public class BootJarTool {
   private final static String         TARGET_FILE_OPTION           = "o";
   private final static boolean        WRITE_OUT_TEMP_FILE          = true;
 
-  private static final String         DEFAULT_CONFIG_PATH          = "default-config.xml";
   private static final String         DEFAULT_CONFIG_SPEC          = "tc-config.xml";
 
   private final ClassLoader           tcLoader;
@@ -403,7 +402,9 @@ public class BootJarTool {
       loadTerracottaClass(DebugUtil.class.getName());
       loadTerracottaClass(SessionSupport.class.getName());
       loadTerracottaClass(TCMap.class.getName());
-      loadTerracottaClass("com.tc.util.concurrent.locks.TCLock");
+      if(Vm.isJDK15Compliant()) {
+        loadTerracottaClass("com.tc.util.concurrent.locks.TCLock");
+      }
       loadTerracottaClass(com.tc.util.Stack.class.getName());
       loadTerracottaClass(TCObjectNotSharableException.class.getName());
 
@@ -2330,8 +2331,7 @@ public class BootJarTool {
       if (localConfig.exists()) {
         configSpec = localConfig.getAbsolutePath();
       } else {
-        String packageName = BootJarTool.class.getPackage().getName();
-        configSpec = "resource:///" + packageName.replace('.', '/') + "/" + DEFAULT_CONFIG_PATH;
+        configSpec = StandardTVSConfigurationSetupManagerFactory.DEFAULT_CONFIG_URI;
       }
 
       String[] newArgs = new String[args.length + 2];

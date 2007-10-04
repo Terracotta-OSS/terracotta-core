@@ -6,6 +6,7 @@ package org.terracotta.dso;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageDeclaration;
@@ -18,11 +19,13 @@ import org.eclipse.jdt.core.dom.MethodDeclaration;
 
 import com.tc.aspectwerkz.expression.ExpressionContext;
 import com.tc.aspectwerkz.expression.ExpressionVisitor;
+import com.tc.aspectwerkz.expression.PointcutType;
 import com.tc.aspectwerkz.reflect.ClassInfo;
+import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.aspectwerkz.reflect.MethodInfo;
-import com.tc.object.bytecode.aspectwerkz.AsmMethodInfo;
 import com.tc.object.bytecode.aspectwerkz.ExpressionHelper;
+import com.terracottatech.config.Root;
 
 import java.util.HashMap;
 
@@ -49,6 +52,27 @@ public class PatternHelper {
     m_executionExpressionContextCache = new HashMap();
   }
 
+//  public boolean matchesFieldName(Root root, String fieldName) {
+//    if(root.isSetFieldName()) {
+//      return root.getFieldName().equals(fieldName);
+//    } else {
+//      String fieldExpr = root.getFieldExpression();
+//      ExpressionVisitor visitor = m_expressionHelper.createExpressionVisitor("get(" + fieldExpr + ")");
+//      return visitor.match(new ExpressionContext(PointcutType.GET, fi, fi));
+//    }
+//  }
+  
+  public boolean matchesField(Root root, IField field) {
+    if(root.isSetFieldName()) {
+      return root.getFieldName().equals(ConfigurationHelper.getFullName(field));
+    } else {
+      FieldInfo fi = getFieldInfo(field);
+      String fieldExpr = root.getFieldExpression();
+      ExpressionVisitor visitor = m_expressionHelper.createExpressionVisitor("get(" + fieldExpr + ")");
+      return visitor.match(new ExpressionContext(PointcutType.GET, fi, fi));
+    }
+  }
+  
   public boolean matchesMethod(String expression, final IMethod method) {
     MethodInfo methodInfo = method != null ? getMethodInfo(method) : null;
     
@@ -284,18 +308,16 @@ public class PatternHelper {
     
     if(method != null) {
       try {
-        String   className  = getFullyQualifiedName(method.getDeclaringType());
-        String   methodName = method.isConstructor() ? "__INIT__" : method.getElementName();
-        String   desc       = getSignature(method);
-        String[] excepts    = method.getExceptionTypes();
-        int      access     = method.getFlags();
-  
-        info = getMethodInfo(access, className, methodName, desc, excepts);
+        info = m_classInfoFactory.getMethodInfo(method);
       } catch(JavaModelException jme) {/**/}
         catch(NullPointerException npe) {/**/}
     }
     
     return info;
+  }
+
+  public FieldInfo getFieldInfo(IField field) {
+    return (field != null) ? m_classInfoFactory.getFieldInfo(field) : null;
   }
   
   public MethodInfo getMethodInfo(MethodDeclaration methodDecl) {
@@ -311,21 +333,6 @@ public class PatternHelper {
     }
 
     return null;  
-  }
-  
-  public MethodInfo getMethodInfo(
-    int      modifiers,
-    String   className,
-    String   methodName,
-    String   description,
-    String[] exceptions)
-  {
-    return new AsmMethodInfo(m_classInfoFactory,
-                             modifiers,
-                             className,
-                             methodName,
-                             description,
-                             exceptions);
   }
   
   public static String getExecutionPattern(IJavaElement element) {

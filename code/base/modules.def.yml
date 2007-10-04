@@ -297,6 +297,8 @@ modules:
         - deploy
         - dso-l2
         - aspectwerkz
+        - thirdparty
+        - thirdparty-api
   - installer:
       options:
         jdk: J2SE-1.4

@@ -599,13 +599,13 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     String[] v1Elems = StringUtils.split(v1, '.');
     String[] v2Elems = StringUtils.split(v2, '.');
 
-    return v1Elems != null && v2Elems != null && v1Elems.length == v2Elems.length && v1Elems[0].equals(v2Elems[0])
-           && v1Elems[1].equals(v2Elems[1]);
+    return v1Elems != null && v2Elems != null && v1Elems.length == v2Elems.length && v1Elems.length > 1
+           && v1Elems[0].equals(v2Elems[0]) && v1Elems[1].equals(v2Elems[1]);
   }
 
   public boolean testServerMatch(ServerNode serverNode) {
-    if (m_versionCheckAction == null || !m_versionCheckAction.isVersionCheckEnabled()
-        || com.tc.util.ProductInfo.getInstance().isDevMode()) { return true; }
+    if (com.tc.util.ProductInfo.getInstance().isDevMode() || m_versionCheckAction == null
+        || !m_versionCheckAction.isVersionCheckEnabled()) { return true; }
 
     ProductInfo consoleInfo = new ProductInfo();
     String consoleVersion = consoleInfo.getVersion();

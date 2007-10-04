@@ -182,7 +182,7 @@ public class TimeExpiryMapTestApp extends AbstractTransparentApp {
     spec.addRoot("barrier", "barrier");
     spec.addRoot("dataRoot", "dataRoot");
     
-    config.addNewModule("clustered-ehcache-1.2.4", "1.0.0"); // this is just a quick way to add TimeExpiryMap to the instrumentation list
+    config.addNewModule("clustered-ehcache-1.2.4", "1.0.0.SNAPSHOT"); // this is just a quick way to add TimeExpiryMap to the instrumentation list
   }
 
   private static class DataRoot {

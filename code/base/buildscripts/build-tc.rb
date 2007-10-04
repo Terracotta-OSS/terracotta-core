@@ -506,7 +506,7 @@ END
     subtree.run_java(ant, 'com.tc.server.TCServerMain', home.dir.to_s,
     jvm, config_source.as_array('jvmargs'),
     all_remaining_arguments,
-    { 'tc.install-root' => home.dir.to_s },
+    { 'tc.base-dir' => home.dir.to_s },
     @build_results, @build_environment)
   end
 

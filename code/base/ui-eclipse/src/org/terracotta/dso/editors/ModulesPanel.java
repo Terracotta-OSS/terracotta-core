@@ -5,8 +5,11 @@
 package org.terracotta.dso.editors;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -17,7 +20,10 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
-import org.terracotta.dso.dialogs.AddModuleDialog;
+import org.terracotta.dso.ModuleInfo;
+import org.terracotta.dso.ModulesConfiguration;
+import org.terracotta.dso.TcPlugin;
+import org.terracotta.dso.dialogs.NewAddModuleDialog;
 import org.terracotta.dso.dialogs.RepoLocationDialog;
 import org.terracotta.dso.editors.xmlbeans.XmlObjectStructureChangeEvent;
 import org.terracotta.dso.editors.xmlbeans.XmlObjectStructureListener;
@@ -35,16 +41,18 @@ public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectS
 
   private TableSelectionListener m_tableSelectionListener;
   private TableDataListener      m_tableDataListener;
+  private MouseMoveListener      m_moduleMouseMoveListener;
   private AddModuleHandler       m_addModuleHandler;
   private RemoveModuleHandler    m_removeModuleHandler;
   private AddRepoHandler         m_addRepoHandler;
   private RemoveRepoHandler      m_removeRepoHandler;
 
-  private static final String    MODULE_DECLARATION   = "Module Declaration";
-  private static final String    MODULE_REPO_LOCATION = "Repository Location (URL)";
-  private static final String    REPO_DECLARATION     = "Repository Declaration";
+  private static final String    MODULE_DECLARATION    = "Module Declaration";
+  private static final String    MODULE_REPO_LOCATION  = "Repository Location (URL)";
+  private static final String    REPO_DECLARATION      = "Repository Declaration";
 
-  private static final int       MODULE_NAME_INDEX    = 0;
+  private static final int       MODULE_NAME_INDEX     = 0;
+  private static final int       MODULE_GROUP_ID_INDEX = 0;
 
   public ModulesPanel(Composite parent, int style) {
     super(parent, style);
@@ -52,6 +60,7 @@ public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectS
 
     m_tableSelectionListener = new TableSelectionListener();
     m_tableDataListener = new TableDataListener();
+    m_moduleMouseMoveListener = new ModuleMouseMoveListener();
     m_addModuleHandler = new AddModuleHandler();
     m_removeModuleHandler = new RemoveModuleHandler();
     m_addRepoHandler = new AddRepoHandler();
@@ -102,6 +111,7 @@ public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectS
     m_layout.m_moduleRepoTable.addListener(SWT.SetData, m_tableDataListener);
     m_layout.m_moduleTable.addSelectionListener(m_tableSelectionListener);
     m_layout.m_moduleTable.addListener(SWT.SetData, m_tableDataListener);
+    m_layout.m_moduleTable.addMouseMoveListener(m_moduleMouseMoveListener);
     m_layout.m_addModule.addSelectionListener(m_addModuleHandler);
     m_layout.m_removeModule.addSelectionListener(m_removeModuleHandler);
     m_layout.m_addModuleRepo.addSelectionListener(m_addRepoHandler);
@@ -113,6 +123,7 @@ public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectS
     m_layout.m_moduleRepoTable.removeListener(SWT.SetData, m_tableDataListener);
     m_layout.m_moduleTable.removeSelectionListener(m_tableSelectionListener);
     m_layout.m_moduleTable.removeListener(SWT.SetData, m_tableDataListener);
+    m_layout.m_moduleTable.removeMouseMoveListener(m_moduleMouseMoveListener);
     m_layout.m_addModule.removeSelectionListener(m_addModuleHandler);
     m_layout.m_removeModule.removeSelectionListener(m_removeModuleHandler);
     m_layout.m_addModuleRepo.removeSelectionListener(m_addRepoHandler);
@@ -140,16 +151,18 @@ public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectS
     return m_modules != null && (m_modules.sizeOfRepositoryArray() > 0 || m_modules.sizeOfModuleArray() > 0);
   }
 
-  private void internalAddModule(String name, String version) {
+  private void internalAddModule(String groupId, String name, String version) {
     Module module = ensureModules().addNewModule();
     module.setName(name);
+    module.setGroupId(groupId);
     module.setVersion(version);
     createModuleTableItem(module);
   }
 
   private void createModuleTableItem(Module module) {
     TableItem item = new TableItem(m_layout.m_moduleTable, SWT.NONE);
-    item.setText(new String[] { module.getName(), module.getVersion() });
+    String groupId = module.isSetGroupId() ? module.getGroupId() : "org.terracotta.modules";
+    item.setText(new String[] { module.getName(), groupId, module.getVersion() });
     item.setData(module);
   }
 
@@ -197,6 +210,7 @@ public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectS
     private static final String MODULES             = "Modules";
     private static final String LOCATION            = "Location";
     private static final String NAME                = "Name";
+    private static final String GROUP_ID            = "Group Identifier";
     private static final String VERSION             = "Version";
     private static final String ADD                 = "Add...";
     private static final String REMOVE              = "Remove";
@@ -297,7 +311,7 @@ public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectS
       m_moduleTable.setHeaderVisible(true);
       m_moduleTable.setLinesVisible(true);
       SWTUtil.makeTableColumnsResizeEqualWidth(sidePanel, m_moduleTable);
-      SWTUtil.makeTableColumnsEditable(m_moduleTable, new int[] { 0, 1 });
+      SWTUtil.makeTableColumnsEditable(m_moduleTable, new int[] { 0, 1, 2 });
       gridData = new GridData(GridData.FILL_BOTH);
       gridData.heightHint = SWTUtil.tableRowsToPixels(m_moduleTable, 0);
       m_moduleTable.setLayoutData(gridData);
@@ -309,8 +323,13 @@ public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectS
 
       TableColumn column1 = new TableColumn(m_moduleTable, SWT.NONE);
       column1.setResizable(true);
-      column1.setText(VERSION);
+      column1.setText(GROUP_ID);
       column1.pack();
+
+      TableColumn column2 = new TableColumn(m_moduleTable, SWT.NONE);
+      column2.setResizable(true);
+      column2.setText(VERSION);
+      column2.pack();
 
       Composite buttonPanel = new Composite(comp, SWT.NONE);
       gridLayout = new GridLayout();
@@ -356,6 +375,8 @@ public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectS
         Module module = (Module) item.getData();
         if (event.index == MODULE_NAME_INDEX) {
           module.setName(text);
+        } else if(event.index == MODULE_GROUP_ID_INDEX){
+          module.setGroupId(text);
         } else {
           module.setVersion(text);
         }
@@ -365,13 +386,38 @@ public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectS
     }
   }
 
+  class ModuleMouseMoveListener implements MouseMoveListener {
+    public void mouseMove(MouseEvent e) {
+      String tip = null;
+      TableItem item = m_layout.m_moduleTable.getItem(new Point(e.x, e.y));
+      if (item != null) {
+        Module module = (Module) item.getData();
+        TcPlugin plugin = TcPlugin.getDefault();
+        ModulesConfiguration modulesConfig = plugin.getModulesConfiguration(getProject());
+        if (modulesConfig != null) {
+          ModuleInfo moduleInfo = modulesConfig.getModuleInfo(module);
+          if (moduleInfo != null) {
+            Exception error = moduleInfo.getError();
+            if (error != null) {
+              tip = error.getMessage();
+            } else {
+              tip = moduleInfo.getLocation().toString();
+            }
+          }
+        }
+      }
+      m_layout.m_moduleTable.setToolTipText(tip);
+    }
+  }
+
   class AddModuleHandler extends SelectionAdapter {
     public void widgetSelected(SelectionEvent e) {
-      AddModuleDialog dialog = new AddModuleDialog(getShell(), MODULE_DECLARATION, MODULE_DECLARATION);
-      dialog.addValueListener(new AddModuleDialog.ValueListener() {
-        public void setValues(String name, String version) {
-          internalAddModule(name, version);
+      NewAddModuleDialog dialog = new NewAddModuleDialog(getShell(), MODULE_DECLARATION, MODULE_DECLARATION, m_modules);
+      dialog.addValueListener(new NewAddModuleDialog.ValueListener() {
+        public void setValue(Modules modules) {
+          m_dsoClient.setModules(modules);
           fireModulesChanged();
+          fireModuleReposChanged();
         }
       });
       dialog.open();

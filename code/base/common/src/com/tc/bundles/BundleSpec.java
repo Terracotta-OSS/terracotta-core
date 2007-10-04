@@ -4,7 +4,9 @@
  */
 package com.tc.bundles;
 
+import org.knopflerfish.framework.VersionRange;
 import org.osgi.framework.BundleException;
+import org.osgi.framework.Version;
 
 import com.tc.bundles.exception.InvalidBundleManifestException;
 
@@ -18,24 +20,24 @@ import java.util.regex.Pattern;
 
 /**
  * Specification for the Require-Bundle attribute
- *  
+ * 
  * <pre>
  * SYNTAX:
  * Require-Bundle ::= bundle {, bundle...}
- * bundle ::= symbolic-name{;bundle-version:="constraint"{;resolution:=optional}}
+ * bundle ::= symbolic-name{;bundle-version:=&quot;constraint&quot;{;resolution:=optional}}
  * constraint ::= [range] || (range)
  * range ::= min, {max}
  * 
  * EXAMPLES:
  * Require-Bundle: foo.bar.baz.widget - require widget bundle from group foo.bar.baz
  * Require-Bundle: foo.bar.baz.widget, foo.bar.baz.gadget - require widget and gadget bundles
- * Require-Bundle: foo.bar.baz.widget;bundle-version:="1.0.0" - widget bundle must be version 1.0.0
- * Require-Bundle: foo.bar.baz.widget;bundle-version:="[1.0.0, 2.0.0]" - bundle version must > 1.0.0 and < 2.0.0
- * Require-Bundle: foo.bar.baz.widget;bundle-version:="[1.0.0, 2.0.0)" - bundle version must > 1.0.0 and <= 2.0.0
- * Require-Bundle: foo.bar.baz.widget;bundle-version:="(1.0.0, 2.0.0)" - bundle version must >= 1.0.0 and <= 2.0.0
- * Require-Bundle: foo.bar.baz.widget;bundle-version:="(1.0.0, 2.0.0]" - bundle version must >= 1.0.0 and < 2.0.0
- * Require-Bundle: foo.bar.baz.widget;bundle-version:="[1.0.0,]" - bundle version must > 1.0.0
- * Require-Bundle: foo.bar.baz.widget;bundle-version:="(1.0.0,)" - bundle version must >= 1.0.0
+ * Require-Bundle: foo.bar.baz.widget;bundle-version:=&quot;1.0.0&quot; - widget bundle must be version 1.0.0
+ * Require-Bundle: foo.bar.baz.widget;bundle-version:=&quot;[1.0.0, 2.0.0]&quot; - bundle version must &gt; 1.0.0 and &lt; 2.0.0
+ * Require-Bundle: foo.bar.baz.widget;bundle-version:=&quot;[1.0.0, 2.0.0)&quot; - bundle version must &gt; 1.0.0 and &lt;= 2.0.0
+ * Require-Bundle: foo.bar.baz.widget;bundle-version:=&quot;(1.0.0, 2.0.0)&quot; - bundle version must &gt;= 1.0.0 and &lt;= 2.0.0
+ * Require-Bundle: foo.bar.baz.widget;bundle-version:=&quot;(1.0.0, 2.0.0]&quot; - bundle version must &gt;= 1.0.0 and &lt; 2.0.0
+ * Require-Bundle: foo.bar.baz.widget;bundle-version:=&quot;[1.0.0,]&quot; - bundle version must &gt; 1.0.0
+ * Require-Bundle: foo.bar.baz.widget;bundle-version:=&quot;(1.0.0,)&quot; - bundle version must &gt;= 1.0.0
  * Require-Bundle: foo.bar.baz.widget;resolution:=optional - bundle is optional (recognized but not supported)
  * </pre>
  */
@@ -137,77 +139,10 @@ public final class BundleSpec {
     // so it must be compatible with the version
     if (spec == null) { return true; }
 
-    // clean up the version spec a bit
-    spec = spec.replaceAll("\\\"", "");
-    final VersionSpec target = new VersionSpec(version);
+    final Version target = new Version(version);
+    VersionRange range = new VersionRange(spec.replaceAll("\\\"", ""));
 
-    // bundle-version:="1.0.0"
-    // anything >= 1.0.0
-    if (!spec.startsWith("[") && !spec.startsWith("(")) {
-      final VersionSpec v = new VersionSpec(spec);
-      return (v.compareTo(target) <= 0);
-    }
-
-    // bundle-version:="[1.0.0, 1.0.1]"
-    // anything within bounds of the given range
-    final boolean inclusiveFloor = spec.startsWith("[");
-    final boolean inclusiveCeiling = spec.endsWith("]");
-
-    spec = spec.replaceAll("\\[|\\]|\\(|\\)", "");
-    final String[] range = spec.replaceAll(" ", "").split(",");
-    final VersionSpec floor = new VersionSpec(range[0]);
-    final VersionSpec ceiling = new VersionSpec(range[1]);
-    final boolean lowerBound = inclusiveFloor ? (floor.compareTo(target) >= 0) : (floor.compareTo(target) > 0);
-    final boolean upperBound = inclusiveCeiling ? (target.compareTo(ceiling) <= 0) : (target.compareTo(ceiling) < 0);
-
-    // it's compatible if version falls within the (lower|upper)-bound versions
-    // according to the (in|ex)clusivity flags
-    return (lowerBound && upperBound);
+    return range.withinRange(target);
   }
 
-  class VersionSpec {
-    private String[] spec = new String[0];
-
-    public VersionSpec(final String version) {
-      this.spec = version.split("\\.");
-    }
-
-    public final String getMajor() {
-      return spec[0];
-    }
-
-    public final String getMinor() {
-      return spec.length > 1 ? spec[1] : "";
-    }
-
-    public final String getRevision() {
-      return spec.length > 2 ? spec[2] : "";
-    }
-
-    public final String getBuild() {
-      return spec.length > 3 ? spec[3] : "";
-    }
-
-    public final int compareTo(VersionSpec v) {
-      int result = getMajor().compareTo(v.getMajor());
-      if (result == 0) {
-        result = getMinor().compareTo(v.getMinor());
-        if (result == 0) {
-          result = getRevision().compareTo(v.getRevision());
-          if (result == 0) {
-            result = getBuild().compareTo(v.getBuild());
-          }
-        }
-      }
-      return result;
-    }
-
-    public final String toString() {
-      StringBuffer buffer = new StringBuffer(this.spec[0]);
-      for (int i = 1; i < this.spec.length; i++) {
-        buffer.append(".").append(this.spec[i]);
-      }
-      return buffer.toString();
-    }
-  }
 }

@@ -43,6 +43,11 @@ public interface QualifiedNames {
                         "DomainConfig");
 
   public static final QualifiedName
+    MODULES_CONFIGURATION =
+      new QualifiedName(TERRACOTTA_QUALIFIER,
+                        "ModulesConfig");
+  
+  public static final QualifiedName
     CONFIGURATION_LINE_LENGTHS =
       new QualifiedName(TERRACOTTA_QUALIFIER,
                         "DomainConfigLineLengths");

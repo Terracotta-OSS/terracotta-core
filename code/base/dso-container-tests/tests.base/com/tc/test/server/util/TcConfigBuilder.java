@@ -138,6 +138,11 @@ public class TcConfigBuilder {
     newModule.setVersion(version);
   }
 
+  public void addRepository(String location) {
+    ensureModules();
+    tcConfig.getClients().getModules().addRepository(location);
+  }
+
   public void addWebApplication(String appName) {
     addWebApplication(appName, false);
   }

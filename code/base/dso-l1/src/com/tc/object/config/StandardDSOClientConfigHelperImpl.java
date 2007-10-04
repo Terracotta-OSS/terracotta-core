@@ -1780,6 +1780,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     userDefinedBootSpecs.put(className, spec);
   }
 
+  public void addRepository(String location) {
+    modulesContext.modules.addRepository(location);
+  }
+  
   public void addNewModule(String name, String version) {
     Module newModule = modulesContext.modules.addNewModule();
     newModule.setName(name);
@@ -1798,6 +1802,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     private Modules modules;
 
     // This is used only in test
+    // XXX: Remove anything test related from production code
     void initializedModulesOnlyOnce() {
       this.alwaysInitializedModules = false;
     }

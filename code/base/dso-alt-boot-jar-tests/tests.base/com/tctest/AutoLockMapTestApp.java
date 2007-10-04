@@ -544,7 +544,7 @@ public class AutoLockMapTestApp extends GenericTestApp {
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-	config.addNewModule("clustered-commons-collections-3.1", "1.0.0");
+	config.addNewModule("clustered-commons-collections-3.1", "1.0.0.SNAPSHOT");
 
     String testClass = AutoLockMapTestApp.class.getName();
     config.getOrCreateSpec(testClass);

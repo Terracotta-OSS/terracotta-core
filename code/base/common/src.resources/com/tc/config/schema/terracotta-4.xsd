@@ -755,9 +755,8 @@
       </xs:documentation>
     </xs:annotation>
     <xs:sequence maxOccurs="1">
-                <xs:sequence>
-        <xs:element name="server" type="server"
-          maxOccurs="unbounded" />
+      <xs:sequence>
+         <xs:element name="server" type="server" minOccurs="0" maxOccurs="unbounded" />
       </xs:sequence>
       <xs:element name="ha" type="ha" maxOccurs="1" minOccurs="0"></xs:element>
       <xs:element name="update-check" type="update-check" maxOccurs="1" minOccurs="0"></xs:element>

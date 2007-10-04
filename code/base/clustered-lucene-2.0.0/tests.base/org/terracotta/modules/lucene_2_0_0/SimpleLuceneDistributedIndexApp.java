@@ -67,7 +67,7 @@ public final class SimpleLuceneDistributedIndexApp extends AbstractTransparentAp
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    config.addNewModule("clustered-lucene-2.0.0", "1.0.0");
+    config.addNewModule("clustered-lucene-2.0.0", "1.0.0.SNAPSHOT");
 
     config.addIncludePattern(LuceneSampleDataIndex.class.getName());
     config.addIncludePattern(SimpleLuceneDistributedIndexApp.class.getName());

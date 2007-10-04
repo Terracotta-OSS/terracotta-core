@@ -83,7 +83,7 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     handler.callback(bundle);
   }
 
-  private void installBundle(final URL location) throws BundleException {
+  public void installBundle(final URL location) throws BundleException {
     try {
       if (logger.isDebugEnabled()) {
         info(Message.INSTALLING_BUNDLE, new Object[] { location });
@@ -113,6 +113,14 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     info(Message.SERVICE_REGISTERED, new Object[] { serviceObject.getClass().getName() });
   }
 
+  public void registerService(final String serviceName, final Object serviceObject, final Dictionary serviceProps) throws BundleException {
+    if (logger.isDebugEnabled()) {
+      info(Message.REGISTERING_SERVICE, new Object[] { serviceName, serviceProps });
+    }
+    framework.getSystemBundleContext().registerService(serviceName, serviceObject, serviceProps);
+    info(Message.SERVICE_REGISTERED, new Object[] { serviceName });
+  }
+
   public ServiceReference[] getAllServiceReferences(String clazz, java.lang.String filter)
       throws InvalidSyntaxException {
     return framework.getSystemBundleContext().getAllServiceReferences(clazz, filter);
@@ -127,6 +135,7 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
   }
 
   public void shutdown() {
+    if(framework == null) return;
     if (logger.isDebugEnabled()) {
       info(Message.STOPPING_FRAMEWORK, new Object[0]);
     }

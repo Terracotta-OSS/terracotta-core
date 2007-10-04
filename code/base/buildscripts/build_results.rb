@@ -150,7 +150,7 @@ class BuildResults
       if build_module.module?
         module_metainf_dir = FilePath.new(build_module.root, "META-INF").to_s
         manifest = FilePath.new(module_metainf_dir, "MANIFEST.MF")
-        module_version = extract_version_from_manifest(manifest.to_s)
+        module_version = extract_version_from_manifest(manifest.to_s).gsub(/\.SNAPSHOT/,'-SNAPSHOT')
         artifact = build_module.name
         output_dir = FilePath.new(self.modules_home, build_module.group_id.gsub(/\./, '/'),
                                   artifact, module_version).ensure_directory

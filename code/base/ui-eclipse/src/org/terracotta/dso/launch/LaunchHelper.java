@@ -10,6 +10,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.variables.IStringVariableManager;
 import org.eclipse.core.variables.VariablesPlugin;
@@ -40,6 +41,7 @@ import org.terracotta.dso.TcPlugin;
 import org.terracotta.dso.actions.BuildBootJarAction;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Launcher helper for standard DSO applications, Eclipse applications, and JUnit tests. 
@@ -138,7 +140,8 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
         cpProp = " -Dtc.install-root=\"" + toOSString(plugin.getLocation()) + "\"";
       }
       else {
-        cpProp = " -Dtc.classpath=\"" + ClasspathProvider.makeDevClasspath() + "\"";
+        cpProp = " -Dtc.classpath=\"" + ClasspathProvider.makeDevClasspath() + "\" -Dtc.install-root=\""
+            + System.getProperty("tc.install-root") + "\"";
       }
       
       String projectNameProp = "-Dproject.name=\"" + project.getName() + "\"";
@@ -242,9 +245,13 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
     }
   }
   
-  private boolean queryStartServer(final IProject project, final IProgressMonitor monitor) {
-    final AtomicBoolean startServer = new AtomicBoolean();
+  public static final QualifiedName QUERY_START_SERVER = new QualifiedName(LaunchHelper.class.getName(), "QueryStartServer");
 
+  private boolean queryStartServer(final IProject project, final IProgressMonitor monitor) throws CoreException {
+    if(project.getSessionProperty(QUERY_START_SERVER) != null) { return false; }
+
+    final AtomicBoolean startServer = new AtomicBoolean();
+    final AtomicReference errorRef = new AtomicReference();
     Display.getDefault().syncExec(new Runnable() {
       public void run() {
         String title = "Terracotta";
@@ -259,11 +266,19 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
           startServer.set(start);
           if(dialog.quitAsking()) {
             TcPlugin.getDefault().setAutoStartServerOption(project, start);
+            try {
+              project.setSessionProperty(QUERY_START_SERVER, "true");
+            } catch(CoreException ce) {
+              errorRef.set(ce);
+            }
           }
         }
       }
     });
 
+    CoreException ce = (CoreException)errorRef.get();
+    if(ce != null) { throw ce; }
+    
     return startServer.get();
   }
 }

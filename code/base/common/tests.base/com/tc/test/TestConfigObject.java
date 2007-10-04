@@ -145,10 +145,10 @@ public class TestConfigObject {
   private static void loadEnv() throws IOException {
     File baseDir = getBaseDir();
 
-    if (StringUtils.isBlank(System.getProperty(Directories.TC_INSTALL_ROOT_PROPERTY_NAME))) {
-      System.setProperty(Directories.TC_INSTALL_ROOT_PROPERTY_NAME, baseDir.getCanonicalPath());
-      System.setProperty(Directories.TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME, "true");
+    if (!StringUtils.isBlank(System.getProperty(Directories.TC_INSTALL_ROOT_PROPERTY_NAME))) {
+      throw new RuntimeException("Don't set '"+Directories.TC_INSTALL_ROOT_PROPERTY_NAME+"' in tests.");
     }
+    System.setProperty(Directories.TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME, "true");
     System.setProperty(Directories.TC_LICENSE_LOCATION_PROPERTY_NAME, baseDir.getCanonicalPath());
   }
 

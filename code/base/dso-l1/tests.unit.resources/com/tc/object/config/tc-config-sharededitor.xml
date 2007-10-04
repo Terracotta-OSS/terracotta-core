@@ -22,7 +22,7 @@
       <repository>file:/tmp/bundle1</repository>
       <module name="sample1" version="1.0.0"/>
       <module name="sample2" version="1.0.0"/>
-      <module name="sample3" version="1.0.0"/>
+      <module name="sample3" version="1.0.0.SNAPSHOT"/>
     </modules>
   </clients>
 

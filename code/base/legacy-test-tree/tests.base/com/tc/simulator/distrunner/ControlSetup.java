@@ -94,8 +94,8 @@ public class ControlSetup {
     return new ExtraProcessServerControl(new DebugParams(), this.controlServerSpec.getHostName(),
                                          this.controlServerSpec.getDsoPort(), this.controlServerSpec.getJmxPort(),
                                          this.sandbox.getConfigFile().getAbsolutePath(), this.sandbox.getServerHome(),
-                                         this.sandbox.getInstallationRoot(), mergeOutput, this.controlServerSpec
-                                             .getJvmOpts(), ArgParser.getUndefinedString());
+                                         mergeOutput, this.controlServerSpec.getJvmOpts(), ArgParser
+                                             .getUndefinedString());
   }
 
   private void startServer() {

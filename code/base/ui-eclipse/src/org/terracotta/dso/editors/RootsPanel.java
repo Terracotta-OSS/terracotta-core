@@ -3,6 +3,7 @@
  */
 package org.terracotta.dso.editors;
 
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -153,7 +154,13 @@ public class RootsPanel extends ConfigurationEditorPanel {
   }
 
   private void initTableItem(TableItem item, Root root) {
-    item.setText(new String[] { root.getFieldName(), root.getRootName() });
+    String fieldNameOrExpression;
+    if(root.isSetFieldName()) {
+      fieldNameOrExpression = root.getFieldName();
+    } else {
+      fieldNameOrExpression = root.getFieldExpression();      
+    }
+    item.setText(new String[] { fieldNameOrExpression, root.getRootName() });
   }
 
   private void updateTableItem(int index) {
@@ -167,29 +174,27 @@ public class RootsPanel extends ConfigurationEditorPanel {
     item.setData(root);
   }
 
-  private void internalAddRoot(String fieldName) {
+  private void internalAddRoot(String fieldNameOrExpression) {
     Root root = ensureRoots().addNewRoot();
 
-    root.setFieldName(fieldName);
+    fieldNameOrExpression = fieldNameOrExpression.trim();
+    String sansWhitespace = StringUtils.deleteWhitespace(fieldNameOrExpression);
+    if(fieldNameOrExpression.length() != sansWhitespace.length()) {
+      root.setFieldExpression(fieldNameOrExpression);
+      root.unsetFieldName();
+    } else {
+      root.setFieldName(fieldNameOrExpression);
+      root.unsetFieldName();
+    }
     createTableItem(root);
 
     int row = m_layout.m_table.getItemCount() - 1;
     m_layout.m_table.setSelection(row);
   }
 
-  public boolean isRoot(String fieldName) {
-    Roots roots = ensureRoots();
-
-    for (int i = 0; i < roots.sizeOfRootArray(); i++) {
-      if (fieldName.equals(roots.getRootArray(i).getFieldName())) { return true; }
-    }
-
-    return false;
-  }
-
   private static class Layout {
     private static final String ROOTS  = "Roots";
-    private static final String FIELD  = "Field";
+    private static final String FIELD  = "Field/Expression";
     private static final String NAME   = "Name";
     private static final String ADD    = "Add...";
     private static final String REMOVE = "Remove";

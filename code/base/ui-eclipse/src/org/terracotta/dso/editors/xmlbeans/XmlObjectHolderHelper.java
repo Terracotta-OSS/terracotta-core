@@ -211,7 +211,11 @@ public class XmlObjectHolderHelper {
   
   
   public StringEnumAbstractBase getEnumValue() {
-    return enumForString(((XmlToken)getXmlObject()).getStringValue());
+    try {
+      return enumForString(((XmlToken)getXmlObject()).getStringValue());
+    } catch(Exception e) {
+      return defaultEnumValue();
+    }
   }
  
   public StringEnumAbstractBase enumForInt(int i) {

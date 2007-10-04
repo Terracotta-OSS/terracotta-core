@@ -59,7 +59,7 @@ public class RAMDirectoryTestApp extends AbstractErrorCatchingTransparentApp {
    * @param config
    */
   public static void visitL1DSOConfig(final ConfigVisitor visitor, final DSOClientConfigHelper config) {
-    config.addNewModule("clustered-lucene-2.0.0", "1.0.0");
+    config.addNewModule("clustered-lucene-2.0.0", "1.0.0.SNAPSHOT");
 
     final String testClass = RAMDirectoryTestApp.class.getName();
     final TransparencyClassSpec spec = config.getOrCreateSpec(testClass);

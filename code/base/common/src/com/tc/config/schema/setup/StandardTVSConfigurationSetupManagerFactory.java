@@ -23,20 +23,24 @@ import java.net.UnknownHostException;
  */
 public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigurationSetupManagerFactory {
 
-  private static final String   CONFIG_SPEC_ARGUMENT_NAME        = "config";
+  private static final String CONFIG_SPEC_ARGUMENT_NAME = "config";
   /**
    * <code>public</code> for <strong>TESTS AND DOCUMENTATION ONLY</strong>.
    */
-  public static final String    CONFIG_SPEC_ARGUMENT_WORD        = "--" + CONFIG_SPEC_ARGUMENT_NAME;
-  public static final String    SERVER_NAME_ARGUMENT_WORD        = "-n";
+  public static final String  CONFIG_SPEC_ARGUMENT_WORD = "--" + CONFIG_SPEC_ARGUMENT_NAME;
+  public static final String  SERVER_NAME_ARGUMENT_WORD = "-n";
 
-  private static final String   L2_NAME_PROPERTY_NAME            = "tc.server.name";
-  public static final String    DEFAULT_CONFIG_SPEC              = "tc-config.xml";
-  public static final String    DEFAULT_CONFIG_PATH              = "default-config.xml";
+  private static final String L2_NAME_PROPERTY_NAME     = "tc.server.name";
+  public static final String  DEFAULT_CONFIG_SPEC       = "tc-config.xml";
+  public static final String  DEFAULT_CONFIG_PATH       = "default-config.xml";
+  public static final String  DEFAULT_CONFIG_URI        = "resource:///"
+                                                            + StandardTVSConfigurationSetupManagerFactory.class
+                                                                .getPackage().getName().replace('.', '/') + "/"
+                                                            + DEFAULT_CONFIG_PATH;
 
-  private final String          defaultL2Identifier;
-  private final String          configSpec;
-  private final File            cwd;
+  private final String        defaultL2Identifier;
+  private final String        configSpec;
+  private final File          cwd;
 
   public StandardTVSConfigurationSetupManagerFactory(boolean isForL2,
                                                      IllegalConfigurationChangeHandler illegalChangeHandler)
@@ -83,30 +87,28 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
 
     if (StringUtils.isBlank(effectiveConfigSpec)) {
       File localConfig = new File(System.getProperty("user.dir"), DEFAULT_CONFIG_SPEC);
-      
-      if(localConfig.exists()) {
+
+      if (localConfig.exists()) {
         effectiveConfigSpec = localConfig.getAbsolutePath();
-      } else if(isForL2) {
-        String packageName = getClass().getPackage().getName();
-        effectiveConfigSpec = "resource:///" + packageName.replace('.', '/') + "/" + DEFAULT_CONFIG_PATH;
+      } else if (isForL2) {
+        effectiveConfigSpec = DEFAULT_CONFIG_URI;
       }
     }
     this.configSpec = effectiveConfigSpec;
-    
+
     if (StringUtils.isBlank(this.configSpec)) {
       // formatting
       throw new ConfigurationSetupException("You must specify the location of the Terracotta "
-                                            + "configuration file for this process, using the " + "'"
-                                            + CONFIG_FILE_PROPERTY_NAME + "' system property.");
+          + "configuration file for this process, using the " + "'" + CONFIG_FILE_PROPERTY_NAME + "' system property.");
     }
 
     String cwdAsString = System.getProperty("user.dir");
     if (StringUtils.isBlank(cwdAsString)) {
       // formatting
       throw new ConfigurationSetupException(
-                                            "We can't find the working directory of the process; we need this to continue. "
-                                            + "(The system property 'user.dir' was "
-                                            + (cwdAsString == null ? "null" : "'" + cwdAsString + "'") + ".)");
+          "We can't find the working directory of the process; we need this to continue. "
+              + "(The system property 'user.dir' was " + (cwdAsString == null ? "null" : "'" + cwdAsString + "'")
+              + ".)");
     }
 
     this.cwd = new File(cwdAsString);
@@ -124,8 +126,8 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
 
       String potentialName = hostName;
 
-      if (potentialName != null && potentialName.indexOf(".") >= 0) potentialName = potentialName
-          .substring(0, potentialName.indexOf("."));
+      if (potentialName != null && potentialName.indexOf(".") >= 0) potentialName = potentialName.substring(0,
+          potentialName.indexOf("."));
       if (potentialName != null) potentialName = potentialName.trim();
 
       if (!StringUtils.isBlank(potentialName) && (!potentialName.equalsIgnoreCase("localhost"))) {
@@ -140,17 +142,17 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
     Options options = new Options();
 
     Option configFileOption = new Option("f", CONFIG_SPEC_ARGUMENT_NAME, true,
-                                         "the configuration file to use, specified as a file path or URL");
+        "the configuration file to use, specified as a file path or URL");
     configFileOption.setArgName("file-or-URL");
     configFileOption.setType(String.class);
-
-    Option l2NameOption = new Option("n", "name", true, "the name of this L2; defaults to the host name");
-    l2NameOption.setRequired(false);
-    l2NameOption.setArgName("l2-name");    
 
     if (isForL2) {
       configFileOption.setRequired(false);
       options.addOption(configFileOption);
+
+      Option l2NameOption = new Option("n", "name", true, "the name of this L2; defaults to the host name");
+      l2NameOption.setRequired(false);
+      l2NameOption.setArgName("l2-name");
       options.addOption(l2NameOption);
     } else {
       configFileOption.setRequired(true);
@@ -160,53 +162,36 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
     return options;
   }
 
-
   public L1TVSConfigurationSetupManager createL1TVSConfigurationSetupManager(TCLogger logger)
-    throws ConfigurationSetupException
-  {
-    ConfigurationCreator configurationCreator = new StandardXMLFileConfigurationCreator(logger,
-                                                                                        this.configSpec,
-                                                                                        this.cwd,
-                                                                                        this.beanFactory);
-  
+      throws ConfigurationSetupException {
+    ConfigurationCreator configurationCreator = new StandardXMLFileConfigurationCreator(logger, this.configSpec,
+        this.cwd, this.beanFactory);
+
     L1TVSConfigurationSetupManager setupManager = new StandardL1TVSConfigurationSetupManager(configurationCreator,
-                                                                                             this.defaultValueProvider,
-                                                                                             this.xmlObjectComparator,
-                                                                                             this.illegalChangeHandler);
-    
+        this.defaultValueProvider, this.xmlObjectComparator, this.illegalChangeHandler);
+
     return setupManager;
   }
 
-  public L1TVSConfigurationSetupManager createL1TVSConfigurationSetupManager()
-    throws ConfigurationSetupException
-  {
-    ConfigurationCreator configurationCreator = new StandardXMLFileConfigurationCreator(this.configSpec,
-                                                                                        this.cwd,
-                                                                                        this.beanFactory);
+  public L1TVSConfigurationSetupManager createL1TVSConfigurationSetupManager() throws ConfigurationSetupException {
+    ConfigurationCreator configurationCreator = new StandardXMLFileConfigurationCreator(this.configSpec, this.cwd,
+        this.beanFactory);
 
     L1TVSConfigurationSetupManager setupManager = new StandardL1TVSConfigurationSetupManager(configurationCreator,
-                                                                                             this.defaultValueProvider,
-                                                                                             this.xmlObjectComparator,
-                                                                                             this.illegalChangeHandler);
-    
+        this.defaultValueProvider, this.xmlObjectComparator, this.illegalChangeHandler);
+
     return setupManager;
   }
 
   public L2TVSConfigurationSetupManager createL2TVSConfigurationSetupManager(String l2Name)
-    throws ConfigurationSetupException
-  {
+      throws ConfigurationSetupException {
     if (l2Name == null) l2Name = this.defaultL2Identifier;
 
     ConfigurationCreator configurationCreator;
-    configurationCreator = new StandardXMLFileConfigurationCreator(this.configSpec,
-                                                                   this.cwd,
-                                                                   this.beanFactory);
+    configurationCreator = new StandardXMLFileConfigurationCreator(this.configSpec, this.cwd, this.beanFactory);
 
-    return new StandardL2TVSConfigurationSetupManager(configurationCreator,
-                                                      l2Name,
-                                                      this.defaultValueProvider,
-                                                      this.xmlObjectComparator,
-                                                      this.illegalChangeHandler);
+    return new StandardL2TVSConfigurationSetupManager(configurationCreator, l2Name, this.defaultValueProvider,
+        this.xmlObjectComparator, this.illegalChangeHandler);
   }
 
 }

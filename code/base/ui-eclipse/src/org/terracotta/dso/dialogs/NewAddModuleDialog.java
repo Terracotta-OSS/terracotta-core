@@ -1,0 +1,300 @@
+/*
+ * All content copyright (c) 2003-2007 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
+ */
+package org.terracotta.dso.dialogs;
+
+import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.FocusAdapter;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseMoveListener;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Combo;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.DirectoryDialog;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Table;
+import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.swt.widgets.TableItem;
+import org.terracotta.ui.util.SWTUtil;
+
+import com.terracottatech.config.Module;
+import com.terracottatech.config.Modules;
+
+import java.io.File;
+import java.io.FilenameFilter;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+
+public class NewAddModuleDialog extends MessageDialog {
+  private Modules             fModules;
+  private Combo               fGroupIdCombo;
+  private Table               fTable;
+  private SelectionListener   fColumnSelectionListener;
+  private Button              fAddRepoButton;
+  
+  private ValueListener       m_valueListener;
+
+  private static final String GROUP_ID        = "Group Identifier:";
+  private static final String REPO            = "Repository";
+  private static final String NAME            = "Name";
+  private static final String VERSION         = "Version";
+
+  private static final String VERSION_PATTERN = "^[0-9]+\\.[0-9]+\\.[0-9]+(-SNAPSHOT)?$";
+
+  public NewAddModuleDialog(Shell parentShell, String title, String message, Modules modules) {
+    super(parentShell, "Select modules", null, "Select modules to add to your configuration", MessageDialog.NONE,
+        new String[] { IDialogConstants.OK_LABEL, IDialogConstants.CANCEL_LABEL }, 0);
+    setShellStyle(SWT.DIALOG_TRIM | getDefaultOrientation() | SWT.RESIZE);
+    fModules = modules != null ? (Modules)modules.copy() : Modules.Factory.newInstance();
+    fColumnSelectionListener = new ColumnSelectionListener();
+  }
+
+  protected Control createCustomArea(Composite parent) {
+    Composite comp = new Composite(parent, SWT.NONE);
+    comp.setLayout(new GridLayout());
+    comp.setLayoutData(new GridData(GridData.FILL_BOTH));
+
+    Composite groupComp = new Composite(comp, SWT.NONE);
+    groupComp.setLayout(new GridLayout(2, false));
+
+    Label groupIdLabel = new Label(groupComp, SWT.NONE);
+    groupIdLabel.setText(GROUP_ID);
+    groupIdLabel.setLayoutData(new GridData());
+
+    fGroupIdCombo = new Combo(groupComp, SWT.BORDER);
+    fGroupIdCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+    fGroupIdCombo.add("org.terracotta.modules");
+    fGroupIdCombo.select(0);
+    fGroupIdCombo.addSelectionListener(new SelectionAdapter() {
+      public void widgetSelected(SelectionEvent e) {
+        populateTable();
+      }
+    });
+    fGroupIdCombo.addFocusListener(new FocusAdapter() {
+      public void focusLost(FocusEvent e) {
+        String text = fGroupIdCombo.getText();
+        if (fGroupIdCombo.indexOf(text) == -1) {
+          fGroupIdCombo.add(text);
+        }
+      }
+    });
+
+    fTable = new Table(comp, SWT.BORDER | SWT.MULTI | SWT.FULL_SELECTION | SWT.V_SCROLL);
+    fTable.setHeaderVisible(true);
+    fTable.setLinesVisible(true);
+    GridData gridData = new GridData(GridData.FILL_BOTH);
+    gridData.heightHint = SWTUtil.tableRowsToPixels(fTable, 10);
+    gridData.widthHint = SWTUtil.textColumnsToPixels(fTable, 100);
+    fTable.setLayoutData(gridData);
+
+    TableColumn column0 = new TableColumn(fTable, SWT.NONE);
+    column0.setResizable(true);
+    column0.setText(REPO);
+    column0.pack();
+    column0.addSelectionListener(fColumnSelectionListener);
+
+    TableColumn column1 = new TableColumn(fTable, SWT.NONE);
+    column1.setResizable(true);
+    column1.setText(NAME);
+    column1.pack();
+    column1.addSelectionListener(fColumnSelectionListener);
+
+    TableColumn column2 = new TableColumn(fTable, SWT.NONE);
+    column2.setResizable(true);
+    column2.setText(VERSION);
+    column2.pack();
+    column2.addSelectionListener(fColumnSelectionListener);
+
+    SWTUtil.makeTableColumnsResizeWeightedWidth(comp, fTable, new int[] { 2, 2, 1 });
+
+    fTable.addMouseMoveListener(new MouseMoveListener() {
+      public void mouseMove(MouseEvent e) {
+        String tip = null;
+        TableItem item = fTable.getItem(new Point(e.x, e.y));
+        if(item != null) {
+          ItemData itemData = (ItemData) item.getData();
+          tip = itemData.fArchiveFile.getAbsolutePath();
+        }
+        fTable.setToolTipText(tip);
+      }
+    });
+    
+    populateTable();
+
+    fAddRepoButton = new Button(comp, SWT.PUSH);
+    fAddRepoButton.setText("Add repository...");
+    fAddRepoButton.setLayoutData(new GridData());
+    fAddRepoButton.addSelectionListener(new SelectionAdapter() {
+      public void widgetSelected(SelectionEvent e) {
+        DirectoryDialog directoryDialog = new DirectoryDialog(getShell());
+        directoryDialog.setText("Terracotta Module Repository Chooser");
+        directoryDialog.setMessage("Select a module repository directory");
+        String path = directoryDialog.open();
+        if(path != null) {
+          File dir = new File(path);
+          try {
+            fModules.addRepository(dir.toURL().toString());
+            populateTable();
+          } catch(MalformedURLException mure) {/**/}
+        }
+      }
+    });
+
+    return comp;
+  }
+
+  private void populateTable() {
+    fTable.removeAll();
+    File installRoot = new File(System.getProperty("tc.install-root"));
+    populateTable(new File(installRoot, "modules"), "KIT");
+    String[] repos = fModules.getRepositoryArray();
+    if (repos != null) {
+      for (String repo : repos) {
+        try {
+          File repoDir = new File(new URL(repo).getFile());
+          if (repoDir.exists() && repoDir.isDirectory()) {
+            populateTable(repoDir, null);
+          }
+        } catch(MalformedURLException e) {/**/}
+      }
+    }
+  }
+
+  private void populateTable(File repoDir, String nickname) {
+    File groupDir = new File(repoDir, fGroupIdCombo.getText().replace('.', File.separatorChar));
+    File[] names = groupDir.listFiles();
+
+    if (names == null) return;
+
+    for (File nameFile : names) {
+      File[] versions = nameFile.listFiles(new FilenameFilter() {
+        public boolean accept(File dir, String name) {
+          return name.matches(VERSION_PATTERN);
+        }
+      });
+      if (versions == null) continue;
+      for (File versionFile : versions) {
+        TableItem item = new TableItem(fTable, SWT.NONE);
+        String repo = nickname != null ? nickname : repoDir.getAbsolutePath();
+        String name = nameFile.getName();
+        String version = versionFile.getName();
+        String[] strings = new String[] { repo, name, version };
+        item.setText(strings);
+        File archiveFile = new File(versionFile, name+"-"+version+".jar");
+        item.setData(new ItemData(strings, repoDir, archiveFile));
+      }
+    }
+  }
+
+  class ColumnSelectionListener extends SelectionAdapter {
+    public void widgetSelected(SelectionEvent e) {
+      TableColumn col = (TableColumn) e.widget;
+      switch (fTable.getSortDirection()) {
+        case SWT.DOWN:
+          fTable.setSortDirection(SWT.UP);
+          break;
+        case SWT.UP:
+        default:
+          fTable.setSortDirection(SWT.DOWN);
+      }
+      fTable.setSortColumn(col);
+      sort();
+    }
+  }
+
+  void sort() {
+    int itemCount = fTable.getItemCount();
+    if (itemCount == 0 || itemCount == 1) return;
+    Comparator comparator = new Comparator() {
+      final int         sortDirection = fTable.getSortDirection();
+      final TableColumn sortColumn    = fTable.getSortColumn();
+      int               index         = sortColumn == null ? 0 : fTable.indexOf(sortColumn);
+
+      public int compare(Object object1, Object object2) {
+        ItemData itemData1 = (ItemData) object1, itemData2 = (ItemData) object2;
+        if (sortDirection == SWT.UP || sortDirection == SWT.NONE) {
+          return itemData1.fStrings[index].compareTo(itemData2.fStrings[index]);
+        } else {
+          return itemData2.fStrings[index].compareTo(itemData1.fStrings[index]);
+        }
+      }
+    };
+    ArrayList selection = new ArrayList();
+    for (TableItem item : fTable.getSelection()) {
+      selection.add(item.getData());
+    }
+    ItemData[] data = new ItemData[fTable.getItemCount()];
+    for (int i = 0; i < fTable.getItemCount(); i++) {
+      data[i] = (ItemData) (fTable.getItem(i).getData());
+    }
+    Arrays.sort(data, 0, itemCount, comparator);
+    fTable.setRedraw(false);
+    try {
+      fTable.deselectAll();
+      for (int i = 0; i < fTable.getItemCount(); i++) {
+        TableItem item = fTable.getItem(i);
+        ItemData itemData = data[i];
+        item.setText(itemData.fStrings);
+        item.setData(itemData);
+        if (selection.contains(itemData)) {
+          fTable.select(i);
+        }
+      }
+    } finally {
+      fTable.setRedraw(true);
+    }
+  }
+
+  protected void buttonPressed(int buttonId) {
+    if (buttonId == IDialogConstants.OK_ID) {
+      TableItem[] items = fTable.getSelection();
+      String groupId = fGroupIdCombo.getText();
+      
+      for (TableItem item : items) {
+        Module module = fModules.addNewModule();
+        module.setGroupId(groupId);
+        module.setName(item.getText(1));
+        module.setVersion(item.getText(2));
+      }
+      if (m_valueListener != null) m_valueListener.setValue(fModules);
+    }
+    super.buttonPressed(buttonId);
+  }
+
+  class ItemData {
+    String[] fStrings;
+    File fRepoDir;
+    File fArchiveFile;
+    
+    ItemData(String[] strings, File repoDir, File moduleFile) {
+      fStrings = strings;
+      fRepoDir = repoDir;
+      fArchiveFile = moduleFile;
+    }
+  }
+  
+  public void addValueListener(ValueListener listener) {
+    this.m_valueListener = listener;
+  }
+
+  // --------------------------------------------------------------------------------
+
+  public static interface ValueListener {
+    void setValue(Modules modules);
+  }
+}

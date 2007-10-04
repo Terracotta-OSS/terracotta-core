@@ -286,7 +286,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
         UnlockedSharedObjectEventContext eventContext = appEventContextFactory
             .createUnlockedSharedObjectEventContext(context, usoe);
         objectManager.sendApplicationEvent(context, new UnlockedSharedObjectEvent(eventContext));
-//        objectManager.sendUnlockedSharedObjectEvent(context, eventContext);
       }
 
       throw usoe;
@@ -303,7 +302,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
       if (sendErrors) {
         ReadOnlyObjectEventContext eventContext = appEventContextFactory.createReadOnlyObjectEventContext(context, roe);
         objectManager.sendApplicationEvent(context, new ReadOnlyObjectEvent(eventContext));
-//        objectManager.sendReadOnlyObjectEvent(context, eventContext);
       }
 
       throw roe;
@@ -530,7 +528,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
           UnlockedSharedObjectEventContext eventContext = appEventContextFactory
               .createUnlockedSharedObjectEventContext(pojo, usoe);
           objectManager.sendApplicationEvent(pojo, new UnlockedSharedObjectEvent(eventContext));
-//          objectManager.sendUnlockedSharedObjectEvent(pojo, eventContext);
         }
 
         throw usoe;
@@ -542,7 +539,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
         if (sendErrors) {
           ReadOnlyObjectEventContext eventContext = appEventContextFactory.createReadOnlyObjectEventContext(pojo, roe);
           objectManager.sendApplicationEvent(pojo, new ReadOnlyObjectEvent(eventContext));
-//          objectManager.sendReadOnlyObjectEvent(pojo, eventContext);
         }
         throw roe;
       }
@@ -568,7 +564,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
           UnlockedSharedObjectEventContext eventContext = appEventContextFactory
               .createUnlockedSharedObjectEventContext(pojo, classname, fieldname, usoe);
           objectManager.sendApplicationEvent(pojo, new UnlockedSharedObjectEvent(eventContext));
-//          objectManager.sendUnlockedSharedObjectEvent(pojo, eventContext);
         }
 
         throw usoe;
@@ -584,7 +579,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
             ReadOnlyObjectEventContext eventContext = appEventContextFactory
                 .createReadOnlyObjectEventContext(pojo, classname, fieldname, roe);
             objectManager.sendApplicationEvent(pojo, new ReadOnlyObjectEvent(eventContext));
-//            objectManager.sendReadOnlyObjectEvent(pojo, eventContext);
           }
           throw roe;
         }
@@ -602,7 +596,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
             ReadOnlyObjectEventContext eventContext = appEventContextFactory
                 .createReadOnlyObjectEventContext(pojo, classname, fieldname, roe);
             objectManager.sendApplicationEvent(pojo, new ReadOnlyObjectEvent(eventContext));
-//            objectManager.sendReadOnlyObjectEvent(pojo, eventContext);
           }
           throw roe;
         }
@@ -632,7 +625,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
           UnlockedSharedObjectEventContext eventContext = appEventContextFactory
               .createUnlockedSharedObjectEventContext(pojo, usoe);
           objectManager.sendApplicationEvent(pojo, new UnlockedSharedObjectEvent(eventContext));
-//          objectManager.sendUnlockedSharedObjectEvent(pojo, eventContext);
         }
 
         throw usoe;
@@ -661,7 +653,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
         if (sendErrors) {
           ReadOnlyObjectEventContext eventContext = appEventContextFactory.createReadOnlyObjectEventContext(pojo, roe);
           objectManager.sendApplicationEvent(pojo, new ReadOnlyObjectEvent(eventContext));
-//          objectManager.sendReadOnlyObjectEvent(pojo, eventContext);
         }
         throw roe;
       }
@@ -694,7 +685,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
               .createUnlockedSharedObjectEventContext(pojo, usoe);
           pojo = objectManager.cloneAndInvokeLogicalOperation(pojo, methodName, parameters);
           objectManager.sendApplicationEvent(pojo, new UnlockedSharedObjectEvent(eventContext));
-//          objectManager.sendUnlockedSharedObjectEvent(pojo, eventContext);
         }
 
         throw usoe;
@@ -725,7 +715,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
           ReadOnlyObjectEventContext eventContext = appEventContextFactory.createReadOnlyObjectEventContext(pojo, roe);
           pojo = objectManager.cloneAndInvokeLogicalOperation(pojo, methodName, parameters);
           objectManager.sendApplicationEvent(pojo, new ReadOnlyObjectEvent(eventContext));
-//          objectManager.sendReadOnlyObjectEvent(pojo, eventContext);
         }
         throw roe;
       }

@@ -11,7 +11,7 @@ module PropertyNames
   STATIC_PROPERTIES_PREFIX = 'tc.tests.configuration.'
 
   # The name of the system property that contains the URL for modules.
-  MODULES_URL = STATIC_PROPERTIES_PREFIX + 'modules.url'
+  MODULES_URL = 'com.tc.l1.modules.repositories'
 
   TC_BASE_DIR = 'tc.base-dir'
 end

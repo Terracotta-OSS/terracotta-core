@@ -15,17 +15,4 @@
 <tc:tc-config xmlns:tc="http://www.terracotta.org/config"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://www.terracotta.org/config http://www.terracotta.org/config/terracotta-2.2.xsd">
-
-  <!-- implicit config bundles -  we only specify these in the default config to appease the tests 
-  <clients>
-    <modules>
-      <module name="excludes-config" version="1.0.0"/>
-      <module name="guimodels-config" version="1.0.0"/>
-      <module name="jdk15-preinst-config" version="1.0.0"/>
-      <module name="spring-config" version="1.0.0"/>
-      <module name="standard-config" version="1.0.0"/>
-    </modules>
-  </clients>
-  -->	
-  
 </tc:tc-config>

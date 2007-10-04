@@ -4,6 +4,7 @@
  */
 package com.tc.plugins;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.xmlbeans.XmlException;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
@@ -28,6 +29,8 @@ import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.NamedClassLoader;
 import com.tc.object.loaders.Namespace;
 import com.tc.object.util.JarResourceLoader;
+import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.VendorVmSignature;
 import com.tc.util.VendorVmSignatureException;
@@ -88,7 +91,7 @@ public class ModulesLoader {
         consoleLogger.warn("Modules configuration might not have been properly initialized.");
         return;
       }
-      
+
       try {
         osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
         initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), forBootJar);
@@ -118,13 +121,14 @@ public class ModulesLoader {
   }
 
   private static void shutdownAndExit(final EmbeddedOSGiRuntime osgiRuntime, final Throwable cause) {
+    cause.printStackTrace();
     logger.fatal(cause.getMessage(), cause);
     shutdown(osgiRuntime);
     System.exit(-1);
   }
 
   private static void shutdown(final EmbeddedOSGiRuntime osgiRuntime) {
-    if(osgiRuntime != null) {
+    if (osgiRuntime != null) {
       osgiRuntime.shutdown();
     }
   }
@@ -138,7 +142,7 @@ public class ModulesLoader {
       serviceProps.put(Constants.SERVICE_VENDOR, "Terracotta, Inc.");
       serviceProps.put(Constants.SERVICE_DESCRIPTION, "Main point of entry for programmatic access to"
                                                       + " the Terracotta bytecode instrumentation");
-      osgiRuntime.registerService(configHelper, serviceProps);
+      osgiRuntime.registerService(StandardDSOClientConfigHelper.class.getName(), configHelper, serviceProps);
     }
 
     EmbeddedOSGiEventHandler handler = new EmbeddedOSGiEventHandler() {
@@ -168,45 +172,44 @@ public class ModulesLoader {
 
   private static List getAdditionalModules() {
     final List modules = new ArrayList();
+    final TCProperties modulesProps = TCPropertiesImpl.getProperties().getPropertiesFor("l1.modules");
+    final String additionalModuleList = modulesProps != null ? modulesProps.getProperty("additional", true) : null;
 
-    // TODO: should use tc properties
-    // System.setProperty(EmbeddedOSGiRuntime.TESTS_CONFIG_MODULE_NAMES,
-    // "org.terracotta.modules.clustered-apache-struts-1.1-1.1.0.jar,clustered-apache-struts-2.2-2.2.0.jar");
-    final String additionalModuleList = System.getProperty(EmbeddedOSGiRuntime.TESTS_CONFIG_MODULE_NAMES, "");
-    final String[] additionalModules = additionalModuleList.split(",");
+    if (additionalModuleList != null) {
+      final String[] additionalModules = additionalModuleList.split(";");
 
-    // clustered-apache-struts-1.1-1.1.0.jar
-    // org.terracotta.modules.clustered-apache-struts-1.1-1.1.0.jar
-    Pattern pattern = Pattern.compile("(.+?)-([0-9\\.]+)-([0-9\\.\\-]+)");
-    for (int i = 0; i < additionalModules.length; i++) {
-      if (additionalModules[i].length() == 0) {
-        continue;
+      Pattern pattern = Pattern.compile("(.+?)-([0-9\\.]+)-([0-9\\.\\-]+)");
+      for (int i = 0; i < additionalModules.length; i++) {
+        if (additionalModules[i].length() == 0) {
+          continue;
+        }
+
+        final Matcher matcher = pattern.matcher(additionalModules[i]);
+        if (!matcher.find() || matcher.groupCount() < 3) {
+          logger.error("Invalid bundle-jar filename " + additionalModules[i]
+                       + "; filenames need to match the pattern: " + pattern.toString());
+          continue;
+        }
+
+        String component = matcher.group(1);
+        final String componentVersion = matcher.group(2);
+        final String moduleVersion = matcher.group(3).replaceFirst("\\.$", "");
+
+        final Module module = Module.Factory.newInstance();
+        String groupId = module.getGroupId(); // rely on the constant defined in the schema for the default groupId
+        final int n = component.lastIndexOf('.');
+        if (n > 0) {
+          groupId = component.substring(0, n);
+          component = component.substring(n + 1);
+          module.setGroupId(groupId);
+        }
+
+        module.setName(component + "-" + componentVersion);
+        module.setVersion(moduleVersion);
+        modules.add(module);
       }
-
-      final Matcher matcher = pattern.matcher(additionalModules[i]);
-      if (!matcher.find() || matcher.groupCount() < 3) {
-        logger.error("Invalid bundle-jar filename " + additionalModules[i] + "; filenames need to match the pattern: "
-                     + pattern.toString());
-        continue;
-      }
-
-      String component = matcher.group(1);
-      final String componentVersion = matcher.group(2);
-      final String moduleVersion = matcher.group(3).replaceFirst("\\.$", "");
-
-      final Module module = Module.Factory.newInstance();
-      String groupId = module.getGroupId(); // rely on the constant defined in the schema for the default groupId
-      final int n = component.lastIndexOf('.');
-      if (n > 0) {
-        groupId = component.substring(0, n);
-        component = component.substring(n + 1);
-        module.setGroupId(groupId);
-      }
-
-      module.setName(component + "-" + componentVersion);
-      module.setVersion(moduleVersion);
-      modules.add(module);
     }
+
     return modules;
   }
 
@@ -248,10 +251,9 @@ public class ModulesLoader {
   }
 
   /**
-   * Extract the list of xml-fragment files that a config bundle 
-   * should use for instrumentation. 
+   * Extract the list of xml-fragment files that a config bundle should use for instrumentation.
    */
-  private static String[] getConfigPath(final Bundle bundle) throws BundleException {
+  public static String[] getConfigPath(final Bundle bundle) throws BundleException {
     final VendorVmSignature vmsig;
     try {
       vmsig = new VendorVmSignature();
@@ -297,11 +299,7 @@ public class ModulesLoader {
         throw new BundleException("Unable to extract " + configPath + " from URL: " + bundle.getLocation(), ioe);
       }
 
-      // if config-bundle's fragment of the configuration file is not included in the jar file
-      // then we don't need to merge it in with the current configuration --- but make a note of it.
       if (is == null) {
-        logger.warn("The config file '" + configPath + "', for module '" + bundle.getSymbolicName()
-                    + "' does not appear to be a part of the module's config-bundle jar file contents.");
         continue;
       }
 
@@ -323,11 +321,7 @@ public class ModulesLoader {
         logger.warn("Unable to load configuration from bundle: " + bundle.getSymbolicName(), cse);
       } finally {
         if (is != null) {
-          try {
-            is.close();
-          } catch (IOException ex) {
-            // ignore
-          }
+          IOUtils.closeQuietly(is);
         }
       }
     }

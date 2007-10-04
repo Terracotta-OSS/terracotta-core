@@ -112,7 +112,7 @@ public class SetLocalStateTestApp extends GenericLocalStateTestApp {
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    config.addNewModule("clustered-commons-collections-3.1", "1.0.0");
+    config.addNewModule("clustered-commons-collections-3.1", "1.0.0.SNAPSHOT");
 
     String testClass = SetLocalStateTestApp.class.getName();
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);

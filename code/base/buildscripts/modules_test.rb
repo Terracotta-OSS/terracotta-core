@@ -420,10 +420,10 @@ class SubtreeTestRun
 
         # 'tc.tests.info.property-files' is set so that TestConfigObject knows which file to go read.
         @sysproperties = {
-            "tc.base-dir" => @static_resources.root_dir.to_s,
+            'tc.base-dir' => @static_resources.root_dir.to_s,
             'java.awt.headless' => true,
             'tc.tests.info.property-files' => @testrun_results.build_configuration_file(@subtree).to_s,
-            "#{STATIC_PROPERTIES_PREFIX}modules.url" => modules_url
+            'com.tc.l1.modules.repositories' => modules_url
         }
 
         @sysproperties['java.library.path'] = native_library_path.to_s unless native_library_path.to_s.blank?

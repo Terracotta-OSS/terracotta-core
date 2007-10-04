@@ -3,11 +3,24 @@
  */
 package org.terracotta.dso;
 
+import org.eclipse.jdt.core.IField;
+import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.dom.Annotation;
+import org.eclipse.jdt.core.dom.IAnnotationBinding;
 
 import com.tc.aspectwerkz.reflect.ClassInfo;
+import com.tc.aspectwerkz.reflect.FieldInfo;
+import com.tc.aspectwerkz.reflect.MethodInfo;
+import com.tc.backport175.bytecode.AnnotationElement;
 import com.tc.object.bytecode.aspectwerkz.SimpleClassInfo;
+
+import java.lang.ref.SoftReference;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class JavaModelClassInfo extends SimpleClassInfo {
   private IType fType;
@@ -15,7 +28,10 @@ public class JavaModelClassInfo extends SimpleClassInfo {
   private ClassInfo fSuperClass;
   private String[] fInterfaceSigs;
   private ClassInfo[] fInterfaces;
-  
+  private List<AnnotationElement.Annotation> fAnnotations = new ArrayList<AnnotationElement.Annotation>();
+  private final Map<IMethod, SoftReference> fMethodInfoCache = new HashMap<IMethod, SoftReference>();
+  private final Map<IField, SoftReference> fFieldInfoCache = new HashMap<IField, SoftReference>();
+
   private static final String[] NO_INTERFACE_SIGS = new String[0];
   private static final ClassInfo[] NO_INTERFACES = new ClassInfo[0];
   
@@ -58,6 +74,50 @@ public class JavaModelClassInfo extends SimpleClassInfo {
   
   public ClassInfo[] getInterfaces() {
     return fInterfaces.clone();
+  }
+
+  public MethodInfo getMethod(ClassInfoFactory classInfoFactory, IMethod method) throws JavaModelException {
+    MethodInfo info = null;
+    synchronized (fMethodInfoCache) {
+      SoftReference ref = fMethodInfoCache.get(method);
+      if(ref != null) {
+        info = (MethodInfo) ref.get();
+      }
+      if (info == null) {
+        info = new JavaModelMethodInfo(classInfoFactory, method);
+        fMethodInfoCache.put(method, new SoftReference(info));
+      }
+    }
+    return info;
+  }
+  
+  public FieldInfo getField(ClassInfoFactory classInfoFactory, IField field) {
+    FieldInfo info = null;
+    synchronized (fFieldInfoCache) {
+      SoftReference ref = fFieldInfoCache.get(field);
+      if(ref != null) {
+        info = (FieldInfo) ref.get();
+      }
+      if (info == null) {
+        info = new JavaModelFieldInfo(classInfoFactory, field);
+        fFieldInfoCache.put(field, new SoftReference(info));
+      }
+    }
+    return info;
+  }
+  
+  public void clearAnnotations() {
+    fAnnotations.clear();
+  }
+  
+  public void addAnnotation(Annotation annotation) {
+    IAnnotationBinding binding = annotation.resolveAnnotationBinding();
+    String name = binding.getAnnotationType().getQualifiedName();
+    fAnnotations.add(new AnnotationElement.Annotation(name));
+  }
+  
+  public AnnotationElement.Annotation[] getAnnotations() {
+    return fAnnotations.toArray(new AnnotationElement.Annotation[0]);
   }
   
   public boolean isStale() {

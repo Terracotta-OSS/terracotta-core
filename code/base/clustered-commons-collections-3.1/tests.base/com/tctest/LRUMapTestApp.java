@@ -25,7 +25,7 @@ public final class LRUMapTestApp extends
 
 	public static void visitL1DSOConfig(final ConfigVisitor visitor,
 			final DSOClientConfigHelper config) {
-		config.addNewModule("clustered-commons-collections-3.1", "1.0.0");
+		config.addNewModule("clustered-commons-collections-3.1", "1.0.0.SNAPSHOT");
 
 		final String testClass = LRUMapTestApp.class.getName();
 		config.addIncludePattern(testClass + "$*");

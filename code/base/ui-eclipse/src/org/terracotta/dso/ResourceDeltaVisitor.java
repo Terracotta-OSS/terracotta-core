@@ -65,7 +65,7 @@ public class ResourceDeltaVisitor implements IResourceDeltaVisitor {
       dump(delta);
     }
     
-    if(!plugin.hasTerracottaNature(project)) {
+    if(plugin == null || !plugin.hasTerracottaNature(project)) {
       return true;
     }
     

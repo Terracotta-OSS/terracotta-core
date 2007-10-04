@@ -37,6 +37,7 @@ import org.eclipse.jface.text.FindReplaceDocumentAdapter;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.ui.texteditor.MarkerUtilities;
+import org.osgi.framework.BundleException;
 import org.terracotta.dso.editors.ConfigurationEditor;
 
 import com.tc.aspectwerkz.reflect.MemberInfo;
@@ -52,6 +53,7 @@ import com.terracottatech.config.Include;
 import com.terracottatech.config.InstrumentedClasses;
 import com.terracottatech.config.LockLevel;
 import com.terracottatech.config.Locks;
+import com.terracottatech.config.Module;
 import com.terracottatech.config.Modules;
 import com.terracottatech.config.NamedLock;
 import com.terracottatech.config.Root;
@@ -62,6 +64,7 @@ import com.terracottatech.config.DistributedMethods.MethodExpression;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -125,26 +128,46 @@ public class ConfigurationHelper {
     return false;
   }
 
+  private Boolean isTypeAdaptable(IType type, InstrumentedClasses instrumentedClasses) {
+    if (instrumentedClasses != null) {
+      XmlObject[] objects = instrumentedClasses.selectPath("*");
+
+      if (objects != null && objects.length > 0) {
+        for (int i = objects.length - 1; i >= 0; i--) {
+          XmlObject object = objects[i];
+
+          if (object instanceof Include) {
+            String expr = ((Include) object).getClassExpression();
+            if (m_patternHelper.matchesType(expr, type)) { return Boolean.TRUE; }
+          } else if (object instanceof ClassExpression) {
+            String expr = ((ClassExpression) object).getStringValue();
+            if (m_patternHelper.matchesType(expr, type)) { return Boolean.FALSE; }
+          }
+        }
+      }
+    }
+    return null;
+  }
+  
   public boolean isTypeAdaptable(IType type) {
     TcConfig config = getConfig();
 
     if (config != null) {
-      InstrumentedClasses classes = getInstrumentedClasses();
-
-      if (classes != null) {
-        XmlObject[] objects = classes.selectPath("*");
-
-        if (objects != null && objects.length > 0) {
-          for (int i = objects.length - 1; i >= 0; i--) {
-            XmlObject object = objects[i];
-
-            if (object instanceof Include) {
-              String expr = ((Include) object).getClassExpression();
-              if (m_patternHelper.matchesType(expr, type)) { return true; }
-            } else if (object instanceof ClassExpression) {
-              String expr = ((ClassExpression) object).getStringValue();
-              if (m_patternHelper.matchesType(expr, type)) { return false; }
-            }
+      InstrumentedClasses instrumentedClasses = getInstrumentedClasses();
+      if (instrumentedClasses != null) {
+        Boolean adaptable = isTypeAdaptable(type, instrumentedClasses);
+        if(adaptable != null) {
+          return adaptable;
+        }
+      }
+      
+      ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
+      if(modulesConfig != null) {
+        instrumentedClasses = modulesConfig.getApplication().getInstrumentedClasses();
+        if(instrumentedClasses != null) {
+          Boolean adaptable = isTypeAdaptable(type, instrumentedClasses);
+          if(adaptable != null) {
+            return adaptable;
           }
         }
       }
@@ -153,27 +176,44 @@ public class ConfigurationHelper {
     return false;
   }
 
+  private Boolean isAdaptable(IPackageDeclaration packageDecl, InstrumentedClasses instrumentedClasses) {
+    if (instrumentedClasses != null) {
+      XmlObject[] objects = instrumentedClasses.selectPath("*");
+
+      if (objects != null && objects.length > 0) {
+        for (int i = objects.length - 1; i >= 0; i--) {
+          XmlObject object = objects[i];
+
+          if (object instanceof Include) {
+            String expr = ((Include) object).getClassExpression();
+            if (m_patternHelper.matchesPackageDeclaration(expr, packageDecl)) { return Boolean.TRUE; }
+          } else if (object instanceof ClassExpression) {
+            String expr = ((ClassExpression) object).getStringValue();
+            if (m_patternHelper.matchesPackageDeclaration(expr, packageDecl)) { return Boolean.FALSE; }
+          }
+        }
+      }
+    }
+    return null;
+  }
+  
   public boolean isAdaptable(IPackageDeclaration packageDecl) {
     TcConfig config = getConfig();
 
     if (config != null) {
-      InstrumentedClasses classes = getInstrumentedClasses();
+      InstrumentedClasses instrumentedClasses = getInstrumentedClasses();
 
-      if (classes != null) {
-        XmlObject[] objects = classes.selectPath("*");
+      if (instrumentedClasses != null) {
+        Boolean adaptable = isAdaptable(packageDecl, instrumentedClasses);
+        if (adaptable != null) { return adaptable; }
+      }
 
-        if (objects != null && objects.length > 0) {
-          for (int i = objects.length - 1; i >= 0; i--) {
-            XmlObject object = objects[i];
-
-            if (object instanceof Include) {
-              String expr = ((Include) object).getClassExpression();
-              if (m_patternHelper.matchesPackageDeclaration(expr, packageDecl)) { return true; }
-            } else if (object instanceof ClassExpression) {
-              String expr = ((ClassExpression) object).getStringValue();
-              if (m_patternHelper.matchesPackageDeclaration(expr, packageDecl)) { return false; }
-            }
-          }
+      ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
+      if (modulesConfig != null) {
+        instrumentedClasses = modulesConfig.getApplication().getInstrumentedClasses();
+        if (instrumentedClasses != null) {
+          Boolean adaptable = isAdaptable(packageDecl, instrumentedClasses);
+          if (adaptable != null) { return adaptable; }
         }
       }
     }
@@ -181,27 +221,44 @@ public class ConfigurationHelper {
     return false;
   }
 
+  private Boolean isAdaptable(IPackageFragment fragment, InstrumentedClasses instrumentedClasses) {
+    if (instrumentedClasses != null) {
+      XmlObject[] objects = instrumentedClasses.selectPath("*");
+
+      if (objects != null && objects.length > 0) {
+        for (int i = objects.length - 1; i >= 0; i--) {
+          XmlObject object = objects[i];
+
+          if (object instanceof Include) {
+            String expr = ((Include) object).getClassExpression();
+            if (m_patternHelper.matchesPackageFragment(expr, fragment)) { return Boolean.TRUE; }
+          } else if (object instanceof ClassExpression) {
+            String expr = ((ClassExpression) object).getStringValue();
+            if (m_patternHelper.matchesPackageFragment(expr, fragment)) { return Boolean.FALSE; }
+          }
+        }
+      }
+    }
+    return null;
+  }
+  
   public boolean isAdaptable(IPackageFragment fragment) {
     TcConfig config = getConfig();
 
     if (config != null) {
-      InstrumentedClasses classes = getInstrumentedClasses();
+      InstrumentedClasses instrumentedClasses = getInstrumentedClasses();
 
-      if (classes != null) {
-        XmlObject[] objects = classes.selectPath("*");
+      if (instrumentedClasses != null) {
+        Boolean adaptable = isAdaptable(fragment, instrumentedClasses);
+        if (adaptable != null) { return adaptable; }
+      }
 
-        if (objects != null && objects.length > 0) {
-          for (int i = objects.length - 1; i >= 0; i--) {
-            XmlObject object = objects[i];
-
-            if (object instanceof Include) {
-              String expr = ((Include) object).getClassExpression();
-              if (m_patternHelper.matchesPackageFragment(expr, fragment)) { return true; }
-            } else if (object instanceof ClassExpression) {
-              String expr = ((ClassExpression) object).getStringValue();
-              if (m_patternHelper.matchesPackageFragment(expr, fragment)) { return false; }
-            }
-          }
+      ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
+      if (modulesConfig != null) {
+        instrumentedClasses = modulesConfig.getApplication().getInstrumentedClasses();
+        if (instrumentedClasses != null) {
+          Boolean adaptable = isAdaptable(fragment, instrumentedClasses);
+          if (adaptable != null) { return adaptable; }
         }
       }
     }
@@ -225,27 +282,44 @@ public class ConfigurationHelper {
     return false;
   }
 
+  private Boolean isAdaptable(String classExpr, InstrumentedClasses instrumentedClasses) {
+    if (instrumentedClasses != null) {
+      XmlObject[] objects = instrumentedClasses.selectPath("*");
+
+      if (objects != null && objects.length > 0) {
+        for (int i = objects.length - 1; i >= 0; i--) {
+          XmlObject object = objects[i];
+
+          if (object instanceof Include) {
+            String expr = ((Include) object).getClassExpression();
+            if (m_patternHelper.matchesClass(expr, classExpr)) { return Boolean.TRUE; }
+          } else if (object instanceof ClassExpression) {
+            String expr = ((ClassExpression) object).getStringValue();
+            if (m_patternHelper.matchesClass(expr, classExpr)) { return Boolean.FALSE; }
+          }
+        }
+      }
+    }
+    return null;
+  }
+  
   public boolean isAdaptable(String classExpr) {
     TcConfig config = getConfig();
 
     if (config != null) {
-      InstrumentedClasses classes = getInstrumentedClasses();
+      InstrumentedClasses instrumentedClasses = getInstrumentedClasses();
 
-      if (classes != null) {
-        XmlObject[] objects = classes.selectPath("*");
+      if (instrumentedClasses != null) {
+        Boolean adaptable = isAdaptable(classExpr, instrumentedClasses);
+        if (adaptable != null) { return adaptable; }
+      }
 
-        if (objects != null && objects.length > 0) {
-          for (int i = objects.length - 1; i >= 0; i--) {
-            XmlObject object = objects[i];
-
-            if (object instanceof Include) {
-              String expr = ((Include) object).getClassExpression();
-              if (m_patternHelper.matchesClass(expr, classExpr)) { return true; }
-            } else if (object instanceof ClassExpression) {
-              String expr = ((ClassExpression) object).getStringValue();
-              if (m_patternHelper.matchesClass(expr, classExpr)) { return false; }
-            }
-          }
+      ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
+      if (modulesConfig != null) {
+        instrumentedClasses = modulesConfig.getApplication().getInstrumentedClasses();
+        if (instrumentedClasses != null) {
+          Boolean adaptable = isAdaptable(classExpr, instrumentedClasses);
+          if (adaptable != null) { return adaptable; }
         }
       }
     }
@@ -762,27 +836,44 @@ public class ConfigurationHelper {
     return type != null && isExcluded(PatternHelper.getFullyQualifiedName(type));
   }
 
+  private Boolean isExcluded(IPackageFragment fragment, InstrumentedClasses instrumentedClasses) {
+    if (instrumentedClasses != null) {
+      XmlObject[] objects = instrumentedClasses.selectPath("*");
+
+      if (objects != null && objects.length > 0) {
+        for (int i = objects.length - 1; i >= 0; i--) {
+          XmlObject object = objects[i];
+
+          if (object instanceof Include) {
+            String expr = ((Include) object).getClassExpression();
+            if (m_patternHelper.matchesPackageFragment(expr, fragment)) { return Boolean.FALSE; }
+          } else if (object instanceof ClassExpression) {
+            String expr = ((ClassExpression) object).getStringValue();
+            if (m_patternHelper.matchesPackageFragment(expr, fragment)) { return Boolean.TRUE; }
+          }
+        }
+      }
+    }
+    return null;
+  }
+  
   public boolean isExcluded(IPackageFragment fragment) {
     TcConfig config = getConfig();
 
     if (config != null) {
-      InstrumentedClasses classes = getInstrumentedClasses();
+      InstrumentedClasses instrumentedClasses = getInstrumentedClasses();
 
-      if (classes != null) {
-        XmlObject[] objects = classes.selectPath("*");
-
-        if (objects != null && objects.length > 0) {
-          for (int i = objects.length - 1; i >= 0; i--) {
-            XmlObject object = objects[i];
-
-            if (object instanceof Include) {
-              String expr = ((Include) object).getClassExpression();
-              if (m_patternHelper.matchesPackageFragment(expr, fragment)) { return false; }
-            } else if (object instanceof ClassExpression) {
-              String expr = ((ClassExpression) object).getStringValue();
-              if (m_patternHelper.matchesPackageFragment(expr, fragment)) { return true; }
-            }
-          }
+      if (instrumentedClasses != null) {
+        Boolean excluded = isExcluded(fragment, instrumentedClasses);
+        if(excluded != null) { return excluded; }
+      }
+      
+      ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
+      if (modulesConfig != null) {
+        instrumentedClasses = modulesConfig.getApplication().getInstrumentedClasses();
+        if (instrumentedClasses != null) {
+          Boolean excluded = isExcluded(fragment, instrumentedClasses);
+          if(excluded != null) { return excluded; }
         }
       }
     }
@@ -806,27 +897,44 @@ public class ConfigurationHelper {
     return false;
   }
 
+  public Boolean isExcluded(String classExpr, InstrumentedClasses instrumentedClasses) {
+    if (instrumentedClasses != null) {
+      XmlObject[] objects = instrumentedClasses.selectPath("*");
+
+      if (objects != null && objects.length > 0) {
+        for (int i = objects.length - 1; i >= 0; i--) {
+          XmlObject object = objects[i];
+
+          if (object instanceof Include) {
+            String expr = ((Include) object).getClassExpression();
+            if (m_patternHelper.matchesClass(expr, classExpr)) { return Boolean.FALSE; }
+          } else if (object instanceof ClassExpression) {
+            String expr = ((ClassExpression) object).getStringValue();
+            if (m_patternHelper.matchesClass(expr, classExpr)) { return Boolean.TRUE; }
+          }
+        }
+      }
+    }
+    return null;
+  }
+  
   public boolean isExcluded(String classExpr) {
     TcConfig config = getConfig();
 
     if (config != null) {
-      InstrumentedClasses classes = getInstrumentedClasses();
+      InstrumentedClasses instrumentedClasses = getInstrumentedClasses();
 
-      if (classes != null) {
-        XmlObject[] objects = classes.selectPath("*");
-
-        if (objects != null && objects.length > 0) {
-          for (int i = objects.length - 1; i >= 0; i--) {
-            XmlObject object = objects[i];
-
-            if (object instanceof Include) {
-              String expr = ((Include) object).getClassExpression();
-              if (m_patternHelper.matchesClass(expr, classExpr)) { return false; }
-            } else if (object instanceof ClassExpression) {
-              String expr = ((ClassExpression) object).getStringValue();
-              if (m_patternHelper.matchesClass(expr, classExpr)) { return true; }
-            }
-          }
+      if (instrumentedClasses != null) {
+        Boolean excluded = isExcluded(classExpr, instrumentedClasses);
+        if(excluded != null) { return excluded; }
+      }
+      
+      ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
+      if (modulesConfig != null) {
+        instrumentedClasses = modulesConfig.getApplication().getInstrumentedClasses();
+        if (instrumentedClasses != null) {
+          Boolean excluded = isExcluded(classExpr, instrumentedClasses);
+          if(excluded != null) { return excluded; }
         }
       }
     }
@@ -1103,8 +1211,38 @@ public class ConfigurationHelper {
     return parentType + "." + fieldName;
   }
 
+  public Boolean isRoot(IField field, Roots roots) {
+    if (roots != null) {
+      for (int i = 0; i < roots.sizeOfRootArray(); i++) {
+        if (m_patternHelper.matchesField(roots.getRootArray(i), field)) { return Boolean.TRUE; }
+      }
+    }
+    return null;
+  }
+  
   public boolean isRoot(IField field) {
-    return field != null && isRoot(getFullName(field));
+    if(field == null) return false;
+
+    TcConfig config = getConfig();
+    if (config != null) {
+      Roots roots = getRoots();
+
+      if (roots != null) {
+        Boolean isRoot = isRoot(field, roots);
+        if(isRoot != null) { return isRoot; }
+      }
+      
+      ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
+      if (modulesConfig != null) {
+        roots = modulesConfig.getApplication().getRoots();
+        if (roots != null) {
+          Boolean isRoot = isRoot(field, roots);
+          if(isRoot != null) { return isRoot; }
+        }
+      }
+    }
+
+    return false;
   }
 
   public boolean isRoot(String className, String fieldName) {
@@ -1112,21 +1250,7 @@ public class ConfigurationHelper {
   }
 
   public boolean isRoot(String fieldName) {
-    TcConfig config = getConfig();
-
-    if (config != null) {
-      Roots roots = getRoots();
-
-      if (roots != null) {
-        int size = roots.sizeOfRootArray();
-
-        for (int i = 0; i < size; i++) {
-          if (fieldName.equals(roots.getRootArray(i).getFieldName())) { return true; }
-        }
-      }
-    }
-
-    return false;
+    return isRoot(getField(fieldName));
   }
 
   public void ensureRoot(IField field) {
@@ -1327,15 +1451,32 @@ public class ConfigurationHelper {
     return isTransient(className + "." + fieldName);
   }
 
+  private Boolean isTransient(String fieldName, TransientFields transientFields) {
+    if (transientFields != null) {
+      for (int i = 0; i < transientFields.sizeOfFieldNameArray(); i++) {
+        if (fieldName.equals(transientFields.getFieldNameArray(i))) { return Boolean.TRUE; }
+      }
+    }
+    return null;
+  }
+  
   public boolean isTransient(String fieldName) {
     TcConfig config = getConfig();
 
     if (config != null) {
-      TransientFields transients = getTransientFields();
+      TransientFields transientFields = getTransientFields();
 
-      if (transients != null) {
-        for (int i = 0; i < transients.sizeOfFieldNameArray(); i++) {
-          if (fieldName.equals(transients.getFieldNameArray(i))) { return true; }
+      if (transientFields != null) {
+        Boolean isTransient = isTransient(fieldName, transientFields);
+        if(isTransient != null) { return isTransient; }
+      }
+
+      ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
+      if (modulesConfig != null) {
+        transientFields = modulesConfig.getApplication().getTransientFields();
+        if (transientFields != null) {
+          Boolean isTransient = isTransient(fieldName, transientFields);
+          if(isTransient != null) { return isTransient; }
         }
       }
     }
@@ -1497,16 +1638,33 @@ public class ConfigurationHelper {
     return methodInfo != null && isDistributedMethod(methodInfo);
   }
 
+  private Boolean isDistributedMethod(MethodInfo methodInfo, DistributedMethods distributedMethods) {
+    if (distributedMethods != null) {
+      for (int i = 0; i < distributedMethods.sizeOfMethodExpressionArray(); i++) {
+        String expr = distributedMethods.getMethodExpressionArray(i).getStringValue();
+        if (m_patternHelper.matchesMember(expr, methodInfo)) { return Boolean.TRUE; }
+      }
+    }
+    return null;
+  }
+  
   public boolean isDistributedMethod(MethodInfo methodInfo) {
     TcConfig config = getConfig();
 
     if (config != null) {
-      DistributedMethods methods = getDistributedMethods();
+      DistributedMethods distributedMethods = getDistributedMethods();
 
-      if (methods != null) {
-        for (int i = 0; i < methods.sizeOfMethodExpressionArray(); i++) {
-          String expr = methods.getMethodExpressionArray(i).getStringValue();
-          if (m_patternHelper.matchesMember(expr, methodInfo)) { return true; }
+      if (distributedMethods != null) {
+        Boolean isDistributedMethod = isDistributedMethod(methodInfo, distributedMethods);
+        if(isDistributedMethod != null) { return isDistributedMethod; }
+      }
+      
+      ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
+      if (modulesConfig != null) {
+        distributedMethods = modulesConfig.getApplication().getDistributedMethods();
+        if (distributedMethods != null) {
+          Boolean isDistributedMethod = isDistributedMethod(methodInfo, distributedMethods);
+          if(isDistributedMethod != null) { return isDistributedMethod; }
         }
       }
     }
@@ -1540,7 +1698,6 @@ public class ConfigurationHelper {
     }
 
     DistributedMethods methods = ensureDistributedMethods();
-    // MethodNameExpression expr =
     MethodExpression methodExpression = methods.addNewMethodExpression();
 
     try {
@@ -1659,6 +1816,18 @@ public class ConfigurationHelper {
     return false;
   }
 
+  private Boolean isAutolocked(MethodInfo methodInfo, Locks locks) {
+    if (locks != null) {
+      for (int i = 0; i < locks.sizeOfAutolockArray(); i++) {
+        Autolock autolock = locks.getAutolockArray(i);
+        String expr = autolock.getMethodExpression();
+
+        if (m_patternHelper.matchesMember(expr, methodInfo)) { return Boolean.TRUE; }
+      }
+    }
+    return null;
+  }
+  
   public boolean isAutolocked(MethodInfo methodInfo) {
     TcConfig config = getConfig();
 
@@ -1666,11 +1835,16 @@ public class ConfigurationHelper {
       Locks locks = getLocks();
 
       if (locks != null) {
-        for (int i = 0; i < locks.sizeOfAutolockArray(); i++) {
-          Autolock autolock = locks.getAutolockArray(i);
-          String expr = autolock.getMethodExpression();
+        Boolean isAutolocked = isAutolocked(methodInfo, locks);
+        if(isAutolocked != null) { return isAutolocked; }
+      }
 
-          if (m_patternHelper.matchesMember(expr, methodInfo)) { return true; }
+      ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
+      if (modulesConfig != null) {
+        locks = modulesConfig.getApplication().getLocks();
+        if (locks != null) {
+          Boolean isAutolocked = isAutolocked(methodInfo, locks);
+          if(isAutolocked != null) { return isAutolocked; }
         }
       }
     }
@@ -1687,6 +1861,21 @@ public class ConfigurationHelper {
     return false;
   }
 
+  // TODO: use m_patternHelper.matchesType(expr, type) here?
+  public Boolean isAutolocked(IType type, Locks locks) {
+    if (locks != null) {
+      String typeExpr = PatternHelper.getExecutionPattern(type);
+
+      for (int i = 0; i < locks.sizeOfAutolockArray(); i++) {
+        Autolock autolock = locks.getAutolockArray(i);
+        String expr = autolock.getMethodExpression();
+
+        if (typeExpr.equals(expr)) { return Boolean.TRUE; }
+      }
+    }
+    return null;
+  }
+  
   public boolean isAutolocked(IType type) {
     try {
       if (type.isInterface()) { return false; }
@@ -1694,18 +1883,20 @@ public class ConfigurationHelper {
     }
 
     TcConfig config = getConfig();
-
     if (config != null) {
       Locks locks = getLocks();
 
       if (locks != null) {
-        String typeExpr = PatternHelper.getExecutionPattern(type);
-
-        for (int i = 0; i < locks.sizeOfAutolockArray(); i++) {
-          Autolock autolock = locks.getAutolockArray(i);
-          String expr = autolock.getMethodExpression();
-
-          if (typeExpr.equals(expr)) { return true; }
+        Boolean isAutolocked = isAutolocked(type, locks);
+        if(isAutolocked != null) { return isAutolocked; }
+      }
+      
+      ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
+      if (modulesConfig != null) {
+        locks = modulesConfig.getApplication().getLocks();
+        if (locks != null) {
+          Boolean isAutolocked = isAutolocked(type, locks);
+          if(isAutolocked != null) { return isAutolocked; }
         }
       }
     }
@@ -1798,6 +1989,18 @@ public class ConfigurationHelper {
     return false;
   }
 
+  private Boolean isNameLocked(MethodInfo methodInfo, Locks locks) {
+    if (locks != null) {
+      for (int i = 0; i < locks.sizeOfNamedLockArray(); i++) {
+        NamedLock namedLock = locks.getNamedLockArray(i);
+        String expr = namedLock.getMethodExpression();
+
+        if (m_patternHelper.matchesMember(expr, methodInfo)) { return Boolean.TRUE; }
+      }
+    }
+    return null;
+  }
+  
   public boolean isNameLocked(MethodInfo methodInfo) {
     TcConfig config = getConfig();
 
@@ -1805,11 +2008,16 @@ public class ConfigurationHelper {
       Locks locks = getLocks();
 
       if (locks != null) {
-        for (int i = 0; i < locks.sizeOfNamedLockArray(); i++) {
-          NamedLock namedLock = locks.getNamedLockArray(i);
-          String expr = namedLock.getMethodExpression();
-
-          if (m_patternHelper.matchesMember(expr, methodInfo)) { return true; }
+        Boolean isNameLocked = isNameLocked(methodInfo, locks);
+        if(isNameLocked != null) { return isNameLocked; }
+      }
+      
+      ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
+      if (modulesConfig != null) {
+        locks = modulesConfig.getApplication().getLocks();
+        if (locks != null) {
+          Boolean isNameLocked = isNameLocked(methodInfo, locks);
+          if(isNameLocked != null) { return isNameLocked; }
         }
       }
     }
@@ -1826,6 +2034,20 @@ public class ConfigurationHelper {
     return false;
   }
 
+  private Boolean isNameLocked(IType type, Locks locks) {
+    if (locks != null) {
+      String typeExpr = PatternHelper.getExecutionPattern(type);
+
+      for (int i = 0; i < locks.sizeOfNamedLockArray(); i++) {
+        NamedLock namedLock = locks.getNamedLockArray(i);
+        String expr = namedLock.getMethodExpression();
+
+        if (typeExpr.equals(expr)) { return Boolean.TRUE; }
+      }
+    }
+    return null;
+  }
+  
   public boolean isNameLocked(IType type) {
     try {
       if (type.isInterface()) { return false; }
@@ -1833,18 +2055,20 @@ public class ConfigurationHelper {
     }
 
     TcConfig config = getConfig();
-
     if (config != null) {
       Locks locks = getLocks();
 
       if (locks != null) {
-        String typeExpr = PatternHelper.getExecutionPattern(type);
-
-        for (int i = 0; i < locks.sizeOfNamedLockArray(); i++) {
-          NamedLock namedLock = locks.getNamedLockArray(i);
-          String expr = namedLock.getMethodExpression();
-
-          if (typeExpr.equals(expr)) { return true; }
+        Boolean isNameLocked = isNameLocked(type, locks);
+        if(isNameLocked != null) { return isNameLocked; }
+      }
+      
+      ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
+      if (modulesConfig != null) {
+        locks = modulesConfig.getApplication().getLocks();
+        if (locks != null) {
+          Boolean isNameLocked = isNameLocked(type, locks);
+          if(isNameLocked != null) { return isNameLocked; }
         }
       }
     }
@@ -1852,6 +2076,18 @@ public class ConfigurationHelper {
     return false;
   }
 
+  private Boolean isNameLocked(IPackageDeclaration packageDecl, Locks locks) {
+    String fragExpr = PatternHelper.getExecutionPattern(packageDecl);
+
+    for (int i = 0; i < locks.sizeOfNamedLockArray(); i++) {
+      NamedLock namedLock = locks.getNamedLockArray(i);
+      String expr = namedLock.getMethodExpression();
+
+      if (fragExpr.equals(expr)) { return Boolean.TRUE; }
+    }
+    return null;
+  }
+  
   public boolean isNameLocked(IPackageDeclaration packageDecl) {
     TcConfig config = getConfig();
 
@@ -1859,13 +2095,16 @@ public class ConfigurationHelper {
       Locks locks = getLocks();
 
       if (locks != null) {
-        String fragExpr = PatternHelper.getExecutionPattern(packageDecl);
-
-        for (int i = 0; i < locks.sizeOfNamedLockArray(); i++) {
-          NamedLock namedLock = locks.getNamedLockArray(i);
-          String expr = namedLock.getMethodExpression();
-
-          if (fragExpr.equals(expr)) { return true; }
+        Boolean isNameLocked = isNameLocked(packageDecl, locks);
+        if(isNameLocked != null) { return isNameLocked; }
+      }
+      
+      ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
+      if (modulesConfig != null) {
+        locks = modulesConfig.getApplication().getLocks();
+        if (locks != null) {
+          Boolean isNameLocked = isNameLocked(packageDecl, locks);
+          if(isNameLocked != null) { return isNameLocked; }
         }
       }
     }
@@ -1873,6 +2112,20 @@ public class ConfigurationHelper {
     return false;
   }
 
+  private Boolean isNameLocked(IPackageFragment fragment, Locks locks) {
+    if (locks != null) {
+      String fragExpr = PatternHelper.getExecutionPattern(fragment);
+
+      for (int i = 0; i < locks.sizeOfNamedLockArray(); i++) {
+        NamedLock namedLock = locks.getNamedLockArray(i);
+        String expr = namedLock.getMethodExpression();
+
+        if (fragExpr.equals(expr)) { return Boolean.TRUE; }
+      }
+    }
+    return null;
+  }
+  
   public boolean isNameLocked(IPackageFragment fragment) {
     TcConfig config = getConfig();
 
@@ -1880,13 +2133,16 @@ public class ConfigurationHelper {
       Locks locks = getLocks();
 
       if (locks != null) {
-        String fragExpr = PatternHelper.getExecutionPattern(fragment);
+        Boolean isNameLocked = isNameLocked(fragment, locks);
+        if(isNameLocked != null) { return isNameLocked; }
+      }
 
-        for (int i = 0; i < locks.sizeOfNamedLockArray(); i++) {
-          NamedLock namedLock = locks.getNamedLockArray(i);
-          String expr = namedLock.getMethodExpression();
-
-          if (fragExpr.equals(expr)) { return true; }
+      ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
+      if (modulesConfig != null) {
+        locks = modulesConfig.getApplication().getLocks();
+        if (locks != null) {
+          Boolean isNameLocked = isNameLocked(fragment, locks);
+          if(isNameLocked != null) { return isNameLocked; }
         }
       }
     }
@@ -2882,14 +3138,31 @@ public class ConfigurationHelper {
     return isBootJarClass(PatternHelper.getFullyQualifiedName(type));
   }
 
-  public boolean isBootJarClass(String className) {
-    AdditionalBootJarClasses classes = getAdditionalBootJarClasses();
-
-    if (classes != null) {
-      String[] includes = classes.getIncludeArray();
+  private Boolean isBootJarClass(String className, AdditionalBootJarClasses abjc) {
+    if (abjc != null) {
+      String[] includes = abjc.getIncludeArray();
 
       for (int i = 0; i < includes.length; i++) {
-        if (m_patternHelper.matchesClass(includes[i], className)) { return true; }
+        if (m_patternHelper.matchesClass(includes[i], className)) { return Boolean.TRUE; }
+      }
+    }
+    return null;
+  }
+  
+  public boolean isBootJarClass(String className) {
+    AdditionalBootJarClasses abjc = getAdditionalBootJarClasses();
+
+    if (abjc != null) {
+      Boolean isBootJarClass = isBootJarClass(className, abjc);
+      if(isBootJarClass != null) { return isBootJarClass; }
+    }
+
+    ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
+    if (modulesConfig != null) {
+      abjc = modulesConfig.getApplication().getAdditionalBootJarClasses();
+      if (abjc != null) {
+        Boolean isBootJarClass = isBootJarClass(className, abjc);
+        if(isBootJarClass != null) { return isBootJarClass; }
       }
     }
 
@@ -3048,6 +3321,7 @@ public class ConfigurationHelper {
       validateRoots();
       validateTransientFields();
       validateBootJarClasses();
+      validateModules();
     }
   }
 
@@ -3565,6 +3839,39 @@ public class ConfigurationHelper {
     }
   }
 
+  private static String MODULE_PROBLEM_MARKER = "org.terracotta.dso.ModuleProblemMarker";
+  private static String MODULE_REPO_PROBLEM_MARKER = "org.terracotta.dso.ModuleRepoProblemMarker";
+
+  private void validateModules() {
+    clearConfigProblemMarkersOfType(MODULE_PROBLEM_MARKER);
+    clearConfigProblemMarkersOfType(MODULE_REPO_PROBLEM_MARKER);
+
+    Modules modules = getModules();
+    if(modules != null) {
+      ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
+      
+      for(String repo : modules.getRepositoryArray()) {
+        try {
+          URL url = new URL(repo);
+          url.openStream().close();
+        } catch(Exception e) {
+          reportConfigProblem(repo, e.getMessage(), MODULE_REPO_PROBLEM_MARKER);
+        }
+      }
+      
+      for(Module module : modules.getModuleArray()) {
+        ModuleInfo moduleInfo = modulesConfig.getModuleInfo(module);
+        if(moduleInfo != null) {
+          BundleException error = moduleInfo.getError();
+          if(error != null) {
+            String text = module.getName();
+            reportConfigProblem(text, error.getMessage(), MODULE_PROBLEM_MARKER);
+          }
+        }
+      }
+    }
+  }
+  
   private void reportConfigProblem(String configText, String msg, String markerType) {
     ConfigurationEditor editor = m_plugin.getConfigurationEditor(m_project);
 
@@ -3641,19 +3948,11 @@ public class ConfigurationHelper {
     return dsoApp;
   }
 
-  private Client ensureClient() {
+  private Client getClient() {
     TcConfig config = getConfig();
-    Client client = null;
-
-    if (config != null) {
-      if ((client = config.getClients()) == null) {
-        client = config.addNewClients();
-      }
-    }
-
-    return client;
+    return config != null ? config.getClients() : null;
   }
-
+  
   private Application getApplication() {
     TcConfig config = getConfig();
     return config != null ? config.getApplication() : null;
@@ -3795,7 +4094,8 @@ public class ConfigurationHelper {
   }
 
   private Modules getModules() {
-    return ensureClient().getModules();
+    Client client = getClient();
+    return client != null ? client.getModules() : null;
   }
 
   private AdditionalBootJarClasses getAdditionalBootJarClasses() {

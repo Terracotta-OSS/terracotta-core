@@ -225,6 +225,8 @@ public class ServerTracker implements IDebugEventSetListener {
             public void run() {
               try {
                 handleApplicationEvent((AbstractApplicationEvent) event);
+              } catch(Throwable t) { 
+                t.printStackTrace();
               } finally {
                 fHandlingApplicationEvent = false;
               }

@@ -15,6 +15,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
@@ -22,6 +23,7 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.AnnotationTypeDeclaration;
 import org.eclipse.jdt.core.dom.AnnotationTypeMemberDeclaration;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
@@ -110,6 +112,10 @@ import org.eclipse.jdt.core.dom.WhileStatement;
 import org.eclipse.jdt.core.dom.WildcardType;
 import org.eclipse.ui.texteditor.MarkerUtilities;
 
+import com.tc.aspectwerkz.reflect.ClassInfo;
+import com.tc.aspectwerkz.reflect.FieldInfo;
+import com.tc.aspectwerkz.reflect.MethodInfo;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -184,6 +190,7 @@ public class CompilationUnitVisitor extends ASTVisitor {
       m_ast = (CompilationUnit)parser.createAST(monitor);
       m_ast.accept(CompilationUnitVisitor.this);
       
+      m_plugin.updateDecorators();
       m_configHelper.validateAll();
     }
   }
@@ -204,9 +211,18 @@ public class CompilationUnitVisitor extends ASTVisitor {
   
   public boolean visit(TypeDeclaration node) {
     ITypeBinding binding = node.resolveBinding();
-  
     if(binding != null) {
       IType type = typeFromTypeBinding(binding);
+      ClassInfo classInfo = PatternHelper.getHelper().getClassInfo(type);
+      if(classInfo instanceof JavaModelClassInfo) {
+        JavaModelClassInfo jmci = (JavaModelClassInfo)classInfo;
+        jmci.clearAnnotations();
+        for(Object o : node.modifiers()) {
+          if (o instanceof Annotation) {
+            jmci.addAnnotation((Annotation)o);
+          }
+        }
+      }
       
       if(type != null) {
         String fullName = PatternHelper.getFullyQualifiedName(type);
@@ -271,6 +287,23 @@ public class CompilationUnitVisitor extends ASTVisitor {
     if (binding != null && !binding.isPrimitive() && (binding.isClass() || binding.isInterface())) {
       IType type = typeFromTypeBinding(binding);
       
+      List fragments = node.fragments();
+      Iterator<VariableDeclarationFragment> fragIter = fragments.iterator();
+      while (fragIter.hasNext()) {
+        VariableDeclarationFragment vdf = fragIter.next();
+        IField field = (IField) vdf.resolveBinding().getJavaElement();
+        FieldInfo fieldInfo = PatternHelper.getHelper().getFieldInfo(field);
+        if (fieldInfo instanceof JavaModelFieldInfo) {
+          JavaModelFieldInfo jmfi = (JavaModelFieldInfo) fieldInfo;
+          jmfi.clearAnnotations();
+          for (Object o : node.modifiers()) {
+            if (o instanceof Annotation) {
+              jmfi.addAnnotation((Annotation) o);
+            }
+          }
+        }
+      }
+      
       if(type != null) {
         String fullName = PatternHelper.getFullyQualifiedName(type);
   
@@ -288,13 +321,17 @@ public class CompilationUnitVisitor extends ASTVisitor {
   }
 
   public boolean visit(MethodDeclaration node) {
-//    IMethod method = (IMethod)node.resolveBinding().getJavaElement();
-//    JavaModelMethodInfo methodInfo = PatternHelper.getHelper().getMethodInfo(method);
-//    for(Object o : node.modifiers()) {
-//      if (o instanceof Annotation) {
-//        methodInfo.addAnnotation((Annotation)o);
-//      }
-//    }
+    IMethod method = (IMethod)node.resolveBinding().getJavaElement();
+    MethodInfo methodInfo = PatternHelper.getHelper().getMethodInfo(method);
+    if(methodInfo instanceof JavaModelMethodInfo) {
+      JavaModelMethodInfo jmmi = (JavaModelMethodInfo)methodInfo;
+      jmmi.clearAnnotations();
+      for(Object o : node.modifiers()) {
+        if (o instanceof Annotation) {
+          jmmi.addAnnotation((Annotation)o);
+        }
+      }
+    }
     
     if(isDeclaringTypeAdaptable(node)) {
       if(m_configHelper.isAutolocked(node) && hasSynchronization(node)) {
@@ -364,20 +401,20 @@ public class CompilationUnitVisitor extends ASTVisitor {
     IVariableBinding binding = node.resolveBinding();
     
     if(binding != null) {
-      if(binding.isField()) {
-        String parentClass = getQualifiedName(binding.getDeclaringClass());
-        String fieldName   = parentClass+"."+binding.getName();
-  
-        if(m_configHelper.isRoot(fieldName)) {
-          addMarker("rootMarker", "DSO Root Field", node.getName());
-        } else if(m_configHelper.isTransient(fieldName)) {
-          addMarker("transientFieldMarker", "DSO Transient Field", node.getName());
-          
-          if(!m_configHelper.isAdaptable(parentClass) && !m_configHelper.declaresRoot(parentClass)) {
-            addProblemMarker("DeclaringTypeNotInstrumentedMarker", "Declaring type not instrumented", node.getName());
-          }
-        }
-      }
+//      if(binding.isField()) {
+//        String parentClass = getQualifiedName(binding.getDeclaringClass());
+//        String fieldName   = parentClass+"."+binding.getName();
+//  
+//        if(m_configHelper.isRoot(fieldName)) {
+//          addMarker("rootMarker", "DSO Root Field", node.getName());
+//        } else if(m_configHelper.isTransient(fieldName)) {
+//          addMarker("transientFieldMarker", "DSO Transient Field", node.getName());
+//          
+//          if(!m_configHelper.isAdaptable(parentClass) && !m_configHelper.declaresRoot(parentClass)) {
+//            addProblemMarker("DeclaringTypeNotInstrumentedMarker", "Declaring type not instrumented", node.getName());
+//          }
+//        }
+//      }
       
       if(m_plugin.isBootClass(binding.getType().getQualifiedName())) {
         addMarker("bootJarTypeMarker", "BootJar Type", node.getType());
@@ -405,8 +442,9 @@ public class CompilationUnitVisitor extends ASTVisitor {
       if(binding.isField()) {
         String parentClass = getQualifiedName(binding.getDeclaringClass());
         String fieldName   = parentClass+"."+binding.getName();
-  
-        if(m_configHelper.isRoot(fieldName)) {
+        IField field = (IField)binding.getJavaElement();
+        
+        if(m_configHelper.isRoot(field)) {
           addMarker("rootMarker", "DSO Root Field", node.getName());
         } else if(m_configHelper.isTransient(fieldName)) {
           addMarker("transientFieldMarker", "DSO Transient Field", node.getName());

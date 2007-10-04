@@ -6,20 +6,20 @@ package com.tc.bundles;
 
 import org.apache.commons.io.FileUtils;
 import org.osgi.framework.BundleException;
+import org.osgi.framework.Version;
 
 import com.tc.bundles.exception.InvalidBundleManifestException;
 import com.tc.bundles.exception.MissingBundleException;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
+import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesImpl;
 import com.terracottatech.config.Module;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -34,37 +34,104 @@ import java.util.jar.Manifest;
 
 public class Resolver {
 
-  private static final String BUNDLE_VERSION            = "Bundle-Version";
-  private static final String BUNDLE_SYMBOLICNAME       = "Bundle-SymbolicName";
+  private static final String BUNDLE_VERSION        = "Bundle-Version";
+  private static final String BUNDLE_SYMBOLICNAME   = "Bundle-SymbolicName";
 
-  private static final String BUNDLE_FILENAME_EXT       = ".jar";
-  private static final String BUNDLE_PATH               = "{0}-{1}" + BUNDLE_FILENAME_EXT;
-  private static final String BUNDLE_VERSION_REGEX      = "[0-9]+\\.[0-9]+\\.[0-9]+(-SNAPSHOT)?";
-  private static final String BUNDLE_FILENAME_REGEX     = ".+-";
-  private static final String BUNDLE_FILENAME_EXT_REGEX = "\\" + BUNDLE_FILENAME_EXT;
-  private static final String BUNDLE_FILENAME_PATTERN   = "^" + BUNDLE_FILENAME_REGEX + BUNDLE_VERSION_REGEX
-                                                            + BUNDLE_FILENAME_EXT_REGEX + "$";
+  private static final String TC_PROPERTIES_SECTION = "l1.modules";
 
   private URL[]               repositories;
-  private List                registry                  = new ArrayList();
+  private List                registry              = new ArrayList();
 
-  public Resolver(final URL[] repositories) {
-    this.repositories = repositories;
-  }
-  
-  public final URL[] resolve(Module[] modules) throws BundleException {
-    for (int i = 0; i < modules.length; i++) {
-      final URL location = resolveLocation(modules[i]);
-      if (location == null) {
-        final String msg = error(Message.ERROR_BUNDLE_UNRESOLVED, new Object[] { modules[i].getName(),
-            modules[i].getVersion(), modules[i].getGroupId(), repositoriesToString() });
-        throw new MissingBundleException(msg);
-      }
-      resolveDependencies(location);
+  public Resolver(final URL[] repositories) throws BundleException {
+    final List repoLocations = new ArrayList();
+
+    try {
+      injectDefaultRepositories(repoLocations);
+    } catch (MalformedURLException mue) {
+      throw new BundleException("Failed to inject default repositories", mue);
     }
+
+    for (int i = 0; i < repositories.length; i++) {
+      repoLocations.add(repositories[i]);
+    }
+
+    if (repoLocations.isEmpty()) { throw new RuntimeException(
+        "No module repositories have been specified via the com.tc.l1.modules.repositories system property"); }
+
+    this.repositories = (URL[]) repoLocations.toArray(new URL[0]);
+  }
+
+  private static final void injectDefaultRepositories(final List repoLocations) throws MalformedURLException {
+    String installRoot = System.getProperty("tc.install-root");
+    if (installRoot != null) {
+      final URL defaultRepository = new File(installRoot, "modules").toURL();
+      logger.debug("Prepending default bundle repository: '" + defaultRepository.toString() + "'");
+      repoLocations.add(defaultRepository);
+    }
+
+    final TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor(TC_PROPERTIES_SECTION);
+    final String reposProp = props != null ? props.getProperty("repositories", true) : null;
+    if (reposProp != null) {
+      final String[] entries = reposProp.split(",");
+      if (entries != null) {
+        for (int i = 0; i < entries.length; i++) {
+          String entry = entries[i].trim();
+          if (entry != null && entry.length() > 0) {
+            final URL defaultRepository = new URL(entries[i]);
+            logger.debug("Prepending default bundle repository: '" + defaultRepository.toString() + "'");
+            repoLocations.add(defaultRepository);
+          }
+        }
+      }
+    }
+  }
+
+  public final URL resolve(Module module) throws BundleException {
+    final URL location = resolveLocation(module);
+    if (location == null) {
+      final String msg = error(Message.ERROR_BUNDLE_UNRESOLVED, new Object[] { module.getName(), module.getVersion(),
+          module.getGroupId(), repositoriesToString() });
+      throw new MissingBundleException(msg);
+    }
+    resolveDependencies(location);
+    return location;
+  }
+
+  public final URL[] resolve(Module[] modules) throws BundleException {
+    resolveDefaultModules();
+    resolveAdditionalModules();
+
+    if (modules != null) {
+      for (int i = 0; i < modules.length; i++) {
+        resolve(modules[i]);
+      }
+    }
+
     return getResolvedUrls();
   }
-  
+
+  private void resolveDefaultModules() throws BundleException {
+    final TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor(TC_PROPERTIES_SECTION);
+    final String defaultModulesProp = props != null ? props.getProperty("default") : null;
+
+    if (defaultModulesProp == null) {
+      logger.debug("No implicit modules were loaded because the l1.modules.default property "
+          + "in tc.properties file was not set.");
+      return;
+    }
+
+    String[] defaultModulesSpec = BundleSpec.getRequirements(defaultModulesProp);
+    if (defaultModulesSpec.length > 0) {
+      for (int i = 0; i < defaultModulesSpec.length; i++) {
+        BundleSpec spec = new BundleSpec(defaultModulesSpec[i]);
+        ensureBundle(spec);
+      }
+    } else {
+      logger.debug("No implicit modules were loaded because the l1.modules.default property "
+          + "in tc.properties file was empty.");
+    }
+  }
+
   private final String repositoriesToString() {
     final StringBuffer repos = new StringBuffer();
     for (int j = 0; j < repositories.length; j++) {
@@ -73,7 +140,7 @@ public class Resolver {
     return repos.toString();
   }
 
-  private final URL[] getResolvedUrls() {
+  public final URL[] getResolvedUrls() {
     int j = 0;
     final URL[] urls = new URL[registry.size()];
     for (Iterator i = registry.iterator(); i.hasNext();) {
@@ -81,6 +148,31 @@ public class Resolver {
       urls[j++] = entry.getLocation();
     }
     return urls;
+  }
+
+  private void resolveAdditionalModules() throws BundleException {
+    final TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor(TC_PROPERTIES_SECTION);
+    final String additionalModulesProp = props != null ? props.getProperty("additional") : null;
+    if (additionalModulesProp != null) {
+      String[] additionalModulesSpec = BundleSpec.getRequirements(additionalModulesProp);
+      if (additionalModulesSpec.length > 0) {
+        for (int i = 0; i < additionalModulesSpec.length; i++) {
+          BundleSpec spec = new BundleSpec(additionalModulesSpec[i]);
+          ensureBundle(spec);
+        }
+      }
+    }
+  }
+
+  private BundleSpec[] getRequirements(Manifest manifest) throws BundleException {
+    List requirementList = new ArrayList();
+    String[] manifestRequirements = BundleSpec.getRequirements(manifest);
+    if (manifestRequirements.length > 0) {
+      for (int i = 0; i < manifestRequirements.length; i++) {
+        requirementList.add(new BundleSpec(manifestRequirements[i]));
+      }
+    }
+    return (BundleSpec[]) requirementList.toArray(new BundleSpec[0]);
   }
 
   private final void resolveDependencies(final URL location) throws BundleException {
@@ -91,25 +183,27 @@ public class Resolver {
       throw new InvalidBundleManifestException(msg);
     }
 
-    final String[] requirements = BundleSpec.getRequirements(manifest);
+    final BundleSpec[] requirements = getRequirements(manifest);
     for (int i = 0; i < requirements.length; i++) {
-      final BundleSpec spec = new BundleSpec(requirements[i]);
-      URL required = findInRegistry(spec);
-      if (required == null) {
-        required = resolveBundle(spec);
-        if (required == null) {
-          final String msg = error(Message.ERROR_BUNDLE_DEPENDENCY_UNRESOLVED, new Object[] { spec.getName(),
-              spec.getVersion(), spec.getGroupId(), repositoriesToString() });
-          throw new MissingBundleException(msg);
-        }
-        addToRegistry(required, getManifest(required));
-      }
-
-      // TODO do we really need to resolve it again if already found in the registry?
-      resolveDependencies(required);
+      final BundleSpec spec = requirements[i];
+      ensureBundle(spec);
     }
 
     addToRegistry(location, manifest);
+  }
+
+  private final void ensureBundle(final BundleSpec spec) throws BundleException {
+    URL required = findInRegistry(spec);
+    if (required == null) {
+      required = resolveBundle(spec);
+      if (required == null) {
+        final String msg = error(Message.ERROR_BUNDLE_DEPENDENCY_UNRESOLVED, new Object[] { spec.getName(),
+            spec.getVersion(), spec.getGroupId(), repositoriesToString() });
+        throw new MissingBundleException(msg);
+      }
+      addToRegistry(required, getManifest(required));
+      resolveDependencies(required);
+    }
   }
 
   private final URL addToRegistry(final URL location, final Manifest manifest) {
@@ -121,51 +215,44 @@ public class Resolver {
   }
 
   protected URL resolveBundle(BundleSpec spec) {
-    for (int i = 0; i < repositories.length; i++) {
+    for (int i = repositories.length - 1; i >= 0; i--) {
       final URL location = repositories[i];
       // TODO: support other protocol besides file://
-      if (location.getProtocol().equalsIgnoreCase("file")) {
-        URI uriLocation = null;
-        try {
-          uriLocation = new URI(location.toString());
-        } catch (URISyntaxException e1) {
-          error(Message.ERROR_BUNDLE_MALFORMED_URL, new Object[] { location });
-          return null;
-        }
-        
-        final File repository = new File(uriLocation.getPath(), spec.getGroupId().replace('.', File.separatorChar));
-        if (!repository.exists() || !repository.isDirectory()) {
-          warn(Message.WARN_REPOSITORY_UNRESOLVED, new Object[] { location });
+      if (!location.getProtocol().equalsIgnoreCase("file")) {
+        warn(Message.WARN_REPOSITORY_PROTOCOL_UNSUPPORTED, new Object[] { location.getProtocol() });
+        continue;
+      }
+
+      final File repository = new File(location.getPath(), spec.getGroupId().replace('.', File.separatorChar));
+      if (!repository.exists() || !repository.isDirectory()) {
+        warn(Message.WARN_REPOSITORY_UNRESOLVED, new Object[] { repository.getAbsolutePath() });
+        continue;
+      }
+
+      final Collection jarfiles = FileUtils.listFiles(repository, new String[] { "jar" }, true);
+      for (final Iterator j = jarfiles.iterator(); j.hasNext();) {
+        final File bundleFile = (File) j.next();
+        if (!bundleFile.isFile()) {
+          warn(Message.WARN_FILE_IGNORED_INVALID_NAME, new Object[] { bundleFile.getName() });
           continue;
         }
 
-        final Collection jarfiles = FileUtils.listFiles(repository, new String[] { "jar" }, true);
-        for (Iterator j = jarfiles.iterator(); j.hasNext();) {
-          final File bundleFile = (File) j.next();
-          if (!bundleFile.isFile() || !bundleFile.getName().matches(BUNDLE_FILENAME_PATTERN)) {
-            warn(Message.WARN_FILE_IGNORED_INVALID_NAME, new Object[] { bundleFile.getName(), BUNDLE_FILENAME_PATTERN });
-            continue;
-          }
+        final Manifest manifest = getManifest(bundleFile);
+        if (manifest == null) {
+          warn(Message.WARN_FILE_IGNORED_MISSING_MANIFEST, new Object[] { bundleFile.getName() });
+          continue;
+        }
 
-          final Manifest manifest = getManifest(bundleFile);
-          if (manifest == null) {
-            warn(Message.WARN_FILE_IGNORED_MISSING_MANIFEST, new Object[] { bundleFile.getName() });
-            continue;
-          }
-
-          final String symname = manifest.getMainAttributes().getValue(BUNDLE_SYMBOLICNAME);
-          final String version = manifest.getMainAttributes().getValue(BUNDLE_VERSION);
-          if (spec.isCompatible(symname, version)) {
-            try {
-              return bundleFile.toURL();
-            } catch (MalformedURLException e) {
-              error(Message.ERROR_BUNDLE_MALFORMED_URL, new Object[] { bundleFile.getName() }); // should be fatal???
-              return null;
-            }
+        final String symname = manifest.getMainAttributes().getValue(BUNDLE_SYMBOLICNAME);
+        final String version = manifest.getMainAttributes().getValue(BUNDLE_VERSION);
+        if (spec.isCompatible(symname, version)) {
+          try {
+            return bundleFile.toURL();
+          } catch (MalformedURLException e) {
+            error(Message.ERROR_BUNDLE_MALFORMED_URL, new Object[] { bundleFile.getName() }); // should be fatal???
+            return null;
           }
         }
-      } else {
-        warn(Message.WARN_REPOSITORY_PROTOCOL_UNSUPPORTED, new Object[] { location.getProtocol() });
       }
     }
     return null;
@@ -196,44 +283,37 @@ public class Resolver {
       final JarFile bundle = new JarFile(FileUtils.toFile(location));
       return bundle.getManifest();
     } catch (IOException e) {
-      // ignore and return null, this is a bad URL
       return null;
-      // warn(Message.WARN_EXCEPTION_OCCURED, new Object[] { location, e.getMessage() });
     }
   }
 
   private final URL resolveLocation(final Module module) {
-    final String groupId = module.getGroupId();
-    final String name = module.getName();
-    final String version = module.getVersion();
-    return resolveLocation(name, version, groupId);
-  }
-
-  protected URL resolveLocation(final String name, final String version, final String groupId) {
-    final String base = groupId.replace('.', File.separatorChar);
-    final String path = MessageFormat.format("{2}{3}{0}{3}{1}{3}" + BUNDLE_PATH, new String[] { name, version, base,
-        File.separator });
-    return resolveUrls(path);
-  }
-
-  private URL resolveUrls(final String path) {
-    for (int i = 0; i < repositories.length; i++) {
-      URL location = null;
-      InputStream is = null;
+    final String symname = MessageFormat.format("{0}.{1}", new Object[] { module.getGroupId(), module.getName() })
+        .replace('-', '_');
+    Version version = Version.parseVersion(module.getVersion());
+    for (int i = repositories.length - 1; i >= 0; i--) {
       try {
-        location = new URL(repositories[i].toString() + (repositories[i].toString().endsWith("/") ? "" : "/") + path);
-        is = location.openStream();
-        is.read();
-        is.close();
-        return location;
-      } catch (IOException e) {
-        // ignore bad or unreachable URL
-      } finally {
-        try {
-          if (is != null) is.close();
-        } catch (IOException e) {
-          // ignore
+        final URL url = new URL(repositories[i].toString() + (repositories[i].toString().endsWith("/") ? "" : "/"));
+        final File directory = FileUtils.toFile(url);
+
+        // ignore non-existent locations
+        if (!directory.exists()) continue;
+
+        final Collection jars = FileUtils.listFiles(directory, new String[] { "jar" }, true);
+        for (final Iterator j = jars.iterator(); j.hasNext();) {
+          final File jar = (File) j.next();
+          final Manifest manifest = getManifest(jar);
+
+          // ignore bad JAR files
+          if (manifest == null) continue;
+
+          // found a match!
+          if (symname.equalsIgnoreCase(manifest.getMainAttributes().getValue(BUNDLE_SYMBOLICNAME))
+              && version.equals(Version.parseVersion(manifest.getMainAttributes().getValue(BUNDLE_VERSION)))) { return addToRegistry(
+              jar.toURL(), manifest); }
         }
+      } catch (MalformedURLException e) {
+        // ignore bad URLs
       }
     }
     return null;
@@ -346,7 +426,7 @@ public class Resolver {
 
   private final String error(final Message message, final Object[] arguments) {
     final String msg = formatMessage(message, arguments);
-    logger.error(message);
+    logger.error(msg);
     return msg;
   }
 

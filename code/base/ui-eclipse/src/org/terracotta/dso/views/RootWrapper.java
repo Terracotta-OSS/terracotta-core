@@ -17,8 +17,20 @@ public class RootWrapper {
     return m_parent;
   }
   
+  boolean isSetFieldName() {
+    return m_parent.getRootArray(m_index).isSetFieldName();
+  }
+  
   String getFieldName() {
     return m_parent.getRootArray(m_index).getFieldName();
+  }
+  
+  boolean isSetFieldExpression() {
+    return m_parent.getRootArray(m_index).isSetFieldExpression();
+  }
+  
+  String getFieldExpression() {
+    return m_parent.getRootArray(m_index).getFieldExpression();
   }
   
   void remove() {
@@ -26,6 +38,6 @@ public class RootWrapper {
   }
   
   public String toString() {
-    return getFieldName();
+    return isSetFieldName() ? getFieldName() : getFieldExpression();
   }
 }

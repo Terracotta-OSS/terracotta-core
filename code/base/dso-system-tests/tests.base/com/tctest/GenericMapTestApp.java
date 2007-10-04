@@ -137,7 +137,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClass = GenericMapTestApp.class.getName();
-    config.addNewModule("clustered-commons-collections-3.1", "1.0.0");
+    config.addNewModule("clustered-commons-collections-3.1", "1.0.0.SNAPSHOT");
     config.getOrCreateSpec(testClass);
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);
@@ -149,7 +149,7 @@ public class GenericMapTestApp extends GenericTestApp {
     config.addIncludePattern(SimpleEntry.class.getName());
     config.addExcludePattern(MyNonPortableObject.class.getName());
     
-    config.addNewModule("clustered-ehcache-1.2.4", "1.0.0"); // this is just a quick way to add TimeExpiryMap to the instrumentation list
+    config.addNewModule("clustered-ehcache-1.2.4", "1.0.0.SNAPSHOT"); // this is just a quick way to add TimeExpiryMap to the instrumentation list
   }
 
   void testBasicUnSynchronizedPut(Map map, boolean validate) {

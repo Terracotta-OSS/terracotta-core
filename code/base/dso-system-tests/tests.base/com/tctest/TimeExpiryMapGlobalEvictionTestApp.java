@@ -8,7 +8,6 @@ import org.apache.commons.io.FileUtils;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
-import com.tc.bundles.EmbeddedOSGiRuntime;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -39,15 +38,10 @@ public class TimeExpiryMapGlobalEvictionTestApp extends ServerCrashingAppBase {
   private void basicGlobalEvictionTest() throws Exception {
     DebugUtil.DEBUG = true;
 
-    final List jvmArgs = new ArrayList();
-    String modules_url = System.getProperty(EmbeddedOSGiRuntime.TESTS_CONFIG_MODULE_REPOSITORIES);
-    if (modules_url != null) {
-      jvmArgs.add("-D"+EmbeddedOSGiRuntime.TESTS_CONFIG_MODULE_REPOSITORIES+"="+modules_url);
-    }
     Thread t1 = new Thread(new Runnable() {
       public void run() {
         try {
-          spawnNewClient("0", L1Client.class, new String[] { "0" }, jvmArgs);
+          spawnNewClient("0", L1Client.class, new String[] { "0" });
         } catch (Exception e) {
           e.printStackTrace(System.err);
         }
@@ -57,7 +51,7 @@ public class TimeExpiryMapGlobalEvictionTestApp extends ServerCrashingAppBase {
     Thread t2 = new Thread(new Runnable() {
       public void run() {
         try {
-          spawnNewClient("1", L1Client.class, new String[] { "1" }, jvmArgs);
+          spawnNewClient("1", L1Client.class, new String[] { "1" });
         } catch (Exception e) {
           e.printStackTrace(System.err);
         }
@@ -73,7 +67,7 @@ public class TimeExpiryMapGlobalEvictionTestApp extends ServerCrashingAppBase {
     DebugUtil.DEBUG = false;
   }
 
-  protected ExtraL1ProcessControl spawnNewClient(String clientId, Class clientClass, String[] mainArgs, List jvmArgs)
+  protected ExtraL1ProcessControl spawnNewClient(String clientId, Class clientClass, String[] mainArgs)
       throws Exception {
     final String hostName = getHostName();
     final int port = getPort();
@@ -81,6 +75,7 @@ public class TimeExpiryMapGlobalEvictionTestApp extends ServerCrashingAppBase {
     File workingDir = new File(configFile.getParentFile(), "client-" + clientId);
     FileUtils.forceMkdir(workingDir);
 
+    List jvmArgs = new ArrayList();
     addTestTcPropertiesFile(jvmArgs);
     ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, clientClass, configFile.getAbsolutePath(),
                                                              mainArgs, workingDir, jvmArgs);

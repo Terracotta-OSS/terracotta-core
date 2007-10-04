@@ -49,7 +49,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 */
 	public static void visitL1DSOConfig(final ConfigVisitor visitor,
 			final DSOClientConfigHelper config) {
-		config.addNewModule("clustered-ehcache-1.3", "1.0.0");
+		config.addNewModule("clustered-ehcache-1.3", "1.0.0.SNAPSHOT");
 		config.addAutolock("* *..*.*(..)", ConfigLockLevel.WRITE);
 
 		final String testClass = EhcacheManagerTestApp.class.getName();

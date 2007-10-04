@@ -17,6 +17,7 @@ import java.util.Map;
 public class L1ConfigBuilder extends BaseConfigBuilder {
 
   private List modules = new ArrayList();
+  private List repos = new ArrayList();
 
   public L1ConfigBuilder() {
     super(1, ALL_PROPERTIES);
@@ -154,25 +155,39 @@ public class L1ConfigBuilder extends BaseConfigBuilder {
     setProperty("logs", value);
   }
 
+  public void addRepository(String location) {
+    repos.add(location);
+  }
+  
   public void addModule(String name, String version) {
-    modules.add(new Module(name, version));
+    addModule(name, "org.terracotta.modules", version);
+  }
+  
+  public void addModule(String name, String groupId, String version) {
+    modules.add(new Module(name, groupId, version));
   }
 
   private String addModuleElement() {
     StringBuffer moduleElement = new StringBuffer();
-    if (modules.size() > 0) {
+
+    if (modules.size() > 0 || repos.size() > 0) {
       moduleElement.append(openElement("modules"));
-    }
 
-    for (Iterator it = modules.iterator(); it.hasNext();) {
-      Module m = (Module) it.next();
-      moduleElement.append(selfCloseElement("module", m.asAttribute()));
-    }
-
-    if (modules.size() > 0) {
+      for (Iterator it = repos.iterator(); it.hasNext();) {
+        String loc = (String) it.next();
+        moduleElement.append(openElement("repository"));
+        moduleElement.append(loc);
+        moduleElement.append(closeElement("repository"));
+      }
+  
+      for (Iterator it = modules.iterator(); it.hasNext();) {
+        Module m = (Module) it.next();
+        moduleElement.append(selfCloseElement("module", m.asAttribute()));
+      }
+  
       moduleElement.append(closeElement("modules"));
     }
-
+    
     return moduleElement.toString();
   }
 
@@ -187,7 +202,7 @@ public class L1ConfigBuilder extends BaseConfigBuilder {
       DSO_RUNTIME_LOGGING, DSO_RUNTIME_OUTPUT_OPTIONS      });
   private static final String[] DSO                         = concat(new Object[] { "max-in-memory-object-count",
       DSO_DEBUGGING                                        });
-  private static final String[] MODULE_ATTRIBUTES           = new String[] { "name", "version" };
+  private static final String[] MODULE_ATTRIBUTES           = new String[] { "name", "group-id", "version" };
   private static final String[] ALL_PROPERTIES              = concat(new Object[] { "modules", "logs", DSO });
 
   public String toString() {
@@ -206,17 +221,20 @@ public class L1ConfigBuilder extends BaseConfigBuilder {
 
   private static class Module {
     private String name;
+    private String groupId;
     private String version;
 
-    public Module(String name, String version) {
+    public Module(String name, String groupId, String version) {
       this.name = name;
+      this.groupId = groupId;
       this.version = version;
     }
 
     public Map asAttribute() {
       Map attr = new HashMap();
       attr.put(MODULE_ATTRIBUTES[0], name);
-      attr.put(MODULE_ATTRIBUTES[1], version);
+      attr.put(MODULE_ATTRIBUTES[1], groupId);
+      attr.put(MODULE_ATTRIBUTES[2], version);
       return attr;
     }
   }
@@ -228,7 +246,7 @@ public class L1ConfigBuilder extends BaseConfigBuilder {
     builder.setROOCaller(true);
     builder.setROOFullStack(false);
     builder.setLogs("funk");
-    builder.addModule("testmo", "1.2");
+    builder.addModule("testmo", "org.mycompany.modules", "1.2");
     System.err.println(builder);
   }
 

@@ -9,10 +9,10 @@ Bundle-Name: Terracotta Configuration for Ehcache 1.2.4
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-SymbolicName: org.terracotta.modules.clustered_ehcache_1.2.4
 Bundle-Vendor: Terracotta, Inc.
-Bundle-Version: 1.0.0
+Bundle-Version: 1.0.0.SNAPSHOT
 Import-Package: net.sf.ehcache.store,
  org.terracotta.modules.configuration,
  org.terracotta.modules.ehcache.commons_1_0
-Require-Bundle: org.terracotta.modules.clustered_commons_collections_3.1,
- org.terracotta.modules.clustered_ehcache_commons_1.0,
- org.terracotta.modules.modules_common
+Require-Bundle: org.terracotta.modules.clustered_commons_collections_3.1;bundle-version:="1.0.0.SNAPSHOT",
+ org.terracotta.modules.clustered_ehcache_commons_1.0;bundle-version:="1.0.0.SNAPSHOT",
+ org.terracotta.modules.modules_common;bundle-version:="1.0.0.SNAPSHOT"

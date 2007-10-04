@@ -133,10 +133,10 @@ public class IBatisSimpleTestApp extends AbstractTransparentApp {
     config.addIncludePattern("com.tctest.domain.Customer");
     new CyclicBarrierSpec().visit(visitor, config);
 
-    config.addNewModule("clustered-iBatis-2.2.0", "1.0.0");
+    config.addNewModule("clustered-iBatis-2.2.0", "1.0.0.SNAPSHOT");
 
     // transient stuff
-    config.addNewModule("clustered-cglib-2.1.3", "1.0.0");
+    config.addNewModule("clustered-cglib-2.1.3", "1.0.0.SNAPSHOT");
   }
 
 }

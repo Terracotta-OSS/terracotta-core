@@ -94,41 +94,6 @@ public class BuildBootJarAction extends Action implements IActionDelegate, IWork
     }
   }
   
-//  public void run(IAction action) {
-//    IWorkbench workbench = PlatformUI.getWorkbench();
-//
-//    if (!workbench.saveAllEditors(true)) { return; }
-//
-//    try {
-//      IRunnableWithProgress op = new IRunnableWithProgress() {
-//        public void run(IProgressMonitor monitor) throws InvocationTargetException {
-//          try {
-//            monitor.beginTask("Creating DSO BootJar...", IProgressMonitor.UNKNOWN);
-//            doFinish(monitor);
-//          } catch (Exception e) {
-//            throw new InvocationTargetException(e);
-//          } finally {
-//            monitor.done();
-//          }
-//        }
-//      };
-//
-//      new ProgressMonitorDialog(null).run(true, true, op);
-//    } catch (InterruptedException e) {
-//      /**/
-//    } catch (final InvocationTargetException ite) {
-//      Throwable t = ite.getCause();
-//      ExceptionDialog dialog = new ExceptionDialog(TcPlugin.getStandardDisplay().getActiveShell(), EXCEPTION_TITLE,
-//          EXCEPTION_MESSAGE, t.getMessage());
-//      dialog.open();
-//    } catch (final Exception e) {
-//      Throwable t = e.getCause();
-//      ExceptionDialog dialog = new ExceptionDialog(TcPlugin.getStandardDisplay().getActiveShell(), EXCEPTION_TITLE,
-//          EXCEPTION_MESSAGE, t.getMessage());
-//      dialog.open();
-//    }
-//  }
-
   private void doFinish(final IProgressMonitor monitor) throws Exception {
     ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
     ILaunchConfigurationType type = manager.getLaunchConfigurationType(ID_JAVA_APPLICATION);
@@ -176,7 +141,8 @@ public class BuildBootJarAction extends Action implements IActionDelegate, IWork
       String installPath = plugin.getLocation().makeAbsolute().toOSString();
       vmargs = "-Dtc.install-root=\"" + installPath + "\"";
     } else {
-      vmargs = "-Dtc.classpath=\"" + ClasspathProvider.makeDevClasspath() + "\"";
+      vmargs = "-Dtc.classpath=\"" + ClasspathProvider.makeDevClasspath() + "\" -Dtc.install-root=\""
+        + System.getProperty("tc.install-root") + "\"";
     }
 
     wc.setAttribute(ATTR_VM_ARGUMENTS, vmargs + origVMArgs);

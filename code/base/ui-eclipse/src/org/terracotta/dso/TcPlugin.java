@@ -6,6 +6,8 @@ package org.terracotta.dso;
 
 import org.apache.commons.io.CopyUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.apache.xmlbeans.XmlError;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlOptions;
@@ -77,7 +79,9 @@ import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.eclipse.ui.texteditor.MarkerUtilities;
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleException;
 import org.terracotta.dso.actions.ActionUtil;
 import org.terracotta.dso.actions.IProjectAction;
 import org.terracotta.dso.decorator.AdaptedModuleDecorator;
@@ -97,11 +101,24 @@ import org.terracotta.dso.editors.ConfigurationEditor;
 import org.terracotta.dso.wizards.ProjectWizard;
 
 import com.tc.admin.common.InputStreamDrainer;
+import com.tc.bundles.EmbeddedOSGiEventHandler;
+import com.tc.bundles.EmbeddedOSGiRuntime;
+import com.tc.bundles.Resolver;
+import com.tc.bundles.exception.MissingBundleException;
 import com.tc.config.Loader;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
+import com.tc.logging.CustomerLogging;
+import com.tc.logging.LogLevel;
+import com.tc.object.util.JarResourceLoader;
+import com.tc.plugins.ModulesLoader;
 import com.tc.server.ServerConstants;
+import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Os;
+import com.terracottatech.config.Client;
+import com.terracottatech.config.DsoApplication;
+import com.terracottatech.config.Module;
+import com.terracottatech.config.Modules;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.TcConfigDocument;
@@ -115,12 +132,14 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * The Terracotta plugin. The whole enchilada centers around this singleton. The primary duties of this class are to
@@ -164,6 +183,12 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
   public static final boolean       DEFAULT_WARN_CONFIG_PROBLEMS_OPTION = true;
   public static final boolean       DEFAULT_QUERY_RESTART_OPTION        = true;
 
+  static {
+    CustomerLogging.getConsoleLogger().setLevel(LogLevel.OFF);
+    Logger.getLogger("com.terracottatech").setLevel(Level.OFF);
+    Logger.getLogger("com.tc").setLevel(Level.OFF);
+  }
+  
   public TcPlugin() {
     super();
     if (m_plugin != null) throw new IllegalStateException("Plugin already instantiated.");
@@ -582,12 +607,147 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
         handleXmlErrors(configFile, lineLengths, errors.iterator());
       }
       m_xmlOptions.setErrorListener(null);
-
+      
+      clearModulesConfiguration(project);
+      Client client = config.getClients();
+      if(client != null && client.isSetModules() && client.getModules().sizeOfModuleArray() > 0) {
+        ModulesConfiguration modulesConfig = createModulesConfiguration(project);
+        initModules(client.getModules(), modulesConfig);
+      }
+      
       setSessionProperty(project, CONFIGURATION, config);
 
       if (config != null) {
         getConfigurationHelper(project).validateAll();
         fireConfigurationChange(project);
+      }
+    }
+  }
+
+  private void clearModulesConfiguration(IProject project) {
+    setSessionProperty(project, MODULES_CONFIGURATION, null);
+  }
+  
+  private ModulesConfiguration createModulesConfiguration(IProject project) {
+    ModulesConfiguration modulesConfig = new ModulesConfiguration();
+    setSessionProperty(project, MODULES_CONFIGURATION, modulesConfig); 
+    return modulesConfig;
+  }
+  
+  public ModulesConfiguration getModulesConfiguration(IProject project) {
+    return (ModulesConfiguration)getSessionProperty(project, MODULES_CONFIGURATION);
+  }
+  
+  private void initModules(final Modules modules, final ModulesConfiguration modulesConfig) {
+    EmbeddedOSGiRuntime osgiRuntime = null;
+    
+    try {
+      Modules modulesCopy = (Modules)modules.copy();
+      Module[] origModules = modulesCopy.getModuleArray();
+      
+      for(Module origModule : origModules) {
+        Modules tmpModules = (Modules)modulesCopy.copy();
+        tmpModules.setModuleArray(new Module[] {origModule});
+        osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(tmpModules);
+        final Resolver resolver = new Resolver(osgiRuntime.getRepositories());
+        Module[] allModules = tmpModules.getModuleArray();
+        ModuleInfo origModuleInfo = modulesConfig.getOrAdd(origModule);
+        
+        for(Module module: allModules) {
+          ModuleInfo moduleInfo = modulesConfig.getOrAdd(module);
+          try {
+            moduleInfo.setLocation(resolver.resolve(module));
+            final URL[] locations = resolver.getResolvedUrls();
+            for(URL location : locations) {
+              osgiRuntime.installBundle(location);
+            }
+          } catch(BundleException be) {
+            if(be instanceof MissingBundleException) {
+              String msg = be.getMessage();
+              msg = msg.substring(0, msg.indexOf(';'));
+              be = new MissingBundleException(msg);
+            }
+            moduleInfo.setError(be);
+            origModuleInfo.setError(be);
+          }
+        }
+        osgiRuntime.shutdown();
+      }
+      
+      osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modulesCopy);
+      final Resolver resolver = new Resolver(osgiRuntime.getRepositories());
+      Module[] allModules = modulesCopy.getModuleArray();
+
+      for(Module module: allModules) {
+        try {
+          resolver.resolve(module);
+        } catch(BundleException be) {
+          /**/
+        }
+      }
+      
+      final URL[] locations = resolver.getResolvedUrls();
+      for(URL location : locations) {
+        try {
+          osgiRuntime.installBundle(location);
+        } catch(BundleException be) {
+          be.printStackTrace();
+        }
+      }
+      
+      osgiRuntime.registerService("com.tc.object.config.StandardDSOClientConfigHelper",
+          new FakeDSOClientConfigHelper(), new Properties());
+      
+      osgiRuntime.startBundles(locations, new EmbeddedOSGiEventHandler() {
+        public void callback(final Object payload) throws BundleException {
+          Assert.assertTrue(payload instanceof Bundle);
+          Bundle bundle = (Bundle) payload;
+          if (bundle != null) {
+            loadModuleConfiguration(bundle, modulesConfig);
+          }
+        }
+      });
+    } catch(Exception e) {
+      e.printStackTrace();
+    } finally {
+      if(osgiRuntime != null) {
+        osgiRuntime.shutdown();
+      }
+    }
+  }
+  
+  private void loadModuleConfiguration(final Bundle bundle, final ModulesConfiguration modulesConfig) throws BundleException {
+    ModuleInfo moduleInfo = modulesConfig.associateBundle(bundle);
+    if(moduleInfo == null) return;
+    
+    final String[] paths = ModulesLoader.getConfigPath(bundle);
+    for (int i = 0; i < paths.length; i++) {
+      final String configPath = paths[i];
+      InputStream is = null;
+      
+      try {
+        is = JarResourceLoader.getJarResource(new URL(bundle.getLocation()), configPath);
+      } catch (MalformedURLException murle) {
+        moduleInfo.setError(new BundleException("Unable to create URL from: " + bundle.getLocation(), murle));
+      } catch (IOException ioe) {
+        moduleInfo.setError(new BundleException("Unable to extract " + configPath + " from URL: " + bundle.getLocation(), ioe));
+      }
+
+      if (is == null) {
+        continue;
+      }
+
+      try {
+        final DsoApplication application = DsoApplication.Factory.parse(is);
+        if (application != null) {
+          modulesConfig.setModuleApplication(moduleInfo, application);
+        }
+      } catch(Exception e) {
+        /**/
+      } finally {
+        if (is != null) {
+          IOUtils.closeQuietly(is);
+        }
       }
     }
   }
@@ -623,6 +783,13 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
         handleXmlErrors(configFile, lineLengths, errors.iterator());
       }
       m_xmlOptions.setErrorListener(null);
+
+      clearModulesConfiguration(project);
+      Client client = config.getClients();
+      if(client != null && client.isSetModules() && client.getModules().sizeOfModuleArray() > 0) {
+        ModulesConfiguration modulesConfig = createModulesConfiguration(project);
+        initModules(client.getModules(), modulesConfig);
+      }
 
       setSessionProperty(project, CONFIGURATION, config);
 

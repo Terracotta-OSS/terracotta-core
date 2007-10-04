@@ -15,7 +15,6 @@ public final class Sandbox {
   private static final String TC_DISTRIBUTION             = "terracotta";
 
   final File                  testHome;
-  final File                  installationRoot;
   final File                  serverHome;
   final File                  configFile;
   final int                   serverType;
@@ -23,7 +22,6 @@ public final class Sandbox {
   public Sandbox(File testHome, int serverType) {
     this.testHome = testHome;
     this.testHome.mkdir();
-    this.installationRoot = new File(testHome, "terracotta");
     this.serverType = serverType;
     if (this.serverType == TEST_SERVER) {
       this.serverHome = new File(this.testHome, TEST_SERVER_SANDBOX_NAME);
@@ -43,10 +41,6 @@ public final class Sandbox {
 
   public File getServerHome() {
     return this.serverHome;
-  }
-
-  public File getInstallationRoot() {
-    return this.installationRoot;
   }
 
   public File getTestHome() {

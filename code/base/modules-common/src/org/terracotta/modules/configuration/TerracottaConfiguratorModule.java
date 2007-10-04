@@ -25,7 +25,7 @@ public abstract class TerracottaConfiguratorModule
 
    protected ServiceReference getConfigHelperReference(BundleContext context)
          throws Exception {
-      final String CONFIGHELPER_CLASS_NAME = "com.tc.object.config.StandardDSOClientConfigHelperImpl";
+      final String CONFIGHELPER_CLASS_NAME = "com.tc.object.config.StandardDSOClientConfigHelper";
       final ServiceReference configHelperRef = context
             .getServiceReference(CONFIGHELPER_CLASS_NAME);
       if (configHelperRef == null) {

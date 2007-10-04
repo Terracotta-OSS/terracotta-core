@@ -34,7 +34,7 @@ public class CacheEvictor124TestApp extends CacheEvictorTestApp {
   }
   
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    config.addNewModule("clustered-ehcache-1.2.4", "1.0.0");
+    config.addNewModule("clustered-ehcache-1.2.4", "1.0.0.SNAPSHOT");
 
     String testClass = CacheEvictor124TestApp.class.getName();
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);

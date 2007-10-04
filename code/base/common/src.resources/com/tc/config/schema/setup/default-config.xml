@@ -7,13 +7,9 @@
 
 -->
 
-<!-- This config file is used by the server when non is specified. -->
+<!-- This config file is used by the server and bootjar tool when none is specified. -->
 
 <tc:tc-config xmlns:tc="http://www.terracotta.org/config">
-    <system>
-        <configuration-model>development</configuration-model>
-    </system>
-
     <servers>
         <server host="%i">
             <data>%(user.home)/terracotta/server-data</data>

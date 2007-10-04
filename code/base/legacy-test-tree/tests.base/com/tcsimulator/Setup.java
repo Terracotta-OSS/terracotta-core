@@ -158,8 +158,7 @@ public class Setup {
     } else {
       rv = new ExtraProcessServerControl(new DebugParams(), this.testServerSpec.getHostName(), this.testServerSpec
           .getDsoPort(), this.testServerSpec.getJmxPort(), this.sandbox.getConfigFile().getAbsolutePath(), this.sandbox
-          .getServerHome(), this.sandbox.getInstallationRoot(), mergeOutput, this.testServerSpec.getJvmOpts(),
-                                         ArgParser.getUndefinedString());
+          .getServerHome(), mergeOutput, this.testServerSpec.getJvmOpts(), ArgParser.getUndefinedString());
     }
     return rv;
   }

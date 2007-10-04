@@ -7,15 +7,25 @@ package org.terracotta.dso.dialogs;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import org.terracotta.ui.util.SWTUtil;
+
+import java.io.File;
+import java.net.MalformedURLException;
 
 public class RepoLocationDialog extends MessageDialog {
 
   private Text          m_repoLocation;
+  private Button        m_browseButton;
   private ValueListener m_valueListener;
 
   public RepoLocationDialog(Shell parentShell, String title, String message) {
@@ -25,8 +35,31 @@ public class RepoLocationDialog extends MessageDialog {
   }
 
   protected Control createCustomArea(Composite parent) {
-    m_repoLocation = new Text(parent, SWT.SINGLE | SWT.BORDER);
+    Composite comp = new Composite(parent, SWT.NONE);
+    comp.setLayout(new GridLayout(2, false));
+    comp.setLayoutData(new GridData(GridData.FILL_BOTH));
+    
+    m_repoLocation = new Text(comp, SWT.SINGLE | SWT.BORDER);
     m_repoLocation.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+
+    m_browseButton = new Button(comp, SWT.PUSH);
+    m_browseButton.setText("Browse...");
+    m_browseButton.addSelectionListener(new SelectionAdapter() {
+      public void widgetSelected(SelectionEvent e) {
+        DirectoryDialog directoryDialog = new DirectoryDialog(getShell());
+        directoryDialog.setText("Terracotta Module Repository Chooser");
+        directoryDialog.setMessage("Select a module repository directory");
+        String path = directoryDialog.open();
+        if (path != null) {
+          File dir = new File(path);
+          try {
+            m_repoLocation.setText(dir.toURL().toString());
+          } catch(MalformedURLException mure) {/**/}
+        }
+      }
+    });
+    SWTUtil.applyDefaultButtonSize(m_browseButton);
+    
     return m_repoLocation;
   }
 

@@ -3,39 +3,60 @@
  */
 package org.terracotta.dso;
 
+import org.eclipse.jdt.core.IField;
+import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaModelException;
 
 import com.tc.aspectwerkz.reflect.ClassInfo;
+import com.tc.aspectwerkz.reflect.FieldInfo;
+import com.tc.aspectwerkz.reflect.MethodInfo;
 
+import java.lang.ref.SoftReference;
 import java.util.HashMap;
 import java.util.Map;
 
 public class ClassInfoFactory extends com.tc.object.bytecode.aspectwerkz.ClassInfoFactory {
-  private final Map classInfoCache = new HashMap();
+  private final Map<String, SoftReference> classInfoCache = new HashMap<String, SoftReference>();
 
   public ClassInfo getClassInfo(String className) {
-    ClassInfo info;
+    ClassInfo info = null;
     synchronized (classInfoCache) {
-      info = (ClassInfo) classInfoCache.get(className);
+      SoftReference ref = classInfoCache.get(className);
+      if(ref != null) {
+        info = (JavaModelClassInfo) ref.get();
+      }
       if (info == null) {
         info = new JavaModelClassInfo(className);
-        classInfoCache.put(className, info);
+        classInfoCache.put(className, new SoftReference(info));
       }
     }
     return info;
   }
 
   public ClassInfo getClassInfo(IType type) {
-    JavaModelClassInfo info;
+    JavaModelClassInfo info = null;
     synchronized (classInfoCache) {
       String className = type.getFullyQualifiedName('$');
-      info = (JavaModelClassInfo) classInfoCache.get(className);
+      SoftReference ref = classInfoCache.get(className);
+      if(ref != null) {
+        info = (JavaModelClassInfo) ref.get();
+      }
       if (info == null || info.isStale()) {
         info = new JavaModelClassInfo(type);
-        classInfoCache.put(className, info);
+        classInfoCache.put(className, new SoftReference(info));
       }
     }
     return info;
   }
 
+  public MethodInfo getMethodInfo(IMethod method) throws JavaModelException {
+    JavaModelClassInfo classInfo = (JavaModelClassInfo)getClassInfo(method.getDeclaringType());
+    return classInfo.getMethod(this, method);
+  }
+
+  public FieldInfo getFieldInfo(IField field) {
+    JavaModelClassInfo classInfo = (JavaModelClassInfo)getClassInfo(field.getDeclaringType());
+    return classInfo.getField(this, field);
+  }
 }

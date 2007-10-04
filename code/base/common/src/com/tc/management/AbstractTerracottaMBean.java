@@ -178,7 +178,7 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
       bundle = ResourceBundle.getBundle(mBeanInterface.getName(), Locale.getDefault(), AbstractTerracottaMBean.class
           .getClassLoader());
     } catch (MissingResourceException mre) {
-      logger.info("No resource bundle exists for MBean " + mBeanInterface.getName());
+      /* Caller must deal with null return value when missing */
     } catch (Throwable t) {
       logger.warn("Unexpected error loading resource bundle for MBean " + mBeanInterface.getName(), t);
     }

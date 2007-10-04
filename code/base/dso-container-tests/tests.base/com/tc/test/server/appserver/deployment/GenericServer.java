@@ -90,6 +90,8 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     tcConfigbuilder.saveToFile(tcConfigFile);
 
     if (dsoEnabled()) {
+      parameters.appendSysProp("tc.base-dir", System.getProperty(TestConfigObject.TC_BASE_DIR));
+      parameters.appendSysProp("com.tc.l1.modules.repositories", System.getProperty("com.tc.l1.modules.repositories"));
       parameters.appendSysProp("tc.config", tcConfigFile.getAbsolutePath());
       parameters.appendJvmArgs("-Xbootclasspath/p:" + bootJarFile.getAbsolutePath());
       parameters.appendSysProp("tc.classpath", writeTerracottaClassPathFile());
@@ -110,8 +112,6 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     }
 
     parameters.appendSysProp("rmi.registry.port", this.rmiRegistryPort);
-    parameters.appendSysProp("tc.tests.configuration.modules.url", System
-        .getProperty("tc.tests.configuration.modules.url"));
 
     String[] params = { "tc.classloader.writeToDisk", "tc.objectmanager.dumpHierarchy", "aspectwerkz.deployment.info",
         "aspectwerkz.details", "aspectwerkz.gen.closures", "aspectwerkz.dump.pattern", "aspectwerkz.dump.closures",

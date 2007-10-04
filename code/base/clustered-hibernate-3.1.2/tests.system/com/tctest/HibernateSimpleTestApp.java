@@ -411,12 +411,12 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
     config.addIncludePattern("com.tctest.domain.PromotionId");
     new CyclicBarrierSpec().visit(visitor, config);
 
-    config.addNewModule("clustered-hibernate-3.1.2", "1.0.0");
-    config.addNewModule("clustered-ehcache-1.2.4", "1.0.0");
+    config.addNewModule("clustered-hibernate-3.1.2", "1.0.0.SNAPSHOT");
+    config.addNewModule("clustered-ehcache-1.2.4", "1.0.0.SNAPSHOT");
 
     // transient stuff
-    config.addNewModule("clustered-cglib-2.1.3", "1.0.0");
-    config.addNewModule("clustered-commons-collections-3.1", "1.0.0");
+    config.addNewModule("clustered-cglib-2.1.3", "1.0.0.SNAPSHOT");
+    config.addNewModule("clustered-commons-collections-3.1", "1.0.0.SNAPSHOT");
   }
 
 }
