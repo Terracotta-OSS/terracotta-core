@@ -4,6 +4,8 @@
  */
 package com.tctest.server.appserver.unit;
 
+import org.apache.commons.io.IOUtils;
+
 import com.meterware.httpunit.WebResponse;
 import com.tc.test.server.appserver.AppServerFactory;
 import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
@@ -12,9 +14,12 @@ import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.GenericServer;
 import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
+import com.tc.test.server.appserver.was6x.Was6xAppServer;
 import com.tc.test.server.util.TcConfigBuilder;
 import com.tctest.webapp.servlets.OkServlet;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -28,7 +33,7 @@ import junit.framework.Test;
  * @author hhuynh
  */
 public class WebAppConfigTest extends AbstractDeploymentTest {
-  private static final String CONTEXT = "webapptest";
+  private static final String CONTEXT = "WebAppConfigTest";
   private static final String MAPPING = "OkServlet";
   private Deployment          deployment;
   private TcConfigBuilder     tcConfigBuilder;
@@ -39,7 +44,7 @@ public class WebAppConfigTest extends AbstractDeploymentTest {
       disableAllUntil(new Date(Long.MAX_VALUE));
     }
   }
-  
+
   public static Test suite() {
     return new ServerTestSetup(WebAppConfigTest.class);
   }
@@ -52,10 +57,10 @@ public class WebAppConfigTest extends AbstractDeploymentTest {
   private Deployment makeDeployment() throws Exception {
     tcConfigBuilder = new TcConfigBuilder();
     tcConfigBuilder.addWebApplication(CONTEXT);
-    
+
     DeploymentBuilder builder = makeDeploymentBuilder(CONTEXT + ".war");
     builder.addServlet(MAPPING, "/ok/*", OkServlet.class, null, false);
-    
+
     // add container specific descriptor
     if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.WEBLOGIC) {
       if (AppServerFactory.getCurrentAppServerMajorVersion().equals("8")) {
@@ -63,9 +68,9 @@ public class WebAppConfigTest extends AbstractDeploymentTest {
       }
       if (AppServerFactory.getCurrentAppServerMajorVersion().equals("9")) {
         builder.addResourceFullpath("/container-descriptors", "weblogic92.xml", "WEB-INF/weblogic.xml");
-      }      
+      }
     }
-    
+
     return builder.makeDeployment();
   }
 
@@ -74,51 +79,78 @@ public class WebAppConfigTest extends AbstractDeploymentTest {
     GenericServer.setDsoEnabled(false);
     WebApplicationServer server0 = makeWebApplicationServer(tcConfigBuilder);
     server0.addWarDeployment(deployment, CONTEXT);
+    setCookieForWebsphere(server0);
     server0.start();
 
     // server1 is enabled with DSO
     GenericServer.setDsoEnabled(true);
     WebApplicationServer server1 = makeWebApplicationServer(tcConfigBuilder);
     server1.addWarDeployment(deployment, CONTEXT);
+    setCookieForWebsphere(server1);
     server1.start();
 
     WebResponse response0 = server0.ping("/" + CONTEXT + "/ok");
     System.out.println("Cookie from server0 w/o DSO: " + response0.getHeaderField("Set-Cookie"));
-    
+
     WebResponse response1 = server1.ping("/" + CONTEXT + "/ok");
     System.out.println("Cookie from server1 w/ DSO: " + response1.getHeaderField("Set-Cookie"));
-    
+
     assertCookie(response0.getHeaderField("Set-Cookie"), response1.getHeaderField("Set-Cookie"));
   }
 
+  private void setCookieForWebsphere(WebApplicationServer server) throws Exception {
+    if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.WEBSPHERE) {
+      System.out.println("Setting cookie for websphere...");
+      File cookieSettingsScript = File.createTempFile("cookiesettings", ".py");
+      cookieSettingsScript.deleteOnExit();
+      FileOutputStream out = new FileOutputStream(cookieSettingsScript);
+      IOUtils.copy(getClass().getResourceAsStream("/com/tc/test/server/appserver/was6x/cookiesettings.py"), out);
+      out.close();
+      Was6xAppServer wasServer = (Was6xAppServer) ((GenericServer) server).getAppServer();
+      wasServer.setExtraScript(cookieSettingsScript);
+    }
+  }
+
   private void assertCookie(String expected, String actual) throws Exception {
-    SimpleDateFormat formatter = new SimpleDateFormat ("EEE, dd-MMM-yyyy HH:mm:ss z");
+    SimpleDateFormat formatter = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
+
     Map expectedCookie = toHash(expected);
     Map actualCookie = toHash(actual);
-    
+
     // all keys are matched
     assertEquals(expectedCookie.keySet(), actualCookie.keySet());
-    
+
     // all content are matched exception [J]SESSIONID
     Set keys = expectedCookie.keySet();
-    for (Iterator it = keys.iterator(); it.hasNext(); ) {
-      String key = (String)it.next();
-      
+    for (Iterator it = keys.iterator(); it.hasNext();) {
+      String key = (String) it.next();
+
       // expires time need to match appromixately within 15s of each other
       if (key.equalsIgnoreCase("expires")) {
-        Date expectedDate = formatter.parse((String)expectedCookie.get(key));
-        Date actualDate = formatter.parse((String)actualCookie.get(key));        
+        // websphere doesn't use "-" between date when the other webapps do
+        // strip them out to be consistent
+        Date expectedDate = formatter.parse(((String) expectedCookie.get(key)).replace('-', ' '));
+        Date actualDate = formatter.parse(((String) actualCookie.get(key)).replace('-', ' '));
         assertTrue(Math.abs(actualDate.getTime() - expectedDate.getTime()) < 15 * 1000);
         continue;
       }
-      
-      if (!key.endsWith("SESSIONID")) {
+
+      if (key.toUpperCase().endsWith("SESSIONID")) {
+        switch (AppServerFactory.getCurrentAppServerId()) {
+          case AppServerFactory.WEBLOGIC:
+          case AppServerFactory.WEBSPHERE:
+            assertEquals(key.toUpperCase(), "CUSTOMSESSIONID");
+            break;
+          default:
+            assertEquals(key.toUpperCase(), "JSESSIONID");
+        }
+      } else {
         assertEquals(expectedCookie.get(key), actualCookie.get(key));
       }
     }
-    
+
   }
-  
+
   private Map toHash(String cookieString) {
     Map map = new HashMap();
     String[] tokens = cookieString.split(";");

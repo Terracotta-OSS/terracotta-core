@@ -264,10 +264,8 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
   }
 
   protected void doStart() throws Exception {
-    server = factory.createAppServer(installation);
-
     try {
-      result = server.start(parameters);
+      result = getAppServer().start(parameters);
     } catch (Exception e) {
       dumpThreadsAndRethrow(e);
     }
@@ -381,5 +379,12 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
 
   public File getWorkingDirectory() {
     return workingDir;
+  }
+
+  public AppServer getAppServer() {
+    if (server == null) {
+      server = factory.createAppServer(installation);
+    }
+    return server;
   }
 }

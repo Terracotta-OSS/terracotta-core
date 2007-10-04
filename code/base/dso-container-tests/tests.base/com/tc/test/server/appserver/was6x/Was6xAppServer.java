@@ -58,6 +58,7 @@ public class Was6xAppServer extends AbstractAppServer {
   private File                  warDir;
   private File                  portDefFile;
   private File                  serverInstallDir;
+  private File extraScript;
 
   private Thread                serverThread;
 
@@ -76,6 +77,9 @@ public class Was6xAppServer extends AbstractAppServer {
     deployWarFile();
     addTerracottaToServerPolicy();
     enableDSO();
+    if (extraScript != null) {
+      executeJythonScript(extraScript);
+    }
     serverThread = new Thread() {
       public void run() {
         try {
@@ -159,6 +163,12 @@ public class Was6xAppServer extends AbstractAppServer {
     String[] args = new String[] { "-lang", "jython", "-connType", "NONE", "-profileName", instanceName, "-f",
         new File(pyScriptsDir, ENABLE_DSO_PY).getAbsolutePath() };
     executeCommand(serverInstallDir, "wsadmin", args, pyScriptsDir, "Error in enabling DSO for " + instanceName);
+  }
+
+  private void executeJythonScript(File script) throws Exception {
+    String[] args = new String[] { "-lang", "jython", "-connType", "NONE", "-profileName", instanceName, "-f",
+        script.getAbsolutePath() };
+    executeCommand(serverInstallDir, "wsadmin", args, pyScriptsDir, "Error executing " + script);
   }
 
   private void deleteProfile() throws Exception {
@@ -338,4 +348,7 @@ public class Was6xAppServer extends AbstractAppServer {
     }
   }
 
+  public void setExtraScript(File extraScript) {
+    this.extraScript = extraScript;
+  }
 }
