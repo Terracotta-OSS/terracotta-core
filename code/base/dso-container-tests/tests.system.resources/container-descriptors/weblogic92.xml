@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <weblogic-web-app xmlns="http://www.bea.com/ns/weblogic/90">
 	<session-descriptor>
-	 	<cookie-name>SESSIONID</cookie-name>	 	
+	 	<cookie-name>CUSTOMSESSIONID</cookie-name>	 	
 		<cookie-path>/WebAppConfigTest</cookie-path>		 
 		<cookie-domain>localhost</cookie-domain>		
 		<cookie-comment>WTF</cookie-comment>

@@ -3,7 +3,7 @@
 	<session-descriptor>
 		<session-param>
 			<param-name>CookieName</param-name>
-			<param-value>SESSIONID</param-value>
+			<param-value>CUSTOMSESSIONID</param-value>
 		</session-param>
 		
 		<session-param>
