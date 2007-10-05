@@ -17,7 +17,12 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
                               :snapshot => config_source[MAVEN_SNAPSHOT_CONFIG_KEY])
       args.each do |arg|
         next unless arg
-        file = FilePath.new(product_directory, interpolate(arg['file'])).to_s
+        if arg['file']
+          file = FilePath.new(product_directory, interpolate(arg['file'])).to_s
+        else
+          file = FilePath.new(arg['srcfile']).to_s
+        end
+
         artifact = arg['artifact']
         version = arg[MAVEN_VERSION_CONFIG_KEY] || config_source[MAVEN_VERSION_CONFIG_KEY] ||
                   config_source['version'] || build_environment.version

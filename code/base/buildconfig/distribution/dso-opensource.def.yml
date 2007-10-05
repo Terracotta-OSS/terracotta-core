@@ -138,6 +138,9 @@ postscripts:
         - samples/sessions
   - maven-deploy:
       args:
+        - artifact: parent
+          srcfile: pom.xml
+          pom: pom.xml
         - artifact: terracotta
           file: lib/tc.jar
           pom: poms/terracotta-pom.xml
