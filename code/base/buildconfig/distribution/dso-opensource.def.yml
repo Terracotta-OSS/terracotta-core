@@ -141,6 +141,9 @@ postscripts:
         - artifact: parent
           srcfile: pom.xml
           pom: pom.xml
+        - artifact: dependencies
+          srcfile: dependencies/pom.xml
+          pom: dependencies/pom.xml
         - artifact: terracotta
           file: lib/tc.jar
           pom: poms/terracotta-pom.xml
