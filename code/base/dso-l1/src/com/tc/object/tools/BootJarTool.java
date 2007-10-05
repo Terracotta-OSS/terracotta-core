@@ -487,6 +487,7 @@ public class BootJarTool {
 
       loadTerracottaClass(Vm.class.getName());
       loadTerracottaClass(Vm.Version.class.getName());
+      loadTerracottaClass("com.tc.util.runtime.Vm$1");
       loadTerracottaClass(UnknownJvmVersionException.class.getName());
       loadTerracottaClass(UnknownRuntimeVersionException.class.getName());
 

@@ -26,7 +26,7 @@ public class Vm {
   public static final Version  VERSION;
   static {
     try {
-      VERSION = new Version(System.getProperties());
+      VERSION = new Version(System.getProperties(), true);
     } catch (UnknownJvmVersionException mve) {
       throw new RuntimeException(mve);
     } catch (UnknownRuntimeVersionException mve) {
@@ -168,7 +168,12 @@ public class Vm {
      * @throws UnknownRuntimeVersionException If Java runtime version is unknown
      */
     public Version(final Properties props) throws UnknownJvmVersionException, UnknownRuntimeVersionException {
-      this(javaVersion(props), runtimeVersion(props), isJRockit(props), isIBM(props));
+      this(props, false);
+    }
+
+    private Version(final Properties props, boolean ibmWorkaround) throws UnknownJvmVersionException,
+        UnknownRuntimeVersionException {
+      this(javaVersion(props), runtimeVersion(props, ibmWorkaround), isJRockit(props), isIBM(props));
     }
 
     /**
@@ -319,8 +324,8 @@ public class Vm {
       return props.getProperty("java.version", "<error: java.version not specified in properties>");
     }
 
-    private static String runtimeVersion(Properties props) {
-      if (isIBM(props)) {
+    private static String runtimeVersion(Properties props, boolean ibmWorkaround) {
+      if (ibmWorkaround && isIBM(props)) {
         // It's not safe to read "java.runtime.version" from system properties until a certain point in startup
         // Specifically there is a race to set this prop in com.ibm.misc.SystemIntialization.lastChanceHook() and the
         // start of the management agent thread there (MNK-393)
