@@ -47,8 +47,9 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
 
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
     final MethodVisitor visitor;
-    if (("get".equals(name) && "(Ljava/lang/Object;I)Ljava/lang/Object;".equals(desc)) ||
-        ("containsKey".equals(name) && "(Ljava/lang/Object;I)Z".equals(desc))) {
+    if ("get".equals(name) && "(Ljava/lang/Object;I)Ljava/lang/Object;".equals(desc)) {
+      return new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, addWrapperMethod(access, name, desc, signature, exceptions), true);
+    } else if ("containsKey".equals(name) && "(Ljava/lang/Object;I)Z".equals(desc)) {
       visitor = addWrapperMethod(access, name, desc, signature, exceptions);
     } else {
       String description = desc;
@@ -86,7 +87,7 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
       }
     }
     
-    return new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, visitor);
+    return new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, visitor, false);
   }
   
   private String getNewName(String methodName) {

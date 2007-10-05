@@ -9,9 +9,9 @@ import com.tc.asm.ClassVisitor;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 
-public class JavaUtilConcurrentHashMapValueIteratorAdapter extends ClassAdapter implements Opcodes {
+public class JavaUtilConcurrentHashMapEntryIteratorAdapter extends ClassAdapter implements Opcodes {
 
-  public JavaUtilConcurrentHashMapValueIteratorAdapter(ClassVisitor cv) {
+  public JavaUtilConcurrentHashMapEntryIteratorAdapter(ClassVisitor cv) {
     super(cv);
   }
 

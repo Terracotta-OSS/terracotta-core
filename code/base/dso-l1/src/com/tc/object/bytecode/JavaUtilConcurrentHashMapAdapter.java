@@ -54,7 +54,7 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
       return addWrapperMethod(access, name, desc, signature, exceptions);
     } else if ("isEmpty".equals(name) && "()Z".equals(desc)) {
       return addWrapperMethod(access, name, desc, signature, exceptions);
-    } else if ("containsValue".equals(name) && "(Ljava/lang/Object;)Z".equals(desc)) { //
+    } else if ("containsValue".equals(name) && "(Ljava/lang/Object;)Z".equals(desc)) {
       return addWrapperMethod(access, name, desc, signature, exceptions);
     }
 
@@ -76,7 +76,7 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     } else if ("replace".equals(name) && "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Z".equals(desc)) {
       mv = new ReplaceMethodAdapter(mv);
     } else if ("writeObject".equals(name) && "(Ljava/io/ObjectOutputStream;)V".equals(desc)) {
-      mv = new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, mv);
+      mv = new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, mv, false);
     }
 
     return new ConcurrentHashMapMethodAdapter(access, desc, mv);
@@ -90,6 +90,7 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     createTCRehashAndSupportMethods();
     createTCFullyReadLockMethod();
     createTCFullyReadUnlockMethod();
+    
     super.visitEnd();
   }
 
@@ -118,24 +119,18 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
 
     Label l3 = new Label();
     mv.visitLabel(l3);
-    mv.visitLineNumber(805, l3);
     mv.visitVarInsn(ALOAD, 0);
     mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "isManaged", "(Ljava/lang/Object;)Z");
     int isManagedVar = mv.newLocal(Type.BOOLEAN_TYPE);
     mv.visitVarInsn(ISTORE, isManagedVar);
     Label l4 = new Label();
     mv.visitLabel(l4);
-    mv.visitLineNumber(806, l4);
     mv.visitVarInsn(ILOAD, isManagedVar);
     mv.visitJumpInsn(IFEQ, l0);
-    Label l5 = new Label();
-    mv.visitLabel(l5);
-    mv.visitLineNumber(807, l5);
     mv.visitVarInsn(ALOAD, 0);
     mv.visitMethodInsn(INVOKESPECIAL, CONCURRENT_HASH_MAP_SLASH, TC_FULLY_READLOCK_METHOD_NAME,
                        TC_FULLY_READLOCK_METHOD_DESC);
     mv.visitLabel(l0);
-    mv.visitLineNumber(810, l0);
 
     mv.visitVarInsn(ALOAD, 0);
     for (int i = 0; i < params.length; i++) {
@@ -146,39 +141,28 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     mv.visitVarInsn(returnType.getOpcode(ISTORE), valueVar);
 
     mv.visitLabel(l1);
-    mv.visitLineNumber(812, l1);
     mv.visitVarInsn(ILOAD, isManagedVar);
     Label l6 = new Label();
     mv.visitJumpInsn(IFEQ, l6);
     Label l7 = new Label();
     mv.visitLabel(l7);
-    mv.visitLineNumber(813, l7);
     mv.visitVarInsn(ALOAD, 0);
     mv.visitMethodInsn(INVOKESPECIAL, CONCURRENT_HASH_MAP_SLASH, TC_FULLY_READUNLOCK_METHOD_NAME,
                        TC_FULLY_READUNLOCK_METHOD_DESC);
     mv.visitLabel(l6);
-    mv.visitLineNumber(810, l6);
     mv.visitVarInsn(returnType.getOpcode(ILOAD), valueVar);
     mv.visitInsn(returnType.getOpcode(IRETURN));
 
     mv.visitLabel(l2);
-    mv.visitLineNumber(811, l2);
     int exceptionVar = mv.newLocal(Type.getObjectType("java/lang/Exception"));
     mv.visitVarInsn(ASTORE, exceptionVar);
-    Label l8 = new Label();
-    mv.visitLabel(l8);
-    mv.visitLineNumber(812, l8);
     mv.visitVarInsn(ILOAD, isManagedVar);
     Label l9 = new Label();
     mv.visitJumpInsn(IFEQ, l9);
-    Label l10 = new Label();
-    mv.visitLabel(l10);
-    mv.visitLineNumber(813, l10);
     mv.visitVarInsn(ALOAD, 0);
     mv.visitMethodInsn(INVOKESPECIAL, CONCURRENT_HASH_MAP_SLASH, TC_FULLY_READUNLOCK_METHOD_NAME,
                        TC_FULLY_READUNLOCK_METHOD_DESC);
     mv.visitLabel(l9);
-    mv.visitLineNumber(815, l9);
     mv.visitVarInsn(ALOAD, exceptionVar);
     mv.visitInsn(ATHROW);
     Label l11 = new Label();
@@ -224,14 +208,12 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     mv.visitCode();
     Label l0 = new Label();
     mv.visitLabel(l0);
-    mv.visitLineNumber(789, l0);
     mv.visitVarInsn(ALOAD, 0);
     mv.visitFieldInsn(GETFIELD, CONCURRENT_HASH_MAP_SLASH, "segments",
                       "[Ljava/util/concurrent/ConcurrentHashMap$Segment;");
     mv.visitVarInsn(ASTORE, 1);
     Label l1 = new Label();
     mv.visitLabel(l1);
-    mv.visitLineNumber(790, l1);
     mv.visitInsn(ICONST_0);
     mv.visitVarInsn(ISTORE, 2);
     Label l2 = new Label();
@@ -240,16 +222,12 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     mv.visitJumpInsn(GOTO, l3);
     Label l4 = new Label();
     mv.visitLabel(l4);
-    mv.visitLineNumber(791, l4);
     mv.visitVarInsn(ALOAD, 1);
     mv.visitVarInsn(ILOAD, 2);
     mv.visitInsn(AALOAD);
     mv.visitMethodInsn(INVOKEVIRTUAL, JavaUtilConcurrentHashMapSegmentAdapter.CONCURRENT_HASH_MAP_SEGMENT_SLASH,
                        JavaUtilConcurrentHashMapSegmentAdapter.TC_READLOCK_METHOD_NAME,
                        JavaUtilConcurrentHashMapSegmentAdapter.TC_READLOCK_METHOD_DESC);
-    Label l5 = new Label();
-    mv.visitLabel(l5);
-    mv.visitLineNumber(790, l5);
     mv.visitIincInsn(2, 1);
     mv.visitLabel(l3);
     mv.visitVarInsn(ILOAD, 2);
@@ -258,7 +236,6 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     mv.visitJumpInsn(IF_ICMPLT, l4);
     Label l6 = new Label();
     mv.visitLabel(l6);
-    mv.visitLineNumber(792, l6);
     mv.visitInsn(RETURN);
     Label l7 = new Label();
     mv.visitLabel(l7);
@@ -276,14 +253,12 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     mv.visitCode();
     Label l0 = new Label();
     mv.visitLabel(l0);
-    mv.visitLineNumber(795, l0);
     mv.visitVarInsn(ALOAD, 0);
     mv.visitFieldInsn(GETFIELD, CONCURRENT_HASH_MAP_SLASH, "segments",
                       "[Ljava/util/concurrent/ConcurrentHashMap$Segment;");
     mv.visitVarInsn(ASTORE, 1);
     Label l1 = new Label();
     mv.visitLabel(l1);
-    mv.visitLineNumber(796, l1);
     mv.visitInsn(ICONST_0);
     mv.visitVarInsn(ISTORE, 2);
     Label l2 = new Label();
@@ -292,16 +267,12 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     mv.visitJumpInsn(GOTO, l3);
     Label l4 = new Label();
     mv.visitLabel(l4);
-    mv.visitLineNumber(797, l4);
     mv.visitVarInsn(ALOAD, 1);
     mv.visitVarInsn(ILOAD, 2);
     mv.visitInsn(AALOAD);
     mv.visitMethodInsn(INVOKEVIRTUAL, JavaUtilConcurrentHashMapSegmentAdapter.CONCURRENT_HASH_MAP_SEGMENT_SLASH,
                        JavaUtilConcurrentHashMapSegmentAdapter.TC_READUNLOCK_METHOD_NAME,
                        JavaUtilConcurrentHashMapSegmentAdapter.TC_READUNLOCK_METHOD_DESC);
-    Label l5 = new Label();
-    mv.visitLabel(l5);
-    mv.visitLineNumber(796, l5);
     mv.visitIincInsn(2, 1);
     mv.visitLabel(l3);
     mv.visitVarInsn(ILOAD, 2);
@@ -310,7 +281,6 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     mv.visitJumpInsn(IF_ICMPLT, l4);
     Label l6 = new Label();
     mv.visitLabel(l6);
-    mv.visitLineNumber(798, l6);
     mv.visitInsn(RETURN);
     Label l7 = new Label();
     mv.visitLabel(l7);
@@ -328,41 +298,27 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     mv.visitCode();
     Label l0 = new Label();
     mv.visitLabel(l0);
-    mv.visitLineNumber(639, l0);
     mv.visitVarInsn(ALOAD, 1);
     mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "lookupExistingOrNull",
                        "(Ljava/lang/Object;)Lcom/tc/object/TCObject;");
     mv.visitInsn(POP);
-    Label l1 = new Label();
-    mv.visitLabel(l1);
-    mv.visitLineNumber(640, l1);
     mv.visitVarInsn(ALOAD, 0);
     mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/concurrent/ConcurrentHashMap", "__tc_managed",
                        "()Lcom/tc/object/TCObject;");
     Label l2 = new Label();
     mv.visitJumpInsn(IFNULL, l2);
-    Label l3 = new Label();
-    mv.visitLabel(l3);
-    mv.visitLineNumber(641, l3);
     mv.visitVarInsn(ALOAD, 1);
     mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "lookupExistingOrNull",
                        "(Ljava/lang/Object;)Lcom/tc/object/TCObject;");
     mv.visitJumpInsn(IFNONNULL, l2);
-    Label l4 = new Label();
-    mv.visitLabel(l4);
-    mv.visitLineNumber(642, l4);
     mv.visitVarInsn(ALOAD, 1);
     mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "hashCode", "()I");
     mv.visitVarInsn(ALOAD, 1);
     mv.visitMethodInsn(INVOKESTATIC, "java/lang/System", "identityHashCode", "(Ljava/lang/Object;)I");
     mv.visitJumpInsn(IF_ICMPNE, l2);
-    Label l5 = new Label();
-    mv.visitLabel(l5);
-    mv.visitLineNumber(643, l5);
     mv.visitInsn(ICONST_0);
     mv.visitInsn(IRETURN);
     mv.visitLabel(l2);
-    mv.visitLineNumber(646, l2);
     mv.visitInsn(ICONST_1);
     mv.visitInsn(IRETURN);
     Label l6 = new Label();
@@ -381,7 +337,7 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     String name = TC_REHASH_METHOD_NAME;
     String desc = TC_REHASH_METHOD_DESC;
     MethodVisitor mv = super.visitMethod(access, name, desc, null, null);
-    mv = new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, mv);
+    mv = new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, mv, false);
     
     mv.visitCode();
     Label l0 = new Label();
@@ -391,26 +347,20 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     mv.visitTryCatchBlock(l0, l2, l2, null);
     Label l3 = new Label();
     mv.visitLabel(l3);
-    mv.visitLineNumber(670, l3);
     mv.visitVarInsn(ALOAD, 0);
     mv.visitMethodInsn(INVOKEVIRTUAL, CONCURRENT_HASH_MAP_SLASH, "size", "()I");
     Label l4 = new Label();
     mv.visitJumpInsn(IFLE, l4);
-    Label l5 = new Label();
-    mv.visitLabel(l5);
-    mv.visitLineNumber(671, l5);
     mv.visitVarInsn(ALOAD, 0);
     mv.visitMethodInsn(INVOKESPECIAL, CONCURRENT_HASH_MAP_SLASH, TC_FULLY_READLOCK_METHOD_NAME,
                        TC_FULLY_READLOCK_METHOD_DESC);
     mv.visitLabel(l0);
-    mv.visitLineNumber(673, l0);
     mv.visitTypeInsn(NEW, "java/util/ArrayList");
     mv.visitInsn(DUP);
     mv.visitMethodInsn(INVOKESPECIAL, "java/util/ArrayList", "<init>", "()V");
     mv.visitVarInsn(ASTORE, 1);
     Label l6 = new Label();
     mv.visitLabel(l6);
-    mv.visitLineNumber(674, l6);
     mv.visitInsn(ICONST_0);
     mv.visitVarInsn(ISTORE, 2);
     Label l7 = new Label();
@@ -419,7 +369,6 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     mv.visitJumpInsn(GOTO, l8);
     Label l9 = new Label();
     mv.visitLabel(l9);
-    mv.visitLineNumber(675, l9);
     mv.visitVarInsn(ALOAD, 0);
     mv.visitFieldInsn(GETFIELD, CONCURRENT_HASH_MAP_SLASH, "segments",
                       "[Ljava/util/concurrent/ConcurrentHashMap$Segment;");
@@ -430,7 +379,6 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     mv.visitVarInsn(ASTORE, 3);
     Label l10 = new Label();
     mv.visitLabel(l10);
-    mv.visitLineNumber(676, l10);
     mv.visitInsn(ICONST_0);
     mv.visitVarInsn(ISTORE, 4);
     Label l11 = new Label();
@@ -439,44 +387,33 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     mv.visitJumpInsn(GOTO, l12);
     Label l13 = new Label();
     mv.visitLabel(l13);
-    mv.visitLineNumber(677, l13);
     mv.visitVarInsn(ALOAD, 3);
     mv.visitVarInsn(ILOAD, 4);
     mv.visitInsn(AALOAD);
     Label l14 = new Label();
     mv.visitJumpInsn(IFNULL, l14);
-    Label l15 = new Label();
-    mv.visitLabel(l15);
-    mv.visitLineNumber(678, l15);
     mv.visitVarInsn(ALOAD, 3);
     mv.visitVarInsn(ILOAD, 4);
     mv.visitInsn(AALOAD);
     mv.visitVarInsn(ASTORE, 5);
     Label l16 = new Label();
     mv.visitLabel(l16);
-    mv.visitLineNumber(679, l16);
     Label l17 = new Label();
     mv.visitJumpInsn(GOTO, l17);
     Label l18 = new Label();
     mv.visitLabel(l18);
-    mv.visitLineNumber(680, l18);
     mv.visitVarInsn(ALOAD, 1);
     mv.visitVarInsn(ALOAD, 5);
     mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z");
     mv.visitInsn(POP);
-    Label l19 = new Label();
-    mv.visitLabel(l19);
-    mv.visitLineNumber(681, l19);
     mv.visitVarInsn(ALOAD, 5);
     mv.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap$HashEntry", "next",
                       "Ljava/util/concurrent/ConcurrentHashMap$HashEntry;");
     mv.visitVarInsn(ASTORE, 5);
     mv.visitLabel(l17);
-    mv.visitLineNumber(679, l17);
     mv.visitVarInsn(ALOAD, 5);
     mv.visitJumpInsn(IFNONNULL, l18);
     mv.visitLabel(l14);
-    mv.visitLineNumber(676, l14);
     mv.visitIincInsn(4, 1);
     mv.visitLabel(l12);
     mv.visitVarInsn(ILOAD, 4);
@@ -485,7 +422,6 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     mv.visitJumpInsn(IF_ICMPLT, l13);
     Label l20 = new Label();
     mv.visitLabel(l20);
-    mv.visitLineNumber(674, l20);
     mv.visitIincInsn(2, 1);
     mv.visitLabel(l8);
     mv.visitVarInsn(ILOAD, 2);
@@ -496,12 +432,8 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     mv.visitJumpInsn(IF_ICMPLT, l9);
     Label l21 = new Label();
     mv.visitLabel(l21);
-    mv.visitLineNumber(686, l21);
     mv.visitVarInsn(ALOAD, 0);
     mv.visitMethodInsn(INVOKEVIRTUAL, CONCURRENT_HASH_MAP_SLASH, "__tc_clear", "()V");
-    Label l22 = new Label();
-    mv.visitLabel(l22);
-    mv.visitLineNumber(687, l22);
     mv.visitVarInsn(ALOAD, 1);
     mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "iterator", "()Ljava/util/Iterator;");
     mv.visitVarInsn(ASTORE, 2);
@@ -511,7 +443,6 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     mv.visitJumpInsn(GOTO, l24);
     Label l25 = new Label();
     mv.visitLabel(l25);
-    mv.visitLineNumber(688, l25);
     mv.visitVarInsn(ALOAD, 2);
     mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "next", "()Ljava/lang/Object;");
     mv.visitTypeInsn(CHECKCAST, "java/util/concurrent/ConcurrentHashMap$HashEntry");
@@ -519,24 +450,20 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     mv.visitVarInsn(ASTORE, 3);
     Label l26 = new Label();
     mv.visitLabel(l26);
-    mv.visitLineNumber(689, l26);
     mv.visitVarInsn(ALOAD, 3);
     mv.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap$HashEntry", "key", "Ljava/lang/Object;");
     mv.visitVarInsn(ASTORE, 4);
     Label l27 = new Label();
     mv.visitLabel(l27);
-    mv.visitLineNumber(690, l27);
     mv.visitVarInsn(ALOAD, 3);
     mv.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap$HashEntry", "value", "Ljava/lang/Object;");
     mv.visitVarInsn(ASTORE, 5);
     Label l28 = new Label();
     mv.visitLabel(l28);
-    mv.visitLineNumber(691, l28);
     invokeJdkHashMethod(mv, 4);
     mv.visitVarInsn(ISTORE, 6);
     Label l29 = new Label();
     mv.visitLabel(l29);
-    mv.visitLineNumber(692, l29);
     mv.visitVarInsn(ALOAD, 0);
     mv.visitVarInsn(ALOAD, 0);
     mv.visitVarInsn(ALOAD, 4);
@@ -552,7 +479,6 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
                        SEGMENT_TC_PUT_METHOD_DESC);
     mv.visitInsn(POP);
     mv.visitLabel(l24);
-    mv.visitLineNumber(687, l24);
     mv.visitVarInsn(ALOAD, 2);
     mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "hasNext", "()Z");
     mv.visitJumpInsn(IFNE, l25);
@@ -561,11 +487,9 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     Label l31 = new Label();
     mv.visitJumpInsn(GOTO, l31);
     mv.visitLabel(l1);
-    mv.visitLineNumber(694, l1);
     mv.visitVarInsn(ASTORE, 1);
     Label l32 = new Label();
     mv.visitLabel(l32);
-    mv.visitLineNumber(695, l32);
     mv.visitVarInsn(ALOAD, 1);
     mv.visitFieldInsn(GETSTATIC, "java/lang/System", "err", "Ljava/io/PrintStream;");
     mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Throwable", "printStackTrace", "(Ljava/io/PrintStream;)V");
@@ -573,26 +497,19 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     mv.visitLabel(l33);
     mv.visitJumpInsn(GOTO, l31);
     mv.visitLabel(l2);
-    mv.visitLineNumber(696, l2);
     mv.visitVarInsn(ASTORE, 7);
     Label l34 = new Label();
     mv.visitLabel(l34);
-    mv.visitLineNumber(697, l34);
     mv.visitVarInsn(ALOAD, 0);
     mv.visitMethodInsn(INVOKESPECIAL, CONCURRENT_HASH_MAP_SLASH, TC_FULLY_READUNLOCK_METHOD_NAME,
                        TC_FULLY_READUNLOCK_METHOD_DESC);
-    Label l35 = new Label();
-    mv.visitLabel(l35);
-    mv.visitLineNumber(698, l35);
     mv.visitVarInsn(ALOAD, 7);
     mv.visitInsn(ATHROW);
     mv.visitLabel(l31);
-    mv.visitLineNumber(697, l31);
     mv.visitVarInsn(ALOAD, 0);
     mv.visitMethodInsn(INVOKESPECIAL, CONCURRENT_HASH_MAP_SLASH, TC_FULLY_READUNLOCK_METHOD_NAME,
                        TC_FULLY_READUNLOCK_METHOD_DESC);
     mv.visitLabel(l4);
-    mv.visitLineNumber(700, l4);
     mv.visitInsn(RETURN);
     Label l36 = new Label();
     mv.visitLabel(l36);
@@ -882,7 +799,7 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
       mv.visitLabel(l1);
     }
   }
-
+  
   private static class GetMethodAdapter extends AddCheckManagedKeyMethodAdapter {
     public GetMethodAdapter(MethodVisitor mv) {
       super(mv);

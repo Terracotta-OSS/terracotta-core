@@ -10,8 +10,12 @@ import com.tc.asm.Type;
 import com.tc.asm.commons.LocalVariablesSorter;
 
 class JavaUtilConcurrentHashMapLazyValuesMethodAdapter extends LocalVariablesSorter implements Opcodes {
-  public JavaUtilConcurrentHashMapLazyValuesMethodAdapter(final int access, final String desc, final MethodVisitor mv) {
-    super(access, desc, mv);      
+  private boolean storeOnlyNonNull = false;
+  
+  public JavaUtilConcurrentHashMapLazyValuesMethodAdapter(final int access, final String desc, final MethodVisitor mv, final boolean storeOnlyNonNull) {
+    super(access, desc, mv);
+    
+    this.storeOnlyNonNull = storeOnlyNonNull;
   }
 
   public void visitFieldInsn(int opcode, String owner, String name, String desc) {
@@ -48,11 +52,6 @@ class JavaUtilConcurrentHashMapLazyValuesMethodAdapter extends LocalVariablesSor
       super.visitFieldInsn(opcode, owner, name, desc);
       int valueLocal = newLocal(Type.getObjectType("java/lang/Object"));
       mv.visitVarInsn(ASTORE, valueLocal); 
-      
-      // check that the 'this' object is actually managed by DSO
-      mv.visitVarInsn(ALOAD, 0);
-      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "isManaged", "(Ljava/lang/Object;)Z");
-      mv.visitJumpInsn(IFEQ, labelDone);
 
       // check if the entry's value is a logical object ID
       mv.visitVarInsn(ALOAD, valueLocal); 
@@ -66,9 +65,26 @@ class JavaUtilConcurrentHashMapLazyValuesMethodAdapter extends LocalVariablesSor
       // lookup the real entry value from the object ID and store it back into the entry for caching
       mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "lookupObject", "(Lcom/tc/object/ObjectID;)Ljava/lang/Object;");
       mv.visitVarInsn(ASTORE, valueLocal); 
-      mv.visitVarInsn(ALOAD, hashEntryLocal); 
-      mv.visitVarInsn(ALOAD, valueLocal); 
-      mv.visitFieldInsn(PUTFIELD, "java/util/concurrent/ConcurrentHashMap$HashEntry", "value", "Ljava/lang/Object;");
+      
+      if (storeOnlyNonNull) {
+        // only store the value if it's not null, otherwise lock-less value retrieval could overwrite
+        // the object ID with a null value before the actual value is available
+        mv.visitVarInsn(ALOAD, valueLocal);
+        Label labelValueNull = new Label();
+        mv.visitJumpInsn(IFNULL, labelValueNull);
+        mv.visitVarInsn(ALOAD, hashEntryLocal); 
+        mv.visitVarInsn(ALOAD, valueLocal); 
+        mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/concurrent/ConcurrentHashMap$HashEntry",
+                           JavaUtilConcurrentHashMapHashEntryAdapter.TC_RAWSETVALUE_METHOD_NAME,
+                           JavaUtilConcurrentHashMapHashEntryAdapter.TC_RAWSETVALUE_METHOD_DESC);
+        mv.visitLabel(labelValueNull);
+      } else {
+        mv.visitVarInsn(ALOAD, hashEntryLocal); 
+        mv.visitVarInsn(ALOAD, valueLocal); 
+        mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/concurrent/ConcurrentHashMap$HashEntry",
+                           JavaUtilConcurrentHashMapHashEntryAdapter.TC_RAWSETVALUE_METHOD_NAME,
+                           JavaUtilConcurrentHashMapHashEntryAdapter.TC_RAWSETVALUE_METHOD_DESC);
+      }
       
       // load the entry's value from the local variable
       mv.visitLabel(labelDone);
