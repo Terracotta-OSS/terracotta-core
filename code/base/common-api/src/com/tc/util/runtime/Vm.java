@@ -4,25 +4,26 @@
  */
 package com.tc.util.runtime;
 
+import java.lang.reflect.Method;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Utility class for understanding the current JVM version.  Access the VM version information
- * by looking at {@link #VERSION} directly or calling the static helper methods.
+ * Utility class for understanding the current JVM version. Access the VM version information by looking at
+ * {@link #VERSION} directly or calling the static helper methods.
  */
 public class Vm {
 
   private static final Pattern JVM_VERSION_PATTERN         = Pattern
-                                                              .compile("^(\\p{Digit})\\.(\\p{Digit})\\.(\\p{Digit})(?:[-_](.+))?$");
+                                                               .compile("^(\\p{Digit})\\.(\\p{Digit})\\.(\\p{Digit})(?:[-_](.+))?$");
   private static final Pattern IBM_SERVICE_RELEASE_PATTERN = Pattern
-                                                              .compile("^[^-]+-\\p{Digit}{8}[^\\p{Space}]*\\p{Space}*\\(.*(SR\\p{Digit}+).*\\)$");
+                                                               .compile("^[^-]+-\\p{Digit}{8}[^\\p{Space}]*\\p{Space}*\\(.*(SR\\p{Digit}+).*\\)$");
 
   /**
    * Version info is parsed from system properties and stored here.
    */
-  public static final Version VERSION;
+  public static final Version  VERSION;
   static {
     try {
       VERSION = new Version(System.getProperties());
@@ -39,6 +40,7 @@ public class Vm {
 
   /**
    * Get mega version (ie 1 in 1.2.3)
+   *
    * @return Mega version
    */
   public static int getMegaVersion() {
@@ -47,6 +49,7 @@ public class Vm {
 
   /**
    * Get major version (ie 2 in 1.2.3)
+   *
    * @return Major version
    */
   public static int getMajorVersion() {
@@ -55,6 +58,7 @@ public class Vm {
 
   /**
    * Get minor version (ie 3 in 1.2.3)
+   *
    * @return Minor version
    */
   public static int getMinorVersion() {
@@ -63,6 +67,7 @@ public class Vm {
 
   /**
    * Get patch level (ie 12 in 1.4.2_12)
+   *
    * @return Patch level
    */
   public static String getPatchLevel() {
@@ -71,6 +76,7 @@ public class Vm {
 
   /**
    * True if mega/major is 1.4
+   *
    * @return True if 1.4
    */
   public static boolean isJDK14() {
@@ -79,6 +85,7 @@ public class Vm {
 
   /**
    * True if mega/major is 1.5
+   *
    * @return True if 1.5
    */
   public static boolean isJDK15() {
@@ -87,6 +94,7 @@ public class Vm {
 
   /**
    * True if mega/major is 1.6
+   *
    * @return True if 1.6
    */
   public static boolean isJDK16() {
@@ -95,6 +103,7 @@ public class Vm {
 
   /**
    * True if mega/major is 1.7
+   *
    * @return True if 1.7
    */
   public static boolean isJDK17() {
@@ -103,14 +112,16 @@ public class Vm {
 
   /**
    * True if JDK is 1.5+
+   *
    * @return True if JDK 1.5/1.6/1.7
    */
   public static boolean isJDK15Compliant() {
     return VERSION.isJDK15() || VERSION.isJDK16() || VERSION.isJDK17();
   }
-  
+
   /**
    * True if JDK is 1.6+
+   *
    * @return True if JDK 1.6/1.7
    */
   public static boolean isJDK16Compliant() {
@@ -119,6 +130,7 @@ public class Vm {
 
   /**
    * True if IBM JDK
+   *
    * @return True if IBM JDK
    */
   public static boolean isIBM() {
@@ -127,6 +139,7 @@ public class Vm {
 
   /**
    * True if JRockit
+   *
    * @return True if BEA Jrockit VM
    */
   public static boolean isJRockit() {
@@ -147,31 +160,29 @@ public class Vm {
     private final boolean isJRockit;
 
     /**
-     * Construct with system properties, which will be parsed to determine version.  Looks at properties
-     * like java.version, java.runtime.version, jrockit.version, java.vm.name, and java.vendor.
+     * Construct with system properties, which will be parsed to determine version. Looks at properties like
+     * java.version, java.runtime.version, jrockit.version, java.vm.name, and java.vendor.
+     *
      * @param Properties Typically System.getProperties()
      * @throws UnknownJvmVersionException If JVM version is unknown
      * @throws UnknownRuntimeVersionException If Java runtime version is unknown
      */
-    public Version(final Properties properties) throws UnknownJvmVersionException, UnknownRuntimeVersionException {
-      this(properties.getProperty("java.version", "<error: java.version not specified in properties>"), properties
-          .getProperty("java.runtime.version", "<error: java.runtime.version not specified in properties>"), properties
-          .getProperty("jrockit.version") != null
-          || properties.getProperty("java.vm.name", "").toLowerCase().indexOf("jrockit") >= 0, properties.getProperty(
-          "java.vendor", "").toLowerCase().startsWith("ibm "));
+    public Version(final Properties props) throws UnknownJvmVersionException, UnknownRuntimeVersionException {
+      this(javaVersion(props), runtimeVersion(props), isJRockit(props), isIBM(props));
     }
 
     /**
      * Construct with specific version information
+     *
      * @param vendorVersion Version pattern like 1.4.2_12
-     * @param runtimeVersion Runtime version pattern like 1.4.2_12-269  
+     * @param runtimeVersion Runtime version pattern like 1.4.2_12-269
      * @param isJRockit True if BEA JRockit JVM
      * @param isIBM True if IBM JVM
      * @throws UnknownJvmVersionException If JVM version is unknown
      * @throws UnknownRuntimeVersionException If Java runtime version is unknown
      */
-    public Version(final String vendorVersion, final String runtimeVersion, final boolean isJRockit, final boolean isIBM)
-        throws UnknownJvmVersionException, UnknownRuntimeVersionException {
+    private Version(final String vendorVersion, final String runtimeVersion, final boolean isJRockit,
+                    final boolean isIBM) throws UnknownJvmVersionException, UnknownRuntimeVersionException {
       this.isIBM = isIBM;
       this.isJRockit = isJRockit;
       final Matcher versionMatcher = JVM_VERSION_PATTERN.matcher(vendorVersion);
@@ -207,8 +218,9 @@ public class Vm {
     }
 
     /**
-     * Given the history of SunOS and Java version numbering by Sun, this will return '1' for a long time to come.
-     * Mega version = 1 in 1.2.3
+     * Given the history of SunOS and Java version numbering by Sun, this will return '1' for a long time to come. Mega
+     * version = 1 in 1.2.3
+     *
      * @return Mega version
      */
     public int getMegaVersion() {
@@ -217,6 +229,7 @@ public class Vm {
 
     /**
      * Get major version (ie 2 in 1.2.3)
+     *
      * @return Major version
      */
     public int getMajorVersion() {
@@ -225,6 +238,7 @@ public class Vm {
 
     /**
      * Get minor version (ie 3 in 1.2.3)
+     *
      * @return Minor version
      */
     public int getMinorVersion() {
@@ -233,6 +247,7 @@ public class Vm {
 
     /**
      * Get patch level (ie 12 in 1.2.3_12)
+     *
      * @return Patch level
      */
     public String getPatchLevel() {
@@ -299,6 +314,42 @@ public class Vm {
     public String toString() {
       return vmVersion;
     }
+
+    private static String javaVersion(Properties props) {
+      return props.getProperty("java.version", "<error: java.version not specified in properties>");
+    }
+
+    private static String runtimeVersion(Properties props) {
+      if (isIBM(props)) {
+        // It's not safe to read "java.runtime.version" from system properties until a certain point in startup
+        // Specifically there is a race to set this prop in com.ibm.misc.SystemIntialization.lastChanceHook() and the
+        // start of the management agent thread there (MNK-393)
+        return getIBMRuntimeVersion();
+      } else {
+        return props.getProperty("java.runtime.version", "<error: java.runtime.version not specified in properties>");
+      }
+    }
+
+    private static String getIBMRuntimeVersion() {
+      try {
+        Class c = Class.forName("com.ibm.misc.JavaRuntimeVersion");
+        Method m = c.getDeclaredMethod("getValue", new Class[] {});
+        m.setAccessible(true);
+        return (String) m.invoke(c, new Object[] {});
+      } catch (Throwable t) {
+        throw new RuntimeException(t);
+      }
+    }
+
+    private static boolean isIBM(Properties props) {
+      return props.getProperty("java.vendor", "").toLowerCase().startsWith("ibm ");
+    }
+
+    private static boolean isJRockit(Properties props) {
+      return props.getProperty("jrockit.version") != null
+          || props.getProperty("java.vm.name", "").toLowerCase().indexOf("jrockit") >= 0;
+    }
+
   }
 
 }
