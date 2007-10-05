@@ -49,6 +49,8 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
     final MethodVisitor visitor;
     if ("get".equals(name) && "(Ljava/lang/Object;I)Ljava/lang/Object;".equals(desc)) {
       return new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, addWrapperMethod(access, name, desc, signature, exceptions), true);
+    } else if ("containsValue".equals(name) && "(Ljava/lang/Object;)Z".equals(desc)) {
+      return new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, super.visitMethod(access, name, desc, signature, exceptions), true);
     } else if ("containsKey".equals(name) && "(Ljava/lang/Object;I)Z".equals(desc)) {
       visitor = addWrapperMethod(access, name, desc, signature, exceptions);
     } else {
