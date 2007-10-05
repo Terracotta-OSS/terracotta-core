@@ -89,7 +89,7 @@ public class PortabilityImpl implements Portability {
         }
       } else {
         if (!isPortableClass(class2Inspect)) {
-          if (reasonCode == NonPortableReason.UNDEFINED) {
+          if (reasonCode == NonPortableReason.UNDEFINED || config.getSpec(topLevelClass.getName()) != null) {
             reasonCode = NonPortableReason.SUPER_CLASS_NOT_INSTRUMENTED;
           }
           uninstrumentedSupers.add(class2Inspect);
