@@ -186,11 +186,13 @@ public class RelaunchDialog extends MessageDialog implements SelectionListener {
         }
       }
 
-      int launchCount = fLaunchesItem.getItemCount();
-      for (int i = 0; i < launchCount; i++) {
-        TreeItem item = fLaunchesItem.getItem(i);
-        if (!item.getChecked()) {
-          fLaunches.remove(item.getData());
+      if(fLaunchesItem != null) {
+        int launchCount = fLaunchesItem.getItemCount();
+        for (int i = 0; i < launchCount; i++) {
+          TreeItem item = fLaunchesItem.getItem(i);
+          if (!item.getChecked()) {
+            fLaunches.remove(item.getData());
+          }
         }
       }
     }
