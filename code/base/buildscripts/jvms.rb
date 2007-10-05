@@ -24,7 +24,7 @@ class JavaVersion
     # Creates a new representation of a version, as specified by a string. This can
     # currently be either something like '1.4.2' or something like '1.4.2_07'.
     def initialize(version_string)
-        if version_string =~ /^\s*(\d+)\.(\d+)\.(\d+)(?:_(\d+))?\s*$/
+        if version_string =~ /^\s*(\d+)\.(\d+)\.(\d+)(?:_(\d+))?(?:-\w+)?\s*$/
             @major, @minor, @patch = $1.to_i, $2.to_i, $3.to_i
             @release = $4.blank? ? 0 : $4.to_i
         else
