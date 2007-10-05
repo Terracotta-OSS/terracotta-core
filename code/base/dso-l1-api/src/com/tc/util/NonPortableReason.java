@@ -219,10 +219,6 @@ public class NonPortableReason implements Serializable {
       default:
         throw new AssertionError("Unknown reason: " + reason);
     }    
-
-    sb.append("\n\nFor more information on this issue, please visit our Troubleshooting Guide at:\n");    
-    sb.append("http://terracotta.org/kit/troubleshooting\n");
-    
     return sb.toString();
   }
 

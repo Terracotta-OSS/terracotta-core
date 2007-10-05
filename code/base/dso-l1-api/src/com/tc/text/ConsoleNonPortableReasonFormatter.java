@@ -96,6 +96,9 @@ public class ConsoleNonPortableReasonFormatter implements NonPortableReasonForma
       
     out.println(paragraphFormatter.format(reasonText));
     out.println();
+    out.println("For more information on this issue, please visit our Troubleshooting Guide at:");
+    out.println("http://terracotta.org/kit/troubleshooting");
+    out.println();
   }
 
   public void formatInstructionsText(String instructionsText) {
