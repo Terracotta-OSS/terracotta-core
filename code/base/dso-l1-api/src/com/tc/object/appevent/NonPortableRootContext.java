@@ -10,9 +10,11 @@ import com.tc.util.NonPortableReason;
  */
 public class NonPortableRootContext extends NonPortableEventContext {
 
-  private static final long serialVersionUID = -556002400100752261L;
+  private static final long  serialVersionUID = -556002400100752261L;
 
-  private final String      rootName;
+  public static final String ROOT_NAME_LABEL  = "Non-portable root name";
+
+  private final String       rootName;
 
   public NonPortableRootContext(String threadName, String clientId, String rootName, Object rootValue) {
     super(rootValue, threadName, clientId);
@@ -35,7 +37,7 @@ public class NonPortableRootContext extends NonPortableEventContext {
 
   public void addDetailsTo(NonPortableReason reason) {
     super.addDetailsTo(reason);
-    reason.addDetail("Non-portable root name", rootName);
+    reason.addDetail(ROOT_NAME_LABEL, rootName);
   }
 
 }

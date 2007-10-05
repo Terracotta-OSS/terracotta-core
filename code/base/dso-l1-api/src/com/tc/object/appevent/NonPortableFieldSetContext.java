@@ -11,10 +11,12 @@ import com.tc.util.NonPortableReason;
  */
 public class NonPortableFieldSetContext extends NonPortableEventContext {
 
-  private static final long      serialVersionUID = -556002400100752261L;
+  private static final long serialVersionUID = -556002400100752262L;
 
   private final String           fieldName;
   private transient final Object fieldValue;
+
+  public static final String     FIELD_NAME_LABEL = "Non-portable field name";
 
   public NonPortableFieldSetContext(String threadName, String clientId, Object pojo, String fieldName, Object fieldValue) {
     super(pojo, threadName, clientId);
@@ -38,7 +40,7 @@ public class NonPortableFieldSetContext extends NonPortableEventContext {
 
   public void addDetailsTo(NonPortableReason reason) {
     super.addDetailsTo(reason);
-    reason.addDetail("Non-portable field name", fieldName);
+    reason.addDetail(FIELD_NAME_LABEL, fieldName);
   }
 
 }

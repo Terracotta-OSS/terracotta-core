@@ -1,19 +1,23 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * All content copyright (c) 2003-2007 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
 package com.tc.util;
 
+import com.tc.object.appevent.NonPortableFieldSetContext;
+import com.tc.object.appevent.NonPortableRootContext;
 import com.tc.text.NonPortableReasonFormatter;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ResourceBundle;
 
 /**
  * Encapsulate why something is non-portable and build nice error messages 
@@ -36,8 +40,8 @@ public class NonPortableReason implements Serializable {
   private static final byte LAST_DEFINED                        = 0x07;
 
   private final String      className;
-  private final List        nonBootJarClasses                   = new ArrayList();
-  private final List        bootJarClasses                      = new ArrayList();
+  private final List        nonBootJarClasses;
+  private final List        bootJarClasses;
   private final Collection  details;
   private final byte        reason;
   private transient String  detailedReason;
@@ -50,9 +54,7 @@ public class NonPortableReason implements Serializable {
    * @param reasonCode The reason why it is non-portable
    */
   public NonPortableReason(Class clazz, byte reasonCode) {
-    this.reason = reasonCode;
-    this.className = clazz.getName();
-    this.details = new LinkedList();
+    this(clazz.getName(), reasonCode);
   }
 
   /**
@@ -63,6 +65,8 @@ public class NonPortableReason implements Serializable {
     this.className = className;
     this.reason = reasonCode;
     this.details = new LinkedList();
+    nonBootJarClasses = new LinkedList();
+    bootJarClasses = new LinkedList();
   }
 
   /**
@@ -103,7 +107,7 @@ public class NonPortableReason implements Serializable {
    * @param value The value
    */
   public void addDetail(String label, String value) {
-    this.details.add(new NonPortableDetail(label, value));
+    details.add(new NonPortableDetail(label, value));
   }
 
   private String constructDetailedReason() {
@@ -153,55 +157,37 @@ public class NonPortableReason implements Serializable {
         } else {
           sb.append("Attempted to share an instance of a class which");
         }
-        if (!this.bootJarClasses.isEmpty()) {
+        if (!bootJarClasses.isEmpty()) {
           sb.append(" must be in the DSO boot jar.  It also has superclasses which must be in the DSO"
                     + " boot jar.  Please add all of these classes to the boot jar configuration and re-create"
                     + " the DSO boot jar.");
           List classes = new ArrayList();
           classes.addAll(bootJarClasses);
-          classes.add(this.className);
+          classes.add(className);
           addDetail("Classes to add to boot jar", csvList(classes));
         } else {
           sb.append(" must be in the DSO boot jar. Please add this class to the boot jar configuration"
                     + " and re-create the DSO boot jar.");
-          addDetail("Class to add to boot jar", this.className);
+          addDetail("Class to add to boot jar", className);
         }
 
         break;
       case SUPER_CLASS_NOT_INSTRUMENTED:
         if (hasPreamble) {
-          sb.append(" This unshareable class");
+          sb.append(" This unshareable class has");
         } else {
           sb.append("Attempted to share an instance of a class which has");
         }
-        boolean plural = (this.bootJarClasses.size() + this.nonBootJarClasses.size()) > 1;
+        boolean plural = (bootJarClasses.size() + nonBootJarClasses.size()) > 1;
         sb.append(plural ? " super-classes" : " a super-class");
         sb.append(" that" + (plural ? " are" : " is") + " uninstrumented."
                   + "  Subclasses of uninstrumented classes cannot be shared.");
-        if (!this.bootJarClasses.isEmpty()) {
-          sb.append("  Please");
-          if (this.bootJarClasses.size() > 1) {
-            sb.append(" add the relevant super-classes to the boot jar configuration and re-create"
-                      + " the DSO boot jar.");
-          } else {
-            sb.append(" add the relevant super-class to the boot jar configuration and re-create"
-                      + " the DSO boot jar.");
-          }
-        }
-        if (!this.nonBootJarClasses.isEmpty()) {
-          sb.append("  Please");
-          if (this.nonBootJarClasses.size() > 1) {
-            sb.append(" add the relevant super-classes to the <includes> section of the configuration file.");
-          } else {
-            sb.append(" add the relevant super-class to the <includes> section of the configuration file.");
-          }
-        }
 
         addDetail("Unshareable class", className);
-        if (!this.bootJarClasses.isEmpty()) {
+        if (!bootJarClasses.isEmpty()) {
           addDetail("Classes to add to boot jar", csvList(bootJarClasses));
         }
-        if (!this.nonBootJarClasses.isEmpty()) {
+        if (!nonBootJarClasses.isEmpty()) {
           addDetail("Classes to add to the <includes> configuration", csvList(nonBootJarClasses));
         }
         break;
@@ -211,73 +197,84 @@ public class NonPortableReason implements Serializable {
         } else {
           sb.append("Attempted to share an instance of a class which");
         }
-        sb.append(" has not been included for sharing in the configuration. Please add this class to the <includes>");
-        sb.append(" section of the configuration file.");
-        if (!this.nonBootJarClasses.isEmpty()) {
-          if (this.nonBootJarClasses.size() == 1) {
-            sb.append(" This class also has a super-class that has not been included for sharing in"
-                      + " the configuration.  Please add this class to the <includes> section in the"
-                      + " configuration file also.");
-          } else {
-            sb.append(" This class also has super-classes that have not been included for sharing in"
-                      + " the configuration.  Please add these classes to the <includes> section of"
-                      + " the configuration file also.");
-          }
+        sb.append(" has not been included for sharing in the configuration.");
+        if (!nonBootJarClasses.isEmpty()) {
           List classes = new LinkedList();
           classes.add(className);
-          classes.addAll(this.nonBootJarClasses);
+          classes.addAll(nonBootJarClasses);
           addDetail("Non-included classes", csvList(classes));
         } else {
           addDetail("Non-included class", className);
         }
-
-        if (!this.bootJarClasses.isEmpty()) {
-          if (this.bootJarClasses.size() == 1) {
-            sb.append(" This class also has a super-class that must be in the DSO boot jar."
-                      + " Please add this class to the boot jar configuration");
+        if (!bootJarClasses.isEmpty()) {
+          if (bootJarClasses.size() == 1) {
             addDetail("Class to add to boot jar", csvList(bootJarClasses));
           } else {
-            sb.append(" This class also has super-classes that must be in the DSO boot jar."
-                      + " Please add these classes to the boot jar configuration");
             addDetail("Classes to add to boot jar", csvList(bootJarClasses));
           }
-          sb.append(" and re-create the DSO boot jar.");
         }
-
         break;
       case TEST_REASON:
         break;
       default:
         throw new AssertionError("Unknown reason: " + reason);
-    }
+    }    
+
+    sb.append("\n\nFor more information on this issue, please visit our Troubleshooting Guide at:\n");    
+    sb.append("http://terracotta.org/kit/troubleshooting\n");
+    
     return sb.toString();
   }
 
   private String constructInstructions() {
     StringBuffer sb = new StringBuffer();
-
     switch (reason) {
-      case CLASS_NOT_IN_BOOT_JAR:
-        List classes = new ArrayList();
-        classes.addAll(bootJarClasses);
-        classes.add(this.className);
-
-        sb.append("\nTypical steps to resolve this are:\n\n");
-        sb.append("* edit your tc-config.xml file\n");
-        sb.append("* locate the <dso> tag\n");
-        sb.append("* add this snippet inside the tag\n\n");
-        sb.append("  <additional-boot-jar-classes>\n");
-        for (Iterator i = classes.iterator(); i.hasNext();) {
-          sb.append("    <include>");
-          sb.append(i.next());
-          sb.append("</include>\n");
+      case CLASS_NOT_ADAPTABLE: {
+        NonPortableDetail detail = findDetailByLabel(NonPortableRootContext.ROOT_NAME_LABEL);
+        final boolean isRoot = detail != null;
+        if (detail == null) {
+          detail = findDetailByLabel(NonPortableFieldSetContext.FIELD_NAME_LABEL);
         }
-        sb.append("  </additional-boot-jar-classes>\n\n");
-        sb
-            .append("* if there's already an <additional-boot-jar-classes> tag present, simply add\n  the new includes to the existing one\n");
-        sb.append("\n");
-        sb
-            .append("It's possible that this class is truly not-portable, the solution is then to\nmark the referring field as transient.\n");
+        sb.append(Messages.classNotAdaptableInstructions(detail != null ? detail.getValue() : null, className, isRoot));
+      }
+        break;
+      case SUPER_CLASS_NOT_ADAPTABLE: {
+        NonPortableDetail detail = findDetailByLabel(NonPortableRootContext.ROOT_NAME_LABEL);
+        final boolean isRoot = detail != null;
+        if (detail == null) {
+          detail = findDetailByLabel(NonPortableFieldSetContext.FIELD_NAME_LABEL);
+        }
+        sb.append(Messages.superClassNotAdaptableInstructions(detail != null ? detail.getValue() : null, className,
+                                                              getErroneousSuperClassNames(), isRoot));
+      }
+        break;
+      case SUBCLASS_OF_LOGICALLY_MANAGED_CLASS: {
+        NonPortableDetail detail = findDetailByLabel(NonPortableRootContext.ROOT_NAME_LABEL);
+        final boolean isRoot = detail != null;
+        if (detail == null) {
+          detail = findDetailByLabel(NonPortableFieldSetContext.FIELD_NAME_LABEL);
+        }
+        sb.append(Messages
+            .subclassOfLogicallyManagedClassInstructions(detail != null ? detail.getValue() : null, className,
+                                                         getErroneousSuperClassNames(), isRoot));
+      }
+        break;
+      case CLASS_NOT_IN_BOOT_JAR:
+        List classes = new LinkedList();
+        classes.addAll(bootJarClasses);
+        classes.add(className);
+        sb.append(Messages.classNotInBootJarInstructions(classes));
+        break;
+      case CLASS_NOT_INCLUDED_IN_CONFIG:
+        List normalClasses = new LinkedList();
+        normalClasses.add(className);
+        if (nonBootJarClasses != null) {
+          normalClasses.addAll(nonBootJarClasses);
+        }
+        sb.append(Messages.classNotIncludedInConfigInstructions(normalClasses, bootJarClasses));
+        break;
+      case SUPER_CLASS_NOT_INSTRUMENTED:
+        sb.append(Messages.superClassNotInstrumentedInstructions(nonBootJarClasses, bootJarClasses));
         break;
       case TEST_REASON:
         sb.append("instructions");
@@ -291,7 +288,7 @@ public class NonPortableReason implements Serializable {
    * @return True if has field name
    */
   public boolean hasUltimateNonPortableFieldName() {
-    return this.ultimateNonPortableFieldName != null;
+    return ultimateNonPortableFieldName != null;
   }
 
   /**
@@ -300,23 +297,23 @@ public class NonPortableReason implements Serializable {
    */
   public void setUltimateNonPortableFieldName(String name) {
     addDetail("Referring field", name);
-    this.ultimateNonPortableFieldName = name;
+    ultimateNonPortableFieldName = name;
   }
 
   /**
    * @return the field holding the non-portable object.
    */
   public String getUltimateNonPortableFieldName() {
-    return this.ultimateNonPortableFieldName;
+    return ultimateNonPortableFieldName;
   }
 
   private String getErroneousSuperClassNames() {
-    Collection supers = new ArrayList(nonBootJarClasses);
+    Collection supers = new LinkedList(nonBootJarClasses);
     supers.addAll(bootJarClasses);
     return csvList(supers);
   }
 
-  private String csvList(Collection list) {
+  private static String csvList(Collection list) {
     StringBuffer sb = new StringBuffer();
     for (Iterator i = list.iterator(); i.hasNext();) {
       sb.append(i.next());
@@ -382,7 +379,7 @@ public class NonPortableReason implements Serializable {
    * @param msg The message
    */
   public void setMessage(String msg) {
-    this.message = msg;
+    message = msg;
   }
 
   /**
@@ -399,11 +396,130 @@ public class NonPortableReason implements Serializable {
    */
   public void accept(NonPortableReasonFormatter formatter) {
     formatter.formatReasonText(getDetailedReason());
-    // formatter.formatReasonText("Actions to take:");
     for (Iterator i = details.iterator(); i.hasNext();) {
       formatter.formatDetail((NonPortableDetail) i.next());
     }
     formatter.formatInstructionsText(getInstructions());
+  }
+
+  private NonPortableDetail findDetailByLabel(final String label) {
+    for (Iterator pos = details.iterator(); pos.hasNext();) {
+      NonPortableDetail detail = (NonPortableDetail) pos.next();
+      if (label.equals(detail.getLabel())) { return detail; }
+    }
+    return null;
+  }
+
+  private static final class Messages {
+
+    private static final ResourceBundle rb                                                         = ResourceBundle
+                                                                                                       .getBundle(NonPortableReason.class
+                                                                                                           .getName());
+
+    private static final String         CLASS_NOT_ADAPTABLE_ROOT_INSTRUCTIONS_KEY                  = "classNotAdaptable.root.instructions";
+    private static final String         CLASS_NOT_ADAPTABLE_FIELD_INSTRUCTIONS_KEY                 = "classNotAdaptable.field.instructions";
+
+    private static final String         SUPER_CLASS_NOT_ADAPTABLE_ROOT_INSTRUCTIONS_KEY            = "superClassNotAdaptable.root.instructions";
+    private static final String         SUPER_CLASS_NOT_ADAPTABLE_FIELD_INSTRUCTIONS_KEY           = "superClassNotAdaptable.field.instructions";
+
+    private static final String         SUBCLASS_OF_LOGICALLY_MANAGED_CLASS_ROOT_INSTRUCTIONS_KEY  = "logicallyManagedSuperClass.root.instructions";
+    private static final String         SUBCLASS_OF_LOGICALLY_MANAGED_CLASS_FIELD_INSTRUCTIONS_KEY = "logicallyManagedSuperClass.field.instructions";
+
+    private static final String         CLASS_NOT_IN_BOOT_JAR_CLASS_KEY                            = "classNotInBootJar.class";
+    private static final String         CLASS_NOT_IN_BOOT_JAR_INSTRUCTIONS_KEY                     = "classNotInBootJar.instructions";
+
+    private static final String         CLASS_NOT_INCLUDED_IN_CONFIG_HEADER_KEY                    = "classNotIncludedInConfig.header";
+    private static final String         CLASS_NOT_INCLUDED_IN_CONFIG_NON_BOOTJAR_CLASS_KEY         = "classNotIncludedInConfig.non-bootjar.class";
+    private static final String         CLASS_NOT_INCLUDED_IN_CONFIG_NON_BOOTJAR_INSTRUCTIONS_KEY  = "classNotIncludedInConfig.non-bootjar.instructions";
+    private static final String         CLASS_NOT_INCLUDED_IN_CONFIG_BOOTJAR_CLASS_KEY             = "classNotIncludedInConfig.bootjar.class";
+    private static final String         CLASS_NOT_INCLUDED_IN_CONFIG_BOOTJAR_INSTRUCTIONS_KEY      = "classNotIncludedInConfig.bootjar.instructions";
+    private static final String         CLASS_NOT_INCLUDED_IN_CONFIG_FOOTER_KEY                    = "classNotIncludedInConfig.footer";
+
+    private static final String         SUPER_CLASS_NOT_INSTRUMENTED_HEADER_KEY                    = "superClassNotInstrumented.header";
+    private static final String         SUPER_CLASS_NOT_INSTRUMENTED_NON_BOOTJAR_CLASS_KEY         = "superClassNotInstrumented.non-bootjar.class";
+    private static final String         SUPER_CLASS_NOT_INSTRUMENTED_NON_BOOTJAR_INSTRUCTIONS_KEY  = "superClassNotInstrumented.non-bootjar.instructions";
+    private static final String         SUPER_CLASS_NOT_INSTRUMENTED_BOOTJAR_CLASS_KEY             = "superClassNotInstrumented.bootjar.class";
+    private static final String         SUPER_CLASS_NOT_INSTRUMENTED_BOOTJAR_INSTRUCTIONS_KEY      = "superClassNotInstrumented.bootjar.instructions";
+    private static final String         SUPER_CLASS_NOT_INSTRUMENTED_FOOTER_KEY                    = "superClassNotInstrumented.footer";
+
+    static String classNotAdaptableInstructions(String fieldName, String nonAdaptableClassName, boolean isRootField) {
+      return MessageFormat.format(rb.getString(isRootField ? CLASS_NOT_ADAPTABLE_ROOT_INSTRUCTIONS_KEY
+          : CLASS_NOT_ADAPTABLE_FIELD_INSTRUCTIONS_KEY), new Object[] { fieldName, nonAdaptableClassName });
+    }
+
+    static String superClassNotAdaptableInstructions(String fieldName, String nonAdaptableSubclass,
+                                                     String nonAdaptableSuperClasses, boolean isRootField) {
+      return MessageFormat.format(rb.getString(isRootField ? SUPER_CLASS_NOT_ADAPTABLE_ROOT_INSTRUCTIONS_KEY
+          : SUPER_CLASS_NOT_ADAPTABLE_FIELD_INSTRUCTIONS_KEY), new Object[] { fieldName, nonAdaptableSubclass,
+          nonAdaptableSuperClasses });
+    }
+
+    static String subclassOfLogicallyManagedClassInstructions(String fieldName, String nonAdaptableSubclass,
+                                                              String logicallyManagedSuperClasses, boolean isRootField) {
+      return MessageFormat.format(rb.getString(isRootField ? SUBCLASS_OF_LOGICALLY_MANAGED_CLASS_ROOT_INSTRUCTIONS_KEY
+          : SUBCLASS_OF_LOGICALLY_MANAGED_CLASS_FIELD_INSTRUCTIONS_KEY), new Object[] { fieldName,
+          nonAdaptableSubclass, logicallyManagedSuperClasses });
+    }
+
+    static String classNotInBootJarInstructions(List classes) {
+      final StringBuffer classesMsg = new StringBuffer();
+      for (Iterator pos = classes.iterator(); pos.hasNext();) {
+        classesMsg.append(MessageFormat.format(rb.getString(CLASS_NOT_IN_BOOT_JAR_CLASS_KEY),
+                                               new Object[] { pos.next() }));
+      }
+      return MessageFormat.format(rb.getString(CLASS_NOT_IN_BOOT_JAR_INSTRUCTIONS_KEY), new Object[] { classesMsg });
+    }
+
+    static String classNotIncludedInConfigInstructions(List normalClassNames, List bootJarClassNames) {
+      final StringBuffer instructions = new StringBuffer(MessageFormat.format(rb
+          .getString(CLASS_NOT_INCLUDED_IN_CONFIG_HEADER_KEY), null));
+      if (normalClassNames != null && !normalClassNames.isEmpty()) {
+        final StringBuffer classList = new StringBuffer();
+        for (Iterator pos = normalClassNames.iterator(); pos.hasNext();) {
+          classList.append(MessageFormat.format(rb.getString(CLASS_NOT_INCLUDED_IN_CONFIG_NON_BOOTJAR_CLASS_KEY),
+                                                new Object[] { pos.next() }));
+        }
+        instructions.append(MessageFormat.format(rb
+            .getString(CLASS_NOT_INCLUDED_IN_CONFIG_NON_BOOTJAR_INSTRUCTIONS_KEY), new Object[] { classList }));
+      }
+      if (bootJarClassNames != null && !bootJarClassNames.isEmpty()) {
+        final StringBuffer bootJarClassList = new StringBuffer();
+        for (Iterator pos = bootJarClassNames.iterator(); pos.hasNext();) {
+          bootJarClassList.append(MessageFormat.format(rb.getString(CLASS_NOT_INCLUDED_IN_CONFIG_BOOTJAR_CLASS_KEY),
+                                                       new Object[] { pos.next() }));
+        }
+        instructions.append(MessageFormat.format(rb.getString(CLASS_NOT_INCLUDED_IN_CONFIG_BOOTJAR_INSTRUCTIONS_KEY),
+                                                 new Object[] { bootJarClassList }));
+      }
+      instructions.append(MessageFormat.format(rb.getString(CLASS_NOT_INCLUDED_IN_CONFIG_FOOTER_KEY), null));
+      return instructions.toString();
+    }
+
+    static String superClassNotInstrumentedInstructions(List normalClassNames, List bootJarClassNames) {
+      final StringBuffer instructions = new StringBuffer(MessageFormat.format(rb
+          .getString(SUPER_CLASS_NOT_INSTRUMENTED_HEADER_KEY), null));
+      if (normalClassNames != null && !normalClassNames.isEmpty()) {
+        final StringBuffer classList = new StringBuffer();
+        for (Iterator pos = normalClassNames.iterator(); pos.hasNext();) {
+          classList.append(MessageFormat.format(rb.getString(SUPER_CLASS_NOT_INSTRUMENTED_NON_BOOTJAR_CLASS_KEY),
+                                                new Object[] { pos.next() }));
+        }
+        instructions.append(MessageFormat.format(rb
+            .getString(SUPER_CLASS_NOT_INSTRUMENTED_NON_BOOTJAR_INSTRUCTIONS_KEY), new Object[] { classList }));
+      }
+      if (bootJarClassNames != null && !bootJarClassNames.isEmpty()) {
+        final StringBuffer bootJarClassList = new StringBuffer();
+        for (Iterator pos = bootJarClassNames.iterator(); pos.hasNext();) {
+          bootJarClassList.append(MessageFormat.format(rb.getString(SUPER_CLASS_NOT_INSTRUMENTED_BOOTJAR_CLASS_KEY),
+                                                       new Object[] { pos.next() }));
+        }
+        instructions.append(MessageFormat.format(rb.getString(SUPER_CLASS_NOT_INSTRUMENTED_BOOTJAR_INSTRUCTIONS_KEY),
+                                                 new Object[] { bootJarClassList }));
+      }
+      instructions.append(MessageFormat.format(rb.getString(SUPER_CLASS_NOT_INSTRUMENTED_FOOTER_KEY), null));
+      return instructions.toString();
+    }
+
   }
 
 }
