@@ -46,6 +46,12 @@ public class NonPortableReasonFormatterTest extends TestCase {
     StringBuffer expected = new StringBuffer();
     expected.append(reasonText + stringFormatter.newline());
     expected.append(stringFormatter.newline());
+    
+    expected.append("For more information on this issue, please visit our Troubleshooting Guide at:" + 
+                    stringFormatter.newline());                    
+    expected.append("http://terracotta.org/kit/troubleshooting" + stringFormatter.newline());
+    expected.append(stringFormatter.newline());
+    
     expected.append("0123456789" + separator + "0123456789" + stringFormatter.newline());
     expected.append("0123      " + separator + "0123");
 
