@@ -229,8 +229,8 @@ public class AdminClientBundle extends ListResourceBundle {
      
     {"version.check.message",
      "<html><h3>Version mismatch for {0}.</h3><br>"
-       + "<table border=1 cellspacing=1><tr><td align=right>Terracotta Server Version:</td><td>{1}"
-       + "</tr><tr><td align=right>AdminConsole Version:</td><td>{2}"
+       + "<table border=0 cellspacing=1><tr><td align=right><b>Terracotta Server Version:</b></td><td>{1}"
+       + "</tr><tr><td align=right><b>AdminConsole Version:</b</td><td>{2}"
        + "</td></tr></table><h3>Continue?</h3></html>"
     }
   };

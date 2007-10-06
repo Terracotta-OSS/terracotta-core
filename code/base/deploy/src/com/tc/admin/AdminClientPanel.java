@@ -596,6 +596,8 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
    * Returns if the major and minor elements of the passed version strings match.
    */
   private static boolean versionsMatch(String v1, String v2) {
+    if(v1.equals(v2)) { return true; }
+    
     String[] v1Elems = StringUtils.split(v1, '.');
     String[] v2Elems = StringUtils.split(v2, '.');
 
