@@ -14,8 +14,10 @@ import java.util.Set;
 
 public class PassiveTransactionAccount implements TransactionAccount {
 
-  private final NodeID nodeID;
-  private final Set    txnIDs = Collections.synchronizedSet(new HashSet());
+  private final NodeID       nodeID;
+  private final Set          txnIDs = Collections.synchronizedSet(new HashSet());
+  private CallBackOnComplete callback;
+  private boolean            dead = false;
 
   public PassiveTransactionAccount(NodeID source) {
     this.nodeID = source;
@@ -27,7 +29,10 @@ public class PassiveTransactionAccount implements TransactionAccount {
   }
 
   public boolean applyCommitted(TransactionID requestID) {
-    txnIDs.remove(new ServerTransactionID(nodeID, requestID));
+    synchronized (txnIDs) {
+      txnIDs.remove(new ServerTransactionID(nodeID, requestID));
+      invokeCallBackOnCompleteIfNecessary();
+    }
     return true;
   }
 
@@ -52,7 +57,10 @@ public class PassiveTransactionAccount implements TransactionAccount {
   }
 
   public boolean skipApplyAndCommit(TransactionID requestID) {
-    txnIDs.remove(new ServerTransactionID(nodeID, requestID));
+    synchronized (txnIDs) {
+      txnIDs.remove(new ServerTransactionID(nodeID, requestID));
+      invokeCallBackOnCompleteIfNecessary();
+    }
     return true;
   }
 
@@ -71,6 +79,16 @@ public class PassiveTransactionAccount implements TransactionAccount {
   }
 
   public void nodeDead(CallBackOnComplete callBack) {
-    throw new AssertionError("This should never be called.");
+    synchronized (txnIDs) {
+      this.callback = callBack;
+      this.dead = true;
+      invokeCallBackOnCompleteIfNecessary();
+    }
+  }
+
+  private void invokeCallBackOnCompleteIfNecessary() {
+    if (dead && txnIDs.isEmpty()) {
+      callback.onComplete(nodeID);
+    }
   }
 }
