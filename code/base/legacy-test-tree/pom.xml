@@ -93,5 +93,11 @@
       <version>${tcVersion}</version>
       <type>test-jar</type>
     </dependency>
+    <dependency>
+      <groupId>httpunit</groupId>
+      <artifactId>httpunit</artifactId>
+      <version>1.6</version>
+      <type>test-jar</type>
+    </dependency>
   </dependencies>
 </project>
