@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
@@ -75,6 +76,24 @@ public class ObjectIDSetTest extends TCTestCase {
       Assert.eval("FAILED:" + i.toString(), s.remove(i));
     }
     Assert.eval(s.size() == 0);
+
+    // test retain all
+    Set odds = new HashSet();
+    Set evens = new HashSet();
+    for (int i = 0; i < all.size(); i++) {
+      if (i % 2 == 0) {
+        evens.add(all.get(i));
+      } else {
+        odds.add(all.get(i));
+      }
+    }
+    boolean b = small.retainAll(odds);
+    assertTrue(b);
+    assertEquals(odds, small);
+    b = small.retainAll(evens);
+    assertTrue(b);
+    assertEquals(0, small.size());
+    small.addAll(all); // back to original state
 
     // test new set creation (which uses cloning
     long start = System.currentTimeMillis();

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
@@ -214,9 +215,9 @@ public class ObjectIDSet2 extends AbstractSet {
         else return 0;
       }
     }
-    
+
     public String toString() {
-      return "MyLong@" + System.identityHashCode(this) + "(" + number +")" ;
+      return "MyLong@" + System.identityHashCode(this) + "(" + number + ")";
     }
   }
 
@@ -287,8 +288,7 @@ public class ObjectIDSet2 extends AbstractSet {
    */
   public boolean retainAll(Collection c) {
     boolean modified = false;
-      // XXX :; yuck !!
-    ArrayList toRemove = new ArrayList(c.size());
+    ObjectIDSet2 toRemove = new ObjectIDSet2();
     Iterator e = iterator();
     while (e.hasNext()) {
       Object o = e.next();
