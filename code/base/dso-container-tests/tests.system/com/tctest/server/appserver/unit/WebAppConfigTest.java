@@ -37,7 +37,7 @@ public class WebAppConfigTest extends AbstractDeploymentTest {
   private static final String MAPPING = "OkServlet";
   private Deployment          deployment;
   private TcConfigBuilder     tcConfigBuilder;
-
+  
   public WebAppConfigTest() {
     // DEV-984
     if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.JBOSS) {
@@ -60,6 +60,7 @@ public class WebAppConfigTest extends AbstractDeploymentTest {
 
     DeploymentBuilder builder = makeDeploymentBuilder(CONTEXT + ".war");
     builder.addServlet(MAPPING, "/ok/*", OkServlet.class, null, false);
+    builder.addSessionConfig("session-timeout", "69");
 
     // add container specific descriptor
     if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.WEBLOGIC) {
@@ -73,8 +74,8 @@ public class WebAppConfigTest extends AbstractDeploymentTest {
 
     return builder.makeDeployment();
   }
-
-  public final void testCookie() throws Exception {
+  
+  public void testAppConfig() throws Exception {    
     // server0 is NOT enabled with DSO
     GenericServer.setDsoEnabled(false);
     WebApplicationServer server0 = makeWebApplicationServer(tcConfigBuilder);
@@ -89,13 +90,18 @@ public class WebAppConfigTest extends AbstractDeploymentTest {
     setCookieForWebsphere(server1);
     server1.start();
 
+    // test cookie settings
     WebResponse response0 = server0.ping("/" + CONTEXT + "/ok");
     System.out.println("Cookie from server0 w/o DSO: " + response0.getHeaderField("Set-Cookie"));
-
+    
     WebResponse response1 = server1.ping("/" + CONTEXT + "/ok");
     System.out.println("Cookie from server1 w/ DSO: " + response1.getHeaderField("Set-Cookie"));
 
     assertCookie(response0.getHeaderField("Set-Cookie"), response1.getHeaderField("Set-Cookie"));
+    
+    // test session-timeout, it is set at 69 minutes
+    response1 = server1.ping("/" + CONTEXT + "/ok?cmd=getMaxInactiveInterval");
+    assertEquals("4140", response1.getText().trim()); // 69min * 60 = 4140sec
   }
 
   private void setCookieForWebsphere(WebApplicationServer server) throws Exception {

@@ -14,8 +14,15 @@ public final class OkServlet extends HttpServlet {
 
   public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     HttpSession session = request.getSession(true);
-    session.setAttribute("da", "bomb");
     response.setContentType("text/html");
-    response.getWriter().println("OK");
+    String cmd = request.getParameter("cmd");
+    
+    if (cmd != null && cmd.equals("getMaxInactiveInterval")) {
+      response.getWriter().println(session.getMaxInactiveInterval());
+    } else {
+      session.setAttribute("da", "bomb");    
+      response.getWriter().println("OK");
+    }
+    
   }
 }
