@@ -314,11 +314,17 @@ public class ModulesLoader {
         }
         is.close();
       } catch (IOException ioe) {
-        logger.warn("Unable to read configuration from bundle: " + bundle.getSymbolicName(), ioe);
+        String msg = "Unable to read configuration from bundle: " + bundle.getSymbolicName();
+        consoleLogger.warn(msg, ioe);
+        logger.warn(msg, ioe);
       } catch (XmlException xmle) {
-        logger.warn("Unable to parse configuration from bundle: " + bundle.getSymbolicName(), xmle);
+        String msg = "Unable to parse configuration from bundle: " + bundle.getSymbolicName();
+        consoleLogger.warn(msg, xmle);
+        logger.warn(msg, xmle);
       } catch (ConfigurationSetupException cse) {
-        logger.warn("Unable to load configuration from bundle: " + bundle.getSymbolicName(), cse);
+        String msg = "Unable to load configuration from bundle: " + bundle.getSymbolicName();
+        consoleLogger.warn(msg, cse);
+        logger.warn(msg, cse);
       } finally {
         if (is != null) {
           IOUtils.closeQuietly(is);
