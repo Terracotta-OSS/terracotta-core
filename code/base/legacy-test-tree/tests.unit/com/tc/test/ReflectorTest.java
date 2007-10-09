@@ -38,12 +38,14 @@ public class ReflectorTest extends TestCase {
     }
 
     if (brokenLinks.size() > 0) {
+      StringBuffer keys = new StringBuffer();
       System.err.println("Broken links:");
       for (Iterator it = brokenLinks.entrySet().iterator(); it.hasNext();) {
         Map.Entry e = (Map.Entry) it.next();
         System.err.println(e.getKey() + " = " + e.getValue());
+        keys.append((String)e.getKey()).append("\n");
       }
-      fail("Broken links found on reflector. Please let Orion or Fiona know.");
+      fail("Broken links found on reflector. Please let Orion or Fiona know.\n" + keys.toString());
     }
   }
 
