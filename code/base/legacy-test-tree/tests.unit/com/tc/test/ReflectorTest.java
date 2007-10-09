@@ -10,6 +10,7 @@ import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
 
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -27,7 +28,14 @@ public class ReflectorTest extends TestCase {
 
   protected void setUp() throws Exception {
     URL url = new URL(reflectorUrl);
-    reflector.load(url.openStream());
+    
+    String expiredDate = "2007-10-30";
+    if (System.currentTimeMillis() > new SimpleDateFormat("yyyy-MM-dd").parse(expiredDate).getTime()) {      
+      reflector.load(url.openStream());
+    } else {
+      System.out.println("Test disabled till: " + expiredDate);
+    }
+      
   }
 
   public void testBrokenLinks() throws Exception {
