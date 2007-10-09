@@ -495,7 +495,20 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       ObjectID id = (ObjectID) i.next();
       ManagedObjectReference ref = (ManagedObjectReference) references.remove(id);
       if (ref != null) {
-        Assert.assertFalse(ref.isReferenced() || ref.isNew());
+        Assert.assertFalse(ref.isNew());
+        while (ref.isReferenced()) {
+          // This is possible if the cache manager is evicting this *unreachable* object or somehow the admin console is
+          // looking up this object.
+          logger.warn("Reference : " + ref + " was referenced. So waiting to remove !");
+          // reconcile
+          references.put(id, ref);
+          try {
+            wait();
+          } catch (InterruptedException e) {
+            throw new AssertionError(e);
+          }
+          ref = (ManagedObjectReference) references.remove(id);
+        }
         evictionPolicy.remove(ref);
       }
     }
