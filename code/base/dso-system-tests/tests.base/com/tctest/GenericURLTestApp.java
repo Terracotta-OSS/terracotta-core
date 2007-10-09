@@ -17,7 +17,7 @@ import java.util.List;
 public class GenericURLTestApp extends GenericTestApp {
   public final static String URL_SPEC1 = "https://www.terracotta.org/path?param1=val1&param2=val2;test#reference";
   public final static String URL_SPEC2 = "http://www.terracottatech.com:8081";
-  public final static String URL_SPEC3 = "http://www.apple.com#ref";
+  public final static String URL_SPEC3 = "http://user:pass@www.apple.com#ref";
   
   public GenericURLTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider, URL.class);
