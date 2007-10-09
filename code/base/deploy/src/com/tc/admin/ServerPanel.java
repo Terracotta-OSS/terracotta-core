@@ -41,6 +41,7 @@ public class ServerPanel extends XContainer {
   static private ImageIcon        m_disconnectIcon;
   private Container               m_runtimeInfoPanel;
   private StatusView              m_statusView;
+  private JButton                 m_shutdownButton;
   private ProductInfoPanel        m_productInfoPanel;
   private ProductInfoPanel        m_altProductInfoPanel;    // Displayed if the RuntimeInfoPanel is not.
   private XObjectTable            m_clusterMemberTable;
@@ -64,6 +65,7 @@ public class ServerPanel extends XContainer {
     m_connectButton = (JButton) findComponent("ConnectButton");
     m_runtimeInfoPanel = (Container) findComponent("RuntimeInfoPanel");
     m_statusView = (StatusView) findComponent("StatusIndicator");
+    m_shutdownButton = (JButton) findComponent("ShutdownButton");
     m_productInfoPanel = (ProductInfoPanel) findComponent("ProductInfoPanel");
     m_clusterMemberTable = (XObjectTable) findComponent("ClusterMembersTable");
     m_clusterMemberTableModel = new ClusterMemberTableModel();
@@ -114,6 +116,8 @@ public class ServerPanel extends XContainer {
     m_hostField.setText(m_serverNode.getHost());
     m_portField.setText(Integer.toString(m_serverNode.getPort()));
 
+    m_shutdownButton.setAction(m_serverNode.getShutdownAction());
+    
     setupConnectButton();
   }
 

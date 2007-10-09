@@ -40,6 +40,7 @@ import javax.swing.Icon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
 import javax.swing.JTree;
@@ -235,12 +236,16 @@ public class ServerNode extends ComponentNode
     m_popupMenu.add(m_connectAction);
     m_popupMenu.add(m_disconnectAction);
     m_popupMenu.add(new JSeparator());
-    // m_popupMenu.add(m_shutdownAction);
+    m_popupMenu.add(m_shutdownAction);
     m_popupMenu.add(m_deleteAction);
     m_popupMenu.add(new JSeparator());
 
     m_popupMenu.add(m_autoConnectMenuItem = new JCheckBoxMenuItem(m_autoConnectAction));
     m_autoConnectMenuItem.setSelected(autoConnect);
+  }
+  
+  ShutdownAction getShutdownAction() {
+    return m_shutdownAction;
   }
   
   void setVersionMismatchDialog(JDialog dialog) {
@@ -453,6 +458,17 @@ public class ServerNode extends ComponentNode
   }
 
   void shutdown() {
+    AdminClientPanel topPanel = (AdminClientPanel) m_serverPanel.getAncestorOfClass(AdminClientPanel.class);
+    Frame frame = (Frame) topPanel.getAncestorOfClass(java.awt.Frame.class);
+    String msg = "Are you sure you want to shutdown '"+this+"'?";
+    
+    int result = JOptionPane.showConfirmDialog(frame, msg, frame.getTitle(), JOptionPane.OK_CANCEL_OPTION);
+    if(result == JOptionPane.OK_OPTION) {
+      doShutdown();
+    }
+  }
+
+  void doShutdown() {
     try {
       ConnectionContext cntx = getConnectionContext();
       ObjectName serverInfo = getServerInfo(cntx);
@@ -462,7 +478,7 @@ public class ServerNode extends ComponentNode
       m_acc.log(e);
     }
   }
-
+  
   public Icon getIcon() {
     return ServersHelper.getHelper().getServerIcon();
   }
@@ -506,7 +522,7 @@ public class ServerNode extends ComponentNode
     }
   }
 
-  private class ShutdownAction extends XAbstractAction {
+  private class ShutdownAction extends XAbstractAction implements Runnable {
     ShutdownAction() {
       super("Shutdown", ServersHelper.getHelper().getShutdownIcon());
 
@@ -514,8 +530,12 @@ public class ServerNode extends ComponentNode
       setEnabled(false);
     }
 
-    public void actionPerformed(ActionEvent ae) {
+    public void run() {
       shutdown();
+    }
+
+    public void actionPerformed(ActionEvent ae) {
+      SwingUtilities.invokeLater(this);
     }
   }
 
@@ -583,8 +603,8 @@ public class ServerNode extends ComponentNode
 
   void handleStarting() {
     m_acc.controller.nodeChanged(ServerNode.this);
-    m_serverPanel.started();
     m_shutdownAction.setEnabled(false);
+    m_serverPanel.started();
   }
 
   SynchronizedBoolean m_tryAddingDSONode = new SynchronizedBoolean(false);
@@ -624,8 +644,8 @@ public class ServerNode extends ComponentNode
   void handlePassiveUninitialized() {
     try {
       tryAddDSONode();
-      m_serverPanel.passiveUninitialized();
       m_shutdownAction.setEnabled(false);
+      m_serverPanel.passiveUninitialized();
     } catch(Exception e) {
       // just wait for disconnect message to come in
     }
@@ -634,8 +654,8 @@ public class ServerNode extends ComponentNode
   void handlePassiveStandby() {
     try {
       tryAddDSONode();
-      m_serverPanel.passiveStandby();
       m_shutdownAction.setEnabled(true);
+      m_serverPanel.passiveStandby();
     } catch (Exception e) {
       // just wait for disconnect message to come in
     }
@@ -644,8 +664,8 @@ public class ServerNode extends ComponentNode
   void handleActivation() {
     try {
       tryAddDSONode();
-      m_serverPanel.activated();
       m_shutdownAction.setEnabled(true);
+      m_serverPanel.activated();
     } catch (Exception e) {
       // just wait for disconnect message to come in
     }
@@ -749,10 +769,10 @@ public class ServerNode extends ComponentNode
       remove(i);
     }
 
+    m_shutdownAction.setEnabled(false);
     m_serverPanel.disconnected();
     m_acc.controller.nodeStructureChanged(ServerNode.this);
     m_acc.controller.select(this);
-    m_shutdownAction.setEnabled(false);
   }
 
   Color getServerStatusColor() {
