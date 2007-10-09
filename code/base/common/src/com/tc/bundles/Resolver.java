@@ -5,6 +5,7 @@
 package com.tc.bundles;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Version;
 
@@ -174,8 +175,10 @@ public class Resolver {
     for (int i = repositories.length - 1; i >= 0; i--) {
       try {
         final URL url = new URL(repositories[i].toString() + (repositories[i].toString().endsWith("/") ? "" : "/"));
-        final File directory = FileUtils.toFile(url);
-
+        File directory = FileUtils.toFile(url);
+        if(!StringUtils.isBlank(groupId)) {
+          directory = new File(directory, groupId.replace('.', File.separatorChar));
+        }
         // ignore non-existent locations
         if (!directory.exists()) continue;
 

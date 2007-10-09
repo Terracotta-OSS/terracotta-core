@@ -76,9 +76,10 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
       return;
     }
 
-    info(Message.STARTING_BUNDLE, new Object[] { bundle.getSymbolicName() });    
+    if (logger.isDebugEnabled()) {
+      info(Message.STARTING_BUNDLE, new Object[] { bundle.getSymbolicName() });
+    }
     framework.startBundle(bundle.getBundleId());
-    info(Message.BUNDLE_STARTED, new Object[] { bundle.getSymbolicName() });
     Assert.assertEquals(bundle.getState() & Bundle.ACTIVE, bundle.getState());
     handler.callback(bundle);
   }
@@ -95,7 +96,7 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
         framework.uninstallBundle(id);
         final File bundleFile = new File(new URI(location.toString()));
         warn(Message.WARN_SKIPPED_FILE_INSTALLATION, new Object[] { bundleFile.getName() });
-      } else {
+      } else if (logger.isDebugEnabled()) {
         info(Message.BUNDLE_INSTALLED, new Object[] { symname });
       }
     } catch (URISyntaxException e) {
@@ -110,7 +111,9 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
       info(Message.REGISTERING_SERVICE, new Object[] { serviceObject.getClass().getName(), serviceProps });
     }
     framework.getSystemBundleContext().registerService(serviceObject.getClass().getName(), serviceObject, serviceProps);
-    info(Message.SERVICE_REGISTERED, new Object[] { serviceObject.getClass().getName() });
+    if (logger.isDebugEnabled()) {
+      info(Message.SERVICE_REGISTERED, new Object[] { serviceObject.getClass().getName() });
+    }
   }
 
   public void registerService(final String serviceName, final Object serviceObject, final Dictionary serviceProps) throws BundleException {
@@ -118,7 +121,9 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
       info(Message.REGISTERING_SERVICE, new Object[] { serviceName, serviceProps });
     }
     framework.getSystemBundleContext().registerService(serviceName, serviceObject, serviceProps);
-    info(Message.SERVICE_REGISTERED, new Object[] { serviceName });
+    if (logger.isDebugEnabled()) {
+      info(Message.SERVICE_REGISTERED, new Object[] { serviceName });
+    }
   }
 
   public ServiceReference[] getAllServiceReferences(String clazz, java.lang.String filter)

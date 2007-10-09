@@ -41,7 +41,7 @@ public abstract class EhcacheGlobalEvictionTestBase extends ServerCrashingTestBa
     String barrierClassName = CyclicBarrier.class.getName();
 
     L1ConfigBuilder l1Config = cb.getClient();
-    l1Config.addModule("clustered-ehcache-1.2.4", "1.0.0");
+    l1Config.addModule("clustered-ehcache-1.2.4", "1.0.0.SNAPSHOT");
 
     LockConfigBuilder lock1 = new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
     lock1.setMethodExpression("* " + testClassName + "*.*(..)");

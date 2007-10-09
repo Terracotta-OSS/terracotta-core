@@ -15,8 +15,6 @@ import org.osgi.framework.ServiceReference;
 import com.tc.bundles.EmbeddedOSGiEventHandler;
 import com.tc.bundles.EmbeddedOSGiRuntime;
 import com.tc.bundles.Resolver;
-import com.tc.bundles.exception.InvalidBundleManifestException;
-import com.tc.bundles.exception.MissingBundleException;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
@@ -98,18 +96,6 @@ public class ModulesLoader {
         if (!forBootJar) {
           getModulesCustomApplicatorSpecs(osgiRuntime, configHelper);
         }
-      } catch (MissingBundleException mbe) {
-        consoleLogger.fatal(mbe.getMessage() + " - unable to initialize modules, shutting down. See log for details.");
-        shutdownAndExit(osgiRuntime, mbe);
-      } catch (InvalidBundleManifestException ibme) {
-        consoleLogger.fatal(ibme.getMessage() + " - unable to initialize modules, shutting down. See log for details.");
-        shutdownAndExit(osgiRuntime, ibme);
-      } catch (BundleException be) {
-        consoleLogger.fatal(be.getMessage() + " - unable to initialize modules, shutting down. See log for details.");
-        shutdownAndExit(osgiRuntime, be);
-      } catch (InvalidSyntaxException ise) {
-        consoleLogger.fatal(ise.getMessage() + " - unable to initialize modules, shutting down. See log for details.");
-        shutdownAndExit(osgiRuntime, ise);
       } catch (Exception e) {
         throw new RuntimeException("Unable to create runtime for plugins", e);
       } finally {
@@ -118,13 +104,6 @@ public class ModulesLoader {
         }
       }
     }
-  }
-
-  private static void shutdownAndExit(final EmbeddedOSGiRuntime osgiRuntime, final Throwable cause) {
-    cause.printStackTrace();
-    logger.fatal(cause.getMessage(), cause);
-    shutdown(osgiRuntime);
-    System.exit(-1);
   }
 
   private static void shutdown(final EmbeddedOSGiRuntime osgiRuntime) {

@@ -84,7 +84,7 @@ public final class BundleSpec {
     this.symbolicName = data[0];
     for (int i = 1; i < data.length; i++) {
       final String[] pairs = data[i].replaceAll(" ", "").split(":=");
-      attributes.put(pairs[0], pairs[1]);
+      attributes.put(pairs[0], pairs[1].replaceAll("\\\"", ""));
     }
   }
 
@@ -140,7 +140,7 @@ public final class BundleSpec {
     if (spec == null) { return true; }
 
     final Version target = new Version(version);
-    VersionRange range = new VersionRange(spec.replaceAll("\\\"", ""));
+    VersionRange range = new VersionRange(spec);
 
     return range.withinRange(target);
   }
