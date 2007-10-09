@@ -4,6 +4,9 @@
 # All rights reserved
 #
 
+require 'net/http'
+require 'uri'
+
 # Adds methods to BuildSubtree that allow you to run JUnit tests on it. This is probably
 # the most complex single file in the entire buildsystem.
 
@@ -464,44 +467,52 @@ class SubtreeTestRun
     end
 
     def download_appserver_if_needed
-      appserver_home = @config_source['tc.tests.configuration.appserver.home']
-      if requires_container?
-        if appserver_home
-          if File.exist?(appserver_home)
-            puts "** Appserver home is specified #{appserver_home}"
-            return
-          else
-            fail("Appserver home specified [#{appserver_home}] but path not found!")
-          end
-        end
-
-        url = @config_source['tc.tests.configuration.appserver.repository']
-        fail("Neither [tc.tests.configuration.appserver.home] OR [tc.tests.configuration.appserver.repository] was specified!") unless url
-
-        appserver = @config_source['tc.tests.configuration.appserver.factory.name'] + "-" +
-                    @config_source['tc.tests.configuration.appserver.major-version'] + "." +
-                    @config_source['tc.tests.configuration.appserver.minor-version']
-
-        cache_location = @build_environment.os_type(:nice) =~ /windows/i ? 'c:/temp/appservers' : "#{ENV['HOME']}/.tc/appservers"
-
-        appserver_home = File.join(cache_location, appserver)
+      return unless requires_container?
+      appserver_home = @config_source['tc.tests.configuration.appserver.home']      
+      if appserver_home
         if File.exist?(appserver_home)
-          puts "** Found cached version of #{appserver} at #{cache_location}"
+          puts "** Appserver home is specified #{appserver_home}"
+          return
         else
-          FilePath.new(cache_location).ensure_directory
-          os_name = @build_environment.os_type(:nice).downcase
-          os_name = "win32" if os_name =~ /windows/
-          url = url + "/" + @config_source['tc.tests.configuration.appserver.factory.name'] + "/" + os_name + "/" + appserver + ".zip"
-          appserver_zip_path = appserver_home + ".zip"
-          @ant.get(:src => url, :dest => appserver_zip_path)
-          # we don't use @ant.unzip because it doesn't preserve executable bit of .sh files
-          @ant.exec(:executable => "unzip", :dir => cache_location) do
-            @ant.arg(:value => appserver_zip_path)
-          end
-          @ant.delete(:file => appserver_zip_path)
+          fail("Appserver home specified [#{appserver_home}] but path not found!")
         end
-        @internal_config_source['tc.tests.configuration.appserver.home'] = appserver_home
       end
+
+      urls = @config_source['tc.tests.configuration.appserver.repository'].to_s.split(/,/)      
+      fail("Neither [tc.tests.configuration.appserver.home] OR [tc.tests.configuration.appserver.repository] was specified!") unless urls
+
+      appserver = @config_source['tc.tests.configuration.appserver.factory.name'] + "-" +
+                  @config_source['tc.tests.configuration.appserver.major-version'] + "." +
+                  @config_source['tc.tests.configuration.appserver.minor-version']
+
+      cache_location = @build_environment.os_type(:nice) =~ /windows/i ? 'c:/temp/appservers' : "#{ENV['HOME']}/.tc/appservers"
+
+      appserver_home = File.join(cache_location, appserver)
+      if File.exist?(appserver_home)
+        puts "** Found cached version of #{appserver} at #{cache_location}"
+      else
+        FilePath.new(cache_location).ensure_directory
+        os_name = @build_environment.os_type(:nice).downcase
+        os_name = "win32" if os_name =~ /windows/
+        # pick a URL that is live
+        url = ''
+        urls.each do | u |          
+          url = "#{u}/#{@config_source['tc.tests.configuration.appserver.factory.name']}/#{os_name}/#{appserver}.zip"          
+          break if isLive?(url)          
+        end
+        
+        puts "Downloading appserver from: #{url}"
+        fail("Can't find any URL that container appserver #{appserver}") unless url
+        
+        appserver_zip_path = appserver_home + ".zip"
+        @ant.get(:src => url, :dest => appserver_zip_path)
+        # we don't use @ant.unzip because it doesn't preserve executable bit of .sh files
+        @ant.exec(:executable => "unzip", :dir => cache_location) do
+          @ant.arg(:value => appserver_zip_path)
+        end
+        @ant.delete(:file => appserver_zip_path)
+      end
+      @internal_config_source['tc.tests.configuration.appserver.home'] = appserver_home      
     end
 
     # The list of system properties that *must* be set directly on the spawned JVM, rather than
@@ -930,14 +941,12 @@ END
         out
     end
 
-    # do a "ps auxwwww | grep java"
-    # to be used in monkey environment ONLY
-    def ps_grep_java
-        java_processes = case @build_environment.os_type(:nice)
-            when /windows/i: Registry[:platform].exec("#{Registry[:basedir]}/common/lib.tests.base.native/Windows/pv.exe", "-l", "java.exe")
-            when /solaris/i: `/usr/ucb/ps auxwwww | grep java | grep -v grep`
-            else `ps auxwwww | grep java | grep -v grep`
-        end
-        java_processes
+    def isLive?(url_string)
+      url = URI.parse(url_string)
+      response = nil
+      Net::HTTP.start(url.host, url.port) { |http|
+        response = http.head(url.path.size > 0 ? url.path : "/")
+      }  
+      return response.code == "200"
     end
 end
