@@ -88,7 +88,6 @@ public class DNAEncodingImpl implements DNAEncoding {
   private static final byte          TYPE_ID_CURRENCY                     = 24;
   private static final byte          TYPE_ID_STRING_COMPRESSED            = 25;
   private static final byte          TYPE_ID_URL                          = 26;
-  private static final byte          TYPE_ID_URL_COMPRESSED               = 27;
 
   private static final byte          ARRAY_TYPE_PRIMITIVE                 = 1;
   private static final byte          ARRAY_TYPE_NON_PRIMITIVE             = 2;
@@ -243,7 +242,14 @@ public class DNAEncodingImpl implements DNAEncoding {
         output.writeShort(((Short) value).shortValue());
         break;
       case LiteralValues.STRING:
-        encodeAsString(TYPE_ID_STRING, TYPE_ID_STRING_COMPRESSED, output, (String)value);
+        String s = (String)value;
+        if (STRING_COMPRESSION_ENABLED && s.length() >= STRING_COMPRESSION_MIN_SIZE) {
+          output.writeByte(TYPE_ID_STRING_COMPRESSED);
+          writeCompressedString(s, output);
+        } else {
+          output.writeByte(TYPE_ID_STRING);
+          writeString(s, output);
+        }
         break;
       case LiteralValues.STRING_BYTES:
         UTF8ByteDataHolder utfBytes = (UTF8ByteDataHolder) value;
@@ -277,23 +283,21 @@ public class DNAEncodingImpl implements DNAEncoding {
         encodeArray(value, output);
         break;
       case LiteralValues.URL:
-        encodeAsString(TYPE_ID_URL, TYPE_ID_URL_COMPRESSED, output, ((URL)value).toExternalForm());
+        {
+          URL url = (URL)value;
+          output.writeByte(TYPE_ID_URL);
+          output.writeString(url.getProtocol());
+          output.writeString(url.getHost());
+          output.writeInt(url.getPort());
+          output.writeString(url.getFile());
+          output.writeString(url.getRef());
+        }
         break;
       default:
         throw Assert.failure("Illegal type (" + type + "):" + value);
     }
 
     // unreachable
-  }
-
-  private void encodeAsString(byte typeRegular, byte typeCompressed, TCDataOutput output, String s) {
-    if (STRING_COMPRESSION_ENABLED && s.length() >= STRING_COMPRESSION_MIN_SIZE) {
-      output.writeByte(typeCompressed);
-      writeCompressedString(s, output);
-    } else {
-      output.writeByte(typeRegular);
-      writeString(s, output);
-    }
   }
 
   private void writeStackTraceElement(StackTraceElement ste, TCDataOutput output) {
@@ -428,9 +432,17 @@ public class DNAEncodingImpl implements DNAEncoding {
         byte[] b2 = readByteArray(input);
         return new BigDecimal(new String(b2));
       case TYPE_ID_URL:
-        return new URL(readString(input, type).toString());
-      case TYPE_ID_URL_COMPRESSED:
-        return new URL(readCompressedString(input).toString());
+        {        
+          String protocol = input.readString();
+          String host = input.readString();
+          int port = input.readInt();
+          String file = input.readString();
+          String ref = input.readString();
+          if (ref != null) {
+            file = file+"#"+ref;
+          }
+          return new URL(protocol, host, port, file);
+        }
       default:
         throw Assert.failure("Illegal type (" + type + ")");
     }

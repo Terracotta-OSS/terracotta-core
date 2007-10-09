@@ -11,20 +11,30 @@ import com.tc.util.Assert;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GenericURLTestApp extends GenericTestApp {
-  public final static String URL_SPEC = "https://www.terracotta.org/path?param1=val1&param2=val2;test";
+  public final static String URL_SPEC1 = "https://www.terracotta.org/path?param1=val1&param2=val2;test#reference";
+  public final static String URL_SPEC2 = "http://www.terracottatech.com:8081";
+  public final static String URL_SPEC3 = "http://www.apple.com#ref";
   
   public GenericURLTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider, URL.class);
   }
 
   protected Object getTestObject(String testName) {
-    return sharedMap.get("url");
+    List list = (List) sharedMap.get("list");
+    return list.iterator();
   }
 
   protected void setupTestObject(String testName) {
-    sharedMap.put("url", createURL(URL_SPEC));
+    List list = new ArrayList();
+    list.add(createURL(URL_SPEC1));
+    list.add(createURL(URL_SPEC2));
+    list.add(createURL(URL_SPEC3));
+    
+    sharedMap.put("list", list);
   }
   
   private URL createURL(String url) {
@@ -37,18 +47,14 @@ public class GenericURLTestApp extends GenericTestApp {
 
   void testSharedURL(URL url, boolean validate) {
     if (validate) {
-      assertEqualURL(createURL(URL_SPEC), url);
+      Assert.assertTrue(createURL(URL_SPEC1).equals(url)
+                        || createURL(URL_SPEC2).equals(url)
+                        || createURL(URL_SPEC3).equals(url));
     } else {
       synchronized (url) {
-        System.out.println(url);
+        System.out.println("URL : "+url);
       }
     }
-  }
-  
-  private void assertEqualURL(URL expect, URL actual) {
-    Assert.assertNotNull(expect);
-    Assert.assertNotNull(actual);
-    Assert.assertEquals(expect, actual);
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
