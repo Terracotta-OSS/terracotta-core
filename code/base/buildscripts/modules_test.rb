@@ -495,13 +495,15 @@ class SubtreeTestRun
         os_name = @build_environment.os_type(:nice).downcase
         os_name = "win32" if os_name =~ /windows/
         # pick a URL that is live
-        url = ''
+        url = nil
         urls.each do | u |          
-          url = "#{u}/#{@config_source['tc.tests.configuration.appserver.factory.name']}/#{os_name}/#{appserver}.zip"          
-          break if isLive?(url)          
+          testurl = "#{u}/#{@config_source['tc.tests.configuration.appserver.factory.name']}/#{os_name}/#{appserver}.zip"          
+          if isLive?(testurl)
+            url = testurl
+            break
+          end
         end
         
-        puts "Downloading appserver from: #{url}"
         fail("Can't find any URL that container appserver #{appserver}") unless url
         
         appserver_zip_path = appserver_home + ".zip"
@@ -942,11 +944,15 @@ END
     end
 
     def isLive?(url_string)
-      url = URI.parse(url_string)
-      response = nil
-      Net::HTTP.start(url.host, url.port) { |http|
-        response = http.head(url.path.size > 0 ? url.path : "/")
-      }  
-      return response.code == "200"
+      begin
+        url = URI.parse(url_string)
+        response = nil
+        Net::HTTP.start(url.host, url.port) { |http|
+          response = http.head(url.path.size > 0 ? url.path : "/")
+        }  
+        return response.code == "200"
+      rescue
+        return false
+      end
     end
 end
