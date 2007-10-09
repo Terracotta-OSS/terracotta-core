@@ -24,7 +24,7 @@ import java.util.Date;
 import java.util.Map;
 
 /**
- * ChangeApplicator for HashSets.
+ * ChangeApplicator for Dates.
  */
 public class DateApplicator extends BaseApplicator {
 
