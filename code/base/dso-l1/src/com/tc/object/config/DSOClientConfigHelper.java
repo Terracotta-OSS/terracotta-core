@@ -33,7 +33,7 @@ import java.util.Map;
  */
 public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
-  Root[] getMissingRootDeclarations(ClassInfo classInfo);
+  String[] getMissingRootDeclarations(ClassInfo classInfo);
 
   boolean shouldBeAdapted(ClassInfo classInfo);
 

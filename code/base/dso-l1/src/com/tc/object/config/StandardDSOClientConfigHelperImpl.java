@@ -1194,7 +1194,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return false;
   }
 
-  public Root[] getMissingRootDeclarations(ClassInfo classInfo) {
+  public String[] getMissingRootDeclarations(ClassInfo classInfo) {
     final List missingRoots = new ArrayList();
     for (final Iterator i = roots.iterator(); i.hasNext();) {
       final Root root = (Root) i.next();
@@ -1211,9 +1211,13 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
         found = fieldInfo.getName().equals(fieldName);
       }
       
-      if (!found) missingRoots.add(root);
+      if (!found) {
+        final String declaration = root.getClassName() + "." + root.getFieldName();
+        missingRoots.add(declaration);
+        
+      }
     }
-    return (Root[])missingRoots.toArray(new Root[0]);
+    return (String[])missingRoots.toArray(new String[0]);
   }
 
   private void rewriteHashtableAutoLockSpecIfNecessary() {

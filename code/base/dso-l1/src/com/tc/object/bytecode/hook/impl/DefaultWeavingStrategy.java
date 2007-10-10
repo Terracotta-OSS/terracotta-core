@@ -41,7 +41,6 @@ import com.tc.object.bytecode.RenameClassesAdapter;
 import com.tc.object.bytecode.SafeSerialVersionUIDAdder;
 import com.tc.object.config.ClassReplacementMapping;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.Root;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.InstrumentationLoggerImpl;
 import com.tc.util.AdaptedClassDumper;
@@ -135,10 +134,10 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
       final boolean hasCustomAdapter = m_configHelper.hasCustomAdapter(classInfo);
       
       // CDV-237
-      final Root[] missingRoots = m_configHelper.getMissingRootDeclarations(classInfo);
+      final String[] missingRoots = m_configHelper.getMissingRootDeclarations(classInfo);
       for (int i = 0; i < missingRoots.length; i++) {
-        String MESSAGE = "The field ''{0}'' was declared as root for class ''{1}'' but cannot be found.";
-        Object[] info  = { missingRoots[i].getFieldName(), missingRoots[i].getClassName() };
+        String MESSAGE = "Unable to resolve the root declaration ''{0}'' for class ''{1}''";
+        Object[] info  = { missingRoots[i], classInfo.getName() };
         String message = MessageFormat.format(MESSAGE, info);
         consoleLogger.warn(message);
       }

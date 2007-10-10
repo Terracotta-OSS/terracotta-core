@@ -42,8 +42,8 @@ import java.util.Map;
 
 public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper, DSOClientConfigHelper {
 
-  public Root[] getMissingRootDeclarations(ClassInfo classInfo) {
-    return new Root[0];
+  public String[] getMissingRootDeclarations(ClassInfo classInfo) {
+    return new String[0];
   }
 
   public void addAutoLockExcludePattern(String expression) {
