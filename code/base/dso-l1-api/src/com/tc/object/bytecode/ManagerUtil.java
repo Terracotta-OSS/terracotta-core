@@ -39,7 +39,7 @@ public class ManagerUtil {
     enabled = true;
   }
 
-  private static Manager getManager() {
+  public static Manager getManager() {
     if (!enabled) { return NULL_MANAGER; }
 
     if (ClassProcessorHelper.USE_GLOBAL_CONTEXT) {
