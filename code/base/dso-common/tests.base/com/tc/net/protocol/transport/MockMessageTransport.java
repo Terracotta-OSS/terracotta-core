@@ -20,7 +20,7 @@ public class MockMessageTransport implements MessageTransport {
   public NetworkLayer receiveLayer;
 
   public List listeners = new ArrayList();
-  
+
   public ConnectionID getConnectionId() {
     return this.connectionId;
   }
@@ -28,7 +28,7 @@ public class MockMessageTransport implements MessageTransport {
   public void addTransportListeners(List toAdd) {
     listeners.addAll(toAdd);
   }
-  
+
   public void addTransportListener(MessageTransportListener listener) {
     listeners.add(listener);
   }
@@ -36,7 +36,7 @@ public class MockMessageTransport implements MessageTransport {
   public void removeTransportListeners() {
     listeners.clear();
   }
-  
+
   public void setSendLayer(NetworkLayer layer) {
     throw new ImplementMe();
   }
@@ -67,16 +67,16 @@ public class MockMessageTransport implements MessageTransport {
 
   public void attachNewConnection(TCConnection connection) {
     throw new ImplementMe();
-    
+
   }
 
   public void receiveTransportMessage(WireProtocolMessage message) {
     throw new ImplementMe();
-    
+
   }
 
   public final NoExceptionLinkedQueue sendToConnectionCalls = new NoExceptionLinkedQueue();
-  
+
   public void sendToConnection(TCNetworkMessage message) {
     sendToConnectionCalls.put(message);
   }
@@ -87,5 +87,10 @@ public class MockMessageTransport implements MessageTransport {
 
   public TCSocketAddress getLocalAddress() {
     throw new ImplementMe();
+  }
+
+  public void setAllowConnectionReplace(boolean b) {
+    throw new ImplementMe();
+
   }
 }

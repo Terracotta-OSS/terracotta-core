@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2007 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2007 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test.proxyconnect;
 
@@ -11,48 +12,42 @@ import java.net.InetAddress;
 import java.lang.RuntimeException;
 
 public class ProxyConnectManagerImpl implements ProxyConnectManager {
-  private TCPProxy proxy = null;
-  private int proxyPort, dsoPort;
-  private static ProxyConnectManagerImpl mgr = null;
-  private int downtime = 100;
-  private int waittime = 20 * 1000;
-  private Thread td = null;
-  private boolean toStop = false;
-  
-  private ProxyConnectManagerImpl() {
+  private TCPProxy         proxy    = null;
+  private int              proxyPort, dsoPort;
+  private int              downtime = 100;
+  private int              waittime = 20 * 1000;
+  private Thread           td       = null;
+  private volatile boolean toStop   = false;
+
+  public ProxyConnectManagerImpl() {
     PortChooser pc = new PortChooser();
     proxyPort = pc.chooseRandomPort();
     dsoPort = pc.chooseRandomPort();
   }
-  
-  public static ProxyConnectManagerImpl getManager() {
-    if (mgr == null) mgr = new ProxyConnectManagerImpl();
-    return(mgr);
-  }
-  
+
   public void setupProxy() {
     try {
       proxy = new TCPProxy(proxyPort, InetAddress.getLocalHost(), dsoPort, 0L, false, new File("."));
       proxy.setReuseAddress(true);
     } catch (Exception x) {
-      throw new RuntimeException("setupProxy failed! "+x);
+      throw new RuntimeException("setupProxy failed! " + x);
     }
   }
-  
+
   public void setProxyPort(int port) {
     proxyPort = port;
   }
-  
+
   public int getProxyPort() {
-    return(proxyPort);
+    return (proxyPort);
   }
-  
+
   public void setDsoPort(int port) {
     dsoPort = port;
   }
-  
+
   public int getDsoPort() {
-    return(dsoPort);
+    return (dsoPort);
   }
 
   public void proxyDown() {
@@ -60,7 +55,7 @@ public class ProxyConnectManagerImpl implements ProxyConnectManager {
     proxy.fastStop();
   }
 
-  public void proxyUp(){
+  public void proxyUp() {
     // wait until backend is ready
     int i = 0;
     while (!proxy.probeBackendConnection()) {
@@ -69,34 +64,32 @@ public class ProxyConnectManagerImpl implements ProxyConnectManager {
       } catch (Exception e) {
         //
       }
-      if (i++ > 600) {
-        throw new RuntimeException("L2 is not ready!");
-      }
+      if (i++ > 600) { throw new RuntimeException("L2 is not ready!"); }
     }
 
     try {
-      System.out.println("XXX start proxy at "+proxyPort+" to "+ dsoPort);
+      System.out.println("XXX start proxy at " + proxyPort + " to " + dsoPort);
       proxy.start();
     } catch (Exception x) {
-      throw new RuntimeException("proxyUp failed! "+x);
+      throw new RuntimeException("proxyUp failed! " + x);
     }
   }
-  
+
   public void stopProxyTest() {
     toStop = true;
     proxyDown();
-    if(td.isAlive()) td.interrupt();
+    if (td.isAlive()) td.interrupt();
     while (td.isAlive()) {
       try {
         Thread.sleep(10);
-      } catch(Exception x) {
+      } catch (Exception x) {
         //
       }
-      if(td.isAlive()) td.interrupt();
+      if (td.isAlive()) td.interrupt();
     }
     System.out.println("XXX proxy thread stopped");
   }
-  
+
   public void startProxyTest() {
     toStop = false;
     td = new Thread(new Runnable() {
@@ -106,44 +99,52 @@ public class ProxyConnectManagerImpl implements ProxyConnectManager {
     });
     td.start();
   }
-  
+
   private void runProxy() {
-    if(toStop) return;
-    
+    if (toStop) return;
+
     try {
       Thread.sleep(waittime);
     } catch (Exception x) {
-      //throw new RuntimeException("proxy wait time failed! " + x);
-      //return;
+      // throw new RuntimeException("proxy wait time failed! " + x);
+      // return;
     }
-    if(toStop) return;
+    if (toStop) return;
     proxyDown();
-    
+
     try {
       Thread.sleep(downtime);
     } catch (Exception x) {
-      //throw new RuntimeException("proxy down time failed! " + x);
-      //return;
+      // throw new RuntimeException("proxy down time failed! " + x);
+      // return;
     }
-    if(toStop) return;
-    
+    if (toStop) return;
+
     proxyUp();
   }
 
   public void setProxyDownTime(int milliseconds) {
     downtime = milliseconds;
   }
-  
+
   public int getProxyDownTime() {
-    return(downtime);
+    return (downtime);
   }
 
   public void setProxyWaitTime(int milliseconds) {
     waittime = milliseconds;
   }
-  
+
   public int getProxyWaitTime() {
-    return(waittime);
+    return (waittime);
+  }
+
+  public void close() {
+    this.proxy.stop();
+  }
+
+  public void closeClientConnections() {
+    this.proxy.closeClientConnections(true, true);
   }
 
 }

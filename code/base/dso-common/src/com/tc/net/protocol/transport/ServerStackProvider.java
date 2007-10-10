@@ -9,6 +9,7 @@ import EDU.oswego.cs.dl.util.concurrent.ConcurrentHashMap;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.net.core.TCConnection;
+import com.tc.net.protocol.IllegalReconnectException;
 import com.tc.net.protocol.NetworkStackHarness;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
@@ -24,7 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Provides network statcks on the server side
+ * Provides network stacks on the server side
  */
 public class ServerStackProvider implements NetworkStackProvider, MessageTransportListener, ProtocolAdaptorFactory {
 
@@ -67,7 +68,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
   }
 
   public MessageTransport attachNewConnection(ConnectionID connectionId, TCConnection connection)
-      throws StackNotFoundException {
+      throws StackNotFoundException, IllegalReconnectException {
     Assert.assertNotNull(connection);
 
     final NetworkStackHarness harness;
@@ -226,7 +227,12 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
         return;
       }
 
-      this.transport = attachNewConnection(connectionId, syn.getSource());
+      try {
+        this.transport = attachNewConnection(connectionId, syn.getSource());
+      } catch (IllegalReconnectException e) {
+        logger.warn("Client attempting an illegal reconnect for id " + connectionId + ", " + syn.getSource());
+        return;
+      }
       connectionId = this.transport.getConnectionId();
       sendSynAck(connectionId, syn.getSource());
     }

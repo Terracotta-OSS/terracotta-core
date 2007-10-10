@@ -98,7 +98,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     if (msg.isSend() || msg.isAck()) {
       Assert.inv(!handshakeMode.get());
       Assert.inv(channelConnected.get());
-      if (sessionId != msg.getSessionId()) 
+      if (sessionId != msg.getSessionId())
         return; // drop bad message
       delivery.receive(msg);
     } else if (msg.isHandshake()) {
@@ -113,8 +113,8 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
         handshakeMode.set(false);
         if (!channelConnected.get()) {
           channelConnected.set(true);
-	  receiveLayer.notifyTransportConnected(this);
-	}
+    receiveLayer.notifyTransportConnected(this);
+  }
         reconnectMode.set(false);
       } else if (msg.getSessionId() == getSessionId()) {
         debugLog("A same-session client is trying to connect - reply OK");
@@ -126,8 +126,8 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
         delivery.receive(createHandshakeReplyOkMessage(msg.getAckSequence()));
         if (!channelConnected.get()) {
           channelConnected.set(true);
-	  receiveLayer.notifyTransportConnected(this);
-	}
+    receiveLayer.notifyTransportConnected(this);
+  }
         reconnectMode.set(false);
       } else {
         debugLog("A DIFF-session client is trying to connect - reply FAIL");
@@ -139,10 +139,10 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
         resetStack();
         delivery.resume();
         delivery.receive(reply);
-	if (!channelConnected.get()) {
+  if (!channelConnected.get()) {
           channelConnected.set(true);
           receiveLayer.notifyTransportConnected(this);
-	}
+  }
         reconnectMode.set(false);
       }
     } else if (msg.isHandshakeReplyOk()) {
@@ -158,7 +158,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
       delivery.receive(msg);
       if (!channelConnected.get()) {
         channelConnected.set(true);
-	receiveLayer.notifyTransportConnected(this);
+  receiveLayer.notifyTransportConnected(this);
       }
       reconnectMode.set(false);
     } else if (msg.isHandshakeReplyFail()) {
@@ -178,7 +178,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
       delivery.receive(msg);
       if (!channelConnected.get()) {
         channelConnected.set(true);
-	receiveLayer.notifyTransportConnected(this);
+  receiveLayer.notifyTransportConnected(this);
       }
     } else if (msg.isGoodbye()) {
       debugLog("Got GoodBye message - shutting down");
@@ -344,6 +344,10 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     throw new AssertionError("Must not call!");
   }
 
+  public void setAllowConnectionReplace(boolean allow) {
+    throw new AssertionError("Must not call!");
+  }
+
   public ConnectionID getConnectionId() {
     return sendLayer != null ? sendLayer.getConnectionId() : null;
   }
@@ -398,5 +402,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     r.setSeed(System.currentTimeMillis());
     return ((short) r.nextInt(Short.MAX_VALUE));
   }
+
+
 
 }

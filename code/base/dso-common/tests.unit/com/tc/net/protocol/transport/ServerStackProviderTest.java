@@ -7,6 +7,7 @@ package com.tc.net.protocol.transport;
 import com.tc.logging.TCLogging;
 import com.tc.net.core.MockTCConnection;
 import com.tc.net.core.TestTCConnection;
+import com.tc.net.protocol.IllegalReconnectException;
 import com.tc.net.protocol.StackNotFoundException;
 import com.tc.net.protocol.transport.MockTransportHandshakeMessageFactory.CallContext;
 import com.tc.test.TCTestCase;
@@ -139,10 +140,10 @@ public class ServerStackProviderTest extends TCTestCase {
 
     // transport disconnect event doesnt close client
     assertEquals(0, connectionPolicy.clientDisconnected);
-    
-    //send transport close event
+
+    // send transport close event
     provider.notifyTransportClosed(transport);
-    
+
     // make sure that the connection policy is decremented
     assertEquals(1, connectionPolicy.clientDisconnected);
 
@@ -200,6 +201,8 @@ public class ServerStackProviderTest extends TCTestCase {
       provider.attachNewConnection(ConnectionID.NULL_ID, conn);
     } catch (StackNotFoundException e) {
       fail("was virgin, should not throw exception");
+    } catch (IllegalReconnectException e) {
+      fail("was virgin, should not throw exception");
     }
 
     assertFalse(harness.wasAttachNewConnectionCalled);
@@ -212,6 +215,8 @@ public class ServerStackProviderTest extends TCTestCase {
     try {
       provider.attachNewConnection(this.connId, conn);
     } catch (StackNotFoundException e) {
+      fail("was virgin, should not throw exception");
+    } catch (IllegalReconnectException e) {
       fail("was virgin, should not throw exception");
     }
 
@@ -228,9 +233,11 @@ public class ServerStackProviderTest extends TCTestCase {
       fail("was not virgin and had connId, but should not exist in provider");
     } catch (StackNotFoundException e) {
       // expected
+    } catch (IllegalReconnectException e) {
+      fail("unexpected exception: " + e);
     }
   }
-  
+
   private class TestConnectionIDFactory extends DefaultConnectionIdFactory {
 
     public synchronized ConnectionID nextConnectionId() {

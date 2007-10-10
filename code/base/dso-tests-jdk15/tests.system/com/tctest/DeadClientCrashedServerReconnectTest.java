@@ -21,6 +21,7 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.stats.DSOMBean;
+import com.tc.test.proxyconnect.ProxyConnectManager;
 import com.tc.test.proxyconnect.ProxyConnectManagerImpl;
 import com.tc.test.restart.RestartTestEnvironment;
 import com.tc.test.restart.RestartTestHelper;
@@ -59,7 +60,7 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
     int jmxPort = helper.getAdminPort();
     ServerControl server = helper.getServerControl();
 
-    ProxyConnectManagerImpl mgr = ProxyConnectManagerImpl.getManager();
+    ProxyConnectManager mgr = new ProxyConnectManagerImpl();
     mgr.setDsoPort(dsoPort);
     mgr.setProxyPort(proxyPort);
     mgr.setupProxy();

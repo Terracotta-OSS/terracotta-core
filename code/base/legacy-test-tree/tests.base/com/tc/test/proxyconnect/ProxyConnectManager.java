@@ -9,7 +9,7 @@ public interface ProxyConnectManager {
   void proxyUp();
   void startProxyTest();
   void stopProxyTest();
-  
+
   void setProxyPort(int port);
   int getProxyPort();
   void setDsoPort(int port);
@@ -18,5 +18,8 @@ public interface ProxyConnectManager {
   int getProxyDownTime();
   void setProxyWaitTime(int milliseconds);
   int getProxyWaitTime();
+
+  void close();
+  void closeClientConnections();
 
 }

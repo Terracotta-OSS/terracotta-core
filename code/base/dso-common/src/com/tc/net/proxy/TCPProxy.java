@@ -184,6 +184,21 @@ public class TCPProxy {
     closeAllConnections(waitDeadThread);
   }
 
+  public synchronized void closeClientConnections(boolean waitDeadThread, boolean split) {
+    Connection conns[];
+    synchronized (connections) {
+      conns = (Connection[]) connections.toArray(new Connection[] {});
+    }
+
+    for (int i = 0; i < conns.length; i++) {
+      try {
+        conns[i].closeClientHalf(waitDeadThread, split);
+      } catch (Exception e) {
+        log("Error closing client-side connection " + conns[i].toString(), e);
+      }
+    }
+  }
+
   synchronized void closeAllConnections(boolean waitDeadThread) {
     Connection conns[];
     synchronized (connections) {
@@ -412,6 +427,7 @@ public class TCPProxy {
     private long               proxyBytesIn  = 0;
     private final OutputStream clientLog;
     private final OutputStream proxyLog;
+    private volatile boolean   allowSplit    = false;
 
     Connection(Socket client, TCPProxy parent, boolean logData, File logDir) throws IOException {
       this.parent = parent;
@@ -469,13 +485,13 @@ public class TCPProxy {
 
       clientThread = new Thread(new Runnable() {
         public void run() {
-          runHalf(clientIs, proxyOs, true, clientLog);
+          runHalf(clientIs, proxyOs, true, clientLog, Connection.this.client);
         }
       }, "Client thread for connection " + client + " proxy to " + proxy);
 
       proxyThread = new Thread(new Runnable() {
         public void run() {
-          runHalf(proxyIs, clientOs, false, proxyLog);
+          runHalf(proxyIs, clientOs, false, proxyLog, proxy);
         }
       }, "Proxy thread for connection " + client + " proxy to " + proxy);
 
@@ -525,7 +541,7 @@ public class TCPProxy {
       }
     }
 
-    private void runHalf(InputStream src, OutputStream dest, boolean isClientHalf, OutputStream log) {
+    private void runHalf(InputStream src, OutputStream dest, boolean isClientHalf, OutputStream log, Socket s) {
       byte buffer[] = new byte[4096];
 
       while (!stopConn) {
@@ -555,7 +571,9 @@ public class TCPProxy {
 
         if (bytesRead < 0) {
           // delay();
-          close(true);
+          if (!allowSplit) {
+            close(true);
+          }
           return;
         }
 
@@ -567,7 +585,9 @@ public class TCPProxy {
             dest.write(buffer, 0, bytesRead);
             dest.flush();
           } catch (IOException ioe) {
-            close(true);
+            if (!allowSplit) {
+              close(true);
+            }
             return;
           }
         }
@@ -582,6 +602,53 @@ public class TCPProxy {
       }
     }
 
+    void closeClientHalf(boolean wait, boolean split) {
+      this.allowSplit = split;
+      try {
+        closeHalf(client, clientThread, clientLog, wait);
+      } catch (Throwable t) {
+        t.printStackTrace();
+      }
+
+    }
+
+    void closeProxyHalf(boolean wait, boolean split) {
+      this.allowSplit = split;
+      try {
+        closeHalf(proxy, proxyThread, proxyLog, wait);
+      } catch (Throwable t) {
+        t.printStackTrace();
+      }
+    }
+
+    private static void closeHalf(Socket socket, Thread thread, OutputStream out, boolean wait) {
+      try {
+        try {
+          if (socket != null) socket.close();
+        } catch (IOException e) {
+          // ignore
+        }
+
+        thread.interrupt();
+
+        if (wait) {
+          try {
+            thread.join(1000);
+          } catch (InterruptedException ie) {
+            // ignore
+          }
+        }
+      } finally {
+        try {
+          if (out != null) {
+            out.close();
+          }
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+    }
+
     void close(boolean waitDeadThread) {
       synchronized (closeLock) {
         if (stopConn) return;
@@ -589,51 +656,10 @@ public class TCPProxy {
       }
 
       try {
-        try {
-          if (client != null) client.close();
-        } catch (IOException e) {
-          // ignore
-        }
-
-        try {
-          if (proxy != null) proxy.close();
-        } catch (IOException e) {
-          // ignore
-        }
-
-        clientThread.interrupt();
-        proxyThread.interrupt();
-
-        if (waitDeadThread) {
-          try {
-            clientThread.join(1000);
-          } catch (InterruptedException ie) {
-            // ignore
-          }
-          try {
-            proxyThread.join(1000);
-          } catch (InterruptedException ie) {
-            // ignore
-          }
-        }
+        closeClientHalf(waitDeadThread, false);
+        closeProxyHalf(waitDeadThread, false);
       } finally {
         parent.deregister(this);
-
-        try {
-          if (clientLog != null) {
-            clientLog.close();
-          }
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-
-        try {
-          if (proxyLog != null) {
-            proxyLog.close();
-          }
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
       }
     }
   }

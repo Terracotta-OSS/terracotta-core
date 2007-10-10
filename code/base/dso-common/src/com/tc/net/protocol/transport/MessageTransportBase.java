@@ -16,6 +16,7 @@ import com.tc.net.core.TCConnection;
 import com.tc.net.core.event.TCConnectionErrorEvent;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.core.event.TCConnectionEventListener;
+import com.tc.net.protocol.IllegalReconnectException;
 import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
@@ -27,7 +28,8 @@ import java.io.IOException;
 /**
  * Implementation of MessaageTransport
  */
-abstract class MessageTransportBase extends AbstractMessageTransport implements NetworkLayer, TCConnectionEventListener, ConnectionIDProvider {
+abstract class MessageTransportBase extends AbstractMessageTransport implements NetworkLayer,
+    TCConnectionEventListener, ConnectionIDProvider {
   private TCConnection                             connection;
 
   protected ConnectionID                           connectionId           = ConnectionID.NULL_ID;
@@ -43,6 +45,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   private int                                      sourcePort;
   private byte[]                                   destinationAddress;
   private int                                      destinationPort;
+  private boolean                                  allowConnectionReplace = false;
 
   protected MessageTransportBase(MessageTransportState initialState,
                                  TransportHandshakeErrorHandler handshakeErrorHandler,
@@ -53,6 +56,10 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     this.messageFactory = messageFactory;
     this.isOpen = new SynchronizedBoolean(isOpen);
     this.status = new MessageTransportStatus(initialState, logger);
+  }
+
+  public void setAllowConnectionReplace(boolean allow) {
+    this.allowConnectionReplace = allow;
   }
 
   public final ConnectionID getConnectionId() {
@@ -83,9 +90,8 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
 
   protected final void receiveToReceiveLayer(WireProtocolMessage message) {
     Assert.assertNotNull(receiveLayer);
-    if (message instanceof TransportHandshakeMessage) {
-      throw new AssertionError("Wrong handshake message from: " + message.getSource());
-    }
+    if (message instanceof TransportHandshakeMessage) { throw new AssertionError("Wrong handshake message from: "
+                                                                                 + message.getSource()); }
 
     this.receiveLayer.receive(message.getPayload());
     message.getWireProtocolHeader().recycle();
@@ -101,7 +107,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   public void close() {
     synchronized (isOpen) {
       if (!isOpen.get()) {
-        // see DEV-659:  we used to throw an assertion error here if already closed
+        // see DEV-659: we used to throw an assertion error here if already closed
         logger.warn("Can only close an open connection");
         return;
       }
@@ -170,8 +176,10 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     }
   }
 
-  public final void attachNewConnection(TCConnection newConnection) {
+  public final void attachNewConnection(TCConnection newConnection) throws IllegalReconnectException {
     synchronized (attachingNewConnection) {
+      if ((this.connection != null) && !allowConnectionReplace) { throw new IllegalReconnectException(); }
+
       getConnectionAttacher().attachNewConnection((TCConnectionEvent) this.connectionCloseEvent.get(), this.connection,
                                                   newConnection);
     }

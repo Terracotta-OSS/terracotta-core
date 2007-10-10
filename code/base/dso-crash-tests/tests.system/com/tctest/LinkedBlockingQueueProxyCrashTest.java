@@ -4,12 +4,12 @@
  */
 package com.tctest;
 
-import com.tc.test.proxyconnect.ProxyConnectManagerImpl;
+import com.tc.test.proxyconnect.ProxyConnectManager;
 
 public class LinkedBlockingQueueProxyCrashTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 4;
-  
+
   public LinkedBlockingQueueProxyCrashTest() {
     //disableAllUntil("2007-06-30");
   }
@@ -26,19 +26,19 @@ public class LinkedBlockingQueueProxyCrashTest extends TransparentTestBase {
   protected boolean canRunCrash() {
     return true;
   }
-  
+
   protected boolean canRunProxyConnect() {
     return true;
   }
-  
+
   protected boolean enableL1Reconnect() {
     return true;
   }
 
-  protected void setupProxyConnectTest(ProxyConnectManagerImpl mgr) {
+  protected void setupProxyConnectTest(ProxyConnectManager mgr) {
     mgr.setProxyWaitTime(30 * 1000);
     mgr.setProxyDownTime(100);
   }
 
- 
+
 }

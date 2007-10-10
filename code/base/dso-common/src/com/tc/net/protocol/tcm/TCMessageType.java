@@ -54,6 +54,7 @@ public final class TCMessageType {
   public static final int           TYPE_CLUSTER_MEMBERSHIP_EVENT_MESSAGE         = 39;
   public static final int           TYPE_CLIENT_JMX_READY_MESSAGE                 = 40;
   public static final int           TYPE_OBJECTS_NOT_FOUND_RESPONSE_MESSAGE       = 41;
+  public static final int           TYPE_BENCH_MESSAGE                            = 42;
 
   public static final TCMessageType PING_MESSAGE                                  = new TCMessageType();
   public static final TCMessageType PONG_MESSAGE                                  = new TCMessageType();
@@ -82,6 +83,7 @@ public final class TCMessageType {
   public static final TCMessageType CLUSTER_MEMBERSHIP_EVENT_MESSAGE              = new TCMessageType();
   public static final TCMessageType CLIENT_JMX_READY_MESSAGE                      = new TCMessageType();
   public static final TCMessageType OBJECTS_NOT_FOUND_RESPONSE_MESSAGE            = new TCMessageType();
+  public static final TCMessageType BENCH_MESSAGE                                 = new TCMessageType();
 
   public static TCMessageType getInstance(int i) {
     return (TCMessageType) typeMap.get(i);

@@ -25,6 +25,7 @@ import com.tc.test.TestConfigObject;
 import com.tc.test.activepassive.ActivePassiveServerConfigCreator;
 import com.tc.test.activepassive.ActivePassiveServerManager;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
+import com.tc.test.proxyconnect.ProxyConnectManager;
 import com.tc.test.proxyconnect.ProxyConnectManagerImpl;
 import com.tc.test.restart.RestartTestEnvironment;
 import com.tc.test.restart.RestartTestHelper;
@@ -76,6 +77,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   private ServerCrasher                           crasher;
   private File                                    javaHome;
   private int                                     pid                             = -1;
+  private final ProxyConnectManager               proxyMgr                        = new ProxyConnectManagerImpl();
 
   // for active-passive tests
   private ActivePassiveServerManager              apServerManager;
@@ -112,8 +114,10 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     // config should be set up before tc-config for external L2s are written out
     setupConfig(configFactory());
 
-    if (canRunProxyConnect() && !enableL1Reconnect()) { throw new AssertionError(
-                                                                                 "proxy-connect needs l1reconnect enabled, please overwrite enableL1Reconnect()"); }
+    if (!canSkipL1ReconnectCheck() && canRunProxyConnect() && !enableL1Reconnect()) {
+      //
+      throw new AssertionError("proxy-connect needs l1reconnect enabled, please overwrite enableL1Reconnect()");
+    }
 
     ArrayList jvmArgs = new ArrayList();
     addTestTcPropertiesFile(jvmArgs);
@@ -160,10 +164,14 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     if (isCrashy() && canRunCrash()) {
       crashTestState = new TestState(false);
       crasher = new ServerCrasher(serverControl, helper.getServerCrasherConfig().getRestartInterval(), helper
-          .getServerCrasherConfig().isCrashy(), crashTestState);
+          .getServerCrasherConfig().isCrashy(), crashTestState, proxyMgr);
       if (canRunProxyConnect()) crasher.setProxyConnectMode(true);
       crasher.startAutocrash();
     }
+  }
+
+  protected ProxyConnectManager getProxyConnectManager() {
+    return this.proxyMgr;
   }
 
   private final void addTestTcPropertiesFile(List jvmArgs) {
@@ -219,18 +227,18 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     }
 
     int dsoProxyPort = portChooser.chooseRandomPort();
-    ProxyConnectManagerImpl mgr = ProxyConnectManagerImpl.getManager();
-    mgr.setDsoPort(dsoPort);
-    mgr.setProxyPort(dsoProxyPort);
-    mgr.setupProxy();
-    setupProxyConnectTest(mgr);
+
+    proxyMgr.setDsoPort(dsoPort);
+    proxyMgr.setProxyPort(dsoProxyPort);
+    proxyMgr.setupProxy();
+    setupProxyConnectTest(proxyMgr);
 
     ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(dsoPort);
     ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(jmxPort);
     configFactory().addServerToL1Config(null, dsoProxyPort, -1);
   }
 
-  protected void setupProxyConnectTest(ProxyConnectManagerImpl mgr) {
+  protected void setupProxyConnectTest(ProxyConnectManager mgr) {
     /*
      * subclass can overwrite to change the test parameters.
      */
@@ -314,6 +322,8 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
                                                       DEFAULT_VALIDATOR_COUNT, DEFAULT_ADAPTED_MUTATOR_COUNT,
                                                       DEFAULT_ADAPTED_VALIDATOR_COUNT);
     }
+
+    transparentAppConfig.setAttribute(TransparentAppConfig.PROXY_CONNECT_MGR, proxyMgr);
   }
 
   protected synchronized final String mode() {
@@ -410,6 +420,14 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     return false;
   }
 
+  protected boolean canSkipL1ReconnectCheck() {
+    return false;
+  }
+
+  protected boolean enableManualProxyConnectControl() {
+    return false;
+  }
+
   protected boolean enableL1Reconnect() {
     return false;
   }
@@ -445,8 +463,11 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
       this.runner.startServer();
       if (canRunProxyConnect()) {
-        ProxyConnectManagerImpl.getManager().proxyUp();
-        ProxyConnectManagerImpl.getManager().startProxyTest();
+        proxyMgr.proxyUp();
+
+        if (!enableManualProxyConnectControl()) {
+          proxyMgr.startProxyTest();
+        }
       }
       this.runner.run();
 
@@ -476,6 +497,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
                          + "', and thus will be skipped.");
     }
   }
+
 
   private void dumpServers() throws Exception {
     if (serverControl != null && serverControl.isRunning()) {

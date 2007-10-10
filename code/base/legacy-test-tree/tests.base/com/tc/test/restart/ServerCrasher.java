@@ -6,22 +6,25 @@ package com.tc.test.restart;
 
 import com.tc.exception.TCRuntimeException;
 import com.tc.objectserver.control.ServerControl;
-import com.tc.test.proxyconnect.ProxyConnectManagerImpl;
+import com.tc.test.proxyconnect.ProxyConnectManager;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.TestState;
 
 public class ServerCrasher implements Runnable {
-  private final ServerControl server;
-  private final Thread        myThread         = new Thread(this, "ServerCrasher");
-  private final long          crashInterval;
-  private final TestState     testState;
-  private boolean             proxyConnectMode = false;
+  private final ServerControl       server;
+  private final Thread              myThread         = new Thread(this, "ServerCrasher");
+  private final long                crashInterval;
+  private final TestState           testState;
+  private boolean                   proxyConnectMode = false;
+  private final ProxyConnectManager proxyMgr;
 
-  public ServerCrasher(final ServerControl server, final long crashInterval, final boolean crash, TestState testState) {
+  public ServerCrasher(final ServerControl server, final long crashInterval, final boolean crash, TestState testState,
+                       ProxyConnectManager proxyMgr) {
     super();
     this.server = server;
     this.crashInterval = crashInterval;
     this.testState = testState;
+    this.proxyMgr = proxyMgr;
   }
 
   public void startAutocrash() throws Exception {
@@ -53,8 +56,8 @@ public class ServerCrasher implements Runnable {
           try {
             System.err.println("Crashing server...");
             if (proxyConnectMode) {
-              ProxyConnectManagerImpl.getManager().stopProxyTest();
-              ProxyConnectManagerImpl.getManager().proxyDown();
+              proxyMgr.stopProxyTest();
+              proxyMgr.proxyDown();
             }
             server.crash();
 
@@ -63,8 +66,8 @@ public class ServerCrasher implements Runnable {
             System.err.println("Starting server...");
             server.start();
             if (proxyConnectMode) {
-              ProxyConnectManagerImpl.getManager().proxyUp();
-              ProxyConnectManagerImpl.getManager().startProxyTest();
+              proxyMgr.proxyUp();
+              proxyMgr.startProxyTest();
             }
 
           } catch (Exception e) {

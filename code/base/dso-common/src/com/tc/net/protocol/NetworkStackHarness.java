@@ -8,7 +8,7 @@ import com.tc.net.protocol.transport.MessageTransport;
 
 public interface NetworkStackHarness {
 
-  public MessageTransport attachNewConnection(TCConnection connection);
+  public MessageTransport attachNewConnection(TCConnection connection) throws IllegalReconnectException;
 
   public void finalizeStack();
 

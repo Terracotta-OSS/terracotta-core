@@ -16,6 +16,7 @@ import java.util.Map;
 
 public class TransparentAppConfig implements ApplicationConfig, ApplicationConfigBuilder {
   public static final String      adapterMapKey                     = "adapterMap";
+  public static final String      PROXY_CONNECT_MGR                 = "PROXY_CONNECT_MGR";
 
   private final String            applicationClassname;
   private final GlobalIdGenerator idGenerator;

@@ -4,7 +4,7 @@
  */
 package com.tctest.restart.system;
 
-import com.tc.test.proxyconnect.ProxyConnectManagerImpl;
+import com.tc.test.proxyconnect.ProxyConnectManager;
 import com.tctest.TestConfigurator;
 import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
@@ -12,7 +12,7 @@ import com.tctest.TransparentTestIface;
 public class ObjectDataProxyConnectCrashTest extends TransparentTestBase implements TestConfigurator {
 
   private int clientCount = 2;
-  
+
   public ObjectDataProxyConnectCrashTest() {
     //
   }
@@ -30,16 +30,16 @@ public class ObjectDataProxyConnectCrashTest extends TransparentTestBase impleme
   protected boolean canRunProxyConnect() {
     return true;
   }
-  
+
   protected boolean canRunCrash() {
     return true;
   }
-  
+
   protected boolean enableL1Reconnect() {
     return true;
   }
 
-  protected void setupProxyConnectTest(ProxyConnectManagerImpl mgr) {
+  protected void setupProxyConnectTest(ProxyConnectManager mgr) {
     mgr.setProxyWaitTime(30 * 1000);
     mgr.setProxyDownTime(100);
   }
