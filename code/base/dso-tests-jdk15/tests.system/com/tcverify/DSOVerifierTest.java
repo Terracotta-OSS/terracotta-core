@@ -145,7 +145,6 @@ public class DSOVerifierTest extends TCTestCase {
     }
   }
 
-
   protected String getMainClass() {
     return DSOVerifier.class.getName();
   }
@@ -169,6 +168,10 @@ public class DSOVerifierTest extends TCTestCase {
     return Collections.EMPTY_LIST;
   }
 
+  protected boolean isSynchronousWrite() {
+    return false;
+  }
+
   private File writeConfigFile() throws IOException {
     TerracottaConfigBuilder config = TerracottaConfigBuilder.newMinimalInstance();
 
@@ -187,12 +190,20 @@ public class DSOVerifierTest extends TCTestCase {
     LockConfigBuilder lock1 = new LockConfigBuilderImpl(LockConfigBuilder.TAG_NAMED_LOCK);
     lock1.setMethodExpression("java.lang.Object com.tcverify.DSOVerifier.getValue(int)");
     lock1.setLockName("verifierMap");
-    lock1.setLockLevel(LockConfigBuilder.LEVEL_WRITE);
+    if (isSynchronousWrite()) {
+      lock1.setLockLevel(LockConfigBuilder.LEVEL_SYNCHRONOUS_WRITE);
+    } else {
+      lock1.setLockLevel(LockConfigBuilder.LEVEL_WRITE);
+    }
 
     LockConfigBuilder lock2 = new LockConfigBuilderImpl(LockConfigBuilder.TAG_NAMED_LOCK);
     lock2.setMethodExpression("void com.tcverify.DSOVerifier.setValue(int)");
     lock2.setLockName("verifierMap");
-    lock2.setLockLevel(LockConfigBuilder.LEVEL_WRITE);
+    if (isSynchronousWrite()) {
+      lock2.setLockLevel(LockConfigBuilder.LEVEL_SYNCHRONOUS_WRITE);
+    } else {
+      lock2.setLockLevel(LockConfigBuilder.LEVEL_WRITE);
+    }
 
     config.getApplication().getDSO().setLocks(new LockConfigBuilder[] { lock1, lock2 });
 
