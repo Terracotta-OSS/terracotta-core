@@ -1,4 +1,4 @@
-# this file is only used with WebAppConfigTest
+# this file is only used with CookieSettingTest
 import operator
 
 server = AdminConfig.getid('/Server:server1/')
