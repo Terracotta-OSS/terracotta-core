@@ -298,7 +298,7 @@ public class TerracottaSessionManager implements SessionManager {
     try {
       sd.invalidateIfNecessary();
     } catch (Throwable t) {
-      logger.error("unhandled exception during invalidate() for session " + id.getKey());
+      logger.error("unhandled exception during invalidate() for session " + id.getKey(), t);
     }
   }
 
