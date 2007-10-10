@@ -44,10 +44,12 @@ import java.util.regex.Pattern;
 public final class BundleSpec {
   private static final String PROP_KEY_RESOLUTION         = "resolution";
   private static final String PROP_KEY_BUNDLE_VERSION     = "bundle-version";
-  private static final String REQUIRE_BUNDLE_EXPR_MATCHER = "([A-Za-z0-9._\\-]+(;resolution:=\"optional\")?(;bundle-version:=(\"[A-Za-z0-9.]+\"|\"\\[[A-Za-z0-9.]+,[A-Za-z0-9.]+\\]\"))?)";
+  private static final String REQUIRE_BUNDLE_EXPR_MATCHER = "([A-Za-z0-9._\\-]+(;resolution:=\"?optional\"?)?" + //
+                                                              "(;bundle-version:=(\"?[A-Za-z0-9.]+\"?|" + //
+                                                              "\"?[\\[\\(][A-Za-z0-9.]+,[A-Za-z0-9.]*[\\]\\)]\"?))?)";
 
   private final String        symbolicName;
-  private Map                 attributes;
+  private final Map           attributes                  = new HashMap();
 
   public static final String[] getRequirements(final Manifest manifest) throws BundleException {
     return getRequirements(manifest.getMainAttributes().getValue("Require-Bundle"));
@@ -68,18 +70,14 @@ public final class BundleSpec {
       list.add(group);
     }
 
-    if (!spec.equals(check.toString().replaceFirst(",", ""))) throw new InvalidBundleManifestException(
-        "Syntax error specifying Require-Bundle: " + source);
+    if (!spec.equals(check.toString().replaceFirst(",", ""))) { //
+      throw new InvalidBundleManifestException("Syntax error specifying Require-Bundle: " + source + " found " + check);
+    }
 
-    return (String[]) list.toArray(new String[0]);
-  }
-
-  public static final String[] parseList(final String source) throws BundleException {
-    return getRequirements(source);
+    return (String[]) list.toArray(new String[list.size()]);
   }
 
   public BundleSpec(final String spec) {
-    attributes = new HashMap();
     final String[] data = spec.split(";");
     this.symbolicName = data[0];
     for (int i = 1; i < data.length; i++) {
@@ -109,9 +107,9 @@ public final class BundleSpec {
         break;
       }
     }
+    final int start = "name".equals(n) ? k : 0;
+    final int end = "name".equals(n) ? pieces.length : k;
     final StringBuffer result = new StringBuffer();
-    final int start = n.equals("name") ? k : 0;
-    final int end = n.equals("name") ? pieces.length : k;
     for (int j = start; j < end; j++) {
       result.append(pieces[j]).append(".");
     }
