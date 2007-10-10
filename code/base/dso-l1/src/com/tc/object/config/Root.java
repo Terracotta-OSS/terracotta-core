@@ -7,6 +7,7 @@ package com.tc.object.config;
 import com.tc.aspectwerkz.expression.ExpressionContext;
 import com.tc.aspectwerkz.expression.ExpressionVisitor;
 import com.tc.aspectwerkz.expression.PointcutType;
+import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.object.bytecode.aspectwerkz.ExpressionHelper;
 
@@ -42,6 +43,9 @@ public class Root {
     this.type = type;
   }
 
+  public boolean isExpression() {
+    return (type == Type.FIELD_EXPR);
+  }
   public String getClassName() {
     if (type != Type.FIELD_NAME) { throw new IllegalStateException(); }
     return this.className;
@@ -56,7 +60,7 @@ public class Root {
     if (type != Type.FIELD_EXPR) { throw new IllegalStateException(); }
     return this.fieldNameOrExpression;
   }
-
+  
   public String getRootName(FieldInfo fieldInfo) {
     return rootName == null ? fieldInfo.getDeclaringType().getName() + "." + fieldInfo.getName() : rootName;
   }
@@ -73,6 +77,17 @@ public class Root {
     return (dsoFinal == DsoFinal.TRUE);
   }
 
+  public boolean matches(ClassInfo ci, ExpressionHelper expressionHelper) {
+    if (type == Type.FIELD_EXPR) {
+      ExpressionContext ctxt = expressionHelper.createWithinExpressionContext(ci);
+      ExpressionVisitor visitor = expressionHelper.createExpressionVisitor(fieldNameOrExpression);
+      return visitor.match(ctxt);
+    } else if (type == Type.FIELD_NAME) {
+      return ci.getName().equals(className);
+    }
+    throw new AssertionError();
+  }
+  
   public boolean matches(FieldInfo fi, ExpressionHelper expressionHelper) {
     if (type == Type.FIELD_EXPR) {
       ExpressionVisitor visitor = expressionHelper.createExpressionVisitor("get(" + fieldNameOrExpression + ")");
