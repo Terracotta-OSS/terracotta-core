@@ -33,17 +33,22 @@ import junit.framework.Test;
  * @author hhuynh
  */
 public class CookieSettingTest extends AbstractDeploymentTest {
-  private static final String  CONTEXT = "CookieSettingTest";
-  private static final String  MAPPING = "OkServlet";
-  private Deployment           deployment;
-  private TcConfigBuilder      tcConfigBuilder;
-  private WebApplicationServer server0;
-  private WebApplicationServer server1;
+  private static final String         CONTEXT = "CookieSettingTest";
+  private static Deployment           deployment;
+  private static TcConfigBuilder      tcConfigBuilder;
+  private static WebApplicationServer server0;
+  private static WebApplicationServer server1;
 
   public CookieSettingTest() {
     // DEV-984
     if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.JBOSS) {
       disableAllUntil(new Date(Long.MAX_VALUE));
+    }
+
+    // CDV-452
+    if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.WEBLOGIC &&
+        "8".equals(AppServerFactory.getCurrentAppServerMajorVersion())) {      
+      disableTestUntil("testSessionTimeout", new Date(Long.MAX_VALUE));
     }
   }
 
@@ -51,24 +56,30 @@ public class CookieSettingTest extends AbstractDeploymentTest {
     return new ServerTestSetup(CookieSettingTest.class);
   }
 
+  protected boolean shouldKillAppServersEachRun() {
+    return false;
+  }
+
   public void setUp() throws Exception {
     super.setUp();
 
-    deployment = makeDeployment();
+    if (deployment == null) {
+      deployment = makeDeployment();
 
-    // server0 is NOT enabled with DSO
-    GenericServer.setDsoEnabled(false);
-    server0 = makeWebApplicationServer(tcConfigBuilder);
-    server0.addWarDeployment(deployment, CONTEXT);
-    setCookieForWebsphere(server0);
-    server0.start();
+      // server0 is NOT enabled with DSO
+      GenericServer.setDsoEnabled(false);
+      server0 = makeWebApplicationServer(tcConfigBuilder);
+      server0.addWarDeployment(deployment, CONTEXT);
+      setCookieForWebsphere(server0);
+      server0.start();
 
-    // server1 is enabled with DSO
-    GenericServer.setDsoEnabled(true);
-    server1 = makeWebApplicationServer(tcConfigBuilder);
-    server1.addWarDeployment(deployment, CONTEXT);
-    setCookieForWebsphere(server1);
-    server1.start();
+      // server1 is enabled with DSO
+      GenericServer.setDsoEnabled(true);
+      server1 = makeWebApplicationServer(tcConfigBuilder);
+      server1.addWarDeployment(deployment, CONTEXT);
+      setCookieForWebsphere(server1);
+      server1.start();
+    }
   }
 
   public void testCookieSetting() throws Exception {
@@ -80,9 +91,11 @@ public class CookieSettingTest extends AbstractDeploymentTest {
     System.out.println("Cookie from server1 w/ DSO: " + response1.getHeaderField("Set-Cookie"));
 
     assertCookie(response0.getHeaderField("Set-Cookie"), response1.getHeaderField("Set-Cookie"));
+  }
 
+  public void testSessionTimeout() throws Exception {    
     // test session-timeout, it is set at 69 minutes
-    response1 = server1.ping("/" + CONTEXT + "/ok?cmd=getMaxInactiveInterval");
+    WebResponse response1 = server1.ping("/" + CONTEXT + "/ok?cmd=getMaxInactiveInterval");
     assertEquals("4140", response1.getText().trim()); // 69min * 60 = 4140sec
   }
 
@@ -91,7 +104,7 @@ public class CookieSettingTest extends AbstractDeploymentTest {
     tcConfigBuilder.addWebApplication(CONTEXT);
 
     DeploymentBuilder builder = makeDeploymentBuilder(CONTEXT + ".war");
-    builder.addServlet(MAPPING, "/ok/*", OkServlet.class, null, false);
+    builder.addServlet("OkServlet", "/ok/*", OkServlet.class, null, false);
     builder.addSessionConfig("session-timeout", "69");
 
     // add container specific descriptor
