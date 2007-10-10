@@ -83,7 +83,6 @@ import com.terracottatech.config.SpringApplication;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.net.URL;
-import java.text.MessageFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -104,9 +103,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   private static final TCLogger                  logger                             = CustomerLogging
                                                                                         .getDSOGenericLogger();
-
-  private static final TCLogger                  consoleLogger                      = CustomerLogging
-                                                                                        .getConsoleLogger();
 
   private static final InstrumentationDescriptor DEAFULT_INSTRUMENTATION_DESCRIPTOR = new NullInstrumentationDescriptor();
 
@@ -1198,29 +1194,26 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return false;
   }
 
-  private void checkForMissingRoots(ClassInfo classInfo) {
+  public Root[] getMissingRootDeclarations(ClassInfo classInfo) {
+    final List missingRoots = new ArrayList();
     for (final Iterator i = roots.iterator(); i.hasNext();) {
-      final Root r = (Root) i.next();
-
-      if (r.isExpression() || !r.matches(classInfo, expressionHelper)) continue;
-      final String fieldName = r.getFieldName();
-
+      final Root root = (Root) i.next();
+      
+      // TODO: do we need to support checking for roots defined using expressions?
+      if (root.isExpression()) continue; 
+      if (!root.matches(classInfo, expressionHelper)) continue;
+      
+      final String fieldName = root.getFieldName();
       final FieldInfo[] fields = classInfo.getFields();
       boolean found = false;
       for (int n = 0; (n < fields.length) && !found; n++) {
         FieldInfo fieldInfo = fields[n];
         found = fieldInfo.getName().equals(fieldName);
       }
-
-      if (found) continue;
       
-      final String message = MessageFormat.format(
-        "The field ''{0}'' was declared as root for class ''{1}'' but cannot be found. " +
-        "Please check that you have spelled the name correctly and make sure that it should belong to that class.",
-        new Object[] { r.getFieldName(), classInfo.getName() });
-      
-      consoleLogger.warn(message);
+      if (!found) missingRoots.add(root);
     }
+    return (Root[])missingRoots.toArray(new Root[0]);
   }
 
   private void rewriteHashtableAutoLockSpecIfNecessary() {
@@ -1349,9 +1342,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   public boolean shouldBeAdapted(ClassInfo classInfo) {
-    // check for missing root declarations
-    checkForMissingRoots(classInfo);
-    
     // now check if class is adaptable
     String fullClassName = classInfo.getName();
     Boolean cache = readAdaptableCache(fullClassName);
