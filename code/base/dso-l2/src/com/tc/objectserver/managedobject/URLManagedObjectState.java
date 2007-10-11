@@ -5,15 +5,21 @@ package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
+import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
+import com.tc.objectserver.mgmt.PhysicalManagedObjectFacade;
 import com.tc.util.Assert;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -92,9 +98,27 @@ public class URLManagedObjectState extends LogicalManagedObjectState {
   protected void addAllObjectReferencesTo(Set refs) {
     return;
   }
+  
+  private URL createURLFromState() {
+    String file = path;
+    if (query != null && query.length() > 0) {
+      file = file+"?"+query;
+    }
+    if (ref != null && ref.length() > 0) {
+      file = file+"#"+ref;
+    }
+    
+    try {
+      return new URL(protocol, host, port, file);
+    } catch (MalformedURLException e) {
+      throw new RuntimeException(e);
+    }    
+  }
 
   public ManagedObjectFacade createFacade(ObjectID objectID, String className, int limit) {
-    throw new UnsupportedOperationException();
+    Map dataCopy = new HashMap();
+    dataCopy.put("url", createURLFromState());
+    return new PhysicalManagedObjectFacade(objectID, ObjectID.NULL_ID, className, dataCopy, false, DNA.NULL_ARRAY_SIZE, false);
   }
 
   protected void basicWriteTo(ObjectOutput o) throws IOException {
