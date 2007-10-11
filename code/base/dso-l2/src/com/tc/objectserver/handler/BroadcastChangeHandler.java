@@ -7,7 +7,6 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
-import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.net.groups.ClientID;
 import com.tc.net.groups.NodeID;
@@ -15,19 +14,14 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ObjectRequestID;
 import com.tc.object.dmi.DmiDescriptor;
-import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
 import com.tc.object.msg.BroadcastTransactionMessage;
 import com.tc.object.net.DSOChannelManager;
-import com.tc.object.net.NoSuchChannelException;
 import com.tc.object.tx.TransactionID;
-import com.tc.object.tx.TxnBatchID;
 import com.tc.objectserver.context.BroadcastChangeContext;
 import com.tc.objectserver.context.ManagedObjectRequestContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.l1.api.ClientStateManager;
-import com.tc.objectserver.tx.NoSuchBatchException;
 import com.tc.objectserver.tx.ServerTransactionManager;
-import com.tc.objectserver.tx.TransactionBatchManager;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,18 +36,13 @@ import java.util.Set;
  * @author steve
  */
 public class BroadcastChangeHandler extends AbstractEventHandler {
-  private DSOChannelManager             channelManager;
-  private ClientStateManager            clientStateManager;
-  private ServerTransactionManager      transactionManager;
-  private Sink                          managedObjectRequestSink;
-  private Sink                          respondObjectRequestSink;
-  private final TransactionBatchManager transactionBatchManager;
+  private DSOChannelManager        channelManager;
+  private ClientStateManager       clientStateManager;
+  private ServerTransactionManager transactionManager;
+  private Sink                     managedObjectRequestSink;
+  private Sink                     respondObjectRequestSink;
 
-  public BroadcastChangeHandler(TransactionBatchManager transactionBatchManager) {
-    this.transactionBatchManager = transactionBatchManager;
-  }
-
-  public void handleEvent(EventContext context) throws EventHandlerException {
+  public void handleEvent(EventContext context) {
     BroadcastChangeContext bcc = (BroadcastChangeContext) context;
 
     final NodeID committerID = bcc.getNodeID();
@@ -63,7 +52,7 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
 
     for (int i = 0; i < channels.length; i++) {
       MessageChannel client = channels[i];
-      //TODO:: make message channel return clientID and short channelManager call.
+      // TODO:: make message channel return clientID and short channelManager call.
       ClientID clientID = channelManager.getClientIDFor(client.getChannelID());
 
       Map newRoots = bcc.getNewRoots();
@@ -102,20 +91,6 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
       }
     }
     transactionManager.broadcasted(committerID, txnID);
-    try {
-      TxnBatchID batchID = bcc.getBatchID();
-      if (transactionBatchManager.batchComponentComplete(committerID, batchID, txnID)) {
-        try {
-          BatchTransactionAcknowledgeMessage msg = channelManager.newBatchTransactionAcknowledgeMessage(committerID);
-          msg.initialize(batchID);
-          msg.send();
-        } catch (NoSuchChannelException e) {
-          getLogger().warn("Can't send transaction batch acknowledge message to unconnected client: " + committerID);
-        }
-      }
-    } catch (NoSuchBatchException e) {
-      throw new EventHandlerException(e);
-    }
   }
 
   private static DmiDescriptor[] pruneDmiDescriptors(DmiDescriptor[] dmiDescriptors, ClientID clientID,

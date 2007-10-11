@@ -326,6 +326,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     }
   }
 
+  //XXX:: Currently server always sends NULL BatchID
   public void receivedBatchAcknowledgement(TxnBatchID txnBatchID) {
     synchronized (lock) {
       if (status == STOP_INITIATED) {

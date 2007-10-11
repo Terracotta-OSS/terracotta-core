@@ -8,7 +8,6 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.groups.NodeID;
 import com.tc.object.tx.TransactionID;
-import com.tc.object.tx.TxnBatchID;
 import com.tc.util.Assert;
 
 import java.util.HashMap;
@@ -20,9 +19,9 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager {
 
   private final Map             map    = new HashMap();
 
-  public synchronized void defineBatch(NodeID nid, TxnBatchID batchID, int numTxns) {
+  public synchronized void defineBatch(NodeID nid, int numTxns) {
     BatchStats batchStats = getOrCreateStats(nid);
-    batchStats.defineBatch(batchID, numTxns);
+    batchStats.defineBatch(numTxns);
   }
 
   private BatchStats getOrCreateStats(NodeID nid) {
@@ -34,10 +33,10 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager {
     return bs;
   }
 
-  public synchronized boolean batchComponentComplete(NodeID nid, TxnBatchID batchID, TransactionID txnID) {
+  public synchronized boolean batchComponentComplete(NodeID nid, TransactionID txnID) {
     BatchStats bs = (BatchStats) map.get(nid);
     Assert.assertNotNull(bs);
-    return bs.batchComplete(batchID, txnID);
+    return bs.batchComplete(txnID);
   }
 
   public synchronized void shutdownNode(NodeID nodeID) {
@@ -64,7 +63,7 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager {
       this.nodeID = nid;
     }
 
-    public void defineBatch(TxnBatchID batchID, int numTxns) {
+    public void defineBatch(int numTxns) {
       long adjustedTotal = (long) (batchCount * avg) + numTxns;
       txnCount += numTxns;
       batchCount++;
@@ -82,7 +81,7 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager {
                   + " threshold = " + thresh);
     }
 
-    public boolean batchComplete(TxnBatchID batchID, TransactionID txnID) {
+    public boolean batchComplete(TransactionID txnID) {
       txnCount--;
       if (killed) {
         // return true only when all txns are acked. Note new batches may still be in network read queue

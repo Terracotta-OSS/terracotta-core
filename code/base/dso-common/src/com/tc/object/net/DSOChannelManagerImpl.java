@@ -32,22 +32,20 @@ import java.util.Set;
  * clients and hides the channel to client ID mapping from the rest of the world.
  */
 public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManagerMBean {
-  private static final TCLogger         logger              = TCLogging.getLogger(DSOChannelManager.class);
-  private static final MessageChannel[] EMPTY_CHANNEL_ARRAY = new MessageChannel[] {};
+  private static final TCLogger     logger         = TCLogging.getLogger(DSOChannelManager.class);
 
-  private final CopyOnWriteArrayMap     activeChannels      = new CopyOnWriteArrayMap(
-                                                                                      new CopyOnWriteArrayMap.TypedArrayFactory() {
+  private final CopyOnWriteArrayMap activeChannels = new CopyOnWriteArrayMap(
+                                                                             new CopyOnWriteArrayMap.TypedArrayFactory() {
 
-                                                                                        public Object[] createTypedArray(
-                                                                                                                         int size) {
-                                                                                          return new MessageChannel[size];
-                                                                                        }
+                                                                               public Object[] createTypedArray(int size) {
+                                                                                 return new MessageChannel[size];
+                                                                               }
 
-                                                                                      });
-  private final List                    eventListeners      = new CopyOnWriteArrayList();
+                                                                             });
+  private final List                eventListeners = new CopyOnWriteArrayList();
 
-  private final ChannelManager          genericChannelManager;
-  private final String                  serverVersion;
+  private final ChannelManager      genericChannelManager;
+  private final String              serverVersion;
 
   public DSOChannelManagerImpl(ChannelManager genericChannelManager, String serverVersion) {
     this.genericChannelManager = genericChannelManager;

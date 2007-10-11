@@ -113,8 +113,7 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
     // make sure defineBatch was called on the transaction manager.
     Object[] args = (Object[]) transactionBatchManager.defineBatchContexts.take();
     assertEquals(batch.clientID, args[0]);
-    assertEquals(batch.batchID, args[1]);
-    assertEquals(new Integer(1), args[2]);
+    assertEquals(new Integer(1), args[1]);
     // there shouldn't be any more calls in the queue
     assertTrue(transactionBatchManager.defineBatchContexts.isEmpty());
 

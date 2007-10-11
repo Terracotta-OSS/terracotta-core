@@ -68,13 +68,14 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
       gtxManager.setLowWatermark(lowWaterMark);
     }
     if (gtxManager.startApply(btm.getCommitterID(), btm.getTransactionID(), btm.getGlobalTransactionID())) {
-      if (btm.getObjectChanges().size() > 0 || btm.getLookupObjectIDs().size() > 0 || btm.getNewRoots().size() > 0) {
+      Collection changes = btm.getObjectChanges();
+      if (changes.size() > 0 || btm.getLookupObjectIDs().size() > 0 || btm.getNewRoots().size() > 0) {
 
         if (false) System.err.println(cidProvider.getChannelID() + " Applying - committer=" + btm.getCommitterID()
                                       + " , " + btm.getTransactionID() + " , " + btm.getGlobalTransactionID());
 
-        txManager.apply(btm.getTransactionType(), btm.getLockIDs(), btm.getObjectChanges(), btm.getLookupObjectIDs(),
-                        btm.getNewRoots());
+        txManager.apply(btm.getTransactionType(), btm.getLockIDs(), changes, btm.getLookupObjectIDs(), btm
+            .getNewRoots());
       }
     }
 

@@ -6,13 +6,12 @@ package com.tc.objectserver.tx;
 
 import com.tc.net.groups.NodeID;
 import com.tc.object.tx.TransactionID;
-import com.tc.object.tx.TxnBatchID;
 
 public interface TransactionBatchManager {
 
-  public void defineBatch(NodeID node, TxnBatchID batchID, int numTxns) throws BatchDefinedException;
+  public void defineBatch(NodeID node, int numTxns) throws BatchDefinedException;
 
-  public boolean batchComponentComplete(NodeID committerID, TxnBatchID batchID, TransactionID txnID)
+  public boolean batchComponentComplete(NodeID committerID, TransactionID txnID)
       throws NoSuchBatchException;
 
   public void shutdownNode(NodeID nodeID);
