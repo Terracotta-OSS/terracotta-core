@@ -354,12 +354,12 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
   }
   
   private long getLockHeldTime(String lockName, long channelID) {
-    Collection c = statMBean.getTopHeld(100);
+    Collection c = statMBean.getTopHeld(500);
     for (Iterator<LockHolder> i = c.iterator(); i.hasNext();) {
       LockHolder s = i.next();
       if (s.getLockID().asString().endsWith(lockName)) {
         if (((ClientID) s.getNodeID()).getChannelID().toLong() == channelID) {
-          return s.getHeldTimeInMillis();
+          return s.getAndSetHeldTimeInMillis();
         }
       }
     }
@@ -367,12 +367,12 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
   }
   
   private long getLockWaitTime(String lockName, long channelID) {
-    Collection c = statMBean.getTopHeld(100);
+    Collection c = statMBean.getTopHeld(500);
     for (Iterator<LockHolder> i = c.iterator(); i.hasNext();) {
       LockHolder s = i.next();
       if (s.getLockID().asString().endsWith(lockName)) {
         if (((ClientID) s.getNodeID()).getChannelID().toLong() == channelID) {
-          return s.getWaitTimeInMillis();
+          return s.getAndSetWaitTimeInMillis();
         }
       }
     }

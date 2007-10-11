@@ -67,7 +67,7 @@ public class LockStatManagerTest extends TestCase {
       Thread.sleep(5000);
       lockManager.unlock(l1, cid1, s1);
 
-      assertTrue(lockHolder1.getHeldTimeInMillis() > lockHolder2.getHeldTimeInMillis());
+      assertTrue(lockHolder1.getAndSetHeldTimeInMillis() > lockHolder2.getAndSetHeldTimeInMillis());
       lockManager.unlock(l1, cid2, s2);
     } catch (InterruptedException e) {
       // ignore

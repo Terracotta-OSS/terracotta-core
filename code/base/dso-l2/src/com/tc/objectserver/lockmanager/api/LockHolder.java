@@ -12,6 +12,7 @@ import com.tc.object.lockmanager.api.ThreadID;
 import java.io.Serializable;
 
 public class LockHolder implements Serializable {
+  private final static long NON_SET_TIME_MILLIS = -1;
 
   private final LockID   lockID;
   private final NodeID   nodeID;
@@ -21,6 +22,8 @@ public class LockHolder implements Serializable {
   private long           timeAcquired;
   private long           timeReleased;
   private long           timeRequested;
+  private long           waitTimeInMillis;
+  private long           heldTimeInMillis;
 
   public LockHolder(LockID lockID, NodeID cid, String channelAddr, ThreadID threadID, int level,
                     long timeRequested) {
@@ -29,16 +32,13 @@ public class LockHolder implements Serializable {
     this.channelAddr = channelAddr;
     this.threadID = threadID;
     this.timeRequested = timeRequested;
+    this.waitTimeInMillis = NON_SET_TIME_MILLIS;
+    this.heldTimeInMillis = NON_SET_TIME_MILLIS;
     this.lockLevel = LockLevel.toString(level);
   }
 
   public LockHolder(LockID lockID, NodeID cid, String channelAddr, ThreadID threadID, int level) {
-    this.lockID = lockID;
-    this.nodeID = cid;
-    this.channelAddr = channelAddr;
-    this.threadID = threadID;
-    this.timeRequested = -1;
-    this.lockLevel = LockLevel.toString(level);
+    this(lockID, cid, channelAddr, threadID, level, NON_SET_TIME_MILLIS);
   }
   
   public LockID getLockID() {
@@ -82,22 +82,39 @@ public class LockHolder implements Serializable {
       timeAcquired = timeReleased;
     }
   }
-
+  
   public long getWaitTimeInMillis() {
-    if (timeAcquired <=0 && timeRequested <= 0) {
-      return 0;
-    } else if (timeAcquired <= 0) {
-      return System.currentTimeMillis() - timeRequested;
-    } else {
-      return timeAcquired - timeRequested;
+    if (waitTimeInMillis == NON_SET_TIME_MILLIS) {
+      getAndSetWaitTimeInMillis();
     }
+    return waitTimeInMillis;
+  }
+  
+  public long getHeldTimeInMillis() {
+    if (heldTimeInMillis == NON_SET_TIME_MILLIS) {
+      getAndSetHeldTimeInMillis();
+    }
+    return heldTimeInMillis;
   }
 
-  public long getHeldTimeInMillis() {
+  public long getAndSetWaitTimeInMillis() {
+    if (timeAcquired <=0 && timeRequested <= 0) {
+      waitTimeInMillis = 0;
+    } else if (timeAcquired <= 0) {
+      waitTimeInMillis = System.currentTimeMillis() - timeRequested;
+    } else {
+      waitTimeInMillis = timeAcquired - timeRequested;
+    }
+    return waitTimeInMillis;
+  }
+
+  public long getAndSetHeldTimeInMillis() {
     if (timeReleased <= 0 && timeAcquired <=0) {
-      return 0;
-    } else if (timeReleased <= 0) { return System.currentTimeMillis() - timeAcquired; }
-    return timeReleased - timeAcquired;
+      heldTimeInMillis = 0;
+    } else if (timeReleased <= 0) { heldTimeInMillis = System.currentTimeMillis() - timeAcquired; }
+    heldTimeInMillis = timeReleased - timeAcquired;
+    
+    return heldTimeInMillis;
   }
 
   public String toString() {
@@ -110,9 +127,9 @@ public class LockHolder implements Serializable {
     sb.append(", lock level: ");
     sb.append(lockLevel);
     sb.append(", held time in millis: ");
-    sb.append(getHeldTimeInMillis());
+    sb.append(getAndSetHeldTimeInMillis());
     sb.append(", wait time in millis: ");
-    sb.append(getWaitTimeInMillis());
+    sb.append(getAndSetWaitTimeInMillis());
     sb.append(", time acquired: ");
     sb.append(timeAcquired);
     sb.append(", time released: ");

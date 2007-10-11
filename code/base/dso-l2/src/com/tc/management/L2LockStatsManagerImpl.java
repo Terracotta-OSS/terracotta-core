@@ -558,10 +558,16 @@ public class L2LockStatsManagerImpl implements L2LockStatsManager {
 
     public Collection topN(int n, Comparator comparator) {
       Collection val = pendingData.values();
+
       TopN topN = new TopN(comparator, n);
       for (Iterator i = val.iterator(); i.hasNext();) {
         Map lockHolders = (Map) i.next();
-        topN.evaluate(lockHolders.values());
+        for (Iterator j=lockHolders.values().iterator(); j.hasNext(); ) {
+          LockHolder lockHolder = (LockHolder)j.next();
+          lockHolder.getAndSetHeldTimeInMillis();
+          lockHolder.getAndSetWaitTimeInMillis();
+          topN.evaluate(lockHolder);
+        }
       }
       topN.evaluate(historyData);
       return topN.getDataSnapshot();

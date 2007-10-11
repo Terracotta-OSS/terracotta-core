@@ -26,8 +26,8 @@ public class LockHolderWrapper implements LockElementWrapper {
   public long getTimeAcquired() { return lockHolder.getTimeAcquired();  }
   public long getTimeReleased() { return lockHolder.getTimeReleased(); }
   public long getThreadID() { return lockHolder.getThreadID().toLong(); }
-  public long getWaitTimeInMillis() { return lockHolder.getWaitTimeInMillis(); }
-  public long getHeldTimeInMillis() { return lockHolder.getHeldTimeInMillis(); }
+  public long getWaitTimeInMillis() { return lockHolder.getAndSetWaitTimeInMillis(); }
+  public long getHeldTimeInMillis() { return lockHolder.getAndSetHeldTimeInMillis(); }
   
   public void setStackTrace(String stackTrace) {
     this.stackTrace = stackTrace;
