@@ -29,20 +29,20 @@ public abstract class EhcacheTerracottaCommonsConfigurator extends TerracottaCon
     addExportedBundleClass(thisBundle, "net.sf.ehcache.store.TimeExpiryMemoryStore$SpoolingTimeExpiryMap");
     addExportedBundleClass(thisBundle, "org.terracotta.modules.ehcache.commons_1_0.util.Util");
     addExportedTcJarClass("com.tcclient.ehcache.TimeExpiryMap");
+    addExportedTcJarClass("com.tcclient.cache.CacheConfig");
     addExportedTcJarClass("com.tcclient.cache.CacheData");
     addExportedTcJarClass("com.tcclient.cache.CacheDataStore");
-    addExportedTcJarClass("com.tcclient.cache.CacheDataStore$CacheEntryInvalidator");
-    addExportedTcJarClass("com.tcclient.cache.CacheDataStore$CacheInvalidationTimer");
+    addExportedTcJarClass("com.tcclient.cache.CacheEntryInvalidator");
+    addExportedTcJarClass("com.tcclient.cache.CacheInvalidationTimer");
+    addExportedTcJarClass("com.tcclient.cache.CacheInvalidationTimer$EvictionRunner");
     addExportedTcJarClass("com.tcclient.cache.Expirable");
     addExportedTcJarClass("com.tcclient.cache.Lock");
     addExportedTcJarClass("com.tcclient.cache.Timestamp");
     addExportedTcJarClass("com.tcclient.cache.GlobalKeySet");
-    addExportedTcJarClass("com.tcclient.cache.CacheParticipants");
     
     // explicitly excluding autolocking
     configHelper.addAutoLockExcludePattern("* com.tcclient.cache.CacheData.*(..)");
     configHelper.addAutoLockExcludePattern("* com.tcclient.cache.CacheDataStore.*(..)");
-    configHelper.addAutoLockExcludePattern("* com.tcclient.cache.CacheParticipants.*(..)");
     configHelper.addAutoLockExcludePattern("* com.tcclient.cache.Lock.*(..)");
     configHelper.addAutoLockExcludePattern("* com.tcclient.cache.Timestamp.*(..)");
     configHelper.addAutoLockExcludePattern("* com.tcclient.ehcache..*(..)");
@@ -80,11 +80,6 @@ public abstract class EhcacheTerracottaCommonsConfigurator extends TerracottaCon
     
     // autolocking
     configHelper.addAutolock(" * com.tcclient.cache.GlobalKeySet.*(..)", ConfigLockLevel.WRITE);
-    configHelper.addAutolock(" * com.tcclient.cache.GlobalKeySet.allGlobalKeys(..)", ConfigLockLevel.READ);
-//    
-//    configHelper.addAutolock(" * com.tcclient.cache.CacheParticipants.*(..)", ConfigLockLevel.WRITE);
-//    configHelper.addAutolock(" * com.tcclient.cache.CacheParticipants.getCacheParticipants(..)", ConfigLockLevel.READ);
-//    configHelper.addAutolock(" * com.tcclient.cache.CacheParticipants.getNodeId(..)", ConfigLockLevel.READ);
 	}
   
   protected Bundle getExportedBundle(final BundleContext context, String targetBundleName) {
