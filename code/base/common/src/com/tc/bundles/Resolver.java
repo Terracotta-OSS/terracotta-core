@@ -140,8 +140,11 @@ public class Resolver {
         continue;
       }
 
-      final Collection jarfiles = FileUtils.listFiles(repository, new String[] { "jar" }, true);
-      for (final Iterator j = jarfiles.iterator(); j.hasNext();) {
+      final String[] extensions = new String[] { "jar" };
+      final Collection jars = FileUtils.listFiles(repository, extensions, true);
+      jars.addAll(FileUtils.listFiles(FileUtils.toFile(location), extensions, false));
+
+      for (final Iterator j = jars.iterator(); j.hasNext();) {
         final File bundleFile = (File) j.next();
         if (!bundleFile.isFile()) {
           warn(Message.WARN_FILE_IGNORED_INVALID_NAME, new Object[] { bundleFile.getName() });
@@ -175,14 +178,16 @@ public class Resolver {
     for (int i = repositories.length - 1; i >= 0; i--) {
       try {
         final URL url = new URL(repositories[i].toString() + (repositories[i].toString().endsWith("/") ? "" : "/"));
-        File directory = FileUtils.toFile(url);
-        if(!StringUtils.isBlank(groupId)) {
-          directory = new File(directory, groupId.replace('.', File.separatorChar));
-        }
+        final File location = FileUtils.toFile(url);
+        final File directory = StringUtils.isBlank(groupId) ? location : new File(location, groupId.replace('.', File.separatorChar));
+
         // ignore non-existent locations
         if (!directory.exists()) continue;
 
-        final Collection jars = FileUtils.listFiles(directory, new String[] { "jar" }, true);
+        final String[] extensions = new String[] { "jar" };
+        final Collection jars = FileUtils.listFiles(directory, extensions, !location.equals(directory));
+        if (!location.equals(directory)) jars.addAll(FileUtils.listFiles(location, extensions, false));
+
         for (final Iterator j = jars.iterator(); j.hasNext();) {
           final File jar = (File) j.next();
           final Manifest manifest = getManifest(jar);
