@@ -5,60 +5,49 @@
 package com.tcclient.cache;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
+/**
+ * Accumulate all keys being managed by other nodes participating in this cache during 
+ * this global eviction cycle with the goal of discovering what keys <strong>aren't</strong>
+ * managed by any local cache.  These are the keys that need to be worked on by the global evictor.
+ * The cycle is "started" by setting the global eviction flag then other nodes will report in as 
+ * they do eviction until all nodes have been accounted for.  
+ * 
+ * Whatever keys aren't in the global key set are assumed to be orphans and are then undergo eviction
+ * by the node assigned as the global evictor.
+ */
 class GlobalKeySet {
-  private final Map    nodeIdsToKeysMap = new HashMap();
-  private final String cacheName;
-  private boolean      globalEvictionStarted;
-  private Set          globalNodeIds = new HashSet();
+  // State - all guarded by "this" lock
+  private boolean globalEvictionStarted;
+  private Set keys = new HashSet();
 
-  public GlobalKeySet(String cacheName) {
-    this.cacheName = cacheName;
+  synchronized boolean inGlobalEviction() {
+    return this.globalEvictionStarted;
   }
-
-  synchronized void waitForGlobalEviction() {
-    while (!globalEvictionStarted) {
-      try {
-        wait();
-      } catch (InterruptedException e) {
-        // ignore the interrupt
+  
+  synchronized void addLocalKeySet(Object[] keySet) {
+    if(globalEvictionStarted) {
+      if(keySet != null) {
+        for(int i=0; i<keySet.length; i++) {
+          keys.add(keySet[i]);
+        }
       }
     }
   }
-
-  synchronized void globalEvictionStart(String thisNodeId, Set globalNodeIds) {
-    this.globalNodeIds.addAll(globalNodeIds);
-    this.globalNodeIds.remove(thisNodeId);
-    this.nodeIdsToKeysMap.clear();
+  
+  synchronized void globalEvictionStart(Object[] localKeys) {
+    this.keys.clear();
     globalEvictionStarted = true;
-    notifyAll();
-    while (this.globalNodeIds.size() > 0) {
-      try {
-        wait();
-      } catch (InterruptedException e) {
-        // ignore the interrupt
-      }
-    }
+    addLocalKeySet(localKeys);
   }
 
-  synchronized void globalEvictionEnd() {
+  synchronized Collection globalEvictionEnd() {
     globalEvictionStarted = false;
-    globalNodeIds.clear();
+    Set remoteKeys = new HashSet(keys);
+    this.keys.clear();
+    return remoteKeys;
   }
 
-  synchronized void addLocalKeySet(String nodeId, Object[] keySet) {
-    nodeIdsToKeysMap.put(nodeId, keySet);
-    globalNodeIds.remove(nodeId);
-    if (globalNodeIds.size() == 0) {
-      notify();
-    }
-  }
-
-  synchronized Collection allGlobalKeys() {
-    return nodeIdsToKeysMap.values();
-  }
 }

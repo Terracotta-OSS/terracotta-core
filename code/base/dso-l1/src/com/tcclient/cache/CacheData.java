@@ -6,32 +6,34 @@ package com.tcclient.cache;
 
 import java.io.Serializable;
 
+/**
+ * Wrapper for a data value in the cache data store.  This wrapper knows 
+ * additional information about when the item was created, when it was last 
+ * used, when it expires, and whether it is still valid.
+ */
 public class CacheData implements Serializable {
-  private Object         value;
-  private long           maxIdleMillis;
-  private long           maxTTLMillis;
-  private long           createTime;
-  private Timestamp      timestamp;               // timestamp contains the time when the
-  // CacheData will be expired
+  // Config
+  private final CacheConfig    config;
+  
+  // State (not modified)
+  private final Object         value;
+  private final Timestamp      timestamp;  // timestamp contains the time when the CacheData will be expired
+  private final long           createTime;  // saved at creation time
 
+  // State (modifiable) - guarded by synchronized methods on "this"
   private transient long lastAccessedTimeInMillis;
-  private boolean        invalidated = false;
+  private boolean        invalidated;
 
-  public CacheData(Object value, long maxIdleSeconds, long maxTTLSeconds) {
+  /**
+   * @param value Data value, should never null (checked by caller)
+   * @param config Cache configuration information
+   */
+  public CacheData(Object value, CacheConfig config) {
+    this.config = config;
     this.value = value;
     this.createTime = System.currentTimeMillis();
-    this.maxIdleMillis = maxIdleSeconds * 1000;
-    this.maxTTLMillis = maxTTLSeconds * 1000;
-    if (maxIdleMillis <= 0) {
-      this.timestamp = new Timestamp(this.createTime + maxTTLMillis, this.createTime + maxTTLMillis);
-    } else {
-      this.timestamp = new Timestamp(this.createTime + maxIdleMillis, this.createTime + maxTTLMillis);
-    }
+    this.timestamp = new Timestamp(this.createTime, config.getMaxIdleTimeoutMillis(), config.getMaxTTLMillis());
     this.lastAccessedTimeInMillis = 0;
-  }
-
-  public CacheData() {
-    this.lastAccessedTimeInMillis = System.currentTimeMillis();
   }
 
   Timestamp getTimestamp() {
@@ -44,17 +46,17 @@ public class CacheData implements Serializable {
   }
 
   private boolean hasNotExpired() {
-    if (getMaxInactiveMillis() <= 0) { return true; }
-    return getIdleMillis() < getMaxInactiveMillis();
+    if (config.getMaxIdleTimeoutMillis() <= 0) { return true; }
+    return getIdleMillis() < config.getMaxIdleTimeoutMillis();
   }
 
   private boolean isStillAlive() {
-    if (maxTTLMillis <= 0) { return true; }
+    if (config.getMaxTTLMillis() <= 0) { return true; }
     return System.currentTimeMillis() <= getTimeToDieMillis();
   }
 
   private long getTimeToDieMillis() {
-    return this.createTime + maxTTLMillis;
+    return this.createTime + config.getMaxTTLMillis();
   }
 
   synchronized long getIdleMillis() {
@@ -68,10 +70,6 @@ public class CacheData implements Serializable {
 
   synchronized void accessed() {
     lastAccessedTimeInMillis = System.currentTimeMillis();
-  }
-
-  synchronized long getMaxInactiveMillis() {
-    return maxIdleMillis;
   }
 
   public synchronized Object getValue() {
@@ -93,8 +91,7 @@ public class CacheData implements Serializable {
   public boolean equals(Object obj) {
     if (!(obj instanceof CacheData)) { return false; }
     CacheData cd = (CacheData) obj;
-    return this.value.equals(cd.value) && (this.maxIdleMillis == cd.maxIdleMillis)
-           && (this.maxTTLMillis == cd.maxTTLMillis);
+    return this.value.equals(cd.value);
   }
 
 }

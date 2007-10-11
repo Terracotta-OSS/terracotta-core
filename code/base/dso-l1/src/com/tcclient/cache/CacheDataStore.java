@@ -5,12 +5,10 @@
 package com.tcclient.cache;
 
 import com.tc.config.lock.LockLevel;
-import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.object.bytecode.Clearable;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.TCMap;
-import com.tc.properties.TCProperties;
 import com.tc.util.Assert;
 
 import java.io.Serializable;
@@ -23,27 +21,108 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * The main class for the cache.  It holds CacheData objects
+ */
 public class CacheDataStore implements Serializable {
-  private final static TCLogger              logger = ManagerUtil.getLogger("com.tc.cache.CacheDataStore");
-
-  private final Map[]                        store;                                                        // <Data>
-  private final Map[]                        dtmStore;                                                     // <Timestamp>
-  private final String                       cacheName;
-  private final long                         maxIdleTimeoutSeconds;
-  private final long                         maxTTLSeconds;
-  private final long                         invalidatorSleepSeconds;
+  // Resources
+  private static final TCLogger              logger = ManagerUtil.getLogger("com.tc.cache.CacheDataStore");
+  
+  // Config
+  private final CacheConfig                  config;
+  
+  // Cache state, changes during lifetime
+  private final Map[]                        store;              // <Object, CacheData>, values may be faulted out
+  private final Map[]                        dtmStore;           // <Object, Timestamp>, values never faulted out
   private final GlobalKeySet[]               globalKeySet;
-  private final Expirable                    callback;
-  private int                                concurrency;
-  private int                                evictorPoolSize;
-  private boolean                            globalEvictionEnabled;
-  private int                                globalEvictionFrequency;
-  private transient boolean                  isLoggingEnabled;
-  private transient CacheParticipants        cacheParticipants;
+  
+  // Local cache stats
   private transient int                      hitCount;
   private transient int                      missCountExpired;
   private transient int                      missCountNotFound;
+  
+  // Local eviction thread
   private transient CacheInvalidationTimer[] cacheInvalidationTimer;
+  
+  /**
+   * This is a shared object, so this only happens once.  In other nodes, 
+   * the initialize() method is called on load of this object into the node.
+   */
+  public CacheDataStore(CacheConfig config) {
+    this.config = config;
+    
+    // Set up cache state
+    this.store = new Map[config.getConcurrency()];
+    this.dtmStore = new Map[config.getConcurrency()];
+    initializeStore();
+
+    this.globalKeySet = new GlobalKeySet[config.getEvictorPoolSize()];
+    initializeGlobalKeySet();
+
+    this.hitCount = 0;
+  }
+  
+  public CacheConfig getConfig() {
+    return this.config;
+  }
+  
+  private void initializeGlobalKeySet() {
+    for (int i = 0; i < config.getEvictorPoolSize(); i++) {
+      globalKeySet[i] = new GlobalKeySet();
+    }
+  }
+
+  private void initializeStore() {
+    for (int i = 0; i < config.getConcurrency(); i++) {
+      this.store[i] = new HashMap();
+      this.dtmStore[i] = new HashMap();
+      ((Clearable) dtmStore[i]).setEvictionEnabled(false);
+    }
+  }
+
+  /**
+   * Called onload to initialize transient per-node state
+   */
+  public void initialize() {
+    logDebug("Initializing CacheDataStore");
+    
+    int startEvictionIndex = 0;
+    this.cacheInvalidationTimer = new CacheInvalidationTimer[config.getEvictorPoolSize()];
+    for (int i = 0; i < config.getEvictorPoolSize(); i++) {
+      int lastEvictionIndex = startEvictionIndex + config.getStoresPerInvalidator();
+      cacheInvalidationTimer[i] = new CacheInvalidationTimer(config.getInvalidatorSleepSeconds(), config.getCacheName()
+                                                                                      + " invalidation thread" + i);
+      
+                                                             
+      cacheInvalidationTimer[i].start(new CacheEntryInvalidator(globalKeySet[i],
+                                                                startEvictionIndex,
+                                                                lastEvictionIndex, 
+                                                                config,
+                                                                ManagerUtil.getManager(),
+                                                                this));
+      startEvictionIndex = lastEvictionIndex;      
+    }
+  }
+
+  /**
+   * This is used as a DistributedMethod because when one node cancel a timer, other nodes 
+   * need to cancel the timer as well.
+   */
+  public void stopInvalidatorThread() {
+    logDebug("stopInvalidatorThread()");
+
+    for (int i = 0; i < config.getEvictorPoolSize(); i++) {
+      if(cacheInvalidationTimer[i] != null) {
+        cacheInvalidationTimer[i].stop();
+      }
+    }
+  }
+
+  private int getStoreIndex(Object key) {
+    if (config.getConcurrency() == 1) { return 0; }
+    int hashValue = Math.abs(hash(key.hashCode()));
+    return hashValue % config.getConcurrency();
+  }
 
   private static int hash(int h) {
     h += ~(h << 9);
@@ -53,131 +132,18 @@ public class CacheDataStore implements Serializable {
     return h;
   }
 
-  public CacheDataStore(long invalidatorSleepSeconds, long maxIdleTimeoutSeconds, long maxTTLSeconds, String cacheName,
-                        Expirable callback) {
-    TCProperties ehcacheProperies = ManagerUtil.getTCProperties().getPropertiesFor("ehcache");
-    this.concurrency = ehcacheProperies.getInt("concurrency");
-    if (this.concurrency <= 1) {
-      this.concurrency = 1;
-      this.evictorPoolSize = 1;
-    } else {
-      this.evictorPoolSize = ehcacheProperies.getInt("evictor.pool.size");
-      if (this.evictorPoolSize > this.concurrency) {
-        this.evictorPoolSize = this.concurrency;
-      }
-    }
-
-    this.store = new Map[concurrency];
-    this.dtmStore = new Map[concurrency];
-    this.globalKeySet = new GlobalKeySet[evictorPoolSize];
-
-    this.cacheName = cacheName;
-    this.maxIdleTimeoutSeconds = maxIdleTimeoutSeconds;
-    this.maxTTLSeconds = maxTTLSeconds;
-    this.invalidatorSleepSeconds = invalidatorSleepSeconds;
-    this.callback = callback;
-    this.hitCount = 0;
-
-    this.globalEvictionEnabled = ehcacheProperies.getBoolean("global.eviction.enable");
-    this.globalEvictionFrequency = ehcacheProperies.getInt("global.eviction.frequency");
-    initializeGlobalKeySet();
-    initializeStore();
-  }
-
-  // For test only
-  public CacheDataStore(long invalidatorSleepSeconds, long maxIdleTimeoutSeconds, long maxTTLSeconds, String cacheName,
-                        Expirable callback, boolean globalEvictionEnabled, int globalEvictionFrequency,
-                        int concurrency, int evictorPoolSize) {
-    this.concurrency = concurrency;
-    this.evictorPoolSize = evictorPoolSize;
-
-    this.store = new Map[concurrency];
-    this.dtmStore = new Map[concurrency];
-    this.globalKeySet = new GlobalKeySet[evictorPoolSize];
-
-    this.cacheName = cacheName;
-    this.maxIdleTimeoutSeconds = maxIdleTimeoutSeconds;
-    this.maxTTLSeconds = maxTTLSeconds;
-    this.invalidatorSleepSeconds = invalidatorSleepSeconds;
-    this.callback = callback;
-    this.hitCount = 0;
-
-    this.globalEvictionEnabled = globalEvictionEnabled;
-    this.globalEvictionFrequency = globalEvictionFrequency;
-    initializeGlobalKeySet();
-    initializeStore();
-  }
-
-  private void initializeGlobalKeySet() {
-    for (int i = 0; i < evictorPoolSize; i++) {
-      globalKeySet[i] = new GlobalKeySet(cacheName);
-    }
-  }
-
-  private void initializeStore() {
-    for (int i = 0; i < this.concurrency; i++) {
-      this.store[i] = new HashMap();
-      this.dtmStore[i] = new HashMap();
-      ((Clearable) dtmStore[i]).setEvictionEnabled(false);
-    }
-  }
-
-  public void initialize() {
-    this.cacheParticipants = new CacheParticipants();
-    this.cacheParticipants.register();
-
-    int numOfStorePerInvalidator = this.concurrency / this.evictorPoolSize;
-    int startEvitionIndex = 0;
-    this.cacheInvalidationTimer = new CacheInvalidationTimer[evictorPoolSize];
-    for (int i = 0; i < evictorPoolSize; i++) {
-      int lastEvitionIndex = startEvitionIndex + numOfStorePerInvalidator;
-      cacheInvalidationTimer[i] = new CacheInvalidationTimer(invalidatorSleepSeconds, cacheName
-                                                                                      + " invalidation thread" + i,
-                                                             new CacheEntryInvalidator(globalKeySet[i],
-                                                                                       globalEvictionEnabled,
-                                                                                       globalEvictionFrequency,
-                                                                                       startEvitionIndex,
-                                                                                       lastEvitionIndex));
-      cacheInvalidationTimer[i].schedule(true);
-      startEvitionIndex = lastEvitionIndex;
-    }
-
-    TCProperties loggingPropreties = ManagerUtil.getTCProperties().getPropertiesFor("ehcache.logging");
-    if (loggingPropreties != null) {
-      this.isLoggingEnabled = loggingPropreties.getBoolean("enabled");
-    } else {
-      this.isLoggingEnabled = false;
-    }
-  }
-
-  /**
-   * This is used as a DistributedMethod because when one node cancel a timer, other nodes need to cancel the timer as
-   * well.
-   */
-  public void stopInvalidatorThread() {
-    for (int i = 0; i < evictorPoolSize; i++) {
-      cacheInvalidationTimer[i].cancel();
-    }
-  }
-
-  private int getStoreIndex(Object key) {
-    if (this.concurrency == 1) { return 0; }
-    int hashValue = Math.abs(hash(key.hashCode()));
-    return hashValue % this.concurrency;
-  }
-
   public Object put(final Object key, final Object value) {
     logDebug("Put [" + key + ", " + value + "]");
     Assert.pre(key != null);
     Assert.pre(value != null);
 
-    CacheData cd = new CacheData(value, maxIdleTimeoutSeconds, maxTTLSeconds);
+    CacheData cd = new CacheData(value, config);
     cd.accessed();
     int storeIndex = getStoreIndex(key);
 
     CacheData rcd = (CacheData) store[storeIndex].put(key, cd);
     // Only need to put into the timestamp map only when the invalidator thread will be active
-    if (invalidatorSleepSeconds >= 0) {
+    if (config.getInvalidatorSleepSeconds() >= 0) {
       dtmStore[storeIndex].put(key, cd.getTimestamp());
     }
 
@@ -185,11 +151,11 @@ public class CacheDataStore implements Serializable {
     return rv;
   }
 
-  private void dumpStore() {
-    for (int i = 0; i < concurrency; i++) {
-      System.err.println("Dump store Client " + ManagerUtil.getClientID() + "i: " + i + " " + store[i]);
-    }
-  }
+//  private void dumpStore() {
+//    for (int i = 0; i < config.getConcurrency(); i++) {
+//      System.err.println("Dump store Client " + manager.getClientID() + "i: " + i + " " + store[i]);
+//    }
+//  }
 
   public Object get(final Object key) {
     logDebug("Get [" + key + "]");
@@ -247,11 +213,11 @@ public class CacheDataStore implements Serializable {
 
   public void expire(Object key) {
     removeInternal(key);
-    callback.expire(key);
+    config.getCallback().expire(key);
   }
 
   public void clear() {
-    for (int i = 0; i < this.concurrency; i++) {
+    for (int i = 0; i < config.getConcurrency(); i++) {
       store[i].clear();
       dtmStore[i].clear();
     }
@@ -264,14 +230,14 @@ public class CacheDataStore implements Serializable {
 
   public Set entrySet() {
     Set entrySet = new HashSet();
-    for (int i = 0; i < this.concurrency; i++) {
+    for (int i = 0; i < config.getConcurrency(); i++) {
       entrySet.addAll(store[i].entrySet());
     }
     return entrySet;
   }
 
   public boolean isEmpty() {
-    for (int i = 0; i < this.concurrency; i++) {
+    for (int i = 0; i < config.getConcurrency(); i++) {
       if (!store[i].isEmpty()) { return false; }
     }
     return true;
@@ -279,15 +245,15 @@ public class CacheDataStore implements Serializable {
 
   public Set keySet() {
     Set keySet = new HashSet();
-    for (int i = 0; i < this.concurrency; i++) {
+    for (int i = 0; i < config.getConcurrency(); i++) {
       keySet.addAll(store[i].keySet());
     }
     return keySet;
   }
 
   public boolean containsValue(Object value) {
-    CacheData cd = new CacheData(value, this.maxIdleTimeoutSeconds, this.maxTTLSeconds);
-    for (int i = 0; i < this.concurrency; i++) {
+    CacheData cd = new CacheData(value, config);
+    for (int i = 0; i < config.getConcurrency(); i++) {
       if (store[i].containsValue(cd)) { return true; }
     }
     return false;
@@ -295,7 +261,7 @@ public class CacheDataStore implements Serializable {
 
   public int size() {
     int size = 0;
-    for (int i = 0; i < this.concurrency; i++) {
+    for (int i = 0; i < config.getConcurrency(); i++) {
       size += store[i].size();
     }
     return size;
@@ -303,32 +269,23 @@ public class CacheDataStore implements Serializable {
 
   public Collection values() {
     List values = new ArrayList();
-    for (int i = 0; i < this.concurrency; i++) {
+    for (int i = 0; i < config.getConcurrency(); i++) {
       values.addAll(store[i].values());
     }
     return values;
   }
 
-  public long getMaxIdleTimeoutSeconds() {
-    return maxIdleTimeoutSeconds;
-  }
-
-  public long getMaxTTLSeconds() {
-    return maxTTLSeconds;
-  }
-
   void updateTimestampIfNeeded(Object key, CacheData rv) {
-    if (maxIdleTimeoutSeconds <= 0) { return; }
+    if (config.getMaxTTLSeconds() <= 0) { return; }
 
     Assert.pre(rv != null);
     final long now = System.currentTimeMillis();
     final Timestamp t = rv.getTimestamp();
-    final long expiredTimeMillis = t.getExpiredTimeMillis();
     if (needsUpdate(rv)) {
       int storeIndex = getStoreIndex(key);
       ManagerUtil.monitorEnter(store[storeIndex], LockLevel.CONCURRENT);
       try {
-        t.setExpiredTimeMillis(now + rv.getMaxInactiveMillis());
+        t.setExpiredTimeMillis(now + config.getMaxIdleTimeoutMillis());
       } finally {
         ManagerUtil.monitorExit(store[storeIndex]);
       }
@@ -339,7 +296,7 @@ public class CacheDataStore implements Serializable {
     final long now = System.currentTimeMillis();
     final Timestamp t = rv.getTimestamp();
     final long diff = t.getExpiredTimeMillis() - now;
-    return (diff < (rv.getMaxInactiveMillis() / 2) || diff > (rv.getMaxInactiveMillis()));
+    return (diff < (config.getMaxIdleTimeoutMillis() / 2) || diff > (config.getMaxIdleTimeoutMillis()));
   }
 
   Timestamp findTimestampUnlocked(final Object key) {
@@ -372,17 +329,17 @@ public class CacheDataStore implements Serializable {
   }
 
   private void logDebug(String msg) {
-    if (isLoggingEnabled) {
+    if (config.isLoggingEnabled()) {
       logger.debug(msg);
     }
   }
 
   private void logError(String msg, Throwable t) {
-    if (isLoggingEnabled) {
+    if (config.isLoggingEnabled()) {
       logger.error(msg, t);
     }
   }
-
+  
   private Collection getAllLocalEntries(int startEvictionIndex, int lastEvictionIndex) {
     Collection allLocalEntries = new ArrayList();
     for (int i = startEvictionIndex; i < lastEvictionIndex; i++) {
@@ -392,11 +349,11 @@ public class CacheDataStore implements Serializable {
     return allLocalEntries;
   }
 
-  private Object[] getAllLocalKeys(int startEvictionIndex, int lastEvictionIndex) {
-    Collection allLocalEntires = getAllLocalEntries(startEvictionIndex, lastEvictionIndex);
-    Object[] allLocalKeys = new Object[allLocalEntires.size()];
+  Object[] getAllLocalKeys(int startEvictionIndex, int lastEvictionIndex) {
+    Collection allLocalEntries = getAllLocalEntries(startEvictionIndex, lastEvictionIndex);
+    Object[] allLocalKeys = new Object[allLocalEntries.size()];
     int i = 0;
-    for (Iterator it = allLocalEntires.iterator(); it.hasNext();) {
+    for (Iterator it = allLocalEntries.iterator(); it.hasNext(); i++) {
       Map.Entry e = (Map.Entry) it.next();
       allLocalKeys[i] = e.getKey();
     }
@@ -419,7 +376,7 @@ public class CacheDataStore implements Serializable {
   }
 
   public void evictExpiredElements() {
-    evictExpiredElements(0, this.concurrency);
+    evictExpiredElements(0, config.getConcurrency());
   }
 
   public void evictExpiredElements(int startEvictionIndex, int lastEvictionIndex) {
@@ -429,11 +386,7 @@ public class CacheDataStore implements Serializable {
 
   public void evictAllExpiredElements(Collection remoteKeys, int startEvictionIndex, int lastEvictionIndex) {
     final Collection orphanEntries = getAllOrphanEntries(remoteKeys, startEvictionIndex, lastEvictionIndex);
-    TCProperties ehcacheProperies = ManagerUtil.getTCProperties().getPropertiesFor("ehcache.global.eviction");
-    int numOfChunks = ehcacheProperies.getInt("segments");
-    long restMillis = ehcacheProperies.getLong("rest.timeMillis");
-
-    invalidateCacheEntries(orphanEntries, true, numOfChunks, restMillis);
+    invalidateCacheEntries(orphanEntries, true, config.getNumOfChunks(), config.getRestMillis());
   }
 
   private void invalidateCacheEntries(final Collection entriesToBeExamined, boolean isGlobalInvalidation,
@@ -445,7 +398,8 @@ public class CacheDataStore implements Serializable {
     long numOfObjectsPerChunk = entriesToBeExamined.size();
 
     if (isGlobalInvalidation) {
-      numOfObjectsPerChunk = Math.round(entriesToBeExamined.size() * 1.0 / numOfChunks);
+      // Use ceiling here so that we get at least 1 obj / chunk
+      numOfObjectsPerChunk = (int)Math.ceil(entriesToBeExamined.size() * 1.0 / numOfChunks);
     }
 
     for (Iterator it = entriesToBeExamined.iterator(); it.hasNext();) {
@@ -479,183 +433,5 @@ public class CacheDataStore implements Serializable {
     }
   }
 
-  private class CacheEntryInvalidator implements Runnable {
-    private final TCLogger     logger              = ManagerUtil
-                                                       .getLogger("com.tc.cache.CacheDataStore$CacheEntryInvalidator");
 
-    private final Lock         globalInvalidationLock;
-    private final Lock         localInvalidationLock;
-    private boolean            isGlobalInvalidator = false;
-    private final GlobalKeySet globalKeySet;
-    private final boolean      globalEvictionEnabled;
-    private final int          globalEvictionFrequency;
-    private final int          startEvictionIndex;
-    private final int          lastEvictionIndex;
-    private int                numOfLocalEvictionOccurred;
-    private final boolean      isLoggingEnabled;
-
-    public CacheEntryInvalidator(GlobalKeySet globalKeySet, boolean globalEvictionEnabled, int globalEvictionFrequency,
-                                 int startEvitionIndex, int lastEvitionIndex) {
-      String localEvictionLockName = "tc:local_time_expiry_cache_invalidator_lock_" + cacheName + ":"
-                                     + startEvitionIndex + ":" + lastEvitionIndex;
-      String globalEvictionLockName = "tc:global_time_expiry_cache_invalidator_lock_" + cacheName + ":"
-                                      + startEvitionIndex + ":" + lastEvitionIndex;
-      this.globalKeySet = globalKeySet;
-      this.localInvalidationLock = new Lock(localEvictionLockName);
-      this.globalInvalidationLock = new Lock(globalEvictionLockName);
-      this.globalEvictionEnabled = globalEvictionEnabled;
-      this.globalEvictionFrequency = globalEvictionFrequency;
-      this.startEvictionIndex = startEvitionIndex;
-      this.lastEvictionIndex = lastEvitionIndex;
-      TCProperties loggingProperty = ManagerUtil.getTCProperties().getPropertiesFor("ehcache.evictor.logging");
-      if (loggingProperty != null) {
-        this.isLoggingEnabled = loggingProperty.getBoolean("enabled");
-      } else {
-        this.isLoggingEnabled = false;
-      }
-    }
-
-    public void run() {
-      try {
-        tryToBeGlobalInvalidator();
-
-        localInvalidationLock.writeLock();
-        try {
-          evictLocalElements();
-        } finally {
-          localInvalidationLock.commitLock();
-          numOfLocalEvictionOccurred++;
-        }
-        globalEvictionIfNecessary();
-      } catch (Throwable t) {
-        t.printStackTrace(System.err);
-        throw new TCRuntimeException(t);
-      }
-    }
-
-    protected void evictLocalElements() {
-      log("Local eviction started");
-      evictExpiredElements(this.startEvictionIndex, this.lastEvictionIndex);
-      log("Local eviction finished");
-    }
-
-    private void globalEvictionIfNecessary() {
-      if (!isGlobalEvictionEnabled()) { return; }
-
-      if (isTimeForGlobalInvalidation()) {
-        try {
-          if (isGlobalInvalidator) {
-            try {
-              globalEvictionStarted();
-              evictAllExpiredElements(globalKeySet.allGlobalKeys(), startEvictionIndex, lastEvictionIndex);
-            } finally {
-              globalEvictionEnded();
-            }
-          } else {
-            waitForGlobalEviction();
-            notifyLocalKeySet();
-          }
-        } finally {
-          numOfLocalEvictionOccurred = 0;
-        }
-      }
-    }
-
-    private void waitForGlobalEviction() {
-      globalKeySet.waitForGlobalEviction();
-    }
-
-    private void notifyLocalKeySet() {
-      globalKeySet
-          .addLocalKeySet(cacheParticipants.getNodeId(), getAllLocalKeys(startEvictionIndex, lastEvictionIndex));
-    }
-
-    private void globalEvictionStarted() {
-      log("Global eviction started");
-      globalKeySet.globalEvictionStart(cacheParticipants.getNodeId(), cacheParticipants.getCacheParticipants());
-    }
-
-    private void globalEvictionEnded() {
-      log("Global eviction finished");
-      globalKeySet.globalEvictionEnd();
-    }
-
-    public void postRun() {
-      if (isGlobalInvalidator) {
-        globalInvalidationLock.commitLock();
-        isGlobalInvalidator = false;
-      }
-    }
-
-    private boolean isTimeForGlobalInvalidation() {
-      Assert.eval(globalEvictionFrequency > 0);
-      return globalEvictionFrequency == numOfLocalEvictionOccurred;
-    }
-
-    private boolean isGlobalEvictionEnabled() {
-      return globalEvictionEnabled;
-    }
-
-    private void tryToBeGlobalInvalidator() {
-      if (isGlobalEvictionEnabled() && !isGlobalInvalidator) {
-        log("CacheEntryInvalidator try to get the global invalidation lock.");
-        if (globalInvalidationLock.tryWriteLock()) {
-          isGlobalInvalidator = true;
-        }
-      }
-    }
-
-    private void log(String msg) {
-      if (isLoggingEnabled) {
-        logger.info(msg);
-      }
-    }
-  }
-
-  private class CacheInvalidationTimer implements Runnable {
-    private final long                            delayMillis;
-    private boolean                               recurring = true;
-    private final String                          timerName;
-    private final transient CacheEntryInvalidator invalidationTask;
-
-    public CacheInvalidationTimer(final long delayInSecs, final String timerName,
-                                  final CacheEntryInvalidator invalidationTask) {
-      this.timerName = timerName;
-      this.invalidationTask = invalidationTask;
-      this.delayMillis = delayInSecs * 1000;
-    }
-
-    public void schedule(boolean recurring) {
-      if (delayMillis <= 0) { return; }
-
-      this.recurring = recurring;
-      Thread t = new Thread(this, timerName);
-      t.setDaemon(true);
-      t.start();
-    }
-
-    public void run() {
-      long nextDelay = delayMillis;
-      try {
-        do {
-          sleep(nextDelay);
-          invalidationTask.run();
-        } while (recurring);
-      } finally {
-        invalidationTask.postRun();
-      }
-    }
-
-    private void sleep(long l) {
-      try {
-        Thread.sleep(l);
-      } catch (InterruptedException ignore) {
-        // nothing to do
-      }
-    }
-
-    public void cancel() {
-      recurring = false;
-    }
-  }
 }

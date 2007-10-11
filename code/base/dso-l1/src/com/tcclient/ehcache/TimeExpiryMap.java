@@ -4,7 +4,10 @@
  */
 package com.tcclient.ehcache;
 
+import com.tc.object.bytecode.Manager;
+import com.tc.object.bytecode.ManagerUtil;
 import com.tc.util.Assert;
+import com.tcclient.cache.CacheConfig;
 import com.tcclient.cache.CacheData;
 import com.tcclient.cache.CacheDataStore;
 import com.tcclient.cache.Expirable;
@@ -26,16 +29,35 @@ public class TimeExpiryMap implements Map, Expirable, Cloneable, Serializable {
   protected final CacheDataStore timeExpiryDataStore;
 
   public TimeExpiryMap(long invalidatorSleepSeconds, long maxIdleTimeoutSeconds, long maxTTLSeconds, String cacheName) {
-    timeExpiryDataStore = new CacheDataStore(invalidatorSleepSeconds, maxIdleTimeoutSeconds, maxTTLSeconds,
-                                             "CacheInvalidator - " + cacheName, this);
+    Manager manager = ManagerUtil.getManager();
+    CacheConfig config = new CacheConfig("CacheInvalidator - " + cacheName, 
+                                         maxIdleTimeoutSeconds, 
+                                         maxTTLSeconds,
+                                         invalidatorSleepSeconds, 
+                                         this, 
+                                         manager);
+    timeExpiryDataStore = new CacheDataStore(config);
   }
 
   // For test only
   public TimeExpiryMap(long invalidatorSleepSeconds, long maxIdleTimeoutSeconds, long maxTTLSeconds, String cacheName,
-                       boolean globalEvictionEnabled, int globalEvictionDuration, int concurrency, int evictorPoolSize) {
-    timeExpiryDataStore = new CacheDataStore(invalidatorSleepSeconds, maxIdleTimeoutSeconds, maxTTLSeconds,
-                                             "CacheInvalidator - " + cacheName, this, globalEvictionEnabled,
-                                             globalEvictionDuration, concurrency, evictorPoolSize);
+                       boolean globalEvictionEnabled, int globalEvictionDuration, int concurrency, int evictorPoolSize,
+                       boolean isLoggingEnabled, boolean isEvictorLoggingEnabled, int numOfChunks, long restMillis) {
+
+    CacheConfig config = new CacheConfig("CacheInvalidator - " + cacheName, 
+                                         maxIdleTimeoutSeconds, 
+                                         maxTTLSeconds,
+                                         invalidatorSleepSeconds, 
+                                         this, 
+                                         concurrency,
+                                         evictorPoolSize,
+                                         globalEvictionEnabled,
+                                         globalEvictionDuration,
+                                         isLoggingEnabled, 
+                                         isEvictorLoggingEnabled,
+                                         numOfChunks, 
+                                         restMillis);
+    timeExpiryDataStore = new CacheDataStore(config);
   }
 
   public void initialize() {
@@ -176,7 +198,7 @@ public class TimeExpiryMap implements Map, Expirable, Cloneable, Serializable {
 
     public boolean contains(Object o) {
       if (!(o instanceof CacheData)) {
-        o = new CacheData(o, timeExpiryDataStore.getMaxIdleTimeoutSeconds(), timeExpiryDataStore.getMaxTTLSeconds());
+        o = new CacheData(o, timeExpiryDataStore.getConfig());
       }
       return values.contains(o);
     }
@@ -222,8 +244,7 @@ public class TimeExpiryMap implements Map, Expirable, Cloneable, Serializable {
 
     public Object setValue(Object value) {
       if (!(value instanceof CacheData)) {
-        value = new CacheData(value, timeExpiryDataStore.getMaxIdleTimeoutSeconds(), timeExpiryDataStore
-            .getMaxTTLSeconds());
+        value = new CacheData(value, timeExpiryDataStore.getConfig());
       }
       CacheData cd = (CacheData) entry.setValue(value);
       return cd.getValue();

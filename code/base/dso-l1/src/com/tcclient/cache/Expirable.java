@@ -3,6 +3,14 @@
  */
 package com.tcclient.cache;
 
+/**
+ * Callback interface for when a data item is expired and removed from the store.
+ */
 public interface Expirable {
+  
+  /**
+   * The item handled by the key has been expired and removed
+   * @param key The item key
+   */
   public void expire(Object key);
 }
