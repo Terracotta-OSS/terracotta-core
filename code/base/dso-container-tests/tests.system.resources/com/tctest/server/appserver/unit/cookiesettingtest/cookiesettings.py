@@ -3,5 +3,5 @@ import operator
 
 server = AdminConfig.getid('/Server:server1/')
 smgr = AdminConfig.list('SessionManager', server)
-AdminConfig.modify(smgr, [['enableCookies', 'true'], ['defaultCookieSettings',  [['name', 'CUSTOMSESSIONID'], ['maximumAge', 3600], ['domain', 'localhost'], ['path', '/WebAppConfigTest'], ['secure', 'true']]]])
+AdminConfig.modify(smgr, [['enableCookies', 'true'], ['defaultCookieSettings',  [['name', 'CUSTOMSESSIONID'], ['maximumAge', 3600], ['domain', 'localhost'], ['path', '/CookieSettingTest'], ['secure', 'true']]]])
 AdminConfig.save()
