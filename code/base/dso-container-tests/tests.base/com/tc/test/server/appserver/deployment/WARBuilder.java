@@ -36,6 +36,15 @@ import java.util.StringTokenizer;
 
 import junit.framework.Assert;
 
+/*
+<!ELEMENT web-app (icon?, display-name?, description?, distributable?,
+context-param*, filter*, filter-mapping*, listener*, servlet*, 
+servlet-mapping*, session-config?, mime-mapping*, welcome-file-list?,
+error-page*, taglib*, resource-env-ref*, resource-ref*, 
+security-constraint*, login-config?, security-role*, env-entry*, 
+ejb-ref*,  ejb-local-ref*)>
+*/
+
 public class WARBuilder implements DeploymentBuilder {
 
   private static final TCLogger  logger                = TCLogging.getLogger(WARBuilder.class);
@@ -294,11 +303,6 @@ public class WARBuilder implements DeploymentBuilder {
         writeContextParam(pw, (String) param.getKey(), (String) param.getValue());
       }
 
-      for (Iterator it = sessionConfig.entrySet().iterator(); it.hasNext();) {
-        Map.Entry entry = (Map.Entry) it.next();
-        writeSessionConfig(pw, (String) entry.getKey(), (String) entry.getValue());
-      }
-      
       for (Iterator it = filters.iterator(); it.hasNext();) {
         FilterDefinition definition = (FilterDefinition) it.next();
         writeFilter(pw, definition);
@@ -336,7 +340,12 @@ public class WARBuilder implements DeploymentBuilder {
         pw.println("    <url-pattern>" + definition.mapping + "</url-pattern>");
         pw.println("  </servlet-mapping>");
       }
-
+      
+      for (Iterator it = sessionConfig.entrySet().iterator(); it.hasNext();) {
+        Map.Entry entry = (Map.Entry) it.next();
+        writeSessionConfig(pw, (String) entry.getKey(), (String) entry.getValue());
+      }
+      
       if (!taglibs.isEmpty()) {
         pw.println("  <jsp-config>");
         for (Iterator it = taglibs.entrySet().iterator(); it.hasNext();) {
@@ -681,3 +690,4 @@ public class WARBuilder implements DeploymentBuilder {
   }
 
 }
+

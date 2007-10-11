@@ -46,8 +46,8 @@ public class CookieSettingTest extends AbstractDeploymentTest {
     }
 
     // CDV-452
-    if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.WEBLOGIC &&
-        "8".equals(AppServerFactory.getCurrentAppServerMajorVersion())) {      
+    if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.WEBLOGIC
+        && "8".equals(AppServerFactory.getCurrentAppServerMajorVersion())) {
       disableTestUntil("testSessionTimeout", new Date(Long.MAX_VALUE));
     }
   }
@@ -64,6 +64,9 @@ public class CookieSettingTest extends AbstractDeploymentTest {
     super.setUp();
 
     if (deployment == null) {
+      tcConfigBuilder = new TcConfigBuilder();
+      tcConfigBuilder.addWebApplication(CONTEXT);
+
       deployment = makeDeployment();
 
       // server0 is NOT enabled with DSO
@@ -83,26 +86,24 @@ public class CookieSettingTest extends AbstractDeploymentTest {
   }
 
   public void testCookieSetting() throws Exception {
-    // test cookie settings
+    System.out.println("Hitting server0...");
     WebResponse response0 = server0.ping("/" + CONTEXT + "/ok");
     System.out.println("Cookie from server0 w/o DSO: " + response0.getHeaderField("Set-Cookie"));
 
+    System.out.println("Hitting server1...");
     WebResponse response1 = server1.ping("/" + CONTEXT + "/ok");
     System.out.println("Cookie from server1 w/ DSO: " + response1.getHeaderField("Set-Cookie"));
 
     assertCookie(response0.getHeaderField("Set-Cookie"), response1.getHeaderField("Set-Cookie"));
   }
 
-  public void testSessionTimeout() throws Exception {    
+  public void testSessionTimeout() throws Exception {
     // test session-timeout, it is set at 69 minutes
     WebResponse response1 = server1.ping("/" + CONTEXT + "/ok?cmd=getMaxInactiveInterval");
     assertEquals("4140", response1.getText().trim()); // 69min * 60 = 4140sec
   }
 
   private Deployment makeDeployment() throws Exception {
-    tcConfigBuilder = new TcConfigBuilder();
-    tcConfigBuilder.addWebApplication(CONTEXT);
-
     DeploymentBuilder builder = makeDeploymentBuilder(CONTEXT + ".war");
     builder.addServlet("OkServlet", "/ok/*", OkServlet.class, null, false);
     builder.addSessionConfig("session-timeout", "69");
