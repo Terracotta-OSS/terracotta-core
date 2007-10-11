@@ -639,7 +639,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
      * // ---------------------------- // implicit config-bundle - JAG // ---------------------------- spec =
      * getOrCreateSpec("java.io.File"); spec.setHonorTransient(true);
      */
-
     spec = getOrCreateSpec("java.util.Date", "com.tc.object.applicator.DateApplicator");
     spec.addAlwaysLogSpec(SerializationUtil.SET_TIME_SIGNATURE);
     spec.addDateMethodLogSpec(SerializationUtil.SET_YEAR_SIGNATURE);
@@ -654,6 +653,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     spec = getOrCreateSpec("java.sql.Timestamp", "com.tc.object.applicator.DateApplicator");
     spec.addDateMethodLogSpec(SerializationUtil.SET_TIME_SIGNATURE, MethodSpec.TIMESTAMP_SET_TIME_METHOD_WRAPPER_LOG);
     spec.addAlwaysLogSpec(SerializationUtil.SET_NANOS_SIGNATURE);
+    
+    spec = getOrCreateSpec("java.net.URL", "com.tc.object.applicator.URLApplicator");
+    spec.setHonorTransient(true);
+    spec.addAlwaysLogSpec(SerializationUtil.URL_SET_SIGNATURE);
 
     /**
      * // ---------------------------- // implicit config-bundle - JAG // ----------------------------

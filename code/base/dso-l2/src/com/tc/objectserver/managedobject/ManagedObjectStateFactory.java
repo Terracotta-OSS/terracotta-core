@@ -69,6 +69,7 @@ public class ManagedObjectStateFactory {
     classNameToStateMap.put(java.sql.Date.class.getName(), new Byte(ManagedObjectState.DATE_TYPE));
     classNameToStateMap.put(java.sql.Time.class.getName(), new Byte(ManagedObjectState.DATE_TYPE));
     classNameToStateMap.put(java.sql.Timestamp.class.getName(), new Byte(ManagedObjectState.DATE_TYPE));
+    classNameToStateMap.put(java.net.URL.class.getName(), new Byte(ManagedObjectState.URL_TYPE));
     // These 1.5 classes needs to be compiled in 1.4 !!
     classNameToStateMap.put("java.util.concurrent.LinkedBlockingQueue", new Byte(ManagedObjectState.QUEUE_TYPE));
     classNameToStateMap.put("java.util.concurrent.ConcurrentHashMap",
@@ -161,6 +162,8 @@ public class ManagedObjectStateFactory {
         return new DateManagedObjectState(classID);
       case ManagedObjectState.CONCURRENT_HASHMAP_TYPE:
         return new ConcurrentHashMapManagedObjectState(classID);
+      case ManagedObjectState.URL_TYPE:
+        return new URLManagedObjectState(classID);
     }
     // Unreachable
     throw new AssertionError("Type : " + type + " is unknown !");

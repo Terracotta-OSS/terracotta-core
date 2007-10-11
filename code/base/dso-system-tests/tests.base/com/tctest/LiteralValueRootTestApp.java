@@ -13,8 +13,6 @@ import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tctest.runner.AbstractTransparentApp;
 
-import java.net.URL;
-
 public class LiteralValueRootTestApp extends AbstractTransparentApp {
 
   private final SyncRoot      syncRoot                   = new SyncRoot();
@@ -28,7 +26,6 @@ public class LiteralValueRootTestApp extends AbstractTransparentApp {
   private Byte                byteRoot                   = null;
   private Boolean             booleanRoot                = null;
   private Character           characterRoot              = null;
-  private URL                 urlRoot                    = null;
 
   private Class               classRoot                  = null;
 
@@ -82,7 +79,6 @@ public class LiteralValueRootTestApp extends AbstractTransparentApp {
       testSharedBooleanRoot();
       testSharedCharacterRoot();
       testReferenceInequality();
-      testSharedURLRoot();
 
       // testReferenceEquality();
     } catch (Throwable t) {
@@ -484,32 +480,6 @@ public class LiteralValueRootTestApp extends AbstractTransparentApp {
     barrier.barrier();
   }
 
-  private void testSharedURLRoot() throws Exception {
-    clear();
-
-    int index = -1;
-    synchronized (syncRoot) {
-      index = syncRoot.getIndex();
-      if (index == 0) {
-        syncRoot.setIndex(1);
-      }
-    }
-
-    barrier.barrier();
-
-    synchronized (syncRoot) {
-      if (index == 0) {
-        urlRoot = new URL("http://www.terracotta.org");
-      }
-    }
-
-    barrier.barrier();
-
-    Assert.assertEquals(new URL("http://www.terracotta.org"), urlRoot);
-
-    barrier.barrier();
-  }
-
   private void testSharedIntegerRoot() throws Exception {
     clear();
 
@@ -788,7 +758,6 @@ public class LiteralValueRootTestApp extends AbstractTransparentApp {
     spec.addRoot("characterRoot", "characterRoot");
     spec.addRoot("syncRoot", "syncRoot");
     spec.addRoot("referenceRoot", "referenceRoot");
-    spec.addRoot("urlRoot", "urlRoot");
     spec.addRoot("barrier", "barrier");
   }
 

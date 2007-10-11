@@ -68,6 +68,7 @@ import com.tc.object.bytecode.JavaLangReflectFieldAdapter;
 import com.tc.object.bytecode.JavaLangReflectProxyClassAdapter;
 import com.tc.object.bytecode.JavaLangStringAdapter;
 import com.tc.object.bytecode.JavaLangThrowableDebugClassAdapter;
+import com.tc.object.bytecode.JavaNetURLAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentCyclicBarrierDebugClassAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentHashMapAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentHashMapEntryIteratorAdapter;
@@ -510,6 +511,7 @@ public class BootJarTool {
       addInstrumentedJavaLangStringBuffer();
       addInstrumentedClassLoader();
       addInstrumentedJavaLangString();
+      addInstrumentedJavaNetURL();
       addInstrumentedProxy();
       addTreeMap();
       addInstrumentedAtomicInteger();
@@ -1102,6 +1104,7 @@ public class BootJarTool {
     loadTerracottaClass("com.tc.util.Assert");
     loadTerracottaClass("com.tc.util.StringUtil");
     loadTerracottaClass("com.tc.util.TCAssertionError");
+    loadTerracottaClass("com.tc.object.applicator.TCURL");
 
     // this class needed for ibm-jdk-15 branch
     loadTerracottaClass("com.tc.object.bytecode.ClassAdapterFactory");
@@ -1598,6 +1601,29 @@ public class BootJarTool {
     cr.accept(cv, ClassReader.SKIP_FRAMES);
 
     bootJar.loadClassIntoJar("java.lang.String", cw.toByteArray(), false);
+  }
+
+  private final void addInstrumentedJavaNetURL() {
+    String className = "java.net.URL";
+    byte[] bytes = getSystemBytes(className);
+
+    ClassReader cr = new ClassReader(bytes);
+    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+
+    ClassVisitor cv = new JavaNetURLAdapter(cw);
+    cr.accept(cv, ClassReader.SKIP_FRAMES);
+
+    TransparencyClassSpec spec = config.getOrCreateSpec(className, "com.tc.object.applicator.URLApplicator");
+    spec.markPreInstrumented();
+    spec.setHonorTransient(true);
+    spec.addAlwaysLogSpec(SerializationUtil.URL_SET_SIGNATURE);
+    // note that there's another set method, that is actually never referenced
+    // from URLStreamHandler, so it's not accessible from classes that extend
+    // URLStreamHandler, so I'm not supporting it here
+
+    bytes = doDSOTransform(className, cw.toByteArray());
+
+    bootJar.loadClassIntoJar(className, bytes, spec.isPreInstrumented());
   }
 
   private final void addSunStandardLoaders() {

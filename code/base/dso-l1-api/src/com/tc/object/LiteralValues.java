@@ -9,7 +9,6 @@ import com.tc.util.ClassUtils;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.net.URL;
 import java.util.Collections;
 import java.util.Currency;
 import java.util.HashMap;
@@ -50,7 +49,6 @@ public class LiteralValues {
   public final static int    ENUM                         = 20;
   public final static int    ENUM_HOLDER                  = 21;
   public final static int    CURRENCY                     = 22;
-  public final static int    URL                          = 23;
 
   private final Map          values;
 
@@ -97,8 +95,6 @@ public class LiteralValues {
     addMapping(tmp, "com.tc.object.dna.impl.EnumInstance", ENUM_HOLDER);
 
     addMapping(tmp, Currency.class.getName(), CURRENCY);
-
-    addMapping(tmp, URL.class.getName(), URL);
 
     values = Collections.unmodifiableMap(tmp);
   }

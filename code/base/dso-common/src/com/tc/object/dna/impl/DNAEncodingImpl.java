@@ -30,7 +30,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.net.URL;
 import java.util.Currency;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
@@ -87,7 +86,7 @@ public class DNAEncodingImpl implements DNAEncoding {
   private static final byte          TYPE_ID_ENUM_HOLDER                  = 23;
   private static final byte          TYPE_ID_CURRENCY                     = 24;
   private static final byte          TYPE_ID_STRING_COMPRESSED            = 25;
-  private static final byte          TYPE_ID_URL                          = 26;
+//  private static final byte          TYPE_ID_URL                          = 26;
 
   private static final byte          ARRAY_TYPE_PRIMITIVE                 = 1;
   private static final byte          ARRAY_TYPE_NON_PRIMITIVE             = 2;
@@ -282,17 +281,17 @@ public class DNAEncodingImpl implements DNAEncoding {
       case LiteralValues.ARRAY:
         encodeArray(value, output);
         break;
-      case LiteralValues.URL:
-        {
-          URL url = (URL)value;
-          output.writeByte(TYPE_ID_URL);
-          output.writeString(url.getProtocol());
-          output.writeString(url.getHost());
-          output.writeInt(url.getPort());
-          output.writeString(url.getFile());
-          output.writeString(url.getRef());
-        }
-        break;
+//      case LiteralValues.URL:
+//        {
+//          URL url = (URL)value;
+//          output.writeByte(TYPE_ID_URL);
+//          output.writeString(url.getProtocol());
+//          output.writeString(url.getHost());
+//          output.writeInt(url.getPort());
+//          output.writeString(url.getFile());
+//          output.writeString(url.getRef());
+//        }
+//        break;
       default:
         throw Assert.failure("Illegal type (" + type + "):" + value);
     }
@@ -431,18 +430,18 @@ public class DNAEncodingImpl implements DNAEncoding {
         // char[] chars = readCharArray(input); // Unfortunately this is 1.5 specific
         byte[] b2 = readByteArray(input);
         return new BigDecimal(new String(b2));
-      case TYPE_ID_URL:
-        {        
-          String protocol = input.readString();
-          String host = input.readString();
-          int port = input.readInt();
-          String file = input.readString();
-          String ref = input.readString();
-          if (ref != null) {
-            file = file+"#"+ref;
-          }
-          return new URL(protocol, host, port, file);
-        }
+//      case TYPE_ID_URL:
+//        {        
+//          String protocol = input.readString();
+//          String host = input.readString();
+//          int port = input.readInt();
+//          String file = input.readString();
+//          String ref = input.readString();
+//          if (ref != null) {
+//            file = file+"#"+ref;
+//          }
+//          return new URL(protocol, host, port, file);
+//        }
       default:
         throw Assert.failure("Illegal type (" + type + ")");
     }

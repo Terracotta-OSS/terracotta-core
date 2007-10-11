@@ -76,7 +76,6 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
     addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.ENUM, "writeObject", "(Ljava/lang/Object;)V");
     addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.ENUM_HOLDER, "writeObject", "(Ljava/lang/Object;)V");
     addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.CURRENCY, "writeObject", "(Ljava/lang/Object;)V");
-    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.URL, "writeObject", "(Ljava/lang/Object;)V");
 
     addMapping(OBJECT_INPUT_METHODS, LiteralValues.INTEGER, "readInt", "()I");
     addMapping(OBJECT_INPUT_METHODS, LiteralValues.LONG, "readLong", "()J");
@@ -103,7 +102,6 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
     addMapping(OBJECT_INPUT_METHODS, LiteralValues.ENUM, "readObject", "()Ljava/lang/Object;");
     addMapping(OBJECT_INPUT_METHODS, LiteralValues.ENUM_HOLDER, "readObject", "()Ljava/lang/Object;");
     addMapping(OBJECT_INPUT_METHODS, LiteralValues.CURRENCY, "readObject", "()Ljava/lang/Object;");
-    addMapping(OBJECT_INPUT_METHODS, LiteralValues.URL, "readObject", "()Ljava/lang/Object;");
   }
 
   public PhysicalStateClassLoader(ClassLoader parent) {

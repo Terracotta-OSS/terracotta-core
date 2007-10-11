@@ -41,6 +41,7 @@ public class SerializationUtil {
   public final static int         REPLACE_IF_VALUE_EQUAL           = 25;
   public final static int         PUT_IF_ABSENT                    = 26;
   public final static int         REMOVE_IF_VALUE_EQUAL            = 27;
+  public final static int         URL_SET                          = 28;
 
   public final static String      PUSH_SIGNATURE                   = "push(Ljava/lang/Object;)java/lang/Object;";
   public final static String      POP_SIGNATURE                    = "pop()java/lang/Object;";
@@ -111,6 +112,8 @@ public class SerializationUtil {
   public final static String      SIGNAL_SIGNATURE                 = "signal()V";
   public final static String      SIGNAL_ALL_SIGNATURE             = "signalAll()V";
   public final static String      TRANSFORM_VALUES_SIGNATURE       = "transformValues(Lgnu/trove/TObjectFunction;)V";
+  public final static String      URL_SET_SIGNATURE                = "set(Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V";
+
 
   private final TObjectIntHashMap mappings                         = new TObjectIntHashMap();
 
@@ -151,6 +154,7 @@ public class SerializationUtil {
     mappings.put(PUT_IF_ABSENT_SIGNATURE, PUT_IF_ABSENT);
     mappings.put(REPLACE_SIGNATURE, REPLACE);
     mappings.put(REPLACE_IF_VALUE_EQUAL_SIGNATURE, REPLACE_IF_VALUE_EQUAL);
+    mappings.put(URL_SET_SIGNATURE, URL_SET);
   }
 
   public String[] getSignatures() {

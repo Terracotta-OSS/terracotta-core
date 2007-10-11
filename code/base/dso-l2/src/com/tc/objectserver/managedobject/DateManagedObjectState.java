@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * ManagedObjectState for sets.
+ * ManagedObjectState for dates.
  */
 public class DateManagedObjectState extends LogicalManagedObjectState {
 
