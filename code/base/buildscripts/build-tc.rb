@@ -294,6 +294,11 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     end
   end
 
+  def check_ee_build
+    check_short
+    publish_enterprise_packages
+  end
+    
   # A helper method to validate and run a test set. (Validation lets us avoid the case where,
   # for example, you misspell a test name in a list and don't realize it.)
   def validate_and_run(test_set)
@@ -419,7 +424,7 @@ END
   # working correctly. We run this test because it's one of the few that's
   # relevant to the monkey system itself.
   def check_monkeytest
-    check_one('UsingCorrect14JVMTest')
+    check_one('AssertTest')
   end
 
   # Target that runs tests for all modules which are not assigned to a module group.

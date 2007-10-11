@@ -98,7 +98,7 @@ class SvnUpdate
       log("curr: #{current_rev}")
       log("good: #{current_good_rev}")
 
-      if @monkey_name == "monkey-police" || current_good_rev == -1
+      if @monkey_name == "monkey-police" || @monkey_name =~ /kit/ || current_good_rev == -1
         log("monkey-police - updating to HEAD")
         svn_update_with_error_tolerant("HEAD")
         exit(0)
