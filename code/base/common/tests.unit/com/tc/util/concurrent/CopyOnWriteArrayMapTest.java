@@ -100,7 +100,7 @@ public class CopyOnWriteArrayMapTest extends TestCase {
 
   }
   
-  public void testBasicEntrySetKeySet() throws Exception {
+  public void testBasicEntrySet() throws Exception {
     CopyOnWriteArrayMap cam = new CopyOnWriteArrayMap();
     cam.put(new Integer(10), "String value 10");
     cam.put(new Integer(20), "String value 20");
@@ -126,6 +126,31 @@ public class CopyOnWriteArrayMapTest extends TestCase {
         System.err.println("Caught exception as expected ;)");
       }
     }
+  }
+  
+  public void testBasicKeySet() throws Exception {
+    CopyOnWriteArrayMap cam = new CopyOnWriteArrayMap();
+    cam.put(new Integer(10), "String value 10");
+    cam.put(new Integer(20), "String value 20");
+    cam.put(new Integer(30), "String value 30");
+    cam.put(new Integer(40), "String value 40");
+    
+    Set expectedKeys = new HashSet();
+    expectedKeys.add(new Integer(10));
+    expectedKeys.add(new Integer(20));
+    expectedKeys.add(new Integer(30));
+    expectedKeys.add(new Integer(40));
+    
+    Set keys = cam.keySet();
+    assertEquals(expectedKeys, keys);
+    
+    int count = expectedKeys.size();
+    for (Iterator i = keys.iterator(); i.hasNext();) {
+      Object key = i.next();
+      assertTrue(expectedKeys.contains(key));
+      count--;
+    }
+    assertEquals(0, count);
   }
   
   public void testTypedArrayFactory() throws Exception {

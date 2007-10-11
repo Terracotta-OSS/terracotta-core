@@ -94,7 +94,7 @@ public class CopyOnWriteArrayMap extends Hashtable {
    * This returns a Read only set since remove is not implemented on the set due to lack to time.
    */
   public Set keySet() {
-    return new ReadOnlySet(super.entrySet());
+    return new ReadOnlySet(super.keySet());
   }
 
   public synchronized Object put(Object key, Object value) {
