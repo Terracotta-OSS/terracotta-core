@@ -105,6 +105,7 @@ public class SessionConfigTest extends AbstractDeploymentTest {
     assertEquals("OK", response.getText().trim());
     int idLength = wc.getCookieValue("JSESSIONID").indexOf("!");
     System.out.println(wc.getCookieValue("JSESSIONID") + ", length = " + idLength);
+    assertEquals(69, idLength);
   }
 
   private WebResponse request(WebApplicationServer appserver, String params, WebConversation con) throws Exception {
