@@ -224,7 +224,7 @@ public class TimeExpiryMapGlobalEvictionTestApp extends ServerCrashingAppBase {
     private int numOfEvicted = 0;
 
     public MockTimeExpiryMap(int invalidatorSleepSeconds, int maxIdleTimeoutSeconds, int maxTTLSeconds) {
-      super(invalidatorSleepSeconds, maxIdleTimeoutSeconds, maxTTLSeconds, "MockCache", true, 3, 4, 2);
+      super(invalidatorSleepSeconds, maxIdleTimeoutSeconds, maxTTLSeconds, "MockCache", true, 3, 4, 2, true, true, 2, 10);
     }
 
     protected final synchronized void processExpired(Object key) {
