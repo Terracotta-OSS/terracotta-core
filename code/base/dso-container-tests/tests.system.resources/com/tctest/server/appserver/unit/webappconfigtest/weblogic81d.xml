@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<weblogic-web-app>
+	<session-descriptor>
+		<session-param>
+			<param-name>IDLength</param-name>
+			<param-value>69</param-value>
+		</session-param>
+	</session-descriptor>
+</weblogic-web-app>

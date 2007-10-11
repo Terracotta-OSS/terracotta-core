@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<weblogic-web-app xmlns="http://www.bea.com/ns/weblogic/90">
+	<session-descriptor>
+	 	<id-length>69</id-length>	 	
+	</session-descriptor>
+</weblogic-web-app>
