@@ -99,4 +99,8 @@ public interface ClientLockManager {
   public boolean isLocked(LockID lockID, ThreadID threadID, int lockLevel);
 
   public void queryLockCommit(ThreadID threadID, GlobalLockInfo globalLockInfo);
+  
+  public void enableStat(LockID lockID, int lockStackTraceDepth, int lockStatCollectFrequency);
+  
+  public void disableStat(LockID lockID);
 }

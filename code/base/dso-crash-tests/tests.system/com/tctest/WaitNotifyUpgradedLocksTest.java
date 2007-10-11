@@ -6,6 +6,10 @@ package com.tctest;
 public class WaitNotifyUpgradedLocksTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 2;
+  
+  public WaitNotifyUpgradedLocksTest() {
+    this.disableAllUntil("2009-08-01");
+  }
 
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT).setIntensity(1);

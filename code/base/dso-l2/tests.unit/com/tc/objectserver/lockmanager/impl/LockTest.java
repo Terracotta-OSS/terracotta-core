@@ -6,6 +6,8 @@ package com.tc.objectserver.lockmanager.impl;
 
 import com.tc.async.api.Sink;
 import com.tc.async.impl.MockSink;
+import com.tc.exception.TCLockUpgradeNotSupportedError;
+import com.tc.management.L2LockStatsManager;
 import com.tc.net.groups.ClientID;
 import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -35,7 +37,7 @@ public class LockTest extends TestCase {
   private Sink            sink;
   private long            uniqueId = 100000L;
   private WaitTimer       waitTimer;
-  private LockManagerImpl lockMgr  = new LockManagerImpl(new NullChannelManager());
+  private LockManagerImpl lockMgr  = new LockManagerImpl(new NullChannelManager(), L2LockStatsManager.NULL_LOCK_STATS_MANAGER);
   private NotifiedWaiters notifiedWaiters;
 
   protected void setUp() throws Exception {
@@ -66,71 +68,49 @@ public class LockTest extends TestCase {
     lock.requestLock(thread1, LockLevel.READ, sink);
     lock.requestLock(thread2, LockLevel.READ, sink);
     lock.requestLock(thread3, LockLevel.READ, sink);
-
-    // request the upgrade
     assertEquals(3, lock.getHoldersCount());
-    assertEquals(0, lock.getPendingUpgradeCount());
-    lock.requestLock(thread1, LockLevel.WRITE, sink);
-    assertEquals(1, lock.getPendingUpgradeCount());
-    assertEquals(3, lock.getHoldersCount());
+    assertEquals(0, lock.getPendingCount());
 
-    // release 1 of 2 pending read locks
+    // try requesting the upgrade
+    try {
+      lock.requestLock(thread1, LockLevel.WRITE, sink);
+      throw new AssertionError("Should have thrown a TCLockUpgradeNotSupportedError.");
+    } catch (TCLockUpgradeNotSupportedError e) {
+      // expected
+    }
+    assertEquals(3, lock.getHoldersCount());
+    assertEquals(0, lock.getPendingCount());
+
     lock.removeCurrentHold(thread2);
-    lock.nextPending();
-    assertEquals(1, lock.getPendingUpgradeCount());
     assertEquals(2, lock.getHoldersCount());
+    assertEquals(0, lock.getPendingCount());
 
-    // release final pending read lock
+    // release 1 read lock
     lock.removeCurrentHold(thread3);
-    lock.nextPending();
 
-    // verify upgrade granted
-    assertEquals(0, lock.getPendingUpgradeCount());
     assertEquals(1, lock.getHoldersCount());
+    assertEquals(0, lock.getPendingCount());
     Holder holder = (Holder) lock.getHoldersCollection().toArray()[0];
     assertEquals(cid1, holder.getNodeID());
     assertEquals(txnId1, holder.getThreadID());
-    assertTrue(holder.isUpgrade());
+    //assertFalse(holder.isUpgrade());
 
     // add some other pending lock requests
     lock.requestLock(thread2, LockLevel.READ, sink);
     lock.requestLock(thread3, LockLevel.WRITE, sink);
-    assertEquals(2, lock.getPendingCount());
+    assertEquals(1, lock.getPendingCount());
+    assertEquals(2, lock.getHoldersCount());
 
-    // release the upgrade (tx1 and tx2 should now hold read locks)
+    // release all reads
     lock.removeCurrentHold(thread1);
-    lock.awardAllReads();
+    lock.removeCurrentHold(thread2);
+    assertEquals(0, lock.getHoldersCount());
     assertEquals(1, lock.getPendingCount());
     Holder[] holders = (Holder[]) lock.getHoldersCollection().toArray(new Holder[] {});
-    assertEquals(2, holders.length);
-    boolean tx1 = false, tx2 = false;
-
-    for (int i = 0; i < 2; i++) {
-      Holder h = holders[i];
-      assertEquals(cid1, h.getNodeID());
-      if (h.getThreadID().equals(txnId1)) {
-        assertFalse(tx1);
-        tx1 = true;
-      } else if (h.getThreadID().equals(txnId2)) {
-        assertFalse(tx2);
-        tx2 = true;
-      } else {
-        fail(h.getThreadID().toString());
-      }
-
-      assertEquals(LockLevel.READ, h.getLockLevel());
-    }
-    assertTrue(tx1);
-    assertTrue(tx2);
+    assertEquals(0, holders.length);
 
     // release one of the current read locks
     lock.removeCurrentHold(thread1);
-    lock.nextPending();
-    assertEquals(1, lock.getHoldersCount());
-    assertEquals(1, lock.getPendingCount());
-
-    // release the other read lock
-    lock.removeCurrentHold(thread2);
     lock.nextPending();
     assertEquals(0, lock.getPendingCount());
     assertEquals(1, lock.getHoldersCount());
@@ -138,6 +118,12 @@ public class LockTest extends TestCase {
     assertEquals(cid1, holder.getNodeID());
     assertEquals(txnId3, holder.getThreadID());
     assertEquals(LockLevel.WRITE, holder.getLockLevel());
+
+
+    // release the write lock
+    lock.removeCurrentHold(thread3);
+    assertEquals(0, lock.getPendingCount());
+    assertEquals(0, lock.getHoldersCount());
   }
 
   private static ServerThreadContext makeTxn(ClientID cid, ThreadID threadID) {
@@ -457,18 +443,13 @@ public class LockTest extends TestCase {
     assertFalse(lock.hasPending());
   }
 
-  public void testWaitOnUpgradedLock() throws Exception {
+  public void testWaitOnAndNotify() throws Exception {
     ClientID cid1 = new ClientID(new ChannelID(1));
 
     ServerThreadContext thread1 = makeTxn(cid1, new ThreadID(1));
     ServerThreadContext thread2 = makeTxn(cid1, new ThreadID(2));
 
     Lock lock = new Lock(new LockID("timmy"), 0, new LockEventListener[] {});
-    lock.requestLock(thread1, LockLevel.READ, sink);
-    assertEquals(1, lock.getHoldersCount());
-    assertEquals(0, lock.getWaiterCount());
-    assertFalse(lock.hasPending());
-
     lock.requestLock(thread1, LockLevel.WRITE, sink);
     assertEquals(1, lock.getHoldersCount());
     assertEquals(0, lock.getWaiterCount());
@@ -497,7 +478,7 @@ public class LockTest extends TestCase {
     assertEquals(0, lock.getWaiterCount());
     assertEquals(0, lock.getPendingCount());
 
-    // make sure the wait()'er gets an upgraded lock back
+    // make sure the wait()'er gets an write lock back
     Collection holders = lock.getHoldersCollection();
     assertEquals(1, holders.size());
     Holder holder = null;
@@ -507,8 +488,8 @@ public class LockTest extends TestCase {
     }
 
     assertEquals(thread1, holder.getThreadContext());
-    assertTrue(holder.isUpgrade());
-    assertEquals(LockLevel.READ | LockLevel.WRITE, holder.getLockLevel());
+    //assertFalse(holder.isUpgrade());
+    assertEquals(LockLevel.WRITE, holder.getLockLevel());
   }
 
   public void testNotifyAll() throws Exception {

@@ -7,6 +7,8 @@ package com.tc.object.lockmanager.impl;
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 import com.tc.logging.NullTCLogger;
+import com.tc.management.ClientLockStatManager;
+import com.tc.management.L2LockStatsManager;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.LockRequest;
@@ -38,9 +40,9 @@ public class ClientServerLockManagerTest extends TestCase {
     super.setUp();
     sessionManager = new TestSessionManager();
     glue = new ClientServerLockManagerGlue(sessionManager);
-    clientLockManager = new ClientLockManagerImpl(new NullTCLogger(), glue, sessionManager);
+    clientLockManager = new ClientLockManagerImpl(new NullTCLogger(), glue, sessionManager, ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER);
 
-    serverLockManager = new LockManagerImpl(new NullChannelManager());
+    serverLockManager = new LockManagerImpl(new NullChannelManager(), L2LockStatsManager.NULL_LOCK_STATS_MANAGER);
     serverLockManager.setLockPolicy(LockManagerImpl.ALTRUISTIC_LOCK_POLICY);
     glue.set(clientLockManager, serverLockManager);
   }
@@ -55,7 +57,7 @@ public class ClientServerLockManagerTest extends TestCase {
     clientLockManager.lock(lockID1, tx1, LockLevel.READ);
     clientLockManager.lock(lockID1, tx3, LockLevel.READ);
     clientLockManager.lock(lockID2, tx2, LockLevel.READ);
-    clientLockManager.lock(lockID2, tx2, LockLevel.WRITE); // Upgrade
+    //clientLockManager.lock(lockID2, tx2, LockLevel.WRITE); // Upgrade
 
     clientLockManager.pause();
     LockMBean[] lockBeans1 = serverLockManager.getAllLocks();
@@ -76,7 +78,7 @@ public class ClientServerLockManagerTest extends TestCase {
     clientLockManager.lock(lockID1, tx1, LockLevel.READ);
     clientLockManager.lock(lockID1, tx3, LockLevel.READ);
     clientLockManager.lock(lockID2, tx2, LockLevel.WRITE);
-    clientLockManager.lock(lockID2, tx2, LockLevel.READ); // Local Upgrade
+    clientLockManager.lock(lockID2, tx2, LockLevel.READ);
 
     clientLockManager.pause();
     LockMBean[] lockBeans1 = serverLockManager.getAllLocks();
@@ -126,46 +128,12 @@ public class ClientServerLockManagerTest extends TestCase {
     if (!equals(lockBeans1, lockBeans2)) { throw new AssertionError("The locks are not the same"); }
   }
 
-  public void testWaitRWServer() {
-    final LockID lockID1 = new LockID("1");
-    final ThreadID tx1 = new ThreadID(1);
-
-    clientLockManager.lock(lockID1, tx1, LockLevel.READ);
-    clientLockManager.lock(lockID1, tx1, LockLevel.WRITE); // Upgrade
-
-    Thread waitCallThread = new Thread() {
-
-      public void run() {
-        try {
-          clientLockManager.wait(lockID1, tx1, new WaitInvocation(), new Object(), new WaitListener() {
-
-            public void handleWaitEvent() {
-              // Formatter
-            }
-          });
-        } catch (InterruptedException ie) {
-          handleExceptionForTest(ie);
-        }
-      }
-    };
-    waitCallThread.start();
-    sleep(1000l);
-
-    clientLockManager.pause();
-    LockMBean[] lockBeans1 = serverLockManager.getAllLocks();
-
-    LockManagerImpl server2 = glue.restartServer();
-
-    LockMBean[] lockBeans2 = server2.getAllLocks();
-    if (!equals(lockBeans1, lockBeans2)) { throw new AssertionError("The locks are not the same"); }
-  }
-
   public void testWaitWRServer() {
     final LockID lockID1 = new LockID("1");
     final ThreadID tx1 = new ThreadID(1);
 
     clientLockManager.lock(lockID1, tx1, LockLevel.WRITE);
-    clientLockManager.lock(lockID1, tx1, LockLevel.READ); // Local Upgrade
+    clientLockManager.lock(lockID1, tx1, LockLevel.READ);
     Thread waitCallThread = new Thread() {
 
       public void run() {
@@ -198,8 +166,7 @@ public class ClientServerLockManagerTest extends TestCase {
     final ThreadID tx1 = new ThreadID(1);
     final ThreadID tx2 = new ThreadID(2);
 
-    clientLockManager.lock(lockID1, tx1, LockLevel.READ);
-    clientLockManager.lock(lockID1, tx1, LockLevel.WRITE); // Upgrade
+    clientLockManager.lock(lockID1, tx1, LockLevel.WRITE);
 
     Thread waitCallThread = new Thread() {
 
@@ -219,7 +186,7 @@ public class ClientServerLockManagerTest extends TestCase {
     waitCallThread.start();
     sleep(1000l);
 
-    clientLockManager.lock(lockID1, tx2, LockLevel.WRITE); // Upgrade
+    clientLockManager.lock(lockID1, tx2, LockLevel.WRITE);
     /*
      * Since this call is no longer in Lock manager, forced to call the server lock manager directly
      * clientLockManager.notify(lockID1,tx2, true);
@@ -242,8 +209,7 @@ public class ClientServerLockManagerTest extends TestCase {
     final ThreadID tx1 = new ThreadID(1);
     final ThreadID tx2 = new ThreadID(2);
 
-    clientLockManager.lock(lockID1, tx1, LockLevel.READ);
-    clientLockManager.lock(lockID1, tx1, LockLevel.WRITE); // Upgrade
+    clientLockManager.lock(lockID1, tx1, LockLevel.WRITE);
 
     LockMBean[] lockBeans1 = serverLockManager.getAllLocks();
 
@@ -280,9 +246,9 @@ public class ClientServerLockManagerTest extends TestCase {
     for (Iterator i = clientLockManager.addAllHeldLocksTo(new HashSet()).iterator(); i.hasNext();) {
       LockRequest request = (LockRequest) i.next();
       if (request.lockID().equals(lockID1) && request.threadID().equals(tx1)) {
-        if (!LockLevel.isRead(request.lockLevel()) || !LockLevel.isWrite(request.lockLevel())) {
+        if (LockLevel.isRead(request.lockLevel())) {
           // formater
-          throw new AssertionError("Lock Level is not READ WRITE");
+          throw new AssertionError("Should not have READ lock level.");
         }
         found = true;
         break;
@@ -362,7 +328,6 @@ public class ClientServerLockManagerTest extends TestCase {
     final ThreadID tx1 = new ThreadID(1);
     final ThreadID tx2 = new ThreadID(2);
 
-    clientLockManager.lock(lockID1, tx1, LockLevel.READ);
     clientLockManager.lock(lockID1, tx1, LockLevel.WRITE);
 
     Thread waitCallThread = new Thread() {
@@ -567,7 +532,6 @@ public class ClientServerLockManagerTest extends TestCase {
   private boolean equals(LockMBean bean1, LockMBean bean2) {
     return equals(bean1.getHolders(), bean2.getHolders())
            && equals(bean1.getPendingRequests(), bean2.getPendingRequests())
-           && equals(bean1.getPendingUpgrades(), bean2.getPendingUpgrades())
            && equals(bean1.getWaiters(), bean2.getWaiters());
   }
 

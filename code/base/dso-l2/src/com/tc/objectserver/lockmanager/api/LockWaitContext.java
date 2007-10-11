@@ -18,8 +18,6 @@ public interface LockWaitContext {
 
   public long getTimestamp();
 
-  public boolean wasUpgrade();
-  
   public int lockLevel();
 
   public Sink getLockResponseSink();

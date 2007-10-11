@@ -7,6 +7,7 @@ package com.tc.object.lockmanager.impl;
 import org.apache.commons.collections.map.ListOrderedMap;
 
 import com.tc.logging.TCLogger;
+import com.tc.management.ClientLockStatManager;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.lockmanager.api.ClientLockManager;
 import com.tc.object.lockmanager.api.LockFlushCallback;
@@ -41,27 +42,30 @@ import java.util.TimerTask;
  */
 public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallback {
 
-  public static final long        TIMEOUT                      = 60 * 1000;
+  public static final long            TIMEOUT                      = 60 * 1000;
 
-  private static final State      RUNNING                      = new State("RUNNING");
-  private static final State      STARTING                     = new State("STARTING");
-  private static final State      PAUSED                       = new State("PAUSED");
+  private static final State          RUNNING                      = new State("RUNNING");
+  private static final State          STARTING                     = new State("STARTING");
+  private static final State          PAUSED                       = new State("PAUSED");
 
-  private static final String     MISSING_LOCK_TEXT            = makeMissingLockText();
+  private static final String         MISSING_LOCK_TEXT            = makeMissingLockText();
 
-  private State                   state                        = RUNNING;
-  private final Map               locksByID                    = new HashMap();
-  private final Map               pendingQueryLockRequestsByID = new ListOrderedMap();
-  private final Map               lockInfoByID                 = new HashMap();
-  private final RemoteLockManager remoteLockManager;
-  private final WaitTimer         waitTimer                    = new WaitTimerImpl();
-  private final TCLogger          logger;
-  private final SessionManager    sessionManager;
+  private State                       state                        = RUNNING;
+  private final Map                   locksByID                    = new HashMap();
+  private final Map                   pendingQueryLockRequestsByID = new ListOrderedMap();
+  private final Map                   lockInfoByID                 = new HashMap();
+  private final RemoteLockManager     remoteLockManager;
+  private final WaitTimer             waitTimer                    = new WaitTimerImpl();
+  private final TCLogger              logger;
+  private final SessionManager        sessionManager;
+  private final ClientLockStatManager lockStatManager;
 
-  public ClientLockManagerImpl(TCLogger logger, RemoteLockManager remoteLockManager, SessionManager sessionManager) {
+  public ClientLockManagerImpl(TCLogger logger, RemoteLockManager remoteLockManager, SessionManager sessionManager,
+                               ClientLockStatManager lockStatManager) {
     this.logger = logger;
     this.remoteLockManager = remoteLockManager;
     this.sessionManager = sessionManager;
+    this.lockStatManager = lockStatManager;
     waitTimer.getTimer().schedule(new LockGCTask(this), TIMEOUT, TIMEOUT);
   }
 
@@ -112,6 +116,24 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
       }
     }
   }
+  
+  public void enableStat(LockID lockID, int lockStackTraceDepth, int lockStatCollectFrequency) {
+    final ClientLock lock;
+
+    synchronized (this) {
+      waitUntilRunning();
+      lockStatManager.enableStat(lockID, lockStackTraceDepth, lockStatCollectFrequency);
+    }
+  }
+  
+  public void disableStat(LockID lockID) {
+    final ClientLock lock;
+
+    synchronized (this) {
+      waitUntilRunning();
+      lockStatManager.disableStat(lockID);
+    }
+  }
 
   private GlobalLockInfo getLockInfo(LockID lockID, ThreadID threadID) {
     Object waitLock = addToPendingQueryLockRequest(lockID, threadID);
@@ -134,7 +156,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     }
     GlobalLockInfo lockInfo = getLockInfo(lockID, threadID);
 
-    int queueLength = lockInfo.getLockRequestQueueLength() + lockInfo.getLockUpgradeQueueLength();
+    int queueLength = lockInfo.getLockRequestQueueLength();
     if (lock != null) {
       queueLength += lock.queueLength();
     }
@@ -153,9 +175,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     GlobalLockInfo lockInfo = getLockInfo(lockID, threadID);
     int waitLength = lockInfo.getWaitersInfo().size();
 
-    if (lock != null) {
-      return waitLength + lock.waitLength();
-    }
+    if (lock != null) { return waitLength + lock.waitLength(); }
 
     return waitLength;
   }
@@ -319,7 +339,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     synchronized (lockInfoByID) {
       lockInfoByID.put(threadID, globalLockInfo);
     }
-    QueryLockRequest qRequest = (QueryLockRequest)pendingQueryLockRequestsByID.remove(threadID);
+    QueryLockRequest qRequest = (QueryLockRequest) pendingQueryLockRequestsByID.remove(threadID);
     if (qRequest == null) { throw new AssertionError("Query Lock request does not exist."); }
     Object waitLock = qRequest.getWaitLock();
     synchronized (waitLock) {
@@ -382,8 +402,9 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
       return;
     }
     final ClientLock lock = (ClientLock) locksByID.get(lockID);
-    if (lock == null) { throw new AssertionError("Client id: " + ManagerUtil.getClientID() + ", cannotAwardLock(): Lock not found" + lockID.toString() + " :: " + threadID
-                                                 + " :: " + LockLevel.toString(level)); }
+    if (lock == null) { throw new AssertionError("Client id: " + ManagerUtil.getClientID()
+                                                 + ", cannotAwardLock(): Lock not found" + lockID.toString() + " :: "
+                                                 + threadID + " :: " + LockLevel.toString(level)); }
     lock.cannotAwardLock(threadID, level);
   }
 
@@ -395,7 +416,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   private synchronized ClientLock getOrCreateLock(LockID id) {
     ClientLock lock = (ClientLock) locksByID.get(id);
     if (lock == null) {
-      lock = new ClientLock(id, remoteLockManager, waitTimer);
+      lock = new ClientLock(id, remoteLockManager, waitTimer, lockStatManager);
       locksByID.put(id, lock);
     }
     return lock;
@@ -489,8 +510,8 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   }
 
   private synchronized void resubmitQueryLockRequests() {
-    for (Iterator i=pendingQueryLockRequestsByID.values().iterator(); i.hasNext(); ) {
-      QueryLockRequest qRequest = (QueryLockRequest)i.next();
+    for (Iterator i = pendingQueryLockRequestsByID.values().iterator(); i.hasNext();) {
+      QueryLockRequest qRequest = (QueryLockRequest) i.next();
       remoteLockManager.queryLock(qRequest.lockID(), qRequest.threadID());
     }
   }

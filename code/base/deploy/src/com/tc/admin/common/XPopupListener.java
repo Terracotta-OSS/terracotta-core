@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin.common;
 
@@ -20,28 +21,28 @@ public class XPopupListener extends MouseAdapter {
   public XPopupListener() {
     super();
   }
-  
+
   public XPopupListener(JComponent target) {
     this();
     m_target = target;
   }
-  
+
   public void setTarget(JComponent target) {
-    if(m_target != null) {
-      if(m_popupMenu != null) {
+    if (m_target != null) {
+      if (m_popupMenu != null) {
         m_target.removeMouseListener(this);
-        m_target.remove(m_popupMenu);
+        m_target.setComponentPopupMenu(null);
       }
     }
-    
-    if((m_target = target) != null) {
-      if(m_popupMenu != null) {
-        m_target.add(m_popupMenu);
+
+    if ((m_target = target) != null) {
+      if (m_popupMenu != null) {
+        m_target.setComponentPopupMenu(m_popupMenu);
         m_target.addMouseListener(this);
       }
     }
   }
-  
+
   public void mousePressed(MouseEvent e) {
     testPopup(e);
   }
@@ -51,20 +52,24 @@ public class XPopupListener extends MouseAdapter {
   }
 
   public void testPopup(MouseEvent e) {
-    if(e.isPopupTrigger()) {
+    if (e.isPopupTrigger()) {
       m_popupMenu.show(m_target, e.getX(), e.getY());
     }
   }
 
   public void setPopupMenu(JPopupMenu popupMenu) {
-    if(m_popupMenu != null) {
-      m_target.removeMouseListener(this);
-      m_target.remove(m_popupMenu);
+    if (m_popupMenu != null) {
+      if (m_target != null) {
+        m_target.removeMouseListener(this);
+        m_target.remove(m_popupMenu);
+      }
     }
 
-    if((m_popupMenu = popupMenu) != null) {
-      m_target.add(popupMenu);
-      m_target.addMouseListener(this);
+    if ((m_popupMenu = popupMenu) != null) {
+      if (m_target != null) {
+        m_target.add(popupMenu);
+        m_target.addMouseListener(this);
+      }
     }
   }
 

@@ -1,8 +1,10 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
+import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -34,7 +36,7 @@ public class WaitNotifyUpgradedLocksTestApp extends AbstractTransparentApp {
     String testClass = WaitNotifyUpgradedLocksTestApp.class.getName();
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     config.addIncludePattern(testClass + "$*");
-    
+
     String methodExpression = "* " + testClass + ".run()";
     config.addWriteAutolock(methodExpression);
 
@@ -96,14 +98,19 @@ public class WaitNotifyUpgradedLocksTestApp extends AbstractTransparentApp {
         m.put(new Object(), null);
         throw new RuntimeException("Not in a read only context");
       } catch (ReadOnlyException r) {
-          // expected
+        // expected
       }
     }
   }
 
   public void runWrite(Map m, Runnable action) {
-    synchronized (m) {
-      action.run();
+    try {
+      synchronized (m) {
+        action.run();
+      }
+      throw new AssertionError("Should have thrown a TCLockUpgradeNotSupportedError.");
+    } catch (TCLockUpgradeNotSupportedError e) {
+      // expected
     }
   }
 

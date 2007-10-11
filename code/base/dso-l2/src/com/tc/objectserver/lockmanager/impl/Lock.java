@@ -8,8 +8,10 @@ import org.apache.commons.collections.map.ListOrderedMap;
 
 import com.tc.async.api.Sink;
 import com.tc.exception.TCInternalError;
+import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.management.L2LockStatsManager;
 import com.tc.net.groups.NodeID;
 import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.LockID;
@@ -36,9 +38,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimerTask;
 
 public class Lock {
@@ -46,16 +48,15 @@ public class Lock {
   public final static Lock                 NULL_LOCK           = new Lock(LockID.NULL_ID, 0,
                                                                           new LockEventListener[] {}, true,
                                                                           LockManagerImpl.ALTRUISTIC_LOCK_POLICY,
-                                                                          ServerThreadContextFactory.DEFAULT_FACTORY);
-
-  private static final int                 UPGRADE             = LockLevel.READ | LockLevel.WRITE;
+                                                                          ServerThreadContextFactory.DEFAULT_FACTORY,
+                                                                          L2LockStatsManager.NULL_LOCK_STATS_MANAGER);
 
   private final LockEventListener[]        listeners;
   private final Map                        greedyHolders       = new HashMap();
   private final Map                        holders             = new HashMap();
   private final Map                        tryLockTimers       = new HashMap();
   private final ListOrderedMap             pendingLockRequests = new ListOrderedMap();
-  private final List                       pendingLockUpgrades = new LinkedList();
+
   private final ListOrderedMap             waiters             = new ListOrderedMap();
   private final Map                        waitTimers          = new HashMap();
   private final LockID                     lockID;
@@ -66,35 +67,38 @@ public class Lock {
 
   private int                              lockPolicy;
   private final ServerThreadContextFactory threadContextFactory;
+  private final L2LockStatsManager         lockStatsManager;
 
   // real constructor used by lock manager
   Lock(LockID lockID, ServerThreadContext txn, int lockLevel, Sink lockResponseSink, long timeout,
-       LockEventListener[] listeners, int lockPolicy, ServerThreadContextFactory threadContextFactory) {
-    this(lockID, timeout, listeners, false, lockPolicy, threadContextFactory);
+       LockEventListener[] listeners, int lockPolicy, ServerThreadContextFactory threadContextFactory,
+       L2LockStatsManager lockStatsManager) {
+    this(lockID, timeout, listeners, false, lockPolicy, threadContextFactory, lockStatsManager);
     requestLock(txn, lockLevel, lockResponseSink);
   }
 
   // real constructor used by lock manager when re-establishing waits and lock holds on
   // restart.
   Lock(LockID lockID, ServerThreadContext txn, long timeout, LockEventListener[] listeners, int lockPolicy,
-       ServerThreadContextFactory threadContextFactory) {
-    this(lockID, timeout, listeners, false, lockPolicy, threadContextFactory);
+       ServerThreadContextFactory threadContextFactory, L2LockStatsManager lockStatsManager) {
+    this(lockID, timeout, listeners, false, lockPolicy, threadContextFactory, lockStatsManager);
   }
 
   // for tests
   Lock(LockID lockID, long timeout, LockEventListener[] listeners) {
     this(lockID, timeout, listeners, false, LockManagerImpl.ALTRUISTIC_LOCK_POLICY,
-         ServerThreadContextFactory.DEFAULT_FACTORY);
+         ServerThreadContextFactory.DEFAULT_FACTORY, L2LockStatsManager.NULL_LOCK_STATS_MANAGER);
   }
 
   private Lock(LockID lockID, long timeout, LockEventListener[] listeners, boolean isNull, int lockPolicy,
-               ServerThreadContextFactory threadContextFactory) {
+               ServerThreadContextFactory threadContextFactory, L2LockStatsManager lockStatsManager) {
     this.lockID = lockID;
     this.listeners = listeners;
     this.timeout = timeout;
     this.isNull = isNull;
     this.lockPolicy = lockPolicy;
     this.threadContextFactory = threadContextFactory;
+    this.lockStatsManager = lockStatsManager;
   }
 
   static LockResponseContext createLockRejectedResponseContext(LockID lockID, ServerThreadID threadID, int level) {
@@ -119,27 +123,46 @@ public class Lock {
   }
 
   static LockResponseContext createLockQueriedResponseContext(LockID lockID, ServerThreadID threadID, int level,
-                                                              int lockRequestQueueLength, int lockUpgradeQueueLength,
-                                                              Collection greedyHolders, Collection holders,
-                                                              Collection waiters) {
+                                                              int lockRequestQueueLength, Collection greedyHolders,
+                                                              Collection holders, Collection waiters) {
     return new LockResponseContext(lockID, threadID.getNodeID(), threadID.getClientThreadID(), level,
-                                   lockRequestQueueLength, lockUpgradeQueueLength, greedyHolders, holders, waiters,
+                                   lockRequestQueueLength, greedyHolders, holders, waiters,
                                    LockResponseContext.LOCK_INFO);
+  }
+
+  static LockResponseContext createLockStatEnableResponseContext(LockID lockID, NodeID nodeID, ThreadID threadID,
+                                                                 int level, int stackTraceDepth, int statCollectFrequency) {
+    return new LockResponseContext(lockID, nodeID, threadID, level, LockResponseContext.LOCK_STAT_ENABLED, stackTraceDepth, statCollectFrequency);
+  }
+  
+  static LockResponseContext createLockStatDisableResponseContext(LockID lockID, NodeID nodeID, ThreadID threadID, int level) {
+    return new LockResponseContext(lockID, nodeID, threadID, level, LockResponseContext.LOCK_STAT_DISABLED);
+  }
+  
+  private static Request createRequest(ServerThreadContext txn, int lockLevel, Sink lockResponseSink,
+                                       WaitInvocation timeout, boolean isBlock) {
+    Request request = null;
+    if (isBlock) {
+      request = new TryLockRequest(txn, lockLevel, lockResponseSink, timeout);
+    } else {
+      request = new Request(txn, lockLevel, lockResponseSink);
+    }
+    return request;
   }
 
   synchronized LockMBean getMBean(DSOChannelManager channelManager) {
     int count;
     LockHolder[] holds = new LockHolder[this.holders.size()];
     ServerLockRequest[] reqs = new ServerLockRequest[this.pendingLockRequests.size()];
-    ServerLockRequest[] upgrades = new ServerLockRequest[this.pendingLockUpgrades.size()];
     Waiter[] waits = new Waiter[this.waiters.size()];
 
     count = 0;
     for (Iterator i = this.holders.values().iterator(); i.hasNext();) {
       Holder h = (Holder) i.next();
       NodeID cid = h.getNodeID();
-      holds[count++] = new LockHolder(cid, channelManager.getChannelAddress(cid), h.getThreadID(), h.getLockLevel(), h
-          .getTimestamp());
+      holds[count] = new LockHolder(h.getLockID(), cid, channelManager.getChannelAddress(cid), h.getThreadID(), h
+          .getLockLevel(), h.getTimestamp());
+      holds[count++].lockAcquired(h.getTimestamp());
     }
 
     count = 0;
@@ -151,14 +174,6 @@ public class Lock {
     }
 
     count = 0;
-    for (Iterator i = this.pendingLockUpgrades.iterator(); i.hasNext();) {
-      Request r = (Request) i.next();
-      NodeID cid = r.getRequesterID();
-      upgrades[count++] = new ServerLockRequest(cid, channelManager.getChannelAddress(cid), r.getSourceID(), r
-          .getLockLevel(), r.getTimestamp());
-    }
-
-    count = 0;
     for (Iterator i = this.waiters.values().iterator(); i.hasNext();) {
       LockWaitContext wc = (LockWaitContext) i.next();
       NodeID cid = wc.getNodeID();
@@ -166,24 +181,64 @@ public class Lock {
                                   wc.getTimestamp());
     }
 
-    return new LockMBeanImpl(lockID, holds, reqs, upgrades, waits);
+    return new LockMBeanImpl(lockID, holds, reqs, waits);
+  }
+
+  synchronized void enableClientStat(Sink lockResponseSink, int stackTraceDepth, int statCollectFrequency) {
+    enableClientStatInHolders(lockResponseSink, stackTraceDepth, statCollectFrequency);
+    enableClientStatInPendings(lockResponseSink, stackTraceDepth, statCollectFrequency);
+    enableClientStatInWaiters(lockResponseSink, stackTraceDepth, statCollectFrequency);
+  }
+
+  synchronized void disableClientStat(Set statEnabledClients, Sink lockResponseSink) {
+    for (Iterator i=statEnabledClients.iterator(); i.hasNext(); ) {
+      NodeID nodeID = (NodeID) i.next();
+      lockResponseSink.add(createLockStatDisableResponseContext(lockID, nodeID, ThreadID.VM_ID, level));
+    }
+  }
+
+  private void enableClientStatInHolders(Sink lockResponseSink, int stackTraceDepth, int statCollectFrequency) {
+    for (Iterator i = holders.values().iterator(); i.hasNext();) {
+      Holder holder = (Holder) i.next();
+      remoteEnableClientStat(lockResponseSink, holder.getNodeID(), stackTraceDepth, statCollectFrequency);
+    }
+  }
+
+  private void enableClientStatInPendings(Sink lockResponseSink, int stackTraceDepth, int statCollectFrequency) {
+    for (Iterator i = pendingLockRequests.values().iterator(); i.hasNext();) {
+      Request request = (Request) i.next();
+      remoteEnableClientStat(lockResponseSink, request.getThreadContext().getId().getNodeID(), stackTraceDepth, statCollectFrequency);
+    }
+  }
+
+  private void enableClientStatInWaiters(Sink lockResponseSink, int stackTraceDepth, int statCollectFrequency) {
+    for (Iterator i = waiters.values().iterator(); i.hasNext();) {
+      LockWaitContext ctxt = (LockWaitContext) i.next();
+      remoteEnableClientStat(lockResponseSink, ctxt.getNodeID(), stackTraceDepth, statCollectFrequency);
+    }
+  }
+  
+  private void remoteEnableClientStat(Sink lockResponseSink, NodeID nodeID, int stackTraceDepth, int statCollectFrequency) {
+    if (!lockStatsManager.isLockStatEnabledInClient(lockID, nodeID)) {
+      lockResponseSink.add(createLockStatEnableResponseContext(lockID, nodeID, ThreadID.VM_ID, level, stackTraceDepth, statCollectFrequency));
+      lockStatsManager.recordClientStatEnabled(lockID, nodeID);
+    }
+  }
+
+  private void enableClientStatIfNeeded(Sink lockResponseSink, ServerThreadContext txn) {
+    if (lockStatsManager.isClientLockStatEnable(lockID)) {
+      remoteEnableClientStat(lockResponseSink, txn.getId().getNodeID(), lockStatsManager.getLockStackTraceDepth(lockID), lockStatsManager.getLockStatCollectFrequency(lockID));
+    }
   }
 
   synchronized void queryLock(ServerThreadContext txn, Sink lockResponseSink) {
-    if (!hasGreedyHolders()) {
-      lockResponseSink.add(createLockQueriedResponseContext(this.lockID, txn.getId(), this.level,
-                                                            this.pendingLockRequests.size(), this.pendingLockUpgrades
-                                                                .size(), this.greedyHolders.values(), this.holders
-                                                                .values(), this.waiters.values()));
-    } else {
-      // TODO:
-      // The Remote Lock Manager needs to ask the client for lock information when greedy lock is awarded.
-      // Currently, the Remote Lock Manager responds to queryLock by looking at the server only.
-      lockResponseSink.add(createLockQueriedResponseContext(this.lockID, txn.getId(), this.level,
-                                                            this.pendingLockRequests.size(), this.pendingLockUpgrades
-                                                                .size(), this.greedyHolders.values(), this.holders
-                                                                .values(), this.waiters.values()));
-    }
+
+    // TODO:
+    // The Remote Lock Manager needs to ask the client for lock information when greedy lock is awarded.
+    // Currently, the Remote Lock Manager responds to queryLock by looking at the server only.
+    lockResponseSink.add(createLockQueriedResponseContext(this.lockID, txn.getId(), this.level,
+                                                          this.pendingLockRequests.size(), this.greedyHolders.values(),
+                                                          this.holders.values(), this.waiters.values()));
   }
 
   boolean tryRequestLock(ServerThreadContext txn, int requestedLockLevel, WaitInvocation timeout, WaitTimer waitTimer,
@@ -199,6 +254,16 @@ public class Lock {
   synchronized boolean requestLock(ServerThreadContext txn, int requestedLockLevel, Sink lockResponseSink,
                                    boolean noBlock, WaitInvocation timeout, WaitTimer waitTimer,
                                    WaitTimerCallback callback) {
+
+    if (holdsReadLock(txn) && LockLevel.isWrite(requestedLockLevel)) {
+      // lock upgrade is not supported; it should have been rejected by the client.
+      throw new TCLockUpgradeNotSupportedError(
+                                               "Lock upgrade is not supported. The request should have been rejected by the client. Your client may be using an older version of tc.jar");
+    }
+
+    if (waiters.containsKey(txn)) throw new AssertionError("Attempt to request a lock in a Thread "
+                                                           + "that is already part of the wait set. lock = " + this);
+
     // debug("requestLock - BEGIN -", txn, ",", LockLevel.toString(requestedLockLevel));
     // it is an error (probably originating from the client side) to
     // request a lock you already hold
@@ -210,9 +275,9 @@ public class Lock {
         throw new AssertionError("Client requesting already held lock! holder=" + holder + ", lock=" + this);
       }
     }
-    if (waiters.containsKey(txn)) throw new AssertionError("Attempt to request a lock in a Thread "
-                                                           + "that is already part of the wait set. lock = " + this);
 
+    enableClientStatIfNeeded(lockResponseSink, txn);
+    recordLockRequestStat(txn.getId().getNodeID(), txn.getId().getClientThreadID(), requestedLockLevel);
     if (isPolicyGreedy()) {
       if (canAwardGreedilyOnTheClient(txn, requestedLockLevel)) {
         // These requests are the ones in the wire when the greedy lock was given out to the client.
@@ -225,15 +290,7 @@ public class Lock {
         // add to pending until recall process is complete, those who hold the lock greedily will send the
         // pending state during recall commit.
         if (!holdsGreedyLock(txn)) {
-          if (noBlock) {
-            if (timeout.needsToWait()) {
-              addTryLockPending(txn, requestedLockLevel, timeout, lockResponseSink, waitTimer, callback);
-            } else {
-              cannotAwardAndRespond(txn, requestedLockLevel, lockResponseSink);
-            }
-          } else {
-            addPending(txn, requestedLockLevel, lockResponseSink);
-          }
+          queueRequest(txn, requestedLockLevel, lockResponseSink, noBlock, timeout, waitTimer, callback);
         }
         return false;
       }
@@ -244,46 +301,40 @@ public class Lock {
     // 1. If only a read lock is held and no write locks are pending, and another read
     // (and only read) lock is requested, award it. If Write locks are pending, we dont want to
     // starve the WRITES by keeping on awarding READ Locks.
-    // 2. If there is only one holder, that hold is a read lock, the holder is
-    // the requestor, and the requestor wants a write lock...then this is an
-    // awardable lock upgrade
-    // 3. Else the request must be queued (ie. added to pending list)
+    // 2. Else the request must be queued (ie. added to pending list)
 
     if ((getHoldersCount() == 0) || ((!hasPending()) && ((requestedLockLevel == LockLevel.READ) && this.isRead()))) {
       // (0, 1) uncontended or additional read lock
-      if (isPolicyGreedy() && (requestedLockLevel != UPGRADE)
-          && ((requestedLockLevel == LockLevel.READ) || (getWaiterCount() == 0))) {
+      if (isPolicyGreedy() && ((requestedLockLevel == LockLevel.READ) || (getWaiterCount() == 0))) {
         awardGreedyAndRespond(txn, requestedLockLevel, lockResponseSink);
       } else {
-        awardAndRespond(txn, requestedLockLevel, lockResponseSink);
+        awardAndRespond(txn, txn.getId().getClientThreadID(), requestedLockLevel, lockResponseSink);
       }
-    } else if ((getHoldersCount() == 1) && holdsReadLock(txn) && LockLevel.isWrite(requestedLockLevel)) {
-      // (2) allowed lock upgrade
-      if (isPolicyGreedy() && isGreedyRequest(txn)) {
-        // XXX::Currently Greedy upgrades are not supported. Client never does a greedy request.
-        requestedLockLevel = LockLevel.makeGreedy(requestedLockLevel);
-      }
-      awardAndRespond(txn, requestedLockLevel, lockResponseSink);
     } else {
-      // (3) queue request
+      // (2) queue request
       if (isPolicyGreedy() && hasGreedyHolders()) {
         recall(requestedLockLevel);
       }
       if (!holdsGreedyLock(txn)) {
-        if (noBlock) {
-          if (timeout.needsToWait()) {
-            addTryLockPending(txn, requestedLockLevel, timeout, lockResponseSink, waitTimer, callback);
-          } else {
-            cannotAwardAndRespond(txn, requestedLockLevel, lockResponseSink);
-          }
-        } else {
-          addPending(txn, requestedLockLevel, lockResponseSink);
-        }
+        queueRequest(txn, requestedLockLevel, lockResponseSink, noBlock, timeout, waitTimer, callback);
       }
       return false;
     }
 
     return true;
+  }
+
+  private void queueRequest(ServerThreadContext txn, int requestedLockLevel, Sink lockResponseSink, boolean noBlock,
+                            WaitInvocation timeout, WaitTimer waitTimer, WaitTimerCallback callback) {
+    if (noBlock) {
+      if (timeout.needsToWait()) {
+        addPendingTryLockRequest(txn, requestedLockLevel, timeout, lockResponseSink, waitTimer, callback);
+      } else {
+        cannotAwardAndRespond(txn, requestedLockLevel, lockResponseSink);
+      }
+    } else {
+      addPendingLockRequest(txn, requestedLockLevel, lockResponseSink);
+    }
   }
 
   synchronized void addRecalledHolder(ServerThreadContext txn, int lockLevel) {
@@ -292,44 +343,61 @@ public class Lock {
       // Client issued a WRITE lock without holding a GREEDY WRITE. Bug in the client.
       throw new AssertionError("Client issued a WRITE lock without holding a GREEDY WRITE !");
     }
-    awardLock(txn, lockLevel);
-    if (LockLevel.isRead(lockLevel) && pendingLockRequests.size() > 0) {
-      // Check to see if we have any lock request for this Thread that needs to go to lock upgrade
-      for (Iterator iter = pendingLockRequests.values().iterator(); iter.hasNext();) {
-        Request request = (Request) iter.next();
-        if (request.getThreadContext().equals(txn) && LockLevel.isWrite(request.getLockLevel())) {
-          iter.remove();
-          pendingLockUpgrades.add(request);
-          break;
-        }
-      }
-    }
+    recordLockRequestStat(txn.getId().getNodeID(), txn.getId().getClientThreadID(), lockLevel);
+    awardLock(txn, txn.getId().getClientThreadID(), lockLevel);
   }
 
   synchronized void addRecalledPendingRequest(ServerThreadContext txn, int lockLevel, Sink lockResponseSink) {
     // debug("addRecalledPendingRequest - BEGIN -", txn, ",", LockLevel.toString(lockLevel));
-    addPending(txn, lockLevel, lockResponseSink);
+    recordLockRequestStat(txn.getId().getNodeID(), txn.getId().getClientThreadID(), lockLevel);
+    addPendingLockRequest(txn, lockLevel, lockResponseSink);
   }
 
   synchronized void addRecalledTryLockPendingRequest(ServerThreadContext txn, int lockLevel, WaitInvocation timeout,
                                                      Sink lockResponseSink, WaitTimer waitTimer,
                                                      WaitTimerCallback callback) {
+    recordLockRequestStat(txn.getId().getNodeID(), txn.getId().getClientThreadID(), lockLevel);
+
     if (!timeout.needsToWait()) {
       cannotAwardAndRespond(txn, lockLevel, lockResponseSink);
       return;
     }
 
-    addTryLockPending(txn, lockLevel, timeout, lockResponseSink, waitTimer, callback);
+    addPendingTryLockRequest(txn, lockLevel, timeout, lockResponseSink, waitTimer, callback);
   }
 
-  private void addTryLockPending(ServerThreadContext txn, int lockLevel, WaitInvocation timeout, Sink lockResponseSink,
+  private void addPendingTryLockRequest(ServerThreadContext txn, int lockLevel, WaitInvocation timeout, Sink lockResponseSink,
                                  WaitTimer waitTimer, WaitTimerCallback callback) {
+    Request request = addPending(txn, lockLevel, lockResponseSink, timeout, true);
+
     TryLockContextImpl tryLockWaitRequestContext = new TryLockContextImpl(txn, this, timeout, lockLevel,
                                                                           lockResponseSink);
 
-    Request request = createTryLockPendingRequest(tryLockWaitRequestContext);
-    TimerTask timer = scheduleWaitForTryLock(callback, waitTimer, request, tryLockWaitRequestContext);
-    txn.setWaitingOn(this);
+    scheduleWaitForTryLock(callback, waitTimer, request, tryLockWaitRequestContext);
+  }
+  
+  private void addPendingLockRequest(ServerThreadContext threadContext, int lockLevel, Sink awardLockSink) {
+    addPending(threadContext, lockLevel, awardLockSink, null, false);
+  }
+  
+  private Request addPending(ServerThreadContext threadContext, int lockLevel, Sink awardLockSink, WaitInvocation timeout, boolean noBlock) {
+    Assert.assertFalse(isNull());
+    // debug("addPending() - BEGIN -", threadContext, ", ", LockLevel.toString(lockLevel));
+
+    Request request = createRequest(threadContext, lockLevel, awardLockSink, timeout, noBlock);
+
+    if (pendingLockRequests.containsValue(request)) {
+      logger.debug("Ignoring existing Request " + request + " in Lock " + lockID);
+      return request;
+    }
+
+    this.pendingLockRequests.put(threadContext, request);
+    for (Iterator currentHolders = holders.values().iterator(); currentHolders.hasNext();) {
+      Holder holder = (Holder) currentHolders.next();
+      notifyAddPending(holder);
+    }
+    threadContext.setWaitingOn(this);
+    return request;
   }
 
   private synchronized void recall(int recallLevel) {
@@ -356,6 +424,10 @@ public class Lock {
     return lockPolicy;
   }
 
+  int getLockLevel() {
+    return level;
+  }
+
   void setLockPolicy(int newPolicy) {
     if (!isNull() && newPolicy != lockPolicy) {
       this.lockPolicy = newPolicy;
@@ -372,8 +444,7 @@ public class Lock {
 
     NodeID ch = txn.getId().getNodeID();
     checkAndClearStateOnGreedyAward(txn.getId().getClientThreadID(), ch, requestedLockLevel);
-    awardAndRespond(clientTx, greedyLevel, lockResponseSink);
-    Holder holder = getHolder(clientTx);
+    Holder holder = awardAndRespond(clientTx, txn.getId().getClientThreadID(), greedyLevel, lockResponseSink);
     holder.setSink(lockResponseSink);
     greedyHolders.put(ch, holder);
     clearWaitingOn(txn);
@@ -381,12 +452,15 @@ public class Lock {
 
   private void cannotAwardAndRespond(ServerThreadContext txn, int requestedLockLevel, Sink lockResponseSink) {
     lockResponseSink.add(createLockRejectedResponseContext(this.lockID, txn.getId(), requestedLockLevel));
+    recordLockRejectStat(txn.getId().getNodeID(), txn.getId().getClientThreadID());
   }
 
-  private void awardAndRespond(ServerThreadContext txn, int requestedLockLevel, Sink lockResponseSink) {
+  private Holder awardAndRespond(ServerThreadContext txn, ThreadID requestThreadID, int requestedLockLevel,
+                                 Sink lockResponseSink) {
     // debug("awardRespond() - BEGIN - ", txn, ",", LockLevel.toString(requestedLockLevel));
-    awardLock(txn, requestedLockLevel);
+    Holder holder = awardLock(txn, requestThreadID, requestedLockLevel);
     lockResponseSink.add(createLockAwardResponseContext(this.lockID, txn.getId(), requestedLockLevel));
+    return holder;
   }
 
   synchronized void notify(ServerThreadContext txn, boolean all, NotifiedWaiters addNotifiedWaitersTo)
@@ -400,10 +474,12 @@ public class Lock {
       for (int i = 0; i < numToNotify; i++) {
         LockWaitContext wait = (LockWaitContext) waiters.remove(0);
         removeAndCancelWaitTimer(wait);
+        recordLockRequestStat(wait.getNodeID(), wait.getThreadID(), wait.lockLevel());
         createPendingFromWaiter(wait);
         addNotifiedWaitersTo.addNotification(new LockContext(lockID, wait.getNodeID(), wait.getThreadID(), wait
             .lockLevel()));
       }
+      recordLockNotifyStat(numToNotify);
     }
   }
 
@@ -413,6 +489,7 @@ public class Lock {
       return;
     }
     LockWaitContext wait = (LockWaitContext) waiters.remove(txn);
+    recordLockRequestStat(wait.getNodeID(), wait.getThreadID(), wait.lockLevel());
     removeAndCancelWaitTimer(wait);
     createPendingFromWaiter(wait);
   }
@@ -424,8 +501,8 @@ public class Lock {
 
   private Request createPendingFromWaiter(LockWaitContext wait) {
     // XXX: This cast to WaitContextImpl is lame. I'm not sure how to refactor it right now.
-    Request request = new Request(((LockWaitContextImpl) wait).getThreadContext(), wait.lockLevel(), wait
-        .getLockResponseSink());
+    Request request = createRequest(((LockWaitContextImpl) wait).getThreadContext(), wait.lockLevel(), wait
+        .getLockResponseSink(), null, false);
     createPending(wait, request);
     return request;
   }
@@ -435,17 +512,8 @@ public class Lock {
     pendingLockRequests.put(txn, request);
 
     if (isPolicyGreedy() && hasGreedyHolders()) {
-      // recall(LockLevel.WRITE);
       recall(request.getLockLevel());
     }
-  }
-
-  private Request createTryLockPendingRequest(TryLockContextImpl tryLockContext) {
-    Request request = new TryLockRequest(tryLockContext.getThreadContext(), tryLockContext.lockLevel(), tryLockContext
-        .getLockResponseSink(), tryLockContext.getWaitInvocation());
-    ServerThreadContext txn = tryLockContext.getThreadContext();
-    pendingLockRequests.put(txn, request);
-    return request;
   }
 
   synchronized void tryRequestLockTimeout(LockWaitContext context) {
@@ -475,11 +543,12 @@ public class Lock {
       // Add a wait Timeout message
       lockResponseSink.add(createLockWaitTimeoutResponseContext(this.lockID, txn.getId(), lockLevel));
 
+      recordLockRequestStat(context.getNodeID(), context.getThreadID(), lockLevel);
       if (holders.size() == 0) {
         if (isPolicyGreedy() && (getWaiterCount() == 0)) {
           awardGreedyAndRespond(txn, lockLevel, lockResponseSink);
         } else {
-          awardAndRespond(txn, lockLevel, lockResponseSink);
+          awardAndRespond(txn, txn.getId().getClientThreadID(), lockLevel, lockResponseSink);
         }
       } else {
         createPendingFromWaiter(context);
@@ -495,7 +564,6 @@ public class Lock {
 
     Holder current = getHolder(txn);
     Assert.assertNotNull(current);
-    boolean isUpgrade = current.isUpgrade();
 
     LockWaitContext waitContext = new LockWaitContextImpl(txn, this, call, current.getLockLevel(), lockResponseSink);
     waiters.put(txn, waitContext);
@@ -504,12 +572,7 @@ public class Lock {
     txn.setWaitingOn(this);
     removeCurrentHold(txn);
 
-    if (isUpgrade) {
-      // wait()'ing on an upgraded lock needs to release both the READ and WRITE
-      // locks held
-      removeCurrentHold(txn);
-    }
-
+    recordLockWaitStat();
     nextPending();
   }
 
@@ -524,13 +587,14 @@ public class Lock {
       logger.debug("addRecalledWaiter(): Ignoring " + waitContext + " as it is already in waiters list.");
       return;
     }
-    Request request = new Request(txn, lockLevel, lockResponseSink);
+    Request request = createRequest(txn, lockLevel, lockResponseSink, null, false);
     if (pendingLockRequests.containsValue(request)) {
       logger.debug("addRecalledWaiter(): Ignoring " + waitContext + " as it is already in pending list.");
       return;
     }
     waiters.put(txn, waitContext);
     scheduleWait(callback, waitTimer, waitContext);
+    recordLockWaitStat();
   }
 
   // This method reestablished Wait State and does not schedules wait timeouts too. This is
@@ -543,26 +607,28 @@ public class Lock {
 
   synchronized void reestablishLock(ServerThreadContext threadContext, int requestedLevel, Sink lockResponseSink) {
     if ((LockLevel.isWrite(requestedLevel) && holders.size() != 0)
-        || (LockLevel.isRead(requestedLevel) && LockLevel.isWrite(this.level))) {
-      //
-      throw new AssertionError("Lock " + this + " already held by other Holder. Can't grant to " + threadContext
-                               + LockLevel.toString(requestedLevel));
+        || (LockLevel.isRead(requestedLevel) && LockLevel.isWrite(this.level))) { throw new AssertionError(
+                                                                                                           "Lock "
+                                                                                                               + this
+                                                                                                               + " already held by other Holder. Can't grant to "
+                                                                                                               + threadContext
+                                                                                                               + LockLevel
+                                                                                                                   .toString(requestedLevel));
 
     }
-    if (waiters.get(threadContext) != null) {
-      //
-      throw new AssertionError("Thread " + threadContext + "is already in Wait state for Lock " + this
-                               + ". Can't grant Lock Hold !");
-    }
+    if (waiters.get(threadContext) != null) { throw new AssertionError("Thread " + threadContext
+                                                                       + "is already in Wait state for Lock " + this
+                                                                       + ". Can't grant Lock Hold !"); }
+    recordLockRequestStat(threadContext.getId().getNodeID(), threadContext.getId().getClientThreadID(),
+                          requestedLevel);
     if (isGreedyRequest(threadContext)) {
       int greedyLevel = LockLevel.makeGreedy(requestedLevel);
       NodeID nid = threadContext.getId().getNodeID();
-      awardLock(threadContext, greedyLevel);
-      Holder holder = getHolder(threadContext);
+      Holder holder = awardLock(threadContext, threadContext.getId().getClientThreadID(), greedyLevel);
       holder.setSink(lockResponseSink);
       greedyHolders.put(nid, holder);
     } else {
-      awardLock(threadContext, requestedLevel);
+      awardLock(threadContext, threadContext.getId().getClientThreadID(), requestedLevel);
     }
   }
 
@@ -616,10 +682,6 @@ public class Lock {
     return pendingLockRequests.size();
   }
 
-  public synchronized int getPendingUpgradeCount() {
-    return pendingLockUpgrades.size();
-  }
-
   Collection getHoldersCollection() {
     return Collections.unmodifiableCollection(this.holders.values());
   }
@@ -645,11 +707,6 @@ public class Lock {
         rv.append('\t').append(iter.next().toString()).append("\r\n");
       }
 
-      rv.append("Pending lock upgrades (").append(pendingLockUpgrades.size()).append(")\r\n");
-      for (Iterator iter = pendingLockUpgrades.iterator(); iter.hasNext();) {
-        rv.append('\t').append(iter.next().toString()).append("\r\n");
-      }
-
       return rv.toString();
     } catch (Throwable t) {
       t.printStackTrace();
@@ -657,24 +714,21 @@ public class Lock {
     }
   }
 
-  private void awardLock(ServerThreadContext threadContext, int lockLevel) {
+  private Holder awardLock(ServerThreadContext threadContext, ThreadID requestThreadID, int lockLevel) {
     Assert.assertFalse(isNull());
 
     Holder holder = getHolder(threadContext);
 
-    if (holder != null) {
-      holder.addLockLevel(lockLevel);
-      this.level = holder.getLockLevel();
-    } else {
-      threadContext.addLock(this);
-      holder = new Holder(this.lockID, threadContext, this.timeout);
-      holder.addLockLevel(lockLevel);
-      Object prev = this.holders.put(threadContext, holder);
-      Assert.assertNull(prev);
-      this.level = holder.getLockLevel();
-      notifyAwardLock(holder);
-    }
-
+    Assert.assertNull(holder);
+    threadContext.addLock(this);
+    holder = new Holder(this.lockID, threadContext, this.timeout);
+    holder.addLockLevel(lockLevel);
+    Object prev = this.holders.put(threadContext, holder);
+    Assert.assertNull(prev);
+    this.level = holder.getLockLevel();
+    notifyAwardLock(holder);
+    recordLockAwardStat(holder.getNodeID(), requestThreadID, isGreedyRequest(threadContext), holder.getTimestamp());
+    return holder;
   }
 
   private void notifyAwardLock(Holder holder) {
@@ -693,32 +747,6 @@ public class Lock {
     return LockLevel.WRITE == this.level;
   }
 
-  // XXX:: Note that lockLevel == UPGRADE (in notified waits) also get into pendingLockRequests which is correct
-  synchronized void addPending(ServerThreadContext threadContext, int lockLevel, Sink awardLockSink) {
-    Assert.assertFalse(isNull());
-    // debug("addPending() - BEGIN -", threadContext, ", ", LockLevel.toString(lockLevel));
-
-    Request request = new Request(threadContext, lockLevel, awardLockSink);
-
-    if ((lockLevel == LockLevel.WRITE) && holdsReadLock(threadContext)) {
-      // this is a lock upgrade request
-      this.pendingLockUpgrades.add(request);
-    } else {
-      if (pendingLockRequests.containsValue(request)) {
-        logger.debug("Ignoring existing Request " + request + " in Lock " + lockID);
-        return;
-      }
-
-      this.pendingLockRequests.put(threadContext, request);
-      for (Iterator currentHolders = holders.values().iterator(); currentHolders.hasNext();) {
-        Holder holder = (Holder) currentHolders.next();
-        notifyAddPending(holder);
-      }
-    }
-
-    threadContext.setWaitingOn(this);
-  }
-
   private boolean holdsReadLock(ServerThreadContext threadContext) {
     Holder holder = getHolder(threadContext);
     if (holder != null) { return holder.getLockLevel() == LockLevel.READ; }
@@ -727,6 +755,14 @@ public class Lock {
 
   private Holder getHolder(ServerThreadContext threadContext) {
     return (Holder) this.holders.get(threadContext);
+  }
+
+  public Holder getLockHolder(ServerThreadContext threadContext) {
+    Holder lockHolder = (Holder) this.holders.get(threadContext);
+    if (lockHolder == null) {
+      lockHolder = (Holder) this.holders.get(getClientVMContext(threadContext));
+    }
+    return lockHolder;
   }
 
   private void notifyAddPending(Holder holder) {
@@ -742,7 +778,7 @@ public class Lock {
   }
 
   synchronized boolean hasPending() {
-    return pendingLockRequests.size() > 0 || pendingLockUpgrades.size() > 0;
+    return pendingLockRequests.size() > 0;
   }
 
   synchronized boolean hasWaiting() {
@@ -790,18 +826,8 @@ public class Lock {
 
     boolean clear;
     try {
-      // FIXME:: If ever there are two lock upgrade request, then it is a deadlock situation.
-      // Can be easily fixed if we know what is the right solution to the problem.
-      if ((holders.size() == 1) && (!pendingLockUpgrades.isEmpty())) {
-        // Can we award an upgrade?
-        Request request = (Request) pendingLockUpgrades.get(0);
-        if (holdsReadLock(request.getThreadContext())) {
-          // Upgrades are not given greedily
-          // debug("nextPending() - Giving Upgrade -", request);
-          pendingLockUpgrades.remove(0);
-          grantRequest(request);
-        }
-      } else if (!pendingLockRequests.isEmpty()) {
+      // Lock upgrade is not supported.
+      if (!pendingLockRequests.isEmpty()) {
         Request request = (Request) pendingLockRequests.get(pendingLockRequests.get(0));
         int reqLockLevel = request.getLockLevel();
 
@@ -811,23 +837,16 @@ public class Lock {
 
           switch (reqLockLevel) {
             case LockLevel.WRITE: {
+              pendingLockRequests.remove(0);
+              cancelTryLockTimer(request);
               // Give locks greedily only if there is no one waiting or pending for this lock
               if (isPolicyGreedy() && isAllPendingLockRequestsFromNode(request.getRequesterID())
                   && (getWaiterCount() == 0)) {
                 // debug("nextPending() - Giving GREEDY WRITE request -", request);
-                pendingLockRequests.remove(0);
-                cancelTryLockTimer(request);
                 grantGreedyRequest(request);
-                break;
+              } else {
+                grantRequest(request);
               }
-              // else fall thru
-            }
-            case UPGRADE: {
-              // debug("nextPending() - granting not greedily request -", request);
-              // Upgrades are not given greedily
-              pendingLockRequests.remove(0);
-              grantRequest(request);
-              cancelTryLockTimer(request);
               break;
             }
             case LockLevel.READ: {
@@ -841,10 +860,8 @@ public class Lock {
           }
         }
       }
-
     } finally {
-      clear = holders.size() == 0 && this.waiters.size() == 0 && this.pendingLockRequests.size() == 0
-              && this.pendingLockUpgrades.size() == 0;
+      clear = holders.size() == 0 && this.waiters.size() == 0 && this.pendingLockRequests.size() == 0;
     }
 
     return clear;
@@ -872,7 +889,7 @@ public class Lock {
   private void grantRequest(Request request) {
     // debug("grantRequest() - BEGIN -", request);
     ServerThreadContext threadContext = request.getThreadContext();
-    awardLock(threadContext, request.getLockLevel());
+    awardLock(threadContext, threadContext.getId().getClientThreadID(), request.getLockLevel());
     clearWaitingOn(threadContext);
     request.execute(lockID);
   }
@@ -886,20 +903,15 @@ public class Lock {
     // debug("removeCurrentHold() - BEGIN -", threadContext);
     Holder holder = getHolder(threadContext);
     if (holder != null) {
-      if (holder.isUpgrade()) {
-        holder.removeLockLevel(LockLevel.WRITE);
-        this.level = holder.getLockLevel();
-        return true;
-      } else {
-        this.holders.remove(threadContext);
-        threadContext.removeLock(this);
-        threadContextFactory.removeIfClear(threadContext);
-        if (isGreedyRequest(threadContext)) {
-          removeGreedyHolder(threadContext.getId().getNodeID());
-        }
-        this.level = (holders.size() == 0 ? LockLevel.NIL_LOCK_LEVEL : LockLevel.READ);
-        notifyRevoke(holder);
+      this.holders.remove(threadContext);
+      threadContext.removeLock(this);
+      threadContextFactory.removeIfClear(threadContext);
+      if (isGreedyRequest(threadContext)) {
+        removeGreedyHolder(threadContext.getId().getNodeID());
       }
+      this.level = (holders.size() == 0 ? LockLevel.NIL_LOCK_LEVEL : LockLevel.READ);
+      notifyRevoke(holder);
+      recordLockReleaseStat(holder.getNodeID(), holder.getThreadID());
     }
     return false;
   }
@@ -1015,14 +1027,6 @@ public class Lock {
         i.remove();
       }
     }
-
-    for (Iterator i = pendingLockUpgrades.iterator(); i.hasNext();) {
-      Request r = (Request) i.next();
-      if (r.getRequesterID().equals(nid)) {
-        i.remove();
-      }
-    }
-
     for (Iterator i = pendingLockRequests.values().iterator(); i.hasNext();) {
       Request r = (Request) i.next();
       if (r.getRequesterID().equals(nid)) {
@@ -1052,10 +1056,11 @@ public class Lock {
   }
 
   synchronized void checkAndClearStateOnGreedyAward(ThreadID clientThreadID, NodeID ch, int requestedLevel) {
-    // We dont want to award a greedy lock for lock upgrades or if there are waiters.
+    // We dont want to award a greedy lock if there are waiters. Lock upgrade is not a problem as it is no longer
+    // supported.
     // debug("checkAndClearStateOnGreedyAward For ", ch, ", ", LockLevel.toString(requestedLevel));
     // debug("checkAndClear... BEFORE Lock = ", this);
-    Assert.assertTrue(pendingLockUpgrades.size() == 0);
+    // Assert.assertTrue(pendingLockUpgrades.size() == 0);
     Assert.assertTrue((requestedLevel == LockLevel.READ) || (waiters.size() == 0));
 
     for (Iterator i = holders.values().iterator(); i.hasNext();) {
@@ -1084,6 +1089,30 @@ public class Lock {
       }
     }
     // debug("checkAndClear... AFTER Lock = ", this);
+  }
+
+  private void recordLockRequestStat(NodeID nodeID, ThreadID threadID, int lockLevel) {
+    lockStatsManager.lockRequested(lockID, nodeID, threadID, lockLevel);
+  }
+
+  private void recordLockAwardStat(NodeID nodeID, ThreadID threadID, boolean isGreedyRequest, long awardTimestamp) {
+    lockStatsManager.lockAwarded(lockID, nodeID, threadID, isGreedyRequest, awardTimestamp);
+  }
+
+  private void recordLockReleaseStat(NodeID nodeID, ThreadID threadID) {
+    lockStatsManager.lockReleased(lockID, nodeID, threadID);
+  }
+
+  private void recordLockRejectStat(NodeID nodeID, ThreadID threadID) {
+    lockStatsManager.lockRejected(lockID, nodeID, threadID);
+  }
+
+  private void recordLockWaitStat() {
+    lockStatsManager.lockWait(lockID);
+  }
+
+  private void recordLockNotifyStat(int numToNotify) {
+    lockStatsManager.lockNotified(lockID, numToNotify);
   }
 
   // I wish we were using 1.5 !!!

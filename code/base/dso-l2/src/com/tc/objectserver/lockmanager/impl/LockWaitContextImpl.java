@@ -5,7 +5,6 @@ package com.tc.objectserver.lockmanager.impl;
 
 import com.tc.async.api.Sink;
 import com.tc.net.groups.NodeID;
-import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.ServerThreadID;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.tx.WaitInvocation;
@@ -71,10 +70,6 @@ public class LockWaitContextImpl implements LockWaitContext {
 
   public long getTimestamp() {
     return timestamp;
-  }
-
-  public boolean wasUpgrade() {
-    return lockLevel == (LockLevel.READ | LockLevel.WRITE);
   }
 
   public int lockLevel() {

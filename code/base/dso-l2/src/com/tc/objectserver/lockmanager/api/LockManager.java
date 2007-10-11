@@ -10,11 +10,16 @@ import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.tx.WaitInvocation;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * The Lock Manager interface implemented at the L2
  */
 public interface LockManager {
+  
+  public void enableClientStat(LockID lockID, Sink sink , int stackTraceDepth, int statCollectFrequency);
+  
+  public void disableClientStat(LockID lockID, Set statEnabledClients, Sink sink);
 
   public void notify(LockID lid, NodeID cid, ThreadID tid, boolean all, NotifiedWaiters addNotifiedWaitersTo);
 

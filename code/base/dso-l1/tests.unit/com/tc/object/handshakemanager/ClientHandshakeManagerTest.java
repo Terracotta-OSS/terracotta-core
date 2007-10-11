@@ -379,6 +379,14 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     public void cannotAwardLock(SessionID sessionID, LockID id, ThreadID threadID, int type) {
       throw new ImplementMe();
     }
+
+    public void enableStat(LockID lockID, int lockStackTraceDepth, int lockStatCollectFrequency) {
+      throw new ImplementMe();
+    }
+
+    public void disableStat(LockID lockID) {
+      throw new ImplementMe();
+    }
   }
 
   public class TestSequenceProvider implements BatchSequenceProvider {

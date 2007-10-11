@@ -20,6 +20,7 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.lang.StartupHelper;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
@@ -136,7 +137,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     }
   }
 
-  public void testUpgradeDeadlock() throws Exception {
+  public void disableTestUpgradeDeadlock() throws Exception {
     final LockID l1 = new LockID("1");
 
     final ThreadID tid1 = new ThreadID(1);
@@ -204,7 +205,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     ThreadUtil.reallySleep(amount);
   }
 
-  public void testUpgrade() throws Exception {
+  public void testUpgradeNotSupported() throws Exception {
     final LockID l1 = new LockID("1");
 
     final ThreadID tid1 = new ThreadID(1);
@@ -218,22 +219,21 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
 
     Thread t = new Thread() {
       public void run() {
-        LockManagerSystemTest.this.lockManager.lock(l1, tid1, LockLevel.WRITE);
-        flag.set();
+        try {
+          LockManagerSystemTest.this.lockManager.lock(l1, tid1, LockLevel.WRITE);
+          throw new AssertionError("Should have thrown a TCLockUpgradeNotSupportedError.");
+        } catch (TCLockUpgradeNotSupportedError e) {
+          flag.set();
+        }
       }
     };
     t.start();
 
     sleep(5);
-    assertFalse(flag.isSet());
+    assertTrue(flag.isSet());
 
     lockManager.unlock(l1, tid2);
-    sleep(5);
-    assertFalse(flag.isSet());
-
     lockManager.unlock(l1, tid3);
-    sleep(5);
-    assertTrue(flag.isSet());
 
     t.join();
 
@@ -262,9 +262,6 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     assertFalse(secondReader.isAlive());
     assertTrue(secondWriter.isAlive());
 
-    lockManager.unlock(l1, tid1);
-    sleep(5);
-    assertTrue(secondWriter.isAlive());
     lockManager.unlock(l1, tid2);
     secondWriter.join(60000);
     assertFalse(secondWriter.isAlive());

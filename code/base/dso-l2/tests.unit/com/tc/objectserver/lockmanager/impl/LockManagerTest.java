@@ -8,6 +8,9 @@ import org.apache.commons.io.output.NullOutputStream;
 
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
+import com.tc.exception.TCLockUpgradeNotSupportedError;
+import com.tc.management.L2LockStatsManager;
+import com.tc.management.L2LockStatsManagerImpl;
 import com.tc.net.groups.ClientID;
 import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -44,14 +47,14 @@ import junit.framework.TestCase;
  * @author steve
  */
 public class LockManagerTest extends TestCase {
-  private TestSink         sink;
-  private LockManagerImpl  lockManager;
-  private Random           random     = new Random();
+  private TestSink           sink;
+  private LockManagerImpl    lockManager;
+  private Random             random     = new Random();
 
-  final int                numLocks   = 30;
-  final int                numThreads = 15;
-  private LockID[]         locks      = makeUniqueLocks(numLocks);
-  private ServerThreadID[] txns       = makeUniqueTxns(numThreads);
+  final int                  numLocks   = 30;
+  final int                  numThreads = 15;
+  private LockID[]           locks      = makeUniqueLocks(numLocks);
+  private ServerThreadID[]   txns       = makeUniqueTxns(numThreads);
 
   protected void setUp() throws Exception {
     super.setUp();
@@ -72,7 +75,7 @@ public class LockManagerTest extends TestCase {
       }
     }
 
-    lockManager = new LockManagerImpl(new NullChannelManager());
+    lockManager = new LockManagerImpl(new NullChannelManager(), L2LockStatsManager.NULL_LOCK_STATS_MANAGER);
     lockManager.setLockPolicy(LockManagerImpl.ALTRUISTIC_LOCK_POLICY);
     if (start) {
       lockManager.start();
@@ -97,22 +100,29 @@ public class LockManagerTest extends TestCase {
     ThreadID tid1 = new ThreadID(1);
     WaitInvocation wait = new WaitInvocation(Integer.MAX_VALUE);
 
+    L2LockStatsManager lockStatsManager = new L2LockStatsManagerImpl();
     lockManager = new LockManagerImpl(new NullChannelManager() {
       public String getChannelAddress(NodeID nid) {
         if (cid1.equals(nid)) { return "127.0.0.1:6969"; }
         return "no longer connected";
       }
-    });
+    }, lockStatsManager);
 
     lockManager.setLockPolicy(LockManagerImpl.ALTRUISTIC_LOCK_POLICY);
     lockManager.start();
+    lockStatsManager.start(new NullChannelManager(), lockManager, sink);
 
     lockManager.requestLock(lid1, cid1, tid1, LockLevel.WRITE, sink); // hold
     lockManager.requestLock(lid1, cid2, tid1, LockLevel.WRITE, sink); // pending
 
     lockManager.requestLock(lid2, cid1, tid1, LockLevel.READ, sink); // hold
     lockManager.requestLock(lid2, cid2, tid1, LockLevel.READ, sink); // hold
-    lockManager.requestLock(lid2, cid1, tid1, LockLevel.WRITE, sink); // upgrade
+    try {
+      lockManager.requestLock(lid2, cid1, tid1, LockLevel.WRITE, sink); // try upgrade and fail
+      throw new AssertionError("Should have thrown an TCLockUpgradeNotSupportedError.");
+    } catch (TCLockUpgradeNotSupportedError e) {
+      //
+    }
 
     lockManager.requestLock(lid3, cid1, tid1, LockLevel.WRITE, sink); // hold
     lockManager.wait(lid3, cid1, tid1, wait, sink); // wait
@@ -139,11 +149,9 @@ public class LockManagerTest extends TestCase {
   private void validateBean3(LockMBean bean3, long time, WaitInvocation wait) {
     LockHolder[] holders = bean3.getHolders();
     ServerLockRequest[] reqs = bean3.getPendingRequests();
-    ServerLockRequest[] upgrades = bean3.getPendingUpgrades();
     Waiter[] waiters = bean3.getWaiters();
     assertEquals(0, holders.length);
     assertEquals(0, reqs.length);
-    assertEquals(0, upgrades.length);
     assertEquals(1, waiters.length);
 
     Waiter waiter = waiters[0];
@@ -157,11 +165,9 @@ public class LockManagerTest extends TestCase {
   private void validateBean2(LockMBean bean2, long time) {
     LockHolder[] holders = bean2.getHolders();
     ServerLockRequest[] reqs = bean2.getPendingRequests();
-    ServerLockRequest[] upgrades = bean2.getPendingUpgrades();
     Waiter[] waiters = bean2.getWaiters();
     assertEquals(2, holders.length);
     assertEquals(0, reqs.length);
-    assertEquals(1, upgrades.length);
     assertEquals(0, waiters.length);
 
     LockHolder holder = holders[0];
@@ -178,22 +184,20 @@ public class LockManagerTest extends TestCase {
     assertEquals("no longer connected", holder.getChannelAddr());
     assertEquals(new ThreadID(1), holder.getThreadID());
 
-    ServerLockRequest up = upgrades[0];
-    assertEquals(LockLevel.toString(LockLevel.WRITE), up.getLockLevel());
-    assertTrue(up.getRequestTime() >= time);
-    assertEquals(new ClientID(new ChannelID(1)), up.getNodeID());
-    assertEquals("127.0.0.1:6969", up.getChannelAddr());
-    assertEquals(new ThreadID(1), up.getThreadID());
+    // ServerLockRequest up = upgrades[0];
+    // assertEquals(LockLevel.toString(LockLevel.WRITE), up.getLockLevel());
+    // assertTrue(up.getRequestTime() >= time);
+    // assertEquals(new ChannelID(1), up.getChannelID());
+    // assertEquals("127.0.0.1:6969", up.getChannelAddr());
+    // assertEquals(new ThreadID(1), up.getThreadID());
   }
 
   private void validateBean1(LockMBean bean1, long time) {
     LockHolder[] holders = bean1.getHolders();
     ServerLockRequest[] reqs = bean1.getPendingRequests();
-    ServerLockRequest[] upgrades = bean1.getPendingUpgrades();
     Waiter[] waiters = bean1.getWaiters();
     assertEquals(1, holders.length);
     assertEquals(1, reqs.length);
-    assertEquals(0, upgrades.length);
     assertEquals(0, waiters.length);
 
     LockHolder holder = holders[0];
@@ -618,8 +622,6 @@ public class LockManagerTest extends TestCase {
 
     lockManager.requestLock(l1, c4, s1, LockLevel.WRITE, sink);
     assertTrue(lockManager.hasPending(l1));
-    lockManager.unlock(l1, c2, s1);
-    assertTrue(lockManager.hasPending(l1));
     lockManager.unlock(l1, c3, s1);
     assertFalse(lockManager.hasPending(l1));
     lockManager.unlock(l1, c4, s1);
@@ -718,7 +720,7 @@ public class LockManagerTest extends TestCase {
     lockManager.clearAllLocksFor(c1);
   }
 
-  public void testUpgradeDeadLock() {
+  public void disableTestUpgradeDeadLock() {
     // Detect deadlock in competing upgrades
     LockID l1 = new LockID("L1");
 

@@ -5,6 +5,7 @@
 package com.tc.object.tx;
 
 import com.tc.exception.TCClassNotFoundException;
+import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.tx.ClientTxMonitorMBean;
@@ -178,8 +179,17 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
       currentTransaction.setTransactionContext(this.peekContext());
     }
 
-    lockManager.lock(lockID, lockLevel);
-    return true;
+    try {
+      lockManager.lock(lockID, lockLevel);
+      return true;
+    } catch (TCLockUpgradeNotSupportedError e) {
+      popTransaction(lockID);
+      if (peekContext() != null) {
+        currentTransaction.setTransactionContext(peekContext());
+        setTransaction(currentTransaction);
+      }
+      throw e;
+    }
   }
 
   private TxnType getTxnTypeFromLockLevel(int lockLevel) {

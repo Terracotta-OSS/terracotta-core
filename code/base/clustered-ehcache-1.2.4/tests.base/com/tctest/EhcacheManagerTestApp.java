@@ -182,7 +182,8 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
     if (mustDelegate) {
       cacheManager.addCache(name);
     } else {
-      Cache cache = new Cache(name, 2, false, true, 0, 2);
+      Cache cache = new Cache(name, 2, false, true, 0, 0); // setting both maxIdleTime and maxTTL to 0, so the cache entries
+                                                           // never expire.
       cacheManager.addCache(cache);
     }
 

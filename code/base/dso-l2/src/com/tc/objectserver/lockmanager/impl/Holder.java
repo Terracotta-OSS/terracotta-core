@@ -32,10 +32,6 @@ public class Holder implements LockAwardContext {
     this.lockLevel = LockLevel.NIL_LOCK_LEVEL;
   }
 
-  public synchronized boolean isUpgrade() {
-    return LockLevel.isRead(lockLevel) && LockLevel.isWrite(lockLevel);
-  }
-
   synchronized int addLockLevel(int level) {
     if (LockLevel.isGreedy(level)) {
       Assert.assertEquals(getThreadID(), ThreadID.VM_ID);

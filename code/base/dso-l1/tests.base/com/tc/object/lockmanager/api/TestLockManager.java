@@ -135,4 +135,12 @@ public class TestLockManager implements ClientLockManager {
     throw new ImplementMe();
   }
 
+  public void enableStat(LockID lockID, int lockStackTraceDepth, int lockStatCollectFrequency) {
+    throw new ImplementMe();
+  }
+
+  public void disableStat(LockID lockID) {
+    throw new ImplementMe();
+  }
+
 }

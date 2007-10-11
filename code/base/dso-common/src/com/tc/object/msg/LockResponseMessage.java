@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.msg;
 
@@ -18,26 +19,32 @@ import com.tc.object.session.SessionID;
 import java.io.IOException;
 
 public class LockResponseMessage extends DSOMessageBase {
-  private static final byte TYPE              = 1;
-  private static final byte THREAD_ID         = 2;
-  private static final byte LOCK_ID           = 3;
-  private static final byte LOCK_LEVEL        = 7;
-  private static final byte GLOBAL_LOCK_INFO  = 8;
+  private static final byte TYPE                        = 1;
+  private static final byte THREAD_ID                   = 2;
+  private static final byte LOCK_ID                     = 3;
+  private static final byte LOCK_LEVEL                  = 7;
+  private static final byte GLOBAL_LOCK_INFO            = 8;
+  private static final byte LOCK_STACK_TRACE_DEPTH      = 9;
+  private static final byte LOCK_STAT_COLLECT_FREQUENCY = 10;
 
-  public static final int   LOCK_AWARD        = 1;
-  public static final int   LOCK_RECALL       = 2;
-  public static final int   LOCK_WAIT_TIMEOUT = 3;
-  public static final int   LOCK_INFO         = 4;
-  public static final int   LOCK_NOT_AWARDED  = 5;
-
+  public static final int   LOCK_AWARD                  = 1;
+  public static final int   LOCK_RECALL                 = 2;
+  public static final int   LOCK_WAIT_TIMEOUT           = 3;
+  public static final int   LOCK_INFO                   = 4;
+  public static final int   LOCK_NOT_AWARDED            = 5;
+  public static final int   LOCK_STAT_ENABLED           = 6;
+  public static final int   LOCK_STAT_DISABLED          = 7;
 
   private int               type;
   private ThreadID          threadID;
   private LockID            lockID;
   private int               lockLevel;
   private GlobalLockInfo    globalLockInfo;
+  private int               stackTraceDepth;
+  private int               statCollectFrequency;
 
-  public LockResponseMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel, TCMessageType type) {
+  public LockResponseMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out,
+                             MessageChannel channel, TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 
@@ -54,8 +61,12 @@ public class LockResponseMessage extends DSOMessageBase {
     if (globalLockInfo != null) {
       putNVPair(GLOBAL_LOCK_INFO, globalLockInfo);
     }
+    if (isLockStatEnabled()) {
+      putNVPair(LOCK_STACK_TRACE_DEPTH, this.stackTraceDepth);
+      putNVPair(LOCK_STAT_COLLECT_FREQUENCY, this.statCollectFrequency);
+    }
   }
-  
+
   protected String describePayload() {
     StringBuffer rv = new StringBuffer();
     rv.append("Type : ");
@@ -70,6 +81,10 @@ public class LockResponseMessage extends DSOMessageBase {
       rv.append("LOCK INFO");
     } else if (isLockNotAwarded()) {
       rv.append("LOCK NOT AWARDED");
+    } else if (isLockStatEnabled()) {
+      rv.append("ENABLE LOCK STATISTICS");
+    } else if (isLockStatDisabled()) {
+      rv.append("DISABLE LOCK STATISTICS");
     } else {
       rv.append("UNKNOWN \n");
     }
@@ -102,6 +117,12 @@ public class LockResponseMessage extends DSOMessageBase {
         globalLockInfo = new GlobalLockInfo();
         getObject(globalLockInfo);
         return true;
+      case LOCK_STACK_TRACE_DEPTH:
+        this.stackTraceDepth = getIntValue();
+        return true;
+      case LOCK_STAT_COLLECT_FREQUENCY:
+        this.statCollectFrequency = getIntValue();
+        return true;
       default:
         return false;
     }
@@ -126,7 +147,15 @@ public class LockResponseMessage extends DSOMessageBase {
   public boolean isLockNotAwarded() {
     return (this.type == LOCK_NOT_AWARDED);
   }
-  
+
+  public boolean isLockStatEnabled() {
+    return (this.type == LOCK_STAT_ENABLED);
+  }
+
+  public boolean isLockStatDisabled() {
+    return (this.type == LOCK_STAT_DISABLED);
+  }
+
   public LockID getLockID() {
     return this.lockID;
   }
@@ -139,10 +168,18 @@ public class LockResponseMessage extends DSOMessageBase {
     return this.lockLevel;
   }
 
+  public int getStackTraceDepth() {
+    return stackTraceDepth;
+  }
+
+  public int getStatCollectFrequency() {
+    return statCollectFrequency;
+  }
+
   public GlobalLockInfo getGlobalLockInfo() {
     return globalLockInfo;
   }
-  
+
   public void initializeLockAward(LockID lid, ThreadID sid, int level) {
     this.type = LOCK_AWARD;
     initialize(lid, sid, level, null);
@@ -167,7 +204,20 @@ public class LockResponseMessage extends DSOMessageBase {
     this.type = LOCK_INFO;
     initialize(lid, sid, level, info);
   }
-  
+
+  public void initializeLockStatEnable(LockID lid, ThreadID sid, int level, int stackTraceDepth,
+                                       int statCollectFrequency) {
+    this.type = LOCK_STAT_ENABLED;
+    initialize(lid, sid, level);
+    this.stackTraceDepth = stackTraceDepth;
+    this.statCollectFrequency = statCollectFrequency;
+  }
+
+  public void initializeLockStatDisable(LockID lid, ThreadID sid, int level) {
+    this.type = LOCK_STAT_DISABLED;
+    initialize(lid, sid, level);
+  }
+
   private void initialize(LockID lid, ThreadID sid, int level) {
     initialize(lid, sid, level, null);
   }

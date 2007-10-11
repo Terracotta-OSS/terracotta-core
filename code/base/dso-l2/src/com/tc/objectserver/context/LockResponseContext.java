@@ -21,43 +21,52 @@ import java.util.Iterator;
 
 public class LockResponseContext implements EventContext {
 
-  public static final int      LOCK_AWARD        = 1;
-  public static final int      LOCK_RECALL       = 2;
-  public static final int      LOCK_WAIT_TIMEOUT = 3;
-  public static final int      LOCK_INFO         = 4;
-  public static final int      LOCK_NOT_AWARDED  = 5;
+  public static final int      LOCK_AWARD         = 1;
+  public static final int      LOCK_RECALL        = 2;
+  public static final int      LOCK_WAIT_TIMEOUT  = 3;
+  public static final int      LOCK_INFO          = 4;
+  public static final int      LOCK_NOT_AWARDED   = 5;
+  public static final int      LOCK_STAT_ENABLED  = 6;
+  public static final int      LOCK_STAT_DISABLED = 7;
 
   private final LockID         lockID;
   private final ThreadID       threadID;
   private final int            level;
   private final NodeID         nodeID;
   private final int            responseType;
+  private final int            stackTraceDepth;
+  private final int            statCollectFrequency;
   private final GlobalLockInfo globalLockInfo;
 
   public LockResponseContext(LockID lockID, NodeID nodeID, ThreadID threadID, int level, int lockRequestQueueLength,
-                             int lockUpgradeQueueLength, Collection greedyHolders, Collection holders,
-                             Collection waiters, int type) {
-    this.lockID = lockID;
-    this.nodeID = nodeID;
-    this.threadID = threadID;
-    this.level = level;
-    this.responseType = type;
-    this.globalLockInfo = new GlobalLockInfo(lockID, level, lockRequestQueueLength, lockUpgradeQueueLength,
-                                             getGlobalLockHolderInfo(greedyHolders), getGlobalLockHolderInfo(holders),
-                                             getGlobalLockWaiterInfo(lockID, waiters));
-    Assert.assertTrue(responseType == LOCK_AWARD || responseType == LOCK_RECALL || responseType == LOCK_WAIT_TIMEOUT
-                      || responseType == LOCK_INFO || responseType == LOCK_NOT_AWARDED);
+                             Collection greedyHolders, Collection holders, Collection waiters, int type) {
+    this(lockID, nodeID, threadID, level, new GlobalLockInfo(lockID, level, lockRequestQueueLength,
+                                                             getGlobalLockHolderInfo(greedyHolders),
+                                                             getGlobalLockHolderInfo(holders),
+                                                             getGlobalLockWaiterInfo(lockID, waiters)), type, -1, -1);
   }
 
   public LockResponseContext(LockID lockID, NodeID nodeID, ThreadID sourceID, int level, int type) {
+    this(lockID, nodeID, sourceID, level, null, type, -1, -1);
+  }
+  
+  public LockResponseContext(LockID lockID, NodeID nodeID, ThreadID sourceID, int level, int type, int stackTraceDepth, int statCollectFrequency) {
+    this(lockID, nodeID, sourceID, level, null, type, stackTraceDepth, statCollectFrequency);
+  }
+
+  private LockResponseContext(LockID lockID, NodeID nodeID, ThreadID sourceID, int level,
+                              GlobalLockInfo globalLockInfo, int type, int stackTraceDepth, int statCollectFrequency) {
     this.lockID = lockID;
     this.nodeID = nodeID;
     this.threadID = sourceID;
     this.level = level;
     this.responseType = type;
-    this.globalLockInfo = null;
+    this.globalLockInfo = globalLockInfo;
+    this.stackTraceDepth = stackTraceDepth;
+    this.statCollectFrequency = statCollectFrequency;
     Assert.assertTrue(responseType == LOCK_AWARD || responseType == LOCK_RECALL || responseType == LOCK_WAIT_TIMEOUT
-                      || responseType == LOCK_INFO || responseType == LOCK_NOT_AWARDED);
+                      || responseType == LOCK_INFO || responseType == LOCK_NOT_AWARDED
+                      || responseType == LOCK_STAT_ENABLED || responseType == LOCK_STAT_DISABLED);
   }
 
   public NodeID getNodeID() {
@@ -78,6 +87,14 @@ public class LockResponseContext implements EventContext {
 
   public int getLockLevel() {
     return level;
+  }
+
+  public int getStackTraceDepth() {
+    return stackTraceDepth;
+  }
+
+  public int getStatCollectFrequency() {
+    return statCollectFrequency;
   }
 
   public GlobalLockInfo getGlobalLockInfo() {
@@ -104,6 +121,14 @@ public class LockResponseContext implements EventContext {
     return (this.responseType == LOCK_NOT_AWARDED);
   }
 
+  public boolean isLockStatEnabled() {
+    return (this.responseType == LOCK_STAT_ENABLED);
+  }
+
+  public boolean isLockStatDisabled() {
+    return (this.responseType == LOCK_STAT_DISABLED);
+  }
+
   public String toString() {
     return "LockResponseContext(" + lockID + "," + nodeID + "," + threadID + ", " + LockLevel.toString(level) + " , "
            + toString(responseType) + ")";
@@ -126,7 +151,7 @@ public class LockResponseContext implements EventContext {
     }
   }
 
-  private Collection getGlobalLockHolderInfo(Collection holderInfo) {
+  private static Collection getGlobalLockHolderInfo(Collection holderInfo) {
     Collection holdersInfo = new ArrayList();
     for (Iterator i = holderInfo.iterator(); i.hasNext();) {
       Holder holder = (Holder) i.next();
@@ -136,7 +161,7 @@ public class LockResponseContext implements EventContext {
     return holdersInfo;
   }
 
-  private Collection getGlobalLockWaiterInfo(LockID id, Collection waiters) {
+  private static Collection getGlobalLockWaiterInfo(LockID id, Collection waiters) {
     Collection waitersInfo = new ArrayList();
     for (Iterator i = waiters.iterator(); i.hasNext();) {
       LockWaitContext lockWaitContext = (LockWaitContext) i.next();

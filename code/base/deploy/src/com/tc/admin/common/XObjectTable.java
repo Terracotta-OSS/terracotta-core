@@ -232,7 +232,10 @@ public class XObjectTable extends XTable {
 
   public void setModel(TableModel model) {
     super.setModel(model);
-    sort();
+    if(sortColumn != -1) {
+      sortColumn = Math.min(sortColumn, model.getColumnCount()-1);
+      sort();
+    }
   }
 
   public void showColumnsExclusive(String[] fieldNames) {

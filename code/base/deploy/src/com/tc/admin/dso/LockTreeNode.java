@@ -18,7 +18,6 @@ import com.tc.objectserver.lockmanager.api.Waiter;
 public class LockTreeNode extends XTreeNode {
   private XTreeNode m_holders;
   private XTreeNode m_pendingRequests;
-  private XTreeNode m_pendingUpgrades;
   private XTreeNode m_waiters;
 
   public LockTreeNode(ConnectionContext cc, LockMBean lock) {
@@ -34,12 +33,6 @@ public class LockTreeNode extends XTreeNode {
     if(pendingRequests != null && pendingRequests.length > 0) {
       add(m_pendingRequests = new XTreeNode("Pending Requests"));
       addPendingRequests(pendingRequests);
-    }
-
-    ServerLockRequest[] pendingUpgrades = lock.getPendingUpgrades();
-    if(pendingUpgrades != null && pendingUpgrades.length > 0) {
-      add(m_pendingUpgrades = new XTreeNode("Pending Upgrades"));
-      addPendingUpgrades(pendingUpgrades);
     }
 
     Waiter[] waiters = lock.getWaiters();
@@ -89,12 +82,6 @@ public class LockTreeNode extends XTreeNode {
   public void addPendingRequests(ServerLockRequest[] requests) {
     for(int i = 0; i < requests.length; i++) {
       m_pendingRequests.add(new RequestNode(requests[i]));
-    }
-  }
-
-  public void addPendingUpgrades(ServerLockRequest[] upgrades) {
-    for(int i = 0; i < upgrades.length; i++) {
-      m_pendingUpgrades.add(new RequestNode(upgrades[i]));
     }
   }
 

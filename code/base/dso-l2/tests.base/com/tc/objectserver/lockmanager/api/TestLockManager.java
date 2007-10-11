@@ -7,7 +7,6 @@ package com.tc.objectserver.lockmanager.api;
 import com.tc.async.api.Sink;
 import com.tc.exception.ImplementMe;
 import com.tc.net.groups.NodeID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.ThreadID;
@@ -17,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 public class TestLockManager implements LockManager {
 
@@ -99,11 +99,6 @@ public class TestLockManager implements LockManager {
     reestablishLockCalls.add(new ReestablishLockContext(new LockContext(lid, cid, tid, level), lockResponseSink));
   }
 
-  public void recallCommit(LockID lid, ChannelID cid, Collection lockContexts, Collection waitContexts,
-                           Collection pendingLockContexts, Sink lockResponseSink) {
-    throw new ImplementMe();
-  }
-
   public static class ReestablishLockContext {
     public final LockContext lockContext;
     public final Sink        lockResponseSink;
@@ -133,6 +128,14 @@ public class TestLockManager implements LockManager {
 
   public void recallCommit(LockID lid, NodeID cid, Collection lockContexts, Collection waitContexts,
                            Collection pendingLockContexts, Collection pendingTryLockContexts, Sink lockResponseSink) {
+    throw new ImplementMe();
+  }
+
+  public void disableClientStat(LockID lockID, Set statEnabledClients, Sink sink) {
+    throw new ImplementMe();
+  }
+
+  public void enableClientStat(LockID lockID, Sink sink, int lockStackTraceDepth, int lockStatCollectFrequency) {
     throw new ImplementMe();
   }
 }

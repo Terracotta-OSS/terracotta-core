@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.lockmanager.impl;
 
@@ -13,18 +14,15 @@ import java.io.Serializable;
 
 public class LockMBeanImpl implements LockMBean, Serializable {
 
-  private final String        lockName;
-  private final LockHolder[]  holders;
+  private final String              lockName;
+  private final LockHolder[]        holders;
   private final ServerLockRequest[] pendingRequests;
-  private final ServerLockRequest[] pendingUpgrades;
-  private final Waiter[]      waiters;
+  private final Waiter[]            waiters;
 
-  public LockMBeanImpl(LockID lockID, LockHolder[] holders, ServerLockRequest[] requests, ServerLockRequest[] upgrades,
-                       Waiter[] waiters) {
+  public LockMBeanImpl(LockID lockID, LockHolder[] holders, ServerLockRequest[] requests, Waiter[] waiters) {
     this.lockName = lockID.asString();
     this.holders = holders;
     this.pendingRequests = requests;
-    this.pendingUpgrades = upgrades;
     this.waiters = waiters;
   }
 
@@ -38,10 +36,6 @@ public class LockMBeanImpl implements LockMBean, Serializable {
 
   public ServerLockRequest[] getPendingRequests() {
     return this.pendingRequests;
-  }
-
-  public ServerLockRequest[] getPendingUpgrades() {
-    return this.pendingUpgrades;
   }
 
   public Waiter[] getWaiters() {

@@ -22,7 +22,6 @@ public class GlobalLockInfo implements TCSerializable {
   private LockID     lockID;
   private int        level;
   private int        lockRequestQueueLength;
-  private int        lockUpgradeQueueLength;
   private Collection greedyHoldersInfo;
   private Collection holdersInfo;
   private Collection waitersInfo;
@@ -31,12 +30,11 @@ public class GlobalLockInfo implements TCSerializable {
     super();
   }
 
-  public GlobalLockInfo(LockID lockID, int level, int lockRequestQueueLength, int lockUpgradeQueueLength,
+  public GlobalLockInfo(LockID lockID, int level, int lockRequestQueueLength,
                         Collection greedyHolders, Collection holders, Collection waiters) {
     this.lockID = lockID;
     this.level = level;
     this.lockRequestQueueLength = lockRequestQueueLength;
-    this.lockUpgradeQueueLength = lockUpgradeQueueLength;
     this.greedyHoldersInfo = greedyHolders;
     this.holdersInfo = holders;
     this.waitersInfo = waiters;
@@ -44,10 +42,6 @@ public class GlobalLockInfo implements TCSerializable {
 
   public int getLockRequestQueueLength() {
     return lockRequestQueueLength;
-  }
-
-  public int getLockUpgradeQueueLength() {
-    return lockUpgradeQueueLength;
   }
 
   public boolean isLocked(int level) {
@@ -72,7 +66,6 @@ public class GlobalLockInfo implements TCSerializable {
     serialOutput.writeString(lockID.asString());
     serialOutput.writeInt(level);
     serialOutput.writeInt(lockRequestQueueLength);
-    serialOutput.writeInt(lockUpgradeQueueLength);
     serialOutput.writeInt(holdersInfo.size());
     for (Iterator i = holdersInfo.iterator(); i.hasNext();) {
       GlobalLockStateInfo holderInfo = (GlobalLockStateInfo) i.next();
@@ -94,7 +87,6 @@ public class GlobalLockInfo implements TCSerializable {
     this.lockID = new LockID(serialInput.readString());
     this.level = serialInput.readInt();
     this.lockRequestQueueLength = serialInput.readInt();
-    this.lockUpgradeQueueLength = serialInput.readInt();
     int size = serialInput.readInt();
     holdersInfo = new ArrayList(size);
     for (int i = 0; i < size; i++) {

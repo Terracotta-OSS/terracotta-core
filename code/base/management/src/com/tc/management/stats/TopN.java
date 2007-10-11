@@ -3,6 +3,8 @@
  */
 package com.tc.management.stats;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -42,12 +44,25 @@ public final class TopN {
   /**
    * @param object the object added to the top N list in order, if it qualifies according to the comparator
    */
-  public void evaluate(final Object object) {
+  public boolean evaluate(final Object object) {
     synchronized (data) {
       data.add(object);
       while (data.size() > N) {
         data.remove(data.last());
       }
+      return data.contains(object);
+    }
+  }
+  
+  public void evaluate(final Collection objects) {
+    for (Iterator i=objects.iterator(); i.hasNext(); ) {
+      evaluate(i.next());
+    }
+  }
+  
+  public boolean remove(final Object object) {
+    synchronized(data) {
+      return data.remove(object);
     }
   }
 
@@ -58,6 +73,12 @@ public final class TopN {
   public Iterator iterator() {
     synchronized (data) {
       return Collections.unmodifiableSortedSet(data).iterator();
+    }
+  }
+  
+  public Collection getDataSnapshot() {
+    synchronized(data) {
+      return new ArrayList(data);
     }
   }
 

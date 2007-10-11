@@ -93,7 +93,9 @@ public class XTable extends Table {
 
       try {
         text = (value == null) ? "" : formatter.format(value);
-      } catch(NumberFormatException nfe) {/**/}
+      } catch(Exception nfe) {
+        System.out.println(value.toString());
+      }
 
       setText(text);
     }

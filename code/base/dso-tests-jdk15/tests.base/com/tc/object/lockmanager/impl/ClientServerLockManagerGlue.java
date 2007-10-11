@@ -7,6 +7,7 @@ package com.tc.object.lockmanager.impl;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.impl.NullSink;
+import com.tc.management.L2LockStatsManager;
 import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.lockmanager.api.ClientLockManager;
@@ -138,7 +139,7 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
 
   public LockManagerImpl restartServer() {
     int policy = this.serverLockManager.getLockPolicy();
-    this.serverLockManager = new LockManagerImpl(new NullChannelManager());
+    this.serverLockManager = new LockManagerImpl(new NullChannelManager(), L2LockStatsManager.NULL_LOCK_STATS_MANAGER);
     if (!clientLockManager.isStarting()) clientLockManager.starting();
     for (Iterator i = clientLockManager.addAllHeldLocksTo(new HashSet()).iterator(); i.hasNext();) {
       LockRequest request = (LockRequest) i.next();

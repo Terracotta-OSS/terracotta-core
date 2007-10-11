@@ -26,8 +26,12 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.management.L2LockStatsManager;
+import com.tc.management.L2LockStatsManagerImpl;
 import com.tc.management.L2Management;
 import com.tc.management.beans.L2State;
+import com.tc.management.beans.LockStatisticsMonitor;
+import com.tc.management.beans.LockStatisticsMonitorMBean;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.remote.connect.ClientConnectEventHandler;
@@ -69,6 +73,7 @@ import com.tc.object.msg.CommitTransactionMessageImpl;
 import com.tc.object.msg.JMXMessage;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockResponseMessage;
+import com.tc.object.msg.LockStatisticsResponseMessage;
 import com.tc.object.msg.MessageRecycler;
 import com.tc.object.msg.ObjectIDBatchRequestMessage;
 import com.tc.object.msg.ObjectIDBatchRequestResponseMessage;
@@ -101,6 +106,7 @@ import com.tc.objectserver.handler.ApplyTransactionChangeHandler;
 import com.tc.objectserver.handler.BroadcastChangeHandler;
 import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.handler.ClientHandshakeHandler;
+import com.tc.objectserver.handler.ClientLockStatisticsHandler;
 import com.tc.objectserver.handler.CommitTransactionChangeHandler;
 import com.tc.objectserver.handler.GlobalTransactionIDBatchRequestHandler;
 import com.tc.objectserver.handler.JMXEventsHandler;
@@ -222,6 +228,8 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
 
   private ConnectionIDFactoryImpl              connectionIdFactory;
 
+  private LockStatisticsMonitorMBean           lockStatisticsMBean;
+
   // used by a test
   public DistributedObjectServer(L2TVSConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
                                  ConnectionPolicy connectionPolicy, TCServerInfoMBean tcServerInfoMBean) {
@@ -265,6 +273,9 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
 
   public synchronized void start() throws IOException, TCDatabaseException, LocationNotCreatedException,
       FileNotCreatedException {
+
+    L2LockStatsManager lockStatsManager = new L2LockStatsManagerImpl();
+    this.lockStatisticsMBean = new LockStatisticsMonitor(lockStatsManager);
 
     try {
       startJMXServer();
@@ -470,7 +481,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
 
     ChannelStats channelStats = new ChannelStatsImpl(sampledCounterManager, channelManager);
 
-    lockManager = new LockManagerImpl(channelManager);
+    lockManager = new LockManagerImpl(channelManager, lockStatsManager);
     TransactionAcknowledgeAction taa = new TransactionAcknowledgeActionImpl(channelManager);
     ObjectInstanceMonitorImpl instanceMonitor = new ObjectInstanceMonitorImpl();
     TransactionBatchManager transactionBatchManager = new TransactionBatchManagerImpl();
@@ -524,8 +535,9 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
 
     stageManager.createStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE,
                              new BroadcastChangeHandler(transactionBatchManager), 1, maxStageSize);
-    stageManager.createStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE,
-                             new RespondToRequestLockHandler(), 1, maxStageSize);
+    Stage respondToLockRequestStage = stageManager
+        .createStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE, new RespondToRequestLockHandler(), 1,
+                     maxStageSize);
     Stage requestLock = stageManager.createStage(ServerConfigurationContext.REQUEST_LOCK_STAGE,
                                                  new RequestLockUnLockHandler(), 1, maxStageSize);
     ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(communicationsManager,
@@ -564,6 +576,8 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     cteh.setConnectStageSink(jmxRemoteConnectStage.getSink());
     final Stage jmxRemoteTunnelStage = stageManager.createStage(ServerConfigurationContext.JMXREMOTE_TUNNEL_STAGE,
                                                                 cteh, 1, maxStageSize);
+    
+    final Stage clientLockStatisticsStage = stageManager.createStage(ServerConfigurationContext.CLIENT_LOCK_STATISTICS_STAGE, new ClientLockStatisticsHandler(lockStatsManager), 1, 1);
 
     l1Listener.addClassMapping(TCMessageType.BATCH_TRANSACTION_ACK_MESSAGE,
                                BatchTransactionAcknowledgeMessageImpl.class);
@@ -572,6 +586,8 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     l1Listener.addClassMapping(TCMessageType.LOCK_RESPONSE_MESSAGE, LockResponseMessage.class);
     l1Listener.addClassMapping(TCMessageType.LOCK_RECALL_MESSAGE, LockResponseMessage.class);
     l1Listener.addClassMapping(TCMessageType.LOCK_QUERY_RESPONSE_MESSAGE, LockResponseMessage.class);
+    l1Listener.addClassMapping(TCMessageType.LOCK_STAT_MESSAGE, LockResponseMessage.class);
+    l1Listener.addClassMapping(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE, LockStatisticsResponseMessage.class);
     l1Listener.addClassMapping(TCMessageType.COMMIT_TRANSACTION_MESSAGE, CommitTransactionMessageImpl.class);
     l1Listener.addClassMapping(TCMessageType.REQUEST_ROOT_RESPONSE_MESSAGE, RequestRootResponseMessage.class);
     l1Listener.addClassMapping(TCMessageType.REQUEST_MANAGED_OBJECT_MESSAGE, RequestManagedObjectMessageImpl.class);
@@ -602,6 +618,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     l1Listener.routeMessageType(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, jmxRemoteTunnelStage.getSink(),
                                 hydrateSink);
     l1Listener.routeMessageType(TCMessageType.CLIENT_JMX_READY_MESSAGE, jmxRemoteTunnelStage.getSink(), hydrateSink);
+    l1Listener.routeMessageType(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE, clientLockStatisticsStage.getSink(), hydrateSink);
 
     l2DSOConfig.changesInItemIgnored(l2DSOConfig.clientReconnectWindow());
     long reconnectTimeout = l2DSOConfig.clientReconnectWindow().getInt();
@@ -655,6 +672,8 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
                                                     instanceMonitor, appEvents);
 
     if (l2Properties.getBoolean("beanshell.enabled")) startBeanShell(l2Properties.getInt("beanshell.port"));
+
+    lockStatsManager.start(channelManager, lockManager, respondToLockRequestStage.getSink());
 
     if (networkedHA) {
       final Node thisNode = makeThisNode();
@@ -840,7 +859,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
   }
 
   private void startJMXServer() throws Exception {
-    l2Management = new L2Management(tcServerInfoMBean, configSetupManager, this);
+    l2Management = new L2Management(tcServerInfoMBean, lockStatisticsMBean, configSetupManager, this);
 
     /*
      * Some tests use this if they run with jdk1.4 and start multiple in-process DistributedObjectServers. When we no
