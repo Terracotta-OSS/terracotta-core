@@ -399,17 +399,7 @@ public class TestConfigObject {
   private static File baseDir;
 
   public String transparentTestsMode() {
-    String out = this.properties.getProperty(TRANSPARENT_TESTS_MODE);
-    Assert.assertNotBlank(out);
-
-    boolean foundIt = false;
-    for (int i = 0; i < ALL_TRANSPARENT_TESTS_MODES.length; ++i) {
-      foundIt = foundIt || ALL_TRANSPARENT_TESTS_MODES[i].equals(out);
-    }
-
-    Assert.eval(foundIt);
-
-    return out;
+    return getProperty(TRANSPARENT_TESTS_MODE, TRANSPARENT_TESTS_MODE_NORMAL);
   }
 
   private void assertValidClasspath(String out) {
