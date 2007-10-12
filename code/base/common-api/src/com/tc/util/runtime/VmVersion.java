@@ -36,10 +36,10 @@ public final class VmVersion {
    * @throws UnknownRuntimeVersionException If Java runtime version is unknown
    */
   public VmVersion(final Properties props) throws UnknownJvmVersionException, UnknownRuntimeVersionException {
-    this(props, true);
+    this(props, false);
   }
 
-  private VmVersion(final Properties props, boolean ibmWorkaround) throws UnknownJvmVersionException,
+  /* package */VmVersion(final Properties props, boolean ibmWorkaround) throws UnknownJvmVersionException,
       UnknownRuntimeVersionException {
     this(javaVersion(props), runtimeVersion(props, ibmWorkaround), isJRockit(props), isIBM(props));
   }
@@ -54,8 +54,8 @@ public final class VmVersion {
    * @throws UnknownJvmVersionException If JVM version is unknown
    * @throws UnknownRuntimeVersionException If Java runtime version is unknown
    */
-  private VmVersion(final String vendorVersion, final String runtimeVersion, final boolean isJRockit, final boolean isIBM)
-      throws UnknownJvmVersionException, UnknownRuntimeVersionException {
+  private VmVersion(final String vendorVersion, final String runtimeVersion, final boolean isJRockit,
+                    final boolean isIBM) throws UnknownJvmVersionException, UnknownRuntimeVersionException {
     this.isIBM = isIBM;
     this.isJRockit = isJRockit;
     final Matcher versionMatcher = JVM_VERSION_PATTERN.matcher(vendorVersion);

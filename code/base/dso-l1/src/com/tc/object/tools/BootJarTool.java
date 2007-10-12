@@ -1319,7 +1319,7 @@ public class BootJarTool {
   public final byte[] getBytesForClass(String className, ClassLoader loader) throws ClassNotFoundException {
     String resource = BootJar.classNameToFileName(className);
     InputStream is = loader.getResourceAsStream(resource);
-    if (is == null) { throw new ClassNotFoundException("No resource found for class: " + resource); }
+    if (is == null) { throw new ClassNotFoundException("No resource found for class: " + className); }
     final int size = 4096;
     byte[] buffer = new byte[size];
     ByteArrayOutputStream baos = new ByteArrayOutputStream(size);

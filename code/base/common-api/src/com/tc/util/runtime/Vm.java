@@ -17,7 +17,7 @@ public class Vm {
   public static final VmVersion  VERSION;
   static {
     try {
-      VERSION = new VmVersion(System.getProperties());
+      VERSION = new VmVersion(System.getProperties(), true);
     } catch (UnknownJvmVersionException mve) {
       throw new RuntimeException(mve);
     } catch (UnknownRuntimeVersionException mve) {
