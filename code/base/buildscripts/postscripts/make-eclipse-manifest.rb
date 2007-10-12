@@ -50,7 +50,8 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
       out.puts " org.eclipse.pde.ui;bundle-version=\"[3.3.0,4.0.0)\","
       out.puts " org.junit;bundle-version=\"[3.8.2,4.0.0)\","
       out.puts " org.eclipse.jdt.junit;bundle-version=\"[3.3.0,4.0.0)\","
-      out.puts " org.eclipse.core.variables;bundle-version=\"[3.2.0,4.0.0)\""
+      out.puts " org.eclipse.core.variables;bundle-version=\"[3.2.0,4.0.0)\","
+      out.puts " org.eclipse.ui.forms;bundle-version=\"[3.2.0,4.0.0)\""
 
       libfiles = Dir.entries(common_lib_directory.to_s).delete_if { |item| /\.jar$/ !~ item }
       out.puts "Bundle-ClassPath: #{relative_libpath}/#{libfiles.first},"
