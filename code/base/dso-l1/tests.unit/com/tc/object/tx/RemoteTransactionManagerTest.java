@@ -128,7 +128,7 @@ public class RemoteTransactionManagerTest extends TestCase {
     assertEquals(acknowledged, batch.ackedTransactions);
 
     // fill the current batch with a bunch of transactions
-    int count = 10;
+    int count = 50;
     for (int i = 0; i < count; i++) {
       ClientTransaction ctx1 = makeTransaction();
       barrier = new CyclicBarrier(2);
