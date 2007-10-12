@@ -6,7 +6,7 @@ package com.tc.util;
 
 import com.tc.util.runtime.UnknownJvmVersionException;
 import com.tc.util.runtime.UnknownRuntimeVersionException;
-import com.tc.util.runtime.Vm;
+import com.tc.util.runtime.VmVersion;
 
 import java.util.Properties;
 
@@ -55,9 +55,9 @@ public class VendorVmSignature {
     if (vendor.toLowerCase().startsWith("apple ")) { return VM_VENDOR_SUN; }
     if (vendor.toLowerCase().startsWith("ibm ")) { return VM_VENDOR_IBM; }
     if (vendor.toLowerCase().startsWith("sun ")) {
-      final Vm.Version vmVersion;
+      final VmVersion vmVersion;
       try {
-        vmVersion = new Vm.Version(source);
+        vmVersion = new VmVersion(source);
       } catch (UnknownJvmVersionException ujve) {
         throw new VendorVmSignatureException("Unable to extract the JVM version with properties: " + source, ujve);
       } catch (UnknownRuntimeVersionException urve) {
@@ -75,7 +75,7 @@ public class VendorVmSignature {
 
   private static String getVMVersion(final Properties source) throws VendorVmSignatureException {
     try {
-      final Vm.Version vmVersion = new Vm.Version(source);
+      final VmVersion vmVersion = new VmVersion(source);
       return vmVersion.toString().replaceAll("\\.", "");
     } catch (final UnknownJvmVersionException ujve) {
       throw new VendorVmSignatureException("Cannot determine VM version", ujve);

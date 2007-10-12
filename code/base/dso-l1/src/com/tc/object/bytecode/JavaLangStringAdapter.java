@@ -11,15 +11,15 @@ import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.object.bytecode.hook.impl.JavaLangArrayHelpers;
 import com.tc.util.Assert;
+import com.tc.util.runtime.VmVersion;
 import com.tc.util.runtime.Vm;
-import com.tc.util.runtime.Vm.Version;
 
 public class JavaLangStringAdapter extends ClassAdapter implements Opcodes {
 
-  private final Version vmVersion;
+  private final VmVersion vmVersion;
   private final boolean portableStringBuffer;
 
-  public JavaLangStringAdapter(ClassVisitor cv, Version vmVersion, boolean portableStringBuffer) {
+  public JavaLangStringAdapter(ClassVisitor cv, VmVersion vmVersion, boolean portableStringBuffer) {
     super(cv);
     this.vmVersion = vmVersion;
     this.portableStringBuffer = portableStringBuffer;

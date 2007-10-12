@@ -145,6 +145,7 @@ import com.tc.util.UnsafeUtil;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.UnknownJvmVersionException;
 import com.tc.util.runtime.UnknownRuntimeVersionException;
+import com.tc.util.runtime.VmVersion;
 import com.tc.util.runtime.Vm;
 import com.tc.websphere.WebsphereLoaderNaming;
 import com.tcclient.util.HashtableEntrySetWrapper;
@@ -489,8 +490,8 @@ public class BootJarTool {
       loadTerracottaClass(JavaLangArrayHelpers.class.getName());
 
       loadTerracottaClass(Vm.class.getName());
-      loadTerracottaClass(Vm.Version.class.getName());
-      loadTerracottaClass("com.tc.util.runtime.Vm$1");
+      loadTerracottaClass(VmVersion.class.getName());
+      
       loadTerracottaClass(UnknownJvmVersionException.class.getName());
       loadTerracottaClass(UnknownRuntimeVersionException.class.getName());
 
@@ -1318,7 +1319,7 @@ public class BootJarTool {
   public final byte[] getBytesForClass(String className, ClassLoader loader) throws ClassNotFoundException {
     String resource = BootJar.classNameToFileName(className);
     InputStream is = loader.getResourceAsStream(resource);
-    if (is == null) { throw new ClassNotFoundException("No resource found for class: " + className); }
+    if (is == null) { throw new ClassNotFoundException("No resource found for class: " + resource); }
     final int size = 4096;
     byte[] buffer = new byte[size];
     ByteArrayOutputStream baos = new ByteArrayOutputStream(size);

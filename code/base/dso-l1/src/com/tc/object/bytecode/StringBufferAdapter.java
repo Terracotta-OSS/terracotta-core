@@ -10,13 +10,13 @@ import com.tc.asm.Label;
 import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
-import com.tc.util.runtime.Vm.Version;
+import com.tc.util.runtime.VmVersion;
 
 public class StringBufferAdapter extends ClassAdapter implements Opcodes {
 
-  private final Version version;
+  private final VmVersion version;
 
-  public StringBufferAdapter(ClassVisitor cv, Version version) {
+  public StringBufferAdapter(ClassVisitor cv, VmVersion version) {
     super(cv);
     this.version = version;
   }
@@ -82,9 +82,9 @@ public class StringBufferAdapter extends ClassAdapter implements Opcodes {
   public static class FixUp extends ClassAdapter {
 
     private static final String MANAGED_APPEND = DuplicateMethodAdapter.MANAGED_PREFIX + "append";
-    private final Version       version;
+    private final VmVersion       version;
 
-    public FixUp(ClassVisitor cv, Version version) {
+    public FixUp(ClassVisitor cv, VmVersion version) {
       super(cv);
       this.version = version;
     }
