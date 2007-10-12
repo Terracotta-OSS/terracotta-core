@@ -17,11 +17,10 @@ import com.tc.admin.common.ComponentNode;
 import com.tc.admin.common.XAbstractAction;
 
 public class LocksNode extends ComponentNode {
-  private ConnectionContext m_cc;
-  private JPopupMenu        m_popupMenu;
+  private ConnectionContext   m_cc;
+  private JPopupMenu          m_popupMenu;
 
-  private static final String REFRESH_ACTION          = "RefreshAction";
-  //private static final String DETECT_DEADLOCKS_ACTION = "DetectDeadlocksAction";
+  private static final String REFRESH_ACTION = "RefreshAction";
 
   public LocksNode(ConnectionContext cc) {
     super();
@@ -30,20 +29,19 @@ public class LocksNode extends ComponentNode {
 
     setLabel(AdminClient.getContext().getMessage("dso.locks"));
     setComponent(new LocksPanel(m_cc));
-    
+
     initMenu();
   }
 
   private void initMenu() {
-    RefreshAction         refreshAction         = new RefreshAction();
-    //DetectDeadlocksAction detectDeadlocksAction = new DetectDeadlocksAction();
+    RefreshAction refreshAction = new RefreshAction();
 
     m_popupMenu = new JPopupMenu("Lock Actions");
     m_popupMenu.add(refreshAction);
-    //m_popupMenu.add(detectDeadlocksAction);
-
+    m_popupMenu.add(new EnableStatsAction());
+    m_popupMenu.add(new DisableStatsAction());
+    
     addActionBinding(REFRESH_ACTION, refreshAction);
-    //addActionBinding(DETECT_DEADLOCKS_ACTION, detectDeadlocksAction);
   }
 
   public JPopupMenu getPopupMenu() {
@@ -55,7 +53,27 @@ public class LocksNode extends ComponentNode {
   }
 
   public void refresh() {
-    ((LocksPanel)getComponent()).refresh();
+    ((LocksPanel) getComponent()).refresh();
+  }
+
+  public class DisableStatsAction extends XAbstractAction {
+    DisableStatsAction() {
+      super("Disable stats");
+    }
+
+    public void actionPerformed(ActionEvent ae) {
+      ((LocksPanel) getComponent()).disableLockStatistics();
+    }
+  }
+  
+  public class EnableStatsAction extends XAbstractAction {
+    EnableStatsAction() {
+      super("Enable stats");
+    }
+
+    public void actionPerformed(ActionEvent ae) {
+      ((LocksPanel) getComponent()).enableLockStatistics();
+    }
   }
 
   private class RefreshAction extends XAbstractAction {
@@ -63,7 +81,7 @@ public class LocksNode extends ComponentNode {
       super();
 
       AdminClientContext acc = AdminClient.getContext();
-      
+
       setName(acc.getMessage("refresh.name"));
       setSmallIcon(LocksHelper.getHelper().getRefreshIcon());
       setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0, true));
@@ -74,41 +92,10 @@ public class LocksNode extends ComponentNode {
     }
   }
 
-  /*
-  private void detectDeadlocks() {
-    LocksHelper.getHelper().detectDeadlocks(m_cc);
-  }
-
-  private class DetectDeadlocksAction extends XAbstractAction {
-    private DetectDeadlocksAction() {
-      super();
-
-      AdminClientContext acc = AdminClient.getContext();
-      
-      setName(acc.getMessage("dso.deadlocks.detect"));
-      setSmallIcon(LocksHelper.getHelper().getDetectDeadlocksIcon());
-      setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F7, 0, true));
-    }
-
-    public void actionPerformed(ActionEvent ae) {
-      AdminClientContext acc = AdminClient.getContext();
-
-      acc.controller.setStatus(acc.getMessage("dso.deadlocks.detecting"));
-      try {
-        detectDeadlocks();
-      }
-      catch(Throwable t) {
-        t.printStackTrace();
-      }
-      acc.controller.clearStatus();
-    }
-  }
-  */
-  
   public void tearDown() {
     super.tearDown();
 
-    m_cc        = null;
+    m_cc = null;
     m_popupMenu = null;
   }
 }

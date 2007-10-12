@@ -131,8 +131,6 @@ public class LocksPanel extends XContainer {
     popup.add(new JMenuItem(new GatherAllStackTraces()));
     popup.addSeparator();
     popup.add(new JMenuItem(refreshAction));
-    popup.add(new JMenuItem(new DisableAllAction()));
-    popup.add(new JMenuItem(new EnableAllAction()));
     m_popupListener.setPopupMenu(popup);
   }
 
@@ -179,26 +177,14 @@ public class LocksPanel extends XContainer {
     }
   }
 
-  public class DisableAllAction extends XAbstractAction {
-    DisableAllAction() {
-      super("Disable all lock stats");
-    }
-
-    public void actionPerformed(ActionEvent ae) {
-      lockStatsMBean.disableLockStatistics();
-      refresh();
-    }
+  public void disableLockStatistics() {
+    lockStatsMBean.disableLockStatistics();
+    refresh();
   }
   
-  public class EnableAllAction extends XAbstractAction {
-    EnableAllAction() {
-      super("Enable all lock stats");
-    }
-
-    public void actionPerformed(ActionEvent ae) {
-      lockStatsMBean.enableLockStatistics();
-      refresh();
-    }
+  public void enableLockStatistics() {
+    lockStatsMBean.enableLockStatistics();
+    refresh();
   }
 
   public class EnableStatsAction extends XAbstractAction {
