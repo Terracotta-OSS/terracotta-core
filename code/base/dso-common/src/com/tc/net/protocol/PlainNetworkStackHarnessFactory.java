@@ -18,6 +18,16 @@ import com.tc.net.protocol.transport.MessageTransportListener;
  */
 public class PlainNetworkStackHarnessFactory implements NetworkStackHarnessFactory {
 
+  private final boolean allowConnectionReplace;
+
+  public PlainNetworkStackHarnessFactory() {
+    this(false);
+  }
+
+  public PlainNetworkStackHarnessFactory(boolean allowConnectionReplace) {
+    this.allowConnectionReplace = allowConnectionReplace;
+  }
+
   public NetworkStackHarness createServerHarness(ServerMessageChannelFactory channelFactory,
                                                  MessageTransport transport,
                                                  MessageTransportListener[] transportListeners) {
@@ -30,7 +40,7 @@ public class PlainNetworkStackHarnessFactory implements NetworkStackHarnessFacto
     return new PlainNetworkStackHarness(transportFactory, channel);
   }
 
-  private static class PlainNetworkStackHarness extends AbstractNetworkStackHarness {
+  private class PlainNetworkStackHarness extends AbstractNetworkStackHarness {
 
     PlainNetworkStackHarness(ServerMessageChannelFactory channelFactory, MessageTransport transport) {
       super(channelFactory, transport);
@@ -43,7 +53,9 @@ public class PlainNetworkStackHarnessFactory implements NetworkStackHarnessFacto
     protected void connectStack() {
       channel.setSendLayer(transport);
       transport.setReceiveLayer(channel);
-      //XXX: this is super ugly, but...
+      transport.setAllowConnectionReplace(allowConnectionReplace);
+
+      // XXX: this is super ugly, but...
       if (transport instanceof ClientMessageTransport) {
         ClientMessageTransport cmt = (ClientMessageTransport) transport;
         ClientConnectionEstablisher cce = cmt.getConnectionEstablisher();

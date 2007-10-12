@@ -61,7 +61,11 @@ public class MessageChannelTest extends TCTestCase {
   // }
 
   protected void setUp(int maxReconnectTries) throws Exception {
-    setUp(maxReconnectTries, new PlainNetworkStackHarnessFactory(), new PlainNetworkStackHarnessFactory());
+    setUp(maxReconnectTries, false);
+  }
+
+  protected void setUp(int maxReconnectTries, boolean allowConnectionReplace) throws Exception {
+    setUp(maxReconnectTries, new PlainNetworkStackHarnessFactory(allowConnectionReplace), new PlainNetworkStackHarnessFactory(allowConnectionReplace));
   }
 
   protected void setUp(int maxReconnectTries, NetworkStackHarnessFactory clientStackHarnessFactory,
@@ -151,7 +155,7 @@ public class MessageChannelTest extends TCTestCase {
   }
 
   public void testAutomaticReconnect() throws Exception {
-    setUp(10);
+    setUp(10, true);
     assertEquals(0, clientChannel.getConnectCount());
     assertEquals(0, clientChannel.getConnectAttemptCount());
     clientChannel.open();
