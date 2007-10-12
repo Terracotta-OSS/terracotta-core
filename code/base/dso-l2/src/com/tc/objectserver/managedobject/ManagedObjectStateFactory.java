@@ -246,6 +246,8 @@ public class ManagedObjectStateFactory {
           return ConcurrentHashMapManagedObjectState.readFrom(in);
         case ManagedObjectState.QUEUE_TYPE:
           return QueueManagedObjectState.readFrom(in);
+        case ManagedObjectState.URL_TYPE:
+          return URLManagedObjectState.readFrom(in);
         default:
           throw new AssertionError("Unknown type : " + type + " : Dont know how to deserialize this type !");
       }

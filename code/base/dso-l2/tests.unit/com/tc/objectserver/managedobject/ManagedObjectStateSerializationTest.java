@@ -105,6 +105,9 @@ public class ManagedObjectStateSerializationTest extends TestCase {
           case ManagedObjectState.PROXY_TYPE:
             testProxy();
             break;
+          case ManagedObjectState.URL_TYPE:
+            testURL();
+            break;
           default:
             throw new AssertionError("Type " + type
                                      + " does not have a test case in ManagedObjectStateSerializationTest.");
@@ -294,6 +297,18 @@ public class ManagedObjectStateSerializationTest extends TestCase {
     ManagedObjectState state = applyValidation(className, cursor);
 
     serializationValidation(state, cursor, ManagedObjectState.CONCURRENT_HASHMAP_TYPE);
+  }
+
+  public void testURL() throws Exception {
+    String className = "java.net.URL";
+
+    TestDNACursor cursor = new TestDNACursor();
+
+    cursor.addLogicalAction(SerializationUtil.URL_SET, new Object[] {"http", "terracotta.org", new Integer(8080), "auth", "user:pass", "/test", "par1=val1", "ref"});
+
+    ManagedObjectState state = applyValidation(className, cursor);
+
+    serializationValidation(state, cursor, ManagedObjectState.URL_TYPE);
   }
 
   private ManagedObjectState applyValidation(String className, DNACursor dnaCursor) throws Exception {
