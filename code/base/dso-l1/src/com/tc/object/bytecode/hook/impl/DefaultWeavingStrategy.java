@@ -132,12 +132,14 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
 
       final boolean isDsoAdaptable = m_configHelper.shouldBeAdapted(classInfo);
       final boolean hasCustomAdapter = m_configHelper.hasCustomAdapter(classInfo);
-      
+
       // CDV-237
       final String[] missingRoots = m_configHelper.getMissingRootDeclarations(classInfo);
       for (int i = 0; i < missingRoots.length; i++) {
-        String MESSAGE = "Unable to resolve the root declaration ''{0}'' for class ''{1}''";
-        Object[] info  = { missingRoots[i], classInfo.getName() };
+        String MESSAGE = "The root expression ''{0}'' meant for the class ''{1}'' "
+                         + "has no effect, make sure that it is a valid expression "
+                         + "and that it is spelled correctly.";
+        Object[] info = { missingRoots[i], classInfo.getName() };
         String message = MessageFormat.format(MESSAGE, info);
         consoleLogger.warn(message);
       }
