@@ -143,7 +143,7 @@ public class TestConfigObject {
   }
 
   private static void loadEnv() throws IOException {
-    File baseDir = getBaseDir();
+    initBaseDir();
 
     if (!StringUtils.isBlank(System.getProperty(Directories.TC_INSTALL_ROOT_PROPERTY_NAME))) {
       throw new RuntimeException("Don't set '"+Directories.TC_INSTALL_ROOT_PROPERTY_NAME+"' in tests.");
@@ -152,15 +152,15 @@ public class TestConfigObject {
     System.setProperty(Directories.TC_LICENSE_LOCATION_PROPERTY_NAME, baseDir.getCanonicalPath());
   }
 
-  private static File getBaseDir() throws IOException {
+  private static void initBaseDir() {
     String baseDirProp = System.getProperty(TC_BASE_DIR);
     if (baseDirProp == null || baseDirProp.trim().equals("")) invalidBaseDir();
-    File baseDir = new File(baseDirProp);
+    baseDir = new File(baseDirProp);
     if (!baseDir.isDirectory()) invalidBaseDir();
-    return baseDir.getCanonicalFile();
   }
 
   private static void invalidBaseDir() {
+    baseDir = null;
     String value = System.getProperty(TC_BASE_DIR);
     StringBuffer buf = new StringBuffer();
     buf.append("The value of the system property " + TC_BASE_DIR + " is not valid.");
@@ -299,15 +299,11 @@ public class TestConfigObject {
   }
 
   public String dataDirectoryRoot() {
-    String out = this.properties.getProperty(DATA_DIRECTORY_ROOT);
-    Assert.assertNotBlank(out);
-    return out;
+    return getProperty(DATA_DIRECTORY_ROOT, new File(baseDir, "test-data").getAbsolutePath());
   }
 
   public String tempDirectoryRoot() {
-    String out = this.properties.getProperty(TEMP_DIRECTORY_ROOT);
-    Assert.assertNotBlank(out);
-    return out;
+    return getProperty(TEMP_DIRECTORY_ROOT, new File(baseDir, "temp").getAbsolutePath());
   }
 
   public String appserverHome() {
@@ -399,6 +395,8 @@ public class TestConfigObject {
 
   private static final String[] ALL_TRANSPARENT_TESTS_MODES           = { TRANSPARENT_TESTS_MODE_NORMAL,
       TRANSPARENT_TESTS_MODE_CRASH, TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE };
+
+  private static File baseDir;
 
   public String transparentTestsMode() {
     String out = this.properties.getProperty(TRANSPARENT_TESTS_MODE);
