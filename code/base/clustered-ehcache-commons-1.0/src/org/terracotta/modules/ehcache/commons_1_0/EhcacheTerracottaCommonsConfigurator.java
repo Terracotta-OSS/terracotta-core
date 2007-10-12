@@ -29,6 +29,12 @@ public abstract class EhcacheTerracottaCommonsConfigurator extends TerracottaCon
     addExportedBundleClass(thisBundle, "net.sf.ehcache.store.TimeExpiryMemoryStore$SpoolingTimeExpiryMap");
     addExportedBundleClass(thisBundle, "org.terracotta.modules.ehcache.commons_1_0.util.Util");
     addExportedTcJarClass("com.tcclient.ehcache.TimeExpiryMap");
+    addExportedTcJarClass("com.tcclient.ehcache.TimeExpiryMap$EntriesIterator");
+    addExportedTcJarClass("com.tcclient.ehcache.TimeExpiryMap$EntrySetWrapper");
+    addExportedTcJarClass("com.tcclient.ehcache.TimeExpiryMap$KeySetWrapper");
+    addExportedTcJarClass("com.tcclient.ehcache.TimeExpiryMap$KeysIterator");
+    addExportedTcJarClass("com.tcclient.ehcache.TimeExpiryMap$ValuesCollectionWrapper");
+    addExportedTcJarClass("com.tcclient.ehcache.TimeExpiryMap$ValuesIterator");
     addExportedTcJarClass("com.tcclient.cache.CacheConfig");
     addExportedTcJarClass("com.tcclient.cache.CacheData");
     addExportedTcJarClass("com.tcclient.cache.CacheDataStore");
