@@ -33,6 +33,8 @@ import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.FocusAdapter;
 import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -714,10 +716,13 @@ public abstract class AbstractApplicationEventDialog extends MessageDialog {
       gridData.widthHint = SWTUtil.textColumnsToPixels(executeCodeText, 60);
       gridData.heightHint = SWTUtil.textRowsToPixels(executeCodeText, 3);
       executeCodeText.setLayoutData(gridData);
-      executeCodeText.addFocusListener(new FocusAdapter() {
-        public void focusLost(FocusEvent e) {
+      executeCodeText.addModifyListener(new ModifyListener() {
+        public void modifyText(ModifyEvent e) {
+          if(include == null) return;
           OnLoad onLoad = include.getOnLoad();
-          onLoad.setExecute(executeCodeText.getText());
+          if(onLoad == null) return;
+          String executeText = executeCodeText.getText(); 
+          onLoad.setExecute(executeText);
         }
       });
       gridData = new GridData(GridData.FILL_BOTH);

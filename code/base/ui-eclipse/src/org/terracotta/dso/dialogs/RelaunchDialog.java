@@ -26,6 +26,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 import org.terracotta.dso.TcPlugin;
+import org.terracotta.ui.util.SWTUtil;
 
 import java.util.Iterator;
 import java.util.List;
@@ -154,8 +155,8 @@ public class RelaunchDialog extends MessageDialog implements SelectionListener {
     }
 
     gridData = new GridData(GridData.FILL_BOTH);
-    gridData.heightHint = Math.min(r.height, fTree.getItemHeight() * MAX_VISIBLE_LAUNCH_ITEMS);
-    gridData.widthHint = r.width;
+    gridData.heightHint = Math.min(r.height, fTree.getItemHeight() * MAX_VISIBLE_LAUNCH_ITEMS)+10;
+    gridData.widthHint = Math.min(r.width, SWTUtil.textColumnsToPixels(fTree, 100));
     fTree.setLayoutData(gridData);
 
     fTree.addSelectionListener(this);
