@@ -17,7 +17,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.terracotta.modules.ehcache.commons_1_0.util.Util;
 
-import com.tc.config.lock.LockLevel;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.properties.TCProperties;
 import com.tc.util.Assert;
@@ -70,6 +69,9 @@ public class CacheTC implements Ehcache {
   private static final MemoryStoreEvictionPolicy DEFAULT_MEMORY_STORE_EVICTION_POLICY;
 
   private static InetAddress                     localhost;
+  
+  private int readLockLevel = Util.getEhcacheReadLockLevel();
+  private int writeLockLevel = Util.getEhcacheWriteLockLevel();
 
   static {
     DSO_MEMORY_STORE_EVICTION_POLICY = MemoryStoreEvictionPolicy.fromString("DSO");
@@ -439,11 +441,11 @@ public class CacheTC implements Ehcache {
 
     Object key = element.getObjectKey();
     Object lock = getLockObject(key);
-    ManagerUtil.monitorEnter(lock, LockLevel.WRITE);
+    ManagerUtil.monitorEnter(lock, writeLockLevel);
     try {
       element.resetAccessStatistics();
       boolean elementExists;
-      elementExists = isElementInMemory(key) || isElementOnDisk(key);
+      elementExists = isElementInMemoryUnlock(key) || isElementOnDisk(key);
       if (elementExists) {
         element.updateUpdateStatistics();
       }
@@ -488,7 +490,7 @@ public class CacheTC implements Ehcache {
 
     Object key = element.getObjectKey();
     Object lock = getLockObject(key);
-    ManagerUtil.monitorEnter(lock, LockLevel.WRITE);
+    ManagerUtil.monitorEnter(lock, writeLockLevel);
     try {
       applyDefaultsToElementWithoutLifespanSet(element);
 
@@ -634,7 +636,7 @@ public class CacheTC implements Ehcache {
   private Element searchInMemoryStore(Object key, boolean updateStatistics) {
     Element element;
     Object lock = getLockObject(key);
-    ManagerUtil.monitorEnter(lock, LockLevel.READ);
+    ManagerUtil.monitorEnter(lock, readLockLevel);
     try {
       if (updateStatistics) {
         element = memoryStore.get(key);
@@ -751,7 +753,7 @@ public class CacheTC implements Ehcache {
     boolean removed = false;
     Element elementFromMemoryStore;
     Object lock = getLockObject(key);
-    ManagerUtil.monitorEnter(lock, LockLevel.WRITE);
+    ManagerUtil.monitorEnter(lock, writeLockLevel);
     try {
       elementFromMemoryStore = memoryStore.remove(key);
     } finally {
@@ -1099,7 +1101,7 @@ public class CacheTC implements Ehcache {
     checkStatus();
     Object key = element.getObjectKey();
     Object lock = getLockObject(key);
-    ManagerUtil.monitorEnter(lock, LockLevel.READ);
+    ManagerUtil.monitorEnter(lock, readLockLevel);
     try {
       return memoryStore.isExpired(element.getObjectKey());
     } finally {
@@ -1192,12 +1194,16 @@ public class CacheTC implements Ehcache {
    */
   public final boolean isElementInMemory(Object key) {
     Object lock = getLockObject(key);
-    ManagerUtil.monitorEnter(lock, LockLevel.READ);
+    ManagerUtil.monitorEnter(lock, readLockLevel);
     try {
-      return memoryStore.containsKey(key);
+      return isElementInMemoryUnlock(key);
     } finally {
       ManagerUtil.monitorExit(lock);
     }
+  }
+  
+  private boolean isElementInMemoryUnlock(Object key) {
+    return memoryStore.containsKey(key);
   }
 
   /**
@@ -1450,13 +1456,13 @@ public class CacheTC implements Ehcache {
 
   private void readLockAll() {
     for (int i = 0; i < this.locks.length; i++) {
-      ManagerUtil.monitorEnter(locks[i], LockLevel.READ);
+      ManagerUtil.monitorEnter(locks[i], readLockLevel);
     }
   }
 
   private void writeLockAll() {
     for (int i = 0; i < this.locks.length; i++) {
-      ManagerUtil.monitorEnter(locks[i], LockLevel.WRITE);
+      ManagerUtil.monitorEnter(locks[i], writeLockLevel);
     }
   }
 

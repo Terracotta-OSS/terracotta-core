@@ -31,6 +31,7 @@ public abstract class EhcacheTerracottaCommonsConfigurator extends TerracottaCon
     addExportedTcJarClass("com.tcclient.ehcache.TimeExpiryMap");
     addExportedTcJarClass("com.tcclient.ehcache.TimeExpiryMap$EntriesIterator");
     addExportedTcJarClass("com.tcclient.ehcache.TimeExpiryMap$EntrySetWrapper");
+    addExportedTcJarClass("com.tcclient.ehcache.TimeExpiryMap$EntryWrapper");
     addExportedTcJarClass("com.tcclient.ehcache.TimeExpiryMap$KeySetWrapper");
     addExportedTcJarClass("com.tcclient.ehcache.TimeExpiryMap$KeysIterator");
     addExportedTcJarClass("com.tcclient.ehcache.TimeExpiryMap$ValuesCollectionWrapper");
