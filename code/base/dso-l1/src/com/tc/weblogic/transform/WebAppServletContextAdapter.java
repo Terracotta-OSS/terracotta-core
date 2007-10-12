@@ -50,13 +50,12 @@ public class WebAppServletContextAdapter extends ClassAdapter implements Opcodes
     addSessionDelimiter();
     super.visitEnd();
   }
-  
+
   // see the dummy WebAppServletContext class in dso-weblogic-stubs for this method post-asm.
-  // The method being added is used by most of the ohers being added to switch between wl8 
+  // The method being added is used by most of the ohers being added to switch between wl8
   // and wl9 versions.
   public void addIsWeblogic8() {
-    MethodVisitor mv = cv.visitMethod(ACC_PUBLIC, "__tc_isWeblogic8",
-                                      "()Z", null, null);
+    MethodVisitor mv = cv.visitMethod(ACC_PUBLIC, "__tc_isWeblogic8", "()Z", null, null);
     mv.visitCode();
     Label l0 = new Label();
     Label l1 = new Label();
@@ -67,7 +66,8 @@ public class WebAppServletContextAdapter extends ClassAdapter implements Opcodes
     mv.visitVarInsn(ALOAD, 0);
     mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;");
     mv.visitLdcInsn("sessionCookieName");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "getDeclaredField", "(Ljava/lang/String;)Ljava/lang/reflect/Field;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "getDeclaredField",
+                       "(Ljava/lang/String;)Ljava/lang/reflect/Field;");
     mv.visitInsn(POP);
     mv.visitLabel(l1);
     mv.visitLineNumber(43, l1);
@@ -104,7 +104,8 @@ public class WebAppServletContextAdapter extends ClassAdapter implements Opcodes
     mv.visitLabel(l2);
     mv.visitLineNumber(77, l2);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessAttrListeners", "Ljava/util/List;");
+    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessAttrListeners",
+                      "Ljava/util/List;");
     Label l3 = new Label();
     mv.visitJumpInsn(IFNONNULL, l3);
     Label l4 = new Label();
@@ -116,7 +117,8 @@ public class WebAppServletContextAdapter extends ClassAdapter implements Opcodes
     mv.visitLabel(l3);
     mv.visitLineNumber(80, l3);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessAttrListeners", "Ljava/util/List;");
+    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessAttrListeners",
+                      "Ljava/util/List;");
     mv.visitInsn(ICONST_0);
     mv.visitTypeInsn(ANEWARRAY, "javax/servlet/http/HttpSessionAttributeListener");
     mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "toArray", "([Ljava/lang/Object;)[Ljava/lang/Object;");
@@ -125,8 +127,11 @@ public class WebAppServletContextAdapter extends ClassAdapter implements Opcodes
     mv.visitLabel(l1);
     mv.visitLineNumber(83, l1);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/WebAppServletContext", "getEventsManager", "()Lweblogic/servlet/internal/EventsManager;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/EventsManager", "__tc_session_getHttpSessionAttributeListeners", "()[Ljavax/servlet/http/HttpSessionAttributeListener;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/WebAppServletContext", "getEventsManager",
+                       "()Lweblogic/servlet/internal/EventsManager;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/EventsManager",
+                       "__tc_session_getHttpSessionAttributeListeners",
+                       "()[Ljavax/servlet/http/HttpSessionAttributeListener;");
     mv.visitInsn(ARETURN);
     Label l5 = new Label();
     mv.visitLabel(l5);
@@ -172,8 +177,10 @@ public class WebAppServletContextAdapter extends ClassAdapter implements Opcodes
     mv.visitLabel(l1);
     mv.visitLineNumber(96, l1);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/WebAppServletContext", "getEventsManager", "()Lweblogic/servlet/internal/EventsManager;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/EventsManager", "__tc_session_getHttpSessionListener", "()[Ljavax/servlet/http/HttpSessionListener;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/WebAppServletContext", "getEventsManager",
+                       "()Lweblogic/servlet/internal/EventsManager;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/EventsManager", "__tc_session_getHttpSessionListener",
+                       "()[Ljavax/servlet/http/HttpSessionListener;");
     mv.visitInsn(ARETURN);
     Label l5 = new Label();
     mv.visitLabel(l5);
@@ -197,20 +204,24 @@ public class WebAppServletContextAdapter extends ClassAdapter implements Opcodes
     mv.visitLabel(l2);
     mv.visitLineNumber(103, l2);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionCookieComment", "Ljava/lang/String;");
+    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionCookieComment",
+                      "Ljava/lang/String;");
     mv.visitInsn(ARETURN);
     mv.visitLabel(l1);
     mv.visitLineNumber(105, l1);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionContext", "Lweblogic/servlet/internal/session/SessionContext;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionContext", "getConfigMgr", "()Lweblogic/servlet/internal/session/SessionConfigManager;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionConfigManager", "getCookieComment", "()Ljava/lang/String;");
+    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionContext",
+                      "Lweblogic/servlet/internal/session/SessionContext;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionContext", "getConfigMgr",
+                       "()Lweblogic/servlet/internal/session/SessionConfigManager;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionConfigManager", "getCookieComment",
+                       "()Ljava/lang/String;");
     mv.visitInsn(ARETURN);
     Label l3 = new Label();
     mv.visitLabel(l3);
     mv.visitLocalVariable("this", "Lweblogic/servlet/internal/WebAppServletContext;", null, l0, l3, 0);
     mv.visitMaxs(1, 1);
-    mv.visitEnd();  
+    mv.visitEnd();
   }
 
   // see the dummy WebAppServletContext class in dso-weblogic-stubs for this method post-asm.
@@ -228,14 +239,18 @@ public class WebAppServletContextAdapter extends ClassAdapter implements Opcodes
     mv.visitLabel(l2);
     mv.visitLineNumber(112, l2);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionCookieDomain", "Ljava/lang/String;");
+    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionCookieDomain",
+                      "Ljava/lang/String;");
     mv.visitInsn(ARETURN);
     mv.visitLabel(l1);
     mv.visitLineNumber(114, l1);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionContext", "Lweblogic/servlet/internal/session/SessionContext;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionContext", "getConfigMgr", "()Lweblogic/servlet/internal/session/SessionConfigManager;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionConfigManager", "getCookieDomain", "()Ljava/lang/String;");
+    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionContext",
+                      "Lweblogic/servlet/internal/session/SessionContext;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionContext", "getConfigMgr",
+                       "()Lweblogic/servlet/internal/session/SessionConfigManager;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionConfigManager", "getCookieDomain",
+                       "()Ljava/lang/String;");
     mv.visitInsn(ARETURN);
     Label l3 = new Label();
     mv.visitLabel(l3);
@@ -264,9 +279,12 @@ public class WebAppServletContextAdapter extends ClassAdapter implements Opcodes
     mv.visitLabel(l1);
     mv.visitLineNumber(123, l1);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionContext", "Lweblogic/servlet/internal/session/SessionContext;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionContext", "getConfigMgr", "()Lweblogic/servlet/internal/session/SessionConfigManager;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionConfigManager", "getCookieMaxAgeSecs", "()I");
+    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionContext",
+                      "Lweblogic/servlet/internal/session/SessionContext;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionContext", "getConfigMgr",
+                       "()Lweblogic/servlet/internal/session/SessionConfigManager;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionConfigManager", "getCookieMaxAgeSecs",
+                       "()I");
     mv.visitInsn(IRETURN);
     Label l3 = new Label();
     mv.visitLabel(l3);
@@ -290,14 +308,18 @@ public class WebAppServletContextAdapter extends ClassAdapter implements Opcodes
     mv.visitLabel(l2);
     mv.visitLineNumber(130, l2);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionCookieName", "Ljava/lang/String;");
+    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionCookieName",
+                      "Ljava/lang/String;");
     mv.visitInsn(ARETURN);
     mv.visitLabel(l1);
     mv.visitLineNumber(132, l1);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionContext", "Lweblogic/servlet/internal/session/SessionContext;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionContext", "getConfigMgr", "()Lweblogic/servlet/internal/session/SessionConfigManager;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionConfigManager", "getCookieName", "()Ljava/lang/String;");
+    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionContext",
+                      "Lweblogic/servlet/internal/session/SessionContext;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionContext", "getConfigMgr",
+                       "()Lweblogic/servlet/internal/session/SessionConfigManager;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionConfigManager", "getCookieName",
+                       "()Ljava/lang/String;");
     mv.visitInsn(ARETURN);
     Label l3 = new Label();
     mv.visitLabel(l3);
@@ -321,14 +343,18 @@ public class WebAppServletContextAdapter extends ClassAdapter implements Opcodes
     mv.visitLabel(l2);
     mv.visitLineNumber(139, l2);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionCookiePath", "Ljava/lang/String;");
+    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionCookiePath",
+                      "Ljava/lang/String;");
     mv.visitInsn(ARETURN);
     mv.visitLabel(l1);
     mv.visitLineNumber(141, l1);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionContext", "Lweblogic/servlet/internal/session/SessionContext;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionContext", "getConfigMgr", "()Lweblogic/servlet/internal/session/SessionConfigManager;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionConfigManager", "getCookiePath", "()Ljava/lang/String;");
+    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionContext",
+                      "Lweblogic/servlet/internal/session/SessionContext;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionContext", "getConfigMgr",
+                       "()Lweblogic/servlet/internal/session/SessionConfigManager;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionConfigManager", "getCookiePath",
+                       "()Ljava/lang/String;");
     mv.visitInsn(ARETURN);
     Label l3 = new Label();
     mv.visitLabel(l3);
@@ -357,9 +383,13 @@ public class WebAppServletContextAdapter extends ClassAdapter implements Opcodes
     mv.visitLabel(l1);
     mv.visitLineNumber(150, l1);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionContext", "Lweblogic/servlet/internal/session/SessionContext;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionContext", "getConfigMgr", "()Lweblogic/servlet/internal/session/SessionConfigManager;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionConfigManager", "isCookieSecure", "()Z");
+    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionContext",
+                      "Lweblogic/servlet/internal/session/SessionContext;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionContext", "getConfigMgr",
+                       "()Lweblogic/servlet/internal/session/SessionConfigManager;");
+    mv
+        .visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionConfigManager", "isCookieSecure",
+                         "()Z");
     mv.visitInsn(IRETURN);
     Label l3 = new Label();
     mv.visitLabel(l3);
@@ -388,9 +418,12 @@ public class WebAppServletContextAdapter extends ClassAdapter implements Opcodes
     mv.visitLabel(l1);
     mv.visitLineNumber(159, l1);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionContext", "Lweblogic/servlet/internal/session/SessionContext;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionContext", "getConfigMgr", "()Lweblogic/servlet/internal/session/SessionConfigManager;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionConfigManager", "isSessionCookiesEnabled", "()Z");
+    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionContext",
+                      "Lweblogic/servlet/internal/session/SessionContext;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionContext", "getConfigMgr",
+                       "()Lweblogic/servlet/internal/session/SessionConfigManager;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionConfigManager",
+                       "isSessionCookiesEnabled", "()Z");
     mv.visitInsn(IRETURN);
     Label l3 = new Label();
     mv.visitLabel(l3);
@@ -419,8 +452,10 @@ public class WebAppServletContextAdapter extends ClassAdapter implements Opcodes
     mv.visitLabel(l1);
     mv.visitLineNumber(168, l1);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionContext", "Lweblogic/servlet/internal/session/SessionContext;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionContext", "getConfigMgr", "()Lweblogic/servlet/internal/session/SessionConfigManager;");
+    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionContext",
+                      "Lweblogic/servlet/internal/session/SessionContext;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionContext", "getConfigMgr",
+                       "()Lweblogic/servlet/internal/session/SessionConfigManager;");
     mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionConfigManager", "getIDLength", "()I");
     mv.visitInsn(IRETURN);
     Label l3 = new Label();
@@ -438,7 +473,8 @@ public class WebAppServletContextAdapter extends ClassAdapter implements Opcodes
     mv.visitLabel(l0);
     mv.visitLineNumber(184, l0);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "httpServer", "Lweblogic/servlet/internal/HttpServer;");
+    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "httpServer",
+                      "Lweblogic/servlet/internal/HttpServer;");
     mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/HttpServer", "getServerHash", "()Ljava/lang/String;");
     mv.visitInsn(ARETURN);
     Label l1 = new Label();
@@ -450,7 +486,8 @@ public class WebAppServletContextAdapter extends ClassAdapter implements Opcodes
 
   // see the dummy WebAppServletContext class in dso-weblogic-stubs for this method post-asm.
   private void addSessionDelimiter() {
-    MethodVisitor mv = cv.visitMethod(ACC_PUBLIC, "__tc_session_getSessionDelimiter", "()Ljava/lang/String;", null, null);
+    MethodVisitor mv = cv.visitMethod(ACC_PUBLIC, "__tc_session_getSessionDelimiter", "()Ljava/lang/String;", null,
+                                      null);
     mv.visitCode();
     Label l0 = new Label();
     mv.visitLabel(l0);
@@ -468,29 +505,22 @@ public class WebAppServletContextAdapter extends ClassAdapter implements Opcodes
   private void addSessionTimeoutSeconds() {
     MethodVisitor mv = cv.visitMethod(ACC_PUBLIC, "__tc_session_getSessionTimeoutSecs", "()I", null, null);
     mv.visitCode();
-    Label l0 = new Label();
-    mv.visitLabel(l0);
-    mv.visitLineNumber(174, l0);
     mv.visitVarInsn(ALOAD, 0);
     mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/WebAppServletContext", "__tc_isWeblogic8", "()Z");
-    Label l1 = new Label();
-    mv.visitJumpInsn(IFEQ, l1);
-    Label l2 = new Label();
-    mv.visitLabel(l2);
-    mv.visitLineNumber(175, l2);
+    Label wls92 = new Label();
+    mv.visitJumpInsn(IFEQ, wls92);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionTimeoutSecs", "I");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/WebAppServletContext", "getSessionTimeout", "()I");
     mv.visitInsn(IRETURN);
-    mv.visitLabel(l1);
-    mv.visitLineNumber(177, l1);
+    mv.visitLabel(wls92);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionContext", "Lweblogic/servlet/internal/session/SessionContext;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionContext", "getConfigMgr", "()Lweblogic/servlet/internal/session/SessionConfigManager;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionConfigManager", "getSessionTimeoutSecs", "()I");
+    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionContext",
+                      "Lweblogic/servlet/internal/session/SessionContext;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionContext", "getConfigMgr",
+                       "()Lweblogic/servlet/internal/session/SessionConfigManager;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionConfigManager",
+                       "getSessionTimeoutSecs", "()I");
     mv.visitInsn(IRETURN);
-    Label l3 = new Label();
-    mv.visitLabel(l3);
-    mv.visitLocalVariable("this", "Lweblogic/servlet/internal/WebAppServletContext;", null, l0, l3, 0);
     mv.visitMaxs(1, 1);
     mv.visitEnd();
   }
@@ -515,9 +545,12 @@ public class WebAppServletContextAdapter extends ClassAdapter implements Opcodes
     mv.visitLabel(l1);
     mv.visitLineNumber(192, l1);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionContext", "Lweblogic/servlet/internal/session/SessionContext;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionContext", "getConfigMgr", "()Lweblogic/servlet/internal/session/SessionConfigManager;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionConfigManager", "isSessionTrackingEnabled", "()Z");
+    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionContext",
+                      "Lweblogic/servlet/internal/session/SessionContext;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionContext", "getConfigMgr",
+                       "()Lweblogic/servlet/internal/session/SessionConfigManager;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionConfigManager",
+                       "isSessionTrackingEnabled", "()Z");
     mv.visitInsn(IRETURN);
     Label l3 = new Label();
     mv.visitLabel(l3);
@@ -546,9 +579,12 @@ public class WebAppServletContextAdapter extends ClassAdapter implements Opcodes
     mv.visitLabel(l1);
     mv.visitLineNumber(201, l1);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionContext", "Lweblogic/servlet/internal/session/SessionContext;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionContext", "getConfigMgr", "()Lweblogic/servlet/internal/session/SessionConfigManager;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionConfigManager", "isUrlRewritingEnabled", "()Z");
+    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionContext",
+                      "Lweblogic/servlet/internal/session/SessionContext;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionContext", "getConfigMgr",
+                       "()Lweblogic/servlet/internal/session/SessionConfigManager;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/session/SessionConfigManager",
+                       "isUrlRewritingEnabled", "()Z");
     mv.visitInsn(IRETURN);
     Label l3 = new Label();
     mv.visitLabel(l3);

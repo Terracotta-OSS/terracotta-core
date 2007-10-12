@@ -44,12 +44,6 @@ public class CookieSettingTest extends AbstractDeploymentTest {
     if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.JBOSS) {
       disableAllUntil(new Date(Long.MAX_VALUE));
     }
-
-    // CDV-452
-    if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.WEBLOGIC
-        && "8".equals(AppServerFactory.getCurrentAppServerMajorVersion())) {
-      disableTestUntil("testSessionTimeout", new Date(Long.MAX_VALUE));
-    }
   }
 
   public static Test suite() {
@@ -99,8 +93,13 @@ public class CookieSettingTest extends AbstractDeploymentTest {
 
   public void testSessionTimeout() throws Exception {
     // test session-timeout, it is set at 69 minutes
+    final String EXPECT = "4140"; // 69min * 60 = 4140sec
+
+    WebResponse response0 = server0.ping("/" + CONTEXT + "/ok?cmd=getMaxInactiveInterval");
+    assertEquals(EXPECT, response0.getText().trim());
+
     WebResponse response1 = server1.ping("/" + CONTEXT + "/ok?cmd=getMaxInactiveInterval");
-    assertEquals("4140", response1.getText().trim()); // 69min * 60 = 4140sec
+    assertEquals(EXPECT, response1.getText().trim());
   }
 
   private Deployment makeDeployment() throws Exception {
