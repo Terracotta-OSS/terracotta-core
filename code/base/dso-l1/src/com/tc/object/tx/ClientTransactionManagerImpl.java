@@ -54,12 +54,10 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
                                                                }
                                                              };
 
-  private final ThreadLocal                    txnLogging    = new ThreadLocal() {
-                                                               protected Object initialValue() {
-                                                                 return new ThreadTransactionLoggingStack();
-                                                               }
-
-                                                             };
+  // We need to remove initialValue() here because read auto locking now calls Manager.isDsoMonitored() which will
+  // checks if isTransactionLogging is disabled. If it runs in the context of class loading, it will try to load
+  // the class ThreadTransactionContext and thus throws a LinkageError.
+  private final ThreadLocal                    txnLogging    = new ThreadLocal();
 
   private final ClientTransactionFactory       txFactory;
   private final RemoteTransactionManager       remoteTxManager;
@@ -379,7 +377,14 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     ThreadTransactionContext ttc = getThreadTransactionContext();
     return ttc.peekContext();
   }
-
+  
+  public boolean isLockOnTopStack(String lockName) {
+    final LockID lockID = lockManager.lockIDFor(lockName);
+    TransactionContext tc = peekContext();
+    if (tc == null) { return false; }
+    return (tc.getLockID().equals(lockID));
+  }
+  
   private void pushTxContext(LockID lockID, TxnType txnType) {
     ThreadTransactionContext ttc = getThreadTransactionContext();
     ttc.pushContext(lockID, txnType);
@@ -759,32 +764,37 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
 
   public void disableTransactionLogging() {
     ThreadTransactionLoggingStack txnStack = (ThreadTransactionLoggingStack) txnLogging.get();
-    txnStack.increament();
+    if (txnStack == null) {
+      txnStack = new ThreadTransactionLoggingStack();
+      txnLogging.set(txnStack);
+    }
+    txnStack.increment();
   }
 
   public void enableTransactionLogging() {
     ThreadTransactionLoggingStack txnStack = (ThreadTransactionLoggingStack) txnLogging.get();
+    Assert.assertNotNull(txnStack);
     final int size = txnStack.decrement();
     Assert.assertTrue("size=" + size, size >= 0);
   }
 
   public boolean isTransactionLoggingDisabled() {
     ThreadTransactionLoggingStack txnStack = (ThreadTransactionLoggingStack) txnLogging.get();
-    return (txnStack.get() > 0);
+    return (txnStack != null) && (txnStack.get() > 0);
   }
 
   public static class ThreadTransactionLoggingStack {
     int callCount = 0;
 
-    int increament() {
+    public int increment() {
       return ++callCount;
     }
 
-    int decrement() {
+    public int decrement() {
       return --callCount;
     }
 
-    int get() {
+    public int get() {
       return callCount;
     }
   }

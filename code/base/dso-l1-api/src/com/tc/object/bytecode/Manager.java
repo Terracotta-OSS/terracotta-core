@@ -239,6 +239,19 @@ public interface Manager {
    * @return True if managed
    */
   public boolean isManaged(Object object);
+  
+  /**
+   * Check whether an object is shared
+   * @param object Instance
+   * @return True if shared
+   */
+  public boolean isDsoMonitored(Object obj);
+  
+  /**
+   * Check whether dso MonitorExist is required
+   * @return True if required
+   */
+  public boolean isDsoMonitorExitRequired(Object obj);
 
   /**
    * Check whether object is logically instrumented

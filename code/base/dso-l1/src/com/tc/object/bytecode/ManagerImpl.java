@@ -439,6 +439,20 @@ public class ManagerImpl implements Manager {
     return (!(o instanceof Class)) && literals.isLiteralInstance(o);
   }
 
+  public boolean isDsoMonitorExitRequired(Object o) {
+    String lockName = getLockName(o);
+    if (lockName == null) { return false; }
+    return txManager.isLockOnTopStack(lockName);
+  }
+
+  private String getLockName(Object obj) {
+    TCObject tco = lookupExistingOrNull(obj);
+    if (tco != null) {
+      return generateAutolockName(tco);
+    } else if (isLiteralAutolock(obj)) { return generateLiteralLockName(obj); }
+    return null;
+  }
+
   public void monitorEnter(Object obj, int type) {
     if (obj == null) { throw new NullPointerException("monitorEnter called on a null object"); }
 
@@ -648,6 +662,17 @@ public class ManagerImpl implements Manager {
       return tcobj != null && tcobj.isShared();
     }
     return this.objectManager.isManaged(obj);
+  }
+
+  public boolean isDsoMonitored(Object obj) {
+    if (this.objectManager.isCreationInProgress() || this.txManager.isTransactionLoggingDisabled()) { return false; }
+
+    TCObject tcobj = lookupExistingOrNull(obj);
+    if (tcobj != null) {
+      return tcobj.isShared();
+    } else {
+      return isLiteralAutolock(obj);
+    }
   }
 
   public Object lookupRoot(String name) {

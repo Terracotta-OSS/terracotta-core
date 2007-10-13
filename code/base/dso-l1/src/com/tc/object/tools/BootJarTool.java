@@ -57,7 +57,6 @@ import com.tc.object.bytecode.BufferedWriterAdapter;
 import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.ChangeClassNameHierarchyAdapter;
 import com.tc.object.bytecode.ChangeClassNameRootAdapter;
-import com.tc.object.bytecode.ChangePackageClassAdapter;
 import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.Clearable;
 import com.tc.object.bytecode.DataOutputStreamAdapter;
@@ -91,6 +90,7 @@ import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.MergeTCToJavaClassAdapter;
 import com.tc.object.bytecode.NullManager;
 import com.tc.object.bytecode.NullTCObject;
+import com.tc.object.bytecode.ReentrantLockClassAdapter;
 import com.tc.object.bytecode.ReentrantReadWriteLockClassAdapter;
 import com.tc.object.bytecode.StringBufferAdapter;
 import com.tc.object.bytecode.StringGetCharsAdapter;
@@ -2017,25 +2017,6 @@ public class BootJarTool {
     instrumentedContext = new HashMap();
     mergeReadWriteLockInnerClass(tcInnerClassNameDots, jInnerClassNameDots, tcClassNameDots, jClassNameDots,
                                  "WriteLock", "WriteLock", instrumentedContext);
-
-    String classNameDots = "com.tcclient.util.concurrent.locks.ConditionObject";
-    byte[] bytes = getSystemBytes(classNameDots);
-    spec = config.getOrCreateSpec(classNameDots);
-    spec.disableWaitNotifyCodeSpec("signal()V");
-    spec.disableWaitNotifyCodeSpec("signalAll()V");
-    spec.setHonorTransient(true);
-    spec.markPreInstrumented();
-    bytes = doDSOTransform(classNameDots, bytes);
-    bootJar.loadClassIntoJar(classNameDots, bytes, spec.isPreInstrumented());
-    config.removeSpec(classNameDots);
-
-    classNameDots = "com.tcclient.util.concurrent.locks.ConditionObject$SyncCondition";
-    bytes = getSystemBytes(classNameDots);
-    spec = config.getOrCreateSpec(classNameDots);
-    spec.markPreInstrumented();
-    bytes = doDSOTransform(classNameDots, bytes);
-    bootJar.loadClassIntoJar(classNameDots, bytes, spec.isPreInstrumented());
-    config.removeSpec(classNameDots);
   }
 
   private void mergeReadWriteLockInnerClass(String tcInnerClassNameDots, String jInnerClassNameDots,
@@ -2219,42 +2200,73 @@ public class BootJarTool {
     return data;
   }
 
-  private final byte[] changePackageAndGetBytes(String className, byte[] data, String targetClassName,
-                                                String targetPackageName, String newPackageName) {
-    ClassReader cr = new ClassReader(data);
-    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-
-    ClassInfo classInfo = AsmClassInfo.getClassInfo(className, systemLoader);
-
-    ClassVisitor cv = config.createClassAdapterFor(cw, classInfo, instrumentationLogger, getClass().getClassLoader(),
-                                                   true);
-    cv = new ChangePackageClassAdapter(cv, targetClassName, targetPackageName, newPackageName, null);
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-
-    return cw.toByteArray();
-  }
-
   private void addInstrumentedJavaUtilConcurrentLocks() {
     if (!Vm.isJDK15Compliant()) { return; }
     addInstrumentedReentrantReadWriteLock();
-    addInstrumentedJavaUtilConcurrentLocksReentrantLock();
+    addInstrumentedReentrantLock();
+    addInstrumentedConditionObject();    
   }
-
-  private void addInstrumentedJavaUtilConcurrentLocksReentrantLock() {
-    byte[] bytes = getSystemBytes("com.tc.util.concurrent.locks.ReentrantLock");
-    TransparencyClassSpec spec = config.getOrCreateSpec("com.tc.util.concurrent.locks.ReentrantLock");
+  
+  private void addInstrumentedConditionObject() {
+    String classNameDots = "com.tcclient.util.concurrent.locks.ConditionObject";
+    byte[] bytes = getSystemBytes(classNameDots);
+    TransparencyClassSpec spec = config.getOrCreateSpec(classNameDots);
+    spec.disableWaitNotifyCodeSpec("signal()V");
+    spec.disableWaitNotifyCodeSpec("signalAll()V");
     spec.setHonorTransient(true);
-    spec.setCallConstructorOnLoad(true);
     spec.markPreInstrumented();
-    bytes = changePackageAndGetBytes("com.tc.util.concurrent.locks.ReentrantLock", bytes, "ReentrantLock",
-                                     "com.tc.util.concurrent.locks", "java.util.concurrent.locks");
-    bootJar.loadClassIntoJar("java.util.concurrent.locks.ReentrantLock", bytes, spec.isPreInstrumented());
+    bytes = doDSOTransform(classNameDots, bytes);
+    bootJar.loadClassIntoJar(classNameDots, bytes, spec.isPreInstrumented());
+    config.removeSpec(classNameDots);
 
-    // we need to remove this spec once the package name is changed because we no longer
-    // have com.tc.util.concurrent.locks.ReentrantLock and the massageSpec will complain if
-    // we do not remove this spec.
-    config.removeSpec("com.tc.util.concurrent.locks.ReentrantLock");
+    classNameDots = "com.tcclient.util.concurrent.locks.ConditionObject$SyncCondition";
+    bytes = getSystemBytes(classNameDots);
+    spec = config.getOrCreateSpec(classNameDots);
+    spec.markPreInstrumented();
+    bytes = doDSOTransform(classNameDots, bytes);
+    bootJar.loadClassIntoJar(classNameDots, bytes, spec.isPreInstrumented());
+    config.removeSpec(classNameDots);
 
+  }
+  
+  private void addInstrumentedReentrantLock() {
+    TransparencyClassSpec spec = config.getOrCreateSpec("java.util.concurrent.locks.ReentrantLock");
+    spec.addTransient("sync");
+    spec.setCallConstructorOnLoad(true);
+
+    String jClassNameDots = "java.util.concurrent.locks.ReentrantLock";
+    String tcClassNameDots = "java.util.concurrent.locks.ReentrantLockTC";
+    Map instrumentedContext = new HashMap();
+    mergeReentrantLock(tcClassNameDots, jClassNameDots, instrumentedContext);
+  }
+  
+  private void mergeReentrantLock(String tcClassNameDots, String jClassNameDots, Map instrumentedContext) {
+    byte[] tcData = getSystemBytes(tcClassNameDots);
+    ClassReader tcCR = new ClassReader(tcData);
+    ClassNode tcCN = new ClassNode();
+    tcCR.accept(tcCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+
+    byte[] jData = getSystemBytes(jClassNameDots);
+    ClassReader jCR = new ClassReader(jData);
+    ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
+    ClassVisitor cv1 = new ReentrantLockClassAdapter(cw);
+
+    jCR.accept(cv1, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+    jData = cw.toByteArray();
+
+    jCR = new ClassReader(jData);
+    cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
+
+    ClassInfo jClassInfo = AsmClassInfo.getClassInfo(jClassNameDots, systemLoader);
+    TransparencyClassAdapter dsoAdapter = config.createDsoClassAdapterFor(cw, jClassInfo, instrumentationLogger,
+                                                                          getClass().getClassLoader(), true, true);
+    ClassVisitor cv = new SerialVersionUIDAdder(new MergeTCToJavaClassAdapter(cw, dsoAdapter, jClassNameDots,
+                                                                              tcClassNameDots, tcCN,
+                                                                              instrumentedContext));
+    jCR.accept(cv, ClassReader.SKIP_FRAMES);
+    jData = cw.toByteArray();
+    jData = doDSOTransform(jClassNameDots, jData);
+    bootJar.loadClassIntoJar(jClassNameDots, jData, true);
   }
 
   private final void addInstrumentedWeakHashMap() {

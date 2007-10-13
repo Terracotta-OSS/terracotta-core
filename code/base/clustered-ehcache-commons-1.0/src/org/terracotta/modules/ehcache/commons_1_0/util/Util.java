@@ -23,7 +23,7 @@ public class Util {
     TCProperties ehcacheProperies = ManagerUtil.getTCProperties().getPropertiesFor("ehcache.lock");
     if (ehcacheProperies != null) {
       String lockLevelStr = ehcacheProperies.getProperty("readLevel");
-      if (LOCK_CONCURRENT.equals(lockLevelStr)) {
+      if (LOCK_CONCURRENT.equalsIgnoreCase(lockLevelStr)) {
         lockLevel = LockLevel.CONCURRENT;
       }
     }
@@ -35,7 +35,7 @@ public class Util {
     TCProperties ehcacheProperies = ManagerUtil.getTCProperties().getPropertiesFor("ehcache.lock");
     if (ehcacheProperies != null) {
       String lockLevelStr = ehcacheProperies.getProperty("writeLevel");
-      if (LOCK_CONCURRENT.equals(lockLevelStr)) {
+      if (LOCK_CONCURRENT.equalsIgnoreCase(lockLevelStr)) {
         lockLevel = LockLevel.CONCURRENT;
       }
     }

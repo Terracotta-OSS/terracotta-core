@@ -17,6 +17,7 @@ import com.tc.exception.TCInternalError;
 import com.tc.object.config.LockDefinition;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.TransparencyCodeSpec;
+import com.tc.object.lockmanager.api.LockLevel;
 
 import java.util.AbstractMap;
 
@@ -315,12 +316,46 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
       }
     }
   }
+  
+  private void visitInsnForReadLock(int opCode) {
+    switch(opCode) {
+      case MONITORENTER:
+        super.visitInsn(DUP);
+        super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "isDsoMonitored", "(Ljava/lang/Object;)Z");
+        Label l1 = new Label();
+        super.visitJumpInsn(IFEQ, l1);
+        super.visitLdcInsn(new Integer(autoLockType));
+        mgrHelper.callManagerMethod("monitorEnter", this);
+        Label l2 = new Label();
+        super.visitJumpInsn(GOTO, l2);
+        super.visitLabel(l1);
+        super.visitInsn(opCode);
+        super.visitLabel(l2);
+        return;
+      case MONITOREXIT:
+        super.visitInsn(DUP);
+        super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "isDsoMonitorExitRequired", "(Ljava/lang/Object;)Z");
+        Label l3 = new Label();
+        super.visitJumpInsn(IFEQ, l3);
+        mgrHelper.callManagerMethod("monitorExit", this);
+        Label l4 = new Label();
+        super.visitJumpInsn(GOTO, l4);
+        super.visitLabel(l3);
+        super.visitInsn(opCode);
+        super.visitLabel(l4);
+        return;
+    }
+  }
 
   public void visitInsn(int opCode) {
     if (isMonitorInstrumentationReq(opCode)) {
       switch (opCode) {
         case MONITORENTER:
           if (this.isAutolock) {
+            if (autoLockType == LockLevel.READ) {
+              visitInsnForReadLock(opCode);
+              return;
+            }
             super.visitInsn(DUP);
             super.visitLdcInsn(new Integer(autoLockType));
             mgrHelper.callManagerMethod("monitorEnter", this);
@@ -331,6 +366,10 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
           return;
         case MONITOREXIT:
           if (this.isAutolock) {
+            if (autoLockType == LockLevel.READ) {
+              visitInsnForReadLock(opCode);
+              return;
+            }
             super.visitInsn(DUP);
             super.visitInsn(opCode);
             mgrHelper.callManagerMethod("monitorExit", this);

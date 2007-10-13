@@ -234,5 +234,11 @@ public interface ClientTransactionManager {
    * @param d Descriptor
    */
   public void addDmiDescriptor(DmiDescriptor d);
+  
+  /**
+   * Check if lockID is on top of the transaction stack
+   * @param lockName
+   */
+  public boolean isLockOnTopStack(String lockName);
 
 }

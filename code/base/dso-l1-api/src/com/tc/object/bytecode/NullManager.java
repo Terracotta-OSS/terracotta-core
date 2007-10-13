@@ -230,4 +230,16 @@ public final class NullManager implements Manager {
     throw new UnsupportedOperationException();
   }
 
+  public boolean isDsoMonitored(Object obj) {
+    return false;
+  }
+
+  public boolean isDsoMonitorExitRequired() {
+    return false;
+  }
+
+  public boolean isDsoMonitorExitRequired(Object obj) {
+    return false;
+  }
+
 }

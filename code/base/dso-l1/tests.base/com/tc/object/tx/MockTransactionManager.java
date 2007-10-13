@@ -156,7 +156,7 @@ public class MockTransactionManager implements ClientTransactionManager {
   }
 
   public boolean isTransactionLoggingDisabled() {
-    throw new ImplementMe();
+    return true;
   }
 
   public boolean isHeldByCurrentThread(String lockName, int lockLevel) {
@@ -181,5 +181,9 @@ public class MockTransactionManager implements ClientTransactionManager {
 
   public int localHeldCount(String lockName, int lockLevel) {
     throw new ImplementMe();
+  }
+
+  public boolean isLockOnTopStack(String lockName) {
+    return false;
   }
 }

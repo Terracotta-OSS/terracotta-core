@@ -59,7 +59,6 @@ public class SerializationTest extends BaseDSOTestCase {
   static {
     disabled.add("java.util.concurrent.ConcurrentHashMap");
     disabled.add("java.util.concurrent.LinkedBlockingQueue");
-    disabled.add("java.util.concurrent.locks.ReentrantLock");
     disabled.add("java.util.concurrent.locks.ReentrantReadWriteLock$DsoLock");
     disabled.add("com.tcclient.util.concurrent.locks.ConditionObject");
     disabled.add("com.tcclient.util.concurrent.locks.ConditionObject$SyncCondition");

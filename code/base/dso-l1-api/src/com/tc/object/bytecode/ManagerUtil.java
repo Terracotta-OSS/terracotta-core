@@ -332,6 +332,24 @@ public class ManagerUtil {
   public static boolean isManaged(Object obj) {
     return getManager().isManaged(obj);
   }
+  
+  /**
+   * Check whether an object is shared
+   * @param obj Instance
+   * @return True if shared
+   */
+  public static boolean isDsoMonitored(Object obj) {
+    return getManager().isDsoMonitored(obj);
+  }
+  
+  /**
+   * Check whether dso MonitorExist is required
+   * @return True if required
+   */
+  public static boolean isDsoMonitorExitRequired(Object obj) {
+    return getManager().isDsoMonitorExitRequired(obj);
+  }
+
 
   /**
    * Check whether object is logically instrumented

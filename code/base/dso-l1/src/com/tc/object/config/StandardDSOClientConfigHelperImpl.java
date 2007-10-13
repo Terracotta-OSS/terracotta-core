@@ -899,6 +899,12 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
       spec = getOrCreateSpec("com.tcclient.util.concurrent.locks.ConditionObject$SyncCondition");
       spec.setCallConstructorOnLoad(true);
+      
+      spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantLock");
+      spec.addTransient("sync");
+      spec.setPreCreateMethod("validateInUnLockState");
+      spec.setCallConstructorOnLoad(true);
+      spec.setHonorTransient(true);
     }
   }
 

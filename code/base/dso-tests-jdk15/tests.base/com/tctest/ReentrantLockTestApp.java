@@ -5,6 +5,7 @@
 package com.tctest;
 
 import com.tc.exception.TCNotSupportedMethodException;
+import com.tc.exception.TCObjectNotSharableException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
@@ -110,82 +111,19 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
 
     if (index == 0) {
       ReentrantLock lock = new ReentrantLock();
-      Thread thread = new Thread(new TestRunnable2(lock));
       lock.lock();
-      thread.start();
       synchronized (root) {
-        root.setLazyLock(lock);
-      }
-    }
-
-    barrier.await();
-
-    if (index == 0) {
-      Assert.assertTrue(root.getLazyLock().isLocked());
-      root.getLazyLock().lock();
-    }
-
-    if (index == 0) {
-      root.getLazyLock().unlock();
-      root.getLazyLock().unlock();
-    }
-
-    barrier2.await();
-
-    barrier.await();
-
-    // Now, make sure another node can lock the lock.
-    if (index == 1) {
-      root.getLazyLock().lock();
-      root.getLazyLock().lock();
-    }
-
-    if (index == 1) {
-      root.getLazyLock().unlock();
-      root.getLazyLock().unlock();
-    }
-
-    barrier.await();
-
-    if (index == 1) {
-      Assert.assertFalse(root.getLazyLock().isLocked());
-    }
-
-    barrier.await();
-
-    if (index == 0) {
-      final ReentrantLock lock = new ReentrantLock();
-      final CyclicBarrier localBarrier = new CyclicBarrier(2);
-      Thread thread = new Thread(new Runnable() {
-        public void run() {
-          try {
-            boolean isLocked = lock.tryLock(8000, TimeUnit.MILLISECONDS);
-            Assert.assertTrue(isLocked);
-            lock.unlock();
-            localBarrier.await();
-          } catch (Exception ie) {
-            throw new AssertionError(ie);
-          }
+        try {
+          root.setLazyLock(lock);
+          throw new AssertionError("Should have thrown a TCObjectNotSharableException.");
+        } catch (TCObjectNotSharableException e) {
+          // expected
         }
-      });
-      lock.lock();
-      thread.start();
-      synchronized (root) {
-        root.setLazyLock(lock);
       }
-      lock.unlock();
-
-      localBarrier.await();
-
     }
 
     barrier.await();
 
-    if (index == 0) {
-      Assert.assertFalse(root.getLazyLock().isLocked());
-    }
-
-    barrier.await();
   }
 
   /**
