@@ -4,6 +4,7 @@
  */
 package com.tctest;
 
+import EDU.oswego.cs.dl.util.concurrent.BrokenBarrierException;
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 import com.tc.object.config.ConfigVisitor;
@@ -31,7 +32,7 @@ public class AutolockedDistributedMethodCallTestApp extends AbstractTransparentA
     AutolockedDistributedMethodCallTestApp.appId = appId;
     nodeCount = cfg.getGlobalParticipantCount();
     barrier = new CyclicBarrier(this.nodeCount);
-    sharedObject = new SharedObject();
+    sharedObject = new SharedObject(nodeCount);
   }
 
   public void run() {
@@ -45,20 +46,37 @@ public class AutolockedDistributedMethodCallTestApp extends AbstractTransparentA
           this.sharedObject.autosynchronizedIncrement();
           System.out.println("##### appId=[" + appId + "] initiating autolockedSynchronizeBlockIncrement method call");
           this.sharedObject.autolockedSynchronizeBlockIncrement();
+          System.out.println("##### appId=[" + appId + "] initiating autolockedSynchronizedRead method call");
+          this.sharedObject.autolockedSynchronizedRead();
+          System.out.println("##### appId=[" + appId + "] initiating localCounterIncrement method call");
+          this.sharedObject.localCounterIncrement();
         }
       }
       barrier.barrier();
+
+      waitForAllDistributedCalls();
+
       int autolockedSynchronizedCount = this.sharedObject.getAutolockedSynchronizedCounter();
       int autosynchronizedCount = this.sharedObject.getAutosynchronizedCounter();
       int autolockedSynchronizeBlockCount = this.sharedObject.getAutolockedSynchronizeBlockCounter();
+      int localCount = this.sharedObject.getLocalCounter();
       int expectedCount = ITERATION_COUNT * nodeCount;
 
       Assert.assertEquals(expectedCount, autolockedSynchronizedCount);
       Assert.assertEquals(expectedCount, autosynchronizedCount);
       Assert.assertEquals(expectedCount, autolockedSynchronizeBlockCount);
+      Assert.assertEquals(ITERATION_COUNT, localCount);
 
     } catch (Throwable e) {
       notifyError(e);
+    }
+  }
+
+  private void waitForAllDistributedCalls() throws InterruptedException {
+    final long waitDuration = 1000 * 15;
+    long start = System.currentTimeMillis();
+    while ((System.currentTimeMillis() - start) < waitDuration) {
+      Thread.sleep(1000);
     }
   }
 
@@ -77,6 +95,10 @@ public class AutolockedDistributedMethodCallTestApp extends AbstractTransparentA
       spec.addDistributedMethodCall("autolockedSynchronizedIncrement", "()V", true);
       spec.addDistributedMethodCall("autosynchronizedIncrement", "()V", true);
       spec.addDistributedMethodCall("autolockedSynchronizeBlockIncrement", "()V", true);
+      spec.addDistributedMethodCall("localCounterIncrement", "()V", true);
+      spec.addDistributedMethodCall("autolockedSynchronizedRead", "()V", true);
+      spec.addTransient("localObject");
+      spec.addTransient("localCounter");
       methodExpression = "* " + SharedObject.class.getName() + "*.get*(..)";
       config.addWriteAutolock(methodExpression);
       methodExpression = "* " + SharedObject.class.getName() + "*.autolockedSynchronizedIncrement(..)";
@@ -85,20 +107,27 @@ public class AutolockedDistributedMethodCallTestApp extends AbstractTransparentA
       config.addWriteAutoSynchronize(methodExpression);
       methodExpression = "* " + SharedObject.class.getName() + "*.autolockedSynchronizeBlockIncrement(..)";
       config.addWriteAutolock(methodExpression);
+      methodExpression = "* " + SharedObject.class.getName() + "*.autolockedSynchronizedRead(..)";
+      config.addReadAutolock(methodExpression);
     } catch (Exception e) {
       throw new AssertionError(e);
     }
   }
 
   private static class SharedObject {
-    private int autolockedSynchronizedCounter;
-    private int autosynchronizedCounter;
-    private int autolockedSynchronizeBlockCounter;
+    private static final Object localObject  = new Object();
+    private static int          localCounter = 0;
 
-    public SharedObject() {
+    private int                 autolockedSynchronizedCounter;
+    private int                 autosynchronizedCounter;
+    private int                 autolockedSynchronizeBlockCounter;
+    private CyclicBarrier       readerBarrier;
+
+    public SharedObject(int readerCount) {
       autolockedSynchronizedCounter = 0;
       autosynchronizedCounter = 0;
       autolockedSynchronizeBlockCounter = 0;
+      readerBarrier = new CyclicBarrier(readerCount);
     }
 
     public synchronized int getAutolockedSynchronizedCounter() {
@@ -129,11 +158,34 @@ public class AutolockedDistributedMethodCallTestApp extends AbstractTransparentA
 
     public void autolockedSynchronizeBlockIncrement() {
       synchronized (this) {
-        autosynchronizedCounter++;
+        autolockedSynchronizeBlockCounter++;
         System.out.println("##### appId=[" + AutolockedDistributedMethodCallTestApp.appId
                            + "] autolockedSynchronizeBlockIncrement called:  autolockedSynchronizeBlockCounter=["
                            + autolockedSynchronizeBlockCounter + "]");
       }
+    }
+
+    public void localCounterIncrement() {
+      synchronized (localObject) {
+        localCounter++;
+        System.out.println("***** appId=[" + AutolockedDistributedMethodCallTestApp.appId
+                           + "] localCounterIncrement called:  localCounter=[" + localCounter + "]");
+      }
+    }
+
+    public int getLocalCounter() {
+      synchronized (localObject) {
+        return localCounter;
+      }
+    }
+
+    public synchronized void autolockedSynchronizedRead() throws BrokenBarrierException, InterruptedException {
+      System.out.println("***** appId=[" + AutolockedDistributedMethodCallTestApp.appId
+                         + "] autolockedSynchronizedRead called:  autolockedSynchronizedCounter=["
+                         + autolockedSynchronizedCounter + "]");
+
+      // TODO: uncomment this when Antonio has put in his fix for unblocking-read
+      // readerBarrier.barrier();
     }
   }
 
