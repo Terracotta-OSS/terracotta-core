@@ -185,8 +185,7 @@
             default="false"
             icon="images/eclipse/logo16.gif"
             id="editors.configurationEditor"
-            name="Terracotta Config"
-            matchingStrategy="org.terracotta.dso.EditorMatchingStrategy">
+            name="Terracotta Config">
       </editor>
    </extension>
 
@@ -1059,6 +1058,16 @@
 
    <extension point="org.eclipse.core.resources.markers"
       id="BootClassProblemMarker">
+      <super type="org.terracotta.dso.ConfigProblemMarker"/>
+   </extension>
+
+   <extension point="org.eclipse.core.resources.markers"
+      id="ModuleProblemMarker">
+      <super type="org.terracotta.dso.ConfigProblemMarker"/>
+   </extension>
+
+   <extension point="org.eclipse.core.resources.markers"
+      id="ModuleRepoProblemMarker">
       <super type="org.terracotta.dso.ConfigProblemMarker"/>
    </extension>
 
