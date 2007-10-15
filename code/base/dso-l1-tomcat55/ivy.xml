@@ -3,7 +3,6 @@
   <info organisation="ibiblio" module="dso-l1-tomcat55-tests-base"/>
   <dependencies>
 	<dependency name="catalina" rev="5.5.25" org="terracotta"/>
-	<dependency name="catalina-cluster" rev="5.5.25" org="terracotta"/>
 	<dependency name="servlet-api" rev="2.4" org="terracotta"/>
 	<dependency name="tomcat-util" rev="5.5.25" org="terracotta"/>
 	<dependency name="tomcat-coyote" rev="5.5.25" org="terracotta"/>

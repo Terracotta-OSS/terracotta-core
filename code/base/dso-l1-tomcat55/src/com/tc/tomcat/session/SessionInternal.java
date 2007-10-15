@@ -8,7 +8,6 @@ import org.apache.catalina.Manager;
 import org.apache.catalina.Realm;
 import org.apache.catalina.Session;
 import org.apache.catalina.SessionListener;
-import org.apache.catalina.cluster.session.SerializablePrincipal;
 import org.apache.catalina.realm.GenericPrincipal;
 
 import com.terracotta.session.SessionData;
@@ -19,8 +18,10 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.servlet.http.HttpSession;
 
@@ -188,7 +189,18 @@ public class SessionInternal implements Session {
 
     try {
       ObjectOutputStream oos = new ObjectOutputStream(baos);
-      SerializablePrincipal.writePrincipal(principal, oos);
+
+      oos.writeUTF(principal.getName());
+
+      oos.writeBoolean(principal.getPassword() != null);
+      if (principal.getPassword() != null) oos.writeUTF(principal.getPassword());
+
+      String[] roles = principal.getRoles();
+      if (roles == null) roles = new String[] {};
+      oos.writeInt(roles.length);
+      for (int i = 0; i < roles.length; i++)
+        oos.writeUTF(roles[i]);
+
       oos.flush();
     } catch (IOException e) {
       throw new RuntimeException("Error serializing principal", e);
@@ -199,9 +211,21 @@ public class SessionInternal implements Session {
 
   private GenericPrincipal deserializeGenericPrincipal(byte[] data) {
     try {
-      return SerializablePrincipal.readPrincipal(new ObjectInputStream(new ByteArrayInputStream(data)), realm);
-    } catch (IOException e) {
-      throw new RuntimeException("Error creating principal", e);
+      ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data));
+
+      String name = ois.readUTF();
+      boolean nonNullPasswd = ois.readBoolean();
+      String passwd = null;
+      if (nonNullPasswd) passwd = ois.readUTF();
+      int numRoles = ois.readInt();
+
+      List roles = new ArrayList();
+
+      for (int i = 0; i < numRoles; i++)
+        roles.add(ois.readUTF());
+      return new GenericPrincipal(realm, name, passwd, roles);
+    } catch (IOException ioe) {
+      throw new RuntimeException("Error deserializing principal: " + ioe);
     }
   }
 
