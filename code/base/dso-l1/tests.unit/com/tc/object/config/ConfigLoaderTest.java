@@ -71,7 +71,12 @@ public class ConfigLoaderTest extends TestCase {
   
   public static TestSuite suite() {
     TestSuite suite = new TestSuite(ConfigLoaderTest.class.getName());
-
+    
+    // this to make sure backward compatibility with terracotta-4.xsd
+    // update tc-config-reference.xml if this test fail or there's change to
+    // terracotta-4.xsd (upgrade version, etc)
+    suite.addTest(new ConfigLoaderTest("tc-config-reference.xml"));
+    
     suite.addTest(new ConfigLoaderTest("empty-tc-config.xml"));
     suite.addTest(new ConfigLoaderTest("tc-config-dso.xml"));
     suite.addTest(new ConfigLoaderTest("tc-config-chatter.xml"));
