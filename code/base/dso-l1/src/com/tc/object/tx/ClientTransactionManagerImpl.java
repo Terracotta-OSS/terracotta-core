@@ -779,8 +779,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
   }
 
   public boolean isTransactionLoggingDisabled() {
-    ThreadTransactionLoggingStack txnStack = (ThreadTransactionLoggingStack) txnLogging.get();
-    return (txnStack != null) && (txnStack.get() > 0);
+    Object txnStack = txnLogging.get();
+    return (txnStack != null) && (((ThreadTransactionLoggingStack)txnStack).get() > 0);
   }
 
   public static class ThreadTransactionLoggingStack {

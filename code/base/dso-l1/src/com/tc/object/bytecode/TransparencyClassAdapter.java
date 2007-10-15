@@ -375,7 +375,6 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     if (skipLocalJVMLock) {
       c.visitLabel(l1);
       // access should have the synchronized modifier
-      System.err.println("In recreate method: " + name + " " + getTCSyncMethodName(name));
       callRenamedMethod(access, "sync" + "_" + name, desc, c);
 
       c.visitInsn(returnType.getOpcode(IRETURN));
