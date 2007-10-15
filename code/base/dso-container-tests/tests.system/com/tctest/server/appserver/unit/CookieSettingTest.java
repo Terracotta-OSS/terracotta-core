@@ -40,10 +40,7 @@ public class CookieSettingTest extends AbstractDeploymentTest {
   private static WebApplicationServer server1;
 
   public CookieSettingTest() {
-    // DEV-984
-    if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.JBOSS) {
-      disableAllUntil(new Date(Long.MAX_VALUE));
-    }
+    //
   }
 
   public static Test suite() {

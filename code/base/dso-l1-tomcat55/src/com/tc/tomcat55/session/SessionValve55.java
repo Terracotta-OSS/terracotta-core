@@ -11,6 +11,7 @@ import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.Response;
 import org.apache.catalina.connector.SessionRequest55;
 import org.apache.catalina.connector.SessionResponse55;
+import org.apache.catalina.connector.Tomcat55CookieWriter;
 import org.apache.catalina.valves.ValveBase;
 
 import com.tc.object.bytecode.ManagerUtil;
@@ -24,7 +25,6 @@ import com.terracotta.session.util.Assert;
 import com.terracotta.session.util.ConfigProperties;
 import com.terracotta.session.util.ContextMgr;
 import com.terracotta.session.util.DefaultContextMgr;
-import com.terracotta.session.util.DefaultCookieWriter;
 import com.terracotta.session.util.DefaultIdGenerator;
 import com.terracotta.session.util.DefaultLifecycleEventMgr;
 import com.terracotta.session.util.DefaultWebAppConfig;
@@ -85,7 +85,11 @@ public class SessionValve55 extends ValveBase {
     int lockType = ManagerUtil.getSessionLockType(appName);
     final SessionIdGenerator sig = DefaultIdGenerator.makeInstance(cp, lockType);
 
-    final SessionCookieWriter scw = DefaultCookieWriter.makeInstance(cp);
+    final SessionCookieWriter scw = new Tomcat55CookieWriter(cp.getSessionTrackingEnabled(), cp.getCookiesEnabled(), cp
+        .getUrlRewritingEnabled(), cp.getCookieName(), cp.getCookieDomain(), cp.getCookiePath(),
+                                                             cp.getCookieCoomment(), cp.getCookieMaxAgeSeconds(), cp
+                                                                 .getCookieSecure());
+
     final LifecycleEventMgr eventMgr = DefaultLifecycleEventMgr.makeInstance(cp);
     final ContextMgr contextMgr = DefaultContextMgr
         .makeInstance(contextPath, valveReq.getContext().getServletContext());

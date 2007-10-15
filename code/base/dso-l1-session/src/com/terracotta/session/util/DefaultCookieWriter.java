@@ -23,14 +23,14 @@ public class DefaultCookieWriter implements SessionCookieWriter {
 
   protected final String     cookieName;
   protected final String     idTag;
-  private final boolean      isTrackingEnabled;
-  private final boolean      isCookieEnabled;
-  private final boolean      isUrlRewriteEnabled;
-  private final String       cookieDomain;
-  private final String       cookiePath;
-  private final String       cookieComment;
-  private final int          cookieMaxAge;
-  private final boolean      isCookieSecure;
+  protected final boolean    isTrackingEnabled;
+  protected final boolean    isCookieEnabled;
+  protected final boolean    isUrlRewriteEnabled;
+  protected final String     cookieDomain;
+  protected final String     cookiePath;
+  protected final String     cookieComment;
+  protected final int        cookieMaxAge;
+  protected final boolean    isCookieSecure;
 
   public static DefaultCookieWriter makeInstance(ConfigProperties cp) {
     Assert.pre(cp != null);
@@ -251,12 +251,13 @@ public class DefaultCookieWriter implements SessionCookieWriter {
 
   protected String getCookiePath(HttpServletRequest req) {
     Assert.pre(req != null);
-    if (cookiePath == null) {
-      // if nothing is specified, use request context path
-      String rv = req.getContextPath();
-      return rv == null || rv.trim().length() == 0 ? ConfigProperties.defaultCookiePath : rv.trim();
-    } else {
-      return cookiePath;
-    }
+    if (cookiePath == null) { return computeCookiePath(req); }
+    return cookiePath;
+  }
+
+  protected String computeCookiePath(HttpServletRequest req) {
+    // if nothing is specified, use request context path
+    String rv = req.getContextPath();
+    return rv == null || rv.trim().length() == 0 ? ConfigProperties.defaultCookiePath : rv.trim();
   }
 }
