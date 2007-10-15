@@ -166,8 +166,9 @@ public class ExtraProcessServerControl extends ServerControlBase {
     if (tcBaseDir == null || tcBaseDir.equals("")) { throw new AssertionError("tc.base-dir is not set!"); }
     args.add("-Dtc.base-dir=" + tcBaseDir);
     String val = System.getProperty("tc.tests.info.property-files");
-    if (val == null || val.equals("")) { throw new AssertionError("tc.tests.info.property-files is not set!"); }
-    args.add("-Dtc.tests.info.property-files=" + val);
+    if (val != null && !val.trim().equals("")) {
+      args.add("-Dtc.tests.info.property-files=" + val);
+    }
   }
 
   public void mergeSTDOUT() {
