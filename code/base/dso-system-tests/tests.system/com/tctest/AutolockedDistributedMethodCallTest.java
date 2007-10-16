@@ -4,14 +4,13 @@
  */
 package com.tctest;
 
-
 public class AutolockedDistributedMethodCallTest extends TransparentTestBase implements TestConfigurator {
 
   private static final int NODE_COUNT           = 3;
   private static final int LOOP_ITERATION_COUNT = 1;
 
   public AutolockedDistributedMethodCallTest() {
-    disableAllUntil("2007-11-15");
+    // disableAllUntil("2007-11-15");
   }
 
   public void doSetUp(TransparentTestIface t) throws Exception {

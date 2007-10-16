@@ -17,6 +17,7 @@ public class DistributedMethodCallAdapter implements MethodAdapter, Opcodes {
   private int                   access;
   private String                className;
   private String                methodName;
+  private String                originalMethodname;
   private String                description;
   private String[]              exceptions;
   private String                signature;
@@ -49,7 +50,8 @@ public class DistributedMethodCallAdapter implements MethodAdapter, Opcodes {
     Label l2 = new Label();
     mv.visitTryCatchBlock(l0, l1, l2, null);
 
-    addDistributedCall(mv, methodName, description);
+    addDistributedCall(mv, originalMethodname, description);
+
     mv.visitVarInsn(ISTORE, boolPos);
     mv.visitLabel(l0);
 
@@ -109,6 +111,7 @@ public class DistributedMethodCallAdapter implements MethodAdapter, Opcodes {
     this.access = anAccess;
     this.className = aClassName;
     this.methodName = aMethodName;
+    this.originalMethodname = aOriginalMethodName;
     this.description = aDescription;
     this.exceptions = anExceptions;
     this.signature = sig;

@@ -38,16 +38,16 @@ public class AutolockedDistributedMethodCallTestApp extends AbstractTransparentA
   public void run() {
     try {
       int id = barrier.barrier();
-      for (int i = 0; i < ITERATION_COUNT; i++) {
-        if (id % nodeCount == 0) {
+      if (id % nodeCount == 0) {
+        System.out.println("##### appId=[" + appId + "] initiating autolockedSynchronizedRead method call");
+        this.sharedObject.autolockedSynchronizedRead();
+        for (int i = 0; i < ITERATION_COUNT; i++) {
           System.out.println("##### appId=[" + appId + "] initiating autolockedSynchronizedIncrement method call");
           this.sharedObject.autolockedSynchronizedIncrement();
           System.out.println("##### appId=[" + appId + "] initiating autosynchronizedIncrement method call");
           this.sharedObject.autosynchronizedIncrement();
           System.out.println("##### appId=[" + appId + "] initiating autolockedSynchronizeBlockIncrement method call");
           this.sharedObject.autolockedSynchronizeBlockIncrement();
-          System.out.println("##### appId=[" + appId + "] initiating autolockedSynchronizedRead method call");
-          this.sharedObject.autolockedSynchronizedRead();
           System.out.println("##### appId=[" + appId + "] initiating localCounterIncrement method call");
           this.sharedObject.localCounterIncrement();
         }
@@ -183,9 +183,7 @@ public class AutolockedDistributedMethodCallTestApp extends AbstractTransparentA
       System.out.println("***** appId=[" + AutolockedDistributedMethodCallTestApp.appId
                          + "] autolockedSynchronizedRead called:  autolockedSynchronizedCounter=["
                          + autolockedSynchronizedCounter + "]");
-
-      // TODO: uncomment this when Antonio has put in his fix for unblocking-read
-      // readerBarrier.barrier();
+      readerBarrier.barrier();
     }
   }
 
