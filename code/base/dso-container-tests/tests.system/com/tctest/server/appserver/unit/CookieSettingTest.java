@@ -4,8 +4,6 @@
  */
 package com.tctest.server.appserver.unit;
 
-import org.apache.commons.io.IOUtils;
-
 import com.meterware.httpunit.WebResponse;
 import com.tc.test.server.appserver.AppServerFactory;
 import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
@@ -16,10 +14,10 @@ import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tc.test.server.appserver.was6x.Was6xAppServer;
 import com.tc.test.server.util.TcConfigBuilder;
+import com.tc.util.io.TCFileUtils;
 import com.tctest.webapp.servlets.OkServlet;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -122,12 +120,7 @@ public class CookieSettingTest extends AbstractDeploymentTest {
   private void setCookieForWebsphere(WebApplicationServer server) throws Exception {
     if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.WEBSPHERE) {
       System.out.println("Setting cookie for websphere...");
-      File cookieSettingsScript = File.createTempFile("cookiesettings", ".py");
-      cookieSettingsScript.deleteOnExit();
-      FileOutputStream out = new FileOutputStream(cookieSettingsScript);
-      IOUtils.copy(getClass()
-          .getResourceAsStream("/com/tctest/server/appserver/unit/cookiesettingtest/cookiesettings.py"), out);
-      out.close();
+      File cookieSettingsScript = TCFileUtils.getResourceFile("/com/tctest/server/appserver/unit/cookiesettingtest/cookiesettings.py");
       Was6xAppServer wasServer = (Was6xAppServer) ((GenericServer) server).getAppServer();
       wasServer.setExtraScript(cookieSettingsScript);
     }

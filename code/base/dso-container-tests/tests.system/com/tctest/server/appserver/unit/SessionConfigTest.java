@@ -8,11 +8,13 @@ import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
 import com.tc.test.server.appserver.AppServerFactory;
 import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
-import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
+import com.tc.test.server.appserver.deployment.GenericServer;
 import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
+import com.tc.test.server.appserver.was6x.Was6xAppServer;
 import com.tc.test.server.util.TcConfigBuilder;
+import com.tc.util.io.TCFileUtils;
 import com.tctest.webapp.servlets.SessionConfigServlet;
 
 import java.util.Date;
@@ -34,13 +36,16 @@ public class SessionConfigTest extends AbstractDeploymentTest {
   private static final String  CONTEXT       = "SessionConfigTest";
   private static final String  MAPPING       = "app";
 
-  private Deployment           deployment;
+  private DeploymentBuilder    builder;
   private WebApplicationServer server;
 
   private Map                  descriptors   = new HashMap();
 
   public SessionConfigTest() {
-    if (AppServerFactory.getCurrentAppServerId() != AppServerFactory.WEBLOGIC) {
+    boolean weblogicOrWebsphere = AppServerFactory.getCurrentAppServerId() == AppServerFactory.WEBLOGIC
+                                  || AppServerFactory.getCurrentAppServerId() == AppServerFactory.WEBSPHERE;
+
+    if (!weblogicOrWebsphere) {
       disableAllUntil(new Date(Long.MAX_VALUE));
     }
   }
@@ -53,6 +58,7 @@ public class SessionConfigTest extends AbstractDeploymentTest {
   public void testCookieDisabled() throws Exception {
     descriptors.put("wl81", "weblogic81a.xml");
     descriptors.put("wl92", "weblogic92a.xml");
+    descriptors.put("was61", "websphere61a.xml");
     setupAppServer();
 
     WebConversation conversation = new WebConversation();
@@ -68,6 +74,7 @@ public class SessionConfigTest extends AbstractDeploymentTest {
   public void testUrlRewritingDisabled() throws Exception {
     descriptors.put("wl81", "weblogic81b.xml");
     descriptors.put("wl92", "weblogic92b.xml");
+    descriptors.put("was61", "websphere61b.xml");
     setupAppServer();
 
     WebResponse response = request(server, "testcase=testUrlRewritingDisabled", new WebConversation());
@@ -75,33 +82,32 @@ public class SessionConfigTest extends AbstractDeploymentTest {
     assertEquals("OK", response.getText().trim());
   }
 
-  // TrackingEnabled = false
+  // TrackingEnabled = false -- only applicable to Weblogic
   public void testTrackingDisabled() throws Exception {
+    if (AppServerFactory.getCurrentAppServerId() != AppServerFactory.WEBLOGIC) { return; }    
     descriptors.put("wl81", "weblogic81c.xml");
-    descriptors.put("wl92", "weblogic92c.xml");
+    descriptors.put("wl92", "weblogic92c.xml");    
     setupAppServer();
 
     WebConversation wc = new WebConversation();
     WebResponse response = request(server, "testcase=testTrackingDisabled&hit=0", wc);
     System.out.println("Response: " + response.getText());
     assertEquals("OK", response.getText().trim());
-    
+
     response = request(server, "testcase=testTrackingDisabled&hit=1", wc);
     System.out.println("Response: " + response.getText());
-    assertEquals("OK", response.getText().trim());    
+    assertEquals("OK", response.getText().trim());
   }
-  
+
   // IDLength = 69 -- only applicable to Weblogic
   public void testIdLength() throws Exception {
-    if (AppServerFactory.getCurrentAppServerId() != AppServerFactory.WEBLOGIC) {
-      return;
-    }
+    if (AppServerFactory.getCurrentAppServerId() != AppServerFactory.WEBLOGIC) { return; }
     descriptors.put("wl81", "weblogic81d.xml");
     descriptors.put("wl92", "weblogic92d.xml");
     setupAppServer();
 
     WebConversation wc = new WebConversation();
-    WebResponse response = request(server, "", wc);    
+    WebResponse response = request(server, "", wc);
     assertEquals("OK", response.getText().trim());
     int idLength = wc.getCookieValue("JSESSIONID").indexOf("!");
     System.out.println(wc.getCookieValue("JSESSIONID") + ", length = " + idLength);
@@ -113,20 +119,21 @@ public class SessionConfigTest extends AbstractDeploymentTest {
   }
 
   private void setupAppServer() throws Exception {
+    // prepare tc-config.xml
     TcConfigBuilder tcConfigBuilder = new TcConfigBuilder();
     tcConfigBuilder.addWebApplication(CONTEXT);
 
-    deployment = makeDeployment();
+    // prepare test war
+    builder = makeDeploymentBuilder(CONTEXT + ".war");
+    builder.addServlet("SessionConfigServlet", "/" + MAPPING + "/*", SessionConfigServlet.class, null, false);
+
     server = makeWebApplicationServer(tcConfigBuilder);
-    server.addWarDeployment(deployment, CONTEXT);
+    addSessionDescriptor();
+    server.addWarDeployment(builder.makeDeployment(), CONTEXT);
     server.start();
   }
 
-  private Deployment makeDeployment() throws Exception {
-    DeploymentBuilder builder = makeDeploymentBuilder(CONTEXT + ".war");
-    builder.addServlet("SessionConfigServlet", "/" + MAPPING + "/*", SessionConfigServlet.class, null, false);
-
-    // add container specific descriptor
+  private void addSessionDescriptor() throws Exception {
     switch (AppServerFactory.getCurrentAppServerId()) {
       case AppServerFactory.WEBLOGIC:
         if (AppServerFactory.getCurrentAppServerMajorVersion().equals("8")) {
@@ -136,11 +143,13 @@ public class SessionConfigTest extends AbstractDeploymentTest {
           builder.addResourceFullpath(RESOURCE_ROOT, (String) descriptors.get("wl92"), "WEB-INF/weblogic.xml");
         }
         break;
+      case AppServerFactory.WEBSPHERE:
+        Was6xAppServer wasServer = (Was6xAppServer) ((GenericServer) server).getAppServer();
+        wasServer.setExtraScript(TCFileUtils.getResourceFile(RESOURCE_ROOT + "/" + (String) descriptors.get("was61")));
+        break;
       default:
         break;
     }
-
-    return builder.makeDeployment();
   }
 
 }

@@ -171,7 +171,7 @@ import com.tc.util.SequenceValidator;
 import com.tc.util.StartupLock;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.TCTimerImpl;
-import com.tc.util.io.FileUtils;
+import com.tc.util.io.TCFileUtils;
 import com.tc.util.sequence.BatchSequence;
 import com.tc.util.sequence.MutableSequence;
 import com.tc.util.sequence.Sequence;
@@ -329,7 +329,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
       if (!persistent) {
         if (dbhome.exists()) {
           logger.debug("deleting persistence database...");
-          FileUtils.forceDelete(dbhome, "jdb");
+          TCFileUtils.forceDelete(dbhome, "jdb");
           logger.debug("persistence database deleted.");
         }
       }

@@ -18,7 +18,7 @@ import com.tc.test.server.appserver.wasce1x.Wasce1xAppServerFactory;
 import com.tc.test.server.appserver.weblogic8x.Weblogic8xAppServerFactory;
 import com.tc.test.server.appserver.weblogic9x.Weblogic9xAppServerFactory;
 import com.tc.util.Assert;
-import com.tc.util.io.FileUtils;
+import com.tc.util.io.TCFileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -102,7 +102,7 @@ public abstract class AppServerFactory {
       TempDirectoryHelper helper = new TempDirectoryHelper(getClass());
       File toDir = helper.getDirectory();
       File toFile = new File(toDir, licenseFile.getName());
-      FileUtils.copyFile(licenseFile, toFile);
+      TCFileUtils.copyFile(licenseFile, toFile);
       this.licenseIsSet = true;
     } catch (IOException ioe) {
       throw new RuntimeException("Can't set up license file", ioe);

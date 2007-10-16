@@ -4,23 +4,29 @@
  */
 package com.tc.util.io;
 
+import org.apache.commons.io.IOUtils;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-public class FileUtils {
+public class TCFileUtils {
 
-  /*
+  /**
+   * Given a resource path, returns the File object of that resource
+   */
+  public static File getResourceFile(String resource) { 
+    return org.apache.commons.io.FileUtils.toFile(TCFileUtils.class.getResource(resource));
+  }
+  
+  /**
    * deletes all files with matching extension. Does not recurse into sub directories.
    */
   public static void forceDelete(File directory, String extension) throws IOException {
-    // Iterator files = org.apache.commons.io.FileUtils.iterateFiles(directory, new String[] { extension }, false);
     Iterator files = org.apache.commons.io.FileUtils.listFiles(directory, new String[] { extension }, false).iterator();
     while (files.hasNext()) {
       File f = (File) files.next();
@@ -74,8 +80,8 @@ public class FileUtils {
         out.write(buffer, 0, count);
       }
     } finally {
-      closeQuietly(in);
-      closeQuietly(out);
+      IOUtils.closeQuietly(in);
+      IOUtils.closeQuietly(out);
     }
   }
 
@@ -96,25 +102,4 @@ public class FileUtils {
       return dest;
     }
   }
-
-  public static void closeQuietly(InputStream is) {
-    if (is != null) {
-      try {
-        is.close();
-      } catch (IOException ioe) {
-        //
-      }
-    }
-  }
-
-  public static void closeQuietly(OutputStream os) {
-    if (os != null) {
-      try {
-        os.close();
-      } catch (IOException ioe) {
-        //
-      }
-    }
-  }
-
 }

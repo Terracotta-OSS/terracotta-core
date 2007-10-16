@@ -130,7 +130,7 @@ public class AppServerUtil {
     if (!from.equals(to)) {
       System.out.println("Copying files from " + from + " to " + to);
       try {
-        com.tc.util.io.FileUtils.copyFile(from, to);
+        com.tc.util.io.TCFileUtils.copyFile(from, to);
       } catch (IOException ioe) {
         Banner.warnBanner("IOException caught while copying workingDir files");
         ioe.printStackTrace();
