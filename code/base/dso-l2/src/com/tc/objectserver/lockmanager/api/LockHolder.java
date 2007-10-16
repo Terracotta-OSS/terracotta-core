@@ -14,19 +14,18 @@ import java.io.Serializable;
 public class LockHolder implements Serializable {
   private final static long NON_SET_TIME_MILLIS = -1;
 
-  private final LockID   lockID;
-  private final NodeID   nodeID;
-  private final ThreadID threadID;
-  private final String   lockLevel;
-  private final String   channelAddr;
-  private long           timeAcquired;
-  private long           timeReleased;
-  private long           timeRequested;
-  private long           waitTimeInMillis;
-  private long           heldTimeInMillis;
+  private final LockID      lockID;
+  private final NodeID      nodeID;
+  private final ThreadID    threadID;
+  private final String      lockLevel;
+  private final String      channelAddr;
+  private long              timeAcquired;
+  private long              timeReleased;
+  private long              timeRequested;
+  private long              waitTimeInMillis;
+  private long              heldTimeInMillis;
 
-  public LockHolder(LockID lockID, NodeID cid, String channelAddr, ThreadID threadID, int level,
-                    long timeRequested) {
+  public LockHolder(LockID lockID, NodeID cid, String channelAddr, ThreadID threadID, int level, long timeRequested) {
     this.lockID = lockID;
     this.nodeID = cid;
     this.channelAddr = channelAddr;
@@ -40,7 +39,7 @@ public class LockHolder implements Serializable {
   public LockHolder(LockID lockID, NodeID cid, String channelAddr, ThreadID threadID, int level) {
     this(lockID, cid, channelAddr, threadID, level, NON_SET_TIME_MILLIS);
   }
-  
+
   public LockID getLockID() {
     return this.lockID;
   }
@@ -82,14 +81,14 @@ public class LockHolder implements Serializable {
       timeAcquired = timeReleased;
     }
   }
-  
+
   public long getWaitTimeInMillis() {
     if (waitTimeInMillis == NON_SET_TIME_MILLIS) {
       getAndSetWaitTimeInMillis();
     }
     return waitTimeInMillis;
   }
-  
+
   public long getHeldTimeInMillis() {
     if (heldTimeInMillis == NON_SET_TIME_MILLIS) {
       getAndSetHeldTimeInMillis();
@@ -98,7 +97,7 @@ public class LockHolder implements Serializable {
   }
 
   public long getAndSetWaitTimeInMillis() {
-    if (timeAcquired <=0 && timeRequested <= 0) {
+    if (timeAcquired <= 0 && timeRequested <= 0) {
       waitTimeInMillis = 0;
     } else if (timeAcquired <= 0) {
       waitTimeInMillis = System.currentTimeMillis() - timeRequested;
@@ -109,11 +108,14 @@ public class LockHolder implements Serializable {
   }
 
   public long getAndSetHeldTimeInMillis() {
-    if (timeReleased <= 0 && timeAcquired <=0) {
+    if (timeReleased <= 0 && timeAcquired <= 0) {
       heldTimeInMillis = 0;
-    } else if (timeReleased <= 0) { heldTimeInMillis = System.currentTimeMillis() - timeAcquired; }
-    heldTimeInMillis = timeReleased - timeAcquired;
-    
+    } else if (timeReleased <= 0) {
+      heldTimeInMillis = System.currentTimeMillis() - timeAcquired;
+    } else {
+      heldTimeInMillis = timeReleased - timeAcquired;
+    }
+
     return heldTimeInMillis;
   }
 
