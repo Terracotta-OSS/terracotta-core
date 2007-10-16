@@ -491,7 +491,7 @@ public class BootJarTool {
 
       loadTerracottaClass(Vm.class.getName());
       loadTerracottaClass(VmVersion.class.getName());
-      
+
       loadTerracottaClass(UnknownJvmVersionException.class.getName());
       loadTerracottaClass(UnknownRuntimeVersionException.class.getName());
 
@@ -828,7 +828,7 @@ public class BootJarTool {
     loadTerracottaClass("com.tc.aspectwerkz.proxy.ProxySubclassingStrategy");
     loadTerracottaClass("com.tc.aspectwerkz.proxy.Uuid");
     loadTerracottaClass("com.tc.aspectwerkz.reflect.CflowMetaData");
-    loadTerracottaClass("com.tc.aspectwerkz.reflect.ClassInfo$NullClassInfo");
+    loadTerracottaClass("com.tc.aspectwerkz.reflect.NullClassInfo");
     loadTerracottaClass("com.tc.aspectwerkz.reflect.ClassInfo");
     loadTerracottaClass("com.tc.aspectwerkz.reflect.ClassInfoHelper");
     loadTerracottaClass("com.tc.aspectwerkz.reflect.ClassInfoRepository");
@@ -2204,9 +2204,9 @@ public class BootJarTool {
     if (!Vm.isJDK15Compliant()) { return; }
     addInstrumentedReentrantReadWriteLock();
     addInstrumentedReentrantLock();
-    addInstrumentedConditionObject();    
+    addInstrumentedConditionObject();
   }
-  
+
   private void addInstrumentedConditionObject() {
     String classNameDots = "com.tcclient.util.concurrent.locks.ConditionObject";
     byte[] bytes = getSystemBytes(classNameDots);
@@ -2228,7 +2228,7 @@ public class BootJarTool {
     config.removeSpec(classNameDots);
 
   }
-  
+
   private void addInstrumentedReentrantLock() {
     TransparencyClassSpec spec = config.getOrCreateSpec("java.util.concurrent.locks.ReentrantLock");
     spec.addTransient("sync");
@@ -2239,7 +2239,7 @@ public class BootJarTool {
     Map instrumentedContext = new HashMap();
     mergeReentrantLock(tcClassNameDots, jClassNameDots, instrumentedContext);
   }
-  
+
   private void mergeReentrantLock(String tcClassNameDots, String jClassNameDots, Map instrumentedContext) {
     byte[] tcData = getSystemBytes(tcClassNameDots);
     ClassReader tcCR = new ClassReader(tcData);

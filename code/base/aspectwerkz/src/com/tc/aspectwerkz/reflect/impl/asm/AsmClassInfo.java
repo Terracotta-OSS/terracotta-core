@@ -1,8 +1,8 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.aspectwerkz.reflect.impl.asm;
-
 
 import com.tc.asm.ClassReader;
 import com.tc.asm.FieldVisitor;
@@ -14,6 +14,7 @@ import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.ConstructorInfo;
 import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.MethodInfo;
+import com.tc.aspectwerkz.reflect.NullClassInfo;
 import com.tc.aspectwerkz.reflect.StaticInitializationInfo;
 import com.tc.aspectwerkz.reflect.StaticInitializationInfoImpl;
 import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
@@ -34,135 +35,128 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * Implementation of the ClassInfo interface utilizing the ASM bytecode library for the info retriaval.
- * <p/>
- * Annotations are lazily gathered, unless required to visit them at the same time as we visit methods and fields.
- * <p/>
- * This implementation guarantees that the method, fields and constructors can be retrieved in the same order as they were in the bytecode
- * (it can depends of the compiler and might not be the order of the source code - f.e. IBM compiler)
+ * Implementation of the ClassInfo interface utilizing the ASM bytecode library for the info retriaval. <p/> Annotations
+ * are lazily gathered, unless required to visit them at the same time as we visit methods and fields. <p/> This
+ * implementation guarantees that the method, fields and constructors can be retrieved in the same order as they were in
+ * the bytecode (it can depends of the compiler and might not be the order of the source code - f.e. IBM compiler)
  *
  * @author <a href="mailto:jboner@codehaus.org">Jonas Bonér </a>
  * @author <a href="mailto:alex@gnilux.com">Alexandre Vasseur </a>
  */
 public class AsmClassInfo implements ClassInfo {
 
-  protected final static String[] EMPTY_STRING_ARRAY = new String[0];
+  protected final static String[]      EMPTY_STRING_ARRAY        = new String[0];
 
-  protected final static List EMPTY_LIST = new ArrayList();
+  protected final static List          EMPTY_LIST                = new ArrayList();
 
   /**
    * The class loader wrapped in a weak ref.
    */
-  private final WeakReference m_loaderRef;
+  private final WeakReference          m_loaderRef;
 
   /**
    * The name of the class (with dots and not slashes)
    */
-  private String m_name;
+  private String                       m_name;
 
   /**
    * The signature of the class.
    */
-  private String m_signature;
+  private String                       m_signature;
 
   /**
    * The internal generics signature for this class.
    */
-  private String m_genericsSignature;
+  private String                       m_genericsSignature;
 
   /**
    * The modifiers.
    */
-  private int m_modifiers;
+  private int                          m_modifiers;
 
   /**
    * Is the class an interface.
    */
-  private boolean m_isInterface = false;
+  private boolean                      m_isInterface             = false;
 
   /**
    * Is the class a primitive type.
    */
-  private boolean m_isPrimitive = false;
+  private boolean                      m_isPrimitive             = false;
 
   /**
    * Is the class of type array.
    */
-  private boolean m_isArray = false;
+  private boolean                      m_isArray                 = false;
 
   /**
    * Flag for the static initializer method.
    */
-  private boolean m_hasStaticInitializer = false;
+  private boolean                      m_hasStaticInitializer    = false;
 
   /**
    * Lazy instance that represents the static initializer if present, else null
    */
-  private StaticInitializationInfo m_staticInitializer = null;
+  private StaticInitializationInfo     m_staticInitializer       = null;
 
   /**
-   * A list with the <code>ConstructorInfo</code> instances.
-   * When visiting the bytecode, we keep track of the order of the visit.
-   * The first time the getConstructors() gets called, we build an array and then reuse it directly.
+   * A list with the <code>ConstructorInfo</code> instances. When visiting the bytecode, we keep track of the order of
+   * the visit. The first time the getConstructors() gets called, we build an array and then reuse it directly.
    */
-  private final HashMap m_constructors = new HashMap();
-  private ArrayList m_sortedConstructorHashes = new ArrayList();
-  private ConstructorInfo[] m_constructorsLazy = null;
-
+  private final HashMap                m_constructors            = new HashMap();
+  private ArrayList                    m_sortedConstructorHashes = new ArrayList();
+  private ConstructorInfo[]            m_constructorsLazy        = null;
 
   /**
-   * A list with the <code>MethodInfo</code> instances.
-   * When visiting the bytecode, we keep track of the order of the visit.
-   * The first time the getMethods() gets called, we build an array and then reuse it directly.
+   * A list with the <code>MethodInfo</code> instances. When visiting the bytecode, we keep track of the order of the
+   * visit. The first time the getMethods() gets called, we build an array and then reuse it directly.
    */
-  private final HashMap m_methods = new HashMap();
-  private ArrayList m_sortedMethodHashes = new ArrayList();
-  private MethodInfo[] m_methodsLazy = null;
+  private final HashMap                m_methods                 = new HashMap();
+  private ArrayList                    m_sortedMethodHashes      = new ArrayList();
+  private MethodInfo[]                 m_methodsLazy             = null;
 
   /**
-   * A list with the <code>FieldInfo</code> instances.
-   * When visiting the bytecode, we keep track of the order of the visit.
-   * The first time the getFields() gets called, we build an array and then reuse it directly.
+   * A list with the <code>FieldInfo</code> instances. When visiting the bytecode, we keep track of the order of the
+   * visit. The first time the getFields() gets called, we build an array and then reuse it directly.
    */
-  private final HashMap m_fields = new HashMap();
-  private ArrayList m_sortedFieldHashes = new ArrayList();
-  private FieldInfo[] m_fieldsLazy = null;
+  private final HashMap                m_fields                  = new HashMap();
+  private ArrayList                    m_sortedFieldHashes       = new ArrayList();
+  private FieldInfo[]                  m_fieldsLazy              = null;
 
   /**
    * A list with the interfaces class names.
    */
-  private String[] m_interfaceClassNames = null;
+  private String[]                     m_interfaceClassNames     = null;
 
   /**
    * A list with the interfaces.
    */
-  private ClassInfo[] m_interfaces = null;
+  private ClassInfo[]                  m_interfaces              = null;
 
   /**
    * The super class name.
    */
-  private String m_superClassName = null;
+  private String                       m_superClassName          = null;
 
   /**
    * The super class.
    */
-  private ClassInfo m_superClass = null;
+  private ClassInfo                    m_superClass              = null;
 
   /**
-   * The annotation reader.
-   * Lazily instantiated from backport.
+   * The annotation reader. Lazily instantiated from backport.
    */
-  private AnnotationReader m_annotationReader = null;
+  private AnnotationReader             m_annotationReader        = null;
 
   /**
    * The component type name if array type. Can be an array itself.
    */
-  private String m_componentTypeName = null;
+  private String                       m_componentTypeName       = null;
 
   /**
    * The component type if array type. Can be an array itself.
    */
-  private ClassInfo m_componentType = null;
+  private ClassInfo                    m_componentType           = null;
 
   /**
    * The class info repository.
@@ -176,9 +170,7 @@ public class AsmClassInfo implements ClassInfo {
    * @param loader
    */
   AsmClassInfo(final byte[] bytecode, final ClassLoader loader) {
-    if (bytecode == null) {
-      throw new IllegalArgumentException("bytecode can not be null");
-    }
+    if (bytecode == null) { throw new IllegalArgumentException("bytecode can not be null"); }
     m_loaderRef = new WeakReference(loader);
     m_classInfoRepository = AsmClassInfoRepository.getRepository(loader);
     try {
@@ -198,9 +190,7 @@ public class AsmClassInfo implements ClassInfo {
    * @param loader
    */
   AsmClassInfo(final InputStream resourceStream, final ClassLoader loader) {
-    if (resourceStream == null) {
-      throw new IllegalArgumentException("resource stream can not be null");
-    }
+    if (resourceStream == null) { throw new IllegalArgumentException("resource stream can not be null"); }
     m_loaderRef = new WeakReference(loader);
     m_classInfoRepository = AsmClassInfoRepository.getRepository(loader);
     try {
@@ -222,9 +212,7 @@ public class AsmClassInfo implements ClassInfo {
    * @param loader
    * @param componentInfo
    */
-  AsmClassInfo(final String className,
-               final ClassLoader loader,
-               final ClassInfo componentInfo) {
+  AsmClassInfo(final String className, final ClassLoader loader, final ClassInfo componentInfo) {
     m_loaderRef = new WeakReference(loader);
     m_name = className.replace('/', '.');
     m_classInfoRepository = AsmClassInfoRepository.getRepository(loader);
@@ -232,7 +220,7 @@ public class AsmClassInfo implements ClassInfo {
     m_componentType = componentInfo;
     m_componentTypeName = componentInfo.getName();
     m_modifiers = componentInfo.getModifiers() | Modifier.ABSTRACT | Modifier.FINAL;
-    m_isInterface = false;//as in java.reflect
+    m_isInterface = false;// as in java.reflect
     m_superClass = JavaClassInfo.getClassInfo(Object.class);
     m_superClassName = m_superClass.getName();
     m_interfaceClassNames = new String[0];
@@ -324,7 +312,7 @@ public class AsmClassInfo implements ClassInfo {
       }
       return classInfo;
     } catch (IOException e) {
-      throw new WrappedRuntimeException("Can't get ClassInfo for "+name, e);
+      throw new WrappedRuntimeException("Can't get ClassInfo for " + name, e);
     }
   }
 
@@ -538,8 +526,7 @@ public class AsmClassInfo implements ClassInfo {
       for (int i = 0; i < interfaces.length; i++) {
         ClassInfo ifc = interfaces[i];
         field = ifc.getField(hash);
-        if (field != null)
-          break;
+        if (field != null) break;
       }
     }
     return field;
@@ -631,12 +618,8 @@ public class AsmClassInfo implements ClassInfo {
    * @see java.lang.Object#equals(java.lang.Object)
    */
   public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof ClassInfo)) {
-      return false;
-    }
+    if (this == o) { return true; }
+    if (!(o instanceof ClassInfo)) { return false; }
     ClassInfo classInfo = (ClassInfo) o;
     return m_name.equals(classInfo.getName());
   }
@@ -660,21 +643,18 @@ public class AsmClassInfo implements ClassInfo {
    * @param componentClassInfo
    * @return
    */
-  public static ClassInfo getArrayClassInfo(final String className,
-                                            final ClassLoader loader,
+  public static ClassInfo getArrayClassInfo(final String className, final ClassLoader loader,
                                             final ClassInfo componentClassInfo) {
     return new AsmClassInfo(className, loader, componentClassInfo);
   }
 
   /**
-   * Creates a ClassInfo based on the stream retrieved from the class loader through
-   * <code>getResourceAsStream</code>.
+   * Creates a ClassInfo based on the stream retrieved from the class loader through <code>getResourceAsStream</code>.
    *
-   * @param name   java name as in source code
+   * @param name java name as in source code
    * @param loader
    */
-  private static ClassInfo createClassInfoFromStream(final String name,
-                                                     final ClassLoader loader) {
+  private static ClassInfo createClassInfoFromStream(final String name, final ClassLoader loader) {
     final String className = name.replace('.', '/');
 
     // to handle primitive type we need to know the array dimension
@@ -722,29 +702,25 @@ public class AsmClassInfo implements ClassInfo {
         componentClassAsStream = loader.getResourceAsStream(componentName + ".class");
       } else {
         // boot class loader, fall back to system classloader that will see it anyway
-        componentClassAsStream = ClassLoader.getSystemClassLoader().getResourceAsStream(
-                componentName + ".class");
+        componentClassAsStream = ClassLoader.getSystemClassLoader().getResourceAsStream(componentName + ".class");
       }
       if (componentClassAsStream == null) {
         // might be more than one dimension
-        if (componentName.indexOf('[') > 0) {
-          return getClassInfo(componentName, loader);
-        }
+        if (componentName.indexOf('[') > 0) { return getClassInfo(componentName, loader); }
 
-        System.out.println(
-                "AW::WARNING - could not load class ["
-                        + componentName
-                        + "] as a resource in loader ["
-                        + loader
-                        + "]"
-        );
+        System.out.println("AW::WARNING - could not load class [" + componentName + "] as a resource in loader ["
+                           + loader + "]");
 
-        componentInfo = new ClassInfo.NullClassInfo();
-        return componentInfo;
+        NullClassInfo nullInfo = new NullClassInfo();
+        nullInfo.setName(componentName.replace('/', '.'));
+
+        // remember this missing resource so that later lookups will return early
+        AsmClassInfoRepository.getRepository(loader).addClassInfo(nullInfo);
+        return nullInfo;
       }
-      
+
       try {
-         componentInfo = AsmClassInfo.getClassInfo(componentName, componentClassAsStream, loader);
+        componentInfo = AsmClassInfo.getClassInfo(componentName, componentClassAsStream, loader);
       } finally {
         try {
           componentClassAsStream.close();
@@ -761,41 +737,37 @@ public class AsmClassInfo implements ClassInfo {
     }
   }
 
-//    /**
-//     * Creates a string with the annotation key value pairs.
-//     *
-//     * @param annotation
-//     * @return the string
-//     */
-//    private static String createAnnotationKeyValueString(final Annotation annotation) {
-//        List elementValues = annotation.elementValues;
-//        StringBuffer annotationValues = new StringBuffer();
-//        if (elementValues.size() != 0) {
-//            int i = 0;
-//            for (Iterator iterator = elementValues.iterator(); iterator.hasNext();) {
-//                Object[] keyValuePair = (Object[]) iterator.next();
-//                annotationValues.append((String) keyValuePair[0]);
-//                annotationValues.append('=');
-//                annotationValues.append(keyValuePair[1].toString());
-//                if (i < elementValues.size() - 1) {
-//                    annotationValues.append(',');
-//                }
-//            }
-//        }
-//        return annotationValues.toString();
-//    }
+  // /**
+  // * Creates a string with the annotation key value pairs.
+  // *
+  // * @param annotation
+  // * @return the string
+  // */
+  // private static String createAnnotationKeyValueString(final Annotation annotation) {
+  // List elementValues = annotation.elementValues;
+  // StringBuffer annotationValues = new StringBuffer();
+  // if (elementValues.size() != 0) {
+  // int i = 0;
+  // for (Iterator iterator = elementValues.iterator(); iterator.hasNext();) {
+  // Object[] keyValuePair = (Object[]) iterator.next();
+  // annotationValues.append((String) keyValuePair[0]);
+  // annotationValues.append('=');
+  // annotationValues.append(keyValuePair[1].toString());
+  // if (i < elementValues.size() - 1) {
+  // annotationValues.append(',');
+  // }
+  // }
+  // }
+  // return annotationValues.toString();
+  // }
 
   /**
    * ASM bytecode visitor that gathers info about the class.
    */
   class ClassInfoClassAdapter extends AsmNullAdapter.NullClassAdapter {
 
-    public void visit(final int version,
-                      final int access,
-                      final String name,
-                      final String signature,
-                      final String superName,
-                      final String[] interfaces) {
+    public void visit(final int version, final int access, final String name, final String signature,
+                      final String superName, final String[] interfaces) {
 
       m_modifiers = access;
       m_name = name.replace('/', '.');
@@ -814,22 +786,14 @@ public class AsmClassInfo implements ClassInfo {
         m_isArray = true;
         int index = m_name.indexOf('[');
         m_componentTypeName = m_name.substring(0, index);
-      } else if (m_name.equals("long")
-              || m_name.equals("int")
-              || m_name.equals("short")
-              || m_name.equals("double")
-              || m_name.equals("float")
-              || m_name.equals("byte")
-              || m_name.equals("boolean")
-              || m_name.equals("char")) {
+      } else if (m_name.equals("long") || m_name.equals("int") || m_name.equals("short") || m_name.equals("double")
+                 || m_name.equals("float") || m_name.equals("byte") || m_name.equals("boolean")
+                 || m_name.equals("char")) {
         m_isPrimitive = true;
       }
     }
 
-    public FieldVisitor visitField(final int access,
-                                   final String name,
-                                   final String desc,
-                                   final String signature,
+    public FieldVisitor visitField(final int access, final String name, final String desc, final String signature,
                                    final Object value) {
       final FieldStruct struct = new FieldStruct();
       struct.modifiers = access;
@@ -844,10 +808,7 @@ public class AsmClassInfo implements ClassInfo {
       return null;
     }
 
-    public MethodVisitor visitMethod(final int access,
-                                     final String name,
-                                     final String desc,
-                                     final String signature,
+    public MethodVisitor visitMethod(final int access, final String name, final String desc, final String signature,
                                      final String[] exceptions) {
       final MethodStruct struct = new MethodStruct();
       struct.modifiers = access;
@@ -878,10 +839,9 @@ public class AsmClassInfo implements ClassInfo {
         // TODO: should we make this optional - similar to m_lazyAttributes ?
         Type[] parameterTypes = Type.getArgumentTypes(desc);
         if (parameterTypes.length > 0) {
-          MethodVisitor methodParameterNamesVisitor = new MethodParameterNamesCodeAdapter(
-                  Modifier.isStatic(access),
-                  parameterTypes.length, methodInfo
-          );
+          MethodVisitor methodParameterNamesVisitor = new MethodParameterNamesCodeAdapter(Modifier.isStatic(access),
+                                                                                          parameterTypes.length,
+                                                                                          methodInfo);
           return methodParameterNamesVisitor;
         }
         methodInfo.m_parameterNames = EMPTY_STRING_ARRAY;
@@ -901,11 +861,11 @@ public class AsmClassInfo implements ClassInfo {
    */
   static class MethodParameterNamesCodeAdapter extends AsmNullAdapter.NullMethodAdapter {
     private final boolean m_isStatic;
-    private final int m_parameterCount;
+    private final int     m_parameterCount;
     private AsmMethodInfo m_methodInfo;
-    private int m_signatureParameterRegisterDepth = 0;
-    private String[] m_parameterNames;
-    
+    private int           m_signatureParameterRegisterDepth = 0;
+    private String[]      m_parameterNames;
+
     public MethodParameterNamesCodeAdapter(boolean isStatic, int parameterCount, AsmMethodInfo methodInfo) {
       m_isStatic = isStatic;
       m_methodInfo = methodInfo;
@@ -918,49 +878,46 @@ public class AsmClassInfo implements ClassInfo {
       if (!m_isStatic) {
         m_signatureParameterRegisterDepth++;// index 0 = this
       }
-      m_signatureParameterRegisterDepth += AsmHelper.getRegisterDepth(
-              Type.getArgumentTypes(m_methodInfo.m_member.desc)
-      );
+      m_signatureParameterRegisterDepth += AsmHelper
+          .getRegisterDepth(Type.getArgumentTypes(m_methodInfo.m_member.desc));
     }
 
     /**
-     * Do not assume to visit the local variable with index always increasing since it is a wrong assumption
-     * [ see f.e. test.args.ArgsAspect.withArray advice ]
+     * Do not assume to visit the local variable with index always increasing since it is a wrong assumption [ see f.e.
+     * test.args.ArgsAspect.withArray advice ]
      */
     public void visitLocalVariable(String name, String desc, String sig, Label start, Label end, int index) {
       // skip local variables and "this"
-      if (index >= m_signatureParameterRegisterDepth || (index == 0 && !m_isStatic)) { 
-        return; // local variable
+      if (index >= m_signatureParameterRegisterDepth || (index == 0 && !m_isStatic)) { return; // local variable
       }
-      
-      int startIndex = m_isStatic ? index : index-1;
-      
+
+      int startIndex = m_isStatic ? index : index - 1;
+
       String[] typeNames = m_methodInfo.m_parameterTypeNames;
-      
+
       // assume we have a stack starting at the first parameter
       Type[] parameters = Type.getArgumentTypes(m_methodInfo.getSignature());
       int typeIndex = AsmHelper.getTypeIndexOf(parameters, startIndex);
-      
+
       if (typeIndex >= 0 && typeIndex < m_parameterNames.length
-          && parameters[typeIndex].getClassName()
-               .equals(typeNames[typeIndex])) {
+          && parameters[typeIndex].getClassName().equals(typeNames[typeIndex])) {
         m_parameterNames[typeIndex] = name;
       }
     }
-    
+
     public void visitEnd() {
       boolean resolved = true;
       for (int i = 0; i < m_parameterNames.length; i++) {
         String name = m_parameterNames[i];
-        if(name==null) {
+        if (name == null) {
           resolved = false;
         }
       }
-      if(resolved) {
+      if (resolved) {
         m_methodInfo.m_parameterNames = m_parameterNames;
       }
     }
-    
+
     /**
      * Update the parameter name given the parameter information the index is the one from the register ie a long or
      * double will needs 2 register
@@ -968,21 +925,20 @@ public class AsmClassInfo implements ClassInfo {
      * @param registerIndex
      * @param parameterName
      */
-//    public void pushParameterNameFromRegister(int registerIndex, String parameterName) {
-//      int registerStart = m_isStatic ? 0 : 1;
-//
-//      // assume we have a stack starting at the first parameter
-//      int registerIndexFrom0 = registerIndex - registerStart;
-//      Type[] parameters = Type.getArgumentTypes(m_member.desc);
-//      int typeIndex = AsmHelper.getTypeIndexOf(parameters, registerIndexFrom0);
-//      if (typeIndex >= 0 && typeIndex < m_parameterNames.length) {
-//        m_parameterNames[typeIndex] = parameterName;
-//      } else {
-//        throw new DefinitionException("Could not register parameter named " + parameterName + " from register "
-//                                      + registerIndex + " for " + m_member.name + "." + m_member.desc);
-//      }
-//    }
-    
+    // public void pushParameterNameFromRegister(int registerIndex, String parameterName) {
+    // int registerStart = m_isStatic ? 0 : 1;
+    //
+    // // assume we have a stack starting at the first parameter
+    // int registerIndexFrom0 = registerIndex - registerStart;
+    // Type[] parameters = Type.getArgumentTypes(m_member.desc);
+    // int typeIndex = AsmHelper.getTypeIndexOf(parameters, registerIndexFrom0);
+    // if (typeIndex >= 0 && typeIndex < m_parameterNames.length) {
+    // m_parameterNames[typeIndex] = parameterName;
+    // } else {
+    // throw new DefinitionException("Could not register parameter named " + parameterName + " from register "
+    // + registerIndex + " for " + m_member.name + "." + m_member.desc);
+    // }
+    // }
   }
 
   /**
