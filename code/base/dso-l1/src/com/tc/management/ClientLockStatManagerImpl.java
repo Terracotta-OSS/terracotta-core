@@ -156,6 +156,8 @@ public class ClientLockStatManagerImpl implements ClientLockStatManager {
 
   public void enableStat(LockID lockID, int lockStackTraceDepth, int lockStatCollectFrequency) {
     statEnabledLocks.remove(lockID);
+    stackTracesMap.remove(lockID);
+    
     ClientLockStatContext lockStatContext = new ClientLockStatContext(lockStatCollectFrequency, lockStackTraceDepth);
     statEnabledLocks.put(lockID, lockStatContext);
   }
