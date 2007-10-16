@@ -232,8 +232,10 @@ public class Resolver {
   private String repositoriesToString() {
     final StringBuffer repos = new StringBuffer();
     for (int j = 0; j < repositories.length; j++) {
-      repos.append(repositories[j] + ";");
+      if(j > 0) repos.append(";");
+      repos.append(repositories[j]);
     }
+    
     return repos.toString();
   }
 
