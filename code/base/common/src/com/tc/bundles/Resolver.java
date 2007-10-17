@@ -5,7 +5,6 @@
 package com.tc.bundles;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Version;
 
@@ -114,7 +113,6 @@ public class Resolver {
     return getResolvedUrls();
   }
 
-
   public final URL[] getResolvedUrls() {
     int j = 0;
     final URL[] urls = new URL[registry.size()];
@@ -123,6 +121,22 @@ public class Resolver {
       urls[j++] = entry.getLocation();
     }
     return urls;
+  }
+
+  private Collection findJars(String name, String groupId, File rootLocation) {
+    final String[] extensions = new String[] { "jar" };
+    File installLocation = new File(rootLocation.getPath(), groupId.replace('.', File.separatorChar));
+    installLocation = new File(installLocation, name.replace('_', '-'));
+    final Collection jars = new ArrayList();
+    // attempt to locate the jar for the TIM in the conventional location
+    if (installLocation.exists() && installLocation.isDirectory()) {
+      jars.addAll(FileUtils.listFiles(installLocation, extensions, true));
+    }
+    // attempt to locate the jar for the TIM at the top level of the repository
+    if (jars.isEmpty()) {
+      jars.addAll(FileUtils.listFiles(rootLocation, extensions, false));
+    }
+    return jars;
   }
 
   protected URL resolveBundle(BundleSpec spec) {
@@ -140,23 +154,18 @@ public class Resolver {
         continue;
       }
 
-      final String[] extensions = new String[] { "jar" };
-      final Collection jars = FileUtils.listFiles(repository, extensions, true);
-      jars.addAll(FileUtils.listFiles(FileUtils.toFile(location), extensions, false));
-
+      final Collection jars = findJars(spec.getName(), spec.getGroupId(), FileUtils.toFile(location));
       for (final Iterator j = jars.iterator(); j.hasNext();) {
         final File bundleFile = (File) j.next();
         if (!bundleFile.isFile()) {
           warn(Message.WARN_FILE_IGNORED_INVALID_NAME, new Object[] { bundleFile.getName() });
           continue;
         }
-
         final Manifest manifest = getManifest(bundleFile);
         if (manifest == null) {
           warn(Message.WARN_FILE_IGNORED_MISSING_MANIFEST, new Object[] { bundleFile.getName() });
           continue;
         }
-
         final String symname = manifest.getMainAttributes().getValue(BUNDLE_SYMBOLICNAME);
         final String version = manifest.getMainAttributes().getValue(BUNDLE_VERSION);
         if (spec.isCompatible(symname, version)) {
@@ -178,16 +187,7 @@ public class Resolver {
     for (int i = repositories.length - 1; i >= 0; i--) {
       try {
         final URL url = new URL(repositories[i].toString() + (repositories[i].toString().endsWith("/") ? "" : "/"));
-        final File location = FileUtils.toFile(url);
-        final File directory = StringUtils.isBlank(groupId) ? location : new File(location, groupId.replace('.', File.separatorChar));
-
-        // ignore non-existent locations
-        if (!directory.exists()) continue;
-
-        final String[] extensions = new String[] { "jar" };
-        final Collection jars = FileUtils.listFiles(directory, extensions, !location.equals(directory));
-        if (!location.equals(directory)) jars.addAll(FileUtils.listFiles(location, extensions, false));
-
+        final Collection jars = findJars(name, groupId, FileUtils.toFile(url));
         for (final Iterator j = jars.iterator(); j.hasNext();) {
           final File jar = (File) j.next();
           final Manifest manifest = getManifest(jar);
@@ -232,10 +232,10 @@ public class Resolver {
   private String repositoriesToString() {
     final StringBuffer repos = new StringBuffer();
     for (int j = 0; j < repositories.length; j++) {
-      if(j > 0) repos.append(";");
+      if (j > 0) repos.append(";");
       repos.append(repositories[j]);
     }
-    
+
     return repos.toString();
   }
 
