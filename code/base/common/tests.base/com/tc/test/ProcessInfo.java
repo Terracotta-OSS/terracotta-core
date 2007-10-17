@@ -36,8 +36,9 @@ public class ProcessInfo {
       return result.trim();
 
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      e.printStackTrace();
     }
+    return "";
   }
 }
 
