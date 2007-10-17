@@ -39,14 +39,18 @@ public class EJBCodeGeneratorAdapter extends ClassAdapter implements ClassAdapte
 
     public AppendInterfaceMethodDeclarationAdapter(MethodVisitor mv) {
       super(mv);
-      Label l = new Label();
+    }
+
+    public void visitCode() {
+      super.visitCode();
+      Label notTC = new Label();
       mv.visitVarInsn(ALOAD, 2);
       mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/reflect/Method", "getName", "()Ljava/lang/String;");
       mv.visitLdcInsn(ByteCodeUtil.TC_METHOD_PREFIX);
       mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "startsWith", "(Ljava/lang/String;)Z");
-      mv.visitJumpInsn(IFEQ, l);
+      mv.visitJumpInsn(IFEQ, notTC);
       mv.visitInsn(RETURN);
-      mv.visitLabel(l);
+      mv.visitLabel(notTC);
     }
 
   }
