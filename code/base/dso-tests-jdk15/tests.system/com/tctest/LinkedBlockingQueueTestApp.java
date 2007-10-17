@@ -9,6 +9,7 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.util.Assert;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.concurrent.CyclicBarrier;
@@ -23,8 +24,10 @@ public class LinkedBlockingQueueTestApp extends AbstractTransparentApp {
   private static final int    GC_NUM_OF_PUT       = 1000;
   private static final int    GC_NUM_OF_LOOP      = 5;
   private static final int    GC_CREATE_NUM       = 5;
+  
+  private static final int    CAPACITY            = 100;
 
-  private LinkedBlockingQueue queue               = new LinkedBlockingQueue(100);
+  private LinkedBlockingQueue queue               = new LinkedBlockingQueue(CAPACITY);
   private final CyclicBarrier barrier;
 
   private boolean             isGcTest            = false;
@@ -89,6 +92,7 @@ public class LinkedBlockingQueueTestApp extends AbstractTransparentApp {
     for (int i = 0; i < numOfPut; i++) {
       System.out.println("Putting " + i);
       queue.put(new WorkItem(i));
+      Assert.assertTrue(queue.size() <= CAPACITY);
     }
     int numOfGet = getParticipantCount() - 1;
     for (int i = 0; i < numOfGet; i++) {

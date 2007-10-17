@@ -140,6 +140,8 @@ public class JavaUtilConcurrentLinkedBlockingQueueAdapter implements Opcodes {
     public void visitJumpInsn(int opcode, Label label) {
       if (IF_ICMPEQ == opcode) {
         opcode = IF_ICMPGE;
+      } else if (IF_ICMPNE == opcode) { // for jdk higher than 1.5_08
+        opcode = IF_ICMPLT;
       }
       super.visitJumpInsn(opcode, label);
     }
@@ -186,10 +188,12 @@ public class JavaUtilConcurrentLinkedBlockingQueueAdapter implements Opcodes {
     public void visitJumpInsn(int opcode, Label label) {
       if (IFEQ == opcode) {
         opcode = IFLE;
+      } else if (IFNE == opcode) { // for jdk higher than 1.5_08
+        opcode = IFGT;
       }
       super.visitJumpInsn(opcode, label);
     }
-
+    
     public void visitMethodInsn(int opcode, String owner, String name, String desc) {
       super.visitMethodInsn(opcode, owner, name, desc);
       if ("extract".equals(name) && "()Ljava/lang/Object;".equals(desc)) {
