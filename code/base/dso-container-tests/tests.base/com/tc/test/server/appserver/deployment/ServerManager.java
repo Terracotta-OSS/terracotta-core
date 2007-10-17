@@ -145,10 +145,10 @@ public class ServerManager {
     int appId = AppServerFactory.getCurrentAppServerId();
     switch (appId) {
       case AppServerFactory.JETTY:
-        aCopy.addModule("clustered-jetty-6.1", "1.0.0.SNAPSHOT");
+        aCopy.addNewModule("clustered-jetty-6.1", "1.0.0.SNAPSHOT");
         break;
       case AppServerFactory.WEBSPHERE:
-        aCopy.addModule("clustered-websphere-6.1.0.7", "1.0.0.SNAPSHOT");
+        aCopy.addNewModule("clustered-websphere-6.1.0.7", "1.0.0.SNAPSHOT");
         break;
       default:
         // nothing for now

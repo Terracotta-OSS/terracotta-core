@@ -131,7 +131,7 @@ public class TcConfigBuilder {
     tcConfig.getApplication().getDso().getInstrumentedClasses().addExclude(pattern);
   }
 
-  public void addModule(String name, String version) {
+  public void addNewModule(String name, String version) {
     ensureModules();
     Module newModule = tcConfig.getClients().getModules().insertNewModule(0);
     newModule.setName(name);
@@ -262,8 +262,8 @@ public class TcConfigBuilder {
   public static void main(String[] args) {
     TcConfigBuilder tc = new TcConfigBuilder();
     tc.setDsoPort(3232);
-    tc.addModule("tc", "1.2");
-    tc.addModule("asdfa", "23432");
+    tc.addNewModule("tc", "1.2");
+    tc.addNewModule("asdfa", "23432");
     tc.setServerData("c:/temp");
     tc.setClientLogs("c:/temp/logs");
     tc.addAutoLock("* com.tctest.*.*(..)", "write", true);
@@ -272,7 +272,7 @@ public class TcConfigBuilder {
     tc.addWebApplication("events", false);
     tc.addBootJarClass("java.lang.Local");
     TcConfigBuilder aCopy = tc.copy();
-    aCopy.addModule("hung", "huynh");
+    aCopy.addNewModule("hung", "huynh");
     System.out.println(aCopy.toString());
   }
 
