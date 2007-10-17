@@ -1,4 +1,4 @@
-<project name="*** MODULE NAME ***" xmlns:ivy="antlib:fr.jayasoft.ivy.ant">
+<project name="clustered-surefire-2.3" xmlns:ivy="antlib:fr.jayasoft.ivy.ant">
   <!-- ================================= 
   target: resolve              
   ================================= -->

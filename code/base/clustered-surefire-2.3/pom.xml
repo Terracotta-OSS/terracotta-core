@@ -7,7 +7,7 @@
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
-  <artifactId>clustered-junit-3.8</artifactId>
+  <artifactId>clustered-surefire-2.3</artifactId>
 
   <dependencies>
     <dependency>

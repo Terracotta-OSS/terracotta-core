@@ -7,5 +7,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
 	<classpathentry kind="lib" path="/dependencies/lib/osgi_R4_core-1.0.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/modules-common"/>
+	<classpathentry kind="lib" path="/dependencies/lib/junit-3.8.1.jar"/>
 	<classpathentry kind="output" path="build.eclipse/src.classes"/>
 </classpath>
