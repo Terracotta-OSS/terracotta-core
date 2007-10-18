@@ -33,6 +33,7 @@ import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.logging.LogManager;
 
 /**
  * Helper class called by the modified version of java.lang.ClassLoader
@@ -361,6 +362,9 @@ public class ClassProcessorHelper {
       try {
         // This avoids a deadlock (see LKC-853, LKC-1387)
         java.security.Security.getProviders();
+
+        // Avoid another deadlock (DEV-1047)
+        LogManager.getLogManager();
 
         // Workaround bug in NIO on solaris 10
         NIOWorkarounds.solaris10Workaround();
