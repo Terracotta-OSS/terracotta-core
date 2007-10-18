@@ -16,9 +16,6 @@
 
 	<clients>
 		<logs>%d/client-logs-%h</logs>
-		<modules>
-			<module name="clustered-rife-1.6.0" version="1.0.0.SNAPSHOT" />
-		</modules>
 	</clients>
 
 	<servers>

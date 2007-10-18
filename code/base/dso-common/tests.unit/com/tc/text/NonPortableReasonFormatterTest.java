@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.text;
 
@@ -16,7 +17,7 @@ public class NonPortableReasonFormatterTest extends TestCase {
 
   private NonPortableReasonFormatter formatter;
   private PrintWriter                out;
-  private TestParagraphFormatter         paragraphFormatter;
+  private TestParagraphFormatter     paragraphFormatter;
   private StringFormatter            stringFormatter;
   private StringWriter               stringWriter;
   private String                     separator;
@@ -31,12 +32,12 @@ public class NonPortableReasonFormatterTest extends TestCase {
   }
 
   public void testBasics() {
-    
+
     String reasonText = "my reason text";
     formatter.formatReasonText(reasonText);
     assertEquals(1, paragraphFormatter.formatCalls.size());
     assertEquals(reasonText, paragraphFormatter.formatCalls.get(0));
-    
+
     // check the formatting of details
     NonPortableDetail detail1 = new NonPortableDetail("0123456789", "0123456789");
     NonPortableDetail detail2 = new NonPortableDetail("0123", "0123");
@@ -66,7 +67,7 @@ public class NonPortableReasonFormatterTest extends TestCase {
   private static final class TestParagraphFormatter implements ParagraphFormatter {
 
     public final List formatCalls = new LinkedList();
-    
+
     public String format(String in) {
       formatCalls.add(in);
       return in;

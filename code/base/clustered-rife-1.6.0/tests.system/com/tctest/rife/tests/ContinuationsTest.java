@@ -16,6 +16,8 @@ import com.meterware.httpunit.WebResponse;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
+import com.tc.test.server.util.TcConfigBuilder;
+import com.tc.util.TIMUtil;
 import com.tc.util.runtime.Vm;
 import com.tctest.rife.elements.AllTypes;
 import com.uwyn.rife.engine.ReservedParameters;
@@ -326,6 +328,11 @@ public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
 				.addFilter("RIFE", "/*", RifeFilter.class, new HashMap() {{ put("rep.path", "rife-config-files/continuations/participants.xml"); }})
 				.addResourceFullpath("/web-resources", "counter.html", "WEB-INF/classes/counter.html")
 				.addResourceFullpath("/web-resources", "stepback.html", "WEB-INF/classes/stepback.html");
+		}
+		
+		@SuppressWarnings( { "serial", "unchecked" })
+		protected void configureTcConfig(TcConfigBuilder clientConfig) {
+			clientConfig.addNewModule(TIMUtil.RIFE_1_6_0, TIMUtil.getVersion(TIMUtil.RIFE_1_6_0));
 		}
 	}
 }

@@ -17,6 +17,8 @@ import com.tc.test.server.appserver.AppServerFactory;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
+import com.tc.test.server.util.TcConfigBuilder;
+import com.tc.util.TIMUtil;
 import com.tctest.webapp.servlets.ContainerHibernateTestServlet;
 
 import java.io.PrintWriter;
@@ -94,6 +96,11 @@ public class ContainerHibernateTest extends AbstractTwoServerDeploymentTest {
                          ContainerHibernateTestServlet.class, null, true);
     }
 
+    protected void configureTcConfig(TcConfigBuilder clientConfig) {
+      clientConfig.addNewModule(TIMUtil.EHCACHE_1_3, TIMUtil.getVersion(TIMUtil.EHCACHE_1_3));
+      clientConfig.addNewModule(TIMUtil.HIBERNATE_3_1_2, TIMUtil.getVersion(TIMUtil.HIBERNATE_3_1_2));
+    }
+    
     public void setUp() throws Exception {
       derbyServer = new NetworkServerControl();
       derbyServer.start(new PrintWriter(System.out));
