@@ -196,9 +196,17 @@ public class Resolver {
           if (manifest == null) continue;
 
           // found a match!
-          if (symname.equalsIgnoreCase(manifest.getMainAttributes().getValue(BUNDLE_SYMBOLICNAME))
-              && __version.equals(Version.parseVersion(manifest.getMainAttributes().getValue(BUNDLE_VERSION)))) { return addToRegistry(
-              jar.toURL(), manifest); }
+          if (symname.equalsIgnoreCase(manifest.getMainAttributes().getValue(BUNDLE_SYMBOLICNAME))) {
+            String manifestVersion = manifest.getMainAttributes().getValue(BUNDLE_VERSION);
+            try { 
+              if(__version.equals(Version.parseVersion(manifestVersion))) { 
+                return addToRegistry(jar.toURL(), manifest); 
+              }
+            } catch(NumberFormatException e) {  // thrown by parseVersion() 
+              logger.warn("Bad manifest bundle version in jar='" + jar.getAbsolutePath() + 
+                  "', version='" + manifestVersion + "'.  Skipping...", e);
+            }
+          }
         }
       } catch (MalformedURLException e) {
         // ignore bad URLs
