@@ -12,6 +12,7 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.TIMUtil;
 
 import gnu.trove.THashMap;
 
@@ -99,8 +100,7 @@ public class MapLocalStateTestApp extends GenericLocalStateTestApp {
     switch (lockMode) {
       case NONE:
       case READ:
-        Assert.assertEquals("Type: " + wrapper.getObject().getClass() + ", lock: " + lockMode,
-                            oldSize, newSize);
+        Assert.assertEquals("Type: " + wrapper.getObject().getClass() + ", lock: " + lockMode, oldSize, newSize);
         if (mutator instanceof AddEntryMutator) {
           Collection values = ((Map) wrapper.getObject()).values();
           for (Iterator it = values.iterator(); it.hasNext();) {
@@ -137,7 +137,7 @@ public class MapLocalStateTestApp extends GenericLocalStateTestApp {
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    config.addNewModule("clustered-commons-collections-3.1", "1.0.0.SNAPSHOT");
+    config.addNewModule(TIMUtil.COMMONS_COLLECTIONS_3_1, TIMUtil.getVersion(TIMUtil.COMMONS_COLLECTIONS_3_1));
 
     String testClass = MapLocalStateTestApp.class.getName();
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);

@@ -14,6 +14,7 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.test.HSqlDBServer;
 import com.tc.util.Assert;
+import com.tc.util.TIMUtil;
 import com.tctest.domain.Account;
 import com.tctest.domain.AccountIntf;
 import com.tctest.domain.Customer;
@@ -145,7 +146,7 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
     barrier.barrier();
 
     if (index == 1) {
-      //commitTransaction();
+      // commitTransaction();
       synchronized (cus) {
         cus.setEmailAddress("asi@yahoo.com");
       }
@@ -411,12 +412,12 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
     config.addIncludePattern("com.tctest.domain.PromotionId");
     new CyclicBarrierSpec().visit(visitor, config);
 
-    config.addNewModule("clustered-hibernate-3.1.2", "1.0.0.SNAPSHOT");
-    config.addNewModule("clustered-ehcache-1.2.4", "1.0.0.SNAPSHOT");
+    config.addNewModule(TIMUtil.HIBERNATE_3_1_2, TIMUtil.getVersion(TIMUtil.HIBERNATE_3_1_2));
+    config.addNewModule(TIMUtil.EHCACHE_1_2_4, TIMUtil.getVersion(TIMUtil.EHCACHE_1_2_4));
 
     // transient stuff
-    config.addNewModule("clustered-cglib-2.1.3", "1.0.0.SNAPSHOT");
-    config.addNewModule("clustered-commons-collections-3.1", "1.0.0.SNAPSHOT");
+    config.addNewModule(TIMUtil.CGLIB_2_1_3, TIMUtil.getVersion(TIMUtil.CGLIB_2_1_3));
+    config.addNewModule(TIMUtil.COMMONS_COLLECTIONS_3_1, TIMUtil.getVersion(TIMUtil.COMMONS_COLLECTIONS_3_1));
   }
 
 }

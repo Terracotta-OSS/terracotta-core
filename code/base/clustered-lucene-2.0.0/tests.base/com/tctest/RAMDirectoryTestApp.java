@@ -18,6 +18,7 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.TIMUtil;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.util.Iterator;
@@ -26,7 +27,7 @@ import java.util.concurrent.CyclicBarrier;
 
 /**
  * RAMDirectory clustering test
- *
+ * 
  * @author jgalang
  */
 public class RAMDirectoryTestApp extends AbstractErrorCatchingTransparentApp {
@@ -40,7 +41,7 @@ public class RAMDirectoryTestApp extends AbstractErrorCatchingTransparentApp {
   private final StandardAnalyzer analyzer;
 
   /**
-   *
+   * 
    * @param appId
    * @param cfg
    * @param listenerProvider
@@ -54,12 +55,12 @@ public class RAMDirectoryTestApp extends AbstractErrorCatchingTransparentApp {
 
   /**
    * Inject Lucene 2.0.0 configuration, and instrument this test class
-   *
+   * 
    * @param visitor
    * @param config
    */
   public static void visitL1DSOConfig(final ConfigVisitor visitor, final DSOClientConfigHelper config) {
-    config.addNewModule("clustered-lucene-2.0.0", "1.0.0.SNAPSHOT");
+    config.addNewModule(TIMUtil.LUCENE_2_0_0, TIMUtil.getVersion(TIMUtil.LUCENE_2_0_0));
 
     final String testClass = RAMDirectoryTestApp.class.getName();
     final TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
@@ -97,7 +98,7 @@ public class RAMDirectoryTestApp extends AbstractErrorCatchingTransparentApp {
 
   /**
    * Add datum to RAMDirectory
-   *
+   * 
    * @param value The datum to add
    * @throws Throwable
    */
@@ -115,7 +116,7 @@ public class RAMDirectoryTestApp extends AbstractErrorCatchingTransparentApp {
 
   /**
    * Attempt to retrieve datum from RAMDirectory.
-   *
+   * 
    * @param value The datum to retrieve
    * @throws Exception
    */

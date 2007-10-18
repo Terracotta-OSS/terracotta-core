@@ -16,6 +16,7 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tc.util.DebugUtil;
+import com.tc.util.TIMUtil;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.lang.reflect.Field;
@@ -49,7 +50,7 @@ public class EhcacheEvictionTestApp extends AbstractErrorCatchingTransparentApp 
    * @param config
    */
   public static void visitL1DSOConfig(final ConfigVisitor visitor, final DSOClientConfigHelper config) {
-    config.addNewModule("clustered-ehcache-1.2.4", "1.0.0.SNAPSHOT");
+    config.addNewModule(TIMUtil.EHCACHE_1_2_4, TIMUtil.getVersion(TIMUtil.EHCACHE_1_2_4));
     config.addAutolock("* *..*.*(..)", ConfigLockLevel.WRITE);
 
     final String testClass = EhcacheEvictionTestApp.class.getName();

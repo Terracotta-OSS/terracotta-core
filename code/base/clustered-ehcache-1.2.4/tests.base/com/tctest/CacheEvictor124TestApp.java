@@ -14,11 +14,12 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.util.TIMUtil;
 
 public class CacheEvictor124TestApp extends CacheEvictorTestApp {
   private CyclicBarrier barrier;
   private CacheManager  cacheManager;
-  
+
   public CacheEvictor124TestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     barrier = new CyclicBarrier(cfg.getGlobalParticipantCount());
@@ -32,10 +33,9 @@ public class CacheEvictor124TestApp extends CacheEvictorTestApp {
   protected CacheManager getCacheManger() {
     return cacheManager;
   }
-  
-  public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    config.addNewModule("clustered-ehcache-1.2.4", "1.0.0.SNAPSHOT");
 
+  public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
+    config.addNewModule(TIMUtil.EHCACHE_1_2_4, TIMUtil.getVersion(TIMUtil.EHCACHE_1_2_4));
     String testClass = CacheEvictor124TestApp.class.getName();
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     spec.addRoot("barrier", "barrier");

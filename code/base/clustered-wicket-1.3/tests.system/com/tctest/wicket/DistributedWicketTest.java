@@ -43,7 +43,7 @@ public class DistributedWicketTest extends TransparentTestBase {
     }
     
     public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-      // config.addNewModule("clustered-wicket-1.3", "1.0.0");
+      //
     }
     
     public void run() {

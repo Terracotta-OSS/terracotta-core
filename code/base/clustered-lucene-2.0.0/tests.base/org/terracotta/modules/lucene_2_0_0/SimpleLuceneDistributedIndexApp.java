@@ -1,17 +1,18 @@
 package org.terracotta.modules.lucene_2_0_0;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
-
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.test.TempDirectoryHelper;
 import com.tc.util.Assert;
+import com.tc.util.TIMUtil;
 import com.tctest.runner.AbstractTransparentApp;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 
 public final class SimpleLuceneDistributedIndexApp extends AbstractTransparentApp {
 
@@ -67,7 +68,7 @@ public final class SimpleLuceneDistributedIndexApp extends AbstractTransparentAp
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    config.addNewModule("clustered-lucene-2.0.0", "1.0.0.SNAPSHOT");
+    config.addNewModule(TIMUtil.LUCENE_2_0_0, TIMUtil.getVersion(TIMUtil.LUCENE_2_0_0));
 
     config.addIncludePattern(LuceneSampleDataIndex.class.getName());
     config.addIncludePattern(SimpleLuceneDistributedIndexApp.class.getName());

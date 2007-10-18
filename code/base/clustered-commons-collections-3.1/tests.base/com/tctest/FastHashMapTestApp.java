@@ -12,6 +12,7 @@ import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.TIMUtil;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 public final class FastHashMapTestApp extends
@@ -25,15 +26,16 @@ public final class FastHashMapTestApp extends
 
 	public static void visitL1DSOConfig(final ConfigVisitor visitor,
 			final DSOClientConfigHelper config) {
-		config.addNewModule("clustered-commons-collections-3.1", "1.0.0.SNAPSHOT");
+		config.addNewModule(TIMUtil.COMMONS_COLLECTIONS_3_1, TIMUtil
+				.getVersion(TIMUtil.COMMONS_COLLECTIONS_3_1));
 
 		final String testClass = FastHashMapTestApp.class.getName();
 		config.addIncludePattern(testClass + "$*");
-		
+
 		final TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
 		spec.addRoot("barrier", "barrier");
 		spec.addRoot("clusteredFastHashMap", "clusteredFastHashMap");
-	    new CyclicBarrierSpec().visit(visitor, config);
+		new CyclicBarrierSpec().visit(visitor, config);
 	}
 
 	public FastHashMapTestApp(final String appId, final ApplicationConfig cfg,

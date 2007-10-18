@@ -12,10 +12,10 @@ import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.TIMUtil;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
-public final class LRUMapTestApp extends
-		AbstractErrorCatchingTransparentApp {
+public final class LRUMapTestApp extends AbstractErrorCatchingTransparentApp {
 
 	static final int EXPECTED_THREAD_COUNT = 2;
 
@@ -25,15 +25,16 @@ public final class LRUMapTestApp extends
 
 	public static void visitL1DSOConfig(final ConfigVisitor visitor,
 			final DSOClientConfigHelper config) {
-		config.addNewModule("clustered-commons-collections-3.1", "1.0.0.SNAPSHOT");
+		config.addNewModule(TIMUtil.COMMONS_COLLECTIONS_3_1, TIMUtil
+				.getVersion(TIMUtil.COMMONS_COLLECTIONS_3_1));
 
 		final String testClass = LRUMapTestApp.class.getName();
 		config.addIncludePattern(testClass + "$*");
-		
+
 		final TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
 		spec.addRoot("barrier", "barrier");
 		spec.addRoot("clusteredLRUMap", "clusteredLRUMap");
-	    new CyclicBarrierSpec().visit(visitor, config);
+		new CyclicBarrierSpec().visit(visitor, config);
 	}
 
 	public LRUMapTestApp(final String appId, final ApplicationConfig cfg,
@@ -86,8 +87,7 @@ public final class LRUMapTestApp extends
 
 	private void removeDataFromMap(final int count) {
 		for (int pos = 0; pos < count; ++pos) {
-			clusteredLRUMap.remove(clusteredLRUMap.keySet()
-					.iterator().next());
+			clusteredLRUMap.remove(clusteredLRUMap.keySet().iterator().next());
 		}
 	}
 

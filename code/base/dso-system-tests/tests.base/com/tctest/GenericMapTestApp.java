@@ -15,6 +15,7 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.app.ErrorContext;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.TIMUtil;
 import com.tcclient.ehcache.TimeExpiryMap;
 
 import gnu.trove.THashMap;
@@ -137,7 +138,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClass = GenericMapTestApp.class.getName();
-    config.addNewModule("clustered-commons-collections-3.1", "1.0.0.SNAPSHOT");
+    config.addNewModule(TIMUtil.COMMONS_COLLECTIONS_3_1, TIMUtil.getVersion(TIMUtil.COMMONS_COLLECTIONS_3_1));
     config.getOrCreateSpec(testClass);
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);
@@ -148,8 +149,10 @@ public class GenericMapTestApp extends GenericTestApp {
     config.addIncludePattern(NullTolerantComparator.class.getName());
     config.addIncludePattern(SimpleEntry.class.getName());
     config.addExcludePattern(MyNonPortableObject.class.getName());
-    
-    config.addNewModule("clustered-ehcache-1.2.4", "1.0.0.SNAPSHOT"); // this is just a quick way to add TimeExpiryMap to the instrumentation list
+
+    config.addNewModule(TIMUtil.EHCACHE_1_2_4, TIMUtil.getVersion(TIMUtil.EHCACHE_1_2_4)); // this is just a quick way
+                                                                                            // to add TimeExpiryMap
+    // to the instrumentation list
   }
 
   void testBasicUnSynchronizedPut(Map map, boolean validate) {
@@ -1056,7 +1059,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
   // ReadOnly testing methods.
   void testReadOnlyPut(Map map, boolean validate) {
-    if (! canTestReadOnly(map)) { return; }
+    if (!canTestReadOnly(map)) { return; }
 
     if (validate) {
       assertEmptyMap(map);
@@ -1074,7 +1077,7 @@ public class GenericMapTestApp extends GenericTestApp {
   }
 
   void testReadOnlyPutAll(Map map, boolean validate) {
-    if (! canTestReadOnly(map)) { return; }
+    if (!canTestReadOnly(map)) { return; }
 
     if (validate) {
       assertEmptyMap(map);
@@ -1094,7 +1097,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
   // Setting up for the ReadOnly test for remove.
   void testSetUpRemove(Map map, boolean validate) {
-    if (! canTestReadOnly(map)) { return; }
+    if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
     addMappings(toAdd, 3);
@@ -1124,7 +1127,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
   // Setting up for the ReadOnly test for clear.
   void testSetUpClear(Map map, boolean validate) {
-    if (! canTestReadOnly(map)) { return; }
+    if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
     addMappings(toAdd, 3);
@@ -1154,7 +1157,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
   // Setting up for the ReadOnly test for entry set clear.
   void testSetUpEntrySetClear(Map map, boolean validate) {
-    if (! canTestReadOnly(map)) { return; }
+    if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
     addMappings(toAdd, 3);
@@ -1185,7 +1188,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
   // Setting up for the ReadOnly test for entry set remove.
   void testSetUpEntrySetRemove(Map map, boolean validate) {
-    if (! canTestReadOnly(map)) { return; }
+    if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
     addMappings(toAdd, 3);
@@ -1218,7 +1221,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
   // Setting up for the ReadOnly test for entry set retainAll.
   void testSetUpEntrySetRetainAll(Map map, boolean validate) {
-    if (! canTestReadOnly(map)) { return; }
+    if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
     addMappings(toAdd, 3);
@@ -1252,7 +1255,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
   // Setting up for the ReadOnly test for entry set removeAll.
   void testSetUpEntrySetRemoveAll(Map map, boolean validate) {
-    if (! canTestReadOnly(map)) { return; }
+    if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
     addMappings(toAdd, 3);
@@ -1286,7 +1289,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
   // Setting up for the ReadOnly test for entry set iterator remove.
   void testSetUpEntrySetIteratorRemove(Map map, boolean validate) {
-    if (! canTestReadOnly(map)) { return; }
+    if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
     addMappings(toAdd, 3);
@@ -1318,7 +1321,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
   // Setting up for the ReadOnly test for entry set setValue.
   void testSetUpEntrySet(Map map, boolean validate) {
-    if (! canTestReadOnly(map)) { return; }
+    if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
     addMappings(toAdd, 3);
@@ -1350,7 +1353,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
   // Setting up for the ReadOnly test for key set clear.
   void testSetUpKeySetClear(Map map, boolean validate) {
-    if (! canTestReadOnly(map)) { return; }
+    if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
     addMappings(toAdd, 3);
@@ -1381,7 +1384,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
   // Setting up for the ReadOnly test for key set retainAll.
   void testSetUpKeySetRetainAll(Map map, boolean validate) {
-    if (! canTestReadOnly(map)) { return; }
+    if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
     addMappings(toAdd, 3);
@@ -1415,7 +1418,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
   // Setting up for the ReadOnly test for key set removeAll.
   void testSetUpKeySetRemoveAll(Map map, boolean validate) {
-    if (! canTestReadOnly(map)) { return; }
+    if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
     addMappings(toAdd, 3);
@@ -1449,7 +1452,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
   // Setting up for the ReadOnly test for key set iterator remove.
   void testSetUpKeySetIteratorRemove(Map map, boolean validate) {
-    if (! canTestReadOnly(map)) { return; }
+    if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
     addMappings(toAdd, 3);
@@ -1480,7 +1483,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
   // Setting up for the ReadOnly test for values clear.
   void testSetUpValuesClear(Map map, boolean validate) {
-    if (! canTestReadOnly(map)) { return; }
+    if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
     addMappings(toAdd, 3);
@@ -1511,7 +1514,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
   // Setting up for the ReadOnly test for values retainAll.
   void testSetUpValuesRetainAll(Map map, boolean validate) {
-    if (! canTestReadOnly(map)) { return; }
+    if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
     addMappings(toAdd, 3);
@@ -1545,7 +1548,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
   // Setting up for the ReadOnly test for values removeAll.
   void testSetUpValuesRemoveAll(Map map, boolean validate) {
-    if (! canTestReadOnly(map)) { return; }
+    if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
     addMappings(toAdd, 3);
@@ -1579,7 +1582,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
   // Setting up for the ReadOnly test for values iterator remove.
   void testSetUpValuesIteratorRemove(Map map, boolean validate) {
-    if (! canTestReadOnly(map)) { return; }
+    if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
     addMappings(toAdd, 3);
@@ -1802,7 +1805,7 @@ public class GenericMapTestApp extends GenericTestApp {
   private boolean canTestNonPortableObject(Map map) {
     return ((map instanceof HashMap) || (map instanceof LinkedHashMap) || (map instanceof Hashtable));
   }
-  
+
   private boolean canTestReadOnly(Map map) {
     return (!(map instanceof Hashtable) && !(map instanceof FastHashMap) && !(map instanceof TimeExpiryMap));
   }

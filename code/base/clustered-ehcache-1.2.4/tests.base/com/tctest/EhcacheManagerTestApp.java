@@ -15,6 +15,7 @@ import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.TIMUtil;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.util.Iterator;
@@ -28,13 +29,12 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 
   /**
    * Test that Ehcache's CacheManger and Cache objects can be clustered.
-   *
+   * 
    * @param appId
    * @param cfg
    * @param listenerProvider
    */
-  public EhcacheManagerTestApp(final String appId, final ApplicationConfig cfg,
-      final ListenerProvider listenerProvider) {
+  public EhcacheManagerTestApp(final String appId, final ApplicationConfig cfg, final ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     barrier = new CyclicBarrier(getParticipantCount());
     cacheManager = CacheManager.getInstance();
@@ -42,13 +42,12 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 
   /**
    * Inject Ehcache 1.2.4 configuration, and instrument this test class
-   *
+   * 
    * @param visitor
    * @param config
    */
-  public static void visitL1DSOConfig(final ConfigVisitor visitor,
-      final DSOClientConfigHelper config) {
-    config.addNewModule("clustered-ehcache-1.2.4", "1.0.0.SNAPSHOT");
+  public static void visitL1DSOConfig(final ConfigVisitor visitor, final DSOClientConfigHelper config) {
+    config.addNewModule(TIMUtil.EHCACHE_1_2_4, TIMUtil.getVersion(TIMUtil.EHCACHE_1_2_4));
     config.addAutolock("* *..*.*(..)", ConfigLockLevel.WRITE);
 
     final String testClass = EhcacheManagerTestApp.class.getName();
@@ -58,8 +57,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
   }
 
   /**
-   * Test that the data written in the clustered CacheManager by one node,
-   * becomes available in the other.
+   * Test that the data written in the clustered CacheManager by one node, becomes available in the other.
    */
   protected void runTest() throws Throwable {
     final int CACHE_POPULATION = 10;
@@ -125,9 +123,8 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 
   /**
    * Create many caches.
-   *
-   * @param count
-   *          The number of caches to create
+   * 
+   * @param count The number of caches to create
    * @throws Throwable
    */
   private void addManyCaches(final int count) throws Throwable {
@@ -145,7 +142,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 
   /**
    * Verify that we have an expected number of caches created.
-   *
+   * 
    * @param expected
    * @throws Exception
    */
@@ -156,7 +153,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 
   /**
    * Verify many caches
-   *
+   * 
    * @param count
    * @throws Throwable
    */
@@ -169,21 +166,18 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 
   /**
    * Add a cache into the CacheManager.
-   *
-   * @param name
-   *          The name of the cache to add
-   * @param mustDelegate
-   *          create Manually create the cache or let the manager handle the
-   *          details
+   * 
+   * @param name The name of the cache to add
+   * @param mustDelegate create Manually create the cache or let the manager handle the details
    * @throws Throwable
    */
-  private void addCache(final String name, boolean mustDelegate)
-      throws Throwable {
+  private void addCache(final String name, boolean mustDelegate) throws Throwable {
     if (mustDelegate) {
       cacheManager.addCache(name);
     } else {
-      Cache cache = new Cache(name, 2, false, true, 0, 0); // setting both maxIdleTime and maxTTL to 0, so the cache entries
-                                                           // never expire.
+      Cache cache = new Cache(name, 2, false, true, 0, 0); // setting both maxIdleTime and maxTTL to 0, so the cache
+                                                            // entries
+      // never expire.
       cacheManager.addCache(cache);
     }
 
@@ -194,9 +188,8 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 
   /**
    * Verify that the named cache exists and that it's contents can be retrieved.
-   *
-   * @param name
-   *          The name of the cache to retrieve
+   * 
+   * @param name The name of the cache to retrieve
    * @throws Exception
    */
   private void verifyCache(final String name) throws Exception {
@@ -219,7 +212,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 
   /**
    * Remove the named cache
-   *
+   * 
    * @param name
    */
   private void removeCache(final String name) {
@@ -234,7 +227,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 
   /**
    * Verify that the named cache no longer exists.
-   *
+   * 
    * @param name
    * @throws Exception
    */
@@ -261,14 +254,12 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
   }
 
   // This is lame but it makes runTest() slightly more readable
-  private void letOtherNodeProceed() throws InterruptedException,
-      BrokenBarrierException {
+  private void letOtherNodeProceed() throws InterruptedException, BrokenBarrierException {
     barrier.barrier();
   }
 
   // This is lame but it makes runTest() slightly more readable
-  private void waitForPermissionToProceed() throws InterruptedException,
-      BrokenBarrierException {
+  private void waitForPermissionToProceed() throws InterruptedException, BrokenBarrierException {
     barrier.barrier();
   }
 }

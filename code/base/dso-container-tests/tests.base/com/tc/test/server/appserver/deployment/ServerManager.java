@@ -12,6 +12,7 @@ import com.tc.test.server.appserver.AppServerInstallation;
 import com.tc.test.server.util.AppServerUtil;
 import com.tc.test.server.util.TcConfigBuilder;
 import com.tc.util.PortChooser;
+import com.tc.util.TIMUtil;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.Vm;
 
@@ -51,7 +52,7 @@ public class ServerManager {
     sandbox = AppServerUtil.createSandbox(tempDir);
     warDir = new File(sandbox, "war");
     installation = AppServerUtil.createAppServerInstallation(factory, installDir, sandbox);
-    
+
     if (DEBUG_MODE) {
       serverTcConfig.setDsoPort(9510);
       serverTcConfig.setJmxPort(9520);
@@ -145,10 +146,10 @@ public class ServerManager {
     int appId = AppServerFactory.getCurrentAppServerId();
     switch (appId) {
       case AppServerFactory.JETTY:
-        aCopy.addNewModule("clustered-jetty-6.1", "1.0.0.SNAPSHOT");
+        aCopy.addNewModule(TIMUtil.JETTY_6_1, TIMUtil.getVersion(TIMUtil.JETTY_6_1));
         break;
       case AppServerFactory.WEBSPHERE:
-        aCopy.addNewModule("clustered-websphere-6.1.0.7", "1.0.0.SNAPSHOT");
+        aCopy.addNewModule(TIMUtil.WEBSPHERE_6_1_0_7, TIMUtil.getVersion(TIMUtil.WEBSPHERE_6_1_0_7));
         break;
       default:
         // nothing for now

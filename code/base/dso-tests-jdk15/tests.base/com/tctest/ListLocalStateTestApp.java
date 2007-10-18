@@ -10,6 +10,7 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.TIMUtil;
 
 import java.net.Socket;
 import java.util.ArrayList;
@@ -111,7 +112,7 @@ public class ListLocalStateTestApp extends GenericLocalStateTestApp {
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    config.addNewModule("clustered-commons-collections-3.1", "1.0.0.SNAPSHOT");
+    config.addNewModule(TIMUtil.COMMONS_COLLECTIONS_3_1, TIMUtil.getVersion(TIMUtil.COMMONS_COLLECTIONS_3_1));
 
     String testClass = ListLocalStateTestApp.class.getName();
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);

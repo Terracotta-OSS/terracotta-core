@@ -17,6 +17,7 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tc.util.DebugUtil;
+import com.tc.util.TIMUtil;
 import com.tcclient.ehcache.TimeExpiryMap;
 
 import java.io.File;
@@ -103,7 +104,9 @@ public class TimeExpiryMapGlobalEvictionTestApp extends ServerCrashingAppBase {
     spec.addRoot("barrier", "barrier");
     spec.addRoot("dataRoot", "dataRoot");
 
-    config.addNewModule("clustered-ehcache-1.2.4", "1.0.0.SNAPSHOT"); // this is just a quick way to add TimeExpiryMap to the
+    config.addNewModule(TIMUtil.EHCACHE_1_2_4, TIMUtil.getVersion(TIMUtil.EHCACHE_1_2_4)); // this is just a quick way
+                                                                                            // to add TimeExpiryMap to
+                                                                                            // the
     // instrumentation list
   }
 
@@ -134,7 +137,7 @@ public class TimeExpiryMapGlobalEvictionTestApp extends ServerCrashingAppBase {
       barrier.barrier();
       addData(index, 1);
       barrier.barrier();
-      
+
       Thread.sleep(1000);
       Assert.assertEquals("val01", dataRoot.get("key01"));
       Assert.assertEquals("val02", dataRoot.get("key02"));
@@ -143,7 +146,7 @@ public class TimeExpiryMapGlobalEvictionTestApp extends ServerCrashingAppBase {
       Assert.assertEquals("val12", dataRoot.get("key12"));
       Assert.assertEquals("val13", dataRoot.get("key13"));
       Assert.assertEquals(6, dataRoot.size());
-      
+
       Thread.sleep(10000);
       Assert.assertTrue(dataRoot.isExpired("key01"));
       Assert.assertTrue(dataRoot.isExpired("key02"));
@@ -153,9 +156,9 @@ public class TimeExpiryMapGlobalEvictionTestApp extends ServerCrashingAppBase {
       Assert.assertTrue(dataRoot.isExpired("key13"));
       Assert.assertEquals(0, dataRoot.size());
       Assert.assertEquals(6, dataRoot.getNumOfEvicted());
-      
+
       barrier.barrier();
-      
+
       addData(index, 4);
       Thread.sleep(1000);
       Assert.assertEquals("val04", dataRoot.get("key04"));
@@ -165,7 +168,7 @@ public class TimeExpiryMapGlobalEvictionTestApp extends ServerCrashingAppBase {
       Assert.assertEquals("val15", dataRoot.get("key15"));
       Assert.assertEquals("val16", dataRoot.get("key16"));
       Assert.assertEquals(6, dataRoot.size());
-      
+
       if (index == 0) {
         Thread.sleep(20000);
 
@@ -182,14 +185,14 @@ public class TimeExpiryMapGlobalEvictionTestApp extends ServerCrashingAppBase {
 
     private void addData(int index, int startIndex) {
       dataRoot.put("key" + index + startIndex, "val" + index + startIndex);
-      dataRoot.put("key" + index + (startIndex+1), "val" + index + (startIndex+1));
-      dataRoot.put("key" + index + (startIndex+2), "val" + index + (startIndex+2));
+      dataRoot.put("key" + index + (startIndex + 1), "val" + index + (startIndex + 1));
+      dataRoot.put("key" + index + (startIndex + 2), "val" + index + (startIndex + 2));
     }
   }
 
   public static class DataRoot {
     private MockTimeExpiryMap map;
-    
+
     public DataRoot() {
       super();
     }
@@ -224,7 +227,8 @@ public class TimeExpiryMapGlobalEvictionTestApp extends ServerCrashingAppBase {
     private int numOfEvicted = 0;
 
     public MockTimeExpiryMap(int invalidatorSleepSeconds, int maxIdleTimeoutSeconds, int maxTTLSeconds) {
-      super(invalidatorSleepSeconds, maxIdleTimeoutSeconds, maxTTLSeconds, "MockCache", true, 3, 4, 2, true, true, 2, 10);
+      super(invalidatorSleepSeconds, maxIdleTimeoutSeconds, maxTTLSeconds, "MockCache", true, 3, 4, 2, true, true, 2,
+            10);
     }
 
     protected final synchronized void processExpired(Object key) {

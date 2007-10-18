@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -12,6 +13,7 @@ import com.tc.object.tx.UnlockedSharedObjectException;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.TIMUtil;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -39,7 +41,7 @@ public class AutoLockMapTestApp extends GenericTestApp {
     return maps.iterator();
   }
 
-  @SuppressWarnings({ "unchecked", "unchecked" })
+  @SuppressWarnings( { "unchecked", "unchecked" })
   protected void setupTestObject(String test) {
     List maps = new ArrayList();
     maps.add(new HashMap());
@@ -71,16 +73,12 @@ public class AutoLockMapTestApp extends GenericTestApp {
   }
 
   void testDisableAutoLocks(Map map, boolean validate) throws Exception {
-    if (! (map instanceof Hashtable) || (map instanceof HashMap)) {
-      return;
-    }
+    if (!(map instanceof Hashtable) || (map instanceof HashMap)) { return; }
 
-    if (validate) {
-      return;
-    }
+    if (validate) { return; }
 
-    Hashtable ht = (Hashtable)map;
-    ((Manageable)ht).__tc_managed().disableAutoLocking();
+    Hashtable ht = (Hashtable) map;
+    ((Manageable) ht).__tc_managed().disableAutoLocking();
     try {
       ht.put("saravan", "smells");
       throw new AssertionError("put() did not fail");
@@ -167,24 +165,17 @@ public class AutoLockMapTestApp extends GenericTestApp {
   }
 
   /**
-   * EntryWrapper is not portable yet, so the putting the entries to a shared array
-   * by calling the entrySet().toArray() method will not work and will throw a NonPortableException
-   * at this point.
+   * EntryWrapper is not portable yet, so the putting the entries to a shared array by calling the entrySet().toArray()
+   * method will not work and will throw a NonPortableException at this point.
    */
-  /*void testEntrySetToArray(Map map, boolean validate) {
-    Object[] array = getArray(map);
-
-    if (validate) {
-      assertArray(array, map);
-    } else {
-      initialize(map);
-
-      synchronized (array) {
-        Object[] returnArray = map.entrySet().toArray(array);
-        Assert.assertTrue(returnArray == array);
-      }
-    }
-  }*/
+  /*
+   * void testEntrySetToArray(Map map, boolean validate) { Object[] array = getArray(map);
+   * 
+   * if (validate) { assertArray(array, map); } else { initialize(map);
+   * 
+   * synchronized (array) { Object[] returnArray = map.entrySet().toArray(array); Assert.assertTrue(returnArray ==
+   * array); } } }
+   */
 
   void testEntrySetIterator(Map map, boolean validate) throws Exception {
     if ((map instanceof FastHashMap) && (!((FastHashMap) map).getFast())) { return; }
@@ -420,42 +411,36 @@ public class AutoLockMapTestApp extends GenericTestApp {
 
   void testBasicSetProperty(Map map, boolean validate) {
     if (map instanceof HashMap) { return; }
-    if (!(map instanceof Properties)) {
-      return;
-    }
+    if (!(map instanceof Properties)) { return; }
 
-    if(validate) {
+    if (validate) {
       assertMappings(getInitialData(), map);
     } else {
-      ((Properties)map).setProperty("January", "Jan");
-      ((Properties)map).setProperty("February", "Feb");
-      ((Properties)map).setProperty("March", "Mar");
-      ((Properties)map).setProperty("April", "Apr");
+      ((Properties) map).setProperty("January", "Jan");
+      ((Properties) map).setProperty("February", "Feb");
+      ((Properties) map).setProperty("March", "Mar");
+      ((Properties) map).setProperty("April", "Apr");
     }
   }
 
   void testBasicGetProperty(Map map, boolean validate) {
     if (map instanceof HashMap) { return; }
-    if (!(map instanceof Properties)) {
-      return;
-    }
+    if (!(map instanceof Properties)) { return; }
 
-    if(validate) {
-      Assert.assertEquals("value", ((Properties)map).getProperty("key"));
-      Assert.assertEquals("defaultValue", ((Properties)map).getProperty("nonsense", "defaultValue"));
-      Assert.assertEquals("value", ((Properties)map).getProperty("key", "defaultValue"));
+    if (validate) {
+      Assert.assertEquals("value", ((Properties) map).getProperty("key"));
+      Assert.assertEquals("defaultValue", ((Properties) map).getProperty("nonsense", "defaultValue"));
+      Assert.assertEquals("value", ((Properties) map).getProperty("key", "defaultValue"));
     } else {
-      ((Properties)map).setProperty("key", "value");
+      ((Properties) map).setProperty("key", "value");
     }
   }
 
   void testBasicLoad(Map map, boolean validate) {
     if (map instanceof HashMap) { return; }
-    if (!(map instanceof Properties)) {
-      return;
-    }
+    if (!(map instanceof Properties)) { return; }
 
-    if(validate) {
+    if (validate) {
       Map expectedMap = new Properties();
       expectedMap.put("key1", "val1");
       expectedMap.put("key2", "val2");
@@ -474,7 +459,7 @@ public class AutoLockMapTestApp extends GenericTestApp {
       }
       ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
       try {
-        ((Properties)map).load(inputStream);
+        ((Properties) map).load(inputStream);
       } catch (IOException ioe) {
         Assert.fail();
       }
@@ -499,7 +484,7 @@ public class AutoLockMapTestApp extends GenericTestApp {
   void assertArray(Object[] expect, Collection collection) {
     Assert.assertEquals(expect.length, collection.size());
     for (int i = 0; i < expect.length; i++) {
-      String val = (String)expect[i];
+      String val = (String) expect[i];
       Assert.assertTrue(collection.contains(val));
     }
   }
@@ -544,7 +529,7 @@ public class AutoLockMapTestApp extends GenericTestApp {
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-	config.addNewModule("clustered-commons-collections-3.1", "1.0.0.SNAPSHOT");
+    config.addNewModule(TIMUtil.COMMONS_COLLECTIONS_3_1, TIMUtil.getVersion(TIMUtil.COMMONS_COLLECTIONS_3_1));
 
     String testClass = AutoLockMapTestApp.class.getName();
     config.getOrCreateSpec(testClass);

@@ -15,6 +15,7 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.test.HSqlDBServer;
 import com.tc.util.Assert;
+import com.tc.util.TIMUtil;
 import com.tctest.domain.Account;
 import com.tctest.domain.AccountDAO;
 import com.tctest.domain.Customer;
@@ -145,8 +146,8 @@ public class IBatisSimpleDaoTestApp extends AbstractTransparentApp {
     config.addIncludePattern("com.tctest.domain.*");
     new CyclicBarrierSpec().visit(visitor, config);
 
-    config.addNewModule("clustered-cglib-2.1.3", "1.0.0.SNAPSHOT");
-    config.addNewModule("clustered-iBatis-2.2.0", "1.0.0.SNAPSHOT");
+    config.addNewModule(TIMUtil.CGLIB_2_1_3, TIMUtil.getVersion(TIMUtil.CGLIB_2_1_3));
+    config.addNewModule(TIMUtil.IBATIS_2_2_0, TIMUtil.getVersion(TIMUtil.IBATIS_2_2_0));
   }
 
 }
