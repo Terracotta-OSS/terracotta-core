@@ -14,6 +14,32 @@
   <groupId>org.terracotta</groupId>
   <artifactId>tc-compile</artifactId>
 
+  <repositories>
+    <repository>
+      <id>terracotta-repository</id>
+      <url>http://download.terracotta.org/maven2</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>terracotta-repository</id>
+      <url>http://download.terracotta.org/maven2</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </pluginRepository>
+  </pluginRepositories>
+
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>

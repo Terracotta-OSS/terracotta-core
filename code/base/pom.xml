@@ -13,6 +13,32 @@
     <tcVersion>2.5-SNAPSHOT</tcVersion>
   </properties>
 
+
+  <repositories>
+    <repository>
+      <id>terracotta-repository</id>
+      <url>http://download.terracotta.org/maven2</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>terracotta-repository</id>
+      <url>http://download.terracotta.org/maven2</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </pluginRepository>
+  </pluginRepositories>
   <scm>
     <connection>scm:svn:http://svn.terracotta.org/svn/tc/dso/trunk</connection>
     <url>scm:svn:http://svn.terracotta.org/svn/tc/dso/trunk</url>
