@@ -10,4 +10,4 @@ Bundle-SymbolicName: org.terracotta.modules.clustered_lucene_2.0.0
 Bundle-Vendor: Terracotta, Inc.
 Bundle-Version: 2.5.0.SNAPSHOT
 Bundle-Activator: org.terracotta.modules.lucene_2_0_0.LuceneTerracottaConfigurator
-Require-Bundle: org.terracotta.modules.modules_common;bundle-version:="1.0.0.SNAPSHOT"
+Require-Bundle: org.terracotta.modules.modules_common;bundle-version:="2.5.0.SNAPSHOT"

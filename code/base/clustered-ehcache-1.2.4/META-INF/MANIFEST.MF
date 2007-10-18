@@ -13,6 +13,6 @@ Bundle-Version: 2.5.0.SNAPSHOT
 Import-Package: net.sf.ehcache.store,
  org.terracotta.modules.configuration,
  org.terracotta.modules.ehcache.commons_1_0
-Require-Bundle: org.terracotta.modules.clustered_commons_collections_3.1;bundle-version:="1.0.0.SNAPSHOT",
- org.terracotta.modules.clustered_ehcache_commons_1.0;bundle-version:="1.0.0.SNAPSHOT",
- org.terracotta.modules.modules_common;bundle-version:="1.0.0.SNAPSHOT"
+Require-Bundle: org.terracotta.modules.clustered_commons_collections_3.1;bundle-version:="2.5.0.SNAPSHOT",
+ org.terracotta.modules.clustered_ehcache_commons_2.5.0.SNAPSHOT",
+ org.terracotta.modules.modules_common;bundle-version:="2.5.0.SNAPSHOT"
