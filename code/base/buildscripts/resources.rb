@@ -61,6 +61,11 @@ connections.  For example:
 
   tcbuild check_one AssertTest debug=8000
 
+The test.mode=<mode> option can be used to set the transparent tests mode to
+one of 'crash', 'active-passive', or 'normal' (the default).  For example:
+
+  tcbuild check_one TransparentSetTest test.mode=active-passive
+
 NOTE: To override the JDK used for testing, see the JDK SELECTION section below.
 
 check
