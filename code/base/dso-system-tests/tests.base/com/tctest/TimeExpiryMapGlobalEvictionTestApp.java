@@ -104,7 +104,7 @@ public class TimeExpiryMapGlobalEvictionTestApp extends ServerCrashingAppBase {
     spec.addRoot("barrier", "barrier");
     spec.addRoot("dataRoot", "dataRoot");
 
-    config.addNewModule(TIMUtil.EHCACHE_1_2_4, TIMUtil.getVersion(TIMUtil.EHCACHE_1_2_4)); // this is just a quick way
+    config.addModule(TIMUtil.EHCACHE_1_2_4, TIMUtil.getVersion(TIMUtil.EHCACHE_1_2_4)); // this is just a quick way
                                                                                             // to add TimeExpiryMap to
                                                                                             // the
     // instrumentation list

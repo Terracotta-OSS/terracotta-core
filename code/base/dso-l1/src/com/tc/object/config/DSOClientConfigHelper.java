@@ -188,7 +188,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   void addRepository(String location);
   
-  void addNewModule(String name, String version);
+  void addModule(String name, String version);
 
   boolean removeCustomAdapter(String name);
 

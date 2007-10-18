@@ -114,7 +114,7 @@ public class ContainerWicketTest extends AbstractTwoServerDeploymentTest {
 		}
 
 		protected void configureTcConfig(TcConfigBuilder clientConfig) {
-			clientConfig.addNewModule(TIMUtil.WICKET_1_3, TIMUtil
+			clientConfig.addModule(TIMUtil.WICKET_1_3, TIMUtil
 					.getVersion(TIMUtil.WEBSPHERE_6_1_0_7));
 		}
 

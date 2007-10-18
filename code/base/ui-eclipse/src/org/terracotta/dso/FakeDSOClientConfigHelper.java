@@ -146,7 +146,7 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     /**/
   }
 
-  public void addNewModule(String name, String version) {
+  public void addModule(String name, String version) {
     /**/
   }
 

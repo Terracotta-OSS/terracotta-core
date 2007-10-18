@@ -332,7 +332,7 @@ public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
 		
 		@SuppressWarnings( { "serial", "unchecked" })
 		protected void configureTcConfig(TcConfigBuilder clientConfig) {
-			clientConfig.addNewModule(TIMUtil.RIFE_1_6_0, TIMUtil.getVersion(TIMUtil.RIFE_1_6_0));
+			clientConfig.addModule(TIMUtil.RIFE_1_6_0, TIMUtil.getVersion(TIMUtil.RIFE_1_6_0));
 		}
 	}
 }

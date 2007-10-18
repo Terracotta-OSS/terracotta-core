@@ -97,8 +97,8 @@ public class ContainerHibernateTest extends AbstractTwoServerDeploymentTest {
     }
 
     protected void configureTcConfig(TcConfigBuilder clientConfig) {
-      clientConfig.addNewModule(TIMUtil.EHCACHE_1_3, TIMUtil.getVersion(TIMUtil.EHCACHE_1_3));
-      clientConfig.addNewModule(TIMUtil.HIBERNATE_3_1_2, TIMUtil.getVersion(TIMUtil.HIBERNATE_3_1_2));
+      clientConfig.addModule(TIMUtil.EHCACHE_1_3, TIMUtil.getVersion(TIMUtil.EHCACHE_1_3));
+      clientConfig.addModule(TIMUtil.HIBERNATE_3_1_2, TIMUtil.getVersion(TIMUtil.HIBERNATE_3_1_2));
     }
     
     public void setUp() throws Exception {

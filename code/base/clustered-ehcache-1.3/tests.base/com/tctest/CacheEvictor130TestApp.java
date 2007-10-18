@@ -34,7 +34,7 @@ public class CacheEvictor130TestApp extends CacheEvictorTestApp {
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    config.addNewModule(TIMUtil.EHCACHE_1_3, TIMUtil.getVersion(TIMUtil.EHCACHE_1_3));
+    config.addModule(TIMUtil.EHCACHE_1_3, TIMUtil.getVersion(TIMUtil.EHCACHE_1_3));
     String testClass = CacheEvictor130TestApp.class.getName();
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     spec.addRoot("barrier", "barrier");

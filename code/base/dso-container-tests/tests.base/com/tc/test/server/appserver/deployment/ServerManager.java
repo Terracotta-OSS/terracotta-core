@@ -146,10 +146,10 @@ public class ServerManager {
     int appId = AppServerFactory.getCurrentAppServerId();
     switch (appId) {
       case AppServerFactory.JETTY:
-        aCopy.addNewModule(TIMUtil.JETTY_6_1, TIMUtil.getVersion(TIMUtil.JETTY_6_1));
+        aCopy.addModule(TIMUtil.JETTY_6_1, TIMUtil.getVersion(TIMUtil.JETTY_6_1));
         break;
       case AppServerFactory.WEBSPHERE:
-        aCopy.addNewModule(TIMUtil.WEBSPHERE_6_1_0_7, TIMUtil.getVersion(TIMUtil.WEBSPHERE_6_1_0_7));
+        aCopy.addModule(TIMUtil.WEBSPHERE_6_1_0_7, TIMUtil.getVersion(TIMUtil.WEBSPHERE_6_1_0_7));
         break;
       default:
         // nothing for now

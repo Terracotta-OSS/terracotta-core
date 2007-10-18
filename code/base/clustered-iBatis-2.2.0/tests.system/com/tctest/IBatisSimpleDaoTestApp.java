@@ -146,8 +146,8 @@ public class IBatisSimpleDaoTestApp extends AbstractTransparentApp {
     config.addIncludePattern("com.tctest.domain.*");
     new CyclicBarrierSpec().visit(visitor, config);
 
-    config.addNewModule(TIMUtil.CGLIB_2_1_3, TIMUtil.getVersion(TIMUtil.CGLIB_2_1_3));
-    config.addNewModule(TIMUtil.IBATIS_2_2_0, TIMUtil.getVersion(TIMUtil.IBATIS_2_2_0));
+    config.addModule(TIMUtil.CGLIB_2_1_3, TIMUtil.getVersion(TIMUtil.CGLIB_2_1_3));
+    config.addModule(TIMUtil.IBATIS_2_2_0, TIMUtil.getVersion(TIMUtil.IBATIS_2_2_0));
   }
 
 }

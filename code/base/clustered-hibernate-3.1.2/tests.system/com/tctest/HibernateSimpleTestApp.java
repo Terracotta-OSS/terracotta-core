@@ -412,12 +412,12 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
     config.addIncludePattern("com.tctest.domain.PromotionId");
     new CyclicBarrierSpec().visit(visitor, config);
 
-    config.addNewModule(TIMUtil.HIBERNATE_3_1_2, TIMUtil.getVersion(TIMUtil.HIBERNATE_3_1_2));
-    config.addNewModule(TIMUtil.EHCACHE_1_2_4, TIMUtil.getVersion(TIMUtil.EHCACHE_1_2_4));
+    config.addModule(TIMUtil.HIBERNATE_3_1_2, TIMUtil.getVersion(TIMUtil.HIBERNATE_3_1_2));
+    config.addModule(TIMUtil.EHCACHE_1_2_4, TIMUtil.getVersion(TIMUtil.EHCACHE_1_2_4));
 
     // transient stuff
-    config.addNewModule(TIMUtil.CGLIB_2_1_3, TIMUtil.getVersion(TIMUtil.CGLIB_2_1_3));
-    config.addNewModule(TIMUtil.COMMONS_COLLECTIONS_3_1, TIMUtil.getVersion(TIMUtil.COMMONS_COLLECTIONS_3_1));
+    config.addModule(TIMUtil.CGLIB_2_1_3, TIMUtil.getVersion(TIMUtil.CGLIB_2_1_3));
+    config.addModule(TIMUtil.COMMONS_COLLECTIONS_3_1, TIMUtil.getVersion(TIMUtil.COMMONS_COLLECTIONS_3_1));
   }
 
 }

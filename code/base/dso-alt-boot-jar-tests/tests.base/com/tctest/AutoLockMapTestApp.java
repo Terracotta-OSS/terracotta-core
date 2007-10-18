@@ -529,7 +529,7 @@ public class AutoLockMapTestApp extends GenericTestApp {
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    config.addNewModule(TIMUtil.COMMONS_COLLECTIONS_3_1, TIMUtil.getVersion(TIMUtil.COMMONS_COLLECTIONS_3_1));
+    config.addModule(TIMUtil.COMMONS_COLLECTIONS_3_1, TIMUtil.getVersion(TIMUtil.COMMONS_COLLECTIONS_3_1));
 
     String testClass = AutoLockMapTestApp.class.getName();
     config.getOrCreateSpec(testClass);

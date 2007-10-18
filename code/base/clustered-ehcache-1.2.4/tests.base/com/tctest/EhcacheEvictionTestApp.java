@@ -50,7 +50,7 @@ public class EhcacheEvictionTestApp extends AbstractErrorCatchingTransparentApp 
    * @param config
    */
   public static void visitL1DSOConfig(final ConfigVisitor visitor, final DSOClientConfigHelper config) {
-    config.addNewModule(TIMUtil.EHCACHE_1_2_4, TIMUtil.getVersion(TIMUtil.EHCACHE_1_2_4));
+    config.addModule(TIMUtil.EHCACHE_1_2_4, TIMUtil.getVersion(TIMUtil.EHCACHE_1_2_4));
     config.addAutolock("* *..*.*(..)", ConfigLockLevel.WRITE);
 
     final String testClass = EhcacheEvictionTestApp.class.getName();

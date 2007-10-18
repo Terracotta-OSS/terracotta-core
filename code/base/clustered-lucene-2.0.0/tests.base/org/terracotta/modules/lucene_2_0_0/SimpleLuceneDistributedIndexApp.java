@@ -68,7 +68,7 @@ public final class SimpleLuceneDistributedIndexApp extends AbstractTransparentAp
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    config.addNewModule(TIMUtil.LUCENE_2_0_0, TIMUtil.getVersion(TIMUtil.LUCENE_2_0_0));
+    config.addModule(TIMUtil.LUCENE_2_0_0, TIMUtil.getVersion(TIMUtil.LUCENE_2_0_0));
 
     config.addIncludePattern(LuceneSampleDataIndex.class.getName());
     config.addIncludePattern(SimpleLuceneDistributedIndexApp.class.getName());

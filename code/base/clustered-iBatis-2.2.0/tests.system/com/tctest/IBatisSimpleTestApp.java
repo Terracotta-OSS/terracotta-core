@@ -134,10 +134,10 @@ public class IBatisSimpleTestApp extends AbstractTransparentApp {
     config.addIncludePattern("com.tctest.domain.Customer");
     new CyclicBarrierSpec().visit(visitor, config);
 
-    config.addNewModule(TIMUtil.IBATIS_2_2_0, TIMUtil.getVersion(TIMUtil.IBATIS_2_2_0));
+    config.addModule(TIMUtil.IBATIS_2_2_0, TIMUtil.getVersion(TIMUtil.IBATIS_2_2_0));
 
     // transient stuff
-    config.addNewModule(TIMUtil.CGLIB_2_1_3, TIMUtil.getVersion(TIMUtil.CGLIB_2_1_3));
+    config.addModule(TIMUtil.CGLIB_2_1_3, TIMUtil.getVersion(TIMUtil.CGLIB_2_1_3));
   }
 
 }

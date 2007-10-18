@@ -15,8 +15,8 @@ import com.tc.config.schema.test.L2ConfigBuilder;
 import com.tc.config.schema.test.LockConfigBuilderImpl;
 import com.tc.config.schema.test.RootConfigBuilderImpl;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
+import com.tc.util.TIMUtil;
 import com.tctest.EhcacheGlobalEvictionTestApp.L1Client;
-
 
 public abstract class EhcacheGlobalEvictionTestBase extends ServerCrashingTestBase {
   private final static int NODE_COUNT = 1;
@@ -41,7 +41,7 @@ public abstract class EhcacheGlobalEvictionTestBase extends ServerCrashingTestBa
     String barrierClassName = CyclicBarrier.class.getName();
 
     L1ConfigBuilder l1Config = cb.getClient();
-    l1Config.addModule("clustered-ehcache-1.2.4", "2.5.0.SNAPSHOT");
+    l1Config.addModule(TIMUtil.EHCACHE_1_2_4, TIMUtil.getVersion(TIMUtil.EHCACHE_1_2_4));
 
     LockConfigBuilder lock1 = new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
     lock1.setMethodExpression("* " + testClassName + "*.*(..)");
@@ -60,7 +60,7 @@ public abstract class EhcacheGlobalEvictionTestBase extends ServerCrashingTestBa
     setLockLevel(lock4);
 
     cb.getApplication().getDSO().setLocks(new LockConfigBuilder[] { lock1, lock2, lock3, lock4 });
-    
+
     RootConfigBuilder root = new RootConfigBuilderImpl();
     root.setFieldName(clientClassName + ".barrier");
     root.setRootName("barrier");
@@ -77,7 +77,7 @@ public abstract class EhcacheGlobalEvictionTestBase extends ServerCrashingTestBa
 
     InstrumentedClassConfigBuilder instrumented3 = new InstrumentedClassConfigBuilderImpl();
     instrumented3.setClassExpression(barrierClassName + "*");
-    
+
     InstrumentedClassConfigBuilder instrumented4 = new InstrumentedClassConfigBuilderImpl();
     instrumented4.setClassExpression(getApplicationClass().getName() + "*");
 

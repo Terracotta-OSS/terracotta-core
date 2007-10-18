@@ -138,7 +138,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClass = GenericMapTestApp.class.getName();
-    config.addNewModule(TIMUtil.COMMONS_COLLECTIONS_3_1, TIMUtil.getVersion(TIMUtil.COMMONS_COLLECTIONS_3_1));
+    config.addModule(TIMUtil.COMMONS_COLLECTIONS_3_1, TIMUtil.getVersion(TIMUtil.COMMONS_COLLECTIONS_3_1));
     config.getOrCreateSpec(testClass);
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);
@@ -150,7 +150,7 @@ public class GenericMapTestApp extends GenericTestApp {
     config.addIncludePattern(SimpleEntry.class.getName());
     config.addExcludePattern(MyNonPortableObject.class.getName());
 
-    config.addNewModule(TIMUtil.EHCACHE_1_2_4, TIMUtil.getVersion(TIMUtil.EHCACHE_1_2_4)); // this is just a quick way
+    config.addModule(TIMUtil.EHCACHE_1_2_4, TIMUtil.getVersion(TIMUtil.EHCACHE_1_2_4)); // this is just a quick way
                                                                                             // to add TimeExpiryMap
     // to the instrumentation list
   }

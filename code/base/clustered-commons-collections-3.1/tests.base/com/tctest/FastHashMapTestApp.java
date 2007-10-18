@@ -26,7 +26,7 @@ public final class FastHashMapTestApp extends
 
 	public static void visitL1DSOConfig(final ConfigVisitor visitor,
 			final DSOClientConfigHelper config) {
-		config.addNewModule(TIMUtil.COMMONS_COLLECTIONS_3_1, TIMUtil
+		config.addModule(TIMUtil.COMMONS_COLLECTIONS_3_1, TIMUtil
 				.getVersion(TIMUtil.COMMONS_COLLECTIONS_3_1));
 
 		final String testClass = FastHashMapTestApp.class.getName();
