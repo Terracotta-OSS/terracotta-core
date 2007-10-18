@@ -245,6 +245,10 @@ public class ClientHandshakeManagerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
+    public DNA retrieveWithParentContext(ObjectID id, ObjectID parentContext) {
+      throw new ImplementMe();
+    }
+
   }
 
   private static class TestClientHandshakeMessageFactory implements ClientHandshakeMessageFactory {

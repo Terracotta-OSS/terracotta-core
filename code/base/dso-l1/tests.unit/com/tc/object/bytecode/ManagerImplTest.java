@@ -213,6 +213,10 @@ public class ManagerImplTest extends BaseDSOTestCase {
     public Object lookupObject(ObjectID id) {
       throw new ImplementMe();
     }
+    
+    public Object lookupObject(ObjectID id, ObjectID parentContext) {
+      throw new ImplementMe();
+    }
 
     public TCObject lookupOrCreate(Object obj) {
       throw new ImplementMe();
@@ -347,6 +351,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
     public Object cloneAndInvokeLogicalOperation(Object pojo, String methodName, Object[] parameters) {
       throw new ImplementMe();
     }
+
   }
 
 }

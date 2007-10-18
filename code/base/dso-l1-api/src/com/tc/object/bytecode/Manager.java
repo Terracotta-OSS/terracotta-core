@@ -32,6 +32,7 @@ public interface Manager {
 
   /**
    * Determine whether this class is physically instrumented
+   * 
    * @param clazz Class
    * @return True if physically instrumented
    */
@@ -39,6 +40,7 @@ public interface Manager {
 
   /**
    * Deep copy the source object graph
+   * 
    * @param source Source object
    * @return The copy
    */
@@ -56,6 +58,7 @@ public interface Manager {
 
   /**
    * Look up or create a new root object
+   * 
    * @param name Root name
    * @param object Root object to use if none exists yet
    * @return The root object actually used, may or may not == object
@@ -63,8 +66,8 @@ public interface Manager {
   public Object lookupOrCreateRoot(String name, Object object);
 
   /**
-   * Look up or create a new root object.  Objects faulted in to arbitrary 
-   * depth.
+   * Look up or create a new root object. Objects faulted in to arbitrary depth.
+   * 
    * @param name Root name
    * @param obj Root object to use if none exists yet
    * @return The root object actually used, may or may not == object
@@ -73,6 +76,7 @@ public interface Manager {
 
   /**
    * Create or replace root, typically used for replaceable roots.
+   * 
    * @param rootName Root name
    * @param object Root object
    * @return Root object used
@@ -81,6 +85,7 @@ public interface Manager {
 
   /**
    * Begin volatile lock
+   * 
    * @param tcObject TCObject to lock
    * @param fieldName Field name holding volatile object
    * @param type Lock type
@@ -89,6 +94,7 @@ public interface Manager {
 
   /**
    * Begin lock
+   * 
    * @param lockID Lock identifier
    * @param type Lock type
    */
@@ -96,6 +102,7 @@ public interface Manager {
 
   /**
    * Try to begin lock
+   * 
    * @param lockID Lock identifier
    * @param type Lock type
    * @return True if lock was successful
@@ -104,6 +111,7 @@ public interface Manager {
 
   /**
    * Commit volatile lock
+   * 
    * @param tcObject Volatile object TCObject
    * @param fieldName Field holding the volatile object
    */
@@ -111,19 +119,33 @@ public interface Manager {
 
   /**
    * Commit lock
+   * 
    * @param lockName Lock name
    */
   public void commitLock(String lockName);
 
   /**
    * Look up object by ID, faulting into the JVM if necessary
+   * 
    * @param id Object identifier
    * @return The actual object
    */
   public Object lookupObject(ObjectID id) throws ClassNotFoundException;
 
   /**
+   * Look up object by ID, faulting into the JVM if necessary, This method also passes the parent Object context so that
+   * more intelligent prefetching is possible at the L2.
+   * 
+   * @param id Object identifier of the object we are looking up
+   * @param parentContext Object identifier of the parent object
+   * @return The actual object
+   * @throws TCClassNotFoundException If a class is not found during faulting
+   */
+  public Object lookupObject(ObjectID id, ObjectID parentContext) throws ClassNotFoundException;
+
+  /**
    * Find managed object, which may be null
+   * 
    * @param obj The object instance
    * @return The TCObject
    */
@@ -131,6 +153,7 @@ public interface Manager {
 
   /**
    * Find or create new TCObject
+   * 
    * @param obj The object instance
    * @return The TCObject
    */
@@ -144,24 +167,28 @@ public interface Manager {
 
   /**
    * Perform notify on obj
+   * 
    * @param obj Instance
    */
   public void objectNotify(Object obj);
 
   /**
    * Perform notifyAll on obj
+   * 
    * @param obj Instance
    */
   public void objectNotifyAll(Object obj);
 
   /**
    * Perform untimed wait on obj
+   * 
    * @param obj Instance
    */
   public void objectWait0(Object obj) throws InterruptedException;
 
   /**
    * Perform timed wait on obj
+   * 
    * @param obj Instance
    * @param millis Wait time
    */
@@ -169,6 +196,7 @@ public interface Manager {
 
   /**
    * Perform timed wait on obj
+   * 
    * @param obj Instance
    * @param millis Wait time
    * @param nonas More wait time
@@ -177,6 +205,7 @@ public interface Manager {
 
   /**
    * Enter synchronized monitor
+   * 
    * @param obj Object
    * @param type Lock type
    */
@@ -184,13 +213,15 @@ public interface Manager {
 
   /**
    * Exit synchronized monitor
+   * 
    * @param obj Object
    */
   public void monitorExit(Object obj);
 
   /**
    * Perform invoke on logical managed object
-   * @param object The object 
+   * 
+   * @param object The object
    * @param methodName The method to call
    * @param params The parameters to the method
    */
@@ -198,8 +229,9 @@ public interface Manager {
 
   /**
    * Perform invoke on logical managed object in lock
+   * 
    * @param object The object
-   * @param lockObject The lock object 
+   * @param lockObject The lock object
    * @param methodName The method to call
    * @param params The parameters to the method
    */
@@ -207,6 +239,7 @@ public interface Manager {
 
   /**
    * Perform distributed method call
+   * 
    * @param receiver The receiver object
    * @param method The method to call
    * @param params The parameter values
@@ -221,6 +254,7 @@ public interface Manager {
 
   /**
    * Lookup root by name
+   * 
    * @param name Name of root
    * @return Root object
    */
@@ -228,6 +262,7 @@ public interface Manager {
 
   /**
    * Check whether current context has write access
+   * 
    * @param context Context object
    * @throws com.tc.object.util.ReadOnlyException If in read-only transaction
    */
@@ -235,26 +270,30 @@ public interface Manager {
 
   /**
    * Check whether an object is managed
+   * 
    * @param object Instance
    * @return True if managed
    */
   public boolean isManaged(Object object);
-  
+
   /**
    * Check whether an object is shared
+   * 
    * @param object Instance
    * @return True if shared
    */
   public boolean isDsoMonitored(Object obj);
-  
+
   /**
    * Check whether dso MonitorExist is required
+   * 
    * @return True if required
    */
   public boolean isDsoMonitorExitRequired(Object obj);
 
   /**
    * Check whether object is logically instrumented
+   * 
    * @param object Instance
    * @return True if logically instrumented
    */
@@ -262,18 +301,20 @@ public interface Manager {
 
   /**
    * Check whether field is a root
+   * 
    * @param field Field
    * @return True if root
    */
   public boolean isRoot(Field field);
 
   /**
-   * Begin an optimistic  transaction
+   * Begin an optimistic transaction
    */
   public void optimisticBegin();
 
   /**
    * Commit an optimistic transaction
+   * 
    * @throws ClassNotFoundException If class not found while faulting in object
    */
   public void optimisticCommit() throws ClassNotFoundException;
@@ -285,6 +326,7 @@ public interface Manager {
 
   /**
    * Check whether an object is locked at this lockLevel
+   * 
    * @param obj Lock
    * @param lockLevel Lock level
    * @return True if locked at this level
@@ -294,6 +336,7 @@ public interface Manager {
 
   /**
    * Try to enter monitor for specified object
+   * 
    * @param obj The object monitor
    * @param timeoutInNanos Timeout in nanoseconds
    * @param type The lock level
@@ -302,8 +345,9 @@ public interface Manager {
    */
   public boolean tryMonitorEnter(Object obj, long timeoutInNanos, int type);
 
-  /** 
+  /**
    * Get number of locks held locally on this object
+   * 
    * @param obj The lock object
    * @param lockLevel The lock level
    * @return Lock count
@@ -313,6 +357,7 @@ public interface Manager {
 
   /**
    * Check whether this lock is held by the current thread
+   * 
    * @param obj The lock
    * @param lockLevel The lock level
    * @return True if held by current thread
@@ -322,6 +367,7 @@ public interface Manager {
 
   /**
    * Number in queue waiting on this lock
+   * 
    * @param obj The object
    * @return Number of waiters
    * @throws NullPointerException If obj is null
@@ -330,6 +376,7 @@ public interface Manager {
 
   /**
    * Number in queue waiting on this wait()
+   * 
    * @param obj The object
    * @return Number of waiters
    * @throws NullPointerException If obj is null
@@ -337,20 +384,22 @@ public interface Manager {
   public int waitLength(Object obj);
 
   /**
-   * Check whether a creation is in progress.  This flag is set on a per-thread
-   * basis while hydrating an object from DNA.
+   * Check whether a creation is in progress. This flag is set on a per-thread basis while hydrating an object from DNA.
+   * 
    * @return True if in progress
    */
   public boolean isCreationInProgress();
 
   /**
    * Get JVM Client identifier
+   * 
    * @return Client identifier
    */
   public String getClientID();
 
   /**
    * Get the named logger
+   * 
    * @param name Logger name
    * @return The logger
    */
@@ -368,6 +417,7 @@ public interface Manager {
 
   /**
    * Add listener for cluster events
+   * 
    * @param cel Listener
    */
   public void addClusterEventListener(ClusterEventListener cel);
@@ -376,7 +426,5 @@ public interface Manager {
    * @return DMI manager
    */
   public DmiManager getDmiManager();
-
-
 
 }

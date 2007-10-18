@@ -114,6 +114,10 @@ public class TestClientObjectManager implements ClientObjectManager {
   public Object lookupObject(ObjectID id) {
     return ((TCObject) objects.get(id)).getPeerObject();
   }
+  
+  public Object lookupObject(ObjectID id, ObjectID parentContext) {
+    return ((TCObject) objects.get(id)).getPeerObject();
+  }
 
   public TCClass getOrCreateClass(Class clazz) {
     throw new ImplementMe();
@@ -247,5 +251,6 @@ public class TestClientObjectManager implements ClientObjectManager {
   public Object cloneAndInvokeLogicalOperation(Object pojo, String methodName, Object[] parameters) {
     throw new ImplementMe();    
   }
+
 }
 

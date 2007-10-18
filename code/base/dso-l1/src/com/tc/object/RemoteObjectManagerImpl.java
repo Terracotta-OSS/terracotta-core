@@ -56,12 +56,18 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
                                                                                  .getProperties()
                                                                                  .getInt(
                                                                                          "l1.objectmanager.remote.maxDNALRUSize");
+  private final static boolean                     ENABLE_LOGGING            = TCPropertiesImpl
+                                                                                 .getProperties()
+                                                                                 .getBoolean(
+                                                                                             "l1.objectmanager.remote.logging.enabled");
   private final int                                defaultDepth;
   private State                                    state                     = RUNNING;
   private Set                                      removeObjects             = new HashSet(256);
   private final SessionManager                     sessionManager;
   private final TCLogger                           logger;
   private static final int                         REMOVE_OBJECTS_THRESHOLD  = 10000;
+  private long                                     hit                       = 0;
+  private long                                     miss                      = 0;
 
   public RemoteObjectManagerImpl(TCLogger logger, ClientIDProvider cip, RequestRootMessageFactory rrmFactory,
                                  RequestManagedObjectMessageFactory rmomFactory, ObjectRequestMonitor requestMonitor,
@@ -143,19 +149,30 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
   }
 
   public DNA retrieve(ObjectID id) {
-    return retrieve(id, defaultDepth);
+    return basicRetrieve(id, defaultDepth, ObjectID.NULL_ID);
   }
 
-  public synchronized DNA retrieve(ObjectID id, int depth) {
+  public DNA retrieveWithParentContext(ObjectID id, ObjectID parentContext) {
+    return basicRetrieve(id, defaultDepth, parentContext);
+  }
+
+  public DNA retrieve(ObjectID id, int depth) {
+    return basicRetrieve(id, depth, ObjectID.NULL_ID);
+  }
+
+  public synchronized DNA basicRetrieve(ObjectID id, int depth, ObjectID parentContext) {
     boolean isInterrupted = false;
 
     ObjectRequestContext ctxt = new ObjectRequestContextImpl(this.cip.getClientID(),
-                                                             new ObjectRequestID(objectRequestIDCounter++), id, depth);
+                                                             new ObjectRequestID(objectRequestIDCounter++), id, depth,
+                                                             parentContext);
+    boolean inMemory = true;
     while (!dnaRequests.containsKey(id) || dnaRequests.get(id) == null || missingObjectIDs.contains(id)) {
       waitUntilRunning();
       if (missingObjectIDs.contains(id)) {
         throw new AssertionError("Requested Object is missing : " + id + " Missing Oids = " + missingObjectIDs);
       } else if (!dnaRequests.containsKey(id)) {
+        inMemory = false;
         sendRequest(ctxt);
       } else if (!outstandingObjectRequests.containsKey(id)) {
         outstandingObjectRequests.put(id, ctxt);
@@ -171,6 +188,14 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
     }
     Util.selfInterruptIfNeeded(isInterrupted);
     lruDNA.remove(id);
+    if (inMemory) {
+      hit++;
+    } else {
+      miss++;
+    }
+    if (ENABLE_LOGGING && ((hit + miss) % 1000 == 0)) {
+      logger.info("Cache Hit : Miss ratio = " + hit + "  : " + miss);
+    }
     return (DNA) dnaRequests.remove(id);
   }
 
@@ -314,13 +339,18 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
 
     private final ObjectRequestID requestID;
 
-    private final ClientID       clientID;
+    private final ClientID        clientID;
 
     private final int             depth;
 
-    private ObjectRequestContextImpl(ClientID clientID, ObjectRequestID requestID, ObjectID objectID, int depth) {
+    private ObjectRequestContextImpl(ClientID clientID, ObjectRequestID requestID, ObjectID objectID, int depth,
+                                     ObjectID parentContext) {
       this(clientID, requestID, new HashSet(), depth);
       this.objectIDs.add(objectID);
+      // XXX:: This is a hack for now. This parent context could be exposed to the L2 to make it more elegant.
+      if (!parentContext.isNull()) {
+        this.objectIDs.add(parentContext);
+      }
     }
 
     private ObjectRequestContextImpl(ClientID clientID, ObjectRequestID requestID, Set objectIDs, int depth) {
@@ -398,6 +428,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
       if (dnas.size() > MAX_LRU) {
         Iterator dnaMapIterator = dnas.values().iterator();
         Map dnaMap = (Map) dnaMapIterator.next();
+        int removedDNACount = dnaMap.size();
         for (Iterator i = dnaMap.keySet().iterator(); i.hasNext();) {
           ObjectID id = (ObjectID) i.next();
           if (!outstandingObjectRequests.containsKey(id)) {
@@ -410,6 +441,9 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
           oids2BatchID.remove(id);
         }
         dnaMapIterator.remove();
+        if (ENABLE_LOGGING) {
+          logger.info("DNA LRU remove 1 map containing " + removedDNACount + " DNAs");
+        }
       }
     }
   }

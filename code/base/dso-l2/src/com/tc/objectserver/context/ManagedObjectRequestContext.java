@@ -94,6 +94,10 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
     return "ManagedObjectRequestContext@" + System.identityHashCode(this) + " [ " + clientID + " , " + requestID
            + " , " + requestedObjectIDs + ", requestingThread = " + requestingThreadName + " ]";
   }
+  
+  public String getRequestingThreadName() {
+    return requestingThreadName;
+  }
 
   public void setResults(ObjectManagerLookupResults results) {
     this.objects = results.getObjects();

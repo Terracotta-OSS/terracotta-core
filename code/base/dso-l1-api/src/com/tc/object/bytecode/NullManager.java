@@ -26,6 +26,7 @@ public final class NullManager implements Manager {
 
   /**
    * Get instance of the null manager
+   * 
    * @return NullManager
    */
   public static Manager getInstance() {
@@ -211,6 +212,10 @@ public final class NullManager implements Manager {
   }
 
   public final Object lookupObject(ObjectID id) {
+    throw new UnsupportedOperationException();
+  }
+
+  public Object lookupObject(ObjectID id, ObjectID parentContext) {
     throw new UnsupportedOperationException();
   }
 

@@ -435,6 +435,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       traverser.traverse(lookedUpObjects);
       lookedUpObjects = new HashSet();
       Set lookupObjectIDs = traverser.getObjectsToLookup();
+      if(lookupObjectIDs.isEmpty()) break;
       stateManager.removeReferencedFrom(nodeID, lookupObjectIDs);
       for (Iterator j = lookupObjectIDs.iterator(); j.hasNext();) {
         ObjectID id = (ObjectID) j.next();
@@ -446,7 +447,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
           }
         }
       }
-    } while (lookedUpObjects.size() > 0 && objects.size() < MAX_LOOKUP_OBJECTS_COUNT);
+    } while (objects.size() < MAX_LOOKUP_OBJECTS_COUNT);
     return traverser.getPendingObjectsToLookup(lookedUpObjects);
   }
 

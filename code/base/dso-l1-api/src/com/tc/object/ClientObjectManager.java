@@ -18,7 +18,6 @@ import java.util.Map;
 /**
  * Manages client-side (L1) object state in a VM.
  * 
- * @author steve
  */
 public interface ClientObjectManager {
 
@@ -96,6 +95,19 @@ public interface ClientObjectManager {
    */
   public Object lookupObject(ObjectID id) throws ClassNotFoundException;
 
+  /**
+   * Look up object by ID, faulting into the JVM if necessary, This method also passes the parent Object context so that
+   * more intelligent prefetching is possible at the L2.
+   * The default fault-count will be used to limit the number of dependent objects that 
+   * are also faulted in.
+   * 
+   * @param id Object identifier of the object we are looking up
+   * @param parentContext Object identifier of the parent object
+   * @return The actual object
+   * @throws TCClassNotFoundException If a class is not found during faulting
+   */
+  public Object lookupObject(ObjectID id, ObjectID parentContext) throws ClassNotFoundException;
+  
   /**
    * Find object by ID.  If necessary, the object will be faulted into the JVM.
    * No fault-count depth will be used and all dependent objects will be faulted into 
@@ -335,4 +347,5 @@ public interface ClientObjectManager {
    * @return The cloned object 
    */
   Object cloneAndInvokeLogicalOperation(Object logicalPojo, String methodName, Object[] parameters);
+
 }

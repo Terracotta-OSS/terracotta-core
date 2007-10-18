@@ -25,6 +25,11 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
     return (DNA) retrieveResults.take();
   }
 
+  public DNA retrieveWithParentContext(ObjectID id, ObjectID parentContext) {
+    retrieveCalls.put(id);
+    return (DNA) retrieveResults.take();
+  }
+
   public ObjectID retrieveRootID(String name) {
     retrieveRootIDCalls.put(name);
     return (ObjectID) retrieveRootIDResults.take();

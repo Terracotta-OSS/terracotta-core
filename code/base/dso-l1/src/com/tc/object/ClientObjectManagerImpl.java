@@ -400,18 +400,22 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
   }
 
   public Object lookupObjectNoDepth(ObjectID id) throws ClassNotFoundException {
-    return lookupObject(id, true);
+    return lookupObject(id, null, true);
   }
 
   public Object lookupObject(ObjectID objectID) throws ClassNotFoundException {
-    return lookupObject(objectID, false);
+    return lookupObject(objectID, null, false);
   }
 
-  private Object lookupObject(ObjectID objectID, boolean noDepth) throws ClassNotFoundException {
+  public Object lookupObject(ObjectID id, ObjectID parentContext) throws ClassNotFoundException {
+    return lookupObject(id, parentContext, false);
+  }
+
+  private Object lookupObject(ObjectID objectID, ObjectID parentContext, boolean noDepth) throws ClassNotFoundException {
     if (objectID.isNull()) return null;
     Object o = null;
     while (o == null) {
-      final TCObject tco = lookup(objectID, noDepth);
+      final TCObject tco = lookup(objectID, parentContext, noDepth);
       if (tco == null) throw new AssertionError("TCObject was null for " + objectID);// continue;
 
       o = tco.getPeerObject();
@@ -475,10 +479,10 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
   // Done
 
   public TCObject lookup(ObjectID id) throws ClassNotFoundException {
-    return lookup(id, false);
+    return lookup(id, null, false);
   }
 
-  private TCObject lookup(ObjectID id, boolean noDepth) throws ClassNotFoundException {
+  private TCObject lookup(ObjectID id, ObjectID parentContext, boolean noDepth) throws ClassNotFoundException {
     TCObject obj = null;
     boolean retrieveNeeded = false;
     boolean isInterrupted = false;
@@ -506,7 +510,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
 
     if (retrieveNeeded) {
       try {
-        DNA dna = noDepth ? remoteObjectManager.retrieve(id, NO_DEPTH) : remoteObjectManager.retrieve(id);
+        DNA dna = noDepth ? remoteObjectManager.retrieve(id, NO_DEPTH) : (parentContext == null ? remoteObjectManager
+            .retrieve(id) : remoteObjectManager.retrieveWithParentContext(id, parentContext));
         // obj = factory.getNewInstance(id, classProvider.getClassFor(dna.getTypeName(), dna
         // .getDefiningLoaderDescription()));
         obj = factory.getNewInstance(id, classProvider.getClassFor(Namespace.parseClassNameIfNecessary(dna
@@ -823,7 +828,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
       }
     }
 
-    return lookupObject(rootID, noDepth);
+    return lookupObject(rootID, null, noDepth);
   }
 
   private TCObject basicLookupByID(ObjectID id) {

@@ -624,6 +624,11 @@ public class ManagerImpl implements Manager {
   public Object lookupObject(ObjectID id) throws ClassNotFoundException {
     return this.objectManager.lookupObject(id);
   }
+  
+  public Object lookupObject(ObjectID id, ObjectID parentContext) throws ClassNotFoundException {
+    return this.objectManager.lookupObject(id, parentContext);
+  }
+
 
   public boolean distributedMethodCall(Object receiver, String method, Object[] params, boolean runOnAllNodes) {
     TCObject tco = lookupExistingOrNull(receiver);

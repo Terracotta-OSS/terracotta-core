@@ -12,6 +12,7 @@ import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.TCMap;
 import com.tc.object.bytecode.hook.impl.Util;
+import com.tc.util.Assert;
 
 /*
  * This class will be merged with java.lang.HashMap in the bootjar. This HashMap can store ObjectIDs instead of Objects
@@ -128,6 +129,12 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
     return o;
   }
 
+  private Object lookUpFaultBreadthIfNecessary(Object o) {
+    if (o instanceof ObjectID) { return ManagerUtil.lookupObjectWithParentContext((ObjectID) o, __tc_managed()
+        .getObjectID()); }
+    return o;
+  }
+
   // XXX: This uses entrySet iterator and since we fix that, this should work.
   public int hashCode() {
     return super.hashCode();
@@ -216,7 +223,7 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
       super.remove(key);
     }
   }
-  
+
   public Collection __tc_getAllEntriesSnapshot() {
     if (__tc_isManaged()) {
       synchronized (__tc_managed().getResolveLock()) {
@@ -226,40 +233,40 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
       return __tc_getAllEntriesSnapshotInternal();
     }
   }
-  
+
   public synchronized Collection __tc_getAllEntriesSnapshotInternal() {
     Set entrySet = super.entrySet();
     return new ArrayList(entrySet);
   }
-  
+
   public Collection __tc_getAllLocalEntriesSnapshot() {
     if (__tc_isManaged()) {
-      synchronized(__tc_managed().getResolveLock()) {
+      synchronized (__tc_managed().getResolveLock()) {
         return __tc_getAllLocalEntriesSnapshotInternal();
       }
     } else {
       return __tc_getAllLocalEntriesSnapshotInternal();
     }
   }
-  
+
   private Collection __tc_getAllLocalEntriesSnapshotInternal() {
     Set entrySet = super.entrySet();
     int entrySetSize = entrySet.size();
     if (entrySetSize == 0) { return Collections.EMPTY_LIST; }
-    
+
     Object[] tmp = new Object[entrySetSize];
     int index = -1;
-    for (Iterator i=entrySet.iterator(); i.hasNext(); ) {
-      Map.Entry e = (Map.Entry)i.next();
+    for (Iterator i = entrySet.iterator(); i.hasNext();) {
+      Map.Entry e = (Map.Entry) i.next();
       if (!(e.getValue() instanceof ObjectID)) {
         index++;
         tmp[index] = e;
       }
     }
-    
+
     if (index < 0) { return Collections.EMPTY_LIST; }
-    Object[] rv = new Object[index+1];
-    System.arraycopy(tmp, 0, rv, 0, index+1);
+    Object[] rv = new Object[index + 1];
+    System.arraycopy(tmp, 0, rv, 0, index + 1);
     return Arrays.asList(rv);
   }
 
@@ -337,7 +344,7 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
     return nonOverridableEntrySet();
   }
 
-  private Set nonOverridableEntrySet() {
+  private final Set nonOverridableEntrySet() {
     return new EntrySetWrapper(super.entrySet());
   }
 
@@ -473,6 +480,22 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
       }
     }
 
+    // This method not only does a faulting on this value, but depending on the fault depth, it faults peer objects too.
+    public Object getValueFaultBreadth() {
+      Assert.assertFalse(entry instanceof EntryWrapper);
+      if (__tc_isManaged()) {
+        synchronized (__tc_managed().getResolveLock()) {
+          Object value = lookUpFaultBreadthIfNecessary(entry.getValue());
+          if (entry.getValue() != value) {
+            entry.setValue(value);
+          }
+          return value;
+        }
+      } else {
+        return entry.getValue();
+      }
+    }
+
     /*
      * Even though we do a lookup of oldVal after we change the value in the transaction, DGC will not be able to kick
      * the oldVal out since the transaction is not committed.
@@ -481,7 +504,8 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
       if (__tc_isManaged()) {
         synchronized (__tc_managed().getResolveLock()) {
           ManagerUtil.checkWriteAccess(HashMapTC.this);
-          ManagerUtil.logicalInvoke(HashMapTC.this, SerializationUtil.PUT_SIGNATURE, new Object[] { entry.getKey(), value });
+          ManagerUtil.logicalInvoke(HashMapTC.this, SerializationUtil.PUT_SIGNATURE, new Object[] { entry.getKey(),
+              value });
           Object oldVal = entry.setValue(value);
           return lookUpIfNecessary(oldVal);
         }
@@ -673,7 +697,11 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
 
     public Object next() {
       currentEntry = nextEntry();
-      return new EntryWrapper(currentEntry);
+      if (currentEntry instanceof EntryWrapper) {
+        return currentEntry;
+      } else {
+        return new EntryWrapper(currentEntry);
+      }
     }
 
     protected Map.Entry nextEntry() {
@@ -691,7 +719,8 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
         synchronized (__tc_managed().getResolveLock()) {
           ManagerUtil.checkWriteAccess(HashMapTC.this);
           iterator.remove();
-          ManagerUtil.logicalInvoke(HashMapTC.this, SerializationUtil.REMOVE_ENTRY_FOR_KEY_SIGNATURE, new Object[] { currentEntry.getKey() });
+          ManagerUtil.logicalInvoke(HashMapTC.this, SerializationUtil.REMOVE_ENTRY_FOR_KEY_SIGNATURE,
+                                    new Object[] { currentEntry.getKey() });
         }
       } else {
         iterator.remove();
@@ -719,6 +748,10 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
 
     public Object next() {
       Map.Entry e = (Map.Entry) super.next();
+      if (e instanceof EntryWrapper) {
+        EntryWrapper ew = (EntryWrapper) e;
+        return ew.getValueFaultBreadth();
+      }
       return e.getValue();
     }
 

@@ -127,12 +127,13 @@ public class RespondToObjectRequestHandler extends AbstractEventHandler {
     if (oids.isEmpty()) { return; }
     int maxRequestDepth = morc.getMaxRequestDepth();
     if (logger.isDebugEnabled()) {
-      logger.debug("Creating Server initiated requests for : " + morc.getRequestedNodeID() + " org request Id length = "
-                   + morc.getLookupIDs().size() + "  Reachable object(s) to be looked up  length = " + oids.size());
+      logger.debug("Creating Server initiated requests for : " + morc.getRequestedNodeID()
+                   + " org request Id length = " + morc.getLookupIDs().size()
+                   + "  Reachable object(s) to be looked up  length = " + oids.size());
     }
     if (oids.size() <= MAX_OBJECTS_TO_LOOKUP) {
-      this.managedObjectRequestSink.add(new ManagedObjectRequestContext(morc.getRequestedNodeID(), morc.getRequestID(), oids,
-                                                                        -1, morc.getSink(),
+      this.managedObjectRequestSink.add(new ManagedObjectRequestContext(morc.getRequestedNodeID(), morc.getRequestID(),
+                                                                        oids, -1, morc.getSink(),
                                                                         "RespondToObjectRequestHandler"));
     } else {
       // split into multiple request
@@ -140,9 +141,8 @@ public class RespondToObjectRequestHandler extends AbstractEventHandler {
       for (Iterator i = oids.iterator(); i.hasNext();) {
         split.add(i.next());
         if (split.size() >= MAX_OBJECTS_TO_LOOKUP) {
-          this.managedObjectRequestSink.add(new ManagedObjectRequestContext(morc.getRequestedNodeID(), morc.getRequestID(),
-                                                                            split, -1, morc.getSink(),
-                                                                            "RespondToObjectRequestHandler"));
+          this.managedObjectRequestSink.add(new ManagedObjectRequestContext(morc.getRequestedNodeID(), morc
+              .getRequestID(), split, -1, morc.getSink(), "RespondToObjectRequestHandler"));
           if (i.hasNext()) split = new THashSet(maxRequestDepth);
         }
       }

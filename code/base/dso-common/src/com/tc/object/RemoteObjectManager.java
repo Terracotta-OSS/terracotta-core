@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
@@ -17,6 +18,8 @@ public interface RemoteObjectManager {
   public DNA retrieve(ObjectID id);
 
   public DNA retrieve(ObjectID id, int depth);
+
+  public DNA retrieveWithParentContext(ObjectID id, ObjectID parentContext);
 
   public ObjectID retrieveRootID(String name);
 
