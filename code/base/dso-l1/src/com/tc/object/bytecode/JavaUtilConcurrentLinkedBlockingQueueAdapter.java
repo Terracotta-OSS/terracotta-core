@@ -9,6 +9,8 @@ import com.tc.asm.Label;
 import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
+import com.tc.asm.Type;
+import com.tc.asm.commons.LocalVariablesSorter;
 import com.tc.object.SerializationUtil;
 
 public class JavaUtilConcurrentLinkedBlockingQueueAdapter implements Opcodes {
@@ -16,14 +18,14 @@ public class JavaUtilConcurrentLinkedBlockingQueueAdapter implements Opcodes {
   public static class PutAdapter extends AbstractMethodAdapter {
 
     public MethodVisitor adapt(ClassVisitor classVisitor) {
-      return new PutMethodAdapter(visitOriginal(classVisitor), SerializationUtil.QUEUE_PUT_SIGNATURE);
+      return new PutMethodAdapter(access, description, visitOriginal(classVisitor), SerializationUtil.QUEUE_PUT_SIGNATURE);
     }
 
     public boolean doesOriginalNeedAdapting() {
       return false;
     }
   }
-
+  
   public static class ClearAdapter extends AbstractMethodAdapter {
     public MethodVisitor adapt(ClassVisitor classVisitor) {
       return new ClearMethodAdapter(visitOriginal(classVisitor), SerializationUtil.CLEAR_SIGNATURE);
@@ -125,17 +127,22 @@ public class JavaUtilConcurrentLinkedBlockingQueueAdapter implements Opcodes {
     }
   }
 
-  private static class PutMethodAdapter extends MethodAdapter implements Opcodes {
+  private static class PutMethodAdapter extends LocalVariablesSorter implements Opcodes {
     private final String invokeMethodSignature;
+    private final Label continueLabel;
+    private boolean visitAddCoded = false;
+    private int newVar;
 
-    public PutMethodAdapter(MethodVisitor mv, String invokeMethodSignature) {
-      super(mv);
+    public PutMethodAdapter(final int access, final String desc, final MethodVisitor mv, String invokeMethodSignature) {
+      super(access, desc, mv);
       this.invokeMethodSignature = invokeMethodSignature;
+      this.continueLabel = new Label();
+      this.newVar = newLocal(Type.INT_TYPE);
     }
-    
+
     /**
-     * Changing the while (count.get() == capacity) condition to
-     * while (count.get() >= capacity) due to the non-blocking version of put().
+     * Changing the while (count.get() == capacity) condition to while (count.get() >= capacity) due to the non-blocking
+     * version of __tc_put().
      */
     public void visitJumpInsn(int opcode, Label label) {
       if (IF_ICMPEQ == opcode) {
@@ -150,32 +157,57 @@ public class JavaUtilConcurrentLinkedBlockingQueueAdapter implements Opcodes {
       super.visitMethodInsn(opcode, owner, name, desc);
       if ("insert".equals(name) && "(Ljava/lang/Object;)V".equals(desc)) {
         addLogicalInvokeMethodCall();
+      } else if (INVOKESPECIAL == opcode && "signalNotEmpty".equals(name) && "()V".equals(desc)) {
+        super.visitInsn(RETURN);
       }
+    }
+    
+    public void visitInsn(int opcode) {
+      if (RETURN == opcode) {
+        super.visitVarInsn(ILOAD, newVar);
+        Label a = new Label();
+        super.visitJumpInsn(IFNE, a);
+        ByteCodeUtil.pushThis(mv);
+        super.visitMethodInsn(INVOKESPECIAL, "java/util/concurrent/LinkedBlockingQueue", "signalNotEmpty", "()V");
+        super.visitLabel(a);
+      }
+      super.visitInsn(opcode);
     }
 
     private void addLogicalInvokeMethodCall() {
       Label notManaged = new Label();
+      
       addCheckedManagedCode(mv, notManaged);
+      super.visitVarInsn(ALOAD, 4);
+      super.visitMethodInsn(INVOKEVIRTUAL, "java/util/concurrent/atomic/AtomicInteger", "get", "()I");
+      super.visitVarInsn(ISTORE, 2);
       ByteCodeUtil.pushThis(mv);
-      ByteCodeUtil.pushThis(mv);
-      mv.visitFieldInsn(GETFIELD, "java/util/concurrent/LinkedBlockingQueue", "putLock",
-                        "Ljava/util/concurrent/locks/ReentrantLock;");
-
-      mv.visitLdcInsn(invokeMethodSignature);
-
-      mv.visitLdcInsn(new Integer(1));
-      mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
-      mv.visitInsn(DUP);
-      int count = 0;
-      mv.visitLdcInsn(new Integer(count++));
-      mv.visitVarInsn(ALOAD, 1);
-      mv.visitInsn(AASTORE);
-      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "logicalInvokeWithTransaction",
-                         "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
-      mv.visitLabel(notManaged);
+      super.visitVarInsn(ALOAD, 3);
+      super.visitLdcInsn(invokeMethodSignature);
+      super.visitInsn(ICONST_1);
+      super.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+      super.visitInsn(DUP);
+      super.visitInsn(ICONST_0);
+      super.visitVarInsn(ALOAD, 1);
+      super.visitInsn(AASTORE);
+      super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "logicalInvokeWithTransaction", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
+      super.visitVarInsn(ALOAD, 4);
+      super.visitMethodInsn(INVOKEVIRTUAL, "java/util/concurrent/atomic/AtomicInteger", "getAndIncrement", "()I");
+      super.visitVarInsn(ISTORE, newVar);
+      super.visitJumpInsn(GOTO, continueLabel);
+      super.visitLabel(notManaged);
+      visitAddCoded = true;
+    }
+    
+    public void visitVarInsn(int opcode, int var) {
+      super.visitVarInsn(opcode, var);
+      if (ISTORE == opcode && 2 == var && visitAddCoded) {
+        super.visitLabel(continueLabel);
+        visitAddCoded = false;
+      }
     }
   }
-
+  
   private static class TakeMethodAdapter extends MethodAdapter implements Opcodes {
     private boolean      visitExtract = false;
     private final String invokeMethodSignature;
@@ -193,7 +225,7 @@ public class JavaUtilConcurrentLinkedBlockingQueueAdapter implements Opcodes {
       }
       super.visitJumpInsn(opcode, label);
     }
-    
+
     public void visitMethodInsn(int opcode, String owner, String name, String desc) {
       super.visitMethodInsn(opcode, owner, name, desc);
       if ("extract".equals(name) && "()Ljava/lang/Object;".equals(desc)) {

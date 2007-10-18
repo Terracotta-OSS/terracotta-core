@@ -34,18 +34,18 @@ public class JavaUtilConcurrentLinkedBlockingQueueClassAdapter extends ClassAdap
 
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
     MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
-    // Recreating the instrumented method because it is simpler and it performs a little better than
-    // injecting code.
+    // Recreating these 3 methods because the instrumented code is very ad hoc.
     mv = new NodeMethodAdapter(mv);
     if ("remove".equals(name) && "(Ljava/lang/Object;)Z".equals(desc)) {
-      return recreateRemoveMethod(mv);
+      recreateRemoveMethod(mv);
+      return null;
     } else if ("offer".equals(name) && "(Ljava/lang/Object;)Z".equals(desc)) {
-      return recreateOfferMethod(mv);
+      recreateOfferMethod(mv);
+      return null;
     } else if ("offer".equals(name) && "(Ljava/lang/Object;JLjava/util/concurrent/TimeUnit;)Z".equals(desc)) {
-      return recreateOfferTimeoutMethod(mv);
-    } else if ("put".equals(name) && "(Ljava/lang/Object;)V".equals(desc)) {
-      return recreatePutMethod(mv);
-    } 
+      recreateOfferTimeoutMethod(mv);
+      return null;
+    }
 
     return mv;
   }
@@ -663,7 +663,7 @@ public class JavaUtilConcurrentLinkedBlockingQueueClassAdapter extends ClassAdap
     mv.visitVarInsn(ALOAD, 0);
     mv.visitFieldInsn(GETFIELD, "java/util/concurrent/LinkedBlockingQueue", "capacity", "I");
     Label l5 = new Label();
-    mv.visitJumpInsn(IF_ICMPNE, l5);
+    mv.visitJumpInsn(IF_ICMPLT, l5);
     mv.visitInsn(ICONST_0);
     mv.visitInsn(IRETURN);
     mv.visitLabel(l5);
@@ -798,7 +798,7 @@ public class JavaUtilConcurrentLinkedBlockingQueueClassAdapter extends ClassAdap
     mv.visitLocalVariable("c", "I", null, l6, l23, 3);
     mv.visitLocalVariable("d", "I", null, l7, l23, 4);
     mv.visitLocalVariable("putLock", "Ljava/util/concurrent/locks/ReentrantLock;", null, l8, l23, 5);
-    mv.visitMaxs(7, 7);
+    mv.visitMaxs(0, 0);
     mv.visitEnd();
     return null;
   }
