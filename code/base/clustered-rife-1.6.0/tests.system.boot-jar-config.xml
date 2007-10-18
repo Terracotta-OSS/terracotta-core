@@ -14,12 +14,6 @@
 		<configuration-model>development</configuration-model>
 	</system>
 
-	<clients>
-		<modules>
-			<module name="clustered-rife-1.6.0" version="1.0.0.SNAPSHOT" />
-		</modules>
-	</clients>
-
 	<application>
 		<dso>
 			<!--
