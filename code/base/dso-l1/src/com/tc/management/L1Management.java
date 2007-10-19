@@ -145,7 +145,7 @@ public final class L1Management extends TerracottaManagement {
       if (mBeanServer == null) {
         if (Vm.isJDK14()) {
           List mBeanServers = MBeanServerFactory.findMBeanServer(null);
-          if (mBeanServer != null && !mBeanServers.isEmpty()) {
+          if (mBeanServers != null && !mBeanServers.isEmpty()) {
             mBeanServer = (MBeanServer) mBeanServers.get(0);
           } else {
             if (logger.isDebugEnabled()) {
