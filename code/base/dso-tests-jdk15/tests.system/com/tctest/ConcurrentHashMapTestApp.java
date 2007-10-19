@@ -3,6 +3,7 @@
  */
 package com.tctest;
 
+import com.tc.object.bytecode.TCMap;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -155,6 +156,22 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
     } else {
       map.putAll(toPut);
       map.remove(keyRoots[1]);
+    }
+  }
+
+  void testRemoveLogical(ConcurrentHashMap map, boolean validate) throws Exception {
+    Map toPut = new HashMap();
+    toPut.put(keyRoots[0], valueRoots[0]);
+    toPut.put(keyRoots[1], valueRoots[1]);
+    toPut.put(keyRoots[2], valueRoots[2]);
+    toPut.put(keyRoots[3], valueRoots[3]);
+
+    if (validate) {
+      ((TCMap)toPut).__tc_remove_logical(keyRoots[1]);
+      assertMappingsEqual(toPut, map);
+    } else {
+      map.putAll(toPut);
+      ((TCMap)map).__tc_remove_logical(keyRoots[1]);
     }
   }
 

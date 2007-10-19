@@ -145,8 +145,8 @@ import com.tc.util.UnsafeUtil;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.UnknownJvmVersionException;
 import com.tc.util.runtime.UnknownRuntimeVersionException;
-import com.tc.util.runtime.VmVersion;
 import com.tc.util.runtime.Vm;
+import com.tc.util.runtime.VmVersion;
 import com.tc.websphere.WebsphereLoaderNaming;
 import com.tcclient.util.HashtableEntrySetWrapper;
 import com.tcclient.util.MapEntrySetWrapper;
@@ -1691,32 +1691,49 @@ public class BootJarTool {
     loadTerracottaClass("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$IteratorWrapper");
 
     // java.util.concurrent.ConcurrentHashMap
-    byte[] bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap");
+    String jClassNameDots = "java.util.concurrent.ConcurrentHashMap";
+    String tcClassNameDots = "java.util.concurrent.ConcurrentHashMapTC";
 
-    ClassReader cr = new ClassReader(bytes);
-    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    ClassVisitor cv = new JavaUtilConcurrentHashMapAdapter(cw);
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
+    byte[] tcData = getSystemBytes(tcClassNameDots);
+    ClassReader tcCR = new ClassReader(tcData);
+    ClassNode tcCN = new ClassNode();
+    tcCR.accept(tcCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
-    bytes = cw.toByteArray();
+    byte[] jData = getSystemBytes(jClassNameDots);
+    ClassReader jCR = new ClassReader(jData);
+    ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
+    ClassVisitor cv1 = new JavaUtilConcurrentHashMapAdapter(cw);
 
-    TransparencyClassSpec spec = config.getOrCreateSpec("java.util.concurrent.ConcurrentHashMap",
-                                                        "com.tc.object.applicator.ConcurrentHashMapApplicator");
-    spec.setHonorTransient(true);
-    spec.markPreInstrumented();
-    bytes = doDSOTransform(spec.getClassName(), bytes);
-    bootJar.loadClassIntoJar("java.util.concurrent.ConcurrentHashMap", bytes, true);
+    jCR.accept(cv1, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+    jData = cw.toByteArray();
+    
+    jCR = new ClassReader(jData);
+    cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
 
+    ClassInfo jClassInfo = AsmClassInfo.getClassInfo(jClassNameDots, systemLoader);
+    TransparencyClassAdapter dsoAdapter = config.createDsoClassAdapterFor(cw, jClassInfo, instrumentationLogger,
+                                                                          getClass().getClassLoader(), true, true);
+    Map instrumentedContext = new HashMap();
+    ClassVisitor cv = new SerialVersionUIDAdder(new MergeTCToJavaClassAdapter(cw, dsoAdapter, jClassNameDots,
+                                                                              tcClassNameDots, tcCN,
+                                                                              instrumentedContext));
+    jCR.accept(cv, ClassReader.SKIP_FRAMES);
+    jData = cw.toByteArray();
+    jData = doDSOTransform(jClassNameDots, jData);
+    bootJar.loadClassIntoJar(jClassNameDots, jData, true);
+
+    
+    
     // java.util.concurrent.ConcurrentHashMap$HashEntry
-    bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$HashEntry");
-    cr = new ClassReader(bytes);
+    byte[] bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$HashEntry");
+    ClassReader cr = new ClassReader(bytes);
     cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
     cv = new JavaUtilConcurrentHashMapHashEntryAdapter(cw);
     cr.accept(cv, ClassReader.SKIP_FRAMES);
 
     bytes = cw.toByteArray();
 
-    spec = config.getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$HashEntry");
+    TransparencyClassSpec spec = config.getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$HashEntry");
     spec.addDoNotInstrument(JavaUtilConcurrentHashMapHashEntryAdapter.TC_RAWSETVALUE_METHOD_NAME);
     spec.setHonorTransient(true);
     spec.markPreInstrumented();

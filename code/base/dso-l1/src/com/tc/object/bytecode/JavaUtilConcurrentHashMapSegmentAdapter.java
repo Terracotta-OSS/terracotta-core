@@ -14,27 +14,36 @@ import com.tc.asm.Type;
 import com.tc.object.SerializationUtil;
 
 public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implements Opcodes {
-  private static final String PARENT_CONCURRENT_HASH_MAP_FIELD_TYPE = "Ljava/util/concurrent/ConcurrentHashMap;";
+  private final static String PARENT_CONCURRENT_HASH_MAP_FIELD_TYPE = "Ljava/util/concurrent/ConcurrentHashMap;";
 
-  private static final String PARENT_CONCURRENT_HASH_MAP_FIELD_NAME = "parentMap";
+  private final static String PARENT_CONCURRENT_HASH_MAP_FIELD_NAME = "parentMap";
 
-  private static final String TC_PUT_METHOD_NAME                    = ByteCodeUtil.TC_METHOD_PREFIX + "put";
-  private static final String TC_PUT_METHOD_DESC                    = "(Ljava/lang/Object;ILjava/lang/Object;Z)Ljava/lang/Object;";
+  public final static String TC_PUT_METHOD_NAME                     = ByteCodeUtil.TC_METHOD_PREFIX + "put";
+  public final static String TC_PUT_METHOD_DESC                     = "(Ljava/lang/Object;ILjava/lang/Object;Z)Ljava/lang/Object;";
+
+  public final static String TC_ORIG_PUT_METHOD_NAME                = ByteCodeUtil.TC_METHOD_PREFIX + "origPut";
+  public final static String TC_ORIG_PUT_METHOD_DESC                = "(Ljava/lang/Object;ILjava/lang/Object;Z)Ljava/lang/Object;";
+
+  public final static String TC_ORIG_REMOVE_METHOD_NAME             = ByteCodeUtil.TC_METHOD_PREFIX + "origRemove";
+  public final static String TC_ORIG_REMOVE_METHOD_DESC             = "(Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;";
+
+  public final static String TC_NULLOLDVALUE_REMOVE_METHOD_NAME     = ByteCodeUtil.TC_METHOD_PREFIX + "nulloldvalueRemove";
+  public final static String TC_NULLOLDVALUE_REMOVE_METHOD_DESC     = "(Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;";
 
   private final static String TC_CLEAR_METHOD_NAME                  = ByteCodeUtil.TC_METHOD_PREFIX + "clear";
   private final static String TC_CLEAR_METHOD_DESC                  = "()V";
 
-  public final static String TC_READLOCK_METHOD_NAME               = ByteCodeUtil.TC_METHOD_PREFIX + "readLock";
-  public final static String TC_READLOCK_METHOD_DESC               = "()V";
+  public final static String TC_READLOCK_METHOD_NAME                = ByteCodeUtil.TC_METHOD_PREFIX + "readLock";
+  public final static String TC_READLOCK_METHOD_DESC                = "()V";
 
-  public final static String TC_READUNLOCK_METHOD_NAME             = ByteCodeUtil.TC_METHOD_PREFIX + "readUnlock";
-  public final static String TC_READUNLOCK_METHOD_DESC               = "()V";
+  public final static String TC_READUNLOCK_METHOD_NAME              = ByteCodeUtil.TC_METHOD_PREFIX + "readUnlock";
+  public final static String TC_READUNLOCK_METHOD_DESC              = "()V";
 
-  public static final String  INITIAL_TABLE_METHOD_NAME             = "initTable";
-  private static final String INITIAL_TABLE_METHOD_DESC             = "(I)V";
+  public final static String INITIAL_TABLE_METHOD_NAME              = "initTable";
+  public final static String INITIAL_TABLE_METHOD_DESC              = "(I)V";
 
-  public final static String  CONCURRENT_HASH_MAP_SEGMENT_SLASH     = "java/util/concurrent/ConcurrentHashMap$Segment";
-  public final static String  INIT_DESC                             = "(" + PARENT_CONCURRENT_HASH_MAP_FIELD_TYPE
+  public final static String CONCURRENT_HASH_MAP_SEGMENT_SLASH      = "java/util/concurrent/ConcurrentHashMap$Segment";
+  public final static String INIT_DESC                              = "(" + PARENT_CONCURRENT_HASH_MAP_FIELD_TYPE
                                                                       + "IF)V";
 
   public JavaUtilConcurrentHashMapSegmentAdapter(ClassVisitor cv) {
@@ -46,13 +55,12 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
   }
 
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-    final MethodVisitor visitor;
     if ("get".equals(name) && "(Ljava/lang/Object;I)Ljava/lang/Object;".equals(desc)) {
       return new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, addWrapperMethod(access, name, desc, signature, exceptions), true);
     } else if ("containsValue".equals(name) && "(Ljava/lang/Object;)Z".equals(desc)) {
       return new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, super.visitMethod(access, name, desc, signature, exceptions), true);
     } else if ("containsKey".equals(name) && "(Ljava/lang/Object;I)Z".equals(desc)) {
-      visitor = addWrapperMethod(access, name, desc, signature, exceptions);
+      return new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, addWrapperMethod(access, name, desc, signature, exceptions), false);
     } else {
       String description = desc;
       if ("<init>".equals(name) && "(IF)V".equals(desc)) {
@@ -60,22 +68,33 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
       }
       
       MethodVisitor mv = super.visitMethod(access, name, description, signature, exceptions);
-  
       if ("put".equals(name) && "(Ljava/lang/Object;ILjava/lang/Object;Z)Ljava/lang/Object;".equals(desc)) {
-        visitor = new MulticastMethodVisitor(new MethodVisitor[] {
-          new PutMethodAdapter(mv),
+        return new MulticastMethodVisitor(new MethodVisitor[] {
+          // rename the original, totally un-instrumented put method so that it can be used by the CHM applicator
+          super.visitMethod(ACC_SYNTHETIC, TC_ORIG_PUT_METHOD_NAME, TC_ORIG_PUT_METHOD_DESC, null, null),
+          // adapt the put method
+          new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, new PutMethodAdapter(mv), false),
           // This creates the identical copy of the put() method of Segments except that it does not lock and does
           // not invoke the instrumented version of the logicalInvoke(). The reason that it does not require
           // locking is because it is called from the __tc_rehash() instrumented method and the lock is grabbed
           // at the __tc_rehash() method already.
-          new RemoveLockUnlockMethodAdapter(super.visitMethod(ACC_SYNTHETIC, TC_PUT_METHOD_NAME, TC_PUT_METHOD_DESC, null, null))});
-      } else if ("clear".equals(name) && "()V".equals(desc)) {
+          new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, new RemoveLockUnlockMethodAdapter(super.visitMethod(ACC_SYNTHETIC, TC_PUT_METHOD_NAME, TC_PUT_METHOD_DESC, null, null)), false)});
+      } else if ("remove".equals(name) && "(Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;".equals(desc)) {
+        return new MulticastMethodVisitor(new MethodVisitor[] {
+          // rename the original, totally un-instrumented remove method so that it can be used by the CHM applicator
+          super.visitMethod(ACC_SYNTHETIC, TC_ORIG_REMOVE_METHOD_NAME, TC_ORIG_REMOVE_METHOD_DESC, null, null),
+          // create an adapted remove method that returns nulls for the old values and thus doesn't fault them in
+          new RemoveNullOldValueMethodAdapter(new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, new RemoveMethodAdapter(super.visitMethod(ACC_SYNTHETIC, TC_NULLOLDVALUE_REMOVE_METHOD_NAME, TC_NULLOLDVALUE_REMOVE_METHOD_DESC, null, null)), false)),
+          // adapt the remove method
+          new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, new RemoveMethodAdapter(mv), false)});
+      }
+
+      final MethodVisitor visitor;
+      if ("clear".equals(name) && "()V".equals(desc)) {
         visitor = new MulticastMethodVisitor(new MethodVisitor[] {
           new ClearMethodAdapter(mv),
           // Again, this method does not require locking as it is called by __tc_rehash() which grabs the lock already.
           new RemoveLockUnlockMethodAdapter(super.visitMethod(ACC_SYNTHETIC, TC_CLEAR_METHOD_NAME, TC_CLEAR_METHOD_DESC, null, null))});
-      } else if ("remove".equals(name) && "(Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;".equals(desc)) {
-        visitor = new RemoveMethodAdapter(mv);
       } else if ("replace".equals(name) && "(Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;".equals(desc)) {
         visitor = new ReplaceMethodAdapter(mv);
       } else if ("replace".equals(name) && "(Ljava/lang/Object;ILjava/lang/Object;Ljava/lang/Object;)Z".equals(desc)) {
@@ -87,9 +106,9 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
       } else {
         visitor = mv;
       }
+      
+      return new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, visitor, false);
     }
-    
-    return new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, visitor, false);
   }
   
   private String getNewName(String methodName) {
@@ -431,7 +450,6 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
   }
 
   private static class ReplaceMethodAdapter extends MethodAdapter implements Opcodes {
-
     public ReplaceMethodAdapter(MethodVisitor mv) {
       super(mv);
     }
@@ -473,7 +491,6 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
   }
 
   private static class ReplaceIfValueEqualMethodAdapter extends MethodAdapter implements Opcodes {
-
     public ReplaceIfValueEqualMethodAdapter(MethodVisitor mv) {
       super(mv);
     }
@@ -515,14 +532,15 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
   }
 
   private static class RemoveMethodAdapter extends MethodAdapter implements Opcodes {
-
     public RemoveMethodAdapter(MethodVisitor mv) {
       super(mv);
     }
 
     public void visitFieldInsn(int opcode, String owner, String name, String desc) {
       super.visitFieldInsn(opcode, owner, name, desc);
-      if (PUTFIELD == opcode && CONCURRENT_HASH_MAP_SEGMENT_SLASH.equals(owner) && "count".equals(name)
+      if (PUTFIELD == opcode
+          && CONCURRENT_HASH_MAP_SEGMENT_SLASH.equals(owner)
+          && "count".equals(name)
           && "I".equals(desc)) {
         addLogicalInvokeRemoveMethodCall();
       }
@@ -556,8 +574,25 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
     }
   }
 
-  private static class ClearMethodAdapter extends MethodAdapter implements Opcodes {
+  private static class RemoveNullOldValueMethodAdapter extends MethodAdapter implements Opcodes {
+    public RemoveNullOldValueMethodAdapter(MethodVisitor mv) {
+      super(mv);
+    }
 
+    public void visitFieldInsn(int opcode, String owner, String name, String desc) {
+      if (GETFIELD == opcode
+          && "java/util/concurrent/ConcurrentHashMap$HashEntry".equals(owner)
+          && "value".equals(name)
+          && "Ljava/lang/Object;".equals(desc)) {
+        super.visitInsn(POP);
+        super.visitInsn(ACONST_NULL);
+      } else {
+        super.visitFieldInsn(opcode, owner, name, desc);
+      }
+    }
+  }
+
+  private static class ClearMethodAdapter extends MethodAdapter implements Opcodes {
     public ClearMethodAdapter(MethodVisitor mv) {
       super(mv);
     }
@@ -584,7 +619,6 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
   }
 
   private static class ReadValueUnderLockMethodAdapter extends MethodAdapter implements Opcodes {
-
     public ReadValueUnderLockMethodAdapter(MethodVisitor mv) {
       super(mv);
     }
