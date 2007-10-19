@@ -32,7 +32,7 @@ public class TreeMapAdapter {
       public void visitMethodInsn(int opcode, String owner, String name, String desc) {
         super.visitMethodInsn(opcode, owner, name, desc);
 
-        if ((opcode == INVOKESPECIAL) && "<init>".equals(name) & "java/util/TreeMap$3".equals(owner)) {
+        if ((opcode == INVOKESPECIAL) && "<init>".equals(name) && "java/util/TreeMap$3".equals(owner)) {
           mv.visitVarInsn(ASTORE, 1);
           mv.visitTypeInsn(NEW, MapEntrySetWrapper.CLASS_SLASH);
           mv.visitInsn(DUP);
