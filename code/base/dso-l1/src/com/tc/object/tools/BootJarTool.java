@@ -287,7 +287,7 @@ public class BootJarTool {
    * <additional-boot-jar-classes/> section is present in the boot jar. - And there are no user-classes present in the
    * boot jar that is not declared in the <additional-boot-jar-classes/> section
    *
-   * @return <code>true</cide> if the boot jar is complete.
+   * @return <code>true</code> if the boot jar is complete.
    */
   private final boolean isBootJarComplete(File bootJarFile) {
     try {
@@ -295,7 +295,7 @@ public class BootJarTool {
       final Set missing = (Set) result.get(MISSING_CLASSES);
       final Set excess = (Set) result.get(EXCESS_CLASSES);
       return missing.isEmpty() && excess.isEmpty();
-    } catch (InvalidBootJarMetaDataException e) {
+    } catch (Exception e) {
       return false;
     }
   }
