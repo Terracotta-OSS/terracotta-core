@@ -697,6 +697,22 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
     }
   }
   
+  void testAllEntriesSnapshot(ConcurrentHashMap map, boolean validate) throws Exception {
+    if (validate) {
+      Collection set1 = map.entrySet();
+      Collection set2 = ((TCMap)map).__tc_getAllEntriesSnapshot();
+      Assert.assertTrue(set1 != set2);
+      assertCollectionsEqual(set1, set2);
+    } else {
+      Map toPut = new HashMap();
+      toPut.put(keyRoots[0], valueRoots[0]);
+      toPut.put(keyRoots[1], valueRoots[1]);
+      toPut.put(keyRoots[2], valueRoots[2]);
+      toPut.put(keyRoots[3], valueRoots[3]);
+      map.putAll(toPut);
+    }
+  }
+  
   void testValuesClear1(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(keyRoots[0], valueRoots[0]);

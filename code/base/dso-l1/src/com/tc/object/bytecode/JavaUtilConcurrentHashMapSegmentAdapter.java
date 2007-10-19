@@ -18,6 +18,9 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
 
   private final static String PARENT_CONCURRENT_HASH_MAP_FIELD_NAME = "parentMap";
 
+  public final static String TC_ORIG_GET_METHOD_NAME                = ByteCodeUtil.TC_METHOD_PREFIX + "origGet";
+  public final static String TC_ORIG_GET_METHOD_DESC                = "(Ljava/lang/Object;I)Ljava/lang/Object;";
+
   public final static String TC_PUT_METHOD_NAME                     = ByteCodeUtil.TC_METHOD_PREFIX + "put";
   public final static String TC_PUT_METHOD_DESC                     = "(Ljava/lang/Object;ILjava/lang/Object;Z)Ljava/lang/Object;";
 
@@ -56,7 +59,11 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
 
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
     if ("get".equals(name) && "(Ljava/lang/Object;I)Ljava/lang/Object;".equals(desc)) {
-      return new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, addWrapperMethod(access, name, desc, signature, exceptions), true);
+      return new MulticastMethodVisitor(new MethodVisitor[] {
+        // rename the original, totally un-instrumented get method
+        super.visitMethod(ACC_SYNTHETIC, TC_ORIG_GET_METHOD_NAME, TC_ORIG_GET_METHOD_DESC, null, null),
+        // adapt the get method
+        new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, addWrapperMethod(access, name, desc, signature, exceptions), true)});
     } else if ("containsValue".equals(name) && "(Ljava/lang/Object;)Z".equals(desc)) {
       return new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, super.visitMethod(access, name, desc, signature, exceptions), true);
     } else if ("containsKey".equals(name) && "(Ljava/lang/Object;I)Z".equals(desc)) {
