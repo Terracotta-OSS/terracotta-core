@@ -7,9 +7,7 @@ package com.tc.objectserver.managedobject;
 import com.tc.io.serializer.TCObjectInputStream;
 import com.tc.io.serializer.TCObjectOutputStream;
 import com.tc.object.ObjectID;
-import com.tc.object.SerializationUtil;
 import com.tc.objectserver.core.api.ManagedObjectState;
-import com.tc.objectserver.managedobject.ManagedObjectStateSerializationTest.TestDNACursor;
 import com.tc.util.Assert;
 
 import java.io.ByteArrayInputStream;
