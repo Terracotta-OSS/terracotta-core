@@ -80,7 +80,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
 
   public synchronized void removeTransaction(TransactionID txID) {
     TransactionDescriptor removed = (TransactionDescriptor) transactionData.remove(txID);
-    if (removed == null) throw new AssertionError("Attempt to remove a transaction that doesn't exist : " + removed);
+    if (removed == null) throw new AssertionError("Attempt to remove a transaction that doesn't exist");
     // if we get some acks from the previous instance of the server after we resend this
     // transaction, but before we write to the network, then we dont recycle. We lose those
     // buffers. But since it is a rare scenario we dont lose much, but this check avoid writting

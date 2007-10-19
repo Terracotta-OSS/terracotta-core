@@ -385,7 +385,7 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
     LockRequest pending = new LockRequest(lockID, threadID, server_level);
     LockRequest waiter = (LockRequest) this.pendingLockRequests.remove(threadID);
     if (waiter == null) {
-      logger.warn("Pending request " + pending + " is not present: " + waiter);
+      logger.warn("Pending request " + pending + " is not present");
       return;
     }
     // if (waiter instanceof WaitLockRequest) {
