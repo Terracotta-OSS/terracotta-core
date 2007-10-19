@@ -148,7 +148,7 @@ public class Resolver {
         continue;
       }
 
-      final File repository = new File(location.getPath(), spec.getGroupId().replace('.', File.separatorChar));
+      final File repository = new File(FileUtils.toFile(location), spec.getGroupId().replace('.', File.separatorChar));
       if (!repository.exists() || !repository.isDirectory()) {
         warn(Message.WARN_REPOSITORY_UNRESOLVED, new Object[] { repository.getAbsolutePath() });
         continue;
