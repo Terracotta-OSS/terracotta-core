@@ -6,6 +6,7 @@ package com.tc.objectserver.lockmanager.impl;
 
 import com.tc.management.L2LockStatsManager;
 import com.tc.management.L2LockStatsManagerImpl;
+import com.tc.management.L2LockStatsManagerImpl.LockStat;
 import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.lockmanager.api.LockID;
@@ -15,6 +16,10 @@ import com.tc.object.tx.WaitInvocation;
 import com.tc.objectserver.api.TestSink;
 import com.tc.objectserver.lockmanager.api.LockHolder;
 import com.tc.objectserver.lockmanager.api.NullChannelManager;
+import com.tc.util.Assert;
+
+import java.util.Collection;
+import java.util.Iterator;
 
 import junit.framework.TestCase;
 
@@ -69,6 +74,32 @@ public class LockStatManagerTest extends TestCase {
 
       assertTrue(lockHolder1.getAndSetHeldTimeInMillis() > lockHolder2.getAndSetHeldTimeInMillis());
       lockManager.unlock(l1, cid2, s2);
+    } catch (InterruptedException e) {
+      // ignore
+    } finally {
+      resetLockManager();
+    }
+  }
+  
+  public void testLockHeldAggregateDuration() {
+    try {
+      LockID l1 = new LockID("1");
+      final ClientID cid1 = new ClientID(new ChannelID(1));
+      ThreadID s1 = new ThreadID(0);
+      final ClientID cid2 = new ClientID(new ChannelID(2));
+      ThreadID s2 = new ThreadID(1);
+
+      lockManager.requestLock(l1, cid1, s1, LockLevel.WRITE, sink);
+      Thread.sleep(5000);
+      lockManager.unlock(l1, cid1, s1);
+      lockManager.requestLock(l1, cid2, s2, LockLevel.READ, sink);
+      Thread.sleep(3000);
+      lockManager.unlock(l1, cid2, s2);
+      Collection c = lockStatManager.getTopAggregateLockHolderStats(100);
+      Assert.assertEquals(1, c.size());
+      Iterator i = c.iterator();
+      LockStat lockStat = (LockStat)i.next();
+      Assert.assertTrue(lockStat.getAvgHeldTimeInMillis() >= 4000);
     } catch (InterruptedException e) {
       // ignore
     } finally {

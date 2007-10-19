@@ -19,6 +19,10 @@ public class LockStatisticsMonitor implements LockStatisticsMonitorMBean, Serial
   public Collection getTopHeld(int n) {
     return this.lockStatsManager.getTopLockHoldersStats(n);
   }
+  
+  public Collection getTopAggregateLockHolderStats(int n) {
+    return this.lockStatsManager.getTopAggregateLockHolderStats(n);
+  }
 
   public Collection getTopRequested(int n) {
     return this.lockStatsManager.getTopLockStats(n);
@@ -26,6 +30,10 @@ public class LockStatisticsMonitor implements LockStatisticsMonitorMBean, Serial
   
   public Collection getTopWaitingLocks(int n) {
     return this.lockStatsManager.getTopWaitingLocks(n);
+  }
+  
+  public Collection getTopAggregateWaitingLocks(int n) {
+    return this.lockStatsManager.getTopAggregateWaitingLocks(n);
   }
   
   public Collection getTopContendedLocks(int n) {

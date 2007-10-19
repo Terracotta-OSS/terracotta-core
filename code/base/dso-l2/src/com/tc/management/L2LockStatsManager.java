@@ -133,6 +133,14 @@ public interface L2LockStatsManager {
     public void disableLockStatistics() {
       // do nothing
     }
+
+    public Collection getTopAggregateLockHolderStats(int n) {
+      return Collections.EMPTY_LIST;
+    }
+
+    public Collection getTopAggregateWaitingLocks(int n) {
+      return Collections.EMPTY_LIST;
+    }
   };
   
   public void start(DSOChannelManager channelManager, LockManager lockManager, Sink sink);
@@ -175,7 +183,11 @@ public interface L2LockStatsManager {
   
   public Collection getTopLockStats(int n);
   
+  public Collection getTopAggregateLockHolderStats(int n);
+  
   public Collection getTopLockHoldersStats(int n);
+  
+  public Collection getTopAggregateWaitingLocks(int n);
   
   public Collection getTopWaitingLocks(int n);
   

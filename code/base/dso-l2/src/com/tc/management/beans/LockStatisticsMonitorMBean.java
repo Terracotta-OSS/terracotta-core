@@ -9,10 +9,14 @@ import java.util.Collection;
 public interface LockStatisticsMonitorMBean {
 
   public Collection getTopHeld(int n);
+  
+  public Collection getTopAggregateLockHolderStats(int n);
 
   public Collection getTopRequested(int n);
   
   public Collection getTopWaitingLocks(int n);
+  
+  public Collection getTopAggregateWaitingLocks(int n);
 
   public Collection getTopContendedLocks(int n);
   

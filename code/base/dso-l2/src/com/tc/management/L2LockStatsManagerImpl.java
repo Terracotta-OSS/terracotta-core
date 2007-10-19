@@ -32,58 +32,78 @@ import java.util.Map;
 import java.util.Set;
 
 public class L2LockStatsManagerImpl implements L2LockStatsManager {
-  private final static int        PING_PONG_LOOP_LENGTH               = 2;
-  private final static int        TOP_N                               = 5;
-  private final static Comparator LOCK_REQUESTED_COMPARATOR           = new Comparator() {
-                                                                        public int compare(Object o1, Object o2) {
-                                                                          LockStat s1 = (LockStat) o1;
-                                                                          LockStat s2 = (LockStat) o2;
-                                                                          if (s1 == s2) { return 0; }
-                                                                          if (s1.getNumOfLockRequested() <= s2
-                                                                              .getNumOfLockRequested()) { return -1; }
-                                                                          return 1;
-                                                                        }
-                                                                      };
-  private final static Comparator LOCK_PING_PONG_REQUESTED_COMPARATOR = new Comparator() {
-                                                                        public int compare(Object o1, Object o2) {
-                                                                          LockStat s1 = (LockStat) o1;
-                                                                          LockStat s2 = (LockStat) o2;
-                                                                          if (s1 == s2) { return 0; }
-                                                                          if (s1.getNumOfLockHopRequests() <= s2
-                                                                              .getNumOfLockHopRequests()) { return -1; }
-                                                                          return 1;
-                                                                        }
-                                                                      };
-  private final static Comparator LOCK_HELD_COMPARATOR                = new Comparator() {
-                                                                        public int compare(Object o1, Object o2) {
-                                                                          LockHolder s1 = (LockHolder) o1;
-                                                                          LockHolder s2 = (LockHolder) o2;
-                                                                          if (s1 == s2) { return 0; }
-                                                                          if (s1.getHeldTimeInMillis() <= s2
-                                                                              .getHeldTimeInMillis()) { return -1; }
-                                                                          return 1;
-                                                                        }
-                                                                      };
-  private final static Comparator PENDING_LOCK_REQUESTS_COMPARATOR    = new Comparator() {
-                                                                        public int compare(Object o1, Object o2) {
-                                                                          LockStat s1 = (LockStat) o1;
-                                                                          LockStat s2 = (LockStat) o2;
-                                                                          if (s1 == s2) { return 0; }
-                                                                          if (s1.getNumOfPendingRequests() <= s2
-                                                                              .getNumOfPendingRequests()) { return -1; }
-                                                                          return 1;
-                                                                        }
-                                                                      };
-  private final static Comparator LOCK_ACQUIRED_WAITING_COMPARATOR    = new Comparator() {
-                                                                        public int compare(Object o1, Object o2) {
-                                                                          LockHolder s1 = (LockHolder) o1;
-                                                                          LockHolder s2 = (LockHolder) o2;
-                                                                          if (s1 == s2) { return 0; }
-                                                                          if (s1.getWaitTimeInMillis() <= s2
-                                                                              .getWaitTimeInMillis()) { return -1; }
-                                                                          return 1;
-                                                                        }
-                                                                      };
+  private final static int        PING_PONG_LOOP_LENGTH                    = 2;
+  private final static int        TOP_N                                    = 5;
+  private final static Comparator LOCK_REQUESTED_COMPARATOR                = new Comparator() {
+                                                                             public int compare(Object o1, Object o2) {
+                                                                               LockStat s1 = (LockStat) o1;
+                                                                               LockStat s2 = (LockStat) o2;
+                                                                               if (s1 == s2) { return 0; }
+                                                                               if (s1.getNumOfLockRequested() <= s2
+                                                                                   .getNumOfLockRequested()) { return -1; }
+                                                                               return 1;
+                                                                             }
+                                                                           };
+  private final static Comparator LOCK_HOP_REQUESTED_COMPARATOR            = new Comparator() {
+                                                                             public int compare(Object o1, Object o2) {
+                                                                               LockStat s1 = (LockStat) o1;
+                                                                               LockStat s2 = (LockStat) o2;
+                                                                               if (s1 == s2) { return 0; }
+                                                                               if (s1.getNumOfLockHopRequests() <= s2
+                                                                                   .getNumOfLockHopRequests()) { return -1; }
+                                                                               return 1;
+                                                                             }
+                                                                           };
+  private final static Comparator LOCK_HELD_COMPARATOR                     = new Comparator() {
+                                                                             public int compare(Object o1, Object o2) {
+                                                                               LockHolder s1 = (LockHolder) o1;
+                                                                               LockHolder s2 = (LockHolder) o2;
+                                                                               if (s1 == s2) { return 0; }
+                                                                               if (s1.getHeldTimeInMillis() <= s2
+                                                                                   .getHeldTimeInMillis()) { return -1; }
+                                                                               return 1;
+                                                                             }
+                                                                           };
+  private final static Comparator PENDING_LOCK_REQUESTS_COMPARATOR         = new Comparator() {
+                                                                             public int compare(Object o1, Object o2) {
+                                                                               LockStat s1 = (LockStat) o1;
+                                                                               LockStat s2 = (LockStat) o2;
+                                                                               if (s1 == s2) { return 0; }
+                                                                               if (s1.getNumOfPendingRequests() <= s2
+                                                                                   .getNumOfPendingRequests()) { return -1; }
+                                                                               return 1;
+                                                                             }
+                                                                           };
+  private final static Comparator LOCK_ACQUIRED_WAITING_COMPARATOR         = new Comparator() {
+                                                                             public int compare(Object o1, Object o2) {
+                                                                               LockHolder s1 = (LockHolder) o1;
+                                                                               LockHolder s2 = (LockHolder) o2;
+                                                                               if (s1 == s2) { return 0; }
+                                                                               if (s1.getWaitTimeInMillis() <= s2
+                                                                                   .getWaitTimeInMillis()) { return -1; }
+                                                                               return 1;
+                                                                             }
+                                                                           };
+  private final static Comparator AVERAGE_LOCK_HELD_COMPARATOR             = new Comparator() {
+                                                                             public int compare(Object o1, Object o2) {
+                                                                               LockStat s1 = (LockStat) o1;
+                                                                               LockStat s2 = (LockStat) o2;
+                                                                               if (s1 == s2) { return 0; }
+                                                                               if (s1.getAvgHeldTimeInMillis() <= s2
+                                                                                   .getAvgHeldTimeInMillis()) { return -1; }
+                                                                               return 1;
+                                                                             }
+                                                                           };
+  private final static Comparator AVERAGE_LOCK_ACQUIRED_WAITING_COMPARATOR = new Comparator() {
+                                                                             public int compare(Object o1, Object o2) {
+                                                                               LockStat s1 = (LockStat) o1;
+                                                                               LockStat s2 = (LockStat) o2;
+                                                                               if (s1 == s2) { return 0; }
+                                                                               if (s1.getAvgWaitTimeInMillis() <= s2
+                                                                                   .getAvgWaitTimeInMillis()) { return -1; }
+                                                                               return 1;
+                                                                             }
+                                                                           };
 
   private final LockHolderStats   holderStats;
   private final LRUMap            lockStats;
@@ -259,6 +279,7 @@ public class L2LockStatsManagerImpl implements L2LockStatsManager {
       lockStat.lockAwarded();
 
       if (lockHolder != null) {
+        lockStat.aggregateWaitTime(lockHolder.getAndSetWaitTimeInMillis());
         List previousLockHolderList = (List) previousLockHolders.get(lockID);
         if (previousLockHolderList != null) {
           if (previousLockHolderList.size() > 1 && previousLockHolderList.get(0).equals(lockHolder.getNodeID())) {
@@ -273,12 +294,14 @@ public class L2LockStatsManagerImpl implements L2LockStatsManager {
     if (!lockStatEnabled) { return; }
 
     LockStat lockStat = (LockStat) lockStats.get(lockID);
-    if (lockStat != null) {
-      lockStat.lockReleased();
-    }
 
     LockHolder lockHolder = lockReleasedInternal(lockID, nodeID, threadID);
     if (lockHolder == null) { return; }
+    
+    if (lockStat != null) {
+      lockStat.lockReleased();
+      lockStat.aggregateHeldTime(lockHolder.getAndSetHeldTimeInMillis());
+    }
 
     List previousLockHolderList = (List) previousLockHolders.get(lockID);
     if (previousLockHolderList == null) {
@@ -295,7 +318,7 @@ public class L2LockStatsManagerImpl implements L2LockStatsManager {
     LockKey lockKey = newLockKey(lockID, nodeID, threadID);
     LockHolder lockHolder = getLockHolder(lockKey);
     if (lockHolder == null) { return null; }
-    
+
     lockHolder.lockReleased();
     holderStats.moveToHistory(lockKey, lockHolder);
 
@@ -390,10 +413,22 @@ public class L2LockStatsManagerImpl implements L2LockStatsManager {
     return topNLockStats.getDataSnapshot();
   }
 
+  public synchronized Collection getTopAggregateLockHolderStats(int n) {
+    if (!lockStatEnabled) { return Collections.EMPTY_LIST; }
+
+    return holderStats.aggregateTopN(lockStats, n, AVERAGE_LOCK_HELD_COMPARATOR);
+  }
+
   public synchronized Collection getTopLockHoldersStats(int n) {
     if (!lockStatEnabled) { return Collections.EMPTY_LIST; }
 
     return holderStats.topN(n, LOCK_HELD_COMPARATOR);
+  }
+
+  public synchronized Collection getTopAggregateWaitingLocks(int n) {
+    if (!lockStatEnabled) { return Collections.EMPTY_LIST; }
+
+    return holderStats.aggregateTopN(lockStats, n, AVERAGE_LOCK_ACQUIRED_WAITING_COMPARATOR);
   }
 
   public synchronized Collection getTopWaitingLocks(int n) {
@@ -415,7 +450,7 @@ public class L2LockStatsManagerImpl implements L2LockStatsManager {
     if (!lockStatEnabled) { return Collections.EMPTY_LIST; }
 
     Collection allLockStats = lockStats.values();
-    TopN topNLockStats = new TopN(LOCK_PING_PONG_REQUESTED_COMPARATOR, n);
+    TopN topNLockStats = new TopN(LOCK_HOP_REQUESTED_COMPARATOR, n);
     topNLockStats.evaluate(allLockStats);
     return topNLockStats.getDataSnapshot();
   }
@@ -489,9 +524,24 @@ public class L2LockStatsManagerImpl implements L2LockStatsManager {
   }
 
   private static class LockHolderStats {
+    private static class PendingStat {
+      private long numOfHolders;
+      private long totalWaitTimeInMillis;
+      private long totalHeldTimeInMillis;
+      
+      public PendingStat(long waitTimeInMillis, long heldTimeInMillis) {
+        addPendingHolderData(waitTimeInMillis, heldTimeInMillis);
+      }
+      
+      public void addPendingHolderData(long waitTimeInMillis, long heldTimeInMillis) {
+        this.numOfHolders++;
+        this.totalHeldTimeInMillis+=heldTimeInMillis;
+        this.totalWaitTimeInMillis+=waitTimeInMillis;
+      }
+    }
     private final static int NO_LIMIT = -1;
 
-    private final Map        pendingData;  // map from key to map
+    private final Map        pendingData;  // map<LockKey.subKey, map<LockKey, LockHolder>>
     private final LinkedList historyData;  // list of LockHolder
     private final int        maxSize;
 
@@ -529,8 +579,7 @@ public class L2LockStatsManagerImpl implements L2LockStatsManager {
     public void moveToHistory(LockKey key, Object value) {
       LockKey subKey = key.subKey();
       Map lockHolders = (Map) pendingData.get(subKey);
-      Object o = lockHolders.remove(key);
-      lockHolders = (Map) pendingData.get(key);
+      LockHolder o = (LockHolder) lockHolders.remove(key);
       historyData.addLast(o);
       removeOldDataIfNeeded();
     }
@@ -556,14 +605,47 @@ public class L2LockStatsManagerImpl implements L2LockStatsManager {
       return lockHolders.containsKey(key);
     }
 
+    public Collection aggregateTopN(LRUMap lockStats, int n, Comparator comparator) {
+      Map aggregateData = new HashMap(); // map<LockID, PendingStat>
+      
+      Collection val = pendingData.values();
+      for (Iterator i = val.iterator(); i.hasNext();) {
+        Map lockHolders = (Map) i.next();
+        for (Iterator j = lockHolders.values().iterator(); j.hasNext();) {
+          LockHolder lockHolder = (LockHolder)j.next();
+          updateAggregateLockHolder(aggregateData, lockHolder);
+        }
+      }
+      for (Iterator i=aggregateData.keySet().iterator(); i.hasNext(); ) {
+        LockID lockID = (LockID)i.next();
+        PendingStat pendingStat = (PendingStat)aggregateData.get(lockID);
+        LockStat lockStat = (LockStat)lockStats.get(lockID);
+        lockStat.aggregateAvgWaitTimeInMillis(pendingStat.totalWaitTimeInMillis, pendingStat.numOfHolders);
+        lockStat.aggregateAvgHeldTimeInMillis(pendingStat.totalHeldTimeInMillis, pendingStat.numOfHolders);
+      }
+      TopN topN = new TopN(comparator, n);
+      topN.evaluate(lockStats.values());
+      return topN.getDataSnapshot();
+    }
+
+    private void updateAggregateLockHolder(Map aggregateData, LockHolder lockHolder) {
+      PendingStat pendingStat = (PendingStat) aggregateData.get(lockHolder.getLockID());
+      if (pendingStat == null) {
+        pendingStat = new PendingStat(lockHolder.getAndSetWaitTimeInMillis(), lockHolder.getAndSetHeldTimeInMillis());
+        aggregateData.put(lockHolder.getLockID(), pendingStat);
+      } else {
+        pendingStat.addPendingHolderData(lockHolder.getAndSetWaitTimeInMillis(), lockHolder.getAndSetHeldTimeInMillis());
+      }
+    }
+
     public Collection topN(int n, Comparator comparator) {
       Collection val = pendingData.values();
 
       TopN topN = new TopN(comparator, n);
       for (Iterator i = val.iterator(); i.hasNext();) {
         Map lockHolders = (Map) i.next();
-        for (Iterator j=lockHolders.values().iterator(); j.hasNext(); ) {
-          LockHolder lockHolder = (LockHolder)j.next();
+        for (Iterator j = lockHolders.values().iterator(); j.hasNext();) {
+          LockHolder lockHolder = (LockHolder) j.next();
           lockHolder.getAndSetHeldTimeInMillis();
           lockHolder.getAndSetWaitTimeInMillis();
           topN.evaluate(lockHolder);
@@ -627,6 +709,7 @@ public class L2LockStatsManagerImpl implements L2LockStatsManager {
   }
 
   public static class LockStat implements Serializable {
+    private final static long NON_SET_TIME_MILLIS = -1;
     private static final long serialVersionUID = 618840956490853662L;
 
     private final LockID      lockID;
@@ -636,6 +719,11 @@ public class L2LockStatsManagerImpl implements L2LockStatsManager {
     private long              numOfReleased;
     private long              numOfRejected;
     private long              numOfLockHopRequests;
+    private long              numOfAwarded;
+    private long              totalWaitTimeInMillis;
+    private long              totalHeldTimeInMillis;
+    private long              avgWaitTimeInMillis;
+    private long              avgHeldTimeInMillis;
 
     public LockStat(LockID lockID) {
       this.lockID = lockID;
@@ -644,12 +732,17 @@ public class L2LockStatsManagerImpl implements L2LockStatsManager {
       numOfPendingRequests = 0;
       numOfPendingWaiters = 0;
       numOfLockHopRequests = 0;
+      numOfAwarded = 0;
+      totalWaitTimeInMillis = 0;
+      totalHeldTimeInMillis = 0;
+      avgWaitTimeInMillis = NON_SET_TIME_MILLIS;
+      avgHeldTimeInMillis = NON_SET_TIME_MILLIS;
     }
 
     public LockID getLockID() {
       return lockID;
     }
-
+    
     public void lockRequested() {
       numOfRequested++;
       numOfPendingRequests++;
@@ -657,6 +750,7 @@ public class L2LockStatsManagerImpl implements L2LockStatsManager {
 
     public void lockAwarded() {
       numOfPendingRequests--;
+      numOfAwarded++;
     }
 
     public void lockRejected() {
@@ -699,6 +793,46 @@ public class L2LockStatsManagerImpl implements L2LockStatsManager {
     public long getNumOfLockHopRequests() {
       return numOfLockHopRequests;
     }
+    
+    public void aggregateWaitTime(long waitTimeInMillis) {
+      this.totalWaitTimeInMillis += waitTimeInMillis;
+    }
+    
+    public void aggregateHeldTime(long heldTimeInMillis) {
+      this.totalHeldTimeInMillis += heldTimeInMillis;
+    }
+    
+    public long getAvgWaitTimeInMillis() {
+      if (avgWaitTimeInMillis == NON_SET_TIME_MILLIS) {
+        aggregateAvgWaitTimeInMillis(0, 0);
+      }
+      return avgWaitTimeInMillis;
+    }
+    
+    public long getAvgHeldTimeInMillis() {
+      if (avgHeldTimeInMillis == NON_SET_TIME_MILLIS) {
+        aggregateAvgHeldTimeInMillis(0, 0);
+      }
+      return avgHeldTimeInMillis;
+    }
+    
+    public void aggregateAvgHeldTimeInMillis(long totalHeldTimeInMillis, long numOfReleased) {
+      avgHeldTimeInMillis = NON_SET_TIME_MILLIS;
+      numOfReleased += this.numOfReleased;
+      totalHeldTimeInMillis += this.totalHeldTimeInMillis;
+      if (numOfReleased > 0) {
+        avgHeldTimeInMillis = totalHeldTimeInMillis/numOfReleased;
+      }
+    }
+    
+    public void aggregateAvgWaitTimeInMillis(long totalWaitTimeInMillis, long numOfAwarded) {
+      avgWaitTimeInMillis = NON_SET_TIME_MILLIS;
+      numOfAwarded += this.numOfAwarded;
+      totalWaitTimeInMillis += this.totalWaitTimeInMillis;
+      if (numOfAwarded > 0) {
+        avgWaitTimeInMillis = totalWaitTimeInMillis/numOfAwarded;
+      }
+    }
 
     public String toString() {
       StringBuffer sb = new StringBuffer("[LockID: ");
@@ -711,7 +845,7 @@ public class L2LockStatsManagerImpl implements L2LockStatsManager {
       sb.append(numOfPendingRequests);
       sb.append(", number of pending waiters: ");
       sb.append(numOfPendingWaiters);
-      sb.append(", number of ping pong: ");
+      sb.append(", number of lock hop: ");
       sb.append(numOfLockHopRequests);
       sb.append("]");
       return sb.toString();
