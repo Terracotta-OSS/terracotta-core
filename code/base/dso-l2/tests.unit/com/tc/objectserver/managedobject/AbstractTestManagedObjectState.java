@@ -5,6 +5,8 @@
 package com.tc.objectserver.managedobject;
 
 import com.tc.exception.ImplementMe;
+import com.tc.io.serializer.TCObjectInputStream;
+import com.tc.io.serializer.TCObjectOutputStream;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
@@ -14,7 +16,10 @@ import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.persistence.impl.InMemoryPersistor;
+import com.tc.util.Assert;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -52,6 +57,49 @@ public abstract class AbstractTestManagedObjectState extends TestCase {
                                                                                    new TestDNACursor());
     return state;
   }
+  
+  public void basicTestUnit(String className, final byte type, TestDNACursor cursor, int objCount) throws Exception {
+    ManagedObjectState state = createManagedObjectState(className);
+    state.apply(objectID, cursor, new BackReferences());
+
+    // API verification
+    basicAPI(className, type, cursor, objCount, state);
+    
+    // dehydrate
+    basicDehydrate(cursor, objCount, state);
+    
+    // writeTo, readFrom and equal
+    basicReadWriteEqual(type, state);
+  }
+  
+  protected void basicAPI(String className, final byte type, TestDNACursor cursor, int objCount, ManagedObjectState state) {
+    Assert.assertEquals("BackReferences object size", objCount, state.getObjectReferences().size());
+    Assert.assertTrue(state.getType() == type);
+    Assert.assertTrue("ClassName:"+state.getClassName(), state.getClassName().equals(className));
+
+  }
+  
+  protected void basicDehydrate(TestDNACursor cursor, int objCount, ManagedObjectState state) {
+    TestDNAWriter dnaWriter = new TestDNAWriter();
+    state.dehydrate(objectID, dnaWriter);
+    cursor.reset();
+    cursor.next();
+    while(cursor.next()) {
+      Object action = cursor.getAction();
+      Assert.assertTrue(dnaWriter.containsAction(action));
+    }
+  }
+  
+  protected void basicReadWriteEqual(final byte type, ManagedObjectState state) throws Exception {
+    ByteArrayOutputStream bout = new ByteArrayOutputStream();
+    TCObjectOutputStream out = new TCObjectOutputStream(bout);
+    state.writeTo(out);
+    ByteArrayInputStream bin = new ByteArrayInputStream(bout.toByteArray());
+    TCObjectInputStream in = new TCObjectInputStream(bin);
+    ManagedObjectState state2 = ManagedObjectStateFactory.getInstance().readManagedObjectStateFrom(in, type);
+    Assert.assertTrue(state.equals(state2));
+  }
+
 
   public class TestDNAWriter implements DNAWriter {
     private List physicalActions = new ArrayList();
