@@ -137,7 +137,8 @@ public class JavaUtilConcurrentLinkedBlockingQueueAdapter implements Opcodes {
       super(access, desc, mv);
       this.invokeMethodSignature = invokeMethodSignature;
       this.continueLabel = new Label();
-      this.newVar = newLocal(Type.INT_TYPE);
+      //      this.newVar = newLocal(Type.INT_TYPE);
+      this.newVar = 5;
     }
 
     /**
