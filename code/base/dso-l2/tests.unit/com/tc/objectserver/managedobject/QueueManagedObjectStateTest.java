@@ -17,7 +17,7 @@ public class QueueManagedObjectStateTest extends AbstractTestManagedObjectState 
   final byte type = ManagedObjectState.QUEUE_TYPE;
   
   public void basicTestQueue(TestDNACursor cursor, int objCount, int actionCount) throws Exception {
-    ManagedObjectState state = createManagedObjectState(className);
+    ManagedObjectState state = createManagedObjectState(className, cursor);
     state.apply(objectID, cursor, new BackReferences());
 
     // API verification

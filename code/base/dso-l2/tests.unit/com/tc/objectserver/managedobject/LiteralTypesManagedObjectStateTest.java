@@ -15,7 +15,7 @@ public class LiteralTypesManagedObjectStateTest extends AbstractTestManagedObjec
 
   public void basicLiteral(String className, Object obj) throws Exception {
     TestDNACursor cursor = new TestDNACursor();
-    ManagedObjectState state = createManagedObjectState(className);
+    ManagedObjectState state = createManagedObjectState(className, cursor);
     cursor.addLiteralAction(obj);
     state.apply(objectID, cursor, new BackReferences());
 

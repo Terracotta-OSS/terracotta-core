@@ -51,45 +51,45 @@ public abstract class AbstractTestManagedObjectState extends TestCase {
     listenerProvider = null;
   }
 
-  protected ManagedObjectState createManagedObjectState(String className) throws Exception {
+  protected ManagedObjectState createManagedObjectState(String className, TestDNACursor cursor) throws Exception {
     ManagedObjectState state = ManagedObjectStateFactory.getInstance().createState(new ObjectID(1), ObjectID.NULL_ID,
-                                                                                   className, loaderDesc,
-                                                                                   new TestDNACursor());
+                                                                                   className, loaderDesc, cursor);
     return state;
   }
-  
+
   public void basicTestUnit(String className, final byte type, TestDNACursor cursor, int objCount) throws Exception {
-    ManagedObjectState state = createManagedObjectState(className);
+    ManagedObjectState state = createManagedObjectState(className, cursor);
     state.apply(objectID, cursor, new BackReferences());
 
     // API verification
     basicAPI(className, type, cursor, objCount, state);
-    
+
     // dehydrate
     basicDehydrate(cursor, objCount, state);
-    
+
     // writeTo, readFrom and equal
     basicReadWriteEqual(type, state);
   }
-  
-  protected void basicAPI(String className, final byte type, TestDNACursor cursor, int objCount, ManagedObjectState state) {
+
+  protected void basicAPI(String className, final byte type, TestDNACursor cursor, int objCount,
+                          ManagedObjectState state) {
     Assert.assertEquals("BackReferences object size", objCount, state.getObjectReferences().size());
     Assert.assertTrue(state.getType() == type);
-    Assert.assertTrue("ClassName:"+state.getClassName(), state.getClassName().equals(className));
+    Assert.assertTrue("ClassName:" + state.getClassName(), state.getClassName().equals(className));
 
   }
-  
+
   protected void basicDehydrate(TestDNACursor cursor, int objCount, ManagedObjectState state) {
     TestDNAWriter dnaWriter = new TestDNAWriter();
     state.dehydrate(objectID, dnaWriter);
     cursor.reset();
     cursor.next();
-    while(cursor.next()) {
+    while (cursor.next()) {
       Object action = cursor.getAction();
       Assert.assertTrue(dnaWriter.containsAction(action));
     }
   }
-  
+
   protected void basicReadWriteEqual(final byte type, ManagedObjectState state) throws Exception {
     ByteArrayOutputStream bout = new ByteArrayOutputStream();
     TCObjectOutputStream out = new TCObjectOutputStream(bout);
@@ -99,7 +99,6 @@ public abstract class AbstractTestManagedObjectState extends TestCase {
     ManagedObjectState state2 = ManagedObjectStateFactory.getInstance().readManagedObjectStateFrom(in, type);
     Assert.assertTrue(state.equals(state2));
   }
-
 
   public class TestDNAWriter implements DNAWriter {
     private List physicalActions = new ArrayList();
