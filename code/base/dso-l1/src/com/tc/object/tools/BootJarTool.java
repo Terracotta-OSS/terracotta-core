@@ -115,6 +115,7 @@ import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.dna.impl.ProxyInstance;
 import com.tc.object.field.TCField;
+import com.tc.object.ibm.SystemInitializationAdapter;
 import com.tc.object.loaders.BytecodeProvider;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.NamedClassLoader;
@@ -518,6 +519,8 @@ public class BootJarTool {
       addInstrumentedAtomicInteger();
       addInstrumentedAtomicLong();
 
+      addIBMSpecific();
+
       Map internalSpecs = getTCSpecs();
       loadBootJarClasses(removeAlreadyLoaded(massageSpecs(internalSpecs, true)));
 
@@ -542,6 +545,13 @@ public class BootJarTool {
       exit(e.getMessage(), e.getCause());
     }
 
+  }
+
+  private void addIBMSpecific() {
+    if (Vm.isIBM()) {
+      // Yes, the class name is misspelled
+      adaptAndLoad("com.ibm.misc.SystemIntialization", new SystemInitializationAdapter());
+    }
   }
 
   private void addReflectionInstrumentation() {
@@ -1706,7 +1716,7 @@ public class BootJarTool {
 
     jCR.accept(cv1, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
     jData = cw.toByteArray();
-    
+
     jCR = new ClassReader(jData);
     cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
 
@@ -1722,8 +1732,8 @@ public class BootJarTool {
     jData = doDSOTransform(jClassNameDots, jData);
     bootJar.loadClassIntoJar(jClassNameDots, jData, true);
 
-    
-    
+
+
     // java.util.concurrent.ConcurrentHashMap$HashEntry
     byte[] bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$HashEntry");
     ClassReader cr = new ClassReader(bytes);
@@ -1857,8 +1867,8 @@ public class BootJarTool {
 
     TransparencyClassSpec spec = config.getOrCreateSpec("java.util.concurrent.LinkedBlockingQueue",
                                                         "com.tc.object.applicator.LinkedBlockingQueueApplicator");
-//    spec.addMethodAdapter(SerializationUtil.QUEUE_PUT_SIGNATURE,
-//                          new JavaUtilConcurrentLinkedBlockingQueueAdapter.PutAdapter());
+    // spec.addMethodAdapter(SerializationUtil.QUEUE_PUT_SIGNATURE,
+    //                       new JavaUtilConcurrentLinkedBlockingQueueAdapter.PutAdapter());
     spec.addMethodAdapter(SerializationUtil.TAKE_SIGNATURE,
                           new JavaUtilConcurrentLinkedBlockingQueueAdapter.TakeAdapter());
     spec.addMethodAdapter(SerializationUtil.POLL_TIMEOUT_SIGNATURE,

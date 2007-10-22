@@ -4,7 +4,6 @@
  */
 package com.tc.util.runtime;
 
-
 /**
  * Utility class for understanding the current JVM version. Access the VM version information by looking at
  * {@link #VERSION} directly or calling the static helper methods.
@@ -14,10 +13,10 @@ public class Vm {
   /**
    * Version info is parsed from system properties and stored here.
    */
-  public static final VmVersion  VERSION;
+  public static final VmVersion VERSION;
   static {
     try {
-      VERSION = new VmVersion(System.getProperties(), true);
+      VERSION = new VmVersion(System.getProperties());
     } catch (UnknownJvmVersionException mve) {
       throw new RuntimeException(mve);
     } catch (UnknownRuntimeVersionException mve) {

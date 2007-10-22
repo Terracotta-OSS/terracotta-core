@@ -16,7 +16,6 @@ import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.NamedClassLoader;
 import com.tc.object.loaders.StandardClassProvider;
 import com.tc.text.Banner;
-import com.tc.util.runtime.Vm;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -75,8 +74,6 @@ public class ClassProcessorHelper {
   private static final PrintStream           TRACE_STREAM;
 
   private static boolean                     systemLoaderInitialized = false;
-
-  private static final boolean               IS_IBM_VM               = Vm.isIBM();
 
   static {
 
@@ -357,7 +354,7 @@ public class ClassProcessorHelper {
     return c.getDeclaredMethod(name, args);
   }
 
-  private static void init() {
+  public static void init() {
     if (initState.attemptInit()) {
       try {
         // This avoids a deadlock (see LKC-853, LKC-1387)
@@ -541,10 +538,6 @@ public class ClassProcessorHelper {
 
     if (isAWDependency(name)) { return b; }
     if (isDSODependency(name)) { return b; }
-
-    if (IS_IBM_VM) {
-      init();
-    }
 
     if (!initState.isInitialized()) { return b; }
 

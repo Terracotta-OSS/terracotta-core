@@ -30,23 +30,18 @@ public final class VmVersion {
   /**
    * Construct with system properties, which will be parsed to determine version. Looks at properties like java.version,
    * java.runtime.version, jrockit.version, java.vm.name, and java.vendor.
-   * 
+   *
    * @param Properties Typically System.getProperties()
    * @throws UnknownJvmVersionException If JVM version is unknown
    * @throws UnknownRuntimeVersionException If Java runtime version is unknown
    */
   public VmVersion(final Properties props) throws UnknownJvmVersionException, UnknownRuntimeVersionException {
-    this(props, false);
-  }
-
-  /* package */VmVersion(final Properties props, boolean ibmWorkaround) throws UnknownJvmVersionException,
-      UnknownRuntimeVersionException {
-    this(javaVersion(props), runtimeVersion(props, ibmWorkaround), isJRockit(props), isIBM(props));
+    this(javaVersion(props), runtimeVersion(props), isJRockit(props), isIBM(props));
   }
 
   /**
    * Construct with specific version information
-   * 
+   *
    * @param vendorVersion Version pattern like 1.4.2_12
    * @param runtimeVersion Runtime version pattern like 1.4.2_12-269
    * @param isJRockit True if BEA JRockit JVM
@@ -93,7 +88,7 @@ public final class VmVersion {
   /**
    * Given the history of SunOS and Java version numbering by Sun, this will return '1' for a long time to come. Mega
    * version = 1 in 1.2.3
-   * 
+   *
    * @return Mega version
    */
   public int getMegaVersion() {
@@ -102,7 +97,7 @@ public final class VmVersion {
 
   /**
    * Get major version (ie 2 in 1.2.3)
-   * 
+   *
    * @return Major version
    */
   public int getMajorVersion() {
@@ -111,7 +106,7 @@ public final class VmVersion {
 
   /**
    * Get minor version (ie 3 in 1.2.3)
-   * 
+   *
    * @return Minor version
    */
   public int getMinorVersion() {
@@ -120,7 +115,7 @@ public final class VmVersion {
 
   /**
    * Get patch level (ie 12 in 1.2.3_12)
-   * 
+   *
    * @return Patch level
    */
   public String getPatchLevel() {
@@ -192,8 +187,8 @@ public final class VmVersion {
     return props.getProperty("java.version", "<error: java.version not specified in properties>");
   }
 
-  private static String runtimeVersion(Properties props, boolean ibmWorkaround) {
-    if (ibmWorkaround && isIBM(props)) {
+  private static String runtimeVersion(Properties props) {
+    if (thisVMisIBM()) {
       // It's not safe to read "java.runtime.version" from system properties until a certain point in startup
       // Specifically there is a race to set this prop in com.ibm.misc.SystemIntialization.lastChanceHook() and the
       // start of the management agent thread there (MNK-393)
@@ -201,6 +196,10 @@ public final class VmVersion {
     } else {
       return props.getProperty("java.runtime.version", "<error: java.runtime.version not specified in properties>");
     }
+  }
+
+  private static boolean thisVMisIBM() {
+    return isIBM(System.getProperties());
   }
 
   private static String getIBMRuntimeVersion() {
