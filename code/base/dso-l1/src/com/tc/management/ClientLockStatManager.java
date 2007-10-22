@@ -14,7 +14,7 @@ public interface ClientLockStatManager {
       // do nothing
     }
 
-    public void enableStat(LockID lockID, int lockStackTraceDepth, int lockStatCollectFrequency) {
+    public void enableStackTrace(LockID lockID, int lockStackTraceDepth, int lockStatCollectFrequency) {
       // do nothing
     }
 
@@ -22,7 +22,7 @@ public interface ClientLockStatManager {
       return false;
     }
 
-    public void disableStat(LockID lockID) {
+    public void disableStackTrace(LockID lockID) {
       // do nothing
     }
 
@@ -35,9 +35,9 @@ public interface ClientLockStatManager {
   
   public void recordStackTrace(LockID lockID);
   
-  public void enableStat(LockID lockID, int lockStackTraceDepth, int lockStatCollectFrequency);
+  public void enableStackTrace(LockID lockID, int lockStackTraceDepth, int lockStatCollectFrequency);
   
-  public void disableStat(LockID lockID);
+  public void disableStackTrace(LockID lockID);
   
   public boolean isStatEnabled(LockID lockID);
 }

@@ -91,7 +91,7 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
 
       testStackTracesStatistics(lockName, index, 1);
       
-      enableStackTraces(lockName, index, 1, getClientLockStatCollectionFrequency());
+      enableStackTraces(lockName, index, 2, getClientLockStatCollectionFrequency());
 
       testStackTracesStatistics(lockName, index, 2);
       
@@ -121,7 +121,7 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
   private void enableStackTraces(String lockName, int index) throws Throwable {
     if (index == 0) {
       connect();
-      statMBean.enableClientStat(ByteCodeUtil.generateLiteralLockName(LITERAL_VALUES.valueFor(lockName), lockName));
+      statMBean.enableClientStackTrace(ByteCodeUtil.generateLiteralLockName(LITERAL_VALUES.valueFor(lockName), lockName));
       disconnect();
     }
 
@@ -131,7 +131,7 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
   private void enableStackTraces(String lockName, int index, int stackTraceDepth, int statCollectFrequency ) throws Throwable {
     if (index == 0) {
       connect();
-      statMBean.enableClientStat(ByteCodeUtil.generateLiteralLockName(LITERAL_VALUES.valueFor(lockName), lockName), stackTraceDepth, statCollectFrequency);
+      statMBean.enableClientStackTrace(ByteCodeUtil.generateLiteralLockName(LITERAL_VALUES.valueFor(lockName), lockName), stackTraceDepth, statCollectFrequency);
       disconnect();
     }
 
@@ -256,7 +256,7 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
       
       waitForAllToMoveOn();
       
-      verifyLockHop(lockName, 2);
+      verifyLockHop(lockName, 3);
       verifyStackTraces(lockName, 0, -1, -1);
       waitForAllToMoveOn();
       disconnect();

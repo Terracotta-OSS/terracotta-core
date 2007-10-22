@@ -402,6 +402,7 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, WaitTimer
       }
     }
     threadContextFactory.clear(nid);
+    lockStatsManager.clearAllStatsFor(nid);
   }
 
   private Lock getLockFor(LockID id) {

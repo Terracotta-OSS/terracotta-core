@@ -61,7 +61,10 @@ public abstract class EhcacheTerracottaCommonsConfigurator extends TerracottaCon
     configHelper.addAutoLockExcludePattern("* net.sf.ehcache.Status.*(..)");
     configHelper.addAutoLockExcludePattern("* net.sf.ehcache.bootstrap.*..*(..)");
     configHelper.addAutoLockExcludePattern("* net.sf.ehcache.config.*..*(..)");
-    configHelper.addAutoLockExcludePattern("* net.sf.ehcache.constructs.*..*(..)");
+    configHelper.addAutoLockExcludePattern("* net.sf.ehcache.constructs.asynchronous.*.*(..)");
+    configHelper.addAutoLockExcludePattern("* net.sf.ehcache.constructs.blocking.*.*(..)");
+    configHelper.addAutoLockExcludePattern("* net.sf.ehcache.constructs.concurrent.ConcurrencyUtil.*(..)");
+    configHelper.addAutoLockExcludePattern("* net.sf.ehcache.constructs.concurrent.Sync.*(..)");
     configHelper.addAutoLockExcludePattern("* net.sf.ehcache.distribution.*..*(..)");
     configHelper.addAutoLockExcludePattern("* net.sf.ehcache.event.*..*(..)");
     configHelper.addAutoLockExcludePattern("* net.sf.ehcache.hibernate.*..*(..)");
@@ -69,6 +72,10 @@ public abstract class EhcacheTerracottaCommonsConfigurator extends TerracottaCon
     configHelper.addAutoLockExcludePattern("* net.sf.ehcache.management.*..*(..)");
     configHelper.addAutoLockExcludePattern("* net.sf.ehcache.store.*..*(..)");
     configHelper.addAutoLockExcludePattern("* net.sf.ehcache.util.*..*(..)");
+    
+    configHelper.addAutolock("* net.sf.ehcache.constructs.concurrent.Mutex.acquire(..)", ConfigLockLevel.WRITE);
+    configHelper.addAutolock("* net.sf.ehcache.constructs.concurrent.Mutex.attempt(..)", ConfigLockLevel.WRITE);
+    configHelper.addAutolock("* net.sf.ehcache.constructs.concurrent.Mutex.release(..)", ConfigLockLevel.WRITE);
 
     // perform the rest of the configuration
     configHelper.addIncludePattern("com.tcclient.cache.*", false, false, false);

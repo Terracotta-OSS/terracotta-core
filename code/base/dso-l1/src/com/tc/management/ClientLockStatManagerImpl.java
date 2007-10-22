@@ -54,7 +54,7 @@ public class ClientLockStatManagerImpl implements ClientLockStatManager {
 
   public void recordStackTrace(LockID lockID) {
     ClientLockStatContext lockStatContext = (ClientLockStatContext) statEnabledLocks.get(lockID);
-    if (lockStatContext.getLockAccessedFrequency() == 0) {
+    if (lockStatContext.shouldRecordStackTrace()) {
 
       Set stackTraces = (Set) stackTracesMap.get(lockID);
       if (stackTraces == null) {
@@ -65,15 +65,15 @@ public class ClientLockStatManagerImpl implements ClientLockStatManager {
       StackTraceElement[] stackTraceElements = getStackTraceElements(lockStatContext.getStackTraceDepth());
       TCStackTraceElement tcStackTraceElement = new TCStackTraceElement(stackTraceElements);
 
-      if (!stackTraces.contains(tcStackTraceElement)) {
-        stackTraces.add(tcStackTraceElement);
+      boolean added = stackTraces.add(tcStackTraceElement);
 
+      if (added) {
         List stackTracesList = new ArrayList();
         stackTracesList.add(tcStackTraceElement);
         send(lockID, stackTracesList);
       }
     }
-    lockStatContext.lockAccessed();
+    lockStatContext.updateCollectTimer();
   }
 
   private StackTraceElement[] getStackTraceElements(int stackTraceDepth) {
@@ -83,29 +83,29 @@ public class ClientLockStatManagerImpl implements ClientLockStatManager {
 
   private StackTraceElement[] filterStackTracesElement(StackTraceElement[] stackTraces, int stackTraceDepth) {
     stackTraces = fixTCInstrumentationStackTraces(stackTraces);
-    
-    LinkedList list = new LinkedList();
+
+    List list = new ArrayList();
     int numOfStackTraceCollected = 0;
     for (int i = 0; i < stackTraces.length; i++) {
       if (shouldIgnoreClass(stackTraces[i].getClassName())) {
         continue;
       }
-      list.addLast(stackTraces[i]);
+      list.add(stackTraces[i]);
       numOfStackTraceCollected++;
-      if (numOfStackTraceCollected > stackTraceDepth) {
+      if (numOfStackTraceCollected >= stackTraceDepth) {
         break;
       }
     }
     StackTraceElement[] rv = new StackTraceElement[list.size()];
     return (StackTraceElement[]) list.toArray(rv);
   }
-  
+
   private StackTraceElement[] fixTCInstrumentationStackTraces(StackTraceElement[] stackTraces) {
     LinkedList list = new LinkedList();
-    for (int i=0; i<stackTraces.length; i++) {
+    for (int i = 0; i < stackTraces.length; i++) {
       if (isTCInstrumentationStackTrace(stackTraces, i)) {
-        setStackTraceLineNumber(stackTraces[i+1], stackTraces[i].getLineNumber());
-        list.addLast(stackTraces[i+1]);
+        setStackTraceLineNumber(stackTraces[i + 1], stackTraces[i].getLineNumber());
+        list.addLast(stackTraces[i + 1]);
         i++;
       } else {
         list.addLast(stackTraces[i]);
@@ -114,18 +114,16 @@ public class ClientLockStatManagerImpl implements ClientLockStatManager {
     StackTraceElement[] rv = new StackTraceElement[list.size()];
     return (StackTraceElement[]) list.toArray(rv);
   }
-  
+
   private boolean isTCInstrumentationStackTrace(StackTraceElement[] stackTraces, int index) {
     if (stackTraces[index].getMethodName().startsWith(ByteCodeUtil.TC_METHOD_PREFIX)) {
-      if (!stackTraces[index+1].getMethodName().startsWith(ByteCodeUtil.TC_METHOD_PREFIX)) {
-        if (stackTraces[index].getMethodName().endsWith(stackTraces[index+1].getMethodName())) {
-          return true;
-        }
+      if (!stackTraces[index + 1].getMethodName().startsWith(ByteCodeUtil.TC_METHOD_PREFIX)) {
+        if (stackTraces[index].getMethodName().endsWith(stackTraces[index + 1].getMethodName())) { return true; }
       }
     }
     return false;
   }
-  
+
   private void setStackTraceLineNumber(StackTraceElement se, int newLineNumber) {
     try {
       Field f = StackTraceElement.class.getDeclaredField("lineNumber");
@@ -141,7 +139,7 @@ public class ClientLockStatManagerImpl implements ClientLockStatManager {
       throw new TCRuntimeException(e);
     }
   }
-  
+
   private boolean shouldIgnoreClass(String className) {
     for (Iterator i = IGNORE_STACK_TRACES_PACKAGE.iterator(); i.hasNext();) {
       String ignorePackage = (String) i.next();
@@ -154,15 +152,15 @@ public class ClientLockStatManagerImpl implements ClientLockStatManager {
     sink.add(createLockStatisticsResponseMessage(channel.channel(), lockID, stackTraces));
   }
 
-  public void enableStat(LockID lockID, int lockStackTraceDepth, int lockStatCollectFrequency) {
+  public void enableStackTrace(LockID lockID, int lockStackTraceDepth, int lockStatCollectFrequency) {
     statEnabledLocks.remove(lockID);
     stackTracesMap.remove(lockID);
-    
+
     ClientLockStatContext lockStatContext = new ClientLockStatContext(lockStatCollectFrequency, lockStackTraceDepth);
     statEnabledLocks.put(lockID, lockStatContext);
   }
 
-  public void disableStat(LockID lockID) {
+  public void disableStackTrace(LockID lockID) {
     statEnabledLocks.remove(lockID);
     stackTracesMap.remove(lockID);
   }
@@ -170,27 +168,4 @@ public class ClientLockStatManagerImpl implements ClientLockStatManager {
   public boolean isStatEnabled(LockID lockID) {
     return statEnabledLocks.containsKey(lockID);
   }
-
-  private static class LRUList extends LinkedList {
-    private final static int NO_LIMIT = -1;
-
-    private int              maxSize;
-
-    public LRUList() {
-      this(NO_LIMIT);
-    }
-
-    public LRUList(int maxSize) {
-      this.maxSize = maxSize;
-    }
-
-    public boolean add(Object o) {
-      super.addFirst(o);
-      if (maxSize != NO_LIMIT && size() > maxSize) {
-        removeLast();
-      }
-      return true;
-    }
-  }
-
 }

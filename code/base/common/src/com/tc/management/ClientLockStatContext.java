@@ -12,12 +12,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ClientLockStatContext {
-  private final static int DEFAULT_DEPTH             = 0;
+  private final static int DEFAULT_DEPTH             = 1;
   private final static int DEFAULT_COLLECT_FREQUENCY = 10;
 
   private int              collectFrequency;
   private int              stackTraceDepth           = 0;
-  private int              lockAccessedFrequency     = 0;
+  private int              nextCollectTimer          = 0;
   private Set              statEnabledClients        = new HashSet();
 
   public ClientLockStatContext() {
@@ -64,11 +64,13 @@ public class ClientLockStatContext {
     return statEnabledClients;
   }
 
-  public int getLockAccessedFrequency() {
-    return this.lockAccessedFrequency;
+  public boolean shouldRecordStackTrace() {
+    return this.nextCollectTimer == 0;
   }
 
-  public void lockAccessed() {
-    this.lockAccessedFrequency = (this.lockAccessedFrequency + 1) % collectFrequency;
+  public void updateCollectTimer() {
+    if (collectFrequency > 0) {
+      this.nextCollectTimer = (this.nextCollectTimer + 1) % collectFrequency;
+    }
   }
 }

@@ -55,7 +55,7 @@ public class LockStatManagerTest extends TestCase {
     assertEquals(0, lockManager.getThreadContextCount());
     super.tearDown();
   }
-  
+
   public void testLockHeldDuration() {
     try {
       LockID l1 = new LockID("1");
@@ -80,7 +80,7 @@ public class LockStatManagerTest extends TestCase {
       resetLockManager();
     }
   }
-  
+
   public void testLockHeldAggregateDuration() {
     try {
       LockID l1 = new LockID("1");
@@ -98,38 +98,40 @@ public class LockStatManagerTest extends TestCase {
       Collection c = lockStatManager.getTopAggregateLockHolderStats(100);
       Assert.assertEquals(1, c.size());
       Iterator i = c.iterator();
-      LockStat lockStat = (LockStat)i.next();
-      Assert.assertTrue(lockStat.getAvgHeldTimeInMillis() >= 4000);
+      LockStat lockStat = (LockStat) i.next();
+      long avgHeldTimeInMillis = lockStat.getAvgHeldTimeInMillis();
+      System.out.println("Average held time in millis: " + avgHeldTimeInMillis);
+      Assert.assertTrue(avgHeldTimeInMillis >= 4000);
     } catch (InterruptedException e) {
       // ignore
     } finally {
       resetLockManager();
     }
   }
-  
+
   public void testLockStatsManager() {
     veriyLockStatsManagerStatistics();
-    
+
     lockStatManager.disableLockStatistics();
-    
+
     LockID l1 = new LockID("1");
     ThreadID s1 = new ThreadID(0);
-    
+
     final ClientID cid1 = new ClientID(new ChannelID(1));
-    
+
     lockManager.requestLock(l1, cid1, s1, LockLevel.WRITE, sink);
     assertEquals(0, lockStatManager.getNumberOfLockRequested(l1));
     lockManager.unlock(l1, cid1, s1);
-    
+
     lockStatManager.enableLockStatistics();
-    
+
     veriyLockStatsManagerStatistics();
   }
 
   private void veriyLockStatsManagerStatistics() {
     LockID l1 = new LockID("1");
     ThreadID s1 = new ThreadID(0);
-    
+
     final ClientID cid1 = new ClientID(new ChannelID(1));
     final ClientID cid2 = new ClientID(new ChannelID(2));
     final ClientID cid3 = new ClientID(new ChannelID(3));
@@ -157,7 +159,6 @@ public class LockStatManagerTest extends TestCase {
     assertEquals(1, lockStatManager.getNumberOfPendingRequests(l1));
 
     lockManager.unlock(l1, cid2, s1); // grant to c1 again
-    assertEquals(1, lockStatManager.getNumberOfLockHopRequests(l1));
     assertEquals(0, lockStatManager.getNumberOfPendingRequests(l1));
     assertEquals(2, lockStatManager.getNumberOfLockReleased(l1));
 
@@ -178,11 +179,75 @@ public class LockStatManagerTest extends TestCase {
     assertEquals(1, lockStatManager.getNumberOfPendingRequests(l1));
 
     lockManager.unlock(l1, cid4, s1); // grant to c3 again
-    assertEquals(2, lockStatManager.getNumberOfLockHopRequests(l1));
     assertEquals(0, lockStatManager.getNumberOfPendingRequests(l1));
     assertEquals(5, lockStatManager.getNumberOfLockReleased(l1));
 
     lockManager.unlock(l1, cid3, s1);
+    assertEquals(6, lockStatManager.getNumberOfLockReleased(l1));
+  }
+
+  public void testGreedyLockStatsManagerStatistics() {
+    lockManager = new LockManagerImpl(new NullChannelManager(), lockStatManager);
+    lockManager.setLockPolicy(LockManagerImpl.GREEDY_LOCK_POLICY);
+    lockManager.start();
+    lockStatManager.start(new NullChannelManager(), lockManager, sink);
+    
+    LockID l1 = new LockID("1");
+    ThreadID s1 = new ThreadID(0);
+
+    final ClientID cid1 = new ClientID(new ChannelID(1));
+    final ClientID cid2 = new ClientID(new ChannelID(2));
+    final ClientID cid3 = new ClientID(new ChannelID(3));
+    final ClientID cid4 = new ClientID(new ChannelID(4));
+
+    lockManager.requestLock(l1, cid1, s1, LockLevel.WRITE, sink); // c1 award greedily
+    assertEquals(1, lockStatManager.getNumberOfLockRequested(l1));
+    assertEquals(0, lockStatManager.getNumberOfPendingRequests(l1));
+
+    lockManager.requestLock(l1, cid2, s1, LockLevel.WRITE, sink); // c2 should pend
+    assertEquals(2, lockStatManager.getNumberOfLockRequested(l1));
+    assertEquals(1, lockStatManager.getNumberOfPendingRequests(l1));
+
+    lockManager.tryRequestLock(l1, cid3, s1, LockLevel.WRITE, new WaitInvocation(0, 0), sink);
+    assertEquals(3, lockStatManager.getNumberOfLockRequested(l1));
+    assertEquals(1, lockStatManager.getNumberOfPendingRequests(l1));
+
+    lockManager.unlock(l1, cid1, ThreadID.VM_ID); // it will grant to c2 greedily
+    assertEquals(0, lockStatManager.getNumberOfPendingRequests(l1));
+    assertEquals(1, lockStatManager.getNumberOfLockReleased(l1));
+    assertEquals(1, lockStatManager.getNumberOfLockReleased(l1));
+
+    lockManager.requestLock(l1, cid1, s1, LockLevel.WRITE, sink); // c1 request again
+    assertEquals(4, lockStatManager.getNumberOfLockRequested(l1));
+    assertEquals(1, lockStatManager.getNumberOfPendingRequests(l1));
+
+    lockManager.unlock(l1, cid2, ThreadID.VM_ID); // grant to c1 greedily again
+    assertEquals(2, lockStatManager.getNumberOfLockHopRequests(l1));
+    assertEquals(0, lockStatManager.getNumberOfPendingRequests(l1));
+    assertEquals(2, lockStatManager.getNumberOfLockReleased(l1));
+
+    lockManager.requestLock(l1, cid3, s1, LockLevel.WRITE, sink);
+    lockManager.requestLock(l1, cid4, s1, LockLevel.WRITE, sink);
+    assertEquals(6, lockStatManager.getNumberOfLockRequested(l1));
+    assertEquals(2, lockStatManager.getNumberOfPendingRequests(l1));
+
+    lockManager.unlock(l1, cid1, ThreadID.VM_ID); // grant to c3 non-greedily
+    assertEquals(1, lockStatManager.getNumberOfPendingRequests(l1));
+    assertEquals(3, lockStatManager.getNumberOfLockReleased(l1));
+
+    lockManager.unlock(l1, cid3, s1); // grant to c4 greedily
+    assertEquals(0, lockStatManager.getNumberOfPendingRequests(l1));
+    assertEquals(4, lockStatManager.getNumberOfLockReleased(l1));
+    lockManager.requestLock(l1, cid3, s1, LockLevel.WRITE, sink);
+    assertEquals(7, lockStatManager.getNumberOfLockRequested(l1));
+    assertEquals(1, lockStatManager.getNumberOfPendingRequests(l1));
+
+    lockManager.unlock(l1, cid4, ThreadID.VM_ID); // grant to c3 greedily again
+    assertEquals(4, lockStatManager.getNumberOfLockHopRequests(l1));
+    assertEquals(0, lockStatManager.getNumberOfPendingRequests(l1));
+    assertEquals(5, lockStatManager.getNumberOfLockReleased(l1));
+
+    lockManager.unlock(l1, cid3, ThreadID.VM_ID);
     assertEquals(6, lockStatManager.getNumberOfLockReleased(l1));
   }
 

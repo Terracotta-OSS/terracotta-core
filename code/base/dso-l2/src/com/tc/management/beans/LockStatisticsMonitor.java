@@ -48,20 +48,20 @@ public class LockStatisticsMonitor implements LockStatisticsMonitorMBean, Serial
     return this.lockStatsManager.getStackTraces(new LockID(lockID));
   }
   
-  public void enableClientStat(String lockID) {
-    this.lockStatsManager.enableClientStat(new LockID(lockID));
+  public void enableClientStackTrace(String lockID) {
+    this.lockStatsManager.enableClientStackTrace(new LockID(lockID));
   }
   
-  public void enableClientStat(String lockID, int stackTraceDepth, int statCollectFrequency) {
-    this.lockStatsManager.enableClientStat(new LockID(lockID), stackTraceDepth, statCollectFrequency);
+  public void enableClientStackTrace(String lockID, int stackTraceDepth, int statCollectFrequency) {
+    this.lockStatsManager.enableClientStackTrace(new LockID(lockID), stackTraceDepth, statCollectFrequency);
   }
   
-  public void disableClientStat(String lockID) {
-    this.lockStatsManager.disableClientStat(new LockID(lockID));
+  public void disableClientStackTrace(String lockID) {
+    this.lockStatsManager.disableClientStackTrace(new LockID(lockID));
   }
 
-  public boolean isClientStatEnabled(String lockID) {
-    return this.lockStatsManager.isClientLockStatEnable(new LockID(lockID));
+  public boolean isClientStackTraceEnabled(String lockID) {
+    return this.lockStatsManager.isClientLockStackTraceEnable(new LockID(lockID));
   }
   
   public void enableLockStatistics() {

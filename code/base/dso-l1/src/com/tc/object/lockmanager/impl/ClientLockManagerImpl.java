@@ -118,11 +118,9 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   }
   
   public void enableStat(LockID lockID, int lockStackTraceDepth, int lockStatCollectFrequency) {
-    final ClientLock lock;
-
     synchronized (this) {
       waitUntilRunning();
-      lockStatManager.enableStat(lockID, lockStackTraceDepth, lockStatCollectFrequency);
+      lockStatManager.enableStackTrace(lockID, lockStackTraceDepth, lockStatCollectFrequency);
     }
   }
   
@@ -131,7 +129,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
 
     synchronized (this) {
       waitUntilRunning();
-      lockStatManager.disableStat(lockID);
+      lockStatManager.disableStackTrace(lockID);
     }
   }
 

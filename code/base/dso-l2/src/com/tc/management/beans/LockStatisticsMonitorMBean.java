@@ -24,13 +24,13 @@ public interface LockStatisticsMonitorMBean {
   
   public Collection getStackTraces(String lockID);
   
-  public void enableClientStat(String lockID);
+  public void enableClientStackTrace(String lockID);
   
-  public void enableClientStat(String lockID, int stackTraceDepth, int statCollectFrequency);
+  public void enableClientStackTrace(String lockID, int stackTraceDepth, int statCollectFrequency);
   
-  public void disableClientStat(String lockID);
+  public void disableClientStackTrace(String lockID);
   
-  public boolean isClientStatEnabled(String lockID);
+  public boolean isClientStackTraceEnabled(String lockID);
   
   public void enableLockStatistics();
   

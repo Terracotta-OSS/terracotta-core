@@ -332,7 +332,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
   }
 
   private String getTCSyncMethodName(String name) {
-    return ByteCodeUtil.METHOD_RENAME_PREFIX + "sync" + "_" + name;
+    return ByteCodeUtil.SYNC_METHOD_RENAME_PREFIX + name;
   }
 
   private void createSyncMethod(int access, String name, String desc, String signature, final String[] exceptions) {

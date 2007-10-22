@@ -196,7 +196,7 @@ public class LocksPanel extends XContainer {
       LockElementWrapper wrapper = m_lockTable.getSelectedWrapper();
       if (wrapper != null) {
         String id = wrapper.getLockID();
-        lockStatsMBean.enableClientStat(id, getTraceDepth(), getGatherInterval());
+        lockStatsMBean.enableClientStackTrace(id, getTraceDepth(), getGatherInterval());
       }
     }
   }
@@ -213,7 +213,7 @@ public class LocksPanel extends XContainer {
       for (int i = 0; i < count; i++) {
         LockElementWrapper wrapper = m_lockTable.getWrapperAt(i);
         String id = wrapper.getLockID();
-        lockStatsMBean.enableClientStat(id, traceDepth, gatherInterval);
+        lockStatsMBean.enableClientStackTrace(id, traceDepth, gatherInterval);
       }
     }
   }
@@ -227,7 +227,7 @@ public class LocksPanel extends XContainer {
       LockElementWrapper wrapper = m_lockTable.getSelectedWrapper();
       if (wrapper != null) {
         String id = wrapper.getLockID();
-        lockStatsMBean.disableClientStat(id);
+        lockStatsMBean.disableClientStackTrace(id);
         wrapper.setStackTrace(null);
       }
     }
@@ -243,7 +243,7 @@ public class LocksPanel extends XContainer {
       for (int i = 0; i < count; i++) {
         LockElementWrapper wrapper = m_lockTable.getWrapperAt(i);
         String id = wrapper.getLockID();
-        lockStatsMBean.disableClientStat(id);
+        lockStatsMBean.disableClientStackTrace(id);
         wrapper.setStackTrace(null);
       }
     }

@@ -110,7 +110,7 @@ public class ClientServerLockStatisticsTest extends TestCase {
     final ThreadID tx2 = new ThreadID(1);
     clientLockManager.lock(lockID1, tx1, LockLevel.READ);
 
-    serverLockStatManager.enableClientStat(lockID1, 0, 1);
+    serverLockStatManager.enableClientStackTrace(lockID1, 1, 1);
     sleep(1000);
     clientLockManager.lock(lockID1, tx2, LockLevel.READ);
     sleep(2000);
@@ -120,7 +120,7 @@ public class ClientServerLockStatisticsTest extends TestCase {
     sleep(2000);
     assertStackTraces(lockID1, 2, 1);
     
-    serverLockStatManager.enableClientStat(lockID1, 1, 1);
+    serverLockStatManager.enableClientStackTrace(lockID1, 2, 1);
     sleep(1000);
     clientLockManager.lock(lockID1, tx2, LockLevel.READ);
     sleep(2000);
@@ -128,7 +128,7 @@ public class ClientServerLockStatisticsTest extends TestCase {
     clientLockManager.unlock(lockID1, tx2);
     
     sleep(1000);
-    serverLockStatManager.enableClientStat(lockID1);
+    serverLockStatManager.enableClientStackTrace(lockID1);
     sleep(1000);
     int clientLockStatCollectFrequency = getClientLockStatCollectionFrequency();
     for (int i=0; i<clientLockStatCollectFrequency+1; i++) {

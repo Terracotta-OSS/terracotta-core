@@ -219,14 +219,14 @@ public class Lock {
   }
   
   private void remoteEnableClientStat(Sink lockResponseSink, NodeID nodeID, int stackTraceDepth, int statCollectFrequency) {
-    if (!lockStatsManager.isLockStatEnabledInClient(lockID, nodeID)) {
+    if (!lockStatsManager.isLockStackTraceEnabledInClient(lockID, nodeID)) {
       lockResponseSink.add(createLockStatEnableResponseContext(lockID, nodeID, ThreadID.VM_ID, level, stackTraceDepth, statCollectFrequency));
-      lockStatsManager.recordClientStatEnabled(lockID, nodeID);
+      lockStatsManager.recordClientStackTraceEnabled(lockID, nodeID);
     }
   }
 
   private void enableClientStatIfNeeded(Sink lockResponseSink, ServerThreadContext txn) {
-    if (lockStatsManager.isClientLockStatEnable(lockID)) {
+    if (lockStatsManager.isClientLockStackTraceEnable(lockID)) {
       remoteEnableClientStat(lockResponseSink, txn.getId().getNodeID(), lockStatsManager.getLockStackTraceDepth(lockID), lockStatsManager.getLockStatCollectFrequency(lockID));
     }
   }
@@ -402,6 +402,7 @@ public class Lock {
 
   private synchronized void recall(int recallLevel) {
     if (recalled) { return; }
+    recordLockHoppedStat();
     for (Iterator i = greedyHolders.values().iterator(); i.hasNext();) {
       Holder holder = (Holder) i.next();
       // debug("recall() - issued for -", holder);
@@ -1101,6 +1102,10 @@ public class Lock {
 
   private void recordLockReleaseStat(NodeID nodeID, ThreadID threadID) {
     lockStatsManager.lockReleased(lockID, nodeID, threadID);
+  }
+  
+  private void recordLockHoppedStat() {
+    lockStatsManager.lockHopped(lockID);
   }
 
   private void recordLockRejectStat(NodeID nodeID, ThreadID threadID) {

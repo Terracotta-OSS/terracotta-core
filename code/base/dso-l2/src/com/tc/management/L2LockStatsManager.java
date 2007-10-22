@@ -22,19 +22,19 @@ public interface L2LockStatsManager {
       // do nothing
     }
     
-    public void enableClientStat(LockID lockID) {
+    public void enableClientStackTrace(LockID lockID) {
       // do nothing
     }
     
-    public void enableClientStat(LockID lockID, int stackTraceDepth, int statCollectFrequency) {
+    public void enableClientStackTrace(LockID lockID, int stackTraceDepth, int statCollectFrequency) {
       // do nothing
     }
     
-    public void disableClientStat(LockID lockID) {
+    public void disableClientStackTrace(LockID lockID) {
       // do nothing
     }
     
-    public boolean isClientLockStatEnable(LockID lockID) {
+    public boolean isClientLockStackTraceEnable(LockID lockID) {
       return false;
     }
     
@@ -110,11 +110,11 @@ public interface L2LockStatsManager {
       return Collections.EMPTY_LIST;
     }
 
-    public boolean isLockStatEnabledInClient(LockID lockID, NodeID nodeID) {
+    public boolean isLockStackTraceEnabledInClient(LockID lockID, NodeID nodeID) {
       return false;
     }
 
-    public void recordClientStatEnabled(LockID lockID, NodeID nodeID) {
+    public void recordClientStackTraceEnabled(LockID lockID, NodeID nodeID) {
       // do nothing
     }
 
@@ -141,21 +141,31 @@ public interface L2LockStatsManager {
     public Collection getTopAggregateWaitingLocks(int n) {
       return Collections.EMPTY_LIST;
     }
+
+    public void lockHopped(LockID lockID) {
+      // do nothing
+    }
+
+    public void clearAllStatsFor(NodeID nodeID) {
+      // do nothing
+    }
   };
   
   public void start(DSOChannelManager channelManager, LockManager lockManager, Sink sink);
   
-  public void enableClientStat(LockID lockID);
+  public void enableClientStackTrace(LockID lockID);
   
-  public void enableClientStat(LockID lockID, int stackTraceDepth, int statCollectFrequency);
+  public void enableClientStackTrace(LockID lockID, int stackTraceDepth, int statCollectFrequency);
   
-  public void disableClientStat(LockID lockID);
+  public void disableClientStackTrace(LockID lockID);
   
-  public boolean isClientLockStatEnable(LockID lockID);
+  public boolean isClientLockStackTraceEnable(LockID lockID);
   
-  public boolean isLockStatEnabledInClient(LockID lockID, NodeID nodeID);
+  public boolean isLockStackTraceEnabledInClient(LockID lockID, NodeID nodeID);
   
-  public void recordClientStatEnabled(LockID lockID, NodeID nodeID);
+  public void recordClientStackTraceEnabled(LockID lockID, NodeID nodeID);
+  
+  public void lockHopped(LockID lockID);
   
   public void lockRequested(LockID lockID, NodeID nodeID, ThreadID threadID, int lockLevel);
 
@@ -204,4 +214,6 @@ public interface L2LockStatsManager {
   public void enableLockStatistics();
   
   public void disableLockStatistics();
+  
+  public void clearAllStatsFor(NodeID nodeID);
 }
