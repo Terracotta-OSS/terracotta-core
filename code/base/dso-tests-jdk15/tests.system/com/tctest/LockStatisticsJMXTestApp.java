@@ -81,7 +81,11 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
       synchronized (indexToNodeMap) {
         indexToNodeMap.put(new Integer(index), new Long(ManagerUtil.getClientID()));
       }
-      String lockName = "lock1";
+      String lockName = "lock0";
+      
+      testLockAggregateWaitTime(lockName, index);
+      
+      lockName = "lock1";
 
       testBasicStatistics(lockName, index);
 
@@ -194,6 +198,38 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
       waitForAllToMoveOn();
     }
     
+    waitForAllToMoveOn();
+  }
+  
+  private void testLockAggregateWaitTime(String lockName, int index) throws Throwable {
+    if (index == 0) {
+      connect();
+      waitForAllToMoveOn();
+      long avgWaitTimeInMillis = getAggregateAverageWaitTime(lockName);
+      long avgHeldTimeInMillis = getAggregateAverageHeldTime(lockName);
+      
+      System.out.println("avgHeldTimeInMillis: " + avgHeldTimeInMillis);
+      System.out.println("avgWaitTimeInMillis: " + avgWaitTimeInMillis);
+      Assert.assertTrue(avgWaitTimeInMillis > 1000);
+      Assert.assertTrue(avgHeldTimeInMillis > 2000);
+    } else if (index == 1) {
+      ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
+      waitForTwoToMoveOn();
+      Thread.sleep(2000);
+      ManagerUtil.monitorExit(lockName);
+      waitForTwoToMoveOn();
+      ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
+      Thread.sleep(3000);
+      ManagerUtil.monitorExit(lockName);
+      waitForAllToMoveOn();
+    } else if (index == 2) {
+      waitForTwoToMoveOn();
+      ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
+      waitForTwoToMoveOn();
+      Thread.sleep(2000);
+      ManagerUtil.monitorExit(lockName);
+      waitForAllToMoveOn();
+    }
     waitForAllToMoveOn();
   }
   
@@ -351,6 +387,28 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
     if (isAwarded) {
       throw new AssertionError("Client " + expectedValue + " does not seem to acquire the lock " + lockName);
     }
+  }
+  
+  private long getAggregateAverageHeldTime(String lockName) {
+    Collection c = statMBean.getTopAggregateLockHolderStats(500);
+    for (Iterator<LockStat> i=c.iterator(); i.hasNext(); ) {
+      LockStat s = i.next();
+      if (s.getLockID().asString().endsWith(lockName)) {
+        return s.getAvgHeldTimeInMillis();
+      }
+    }
+    return -1;
+  }
+  
+  private long getAggregateAverageWaitTime(String lockName) {
+    Collection c = statMBean.getTopAggregateWaitingLocks(500);
+    for (Iterator<LockStat> i=c.iterator(); i.hasNext(); ) {
+      LockStat s = i.next();
+      if (s.getLockID().asString().endsWith(lockName)) {
+        return s.getAvgWaitTimeInMillis();
+      }
+    }
+    return -1;
   }
   
   private long getLockHeldTime(String lockName, long channelID) {
