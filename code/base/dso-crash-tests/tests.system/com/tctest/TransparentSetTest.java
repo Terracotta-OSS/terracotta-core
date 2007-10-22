@@ -12,7 +12,7 @@ import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 public class TransparentSetTest extends TransparentTestBase implements TestConfigurator {
   private static final int NODE_COUNT           = 3;
   private static final int EXECUTION_COUNT      = 3;
-  private static final int LOOP_ITERATION_COUNT = 600;
+  private static final int LOOP_ITERATION_COUNT = 400;
 
   protected Class getApplicationClass() {
     return TransparentSetTestApp.class;
@@ -35,7 +35,7 @@ public class TransparentSetTest extends TransparentTestBase implements TestConfi
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
     setupManager.setServerCrashMode(ActivePassiveCrashMode.CONTINUOUS_ACTIVE_CRASH);
-    setupManager.setServerCrashWaitTimeInSec(30);
+    setupManager.setServerCrashWaitTimeInSec(60);
     setupManager.setServerShareDataMode(ActivePassiveSharedDataMode.NETWORK);
     setupManager.setServerPersistenceMode(ActivePassivePersistenceMode.TEMPORARY_SWAP_ONLY);
   }

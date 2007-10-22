@@ -48,6 +48,7 @@ public class TransparentSetTestApp extends AbstractTransparentApp implements App
         int size = set.size();
         set.add(to);
         Assert.eval(set.size() == size + 1);
+	if((size+1) % 50 == 0) System.out.println("XXX added " + (size+1));
       }
        ThreadUtil.reallySleep(20);
     }
@@ -64,6 +65,7 @@ public class TransparentSetTestApp extends AbstractTransparentApp implements App
         boolean wasRemoved = set.remove(testObjects.get(i));
         Assert.eval("Test object should have been removed  but wasn't: " + testObjects.get(i), wasRemoved);
         Assert.eval(set.size() == size - 1);
+	if((size-1) % 50 == 0) System.out.println("XXX remain " + (size-1));
       }
        ThreadUtil.reallySleep(20);
     }
