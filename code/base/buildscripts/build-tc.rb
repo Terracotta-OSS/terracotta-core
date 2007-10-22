@@ -347,6 +347,11 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   # Prepares to run tests in an external tool (i.e., Eclipse).
   def check_prep(module_name = 'all', test_type = 'all')
     depends :init, :compile
+    
+    puts "check_prep always designates JDK 1.5 to be used for the tests"
+    puts "to override it, pass 'tests-jdk=1.4'"
+    
+    Registry[:internal_config_source]['tests-jdk']='1.5'
     if module_name.downcase == 'all'
       @module_set.each do |mod|
         check_prep(mod.name, test_type)
