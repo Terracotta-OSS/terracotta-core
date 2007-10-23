@@ -345,13 +345,13 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   end
 
   # Prepares to run tests in an external tool (i.e., Eclipse).
-  def check_prep(module_name = 'all', test_type = 'all')
+  def check_prep(module_name = 'all', test_type = 'all')    
     depends :init, :compile
     
-    puts "check_prep always designates JDK 1.5 to be used for the tests"
-    puts "to override it, pass 'tests-jdk=1.4'"
+    @internal_config_source['tests-jdk']='1.5'
+    Registry[:jvm_set].add_config_jvm("tests-jdk")
+    loud_message "check_prep always uses JDK 1.5 for the tests."
     
-    Registry[:internal_config_source]['tests-jdk']='1.5'
     if module_name.downcase == 'all'
       @module_set.each do |mod|
         check_prep(mod.name, test_type)
@@ -874,6 +874,7 @@ END
     # This is where the 'run-1.4-tests-with-1.5' property comes into play; we assign the
     # 'tests-1.4' JVM to a 1.4 or 1.5 JVM, based on how this property is set.
     def find_jvms
+      
       return @jvm_set if @jvm_set
 
       @jvm_set = JVMSet.new
