@@ -19,7 +19,7 @@ import java.util.Map.Entry;
 /*
  * This class will be merged with java.lang.Hashtable in the bootjar. This hashtable can store ObjectIDs instead of
  * Objects to save memory and transparently fault Objects as needed. It can also clear references. For General rules
- *
+ * 
  * @see HashMapTC class
  */
 public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearable {
@@ -150,6 +150,14 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
   private static Object unwrapValueIfNecessary(Object value) {
     if (value instanceof ValuesWrapper) {
       return ((ValuesWrapper) value).getValue();
+    } else {
+      return value;
+    }
+  }
+
+  private static Object unwrapValueIfNecessaryFaultBreadth(Object value, ObjectID parentContext) {
+    if (value instanceof ValuesWrapper) {
+      return ((ValuesWrapper) value).getValueFaultBreadth(parentContext);
     } else {
       return value;
     }
@@ -331,6 +339,13 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
       return value;
     }
 
+    public Object getValueFaultBreadth(ObjectID parentContext) {
+      if (value instanceof ObjectID) {
+        value = ManagerUtil.lookupObjectWithParentContext((ObjectID) value, parentContext);
+      }
+      return value;
+    }
+
     public int hashCode() {
       return getValue().hashCode();
     }
@@ -372,6 +387,16 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
       if (__tc_isManaged()) {
         synchronized (HashtableTC.this) {
           return unwrapValueIfNecessary(entry.getValue());
+        }
+      } else {
+        return entry.getValue();
+      }
+    }
+
+    public Object getValueFaultBreadth() {
+      if (__tc_isManaged()) {
+        synchronized (HashtableTC.this) {
+          return unwrapValueIfNecessaryFaultBreadth(entry.getValue(), __tc_managed().getObjectID());
         }
       } else {
         return entry.getValue();
@@ -531,7 +556,13 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
     }
 
     public Object next() {
-      return new EntryWrapper(currentEntry = nextEntry());
+      currentEntry = nextEntry();
+      if (currentEntry instanceof EntryWrapper) {
+        // This check is here since this class is extended by ValuesIterator too.
+        return currentEntry;
+      } else {
+        return new EntryWrapper(currentEntry);
+      }
     }
 
     protected Map.Entry nextEntry() {
@@ -578,6 +609,10 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
 
     public Object next() {
       Map.Entry e = (Map.Entry) super.next();
+      if (e instanceof EntryWrapper) {
+        EntryWrapper ew = (EntryWrapper) e;
+        return ew.getValueFaultBreadth();
+      }
       return e.getValue();
     }
   }

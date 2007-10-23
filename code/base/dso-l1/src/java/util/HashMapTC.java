@@ -698,6 +698,7 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
     public Object next() {
       currentEntry = nextEntry();
       if (currentEntry instanceof EntryWrapper) {
+        // This check is here since this class is extended by ValuesIterator too.
         return currentEntry;
       } else {
         return new EntryWrapper(currentEntry);
