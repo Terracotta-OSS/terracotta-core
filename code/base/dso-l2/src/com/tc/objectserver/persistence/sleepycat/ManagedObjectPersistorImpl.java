@@ -371,7 +371,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
         }
       }
       // write all new Object-IDs to persistor
-      if(oidFastLoad && paranoid) synchronized(oidBitsArrayMap) {
+      if (oidFastLoad && paranoid) {
         if(!OperationStatus.SUCCESS.equals(oidPutAll(persistenceTransaction, sortedOidList))) {
           throw new DBException("Failed to save Object-IDs");
         }
@@ -431,7 +431,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
       }
     }
     
-    if(oidFastLoad && paranoid) synchronized(oidBitsArrayMap) {
+    if (oidFastLoad && paranoid) {
       try {
         oidDeleteAll(tx, sortedOidList);
       } catch (TCDatabaseException de){
@@ -706,16 +706,21 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   private OperationStatus oidPutAll(PersistenceTransaction tx, SortedSet sortedOidList) throws TCDatabaseException {
     OperationStatus status = OperationStatus.SUCCESS;
     for (Iterator i = sortedOidList.iterator(); i.hasNext();) {
-      Long keyOnDisk = (Long) i.next();
-      OidLongArray bits = oidBitsArrayMap.getArrayForDisk(keyOnDisk.longValue());
       DatabaseEntry key = new DatabaseEntry();
       DatabaseEntry value = new DatabaseEntry();
+      Long keyOnDisk = (Long) i.next();
+      if (!oidBitsArrayMap.oidMarkInUse(keyOnDisk)) {
+        throw new TCDatabaseException("OidBitsArrayMap interrupted");
+      }
+      OidLongArray bits = oidBitsArrayMap.getArrayForDisk(keyOnDisk.longValue());
       key.setData(bits.keyToBytes());
       value.setData(bits.arrayToBytes());
       try {
         status = this.oidDB.put(pt2nt(tx), key, value);
       }catch (DatabaseException de) {
         throw new TCDatabaseException(de);
+      } finally {
+        oidBitsArrayMap.oidUnmarkInUse(keyOnDisk);
       }
       if (!OperationStatus.SUCCESS.equals(status)) break;
     }
@@ -733,9 +738,12 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   private OperationStatus oidDeleteAll(PersistenceTransaction tx, SortedSet sortedOidList) throws TCDatabaseException {
     OperationStatus status = OperationStatus.SUCCESS;
     for (Iterator i = sortedOidList.iterator(); i.hasNext();) {
-      Long keyOnDisk = (Long) i.next();
-      OidLongArray bits = oidBitsArrayMap.getArrayForDisk(keyOnDisk.longValue());
       DatabaseEntry key = new DatabaseEntry();
+      Long keyOnDisk = (Long) i.next();
+      if (!oidBitsArrayMap.oidMarkInUse(keyOnDisk)) {
+        throw new TCDatabaseException("OidBitsArrayMap interrupted");
+      }
+      OidLongArray bits = oidBitsArrayMap.getArrayForDisk(keyOnDisk.longValue());
       key.setData(bits.keyToBytes());
       try {
         if (bits.isZero()) {
@@ -749,8 +757,10 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
           if (!OperationStatus.SUCCESS.equals(status)) 
                 throw new TCDatabaseException("Failed to write");
         }
-      }catch (DatabaseException de) {
+      } catch (DatabaseException de) {
         throw new TCDatabaseException(de);
+      } finally {
+        oidBitsArrayMap.oidUnmarkInUse(keyOnDisk);
       }
     }
     return (status);
@@ -798,6 +808,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
     final int memBitsLength;
     final int longsPerDiskUnit;
     final int diskBitsLength;
+    final ConcurrentHashMap inUseMap;
     
     OidBitsArrayMap(int longsPerMemUnit, int longsPerDiskUnit) { 
       this.longsPerMemUnit = longsPerMemUnit;
@@ -805,9 +816,41 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
       this.longsPerDiskUnit = longsPerDiskUnit;
       this.diskBitsLength = longsPerDiskUnit * BitsPerLong;
       map = new ConcurrentHashMap();
+      inUseMap = new ConcurrentHashMap();
       
       Assert.assertTrue("LongsPerMemUnit must be multiple of LongsPerDiskUnit", 
                         (longsPerMemUnit % longsPerDiskUnit) == 0);
+    }
+    
+    public boolean oidMarkInUse(long oid) {
+      Long id = new Long(oid);
+      return(oidMarkInUse(id));
+    }
+    
+    public void oidUnmarkInUse(long oid) {
+      Long id = new Long(oid);
+      oidUnmarkInUse(id);
+    }
+    
+    public boolean oidMarkInUse(Long id) {
+      synchronized(this) {
+        while (inUseMap.containsKey(id)) {
+          try {
+            wait();
+          } catch(InterruptedException ex) {
+            return false;
+          }
+        }
+        inUseMap.put(id, id);
+      }
+      return true;
+    }
+    
+    public void oidUnmarkInUse(Long id) {
+      synchronized(this) {
+        inUseMap.remove(id);
+        notifyAll();
+      }
     }
         
     public long oidOnDiskIndex(long oid) {
