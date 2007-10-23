@@ -14,6 +14,8 @@ import org.apache.log4j.PropertyConfigurator;
 import org.apache.log4j.RollingFileAppender;
 import org.apache.log4j.varia.NullAppender;
 
+import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 
@@ -34,7 +36,7 @@ import java.util.Map.Entry;
 
 /**
  * Factory class for obtaining TCLogger instances.
- *
+ * 
  * @author teck
  */
 public class TCLogging {
@@ -56,8 +58,11 @@ public class TCLogging {
   private static final String       CONSOLE_LOGGER_NAME                = CUSTOMER_LOGGER_NAMESPACE + ".console";
 
   private static final String       BENCH_LOGGER_NAME                  = "terracotta.bench";
-  private static final String       MAX_LOG_FILE_SIZE                  = "512MB";
-  private static final int          MAX_BACKUPS                        = 20;
+  private static final String       LOGGING_PROPERTIES_SECTION         = "logging";
+  private static final String       MAX_LOG_FILE_SIZE_PROPERTY         = "maxLogFileSize";
+  private static final int          DEFAULT_MAX_LOG_FILE_SIZE          = 512;
+  private static final String       MAX_BACKUPS_PROPERTY               = "maxBackups";
+  private static final int          DEFAULT_MAX_BACKUPS                = 20;
   private static final String       LOG4J_PROPERTIES_FILENAME          = ".tc.dev.log4j.properties";
 
   private static final String       CONSOLE_PATTERN                    = "%d %p - %m%n";
@@ -314,10 +319,12 @@ public class TCLogging {
 
     synchronized (TCLogging.class) {
       try {
+        TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor(LOGGING_PROPERTIES_SECTION);
         newFileAppender = new RollingFileAppender(new PatternLayout(FILE_AND_JMX_PATTERN), logFilePath, true);
         newFileAppender.setName("file appender");
-        newFileAppender.setMaxFileSize(MAX_LOG_FILE_SIZE);
-        newFileAppender.setMaxBackupIndex(MAX_BACKUPS);
+        int maxLogFileSize = props.getInt(MAX_LOG_FILE_SIZE_PROPERTY, DEFAULT_MAX_LOG_FILE_SIZE);
+        newFileAppender.setMaxFileSize(maxLogFileSize+"MB");
+        newFileAppender.setMaxBackupIndex(props.getInt(MAX_BACKUPS_PROPERTY, DEFAULT_MAX_BACKUPS));
 
         // This makes us start with a new file each time.
         newFileAppender.rollOver();
@@ -367,9 +374,8 @@ public class TCLogging {
       Logger benchLogger = Logger.getLogger(BENCH_LOGGER_NAME);
 
       /**
-       * Don't add consoleLogger to allLoggers because it's a child of customerLogger,
-       * so it shouldn't get any appenders. If you DO add consoleLogger here, you'll
-       * see duplicate messages in the log file.
+       * Don't add consoleLogger to allLoggers because it's a child of customerLogger, so it shouldn't get any
+       * appenders. If you DO add consoleLogger here, you'll see duplicate messages in the log file.
        */
       allLoggers = new Logger[] { internalLogger, customerLogger, benchLogger };
 
