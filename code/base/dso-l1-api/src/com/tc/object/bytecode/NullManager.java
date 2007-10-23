@@ -243,7 +243,7 @@ public final class NullManager implements Manager {
     return false;
   }
 
-  public boolean isDsoMonitorExitRequired(Object obj) {
+  public boolean isDsoMonitorEntered(Object obj) {
     return false;
   }
 

@@ -369,6 +369,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   public void addIncludeAndLockIfRequired(String expression, boolean honorTransient,
                                           boolean oldStyleCallConstructorOnLoad, boolean honorVolatile,
                                           String lockExpression, ClassInfo classInfo) {
+    if (hasSpec(classInfo)) { return; }
+
     // The addition of the lock expression and the include need to be atomic -- see LKC-2616
     synchronized (this.instrumentationDescriptors) {
       // TODO see LKC-1893. Need to check for primitive types, logically managed classes, etc.
@@ -1640,6 +1642,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   public boolean hasSpec(String className) {
     return getSpec(className) != null;
+  }
+  
+  private boolean hasSpec(ClassInfo classInfo) {
+    return getSpec(classInfo.getName()) != null;
   }
 
   /**

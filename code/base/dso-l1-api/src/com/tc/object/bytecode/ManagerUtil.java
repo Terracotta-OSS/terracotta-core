@@ -389,8 +389,8 @@ public class ManagerUtil {
    * 
    * @return True if required
    */
-  public static boolean isDsoMonitorExitRequired(Object obj) {
-    return getManager().isDsoMonitorExitRequired(obj);
+  public static boolean isDsoMonitorEntered(Object obj) {
+    return getManager().isDsoMonitorEntered(obj);
   }
 
   /**

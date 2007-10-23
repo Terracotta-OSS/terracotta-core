@@ -289,7 +289,7 @@ public interface Manager {
    * 
    * @return True if required
    */
-  public boolean isDsoMonitorExitRequired(Object obj);
+  public boolean isDsoMonitorEntered(Object obj);
 
   /**
    * Check whether object is logically instrumented

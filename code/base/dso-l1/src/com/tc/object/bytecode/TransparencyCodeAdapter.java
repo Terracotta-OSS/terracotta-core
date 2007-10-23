@@ -334,7 +334,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
         return;
       case MONITOREXIT:
         super.visitInsn(DUP);
-        super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "isDsoMonitorExitRequired", "(Ljava/lang/Object;)Z");
+        super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "isDsoMonitorEntered", "(Ljava/lang/Object;)Z");
         Label l3 = new Label();
         super.visitJumpInsn(IFEQ, l3);
         mgrHelper.callManagerMethod("monitorExit", this);

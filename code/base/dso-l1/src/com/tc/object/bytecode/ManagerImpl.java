@@ -439,10 +439,16 @@ public class ManagerImpl implements Manager {
     return (!(o instanceof Class)) && literals.isLiteralInstance(o);
   }
 
-  public boolean isDsoMonitorExitRequired(Object o) {
+  public boolean isDsoMonitorEntered(Object o) {
     String lockName = getLockName(o);
     if (lockName == null) { return false; }
-    return txManager.isLockOnTopStack(lockName);
+    boolean dsoMonitorEntered = txManager.isLockOnTopStack(lockName);
+    
+    if (!dsoMonitorEntered && isManaged(o)) {
+      logger.info("Object " + o + " is a shared object, but a shared lock is not obtained within a locking context. This usually means the object get shared within a synchronized block/method.");
+    }
+    
+    return dsoMonitorEntered;
   }
 
   private String getLockName(Object obj) {
