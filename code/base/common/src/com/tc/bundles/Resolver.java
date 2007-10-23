@@ -6,10 +6,10 @@ package com.tc.bundles;
 
 import org.apache.commons.io.FileUtils;
 import org.osgi.framework.BundleException;
-import org.osgi.framework.Version;
 
 import com.tc.bundles.exception.InvalidBundleManifestException;
 import com.tc.bundles.exception.MissingBundleException;
+import com.tc.bundles.Version;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.properties.TCProperties;
@@ -182,8 +182,8 @@ public class Resolver {
   }
 
   protected URL resolveLocation(final String name, final String version, final String groupId) {
-    final String symname = MessageFormat.format("{0}.{1}", new Object[] { groupId, name }).replace('-', '_');
-    Version __version = Version.parseVersion(version);
+    final String symname = MessageFormat.format("{0}.{1}", new Object[] { groupId, name });
+    Version __version = Version.parse(version);
     for (int i = repositories.length - 1; i >= 0; i--) {
       try {
         final URL url = new URL(repositories[i].toString() + (repositories[i].toString().endsWith("/") ? "" : "/"));
@@ -196,15 +196,13 @@ public class Resolver {
           if (manifest == null) continue;
 
           // found a match!
-          if (symname.equalsIgnoreCase(manifest.getMainAttributes().getValue(BUNDLE_SYMBOLICNAME))) {
-            String manifestVersion = manifest.getMainAttributes().getValue(BUNDLE_VERSION);
-            try { 
-              if(__version.equals(Version.parseVersion(manifestVersion))) { 
-                return addToRegistry(jar.toURL(), manifest); 
-              }
-            } catch(NumberFormatException e) {  // thrown by parseVersion() 
-              logger.warn("Bad manifest bundle version in jar='" + jar.getAbsolutePath() + 
-                  "', version='" + manifestVersion + "'.  Skipping...", e);
+          if (BundleSpec.isMatchingSymbolicName(symname, manifest.getMainAttributes().getValue(BUNDLE_SYMBOLICNAME))) {
+            final String manifestVersion = manifest.getMainAttributes().getValue(BUNDLE_VERSION);
+            try {
+              if (__version.equals(Version.parse(manifestVersion))) return addToRegistry(jar.toURL(), manifest);
+            } catch (NumberFormatException e) { // thrown by parseVersion() 
+              logger.warn("Bad manifest bundle version in jar='" + jar.getAbsolutePath() + "', version='"
+                  + manifestVersion + "'.  Skipping...", e);
             }
           }
         }

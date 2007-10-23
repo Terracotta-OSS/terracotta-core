@@ -6,9 +6,9 @@ package com.tc.bundles;
 
 import org.knopflerfish.framework.VersionRange;
 import org.osgi.framework.BundleException;
-import org.osgi.framework.Version;
 
 import com.tc.bundles.exception.InvalidBundleManifestException;
+import com.tc.bundles.Version;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -128,14 +128,14 @@ public final class BundleSpec {
 
   public final boolean isCompatible(final String symname, final String version) {
     // symbolic-names must match
-    if (!this.symbolicName.equals(symname)) { return false; }
+    if (!isMatchingSymbolicName(this.symbolicName, symname)) return false;
 
     // if symbolic-names are matching, then check for version compatibility
     String spec = (String) attributes.get(PROP_KEY_BUNDLE_VERSION);
 
     // no specific bundle-version required/specified
     // so it must be compatible with the version
-    if (spec == null) { return true; }
+    if (spec == null) return true;
 
     final Version target = new Version(version);
     VersionRange range = new VersionRange(spec);
@@ -143,4 +143,7 @@ public final class BundleSpec {
     return range.withinRange(target);
   }
 
+  public final static boolean isMatchingSymbolicName(final String arg0, final String arg1) {
+    return arg0.replace('-', '_').equalsIgnoreCase(arg1.replace('-', '_'));
+  }
 }
