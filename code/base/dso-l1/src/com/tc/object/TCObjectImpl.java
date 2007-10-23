@@ -33,23 +33,24 @@ import java.lang.ref.WeakReference;
  * <p>
  */
 public abstract class TCObjectImpl implements TCObject {
-  private static final TCLogger logger                      = TCLogging.getLogger(TCObjectImpl.class);
+  private static final TCLogger logger                           = TCLogging.getLogger(TCObjectImpl.class);
 
-  private static final int      ACCESSED_OFFSET             = 1;
-  private static final int      IS_NEW_OFFSET               = 2;
-  private static final int      AUTOLOCKS_DISABLED_OFFSET   = 4;
-  private static final int      EVICTION_IN_PROGRESS_OFFSET = 8;
+  private static final int      ACCESSED_OFFSET                  = 1;
+  private static final int      IS_NEW_OFFSET                    = 2;
+  private static final int      AUTOLOCKS_DISABLED_OFFSET        = 4;
+  private static final int      EVICTION_IN_PROGRESS_OFFSET      = 8;
+  private static final int      NEW_DEHYDRATE_IN_PROGRESS_OFFSET = 16;
 
-  // XXX::This inital negative version number is important since GID is assigned in the server from 0.
-  private long                  version                     = -1;
+  // XXX::This initial negative version number is important since GID is assigned in the server from 0.
+  private long                  version                          = -1;
 
   private final ObjectID        objectID;
   protected final TCClass       tcClazz;
   private WeakReference         peerObject;
   private TLinkable             next;
   private TLinkable             previous;
-  private byte                  flags                       = 0;
-  private static final TCLogger consoleLogger               = CustomerLogging.getConsoleLogger();
+  private byte                  flags                            = 0;
+  private static final TCLogger consoleLogger                    = CustomerLogging.getConsoleLogger();
 
   protected TCObjectImpl(ReferenceQueue queue, ObjectID id, Object peer, TCClass clazz) {
     this.objectID = id;
@@ -267,17 +268,28 @@ public abstract class TCObjectImpl implements TCObject {
    * Writes the data in the object to the DNA writer supplied.
    */
   public boolean dehydrateIfNew(DNAWriter writer) throws DNAException {
-    // The dehydrate and flipping the "new" flag must be atomic -- otherwise the client
-    // memory manager might start nulling field values!
+    final boolean dehydrate;
+
+    // We use 2 flags here, we can't hold the lock on "this"
+    // while dehydrating (CDV-479). Introducing another lock would work, but would
+    // require adding a field to TCObjectImpl (which is a no-no memory wise)
     synchronized (this) {
-      if (isNew()) {
-        tcClazz.dehydrate(this, writer, getPeerObject());
-        setFlag(IS_NEW_OFFSET, false);
-        return true;
+      dehydrate = isNew() && !getFlag(NEW_DEHYDRATE_IN_PROGRESS_OFFSET);
+
+      if (dehydrate) {
+        setFlag(NEW_DEHYDRATE_IN_PROGRESS_OFFSET, true);
       }
     }
 
-    return false;
+    // Flipping the "new" flag must occur AFTER dehydrate -- otherwise the client
+    // memory manager might start nulling field values! (see canEvict() dependency on isNew() condition)
+    if (dehydrate) {
+      tcClazz.dehydrate(this, writer, getPeerObject());
+      setFlag(IS_NEW_OFFSET, false);
+      setFlag(NEW_DEHYDRATE_IN_PROGRESS_OFFSET, false);
+    }
+
+    return dehydrate;
   }
 
   public synchronized void setVersion(long version) {
