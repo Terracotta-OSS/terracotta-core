@@ -751,6 +751,11 @@
               <path>*/beanfactory2.xml</path>
             </paths>
 
+            <!-- Can be used to log the locations of all bean definition
+              resources. This can be useful to help configure your application
+              context paths, above; Optional -->
+            <enable-location-info>false</enable-location-info>
+
             <!-- Specifies list of clustered beans and their configuration for
               this application context. Spring beans with the same name in
               different contexts will be different logical beans. Required. -->

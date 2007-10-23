@@ -168,6 +168,20 @@ public class L2LockStatsManagerImpl implements L2LockStatsManager {
     this.sink = sink;
   }
 
+  public synchronized boolean isLockStatisticsEnabled() {
+    return this.lockStatEnabled;
+  }
+
+  public synchronized void setLockStatisticsEnabled(boolean lockStatEnabled) {
+    if((this.lockStatEnabled = lockStatEnabled) == false) {
+      for (Iterator i = clientStatEnabledLock.keySet().iterator(); i.hasNext();) {
+        LockID lockID = (LockID) i.next();
+        disableClientStackTrace(lockID);
+      }
+      clearAllStatistics();
+    }
+  }
+  
   public synchronized void enableLockStatistics() {
     this.lockStatEnabled = true;
   }

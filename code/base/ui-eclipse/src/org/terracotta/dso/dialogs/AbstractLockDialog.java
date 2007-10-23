@@ -20,7 +20,6 @@ import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.Region;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.CCombo;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -28,6 +27,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
@@ -132,7 +132,7 @@ public abstract class AbstractLockDialog extends AbstractApplicationEventDialog 
     int startIndex = 0;
     for (int i = list.size() - 1; i >= 0; i--) {
       StackTraceElement element = list.get(i);
-      if (element.getMethodName().startsWith("__tc_")) {
+      if (element.getMethodName().startsWith("__tc_") || element.getLineNumber() < 0) {
         startIndex = i + 1;
         break;
       }
@@ -419,7 +419,7 @@ public abstract class AbstractLockDialog extends AbstractApplicationEventDialog 
   }
 
   class LockRulePanel extends Composite {
-    CCombo           fStackCombo;
+    Combo            fStackCombo;
 
     Button           fTypeAutoButton;
     Button           fTypeNamedButton;
@@ -447,7 +447,7 @@ public abstract class AbstractLockDialog extends AbstractApplicationEventDialog 
       Label label = new Label(methodChooser, SWT.NONE);
       label.setText("Method"); //$NON-NLS-1$
       label.setLayoutData(new GridData());
-      fStackCombo = new CCombo(methodChooser, SWT.BORDER | SWT.READ_ONLY);
+      fStackCombo = new Combo(methodChooser, SWT.BORDER | SWT.READ_ONLY);
       fStackCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
       fStackCombo.setFont(parent.getFont());
       fStackCombo.addSelectionListener(new SelectionAdapter() {
@@ -465,8 +465,10 @@ public abstract class AbstractLockDialog extends AbstractApplicationEventDialog 
         public void widgetSelected(SelectionEvent event) {
           if (event.widget == fTypeAutoButton) {
             fTypeSpecificStackLayout.topControl = fAutoSyncButton;
+            fTypeNamedButton.setSelection(false);
           } else {
             fTypeSpecificStackLayout.topControl = fNamePanel;
+            fTypeAutoButton.setSelection(false);
           }
           fTypeSpecificPanel.layout();
           fTypeSpecificPanel.redraw();

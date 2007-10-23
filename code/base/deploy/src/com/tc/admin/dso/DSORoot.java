@@ -38,7 +38,7 @@ public class DSORoot extends DSOObject {
   }
   
   protected void updateLabel() {
-    m_label = getName() + " (" + getClassName() + ")";
+    m_label = getName() + " (" + convertTypeName(getClassName()) + ")";
 
     if(isCollection()) {
       m_label += " [" + getFacadeSize() + "/" + getTrueObjectSize() + "]";

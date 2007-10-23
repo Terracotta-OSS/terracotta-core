@@ -92,7 +92,7 @@ public abstract class DSOObject {
     }
   }
 
-  private static String convertTypeName(String typeName) {
+  static String convertTypeName(String typeName) {
     if (typeName != null && typeName.length() > 0) {
       if (typeName.charAt(0) == C_ARRAY) {
         try {
@@ -103,6 +103,8 @@ public abstract class DSOObject {
             while (typeName.charAt(pos) != ';')
               pos++;
             typeName = typeName.substring(1, pos);
+          } else {
+            typeName = nativeTypeFor(typeName.charAt(0));
           }
           StringBuffer sb = new StringBuffer(typeName);
           for (int i = 0; i < arrayCount; i++) {
@@ -111,11 +113,24 @@ public abstract class DSOObject {
           typeName = sb.toString();
         } catch (IllegalArgumentException iae) {/**/
         }
+      } else if(typeName.length() == 1) {
+        typeName = nativeTypeFor(typeName.charAt(0));
       }
     }
     return typeName;
   }
 
+  private static String nativeTypeFor(char c) {
+    switch(c) {
+      case 'Z': return "boolean";
+      case 'I': return "int";
+      case 'F': return "float";
+      case 'C': return "char";
+      case 'D': return "double";
+    }
+    return String.valueOf(c);
+  }
+  
   public void addPropertyChangeListener(PropertyChangeListener listener) {
     m_changeHelper.addPropertyChangeListener(listener);
   }

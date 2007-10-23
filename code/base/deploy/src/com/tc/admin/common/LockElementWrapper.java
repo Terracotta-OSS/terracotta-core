@@ -7,4 +7,6 @@ public interface LockElementWrapper {
   String getLockID();
   void setStackTrace(String s);
   String getStackTrace();
+  void setAllStackTraces(String allTraces);
+  String getAllStackTraces();
 }

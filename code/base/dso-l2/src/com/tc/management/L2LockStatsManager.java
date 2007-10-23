@@ -126,6 +126,14 @@ public interface L2LockStatsManager {
       return 0;
     }
     
+    public void setLockStatisticsEnabled(boolean lockStatsEnabled) {
+      // do nothing
+    }
+
+    public boolean isLockStatisticsEnabled() {
+      return false;
+    }
+    
     public void enableLockStatistics() {
       // do nothing
     }
@@ -211,9 +219,9 @@ public interface L2LockStatsManager {
   
   public int getLockStatCollectFrequency(LockID lockID);
   
-  public void enableLockStatistics();
-  
-  public void disableLockStatistics();
+  public void setLockStatisticsEnabled(boolean lockStatsEnabled);
+
+  public boolean isLockStatisticsEnabled();
   
   public void clearAllStatsFor(NodeID nodeID);
 }

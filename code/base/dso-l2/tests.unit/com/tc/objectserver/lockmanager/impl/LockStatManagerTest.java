@@ -112,7 +112,7 @@ public class LockStatManagerTest extends TestCase {
   public void testLockStatsManager() {
     veriyLockStatsManagerStatistics();
 
-    lockStatManager.disableLockStatistics();
+    lockStatManager.setLockStatisticsEnabled(false);
 
     LockID l1 = new LockID("1");
     ThreadID s1 = new ThreadID(0);
@@ -123,7 +123,7 @@ public class LockStatManagerTest extends TestCase {
     assertEquals(0, lockStatManager.getNumberOfLockRequested(l1));
     lockManager.unlock(l1, cid1, s1);
 
-    lockStatManager.enableLockStatistics();
+    lockStatManager.setLockStatisticsEnabled(true);
 
     veriyLockStatsManagerStatistics();
   }

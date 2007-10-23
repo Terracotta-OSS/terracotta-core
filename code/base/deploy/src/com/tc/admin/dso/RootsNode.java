@@ -8,6 +8,7 @@ import com.tc.admin.AdminClientContext;
 import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.common.XAbstractAction;
+import com.tc.admin.common.XTreeModel;
 import com.tc.stats.DSOMBean;
 
 import java.awt.event.ActionEvent;
@@ -146,14 +147,19 @@ public class RootsNode extends ComponentNode implements NotificationListener {
 
           ObjectName rootObjectName = (ObjectName) notice.getSource();
           DSORoot root = new DSORoot(m_cc, rootObjectName);
-          ArrayList list = new ArrayList(Arrays.asList(m_roots));
+          ArrayList<DSORoot> list = new ArrayList<DSORoot>(Arrays.asList(m_roots));
 
           list.add(root);
-          m_roots = (DSORoot[]) list.toArray(new DSORoot[] {});
+          m_roots = list.toArray(new DSORoot[] {});
 
           RootNode rn = new RootNode(m_cc, root);
-          getModel().insertNodeInto(rn, RootsNode.this, getChildCount());
-
+          XTreeModel model = getModel();
+          if(model != null) {
+            model.insertNodeInto(rn, RootsNode.this, getChildCount());
+          } else {
+            RootsNode.this.add(rn);
+          }
+          
           ((RootsPanel) getComponent()).add(root);
 
           acc.setStatus(acc.getMessage("dso.root.new") + root);

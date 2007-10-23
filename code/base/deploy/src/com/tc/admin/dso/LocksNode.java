@@ -1,14 +1,8 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin.dso;
-
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-
-import javax.swing.Icon;
-import javax.swing.JPopupMenu;
-import javax.swing.KeyStroke;
 
 import com.tc.admin.AdminClient;
 import com.tc.admin.AdminClientContext;
@@ -16,11 +10,25 @@ import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.common.XAbstractAction;
 
-public class LocksNode extends ComponentNode {
-  private ConnectionContext   m_cc;
-  private JPopupMenu          m_popupMenu;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 
-  private static final String REFRESH_ACTION = "RefreshAction";
+import javax.swing.Icon;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
+import javax.swing.KeyStroke;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
+
+public class LocksNode extends ComponentNode implements PopupMenuListener {
+  private ConnectionContext           m_cc;
+  private JPopupMenu                  m_popupMenu;
+  private JCheckBoxMenuItem           m_enableStatsToggle;
+  private EnableAllClientTracesAction  m_enableAllClientTracesAction;
+  private DisableAllClientTracesAction m_disableAllClientTracesAction;
+
+  private static final String         REFRESH_ACTION = "RefreshAction";
 
   public LocksNode(ConnectionContext cc) {
     super();
@@ -38,10 +46,13 @@ public class LocksNode extends ComponentNode {
 
     m_popupMenu = new JPopupMenu("Lock Actions");
     m_popupMenu.add(refreshAction);
-    m_popupMenu.add(new EnableStatsAction());
-    m_popupMenu.add(new DisableStatsAction());
-    
+    m_popupMenu.add(m_enableStatsToggle = new JCheckBoxMenuItem(new StatsEnabledAction()));
+    m_popupMenu.add(new JMenuItem(m_enableAllClientTracesAction = new EnableAllClientTracesAction()));
+    m_popupMenu.add(new JMenuItem(m_disableAllClientTracesAction = new DisableAllClientTracesAction()));
+
     addActionBinding(REFRESH_ACTION, refreshAction);
+
+    m_popupMenu.addPopupMenuListener(this);
   }
 
   public JPopupMenu getPopupMenu() {
@@ -56,23 +67,33 @@ public class LocksNode extends ComponentNode {
     ((LocksPanel) getComponent()).refresh();
   }
 
-  public class DisableStatsAction extends XAbstractAction {
-    DisableStatsAction() {
-      super("Disable stats");
+  public class StatsEnabledAction extends XAbstractAction {
+    StatsEnabledAction() {
+      super("Stats enabled");
     }
 
     public void actionPerformed(ActionEvent ae) {
-      ((LocksPanel) getComponent()).disableLockStatistics();
+      setLockStatisticsEnabled(m_enableStatsToggle.isSelected());
     }
   }
-  
-  public class EnableStatsAction extends XAbstractAction {
-    EnableStatsAction() {
-      super("Enable stats");
+
+  public class EnableAllClientTracesAction extends XAbstractAction {
+    EnableAllClientTracesAction() {
+      super("Enable all client traces");
     }
 
     public void actionPerformed(ActionEvent ae) {
-      ((LocksPanel) getComponent()).enableLockStatistics();
+      setAllStatsEnabled(true);
+    }
+  }
+
+  public class DisableAllClientTracesAction extends XAbstractAction {
+    DisableAllClientTracesAction() {
+      super("Disable all client traces");
+    }
+
+    public void actionPerformed(ActionEvent ae) {
+      setAllStatsEnabled(false);
     }
   }
 
@@ -90,6 +111,31 @@ public class LocksNode extends ComponentNode {
     public void actionPerformed(ActionEvent ae) {
       refresh();
     }
+  }
+
+  public void popupMenuCanceled(PopupMenuEvent e) {/**/
+  }
+
+  public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {/**/
+  }
+
+  public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+    boolean lockStatsEnabled = isLockStatisticsEnabled();
+    m_enableStatsToggle.setSelected(lockStatsEnabled);
+    m_enableAllClientTracesAction.setEnabled(lockStatsEnabled);
+    m_disableAllClientTracesAction.setEnabled(lockStatsEnabled);
+  }
+
+  private boolean isLockStatisticsEnabled() {
+    return ((LocksPanel) getComponent()).isLockStatisticsEnabled();
+  }
+
+  private void setLockStatisticsEnabled(boolean lockStatsEnabled) {
+    ((LocksPanel) getComponent()).setLockStatisticsEnabled(lockStatsEnabled);
+  }
+
+  private void setAllStatsEnabled(boolean allStatsEnabled) {
+    ((LocksPanel) getComponent()).setAllClientTracesEnabled(allStatsEnabled);
   }
 
   public void tearDown() {

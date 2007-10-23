@@ -10,11 +10,12 @@ public class LockHolderWrapper implements LockElementWrapper {
   private LockHolder lockHolder;
   private String lockId;
   private String stackTrace;
+  private String allStackTraces;
 
   public LockHolderWrapper(LockHolder lockHolder) {
     this.lockHolder = lockHolder;
     this.lockId = lockHolder.getLockID().asString();
-    if(this.lockId.charAt(0) != '@') {
+    if(this.lockId.charAt(0) != '@' && this.lockId.charAt(0) != '^') {
       this.lockId = "^"+this.lockId;
     }
   }
@@ -35,6 +36,14 @@ public class LockHolderWrapper implements LockElementWrapper {
   
   public String getStackTrace() {
     return this.stackTrace;
+  }
+
+  public void setAllStackTraces(String allStackTraces) {
+    this.allStackTraces = allStackTraces;
+  }
+  
+  public String getAllStackTraces() {
+    return this.allStackTraces;
   }
 }
 

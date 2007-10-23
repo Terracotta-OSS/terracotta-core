@@ -10,6 +10,7 @@ import org.dijon.Image;
 
 import com.tc.admin.common.Splash;
 import com.tc.util.ResourceBundleHelper;
+import com.tc.util.runtime.Os;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -33,6 +34,14 @@ public class SessionIntegrator extends ApplicationManager {
   
   public SessionIntegrator() {
     super(APP_NAME);
+    
+    if(Os.isMac()) {
+      System.setProperty("com.apple.macos.useScreenMenuBar", "true");
+      System.setProperty("apple.laf.useScreenMenuBar", "true");
+
+      System.setProperty("apple.awt.showGrowBox", "true");
+      System.setProperty("com.apple.mrj.application.growbox.intrudes", "false");
+    }
     
     m_cntx = new SessionIntegratorContext();
     m_cntx.client = m_client = this;

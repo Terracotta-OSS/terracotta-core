@@ -104,9 +104,13 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
       String configProp = " -Dtc.config=\"" + getConfigSpec(wc) + "\"";
       
       IVMInstall vmInstall = fLaunchDelegate.getVMInstall(wc);
-      String vmType = vmInstall.getVMInstallType().getId();
-      String vmName = vmInstall.getName();
-      String portablePath = ATTR_JRE_CONTAINER_PATH + "/" + vmType + "/" + vmName;
+      String portablePath = null;
+      String vmName = "default";
+      if(vmInstall != null) {
+        String vmType = vmInstall.getVMInstallType().getId();
+        vmName = vmInstall.getName();
+        portablePath = ATTR_JRE_CONTAINER_PATH + "/" + vmType + "/" + vmName;
+      }
       String jreContainerPath = wc.getAttribute(ATTR_JRE_CONTAINER_PATH, portablePath);
       String bootJarName = BootJarHelper.getHelper().getBootJarName(jreContainerPath);
       
@@ -153,7 +157,7 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
 
       return wc;
     } catch(Throwable t) {
-      String msg = "Unable to launch '"+config.getName()+"'\n\n"+t.getLocalizedMessage();
+      String msg = "Unable to launch '"+config.getName()+"': "+t.getLocalizedMessage();
       Status status = new Status(IStatus.ERROR, TcPlugin.getPluginId(), 1, msg, t);
       throw new CoreException(status);
     }

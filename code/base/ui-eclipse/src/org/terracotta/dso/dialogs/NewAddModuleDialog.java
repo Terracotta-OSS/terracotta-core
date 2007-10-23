@@ -7,6 +7,7 @@ package org.terracotta.dso.dialogs;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.events.FocusAdapter;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.MouseEvent;
@@ -45,6 +46,7 @@ public class NewAddModuleDialog extends MessageDialog {
   private Combo               fGroupIdCombo;
   private Table               fTable;
   private SelectionListener   fColumnSelectionListener;
+  private CLabel              fPathLabel;
   private Button              fAddRepoButton;
   
   private ValueListener       m_valueListener;
@@ -130,12 +132,15 @@ public class NewAddModuleDialog extends MessageDialog {
           ItemData itemData = (ItemData) item.getData();
           tip = itemData.fArchiveFile.getAbsolutePath();
         }
-        fTable.setToolTipText(tip);
+        fPathLabel.setText(tip);
       }
     });
     
     populateTable();
 
+    fPathLabel = new CLabel(comp, SWT.NONE);
+    fPathLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+    
     fAddRepoButton = new Button(comp, SWT.PUSH);
     fAddRepoButton.setText("Add repository...");
     fAddRepoButton.setLayoutData(new GridData());
@@ -220,13 +225,12 @@ public class NewAddModuleDialog extends MessageDialog {
   void sort() {
     int itemCount = fTable.getItemCount();
     if (itemCount == 0 || itemCount == 1) return;
-    Comparator comparator = new Comparator() {
+    Comparator<ItemData> comparator = new Comparator<ItemData>() {
       final int         sortDirection = fTable.getSortDirection();
       final TableColumn sortColumn    = fTable.getSortColumn();
       int               index         = sortColumn == null ? 0 : fTable.indexOf(sortColumn);
 
-      public int compare(Object object1, Object object2) {
-        ItemData itemData1 = (ItemData) object1, itemData2 = (ItemData) object2;
+      public int compare(ItemData itemData1, ItemData itemData2) {
         if (sortDirection == SWT.UP || sortDirection == SWT.NONE) {
           return itemData1.fStrings[index].compareTo(itemData2.fStrings[index]);
         } else {
@@ -234,9 +238,9 @@ public class NewAddModuleDialog extends MessageDialog {
         }
       }
     };
-    ArrayList selection = new ArrayList();
+    ArrayList<ItemData> selection = new ArrayList<ItemData>();
     for (TableItem item : fTable.getSelection()) {
-      selection.add(item.getData());
+      selection.add((ItemData)item.getData());
     }
     ItemData[] data = new ItemData[fTable.getItemCount()];
     for (int i = 0; i < fTable.getItemCount(); i++) {
@@ -268,8 +272,8 @@ public class NewAddModuleDialog extends MessageDialog {
       for (TableItem item : items) {
         Module module = fModules.addNewModule();
         module.setGroupId(groupId);
-        module.setName(item.getText(1));
-        module.setVersion(item.getText(2));
+        module.setName(item.getText(1).replace('-', '_'));
+        module.setVersion(item.getText(2).replace('-', '.'));
       }
       if (m_valueListener != null) m_valueListener.setValue(fModules);
     }

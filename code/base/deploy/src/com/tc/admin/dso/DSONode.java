@@ -29,7 +29,9 @@ public class DSONode extends ComponentNode {
     int i = 0;
     insert(new RootsNode(cc), i++);
     insert(new ClassesNode(cc), i++);
-    insert(new LocksNode(cc), i++);
+    try {
+      insert(new LocksNode(cc), i++);
+    } catch(Throwable t) {/**/}
     insert(new ClientsNode(cc), i++);
 
     PollerNode node;

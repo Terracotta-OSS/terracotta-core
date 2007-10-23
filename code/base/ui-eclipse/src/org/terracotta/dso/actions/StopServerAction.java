@@ -31,23 +31,6 @@ public class StopServerAction implements IObjectActionDelegate, IRunnableWithPro
 
   public void setActivePart(IAction action, IWorkbenchPart targetPart) {/**/}
 
-//  public void run(IAction action) {
-//    IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-//
-//    try {
-//      ServerTracker.getDefault().stopServer(m_currentProject);
-//      ((ApplicationWindow)window).setStatus("Terracotta Server Stopped.");
-//    }
-//    catch(Exception e) {
-//      Shell shell = new Shell();
-//      MessageDialog.openInformation(
-//        shell,
-//        "Terracotta",
-//        "Cannot stop Terracotta Server:\n" +
-//        ActionUtil.getStatusMessages(e));
-//    }
-//  }
-
   public void run(IAction action) {
     try {
       IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();

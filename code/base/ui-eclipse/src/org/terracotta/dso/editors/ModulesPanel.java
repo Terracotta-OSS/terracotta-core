@@ -4,6 +4,7 @@
  */
 package org.terracotta.dso.editors;
 
+import org.eclipse.jface.window.ApplicationWindow;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseMoveListener;
@@ -20,6 +21,8 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
 import org.terracotta.dso.ModuleInfo;
 import org.terracotta.dso.ModulesConfiguration;
 import org.terracotta.dso.TcPlugin;
@@ -32,6 +35,8 @@ import org.terracotta.ui.util.SWTUtil;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.Module;
 import com.terracottatech.config.Modules;
+
+import java.net.URL;
 
 public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectStructureListener {
   private Client                 m_dsoClient;
@@ -401,12 +406,19 @@ public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectS
             if (error != null) {
               tip = error.getMessage();
             } else {
-              tip = moduleInfo.getLocation().toString();
+              URL loc = moduleInfo.getLocation();
+              if(loc != null) {
+                tip = loc.toString();
+              }
             }
           }
         }
       }
-      m_layout.m_moduleTable.setToolTipText(tip);
+      
+      final IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+      if(window instanceof ApplicationWindow) {
+        ((ApplicationWindow)window).setStatus(tip);
+      }
     }
   }
 

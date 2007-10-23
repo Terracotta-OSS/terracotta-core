@@ -16,4 +16,8 @@ public class ClassTreeModel extends XTreeModel {
     ((ClassTreeRoot)getRoot()).setClassInfo(classInfo);
     reload();
   }
+  
+  public DSOClassInfo[] getClassInfo() {
+    return ((ClassTreeRoot)getRoot()).getInfo();
+  }
 }

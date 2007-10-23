@@ -32,7 +32,7 @@ public interface LockStatisticsMonitorMBean {
   
   public boolean isClientStackTraceEnabled(String lockID);
   
-  public void enableLockStatistics();
-  
-  public void disableLockStatistics();
+  public void setLockStatisticsEnabled(boolean lockStatsEnabled);
+
+  public boolean isLockStatisticsEnabled();
 }
