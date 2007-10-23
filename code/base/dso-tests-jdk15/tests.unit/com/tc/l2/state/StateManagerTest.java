@@ -4,24 +4,30 @@
  */
 package com.tc.l2.state;
 
-import com.tc.test.TCTestCase;
-import com.tc.l2.context.StateChangedEvent;
-import com.tc.l2.ha.WeightGeneratorFactory;
-import com.tc.l2.msg.L2StateMessage;
-import com.tc.l2.state.StateManagerImpl;
-import com.tc.util.PortChooser;
-import com.tc.util.concurrent.NoExceptionLinkedQueue;
-import com.tc.util.State;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
-import com.tc.net.groups.*;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.impl.MockSink;
-import com.tc.net.groups.GroupManagerFactory;
-import com.tc.properties.TCPropertiesImpl;
-import com.tc.lang.ThrowableHandler;
+import com.tc.l2.context.StateChangedEvent;
+import com.tc.l2.ha.WeightGeneratorFactory;
+import com.tc.l2.msg.L2StateMessage;
 import com.tc.lang.TCThreadGroup;
+import com.tc.lang.ThrowableHandler;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
+import com.tc.net.groups.AbstractGroupMessage;
+import com.tc.net.groups.GroupEventsListener;
+import com.tc.net.groups.GroupManagerFactory;
+import com.tc.net.groups.GroupMessage;
+import com.tc.net.groups.GroupMessageListener;
+import com.tc.net.groups.Node;
+import com.tc.net.groups.NodeID;
+import com.tc.net.groups.TribesGroupManager;
+import com.tc.properties.TCPropertiesImpl;
+import com.tc.test.TCTestCase;
+import com.tc.util.PortChooser;
+import com.tc.util.State;
+import com.tc.util.concurrent.NoExceptionLinkedQueue;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -231,8 +237,9 @@ public class StateManagerTest extends TCTestCase {
   private void shutdown(TribesGroupManager[] groupMgr, L2StateMessageStage[] msgStage, int start, int end) {
     for (int i = start; i < end; ++i) {
       try {
-        groupMgr[i].stop();
         msgStage[i].requestStop();
+        ThreadUtil.reallySleep(100);
+        groupMgr[i].stop();
       } catch (Exception ex) {
         System.out.println("*** Failed to stop Server[" + i + "] " + groupMgr[i] + " " + ex);
       }
@@ -415,8 +422,12 @@ public class StateManagerTest extends TCTestCase {
       setName("L2StateMessageStageThread");
     }
 
-    public void requestStop() {
+    public synchronized void requestStop() {
       stop = true;
+    }
+    
+    public synchronized boolean isStopped() {
+      return stop;
     }
 
     public Sink getSink() {
@@ -424,7 +435,7 @@ public class StateManagerTest extends TCTestCase {
     }
 
     public void run() {
-      while (!stop) {
+      while (!isStopped()) {
         L2StateMessage m = (L2StateMessage) processQ.poll(3000);
         if (m != null) {
           mgr.handleClusterStateMessage(m);
