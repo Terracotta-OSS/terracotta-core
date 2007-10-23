@@ -39,7 +39,7 @@ public class BootJarSignatureTest extends TCTestCase {
     }
 
     try {
-      new BootJarSignature(makeProps("Linux", "IBM Corporation, Inc.", "1.5.0", "unknown", null));
+      new BootJarSignature(makeProps("Linux", "Sun", "1.5.0", "unknown", null));
       fail();
     } catch (UnsupportedVMException uve) {
       // expected
