@@ -124,6 +124,11 @@ public class Vm {
    * @return True if IBM JDK
    */
   public static boolean isIBM() {
+    if (VERSION == null) {
+      // Our instrumentation for java.lang.reflect.Field can end up calling here while in <clinit> for
+      // this class -- this avoids the NPE
+      return VmVersion.thisVMisIBM();
+    }
     return VERSION.isIBM();
   }
 

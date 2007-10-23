@@ -198,7 +198,7 @@ public final class VmVersion {
     }
   }
 
-  private static boolean thisVMisIBM() {
+  static boolean thisVMisIBM() {
     return isIBM(System.getProperties());
   }
 
