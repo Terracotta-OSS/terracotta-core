@@ -94,7 +94,6 @@ public class ConcurrentReadLockTestApp extends AbstractTransparentApp {
   }
 
   private void testConcurrentReadBlock(int index) throws Exception {
-    final CyclicBarrier localBarrier = new CyclicBarrier(3);
     Runnable runnable = new Runnable() {
       public void run() {
         try {
