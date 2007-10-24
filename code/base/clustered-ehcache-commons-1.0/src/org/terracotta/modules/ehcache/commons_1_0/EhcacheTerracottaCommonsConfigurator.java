@@ -4,6 +4,7 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.terracotta.modules.configuration.TerracottaConfiguratorModule;
 
+import com.tc.bundles.BundleSpec;
 import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.TransparencyClassSpec;
@@ -101,7 +102,7 @@ public abstract class EhcacheTerracottaCommonsConfigurator extends TerracottaCon
     Bundle[] bundles = context.getBundles();
     Bundle bundle = null;
     for (int i = 0; i < bundles.length; i++) {
-      if (targetBundleName.equals(bundles[i].getSymbolicName())) {
+      if (BundleSpec.isMatchingSymbolicName(targetBundleName, bundles[i].getSymbolicName())) {
         bundle = bundles[i];
         break;
       }
