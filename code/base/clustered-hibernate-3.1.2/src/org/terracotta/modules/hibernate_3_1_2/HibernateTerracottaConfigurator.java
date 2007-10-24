@@ -90,18 +90,5 @@ public final class HibernateTerracottaConfigurator extends TerracottaConfigurato
     serviceProps.put(Constants.SERVICE_RANKING, ModuleSpec.HIGH_RANK);
     context.registerService(ModuleSpec.class.getName(), new HibernateModuleSpec(new HibernateChangeApplicatorSpec(getClass().getClassLoader())), serviceProps);
   }
-  
-  private Bundle getExportedBundle(final BundleContext context, String targetBundleName) {
-    // find the bundle that contains the replacement classes
-    Bundle[] bundles = context.getBundles();
-    Bundle bundle = null;
-    for (int i = 0; i < bundles.length; i++) {
-      if (targetBundleName.equals(bundles[i].getSymbolicName())) {
-        bundle = bundles[i];
-        break;
-      }
-    }  
-    return bundle;
-  }
 
 }

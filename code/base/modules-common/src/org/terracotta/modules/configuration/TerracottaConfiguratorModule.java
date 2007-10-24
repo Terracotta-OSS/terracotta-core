@@ -4,20 +4,21 @@
  */
 package org.terracotta.modules.configuration;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.ServiceReference;
 
+import com.tc.bundles.BundleSpec;
 import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.config.LockDefinition;
 import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.util.Assert;
+
+import java.net.MalformedURLException;
+import java.net.URL;
 
 public abstract class TerracottaConfiguratorModule implements BundleActivator {
 
@@ -117,6 +118,19 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
 
   protected void addLock(final String expr, final LockDefinition ld) {
     configHelper.addLock(expr, ld);
+  }
+
+  protected Bundle getExportedBundle(final BundleContext context, String targetBundleName) {
+    // find the bundle that contains the replacement classes
+    Bundle[] bundles = context.getBundles();
+    Bundle bundle = null;
+    for (int i = 0; i < bundles.length; i++) {
+      if (BundleSpec.isMatchingSymbolicName(targetBundleName, bundles[i].getSymbolicName())) {
+        bundle = bundles[i];
+        break;
+      }
+    }  
+    return bundle;
   }
 
 }

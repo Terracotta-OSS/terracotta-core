@@ -51,12 +51,12 @@ public class BundleSpecTest extends TestCase {
   }
 
   private BundleSpec[] check(int size, String source) throws BundleException {
-    String[] requirements = BundleSpec.getRequirements(source);
+    String[] requirements = BundleSpecImpl.getRequirements(source);
     assertEquals(size, requirements.length);
     
     BundleSpec[] specs = new BundleSpec[requirements.length];
     for (int i = 0; i < requirements.length; i++) {
-      specs[i] = new BundleSpec(requirements[i]);
+      specs[i] = new BundleSpecImpl(requirements[i]);
     }
     
     return specs;

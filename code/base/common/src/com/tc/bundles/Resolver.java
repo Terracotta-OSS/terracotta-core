@@ -196,7 +196,7 @@ public class Resolver {
           if (manifest == null) continue;
 
           // found a match!
-          if (BundleSpec.isMatchingSymbolicName(symname, manifest.getMainAttributes().getValue(BUNDLE_SYMBOLICNAME))) {
+          if (BundleSpecImpl.isMatchingSymbolicName(symname, manifest.getMainAttributes().getValue(BUNDLE_SYMBOLICNAME))) {
             final String manifestVersion = manifest.getMainAttributes().getValue(BUNDLE_VERSION);
             try {
               if (__version.equals(Version.parse(manifestVersion))) return addToRegistry(jar.toURL(), manifest);
@@ -223,10 +223,10 @@ public class Resolver {
       return;
     }
 
-    String[] defaultModulesSpec = BundleSpec.getRequirements(defaultModulesProp);
+    String[] defaultModulesSpec = BundleSpecImpl.getRequirements(defaultModulesProp);
     if (defaultModulesSpec.length > 0) {
       for (int i = 0; i < defaultModulesSpec.length; i++) {
-        BundleSpec spec = new BundleSpec(defaultModulesSpec[i]);
+        BundleSpec spec = new BundleSpecImpl(defaultModulesSpec[i]);
         ensureBundle(spec);
       }
     } else {
@@ -249,10 +249,10 @@ public class Resolver {
     final TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor(TC_PROPERTIES_SECTION);
     final String additionalModulesProp = props != null ? props.getProperty("additional") : null;
     if (additionalModulesProp != null) {
-      String[] additionalModulesSpec = BundleSpec.getRequirements(additionalModulesProp);
+      String[] additionalModulesSpec = BundleSpecImpl.getRequirements(additionalModulesProp);
       if (additionalModulesSpec.length > 0) {
         for (int i = 0; i < additionalModulesSpec.length; i++) {
-          BundleSpec spec = new BundleSpec(additionalModulesSpec[i]);
+          BundleSpec spec = new BundleSpecImpl(additionalModulesSpec[i]);
           ensureBundle(spec);
         }
       }
@@ -261,10 +261,10 @@ public class Resolver {
 
   private BundleSpec[] getRequirements(Manifest manifest) throws BundleException {
     List requirementList = new ArrayList();
-    String[] manifestRequirements = BundleSpec.getRequirements(manifest);
+    String[] manifestRequirements = BundleSpecImpl.getRequirements(manifest);
     if (manifestRequirements.length > 0) {
       for (int i = 0; i < manifestRequirements.length; i++) {
-        requirementList.add(new BundleSpec(manifestRequirements[i]));
+        requirementList.add(new BundleSpecImpl(manifestRequirements[i]));
       }
     }
     return (BundleSpec[]) requirementList.toArray(new BundleSpec[0]);
