@@ -125,8 +125,6 @@ public class Resolver {
 
   private Collection findJars(String name, String groupId, File rootLocation) {
     final String[] extensions = new String[] { "jar" };
-    System.err.println("group id: " + groupId);
-    System.err.println("group id: " + groupId.replace('.', File.separatorChar));
     File installLocation = new File(rootLocation.getPath(), groupId.replace('.', File.separatorChar));
     installLocation = new File(installLocation, name.replace('_', '-'));
     final Collection jars = new ArrayList();
@@ -180,7 +178,6 @@ public class Resolver {
         }
       }
     }
-    System.err.println("@@@@@@@@@@@@@ " + spec.getSymbolicName());
     return null;
   }
 
