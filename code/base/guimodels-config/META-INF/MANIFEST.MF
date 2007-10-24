@@ -6,8 +6,8 @@ Bundle-Description: Standard DSO configuraton for Swing and AWT models.
 Bundle-ManifestVersion: 2
 Bundle-Name: Standard DSO Swing and AWT Models Configuration
 Bundle-RequiredExecutionEnvironment: J2SE-1.4
-Bundle-SymbolicName: org.terracotta.modules.guimodels_config
+Bundle-SymbolicName: org.terracotta.modules.guimodels-config
 Bundle-Vendor: Terracotta, Inc.
 Bundle-Version: 2.5.0.SNAPSHOT
 Import-Package: org.terracotta.modules.configuration
-Require-Bundle: org.terracotta.modules.modules_common;bundle-version:="2.5.0.SNAPSHOT"
+Require-Bundle: org.terracotta.modules.modules-common;bundle-version:=2.5.0.SNAPSHOT

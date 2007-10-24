@@ -44,7 +44,9 @@ import java.util.regex.Pattern;
 public final class BundleSpec {
   private static final String PROP_KEY_RESOLUTION         = "resolution";
   private static final String PROP_KEY_BUNDLE_VERSION     = "bundle-version";
-  private static final String REQUIRE_BUNDLE_EXPR_MATCHER = "([A-Za-z0-9._\\-]+(;resolution:=\"?optional\"?)?" + //
+  private static final String BUNDLE_SYMBOLIC_NAME_REGEX  = "[a-zA-Z][A-Za-z0-9._\\-]+";
+  private static final String REQUIRE_BUNDLE_EXPR_MATCHER = "(" + BUNDLE_SYMBOLIC_NAME_REGEX
+                                                              + "(;resolution:=\"?optional\"?)?" + //
                                                               "(;bundle-version:=(\"?[A-Za-z0-9.]+\"?|" + //
                                                               "\"?[\\[\\(][A-Za-z0-9.]+,[A-Za-z0-9.]*[\\]\\)]\"?))?)";
 
@@ -102,7 +104,7 @@ public final class BundleSpec {
     final String[] pieces = this.symbolicName.split("\\.");
     int k = 0;
     for (int i = pieces.length - 1; i >= 0; i--) {
-      if (pieces[i].matches("^[a-zA-Z][a-zA-Z0-9_]+")) {
+      if (pieces[i].matches("^" + BUNDLE_SYMBOLIC_NAME_REGEX)) {
         k = i;
         break;
       }

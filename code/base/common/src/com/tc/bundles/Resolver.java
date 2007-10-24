@@ -125,6 +125,8 @@ public class Resolver {
 
   private Collection findJars(String name, String groupId, File rootLocation) {
     final String[] extensions = new String[] { "jar" };
+    System.err.println("group id: " + groupId);
+    System.err.println("group id: " + groupId.replace('.', File.separatorChar));
     File installLocation = new File(rootLocation.getPath(), groupId.replace('.', File.separatorChar));
     installLocation = new File(installLocation, name.replace('_', '-'));
     final Collection jars = new ArrayList();
@@ -147,7 +149,7 @@ public class Resolver {
         warn(Message.WARN_REPOSITORY_PROTOCOL_UNSUPPORTED, new Object[] { location.getProtocol() });
         continue;
       }
-
+      
       final File repository = new File(FileUtils.toFile(location), spec.getGroupId().replace('.', File.separatorChar));
       if (!repository.exists() || !repository.isDirectory()) {
         warn(Message.WARN_REPOSITORY_UNRESOLVED, new Object[] { repository.getAbsolutePath() });
@@ -172,12 +174,13 @@ public class Resolver {
           try {
             return bundleFile.toURL();
           } catch (MalformedURLException e) {
-            error(Message.ERROR_BUNDLE_MALFORMED_URL, new Object[] { bundleFile.getName() }); // should be fatal???
+            error(Message.ERROR_BUNDLE_MALFORMED_URL, new Object[] { bundleFile.getName() }); // should be fatal???            
             return null;
           }
         }
       }
     }
+    System.err.println("@@@@@@@@@@@@@ " + spec.getSymbolicName());
     return null;
   }
 

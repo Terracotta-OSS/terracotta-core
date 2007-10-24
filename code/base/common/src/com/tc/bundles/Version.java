@@ -8,6 +8,7 @@ final class Version extends org.osgi.framework.Version {
 
   public Version(String arg0) {
     super(arg0.replace('-', '.'));
+    System.out.println("$$$$ version: " + arg0);
   }
 
   public Version(int major, int minor, int micro) {
