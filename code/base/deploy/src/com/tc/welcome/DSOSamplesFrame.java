@@ -19,6 +19,7 @@ import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.common.XTextPane;
 import com.tc.server.ServerConstants;
 import com.tc.util.ResourceBundleHelper;
+import com.tc.util.runtime.Os;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -508,6 +509,14 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
 class SampleFrame extends Frame {
   public SampleFrame(Frame parentFrame, String title) {
     super(title);
+    
+    if(Os.isMac()) {
+      System.setProperty("com.apple.macos.useScreenMenuBar", "true");
+      System.setProperty("apple.laf.useScreenMenuBar", "true");
+      System.setProperty("apple.awt.showGrowBox", "true");
+      System.setProperty("com.apple.mrj.application.growbox.intrudes", "false");
+    }
+
     getContentPane().setLayout(new BorderLayout());
     setParentFrame(parentFrame);
   }

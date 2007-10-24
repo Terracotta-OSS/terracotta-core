@@ -38,7 +38,6 @@ public class SessionIntegrator extends ApplicationManager {
     if(Os.isMac()) {
       System.setProperty("com.apple.macos.useScreenMenuBar", "true");
       System.setProperty("apple.laf.useScreenMenuBar", "true");
-
       System.setProperty("apple.awt.showGrowBox", "true");
       System.setProperty("com.apple.mrj.application.growbox.intrudes", "false");
     }

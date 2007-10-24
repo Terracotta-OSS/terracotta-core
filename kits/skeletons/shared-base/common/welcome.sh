@@ -22,7 +22,7 @@ if test \! -d "${JAVA_HOME}"; then
   exit 2
 fi
 
-TC_INSTALL_DIR=`dirname "$0"`/..
+TC_INSTALL_DIR=`dirname "$0"`
 
 # For Cygwin, convert paths to Windows before invoking java
 if $cygwin; then
