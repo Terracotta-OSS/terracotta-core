@@ -54,7 +54,7 @@ public class BundleSpecTest extends TestCase {
     
     BundleSpec[] specs = new BundleSpec[requirements.length];
     for (int i = 0; i < requirements.length; i++) {
-      specs[i] = new BundleSpecImpl(requirements[i]);
+      specs[i] = BundleSpec.newInstance(requirements[i]);
     }
     
     return specs;

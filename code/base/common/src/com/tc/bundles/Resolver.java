@@ -226,7 +226,7 @@ public class Resolver {
     final String[] defaultModulesSpec = BundleSpec.getRequirements(defaultModulesProp);
     if (defaultModulesSpec.length > 0) {
       for (int i = 0; i < defaultModulesSpec.length; i++) {
-        BundleSpec spec = new BundleSpecImpl(defaultModulesSpec[i]);
+        BundleSpec spec = BundleSpec.newInstance(defaultModulesSpec[i]);
         ensureBundle(spec);
       }
     } else {
@@ -252,7 +252,7 @@ public class Resolver {
       String[] additionalModulesSpec = BundleSpec.getRequirements(additionalModulesProp);
       if (additionalModulesSpec.length > 0) {
         for (int i = 0; i < additionalModulesSpec.length; i++) {
-          BundleSpec spec = new BundleSpecImpl(additionalModulesSpec[i]);
+          BundleSpec spec = BundleSpec.newInstance(additionalModulesSpec[i]);
           ensureBundle(spec);
         }
       }
@@ -264,7 +264,7 @@ public class Resolver {
     String[] manifestRequirements = BundleSpec.getRequirements(manifest);
     if (manifestRequirements.length > 0) {
       for (int i = 0; i < manifestRequirements.length; i++) {
-        requirementList.add(new BundleSpecImpl(manifestRequirements[i]));
+        requirementList.add(BundleSpec.newInstance(manifestRequirements[i]));
       }
     }
     return (BundleSpec[]) requirementList.toArray(new BundleSpec[0]);

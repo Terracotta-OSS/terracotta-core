@@ -9,11 +9,12 @@ import java.util.List;
 import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.lang.reflect.Constructor;
 import java.text.MessageFormat;
 
 public abstract class BundleSpec {
 
-  private static final String REQUIRE_BUNDLE = "Require-Bundle";
+  private static final String   REQUIRE_BUNDLE              = "Require-Bundle";
   protected static final String PROP_KEY_RESOLUTION         = "resolution";
   protected static final String PROP_KEY_BUNDLE_VERSION     = "bundle-version";
   protected static final String BUNDLE_SYMBOLIC_NAME_REGEX  = "[a-zA-Z][A-Za-z0-9._\\-]+";
@@ -39,9 +40,7 @@ public abstract class BundleSpec {
   }
 
   public static final String[] getRequirements(final Manifest manifest) {
-    return getRequirements(
-        manifest.getMainAttributes().getValue(REQUIRE_BUNDLE)
-        );
+    return getRequirements(manifest.getMainAttributes().getValue(REQUIRE_BUNDLE));
   }
 
   public static final String[] getRequirements(final String requiredBundles) {
@@ -60,11 +59,22 @@ public abstract class BundleSpec {
     }
 
     if (!spec.equals(check.toString().replaceFirst(",", ""))) {
-      final String arg0 = "Syntax error specifying the required bundle list in the manifest: ''{1}'' found ''{2}''"; 
-      final Object[] arg1 = { requiredBundles, check};
+      final String arg0 = "Syntax error specifying the required bundle list in the manifest: ''{1}'' found ''{2}''";
+      final Object[] arg1 = { requiredBundles, check };
       throw new RuntimeException(MessageFormat.format(arg0, arg1));
     }
 
     return (String[]) list.toArray(new String[list.size()]);
+  }
+
+  public static final BundleSpec newInstance(final String spec) {
+    final String BUNDLESPECIMPL = "com.tc.bundles.BundleSpecImpl";
+    try {
+      final Class klass = Class.forName(BUNDLESPECIMPL);
+      final Constructor constructor = klass.getDeclaredConstructor(new Class[] { String.class });
+      return (BundleSpec) constructor.newInstance(new Object[] { spec });
+    } catch (Exception e) {
+      throw new RuntimeException("Unable to create an instance of class " + BUNDLESPECIMPL, e);
+    }
   }
 }

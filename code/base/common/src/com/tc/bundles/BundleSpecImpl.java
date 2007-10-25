@@ -34,11 +34,11 @@ import java.util.Map;
  * Require-Bundle: foo.bar.baz.widget;resolution:=optional - bundle is optional (recognized but not supported)
  * </pre>
  */
-public final class BundleSpecImpl extends BundleSpec {
+final class BundleSpecImpl extends BundleSpec {
   private final String symbolicName;
   private final Map    attributes = new HashMap();
 
-  public BundleSpecImpl(final String spec) {
+  BundleSpecImpl(final String spec) {
     final String[] data = spec.split(";");
     this.symbolicName = data[0];
     for (int i = 1; i < data.length; i++) {
