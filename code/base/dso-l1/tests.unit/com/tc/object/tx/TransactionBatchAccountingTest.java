@@ -29,7 +29,7 @@ public class TransactionBatchAccountingTest extends TestCase {
     Batch batch1 = new Batch(new TxnBatchID(sequence.next()));
     acct.addBatch(batch1.batchID, batch1.transactionIDs);
     // there should be no completed transactions
-    assertEquals(Collections.EMPTY_SET, acct.addCompletedTransactionIDsTo(new HashSet()));
+    assertEquals(Collections.EMPTY_SET, acct.getAndResetCompletedTransactionIDs());
     // there should be no incomplete batches
     assertEquals(Collections.EMPTY_LIST, acct.addIncompleteBatchIDsTo(new LinkedList()));
     // the min incomplete batch id should be the null id.
@@ -58,7 +58,7 @@ public class TransactionBatchAccountingTest extends TestCase {
     acct.addBatch(batch4.batchID, batch4.transactionIDs);
 
     // there should be no completed transactions, since there were no acknowledgements
-    assertEquals(Collections.EMPTY_SET, acct.addCompletedTransactionIDsTo(new HashSet()));
+    assertEquals(Collections.EMPTY_SET, acct.getAndResetCompletedTransactionIDs());
     // check the incomplete batches
     assertEquals(incompleteBatchIDs, acct.addIncompleteBatchIDsTo(new LinkedList()));
     assertEquals(incompleteBatchIDs.get(0), acct.getMinIncompleteBatchID());
@@ -68,21 +68,21 @@ public class TransactionBatchAccountingTest extends TestCase {
     completedGlobalTransactionIDs.add(txID1);
     // there should still be no completed batches
     assertEquals(incompleteBatchIDs, acct.addIncompleteBatchIDsTo(new LinkedList()));
-    assertEquals(completedGlobalTransactionIDs, acct.addCompletedTransactionIDsTo(new HashSet()));
+    assertEquals(completedGlobalTransactionIDs, acct.getAndResetCompletedTransactionIDs());
+    completedGlobalTransactionIDs.clear();
 
     // ACK the last transaction in the multi-transaction batch. This should cause that batch to become complete AND
     // cause all of its constituent transactions to become completed.
     assertEquals(batch2.batchID, acct.acknowledge(txID2));
+    completedGlobalTransactionIDs.add(txID2);
     incompleteBatchIDs.remove(batch2.batchID);
     assertEquals(incompleteBatchIDs, acct.addIncompleteBatchIDsTo(new LinkedList()));
     assertEquals(incompleteBatchIDs.get(0), acct.getMinIncompleteBatchID());
-    assertEquals(batch2.transactionIDs, acct.addCompletedTransactionIDsTo(new HashSet()));
-    assertEquals(batch2.transactionIDs, acct.addCompletedTransactionIDsTo(new HashSet()));
+    assertEquals(completedGlobalTransactionIDs, acct.getAndResetCompletedTransactionIDs());
 
-    // now clear the completed transactions
-    acct.clearCompletedTransactionIds();
+    // now check if it is empty
     completedGlobalTransactionIDs.clear();
-    assertEquals(completedGlobalTransactionIDs, acct.addCompletedTransactionIDsTo(new HashSet()));
+    assertEquals(completedGlobalTransactionIDs, acct.getAndResetCompletedTransactionIDs());
 
     // ACK another transaction
     assertEquals(batch3.batchID, acct.acknowledge(txID3));
@@ -90,20 +90,20 @@ public class TransactionBatchAccountingTest extends TestCase {
     incompleteBatchIDs.remove(batch3.batchID);
     assertEquals(incompleteBatchIDs, acct.addIncompleteBatchIDsTo(new LinkedList()));
     assertEquals(incompleteBatchIDs.get(0), acct.getMinIncompleteBatchID());
-    assertEquals(completedGlobalTransactionIDs, acct.addCompletedTransactionIDsTo(new HashSet()));
+    assertEquals(completedGlobalTransactionIDs, acct.getAndResetCompletedTransactionIDs());
 
     // ACK the last transaction
+    completedGlobalTransactionIDs.clear();
     assertEquals(batch4.batchID, acct.acknowledge(txID4));
     completedGlobalTransactionIDs.addAll(batch4.transactionIDs);
     incompleteBatchIDs.remove(batch4.batchID);
     assertEquals(Collections.EMPTY_LIST, incompleteBatchIDs);
     assertEquals(incompleteBatchIDs, acct.addIncompleteBatchIDsTo(new LinkedList()));
     assertEquals(TxnBatchID.NULL_BATCH_ID, acct.getMinIncompleteBatchID());
-    assertEquals(completedGlobalTransactionIDs, acct.addCompletedTransactionIDsTo(new HashSet()));
+    assertEquals(completedGlobalTransactionIDs, acct.getAndResetCompletedTransactionIDs());
 
-    acct.clearCompletedTransactionIds();
     completedGlobalTransactionIDs.clear();
-    assertEquals(completedGlobalTransactionIDs, acct.addCompletedTransactionIDsTo(new HashSet()));
+    assertEquals(completedGlobalTransactionIDs, acct.getAndResetCompletedTransactionIDs());
   }
 
   /**

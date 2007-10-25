@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.tx;
 
@@ -17,10 +18,10 @@ import java.util.Set;
 
 public class TransactionBatchAccounting {
 
-  private final Map         batchesByTransaction          = new HashMap();
-  private final TLinkedList batches                       = new TLinkedList();
-  private final Set         completedTransactionIDs = new HashSet();
-  private boolean           stopped                       = false;
+  private final Map         batchesByTransaction    = new HashMap();
+  private final TLinkedList batches                 = new TLinkedList();
+  private Set               completedTransactionIDs = new HashSet();
+  private boolean           stopped                 = false;
 
   public Object dump() {
     return this.toString();
@@ -85,18 +86,19 @@ public class TransactionBatchAccounting {
     return completed;
   }
 
-  public synchronized Collection addCompletedTransactionIDsTo(Collection c) {
-    c.addAll(completedTransactionIDs);
+  public synchronized Set getAndResetCompletedTransactionIDs() {
+    Set c = completedTransactionIDs;
+    completedTransactionIDs = new HashSet();
     return c;
+  }
+  
+  public synchronized int getCompletedTransactionIDsSize() {
+    return completedTransactionIDs.size();
   }
 
   public synchronized void clear() {
     batches.clear();
     batchesByTransaction.clear();
-    clearCompletedTransactionIds();
-  }
-  
-  public synchronized void clearCompletedTransactionIds() {
     completedTransactionIDs.clear();
   }
 

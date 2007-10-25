@@ -15,6 +15,7 @@ import com.tc.util.Assert;
 import com.tc.util.SequenceID;
 import com.tc.util.State;
 import com.tc.util.TCAssertionError;
+import com.tc.util.TCTimerImpl;
 import com.tc.util.Util;
 
 import java.util.ArrayList;
@@ -28,6 +29,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.Map.Entry;
 
 /**
@@ -37,24 +40,28 @@ import java.util.Map.Entry;
  */
 public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
-  private static final long                TIMEOUT                 = 30000L;
+  private static final long                TIMEOUT                     = 30000L;
 
-  private static final int                 MAX_OUTSTANDING_BATCHES = TCPropertiesImpl
-                                                                       .getProperties()
-                                                                       .getInt(
-                                                                               "l1.transactionmanager.maxOutstandingBatchSize");
+  private static final int                 MAX_OUTSTANDING_BATCHES     = TCPropertiesImpl
+                                                                           .getProperties()
+                                                                           .getInt(
+                                                                                   "l1.transactionmanager.maxOutstandingBatchSize");
+  private static final long                COMPLETED_ACK_FLUSH_TIMEOUT = TCPropertiesImpl
+                                                                           .getProperties()
+                                                                           .getLong(
+                                                                                    "l1.transactionmanager.completedAckFlushTimeout");
 
-  private static final State               STARTING                = new State("STARTING");
-  private static final State               RUNNING                 = new State("RUNNING");
-  private static final State               PAUSED                  = new State("PAUSED");
-  private static final State               STOP_INITIATED          = new State("STOP-INITIATED");
-  private static final State               STOPPED                 = new State("STOPPED");
+  private static final State               STARTING                    = new State("STARTING");
+  private static final State               RUNNING                     = new State("RUNNING");
+  private static final State               PAUSED                      = new State("PAUSED");
+  private static final State               STOP_INITIATED              = new State("STOP-INITIATED");
+  private static final State               STOPPED                     = new State("STOPPED");
 
-  private final Object                     lock                    = new Object();
-  private final Map                        incompleteBatches       = new HashMap();
-  private final HashMap                    lockFlushCallbacks      = new HashMap();
+  private final Object                     lock                        = new Object();
+  private final Map                        incompleteBatches           = new HashMap();
+  private final HashMap                    lockFlushCallbacks          = new HashMap();
 
-  private int                              outStandingBatches      = 0;
+  private int                              outStandingBatches          = 0;
   private final TCLogger                   logger;
   private final TransactionBatchAccounting batchAccounting;
   private final LockAccounting             lockAccounting;
@@ -63,17 +70,26 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   private final SessionManager             sessionManager;
   private final TransactionSequencer       sequencer;
   private final DSOClientMessageChannel    channel;
+  private final ClientTransactionFactory   txFactory;
+  private final Timer                      timer                       = new TCTimerImpl(
+                                                                                         "RemoteTransactionManager Flusher",
+                                                                                         true);
+  private long                             lastBatchSentAt;
 
   public RemoteTransactionManagerImpl(TCLogger logger, final TransactionBatchFactory batchFactory,
-                                      TransactionBatchAccounting batchAccounting, LockAccounting lockAccounting,
-                                      SessionManager sessionManager, DSOClientMessageChannel channel) {
+                                      ClientTransactionFactory txFactory, TransactionBatchAccounting batchAccounting,
+                                      LockAccounting lockAccounting, SessionManager sessionManager,
+                                      DSOClientMessageChannel channel) {
     this.logger = logger;
+    this.txFactory = txFactory;
     this.batchAccounting = batchAccounting;
     this.lockAccounting = lockAccounting;
     this.sessionManager = sessionManager;
     this.channel = channel;
     this.status = RUNNING;
     this.sequencer = new TransactionSequencer(batchFactory);
+    this.timer.schedule(new RemoteTransactionManagerTimerTask(), COMPLETED_ACK_FLUSH_TIMEOUT,
+                        COMPLETED_ACK_FLUSH_TIMEOUT);
   }
 
   public void pause() {
@@ -198,9 +214,14 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   }
 
   public void commit(ClientTransaction txn) {
-    TransactionID txID = txn.getTransactionID();
 
     if (!txn.hasChangesOrNotifies()) throw new AssertionError("Attempt to commit an empty transaction.");
+
+    commitInternal(txn);
+  }
+
+  private void commitInternal(ClientTransaction txn) {
+    TransactionID txID = txn.getTransactionID();
     if (!txn.isConcurrent()) {
       lockAccounting.add(txID, Arrays.asList(txn.getAllLockIDs()));
     }
@@ -318,11 +339,11 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
         }
         Collection txnIds = batchToSend.addTransactionIDsTo(new HashSet());
         batchAccounting.addBatch(batchToSend.getTransactionBatchID(), txnIds);
-        batchToSend.addAcknowledgedTransactionIDs(batchAccounting.addCompletedTransactionIDsTo(new HashSet()));
-        batchAccounting.clearCompletedTransactionIds();
+        batchToSend.setAcknowledgedTransactionIDs(batchAccounting.getAndResetCompletedTransactionIDs());
       }
       batchToSend.send();
       outStandingBatches++;
+      lastBatchSentAt = System.currentTimeMillis();
     }
   }
 
@@ -375,6 +396,21 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     fireLockFlushCallbacks(callbacks);
   }
 
+  private void flushCompletedTxnIDsIfNecessary() {
+    boolean toFlush;
+    synchronized (lock) {
+      waitUntilRunning();
+      toFlush = ((System.currentTimeMillis() - lastBatchSentAt) >= COMPLETED_ACK_FLUSH_TIMEOUT
+                 && (batchAccounting.getCompletedTransactionIDsSize() > 0) && canSendBatch());
+    }
+    if (toFlush) {
+      ClientTransaction nullTxn = txFactory.newNullInstance(LockID.NULL_ID, TxnType.NORMAL);
+      logger.info("Sending empty Transaction to server to flush completed transaction ids : "
+                  + nullTxn.getTransactionID());
+      commitInternal(nullTxn);
+    }
+  }
+
   /*
    * Never fire callbacks while holding lock
    */
@@ -424,5 +460,13 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
       resendOutstanding();
       unpause();
     }
+  }
+
+  private class RemoteTransactionManagerTimerTask extends TimerTask {
+
+    public void run() {
+      flushCompletedTxnIDsIfNecessary();
+    }
+
   }
 }
