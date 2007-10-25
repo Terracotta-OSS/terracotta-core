@@ -44,7 +44,7 @@ import java.util.concurrent.CyclicBarrier;
 public class MapLocalStateTestApp extends GenericLocalStateTestApp {
   private List<Wrapper> root       = new ArrayList<Wrapper>();
   private CyclicBarrier barrier;
-  private Class[]       mapClasses = new Class[] { TreeMap.class, THashMap.class, LinkedHashMap.class, Hashtable.class,
+  private Class[]       mapClasses = new Class[] { THashMap.class, TreeMap.class, LinkedHashMap.class, Hashtable.class,
       HashMap.class, ConcurrentHashMap.class, FastHashMap.class };
 
   public MapLocalStateTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {

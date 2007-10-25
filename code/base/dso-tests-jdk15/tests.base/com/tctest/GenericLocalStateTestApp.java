@@ -50,6 +50,7 @@ public abstract class GenericLocalStateTestApp extends AbstractErrorCatchingTran
       }
     }
 
+    System.out.println("Waiting for mutation to finished...");
     await();
     wrapper.getHandler().setLockMode(curr_lockMode);
 
@@ -58,7 +59,10 @@ public abstract class GenericLocalStateTestApp extends AbstractErrorCatchingTran
       validate(oldSize, wrapper, lockMode, mutator);
     }
 
-    if (throwable != null) throw throwable;
+    if (throwable != null) {
+      System.err.println(" ---- ERROR DETECTED --- ");
+      throw throwable;
+    }
   }
 
   protected abstract int await();
