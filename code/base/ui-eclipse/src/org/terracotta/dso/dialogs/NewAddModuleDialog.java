@@ -42,27 +42,28 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 public class NewAddModuleDialog extends MessageDialog {
-  private Modules             fModules;
-  private Combo               fGroupIdCombo;
-  private Table               fTable;
-  private SelectionListener   fColumnSelectionListener;
-  private CLabel              fPathLabel;
-  private Button              fAddRepoButton;
-  
-  private ValueListener       m_valueListener;
+  private Modules                  fModules;
+  private Combo                    fGroupIdCombo;
+  private static ArrayList<String> fCachedGroupIds = new ArrayList<String>();
+  private Table                    fTable;
+  private SelectionListener        fColumnSelectionListener;
+  private CLabel                   fPathLabel;
+  private Button                   fAddRepoButton;
 
-  private static final String GROUP_ID        = "Group Identifier:";
-  private static final String REPO            = "Repository";
-  private static final String NAME            = "Name";
-  private static final String VERSION         = "Version";
+  private ValueListener            m_valueListener;
 
-  private static final String VERSION_PATTERN = "^[0-9]+\\.[0-9]+\\.[0-9]+(-SNAPSHOT)?$";
+  private static final String      GROUP_ID        = "Group Identifier:";
+  private static final String      REPO            = "Repository";
+  private static final String      NAME            = "Name";
+  private static final String      VERSION         = "Version";
+
+  private static final String      VERSION_PATTERN = "^[0-9]+\\.[0-9]+\\.[0-9]+(-SNAPSHOT)?$";
 
   public NewAddModuleDialog(Shell parentShell, String title, String message, Modules modules) {
     super(parentShell, "Select modules", null, "Select modules to add to your configuration", MessageDialog.NONE,
         new String[] { IDialogConstants.OK_LABEL, IDialogConstants.CANCEL_LABEL }, 0);
     setShellStyle(SWT.DIALOG_TRIM | getDefaultOrientation() | SWT.RESIZE);
-    fModules = modules != null ? (Modules)modules.copy() : Modules.Factory.newInstance();
+    fModules = modules != null ? (Modules) modules.copy() : Modules.Factory.newInstance();
     fColumnSelectionListener = new ColumnSelectionListener();
   }
 
@@ -81,6 +82,9 @@ public class NewAddModuleDialog extends MessageDialog {
     fGroupIdCombo = new Combo(groupComp, SWT.BORDER);
     fGroupIdCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
     fGroupIdCombo.add("org.terracotta.modules");
+    for (String groupId : fCachedGroupIds.toArray(new String[0])) {
+      fGroupIdCombo.add(groupId);
+    }
     fGroupIdCombo.select(0);
     fGroupIdCombo.addSelectionListener(new SelectionAdapter() {
       public void widgetSelected(SelectionEvent e) {
@@ -92,7 +96,9 @@ public class NewAddModuleDialog extends MessageDialog {
         String text = fGroupIdCombo.getText();
         if (fGroupIdCombo.indexOf(text) == -1) {
           fGroupIdCombo.add(text);
+          fCachedGroupIds.add(text);
         }
+        populateTable();
       }
     });
 
@@ -128,19 +134,19 @@ public class NewAddModuleDialog extends MessageDialog {
       public void mouseMove(MouseEvent e) {
         String tip = null;
         TableItem item = fTable.getItem(new Point(e.x, e.y));
-        if(item != null) {
+        if (item != null) {
           ItemData itemData = (ItemData) item.getData();
           tip = itemData.fArchiveFile.getAbsolutePath();
         }
         fPathLabel.setText(tip);
       }
     });
-    
+
     populateTable();
 
     fPathLabel = new CLabel(comp, SWT.NONE);
     fPathLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-    
+
     fAddRepoButton = new Button(comp, SWT.PUSH);
     fAddRepoButton.setText("Add repository...");
     fAddRepoButton.setLayoutData(new GridData());
@@ -150,12 +156,13 @@ public class NewAddModuleDialog extends MessageDialog {
         directoryDialog.setText("Terracotta Module Repository Chooser");
         directoryDialog.setMessage("Select a module repository directory");
         String path = directoryDialog.open();
-        if(path != null) {
+        if (path != null) {
           File dir = new File(path);
           try {
             fModules.addRepository(dir.toURL().toString());
             populateTable();
-          } catch(MalformedURLException mure) {/**/}
+          } catch (MalformedURLException mure) {/**/
+          }
         }
       }
     });
@@ -175,7 +182,8 @@ public class NewAddModuleDialog extends MessageDialog {
           if (repoDir.exists() && repoDir.isDirectory()) {
             populateTable(repoDir, null);
           }
-        } catch(MalformedURLException e) {/**/}
+        } catch (MalformedURLException e) {/**/
+        }
       }
     }
   }
@@ -200,7 +208,7 @@ public class NewAddModuleDialog extends MessageDialog {
         String version = versionFile.getName();
         String[] strings = new String[] { repo, name, version };
         item.setText(strings);
-        File archiveFile = new File(versionFile, name+"-"+version+".jar");
+        File archiveFile = new File(versionFile, name + "-" + version + ".jar");
         item.setData(new ItemData(strings, repoDir, archiveFile));
       }
     }
@@ -240,7 +248,7 @@ public class NewAddModuleDialog extends MessageDialog {
     };
     ArrayList<ItemData> selection = new ArrayList<ItemData>();
     for (TableItem item : fTable.getSelection()) {
-      selection.add((ItemData)item.getData());
+      selection.add((ItemData) item.getData());
     }
     ItemData[] data = new ItemData[fTable.getItemCount()];
     for (int i = 0; i < fTable.getItemCount(); i++) {
@@ -268,7 +276,7 @@ public class NewAddModuleDialog extends MessageDialog {
     if (buttonId == IDialogConstants.OK_ID) {
       TableItem[] items = fTable.getSelection();
       String groupId = fGroupIdCombo.getText();
-      
+
       for (TableItem item : items) {
         Module module = fModules.addNewModule();
         module.setGroupId(groupId);
@@ -282,16 +290,16 @@ public class NewAddModuleDialog extends MessageDialog {
 
   class ItemData {
     String[] fStrings;
-    File fRepoDir;
-    File fArchiveFile;
-    
+    File     fRepoDir;
+    File     fArchiveFile;
+
     ItemData(String[] strings, File repoDir, File moduleFile) {
       fStrings = strings;
       fRepoDir = repoDir;
       fArchiveFile = moduleFile;
     }
   }
-  
+
   public void addValueListener(ValueListener listener) {
     this.m_valueListener = listener;
   }

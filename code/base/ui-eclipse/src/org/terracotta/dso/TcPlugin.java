@@ -708,7 +708,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
         }
       });
     } catch(Exception e) {
-      e.printStackTrace();
+      //e.printStackTrace();
     } finally {
       if(osgiRuntime != null) {
         osgiRuntime.shutdown();
