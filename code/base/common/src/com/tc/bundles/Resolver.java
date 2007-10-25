@@ -223,7 +223,7 @@ public class Resolver {
       return;
     }
 
-    String[] defaultModulesSpec = BundleSpecImpl.getRequirements(defaultModulesProp);
+    final String[] defaultModulesSpec = BundleSpec.getRequirements(defaultModulesProp);
     if (defaultModulesSpec.length > 0) {
       for (int i = 0; i < defaultModulesSpec.length; i++) {
         BundleSpec spec = new BundleSpecImpl(defaultModulesSpec[i]);
@@ -249,7 +249,7 @@ public class Resolver {
     final TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor(TC_PROPERTIES_SECTION);
     final String additionalModulesProp = props != null ? props.getProperty("additional") : null;
     if (additionalModulesProp != null) {
-      String[] additionalModulesSpec = BundleSpecImpl.getRequirements(additionalModulesProp);
+      String[] additionalModulesSpec = BundleSpec.getRequirements(additionalModulesProp);
       if (additionalModulesSpec.length > 0) {
         for (int i = 0; i < additionalModulesSpec.length; i++) {
           BundleSpec spec = new BundleSpecImpl(additionalModulesSpec[i]);
@@ -261,7 +261,7 @@ public class Resolver {
 
   private BundleSpec[] getRequirements(Manifest manifest) throws BundleException {
     List requirementList = new ArrayList();
-    String[] manifestRequirements = BundleSpecImpl.getRequirements(manifest);
+    String[] manifestRequirements = BundleSpec.getRequirements(manifest);
     if (manifestRequirements.length > 0) {
       for (int i = 0; i < manifestRequirements.length; i++) {
         requirementList.add(new BundleSpecImpl(manifestRequirements[i]));

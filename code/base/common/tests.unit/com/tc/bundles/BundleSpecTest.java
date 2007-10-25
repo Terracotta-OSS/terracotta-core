@@ -4,13 +4,11 @@
  */
 package com.tc.bundles;
 
-import org.osgi.framework.BundleException;
-
 import junit.framework.TestCase;
 
 public class BundleSpecTest extends TestCase {
 
-  public void testGetRequirementsString() throws BundleException {
+  public void testGetRequirementsString() {
     BundleSpec[] reqs; 
 
     reqs = check(1, "foo.bar.baz.widget");
@@ -50,8 +48,8 @@ public class BundleSpecTest extends TestCase {
     assertEquals("2.5.0.SNAPSHOT", reqs[0].getVersion());
   }
 
-  private BundleSpec[] check(int size, String source) throws BundleException {
-    String[] requirements = BundleSpecImpl.getRequirements(source);
+  private BundleSpec[] check(int size, String source) {
+    String[] requirements = BundleSpec.getRequirements(source);
     assertEquals(size, requirements.length);
     
     BundleSpec[] specs = new BundleSpec[requirements.length];

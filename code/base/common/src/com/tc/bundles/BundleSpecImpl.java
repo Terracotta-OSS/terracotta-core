@@ -5,18 +5,11 @@
 package com.tc.bundles;
 
 import org.knopflerfish.framework.VersionRange;
-import org.osgi.framework.BundleException;
 
-import com.tc.bundles.exception.InvalidBundleManifestException;
 import com.tc.bundles.Version;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.jar.Manifest;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Specification for the Require-Bundle attribute
@@ -42,42 +35,8 @@ import java.util.regex.Pattern;
  * </pre>
  */
 public final class BundleSpecImpl extends BundleSpec {
-  private static final String PROP_KEY_RESOLUTION         = "resolution";
-  private static final String PROP_KEY_BUNDLE_VERSION     = "bundle-version";
-  private static final String BUNDLE_SYMBOLIC_NAME_REGEX  = "[a-zA-Z][A-Za-z0-9._\\-]+";
-  private static final String REQUIRE_BUNDLE_EXPR_MATCHER = "(" + BUNDLE_SYMBOLIC_NAME_REGEX
-                                                              + "(;resolution:=\"?optional\"?)?" + //
-                                                              "(;bundle-version:=(\"?[A-Za-z0-9.]+\"?|" + //
-                                                              "\"?[\\[\\(][A-Za-z0-9.]+,[A-Za-z0-9.]*[\\]\\)]\"?))?)";
-
-  private final String        symbolicName;
-  private final Map           attributes                  = new HashMap();
-
-  public static final String[] getRequirements(final Manifest manifest) throws BundleException {
-    return getRequirements(manifest.getMainAttributes().getValue("Require-Bundle"));
-  }
-
-  public static final String[] getRequirements(final String source) throws BundleException {
-    if (source == null) return new String[0];
-
-    final List list = new ArrayList();
-    final String spec = source.replaceAll(" ", "");
-    final Pattern pattern = Pattern.compile(REQUIRE_BUNDLE_EXPR_MATCHER);
-    final Matcher matcher = pattern.matcher(spec);
-    final StringBuffer check = new StringBuffer();
-
-    while (matcher.find()) {
-      final String group = matcher.group();
-      check.append("," + group);
-      list.add(group);
-    }
-
-    if (!spec.equals(check.toString().replaceFirst(",", ""))) { //
-      throw new InvalidBundleManifestException("Syntax error specifying Require-Bundle: " + source + " found " + check);
-    }
-
-    return (String[]) list.toArray(new String[list.size()]);
-  }
+  private final String symbolicName;
+  private final Map    attributes = new HashMap();
 
   public BundleSpecImpl(final String spec) {
     final String[] data = spec.split(";");
