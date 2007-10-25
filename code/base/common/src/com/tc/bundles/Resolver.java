@@ -259,7 +259,7 @@ public class Resolver {
     }
   }
 
-  private BundleSpec[] getRequirements(Manifest manifest) throws BundleException {
+  private BundleSpec[] getRequirements(Manifest manifest) {
     List requirementList = new ArrayList();
     String[] manifestRequirements = BundleSpec.getRequirements(manifest);
     if (manifestRequirements.length > 0) {
