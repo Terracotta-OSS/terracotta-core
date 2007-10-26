@@ -95,6 +95,7 @@ import com.tc.object.bytecode.ReentrantReadWriteLockClassAdapter;
 import com.tc.object.bytecode.StringBufferAdapter;
 import com.tc.object.bytecode.StringGetCharsAdapter;
 import com.tc.object.bytecode.TCMap;
+import com.tc.object.bytecode.TCMapEntry;
 import com.tc.object.bytecode.TransparencyClassAdapter;
 import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.bytecode.VectorAdapter;
@@ -1746,7 +1747,8 @@ public class BootJarTool {
     bytes = cw.toByteArray();
 
     TransparencyClassSpec spec = config.getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$HashEntry");
-    spec.addDoNotInstrument(JavaUtilConcurrentHashMapHashEntryAdapter.TC_RAWSETVALUE_METHOD_NAME);
+    spec.addDoNotInstrument(TCMapEntry.TC_RAWSETVALUE_METHOD_NAME);
+    spec.addDoNotInstrument(TCMapEntry.TC_ISVALUEFAULTEDIN_METHOD_NAME);
     spec.setHonorTransient(true);
     spec.markPreInstrumented();
     spec.setCallConstructorOnLoad(true);

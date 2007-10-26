@@ -11,9 +11,6 @@ import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 
 public class JavaUtilConcurrentHashMapHashEntryAdapter extends ClassAdapter implements Opcodes {
-  public final static String TC_RAWSETVALUE_METHOD_NAME = ByteCodeUtil.TC_METHOD_PREFIX + "rawSetValue";
-  public final static String TC_RAWSETVALUE_METHOD_DESC = "(Ljava/lang/Object;)V";
-
   public JavaUtilConcurrentHashMapHashEntryAdapter(ClassVisitor cv) {
     super(cv);
   }
@@ -33,7 +30,7 @@ public class JavaUtilConcurrentHashMapHashEntryAdapter extends ClassAdapter impl
   }
   
   private void createTCRawSetValueMethod() {
-    MethodVisitor mv = super.visitMethod(ACC_PUBLIC | ACC_SYNCHRONIZED, TC_RAWSETVALUE_METHOD_NAME, TC_RAWSETVALUE_METHOD_DESC, null, null);
+    MethodVisitor mv = super.visitMethod(ACC_PUBLIC | ACC_SYNCHRONIZED, TCMapEntry.TC_RAWSETVALUE_METHOD_NAME, TCMapEntry.TC_RAWSETVALUE_METHOD_DESC, null, null);
     mv.visitCode();
     mv.visitVarInsn(ALOAD, 0);
     mv.visitVarInsn(ALOAD, 1);

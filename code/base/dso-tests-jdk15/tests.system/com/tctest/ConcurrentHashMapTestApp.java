@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReentrantLock;
 
 @SuppressWarnings("unchecked")
 public class ConcurrentHashMapTestApp extends GenericTestApp {
@@ -30,8 +29,6 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
   
   private final HashKey[]           hashKeys   = new HashKey[]{ new HashKey(1), new HashKey(2), new HashKey(3), new HashKey(4)};
   private final HashValue[]         hashValues = new HashValue[]{ new HashValue(10), new HashValue(20), new HashValue(30), new HashValue(40) };
-  
-  private final ReentrantLock       lock = new ReentrantLock();
 
   public ConcurrentHashMapTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider, ConcurrentHashMap.class);
@@ -774,39 +771,34 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
 //    // make sure that all the clients are run in sequential fashion
 //    // this ensures that the entry values are not cleared by another client
 //    // after they have been faulted in and before they have been cleared
-//    lock.lock();
-//    try {
-//      if (validate) {
-//        if (isMutator()) {
-//          // in the mutator, all the map entries are local
-//          int result = ((Clearable)map).__tc_clearReferences(100);
-//          Assert.assertEquals(4, result);
-//        } else {
-//          // fault in two values
-//          map.get(keyRoots[0]);
-//          map.get(keyRoots[2]);
-//          // check that two have been cleared
-//          Assert.assertEquals(2, ((Clearable)map).__tc_clearReferences(100));
-//          
-//          // fault in three values
-//          map.get(keyRoots[0]);
-//          map.get(keyRoots[3]);
-//          map.get(keyRoots[2]);
-//          // check that one has been cleared
-//          Assert.assertEquals(1, ((Clearable)map).__tc_clearReferences(1));
-//          // check that two have been cleared
-//          Assert.assertEquals(2, ((Clearable)map).__tc_clearReferences(100));
-//        }
+//    if (validate) {
+//      if (isMutator()) {
+//        // in the mutator, all the map entries are local
+//        int result = ((Clearable)map).__tc_clearReferences(100);
+//        Assert.assertEquals(4, result);
 //      } else {
-//        Map toPut = new HashMap();
-//        toPut.put(keyRoots[0], valueRoots[0]);
-//        toPut.put(keyRoots[1], valueRoots[1]);
-//        toPut.put(keyRoots[2], valueRoots[2]);
-//        toPut.put(keyRoots[3], valueRoots[3]);
-//        map.putAll(toPut);
+//        // fault in two values
+//        map.get(keyRoots[0]);
+//        map.get(keyRoots[2]);
+//        // check that two have been cleared
+//        Assert.assertEquals(2, ((Clearable)map).__tc_clearReferences(100));
+//        
+//        // fault in three values
+//        map.get(keyRoots[0]);
+//        map.get(keyRoots[3]);
+//        map.get(keyRoots[2]);
+//        // check that one has been cleared
+//        Assert.assertEquals(1, ((Clearable)map).__tc_clearReferences(1));
+//        // check that two have been cleared
+//        Assert.assertEquals(2, ((Clearable)map).__tc_clearReferences(100));
 //      }
-//    } finally {
-//      lock.unlock();
+//    } else {
+//      Map toPut = new HashMap();
+//      toPut.put(keyRoots[0], valueRoots[0]);
+//      toPut.put(keyRoots[1], valueRoots[1]);
+//      toPut.put(keyRoots[2], valueRoots[2]);
+//      toPut.put(keyRoots[3], valueRoots[3]);
+//      map.putAll(toPut);
 //    }
 //  }
   
@@ -1467,7 +1459,6 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
     spec.addRoot("valueRoots", "valueRoots");
     spec.addRoot("hashKeys", "hashKeys");
     spec.addRoot("hashValues", "hashValues");
-    spec.addRoot("lock", "lock");
   }
   
   private static class SimpleEntry implements Map.Entry {
@@ -1593,5 +1584,4 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       return super.toString() + ", i: " + i;
     }
   }
-  
 }

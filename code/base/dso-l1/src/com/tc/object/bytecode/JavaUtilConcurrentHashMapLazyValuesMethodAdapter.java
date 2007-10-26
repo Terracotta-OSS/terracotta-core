@@ -75,15 +75,15 @@ class JavaUtilConcurrentHashMapLazyValuesMethodAdapter extends LocalVariablesSor
         mv.visitVarInsn(ALOAD, hashEntryLocal); 
         mv.visitVarInsn(ALOAD, valueLocal); 
         mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/concurrent/ConcurrentHashMap$HashEntry",
-                           JavaUtilConcurrentHashMapHashEntryAdapter.TC_RAWSETVALUE_METHOD_NAME,
-                           JavaUtilConcurrentHashMapHashEntryAdapter.TC_RAWSETVALUE_METHOD_DESC);
+                           TCMapEntry.TC_RAWSETVALUE_METHOD_NAME,
+                           TCMapEntry.TC_RAWSETVALUE_METHOD_DESC);
         mv.visitLabel(labelValueNull);
       } else {
         mv.visitVarInsn(ALOAD, hashEntryLocal); 
         mv.visitVarInsn(ALOAD, valueLocal); 
         mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/concurrent/ConcurrentHashMap$HashEntry",
-                           JavaUtilConcurrentHashMapHashEntryAdapter.TC_RAWSETVALUE_METHOD_NAME,
-                           JavaUtilConcurrentHashMapHashEntryAdapter.TC_RAWSETVALUE_METHOD_DESC);
+                           TCMapEntry.TC_RAWSETVALUE_METHOD_NAME,
+                           TCMapEntry.TC_RAWSETVALUE_METHOD_DESC);
       }
       
       // load the entry's value from the local variable

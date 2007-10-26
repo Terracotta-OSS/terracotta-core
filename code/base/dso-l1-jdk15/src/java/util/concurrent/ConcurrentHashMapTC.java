@@ -121,7 +121,7 @@ public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements T
           TCObject tcObject = m.__tc_managed();
           if (tcObject != null
               && !tcObject.recentlyAccessed()) {
-            e.setValue(tcObject.getObjectID());
+            e.__tc_rawSetValue(tcObject.getObjectID());
             cleared++;
           }
         }
