@@ -22,35 +22,45 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * The main class for the cache.  It holds CacheData objects
+ * The main class for the cache. It holds CacheData objects
  */
 public class CacheDataStore implements Serializable {
   // Resources
   private static final TCLogger              logger = ManagerUtil.getLogger("com.tc.cache.CacheDataStore");
-  
+
   // Config
   private final CacheConfig                  config;
-  
+
   // Cache state, changes during lifetime
-  private final Map[]                        store;              // <Object, CacheData>, values may be faulted out
-  private final Map[]                        dtmStore;           // <Object, Timestamp>, values never faulted out
+  private final Map[]                        store;                                                        // <Object,
+                                                                                                            // CacheData>,
+                                                                                                            // values
+                                                                                                            // may be
+                                                                                                            // faulted
+                                                                                                            // out
+  private final Map[]                        dtmStore;                                                     // <Object,
+                                                                                                            // Timestamp>,
+                                                                                                            // values
+                                                                                                            // never
+                                                                                                            // faulted
+                                                                                                            // out
   private final GlobalKeySet[]               globalKeySet;
-  
+
   // Local cache stats
   private transient int                      hitCount;
   private transient int                      missCountExpired;
   private transient int                      missCountNotFound;
-  
+
   // Local eviction thread
   private transient CacheInvalidationTimer[] cacheInvalidationTimer;
-  
+
   /**
-   * This is a shared object, so this only happens once.  In other nodes, 
-   * the initialize() method is called on load of this object into the node.
+   * This is a shared object, so this only happens once. In other nodes, the initialize() method is called on load of
+   * this object into the node.
    */
   public CacheDataStore(CacheConfig config) {
     this.config = config;
-    
+
     // Set up cache state
     this.store = new Map[config.getConcurrency()];
     this.dtmStore = new Map[config.getConcurrency()];
@@ -61,11 +71,11 @@ public class CacheDataStore implements Serializable {
 
     this.hitCount = 0;
   }
-  
+
   public CacheConfig getConfig() {
     return this.config;
   }
-  
+
   private void initializeGlobalKeySet() {
     for (int i = 0; i < config.getEvictorPoolSize(); i++) {
       globalKeySet[i] = new GlobalKeySet();
@@ -85,34 +95,29 @@ public class CacheDataStore implements Serializable {
    */
   public void initialize() {
     logDebug("Initializing CacheDataStore");
-    
+
     int startEvictionIndex = 0;
     this.cacheInvalidationTimer = new CacheInvalidationTimer[config.getEvictorPoolSize()];
     for (int i = 0; i < config.getEvictorPoolSize(); i++) {
       int lastEvictionIndex = startEvictionIndex + config.getStoresPerInvalidator();
-      cacheInvalidationTimer[i] = new CacheInvalidationTimer(config.getInvalidatorSleepSeconds(), config.getCacheName()
-                                                                                      + " invalidation thread" + i);
-      
-                                                             
-      cacheInvalidationTimer[i].start(new CacheEntryInvalidator(globalKeySet[i],
-                                                                startEvictionIndex,
-                                                                lastEvictionIndex, 
-                                                                config,
-                                                                ManagerUtil.getManager(),
-                                                                this));
-      startEvictionIndex = lastEvictionIndex;      
+      cacheInvalidationTimer[i] = new CacheInvalidationTimer(config.getInvalidatorSleepSeconds(),
+                                                             config.getCacheName() + " invalidation thread" + i);
+
+      cacheInvalidationTimer[i].start(new CacheEntryInvalidator(globalKeySet[i], startEvictionIndex, lastEvictionIndex,
+                                                                config, ManagerUtil.getManager(), this));
+      startEvictionIndex = lastEvictionIndex;
     }
   }
 
   /**
-   * This is used as a DistributedMethod because when one node cancel a timer, other nodes 
-   * need to cancel the timer as well.
+   * This is used as a DistributedMethod because when one node cancel a timer, other nodes need to cancel the timer as
+   * well.
    */
   public void stopInvalidatorThread() {
     logDebug("stopInvalidatorThread()");
 
     for (int i = 0; i < config.getEvictorPoolSize(); i++) {
-      if(cacheInvalidationTimer[i] != null) {
+      if (cacheInvalidationTimer[i] != null) {
         cacheInvalidationTimer[i].stop();
       }
     }
@@ -151,11 +156,11 @@ public class CacheDataStore implements Serializable {
     return rv;
   }
 
-//  private void dumpStore() {
-//    for (int i = 0; i < config.getConcurrency(); i++) {
-//      System.err.println("Dump store Client " + manager.getClientID() + "i: " + i + " " + store[i]);
-//    }
-//  }
+  // private void dumpStore() {
+  // for (int i = 0; i < config.getConcurrency(); i++) {
+  // System.err.println("Dump store Client " + manager.getClientID() + "i: " + i + " " + store[i]);
+  // }
+  // }
 
   public Object get(final Object key) {
     logDebug("Get [" + key + "]");
@@ -246,7 +251,11 @@ public class CacheDataStore implements Serializable {
   public Set keySet() {
     Set keySet = new HashSet();
     for (int i = 0; i < config.getConcurrency(); i++) {
-      keySet.addAll(store[i].keySet());
+      Collection entrySnapshot = ((TCMap) store[i]).__tc_getAllEntriesSnapshot();
+      for (Iterator it = entrySnapshot.iterator(); it.hasNext();) {
+        Map.Entry entry = (Map.Entry) it.next();
+        keySet.add(entry.getKey());
+      }
     }
     return keySet;
   }
@@ -270,7 +279,11 @@ public class CacheDataStore implements Serializable {
   public Collection values() {
     List values = new ArrayList();
     for (int i = 0; i < config.getConcurrency(); i++) {
-      values.addAll(store[i].values());
+      Collection entrySnapshot = ((TCMap) store[i]).__tc_getAllEntriesSnapshot();
+      for (Iterator it = entrySnapshot.iterator(); it.hasNext();) {
+        Map.Entry entry = (Map.Entry) it.next();
+        values.add(entry.getValue());
+      }
     }
     return values;
   }
@@ -339,7 +352,7 @@ public class CacheDataStore implements Serializable {
       logger.error(msg, t);
     }
   }
-  
+
   private Collection getAllLocalEntries(int startEvictionIndex, int lastEvictionIndex) {
     Collection allLocalEntries = new ArrayList();
     for (int i = startEvictionIndex; i < lastEvictionIndex; i++) {
@@ -399,7 +412,7 @@ public class CacheDataStore implements Serializable {
 
     if (isGlobalInvalidation) {
       // Use ceiling here so that we get at least 1 obj / chunk
-      numOfObjectsPerChunk = (int)Math.ceil(entriesToBeExamined.size() * 1.0 / numOfChunks);
+      numOfObjectsPerChunk = (int) Math.ceil(entriesToBeExamined.size() * 1.0 / numOfChunks);
     }
 
     for (Iterator it = entriesToBeExamined.iterator(); it.hasNext();) {
@@ -432,6 +445,5 @@ public class CacheDataStore implements Serializable {
       }
     }
   }
-
 
 }
