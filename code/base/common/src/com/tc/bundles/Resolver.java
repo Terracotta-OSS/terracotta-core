@@ -92,7 +92,7 @@ public class Resolver {
     final String groupId = module.getGroupId();
     final URL location = resolveLocation(name, version, groupId);
     if (location == null) {
-      final String msg = error(Message.ERROR_BUNDLE_UNRESOLVED, new Object[] { module.getName(), module.getVersion(),
+      final String msg = fatal(Message.ERROR_BUNDLE_UNRESOLVED, new Object[] { module.getName(), module.getVersion(),
           module.getGroupId(), repositoriesToString() });
       throw new MissingBundleException(msg);
     }
@@ -172,7 +172,7 @@ public class Resolver {
           try {
             return bundleFile.toURL();
           } catch (MalformedURLException e) {
-            error(Message.ERROR_BUNDLE_MALFORMED_URL, new Object[] { bundleFile.getName() }); // should be fatal???            
+            fatal(Message.ERROR_BUNDLE_MALFORMED_URL, new Object[] { bundleFile.getName() }); // should be fatal???            
             return null;
           }
         }
@@ -273,7 +273,7 @@ public class Resolver {
   private void resolveDependencies(final URL location) throws BundleException {
     final Manifest manifest = getManifest(location);
     if (manifest == null) {
-      final String msg = error(Message.ERROR_BUNDLE_UNREADABLE, new Object[] { FileUtils.toFile(location).getName(),
+      final String msg = fatal(Message.ERROR_BUNDLE_UNREADABLE, new Object[] { FileUtils.toFile(location).getName(),
           FileUtils.toFile(location).getParent() });
       throw new InvalidBundleManifestException(msg);
     }
@@ -292,7 +292,7 @@ public class Resolver {
     if (required == null) {
       required = resolveBundle(spec);
       if (required == null) {
-        final String msg = error(Message.ERROR_BUNDLE_DEPENDENCY_UNRESOLVED, new Object[] { spec.getName(),
+        final String msg = fatal(Message.ERROR_BUNDLE_DEPENDENCY_UNRESOLVED, new Object[] { spec.getName(),
             spec.getVersion(), spec.getGroupId(), repositoriesToString() });
         throw new MissingBundleException(msg);
       }
@@ -344,12 +344,12 @@ public class Resolver {
     return msg;
   }
 
-  private String error(final Message message, final Object[] arguments) {
+  private String fatal(final Message message, final Object[] arguments) {
     final String msg = formatMessage(message, arguments);
-    logger.error(msg);
+    logger.fatal(msg);
     return msg;
   }
-
+  
   private static String formatMessage(final Message message, final Object[] arguments) {
     return MessageFormat.format(resourceBundle.getString(message.key()), arguments);
   }
