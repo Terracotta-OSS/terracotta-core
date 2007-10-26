@@ -29,23 +29,23 @@ public class BundleSpecTest extends TestCase {
     reqs = check(1, "foo.bar.baz.widget;bundle-version:=\"(1.0.0,)\""); 
     reqs = check(1, "foo.bar.baz.widget;resolution:=optional"); 
 
-    reqs = check(1, "org.terracotta.modules.clustered_surefire_2.3;bundle-version:=2.5.0.SNAPSHOT");
+    reqs = check(1, "org.terracotta.modules.clustered_surefire_2.3;bundle-version:=2.6.0.SNAPSHOT");
     assertEquals("org.terracotta.modules.clustered_surefire_2.3", reqs[0].getSymbolicName());
     assertEquals("org.terracotta.modules", reqs[0].getGroupId());
     assertEquals("clustered_surefire_2.3", reqs[0].getName());
-    assertEquals("2.5.0.SNAPSHOT", reqs[0].getVersion());
+    assertEquals("2.6.0.SNAPSHOT", reqs[0].getVersion());
     
-    reqs = check(1, "org.terracotta.modules.excludes_config;bundle-version:=2.5.0.SNAPSHOT");
+    reqs = check(1, "org.terracotta.modules.excludes_config;bundle-version:=2.6.0.SNAPSHOT");
     assertEquals("org.terracotta.modules.excludes_config", reqs[0].getSymbolicName());
     assertEquals("org.terracotta.modules", reqs[0].getGroupId());
     assertEquals("excludes_config", reqs[0].getName());
-    assertEquals("2.5.0.SNAPSHOT", reqs[0].getVersion());
+    assertEquals("2.6.0.SNAPSHOT", reqs[0].getVersion());
     
-    reqs = check(1, "org.terracotta.modules.clustered_cglib_2.1.3;bundle-version:=2.5.0.SNAPSHOT");
+    reqs = check(1, "org.terracotta.modules.clustered_cglib_2.1.3;bundle-version:=2.6.0.SNAPSHOT");
     assertEquals("org.terracotta.modules.clustered_cglib_2.1.3", reqs[0].getSymbolicName());
     assertEquals("org.terracotta.modules", reqs[0].getGroupId());
     assertEquals("clustered_cglib_2.1.3", reqs[0].getName());
-    assertEquals("2.5.0.SNAPSHOT", reqs[0].getVersion());
+    assertEquals("2.6.0.SNAPSHOT", reqs[0].getVersion());
   }
 
   private BundleSpec[] check(int size, String source) {
