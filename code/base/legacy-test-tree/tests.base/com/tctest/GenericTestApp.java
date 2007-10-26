@@ -36,6 +36,8 @@ public abstract class GenericTestApp extends AbstractErrorCatchingTransparentApp
 
   private final Class         type;
   private final List          tests;
+  
+  private transient boolean   mutator;
 
   public GenericTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider, Class type) {
     super(appId, cfg, listenerProvider);
@@ -63,13 +65,17 @@ public abstract class GenericTestApp extends AbstractErrorCatchingTransparentApp
 
   public void runTest() throws Throwable {
     int num = barrier.barrier();
-    boolean mutator = (num == 0);
+    mutator = (num == 0);
 
     if (mutator) {
       doMutate();
     } else {
       doValidate();
     }
+  }
+  
+  protected boolean isMutator() {
+    return mutator;
   }
 
   private void doValidate() throws Throwable {

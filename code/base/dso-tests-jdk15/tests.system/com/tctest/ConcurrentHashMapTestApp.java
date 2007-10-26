@@ -20,7 +20,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
+@SuppressWarnings("unchecked")
 public class ConcurrentHashMapTestApp extends GenericTestApp {
 
   private final DataKey[]           keyRoots   = new DataKey[]{ new DataKey(1), new DataKey(2), new DataKey(3), new DataKey(4)};
@@ -29,6 +31,8 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
   private final HashKey[]           hashKeys   = new HashKey[]{ new HashKey(1), new HashKey(2), new HashKey(3), new HashKey(4)};
   private final HashValue[]         hashValues = new HashValue[]{ new HashValue(10), new HashValue(20), new HashValue(30), new HashValue(40) };
   
+  private final ReentrantLock       lock = new ReentrantLock();
+
   public ConcurrentHashMapTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider, ConcurrentHashMap.class);
   }
@@ -713,6 +717,99 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
     }
   }
   
+  void testAllLocalEntriesSnapshot(ConcurrentHashMap map, boolean validate) throws Exception {
+    if (validate) {
+      if (isMutator()) {
+        // if this is the mutator app, all the values are local
+        Collection set1 = map.entrySet();
+        Collection set2 = ((TCMap)map).__tc_getAllLocalEntriesSnapshot();
+
+        Assert.assertTrue(set1 != set2);
+        assertCollectionsEqual(set2, set1);
+      } else {
+        // fault in one root locally
+        map.get(keyRoots[0]);
+        
+        Collection set1a = map.entrySet();
+        Collection set1b = ((TCMap)map).__tc_getAllLocalEntriesSnapshot();
+
+        Assert.assertTrue(set1a != set1b);
+        Assert.assertTrue(set1a.size() != set1b.size());
+        Assert.assertEquals(1, set1b.size());
+      
+        // fault in a second root locally
+        map.get(keyRoots[3]);
+        
+        Collection set2a = map.entrySet();
+        Collection set2b = ((TCMap)map).__tc_getAllLocalEntriesSnapshot();
+
+        Assert.assertTrue(set2a != set2b);
+        Assert.assertTrue(set2a.size() != set2b.size());
+        Assert.assertEquals(2, set2b.size());
+        
+        // fault in a third root locally
+        map.get(keyRoots[2]);
+        
+        Collection set3a = map.entrySet();
+        Collection set3b = ((TCMap)map).__tc_getAllLocalEntriesSnapshot();
+
+        Assert.assertTrue(set3a != set3b);
+        Assert.assertTrue(set3a.size() != set3b.size());
+        Assert.assertEquals(3, set3b.size());
+      }
+    } else {
+      Map toPut = new HashMap();
+      toPut.put(keyRoots[0], valueRoots[0]);
+      toPut.put(keyRoots[1], valueRoots[1]);
+      toPut.put(keyRoots[2], valueRoots[2]);
+      toPut.put(keyRoots[3], valueRoots[3]);
+      map.putAll(toPut);
+    }
+  }
+  
+  // This test doesn't work yet, since I need to figure out a way to reset
+  // the recently accessed count of the map entry values. This is normally
+  // done by the evictor, but in this test I'd like to enforce it.
+//  void testClearable(ConcurrentHashMap map, boolean validate) throws Exception {
+//    // make sure that all the clients are run in sequential fashion
+//    // this ensures that the entry values are not cleared by another client
+//    // after they have been faulted in and before they have been cleared
+//    lock.lock();
+//    try {
+//      if (validate) {
+//        if (isMutator()) {
+//          // in the mutator, all the map entries are local
+//          int result = ((Clearable)map).__tc_clearReferences(100);
+//          Assert.assertEquals(4, result);
+//        } else {
+//          // fault in two values
+//          map.get(keyRoots[0]);
+//          map.get(keyRoots[2]);
+//          // check that two have been cleared
+//          Assert.assertEquals(2, ((Clearable)map).__tc_clearReferences(100));
+//          
+//          // fault in three values
+//          map.get(keyRoots[0]);
+//          map.get(keyRoots[3]);
+//          map.get(keyRoots[2]);
+//          // check that one has been cleared
+//          Assert.assertEquals(1, ((Clearable)map).__tc_clearReferences(1));
+//          // check that two have been cleared
+//          Assert.assertEquals(2, ((Clearable)map).__tc_clearReferences(100));
+//        }
+//      } else {
+//        Map toPut = new HashMap();
+//        toPut.put(keyRoots[0], valueRoots[0]);
+//        toPut.put(keyRoots[1], valueRoots[1]);
+//        toPut.put(keyRoots[2], valueRoots[2]);
+//        toPut.put(keyRoots[3], valueRoots[3]);
+//        map.putAll(toPut);
+//      }
+//    } finally {
+//      lock.unlock();
+//    }
+//  }
+  
   void testValuesClear1(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(keyRoots[0], valueRoots[0]);
@@ -1297,7 +1394,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
   void assertMappingsEqual(Object[] expect, Map map) {
     Assert.assertEquals(expect.length, map.size());
     for (int i = 0; i < expect.length; i++) {
-      Entry entry = (Entry) expect[i];
+      Entry entry = (Entry)expect[i];
       Object val = map.get(entry.getKey());
       Assert.assertEquals(entry.getValue(), val);
     }
@@ -1313,7 +1410,8 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
   void assertCollectionsEqual(Collection expect, Collection collection) {
     Assert.assertEquals(expect.size(), collection.size());
     for (Iterator i=expect.iterator(); i.hasNext(); ) {
-      Assert.assertTrue(collection.contains(i.next()));
+      Object next = i.next();
+      Assert.assertTrue(collection.contains(next));
     }
   }
   
@@ -1369,6 +1467,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
     spec.addRoot("valueRoots", "valueRoots");
     spec.addRoot("hashKeys", "hashKeys");
     spec.addRoot("hashValues", "hashValues");
+    spec.addRoot("lock", "lock");
   }
   
   private static class SimpleEntry implements Map.Entry {

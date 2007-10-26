@@ -16,5 +16,4 @@ public class ConcurrentHashMapTest extends TransparentTestBase {
   protected Class getApplicationClass() {
     return ConcurrentHashMapTestApp.class;
   }
-
 }

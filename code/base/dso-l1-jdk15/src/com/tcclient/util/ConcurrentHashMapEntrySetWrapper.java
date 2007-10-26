@@ -15,6 +15,7 @@ import java.util.Map.Entry;
 /**
  * A wrapper for Map.entrySet() that keeps DSO informed of changes
  */
+@SuppressWarnings("unchecked")
 public class ConcurrentHashMapEntrySetWrapper implements Set {
   public final static String CLASS_SLASH = "com/tc/util/ConcurrentHashMapEntrySetWrapper";
 
@@ -24,6 +25,10 @@ public class ConcurrentHashMapEntrySetWrapper implements Set {
   public ConcurrentHashMapEntrySetWrapper(Map map, Set realEntrySet) {
     this.realEntrySet = realEntrySet;
     this.map = map;
+  }
+  
+  public Set getDelegateEntrySet() {
+    return realEntrySet;
   }
 
   public final boolean add(Object o) {
@@ -119,15 +124,14 @@ public class ConcurrentHashMapEntrySetWrapper implements Set {
     public final Object next() {
       return new EntryWrapper(map, (Entry) realIterator.next());
     }
-
   }
 
-  protected static class EntryWrapper implements Entry {
+  public static class EntryWrapper implements Entry {
     private final Object key;
     private Object       value;
     private final Map    map;
 
-    EntryWrapper(Map map, Entry entry) {
+    public EntryWrapper(Map map, Entry entry) {
       this.map = map;
       this.key = entry.getKey();
       this.value = entry.getValue();
@@ -162,5 +166,4 @@ public class ConcurrentHashMapEntrySetWrapper implements Set {
       return key + "=" + value;
     }
   }
-
 }
