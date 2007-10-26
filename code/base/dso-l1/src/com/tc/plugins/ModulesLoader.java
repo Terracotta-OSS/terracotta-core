@@ -97,7 +97,7 @@ public class ModulesLoader {
           getModulesCustomApplicatorSpecs(osgiRuntime, configHelper);
         }
       } catch (Exception e) {
-        throw new RuntimeException("Unable to create runtime for plugins", e);
+        System.exit(-2);
       } finally {
         if (forBootJar) {
           shutdown(osgiRuntime);
