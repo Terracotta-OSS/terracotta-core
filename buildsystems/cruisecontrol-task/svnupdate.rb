@@ -14,11 +14,11 @@ class SvnUpdate
     @topdir = File.join(@topdir, "..") if @topdir =~ /community/
 
     # default build-archive-dir in monkeys
-    build_archive_dir = "/shares/monkeyoutput"
+    build_archive_dir = "/shares/monkeyoutput/archive"
 
     if ENV['OS'] =~ /win/i
       @topdir=`cygpath -u #{@topdir}`.chomp
-      build_archive_dir = "o:"
+      build_archive_dir = "o:/archive"
     end
 
     @svninfo = YAML::load(`svn info #{@topdir}`)
