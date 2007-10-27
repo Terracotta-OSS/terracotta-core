@@ -74,6 +74,7 @@ import com.tc.object.bytecode.JavaUtilConcurrentHashMapEntryIteratorAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentHashMapHashEntryAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentHashMapSegmentAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentHashMapValueIteratorAdapter;
+import com.tc.object.bytecode.JavaUtilConcurrentHashMapWriteThroughEntryAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentLinkedBlockingQueueAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentLinkedBlockingQueueClassAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentLinkedBlockingQueueIteratorClassAdapter;
@@ -1801,6 +1802,29 @@ public class BootJarTool {
     bytes = doDSOTransform(spec.getClassName(), bytes);
     bootJar.loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$EntryIterator", bytes, spec.isPreInstrumented());
 
+    if (Vm.isJDK16Compliant()) {
+      // java.util.concurrent.ConcurrentHashMap$EntryIterator
+      bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$WriteThroughEntry");
+      cr = new ClassReader(bytes);
+      cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+      cv = new JavaUtilConcurrentHashMapWriteThroughEntryAdapter(cw);
+      cr.accept(cv, ClassReader.SKIP_FRAMES);
+  
+      bytes = cw.toByteArray();
+  
+      spec = config.getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$WriteThroughEntry");
+      spec.setHonorTransient(true);
+      spec.markPreInstrumented();
+      bytes = doDSOTransform(spec.getClassName(), bytes);
+      bootJar.loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$WriteThroughEntry", bytes, spec.isPreInstrumented());
+      
+      // java.util.AbstractMap$SimpleEntry
+      bytes = getTerracottaBytes("java.util.AbstractMap$SimpleEntry");
+      spec = config.getOrCreateSpec("java.util.AbstractMap$SimpleEntry");
+      bytes = doDSOTransform(spec.getClassName(), bytes);
+      bootJar.loadClassIntoJar("java.util.AbstractMap$SimpleEntry", bytes, spec.isPreInstrumented());
+    }
+    
     // com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper
     bytes = getTerracottaBytes("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper");
     spec = config.getOrCreateSpec("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper");

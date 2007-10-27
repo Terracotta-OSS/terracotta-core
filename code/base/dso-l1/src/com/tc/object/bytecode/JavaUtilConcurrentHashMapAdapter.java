@@ -16,9 +16,6 @@ import com.tc.util.runtime.Vm;
 
 public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Opcodes {
   private final static String CONCURRENT_HASH_MAP_SLASH           = "java/util/concurrent/ConcurrentHashMap";
-  private final static String TC_HASH_METHOD_NAME                 = ByteCodeUtil.TC_METHOD_PREFIX + "hash";
-  private final static String TC_HASH_METHOD_DESC                 = "(Ljava/lang/Object;)I";
-  private final static String TC_HASH_METHOD_CHECK_DESC           = "(Ljava/lang/Object;Z)I";
   private final static String TC_REHASH_METHOD_NAME               = ByteCodeUtil.TC_METHOD_PREFIX + "rehash";
   private final static String TC_REHASH_METHOD_DESC               = "()V";
   private final static String TC_CLEAR_METHOD_NAME                = ByteCodeUtil.TC_METHOD_PREFIX + "clear";
@@ -27,6 +24,9 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
   private final static String TC_ORIG_GET_METHOD_DESC             = "(Ljava/lang/Object;)Ljava/lang/Object;";
   private final static String TC_PUT_METHOD_NAME                  = ByteCodeUtil.TC_METHOD_PREFIX + "put";
   private final static String TC_PUT_METHOD_DESC                  = "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;";
+  private final static String TC_HASH_METHOD_NAME                 = ByteCodeUtil.TC_METHOD_PREFIX + "hash";
+  private final static String TC_HASH_METHOD_DESC                 = "(Ljava/lang/Object;)I";
+  private final static String TC_HASH_METHOD_CHECK_DESC           = "(Ljava/lang/Object;Z)I";
   private final static String TC_IS_DSO_HASH_REQUIRED_METHOD_NAME = ByteCodeUtil.TC_METHOD_PREFIX + "isDsoHashRequired";
   private final static String TC_IS_DSO_HASH_REQUIRED_METHOD_DESC = "(Ljava/lang/Object;)Z";
   private final static String TC_FULLY_READLOCK_METHOD_NAME       = ByteCodeUtil.TC_METHOD_PREFIX + "fullyReadLock";
@@ -102,9 +102,6 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
 
   public void visitEnd() {
     createTCPutMethod();
-    createTCSharedHashMethod();
-    createTCForcedHashMethod();
-    createTCDsoRequiredMethod();
     createTCRehashAndSupportMethods();
     createTCFullyReadLockMethod();
     createTCFullyReadUnlockMethod();
@@ -307,41 +304,6 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     mv.visitLocalVariable("segments", "[Ljava/util/concurrent/ConcurrentHashMap$Segment;", null, l1, l7, 1);
     mv.visitLocalVariable("i", "I", null, l2, l6, 2);
     mv.visitMaxs(2, 3);
-    mv.visitEnd();
-  }
-
-  private void createTCDsoRequiredMethod() {
-    MethodVisitor mv = super.visitMethod(ACC_PRIVATE, TC_IS_DSO_HASH_REQUIRED_METHOD_NAME,
-                                         TC_IS_DSO_HASH_REQUIRED_METHOD_DESC, null, null);
-    mv.visitCode();
-    Label l0 = new Label();
-    mv.visitLabel(l0);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "lookupExistingOrNull",
-                       "(Ljava/lang/Object;)Lcom/tc/object/TCObject;");
-    mv.visitInsn(POP);
-    mv.visitVarInsn(ALOAD, 0);
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/concurrent/ConcurrentHashMap", "__tc_managed",
-                       "()Lcom/tc/object/TCObject;");
-    Label l2 = new Label();
-    mv.visitJumpInsn(IFNULL, l2);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "lookupExistingOrNull",
-                       "(Ljava/lang/Object;)Lcom/tc/object/TCObject;");
-    mv.visitJumpInsn(IFNONNULL, l2);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "hashCode", "()I");
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitMethodInsn(INVOKESTATIC, "java/lang/System", "identityHashCode", "(Ljava/lang/Object;)I");
-    mv.visitJumpInsn(IF_ICMPNE, l2);
-    mv.visitInsn(ICONST_0);
-    mv.visitInsn(IRETURN);
-    mv.visitLabel(l2);
-    mv.visitInsn(ICONST_1);
-    mv.visitInsn(IRETURN);
-    Label l6 = new Label();
-    mv.visitLabel(l6);
-    mv.visitMaxs(0, 0);
     mv.visitEnd();
   }
 
@@ -622,143 +584,6 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     mv.visitInsn(RETURN);
     Label l6 = new Label();
     mv.visitLabel(l6);
-    mv.visitMaxs(0, 0);
-    mv.visitEnd();
-  }
-
-  /*
-   * ConcurrentHashMap uses the hashcode of the key and identify the segment to use. Each segment is an ReentrantLock.
-   * This prevents multiple threads to update the same segment at the same time. To support in DSO, we need to check if
-   * the ConcurrentHashMap is a shared object. If it is, we check if the hashcode of the key is the same as the
-   * System.identityHashCode. If it is, we will use the DSO ObjectID of the key to be the hashcode. Since the ObjectID
-   * of the key is a cluster-wide constant, different node will identify the same segment based on the ObjectID of the
-   * key. If the hashcode of the key is not the same as the System.identityHashCode, that would mean the application has
-   * defined the hashcode of the key and in this case, we could use honor the application defined hashcode of the key.
-   * The reason that we do not want to always use the ObjectID of the key is because if the application has defined the
-   * hashcode of the key, map.get(key1) and map.get(key2) will return the same object if key1 and key2 has the same
-   * application defined hashcode even though key1 and key2 has 2 different ObjectID. Using ObjectID as the hashcode in
-   * this case will prevent map.get(key1) and map.get(key2) to return the same result. If the application has not
-   * defined the hashcode of the key, key1 and key2 will have 2 different hashcode (due to the fact that they will have
-   * different System.identityHashCode). Therefore, map.get(key1) and map.get(key2) will return different objects. In
-   * this case, using ObjectID will have the proper behavior. One limitation is that if the application define the
-   * hashcode as some combination of system specific data such as a combination of System.identityHashCode() and some
-   * other data, the current support of ConcurrentHashMap does not support this scenario. Another limitation is that if
-   * the application defined hashcode of the key happens to be the same as the System.identityHashCode, the current
-   * support of ConcurrentHashMap does not support this scenario either.
-   */
-  private void createTCSharedHashMethod() {
-    MethodVisitor mv = cv
-        .visitMethod(ACC_PRIVATE + ACC_SYNTHETIC, TC_HASH_METHOD_NAME, TC_HASH_METHOD_DESC, null, null);
-    Label l0 = new Label();
-    mv.visitLabel(l0);
-    mv.visitVarInsn(ALOAD, 0);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitInsn(ICONST_1);
-    mv.visitMethodInsn(INVOKESPECIAL, CONCURRENT_HASH_MAP_SLASH, TC_HASH_METHOD_NAME, TC_HASH_METHOD_CHECK_DESC);
-    mv.visitInsn(IRETURN);
-    Label l1 = new Label();
-    mv.visitLabel(l1);
-    mv.visitMaxs(0, 0);
-    mv.visitEnd();
-  }
-
-  private void createTCForcedHashMethod() {
-    MethodVisitor mv = super.visitMethod(ACC_PRIVATE + ACC_SYNTHETIC, TC_HASH_METHOD_NAME, TC_HASH_METHOD_CHECK_DESC,
-                                         null, null);
-    mv.visitCode();
-    Label l0 = new Label();
-    mv.visitLabel(l0);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "hashCode", "()I");
-    mv.visitVarInsn(ISTORE, 3);
-    Label l1 = new Label();
-    mv.visitLabel(l1);
-    mv.visitInsn(ICONST_0);
-    mv.visitVarInsn(ISTORE, 4);
-    Label l2 = new Label();
-    mv.visitLabel(l2);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitMethodInsn(INVOKESTATIC, "java/lang/System", "identityHashCode", "(Ljava/lang/Object;)I");
-    mv.visitVarInsn(ILOAD, 3);
-    Label l3 = new Label();
-    mv.visitJumpInsn(IF_ICMPNE, l3);
-    Label l4 = new Label();
-    mv.visitLabel(l4);
-    mv.visitVarInsn(ILOAD, 2);
-    Label l5 = new Label();
-    mv.visitJumpInsn(IFEQ, l5);
-    Label l6 = new Label();
-    mv.visitLabel(l6);
-    mv.visitVarInsn(ALOAD, 0);
-    mv.visitMethodInsn(INVOKEVIRTUAL, CONCURRENT_HASH_MAP_SLASH, "__tc_managed", "()Lcom/tc/object/TCObject;");
-    Label l7 = new Label();
-    mv.visitJumpInsn(IFNONNULL, l7);
-    mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "isCreationInProgress", "()Z");
-    mv.visitJumpInsn(IFEQ, l3);
-    mv.visitLabel(l7);
-    mv.visitInsn(ICONST_1);
-    mv.visitVarInsn(ISTORE, 4);
-    mv.visitJumpInsn(GOTO, l3);
-    mv.visitLabel(l5);
-    mv.visitInsn(ICONST_1);
-    mv.visitVarInsn(ISTORE, 4);
-    mv.visitLabel(l3);
-    mv.visitVarInsn(ILOAD, 4);
-    Label l8 = new Label();
-    mv.visitJumpInsn(IFEQ, l8);
-    Label l9 = new Label();
-    mv.visitLabel(l9);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "shareObjectIfNecessary",
-                       "(Ljava/lang/Object;)Lcom/tc/object/TCObject;");
-    mv.visitVarInsn(ASTORE, 5);
-    Label l10 = new Label();
-    mv.visitLabel(l10);
-    mv.visitVarInsn(ALOAD, 5);
-    mv.visitJumpInsn(IFNULL, l8);
-    mv.visitVarInsn(ALOAD, 5);
-    mv.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "getObjectID", "()Lcom/tc/object/ObjectID;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "com/tc/object/ObjectID", "hashCode", "()I");
-    mv.visitVarInsn(ISTORE, 3);
-    mv.visitLabel(l8);
-    mv.visitVarInsn(ILOAD, 3);
-    mv.visitVarInsn(ILOAD, 3);
-    mv.visitIntInsn(BIPUSH, 9);
-    mv.visitInsn(ISHL);
-    mv.visitInsn(ICONST_M1);
-    mv.visitInsn(IXOR);
-    mv.visitInsn(IADD);
-    mv.visitVarInsn(ISTORE, 3);
-    Label l11 = new Label();
-    mv.visitLabel(l11);
-    mv.visitVarInsn(ILOAD, 3);
-    mv.visitVarInsn(ILOAD, 3);
-    mv.visitIntInsn(BIPUSH, 14);
-    mv.visitInsn(IUSHR);
-    mv.visitInsn(IXOR);
-    mv.visitVarInsn(ISTORE, 3);
-    Label l12 = new Label();
-    mv.visitLabel(l12);
-    mv.visitVarInsn(ILOAD, 3);
-    mv.visitVarInsn(ILOAD, 3);
-    mv.visitInsn(ICONST_4);
-    mv.visitInsn(ISHL);
-    mv.visitInsn(IADD);
-    mv.visitVarInsn(ISTORE, 3);
-    Label l13 = new Label();
-    mv.visitLabel(l13);
-    mv.visitVarInsn(ILOAD, 3);
-    mv.visitVarInsn(ILOAD, 3);
-    mv.visitIntInsn(BIPUSH, 10);
-    mv.visitInsn(IUSHR);
-    mv.visitInsn(IXOR);
-    mv.visitVarInsn(ISTORE, 3);
-    Label l14 = new Label();
-    mv.visitLabel(l14);
-    mv.visitVarInsn(ILOAD, 3);
-    mv.visitInsn(IRETURN);
-    Label l17 = new Label();
-    mv.visitLabel(l17);
     mv.visitMaxs(0, 0);
     mv.visitEnd();
   }

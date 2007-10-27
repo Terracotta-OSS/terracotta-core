@@ -9,6 +9,7 @@ import com.tc.asm.ClassVisitor;
 import com.tc.asm.Label;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
+import com.tc.util.runtime.Vm;
 
 public class JavaUtilConcurrentHashMapEntryIteratorAdapter extends ClassAdapter implements Opcodes {
 
@@ -25,7 +26,13 @@ public class JavaUtilConcurrentHashMapEntryIteratorAdapter extends ClassAdapter 
 
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
     MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
-    return new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, mv, false);
+    if (Vm.isJDK16Compliant()
+        && "next".equals(name)
+        && "()Ljava/util/Map$Entry;".equals(desc)) {
+      return mv;  
+    } else {
+      return new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, mv, false);
+    }  
   }
   
   public void visitEnd() {

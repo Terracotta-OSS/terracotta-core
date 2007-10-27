@@ -3,9 +3,7 @@
  */
 package com.tc.object.bytecode;
 
-import java.util.Map.Entry;
-
-public interface TCMapEntry extends Entry {
+public interface TCMapEntry {
   public final static String TC_RAWSETVALUE_METHOD_NAME = ByteCodeUtil.TC_METHOD_PREFIX + "rawSetValue";
   public final static String TC_RAWSETVALUE_METHOD_DESC = "(Ljava/lang/Object;)V";
 

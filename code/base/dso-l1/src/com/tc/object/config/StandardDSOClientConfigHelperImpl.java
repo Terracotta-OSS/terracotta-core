@@ -989,6 +989,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     spec = getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$Values");
     spec = getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$KeySet");
     spec = getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$HashIterator");
+    if (Vm.isJDK16Compliant()) {
+      spec = getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$WriteThroughEntry");
+      spec = getOrCreateSpec("java.util.AbstractMap$SimpleEntry");
+    }
   }
 
   private void addLogicalAdaptedLinkedBlockingQueueSpec() {
