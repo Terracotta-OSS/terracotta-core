@@ -47,6 +47,7 @@ public class JavaUtilConcurrentHashMapWriteThroughEntryAdapter extends ClassAdap
     mv.visitVarInsn(ALOAD, 0);
     mv.visitVarInsn(ALOAD, 1);
     mv.visitMethodInsn(INVOKESPECIAL, "java/util/AbstractMap$SimpleEntry", "setValue", "(Ljava/lang/Object;)Ljava/lang/Object;");
+    mv.visitInsn(POP);
     mv.visitLabel(labelNotObjectID);
     mv.visitVarInsn(ALOAD, 1);
     mv.visitInsn(ARETURN);
