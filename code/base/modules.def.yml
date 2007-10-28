@@ -28,8 +28,6 @@ modules:
       dependencies:
         - common-api
         - linked-child-process
-        - thirdparty-api
-        - thirdparty
   - aspectwerkz:
       options:
         jdk: J2SE-1.4
