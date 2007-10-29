@@ -88,6 +88,7 @@ public class ServerTracker implements IDebugEventSetListener {
           if (serverInfo != null) {
             m_servers.remove(source);
             serverInfo.setStatus(ServerInfo.TERMINATED);
+            displayStatus("Terracotta Server '"+serverInfo.getName()+"' terminated.");
             IJavaProject javaProj = serverInfo.getJavaProject();
             if (!anyRunning(javaProj)) {
               setRunning(javaProj, null);
@@ -178,7 +179,6 @@ public class ServerTracker implements IDebugEventSetListener {
         m_servers.put(processes[0], info);
 
         DebugPlugin.getDefault().addDebugEventListener(this);
-        setRunning(javaProject, Boolean.TRUE);
 
         waitForMBean(javaProject, name, jmxPort > 0 ? jmxPort : 9520);
         while (!info.isTerminated() && info.isStarting()) {
@@ -194,22 +194,75 @@ public class ServerTracker implements IDebugEventSetListener {
     monitor.done();
 
     if (statusMsg != null) {
-      final String msg = statusMsg;
-      Display.getDefault().syncExec(new Runnable() {
-        public void run() {
-          IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-          if (window instanceof ApplicationWindow) {
-            ((ApplicationWindow) window).setStatus(msg);
-          }
-        }
-      });
+      displayStatus(statusMsg);
     }
   }
 
-  static class L2ConnectListener implements ConnectionListener {
-    public void handleConnection() {/**/}
+  private void displayStatus(final String msg) {
+    Display.getDefault().syncExec(new Runnable() {
+      public void run() {
+        IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+        if (window instanceof ApplicationWindow) {
+          ((ApplicationWindow) window).setStatus(msg);
+        }
+      }
+    });
+  }
+  
+  class L2ConnectListener implements ConnectionListener {
+    IJavaProject            fJavaProject;
+    String                  fName;
+    ServerInfo              fServerInfo;
+    ServerConnectionManager fServerConnectionManager;
 
-    public void handleException() {/**/}
+    L2ConnectListener(IJavaProject javaProject, final String name) {
+      fJavaProject = javaProject;
+      fName = name;
+      fServerInfo = getServerInfo(fJavaProject, fName);
+    }
+
+    void setServerConnectionManager(ServerConnectionManager serverConnectionManager) {
+      fServerConnectionManager = serverConnectionManager;
+    }
+
+    public void handleConnection() {
+      if(fServerConnectionManager == null) { return; }
+
+      if (fServerInfo.isTerminated()) {
+        stopListening();      
+        return;
+      }
+
+      try {
+        if (fServerConnectionManager.testIsConnected()) {
+          if(fServerConnectionManager.isActive() || fServerConnectionManager.isPassiveStandby()) {
+            fServerInfo.setStatus(ServerInfo.STARTED);
+            setRunning(fJavaProject, Boolean.TRUE);
+  
+            ConnectionContext cc = fServerConnectionManager.getConnectionContext();
+            ObjectName on = cc.queryName(L2MBeanNames.DSO_APP_EVENTS.getCanonicalName());
+            if (on != null) {
+              new NonPortableObjectEvent(null, null);
+              cc.addNotificationListener(on, new DSOAppEventListener());
+              stopListening();
+            }
+          }
+        }
+      } catch (Exception e) {/**/
+      }
+    }
+
+    public void handleException() {
+      if (fServerInfo.isTerminated()) {
+        stopListening();      
+      }
+    }
+    
+    private void stopListening() {
+      if(fServerConnectionManager == null) { return; }
+      fServerConnectionManager.tearDown();
+      fServerConnectionManager = null;
+    }
   }
 
   class DSOAppEventListener implements NotificationListener {
@@ -225,7 +278,7 @@ public class ServerTracker implements IDebugEventSetListener {
             public void run() {
               try {
                 handleApplicationEvent((AbstractApplicationEvent) event);
-              } catch(Throwable t) { 
+              } catch (Throwable t) {
                 t.printStackTrace();
               } finally {
                 fHandlingApplicationEvent = false;
@@ -255,32 +308,21 @@ public class ServerTracker implements IDebugEventSetListener {
   }
 
   private void waitForMBean(final IJavaProject javaProject, final String name, final int jmxPort) {
-    new Thread() {
-      public void run() {
-        ServerConnectionManager connectManager = new ServerConnectionManager("localhost", jmxPort, false,
-            new L2ConnectListener());
+    L2ConnectListener connectListener = new L2ConnectListener(javaProject, name);
+    ServerConnectionManager connectManager = new ServerConnectionManager("localhost", jmxPort, false,
+        connectListener);
+    connectListener.setServerConnectionManager(connectManager);
+    connectManager.setAutoConnect(true);
 
-        while (true) {
-          try {
-            if (connectManager.testIsConnected()) {
-              ConnectionContext cc = connectManager.getConnectionContext();
-              ObjectName on = cc.queryName(L2MBeanNames.DSO_APP_EVENTS.getCanonicalName());
-
-              if (on != null) {
-                new NonPortableObjectEvent(null, null);
-                cc.addNotificationListener(on, new DSOAppEventListener());
-                ServerInfo serverInfo = getServerInfo(javaProject, name);
-                serverInfo.setStatus(ServerInfo.STARTED);
-                return;
-              }
-            }
-          } catch (Exception e) {/**/
-          }
-
-          ThreadUtil.reallySleep(1000);
-        }
-      }
-    }.start();
+//    new Thread() {
+//      public void run() {
+//        L2ConnectListener connectListener = new L2ConnectListener(javaProject, name);
+//        ServerConnectionManager connectManager = new ServerConnectionManager("localhost", jmxPort, false,
+//            connectListener);
+//        connectListener.setServerConnectionManager(connectManager);
+//        connectManager.setAutoConnect(true);
+//      }
+//    }.start();
   }
 
   public void cancelServer(IJavaProject javaProject) {
