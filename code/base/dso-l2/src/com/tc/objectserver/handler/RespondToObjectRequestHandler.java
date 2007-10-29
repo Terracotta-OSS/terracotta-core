@@ -114,7 +114,7 @@ public class RespondToObjectRequestHandler extends AbstractEventHandler {
 
     } catch (NoSuchChannelException e) {
       logger.info("Not sending response because channel is disconnected: " + morc.getRequestedNodeID()
-                  + ".  Releasing all checked-out objects...", e);
+                  + ".  Releasing all checked-out objects...");
       for (Iterator i = objectsInOrder.iterator(); i.hasNext();) {
         objectManager.releaseReadOnly((ManagedObject) i.next());
       }
