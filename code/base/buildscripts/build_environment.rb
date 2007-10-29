@@ -23,8 +23,12 @@ class BuildEnvironment < Environment
       @config_source = config_source
       @build_timestamp = Time.now
       begin
-          @svninfo = YAML::load(platform.exec("svn", "info", root_dir))
-      rescue            
+          svn_info = `svn info #{root_dir}`
+          if $? != 0
+            raise "will be caught below"
+          end
+          @svninfo = YAML::load(svn_info)
+      rescue Exception => e
           @svninfo = {}
           @svninfo["Last Changed Rev"] = "00"
           @svninfo["Last Changed Author"] = "unknown-author"
