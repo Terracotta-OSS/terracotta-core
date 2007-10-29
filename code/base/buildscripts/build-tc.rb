@@ -348,9 +348,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   def check_prep(module_name = 'all', test_type = 'all')    
     depends :init, :compile
     
-    @internal_config_source['tests-jdk']='1.5'
-    Registry[:jvm_set].add_config_jvm("tests-jdk")
-    loud_message "check_prep always uses JDK 1.5 for the tests."
+    loud_message "You might need to pass tests-jdk=1.5 if the test is 1.5 compatible and you want L2 to run in process"
     
     if module_name.downcase == 'all'
       @module_set.each do |mod|
