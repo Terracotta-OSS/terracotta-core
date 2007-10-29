@@ -101,7 +101,10 @@ public class LockStatManagerTest extends TestCase {
       LockStat lockStat = (LockStat) i.next();
       long avgHeldTimeInMillis = lockStat.getAvgHeldTimeInMillis();
       System.out.println("Average held time in millis: " + avgHeldTimeInMillis);
-      Assert.assertTrue(avgHeldTimeInMillis >= 4000);
+      // Supported to be 4000 but changed to 3990
+      // This is due to System.currentTimeMillis() which is not that accurate,
+      // according to javadoc, the granularity can be in units of tens of milliseconds
+      Assert.assertTrue(avgHeldTimeInMillis >= 3990);
     } catch (InterruptedException e) {
       // ignore
     } finally {
