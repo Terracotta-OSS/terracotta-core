@@ -17,6 +17,7 @@ import com.tc.objectserver.api.TestSink;
 import com.tc.objectserver.lockmanager.api.LockHolder;
 import com.tc.objectserver.lockmanager.api.NullChannelManager;
 import com.tc.util.Assert;
+import com.tc.util.runtime.Os;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -104,7 +105,12 @@ public class LockStatManagerTest extends TestCase {
       // Supported to be 4000 but changed to 3990
       // This is due to System.currentTimeMillis() which is not that accurate,
       // according to javadoc, the granularity can be in units of tens of milliseconds
-      Assert.assertTrue(avgHeldTimeInMillis >= 3990);
+      if (Os.isWindows()) {
+        // on windows, System.currentTimeMills() only changes every 15-16 millis! It’s even worse on windows 95 (~55ms)
+        Assert.assertTrue(avgHeldTimeInMillis >= 3890);
+      } else {
+        Assert.assertTrue(avgHeldTimeInMillis >= 3990);
+      }
     } catch (InterruptedException e) {
       // ignore
     } finally {
