@@ -23,7 +23,7 @@ class BuildEnvironment < Environment
       @config_source = config_source
       @build_timestamp = Time.now
       begin
-          svn_info = `svn info "#{root_dir}"`
+          svn_info = `svn info '#{root_dir}'`
           if $? != 0
             raise "will be caught below"
           end
