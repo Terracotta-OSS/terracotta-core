@@ -1,7 +1,8 @@
-#Tue Sep 12 14:28:27 PDT 2006
+#
+#Mon Oct 29 11:29:13 PDT 2007
 eclipse.preferences.version=1
-formatter_settings_version=10
-internal.default.compliance=default
+formatter_profile=_Terracotta profile
+formatter_settings_version=11
 org.eclipse.jdt.ui.exception.name=e
 org.eclipse.jdt.ui.gettersetter.use.is=true
 org.eclipse.jdt.ui.ignorelowercasenames=true
