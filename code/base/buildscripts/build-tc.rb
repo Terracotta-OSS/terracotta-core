@@ -169,9 +169,14 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     end
   end
 
-  # Um. Duh.
+  # clean all under build and depedencies/lib
   def clean
-    FileUtils.rm_rf(File.join(@basedir.to_s, "build"))
+    begin
+      FileUtils.rm_rf(File.join(@basedir.to_s, "build"))
+      FileUtils.rm(File.join(@basedir.to_s, "dependencies", "lib", "*"))
+    rescue Errno::ENOENT => e       
+      # ignore file not found error
+    end
   end
 
   def clean_cache
