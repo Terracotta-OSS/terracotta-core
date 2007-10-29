@@ -205,7 +205,7 @@ Dir.foreach( "." ) { |dir|
         <enabled>false</enabled>
       </snapshots>
       <id>terracotta-repository</id>
-      <url>http://download.terracotta.org/maven2/</url>
+      <url>http://www.terracotta.org/download/reflector/maven2/</url>
     </repository>
     <repository>
       <releases>

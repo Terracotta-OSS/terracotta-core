@@ -17,7 +17,7 @@
   <repositories>
     <repository>
       <id>terracotta-repository</id>
-      <url>http://download.terracotta.org/maven2</url>
+      <url>http://www.terracotta.org/download/reflector/maven2</url>
       <releases>
         <enabled>true</enabled>
       </releases>
@@ -30,7 +30,7 @@
   <pluginRepositories>
     <pluginRepository>
       <id>terracotta-repository</id>
-      <url>http://download.terracotta.org/maven2</url>
+      <url>http://www.terracotta.org/download/reflector/maven2</url>
       <releases>
         <enabled>true</enabled>
       </releases>
