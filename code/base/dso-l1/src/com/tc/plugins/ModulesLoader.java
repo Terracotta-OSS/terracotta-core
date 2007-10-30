@@ -97,6 +97,7 @@ public class ModulesLoader {
           getModulesCustomApplicatorSpecs(osgiRuntime, configHelper);
         }
       } catch (Exception e) {
+        System.err.println("Failed to init modules; " + e.toString());
         System.exit(-2);
       } finally {
         if (forBootJar) {

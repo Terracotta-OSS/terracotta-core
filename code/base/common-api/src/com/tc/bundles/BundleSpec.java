@@ -19,9 +19,9 @@ public abstract class BundleSpec {
   protected static final String PROP_KEY_BUNDLE_VERSION     = "bundle-version";
   protected static final String BUNDLE_SYMBOLIC_NAME_REGEX  = "[a-zA-Z][A-Za-z0-9._\\-]+";
   protected static final String REQUIRE_BUNDLE_EXPR_MATCHER = "(" + BUNDLE_SYMBOLIC_NAME_REGEX
-                                                                + "(;resolution:=\"?optional\"?)?" + //
-                                                                "(;bundle-version:=(\"?[A-Za-z0-9.]+\"?|" + //
-                                                                "\"?[\\[\\(][A-Za-z0-9.]+,[A-Za-z0-9.]*[\\]\\)]\"?))?)";
+                                                              + "(;resolution:=\"?optional\"?)?" + //
+                                                              "(;bundle-version:=(\"?[A-Za-z0-9.]+\"?|" + //
+                                                              "\"?[\\[\\(][A-Za-z0-9.]+,[A-Za-z0-9.]*[\\]\\)]\"?))?)";
 
   public abstract String getSymbolicName();
 
@@ -36,7 +36,7 @@ public abstract class BundleSpec {
   public abstract boolean isCompatible(final String symname, final String version);
 
   public final static boolean isMatchingSymbolicName(final String arg0, final String arg1) {
-    return arg0.replace('-', '_').equalsIgnoreCase(arg1.replace('-', '_'));
+    return arg0 != null && arg1 != null && arg0.replace('-', '_').equalsIgnoreCase(arg1.replace('-', '_'));
   }
 
   public static final String[] getRequirements(final Manifest manifest) {
