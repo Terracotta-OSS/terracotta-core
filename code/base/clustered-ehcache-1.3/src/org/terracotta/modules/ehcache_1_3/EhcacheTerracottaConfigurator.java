@@ -4,11 +4,10 @@ import org.osgi.framework.BundleContext;
 import org.terracotta.modules.ehcache.commons_1_0.EhcacheTerracottaCommonsConfigurator;
 
 import com.tc.object.bytecode.ClassAdapterFactory;
-import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 
 public class EhcacheTerracottaConfigurator extends EhcacheTerracottaCommonsConfigurator {
-  protected void addInstrumentation(BundleContext context, StandardDSOClientConfigHelper configHelper) {
+  protected void addInstrumentation(BundleContext context) {
     super.addInstrumentation(context);
 
     ClassAdapterFactory factory = new EhcacheCacheManagerClassAdapter();
