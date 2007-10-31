@@ -18,24 +18,22 @@ public class SurefireTerracottaConfigurator extends TerracottaConfiguratorModule
 
   protected void addInstrumentation(BundleContext context) {
     configHelper.addCustomAdapter("junit.framework.TestSuite", new JUnitTestSuiteAdapter());
-    configHelper.addCustomAdapter("org.apache.maven.surefire.booter.IsolatedClassLoader", new IsolatedClassLoaderAdapter());
-    
-    configHelper.addIncludePattern(JUnitTestSuiteAdapter.CLUSTERED_JUNIT_BARRIER_CLASS, true);
-    configHelper.addAutolock("* " + JUnitTestSuiteAdapter.CLUSTERED_JUNIT_BARRIER_CLASS + ".*(..)", ConfigLockLevel.WRITE);
+    configHelper.addCustomAdapter("org.apache.maven.surefire.booter.IsolatedClassLoader",
+                                  new IsolatedClassLoaderAdapter());
 
-    // find the bundle that contains the replacement classes
-    Bundle[] bundles = context.getBundles();
-    Bundle bundle = null;
-    for (int i = 0; i < bundles.length; i++) {
-      if (CLUSTERED_SUREFIRE_BUNDLE_NAME.equals(bundles[i].getSymbolicName())) {
-        bundle = bundles[i];
-        break;
-      }
+    configHelper.addIncludePattern(JUnitTestSuiteAdapter.CLUSTERED_JUNIT_BARRIER_CLASS, true);
+    configHelper.addAutolock("* " + JUnitTestSuiteAdapter.CLUSTERED_JUNIT_BARRIER_CLASS + ".*(..)",
+                             ConfigLockLevel.WRITE);
+
+    Bundle bundle = getExportedBundle(context, CLUSTERED_SUREFIRE_BUNDLE_NAME);
+    if (null == bundle) {
+      String msg = "Couldn't find bundle with symbolic name '" + CLUSTERED_SUREFIRE_BUNDLE_NAME + "'"
+                   + " during the instrumentation configuration of the bundle '"
+                   + context.getBundle().getSymbolicName() + "'";
+      throw new RuntimeException(msg);
     }
-    
-    if(bundle!=null) {
-      addExportedBundleClass(bundle, JUnitTestSuiteAdapter.CLUSTERED_JUNIT_BARRIER_CLASS);
-    }
+
+    addExportedBundleClass(bundle, JUnitTestSuiteAdapter.CLUSTERED_JUNIT_BARRIER_CLASS);
   }
-  
+
 }

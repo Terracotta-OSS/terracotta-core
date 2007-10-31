@@ -59,7 +59,7 @@ public abstract class BundleSpec {
     }
 
     if (!spec.equals(check.toString().replaceFirst(",", ""))) {
-      final String arg0 = "Syntax error specifying the required bundle list in the manifest: ''{1}'' found ''{2}''";
+      final String arg0 = "Syntax error specifying the required bundle list in the manifest: ''{0}'' found ''{1}''";
       final Object[] arg1 = { requiredBundles, check };
       throw new RuntimeException(MessageFormat.format(arg0, arg1));
     }
