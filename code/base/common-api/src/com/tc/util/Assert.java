@@ -1,5 +1,6 @@
 /**
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
@@ -31,12 +32,12 @@ public class Assert {
   }
 
   /**
-   * This returns an exception, instead of throwing one, so that you can do (e.g.):
-   * <code>
+   * This returns an exception, instead of throwing one, so that you can do (e.g.): <code>
    * public Object foo() { throw Assert.failure("doesn't work"); }
    * </code>
-   * or whatever. If this just threw the exception itself, the compiler would complain
-   * (above) that there's no value being returned.
+   * or whatever. If this just threw the exception itself, the compiler would complain (above) that there's no value
+   * being returned.
+   *
    * @param message The message to put in the assertion error
    * @param t The exception to wrap
    * @return New TCAssertionError, ready to throw
@@ -46,12 +47,12 @@ public class Assert {
   }
 
   /**
-   * This returns an exception, instead of throwing one, so that you can do (e.g.):
-   * <code>
+   * This returns an exception, instead of throwing one, so that you can do (e.g.): <code>
    * public Object foo() { throw Assert.failure("doesn't work"); }
    * </code>
-   * or whatever. If this just threw the exception itself, the compiler would complain
-   * (above) that there's no value being returned.
+   * or whatever. If this just threw the exception itself, the compiler would complain (above) that there's no value
+   * being returned.
+   *
    * @param message The message to put in the assertion error
    * @return New TCAssertionError, ready to throw
    */
@@ -61,6 +62,7 @@ public class Assert {
 
   /**
    * Evaluate the boolean exception and throw an assertion error if false
+   *
    * @param expr Expression
    */
   public static void eval(boolean expr) {
@@ -70,6 +72,7 @@ public class Assert {
 
   /**
    * Evaluate the boolean exception and throw an assertion error if false
+   *
    * @param expr Expression
    * @param message Message for assertion error if false
    */
@@ -80,6 +83,7 @@ public class Assert {
 
   /**
    * Evaluate the boolean exception and throw an assertion error if false
+   *
    * @param expr Expression
    */
   public static void assertTrue(boolean expr) {
@@ -88,6 +92,7 @@ public class Assert {
 
   /**
    * Evaluate the boolean exception and throw an assertion error if false
+   *
    * @param expr Expression
    * @param message Message for assertion error if false
    */
@@ -97,6 +102,7 @@ public class Assert {
 
   /**
    * Evaluate the boolean exception and throw an assertion error if true
+   *
    * @param expr Expression
    * @param message Message for assertion error if true
    */
@@ -106,6 +112,7 @@ public class Assert {
 
   /**
    * Evaluate the boolean exception and throw an assertion error if true
+   *
    * @param expr Expression
    * @param message Message for assertion error if true
    */
@@ -115,6 +122,7 @@ public class Assert {
 
   /**
    * If o is non-null, throw assertion error
+   *
    * @param o Object
    */
   public static void assertNull(Object o) {
@@ -122,7 +130,8 @@ public class Assert {
   }
 
   /**
-   * If o is non-null, throw assertion error 
+   * If o is non-null, throw assertion error
+   *
    * @param o Object
    * @param what Message for error
    */
@@ -132,6 +141,7 @@ public class Assert {
 
   /**
    * If o is null, throw assertion error with message what
+   *
    * @param o Object
    * @param what Message for error
    */
@@ -141,6 +151,7 @@ public class Assert {
 
   /**
    * If o is null, throw assertion error
+   *
    * @param o Object
    */
   public static void assertNotNull(Object o) {
@@ -149,6 +160,7 @@ public class Assert {
 
   /**
    * Validate that the given (1 dimensional) array of references contains no nulls
+   *
    * @param array Array
    */
   public static void assertNoNullElements(Object[] array) {
@@ -162,6 +174,7 @@ public class Assert {
 
   /**
    * Validate that the given array of strings contains no nulls or empty strings
+   *
    * @param array Array of strings
    */
   public static void assertNoBlankElements(String[] array) {
@@ -174,17 +187,19 @@ public class Assert {
 
   /**
    * Validate that s is not null or empty and throw what as a message
+   *
    * @param s String
    * @param what Message
    */
   public static void assertNotEmpty(Object what, String s) {
     assertNotNull(what, s);
     if ((s.length() == 0) && isEnabled()) throw new IllegalArgumentException(StringUtil.safeToString(what)
-                                                                             + " is empty");
+        + " is empty");
   }
 
   /**
    * Validate that s is not null or empty
+   *
    * @param s String
    */
   public static void assertNotEmpty(String s) {
@@ -193,17 +208,19 @@ public class Assert {
 
   /**
    * Validate that s is not blank and throw what as a message
+   *
    * @param s String
    * @param what Message
    */
   public static void assertNotBlank(Object what, String s) {
     assertNotEmpty(what, s);
     if ((s.trim().length() == 0) && isEnabled()) throw new IllegalArgumentException(StringUtil.safeToString(what)
-                                                                                    + " is blank");
+        + " is blank");
   }
 
   /**
    * Validate that s is not blank
+   *
    * @param s String
    */
   public static void assertNotBlank(String s) {
@@ -212,6 +229,7 @@ public class Assert {
 
   /**
    * Validate that lhs and rhs are identical object references or both are null
+   *
    * @param lhs Left hand side
    * @param rhs Right hand side
    */
@@ -226,6 +244,7 @@ public class Assert {
 
   /**
    * Assert expected and actual values are equal
+   *
    * @param expected Expected value
    * @param actual Actual value
    */
@@ -235,35 +254,41 @@ public class Assert {
 
   /**
    * Assert expected and actual values are equal and return what as a message
+   *
    * @param expected Expected value
    * @param actual Actual value
    * @param msg Message, should be non-null
    */
   public static void assertEquals(Object msg, int expected, int actual) {
-    if (expected != actual) { throw new TCAssertionError(msg.toString() + ": Expected <" + expected + "> but got <" + actual + ">"); }
+    if (expected != actual) { throw new TCAssertionError(msg.toString() + ": Expected <" + expected + "> but got <"
+        + actual + ">"); }
   }
-  
+
   /**
    * Assert expected and actual values are equal
+   *
    * @param expected Expected value
    * @param actual Actual value
    */
   public static void assertEquals(double expected, double actual) {
     if (expected != actual) { throw new TCAssertionError("Expected <" + expected + "> but got <" + actual + ">"); }
   }
-  
+
   /**
    * Assert expected and actual values are equal within epsilon
+   *
    * @param expected Expected value
    * @param actual Actual value
    * @param epsilon Maximum allowed difference between expected and actual
    */
   public static void assertEquals(double expected, double actual, double epsilon) {
-    if (Math.abs(actual - expected) > Math.abs(epsilon)) { throw new TCAssertionError("Expected <" + expected + "> but got <" + actual + ">"); }
+    if (Math.abs(actual - expected) > Math.abs(epsilon)) { throw new TCAssertionError("Expected <" + expected
+        + "> but got <" + actual + ">"); }
   }
 
   /**
    * Assert expected and actual values are equal
+   *
    * @param expected Expected value
    * @param actual Actual value
    */
@@ -273,6 +298,7 @@ public class Assert {
 
   /**
    * Assert expected and actual values are equal or both null
+   *
    * @param expected Expected value
    * @param actual Actual value
    */
@@ -283,17 +309,24 @@ public class Assert {
 
   /**
    * Assert expected and actual values are equal or both null
+   *
    * @param expected Expected value
    * @param actual Actual value
    */
   public static void assertEquals(Object expected, Object actual) {
+    assertEquals(null, expected, actual);
+  }
+
+  public static void assertEquals(Object msg, Object expected, Object actual) {
     boolean expr = (expected == null) ? actual == null : expected.equals(actual);
-    if (!expr) { throw new TCAssertionError("Expected <" + expected + "> but got <" + actual + ">"); }
+    if (!expr) { throw new TCAssertionError((msg != null ? (msg + ": ") : "") + "Expected <" + expected + "> but got <"
+        + actual + ">"); }
   }
 
   /**
-   * Assert that all items in collection are of type elementClass, also if !allowNullElements, check that 
-   * all items in the collection are non-null.
+   * Assert that all items in collection are of type elementClass, also if !allowNullElements, check that all items in
+   * the collection are non-null.
+   *
    * @param collection The collection
    * @param elementClass The expected super type of all items in collection
    * @param allowNullElements Flag for whether null elements are allowed or not
@@ -316,6 +349,7 @@ public class Assert {
   /**
    * Tests for equality using the <code>==</code> operator, <em>not</em> <code>Object.equals(Object)</code>.
    * <code>null</code> is a valid element.
+   *
    * @param objectArray Array of objects
    * @param requiredElement Must be in objectArray
    */
@@ -325,7 +359,7 @@ public class Assert {
       if (objectArray[pos] == requiredElement) return;
     }
     throw failure("Element<" + requiredElement + "> not found in array "
-                  + StringUtil.toString(objectArray, ",", "<", ">"));
+        + StringUtil.toString(objectArray, ",", "<", ">"));
   }
 
   /**
@@ -334,36 +368,40 @@ public class Assert {
   public static void fail() {
     throw failure("generic failure");
   }
-  
+
   /**
    * Throw assertion error with specified message
+   *
    * @param message Message
    */
   public static void fail(String message) {
     throw failure(message);
   }
-  
+
   /**
    * Assert precondition
+   *
    * @param v Precondition
    */
-  public static void pre(boolean v){
+  public static void pre(boolean v) {
     if (!v) throw new TCAssertionError("Precondition failed");
   }
 
   /**
    * Assert postcondition
+   *
    * @param v Postcondition
    */
-  public static void post(boolean v){
+  public static void post(boolean v) {
     if (!v) throw new TCAssertionError("Postcondition failed");
   }
-  
+
   /**
    * Assert invariant
+   *
    * @param v Invariant
    */
-  public static void inv(boolean v){
+  public static void inv(boolean v) {
     if (!v) throw new TCAssertionError("Invariant failed");
   }
 }

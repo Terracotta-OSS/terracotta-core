@@ -334,8 +334,6 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
   private void createTHashSetRemoveMethod(ClassVisitor classVisitor) {
     MethodVisitor mv = classVisitor.visitMethod(wrapperAccess, "removeAt", "(I)V", null, null);
     addCheckWriteAccessInstrumentedCode(mv, true);
-    mv.visitInsn(ACONST_NULL);
-    mv.visitVarInsn(ASTORE, 2);
     ByteCodeUtil.pushThis(mv);
     mv.visitFieldInsn(GETFIELD, ownerSlashes, "_set", "[Ljava/lang/Object;");
     mv.visitVarInsn(ILOAD, 1);
@@ -587,7 +585,7 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
   protected int getWrapperAccess() {
     return wrapperAccess;
   }
-  
+
   protected String getOriginalMethodName() {
     return originalMethodName;
   }

@@ -36,10 +36,15 @@ public abstract class GenericTestApp extends AbstractErrorCatchingTransparentApp
 
   private final Class         type;
   private final List          tests;
-  
+  private final int           variants;
+
   private transient boolean   mutator;
 
   public GenericTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider, Class type) {
+    this(appId, cfg, listenerProvider, type, 1);
+  }
+
+  public GenericTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider, Class type, int variants) {
     super(appId, cfg, listenerProvider);
 
     final int count = getParticipantCount();
@@ -49,6 +54,7 @@ public abstract class GenericTestApp extends AbstractErrorCatchingTransparentApp
     this.barrier2 = new CyclicBarrier(getParticipantCount());
 
     this.type = type;
+    this.variants = variants;
     this.tests = getTestNames();
   }
 
@@ -73,7 +79,7 @@ public abstract class GenericTestApp extends AbstractErrorCatchingTransparentApp
       doValidate();
     }
   }
-  
+
   protected boolean isMutator() {
     return mutator;
   }
@@ -82,20 +88,23 @@ public abstract class GenericTestApp extends AbstractErrorCatchingTransparentApp
     Thread.currentThread().setName("VALIDATOR " + getApplicationId());
     for (Iterator i = tests.iterator(); i.hasNext();) {
       String name = (String) i.next();
-      barrier.barrier();
 
-      if (exit.shouldExit()) { return; }
+      for (int variant = 0; variant < variants; variant++) {
+        barrier.barrier();
 
-      try {
-        runOp(name, true);
-      } catch (Throwable t) {
-        exit.toggle();
-        throw t;
-      } finally {
-        barrier2.barrier();
+        if (exit.shouldExit()) { return; }
+
+        try {
+          runOp(name, true, variant);
+        } catch (Throwable t) {
+          exit.toggle();
+          throw t;
+        } finally {
+          barrier2.barrier();
+        }
+
+        if (exit.shouldExit()) { return; }
       }
-
-      if (exit.shouldExit()) { return; }
     }
   }
 
@@ -103,30 +112,33 @@ public abstract class GenericTestApp extends AbstractErrorCatchingTransparentApp
     Thread.currentThread().setName("MUTATOR " + getApplicationId());
     for (Iterator i = tests.iterator(); i.hasNext();) {
       String name = (String) i.next();
+
       System.err.print("Running test: " + name + " ... ");
       long start = System.currentTimeMillis();
 
-      try {
-        runOp(name, false);
-        runOp(name, true);
-      } catch (Throwable t) {
-        exit.toggle();
-        throw t;
-      } finally {
-        barrier.barrier();
+      for (int variant = 0; variant < variants; variant++) {
+        try {
+          runOp(name, false, variant);
+          runOp(name, true, variant);
+        } catch (Throwable t) {
+          exit.toggle();
+          throw t;
+        } finally {
+          barrier.barrier();
 
-        if (!exit.shouldExit()) {
-          barrier2.barrier();
+          if (!exit.shouldExit()) {
+            barrier2.barrier();
+          }
         }
+
+        if (exit.shouldExit()) { return; }
       }
 
       System.err.println(" took " + (System.currentTimeMillis() - start) + " millis");
-
-      if (exit.shouldExit()) { return; }
     }
   }
 
-  private void runOp(String op, boolean validate) throws Throwable {
+  private void runOp(String op, boolean validate, int variant) throws Throwable {
     Method m = findMethod(op);
 
     if (!validate) {
@@ -138,23 +150,37 @@ public abstract class GenericTestApp extends AbstractErrorCatchingTransparentApp
     if (object instanceof Iterator) {
       // do some automagic for Iterators
       for (Iterator i = (Iterator) object; i.hasNext();) {
-        runMethod(m, i.next(), validate);
+        runMethod(m, i.next(), validate, variant);
       }
     } else {
-      runMethod(m, object, validate);
+      runMethod(m, object, validate, variant);
     }
   }
 
-  private void runMethod(Method m, Object object, boolean validate) throws Throwable {
+  private void runMethod(Method m, Object object, boolean validate, int variant) throws Throwable {
+    final Object[] args;
+    if (variants > 1) {
+      args = new Object[] { object, Boolean.valueOf(validate), new Integer(variant) };
+    } else {
+      args = new Object[] { object, Boolean.valueOf(validate) };
+    }
+
     try {
-      m.invoke(this, new Object[] { object, Boolean.valueOf(validate) });
+      m.invoke(this, args);
     } catch (InvocationTargetException ite) {
       throw ite.getTargetException();
     }
   }
 
   private Method findMethod(String name) throws NoSuchMethodException {
-    Method method = getClass().getDeclaredMethod(METHOD_PREFIX + name, new Class[] { type, Boolean.TYPE });
+    final Class[] sig;
+    if (variants > 1) {
+      sig = new Class[] { type, Boolean.TYPE, Integer.TYPE };
+    } else {
+      sig = new Class[] { type, Boolean.TYPE };
+    }
+
+    Method method = getClass().getDeclaredMethod(METHOD_PREFIX + name, sig);
     method.setAccessible(true);
     return method;
   }
@@ -167,7 +193,16 @@ public abstract class GenericTestApp extends AbstractErrorCatchingTransparentApp
       Method m = methods[i];
       if (m.getName().matches(METHOD_PATTERN)) {
         Class[] args = m.getParameterTypes();
-        if ((args.length == 2) && args[0].equals(type) && args[1].equals(Boolean.TYPE)) {
+
+        final boolean ok;
+        if (variants > 1) {
+          ok = (args.length == 3) && args[0].equals(type) && args[1].equals(Boolean.TYPE)
+               && args[2].equals(Integer.TYPE);
+        } else {
+          ok = (args.length == 2) && args[0].equals(type) && args[1].equals(Boolean.TYPE);
+        }
+
+        if (ok) {
           rv.add(m.getName().replaceFirst(METHOD_PREFIX, ""));
         } else {
           throw new RuntimeException("bad method: " + m);

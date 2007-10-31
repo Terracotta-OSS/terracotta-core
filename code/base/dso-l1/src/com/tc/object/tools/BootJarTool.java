@@ -61,6 +61,7 @@ import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.Clearable;
 import com.tc.object.bytecode.DataOutputStreamAdapter;
 import com.tc.object.bytecode.DuplicateMethodAdapter;
+import com.tc.object.bytecode.SetRemoveMethodAdapter;
 import com.tc.object.bytecode.HashtableClassAdapter;
 import com.tc.object.bytecode.JavaLangReflectArrayAdapter;
 import com.tc.object.bytecode.JavaLangReflectFieldAdapter;
@@ -180,13 +181,13 @@ import java.util.Set;
 public class BootJarTool {
   public static final String          TC_DEBUG_THROWABLE_CONSTRUCTION = "tc.debug.throwable.construction";
 
-  private static final String         EXCESS_CLASSES               = "excess";
-  private static final String         MISSING_CLASSES              = "missing";
+  private static final String         EXCESS_CLASSES                  = "excess";
+  private static final String         MISSING_CLASSES                 = "missing";
 
-  private final static String         TARGET_FILE_OPTION           = "o";
-  private final static boolean        WRITE_OUT_TEMP_FILE          = true;
+  private final static String         TARGET_FILE_OPTION              = "o";
+  private final static boolean        WRITE_OUT_TEMP_FILE             = true;
 
-  private static final String         DEFAULT_CONFIG_SPEC          = "tc-config.xml";
+  private static final String         DEFAULT_CONFIG_SPEC             = "tc-config.xml";
 
   private final ClassLoader           tcLoader;
   private final ClassLoader           systemLoader;
@@ -195,11 +196,11 @@ public class BootJarTool {
   private final Portability           portability;
 
   // various sets that are populated while massaging user defined boot jar specs
-  private final Set                   notBootstrapClasses          = new HashSet();
-  private final Set                   notAdaptableClasses          = new HashSet();
-  private final Set                   logicalSubclasses            = new HashSet();
-  private final Set                   autoIncludedBootstrapClasses = new HashSet();
-  private final Set                   nonExistingClasses           = new HashSet();
+  private final Set                   notBootstrapClasses             = new HashSet();
+  private final Set                   notAdaptableClasses             = new HashSet();
+  private final Set                   logicalSubclasses               = new HashSet();
+  private final Set                   autoIncludedBootstrapClasses    = new HashSet();
+  private final Set                   nonExistingClasses              = new HashSet();
 
   private InstrumentationLogger       instrumentationLogger;
   private BootJar                     bootJar;
@@ -403,13 +404,12 @@ public class BootJarTool {
 
       addJdk15SpecificPreInstrumentedClasses();
 
-
       addInstrumentedWeakHashMap();
 
       loadTerracottaClass(DebugUtil.class.getName());
       loadTerracottaClass(SessionSupport.class.getName());
       loadTerracottaClass(TCMap.class.getName());
-      if(Vm.isJDK15Compliant()) {
+      if (Vm.isJDK15Compliant()) {
         loadTerracottaClass("com.tc.util.concurrent.locks.TCLock");
       }
       loadTerracottaClass(com.tc.util.Stack.class.getName());
@@ -576,7 +576,6 @@ public class BootJarTool {
 
     bootJar.loadClassIntoJar(name, bytes, false);
   }
-
 
   private final void addManagementClasses() {
     loadTerracottaClass(SessionMonitorMBean.class.getName());
@@ -1109,7 +1108,7 @@ public class BootJarTool {
     loadTerracottaClass("com.tc.jrexx.set.StateProSet$Iterator");
     loadTerracottaClass("com.tc.jrexx.set.StateProSet$Wrapper_State");
     loadTerracottaClass("com.tc.jrexx.set.XML");
-    
+
     loadTerracottaClass("com.tc.object.applicator.TCURL");
     loadTerracottaClass("com.tc.object.bytecode.TCMapEntry");
 
@@ -1736,8 +1735,6 @@ public class BootJarTool {
     jData = doDSOTransform(jClassNameDots, jData);
     bootJar.loadClassIntoJar(jClassNameDots, jData, true);
 
-
-
     // java.util.concurrent.ConcurrentHashMap$HashEntry
     byte[] bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$HashEntry");
     ClassReader cr = new ClassReader(bytes);
@@ -1809,29 +1806,31 @@ public class BootJarTool {
       cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
       cv = new JavaUtilConcurrentHashMapWriteThroughEntryAdapter(cw);
       cr.accept(cv, ClassReader.SKIP_FRAMES);
-  
+
       bytes = cw.toByteArray();
-  
+
       spec = config.getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$WriteThroughEntry");
       spec.setHonorTransient(true);
       spec.markPreInstrumented();
       bytes = doDSOTransform(spec.getClassName(), bytes);
-      bootJar.loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$WriteThroughEntry", bytes, spec.isPreInstrumented());
-      
+      bootJar.loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$WriteThroughEntry", bytes, spec
+          .isPreInstrumented());
+
       // java.util.AbstractMap$SimpleEntry
       bytes = getTerracottaBytes("java.util.AbstractMap$SimpleEntry");
       spec = config.getOrCreateSpec("java.util.AbstractMap$SimpleEntry");
       bytes = doDSOTransform(spec.getClassName(), bytes);
       bootJar.loadClassIntoJar("java.util.AbstractMap$SimpleEntry", bytes, spec.isPreInstrumented());
     }
-    
+
     // com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper
     bytes = getTerracottaBytes("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper");
     spec = config.getOrCreateSpec("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper");
     spec.markPreInstrumented();
     bytes = doDSOTransform(spec.getClassName(), bytes);
-    bootJar.loadClassIntoJar("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper", bytes, spec.isPreInstrumented());
-    
+    bootJar.loadClassIntoJar("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper", bytes, spec
+        .isPreInstrumented());
+
     // java.util.concurrent.ConcurrentHashMap$Values
     bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$Values");
     spec = config.getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$Values");
@@ -1895,7 +1894,7 @@ public class BootJarTool {
     TransparencyClassSpec spec = config.getOrCreateSpec("java.util.concurrent.LinkedBlockingQueue",
                                                         "com.tc.object.applicator.LinkedBlockingQueueApplicator");
     // spec.addMethodAdapter(SerializationUtil.QUEUE_PUT_SIGNATURE,
-    //                       new JavaUtilConcurrentLinkedBlockingQueueAdapter.PutAdapter());
+    // new JavaUtilConcurrentLinkedBlockingQueueAdapter.PutAdapter());
     spec.addMethodAdapter(SerializationUtil.TAKE_SIGNATURE,
                           new JavaUtilConcurrentLinkedBlockingQueueAdapter.TakeAdapter());
     spec.addMethodAdapter(SerializationUtil.POLL_TIMEOUT_SIGNATURE,
@@ -1940,7 +1939,9 @@ public class BootJarTool {
     TransparencyClassSpec spec = config.getOrCreateSpec("java.util.HashSet",
                                                         "com.tc.object.applicator.HashSetApplicator");
     spec.addIfTrueLogSpec(SerializationUtil.ADD_SIGNATURE);
-    spec.addIfTrueLogSpec(SerializationUtil.REMOVE_SIGNATURE);
+    spec.addMethodAdapter(SerializationUtil.REMOVE_SIGNATURE, new SetRemoveMethodAdapter("java/util/HashSet",
+                                                                                         "java/util/HashMap", "map",
+                                                                                         "java/util/HashMap"));
     spec.addAlwaysLogSpec(SerializationUtil.CLEAR_SIGNATURE);
     spec.addSetIteratorWrapperSpec(SerializationUtil.ITERATOR_SIGNATURE);
     addSerializationInstrumentedCode(spec);
@@ -1950,7 +1951,10 @@ public class BootJarTool {
 
     spec = config.getOrCreateSpec("java.util.TreeSet", "com.tc.object.applicator.TreeSetApplicator");
     spec.addIfTrueLogSpec(SerializationUtil.ADD_SIGNATURE);
-    spec.addIfTrueLogSpec(SerializationUtil.REMOVE_SIGNATURE);
+    spec.addMethodAdapter(SerializationUtil.REMOVE_SIGNATURE,
+                          new SetRemoveMethodAdapter("java/util/TreeSet", "java/util/TreeMap", "m", Vm
+                              .getMajorVersion() >= 6 ? "java/util/NavigableMap" : "java/util/SortedMap"));
+
     spec.addAlwaysLogSpec(SerializationUtil.CLEAR_SIGNATURE);
     spec.addSetIteratorWrapperSpec(SerializationUtil.ITERATOR_SIGNATURE);
     spec.addViewSetWrapperSpec(SerializationUtil.SUBSET_SIGNATURE);

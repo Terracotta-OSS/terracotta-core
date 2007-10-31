@@ -13,6 +13,7 @@ import com.tc.util.Assert;
 
 import gnu.trove.THashSet;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -24,17 +25,20 @@ import java.util.TreeSet;
 
 public class GenericSetTestApp extends GenericTestApp {
 
+  private static final int LITERAL_VARIANT = 0;
+  private static final int OBJECT_VARIANT  = 1;
+
   public GenericSetTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
-    super(appId, cfg, listenerProvider, Set.class);
+    super(appId, cfg, listenerProvider, Set.class, 2);
   }
 
   protected Object getTestObject(String testName) {
-    Set sets = (Set) sharedMap.get("sets");
+    List sets = (List) sharedMap.get("sets");
     return sets.iterator();
   }
 
   protected void setupTestObject(String testName) {
-    Set sets = new HashSet();
+    List sets = new ArrayList();
     sets.add(new HashSet());
     sets.add(new LinkedHashSet());
     sets.add(new THashSet());
@@ -56,27 +60,45 @@ public class GenericSetTestApp extends GenericTestApp {
     sharedMap.put("arrayforMyLinkedHashSet", new Object[2]);
   }
 
+  // This method is kind of like a macro, it returns an element (E == element) to be used
+  // in the set based on the variant value
+  Object E(String val, int variant) {
+    switch (variant) {
+      case LITERAL_VARIANT: {
+        return val;
+      }
+      case OBJECT_VARIANT: {
+        return new Foo(val);
+      }
+      default: {
+        throw new AssertionError("unknown variant: " + variant);
+      }
+    }
+
+    // unreachable
+  }
+
   // Generic Set interface testing methods.
-  void testBasicAdd(Set set, boolean validate) {
+  void testBasicAdd(Set set, boolean validate, int v) {
     if (validate) {
-      assertSetsEqual(Arrays.asList(new Object[] { "January", "February" }), set);
+      assertSetsEqual(Arrays.asList(new Object[] { E("January", v), E("February", v) }), set);
     } else {
       synchronized (set) {
-        boolean added = set.add("January");
+        boolean added = set.add(E("January", v));
         Assert.assertTrue(added);
-        added = set.add("February");
+        added = set.add(E("February", v));
         Assert.assertTrue(added);
       }
     }
   }
 
-  void testAddAll(Set set, boolean validate) {
+  void testAddAll(Set set, boolean validate, int v) {
     if (validate) {
-      assertSetsEqual(Arrays.asList(new Object[] { "January", "February" }), set);
+      assertSetsEqual(Arrays.asList(new Object[] { E("January", v), E("February", v) }), set);
     } else {
       Set toAdd = new LinkedHashSet();
-      toAdd.add("January");
-      toAdd.add("February");
+      toAdd.add(E("January", v));
+      toAdd.add(E("February", v));
       synchronized (set) {
         boolean added = set.addAll(toAdd);
         Assert.assertTrue(added);
@@ -84,81 +106,82 @@ public class GenericSetTestApp extends GenericTestApp {
     }
   }
 
-  void testClear(Set set, boolean validate) {
+  void testClear(Set set, boolean validate, int v) {
     if (validate) {
       assertEmptySet(set);
     } else {
       Set toAdd = new HashSet();
-      toAdd.add("first element");
-      toAdd.add("second element");
+      toAdd.add(E("first element", v));
+      toAdd.add(E("second element", v));
       synchronized (set) {
         set.clear();
       }
     }
   }
 
-  void testRemove(Set set, boolean validate) {
+  void testRemove(Set set, boolean validate, int v) {
     if (validate) {
-      assertSetsEqual(Arrays.asList(new Object[] { "January", "March" }), set);
+      assertSetsEqual(Arrays.asList(new Object[] { E("January", v), E("March", v) }), set);
     } else {
       synchronized (set) {
-        set.add("January");
-        set.add("February");
-        set.add("March");
+        set.add(E("January", v));
+        set.add(E("February", v));
+        set.add(E("March", v));
       }
       synchronized (set) {
-        set.remove("February");
+        boolean remove = set.remove(E("February", v));
+        if (!remove) throw new AssertionError("not removed");
       }
     }
   }
 
-  void testRemoveAll(Set set, boolean validate) {
+  void testRemoveAll(Set set, boolean validate, int v) {
     if (validate) {
-      assertSetsEqual(Arrays.asList(new Object[] { "January", "April" }), set);
+      assertSetsEqual(Arrays.asList(new Object[] { E("January", v), E("April", v) }), set);
     } else {
       synchronized (set) {
-        set.add("January");
-        set.add("February");
-        set.add("March");
-        set.add("April");
+        set.add(E("January", v));
+        set.add(E("February", v));
+        set.add(E("March", v));
+        set.add(E("April", v));
       }
       Set toRemove = new HashSet();
-      toRemove.add("February");
-      toRemove.add("March");
+      toRemove.add(E("February", v));
+      toRemove.add(E("March", v));
       synchronized (set) {
         set.removeAll(toRemove);
       }
     }
   }
 
-  void testRetainAll(Set set, boolean validate) {
+  void testRetainAll(Set set, boolean validate, int v) {
     if (validate) {
-      assertSetsEqual(Arrays.asList(new Object[] { "February", "March" }), set);
+      assertSetsEqual(Arrays.asList(new Object[] { E("February", v), E("March", v) }), set);
     } else {
       synchronized (set) {
-        set.add("January");
-        set.add("February");
-        set.add("March");
-        set.add("April");
+        set.add(E("January", v));
+        set.add(E("February", v));
+        set.add(E("March", v));
+        set.add(E("April", v));
       }
       Set toRetain = new HashSet();
-      toRetain.add("February");
-      toRetain.add("March");
+      toRetain.add(E("February", v));
+      toRetain.add(E("March", v));
       synchronized (set) {
         set.retainAll(toRetain);
       }
     }
   }
 
-  void testToArray(Set set, boolean validate) {
+  void testToArray(Set set, boolean validate, int v) {
     Object[] array = getArray(set);
 
     if (validate) {
       assertSetsEqual(Arrays.asList(array), set);
     } else {
       synchronized (set) {
-        set.add("January");
-        set.add("February");
+        set.add(E("January", v));
+        set.add(E("February", v));
       }
       synchronized (array) {
         Object[] returnArray = set.toArray(array);
@@ -168,20 +191,19 @@ public class GenericSetTestApp extends GenericTestApp {
   }
 
   // Iterator interface testing methods.
-  void testIteratorRemove(Set set, boolean validate) {
+  void testIteratorRemove(Set set, boolean validate, int v) {
     if (validate) {
-      assertSetsEqual(Arrays.asList(new Object[] { "January", "February" }), set);
+      assertSetsEqual(Arrays.asList(new Object[] { E("January", v), E("February", v) }), set);
     } else {
       synchronized (set) {
-        set.add("January");
-        set.add("February");
-        set.add("March");
+        set.add(E("January", v));
+        set.add(E("February", v));
+        set.add(E("March", v));
       }
-      String element;
+
       synchronized (set) {
         for (Iterator iterator = set.iterator(); iterator.hasNext();) {
-          element = (String) iterator.next();
-          if ("March".equals(element)) {
+          if (E("March", v).equals(iterator.next())) {
             iterator.remove();
           }
         }
@@ -189,14 +211,14 @@ public class GenericSetTestApp extends GenericTestApp {
     }
   }
 
-  void testIteratorRemoveNull(Set set, boolean validate) {
+  void testIteratorRemoveNull(Set set, boolean validate, int v) {
     if (validate) {
-      assertSetsEqual(Arrays.asList(new Object[] { "January", "February" }), set);
+      assertSetsEqual(Arrays.asList(new Object[] { E("January", v), E("February", v) }), set);
     } else {
       synchronized (set) {
-        set.add("January");
+        set.add(E("January", v));
         set.add(null);
-        set.add("February");
+        set.add(E("February", v));
       }
       synchronized (set) {
         Iterator iterator = set.iterator();
@@ -212,13 +234,13 @@ public class GenericSetTestApp extends GenericTestApp {
   }
 
   // ReadOnly testing methods.
-  void testReadOnlyAdd(Set set, boolean validate) {
+  void testReadOnlyAdd(Set set, boolean validate, int v) {
     if (validate) {
       assertEmptySet(set);
     } else {
       synchronized (set) {
         try {
-          set.add("first element");
+          set.add(E("first element", v));
           throw new AssertionError("Should have thrown a ReadOnlyException");
         } catch (ReadOnlyException e) {
           // Excepted
@@ -227,13 +249,13 @@ public class GenericSetTestApp extends GenericTestApp {
     }
   }
 
-  void testReadOnlyAddAll(Set set, boolean validate) {
+  void testReadOnlyAddAll(Set set, boolean validate, int v) {
     if (validate) {
       assertEmptySet(set);
     } else {
       Set toAdd = new HashSet();
-      toAdd.add("first element");
-      toAdd.add("second element");
+      toAdd.add(E("first element", v));
+      toAdd.add(E("second element", v));
       synchronized (set) {
         try {
           set.addAll(toAdd);
@@ -246,23 +268,23 @@ public class GenericSetTestApp extends GenericTestApp {
   }
 
   // Setting up for the ReadOnly test for remove.
-  void testSetUpRemove(Set set, boolean validate) {
+  void testSetUpRemove(Set set, boolean validate, int v) {
     if (validate) {
-      assertSetsEqual(Arrays.asList(new Object[] { "January", "February" }), set);
+      assertSetsEqual(Arrays.asList(new Object[] { E("January", v), E("February", v) }), set);
     } else {
       synchronized (set) {
-        set.add("January");
-        set.add("February");
+        set.add(E("January", v));
+        set.add(E("February", v));
       }
-      tryReadOnlyRemove(set);
+      tryReadOnlyRemove(set, v);
     }
   }
 
   // tryReadOnlyRemove() goes hand in hand with testSetUpRemove().
-  private void tryReadOnlyRemove(Set set) {
+  private void tryReadOnlyRemove(Set set, int v) {
     synchronized (set) {
       try {
-        set.remove("February");
+        set.remove(E("February", v));
         throw new AssertionError("Should have thrown a ReadOnlyException");
       } catch (ReadOnlyException t) {
         // expected
@@ -271,13 +293,13 @@ public class GenericSetTestApp extends GenericTestApp {
   }
 
   // Setting up for the ReadOnly test for iterator remove.
-  void testSetUpIteratorRemove(Set set, boolean validate) {
+  void testSetUpIteratorRemove(Set set, boolean validate, int v) {
     if (validate) {
-      assertSetsEqual(Arrays.asList(new Object[] { "January", "February" }), set);
+      assertSetsEqual(Arrays.asList(new Object[] { E("January", v), E("February", v) }), set);
     } else {
       synchronized (set) {
-        set.add("January");
-        set.add("February");
+        set.add(E("January", v));
+        set.add(E("February", v));
       }
       tryReadOnlyIteratorRemove(set);
     }
@@ -298,13 +320,13 @@ public class GenericSetTestApp extends GenericTestApp {
   }
 
   // Setting up for the ReadOnly test for clear.
-  void testSetUpClear(Set set, boolean validate) {
+  void testSetUpClear(Set set, boolean validate, int v) {
     if (validate) {
-      assertSetsEqual(Arrays.asList(new Object[] { "January", "February" }), set);
+      assertSetsEqual(Arrays.asList(new Object[] { E("January", v), E("February", v) }), set);
     } else {
       synchronized (set) {
-        set.add("January");
-        set.add("February");
+        set.add(E("January", v));
+        set.add(E("February", v));
       }
       tryReadOnlyClear(set);
     }
@@ -323,14 +345,14 @@ public class GenericSetTestApp extends GenericTestApp {
   }
 
   // Setting up for the ReadOnly test for toArray.
-  void testSetUpToArray(Set set, boolean validate) {
+  void testSetUpToArray(Set set, boolean validate, int v) {
     if (validate) {
       Object[] array = getArray(set);
       assertEmptyObjectArray(array);
     } else {
       synchronized (set) {
-        set.add("January");
-        set.add("February");
+        set.add(E("January", v));
+        set.add(E("February", v));
       }
       tryReadOnlyToArray(set);
     }
@@ -351,23 +373,23 @@ public class GenericSetTestApp extends GenericTestApp {
   }
 
   // Setting up for the ReadOnly test for RetainAll.
-  void testSetUpRetainAll(Set set, boolean validate) {
+  void testSetUpRetainAll(Set set, boolean validate, int v) {
     if (validate) {
-      assertSetsEqual(Arrays.asList(new Object[] { "January", "February" }), set);
+      assertSetsEqual(Arrays.asList(new Object[] { E("January", v), E("February", v) }), set);
     } else {
       synchronized (set) {
-        set.add("January");
-        set.add("February");
+        set.add(E("January", v));
+        set.add(E("February", v));
       }
-      tryReadOnlyRetainAll(set);
+      tryReadOnlyRetainAll(set, v);
     }
   }
 
   // tryReadOnlyRetainAll() goes hand in hand with testSetUpRetainAll().
-  void tryReadOnlyRetainAll(Set set) {
+  void tryReadOnlyRetainAll(Set set, int v) {
     synchronized (set) {
       Set toRetain = new HashSet();
-      toRetain.add("January");
+      toRetain.add(E("January", v));
       try {
         set.retainAll(toRetain);
         throw new AssertionError("Should have thrown a ReadOnlyException");
@@ -378,23 +400,23 @@ public class GenericSetTestApp extends GenericTestApp {
   }
 
   // Setting up for the ReadOnly test for RemoveAll.
-  void testSetUpRemoveAll(Set set, boolean validate) {
+  void testSetUpRemoveAll(Set set, boolean validate, int v) {
     if (validate) {
-      assertSetsEqual(Arrays.asList(new Object[] { "January", "February" }), set);
+      assertSetsEqual(Arrays.asList(new Object[] { E("January", v), E("February", v) }), set);
     } else {
       synchronized (set) {
-        set.add("January");
-        set.add("February");
+        set.add(E("January", v));
+        set.add(E("February", v));
       }
-      tryReadOnlyRemoveAll(set);
+      tryReadOnlyRemoveAll(set, v);
     }
   }
 
   // tryReadOnlyRemoveAll() goes hand in hand with testSetUpRemoveAll().
-  void tryReadOnlyRemoveAll(Set set) {
+  void tryReadOnlyRemoveAll(Set set, int v) {
     synchronized (set) {
       Set toRemove = new HashSet();
-      toRemove.add("January");
+      toRemove.add(E("January", v));
       try {
         set.removeAll(toRemove);
         throw new AssertionError("Should have thrown a ReadOnlyException");
@@ -441,25 +463,28 @@ public class GenericSetTestApp extends GenericTestApp {
   }
 
   private static void assertSetsEqual(List expectElements, Set actual) {
-    Assert.assertEquals(expectElements.size(), actual.size());
+    String type = actual.getClass().getName();
+
+    Assert.assertEquals(type, expectElements.size(), actual.size());
 
     if (actual instanceof LinkedHashSet) {
       for (Iterator iExpect = expectElements.iterator(), iActual = actual.iterator(); iExpect.hasNext();) {
-        Assert.assertEquals(iExpect.next(), iActual.next());
+        Assert.assertEquals(type, iExpect.next(), iActual.next());
       }
     }
 
-    Assert.assertTrue(expectElements.containsAll(actual));
-    Assert.assertTrue(actual.containsAll(expectElements));
+    Assert.assertTrue(type, expectElements.containsAll(actual));
+    Assert.assertTrue(type, actual.containsAll(expectElements));
 
     if (expectElements.isEmpty()) {
-      Assert.assertTrue(actual.isEmpty());
+      Assert.assertTrue(type, actual.isEmpty());
     } else {
-      Assert.assertFalse(actual.isEmpty());
+      Assert.assertFalse(type, actual.isEmpty());
     }
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
+    config.getOrCreateSpec(NullTolerantComparator.class.getName());
     String testClass = GenericSetTestApp.class.getName();
     config.addIncludePattern(testClass + "$*");
     config.getOrCreateSpec(testClass);
@@ -492,4 +517,26 @@ public class GenericSetTestApp extends GenericTestApp {
       super(comparator);
     }
   }
+
+  private static class Foo implements Comparable {
+    private final String value;
+
+    Foo(String value) {
+      this.value = value;
+    }
+
+    public int hashCode() {
+      return value.hashCode();
+    }
+
+    public boolean equals(Object obj) {
+      if (obj instanceof Foo) { return value.equals(((Foo) obj).value); }
+      return false;
+    }
+
+    public int compareTo(Object o) {
+      return value.compareTo(((Foo) o).value);
+    }
+  }
+
 }
