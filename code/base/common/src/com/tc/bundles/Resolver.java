@@ -56,7 +56,7 @@ public class Resolver {
     }
 
     if (repoLocations.isEmpty()) { throw new RuntimeException(
-        "No module repositories have been specified via the com.tc.l1.modules.repositories system property"); }
+                                                              "No module repositories have been specified via the com.tc.l1.modules.repositories system property"); }
 
     this.repositories = (URL[]) repoLocations.toArray(new URL[0]);
   }
@@ -123,19 +123,29 @@ public class Resolver {
     return urls;
   }
 
-  private Collection findJars(String name, String groupId, File rootLocation) {
+  private Collection findJars(File rootLocation, String groupId, String name, String version) {
     final String[] extensions = new String[] { "jar" };
-    File installLocation = new File(rootLocation.getPath(), groupId.replace('.', File.separatorChar));
-    installLocation = new File(installLocation, name.replace('_', '-'));
+    File groupLocation = new File(rootLocation, groupId.replace('.', File.separatorChar));
+    File nameLocation = new File(groupLocation, name.replace('_', '-'));
+    File versionLocation = new File(nameLocation, version.replaceAll("\\.SNAPSHOT", "\\-SNAPSHOT"));
     final Collection jars = new ArrayList();
-    // attempt to locate the jar for the TIM in the conventional location
-    if (installLocation.exists() && installLocation.isDirectory()) {
-      jars.addAll(FileUtils.listFiles(installLocation, extensions, true));
+
+    if (versionLocation.isDirectory()) {
+      jars.addAll(FileUtils.listFiles(versionLocation, extensions, false));
     }
-    // attempt to locate the jar for the TIM at the top level of the repository
-    if (jars.isEmpty()) {
-      jars.addAll(FileUtils.listFiles(rootLocation, extensions, false));
+
+    if (jars.isEmpty() && nameLocation.isDirectory()) {
+      jars.addAll(FileUtils.listFiles(nameLocation, extensions, !versionLocation.isDirectory()));
     }
+
+    if (jars.isEmpty() && groupLocation.isDirectory()) {
+      jars.addAll(FileUtils.listFiles(groupLocation, extensions, !nameLocation.isDirectory()));
+    }
+
+    if (jars.isEmpty() && rootLocation.isDirectory()) {
+      jars.addAll(FileUtils.listFiles(rootLocation, extensions, !groupLocation.isDirectory()));
+    }
+
     return jars;
   }
 
@@ -147,14 +157,15 @@ public class Resolver {
         warn(Message.WARN_REPOSITORY_PROTOCOL_UNSUPPORTED, new Object[] { location.getProtocol() });
         continue;
       }
-      
-      final File repository = new File(FileUtils.toFile(location), spec.getGroupId().replace('.', File.separatorChar));
+
+      final File root = FileUtils.toFile(location);
+      final File repository = new File(root, spec.getGroupId().replace('.', File.separatorChar));
       if (!repository.exists() || !repository.isDirectory()) {
         warn(Message.WARN_REPOSITORY_UNRESOLVED, new Object[] { repository.getAbsolutePath() });
         continue;
       }
 
-      final Collection jars = findJars(spec.getName(), spec.getGroupId(), FileUtils.toFile(location));
+      final Collection jars = findJars(root, spec.getGroupId(), spec.getName(), spec.getVersion());
       for (final Iterator j = jars.iterator(); j.hasNext();) {
         final File bundleFile = (File) j.next();
         if (!bundleFile.isFile()) {
@@ -172,7 +183,7 @@ public class Resolver {
           try {
             return bundleFile.toURL();
           } catch (MalformedURLException e) {
-            fatal(Message.ERROR_BUNDLE_MALFORMED_URL, new Object[] { bundleFile.getName() }); // should be fatal???            
+            fatal(Message.ERROR_BUNDLE_MALFORMED_URL, new Object[] { bundleFile.getName() }); // should be fatal???
             return null;
           }
         }
@@ -187,7 +198,7 @@ public class Resolver {
     for (int i = repositories.length - 1; i >= 0; i--) {
       try {
         final URL url = new URL(repositories[i].toString() + (repositories[i].toString().endsWith("/") ? "" : "/"));
-        final Collection jars = findJars(name, groupId, FileUtils.toFile(url));
+        final Collection jars = findJars(FileUtils.toFile(url), groupId, name, version);
         for (final Iterator j = jars.iterator(); j.hasNext();) {
           final File jar = (File) j.next();
           final Manifest manifest = getManifest(jar);
@@ -196,13 +207,13 @@ public class Resolver {
           if (manifest == null) continue;
 
           // found a match!
-          if (BundleSpecImpl.isMatchingSymbolicName(symname, manifest.getMainAttributes().getValue(BUNDLE_SYMBOLICNAME))) {
+          if (BundleSpec.isMatchingSymbolicName(symname, manifest.getMainAttributes().getValue(BUNDLE_SYMBOLICNAME))) {
             final String manifestVersion = manifest.getMainAttributes().getValue(BUNDLE_VERSION);
             try {
               if (__version.equals(Version.parse(manifestVersion))) return addToRegistry(jar.toURL(), manifest);
-            } catch (NumberFormatException e) { // thrown by parseVersion() 
+            } catch (NumberFormatException e) { // thrown by parseVersion()
               logger.warn("Bad manifest bundle version in jar='" + jar.getAbsolutePath() + "', version='"
-                  + manifestVersion + "'.  Skipping...", e);
+                          + manifestVersion + "'.  Skipping...", e);
             }
           }
         }
@@ -219,7 +230,7 @@ public class Resolver {
 
     if (defaultModulesProp == null) {
       logger.debug("No implicit modules were loaded because the l1.modules.default property "
-          + "in tc.properties file was not set.");
+                   + "in tc.properties file was not set.");
       return;
     }
 
@@ -231,7 +242,7 @@ public class Resolver {
       }
     } else {
       logger.debug("No implicit modules were loaded because the l1.modules.default property "
-          + "in tc.properties file was empty.");
+                   + "in tc.properties file was empty.");
     }
   }
 
@@ -274,7 +285,7 @@ public class Resolver {
     final Manifest manifest = getManifest(location);
     if (manifest == null) {
       final String msg = fatal(Message.ERROR_BUNDLE_UNREADABLE, new Object[] { FileUtils.toFile(location).getName(),
-          FileUtils.toFile(location).getParent() });
+      FileUtils.toFile(location).getParent() });
       throw new InvalidBundleManifestException(msg);
     }
 
@@ -303,9 +314,7 @@ public class Resolver {
 
   private URL addToRegistry(final URL location, final Manifest manifest) {
     final Entry entry = new Entry(location, manifest);
-    if (!registry.contains(entry)) {
-      registry.add(entry);
-    }
+    if (!registry.contains(entry)) registry.add(entry);
     return entry.getLocation();
   }
 
@@ -349,7 +358,7 @@ public class Resolver {
     logger.fatal(msg);
     return msg;
   }
-  
+
   private static String formatMessage(final Message message, final Object[] arguments) {
     return MessageFormat.format(resourceBundle.getString(message.key()), arguments);
   }
@@ -381,7 +390,7 @@ public class Resolver {
       if (!(object instanceof Entry)) return false;
       final Entry entry = (Entry) object;
       return location.equals(entry.getLocation()) && getVersion().equals(entry.getVersion())
-          && getSymbolicName().equals(entry.getSymbolicName());
+             && getSymbolicName().equals(entry.getSymbolicName());
     }
 
     private static final int SEED1 = 18181;
