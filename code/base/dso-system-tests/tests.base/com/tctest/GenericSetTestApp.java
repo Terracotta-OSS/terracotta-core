@@ -119,6 +119,42 @@ public class GenericSetTestApp extends GenericTestApp {
     }
   }
 
+  void testAddNull(Set set, boolean validate, int v) {
+    if (validate) {
+      assertSetsEqual(Arrays.asList(new Object[] { null }), set);
+    } else {
+      System.err.println(set.getClass());
+      synchronized (set) {
+        boolean added = set.add(null);
+        if (!added) throw new AssertionError("not added!");
+      }
+    }
+  }
+
+  void testElementRetention(Set set, boolean validate, int v) {
+    if (v == LITERAL_VARIANT) return;
+
+    if (validate) {
+      Foo f = (Foo) set.iterator().next();
+      Assert.assertEquals(set.getClass().getName(), "id1", f.id);
+    } else {
+      Foo f1 = (Foo) E("1", v);
+      f1.id = "id1";
+      Foo f2 = (Foo) E("1", v);
+      f2.id = "id2";
+
+      synchronized (set) {
+        boolean added = set.add(f1);
+        if (!added) throw new AssertionError("not added!");
+      }
+
+      synchronized (set) {
+        boolean added = set.add(f2);
+        if (added) throw new AssertionError("added!");
+      }
+    }
+  }
+
   void testRemove(Set set, boolean validate, int v) {
     if (validate) {
       assertSetsEqual(Arrays.asList(new Object[] { E("January", v), E("March", v) }), set);
@@ -520,6 +556,10 @@ public class GenericSetTestApp extends GenericTestApp {
 
   private static class Foo implements Comparable {
     private final String value;
+
+    // This field isn't used in equals/hashCode -- It is only here to test which instance is retained when
+    // two unique (but equal) objects are added to a set
+    private String       id;
 
     Foo(String value) {
       this.value = value;
