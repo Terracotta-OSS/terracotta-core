@@ -11,6 +11,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.util.Assert;
 import com.tc.util.runtime.Os;
+import com.tc.util.runtime.Vm;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -235,7 +236,11 @@ public class TestConfigObject {
   }
 
   public String getL2StartupJavaHome() {
-    return this.properties.getProperty(L2_STARTUP_JAVA_HOME);
+    String result = this.properties.getProperty(L2_STARTUP_JAVA_HOME);
+    if (result == null && Vm.isJDK15Compliant()) {
+      result = System.getProperty("java.home");
+    }
+    return result;
   }
 
   public String[] availableVariantsFor(String variantName) {
