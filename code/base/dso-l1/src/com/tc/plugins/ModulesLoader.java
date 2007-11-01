@@ -97,8 +97,9 @@ public class ModulesLoader {
           getModulesCustomApplicatorSpecs(osgiRuntime, configHelper);
         }
       } catch (Exception e) {
-        System.err.println("Failed to init modules; " + e.toString());
-        System.exit(-2);
+        System.err.println("Unable to initialize modules runtime; " + e.getMessage());
+        //e.printStackTrace();
+        System.exit(-9);
       } finally {
         if (forBootJar) {
           shutdown(osgiRuntime);
