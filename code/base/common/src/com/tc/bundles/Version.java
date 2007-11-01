@@ -22,4 +22,8 @@ final class Version extends org.osgi.framework.Version {
     org.osgi.framework.Version v = org.osgi.framework.Version.parseVersion(version.replace('-', '.'));
     return new Version(v.getMajor(), v.getMinor(), v.getMicro(), v.getQualifier());
   }
+  
+  public String toString() {
+    return getMajor() + ";" + getMinor() + ";" + getMicro() + ";" + getQualifier();
+  }
 }
