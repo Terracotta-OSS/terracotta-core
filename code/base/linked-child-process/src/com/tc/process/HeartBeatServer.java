@@ -24,6 +24,7 @@ public class HeartBeatServer {
   public static final String IS_APP_SERVER_ALIVE = "IS_APP_SERVER_ALIVE";
   public static final String IM_ALIVE            = "IM_ALIVE";
   public static final int    PULSE_INTERVAL      = 30 * 1000;
+  public static final int    MISS_ALLOW          = 5;
   private static DateFormat  DATEFORMAT          = new SimpleDateFormat("HH:mm:ss.SSS");
 
   private ListenThread       listenThread;
@@ -159,7 +160,7 @@ public class HeartBeatServer {
       this.server = server;
       socket = s;
       try {
-        socket.setSoTimeout(PULSE_INTERVAL / 2);
+        socket.setSoTimeout(PULSE_INTERVAL);
         socket.setTcpNoDelay(true);
 
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -177,6 +178,7 @@ public class HeartBeatServer {
         log("got new client: " + clientName);
 
         while (true) {
+          reallySleep(PULSE_INTERVAL);
           log("send pulse to client: " + clientName);
           out.println(PULSE);
           try {
@@ -184,12 +186,10 @@ public class HeartBeatServer {
             if (reply == null) { throw new Exception("read-half of socket closed."); }
             missedPulseCount = 0;
           } catch (SocketTimeoutException toe) {
-            log("Client: " + clientName + " missed " + (++missedPulseCount));            
-            if (missedPulseCount >= 5) {
-              throw new Exception("Client missed 3 pulses... considered it dead.");
-            }
+            log("Client: " + clientName + " missed " + (++missedPulseCount));
+            if (missedPulseCount >= MISS_ALLOW) { throw new Exception("Client missed " + MISS_ALLOW
+                                                                      + " pulses... considered it dead."); }
           }
-          reallySleep(PULSE_INTERVAL);
         }
       } catch (Exception e) {
         if (!killed) {

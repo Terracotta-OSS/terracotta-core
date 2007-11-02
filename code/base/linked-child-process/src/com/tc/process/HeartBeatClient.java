@@ -53,8 +53,8 @@ public class HeartBeatClient extends Thread {
           String signal = in.readLine();
           if (signal == null) {
             throw new Exception("Null signal");
-          } else if (HeartBeatServer.PULSE.equals(signal)) {            
-            log("Received pulse from heartbeat server, port " + socket.getLocalPort());            
+          } else if (HeartBeatServer.PULSE.equals(signal)) {
+            log("Received pulse from heartbeat server, port " + socket.getLocalPort());
             out.println(signal);
             missedPulse = 0;
           } else if (HeartBeatServer.KILL.equals(signal)) {
@@ -73,22 +73,22 @@ public class HeartBeatClient extends Thread {
             throw new Exception("Unknown signal");
           }
         } catch (SocketTimeoutException toe) {
-          log("No pulse received for " + (HeartBeatServer.PULSE_INTERVAL/1000) + " seconds");
+          log("No pulse received for " + (HEARTBEAT_TIMEOUT / 1000) + " seconds");
           log("Missed pulse count: " + missedPulse++);
-          if (missedPulse >= 5) {
-            throw new Exception("Missing 3 pulse from HeartBeatServer");
-          }
+          if (missedPulse >= HeartBeatServer.MISS_ALLOW) { throw new Exception("Missing " + HeartBeatServer.MISS_ALLOW
+                                                                               + " pulses from HeartBeatServer"); }
         }
-      }   
+      }
     } catch (Throwable e) {
       log("Caught exception in heartbeat client. Killing self.");
       e.printStackTrace();
     } finally {
       try {
         socket.close();
-      } catch (Exception ignored) {
+      } catch (Exception e) {
+        // ignored
       }
-      System.exit(1);
+      System.exit(100);
     }
   }
 
