@@ -89,15 +89,14 @@ public abstract class HyperlinkFrame extends Frame implements HyperlinkListener 
   
   protected File getInstallRoot() {
     if(m_installRoot == null) {
-      m_installRoot = new File(System.getProperty("tc.install-root"));
+      m_installRoot = new File(System.getProperty("tc.install-root").trim());
     }
     return m_installRoot;
   }
   
   protected String getBootPath() throws UnsupportedVMException {
     if(m_bootPath == null) {
-      File bootPath = new File(System.getProperty("tc.install-root"));
-      bootPath = new File(bootPath, "lib");
+      File bootPath = new File(getInstallRoot(), "lib");
       bootPath = new File(bootPath, "dso-boot");
       bootPath = new File(bootPath, BootJarSignature.getBootJarNameForThisVM());
       m_bootPath = bootPath;
@@ -133,7 +132,7 @@ public abstract class HyperlinkFrame extends Frame implements HyperlinkListener 
   }
 
   static File staticGetTCLib() {
-    File file = new File(System.getProperty("tc.install-root"));
+    File file = new File(System.getProperty("tc.install-root").trim());
     file = new File(file, "lib");
     return new File(file, "tc.jar");
   }
