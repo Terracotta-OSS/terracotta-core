@@ -17,8 +17,10 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.NodeID;
+import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.util.sequence.SequenceGenerator;
 
@@ -35,28 +37,32 @@ public class TransactionRelayHandler extends AbstractEventHandler {
 
   private ServerTransactionManager   transactionManager;
 
-  public TransactionRelayHandler(L2ObjectStateManager objectStateManager, SequenceGenerator generator) {
+  private final ServerGlobalTransactionManager gtxm;
+
+  public TransactionRelayHandler(L2ObjectStateManager objectStateManager, SequenceGenerator generator, ServerGlobalTransactionManager gtxm) {
     this.l2ObjectStateMgr = objectStateManager;
     this.sequenceGenerator = generator;
+    this.gtxm = gtxm;
   }
 
   public void handleEvent(EventContext context) {
     IncomingTransactionContext ict = (IncomingTransactionContext) context;
+    GlobalTransactionID lowWaterMark = gtxm.getLowGlobalTransactionIDWatermark();
     Collection states = l2ObjectStateMgr.getL2ObjectStates();
     for (Iterator i = states.iterator(); i.hasNext();) {
       L2ObjectState state = (L2ObjectState) i.next();
       NodeID nodeID = state.getNodeID();
-      sendCommitTransactionMessage(nodeID, ict);
+      sendCommitTransactionMessage(nodeID, ict, lowWaterMark);
     }
     transactionManager.transactionsRelayed(ict.getNodeID(), ict.getServerTransactionIDs());
   }
 
-  private void sendCommitTransactionMessage(NodeID nodeID, IncomingTransactionContext ict) {
+  private void sendCommitTransactionMessage(NodeID nodeID, IncomingTransactionContext ict, GlobalTransactionID lowWaterMark) {
     addWaitForNotification(nodeID, ict);
     try {
       RelayedCommitTransactionMessage msg = RelayedCommitTransactionMessageFactory
           .createRelayedCommitTransactionMessage(ict.getCommitTransactionMessage(), ict.getTxns(), sequenceGenerator
-              .getNextSequence(nodeID));
+              .getNextSequence(nodeID), lowWaterMark);
       this.groupManager.sendTo(nodeID, msg);
     } catch (Exception e) {
       reconsileWaitForNotification(nodeID, ict);

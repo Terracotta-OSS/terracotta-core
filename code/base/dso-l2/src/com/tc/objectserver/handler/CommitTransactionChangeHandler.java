@@ -27,8 +27,7 @@ public class CommitTransactionChangeHandler extends AbstractEventHandler {
     CommitTransactionContext ctc = (CommitTransactionContext) context;
     txnObjectManager.commitTransactionsComplete(ctc);
     if (ctc.isInitialized()) {
-      transactionManager.commit(ptxp, ctc.getObjects(), ctc.getNewRoots(), ctc.getAppliedServerTransactionIDs(), ctc
-          .getCompletedTransactionIDs());
+      transactionManager.commit(ptxp, ctc.getObjects(), ctc.getNewRoots(), ctc.getAppliedServerTransactionIDs());
     }
   }
 

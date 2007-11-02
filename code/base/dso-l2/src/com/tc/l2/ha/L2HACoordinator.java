@@ -138,7 +138,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_SEND_STAGE,
                              new L2ObjectSyncSendHandler(this.l2ObjectStateManager), 1, Integer.MAX_VALUE);
     stageManager.createStage(ServerConfigurationContext.TRANSACTION_RELAY_STAGE,
-                             new TransactionRelayHandler(this.l2ObjectStateManager, this.sequenceGenerator), 1,
+                             new TransactionRelayHandler(this.l2ObjectStateManager, this.sequenceGenerator, gtxm), 1,
                              Integer.MAX_VALUE);
     final Sink ackProcessingStage = stageManager
         .createStage(ServerConfigurationContext.SERVER_TRANSACTION_ACK_PROCESSING_STAGE,
@@ -153,7 +153,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
         .getConnectionIdFactory(), stageManager.getStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE).getSink());
 
     OrderedSink orderedObjectsSyncSink = new OrderedSink(logger, objectsSyncSink);
-    this.rTxnManager = new ReplicatedTransactionManagerImpl(groupManager, orderedObjectsSyncSink, transactionManager);
+    this.rTxnManager = new ReplicatedTransactionManagerImpl(groupManager, orderedObjectsSyncSink, transactionManager, gtxm);
 
     this.rObjectManager = new ReplicatedObjectManagerImpl(groupManager, stateManager, l2ObjectStateManager,
                                                           rTxnManager, objectManager, transactionManager,

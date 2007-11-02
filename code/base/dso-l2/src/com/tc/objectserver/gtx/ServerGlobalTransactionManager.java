@@ -37,14 +37,19 @@ public interface ServerGlobalTransactionManager extends GlobalTransactionIDGener
    * it will never be referenced again). The transaction manager is free to release resources dedicated those
    * transactions.
    */
-  public void completeTransactions(PersistenceTransaction tx, Collection collection);
+  public void clearCommitedTransactionsBelowLowWaterMark(ServerTransactionID sid);
+
+  /**
+   * This is used in the PASSIVE to clear completed transaction ids when low water mark is published from the ACTIVE.
+   */
+  public void clearCommitedTransactionsBelowLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark);
 
   public void shutdownNode(NodeID nodeID);
 
   public void shutdownAllClientsExcept(Set cids);
 
   public GlobalTransactionID getGlobalTransactionID(ServerTransactionID serverTransactionID);
-    
+
   public void createGlobalTransactionDescIfNeeded(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID);
 
   public GlobalTransactionIDSequenceProvider getGlobalTransactionIDSequenceProvider();

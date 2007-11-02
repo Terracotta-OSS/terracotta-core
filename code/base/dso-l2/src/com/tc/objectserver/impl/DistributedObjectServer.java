@@ -70,6 +70,7 @@ import com.tc.object.msg.ClientHandshakeAckMessageImpl;
 import com.tc.object.msg.ClientHandshakeMessageImpl;
 import com.tc.object.msg.ClusterMembershipMessage;
 import com.tc.object.msg.CommitTransactionMessageImpl;
+import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
 import com.tc.object.msg.JMXMessage;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockResponseMessage;
@@ -122,6 +123,7 @@ import com.tc.objectserver.handler.RespondToObjectRequestHandler;
 import com.tc.objectserver.handler.RespondToRequestLockHandler;
 import com.tc.objectserver.handler.TransactionAcknowledgementHandler;
 import com.tc.objectserver.handler.TransactionLookupHandler;
+import com.tc.objectserver.handler.TransactionLowWaterMarkHandler;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.impl.ClientStateManagerImpl;
@@ -533,8 +535,8 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     Stage rootRequest = stageManager.createStage(ServerConfigurationContext.MANAGED_ROOT_REQUEST_STAGE,
                                                  new RequestRootHandler(), 1, maxStageSize);
 
-    stageManager.createStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE,
-                             new BroadcastChangeHandler(), 1, maxStageSize);
+    stageManager.createStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE, new BroadcastChangeHandler(), 1,
+                             maxStageSize);
     Stage respondToLockRequestStage = stageManager
         .createStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE, new RespondToRequestLockHandler(), 1,
                      maxStageSize);
@@ -567,6 +569,8 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
                                                      new ClientHandshakeHandler(), 1, maxStageSize);
     Stage hydrateStage = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_SINK,
                                                   new HydrateHandler(), 1, maxStageSize);
+    final Stage txnLwmStage = stageManager.createStage(ServerConfigurationContext.TRANSACTION_LOWWATERMARK_STAGE,
+                                                       new TransactionLowWaterMarkHandler(gtxm), 1, maxStageSize);
 
     Stage jmxEventsStage = stageManager.createStage(ServerConfigurationContext.JMX_EVENTS_STAGE,
                                                     new JMXEventsHandler(appEvents), 1, maxStageSize);
@@ -576,8 +580,10 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     cteh.setConnectStageSink(jmxRemoteConnectStage.getSink());
     final Stage jmxRemoteTunnelStage = stageManager.createStage(ServerConfigurationContext.JMXREMOTE_TUNNEL_STAGE,
                                                                 cteh, 1, maxStageSize);
-    
-    final Stage clientLockStatisticsStage = stageManager.createStage(ServerConfigurationContext.CLIENT_LOCK_STATISTICS_STAGE, new ClientLockStatisticsHandler(lockStatsManager), 1, 1);
+
+    final Stage clientLockStatisticsStage = stageManager
+        .createStage(ServerConfigurationContext.CLIENT_LOCK_STATISTICS_STAGE,
+                     new ClientLockStatisticsHandler(lockStatsManager), 1, 1);
 
     l1Listener.addClassMapping(TCMessageType.BATCH_TRANSACTION_ACK_MESSAGE,
                                BatchTransactionAcknowledgeMessageImpl.class);
@@ -605,6 +611,8 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     l1Listener.addClassMapping(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, JmxRemoteTunnelMessage.class);
     l1Listener.addClassMapping(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, ClusterMembershipMessage.class);
     l1Listener.addClassMapping(TCMessageType.CLIENT_JMX_READY_MESSAGE, L1JmxReady.class);
+    l1Listener.addClassMapping(TCMessageType.COMPLETED_TRANSACTION_LOWWATERMARK_MESSAGE,
+                               CompletedTransactionLowWaterMarkMessage.class);
 
     Sink hydrateSink = hydrateStage.getSink();
     l1Listener.routeMessageType(TCMessageType.COMMIT_TRANSACTION_MESSAGE, processTx.getSink(), hydrateSink);
@@ -618,7 +626,10 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     l1Listener.routeMessageType(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, jmxRemoteTunnelStage.getSink(),
                                 hydrateSink);
     l1Listener.routeMessageType(TCMessageType.CLIENT_JMX_READY_MESSAGE, jmxRemoteTunnelStage.getSink(), hydrateSink);
-    l1Listener.routeMessageType(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE, clientLockStatisticsStage.getSink(), hydrateSink);
+    l1Listener.routeMessageType(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE, clientLockStatisticsStage.getSink(),
+                                hydrateSink);
+    l1Listener.routeMessageType(TCMessageType.COMPLETED_TRANSACTION_LOWWATERMARK_MESSAGE, txnLwmStage.getSink(),
+                                hydrateSink);
 
     l2DSOConfig.changesInItemIgnored(l2DSOConfig.clientReconnectWindow());
     long reconnectTimeout = l2DSOConfig.clientReconnectWindow().getInt();

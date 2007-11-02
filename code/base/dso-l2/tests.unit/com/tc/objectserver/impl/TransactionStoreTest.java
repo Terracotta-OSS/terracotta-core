@@ -28,7 +28,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class TransactionStoreTest extends TCTestCase {
 
@@ -63,7 +62,7 @@ public class TransactionStoreTest extends TCTestCase {
     assertFalse(originalMin == gtxs.get(0));
 
     // delete the set
-    store.removeAllByServerTransactionID(null, toDeleteIDs);
+    store.clearCommitedTransactionsBelowLowWaterMark(null, getGlobalTransactionID((GlobalTransactionDescriptor) gtxs.get(0)));
 
     GlobalTransactionDescriptor currentMin = (GlobalTransactionDescriptor) gtxs.get(0);
     // make sure the min has been adjusted properly
@@ -94,71 +93,127 @@ public class TransactionStoreTest extends TCTestCase {
     store.commitTransactionDescriptor(null, stx1);
     assertEquals(getGlobalTransactionID(gtx1), store.getLeastGlobalTransactionID());
 
-    int min = 100;
-    int max = 200;
+    int min = 10;
+    int max = 20;
+    List gds = new ArrayList();
     for (int i = min; i < max; i++) {
-      ServerTransactionID stxid = new ServerTransactionID(new ClientID(new ChannelID(i)), new TransactionID(i));
-      store.getOrCreateTransactionDescriptor(stxid);
+      ServerTransactionID stxid = new ServerTransactionID(new ClientID(new ChannelID(2)), new TransactionID(i));
+      GlobalTransactionDescriptor gd = store.getOrCreateTransactionDescriptor(stxid);
+      gds.add(gd);
       store.commitTransactionDescriptor(null, stxid);
     }
 
     // Still the least Global Txn ID is the same
     assertEquals(getGlobalTransactionID(gtx1), store.getLeastGlobalTransactionID());
 
-    // now remove some from the the middle
-    Set toDelete = new HashSet();
-    for (int i = min + 25; i < max - 50; i++) {
-      ServerTransactionID stxid = new ServerTransactionID(new ClientID(new ChannelID(i)), new TransactionID(i));
-      toDelete.add(stxid);
+    store.clearCommitedTransactionsBelowLowWaterMark(null, ((GlobalTransactionDescriptor)gds.get(0)).getServerTransactionID());
+    
+    // least Global Txn ID is not the same
+    assertNotEquals(getGlobalTransactionID(gtx1), store.getLeastGlobalTransactionID());
+    
+    GlobalTransactionID currentLWM = store.getLeastGlobalTransactionID();
+    
+    // send LWM of the next txn
+    store.clearCommitedTransactionsBelowLowWaterMark(null, ((GlobalTransactionDescriptor)gds.get(1)).getServerTransactionID());
+    
+    // least Global Txn ID is not the same
+    assertNotEquals(currentLWM, store.getLeastGlobalTransactionID());
+    assertTrue(currentLWM.toLong() < store.getLeastGlobalTransactionID().toLong());
+    currentLWM = store.getLeastGlobalTransactionID();
+    
+    // send LWM of the last txn
+    store.clearCommitedTransactionsBelowLowWaterMark(null, ((GlobalTransactionDescriptor)gds.get(gds.size()-1)).getServerTransactionID());
+    
+    // least Global Txn ID is not the same
+    assertNotEquals(currentLWM, store.getLeastGlobalTransactionID());
+    assertTrue(currentLWM.toLong() < store.getLeastGlobalTransactionID().toLong());
+    currentLWM = store.getLeastGlobalTransactionID();
+    
+    // send LWM above the last txn
+    ServerTransactionID sid = ((GlobalTransactionDescriptor)gds.get(gds.size()-1)).getServerTransactionID();
+    sid = new ServerTransactionID(sid.getSourceID(), sid.getClientTransactionID().next());
+    store.clearCommitedTransactionsBelowLowWaterMark(null, sid);
+    
+    // least Global Txn ID is not the same, its null
+    assertNotEquals(currentLWM, store.getLeastGlobalTransactionID());
+    assertEquals(GlobalTransactionID.NULL_ID, store.getLeastGlobalTransactionID());
+  }
+  
+  public void testLeastGlobalTransactionIDInPassiveServer() throws Exception {
+
+    persistor = new TestTransactionPersistor();
+    store = new TransactionStoreImpl(persistor, persistor);
+
+    assertEquals(GlobalTransactionID.NULL_ID, store.getLeastGlobalTransactionID());
+
+    ServerTransactionID stx1 = new ServerTransactionID(new ClientID(new ChannelID(1)), new TransactionID(1));
+
+    GlobalTransactionDescriptor gtx1 = store.getOrCreateTransactionDescriptor(stx1);
+    assertNotEquals(GlobalTransactionID.NULL_ID, store.getLeastGlobalTransactionID());
+    assertEquals(getGlobalTransactionID(gtx1), store.getLeastGlobalTransactionID());
+
+    store.commitTransactionDescriptor(null, stx1);
+    assertEquals(getGlobalTransactionID(gtx1), store.getLeastGlobalTransactionID());
+
+    int min = 10;
+    int max = 20;
+    List gds = new ArrayList();
+    for (int i = min; i < max; i++) {
+      ServerTransactionID stxid = new ServerTransactionID(new ClientID(new ChannelID(2)), new TransactionID(i));
+      GlobalTransactionDescriptor gd = store.getOrCreateTransactionDescriptor(stxid);
+      gds.add(gd);
     }
-    store.removeAllByServerTransactionID(null, toDelete);
 
     // Still the least Global Txn ID is the same
     assertEquals(getGlobalTransactionID(gtx1), store.getLeastGlobalTransactionID());
 
-    // now remove some from the beginning
-    toDelete.clear();
-    for (int i = min; i < min + 25; i++) {
-      ServerTransactionID stxid = new ServerTransactionID(new ClientID(new ChannelID(i)), new TransactionID(i));
-      toDelete.add(stxid);
-    }
-    toDelete.add(stx1);
-    store.removeAllByServerTransactionID(null, toDelete);
-
-    // the least Global Txn ID is not the same
+    store.clearCommitedTransactionsBelowLowWaterMark(null, ((GlobalTransactionDescriptor)gds.get(0)).getServerTransactionID());
+    
+    // least Global Txn ID is not the same
     assertNotEquals(getGlobalTransactionID(gtx1), store.getLeastGlobalTransactionID());
-    assertTrue(getGlobalTransactionID(gtx1).toLong() < store.getLeastGlobalTransactionID().toLong());
-
-    GlobalTransactionID least1 = store.getLeastGlobalTransactionID();
-
-    // RESTART scenario
-    store = new TransactionStoreImpl(persistor, persistor);
-
-    GlobalTransactionID least2 = store.getLeastGlobalTransactionID();
-    assertEquals(least1, least2);
-
-    // now remove some from the the middle
-    toDelete.clear();
-    for (int i = min + 75; i < max; i++) {
-      ServerTransactionID stxid = new ServerTransactionID(new ClientID(new ChannelID(i)), new TransactionID(i));
-      toDelete.add(stxid);
+    
+    GlobalTransactionID currentLWM = store.getLeastGlobalTransactionID();
+    
+    // send LWM of the next txn
+    store.clearCommitedTransactionsBelowLowWaterMark(null, ((GlobalTransactionDescriptor)gds.get(1)).getServerTransactionID());
+    
+    // least Global Txn ID is STILL the same, since the transactions are not commited.
+    assertEquals(currentLWM, store.getLeastGlobalTransactionID());
+    assertFalse(currentLWM.toLong() < store.getLeastGlobalTransactionID().toLong());
+    
+    // commit transaction
+    store.commitTransactionDescriptor(null, ((GlobalTransactionDescriptor)gds.get(0)).getServerTransactionID());
+    
+    // Now LWM should have moved up
+    assertNotEquals(currentLWM, store.getLeastGlobalTransactionID());
+    assertTrue(currentLWM.toLong() < store.getLeastGlobalTransactionID().toLong());
+    currentLWM = store.getLeastGlobalTransactionID();
+    
+    // send LWM of the last txn
+    store.clearCommitedTransactionsBelowLowWaterMark(null, ((GlobalTransactionDescriptor)gds.get(gds.size()-1)).getServerTransactionID());
+    
+    // least Global Txn ID is STILL the same, since the transactions are not commited.
+    assertEquals(currentLWM, store.getLeastGlobalTransactionID());
+    assertFalse(currentLWM.toLong() < store.getLeastGlobalTransactionID().toLong());
+    
+    for (int i = 1; i < gds.size(); i++) {
+      GlobalTransactionDescriptor gd = (GlobalTransactionDescriptor) gds.get(i);
+      store.commitTransactionDescriptor(null, gd.getServerTransactionID());
     }
-    store.removeAllByServerTransactionID(null, toDelete);
-
-    // Still the least Global Txn ID is the same
-    assertEquals(least1, store.getLeastGlobalTransactionID());
-
-    // now remove each of the remaining ones
-    for (int i = min + 50; i < max - 25; i++) {
-      toDelete.clear();
-      ServerTransactionID stxid = new ServerTransactionID(new ClientID(new ChannelID(i)), new TransactionID(i));
-      toDelete.add(stxid);
-      store.removeAllByServerTransactionID(null, toDelete);
-    }
-
-    assertNotEquals(least1, store.getLeastGlobalTransactionID());
-    least2 = store.getLeastGlobalTransactionID();
-    assertTrue(least2.isNull());
+    
+    // least Global Txn ID is not the same
+    assertNotEquals(currentLWM, store.getLeastGlobalTransactionID());
+    assertTrue(currentLWM.toLong() < store.getLeastGlobalTransactionID().toLong());
+    currentLWM = store.getLeastGlobalTransactionID();
+    
+    // send LWM above the last txn
+    ServerTransactionID sid = ((GlobalTransactionDescriptor)gds.get(gds.size()-1)).getServerTransactionID();
+    sid = new ServerTransactionID(sid.getSourceID(), sid.getClientTransactionID().next());
+    store.clearCommitedTransactionsBelowLowWaterMark(null, sid);
+    
+    // least Global Txn ID is not the same, its null
+    assertNotEquals(currentLWM, store.getLeastGlobalTransactionID());
+    assertEquals(GlobalTransactionID.NULL_ID, store.getLeastGlobalTransactionID());
   }
 
   private GlobalTransactionID getGlobalTransactionID(GlobalTransactionDescriptor gtx) {
@@ -324,7 +379,7 @@ public class TransactionStoreTest extends TCTestCase {
       return sequence;
     }
 
-    public void deleteAllByServerTransactionID(PersistenceTransaction tx, Collection toDelete) {
+    public void deleteAllGlobalTransactionDescriptors(PersistenceTransaction tx, Collection toDelete) {
       deleteQueue.put(toDelete);
       for (Iterator i = toDelete.iterator(); i.hasNext();) {
         persisted.remove(i.next());

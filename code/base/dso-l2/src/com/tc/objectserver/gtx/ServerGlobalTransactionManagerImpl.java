@@ -53,9 +53,16 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
     return gtx.initiateApply();
   }
 
-  public void completeTransactions(PersistenceTransaction tx, Collection collection) {
-    if (collection.isEmpty()) return;
-    transactionStore.removeAllByServerTransactionID(tx, collection);
+  public void clearCommitedTransactionsBelowLowWaterMark(ServerTransactionID sid) {
+    PersistenceTransaction tx = this.persistenceTransactionProvider.newTransaction();
+    transactionStore.clearCommitedTransactionsBelowLowWaterMark(tx, sid);
+    tx.commit();
+  }
+
+  public void clearCommitedTransactionsBelowLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark) {
+    PersistenceTransaction tx = this.persistenceTransactionProvider.newTransaction();
+    transactionStore.clearCommitedTransactionsBelowLowWaterMark(tx, lowGlobalTransactionIDWatermark);
+    tx.commit();
   }
 
   public void commit(PersistenceTransaction persistenceTransaction, ServerTransactionID stxID) {
@@ -92,5 +99,4 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
   public Sequence getGlobalTransactionIDSequence() {
     return globalTransactionIDSequence;
   }
-
 }

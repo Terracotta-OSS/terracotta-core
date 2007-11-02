@@ -76,6 +76,7 @@ import com.tc.object.msg.ClientHandshakeAckMessageImpl;
 import com.tc.object.msg.ClientHandshakeMessageImpl;
 import com.tc.object.msg.ClusterMembershipMessage;
 import com.tc.object.msg.CommitTransactionMessageImpl;
+import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
 import com.tc.object.msg.JMXMessage;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockResponseMessage;
@@ -218,11 +219,11 @@ public class DistributedObjectClient extends SEDA {
         .getCommitTransactionMessageFactory(), new DNAEncodingImpl(classProvider));
 
     rtxManager = new RemoteTransactionManagerImpl(new ChannelIDLogger(channel.getChannelIDProvider(), TCLogging
-        .getLogger(RemoteTransactionManagerImpl.class)), txBatchFactory, txFactory, new TransactionBatchAccounting(),
+        .getLogger(RemoteTransactionManagerImpl.class)), txBatchFactory, new TransactionBatchAccounting(),
                                                   new LockAccounting(), sessionManager, channel);
 
     ClientGlobalTransactionManager gtxManager = new ClientGlobalTransactionManagerImpl(rtxManager);
-    
+
     ClientLockStatManager lockStatManager = new ClientLockStatManagerImpl();
 
     lockManager = new ClientLockManagerImpl(new ChannelIDLogger(channel.getChannelIDProvider(), TCLogging
@@ -295,8 +296,9 @@ public class DistributedObjectClient extends SEDA {
     // more likely an AssertionError
     Stage pauseStage = stageManager.createStage(ClientConfigurationContext.CLIENT_COORDINATION_STAGE,
                                                 new ClientCoordinationHandler(cluster), 1, maxSize);
-    
-    Stage lockStatisticsStage = stageManager.createStage(ClientConfigurationContext.LOCK_STATISTICS_RESPONSE_STAGE, new LockStatisticsResponseHandler(), 1, 1);
+
+    Stage lockStatisticsStage = stageManager.createStage(ClientConfigurationContext.LOCK_STATISTICS_RESPONSE_STAGE,
+                                                         new LockStatisticsResponseHandler(), 1, 1);
     lockStatManager.start(channel, lockStatisticsStage.getSink());
 
     final Stage jmxRemoteTunnelStage = stageManager.createStage(ClientConfigurationContext.JMXREMOTE_TUNNEL_STAGE, teh,
@@ -344,6 +346,8 @@ public class DistributedObjectClient extends SEDA {
     channel.addClassMapping(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, JmxRemoteTunnelMessage.class);
     channel.addClassMapping(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, ClusterMembershipMessage.class);
     channel.addClassMapping(TCMessageType.CLIENT_JMX_READY_MESSAGE, L1JmxReady.class);
+    channel.addClassMapping(TCMessageType.COMPLETED_TRANSACTION_LOWWATERMARK_MESSAGE,
+                            CompletedTransactionLowWaterMarkMessage.class);
 
     logger.debug("Added class mappings.");
 

@@ -20,7 +20,7 @@ public class NullTransactionPersistor implements TransactionPersistor {
     return;
   }
 
-  public void deleteAllByServerTransactionID(PersistenceTransaction tx, Collection toDelete) {
+  public void deleteAllGlobalTransactionDescriptors(PersistenceTransaction tx, Collection toDelete) {
     return;
   }
 }

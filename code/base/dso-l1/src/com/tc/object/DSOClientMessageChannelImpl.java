@@ -16,6 +16,8 @@ import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.msg.CommitTransactionMessage;
 import com.tc.object.msg.CommitTransactionMessageFactory;
+import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
+import com.tc.object.msg.CompletedTransactionLowWaterMarkMessageFactory;
 import com.tc.object.msg.JMXMessage;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockRequestMessageFactory;
@@ -33,7 +35,8 @@ import java.net.UnknownHostException;
 
 public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, LockRequestMessageFactory,
     RequestRootMessageFactory, RequestManagedObjectMessageFactory, ClientHandshakeMessageFactory,
-    ObjectIDBatchRequestMessageFactory, CommitTransactionMessageFactory, AcknowledgeTransactionMessageFactory {
+    ObjectIDBatchRequestMessageFactory, CommitTransactionMessageFactory, AcknowledgeTransactionMessageFactory,
+    CompletedTransactionLowWaterMarkMessageFactory {
 
   private final ClientMessageChannel channel;
 
@@ -118,6 +121,11 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return (JMXMessage) channel.createMessage(TCMessageType.JMX_MESSAGE);
   }
 
+  public CompletedTransactionLowWaterMarkMessage newCompletedTransactionLowWaterMarkMessage() {
+    return (CompletedTransactionLowWaterMarkMessage) channel
+        .createMessage(TCMessageType.COMPLETED_TRANSACTION_LOWWATERMARK_MESSAGE);
+  }
+
   public ObjectIDBatchRequestMessageFactory getObjectIDBatchRequestMessageFactory() {
     return this;
   }
@@ -132,6 +140,10 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
 
   public boolean isConnected() {
     return channel.isConnected();
+  }
+
+  public CompletedTransactionLowWaterMarkMessageFactory getCompletedTransactionLowWaterMarkMessageFactory() {
+    return this;
   }
 
 }

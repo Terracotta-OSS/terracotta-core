@@ -56,7 +56,7 @@ class MemoryStoreTransactionPersistor implements TransactionPersistor {
     return ServerTransactionID.createFrom(data);
   }
 
-  public void deleteAllByServerTransactionID(PersistenceTransaction tx, Collection toDelete) {
+  public void deleteAllGlobalTransactionDescriptors(PersistenceTransaction tx, Collection toDelete) {
     for (Iterator i = toDelete.iterator(); i.hasNext();) {
       ServerTransactionID stxID = (ServerTransactionID) i.next();
       db.remove(serverTxnID2Bytes(stxID));

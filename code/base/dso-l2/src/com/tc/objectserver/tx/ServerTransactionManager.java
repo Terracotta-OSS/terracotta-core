@@ -18,7 +18,6 @@ public interface ServerTransactionManager {
 
   /**
    * called when a Node (Client or Server) leaves.
-   * 
    */
   public void shutdownNode(NodeID nodeID);
 
@@ -59,12 +58,12 @@ public interface ServerTransactionManager {
   public void apply(ServerTransaction txn, Map objects, BackReferences includeIDs, ObjectInstanceMonitor instanceMonitor);
 
   /**
-   * Commits all the changes in objects and releases the objects
-   * This could potentially trigger an acknowledgement to the orginating client.
+   * Commits all the changes in objects and releases the objects This could potentially trigger an acknowledgement to
+   * the orginating client.
    */
   public void commit(PersistenceTransactionProvider ptxp, Collection objects, Map newRoots,
-                     Collection appliedServerTransactionIDs, Set completedTransactionIDs);
-  
+                     Collection appliedServerTransactionIDs);
+
   /**
    * The broadcast stage is completed. This could potentially trigger an acknowledgement to the orginating client.
    */
@@ -80,18 +79,17 @@ public interface ServerTransactionManager {
   public void addTransactionListener(ServerTransactionListener listener);
 
   public void removeTransactionListener(ServerTransactionListener listener);
-  
+
   public void callBackOnTxnsInSystemCompletion(TxnsInSystemCompletionLister l);
 
-  public void incomingTransactions(NodeID nodeID, Set txnIDs, Collection txns, boolean relayed,
-                                   Collection completedTxnIds);
+  public void incomingTransactions(NodeID nodeID, Set txnIDs, Collection txns, boolean relayed);
 
   public void transactionsRelayed(NodeID node, Set serverTxnIDs);
-  
+
   public void setResentTransactionIDs(NodeID source, Collection transactionIDs);
 
   public void start(Set cids);
-  
+
   public void goToActiveMode();
 
 }

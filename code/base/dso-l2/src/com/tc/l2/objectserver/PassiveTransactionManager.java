@@ -1,9 +1,11 @@
 /*
- * All content copyright (c) 2003-2007 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2007 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.l2.objectserver;
 
 import com.tc.net.groups.NodeID;
+import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.objectserver.tx.ServerTransaction;
 
 import java.util.Collection;
@@ -11,8 +13,9 @@ import java.util.Set;
 
 public interface PassiveTransactionManager {
 
-  public void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns, Collection completedTxnIDs);
+  public void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns);
 
   public void addObjectSyncTransaction(ServerTransaction txn);
 
+  public void clearTransactionsBelowLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark);
 }

@@ -17,9 +17,6 @@ import com.tc.objectserver.persistence.impl.TestTransactionStore;
 import com.tc.util.SequenceValidator;
 import com.tc.util.sequence.SimpleSequence;
 
-import java.util.ArrayList;
-import java.util.Collection;
-
 import junit.framework.TestCase;
 
 public class GlobalTransactionManagerImplTest extends TestCase {
@@ -140,14 +137,10 @@ public class GlobalTransactionManagerImplTest extends TestCase {
 
     assertFalse(gtxm.initiateApply(stxid2));
 
-    Collection finished = new ArrayList(2);
-    finished.add(stxid);
-    finished.add(stxid2);
-
+    ServerTransactionID stxid3 = new ServerTransactionID(stxid2.getSourceID(), stxid2.getClientTransactionID().next());
     PersistenceTransaction txn = ptxp.newTransaction();
-    gtxm.completeTransactions(txn, finished);
+    gtxm.clearCommitedTransactionsBelowLowWaterMark(stxid3);
     txn.commit();
-
   }
 
   private void assertNextGlobalTXWasCalled(ServerTransactionID stxid) {

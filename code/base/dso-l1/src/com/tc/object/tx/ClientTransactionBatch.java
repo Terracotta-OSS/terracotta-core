@@ -6,7 +6,6 @@ package com.tc.object.tx;
 import com.tc.util.SequenceID;
 
 import java.util.Collection;
-import java.util.Set;
 
 /**
  * Client representation of a batch of transactions.  Has methods that are only useful in a client context.
@@ -31,11 +30,6 @@ public interface ClientTransactionBatch extends TransactionBatch {
    * Send the transaction to the server.
    */
   public void send();
-
-  /**
-   * Adds the set of acknowledged GlobalTransactionIDs to the batch
-   */
-  public void setAcknowledgedTransactionIDs(Set acknowledged);
 
   public int numberOfTxns();
 

@@ -186,11 +186,6 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
       return clientID;
     }
 
-    public Collection addAcknowledgedTransactionIDsTo(Collection c) {
-      c.addAll(acknowledged);
-      return c;
-    }
-
   }
 
   private final class TestTransactionBatchReaderFactory implements TransactionBatchReaderFactory {

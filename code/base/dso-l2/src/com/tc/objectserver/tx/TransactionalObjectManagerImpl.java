@@ -52,9 +52,6 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   private final TransactionSequencer           sequencer;
   private final ServerGlobalTransactionManager gtxm;
 
-  private final Object                         completedTxnIdsLock     = new Object();
-  private Set                                  completedTxnIDs         = new HashSet();
-
   /*
    * This map contains ObjectIDs to TxnObjectGrouping that contains these objects
    */
@@ -79,24 +76,9 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   }
 
   // ProcessTransactionHandler Method
-  public void addTransactions(Collection txns, Collection completedTxnIds) {
+  public void addTransactions(Collection txns) {
     sequencer.addTransactions(txns);
-    addCompletedTxnIds(completedTxnIds);
     txnStageCoordinator.initiateLookup();
-  }
-
-  private void addCompletedTxnIds(Collection txnIds) {
-    synchronized (completedTxnIdsLock) {
-      completedTxnIDs.addAll(txnIds);
-    }
-  }
-
-  private Set getCompletedTxnIds() {
-    synchronized (completedTxnIdsLock) {
-      Set toRet = completedTxnIDs;
-      completedTxnIDs = new HashSet();
-      return toRet;
-    }
   }
 
   // LookupHandler Method
@@ -230,7 +212,9 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
 
   private synchronized void addLookedupObjects(LookupContext context) {
     Map lookedUpObjects = context.getLookedUpObjects();
-    Assert.assertTrue(lookedUpObjects != null && lookedUpObjects.size() > 0);
+    if (lookedUpObjects == null || lookedUpObjects.isEmpty()) { throw new AssertionError("Lookedup object is null : "
+                                                                                         + lookedUpObjects
+                                                                                         + " context = " + context); }
     TxnObjectGrouping tg = new TxnObjectGrouping(lookedUpObjects);
     for (Iterator i = lookedUpObjects.keySet().iterator(); i.hasNext();) {
       Object oid = i.next();
@@ -349,7 +333,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       }
     }
 
-    ctc.initialize(txnIDs, objects.values(), newRoots, getCompletedTxnIds());
+    ctc.initialize(txnIDs, objects.values(), newRoots);
 
     for (Iterator j = objects.keySet().iterator(); j.hasNext();) {
       Object old = checkedOutObjects.remove(j.next());

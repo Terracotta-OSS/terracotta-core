@@ -17,26 +17,21 @@ public class GlobalTransactionDescriptor {
 
   private final ServerTransactionID stxn;
   private final GlobalTransactionID gid;
-  private State                     state;
-  private boolean                   completed;
+  private volatile State            state;
 
   public GlobalTransactionDescriptor(ServerTransactionID serverTransactionID, GlobalTransactionID gid) {
     this.stxn = serverTransactionID;
     this.gid = gid;
     this.state = INIT;
-    // XXX:: Server Generated Transactions dont get completed acks
-    this.completed = serverTransactionID.isServerGeneratedTransaction();
   }
 
   public void saveStateFrom(GlobalTransactionDescriptor old) {
     this.state = old.state;
-    this.completed = old.completed;
   }
 
-  public boolean commitComplete() {
+  public void commitComplete() {
     if (this.state == COMMIT_COMPLETE) { throw new AssertionError("Already commited : " + this + " state = " + state); }
     this.state = COMMIT_COMPLETE;
-    return this.completed;
   }
 
   public boolean initiateApply() {
@@ -52,7 +47,7 @@ public class GlobalTransactionDescriptor {
   }
 
   public String toString() {
-    return "GlobalTransactionDescriptor[" + stxn + "," + gid + "," + state + "," + completed + "]";
+    return "GlobalTransactionDescriptor[" + stxn + "," + gid + "," + state + "]";
   }
 
   public TransactionID getClientTransactionID() {
@@ -80,7 +75,6 @@ public class GlobalTransactionDescriptor {
   }
 
   public boolean complete() {
-    this.completed = true;
     return (state == COMMIT_COMPLETE);
   }
 }

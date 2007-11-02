@@ -7,6 +7,7 @@ package com.tc.object.tx;
 import com.tc.logging.TCLogger;
 import com.tc.object.lockmanager.api.LockFlushCallback;
 import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
 import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
@@ -70,18 +71,14 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   private final SessionManager             sessionManager;
   private final TransactionSequencer       sequencer;
   private final DSOClientMessageChannel    channel;
-  private final ClientTransactionFactory   txFactory;
   private final Timer                      timer                       = new TCTimerImpl(
                                                                                          "RemoteTransactionManager Flusher",
                                                                                          true);
-  private long                             lastBatchSentAt;
 
   public RemoteTransactionManagerImpl(TCLogger logger, final TransactionBatchFactory batchFactory,
-                                      ClientTransactionFactory txFactory, TransactionBatchAccounting batchAccounting,
-                                      LockAccounting lockAccounting, SessionManager sessionManager,
-                                      DSOClientMessageChannel channel) {
+                                      TransactionBatchAccounting batchAccounting, LockAccounting lockAccounting,
+                                      SessionManager sessionManager, DSOClientMessageChannel channel) {
     this.logger = logger;
-    this.txFactory = txFactory;
     this.batchAccounting = batchAccounting;
     this.lockAccounting = lockAccounting;
     this.sessionManager = sessionManager;
@@ -339,15 +336,13 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
         }
         Collection txnIds = batchToSend.addTransactionIDsTo(new HashSet());
         batchAccounting.addBatch(batchToSend.getTransactionBatchID(), txnIds);
-        batchToSend.setAcknowledgedTransactionIDs(batchAccounting.getAndResetCompletedTransactionIDs());
       }
       batchToSend.send();
       outStandingBatches++;
-      lastBatchSentAt = System.currentTimeMillis();
     }
   }
 
-  //XXX:: Currently server always sends NULL BatchID
+  // XXX:: Currently server always sends NULL BatchID
   public void receivedBatchAcknowledgement(TxnBatchID txnBatchID) {
     synchronized (lock) {
       if (status == STOP_INITIATED) {
@@ -396,18 +391,10 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     fireLockFlushCallbacks(callbacks);
   }
 
-  private void flushCompletedTxnIDsIfNecessary() {
-    boolean toFlush;
+  private TransactionID getCompletedTransactionIDLowWaterMark() {
     synchronized (lock) {
       waitUntilRunning();
-      toFlush = ((System.currentTimeMillis() - lastBatchSentAt) >= COMPLETED_ACK_FLUSH_TIMEOUT
-                 && (batchAccounting.getCompletedTransactionIDsSize() > 0) && canSendBatch());
-    }
-    if (toFlush) {
-      ClientTransaction nullTxn = txFactory.newNullInstance(LockID.NULL_ID, TxnType.NORMAL);
-      logger.info("Sending empty Transaction to server to flush completed transaction ids : "
-                  + nullTxn.getTransactionID());
-      commitInternal(nullTxn);
+      return batchAccounting.getLowWaterMark();
     }
   }
 
@@ -465,8 +452,16 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   private class RemoteTransactionManagerTimerTask extends TimerTask {
 
     public void run() {
-      flushCompletedTxnIDsIfNecessary();
+      try {
+        TransactionID lwm = getCompletedTransactionIDLowWaterMark();
+        CompletedTransactionLowWaterMarkMessage ctm = channel.getCompletedTransactionLowWaterMarkMessageFactory()
+            .newCompletedTransactionLowWaterMarkMessage();
+        ctm.initialize(lwm);
+        ctm.send();
+      } catch (Exception e) {
+        logger.error("Error sending Low water mark : ", e);
+        throw new AssertionError(e);
+      }
     }
-
   }
 }

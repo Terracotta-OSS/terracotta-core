@@ -8,28 +8,27 @@ import gnu.trove.TLinkable;
 import gnu.trove.TLinkedList;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 public class TransactionBatchAccounting {
 
-  private final Map         batchesByTransaction    = new HashMap();
-  private final TLinkedList batches                 = new TLinkedList();
-  private Set               completedTransactionIDs = new HashSet();
-  private boolean           stopped                 = false;
+  private final SortedMap   batchesByTransaction = new TreeMap();
+  private final TLinkedList batches              = new TLinkedList();
+  private boolean           stopped              = false;
+  private TransactionID     highWaterMark        = TransactionID.NULL_ID;
 
   public Object dump() {
     return this.toString();
   }
 
   public String toString() {
-    return "TransactionBatchAccounting[batchesByTransaction=" + batchesByTransaction
-           + ", completedGlobalTransactionIDs=" + completedTransactionIDs + "]";
+    return "TransactionBatchAccounting[batchesByTransaction=" + batchesByTransaction + "]";
   }
 
   public synchronized void addBatch(TxnBatchID batchID, Collection transactionIDs) {
@@ -41,6 +40,9 @@ public class TransactionBatchAccounting {
       Object removed = batchesByTransaction.put(txID, desc);
       if (removed != null) { throw new AssertionError("TransactionID is already accounted for: " + txID + "=>"
                                                       + removed); }
+      if (highWaterMark.toLong() < txID.toLong()) {
+        highWaterMark = txID;
+      }
     }
   }
 
@@ -73,7 +75,6 @@ public class TransactionBatchAccounting {
     final TxnBatchID completed;
     final BatchDescriptor desc = (BatchDescriptor) batchesByTransaction.remove(txID);
     if (desc == null) throw new AssertionError("Batch not found for " + txID);
-    completedTransactionIDs.add(txID);
     if (desc.acknowledge(txID) == 0) {
       // completedGlobalTransactionIDs.addAll(desc.globalTransactionIDs);
       batches.remove(desc);
@@ -85,21 +86,19 @@ public class TransactionBatchAccounting {
                                                                                            "Batches list and batchesByTransaction map aren't zero at the same time"); }
     return completed;
   }
-
-  public synchronized Set getAndResetCompletedTransactionIDs() {
-    Set c = completedTransactionIDs;
-    completedTransactionIDs = new HashSet();
-    return c;
-  }
   
-  public synchronized int getCompletedTransactionIDsSize() {
-    return completedTransactionIDs.size();
+  public synchronized TransactionID getLowWaterMark() {
+    if(batchesByTransaction.isEmpty()) {
+      //Low water mark should be set to the next valid lowwatermark, so that transactions are cleared correctly in the server
+      return highWaterMark.next();
+    } else {
+      return (TransactionID) batchesByTransaction.firstKey();
+    }
   }
 
   public synchronized void clear() {
     batches.clear();
     batchesByTransaction.clear();
-    completedTransactionIDs.clear();
   }
 
   private static final class BatchDescriptor implements TLinkable {

@@ -8,6 +8,7 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
+import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.gtx.GlobalTransactionManager;
 import com.tc.object.lockmanager.api.Notify;
 import com.tc.object.tx.ServerTransactionID;
@@ -31,12 +32,19 @@ import java.util.Iterator;
  * @author steve
  */
 public class ApplyTransactionChangeHandler extends AbstractEventHandler {
+
+  // Every 100 transactions, it updates the LWM
+  private static final int               LOW_WATER_MARK_UPDATE_FREQUENCY = 100;
+
   private ServerTransactionManager       transactionManager;
   private LockManager                    lockManager;
   private Sink                           broadcastChangesSink;
   private final ObjectInstanceMonitor    instanceMonitor;
   private final GlobalTransactionManager gtxm;
   private TransactionalObjectManager     txnObjectMgr;
+
+  private int                            count                           = 0;
+  private GlobalTransactionID            lowWaterMark                    = GlobalTransactionID.NULL_ID;
 
   public ApplyTransactionChangeHandler(ObjectInstanceMonitor instanceMonitor, GlobalTransactionManager gtxm) {
     this.instanceMonitor = instanceMonitor;
@@ -66,8 +74,11 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     }
 
     if (txn.needsBroadcast()) {
-      broadcastChangesSink.add(new BroadcastChangeContext(txn, gtxm.getLowGlobalTransactionIDWatermark(),
-                                                          notifiedWaiters, includeIDs));
+      if (count == 0) {
+        lowWaterMark = gtxm.getLowGlobalTransactionIDWatermark();
+      }
+      count = count++ % LOW_WATER_MARK_UPDATE_FREQUENCY;
+      broadcastChangesSink.add(new BroadcastChangeContext(txn, lowWaterMark, notifiedWaiters, includeIDs));
     }
   }
 

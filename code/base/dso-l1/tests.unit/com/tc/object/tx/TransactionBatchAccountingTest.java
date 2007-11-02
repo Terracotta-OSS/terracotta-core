@@ -24,12 +24,9 @@ public class TransactionBatchAccountingTest extends TestCase {
 
   public void testBasics() throws Exception {
     final List incompleteBatchIDs = new LinkedList();
-    final Set completedGlobalTransactionIDs = new HashSet();
     // try adding an empty batch
     Batch batch1 = new Batch(new TxnBatchID(sequence.next()));
     acct.addBatch(batch1.batchID, batch1.transactionIDs);
-    // there should be no completed transactions
-    assertEquals(Collections.EMPTY_SET, acct.getAndResetCompletedTransactionIDs());
     // there should be no incomplete batches
     assertEquals(Collections.EMPTY_LIST, acct.addIncompleteBatchIDsTo(new LinkedList()));
     // the min incomplete batch id should be the null id.
@@ -57,53 +54,53 @@ public class TransactionBatchAccountingTest extends TestCase {
     incompleteBatchIDs.add(batch4.batchID);
     acct.addBatch(batch4.batchID, batch4.transactionIDs);
 
-    // there should be no completed transactions, since there were no acknowledgements
-    assertEquals(Collections.EMPTY_SET, acct.getAndResetCompletedTransactionIDs());
+    // LWM is the lowest txn id, since there were no acknowledgements
+    assertEquals(txID1, acct.getLowWaterMark());
+    
     // check the incomplete batches
     assertEquals(incompleteBatchIDs, acct.addIncompleteBatchIDsTo(new LinkedList()));
     assertEquals(incompleteBatchIDs.get(0), acct.getMinIncompleteBatchID());
 
     // ACK the first transaction in the multi-transaction batch
     assertEquals(TxnBatchID.NULL_BATCH_ID, acct.acknowledge(txID1));
-    completedGlobalTransactionIDs.add(txID1);
     // there should still be no completed batches
     assertEquals(incompleteBatchIDs, acct.addIncompleteBatchIDsTo(new LinkedList()));
-    assertEquals(completedGlobalTransactionIDs, acct.getAndResetCompletedTransactionIDs());
-    completedGlobalTransactionIDs.clear();
+    
+    //LWM moved up
+    assertEquals(txID2, acct.getLowWaterMark());
 
     // ACK the last transaction in the multi-transaction batch. This should cause that batch to become complete AND
     // cause all of its constituent transactions to become completed.
     assertEquals(batch2.batchID, acct.acknowledge(txID2));
-    completedGlobalTransactionIDs.add(txID2);
     incompleteBatchIDs.remove(batch2.batchID);
     assertEquals(incompleteBatchIDs, acct.addIncompleteBatchIDsTo(new LinkedList()));
     assertEquals(incompleteBatchIDs.get(0), acct.getMinIncompleteBatchID());
-    assertEquals(completedGlobalTransactionIDs, acct.getAndResetCompletedTransactionIDs());
-
-    // now check if it is empty
-    completedGlobalTransactionIDs.clear();
-    assertEquals(completedGlobalTransactionIDs, acct.getAndResetCompletedTransactionIDs());
+    
+    //LWM moved up
+    assertEquals(txID3, acct.getLowWaterMark());
+    
+    // LWM remains the same
+    assertEquals(txID3, acct.getLowWaterMark());
 
     // ACK another transaction
     assertEquals(batch3.batchID, acct.acknowledge(txID3));
-    completedGlobalTransactionIDs.addAll(batch3.transactionIDs);
     incompleteBatchIDs.remove(batch3.batchID);
     assertEquals(incompleteBatchIDs, acct.addIncompleteBatchIDsTo(new LinkedList()));
     assertEquals(incompleteBatchIDs.get(0), acct.getMinIncompleteBatchID());
-    assertEquals(completedGlobalTransactionIDs, acct.getAndResetCompletedTransactionIDs());
-
+    
+    //LWM moved up
+    assertEquals(txID4, acct.getLowWaterMark());
+    
     // ACK the last transaction
-    completedGlobalTransactionIDs.clear();
     assertEquals(batch4.batchID, acct.acknowledge(txID4));
-    completedGlobalTransactionIDs.addAll(batch4.transactionIDs);
     incompleteBatchIDs.remove(batch4.batchID);
     assertEquals(Collections.EMPTY_LIST, incompleteBatchIDs);
     assertEquals(incompleteBatchIDs, acct.addIncompleteBatchIDsTo(new LinkedList()));
     assertEquals(TxnBatchID.NULL_BATCH_ID, acct.getMinIncompleteBatchID());
-    assertEquals(completedGlobalTransactionIDs, acct.getAndResetCompletedTransactionIDs());
 
-    completedGlobalTransactionIDs.clear();
-    assertEquals(completedGlobalTransactionIDs, acct.getAndResetCompletedTransactionIDs());
+    //LWM moved up
+    assertEquals(txID4.next(), acct.getLowWaterMark());
+    
   }
 
   /**

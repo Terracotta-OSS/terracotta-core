@@ -13,6 +13,6 @@ public interface TransactionPersistor {
     
   public void saveGlobalTransactionDescriptor(PersistenceTransaction tx, GlobalTransactionDescriptor gtx);
 
-  public void deleteAllByServerTransactionID(PersistenceTransaction tx, Collection toDelete);
+  public void deleteAllGlobalTransactionDescriptors(PersistenceTransaction tx, Collection toDelete);
 
 }

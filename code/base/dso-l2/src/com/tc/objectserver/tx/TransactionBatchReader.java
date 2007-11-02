@@ -8,7 +8,6 @@ import com.tc.net.groups.NodeID;
 import com.tc.object.tx.TxnBatchID;
 
 import java.io.IOException;
-import java.util.Collection;
 
 public interface TransactionBatchReader {
   public ServerTransaction getNextTransaction() throws IOException;
@@ -18,7 +17,5 @@ public interface TransactionBatchReader {
   public int getNumTxns();
 
   public NodeID getNodeID();
-
-  public Collection addAcknowledgedTransactionIDsTo(Collection c);
 
 }

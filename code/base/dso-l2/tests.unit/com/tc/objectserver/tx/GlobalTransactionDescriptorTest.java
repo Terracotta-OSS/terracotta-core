@@ -12,6 +12,9 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
 import com.tc.test.TCTestCase;
 
+import java.util.Iterator;
+import java.util.TreeMap;
+
 public class GlobalTransactionDescriptorTest extends TCTestCase {
 
   public void tests() throws Exception {
@@ -38,5 +41,24 @@ public class GlobalTransactionDescriptorTest extends TCTestCase {
     assertFalse(d1.equals(null));
     assertFalse(d1.equals(x1));
     assertFalse(d1.equals(x2));
+  }
+
+  public void testGIDIsSorted() throws Exception {
+    TreeMap tm = new TreeMap();
+    tm.put(new GlobalTransactionID(9), new Object());
+    tm.put(new GlobalTransactionID(19), new Object());
+    tm.put(new GlobalTransactionID(1), new Object());
+    tm.put(new GlobalTransactionID(Long.MAX_VALUE), new Object());
+    tm.put(new GlobalTransactionID(Long.MIN_VALUE), new Object());
+    tm.put(new GlobalTransactionID(-256), new Object());
+    tm.put(new GlobalTransactionID(1), new Object());
+    tm.put(new GlobalTransactionID(70003), new Object());
+
+    long min = Long.MIN_VALUE;
+    for (Iterator i = tm.keySet().iterator(); i.hasNext();) {
+      GlobalTransactionID gid = (GlobalTransactionID) i.next();
+      assertTrue(min <= gid.toLong());
+      min = gid.toLong();
+    }
   }
 }

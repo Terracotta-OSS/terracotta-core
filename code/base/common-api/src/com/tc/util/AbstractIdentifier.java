@@ -1,17 +1,18 @@
 /**
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
 import java.io.Serializable;
 
 /**
- * Generic Identifier class, parent class of many ID types.  Legal identifiers are
- * expected to be >= 0 and -1 represents a "null" identifier.  
+ * Generic Identifier class, parent class of many ID types. Legal identifiers are expected to be >= 0 and -1 represents
+ * a "null" identifier.
  * 
  * @author steve
  */
-public abstract class AbstractIdentifier implements Serializable {
+public abstract class AbstractIdentifier implements Comparable, Serializable {
   private static final long NULL_ID = -1;
   private final long        id;
 
@@ -31,6 +32,7 @@ public abstract class AbstractIdentifier implements Serializable {
 
   /**
    * Check whether the identifier is null (-1).
+   * 
    * @return True if -1, false otherwise
    */
   public boolean isNull() {
@@ -39,6 +41,7 @@ public abstract class AbstractIdentifier implements Serializable {
 
   /**
    * Convert to long
+   * 
    * @return Long identifier value
    */
   public final long toLong() {
@@ -50,8 +53,8 @@ public abstract class AbstractIdentifier implements Serializable {
   }
 
   /**
-   * Subclasses of AbstractIdentifier specify their "type" by implementing this method and returning a string.
-   * The type is used in printing toString().
+   * Subclasses of AbstractIdentifier specify their "type" by implementing this method and returning a string. The type
+   * is used in printing toString().
    */
   abstract public String getIdentifierType();
 
@@ -60,7 +63,7 @@ public abstract class AbstractIdentifier implements Serializable {
   }
 
   /**
-   * Equality is based on the id value and the identifier class.   
+   * Equality is based on the id value and the identifier class.
    */
   public boolean equals(Object obj) {
     if (obj instanceof AbstractIdentifier) {
@@ -68,5 +71,10 @@ public abstract class AbstractIdentifier implements Serializable {
       return ((this.id == other.id) && this.getClass().equals(other.getClass()));
     }
     return false;
+  }
+
+  public int compareTo(Object o) {
+    AbstractIdentifier other = (AbstractIdentifier) o;
+    return (id < other.id ? -1 : (id == other.id ? 0 : 1));
   }
 }

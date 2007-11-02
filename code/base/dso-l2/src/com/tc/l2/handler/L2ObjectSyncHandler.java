@@ -18,20 +18,20 @@ import com.tc.l2.objectserver.ServerTransactionFactory;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.TransactionBatchReader;
 import com.tc.objectserver.tx.TransactionBatchReaderFactory;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
 public class L2ObjectSyncHandler extends AbstractEventHandler {
 
-  private static final TCLogger              logger = TCLogging.getLogger(L2ObjectSyncHandler.class);
+  private static final TCLogger         logger = TCLogging.getLogger(L2ObjectSyncHandler.class);
 
   private TransactionBatchReaderFactory batchReaderFactory;
 
@@ -46,6 +46,7 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
     } else if (context instanceof RelayedCommitTransactionMessage) {
       RelayedCommitTransactionMessage commitMessage = (RelayedCommitTransactionMessage) context;
       Set serverTxnIDs = processCommitTransactionMessage(commitMessage);
+      processTransactionLowWaterMark(commitMessage.getLowGlobalTransactionIDWatermark());
       ackTransactions(commitMessage, serverTxnIDs);
     } else if (context instanceof ObjectSyncCompleteMessage) {
       ObjectSyncCompleteMessage msg = (ObjectSyncCompleteMessage) context;
@@ -55,6 +56,11 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
     } else {
       throw new AssertionError("Unknown context type : " + context.getClass().getName() + " : " + context);
     }
+  }
+
+  private void processTransactionLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark) {
+    // TODO:: This processing could be handled by another stage thread.
+    rTxnManager.clearTransactionsBelowLowWaterMark(lowGlobalTransactionIDWatermark);
   }
 
   // TODO:: Implement throttling between active/passive
@@ -74,8 +80,7 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
       while ((txn = reader.getNextTransaction()) != null) {
         txns.put(txn.getServerTransactionID(), txn);
       }
-      rTxnManager.addCommitedTransactions(reader.getNodeID(), txns.keySet(), txns.values(), reader
-          .addAcknowledgedTransactionIDsTo(new HashSet()));
+      rTxnManager.addCommitedTransactions(reader.getNodeID(), txns.keySet(), txns.values());
       return txns.keySet();
     } catch (IOException e) {
       throw new AssertionError(e);

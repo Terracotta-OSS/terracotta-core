@@ -28,7 +28,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -43,13 +42,10 @@ public class ServerTxnAckMessageTest extends TestCase {
   private final NodeID         nodeID    = new NodeIDImpl("foo", "foobar".getBytes());
 
   public void setUp() {
-    Collection acknowledged = new ArrayList();
-    acknowledged.add(new TransactionID(987));
-    acknowledged.add(new TransactionID(876));
     TestCommitTransactionMessage testCommitTransactionMessage = (TestCommitTransactionMessage) new TestCommitTransactionMessageFactory()
         .newCommitTransactionMessage();
     testCommitTransactionMessage.setBatch(new TestTransactionBatch(new TCByteBuffer[] { TCByteBufferFactory
-        .getInstance(false, 3452) }, acknowledged), new ObjectStringSerializer());
+        .getInstance(false, 3452) }), new ObjectStringSerializer());
     testCommitTransactionMessage.setChannelID(new ClientID(new ChannelID(channelId)));
 
     serverTransactionIDs = new HashSet();
@@ -70,7 +66,8 @@ public class ServerTxnAckMessageTest extends TestCase {
     transactions.add(new TestServerTransaction(stid4, new TxnBatchID(9), new GlobalTransactionID(78)));
 
     relayedCommitTransactionMessage = RelayedCommitTransactionMessageFactory
-        .createRelayedCommitTransactionMessage(testCommitTransactionMessage, transactions, 700);
+        .createRelayedCommitTransactionMessage(testCommitTransactionMessage, transactions, 700,
+                                               new GlobalTransactionID(99));
     relayedCommitTransactionMessage.setMessageOrginator(nodeID);
   }
 

@@ -28,14 +28,12 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
 
 public class TransactionBatchWriter implements ClientTransactionBatch {
   private final static TCLogger logger = TCLogging.getLogger(TransactionBatchWriter.class);
 
   private final CommitTransactionMessageFactory commitTransactionMessageFactory;
-  private Set                                   acknowledgedTransactionIDs = null;
   private final TxnBatchID                      batchID;
   private final LinkedHashMap                   transactionData            = new LinkedHashMap();
   private final ObjectStringSerializer          serializer;
@@ -184,15 +182,6 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
   public synchronized Collection addTransactionIDsTo(Collection c) {
     c.addAll(transactionData.keySet());
     return c;
-  }
-
-  public synchronized void setAcknowledgedTransactionIDs(Set acknowledged) {
-    this.acknowledgedTransactionIDs = acknowledged;
-  }
-
-  public synchronized Collection getAcknowledgedTransactionIDs() {
-    if (acknowledgedTransactionIDs == null) { throw new AssertionError("Acknowledged Transaction IDs is not set"); }
-    return this.acknowledgedTransactionIDs;
   }
 
   public synchronized SequenceID getMinTransactionSequence() {

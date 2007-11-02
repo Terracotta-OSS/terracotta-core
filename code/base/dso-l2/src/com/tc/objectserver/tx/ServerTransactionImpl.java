@@ -60,8 +60,8 @@ public class ServerTransactionImpl implements ServerTransaction {
     this.serverTxID = new ServerTransactionID(source, txID);
     // NOTE::XXX:: GlobalTransactionID is assigned in the process transaction stage. The transaction could be
     // re-ordered before apply. This is not a problem because for an transaction to be re-ordered, it should not
-    // have any common objects between them. hence if g1 is the first txn and g2 is the second txn, g2 will be applied
-    // before g1, only when g2 has not common objects with g1. If this is not true then we cant assign gid here.
+    // have any common objects between them. hence if g1 is the first txn and g2 is the second txn, g2 can be applied
+    // before g1 only when g2 has no common objects(or locks) with g1. If this is not true then we cant assign gid here.
     this.globalTxnID = gtxm.getOrCreateGlobalTransactionID(serverTxID);
     this.transactionType = transactionType;
     this.notifies = notifies;

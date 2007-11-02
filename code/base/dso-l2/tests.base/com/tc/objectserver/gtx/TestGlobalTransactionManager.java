@@ -9,7 +9,6 @@ import com.tc.net.groups.NodeID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
-import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.sequence.Sequence;
 
 import java.util.Collection;
@@ -19,9 +18,8 @@ import java.util.Set;
 
 public final class TestGlobalTransactionManager implements ServerGlobalTransactionManager {
 
-  public final NoExceptionLinkedQueue completeTransactionsContexts = new NoExceptionLinkedQueue();
-  private long                        idSequence                   = 0;
-  private Set                         commitedSIDs                 = new HashSet();
+  private long idSequence   = 0;
+  private Set  commitedSIDs = new HashSet();
 
   public boolean initiateApply(ServerTransactionID stxID) {
     return !commitedSIDs.contains(stxID);
@@ -35,8 +33,8 @@ public final class TestGlobalTransactionManager implements ServerGlobalTransacti
     return null;
   }
 
-  public void completeTransactions(PersistenceTransaction persistenceTransaction, Collection collection) {
-    completeTransactionsContexts.put(collection);
+  public void clearCommitedTransactionsBelowLowWaterMark(ServerTransactionID sid) {
+    return;
   }
 
   public void shutdownNode(NodeID nodeID) {
@@ -51,9 +49,6 @@ public final class TestGlobalTransactionManager implements ServerGlobalTransacti
 
   public void clear() {
     commitedSIDs.clear();
-    while (!completeTransactionsContexts.isEmpty()) {
-      completeTransactionsContexts.take();
-    }
   }
 
   public GlobalTransactionID getOrCreateGlobalTransactionID(ServerTransactionID serverTransactionID) {
@@ -77,6 +72,10 @@ public final class TestGlobalTransactionManager implements ServerGlobalTransacti
   }
 
   public GlobalTransactionID getGlobalTransactionID(ServerTransactionID serverTransactionID) {
+    throw new ImplementMe();
+  }
+
+  public void clearCommitedTransactionsBelowLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark) {
     throw new ImplementMe();
   }
 }

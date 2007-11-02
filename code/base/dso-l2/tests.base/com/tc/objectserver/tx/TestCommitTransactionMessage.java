@@ -11,7 +11,6 @@ import com.tc.object.msg.CommitTransactionMessage;
 import com.tc.object.tx.TransactionBatch;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -21,7 +20,6 @@ public class TestCommitTransactionMessage implements CommitTransactionMessage {
   public final List             setBatchCalls    = new LinkedList();
   public final List             sendCalls        = new LinkedList();
   public ObjectStringSerializer serializer;
-  private Collection            atids            = new ArrayList();
   private List                  tcByteBufferList = new ArrayList();
   private ClientID              clientID         = ClientID.NULL_ID;
 
@@ -33,7 +31,6 @@ public class TestCommitTransactionMessage implements CommitTransactionMessage {
     setBatchCalls.add(batch);
     this.serializer = serializer;
 
-    atids.addAll(batch.getAcknowledgedTransactionIDs());
     TCByteBuffer[] tcbb = batch.getData();
     for (int i = 0; i < tcbb.length; i++) {
       tcByteBufferList.add(tcbb[i]);
@@ -55,10 +52,6 @@ public class TestCommitTransactionMessage implements CommitTransactionMessage {
 
   public ObjectStringSerializer getSerializer() {
     return serializer;
-  }
-
-  public Collection getAcknowledgedTransactionIDs() {
-    return atids;
   }
 
   public ClientID getClientID() {

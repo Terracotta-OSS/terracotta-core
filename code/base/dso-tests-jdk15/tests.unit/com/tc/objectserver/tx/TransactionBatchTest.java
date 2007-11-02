@@ -13,7 +13,6 @@ import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.impl.DNAEncodingImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.DefaultGlobalTransactionIDGenerator;
-import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.gtx.GlobalTransactionIDGenerator;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.Notify;
@@ -32,11 +31,9 @@ import com.tc.util.SequenceID;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import junit.framework.TestCase;
 
@@ -87,22 +84,10 @@ public class TransactionBatchTest extends TestCase {
     }
   }
 
-  public void testAddAcknowledgedTransactionIDs() throws Exception {
-    Set txs = new HashSet();
-    for (int i = 0; i < 100; i++) {
-      GlobalTransactionID txID = new GlobalTransactionID(i);
-      txs.add(txID);
-    }
-    writer.setAcknowledgedTransactionIDs(txs);
-    assertEquals(txs, writer.getAcknowledgedTransactionIDs());
-  }
-
   public void testSend() throws Exception {
     assertTrue(messageFactory.messages.isEmpty());
 
-    writer.setAcknowledgedTransactionIDs(new HashSet());
     writer.send();
-
     assertEquals(1, messageFactory.messages.size());
     TestCommitTransactionMessage message = (TestCommitTransactionMessage) messageFactory.messages.get(0);
     assertEquals(1, message.setBatchCalls.size());
@@ -150,8 +135,7 @@ public class TransactionBatchTest extends TestCase {
     writer.wait4AllTxns2Serialize();
 
     TransactionBatchReaderImpl reader = new TransactionBatchReaderImpl(gidGenerator, writer.getData(), clientID,
-                                                                       new HashSet(), serializer,
-                                                                       new ActiveServerTransactionFactory());
+                                                                       serializer, new ActiveServerTransactionFactory());
     assertEquals(2, reader.getNumTxns());
     assertEquals(batchID, reader.getBatchID());
 

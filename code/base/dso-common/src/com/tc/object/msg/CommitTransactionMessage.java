@@ -8,8 +8,6 @@ import com.tc.net.groups.ClientID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.tx.TransactionBatch;
 
-import java.util.Collection;
-
 /**
  * @author steve
  */
@@ -21,8 +19,6 @@ public interface CommitTransactionMessage {
 
   public TCByteBuffer[] getBatchData();
   
-  public Collection getAcknowledgedTransactionIDs();
-
   public void send();
   
   public ClientID getClientID();

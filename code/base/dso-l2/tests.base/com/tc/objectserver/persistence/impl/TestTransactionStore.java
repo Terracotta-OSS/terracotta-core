@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.Map.Entry;
 
 public class TestTransactionStore implements TransactionStore {
 
@@ -31,7 +32,7 @@ public class TestTransactionStore implements TransactionStore {
   public final NoExceptionLinkedQueue nextTransactionIDContextQueue = new NoExceptionLinkedQueue();
 
   private final Map                   volatileMap                   = new HashMap();
-  private final SortedSet             ids                           = new TreeSet(GlobalTransactionID.COMPARATOR);
+  private final SortedSet             ids                           = new TreeSet();
   private final Map                   durableMap                    = new HashMap();
   public long                         idSequence                    = 1;
 
@@ -87,14 +88,17 @@ public class TestTransactionStore implements TransactionStore {
     return (GlobalTransactionID) ids.first();
   }
 
-  public void removeAllByServerTransactionID(PersistenceTransaction tx, Collection collection) {
-    for (Iterator iter = collection.iterator(); iter.hasNext();) {
-      ServerTransactionID sid = (ServerTransactionID) iter.next();
-      GlobalTransactionDescriptor gdesc = (GlobalTransactionDescriptor) volatileMap.remove(sid);
-      if (gdesc != null) {
-        ids.remove(gdesc.getGlobalTransactionID());
+  public void clearCommitedTransactionsBelowLowWaterMark(PersistenceTransaction tx, ServerTransactionID lowWaterMark) {
+    for (Iterator iter = volatileMap.entrySet().iterator(); iter.hasNext();) {
+      Entry e = (Entry) iter.next();
+      ServerTransactionID sid = (ServerTransactionID) e.getKey();
+      if (sid.getSourceID().equals(lowWaterMark.getSourceID())) {
+        GlobalTransactionDescriptor gdesc = (GlobalTransactionDescriptor) e.getValue();
+        if (gdesc.getClientTransactionID().toLong() < lowWaterMark.getClientTransactionID().toLong()) {
+          ids.remove(gdesc.getGlobalTransactionID());
+          durableMap.remove(sid);
+        }
       }
-      durableMap.remove(sid);
     }
   }
 
@@ -116,6 +120,10 @@ public class TestTransactionStore implements TransactionStore {
       ServerTransactionID sid = (ServerTransactionID) i.next();
       commitTransactionDescriptor(persistenceTransaction, sid);
     }
+  }
+
+  public void clearCommitedTransactionsBelowLowWaterMark(PersistenceTransaction tx, GlobalTransactionID lowWaterMark) {
+    throw new ImplementMe();
   }
 
 }

@@ -14,7 +14,6 @@ import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,7 +29,6 @@ public class TestServerTransactionManager implements ServerTransactionManager {
   public final NoExceptionLinkedQueue shutdownClientCalls = new NoExceptionLinkedQueue();
   public final ArrayList              incomingTxnContexts = new ArrayList();
   public final List                   incomingTxns        = new ArrayList();
-  public final Set                    completedTxns       = new HashSet();
 
   public void shutdownNode(NodeID deadClient) {
     shutdownClientCalls.put(deadClient);
@@ -73,10 +71,9 @@ public class TestServerTransactionManager implements ServerTransactionManager {
     // NOP
   }
 
-  public void incomingTransactions(NodeID nodeID, Set txnIDs, Collection txns, boolean relayed, Collection cmpltedTxns) {
+  public void incomingTransactions(NodeID nodeID, Set txnIDs, Collection txns, boolean relayed) {
     incomingTxnContexts.add(new Object[] { nodeID, txnIDs, Boolean.valueOf(relayed) });
     incomingTxns.addAll(txns);
-    completedTxns.addAll(cmpltedTxns);
   }
 
   public void transactionsRelayed(NodeID node, Set serverTxnIDs) {
@@ -84,7 +81,7 @@ public class TestServerTransactionManager implements ServerTransactionManager {
   }
 
   public void commit(PersistenceTransactionProvider ptxp, Collection objects, Map newRoots,
-                     Collection appliedServerTransactionIDs, Set completedTransactionIDs) {
+                     Collection appliedServerTransactionIDs ) {
     // NOP
   }
 

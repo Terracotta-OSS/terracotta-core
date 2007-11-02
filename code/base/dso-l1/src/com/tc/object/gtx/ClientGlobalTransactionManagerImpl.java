@@ -29,7 +29,7 @@ public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransacti
 
   private static final int               ALLOWED_LWM_DELTA    = 100;
   private final Set                      applied              = new HashSet();
-  private final SortedMap                globalTransactionIDs = new TreeMap(GlobalTransactionID.COMPARATOR);
+  private final SortedMap                globalTransactionIDs = new TreeMap();
 
   private GlobalTransactionID            lowWatermark         = GlobalTransactionID.NULL_ID;
   private final RemoteTransactionManager remoteTransactionManager;
@@ -52,8 +52,8 @@ public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransacti
   public synchronized boolean startApply(NodeID committerID, TransactionID transactionID, GlobalTransactionID gtxID) {
     if (gtxID.lessThan(getLowGlobalTransactionIDWatermark())) {
       // formatting
-      throw new UnknownTransactionError("Attempt to apply a transaction lower than the low watermark: gtxID=" + gtxID
-                                        + ", low watermark=" + getLowGlobalTransactionIDWatermark());
+      throw new UnknownTransactionError("Attempt to apply a transaction lower than the low watermark: gtxID = " + gtxID
+                                        + ", low watermark = " + getLowGlobalTransactionIDWatermark());
     }
     ServerTransactionID serverTransactionID = new ServerTransactionID(committerID, transactionID);
     globalTransactionIDs.put(gtxID, serverTransactionID);
@@ -73,10 +73,10 @@ public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransacti
       return;
     }
     if (this.lowWatermark.toLong() + ALLOWED_LWM_DELTA > lowWatermark.toLong()) {
-      if (ignoredCount++ > ALLOWED_LWM_DELTA * 10) {
+      if (ignoredCount++ > ALLOWED_LWM_DELTA * 100) {
         logger.warn("Current Low water Mark = " + this.lowWatermark + " Server sent " + lowWatermark);
         logger.warn("Server didnt send a Low water mark higher than ALLOWED_LWM_DELTA for " + ignoredCount
-                    + " times. Resetting count.");
+                    + " times. applied.size() = " + applied.size() + " Resetting count.");
         ignoredCount = 0;
       }
       return;

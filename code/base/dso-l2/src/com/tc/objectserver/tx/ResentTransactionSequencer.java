@@ -15,7 +15,6 @@ import com.tc.util.State;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -42,8 +41,6 @@ public class ResentTransactionSequencer implements ServerTransactionListener {
   private final ServerGlobalTransactionManager gtxm;
   private final List                           resentTxns             = new LinkedList();
   private final Map                            pendingTxns            = new LinkedHashMap();
-  private final Collection                     pendingCompletedTxnIDs = new ArrayList();
-
   private State                                state                  = PASS_THRU;
 
   public ResentTransactionSequencer(ServerTransactionManager transactionManager, ServerGlobalTransactionManager gtxm,
@@ -53,12 +50,12 @@ public class ResentTransactionSequencer implements ServerTransactionListener {
     this.txnObjectManager = txnObjectManager;
   }
 
-  public synchronized void addTransactions(Collection txns, Collection completedTxnIds) {
+  public synchronized void addTransactions(Collection txns) {
     State lstate = state;
     if (lstate == PASS_THRU) {
-      txnObjectManager.addTransactions(txns, completedTxnIds);
+      txnObjectManager.addTransactions(txns);
     } else if (lstate == INCOMING_RESENT) {
-      addToPending(txns, completedTxnIds);
+      addToPending(txns);
       processResent();
     } else {
       throw new AssertionError("Illegal State : " + state + " resentTxns : " + resentTxns);
@@ -78,17 +75,16 @@ public class ResentTransactionSequencer implements ServerTransactionListener {
       }
     }
     if (!txns2Process.isEmpty()) {
-      txnObjectManager.addTransactions(txns2Process, Collections.EMPTY_LIST);
+      txnObjectManager.addTransactions(txns2Process);
     }
     moveToPassThruIfPossible();
   }
 
-  private synchronized void addToPending(Collection txns, Collection completedTxnIds) {
+  private synchronized void addToPending(Collection txns) {
     for (Iterator i = txns.iterator(); i.hasNext();) {
       ServerTransaction txn = (ServerTransaction) i.next();
       pendingTxns.put(txn.getServerTransactionID(), txn);
     }
-    pendingCompletedTxnIDs.addAll(completedTxnIds);
   }
 
   public synchronized void goToActiveMode() {
@@ -122,8 +118,7 @@ public class ResentTransactionSequencer implements ServerTransactionListener {
   }
 
   private void clearPending() {
-    txnObjectManager.addTransactions(pendingTxns.values(), pendingCompletedTxnIDs);
-    pendingCompletedTxnIDs.clear();
+    txnObjectManager.addTransactions(pendingTxns.values());
     pendingTxns.clear();
   }
 

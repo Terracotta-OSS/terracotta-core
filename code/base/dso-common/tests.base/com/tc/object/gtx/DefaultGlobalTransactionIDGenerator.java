@@ -13,7 +13,7 @@ import java.util.TreeSet;
 
 public class DefaultGlobalTransactionIDGenerator implements GlobalTransactionIDGenerator {
 
-  SortedSet gidSet  = new TreeSet(GlobalTransactionID.COMPARATOR);
+  SortedSet gidSet  = new TreeSet();
   Map       sid2Gid = new HashMap();
   long      id      = 0;
 

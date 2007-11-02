@@ -15,28 +15,20 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionBatch;
-import com.tc.object.tx.TransactionID;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
 
 /**
  * @author steve
  */
 public class CommitTransactionMessageImpl extends DSOMessageBase implements EventContext, CommitTransactionMessage {
-  private static final byte      BATCH_TRANSACTION_DATA_ID   = 1;
-  private static final byte      ACKNOWLEDGED_TRANSACTION_ID = 2;
-  private static final byte      SERIALIZER_ID               = 3;
+  private static final byte      BATCH_TRANSACTION_DATA_ID = 1;
+  private static final byte      SERIALIZER_ID             = 2;
   private ObjectStringSerializer serializer;
 
-  private Recyclable             batch;                                      // This is used to recycle buffers on
+  private Recyclable             batch;                        // This is used to recycle buffers on
   // the write side
   private TCByteBuffer[]         batchData;
-  private final Set              acknowledgedTransactionIDs  = new HashSet();
 
   public CommitTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out,
                                       MessageChannel channel, TCMessageType type) {
@@ -53,9 +45,6 @@ public class CommitTransactionMessageImpl extends DSOMessageBase implements Even
   }
 
   protected void dehydrateValues() {
-    for (Iterator i = acknowledgedTransactionIDs.iterator(); i.hasNext();) {
-      putNVPair(ACKNOWLEDGED_TRANSACTION_ID, ((TransactionID) i.next()).toLong());
-    }
     putNVPair(SERIALIZER_ID, serializer);
     putNVPair(BATCH_TRANSACTION_DATA_ID, batchData);
     batchData = null;
@@ -65,10 +54,6 @@ public class CommitTransactionMessageImpl extends DSOMessageBase implements Even
     switch (name) {
       case BATCH_TRANSACTION_DATA_ID: {
         this.batchData = getInputStream().toArray();
-        return true;
-      }
-      case ACKNOWLEDGED_TRANSACTION_ID: {
-        this.acknowledgedTransactionIDs.add(new TransactionID(getInputStream().readLong()));
         return true;
       }
       case SERIALIZER_ID:
@@ -84,7 +69,6 @@ public class CommitTransactionMessageImpl extends DSOMessageBase implements Even
   public void setBatch(TransactionBatch batch, ObjectStringSerializer serializer) {
     this.batch = batch;
     setBatchData(batch.getData(), serializer);
-    this.acknowledgedTransactionIDs.addAll(batch.getAcknowledgedTransactionIDs());
   }
 
   // This is here for a test
@@ -96,10 +80,6 @@ public class CommitTransactionMessageImpl extends DSOMessageBase implements Even
 
   public synchronized TCByteBuffer[] getBatchData() {
     return batchData;
-  }
-
-  public Collection getAcknowledgedTransactionIDs() {
-    return Collections.unmodifiableCollection(this.acknowledgedTransactionIDs);
   }
 
   public void doRecycleOnRead() {
@@ -117,5 +97,4 @@ public class CommitTransactionMessageImpl extends DSOMessageBase implements Even
       batch.recycle();
     }
   }
-
 }

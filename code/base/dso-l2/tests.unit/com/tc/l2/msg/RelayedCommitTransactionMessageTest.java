@@ -25,7 +25,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -39,13 +38,10 @@ public class RelayedCommitTransactionMessageTest extends TestCase {
   private final int                    channelId = 2;
 
   public void setUp() {
-    Collection acknowledged = new ArrayList();
-    acknowledged.add(new TransactionID(987));
-    acknowledged.add(new TransactionID(876));
     testCommitTransactionMessage = (TestCommitTransactionMessage) new TestCommitTransactionMessageFactory()
         .newCommitTransactionMessage();
     testCommitTransactionMessage.setBatch(new TestTransactionBatch(new TCByteBuffer[] { TCByteBufferFactory
-        .getInstance(false, 3452) }, acknowledged), new ObjectStringSerializer());
+        .getInstance(false, 3452) }), new ObjectStringSerializer());
     testCommitTransactionMessage.setChannelID(new ClientID(new ChannelID(channelId)));
 
     serverTransactionIDs = new ArrayList();
@@ -80,13 +76,9 @@ public class RelayedCommitTransactionMessageTest extends TestCase {
 
     assertEquals(rctm.getClientID(), rctm1.getClientID());
 
-    Collection acknowledged = rctm.getAcknowledgedTransactionIDs();
-    Collection acknowledged1 = rctm1.getAcknowledgedTransactionIDs();
-    assertEquals(acknowledged.size(), acknowledged1.size());
-    Iterator iter1 = acknowledged1.iterator();
-    for (Iterator iter = acknowledged.iterator(); iter.hasNext();) {
-      assertEquals(iter.next(), iter1.next());
-    }
+    GlobalTransactionID lwm = rctm.getLowGlobalTransactionIDWatermark();
+    GlobalTransactionID lwm1 = rctm1.getLowGlobalTransactionIDWatermark();
+    assertEquals(lwm, lwm1);
 
     for (Iterator iter = serverTransactionIDs.iterator(); iter.hasNext();) {
       ServerTransactionID serverTransactionID = (ServerTransactionID) iter.next();
@@ -141,7 +133,8 @@ public class RelayedCommitTransactionMessageTest extends TestCase {
 
   public void testBasicSerialization() throws Exception {
     RelayedCommitTransactionMessage rctm = RelayedCommitTransactionMessageFactory
-        .createRelayedCommitTransactionMessage(testCommitTransactionMessage, transactions, 420);
+        .createRelayedCommitTransactionMessage(testCommitTransactionMessage, transactions, 420,
+                                               new GlobalTransactionID(49));
     RelayedCommitTransactionMessage rctm1 = writeAndRead(rctm);
     validate(rctm, rctm1);
   }

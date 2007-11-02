@@ -19,11 +19,8 @@ import com.tc.util.Assert;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -35,25 +32,25 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
   private TCByteBuffer[]         batchData;
   private ObjectStringSerializer serializer;
   private Map                    sid2gid;
-  private NodeID               nodeID;
-  private Collection             ackedTransactionIDs;
+  private NodeID                 nodeID;
   private long                   sequenceID;
+
+  private GlobalTransactionID    lowWaterMark;
 
   // To make serialization happy
   public RelayedCommitTransactionMessage() {
     super(-1);
   }
 
- public RelayedCommitTransactionMessage(NodeID nodeID, TCByteBuffer[] batchData,
-                                         ObjectStringSerializer serializer, Map sid2gid,
-                                         Collection ackedTransactionIDs, long seqID) {
+  public RelayedCommitTransactionMessage(NodeID nodeID, TCByteBuffer[] batchData, ObjectStringSerializer serializer,
+                                         Map sid2gid, long seqID, GlobalTransactionID lowWaterMark) {
     super(RELAYED_COMMIT_TXN_MSG_TYPE);
     this.nodeID = nodeID;
     this.batchData = batchData;
     this.serializer = serializer;
     this.sid2gid = sid2gid;
-    this.ackedTransactionIDs = ackedTransactionIDs;
     this.sequenceID = seqID;
+    this.lowWaterMark = lowWaterMark;
   }
 
   public NodeID getClientID() {
@@ -74,17 +71,8 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
     this.serializer = readObjectStringSerializer(in);
     this.batchData = readByteBuffers(in);
     this.sid2gid = readServerTxnIDglobalTxnIDMapping(in);
-    this.ackedTransactionIDs = readAckedTransactionIDs(in);
     this.sequenceID = in.readLong();
-  }
-
-  private Collection readAckedTransactionIDs(ObjectInput in) throws IOException {
-    int size = in.readInt();
-    List ackedTxnIDs = new ArrayList(size);
-    for (int i = 0; i < size; i++) {
-      ackedTxnIDs.add(new TransactionID(in.readLong()));
-    }
-    return ackedTxnIDs;
+    this.lowWaterMark = new GlobalTransactionID(in.readLong());
   }
 
   private Map readServerTxnIDglobalTxnIDMapping(ObjectInput in) throws IOException {
@@ -105,16 +93,8 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
     writeObjectStringSerializer(out, serializer);
     writeByteBuffers(out, batchData);
     writeServerTxnIDGlobalTxnIDMapping(out);
-    writeAckedTransactionIDs(out);
     out.writeLong(this.sequenceID);
-  }
-
-  private void writeAckedTransactionIDs(ObjectOutput out) throws IOException {
-    out.writeInt(ackedTransactionIDs.size());
-    for (Iterator i = ackedTransactionIDs.iterator(); i.hasNext();) {
-      TransactionID tid = (TransactionID) i.next();
-      out.writeLong(tid.toLong());
-    }
+    out.writeLong(this.lowWaterMark.toLong());
   }
 
   private void writeServerTxnIDGlobalTxnIDMapping(ObjectOutput out) throws IOException {
@@ -137,12 +117,7 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
   }
 
   public GlobalTransactionID getLowGlobalTransactionIDWatermark() {
-    throw new UnsupportedOperationException(
-                                            "getLowGlobalTransactionIDWatermark() not supported by RelayedCommitTransactionMessage");
-  }
-
-  public Collection getAcknowledgedTransactionIDs() {
-    return this.ackedTransactionIDs;
+    return this.lowWaterMark;
   }
 
   public long getSequenceID() {

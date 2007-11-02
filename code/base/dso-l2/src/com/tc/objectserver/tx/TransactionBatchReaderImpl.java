@@ -14,18 +14,14 @@ import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionIDGenerator;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.Notify;
-import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
-import com.tc.util.Assert;
 import com.tc.util.SequenceID;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -34,24 +30,21 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
 
   private final TCByteBufferInputStream      in;
   private final TxnBatchID                   batchID;
-  private final NodeID                     source;
+  private final NodeID                       source;
   private int                                numTxns;
-  private final Collection                   acknowledgedTransactionIDs;
   private ObjectStringSerializer             serializer;
   private final GlobalTransactionIDGenerator gtxm;
   private final ServerTransactionFactory     txnFactory;
 
   public TransactionBatchReaderImpl(GlobalTransactionIDGenerator gtxm, TCByteBuffer[] data, NodeID nodeID,
-                                    Collection acknowledgedTransactionIDs, ObjectStringSerializer serializer,
-                                    ServerTransactionFactory txnFactory) throws IOException {
+                                    ObjectStringSerializer serializer, ServerTransactionFactory txnFactory)
+      throws IOException {
     this.gtxm = gtxm;
     this.txnFactory = txnFactory;
     this.in = new TCByteBufferInputStream(data);
     this.source = nodeID;
     this.batchID = new TxnBatchID(in.readLong());
     this.numTxns = in.readInt();
-    Assert.assertNotNull(acknowledgedTransactionIDs);
-    this.acknowledgedTransactionIDs = acknowledgedTransactionIDs;
     this.serializer = serializer;
   }
 
@@ -124,12 +117,5 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
 
   public int getNumTxns() {
     return this.numTxns;
-  }
-
-  public Collection addAcknowledgedTransactionIDsTo(Collection c) {
-    for (Iterator iter = acknowledgedTransactionIDs.iterator(); iter.hasNext();) {
-      c.add(new ServerTransactionID(source, (TransactionID) iter.next()));
-    }
-    return c;
   }
 }

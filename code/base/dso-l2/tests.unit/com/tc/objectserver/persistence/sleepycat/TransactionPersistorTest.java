@@ -100,9 +100,9 @@ public class TransactionPersistorTest extends TCTestCase {
         try {
           PersistenceTransaction pt = persistenceTransactionProvider.newTransaction();
           ArrayList al = new ArrayList();
-          al.add(sid);
+          al.add(gtd);
           cb.barrier();
-          tpl.deleteAllByServerTransactionID(pt, al);
+          tpl.deleteAllGlobalTransactionDescriptors(pt, al);
           System.err.println("T2 : Delete done");
           pt.commit();
           System.err.println("T2 : Delete commit done");

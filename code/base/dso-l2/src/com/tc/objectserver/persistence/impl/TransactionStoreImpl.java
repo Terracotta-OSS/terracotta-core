@@ -10,17 +10,15 @@ import com.tc.net.groups.NodeID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
+import com.tc.objectserver.gtx.ServerTransactionIDBookKeeper;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.TransactionPersistor;
 import com.tc.objectserver.persistence.api.TransactionStore;
-import com.tc.util.Assert;
 import com.tc.util.sequence.Sequence;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -30,15 +28,12 @@ import java.util.TreeMap;
 
 public class TransactionStoreImpl implements TransactionStore {
 
-  private static final TCLogger      logger                 = TCLogging.getLogger(TransactionStoreImpl.class);
+  private static final TCLogger               logger = TCLogging.getLogger(TransactionStoreImpl.class);
 
-  private final Map                  serverTransactionIDMap = new HashMap();
-  private final SortedMap            ids                    = Collections
-                                                                .synchronizedSortedMap(new TreeMap(
-                                                                                                   GlobalTransactionID.COMPARATOR));
-  private final Set                  ongoingCommits         = new HashSet();
-  private final TransactionPersistor persistor;
-  private final Sequence             globalIDSequence;
+  private final ServerTransactionIDBookKeeper sids   = new ServerTransactionIDBookKeeper();
+  private final SortedMap                     ids    = Collections.synchronizedSortedMap(new TreeMap());
+  private final TransactionPersistor          persistor;
+  private final Sequence                      globalIDSequence;
 
   public TransactionStoreImpl(TransactionPersistor persistor, Sequence globalIDSequence) {
     this.persistor = persistor;
@@ -52,37 +47,17 @@ public class TransactionStoreImpl implements TransactionStore {
   }
 
   public void commitAllTransactionDescriptor(PersistenceTransaction transaction, Collection stxIDs) {
-    List toSave = new ArrayList(stxIDs.size());
-    synchronized (this) {
-      for (Iterator i = stxIDs.iterator(); i.hasNext();) {
-        ServerTransactionID stxnID = (ServerTransactionID) i.next();
-        GlobalTransactionDescriptor gtx = (GlobalTransactionDescriptor) this.serverTransactionIDMap.get(stxnID);
-        if (gtx.commitComplete()) {
-          // reconsile when txn complete arrives before commit. Can happen in Passive server
-          this.serverTransactionIDMap.remove(gtx.getServerTransactionID());
-          ids.remove(gtx.getGlobalTransactionID());
-        } else {
-          toSave.add(gtx);
-          ongoingCommits.add(stxnID);
-        }
-      }
-    }
-    for (Iterator i = toSave.iterator(); i.hasNext();) {
-      GlobalTransactionDescriptor gtx = (GlobalTransactionDescriptor) i.next();
-      persistor.saveGlobalTransactionDescriptor(transaction, gtx);
-    }
-    synchronized (this) {
-      if (ongoingCommits.size() == toSave.size()) {
-        // No one else is currently saving stuff
-        ongoingCommits.clear();
+    for (Iterator i = stxIDs.iterator(); i.hasNext();) {
+      ServerTransactionID stxnID = (ServerTransactionID) i.next();
+      GlobalTransactionDescriptor gtx = this.sids.get(stxnID);
+      if (stxnID.isServerGeneratedTransaction()) {
+        // XXX:: Since server Generated Transactions dont get completed acks, we dont persist these
+        this.sids.remove(stxnID);
+        this.ids.remove(gtx.getGlobalTransactionID());
       } else {
-        for (Iterator i = toSave.iterator(); i.hasNext();) {
-          GlobalTransactionDescriptor gtx = (GlobalTransactionDescriptor) i.next();
-          boolean removed = ongoingCommits.remove(gtx.getServerTransactionID());
-          Assert.assertTrue(removed);
-        }
+        persistor.saveGlobalTransactionDescriptor(transaction, gtx);
+        gtx.commitComplete();
       }
-      notifyAll();
     }
   }
 
@@ -93,13 +68,12 @@ public class TransactionStoreImpl implements TransactionStore {
     commitAllTransactionDescriptor(transaction, stxIDs);
   }
 
-  public synchronized GlobalTransactionDescriptor getTransactionDescriptor(ServerTransactionID serverTransactionID) {
-    return (GlobalTransactionDescriptor) this.serverTransactionIDMap.get(serverTransactionID);
+  public GlobalTransactionDescriptor getTransactionDescriptor(ServerTransactionID serverTransactionID) {
+    return this.sids.get(serverTransactionID);
   }
 
-  public synchronized GlobalTransactionDescriptor getOrCreateTransactionDescriptor(
-                                                                                   ServerTransactionID serverTransactionID) {
-    GlobalTransactionDescriptor rv = (GlobalTransactionDescriptor) serverTransactionIDMap.get(serverTransactionID);
+  public GlobalTransactionDescriptor getOrCreateTransactionDescriptor(ServerTransactionID serverTransactionID) {
+    GlobalTransactionDescriptor rv = sids.get(serverTransactionID);
     if (rv == null) {
       rv = new GlobalTransactionDescriptor(serverTransactionID, getNextGlobalTransactionID());
       basicAdd(rv);
@@ -118,7 +92,7 @@ public class TransactionStoreImpl implements TransactionStore {
   private void basicAdd(GlobalTransactionDescriptor gtx, boolean allowRemapping) {
     ServerTransactionID sid = gtx.getServerTransactionID();
     GlobalTransactionID gid = gtx.getGlobalTransactionID();
-    GlobalTransactionDescriptor prevDesc = (GlobalTransactionDescriptor) this.serverTransactionIDMap.put(sid, gtx);
+    GlobalTransactionDescriptor prevDesc = this.sids.add(sid, gtx);
     if (prevDesc != null) {
       if (allowRemapping) {
         // This can happen in the 3'rd Passive when the active crashes and the 2'nd passive takes over. Some
@@ -145,70 +119,61 @@ public class TransactionStoreImpl implements TransactionStore {
     }
   }
 
-  public void removeAllByServerTransactionID(PersistenceTransaction tx, Collection stxIDs) {
-    Collection toDelete = new HashSet();
-    synchronized (this) {
-      for (Iterator i = stxIDs.iterator(); i.hasNext();) {
-        ServerTransactionID stxID = (ServerTransactionID) i.next();
-        GlobalTransactionDescriptor desc = (GlobalTransactionDescriptor) this.serverTransactionIDMap.remove(stxID);
-        if (desc != null) {
-          if (desc.complete()) {
-            ids.remove(desc.getGlobalTransactionID());
-            toDelete.add(stxID);
-            while(ongoingCommits.contains(stxID)) {
-              // We want to wait till the save is done. Dont want to race
-              try {
-                logger.warn("Waiting for commit to complete for " + stxID + " before removing");
-                wait();
-              } catch (InterruptedException e) {
-                throw new AssertionError(e);
-              }
-            }
-          } else {
-            // reconsile, commit will remove this
-            this.serverTransactionIDMap.put(stxID, desc);
-          }
-        }
-      }
-    }
-    if (!toDelete.isEmpty()) {
-      persistor.deleteAllByServerTransactionID(tx, toDelete);
-    }
+  /**
+   * This method clears the server transaction ids less than the low water mark, for that particular node.
+   */
+  public void clearCommitedTransactionsBelowLowWaterMark(PersistenceTransaction tx, ServerTransactionID stxIDs) {
+    Collection gidDescs = sids.clearCommitedSidsBelowLowWaterMark(stxIDs);
+    removeGlobalTransacionDescs(gidDescs, tx);
   }
 
   public void shutdownNode(PersistenceTransaction tx, NodeID nid) {
-    Collection stxIDs = new HashSet();
-    synchronized (this) {
-      for (Iterator iter = serverTransactionIDMap.keySet().iterator(); iter.hasNext();) {
-        ServerTransactionID stxID = (ServerTransactionID) iter.next();
-        if (stxID.getSourceID().equals(nid)) {
-          stxIDs.add(stxID);
-        }
-      }
+    Collection gidDescs = sids.removeAll(nid);
+    logger.info("shutdownClient() : Removing txns from DB : " + gidDescs.size());
+    removeGlobalTransacionDescs(gidDescs, tx);
+  }
+
+  /**
+   * Global Tranasaction descriptors should have been deleted from sids datastructure, before this call.
+   */
+  private void removeGlobalTransacionDescs(Collection gidDescs, PersistenceTransaction tx) {
+    for (Iterator i = gidDescs.iterator(); i.hasNext();) {
+      GlobalTransactionDescriptor gd = (GlobalTransactionDescriptor) i.next();
+      ids.remove(gd.getGlobalTransactionID());
     }
-    logger.info("shutdownClient() : Removing txns from DB : " + stxIDs.size());
-    removeAllByServerTransactionID(tx, stxIDs);
+    if (!gidDescs.isEmpty()) {
+      persistor.deleteAllGlobalTransactionDescriptors(tx, gidDescs);
+    }
   }
 
   public void shutdownAllClientsExcept(PersistenceTransaction tx, Set cids) {
-    Collection stxIDs = new HashSet();
-    synchronized (this) {
-      for (Iterator iter = serverTransactionIDMap.keySet().iterator(); iter.hasNext();) {
-        ServerTransactionID stxID = (ServerTransactionID) iter.next();
-        if (!cids.contains(stxID.getSourceID())) {
-          stxIDs.add(stxID);
-        }
-      }
-    }
-    logger.info("shutdownAllClientsExcept() : Removing txns from DB : " + stxIDs.size());
-    removeAllByServerTransactionID(tx, stxIDs);
+    Collection gidDescs = sids.removeAllExcept(cids);
+    logger.info("shutdownAllClientsExcept() : Removing txns from DB : " + gidDescs.size());
+    removeGlobalTransacionDescs(gidDescs, tx);
   }
 
   // Used in Passive server
-  public synchronized void createGlobalTransactionDescIfNeeded(ServerTransactionID stxnID,
-                                                               GlobalTransactionID globalTransactionID) {
+  public void createGlobalTransactionDescIfNeeded(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID) {
     GlobalTransactionDescriptor rv = new GlobalTransactionDescriptor(stxnID, globalTransactionID);
     basicAdd(rv, true);
   }
 
+  // Used in Passive server
+  public void clearCommitedTransactionsBelowLowWaterMark(PersistenceTransaction tx, GlobalTransactionID lowWaterMark) {
+    List toRemove = new ArrayList(100);
+    synchronized (ids) {
+      Map lowerThanLWM = ids.headMap(lowWaterMark);
+      for (Iterator i = lowerThanLWM.values().iterator(); i.hasNext();) {
+        GlobalTransactionDescriptor gd = (GlobalTransactionDescriptor) i.next();
+        if (gd.complete()) {
+          i.remove();
+          sids.remove(gd.getServerTransactionID());
+          toRemove.add(gd);
+        }
+      }
+    }
+    if (!toRemove.isEmpty()) {
+      persistor.deleteAllGlobalTransactionDescriptors(tx, toRemove);
+    }
+  }
 }

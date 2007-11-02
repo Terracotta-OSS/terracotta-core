@@ -86,10 +86,10 @@ class TransactionPersistorImpl extends SleepycatPersistorBase implements Transac
     return ServerTransactionID.createFrom(data);
   }
 
-  public void deleteAllByServerTransactionID(PersistenceTransaction tx, Collection toDelete) {
+  public void deleteAllGlobalTransactionDescriptors(PersistenceTransaction tx, Collection toDelete) {
     DatabaseEntry key = new DatabaseEntry();
     for (Iterator i = toDelete.iterator(); i.hasNext();) {
-      ServerTransactionID stxID = (ServerTransactionID) i.next();
+      ServerTransactionID stxID = ((GlobalTransactionDescriptor) i.next()).getServerTransactionID();
       key.setData(serverTxnID2Bytes(stxID));
       try {
         db.delete(pt2nt(tx), key);

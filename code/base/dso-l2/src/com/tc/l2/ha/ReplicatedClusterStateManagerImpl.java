@@ -165,6 +165,11 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
           .getConnectionID().getChannelID()))));
     } else if (msg.getType() == ClusterStateMessage.CONNECTION_DESTROYED) {
       // this is needed to clean up some data structures internally
+      // NOTE :: It is ok to add this event context directly to the channel life cycle handler (and not wrap around a
+      // InBandMoveToNextSink like in active) because there are no stages before the transactions are added to
+      // server transaction manager.
+      // XXX::FIXME:: The above statement is true only when this event is fixed to be fired from active after all txns
+      // are acked in the active.
       channelLifeCycleSink.add(new NodeStateEventContext(NodeStateEventContext.REMOVE, new ClientID(new ChannelID(msg
           .getConnectionID().getChannelID()))));
     }

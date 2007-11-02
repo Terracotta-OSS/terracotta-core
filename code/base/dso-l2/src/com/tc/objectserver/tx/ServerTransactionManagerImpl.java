@@ -278,11 +278,10 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   }
 
   public void commit(PersistenceTransactionProvider ptxp, Collection objects, Map newRoots,
-                     Collection appliedServerTransactionIDs, Set completedTransactionIDs) {
+                     Collection appliedServerTransactionIDs) {
     PersistenceTransaction ptx = ptxp.newTransaction();
     release(ptx, objects, newRoots);
     gtxm.commitAll(ptx, appliedServerTransactionIDs);
-    gtxm.completeTransactions(ptx, completedTransactionIDs);
     ptx.commit();
     committed(appliedServerTransactionIDs);
   }
@@ -299,8 +298,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
   }
 
-  public void incomingTransactions(NodeID source, Set txnIDs, Collection txns, boolean relayed,
-                                   Collection completedTxnIds) {
+  public void incomingTransactions(NodeID source, Set txnIDs, Collection txns, boolean relayed) {
     final boolean active = isActive();
     TransactionAccount ci = getOrCreateTransactionAccount(source);
     ci.incommingTransactions(txnIDs);
@@ -315,7 +313,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
       }
     }
     fireIncomingTransactionsEvent(source, txnIDs);
-    resentTxnSequencer.addTransactions(txns, completedTxnIds);
+    resentTxnSequencer.addTransactions(txns);
   }
 
   private boolean isActive() {

@@ -7,6 +7,7 @@ package com.tc.l2.objectserver;
 import com.tc.exception.ImplementMe;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.net.groups.NodeID;
+import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.objectserver.tx.ServerTransaction;
 
 import java.util.Collection;
@@ -35,6 +36,15 @@ public class NonReplicatedTransactionManager implements ReplicatedTransactionMan
   }
 
   public void init(Set knownObjectIDs) {
+    throw new ImplementMe();
+  }
+
+  public void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns) {
+    throw new ImplementMe();
+    
+  }
+
+  public void clearTransactionsBelowLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark) {
     throw new ImplementMe();
   }
 
