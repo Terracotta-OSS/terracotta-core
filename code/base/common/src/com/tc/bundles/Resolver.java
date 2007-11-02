@@ -14,6 +14,7 @@ import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.util.runtime.Os;
 import com.terracottatech.config.Module;
 
 import java.io.File;
@@ -62,10 +63,20 @@ public class Resolver {
   }
 
   private static final void injectDefaultRepositories(final List repoLocations) throws MalformedURLException {
-    String installRoot = System.getProperty("tc.install-root");
+    final String userHome = System.getProperty("user.home");
+    if (userHome != null) {
+      final String m2 = (Os.isUnix() ? "." : "") + "m2";
+      final File m2Repository = new File(userHome + File.separator + m2 + File.separator + "repository");
+      if (m2Repository.exists()) {
+        logger.debug("Appending m2 repository: '" + m2Repository.toString() + "'");
+        repoLocations.add(m2Repository.toURL());
+      }
+    }
+    
+    final String installRoot = System.getProperty("tc.install-root");
     if (installRoot != null) {
       final URL defaultRepository = new File(installRoot, "modules").toURL();
-      logger.debug("Prepending default bundle repository: '" + defaultRepository.toString() + "'");
+      logger.debug("Appending default bundle repository: '" + defaultRepository.toString() + "'");
       repoLocations.add(defaultRepository);
     }
 
