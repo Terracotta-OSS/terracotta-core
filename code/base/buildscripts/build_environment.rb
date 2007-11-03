@@ -67,10 +67,10 @@ class BuildEnvironment < Environment
               when /branches\/private\/([^\/]+)/: @branch = $1
               when /branches\/([^\/]+)/: @branch = $1
               when /tags\/([^\/]+)/: @branch = $1
-              else @branch = @config_source["branch"] || "branch-unknown"
-          end
-      end
-      @branch
+              else @branch = @config_source["branch"]
+          end              
+      end      
+      @branch || "branch-unkown"
   end
 
   
@@ -97,7 +97,7 @@ class BuildEnvironment < Environment
   # property is set in the configuration source supplied in the constructor.
   def version
     return @version unless @version.nil?
-    @version = @config_source['version'] || current_branch || 'unknown'        
+    @version = @config_source['version'] || current_branch.to_s + "-revrevision" || 'unknown'        
     @version.gsub!(/revision/, current_revision.to_s)    
     @version
   end
