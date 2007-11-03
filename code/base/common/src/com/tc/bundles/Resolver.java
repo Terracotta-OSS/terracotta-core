@@ -12,6 +12,7 @@ import com.tc.bundles.exception.MissingBundleException;
 import com.tc.bundles.Version;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.runtime.Os;
@@ -39,6 +40,10 @@ public class Resolver {
   private static final String BUNDLE_SYMBOLICNAME   = "Bundle-SymbolicName";
 
   private static final String TC_PROPERTIES_SECTION = "l1.modules";
+
+  private static final String[] JAR_EXTENSIONS      = new String[] { "jar" };
+  
+  private static final TCLogger logger              = TCLogging.getLogger(Resolver.class);
 
   private URL[]               repositories;
   private List                registry              = new ArrayList();
@@ -68,7 +73,7 @@ public class Resolver {
       final String m2 = (Os.isUnix() ? "." : "") + "m2";
       final File m2Repository = new File(userHome + File.separator + m2 + File.separator + "repository");
       if (m2Repository.exists()) {
-        logger.debug("Appending m2 repository: '" + m2Repository.toString() + "'");
+        consoleLogger.debug("Appending m2 repository: '" + m2Repository.toString() + "'");
         repoLocations.add(m2Repository.toURL());
       }
     }
@@ -76,7 +81,7 @@ public class Resolver {
     final String installRoot = System.getProperty("tc.install-root");
     if (installRoot != null) {
       final URL defaultRepository = new File(installRoot, "modules").toURL();
-      logger.debug("Appending default bundle repository: '" + defaultRepository.toString() + "'");
+      consoleLogger.debug("Appending default bundle repository: '" + defaultRepository.toString() + "'");
       repoLocations.add(defaultRepository);
     }
 
@@ -89,7 +94,7 @@ public class Resolver {
           String entry = entries[i].trim();
           if (entry != null && entry.length() > 0) {
             final URL defaultRepository = new URL(entries[i]);
-            logger.debug("Prepending default bundle repository: '" + defaultRepository.toString() + "'");
+            consoleLogger.debug("Prepending default bundle repository: '" + defaultRepository.toString() + "'");
             repoLocations.add(defaultRepository);
           }
         }
@@ -102,11 +107,15 @@ public class Resolver {
     final String version = module.getVersion();
     final String groupId = module.getGroupId();
     final URL location = resolveLocation(name, version, groupId);
+        
     if (location == null) {
       final String msg = fatal(Message.ERROR_BUNDLE_UNRESOLVED, new Object[] { module.getName(), module.getVersion(),
           module.getGroupId(), repositoriesToString() });
       throw new MissingBundleException(msg);
     }
+    
+    logger.info("Resolved module " + groupId + ":" + name + ":" + version + " from " + location);
+    
     resolveDependencies(location);
     return location;
   }
@@ -135,27 +144,43 @@ public class Resolver {
   }
 
   private Collection findJars(File rootLocation, String groupId, String name, String version) {
-    final String[] extensions = new String[] { "jar" };
     File groupLocation = new File(rootLocation, groupId.replace('.', File.separatorChar));
-    File nameLocation = new File(groupLocation, name.replace('_', '-'));
-    File versionLocation = new File(nameLocation, version.replaceAll("\\.SNAPSHOT", "\\-SNAPSHOT"));
+    File nameLocation = new File(groupLocation, name);
+    File versionLocation = new File(nameLocation, version);
     final Collection jars = new ArrayList();
 
-    if (versionLocation.isDirectory()) {
-      jars.addAll(FileUtils.listFiles(versionLocation, extensions, false));
+    File exactLocation = new File(versionLocation, name + "-" + version + ".jar");
+    if(exactLocation.exists() && exactLocation.isFile()) {
+      jars.add(exactLocation);
+    }
+    
+    if (jars.isEmpty()) {
+      if (versionLocation.isDirectory()) {
+        jars.addAll(FileUtils.listFiles(versionLocation, JAR_EXTENSIONS, false));
+      }
+    } else {
+      return jars;
     }
 
-    if (jars.isEmpty() && nameLocation.isDirectory()) {
-      jars.addAll(FileUtils.listFiles(nameLocation, extensions, !versionLocation.isDirectory()));
+    if (jars.isEmpty()) {
+      if (nameLocation.isDirectory()) {
+        jars.addAll(FileUtils.listFiles(nameLocation, JAR_EXTENSIONS, !versionLocation.isDirectory()));
+      }
+    } else {
+      return jars;
     }
 
-    if (jars.isEmpty() && groupLocation.isDirectory()) {
-      jars.addAll(FileUtils.listFiles(groupLocation, extensions, !nameLocation.isDirectory()));
+    if (jars.isEmpty()) {
+      if (groupLocation.isDirectory()) {
+        jars.addAll(FileUtils.listFiles(groupLocation, JAR_EXTENSIONS, !nameLocation.isDirectory()));
+      }
+    } else {
+      return jars;
     }
 
     if (jars.isEmpty() && rootLocation.isDirectory()) {
-      jars.addAll(FileUtils.listFiles(rootLocation, extensions, !groupLocation.isDirectory()));
-    }
+      jars.addAll(FileUtils.listFiles(rootLocation, JAR_EXTENSIONS, !groupLocation.isDirectory()));
+    } 
 
     return jars;
   }
@@ -204,35 +229,63 @@ public class Resolver {
   }
 
   protected URL resolveLocation(final String name, final String version, final String groupId) {
-    final String symname = MessageFormat.format("{0}.{1}", new Object[] { groupId, name });
-    Version __version = Version.parse(version);
+    final String symname = MavenToOSGi.artifactIdToSymbolicName(groupId, name);
+    final String osgiVersionStr = MavenToOSGi.projectVersionToBundleVersion(version);
+    Version osgiVersion = Version.parse(osgiVersionStr);
+    
+    if(logger.isDebugEnabled()) {
+      logger.debug("Resolving location of " + groupId + ":" + name + ":" + version);
+    }
+    
     for (int i = repositories.length - 1; i >= 0; i--) {
+      final String repositoryURL = repositories[i].toString() + (repositories[i].toString().endsWith("/") ? "" : "/");
+      URL url = null;
       try {
-        final URL url = new URL(repositories[i].toString() + (repositories[i].toString().endsWith("/") ? "" : "/"));
-        final Collection jars = findJars(FileUtils.toFile(url), groupId, name, version);
-        for (final Iterator j = jars.iterator(); j.hasNext();) {
-          final File jar = (File) j.next();
-          final Manifest manifest = getManifest(jar);
-
-          // ignore bad JAR files
-          if (manifest == null) continue;
-
-          // found a match!
-          if (BundleSpec.isMatchingSymbolicName(symname, manifest.getMainAttributes().getValue(BUNDLE_SYMBOLICNAME))) {
-            final String manifestVersion = manifest.getMainAttributes().getValue(BUNDLE_VERSION);
-            try {
-              if (__version.equals(Version.parse(manifestVersion))) return addToRegistry(jar.toURL(), manifest);
-            } catch (NumberFormatException e) { // thrown by parseVersion()
-              logger.warn("Bad manifest bundle version in jar='" + jar.getAbsolutePath() + "', version='"
-                          + manifestVersion + "'.  Skipping...", e);
-            }
-          }
-        }
+        url = new URL(repositoryURL);
       } catch (MalformedURLException e) {
         // ignore bad URLs
+        logger.warn("Ignoring bad repository URL during resolution: " + repositoryURL, e);
+        continue;
       }
+      
+      final Collection jars = findJars(FileUtils.toFile(url), groupId, name, version);
+      for (final Iterator j = jars.iterator(); j.hasNext();) {
+        final File jar = (File) j.next();
+        final Manifest manifest = getManifest(jar);
+        
+        if(isBundleMatch(jar, manifest, symname, osgiVersion)) {
+          try {
+            return addToRegistry(jar.toURL(), manifest);
+          } catch(MalformedURLException e) {
+            logger.error(e.getMessage(), e);
+          }
+        }
+      }
+
     }
     return null;
+  }
+  
+  private boolean isBundleMatch(File jarFile, Manifest manifest, String bundleName, Version bundleVersion) {
+    if(logger.isDebugEnabled()) logger.debug("Checking " + jarFile + " for " + bundleName + ":" + bundleVersion);
+
+    // ignore bad JAR files
+    if (manifest == null) return false;
+
+    // found a match!
+    if (BundleSpec.isMatchingSymbolicName(bundleName, manifest.getMainAttributes().getValue(BUNDLE_SYMBOLICNAME))) {
+      final String manifestVersion = manifest.getMainAttributes().getValue(BUNDLE_VERSION);
+      try {
+        if (bundleVersion.equals(Version.parse(manifestVersion))) {
+          return true;
+        }
+      } catch (NumberFormatException e) { // thrown by parseVersion()
+        consoleLogger.warn("Bad manifest bundle version in jar='" + jarFile.getAbsolutePath() + "', version='"
+                    + manifestVersion + "'.  Skipping...", e);
+      }
+    }
+
+    return false;
   }
 
   private void resolveDefaultModules() throws BundleException {
@@ -240,7 +293,7 @@ public class Resolver {
     final String defaultModulesProp = props != null ? props.getProperty("default") : null;
 
     if (defaultModulesProp == null) {
-      logger.debug("No implicit modules were loaded because the l1.modules.default property "
+      consoleLogger.debug("No implicit modules were loaded because the l1.modules.default property "
                    + "in tc.properties file was not set.");
       return;
     }
@@ -252,7 +305,7 @@ public class Resolver {
         ensureBundle(spec);
       }
     } else {
-      logger.debug("No implicit modules were loaded because the l1.modules.default property "
+      consoleLogger.debug("No implicit modules were loaded because the l1.modules.default property "
                    + "in tc.properties file was empty.");
     }
   }
@@ -360,13 +413,13 @@ public class Resolver {
 
   private String warn(final Message message, final Object[] arguments) {
     final String msg = formatMessage(message, arguments);
-    logger.warn(msg);
+    consoleLogger.warn(msg);
     return msg;
   }
 
   private String fatal(final Message message, final Object[] arguments) {
     final String msg = formatMessage(message, arguments);
-    logger.fatal(msg);
+    consoleLogger.fatal(msg);
     return msg;
   }
 
@@ -459,7 +512,7 @@ public class Resolver {
     }
   }
 
-  private static final TCLogger       logger = CustomerLogging.getConsoleLogger();
+  private static final TCLogger       consoleLogger = CustomerLogging.getConsoleLogger();
   private static final ResourceBundle resourceBundle;
 
   static {
