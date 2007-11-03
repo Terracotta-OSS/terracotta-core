@@ -235,7 +235,7 @@ public class ServerTracker implements IDebugEventSetListener {
 
       try {
         if (fServerConnectionManager.testIsConnected()) {
-          if(fServerConnectionManager.isActive() || fServerConnectionManager.isPassiveStandby()) {
+          if(fServerConnectionManager.canShutdown()) {
             fServerInfo.setStatus(ServerInfo.STARTED);
             setRunning(fJavaProject, Boolean.TRUE);
   

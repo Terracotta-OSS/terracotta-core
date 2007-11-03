@@ -23,6 +23,8 @@ public interface TCServerInfoMBean extends TerracottaMBean {
 
   void stop();
 
+  boolean isShutdownable();
+  
   void shutdown();
 
   void startBeanShell(int port);

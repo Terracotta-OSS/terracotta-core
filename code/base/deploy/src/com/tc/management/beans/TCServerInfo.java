@@ -81,6 +81,10 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     _sendNotification("TCServer stopped", "Started", "jmx.terracotta.L2.stopped", Boolean.TRUE, Boolean.FALSE);
   }
 
+  public boolean isShutdownable() {
+    return server.canShutdown();
+  }
+  
   /**
    * This schedules the shutdown to occur one second after we return from this call because otherwise JMX will be
    * shutdown and we'll get all sorts of other errors trying to return from this call.

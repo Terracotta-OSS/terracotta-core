@@ -379,6 +379,14 @@ public class ServerConnectionManager implements NotificationListener {
     return m_active;
   }
 
+  public boolean canShutdown() {
+    try {
+      return m_serverHelper.canShutdown(m_connectCntx);
+    } catch (Exception e) {
+      return false;
+    }
+  }
+  
   private boolean internalIsActive() {
     try {
       return m_serverHelper.isActive(m_connectCntx);

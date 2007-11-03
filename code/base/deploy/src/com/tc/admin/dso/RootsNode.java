@@ -135,17 +135,29 @@ public class RootsNode extends ComponentNode implements NotificationListener {
     m_refreshAction.actionPerformed(null);
   }
 
+  private boolean haveRoot(ObjectName objectName) { 
+    if(m_roots == null) return false;
+    for(DSORoot root : m_roots) {
+      if(root.getObjectName().equals(objectName)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public void handleNotification(final Notification notice, Object handback) {
     String type = notice.getType();
 
     if (DSOMBean.ROOT_ADDED.equals(type)) {
+      final ObjectName rootObjectName = (ObjectName) notice.getSource();
+      if(haveRoot(rootObjectName)) return;
+      
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           AdminClientContext acc = AdminClient.getContext();
 
           acc.setStatus(acc.getMessage("dso.root.retrieving"));
 
-          ObjectName rootObjectName = (ObjectName) notice.getSource();
           DSORoot root = new DSORoot(m_cc, rootObjectName);
           ArrayList<DSORoot> list = new ArrayList<DSORoot>(Arrays.asList(m_roots));
 

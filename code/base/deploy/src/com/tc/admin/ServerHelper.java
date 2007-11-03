@@ -18,6 +18,11 @@ public class ServerHelper extends BaseHelper {
     return cc.queryName(L2MBeanNames.TC_SERVER_INFO.getCanonicalName());
   }
 
+  public boolean canShutdown(ConnectionContext cc) throws Exception {
+    ObjectName infoMBean = getServerInfoMBean(cc);
+    return infoMBean != null && cc.getBooleanAttribute(infoMBean, "Shutdownable");
+  }
+  
   public boolean isActive(ConnectionContext cc) throws Exception {
     ObjectName infoMBean = getServerInfoMBean(cc);
     return infoMBean != null && cc.getBooleanAttribute(infoMBean, "Active");

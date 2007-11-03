@@ -60,15 +60,27 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
     }
   }
 
+  private boolean haveClient(ObjectName objectName) { 
+    if(m_clients == null) return false;
+    for(DSOClient client : m_clients) {
+      if(client.getObjectName().equals(objectName)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
   private void internalHandleNotification(Notification notice, Object handback) {
     String type = notice.getType();
 
     if (DSOMBean.CLIENT_ATTACHED.equals(type)) {
       AdminClientContext acc = AdminClient.getContext();
 
+      ObjectName clientObjectName = (ObjectName) notice.getSource();
+      if(haveClient(clientObjectName)) return;
+      
       acc.setStatus(acc.getMessage("dso.client.retrieving"));
 
-      ObjectName clientObjectName = (ObjectName) notice.getSource();
       DSOClient client = new DSOClient(m_cc, clientObjectName);
       ArrayList<DSOClient> list = new ArrayList<DSOClient>(Arrays.asList(m_clients));
 

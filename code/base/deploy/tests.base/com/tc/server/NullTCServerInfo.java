@@ -56,6 +56,10 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
     return false;
   }
 
+  public boolean isShutdownable() {
+    return false;
+  }
+  
   public void shutdown() {
     //
   }
