@@ -355,6 +355,7 @@ modules:
         - dso-common
         - management
         - dso-common-jdk15
+        - dso-l1-jdk15
         - dso-l1-api
         - dso-l1
         - dso-l2-common
