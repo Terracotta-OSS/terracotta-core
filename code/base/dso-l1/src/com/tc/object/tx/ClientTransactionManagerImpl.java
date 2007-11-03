@@ -302,11 +302,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     // make sure we're not in a read-only transaction
     // txn.readOnlyCheck();
     if (txn.getTransactionType() == TxnType.READ_ONLY) {
-      ReadOnlyException roe = new ReadOnlyException(
-                                                    "Current transaction with read-only access attempted to modify a shared object.  "
-                                                        + "\nPlease alter the locks section of your Terracotta configuration so that the methods involved in this transaction have read/write access.",
-                                                    Thread.currentThread().getName(), cidProvider.getChannelID()
-                                                        .toLong());
+      ReadOnlyException roe = makeReadOnlyException(null);
+
       if (sendErrors) {
         ReadOnlyObjectEventContext eventContext = appEventContextFactory.createReadOnlyObjectEventContext(context, roe);
         objectManager.sendApplicationEvent(context, new ReadOnlyObjectEvent(eventContext));
@@ -377,14 +374,14 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     ThreadTransactionContext ttc = getThreadTransactionContext();
     return ttc.peekContext();
   }
-  
+
   public boolean isLockOnTopStack(String lockName) {
     final LockID lockID = lockManager.lockIDFor(lockName);
     TransactionContext tc = peekContext();
     if (tc == null) { return false; }
     return (tc.getLockID().equals(lockID));
   }
-  
+
   private void pushTxContext(LockID lockID, TxnType txnType) {
     ThreadTransactionContext ttc = getThreadTransactionContext();
     ttc.pushContext(lockID, txnType);
@@ -548,15 +545,19 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
         throw usoe;
       }
 
-      try {
-        tx.literalValueChanged(source, newValue, oldValue);
-      } catch (ReadOnlyException roe) {
+      if (tx.getTransactionType() == TxnType.READ_ONLY) {
+        ReadOnlyException roe = makeReadOnlyException("Failed To Change Value in:  " + newValue.getClass().getName());
+
         if (sendErrors) {
           ReadOnlyObjectEventContext eventContext = appEventContextFactory.createReadOnlyObjectEventContext(pojo, roe);
           objectManager.sendApplicationEvent(pojo, new ReadOnlyObjectEvent(eventContext));
         }
+
         throw roe;
       }
+
+      tx.literalValueChanged(source, newValue, oldValue);
+
     } finally {
       enableTransactionLogging();
     }
@@ -584,19 +585,22 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
         throw usoe;
       }
 
+      if (tx.getTransactionType() == TxnType.READ_ONLY) {
+        ReadOnlyException roe = makeReadOnlyException("Failed To Modify Field:  " + fieldname + " in " + classname);
+        if (sendErrors) {
+          ReadOnlyObjectEventContext eventContext = appEventContextFactory.createReadOnlyObjectEventContext(pojo,
+                                                                                                            classname,
+                                                                                                            fieldname,
+                                                                                                            roe);
+          objectManager.sendApplicationEvent(pojo, new ReadOnlyObjectEvent(eventContext));
+        }
+        throw roe;
+      }
+
       logFieldChanged0(source, classname, fieldname, newValue, tx);
 
       if (newValue != null && literalValues.isLiteralInstance(newValue)) {
-        try {
-          tx.fieldChanged(source, classname, fieldname, newValue, index);
-        } catch (ReadOnlyException roe) {
-          if (sendErrors) {
-            ReadOnlyObjectEventContext eventContext = appEventContextFactory
-                .createReadOnlyObjectEventContext(pojo, classname, fieldname, roe);
-            objectManager.sendApplicationEvent(pojo, new ReadOnlyObjectEvent(eventContext));
-          }
-          throw roe;
-        }
+        tx.fieldChanged(source, classname, fieldname, newValue, index);
       } else {
         if (newValue != null) {
           objectManager.checkPortabilityOfField(newValue, fieldname, pojo);
@@ -604,16 +608,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
 
         TCObject tco = objectManager.lookupOrCreate(newValue);
 
-        try {
-          tx.fieldChanged(source, classname, fieldname, tco.getObjectID(), index);
-        } catch (ReadOnlyException roe) {
-          if (sendErrors) {
-            ReadOnlyObjectEventContext eventContext = appEventContextFactory
-                .createReadOnlyObjectEventContext(pojo, classname, fieldname, roe);
-            objectManager.sendApplicationEvent(pojo, new ReadOnlyObjectEvent(eventContext));
-          }
-          throw roe;
-        }
+        tx.fieldChanged(source, classname, fieldname, tco.getObjectID(), index);
 
         // record the reference in this transaction -- This is to solve the race condition of transactions
         // that reference objects newly "created" in other transactions that may not commit before us
@@ -645,6 +640,17 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
         throw usoe;
       }
 
+      if (tx.getTransactionType() == TxnType.READ_ONLY) {
+        ReadOnlyException roe = makeReadOnlyException("Failed To Modify Array: " + pojo.getClass().getName());
+
+        if (sendErrors) {
+          ReadOnlyObjectEventContext eventContext = appEventContextFactory.createReadOnlyObjectEventContext(pojo, roe);
+          objectManager.sendApplicationEvent(pojo, new ReadOnlyObjectEvent(eventContext));
+        }
+        throw roe;
+
+      }
+
       if (!ClassUtils.isPrimitiveArray(array)) {
         Object[] objArray = (Object[]) array;
         for (int i = 0; i < length; i++) {
@@ -662,15 +668,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
         }
       }
 
-      try {
-        tx.arrayChanged(source, startPos, array, length);
-      } catch (ReadOnlyException roe) {
-        if (sendErrors) {
-          ReadOnlyObjectEventContext eventContext = appEventContextFactory.createReadOnlyObjectEventContext(pojo, roe);
-          objectManager.sendApplicationEvent(pojo, new ReadOnlyObjectEvent(eventContext));
-        }
-        throw roe;
-      }
+      tx.arrayChanged(source, startPos, array, length);
 
     } finally {
       enableTransactionLogging();
@@ -705,6 +703,17 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
         throw usoe;
       }
 
+      if (tx.getTransactionType() == TxnType.READ_ONLY) {
+        ReadOnlyException roe = makeReadOnlyException("Failed Method Call: " + methodName);
+
+        if (sendErrors) {
+          ReadOnlyObjectEventContext eventContext = appEventContextFactory.createReadOnlyObjectEventContext(pojo, roe);
+          pojo = objectManager.cloneAndInvokeLogicalOperation(pojo, methodName, parameters);
+          objectManager.sendApplicationEvent(pojo, new ReadOnlyObjectEvent(eventContext));
+        }
+        throw roe;
+      }
+
       for (int i = 0; i < parameters.length; i++) {
         Object p = parameters[i];
         boolean isLiteral = literalValues.isLiteralInstance(p);
@@ -723,20 +732,24 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
         }
       }
 
-      try {
-        tx.logicalInvoke(source, method, parameters, methodName);
-      } catch (ReadOnlyException roe) {
-        if (sendErrors) {
-          ReadOnlyObjectEventContext eventContext = appEventContextFactory.createReadOnlyObjectEventContext(pojo, roe);
-          pojo = objectManager.cloneAndInvokeLogicalOperation(pojo, methodName, parameters);
-          objectManager.sendApplicationEvent(pojo, new ReadOnlyObjectEvent(eventContext));
-        }
-        throw roe;
-      }
-
+      tx.logicalInvoke(source, method, parameters, methodName);
     } finally {
       enableTransactionLogging();
     }
+  }
+
+  private ReadOnlyException makeReadOnlyException(String details) {
+    long vmId = cidProvider.getChannelID().toLong();
+
+    final ReadOnlyException roe;
+
+    if (details != null) {
+      roe = new ReadOnlyException(READ_ONLY_TEXT, Thread.currentThread().getName(), vmId, details);
+    } else {
+      roe = new ReadOnlyException(READ_ONLY_TEXT, Thread.currentThread().getName(), vmId);
+    }
+    System.err.println(roe.getMessage());
+    throw roe;
   }
 
   private void setTransaction(ClientTransaction tx) {
@@ -780,7 +793,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
 
   public boolean isTransactionLoggingDisabled() {
     Object txnStack = txnLogging.get();
-    return (txnStack != null) && (((ThreadTransactionLoggingStack)txnStack).get() > 0);
+    return (txnStack != null) && (((ThreadTransactionLoggingStack) txnStack).get() > 0);
   }
 
   public static class ThreadTransactionLoggingStack {
@@ -802,5 +815,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
   public void addDmiDescriptor(DmiDescriptor dd) {
     getTransaction().addDmiDescritor(dd);
   }
+
+  private static final String READ_ONLY_TEXT = "Current transaction with read-only access attempted to modify a shared object.  "
+                                               + "\nPlease alter the locks section of your Terracotta configuration so that the methods involved in this transaction have read/write access.";
 
 }

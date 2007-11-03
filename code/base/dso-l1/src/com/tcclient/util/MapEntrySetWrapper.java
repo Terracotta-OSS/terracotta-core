@@ -120,7 +120,7 @@ public class MapEntrySetWrapper implements Set {
     }
 
     if (a.length > size) {
-      a[size] = null;
+      ManagerUtil.objectArrayChanged(a, size, null);
     }
     return a;
   }

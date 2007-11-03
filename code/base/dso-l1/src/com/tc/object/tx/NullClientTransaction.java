@@ -1,10 +1,10 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.tx;
 
 import com.tc.management.beans.tx.ClientTxMonitorMBean;
-import com.tc.net.protocol.tcm.ChannelIDProvider;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.dmi.DmiDescriptor;
@@ -17,8 +17,8 @@ import java.util.Map;
 
 public class NullClientTransaction extends AbstractClientTransaction {
 
-  public NullClientTransaction(TransactionID transactionID, ChannelIDProvider cidProvider) {
-    super(transactionID, cidProvider);
+  public NullClientTransaction(TransactionID transactionID) {
+    super(transactionID);
   }
 
   public boolean hasChangesOrNotifies() {

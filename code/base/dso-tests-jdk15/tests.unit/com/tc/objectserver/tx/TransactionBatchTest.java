@@ -106,11 +106,11 @@ public class TransactionBatchTest extends TestCase {
     // A nested transaction (all this buys us is more than 1 lock in a txn)
     LockID lid1 = new LockID("1");
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, new LockID[] { lid1 });
-    ClientTransaction tmp = new ClientTransactionImpl(new TransactionID(101), new NullRuntimeLogger(), null);
+    ClientTransaction tmp = new ClientTransactionImpl(new TransactionID(101), new NullRuntimeLogger());
     tmp.setTransactionContext(tc);
     LockID lid2 = new LockID("2");
     tc = new TransactionContextImpl(lid2, TxnType.NORMAL, new LockID[] { lid1, lid2 });
-    ClientTransaction txn1 = new ClientTransactionImpl(new TransactionID(1), new NullRuntimeLogger(), null);
+    ClientTransaction txn1 = new ClientTransactionImpl(new TransactionID(1), new NullRuntimeLogger());
     txn1.setTransactionContext(tc);
 
     txn1.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
@@ -123,7 +123,7 @@ public class TransactionBatchTest extends TestCase {
     }
 
     tc = new TransactionContextImpl(new LockID("3"), TxnType.CONCURRENT, new LockID[] { new LockID("3") });
-    ClientTransaction txn2 = new ClientTransactionImpl(new TransactionID(2), new NullRuntimeLogger(), null);
+    ClientTransaction txn2 = new ClientTransactionImpl(new TransactionID(2), new NullRuntimeLogger());
     txn2.setTransactionContext(tc);
 
     writer = new TransactionBatchWriter(batchID, serializer, encoding, mf);

@@ -413,7 +413,7 @@ public class RemoteTransactionManagerTest extends TestCase {
     int num = number.increment();
     LockID lid = new LockID("lock" + num);
     TransactionContext tc = new TransactionContextImpl(lid, TxnType.NORMAL, new LockID[] { lid });
-    ClientTransaction txn = new ClientTransactionImpl(new TransactionID(num), new NullRuntimeLogger(), null);
+    ClientTransaction txn = new ClientTransactionImpl(new TransactionID(num), new NullRuntimeLogger());
     txn.setTransactionContext(tc);
     txn.fieldChanged(new MockTCObject(new ObjectID(num), this), "class", "class.field", new ObjectID(num), -1);
     return txn;

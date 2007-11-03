@@ -89,7 +89,7 @@ public abstract class GenericTestApp extends AbstractErrorCatchingTransparentApp
     for (Iterator i = tests.iterator(); i.hasNext();) {
       String name = (String) i.next();
 
-      for (int variant = 0; variant < variants; variant++) {
+      for (int variant = 1; variant <= variants; variant++) {
         barrier.barrier();
 
         if (exit.shouldExit()) { return; }
@@ -116,7 +116,7 @@ public abstract class GenericTestApp extends AbstractErrorCatchingTransparentApp
       System.err.print("Running test: " + name + " ... ");
       long start = System.currentTimeMillis();
 
-      for (int variant = 0; variant < variants; variant++) {
+      for (int variant = 1; variant <= variants; variant++) {
         try {
           runOp(name, false, variant);
           runOp(name, true, variant);

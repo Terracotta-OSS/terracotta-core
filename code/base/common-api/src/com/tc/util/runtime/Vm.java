@@ -106,7 +106,7 @@ public class Vm {
    * @return True if JDK 1.5/1.6/1.7
    */
   public static boolean isJDK15Compliant() {
-    return VERSION.isJDK15() || VERSION.isJDK16() || VERSION.isJDK17();
+    return VERSION.getMajorVersion() >= 5;
   }
 
   /**
@@ -115,7 +115,7 @@ public class Vm {
    * @return True if JDK 1.6/1.7
    */
   public static boolean isJDK16Compliant() {
-    return VERSION.isJDK16() || VERSION.isJDK17();
+    return VERSION.getMajorVersion() >= 6;
   }
 
   /**

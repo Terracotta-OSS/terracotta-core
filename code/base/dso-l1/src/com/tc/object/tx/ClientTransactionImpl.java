@@ -5,7 +5,6 @@
 package com.tc.object.tx;
 
 import com.tc.management.beans.tx.ClientTxMonitorMBean;
-import com.tc.net.protocol.tcm.ChannelIDProvider;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.change.TCChangeBuffer;
@@ -38,8 +37,8 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   // used to keep things referenced until the transaction is completely ACKED
   private final Map           referenced    = new IdentityHashMap();
 
-  public ClientTransactionImpl(TransactionID txID, RuntimeLogger logger, ChannelIDProvider cidProvider) {
-    super(txID, cidProvider);
+  public ClientTransactionImpl(TransactionID txID, RuntimeLogger logger) {
+    super(txID);
     this.runtimeLogger = logger;
   }
 
@@ -176,7 +175,7 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   public void addDmiDescritor(DmiDescriptor dd) {
     dmis.add(dd);
   }
-  
+
   public List getDmiDescriptors() {
     return dmis;
   }

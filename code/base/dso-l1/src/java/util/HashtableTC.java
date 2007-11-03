@@ -19,7 +19,7 @@ import java.util.Map.Entry;
 /*
  * This class will be merged with java.lang.Hashtable in the bootjar. This hashtable can store ObjectIDs instead of
  * Objects to save memory and transparently fault Objects as needed. It can also clear references. For General rules
- * 
+ *
  * @see HashMapTC class
  */
 public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearable {
@@ -179,11 +179,19 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
   public synchronized Object remove(Object key) {
     if (__tc_isManaged()) {
       ManagerUtil.checkWriteAccess(this);
-      Object removed = unwrapValueIfNecessary(super.remove(key));
-      if (removed != null) {
-        ManagerUtil.logicalInvoke(this, "remove(Ljava/lang/Object;)Ljava/lang/Object;", new Object[] { key });
-      }
-      return removed;
+
+      // XXX: we should really add a removeEntryForKey() method like HashMap to avoid doing two lookups
+      Entry entry = __tc_getEntry(key);
+      if (entry == null) { return null; }
+
+      // read the original key before actually doing the remove()
+      Object origKey = entry.getKey();
+
+      Object removedValue = unwrapValueIfNecessary(super.remove(key));
+
+      ManagerUtil.logicalInvoke(this, "remove(Ljava/lang/Object;)Ljava/lang/Object;", new Object[] { origKey });
+
+      return removedValue;
     } else {
       return super.remove(key);
     }
@@ -456,12 +464,22 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
     }
 
     public boolean remove(Object o) {
+
       if (__tc_isManaged()) {
         synchronized (HashtableTC.this) {
           ManagerUtil.checkWriteAccess(HashtableTC.this);
+
+          if (!(o instanceof Map.Entry)) { return false; }
+
+          Entry entryToRemove = (Entry) o;
+
+          // XXX: two lookup badness!
+          Entry entry = __tc_getEntry(entryToRemove.getKey());
+          if (entry == null) { return false; }
+
           if (entrySet.remove(o)) {
             ManagerUtil.logicalInvoke(HashtableTC.this, "remove(Ljava/lang/Object;)Ljava/lang/Object;",
-                                      new Object[] { ((Map.Entry) o).getKey() });
+                                      new Object[] { entry.getKey() });
             return true;
           }
           return false;

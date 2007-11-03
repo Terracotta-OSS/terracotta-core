@@ -4,11 +4,9 @@
  */
 package com.tc.object.tx;
 
-import com.tc.net.protocol.tcm.ChannelIDProvider;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.lockmanager.api.LockID;
-import com.tc.object.util.ReadOnlyException;
 import com.tc.util.SequenceID;
 
 /**
@@ -20,11 +18,9 @@ abstract class AbstractClientTransaction implements ClientTransaction {
   private final TransactionID     txID;
   private TransactionContext      transactionContext;
   private boolean                 alreadyCommittedFlag;
-  private final ChannelIDProvider cidProvider;
 
-  AbstractClientTransaction(TransactionID txID, ChannelIDProvider cidProvider) {
+  AbstractClientTransaction(TransactionID txID) {
     this.txID = txID;
-    this.cidProvider = cidProvider;
   }
 
   public synchronized void setSequenceID(SequenceID sequenceID) {
@@ -75,10 +71,7 @@ abstract class AbstractClientTransaction implements ClientTransaction {
   }
 
   public final void fieldChanged(TCObject source, String classname, String fieldname, Object newValue, int index) {
-    if (transactionContext.getType() == TxnType.READ_ONLY) {
-      throwReadOnlyException("Failed To Modify Field:  " + fieldname + " in " + classname);
-    }
-
+    assertNotReadOnlyTxn();
     if (source.getTCClass().isEnum()) { throw new AssertionError("fieldChanged() on an enum type "
                                                                  + source.getTCClass().getPeerClass().getName()); }
 
@@ -87,25 +80,19 @@ abstract class AbstractClientTransaction implements ClientTransaction {
   }
 
   public final void literalValueChanged(TCObject source, Object newValue, Object oldValue) {
-    if (transactionContext.getType() == TxnType.READ_ONLY) {
-      throwReadOnlyException("Failed To Change Value in:  " + newValue.getClass().getName());
-    }
+    assertNotReadOnlyTxn();
     alreadyCommittedCheck();
     basicLiteralValueChanged(source, newValue, oldValue);
   }
 
   public final void arrayChanged(TCObject source, int startPos, Object array, int length) {
-    if (transactionContext.getType() == TxnType.READ_ONLY) {
-      throwReadOnlyException("Failed To Modify Array: " + array.getClass().getName());
-    }
+    assertNotReadOnlyTxn();
     alreadyCommittedCheck();
     basicArrayChanged(source, startPos, array, length);
   }
 
   public final void logicalInvoke(TCObject source, int method, Object[] parameters, String methodName) {
-    if (transactionContext.getType() == TxnType.READ_ONLY) {
-      throwReadOnlyException("Failed Method Call: " + methodName);
-    }
+    assertNotReadOnlyTxn();
     alreadyCommittedCheck();
     basicLogicalInvoke(source, method, parameters);
   }
@@ -118,17 +105,10 @@ abstract class AbstractClientTransaction implements ClientTransaction {
     if (alreadyCommittedFlag) { throw new AssertionError("Transaction " + txID + " already commited."); }
   }
 
-  private void throwReadOnlyException(String details) {
-    long vmId = ReadOnlyException.INVALID_VMID;
-    if (cidProvider != null) {
-      vmId = cidProvider.getChannelID().toLong();
+  private void assertNotReadOnlyTxn() {
+    if (transactionContext.getType() == TxnType.READ_ONLY) {
+      throw new AssertionError("fail to perform read only check");
     }
-    ReadOnlyException roe = new ReadOnlyException(
-                                                  "Current transaction with read-only access attempted to modify a shared object.  "
-                                                      + "\nPlease alter the locks section of your Terracotta configuration so that the methods involved in this transaction have read/write access.",
-                                                  Thread.currentThread().getName(), vmId, details);
-    System.err.println(roe.getMessage());
-    throw roe;
   }
 
   public void setAlreadyCommitted() {

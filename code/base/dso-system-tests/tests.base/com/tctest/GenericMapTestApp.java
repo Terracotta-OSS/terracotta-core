@@ -16,6 +16,7 @@ import com.tc.simulator.app.ErrorContext;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tc.util.TIMUtil;
+import com.tc.util.runtime.Vm;
 import com.tcclient.ehcache.TimeExpiryMap;
 
 import gnu.trove.THashMap;
@@ -26,7 +27,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,10 +46,13 @@ import java.util.Map.Entry;
 
 public class GenericMapTestApp extends GenericTestApp {
 
-  private final Map nonSharedArrayMap = new HashMap();
+  private static final int LITERAL_VARIANT   = 1;
+  private static final int OBJECT_VARIANT    = 2;
+
+  private final Map        nonSharedArrayMap = new HashMap();
 
   public GenericMapTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
-    super(appId, cfg, listenerProvider, Map.class);
+    super(appId, cfg, listenerProvider, Map.class, 2);
   }
 
   protected Object getTestObject(String test) {
@@ -57,7 +60,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
     // This is just to make sure all the expected maps are here.
     // As new map classes get added to this test, you'll have to adjust this number obviously
-    Assert.assertEquals(25, maps.size());
+    Assert.assertEquals(25 + (Vm.isJDK15Compliant() ? 1 : 0), maps.size());
 
     return maps.iterator();
   }
@@ -92,6 +95,10 @@ public class GenericMapTestApp extends GenericTestApp {
     maps.add(new MyProperties2());
     maps.add(new MyProperties3());
     maps.add(new TimeExpiryMap(1, 100, 200, "testMap")); // no invalidator is running
+
+    if (Vm.isJDK15Compliant()) {
+      maps.add(makeConcurrentHashMap());
+    }
 
     // maps.add(new IdentityHashMap());
     // maps.add(new WeakHashMap());
@@ -134,6 +141,15 @@ public class GenericMapTestApp extends GenericTestApp {
     nonSharedArrayMap.put("arrayforMyProperties2", new Object[4]);
     nonSharedArrayMap.put("arrayforMyProperties3", new Object[4]);
     nonSharedArrayMap.put("arrayforTimeExpiryMap", new Object[4]);
+    sharedMap.put("arrayforConcurrentHashMap", new Object[4]);
+  }
+
+  private Object makeConcurrentHashMap() {
+    try {
+      return Class.forName("java.util.concurrent.ConcurrentHashMap").newInstance();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
@@ -150,21 +166,40 @@ public class GenericMapTestApp extends GenericTestApp {
     config.addIncludePattern(SimpleEntry.class.getName());
     config.addExcludePattern(MyNonPortableObject.class.getName());
 
-    config.addModule(TIMUtil.EHCACHE_1_2_4, TIMUtil.getVersion(TIMUtil.EHCACHE_1_2_4)); // this is just a quick way
-                                                                                            // to add TimeExpiryMap
-    // to the instrumentation list
+    // this is just a quick way to add TimeExpiryMap to the instrumentation list
+    config.addModule(TIMUtil.EHCACHE_1_2_4, TIMUtil.getVersion(TIMUtil.EHCACHE_1_2_4));
   }
 
-  void testBasicUnSynchronizedPut(Map map, boolean validate) {
-    if (map instanceof Hashtable) { return; }
+  // This method is kind of like a macro, it returns an element (E == element) to be used
+  // in the set based on the variant value
+  Object E(String val, int variant) {
+    switch (variant) {
+      case LITERAL_VARIANT: {
+        return val;
+      }
+      case OBJECT_VARIANT: {
+        return new Key(null, val);
+      }
+      default: {
+        throw new AssertionError("unknown variant: " + variant);
+      }
+    }
+
+    // unreachable
+  }
+
+  void testBasicUnSynchronizedPut(Map map, boolean validate, int v) {
+    // if (map instanceof Hashtable) { return; }
     if (map instanceof FastHashMap) { return; }
     if (map instanceof TimeExpiryMap) { return; }
+    if (isCHM(map)) { return; }
 
     if (validate) {
       assertEmptyMap(map);
     } else {
+      assertEmptyMap(map);
       try {
-        map.put("January", "Jan");
+        map.put(E("January", v), "Jan");
         throw new AssertionError("Should have thrown a UnlockedSharedObjectException");
       } catch (UnlockedSharedObjectException use) {
         // this is expected.
@@ -172,32 +207,32 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testBasicPut(Map map, boolean validate) {
+  void testBasicPut(Map map, boolean validate, int v) {
     if (validate) {
-      assertSingleMapping(map, "timmy", "teck");
+      assertSingleMapping(map, E("timmy", v), "teck");
       if (map instanceof MyHashMap) {
-        Assert.assertEquals("timmy", ((MyHashMap) map).getKey());
+        Assert.assertEquals(E("timmy", v), ((MyHashMap) map).getKey());
         Assert.assertEquals("teck", ((MyHashMap) map).getValue());
       } else if (map instanceof MyTreeMap2) {
-        Assert.assertEquals("timmy", ((MyTreeMap2) map).getKey());
+        Assert.assertEquals(E("timmy", v), ((MyTreeMap2) map).getKey());
         Assert.assertEquals("teck", ((MyTreeMap2) map).getValue());
       } else if (map instanceof MyLinkedHashMap2) {
-        Assert.assertEquals("timmy", ((MyLinkedHashMap2) map).getKey());
+        Assert.assertEquals(E("timmy", v), ((MyLinkedHashMap2) map).getKey());
         Assert.assertEquals("teck", ((MyLinkedHashMap2) map).getValue());
       } else if (map instanceof MyProperties) {
-        Assert.assertEquals("timmy", ((MyProperties) map).getKey());
+        Assert.assertEquals(E("timmy", v), ((MyProperties) map).getKey());
         Assert.assertEquals("teck", ((MyProperties) map).getValue());
       }
     } else {
       synchronized (map) {
-        Object prev = map.put("timmy", "teck");
+        Object prev = map.put(E("timmy", v), "teck");
         Assert.assertNull(prev);
       }
     }
   }
 
-  void testBasicPutAll(Map map, boolean validate) {
-    Map toAdd = getOrderSensitiveMappings();
+  void testBasicPutAll(Map map, boolean validate, int v) {
+    Map toAdd = getOrderSensitiveMappings(v);
 
     if (validate) {
       assertMappings(toAdd, map);
@@ -208,7 +243,7 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testPutNullKey(Map map, boolean validate) {
+  void testPutNullKey(Map map, boolean validate, int v) {
     if (!allowsNull(map)) { return; }
     if (validate) {
       assertSingleMapping(map, null, "value");
@@ -220,7 +255,7 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testReplaceNullKey(Map map, boolean validate) {
+  void testReplaceNullKey(Map map, boolean validate, int v) {
     if (!allowsNull(map)) { return; }
     if (validate) {
       assertSingleMapping(map, null, "value2");
@@ -237,35 +272,35 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testBasicReplace(Map map, boolean validate) {
+  void testBasicReplace(Map map, boolean validate, int v) {
     if (validate) {
-      assertSingleMapping(map, "key", "value2");
+      assertSingleMapping(map, E("key", v), "value2");
     } else {
       synchronized (map) {
-        Object prev = map.put("key", "value");
+        Object prev = map.put(E("key", v), "value");
         Assert.assertNull(prev);
       }
 
       synchronized (map) {
-        Object prev = map.put("key", "value2");
+        Object prev = map.put(E("key", v), "value2");
         Assert.assertEquals("value", prev);
       }
     }
   }
 
-  void testPutNullValue(Map map, boolean validate) {
+  void testPutNullValue(Map map, boolean validate, int v) {
     if (!allowsNull(map)) { return; }
     if (validate) {
-      assertSingleMapping(map, "key", null);
+      assertSingleMapping(map, E("key", v), null);
     } else {
       synchronized (map) {
-        Object prev = map.put("key", null);
+        Object prev = map.put(E("key", v), null);
         Assert.assertNull(prev);
       }
     }
   }
 
-  void testReplaceKeyRetention(Map map, boolean validate) {
+  void testReplaceKeyRetention(Map map, boolean validate, int v) {
     if (validate) {
       assertSingleMapping(map, new Key("** doesn't matter **", "key"), "value2");
 
@@ -286,7 +321,7 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testBasicSetProperty(Map map, boolean validate) {
+  void testBasicSetProperty(Map map, boolean validate, int v) {
     if (!(map instanceof Properties)) { return; }
 
     if (validate) {
@@ -299,7 +334,7 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testBasicGetProperty(Map map, boolean validate) {
+  void testBasicGetProperty(Map map, boolean validate, int v) {
     if (!(map instanceof Properties)) { return; }
 
     if (validate) {
@@ -313,14 +348,14 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testBasicLoad(Map map, boolean validate) {
+  void testBasicLoad(Map map, boolean validate, int v) {
     if (!(map instanceof Properties)) { return; }
 
     if (validate) {
-      Map expectedMap = new Properties();
-      expectedMap.put("key1", "val1");
-      expectedMap.put("key2", "val2");
-      expectedMap.put("key3", "val3");
+      Properties expectedMap = new Properties();
+      expectedMap.setProperty("key1", "val1");
+      expectedMap.setProperty("key2", "val2");
+      expectedMap.setProperty("key3", "val3");
       assertMappings(expectedMap, map);
     } else {
       synchronized (map) {
@@ -345,8 +380,8 @@ public class GenericMapTestApp extends GenericTestApp {
   }
 
   /*
-   * Java 1.5 specific API used void testBasicLoadFromXML(Map map, boolean validate) { if (!(map instanceof Properties)) {
-   * return; } if(validate) { Map expectedMap = new Properties(); expectedMap.put("key1", "val1");
+   * Java 1.5 specific API used void testBasicLoadFromXML(Map map, boolean validate, int v) { if (!(map instanceof
+   * Properties)) { return; } if(validate) { Map expectedMap = new Properties(); expectedMap.put("key1", "val1");
    * expectedMap.put("key2", "val2"); expectedMap.put("key3", "val3"); assertMappings(expectedMap, map); } else {
    * synchronized (map) { Properties data = new Properties(); data.setProperty("key1", "val1"); data.setProperty("key2",
    * "val2"); data.setProperty("key3", "val3"); ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); try {
@@ -355,32 +390,32 @@ public class GenericMapTestApp extends GenericTestApp {
    * (IOException ioe) { Assert.fail(); } } } }
    */
 
-  void testKeySetClear(Map map, boolean validate) {
+  void testKeySetClear(Map map, boolean validate, int v) {
     if (validate) {
       assertEmptyMap(map);
     } else {
-      addMappings(map, 42);
+      addMappings(map, 42, v);
       synchronized (map) {
         map.keySet().clear();
       }
     }
   }
 
-  void testKeySetIteratorRemove(Map map, boolean validate) {
+  void testKeySetIteratorRemove(Map map, boolean validate, int v) {
     if (validate) {
-      Map expect = getOrderSensitiveMappings();
-      expect.remove("February");
-      expect.remove("March");
+      Map expect = getOrderSensitiveMappings(v);
+      expect.remove(E("February", v));
+      expect.remove(E("March", v));
       assertMappings(expect, map);
     } else {
       synchronized (map) {
-        map.putAll(getOrderSensitiveMappings());
+        map.putAll(getOrderSensitiveMappings(v));
       }
 
       synchronized (map) {
         for (Iterator i = map.keySet().iterator(); i.hasNext();) {
           Object key = i.next();
-          if ("February".equals(key) || "March".equals(key)) {
+          if (E("February", v).equals(key) || E("March", v).equals(key)) {
             i.remove();
           }
         }
@@ -388,21 +423,21 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testKeySetIteratorRemoveNull(Map map, boolean validate) {
+  void testKeySetIteratorRemoveNull(Map map, boolean validate, int v) {
     if (!allowsNull(map)) { return; }
 
     if (validate) {
-      assertSingleMapping(map, "key1", "value1");
+      assertSingleMapping(map, E("key1", v), "value1");
     } else {
       synchronized (map) {
-        map.put("key1", "value1");
+        map.put(E("key1", v), "value1");
         map.put(null, "value for null key");
       }
 
       synchronized (map) {
         for (Iterator i = map.keySet().iterator(); i.hasNext();) {
           Object key = i.next();
-          if (!"key1".equals(key)) {
+          if (!E("key1", v).equals(key)) {
             i.remove();
           }
         }
@@ -410,42 +445,42 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testKeySetRemove(Map map, boolean validate) {
+  void testKeySetRemove(Map map, boolean validate, int v) {
     if (validate) {
-      Map expect = getOrderSensitiveMappings();
-      expect.remove("February");
-      expect.remove("March");
+      Map expect = getOrderSensitiveMappings(v);
+      expect.remove(E("February", v));
+      expect.remove(E("March", v));
       assertMappings(expect, map);
     } else {
       synchronized (map) {
-        map.putAll(getOrderSensitiveMappings());
+        map.putAll(getOrderSensitiveMappings(v));
       }
 
       synchronized (map) {
         Set keys = map.keySet();
         boolean removed;
-        removed = keys.remove("February");
+        removed = keys.remove(E("February", v));
         Assert.assertTrue(removed);
-        removed = keys.remove("March");
+        removed = keys.remove(E("March", v));
         Assert.assertTrue(removed);
-        removed = keys.remove("key4");
+        removed = keys.remove(E("key4", v));
         Assert.assertFalse(removed);
       }
     }
   }
 
-  void testBasicGet(Map map, boolean validate) {
+  void testBasicGet(Map map, boolean validate, int v) {
     if (validate) {
       try {
         if (isAccessOrderedLinkedHashMap(map)) {
           synchronized (map) {
-            Assert.assertEquals("value", map.get("key"));
+            Assert.assertEquals("value", map.get(E("key", v)));
           }
         } else {
-          Assert.assertEquals("value", map.get("key"));
+          Assert.assertEquals("value", map.get(E("key", v)));
         }
         if (map instanceof MyHashMap) {
-          Assert.assertEquals("value", ((MyHashMap) map).getObject("key"));
+          Assert.assertEquals("value", ((MyHashMap) map).getObject(E("key", v)));
         }
       } catch (Throwable t) {
         System.err.println("*******" + Thread.currentThread().getName() + ", map: " + map + "********");
@@ -453,31 +488,31 @@ public class GenericMapTestApp extends GenericTestApp {
       }
     } else {
       synchronized (map) {
-        map.put("key", "value");
+        map.put(E("key", v), "value");
       }
     }
   }
 
-  void testBasicRemove(Map map, boolean validate) {
+  void testBasicRemove(Map map, boolean validate, int v) {
     if (validate) {
       assertEmptyMap(map);
     } else {
       synchronized (map) {
-        Object prev = map.put("key", "value");
+        Object prev = map.put(E("key", v), "value");
         Assert.assertNull(prev);
       }
       synchronized (map) {
-        Object prev = map.remove("key");
+        Object prev = map.remove(E("key", v));
         Assert.assertEquals("value", prev);
       }
       synchronized (map) {
-        Object prev = map.remove("key");
+        Object prev = map.remove(E("key", v));
         Assert.assertNull(prev);
       }
     }
   }
 
-  void testRemoveNullKey(Map map, boolean validate) {
+  void testRemoveNullKey(Map map, boolean validate, int v) {
     if (!allowsNull(map)) { return; }
     if (validate) {
       assertEmptyMap(map);
@@ -492,11 +527,11 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testClearNonEmpty(Map map, boolean validate) {
+  void testClearNonEmpty(Map map, boolean validate, int v) {
     if (validate) {
       assertEmptyMap(map);
     } else {
-      addMappings(map, 1);
+      addMappings(map, 1, v);
 
       Assert.assertFalse(map.isEmpty());
 
@@ -506,7 +541,7 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testClearEmpty(Map map, boolean validate) {
+  void testClearEmpty(Map map, boolean validate, int v) {
     if (validate) {
       assertEmptyMap(map);
     } else {
@@ -517,11 +552,11 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testValuesClear(Map map, boolean validate) {
+  void testValuesClear(Map map, boolean validate, int v) {
     if (validate) {
       assertEmptyMap(map);
     } else {
-      addMappings(map, 23);
+      addMappings(map, 23, v);
 
       synchronized (map) {
         map.values().clear();
@@ -529,95 +564,96 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testValuesRemove(Map map, boolean validate) {
+  void testValuesRemove(Map map, boolean validate, int v) {
     if (validate) {
-      Map expect = getOrderSensitiveMappings();
-      expect.remove("March");
-      assertMappings(expect, map);
+      assertEmptyMap(map);
+
     } else {
       synchronized (map) {
-        map.putAll(getOrderSensitiveMappings());
+        map.put(E("key1", v), E("value1", v));
       }
 
       synchronized (map) {
-        map.values().remove("Mar");
+        boolean removed = map.values().remove(E("value1", v));
+        Assert.assertTrue(removed);
       }
     }
   }
 
-  void testValuesDuplicateRemove(Map map, boolean validate) {
+  void testValuesDuplicateRemove(Map map, boolean validate, int v) {
     if (validate) {
       if (map instanceof THashMap) {
         // values().remove(Object) on THashMap will remove all mappings for the given value, not just the first
         assertEmptyMap(map);
       } else {
         Object expect = sharedMap.get("expect" + map.getClass().getName());
-        assertSingleMapping(map, expect, "value");
+        assertSingleMapping(map, expect, E("value", v));
       }
     } else {
       synchronized (map) {
-        map.put("key1", "value");
-        map.put("key2", "value");
+        map.put(E("key1", v), E("value", v));
+        map.put(E("key2", v), E("value", v));
       }
 
       synchronized (map) {
-        boolean removed = map.values().remove("value");
+        boolean removed = map.values().remove(E("value", v));
         Assert.assertTrue(removed);
-        String expectedKey = map.containsKey("key1") ? "key1" : "key2";
+        Object expectedKey = map.containsKey(E("key1", v)) ? E("key1", v) : E("key2", v);
         sharedMap.put("expect" + map.getClass().getName(), expectedKey);
       }
     }
   }
 
-  void testValuesRemoveNull(Map map, boolean validate) {
+  void testValuesRemoveNull(Map map, boolean validate, int v) {
     if (!allowsNull(map)) { return; }
     if (validate) {
-      assertSingleMapping(map, "key1", "value1");
+      assertSingleMapping(map, E("key1", v), "value1");
     } else {
       synchronized (map) {
-        map.put("key1", "value1");
-        map.put("key for null value", null);
-        map.put(null, "value for null key");
+        map.put(E("key1", v), "value1");
+        map.put(E("key for null value", v), null);
+        map.put(null, E("value for null key", v));
       }
 
       synchronized (map) {
         map.values().remove(null);
-        map.values().remove("value for null key");
+        map.values().remove(E("value for null key", v));
       }
     }
   }
 
-  void testValuesRemoveAll(Map map, boolean validate) {
+  void testValuesRemoveAll(Map map, boolean validate, int v) {
     if (validate) {
-      Map expect = getOrderSensitiveMappings();
-      expect.remove("February");
-      expect.remove("March");
+      Map expect = getOrderSensitiveMappings(v);
+      expect.remove(E("February", v));
+      expect.remove(E("March", v));
       assertMappings(expect, map);
     } else {
       synchronized (map) {
-        map.putAll(getOrderSensitiveMappings());
+        map.putAll(getOrderSensitiveMappings(v));
       }
 
       Set toRemove = new HashSet();
-      toRemove.add("Feb");
-      toRemove.add("Mar");
+      toRemove.add(E("Feb", v));
+      toRemove.add(E("Mar", v));
 
       synchronized (map) {
-        map.values().removeAll(toRemove);
+        boolean removed = map.values().removeAll(toRemove);
+        Assert.assertTrue(removed);
       }
     }
   }
 
-  void testValuesRetainAll(Map map, boolean validate) {
+  void testValuesRetainAll(Map map, boolean validate, int v) {
     if (validate) {
-      assertSingleMapping(map, "March", "Mar");
+      assertSingleMapping(map, E("March", v), E("Mar", v));
     } else {
       synchronized (map) {
-        map.putAll(getOrderSensitiveMappings());
+        map.putAll(getOrderSensitiveMappings(v));
       }
 
       Set toRetain = new HashSet();
-      toRetain.add("Mar");
+      toRetain.add(E("Mar", v));
 
       synchronized (map) {
         map.values().retainAll(toRetain);
@@ -625,20 +661,21 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testValuesIteratorRemove(Map map, boolean validate) {
+  void testValuesIteratorRemove(Map map, boolean validate, int v) {
     if (validate) {
-      Map expect = getOrderSensitiveMappings();
-      expect.remove("March");
+      Map expect = new HashMap();
+      expect.put(E("key1", v), E("value1", v));
       assertMappings(expect, map);
     } else {
       synchronized (map) {
-        map.putAll(getOrderSensitiveMappings());
+        map.put(E("key1", v), E("value1", v));
+        map.put(E("key2", v), E("value2", v));
       }
 
       synchronized (map) {
         for (Iterator i = map.values().iterator(); i.hasNext();) {
           Object value = i.next();
-          if ("Mar".equals(value)) {
+          if (E("value2", v).equals(value)) {
             i.remove();
           }
         }
@@ -646,15 +683,15 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testValuesIteratorRemoveNull(Map map, boolean validate) {
+  void testValuesIteratorRemoveNull(Map map, boolean validate, int v) {
     if (!allowsNull(map)) { return; }
     if (validate) {
-      assertSingleMapping(map, "key1", "value1");
+      assertSingleMapping(map, E("key1", v), "value1");
     } else {
       synchronized (map) {
-        map.put("key1", "value1");
-        map.put(null, "value for null key");
-        map.put("key for null value", null);
+        map.put(E("key1", v), "value1");
+        map.put(null, E("value for null key", v));
+        map.put(E("key for null value", v), null);
       }
 
       synchronized (map) {
@@ -668,7 +705,7 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testValuesIterator(Map map, boolean validate) {
+  void testValuesIterator(Map map, boolean validate, int v) {
     if (validate) {
       int count = 0;
       for (Iterator i = map.values().iterator(); i.hasNext();) {
@@ -678,54 +715,54 @@ public class GenericMapTestApp extends GenericTestApp {
       Assert.assertEquals(1, count);
     } else {
       synchronized (map) {
-        map.put("timmy", "teck");
+        map.put(E("timmy", v), "teck");
       }
     }
   }
 
-  void testKeySetIterator(Map map, boolean validate) {
+  void testKeySetIterator(Map map, boolean validate, int v) {
     if (validate) {
       int count = 0;
       for (Iterator i = map.keySet().iterator(); i.hasNext();) {
         count++;
-        Assert.assertEquals("timmy", i.next());
+        Assert.assertEquals(E("timmy", v), i.next());
       }
       Assert.assertEquals(1, count);
     } else {
       synchronized (map) {
-        map.put("timmy", "teck");
+        map.put(E("timmy", v), "teck");
       }
     }
   }
 
-  void testEntrySetIterator(Map map, boolean validate) {
+  void testEntrySetIterator(Map map, boolean validate, int v) {
     if (validate) {
       int count = 0;
       for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
         count++;
         Map.Entry entry = (Entry) i.next();
-        Assert.assertEquals("timmy", entry.getKey());
+        Assert.assertEquals(E("timmy", v), entry.getKey());
         Assert.assertEquals("teck", entry.getValue());
       }
       Assert.assertEquals(1, count);
     } else {
       synchronized (map) {
-        map.put("timmy", "teck");
+        map.put(E("timmy", v), "teck");
       }
     }
   }
 
-  void testEntrySetAdd(Map map, boolean validate) {
+  void testEntrySetAdd(Map map, boolean validate, int v) {
     // no test for entrySet().add() as HashMap, Hashtable, TreeMap, and THashMap throw
     // UnsupportedOperationException.
   }
 
-  void testEntrySetValue(Map map, boolean validate) {
+  void testEntrySetValue(Map map, boolean validate, int v) {
     if (validate) {
-      assertSingleMapping(map, "key", "value2");
+      assertSingleMapping(map, E("key", v), "value2");
     } else {
       synchronized (map) {
-        map.put("key", "value1");
+        map.put(E("key", v), "value1");
       }
 
       synchronized (map) {
@@ -739,14 +776,14 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testEntrySetValueNull(Map map, boolean validate) {
+  void testEntrySetValueNull(Map map, boolean validate, int v) {
     if (!allowsNull(map)) return;
 
     if (validate) {
-      assertSingleMapping(map, "key", null);
+      assertSingleMapping(map, E("key", v), null);
     } else {
       synchronized (map) {
-        map.put("key", "value1");
+        map.put(E("key", v), "value1");
       }
 
       synchronized (map) {
@@ -760,18 +797,18 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testEntrySetRemoveNull(Map map, boolean validate) {
+  void testEntrySetRemoveNull(Map map, boolean validate, int v) {
     if (!allowsNull(map)) return;
 
     if (validate) {
       assertEmptyMap(map);
     } else {
       synchronized (map) {
-        map.put("key", null);
+        map.put(E("key", v), null);
         map.put(null, "value");
       }
 
-      addMappings(map, 3);
+      addMappings(map, 3, v);
 
       synchronized (map) {
         Set set = map.entrySet();
@@ -783,39 +820,39 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testEntrySetRemove(Map map, boolean validate) {
+  void testEntrySetRemove(Map map, boolean validate, int v) {
     if (validate) {
-      Map expect = getOrderSensitiveMappings();
-      expect.remove("March");
+      Map expect = getOrderSensitiveMappings(v);
+      expect.remove(E("March", v));
       assertMappings(expect, map);
     } else {
       synchronized (map) {
-        map.putAll(getOrderSensitiveMappings());
+        map.putAll(getOrderSensitiveMappings(v));
       }
 
       synchronized (map) {
-        map.entrySet().remove(new SimpleEntry("March", "Mar"));
+        map.entrySet().remove(new SimpleEntry(E("March", v), E("Mar", v)));
       }
     }
   }
 
-  void testEntrySetRemoveAll(Map map, boolean validate) {
+  void testEntrySetRemoveAll(Map map, boolean validate, int v) {
     if (validate) {
       Map expect = new HashMap();
-      expect.put("die, die", "die, my darling");
-      expect.put("die, die, die", "no die");
+      expect.put(E("die, die", v), "die, my darling");
+      expect.put(E("die, die, die", v), "no die");
       assertMappings(expect, map);
     } else {
       synchronized (map) {
-        map.put("die", "another day");
-        map.put("die, die", "die, my darling");
-        map.put("die, die, die", "no die");
-        map.put("on the last day of your life, don't forget to", "die");
+        map.put(E("die", v), "another day");
+        map.put(E("die, die", v), "die, my darling");
+        map.put(E("die, die, die", v), "no die");
+        map.put(E("on the last day of your life, don't forget to", v), "die");
       }
 
       Set removeSet = new HashSet(2);
-      removeSet.add(new SimpleEntry("die", "another day"));
-      removeSet.add(new SimpleEntry("on the last day of your life, don't forget to", "die"));
+      removeSet.add(new SimpleEntry(E("die", v), "another day"));
+      removeSet.add(new SimpleEntry(E("on the last day of your life, don't forget to", v), "die"));
 
       synchronized (map) {
         map.entrySet().removeAll(removeSet);
@@ -823,20 +860,20 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testKeySetRemoveAll(Map map, boolean validate) {
+  void testKeySetRemoveAll(Map map, boolean validate, int v) {
     if (validate) {
-      Map expect = getOrderSensitiveMappings();
-      expect.remove("February");
-      expect.remove("March");
+      Map expect = getOrderSensitiveMappings(v);
+      expect.remove(E("February", v));
+      expect.remove(E("March", v));
       assertMappings(expect, map);
     } else {
       synchronized (map) {
-        map.putAll(getOrderSensitiveMappings());
+        map.putAll(getOrderSensitiveMappings(v));
       }
 
       Set toRemove = new HashSet(2);
-      toRemove.add("February");
-      toRemove.add("March");
+      toRemove.add(E("February", v));
+      toRemove.add(E("March", v));
 
       synchronized (map) {
         map.keySet().removeAll(toRemove);
@@ -844,20 +881,20 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testKeySetRetainAll(Map map, boolean validate) {
+  void testKeySetRetainAll(Map map, boolean validate, int v) {
     if (validate) {
-      Map expect = getOrderSensitiveMappings();
-      expect.remove("January");
-      expect.remove("April");
+      Map expect = getOrderSensitiveMappings(v);
+      expect.remove(E("January", v));
+      expect.remove(E("April", v));
       assertMappings(expect, map);
     } else {
       synchronized (map) {
-        map.putAll(getOrderSensitiveMappings());
+        map.putAll(getOrderSensitiveMappings(v));
       }
 
       Set toRetain = new HashSet(2);
-      toRetain.add("March");
-      toRetain.add("February");
+      toRetain.add(E("March", v));
+      toRetain.add(E("February", v));
 
       synchronized (map) {
         map.keySet().retainAll(toRetain);
@@ -865,40 +902,40 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testKeySetRemoveNull(Map map, boolean validate) {
+  void testKeySetRemoveNull(Map map, boolean validate, int v) {
     if (!allowsNull(map)) { return; }
 
     if (validate) {
-      assertSingleMapping(map, "key1", "value1");
+      assertSingleMapping(map, E("key1", v), "value1");
     } else {
       synchronized (map) {
-        map.put("key1", "value1");
+        map.put(E("key1", v), "value1");
         map.put(null, "value for null key");
-        map.put("key for null value", null);
+        map.put(E("key for null value", v), null);
       }
 
       synchronized (map) {
         map.keySet().remove(null);
-        map.keySet().remove("key for null value");
+        map.keySet().remove(E("key for null value", v));
       }
     }
 
   }
 
-  void testEntrySetRetainAll(Map map, boolean validate) {
+  void testEntrySetRetainAll(Map map, boolean validate, int v) {
     if (validate) {
       // NOTE: this test will fail for THashMap if using releases of trove before 1.1b5. See trove bug 1382196
       // http://sourceforge.net/tracker/index.php?func=detail&aid=1382196&group_id=39235&atid=424682
-      assertSingleMapping(map, "key1", "value1");
+      assertSingleMapping(map, E("key1", v), "value1");
     } else {
       synchronized (map) {
-        map.put("key1", "value1");
-        map.put("key2", "value2");
-        map.put("key3", "value3");
+        map.put(E("key1", v), "value1");
+        map.put(E("key2", v), "value2");
+        map.put(E("key3", v), "value3");
       }
 
       Set retainSet = new HashSet();
-      retainSet.add(new SimpleEntry("key1", "value1"));
+      retainSet.add(new SimpleEntry(E("key1", v), "value1"));
 
       synchronized (map) {
         map.entrySet().retainAll(retainSet);
@@ -906,20 +943,20 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testEntrySetRetainAll2(Map map, boolean validate) {
+  void testEntrySetRetainAll2(Map map, boolean validate, int v) {
     if (validate) {
-      Map expect = getOrderSensitiveMappings();
-      expect.remove("January");
-      expect.remove("April");
+      Map expect = getOrderSensitiveMappings(v);
+      expect.remove(E("January", v));
+      expect.remove(E("April", v));
       assertMappings(expect, map);
     } else {
       synchronized (map) {
-        map.putAll(getOrderSensitiveMappings());
+        map.putAll(getOrderSensitiveMappings(v));
       }
 
       Set retainSet = new HashSet();
-      retainSet.add(new SimpleEntry("February", "Feb"));
-      retainSet.add(new SimpleEntry("March", "Mar"));
+      retainSet.add(new SimpleEntry(E("February", v), E("Feb", v)));
+      retainSet.add(new SimpleEntry(E("March", v), E("Mar", v)));
 
       synchronized (map) {
         map.entrySet().retainAll(retainSet);
@@ -927,11 +964,11 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testEntrySetClear(Map map, boolean validate) {
+  void testEntrySetClear(Map map, boolean validate, int v) {
     if (validate) {
       assertEmptyMap(map);
     } else {
-      addMappings(map, 3);
+      addMappings(map, 3, v);
 
       synchronized (map) {
         map.entrySet().clear();
@@ -939,15 +976,15 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testEntrySetIteratorRemove(Map map, boolean validate) {
+  void testEntrySetIteratorRemove(Map map, boolean validate, int v) {
     if (validate) {
-      Map expect = getOrderSensitiveMappings();
-      expect.remove("February");
-      expect.remove("March");
+      Map expect = getOrderSensitiveMappings(v);
+      expect.remove(E("February", v));
+      expect.remove(E("March", v));
       assertMappings(expect, map);
     } else {
       synchronized (map) {
-        map.putAll(getOrderSensitiveMappings());
+        map.putAll(getOrderSensitiveMappings(v));
       }
 
       synchronized (map) {
@@ -955,7 +992,7 @@ public class GenericMapTestApp extends GenericTestApp {
         for (Iterator i = set.iterator(); i.hasNext();) {
           Entry entry = (Entry) i.next();
           Object key = entry.getKey();
-          if ("February".equals(key) || "March".equals(key)) {
+          if (E("February", v).equals(key) || E("March", v).equals(key)) {
             i.remove();
           }
         }
@@ -963,15 +1000,15 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testEntrySetIteratorRemoveNull(Map map, boolean validate) {
+  void testEntrySetIteratorRemoveNull(Map map, boolean validate, int v) {
     if (!allowsNull(map)) { return; }
     if (validate) {
-      assertSingleMapping(map, "key1", "value1");
+      assertSingleMapping(map, E("key1", v), "value1");
     } else {
       synchronized (map) {
-        map.put("key1", "value1");
+        map.put(E("key1", v), "value1");
         map.put(null, "value for null key");
-        map.put("key for null value", null);
+        map.put(E("key for null value", v), null);
       }
 
       synchronized (map) {
@@ -979,7 +1016,7 @@ public class GenericMapTestApp extends GenericTestApp {
         for (Iterator i = set.iterator(); i.hasNext();) {
           Entry entry = (Entry) i.next();
           Object key = entry.getKey();
-          if (!"key1".equals(key)) {
+          if (!E("key1", v).equals(key)) {
             i.remove();
           }
         }
@@ -987,7 +1024,7 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testEntrySetToArray(Map map, boolean validate) {
+  void testEntrySetToArray(Map map, boolean validate, int v) {
     Object[] array = getArray(map);
 
     if (validate) {
@@ -996,7 +1033,7 @@ public class GenericMapTestApp extends GenericTestApp {
       }
     } else {
       synchronized (map) {
-        map.putAll(getOrderSensitiveMappings());
+        map.putAll(getOrderSensitiveMappings(v));
       }
       synchronized (array) {
         Object[] returnArray = map.entrySet().toArray(array);
@@ -1006,7 +1043,7 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testKeySetToArray(Map map, boolean validate) {
+  void testKeySetToArray(Map map, boolean validate, int v) {
     Object[] array = getArray(map);
 
     if (validate) {
@@ -1015,7 +1052,7 @@ public class GenericMapTestApp extends GenericTestApp {
       }
     } else {
       synchronized (map) {
-        map.putAll(getOrderSensitiveMappings());
+        map.putAll(getOrderSensitiveMappings(v));
       }
       synchronized (array) {
         Object[] returnArray = map.keySet().toArray(array);
@@ -1025,7 +1062,7 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testValuesToArray(Map map, boolean validate) {
+  void testValuesToArray(Map map, boolean validate, int v) {
     Object[] array = getArray(map);
 
     if (validate) {
@@ -1034,7 +1071,7 @@ public class GenericMapTestApp extends GenericTestApp {
       }
     } else {
       synchronized (map) {
-        map.putAll(getOrderSensitiveMappings());
+        map.putAll(getOrderSensitiveMappings(v));
       }
       synchronized (array) {
         Object[] returnArray = map.values().toArray(array);
@@ -1044,7 +1081,7 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testFastHashMapSetFast(Map map, boolean validate) {
+  void testFastHashMapSetFast(Map map, boolean validate, int v) {
     if (!(map instanceof FastHashMap)) { return; }
 
     FastHashMap fastHashMap = (FastHashMap) map;
@@ -1058,7 +1095,7 @@ public class GenericMapTestApp extends GenericTestApp {
   }
 
   // ReadOnly testing methods.
-  void testReadOnlyPut(Map map, boolean validate) {
+  void testReadOnlyPut(Map map, boolean validate, int v) {
     if (!canTestReadOnly(map)) { return; }
 
     if (validate) {
@@ -1066,8 +1103,7 @@ public class GenericMapTestApp extends GenericTestApp {
     } else {
       synchronized (map) {
         try {
-          Object prev = map.put("timmy", "teck");
-          Assert.assertNull(prev);
+          map.put(E("timmy", v), "teck");
           throw new AssertionError("Should have thrown a ReadOnlyException");
         } catch (ReadOnlyException re) {
           // expected
@@ -1076,7 +1112,7 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testReadOnlyPutAll(Map map, boolean validate) {
+  void testReadOnlyPutAll(Map map, boolean validate, int v) {
     if (!canTestReadOnly(map)) { return; }
 
     if (validate) {
@@ -1085,7 +1121,7 @@ public class GenericMapTestApp extends GenericTestApp {
       synchronized (map) {
         try {
           Map toAdd = new HashMap();
-          addMappings(toAdd, 3);
+          addMappings(toAdd, 3, v);
           map.putAll(toAdd);
           throw new AssertionError("Should have thrown a ReadOnlyException");
         } catch (ReadOnlyException t) {
@@ -1096,11 +1132,11 @@ public class GenericMapTestApp extends GenericTestApp {
   }
 
   // Setting up for the ReadOnly test for remove.
-  void testSetUpRemove(Map map, boolean validate) {
+  void testSetUpRemove(Map map, boolean validate, int v) {
     if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
-    addMappings(toAdd, 3);
+    addMappings(toAdd, 3, v);
 
     if (validate) {
       assertMappings(toAdd, map);
@@ -1108,16 +1144,16 @@ public class GenericMapTestApp extends GenericTestApp {
       synchronized (map) {
         map.putAll(toAdd);
       }
-      tryReadOnlyRemove(map);
+      tryReadOnlyRemove(map, v);
     }
 
   }
 
   // tryReadOnlyRemove() goes hand in hand with testSetUpRemove().
-  private void tryReadOnlyRemove(Map map) {
+  private void tryReadOnlyRemove(Map map, int v) {
     synchronized (map) {
       try {
-        map.remove("key2");
+        map.remove(E("key2", v));
         throw new AssertionError("Should have thrown a ReadOnlyException");
       } catch (ReadOnlyException t) {
         // expected
@@ -1126,11 +1162,11 @@ public class GenericMapTestApp extends GenericTestApp {
   }
 
   // Setting up for the ReadOnly test for clear.
-  void testSetUpClear(Map map, boolean validate) {
+  void testSetUpClear(Map map, boolean validate, int v) {
     if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
-    addMappings(toAdd, 3);
+    addMappings(toAdd, 3, v);
 
     if (validate) {
       assertMappings(toAdd, map);
@@ -1156,11 +1192,11 @@ public class GenericMapTestApp extends GenericTestApp {
   }
 
   // Setting up for the ReadOnly test for entry set clear.
-  void testSetUpEntrySetClear(Map map, boolean validate) {
+  void testSetUpEntrySetClear(Map map, boolean validate, int v) {
     if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
-    addMappings(toAdd, 3);
+    addMappings(toAdd, 3, v);
 
     if (validate) {
       assertMappings(toAdd, map);
@@ -1187,11 +1223,11 @@ public class GenericMapTestApp extends GenericTestApp {
   }
 
   // Setting up for the ReadOnly test for entry set remove.
-  void testSetUpEntrySetRemove(Map map, boolean validate) {
+  void testSetUpEntrySetRemove(Map map, boolean validate, int v) {
     if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
-    addMappings(toAdd, 3);
+    addMappings(toAdd, 3, v);
 
     if (validate) {
       assertMappings(toAdd, map);
@@ -1220,11 +1256,11 @@ public class GenericMapTestApp extends GenericTestApp {
   }
 
   // Setting up for the ReadOnly test for entry set retainAll.
-  void testSetUpEntrySetRetainAll(Map map, boolean validate) {
+  void testSetUpEntrySetRetainAll(Map map, boolean validate, int v) {
     if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
-    addMappings(toAdd, 3);
+    addMappings(toAdd, 3, v);
 
     if (validate) {
       assertMappings(toAdd, map);
@@ -1254,11 +1290,11 @@ public class GenericMapTestApp extends GenericTestApp {
   }
 
   // Setting up for the ReadOnly test for entry set removeAll.
-  void testSetUpEntrySetRemoveAll(Map map, boolean validate) {
+  void testSetUpEntrySetRemoveAll(Map map, boolean validate, int v) {
     if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
-    addMappings(toAdd, 3);
+    addMappings(toAdd, 3, v);
 
     if (validate) {
       assertMappings(toAdd, map);
@@ -1288,11 +1324,11 @@ public class GenericMapTestApp extends GenericTestApp {
   }
 
   // Setting up for the ReadOnly test for entry set iterator remove.
-  void testSetUpEntrySetIteratorRemove(Map map, boolean validate) {
+  void testSetUpEntrySetIteratorRemove(Map map, boolean validate, int v) {
     if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
-    addMappings(toAdd, 3);
+    addMappings(toAdd, 3, v);
 
     if (validate) {
       assertMappings(toAdd, map);
@@ -1320,11 +1356,11 @@ public class GenericMapTestApp extends GenericTestApp {
   }
 
   // Setting up for the ReadOnly test for entry set setValue.
-  void testSetUpEntrySet(Map map, boolean validate) {
+  void testSetUpEntrySet(Map map, boolean validate, int v) {
     if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
-    addMappings(toAdd, 3);
+    addMappings(toAdd, 3, v);
 
     if (validate) {
       assertMappings(toAdd, map);
@@ -1352,11 +1388,11 @@ public class GenericMapTestApp extends GenericTestApp {
   }
 
   // Setting up for the ReadOnly test for key set clear.
-  void testSetUpKeySetClear(Map map, boolean validate) {
+  void testSetUpKeySetClear(Map map, boolean validate, int v) {
     if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
-    addMappings(toAdd, 3);
+    addMappings(toAdd, 3, v);
 
     if (validate) {
       assertMappings(toAdd, map);
@@ -1383,11 +1419,11 @@ public class GenericMapTestApp extends GenericTestApp {
   }
 
   // Setting up for the ReadOnly test for key set retainAll.
-  void testSetUpKeySetRetainAll(Map map, boolean validate) {
+  void testSetUpKeySetRetainAll(Map map, boolean validate, int v) {
     if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
-    addMappings(toAdd, 3);
+    addMappings(toAdd, 3, v);
 
     if (validate) {
       assertMappings(toAdd, map);
@@ -1417,11 +1453,11 @@ public class GenericMapTestApp extends GenericTestApp {
   }
 
   // Setting up for the ReadOnly test for key set removeAll.
-  void testSetUpKeySetRemoveAll(Map map, boolean validate) {
+  void testSetUpKeySetRemoveAll(Map map, boolean validate, int v) {
     if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
-    addMappings(toAdd, 3);
+    addMappings(toAdd, 3, v);
 
     if (validate) {
       assertMappings(toAdd, map);
@@ -1451,11 +1487,11 @@ public class GenericMapTestApp extends GenericTestApp {
   }
 
   // Setting up for the ReadOnly test for key set iterator remove.
-  void testSetUpKeySetIteratorRemove(Map map, boolean validate) {
+  void testSetUpKeySetIteratorRemove(Map map, boolean validate, int v) {
     if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
-    addMappings(toAdd, 3);
+    addMappings(toAdd, 3, v);
 
     if (validate) {
       assertMappings(toAdd, map);
@@ -1482,11 +1518,11 @@ public class GenericMapTestApp extends GenericTestApp {
   }
 
   // Setting up for the ReadOnly test for values clear.
-  void testSetUpValuesClear(Map map, boolean validate) {
+  void testSetUpValuesClear(Map map, boolean validate, int v) {
     if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
-    addMappings(toAdd, 3);
+    addMappings(toAdd, 3, v);
 
     if (validate) {
       assertMappings(toAdd, map);
@@ -1513,11 +1549,11 @@ public class GenericMapTestApp extends GenericTestApp {
   }
 
   // Setting up for the ReadOnly test for values retainAll.
-  void testSetUpValuesRetainAll(Map map, boolean validate) {
+  void testSetUpValuesRetainAll(Map map, boolean validate, int v) {
     if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
-    addMappings(toAdd, 3);
+    addMappings(toAdd, 3, v);
 
     if (validate) {
       assertMappings(toAdd, map);
@@ -1547,11 +1583,11 @@ public class GenericMapTestApp extends GenericTestApp {
   }
 
   // Setting up for the ReadOnly test for values removeAll.
-  void testSetUpValuesRemoveAll(Map map, boolean validate) {
+  void testSetUpValuesRemoveAll(Map map, boolean validate, int v) {
     if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
-    addMappings(toAdd, 3);
+    addMappings(toAdd, 3, v);
 
     if (validate) {
       assertMappings(toAdd, map);
@@ -1581,11 +1617,11 @@ public class GenericMapTestApp extends GenericTestApp {
   }
 
   // Setting up for the ReadOnly test for values iterator remove.
-  void testSetUpValuesIteratorRemove(Map map, boolean validate) {
+  void testSetUpValuesIteratorRemove(Map map, boolean validate, int v) {
     if (!canTestReadOnly(map)) { return; }
 
     Map toAdd = new HashMap();
-    addMappings(toAdd, 3);
+    addMappings(toAdd, 3, v);
 
     if (validate) {
       assertMappings(toAdd, map);
@@ -1613,49 +1649,39 @@ public class GenericMapTestApp extends GenericTestApp {
   }
 
   // THashMap specific testing methods.
-  void testTHashMapRemoveAt(Map map, boolean validate) {
+  void testTHashMapRemoveAt(Map map, boolean validate, int v) throws Exception {
     if (!(map instanceof THashMap)) { return; }
 
     Map toAdd = new HashMap();
-    addMappings(toAdd, 2);
+    addMappings(toAdd, 2, v);
     if (validate) {
       assertMappings(toAdd, map);
     } else {
       synchronized (map) {
         map.putAll(toAdd);
-        map.put("key2", "value2");
+        map.put(E("key2", v), "value2");
       }
       Class mapClass = TObjectHash.class;
       Class[] parameterType = new Class[1];
 
-      try {
-        parameterType[0] = Object.class;
-        Method m = mapClass.getDeclaredMethod("index", parameterType);
+      parameterType[0] = Object.class;
+      Method m = mapClass.getDeclaredMethod("index", parameterType);
+      m.setAccessible(true);
+      Object indexObj = m.invoke(map, new Object[] { E("key2", v) });
+
+      synchronized (map) {
+        parameterType[0] = Integer.TYPE;
+        m = mapClass.getDeclaredMethod("removeAt", parameterType);
         m.setAccessible(true); // suppressing java access checking since removeRange is
         // a protected method.
-        Object indexObj = m.invoke(map, new Object[] { "key2" });
 
-        synchronized (map) {
-          parameterType[0] = Integer.TYPE;
-          m = mapClass.getDeclaredMethod("removeAt", parameterType);
-          m.setAccessible(true); // suppressing java access checking since removeRange is
-          // a protected method.
-
-          m.invoke(map, new Object[] { indexObj });
-        }
-      } catch (NoSuchMethodException e) {
-        // ignore NoSuchmethodExcpetion in test.
-      } catch (IllegalArgumentException e) {
-        // ignore IllegalArgumentException in test.
-      } catch (IllegalAccessException e) {
-        // ignore IllegalAccessException in test.
-      } catch (InvocationTargetException e) {
-        // ignore InvocationTargetException in test.
+        m.invoke(map, new Object[] { indexObj });
       }
+
     }
   }
 
-  void testTHashMapTransformValues(Map map, boolean validate) {
+  void testTHashMapTransformValues(Map map, boolean validate, int v) {
     if (!(map instanceof THashMap)) { return; }
     THashMap tMap = (THashMap) map;
     if (validate) {
@@ -1674,12 +1700,12 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testPutNonPortableObject(Map map, boolean validate) {
+  void testPutNonPortableObject(Map map, boolean validate, int v) {
     if (!canTestNonPortableObject(map)) { return; }
 
     Map toBeAdded = new HashMap();
-    toBeAdded.put("First", "First Value");
-    toBeAdded.put("Second", "Second Value");
+    toBeAdded.put(E("First", v), "First Value");
+    toBeAdded.put(E("Second", v), "Second Value");
     if (validate) {
       assertMappings(toBeAdded, map);
     } else {
@@ -1688,7 +1714,7 @@ public class GenericMapTestApp extends GenericTestApp {
       }
       synchronized (map) {
         try {
-          map.put("Non-portable", new MyNonPortableObject());
+          map.put(E("Non-portable", v), new MyNonPortableObject());
           throw new AssertionError("Should have thrown a TCNonPortableObjectError.");
         } catch (TCNonPortableObjectError e) {
           //
@@ -1697,30 +1723,30 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void testLinkedHashMapAccessOrderGet(Map map, boolean validate) {
+  void testLinkedHashMapAccessOrderGet(Map map, boolean validate, int v) {
     if (!isAccessOrderedLinkedHashMap(map)) { return; }
 
     if (validate) {
       Map toBeExpected = new LinkedHashMap();
-      toBeExpected.put("First", "First Value");
-      toBeExpected.put("Third", "Third Value");
-      toBeExpected.put("Second", "Second Value"); // access order maps put recently accessed items at the end
+      toBeExpected.put(E("First", v), "First Value");
+      toBeExpected.put(E("Third", v), "Third Value");
+      toBeExpected.put(E("Second", v), "Second Value"); // access order maps put recently accessed items at the end
       assertMappings(toBeExpected, map);
     } else {
       Map toBeAdded = new LinkedHashMap();
-      toBeAdded.put("First", "First Value");
-      toBeAdded.put("Second", "Second Value");
-      toBeAdded.put("Third", "Third Value");
+      toBeAdded.put(E("First", v), "First Value");
+      toBeAdded.put(E("Second", v), "Second Value");
+      toBeAdded.put(E("Third", v), "Third Value");
       synchronized (map) {
         map.putAll(toBeAdded);
       }
       synchronized (map) {
-        Assert.assertEquals("Second Value", map.get("Second"));
+        Assert.assertEquals("Second Value", map.get(E("Second", v)));
       }
     }
   }
 
-  void testLinkedHashMapInsertionOrderPut(Map map, boolean validate) {
+  void testLinkedHashMapInsertionOrderPut(Map map, boolean validate, int v) {
     if (!(map instanceof LinkedHashMap)) { return; }
 
     // we only want insertion ordered maps in this test
@@ -1728,26 +1754,26 @@ public class GenericMapTestApp extends GenericTestApp {
 
     if (validate) {
       Map toBeExpected = new LinkedHashMap();
-      toBeExpected.put("First", "First Value");
-      toBeExpected.put("Second", "New Second Value");
-      toBeExpected.put("Third", "Third Value");
+      toBeExpected.put(E("First", v), "First Value");
+      toBeExpected.put(E("Second", v), "New Second Value");
+      toBeExpected.put(E("Third", v), "Third Value");
       assertMappings(toBeExpected, map);
     } else {
       Map toBeAdded = new LinkedHashMap();
-      toBeAdded.put("First", "First Value");
-      toBeAdded.put("Second", "Second Value");
-      toBeAdded.put("Third", "Third Value");
+      toBeAdded.put(E("First", v), "First Value");
+      toBeAdded.put(E("Second", v), "Second Value");
+      toBeAdded.put(E("Third", v), "Third Value");
       synchronized (map) {
         map.putAll(toBeAdded);
       }
       synchronized (map) {
         // replacing mapping should not affect order (for insertion order maps)
-        map.put("Second", "New Second Value");
+        map.put(E("Second", v), "New Second Value");
       }
     }
   }
 
-  void testLinkedHashMapInsertionOrderRemovePut(Map map, boolean validate) {
+  void testLinkedHashMapInsertionOrderRemovePut(Map map, boolean validate, int v) {
     if (!(map instanceof LinkedHashMap)) { return; }
 
     // we only want insertion ordered maps in this test
@@ -1755,45 +1781,45 @@ public class GenericMapTestApp extends GenericTestApp {
 
     if (validate) {
       Map toBeExpected = new LinkedHashMap();
-      toBeExpected.put("First", "First Value");
-      toBeExpected.put("Third", "Third Value");
-      toBeExpected.put("Second", "New Second Value");
+      toBeExpected.put(E("First", v), "First Value");
+      toBeExpected.put(E("Third", v), "Third Value");
+      toBeExpected.put(E("Second", v), "New Second Value");
       assertMappings(toBeExpected, map);
     } else {
       Map toBeAdded = new LinkedHashMap();
-      toBeAdded.put("First", "First Value");
-      toBeAdded.put("Second", "Second Value");
-      toBeAdded.put("Third", "Third Value");
+      toBeAdded.put(E("First", v), "First Value");
+      toBeAdded.put(E("Second", v), "Second Value");
+      toBeAdded.put(E("Third", v), "Third Value");
       synchronized (map) {
         map.putAll(toBeAdded);
       }
       synchronized (map) {
-        map.remove("Second");
-        map.put("Second", "New Second Value");
+        map.remove(E("Second", v));
+        map.put(E("Second", v), "New Second Value");
       }
     }
   }
 
-  void testLinkedHashMapAccessOrderPut(Map map, boolean validate) {
+  void testLinkedHashMapAccessOrderPut(Map map, boolean validate, int v) {
     if (!isAccessOrderedLinkedHashMap(map)) { return; }
 
     if (validate) {
       Map toBeExpected = new LinkedHashMap();
-      toBeExpected.put("First", "First Value");
-      toBeExpected.put("Third", "Third Value");
-      toBeExpected.put("Second", "New Second Value"); // access order maps put recently accessed items at the end
+      toBeExpected.put(E("First", v), "First Value");
+      toBeExpected.put(E("Third", v), "Third Value");
+      toBeExpected.put(E("Second", v), "New Second Value"); // access order maps put recently accessed items at the end
       assertMappings(toBeExpected, map);
     } else {
       Map toBeAdded = new LinkedHashMap();
-      toBeAdded.put("First", "First Value");
-      toBeAdded.put("Second", "Second Value");
-      toBeAdded.put("Third", "Third Value");
+      toBeAdded.put(E("First", v), "First Value");
+      toBeAdded.put(E("Second", v), "Second Value");
+      toBeAdded.put(E("Third", v), "Third Value");
       synchronized (map) {
         map.putAll(toBeAdded);
       }
       synchronized (map) {
         // puts count as access on access order linked hash maps
-        map.put("Second", "New Second Value");
+        map.put(E("Second", v), "New Second Value");
       }
     }
   }
@@ -1807,7 +1833,7 @@ public class GenericMapTestApp extends GenericTestApp {
   }
 
   private boolean canTestReadOnly(Map map) {
-    return (!(map instanceof Hashtable) && !(map instanceof FastHashMap) && !(map instanceof TimeExpiryMap));
+    return (!(map instanceof Hashtable) && !(map instanceof FastHashMap) && !(map instanceof TimeExpiryMap) && !(isCHM(map)));
   }
 
   /**
@@ -1857,8 +1883,15 @@ public class GenericMapTestApp extends GenericTestApp {
       return (Object[]) nonSharedArrayMap.get("arrayforHashtable");
     } else if (map instanceof TreeMap) {
       return (Object[]) sharedMap.get("arrayforTreeMap");
-    } else if (map instanceof THashMap) { return (Object[]) sharedMap.get("arrayforTHashMap"); }
+    } else if (map instanceof THashMap) {
+      return (Object[]) sharedMap.get("arrayforTHashMap");
+    } else if (isCHM(map)) { return (Object[]) sharedMap.get("arrayforConcurrentHashMap"); }
+
     return null;
+  }
+
+  private static boolean isCHM(Map map) {
+    return map.getClass().getName().equals("java.util.concurrent.ConcurrentHashMap");
   }
 
   void assertMappingsKeysEqual(Object[] expect, Collection collection) {
@@ -1869,19 +1902,19 @@ public class GenericMapTestApp extends GenericTestApp {
   }
 
   void assertMappings(Map expect, Map actual) {
-    Assert.assertEquals(expect.size(), actual.size());
+    Assert.assertEquals(actual.getClass(), expect.size(), actual.size());
 
     Set expectEntries = expect.entrySet();
     Set actualEntries = actual.entrySet();
     if (actual instanceof LinkedHashMap) {
       for (Iterator iExpect = expectEntries.iterator(), iActual = actualEntries.iterator(); iExpect.hasNext();) {
-        Assert.assertEquals(iExpect.next(), iActual.next());
+        Assert.assertEquals(actual.getClass(), iExpect.next(), iActual.next());
       }
     }
 
     for (Iterator i = actualEntries.iterator(); i.hasNext();) {
       Entry entry = (Entry) i.next();
-      Assert.assertEquals(entry.getValue(), expect.get(entry.getKey()));
+      Assert.assertEquals(actual.getClass(), entry.getValue(), expect.get(entry.getKey()));
     }
   }
 
@@ -1966,21 +1999,21 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  private void addMappings(Map map, int count) {
+  private void addMappings(Map map, int count, int v) {
     synchronized (map) {
       for (int i = 0; i < count; i++) {
-        map.put("key" + i, "value" + i);
+        map.put(E("key" + i, v), "value" + i);
       }
     }
   }
 
-  private Map getOrderSensitiveMappings() {
+  private Map getOrderSensitiveMappings(int v) {
     Map map = null;
     map = new HashMap();
-    map.put("January", "Jan");
-    map.put("February", "Feb");
-    map.put("March", "Mar");
-    map.put("April", "Apr");
+    map.put(E("January", v), E("Jan", v));
+    map.put(E("February", v), E("Feb", v));
+    map.put(E("March", v), E("Mar", v));
+    map.put(E("April", v), E("Apr", v));
     return map;
   }
 
@@ -1999,12 +2032,11 @@ public class GenericMapTestApp extends GenericTestApp {
   }
 
   private static boolean allowsNull(Map map) {
-    return !(map instanceof Hashtable) && !(map instanceof TimeExpiryMap);
+    return !(map instanceof Hashtable) && !(map instanceof TimeExpiryMap) && !(isCHM(map));
   }
 
-  // Used to determine if a specific key instance is retained or not
   private static class Key implements Comparable {
-    private final String id;
+    private final String id;    // not used in equals()
     private final String equals;
 
     Key(String id, String equals) {

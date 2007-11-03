@@ -25,8 +25,8 @@ import java.util.TreeSet;
 
 public class GenericSetTestApp extends GenericTestApp {
 
-  private static final int LITERAL_VARIANT = 0;
-  private static final int OBJECT_VARIANT  = 1;
+  private static final int LITERAL_VARIANT = 1;
+  private static final int OBJECT_VARIANT  = 2;
 
   public GenericSetTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider, Set.class, 2);
