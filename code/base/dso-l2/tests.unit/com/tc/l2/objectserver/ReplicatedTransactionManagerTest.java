@@ -117,40 +117,42 @@ public class ReplicatedTransactionManagerTest extends TestCase {
     assertContainsAllVersionizedAndRemove((ServerTransaction) txns.values().iterator().next(), gotTxn);
     assertTrue(gotTxn.getChanges().isEmpty());
 
-    // Now send transaction complete for txn2, with new Objects (10), this should clear pending changes for 8,9
+    // Now send transaction complete for txn1, with new Objects (10), this should clear pending changes for 7
     txns = createTxns(1, 10, 1, true);
     rtm.addCommitedTransactions(clientID, txns.keySet(), txns.values());
-    rtm.clearTransactionsBelowLowWaterMark(getNextLowWaterMark(txns2.keySet()));
+    rtm.clearTransactionsBelowLowWaterMark(getNextLowWaterMark(txns1.values()));
     assertAndClear(txns.values());
 
     // Now create Object Sync txn for 7,8,9
     syncTxns = createTxns(1, 7, 3, true);
     rtm.addObjectSyncTransaction((ServerTransaction) syncTxns.values().iterator().next());
 
-    // One Compound Transaction containing the object DNA for 7 and the delta DNA should be sent to the
-    // transactionalObjectManager
+    // One Compound Transaction containing the object DNA for 7 and object DNA and the delta DNA for 8,9 should be sent
+    // to the transactionalObjectManager
     assertTrue(txnMgr.incomingTxns.size() == 1);
     gotTxn = (ServerTransaction) txnMgr.incomingTxns.remove(0);
     List changes = gotTxn.getChanges();
-    assertEquals(4, changes.size());
+    assertEquals(5, changes.size());
     DNA dna = (DNA) changes.get(0);
     assertEquals(new ObjectID(7), dna.getObjectID());
     assertFalse(dna.isDelta()); // New object
     dna = (DNA) changes.get(1);
-    assertEquals(new ObjectID(7), dna.getObjectID());
-    assertTrue(dna.isDelta()); // Change to that object
-    dna = (DNA) changes.get(2);
     assertEquals(new ObjectID(8), dna.getObjectID());
     assertFalse(dna.isDelta()); // New object
+    dna = (DNA) changes.get(2);
+    assertEquals(new ObjectID(8), dna.getObjectID());
+    assertTrue(dna.isDelta()); // Change to that object
     dna = (DNA) changes.get(3);
     assertEquals(new ObjectID(9), dna.getObjectID());
     assertFalse(dna.isDelta()); // New object
-
+    dna = (DNA) changes.get(4);
+    assertEquals(new ObjectID(9), dna.getObjectID());
+    assertTrue(dna.isDelta()); // Change to that object
   }
 
-  private GlobalTransactionID getNextLowWaterMark(Set set) {
+  private GlobalTransactionID getNextLowWaterMark(Collection txns) {
     GlobalTransactionID lwm = GlobalTransactionID.NULL_ID;
-    for (Iterator i = set.iterator(); i.hasNext();) {
+    for (Iterator i = txns.iterator(); i.hasNext();) {
       ServerTransaction txn = (ServerTransaction) i.next();
       if (lwm.toLong() < txn.getGlobalTransactionID().toLong()) {
         lwm = txn.getGlobalTransactionID();

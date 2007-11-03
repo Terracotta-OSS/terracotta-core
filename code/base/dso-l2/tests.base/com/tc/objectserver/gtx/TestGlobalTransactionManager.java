@@ -76,6 +76,6 @@ public final class TestGlobalTransactionManager implements ServerGlobalTransacti
   }
 
   public void clearCommitedTransactionsBelowLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark) {
-    throw new ImplementMe();
+    return;
   }
 }
