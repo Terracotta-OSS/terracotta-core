@@ -86,11 +86,16 @@ public class TransactionBatchAccounting {
                                                                                            "Batches list and batchesByTransaction map aren't zero at the same time"); }
     return completed;
   }
-  
+
   public synchronized TransactionID getLowWaterMark() {
-    if(batchesByTransaction.isEmpty()) {
-      //Low water mark should be set to the next valid lowwatermark, so that transactions are cleared correctly in the server
-      return highWaterMark.next();
+    if (batchesByTransaction.isEmpty()) {
+      if (highWaterMark == TransactionID.NULL_ID) {
+        return TransactionID.NULL_ID;
+      } else {
+        // Low water mark should be set to the next valid lowwatermark, so that transactions are cleared correctly in
+        // the server
+        return highWaterMark.next();
+      }
     } else {
       return (TransactionID) batchesByTransaction.firstKey();
     }

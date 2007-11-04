@@ -454,6 +454,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     public void run() {
       try {
         TransactionID lwm = getCompletedTransactionIDLowWaterMark();
+        if(lwm.isNull()) return;
         CompletedTransactionLowWaterMarkMessage ctm = channel.getCompletedTransactionLowWaterMarkMessageFactory()
             .newCompletedTransactionLowWaterMarkMessage();
         ctm.initialize(lwm);
