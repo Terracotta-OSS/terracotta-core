@@ -32,7 +32,7 @@ public class MavenToOSGi {
   private static final Pattern OSGI_VERSION_PATTERN = Pattern.compile("^(\\d+)(?:\\.(\\d+)(?:\\.(\\d+)(\\.(.*))?)?)?$");
 
   // Cache pattern defining characters that aren't valid in OSGi symbolic name or version qualifier for speed
-  private static final Pattern INVALID_OSGI_CHAR_PATTERN = Pattern.compile("[^a-zA-Z0-9._]");
+  private static final Pattern INVALID_OSGI_CHAR_PATTERN = Pattern.compile("[^a-zA-Z0-9._\\-]");
   
   private static String replaceInvalidChars(String value) {
     return INVALID_OSGI_CHAR_PATTERN.matcher(value).replaceAll("_");
@@ -41,7 +41,7 @@ public class MavenToOSGi {
   /**
    * Valid OSGi symbolic name format from OSGi v4 spec:
    * <pre>
-   *   token ::= ( alphanum | Õ_Õ | Õ-Õ )+
+   *   token ::= ( alphanum | '_' | '-' )+
    *   symbolic-name :: = token('.'token)*
    * </pre>
    * 
@@ -89,7 +89,7 @@ public class MavenToOSGi {
    *   major ::= number                    
    *   minor ::= number 
    *   micro ::= number 
-   *   qualifier ::= ( alphanum | Õ_Õ | '-' )+
+   *   qualifier ::= ( alphanum | '_' | '-' )+
    * </pre>
    * 
    * The -classifer-i part (such as -ALPHA-1 or -SNAPSHOT) will be parsed upstream, specifically
