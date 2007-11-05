@@ -4,6 +4,7 @@
  */
 package com.terracotta.session.util;
 
+import com.tc.logging.TCLogger;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.properties.TCProperties;
 import com.terracotta.session.WebAppConfig;
@@ -58,16 +59,24 @@ public class ConfigProperties {
 
   private final WebAppConfig    wac;
   private final TCProperties    props;
+  private final ClassLoader     loader;
+  private final TCLogger      logger;
 
-  public ConfigProperties(final WebAppConfig wac) {
-    this(wac, ManagerUtil.getTCProperties());
+  public ConfigProperties(final WebAppConfig wac, ClassLoader loader) {
+    this(wac, ManagerUtil.getTCProperties(), loader, ManagerUtil.getLogger("com.tc.session.ConfigProperties"));
   }
 
-  public ConfigProperties(final WebAppConfig wac, final TCProperties props) {
+  public ConfigProperties(final WebAppConfig wac, final TCProperties props, TCLogger logger) {
+    this(wac, props, ConfigProperties.class.getClassLoader(), logger);
+  }
+
+  private ConfigProperties(final WebAppConfig wac, final TCProperties props, ClassLoader loader, TCLogger logger) {
     Assert.pre(props != null);
 
     this.wac = wac;
     this.props = props;
+    this.loader = loader;
+    this.logger = logger;
   }
 
   public int getDebugServerHopsInterval() {
@@ -99,21 +108,30 @@ public class ConfigProperties {
   }
 
   public int getSessionIdLength() {
-    final int wacVal = (wac == null) ? -1 : wac.__tc_session_getIdLength();
-    final int rv = getIntVal(ID_LENGTH, wacVal, defaultIdLength, -1);
-    return Math.max(1, rv);
+    String spcVal = getProperty(ID_LENGTH);
+    if (spcVal != null) { return Integer.parseInt(spcVal); }
+
+    if (wac != null) { return wac.__tc_session_getIdLength(); }
+
+    return defaultIdLength;
   }
 
   public int getCookieMaxAgeSeconds() {
-    final int wacVal = (wac == null) ? -2 : wac.__tc_session_getCookieMaxAgeSecs();
-    final int rv = getIntVal(COOKIE_MAX_AGE, wacVal, defaultCookieMaxAge, -2);
-    return Math.max(-1, rv);
+    String spcVal = getProperty(COOKIE_MAX_AGE);
+    if (spcVal != null) { return Integer.parseInt(spcVal); }
+
+    if (wac != null) { return wac.__tc_session_getCookieMaxAgeSecs(); }
+
+    return defaultCookieMaxAge;
   }
 
   public int getSessionTimeoutSeconds() {
-    final int wacVal = (wac == null) ? -1 : wac.__tc_session_getSessionTimeoutSecs();
-    final int rv = getIntVal(SESSION_TIMEOUT_SECONDS, wacVal, defaultSessionTimeout, -1);
-    return Math.max(1, rv);
+    String spcVal = getProperty(SESSION_TIMEOUT_SECONDS);
+    if (spcVal != null) { return Integer.parseInt(spcVal); }
+
+    if (wac != null) { return wac.__tc_session_getSessionTimeoutSecs(); }
+
+    return defaultSessionTimeout;
   }
 
   public int getInvalidatorSleepSeconds() {
@@ -153,25 +171,25 @@ public class ConfigProperties {
   public boolean getCookieSecure() {
     final String wacVal = wac == null ? null : Boolean.toString(wac.__tc_session_getCookieSecure());
     final String boolVal = getStringVal(COOKIE_SECURE, wacVal, Boolean.toString(defaultCookieSecure));
-    return "true".equals(boolVal);
+    return Boolean.valueOf(boolVal).booleanValue();
   }
 
   public boolean getCookiesEnabled() {
     final String wacVal = wac == null ? null : Boolean.toString(wac.__tc_session_getCookiesEnabled());
     final String boolVal = getStringVal(COOKIE_ENABLED, wacVal, Boolean.toString(defaultCookiesEnabled));
-    return "true".equals(boolVal);
+    return Boolean.valueOf(boolVal).booleanValue();
   }
 
   public boolean getSessionTrackingEnabled() {
     final String wacVal = wac == null ? null : Boolean.toString(wac.__tc_session_getTrackingEnabled());
     final String boolVal = getStringVal(TRACKING_ENABLED, wacVal, Boolean.toString(defaultTrackingEnabled));
-    return "true".equals(boolVal);
+    return Boolean.valueOf(boolVal).booleanValue();
   }
 
   public boolean getUrlRewritingEnabled() {
     final String wacVal = wac == null ? null : Boolean.toString(wac.__tc_session_getURLRewritingEnabled());
     final String boolVal = getStringVal(URL_REWRITE_ENABLED, wacVal, Boolean.toString(defaultUrlEnabled));
-    return "true".equals(boolVal);
+    return Boolean.valueOf(boolVal).booleanValue();
   }
 
   public boolean getRequestLogBenchEnabled() {
@@ -212,27 +230,27 @@ public class ConfigProperties {
     return rv;
   }
 
-  protected static HttpSessionAttributeListener makeAttributeListener(String type) {
+  protected HttpSessionAttributeListener makeAttributeListener(String type) {
     type = type.trim();
     HttpSessionAttributeListener rv = null;
     try {
-      final Class c = Class.forName(type);
+      final Class c = Class.forName(type, true, loader);
       if (HttpSessionAttributeListener.class.isAssignableFrom(c)) rv = (HttpSessionAttributeListener) c.newInstance();
     } catch (Exception e) {
-      // TODO: log message here...
+      logger.error("Error instantiaing listener of type " + type, e);
       return null;
     }
     return rv;
   }
 
-  protected static HttpSessionListener makeSessionListener(String type) {
+  protected HttpSessionListener makeSessionListener(String type) {
     type = type.trim();
     HttpSessionListener rv = null;
     try {
-      final Class c = Class.forName(type);
+      final Class c = Class.forName(type, true, loader);
       if (HttpSessionListener.class.isAssignableFrom(c)) rv = (HttpSessionListener) c.newInstance();
     } catch (Exception e) {
-      // TODO: log message here...
+      logger.error("Error instantiaing listener of type " + type, e);
       return null;
     }
     return rv;
@@ -245,29 +263,12 @@ public class ConfigProperties {
     return defVal;
   }
 
-  protected int getIntVal(String propName, int wacVal, int defVal, int invalidVal) {
-    final int spcVal = getPropertyInt(propName, invalidVal);
-    if (spcVal != invalidVal) return spcVal;
-    if (wacVal != invalidVal) return wacVal;
-    return defVal;
-  }
-
   protected String getProperty(final String propName) {
     String rv = props.getProperty(propName, true);
     if (rv == null) return null;
     rv = rv.trim();
     if (rv.length() == 0) return null;
     else return rv;
-  }
-
-  protected int getPropertyInt(String propName, int defVal) {
-    final String val = props.getProperty(propName, true);
-    if (val == null || val.length() == 0) return defVal;
-    try {
-      return Integer.parseInt(val);
-    } catch (Exception e) {
-      return defVal;
-    }
   }
 
 }

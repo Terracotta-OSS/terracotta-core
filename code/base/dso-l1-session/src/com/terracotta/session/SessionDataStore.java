@@ -99,9 +99,15 @@ public class SessionDataStore {
 
   void updateTimestampIfNeeded(SessionData sd) {
     Assert.pre(sd != null);
+
+    if (sd.neverExpires()) {
+      return;
+    }
+
     final long now = System.currentTimeMillis();
     final Timestamp t = sd.getTimestamp();
     final long diff = t.getMillis() - now;
+
     if (diff < (sd.getMaxInactiveMillis() / 2) || diff > (sd.getMaxInactiveMillis())) {
       t.setMillis(now + sd.getMaxInactiveMillis());
     }

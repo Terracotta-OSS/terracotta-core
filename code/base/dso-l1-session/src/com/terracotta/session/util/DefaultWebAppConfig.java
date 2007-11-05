@@ -35,7 +35,7 @@ public class DefaultWebAppConfig implements WebAppConfig {
   }
 
   public int __tc_session_getCookieMaxAgeSecs() {
-    return -1;
+    return ConfigProperties.defaultCookieMaxAge;
   }
 
   public String __tc_session_getCookieName() {
@@ -47,11 +47,11 @@ public class DefaultWebAppConfig implements WebAppConfig {
   }
 
   public boolean __tc_session_getCookieSecure() {
-    return false;
+    return ConfigProperties.defaultCookieSecure;
   }
 
   public boolean __tc_session_getCookiesEnabled() {
-    return true;
+    return ConfigProperties.defaultCookiesEnabled;
   }
 
   public HttpSessionAttributeListener[] __tc_session_getHttpSessionAttributeListeners() {
@@ -63,7 +63,7 @@ public class DefaultWebAppConfig implements WebAppConfig {
   }
 
   public int __tc_session_getIdLength() {
-    return -1;
+    return ConfigProperties.defaultIdLength;
   }
 
   public String __tc_session_getServerId() {
@@ -75,11 +75,11 @@ public class DefaultWebAppConfig implements WebAppConfig {
   }
 
   public boolean __tc_session_getTrackingEnabled() {
-    return true;
+    return ConfigProperties.defaultTrackingEnabled;
   }
 
   public boolean __tc_session_getURLRewritingEnabled() {
-    return true;
+    return ConfigProperties.defaultUrlEnabled;
   }
 
   public String __tc_session_getSessionDelimiter() {

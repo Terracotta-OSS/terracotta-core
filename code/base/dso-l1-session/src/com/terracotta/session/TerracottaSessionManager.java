@@ -68,8 +68,8 @@ public class TerracottaSessionManager implements SessionManager {
     // XXX: If reasonable, we should move this out of the constructor -- leaking a reference to "this" to another thread
     // within a constructor is a bad practice (note: although "this" isn't explicitly based as arg, it is available and
     // accessed by the non-static inner class)
-    Thread invalidator = new Thread(new SessionInvalidator(store, cp.getInvalidatorSleepSeconds(), cp
-        .getSessionTimeoutSeconds()), "SessionInvalidator - " + contextMgr.getAppName());
+    Thread invalidator = new Thread(new SessionInvalidator(cp.getInvalidatorSleepSeconds()), "SessionInvalidator - "
+                                                                                             + contextMgr.getAppName());
     invalidator.setDaemon(true);
     invalidator.start();
     Assert.post(invalidator.isAlive());
@@ -341,9 +341,8 @@ public class TerracottaSessionManager implements SessionManager {
 
     private final long sleepMillis;
 
-    public SessionInvalidator(final SessionDataStore store, final long sleepSeconds,
-                              final long defaultSessionIdleSeconds) {
-      this.sleepMillis = sleepSeconds * 1000;
+    public SessionInvalidator(final long sleepSeconds) {
+      this.sleepMillis = sleepSeconds * 1000L;
     }
 
     public void run() {

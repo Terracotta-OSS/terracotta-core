@@ -140,7 +140,7 @@ public class SessionFilter implements Filter {
 
   protected SessionManager createManager(final HttpServletRequest req, final WebAppConfig wac,
                                          final RequestResponseFactory factory, final ServletContext sc) {
-    final ConfigProperties cp = new ConfigProperties(wac);
+    final ConfigProperties cp = new ConfigProperties(wac, getClass().getClassLoader());
 
     String appName = DefaultContextMgr.computeAppName(req);
     int lockType = ManagerUtil.getSessionLockType(appName);

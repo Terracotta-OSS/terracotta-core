@@ -81,7 +81,8 @@ public class SessionValve50 extends ValveBase {
 
   private static SessionManager createManager(CoyoteRequest valveReq, String contextPath) {
     final WebAppConfig webAppConfig = makeWebAppConfig(valveReq.getContext());
-    final ConfigProperties cp = new ConfigProperties(webAppConfig);
+    final ClassLoader loader = valveReq.getContext().getLoader().getClassLoader();
+    final ConfigProperties cp = new ConfigProperties(webAppConfig, loader);
 
     String appName = DefaultContextMgr.computeAppName(valveReq);
     int lockType = ManagerUtil.getSessionLockType(appName);
