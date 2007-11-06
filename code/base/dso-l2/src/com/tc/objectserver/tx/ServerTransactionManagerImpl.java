@@ -137,9 +137,10 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
         callBackAdded = true;
       }
 
-      for (Iterator i = transactionAccounts.entrySet().iterator(); i.hasNext();) {
-        Entry entry = (Entry) i.next();
-        TransactionAccount client = (TransactionAccount) entry.getValue();
+      TransactionAccount tas[] = (TransactionAccount[]) transactionAccounts.values()
+          .toArray(new TransactionAccount[transactionAccounts.size()]);
+      for (int i = 0; i < tas.length; i++) {
+        TransactionAccount client = tas[i];
         if (client == deadClientTA) continue;
         for (Iterator it = client.requestersWaitingFor(deadNodeID).iterator(); it.hasNext();) {
           TransactionID reqID = (TransactionID) it.next();

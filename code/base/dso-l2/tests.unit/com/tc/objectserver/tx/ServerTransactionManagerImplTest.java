@@ -231,6 +231,96 @@ public class ServerTransactionManagerImplTest extends TestCase {
     }
   }
 
+  /**
+   * A transaction is broadcasted to another client, the orginating client disconnects and then the broadcasted client
+   * disconnects. This test was written to illustrate a scenario where when multiple clients were disconnecting, were
+   * acks are being waited for, a concurrent modification exception was thrown.
+   */
+  public void test2ClientsDisconnectAtTheSameTime() throws Exception {
+    ClientID cid1 = new ClientID(new ChannelID(1));
+    TransactionID tid1 = new TransactionID(1);
+    TransactionID tid2 = new TransactionID(2);
+    TransactionID tid3 = new TransactionID(3);
+    ClientID cid2 = new ClientID(new ChannelID(2));
+    ClientID cid3 = new ClientID(new ChannelID(3));
+    ClientID cid4 = new ClientID(new ChannelID(4));
+    ClientID cid5 = new ClientID(new ChannelID(5));
+
+    LockID[] lockIDs = new LockID[0];
+    List dnas = Collections.unmodifiableList(new LinkedList());
+    ObjectStringSerializer serializer = null;
+    Map newRoots = Collections.unmodifiableMap(new HashMap());
+    TxnType txnType = TxnType.NORMAL;
+    SequenceID sequenceID = new SequenceID(1);
+    ServerTransaction tx1 = new ServerTransactionImpl(gtxm, new TxnBatchID(1), tid1, sequenceID, lockIDs, cid1, dnas,
+                                                      serializer, newRoots, txnType, new LinkedList(),
+                                                      DmiDescriptor.EMPTY_ARRAY);
+
+    Set txns = new HashSet();
+    txns.add(tx1);
+    Set txnIDs = new HashSet();
+    txnIDs.add(new ServerTransactionID(cid1, tid1));
+    transactionManager.incomingTransactions(cid1, txnIDs, txns, false);
+    transactionManager.addWaitingForAcknowledgement(cid1, tid1, cid2);
+    transactionManager.addWaitingForAcknowledgement(cid1, tid1, cid3);
+    transactionManager.addWaitingForAcknowledgement(cid1, tid1, cid4);
+    transactionManager.addWaitingForAcknowledgement(cid1, tid1, cid5);
+    doStages(cid1, txns, true);
+
+    // Adding a few more transactions to that Transaction Records are created for everybody
+    txns.clear();
+    txnIDs.clear();
+    ServerTransaction tx2 = new ServerTransactionImpl(gtxm, new TxnBatchID(2), tid2, sequenceID, lockIDs, cid2, dnas,
+                                                      serializer, newRoots, txnType, new LinkedList(),
+                                                      DmiDescriptor.EMPTY_ARRAY);
+    txns.add(tx2);
+    txnIDs.add(new ServerTransactionID(cid2, tid2));
+    transactionManager.incomingTransactions(cid2, txnIDs, txns, false);
+
+    transactionManager.acknowledgement(cid2, tid2, cid3);
+    doStages(cid2, txns, true);
+
+    txns.clear();
+    txnIDs.clear();
+    ServerTransaction tx3 = new ServerTransactionImpl(gtxm, new TxnBatchID(2), tid3, sequenceID, lockIDs, cid3, dnas,
+                                                      serializer, newRoots, txnType, new LinkedList(),
+                                                      DmiDescriptor.EMPTY_ARRAY);
+    txns.add(tx3);
+    txnIDs.add(new ServerTransactionID(cid3, tid3));
+    transactionManager.incomingTransactions(cid3, txnIDs, txns, false);
+
+    transactionManager.acknowledgement(cid3, tid3, cid4);
+    transactionManager.acknowledgement(cid3, tid3, cid2);
+    doStages(cid2, txns, true);
+
+    assertTrue(transactionManager.isWaiting(cid1, tid1));
+
+    transactionManager.acknowledgement(cid1, tid1, cid3);
+    assertTrue(transactionManager.isWaiting(cid1, tid1));
+    transactionManager.acknowledgement(cid1, tid1, cid4);
+    assertTrue(transactionManager.isWaiting(cid1, tid1));
+    transactionManager.acknowledgement(cid1, tid1, cid5);
+    assertTrue(transactionManager.isWaiting(cid1, tid1));
+
+    // Client 1 disconnects
+    transactionManager.shutdownNode(cid1);
+
+    // Still waiting for tx1
+    assertTrue(transactionManager.isWaiting(cid1, tid1));
+
+    // Client 2 disconnects now
+    // Concurrent Modification exception used to be thrown here.
+    transactionManager.shutdownNode(cid2);
+
+    // Not waiting for tx1 anymore
+    assertFalse(transactionManager.isWaiting(cid1, tid1));
+
+    // Client 3 disconnects now
+    // Concurrent Modification exception used to be thrown here.
+    transactionManager.shutdownNode(cid2);
+
+  }
+
   public void tests() throws Exception {
     ClientID cid1 = new ClientID(new ChannelID(1));
     TransactionID tid1 = new TransactionID(1);
