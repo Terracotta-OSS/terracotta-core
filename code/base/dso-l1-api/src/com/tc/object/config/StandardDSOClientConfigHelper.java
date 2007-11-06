@@ -56,4 +56,6 @@ public interface StandardDSOClientConfigHelper {
 
   void addAutolock(String methodPattern, ConfigLockLevel type);
 
+  void addExcludePattern(String string);
+
 }

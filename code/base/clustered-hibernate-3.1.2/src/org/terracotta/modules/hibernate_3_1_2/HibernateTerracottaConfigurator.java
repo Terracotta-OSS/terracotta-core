@@ -20,32 +20,35 @@ import java.util.Hashtable;
 
 public final class HibernateTerracottaConfigurator extends TerracottaConfiguratorModule {
   protected final void addInstrumentation(final BundleContext context) {
-    /* AutoSynchronized lock for AbstractPersistentCollection, PersistentSet, PersistentBag, PersistentList, and PersistentMap are defined in the terracotta.xml */
+    /*
+     * AutoSynchronized lock for AbstractPersistentCollection, PersistentSet, PersistentBag, PersistentList, and
+     * PersistentMap are defined in the terracotta.xml
+     */
     TransparencyClassSpec spec = configHelper.getOrCreateSpec("org.hibernate.collection.AbstractPersistentCollection");
     spec.addTransient("session");
-    
+
     configHelper.addIncludePattern("org.hibernate.collection.PersistentSet", false, false, false);
-    
+
     configHelper.addIncludePattern("org.hibernate.collection.PersistentBag", false, false, false);
-    
+
     configHelper.addIncludePattern("org.hibernate.collection.PersistentList", false, false, false);
-    
+
     configHelper.addIncludePattern("org.hibernate.collection.PersistentMap", false, false, false);
-    
+
     configHelper.addIncludePattern("org.hibernate.type.ComponentType", false, false, false);
-    
+
     configHelper.addIncludePattern("org.hibernate.tuple..*", false, false, false);
-    
+
     configHelper.addIncludePattern("org.hibernate.engine..*", false, false, false);
-    
+
     configHelper.addIncludePattern("org.hibernate.type..*", false, false, false);
-    
+
     configHelper.addIncludePattern("org.hibernate.FetchMode", false, false, false);
-    
+
     configHelper.addIncludePattern("org.hibernate.property..*", false, false, false);
-    
+
     configHelper.addIncludePattern("org.hibernate.cache.QueryKey", false, false, false);
-    
+
     /**
      * Second level cache begin
      */
@@ -58,7 +61,7 @@ public final class HibernateTerracottaConfigurator extends TerracottaConfigurato
     configHelper.addIncludePattern("org.hibernate.type.ImmutableType", false, false, false);
     configHelper.addIncludePattern("org.hibernate.type.NullableType", false, false, false);
     configHelper.addIncludePattern("org.hibernate.type.AbstractType", false, false, false);
-    
+
     configHelper.addIncludePattern("org.hibernate.cache.ReadWriteCache$Item", false, false, false);
     configHelper.addIncludePattern("org.hibernate.cache.ReadWriteCache$Lock", false, false, false);
     configHelper.addIncludePattern("org.hibernate.cache.entry.CacheEntry", false, false, false);
@@ -66,29 +69,39 @@ public final class HibernateTerracottaConfigurator extends TerracottaConfigurato
     /**
      * Second level cache ends
      */
-    
+
     configHelper.addIncludePattern("org.hibernate.proxy.pojo.cglib.CGLIBLazyInitializer", false, false, false);
     configHelper.addIncludePattern("org.hibernate.proxy.pojo.BasicLazyInitializer", false, false, false);
     configHelper.addIncludePattern("org.hibernate.proxy.AbstractLazyInitializer", false, false, false);
-    
+
     ClassAdapterFactory factory = new EhcacheClassAdapter();
     spec = configHelper.getOrCreateSpec("org.hibernate.cache.EhCache");
     spec.setCustomClassAdapter(factory);
-    
+
     factory = new EhcacheProviderClassAdapter();
     spec = configHelper.getOrCreateSpec("org.hibernate.cache.EhCacheProvider");
     spec.setCustomClassAdapter(factory);
-    
+
     Bundle thisBundle = getExportedBundle(context, "org.terracotta.modules.clustered_hibernate_3.1.2");
     addExportedBundleClass(thisBundle, "org.terracotta.modules.hibernate_3_1_2.util.HibernateUtil");
+
+    configHelper.addExcludePattern("org.hibernate.type.TypeFactory");
+    configHelper.addExcludePattern("org.hibernate.engine.Cascade");
+    configHelper.addExcludePattern("org.hibernate.tuple.entity.AbstractEntityTuplizer");
+    configHelper.addExcludePattern("org.hibernate.engine.TwoPhaseLoad");
+    configHelper.addExcludePattern("org.hibernate.property.BasicPropertyAccessor");
+    configHelper.addExcludePattern("org.hibernate.property.BasicPropertyAccessor$BasicSetter");
+
   }
-  
+
   protected final void registerModuleSpec(final BundleContext context) {
     final Dictionary serviceProps = new Hashtable();
     serviceProps.put(Constants.SERVICE_VENDOR, "Terracotta, Inc.");
     serviceProps.put(Constants.SERVICE_DESCRIPTION, "Hibernate Plugin Spec");
     serviceProps.put(Constants.SERVICE_RANKING, ModuleSpec.HIGH_RANK);
-    context.registerService(ModuleSpec.class.getName(), new HibernateModuleSpec(new HibernateChangeApplicatorSpec(getClass().getClassLoader())), serviceProps);
+    context.registerService(ModuleSpec.class.getName(),
+                            new HibernateModuleSpec(new HibernateChangeApplicatorSpec(getClass().getClassLoader())),
+                            serviceProps);
   }
 
 }
