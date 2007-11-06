@@ -63,11 +63,15 @@ public class SessionInvalidatorTest extends AbstractOneServerDeploymentTest {
     checkCallCount("BindingListener.valueUnbound", 1, wc);
 
     // =========================================================
-    // by this point we varified that our old session was invalidated successfully while it WAS NOT being used.
+    // by this point we verified that our old session was invalidated successfully while it WAS NOT being used.
     // now let's see what happens if it's in use by a LOOONG-running request
     // =========================================================
     // make sure we got a new, good session
     checkResponse("OK", "action=isNew", wc);
+
+    // now, put a string into session...
+    checkResponse("OK", "action=set&key=attr1", wc);
+    checkCallCount("BindingListener.valueBound", 3, wc);
 
     // set session max idle time
     checkResponse("OK", "action=setmax&key=5", wc);
@@ -85,7 +89,7 @@ public class SessionInvalidatorTest extends AbstractOneServerDeploymentTest {
     // set session max idle time
     checkResponse("OK", "action=setmax&key=5", wc);
     Thread.sleep(waitFactor * defaultMaxIdleSeconds * 1000);
-    checkCallCount("BindingListener.valueUnbound", 1, wc);
+    checkCallCount("BindingListener.valueUnbound", 2, wc);
     checkCallCount("SessionListener.sessionDestroyed", 2, wc);
   }
 

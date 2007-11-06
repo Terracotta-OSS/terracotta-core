@@ -17,7 +17,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public final class InvalidatorServlet extends HttpServlet {
-  private static Map callCounts = new HashMap();
+  private static final Map callCounts = new HashMap();
 
   protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     final String action = req.getParameter("action");

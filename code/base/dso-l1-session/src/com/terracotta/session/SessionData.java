@@ -37,6 +37,7 @@ public class SessionData implements Session, SessionSupport {
   private transient ContextMgr        contextMgr;
   private transient SessionManager    sessionManager;
   private transient boolean           invalidated        = false;
+  private transient boolean           invalidating       = false;
 
   private static final ThreadLocal    request            = new ThreadLocal();
   private static final long           NEVER_EXPIRE       = -1;
@@ -81,6 +82,7 @@ public class SessionData implements Session, SessionSupport {
   }
 
   public synchronized boolean isValid() {
+    if (invalidating) { return true; }
     if (invalidated) { return false; }
 
     if (getMaxInactiveMillis() == NEVER_EXPIRE) { return true; }
@@ -105,6 +107,9 @@ public class SessionData implements Session, SessionSupport {
 
   public synchronized void invalidate(boolean unlock) {
     if (invalidated) { throw new IllegalStateException("session already invalidated"); }
+    if (invalidating) { return; }
+
+    invalidating = true;
 
     try {
       eventMgr.fireSessionDestroyedEvent(this);
@@ -124,6 +129,7 @@ public class SessionData implements Session, SessionSupport {
         sessionManager.remove(this, unlock);
       } finally {
         invalidated = true;
+        invalidating = false;
       }
     }
   }
@@ -225,9 +231,7 @@ public class SessionData implements Session, SessionSupport {
   }
 
   public int getMaxInactiveInterval() {
-    if (getMaxInactiveMillis() == NEVER_EXPIRE) {
-      return (int)NEVER_EXPIRE;
-    }
+    if (getMaxInactiveMillis() == NEVER_EXPIRE) { return (int) NEVER_EXPIRE; }
 
     return (int) (getMaxInactiveMillis() / 1000L);
   }
