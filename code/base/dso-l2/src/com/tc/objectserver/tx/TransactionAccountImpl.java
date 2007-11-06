@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 /**
  * An account of the state of a given transaction. Keeps track of the initiating client, the state of the transaction
@@ -120,9 +121,11 @@ public class TransactionAccountImpl implements TransactionAccount {
   public Set requestersWaitingFor(NodeID waitee) {
     Set requesters = new HashSet();
     synchronized (waitees) {
-      for (Iterator i = new HashSet(waitees.keySet()).iterator(); i.hasNext();) {
-        TransactionID requester = (TransactionID) i.next();
-        if (getRecord(requester).contains(waitee)) {
+      for (Iterator i = waitees.entrySet().iterator(); i.hasNext();) {
+        Entry e = (Entry) i.next();
+        TransactionRecord record = (TransactionRecord) e.getValue();
+        if (record.contains(waitee)) {
+          TransactionID requester = (TransactionID) e.getKey();
           requesters.add(requester);
         }
       }
