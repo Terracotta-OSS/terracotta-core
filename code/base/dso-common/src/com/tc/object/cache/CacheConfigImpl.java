@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.cache;
 
@@ -14,6 +15,7 @@ public class CacheConfigImpl implements CacheConfig {
   private final int     threshold;
   private final boolean monitorOldGenOnly;
   private final boolean loggingEnabled;
+  private final int     criticalObjectThreshold;
 
   public CacheConfigImpl(TCProperties cacheManagerProperties) {
     leastCount = cacheManagerProperties.getInt("leastCount");
@@ -23,6 +25,7 @@ public class CacheConfigImpl implements CacheConfig {
     threshold = cacheManagerProperties.getInt("threshold");
     monitorOldGenOnly = cacheManagerProperties.getBoolean("monitorOldGenOnly");
     loggingEnabled = cacheManagerProperties.getBoolean("logging.enabled");
+    criticalObjectThreshold = cacheManagerProperties.getInt("criticalObjectThreshold");
   }
 
   public int getLeastCount() {
@@ -51,6 +54,10 @@ public class CacheConfigImpl implements CacheConfig {
 
   public boolean isLoggingEnabled() {
     return loggingEnabled;
+  }
+
+  public int getObjectCountCriticalThreshold() {
+    return criticalObjectThreshold;
   }
 
 }

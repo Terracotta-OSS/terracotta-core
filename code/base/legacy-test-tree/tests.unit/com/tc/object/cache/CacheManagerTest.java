@@ -148,6 +148,10 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
       return false;
     }
 
+    public int getObjectCountCriticalThreshold() {
+      return -1;
+    }
+
   }
 
 }

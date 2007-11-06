@@ -34,4 +34,8 @@ public class DefaultCacheConfig implements CacheConfig {
     return false;
   }
 
+  public int getObjectCountCriticalThreshold() {
+    return -1;
+  }
+
 }

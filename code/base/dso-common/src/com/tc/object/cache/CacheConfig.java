@@ -18,4 +18,6 @@ public interface CacheConfig {
   boolean isOnlyOldGenMonitored();
 
   boolean isLoggingEnabled();
+  
+  int getObjectCountCriticalThreshold();
 }

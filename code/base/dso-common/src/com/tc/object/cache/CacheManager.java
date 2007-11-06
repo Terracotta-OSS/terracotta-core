@@ -37,6 +37,12 @@ public class CacheManager implements MemoryEventsListener {
     this.memoryManager = new TCMemoryManagerImpl(config.getUsedThreshold(), config.getUsedCriticalThreshold(), config
         .getSleepInterval(), config.getLeastCount(), config.isOnlyOldGenMonitored(), threadGroup);
     this.memoryManager.registerForMemoryEvents(this);
+    if (config.getObjectCountCriticalThreshold() > 0) {
+      logger
+          .warn("Cache Object Count Critical threshold is set to "
+                + config.getObjectCountCriticalThreshold()
+                + ". It is not recommended that this value is set. Setting a wrong vlaue could totally destroy performance.");
+    }
   }
 
   public void memoryUsed(MemoryEventType type, MemoryUsage usage) {
@@ -133,8 +139,14 @@ public class CacheManager implements MemoryEventsListener {
     // Reference Queue
     private int computeObjects2Evict(int currentCount) {
       if (type == MemoryEventType.BELOW_THRESHOLD || calculatedCacheSize > currentCount) { return 0; }
-      int overshoot = currentCount - calculatedCacheSize;
-      if (overshoot <= 0) return 0;
+      int overshoot = 0;
+      if (config.getObjectCountCriticalThreshold() > 0 && currentCount > config.getObjectCountCriticalThreshold()) {
+        // Give higher precidence to Object Count Critical Threshold than calculate cache size.
+        overshoot = currentCount - config.getObjectCountCriticalThreshold();
+      } else {
+        overshoot = currentCount - calculatedCacheSize;
+      }
+      if (overshoot <= 0) { return 0; }
       int objects2Evict = overshoot + ((calculatedCacheSize * config.getPercentageToEvict()) / 100);
       return objects2Evict;
     }
