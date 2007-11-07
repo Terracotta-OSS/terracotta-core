@@ -342,9 +342,13 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
     for (Iterator i = removalCandidates.iterator(); i.hasNext();) {
       ManagedObjectReference removalCandidate = (ManagedObjectReference) i.next();
-      if (removalCandidate != null && !removalCandidate.isReferenced() && !removalCandidate.isNew()) {
+      // It is possible that before the cache evictor has a chance to mark the reference, the GC could come and remove
+      // the reference, hence we check in references map again
+      if (removalCandidate != null && !removalCandidate.isReferenced() && !removalCandidate.isNew()
+          && references.containsKey(removalCandidate.getObjectID())) {
         evictionPolicy.remove(removalCandidate);
         if (removalCandidate.getObject().isDirty()) {
+          Assert.assertFalse(config.paranoid());
           markReferenced(removalCandidate);
           toFlush.add(removalCandidate.getObject());
         } else {
@@ -454,11 +458,12 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   // TODO:: Multiple readonly checkouts, now that there are more than 1 thread faulting objects to the
   // client
   public void releaseReadOnly(ManagedObject object) {
+    if (config.paranoid() && object.isDirty()) { throw new AssertionError("Object is dirty after a read-only checkout"
+                                                                          + object); }
     synchronized (this) {
       basicRelease(object);
       postRelease();
     }
-
   }
 
   public void release(PersistenceTransaction persistenceTransaction, ManagedObject object) {
@@ -497,7 +502,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       ManagedObjectReference ref = (ManagedObjectReference) references.remove(id);
       if (ref != null) {
         Assert.assertFalse(ref.isNew());
-        while (ref.isReferenced()) {
+        while (ref != null && ref.isReferenced()) {
           // This is possible if the cache manager is evicting this *unreachable* object or somehow the admin console is
           // looking up this object.
           logger.warn("Reference : " + ref + " was referenced. So waiting to remove !");
@@ -510,7 +515,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
           }
           ref = (ManagedObjectReference) references.remove(id);
         }
-        evictionPolicy.remove(ref);
+        if (ref != null) evictionPolicy.remove(ref);
       }
     }
   }
