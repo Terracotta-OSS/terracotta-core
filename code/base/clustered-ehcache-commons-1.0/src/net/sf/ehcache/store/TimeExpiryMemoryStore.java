@@ -6,6 +6,7 @@ package net.sf.ehcache.store;
 
 import net.sf.ehcache.CacheException;
 import net.sf.ehcache.Ehcache;
+import net.sf.ehcache.Element;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -61,6 +62,13 @@ public class TimeExpiryMemoryStore extends MemoryStore {
       // Give up
       e.printStackTrace(System.err);
       throw new CacheException(cache.getName() + "Cache: Cannot find com.tcclient.ehcache.TimeExpiryMap.");
+    }
+  }
+  
+  public final synchronized void putData(Element element) throws CacheException {
+    if (element != null) {
+        ((SpoolingTimeExpiryMap)map).putData(element.getObjectKey(), element);
+        doPut(element);
     }
   }
 

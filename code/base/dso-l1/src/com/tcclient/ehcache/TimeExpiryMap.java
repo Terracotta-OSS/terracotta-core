@@ -67,6 +67,10 @@ public class TimeExpiryMap implements Map, Expirable, Cloneable, Serializable {
   public Object put(Object key, Object value) {
     return timeExpiryDataStore.put(key, value);
   }
+  
+  public void putData(Object key, Object value) {
+    timeExpiryDataStore.putData(key, value);
+  }
 
   public void expire(Object key) {
     processExpired(key);

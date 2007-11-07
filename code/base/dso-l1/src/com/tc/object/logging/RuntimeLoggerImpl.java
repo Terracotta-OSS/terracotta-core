@@ -10,51 +10,71 @@ import com.tc.logging.TCLogging;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.schema.DSORuntimeLoggingOptions;
-import com.tc.object.config.schema.DSORuntimeOutputOptions;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.tx.WaitInvocation;
 import com.tc.util.Util;
 
 public class RuntimeLoggerImpl implements RuntimeLogger {
-  private static final TCLogger          internalLogger = TCLogging.getLogger(RuntimeLoggerImpl.class);
+  private static final TCLogger internalLogger = TCLogging.getLogger(RuntimeLoggerImpl.class);
 
-  private final DSORuntimeLoggingOptions configuration;
-  private final DSORuntimeOutputOptions  options;
-  private final TCLogger                 logger;
+  private final TCLogger        logger;
+
+  private final boolean         lockDebug;
+  private final boolean         fieldChangeDebug;
+  private final boolean         arrayChangeDebug;
+  private final boolean         newManagedObjectDebug;
+  private final boolean         distributedMethodDebug;
+  private final boolean         nonPortableDump;
+  private final boolean         waitNotifyDebug;
+
+  private final boolean         fullStack;
+  private final boolean         caller;
+  private final boolean         autoLockDetails;
 
   public RuntimeLoggerImpl(DSOClientConfigHelper configHelper) {
-    this.options = configHelper.runtimeOutputOptions();
     this.logger = CustomerLogging.getDSORuntimeLogger();
-    this.configuration = configHelper.runtimeLoggingOptions();
+
+    // runtime logging items
+    this.lockDebug = configHelper.runtimeLoggingOptions().logLockDebug().getBoolean();
+    this.fieldChangeDebug = configHelper.runtimeLoggingOptions().logFieldChangeDebug().getBoolean();
+    this.arrayChangeDebug = fieldChangeDebug;
+    this.newManagedObjectDebug = configHelper.runtimeLoggingOptions().logNewObjectDebug().getBoolean();
+    this.distributedMethodDebug = configHelper.runtimeLoggingOptions().logDistributedMethodDebug().getBoolean();
+    this.nonPortableDump = configHelper.runtimeLoggingOptions().logNonPortableDump().getBoolean();
+    this.waitNotifyDebug = configHelper.runtimeLoggingOptions().logWaitNotifyDebug().getBoolean();
+
+    // runtime logging options
+    this.caller = configHelper.runtimeOutputOptions().doCaller().getBoolean();
+    this.fullStack = configHelper.runtimeOutputOptions().doFullStack().getBoolean();
+    this.autoLockDetails = configHelper.runtimeOutputOptions().doAutoLockDetails().getBoolean();
   }
 
   public boolean lockDebug() {
-    return this.configuration.logLockDebug().getBoolean();
+    return this.lockDebug;
   }
 
   public boolean fieldChangeDebug() {
-    return this.configuration.logFieldChangeDebug().getBoolean();
+    return this.fieldChangeDebug;
   }
 
   public boolean arrayChangeDebug() {
-    return this.configuration.logFieldChangeDebug().getBoolean();
+    return this.arrayChangeDebug;
   }
 
   public boolean newManagedObjectDebug() {
-    return this.configuration.logNewObjectDebug().getBoolean();
+    return this.newManagedObjectDebug;
   }
 
   public boolean waitNotifyDebug() {
-    return this.configuration.logWaitNotifyDebug().getBoolean();
+    return this.waitNotifyDebug;
   }
 
   public boolean distributedMethodDebug() {
-    return this.configuration.logDistributedMethodDebug().getBoolean();
+    return this.distributedMethodDebug;
   }
 
   public boolean nonPortableDump() {
-    return this.configuration.logNonPortableDump().getBoolean();
+    return this.nonPortableDump;
   }
 
   public void lockAcquired(String lockName, int level, Object instance, TCObject tcObject) {
@@ -78,7 +98,7 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
     StringBuffer message = new StringBuffer("Autolock [").append(lockName).append("] acquired with level ")
         .append(LockLevel.toString(level));
 
-    if (options.doAutoLockDetails().getBoolean() && (instance != null)) {
+    if (autoLockDetails && (instance != null)) {
       message.append("\n  type: ").append(instance.getClass().getName());
       message.append(", identityHashCode: 0x").append(Integer.toHexString(System.identityHashCode(instance)));
     }
@@ -89,10 +109,7 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
   }
 
   private void appendCall(StringBuffer message) {
-    boolean fullStack = options.doFullStack().getBoolean();
-    boolean callOnly = options.doCaller().getBoolean();
-
-    if (fullStack || callOnly) {
+    if (fullStack || caller) {
       StackTraceElement[] stack = getTrimmedStack();
       if (stack != null) {
         message.append("\n");
@@ -226,6 +243,5 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
 
     // unreachable
   }
-
 
 }

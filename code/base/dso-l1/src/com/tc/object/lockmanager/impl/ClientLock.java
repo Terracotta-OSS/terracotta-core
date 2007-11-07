@@ -1136,7 +1136,7 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
 
     LockHold(LockID lockID, int level) {
       this.lockID = lockID;
-      Assert.eval("Non-discreet level " + level, LockLevel.isDiscrete(level));
+      if (!LockLevel.isDiscrete(level)) { throw new AssertionError("Non-discreet level " + level); }
       Assert.eval(level != LockLevel.NIL_LOCK_LEVEL);
       this.level = level;
       this.levels.push(level);
@@ -1255,7 +1255,7 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
       /*
        * server_level is not changed to NIL_LOCK_LEVEL even though the server will release the lock as we need to know
        * what state we were holding before wait on certain scenarios like server crash etc.
-       * 
+       *
        * @see ClientLockManager.notified
        */
       return this.server_level;

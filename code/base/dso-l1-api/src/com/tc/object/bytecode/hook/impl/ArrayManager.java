@@ -19,8 +19,8 @@ public class ArrayManager {
 
   // some day we might want to make this stuff externally configurable
   private final static int        CACHE_DEPTH      = 2;
-  private final static int        NUM_MAPS         = 32;
-  private final static int        INITIAL_CAPACITY = 25000;
+  private final static int        NUM_MAPS         = 128;
+  private final static int        INITIAL_CAPACITY = 500;
   private final static float      LOAD_FACTOR      = 0.75F;
 
   private static final Map[]      maps             = new Map[NUM_MAPS];
