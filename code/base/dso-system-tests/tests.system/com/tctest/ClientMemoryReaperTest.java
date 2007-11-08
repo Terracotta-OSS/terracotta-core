@@ -8,6 +8,11 @@ public class ClientMemoryReaperTest extends TransparentTestBase implements TestC
   private static final int NODE_COUNT        = 2;
   private static final int THREADS_COUNT     = 2;
 
+  public ClientMemoryReaperTest() {
+    // MNK-405
+    disableAllUntil("2008-11-20");
+  }
+  
   protected Class getApplicationClass() {
     return ClientMemoryReaperTestApp.class;
   }
