@@ -10,7 +10,7 @@ public class ClientMemoryReaperTest extends TransparentTestBase implements TestC
 
   public ClientMemoryReaperTest() {
     // MNK-405
-    disableAllUntil("2008-11-20");
+    disableAllUntil("2007-11-20");
   }
   
   protected Class getApplicationClass() {
