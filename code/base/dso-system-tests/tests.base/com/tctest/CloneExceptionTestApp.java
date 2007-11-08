@@ -26,7 +26,7 @@ public class CloneExceptionTestApp extends AbstractErrorCatchingTransparentApp {
 
   protected void runTest() throws Throwable {
     synchronized (root) {
-       try {
+      try {
         MyStuff cloned = (MyStuff) root.clone();
       } catch (RuntimeException e) {
         System.err.println("Expecting CloneNotSupportedException, got " + e.getCause());

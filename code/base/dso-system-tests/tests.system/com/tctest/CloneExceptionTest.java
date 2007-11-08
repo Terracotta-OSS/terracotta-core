@@ -10,7 +10,7 @@ public class CloneExceptionTest extends TransparentTestBase {
 
   public CloneExceptionTest() {
     // DEV-865
-    disableAllUntil("2007-11-10");
+    disableAllUntil("2008-11-10");
   }
 
   public void setUp() throws Exception {
