@@ -18,7 +18,7 @@ public final class SessionConfigServlet extends HttpServlet {
     HttpSession session = request.getSession(true);
     response.setContentType("text/html");
     PrintWriter out = response.getWriter();
-
+    
     String testCase = request.getParameter("testcase");
     if ("testCookieDisabled".equals(testCase)) {
       // cookie enable set to false so we should get no cookies
@@ -43,6 +43,8 @@ public final class SessionConfigServlet extends HttpServlet {
       if (!originalUrl.equals(encodedUrl)) {
         out.println("encodeUrl succeeded: " + encodedUrl);
       }
+    } else if ("testSessionTimeOut".equals(testCase)) {
+      out.println(session.getMaxInactiveInterval());
     }
     out.println("OK");
   }

@@ -86,17 +86,6 @@ public class CookieSettingTest extends AbstractDeploymentTest {
     assertCookie(response0.getHeaderField("Set-Cookie"), response1.getHeaderField("Set-Cookie"));
   }
 
-  public void testSessionTimeout() throws Exception {
-    // test session-timeout, it is set at 69 minutes
-    final String EXPECT = "4140"; // 69min * 60 = 4140sec
-
-    WebResponse response0 = server0.ping("/" + CONTEXT + "/ok?cmd=getMaxInactiveInterval");
-    assertEquals(EXPECT, response0.getText().trim());
-
-    WebResponse response1 = server1.ping("/" + CONTEXT + "/ok?cmd=getMaxInactiveInterval");
-    assertEquals(EXPECT, response1.getText().trim());
-  }
-
   private Deployment makeDeployment() throws Exception {
     DeploymentBuilder builder = makeDeploymentBuilder(CONTEXT + ".war");
     builder.addServlet("OkServlet", "/ok/*", OkServlet.class, null, false);

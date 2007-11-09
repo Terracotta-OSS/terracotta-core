@@ -17,16 +17,13 @@ import com.tc.test.server.util.TcConfigBuilder;
 import com.tc.util.io.TCFileUtils;
 import com.tctest.webapp.servlets.SessionConfigServlet;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import junit.framework.Test;
 
 /**
- * Test session-descriptor setting
- * 
- * http://edocs.bea.com/wls/docs81/webapp/weblogic_xml.html#1038173
+ * Test session-descriptor setting http://edocs.bea.com/wls/docs81/webapp/weblogic_xml.html#1038173
  * http://edocs.bea.com/wls/docs90/webapp/weblogic_xml.html#1071982
  * 
  * @author hhuynh
@@ -37,17 +34,14 @@ public class SessionConfigTest extends AbstractDeploymentTest {
   private static final String  MAPPING       = "app";
 
   private DeploymentBuilder    builder;
+  private TcConfigBuilder      tcConfigBuilder;
   private WebApplicationServer server;
-
   private Map                  descriptors   = new HashMap();
+  private boolean              weblogicOrWebsphere;
 
   public SessionConfigTest() {
     boolean weblogicOrWebsphere = AppServerFactory.getCurrentAppServerId() == AppServerFactory.WEBLOGIC
                                   || AppServerFactory.getCurrentAppServerId() == AppServerFactory.WEBSPHERE;
-
-    if (!weblogicOrWebsphere) {
-      disableAllUntil(new Date(Long.MAX_VALUE));
-    }
   }
 
   public static Test suite() {
@@ -56,10 +50,11 @@ public class SessionConfigTest extends AbstractDeploymentTest {
 
   // CookieEnabled = false
   public void testCookieDisabled() throws Exception {
+    if (!weblogicOrWebsphere) return;
     descriptors.put("wl81", "weblogic81a.xml");
     descriptors.put("wl92", "weblogic92a.xml");
     descriptors.put("was61", "websphere61a.xml");
-    setupAppServer();
+    init();
 
     WebConversation conversation = new WebConversation();
 
@@ -72,10 +67,11 @@ public class SessionConfigTest extends AbstractDeploymentTest {
 
   // CookieEnabled = false, URLRewritingEnabled = false
   public void testUrlRewritingDisabled() throws Exception {
+    if (!weblogicOrWebsphere) return;
     descriptors.put("wl81", "weblogic81b.xml");
     descriptors.put("wl92", "weblogic92b.xml");
     descriptors.put("was61", "websphere61b.xml");
-    setupAppServer();
+    init();
 
     WebResponse response = request(server, "testcase=testUrlRewritingDisabled", new WebConversation());
     System.out.println("Response: " + response.getText());
@@ -84,10 +80,11 @@ public class SessionConfigTest extends AbstractDeploymentTest {
 
   // TrackingEnabled = false -- only applicable to Weblogic
   public void testTrackingDisabled() throws Exception {
-    if (AppServerFactory.getCurrentAppServerId() != AppServerFactory.WEBLOGIC) { return; }    
+    if (!weblogicOrWebsphere) return;
+    if (AppServerFactory.getCurrentAppServerId() != AppServerFactory.WEBLOGIC) { return; }
     descriptors.put("wl81", "weblogic81c.xml");
-    descriptors.put("wl92", "weblogic92c.xml");    
-    setupAppServer();
+    descriptors.put("wl92", "weblogic92c.xml");
+    init();
 
     WebConversation wc = new WebConversation();
     WebResponse response = request(server, "testcase=testTrackingDisabled&hit=0", wc);
@@ -104,7 +101,7 @@ public class SessionConfigTest extends AbstractDeploymentTest {
     if (AppServerFactory.getCurrentAppServerId() != AppServerFactory.WEBLOGIC) { return; }
     descriptors.put("wl81", "weblogic81d.xml");
     descriptors.put("wl92", "weblogic92d.xml");
-    setupAppServer();
+    init();
 
     WebConversation wc = new WebConversation();
     WebResponse response = request(server, "", wc);
@@ -114,26 +111,58 @@ public class SessionConfigTest extends AbstractDeploymentTest {
     assertEquals(69, idLength);
   }
 
+  public void testSessionTimeOutNegative() throws Exception {
+    String response = sessionTimeOutTestCase(-1);
+    assertTrue(response.startsWith("-1"));
+  }
+  
+  public void testSessionTimeOutArbitrary() throws Exception {
+    String response = sessionTimeOutTestCase(69);
+    assertTrue(response.startsWith("4140"));
+  }
+  
+
+  private String sessionTimeOutTestCase(int timeOutInMinutes) throws Exception {
+    createTestDeployment();
+    builder.addSessionConfig("session-timeout", String.valueOf(timeOutInMinutes));
+    createAndStartAppServer();
+
+    WebConversation wc = new WebConversation();
+    WebResponse response = request(server, "testcase=testSessionTimeOut", wc);
+    System.out.println("Response: " + response.getText());
+    return response.getText();
+  }
+
   private WebResponse request(WebApplicationServer appserver, String params, WebConversation con) throws Exception {
     return appserver.ping("/" + CONTEXT + "/" + MAPPING + "?" + params, con);
   }
 
-  private void setupAppServer() throws Exception {
-    // prepare tc-config.xml
-    TcConfigBuilder tcConfigBuilder = new TcConfigBuilder();
+  private DeploymentBuilder createTestDeployment() {
+    tcConfigBuilder = new TcConfigBuilder();
     tcConfigBuilder.addWebApplication(CONTEXT);
 
     // prepare test war
     builder = makeDeploymentBuilder(CONTEXT + ".war");
     builder.addServlet("SessionConfigServlet", "/" + MAPPING + "/*", SessionConfigServlet.class, null, false);
 
+    return builder;
+  }
+
+  private void createAndStartAppServer() throws Exception {
     server = makeWebApplicationServer(tcConfigBuilder);
     addSessionDescriptor();
     server.addWarDeployment(builder.makeDeployment(), CONTEXT);
     server.start();
   }
 
+  private void init() throws Exception {
+    createTestDeployment();
+    createAndStartAppServer();
+  }
+
   private void addSessionDescriptor() throws Exception {
+    if (descriptors.size() == 0) return;
+
     switch (AppServerFactory.getCurrentAppServerId()) {
       case AppServerFactory.WEBLOGIC:
         if (AppServerFactory.getCurrentAppServerMajorVersion().equals("8")) {
