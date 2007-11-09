@@ -43,8 +43,18 @@ public final class SessionConfigServlet extends HttpServlet {
       if (!originalUrl.equals(encodedUrl)) {
         out.println("encodeUrl succeeded: " + encodedUrl);
       }
-    } else if ("testSessionTimeOut".equals(testCase)) {
+    } else if ("testSessionTimeOutArbitrary".equals(testCase)) {
       out.println(session.getMaxInactiveInterval());
+    } else if ("testSessionTimeOutNegative".equals(testCase)) {
+      int hit = Integer.parseInt(request.getParameter("hit"));
+      if (hit == 0) {
+        out.println(session.getMaxInactiveInterval());
+        session.setAttribute("testSessionTimeOutNegative", "0");
+      } else if (hit == 1) {
+        if (session.getAttribute("testSessionTimeOutNegative") == null) {
+          out.println("session has expired. isNew() returns " + session.isNew());
+        }
+      }
     }
     out.println("OK");
   }

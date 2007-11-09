@@ -18,6 +18,7 @@ import com.tc.util.io.TCFileUtils;
 import com.tctest.webapp.servlets.SessionConfigServlet;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import junit.framework.Test;
@@ -29,14 +30,15 @@ import junit.framework.Test;
  * @author hhuynh
  */
 public class SessionConfigTest extends AbstractDeploymentTest {
-  private static final String  RESOURCE_ROOT = "/com/tctest/server/appserver/unit/sessionconfigtest";
-  private static final String  CONTEXT       = "SessionConfigTest";
-  private static final String  MAPPING       = "app";
+  private static final String  RESOURCE_ROOT      = "/com/tctest/server/appserver/unit/sessionconfigtest";
+  private static final String  CONTEXT            = "SessionConfigTest";
+  private static final String  MAPPING            = "app";
 
   private DeploymentBuilder    builder;
   private TcConfigBuilder      tcConfigBuilder;
   private WebApplicationServer server;
-  private Map                  descriptors   = new HashMap();
+  private Map                  descriptors        = new HashMap();
+  private Map                  extraServerJvmArgs = new HashMap();
   private boolean              weblogicOrWebsphere;
 
   public SessionConfigTest() {
@@ -111,26 +113,45 @@ public class SessionConfigTest extends AbstractDeploymentTest {
     assertEquals(69, idLength);
   }
 
+  // test session-timeout field in web.xml
   public void testSessionTimeOutNegative() throws Exception {
-    String response = sessionTimeOutTestCase(-1);
-    assertTrue(response.startsWith("-1"));
-  }
-  
-  public void testSessionTimeOutArbitrary() throws Exception {
-    String response = sessionTimeOutTestCase(69);
-    assertTrue(response.startsWith("4140"));
-  }
-  
+    initWithSessionTimeout(-1);
+    WebConversation wc = new WebConversation();
+    WebResponse response = request(server, "testcase=testSessionTimeOutNegative&hit=0", wc);
+    long actual = Long.parseLong(response.getText().replaceAll("[^\\d+-]", ""));
+    System.out.println("actual: " + actual);
+    assertTrue(actual < 0);
 
-  private String sessionTimeOutTestCase(int timeOutInMinutes) throws Exception {
+    // even though negative number should dictate the session never timeouts
+    // we only test it for 1 minute to save time.
+    Thread.sleep(60 * 1000);
+    response = request(server, "testcase=testSessionTimeOutNegative&hit=1", wc);
+    assertEquals("OK", response.getText().trim());
+  }
+
+  // test session-timeout field in web.xml
+  public void testSessionTimeOutArbitrary() throws Exception {
+    int someBigValue = Integer.MAX_VALUE / 60;
+    initWithSessionTimeout(someBigValue);
+    WebConversation wc = new WebConversation();
+    WebResponse response = request(server, "testcase=testSessionTimeOutArbitrary", wc);
+    int actual = Integer.parseInt(response.getText().replaceAll("[^\\d+]", ""));
+    assertEquals(someBigValue * 60, actual);
+  }
+
+  public void testSessionTimeOutFromTCProperties() throws Exception {
+    extraServerJvmArgs.put("com.tc.session.maxidle.seconds", String.valueOf(Integer.MAX_VALUE));
+    init();
+    WebConversation wc = new WebConversation();
+    WebResponse response = request(server, "testcase=testSessionTimeOutArbitrary", wc);
+    int actual = Integer.parseInt(response.getText().replaceAll("[^\\d+]", ""));
+    assertEquals(Integer.MAX_VALUE, actual);
+  }
+
+  private void initWithSessionTimeout(int timeOutInMinutes) throws Exception {
     createTestDeployment();
     builder.addSessionConfig("session-timeout", String.valueOf(timeOutInMinutes));
     createAndStartAppServer();
-
-    WebConversation wc = new WebConversation();
-    WebResponse response = request(server, "testcase=testSessionTimeOut", wc);
-    System.out.println("Response: " + response.getText());
-    return response.getText();
   }
 
   private WebResponse request(WebApplicationServer appserver, String params, WebConversation con) throws Exception {
@@ -152,6 +173,12 @@ public class SessionConfigTest extends AbstractDeploymentTest {
     server = makeWebApplicationServer(tcConfigBuilder);
     addSessionDescriptor();
     server.addWarDeployment(builder.makeDeployment(), CONTEXT);
+    if (extraServerJvmArgs.size() > 0) {
+      for (Iterator it = extraServerJvmArgs.entrySet().iterator(); it.hasNext();) {
+        Map.Entry e = (Map.Entry) it.next();
+        server.getServerParameters().appendSysProp((String) e.getKey(), (String) e.getValue());
+      }
+    }
     server.start();
   }
 
