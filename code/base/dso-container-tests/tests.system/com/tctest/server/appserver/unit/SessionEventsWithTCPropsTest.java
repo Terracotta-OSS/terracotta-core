@@ -5,6 +5,7 @@
 package com.tctest.server.appserver.unit;
 
 import com.meterware.httpunit.WebConversation;
+import com.tc.test.server.appserver.AppServerFactory;
 import com.tc.test.server.appserver.StandardAppServerParameters;
 import com.tc.test.server.appserver.deployment.AbstractOneServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
@@ -19,6 +20,13 @@ import junit.framework.Test;
 public class SessionEventsWithTCPropsTest extends AbstractOneServerDeploymentTest {
   private static final String CONTEXT = "SessionEventsWithTCPropsTest";
   private static final String MAPPING = "ListenerReportingServlet";
+
+  public SessionEventsWithTCPropsTest() {
+    // DEV-1117
+    if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.WEBLOGIC) {
+      disableAllUntil("2007-12-30");
+    }
+  }
 
   public static Test suite() {
     return new SessionEventsWithTCPropsTestSetup();
