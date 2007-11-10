@@ -220,4 +220,8 @@ public class TestTCObject implements TCObject {
   public void setArrayReference(int index, ObjectID id) {
     throw new ImplementMe();
   }
+
+  public boolean isFieldPortableByOffset(long fieldOffset) {
+    throw new ImplementMe();
+  }
 }

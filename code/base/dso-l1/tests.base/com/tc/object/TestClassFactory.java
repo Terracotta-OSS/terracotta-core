@@ -147,5 +147,9 @@ public class TestClassFactory implements TCClassFactory {
       return false;
     }
 
+    public boolean isPortableField(long fieldOffset) {
+      throw new ImplementMe();
+    }
+
   }
 }

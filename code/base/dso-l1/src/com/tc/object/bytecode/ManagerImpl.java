@@ -858,5 +858,10 @@ public class ManagerImpl implements Manager {
   public DmiManager getDmiManager() {
     return this.methodCallManager;
   }
+  
+  public boolean isFieldPortableByOffset(Object pojo, long fieldOffset) {
+    TCObject tcObj = lookupExistingOrNull(pojo);
+    return tcObj != null && tcObj.isFieldPortableByOffset(fieldOffset);
+  }
 
 }

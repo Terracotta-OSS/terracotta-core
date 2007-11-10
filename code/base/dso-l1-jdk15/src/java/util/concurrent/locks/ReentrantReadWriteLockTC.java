@@ -19,13 +19,13 @@ import java.util.concurrent.TimeUnit;
 public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
   private ReentrantReadWriteLock.ReadLock  readerLock;
   private ReentrantReadWriteLock.WriteLock writerLock;
-  private ReentrantReadWriteLock.Sync      sync;
+  private Sync                             sync;
 
   private static class DsoLock {
-    private final ReentrantReadWriteLockTC lock;
-    private final int                      lockLevel;
+    private final Object lock;
+    private final int    lockLevel;
 
-    public DsoLock(ReentrantReadWriteLockTC lock, int lockLevel) {
+    public DsoLock(Object lock, int lockLevel) {
       this.lock = lock;
       this.lockLevel = lockLevel;
     }
@@ -59,7 +59,7 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
       }
     }
 
-    public ReentrantReadWriteLockTC getDsoLock() {
+    public Object getDsoLock() {
       return lock;
     }
 
@@ -74,15 +74,11 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
   public static class ReadLock extends ReentrantReadWriteLock.ReadLock implements Manageable {
     private volatile transient TCObject $__tc_MANAGED;
     private transient DsoLock           dsoLock;
-    private Sync                        sync;
+    private Sync                      sync;
 
     protected ReadLock(ReentrantReadWriteLockTC lock, Sync sync) {
       super(lock);
-      dsoLock = new DsoLock(lock, LockLevel.READ);
-    }
-
-    void init() {
-      sync = dsoLock.getDsoLock().getSync();
+      dsoLock = new DsoLock(sync, LockLevel.READ);
     }
 
     public void lock() {
@@ -134,6 +130,11 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
       }
     }
 
+    private void readObject(java.io.ObjectInputStream s) throws java.io.IOException, ClassNotFoundException {
+      s.defaultReadObject();
+      this.dsoLock = new DsoLock(sync, LockLevel.READ);
+    }
+
     public void __tc_managed(TCObject tcObject) {
       $__tc_MANAGED = tcObject;
     }
@@ -143,8 +144,6 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
     }
 
     public boolean __tc_isManaged() {
-      // TCObject tcManaged = $__tc_MANAGED;
-      // return (tcManaged != null && (tcManaged instanceof TCObjectPhysical || tcManaged instanceof TCObjectLogical));
       return $__tc_MANAGED != null;
     }
   }
@@ -152,15 +151,11 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
   public static class WriteLock extends ReentrantReadWriteLock.WriteLock implements TCLock, Manageable {
     private volatile transient TCObject $__tc_MANAGED;
     private transient DsoLock           dsoLock;
-    private Sync                        sync;
+    private Sync                      sync;
 
     protected WriteLock(ReentrantReadWriteLockTC lock, Sync sync) {
       super(lock);
-      this.dsoLock = new DsoLock(lock, LockLevel.WRITE);
-    }
-
-    void init() {
-      sync = dsoLock.getDsoLock().getSync();
+      this.dsoLock = new DsoLock(sync, LockLevel.WRITE);
     }
 
     public void lock() {
@@ -212,11 +207,16 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
     }
 
     public boolean isHeldByCurrentThread() {
-      return dsoLock.getDsoLock().isWriteLockedByCurrentThread();
+      return sync.isHeldExclusively();
     }
 
     public int localHeldCount() {
-      return dsoLock.getDsoLock().getWriteHoldCount();
+      return sync.getWriteHoldCount();
+    }
+
+    private void readObject(java.io.ObjectInputStream s) throws java.io.IOException, ClassNotFoundException {
+      s.defaultReadObject();
+      this.dsoLock = new DsoLock(sync, LockLevel.WRITE);
     }
 
     public String toString() {
@@ -237,8 +237,6 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
     }
 
     public boolean __tc_isManaged() {
-      // TCObject tcManaged = $__tc_MANAGED;
-      // return (tcManaged != null && (tcManaged instanceof TCObjectPhysical || tcManaged instanceof TCObjectLogical));
       return $__tc_MANAGED != null;
     }
   }
@@ -278,7 +276,7 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
   // TODO: need to review
   public int getReadLockCount() {
     if (ManagerUtil.isManaged(this)) {
-      return ManagerUtil.localHeldCount(this, LockLevel.READ);
+      return ManagerUtil.localHeldCount(sync, LockLevel.READ);
     } else {
       return super.getReadLockCount();
     }
@@ -312,14 +310,10 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
 
   public boolean isWriteLocked() {
     if (ManagerUtil.isManaged(this)) {
-      return ManagerUtil.isLocked(this, LockLevel.WRITE);
+      return ManagerUtil.isLocked(sync, LockLevel.WRITE);
     } else {
       return super.isWriteLocked();
     }
-  }
-
-  public boolean isWriteLockedByCurrentThread() {
-    return super.isWriteLockedByCurrentThread();
   }
 
   private void readObject(java.io.ObjectInputStream s) throws java.io.IOException, ClassNotFoundException {

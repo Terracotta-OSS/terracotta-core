@@ -97,4 +97,20 @@ public class Util {
   public static long getTimeInNanos(long mills, int nanos) {
     return mills*1000000+nanos;
   }
+  
+  public static int hash(Object key, int limit) {
+    if (limit == 1) { return 0; }
+    int hashValue = hash(key.hashCode());
+    if (hashValue == Integer.MIN_VALUE) { hashValue -= 1; }
+    hashValue = Math.abs(hashValue);
+    return hashValue % limit;
+  }
+
+  private static int hash(int h) {
+    h += ~(h << 9);
+    h ^= (h >>> 14);
+    h += (h << 4);
+    h ^= (h >>> 10);
+    return h;
+  }
 }

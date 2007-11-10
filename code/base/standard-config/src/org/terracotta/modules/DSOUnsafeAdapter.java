@@ -84,10 +84,17 @@ public class DSOUnsafeAdapter extends ClassAdapter implements Opcodes, ClassAdap
                        "(Ljava/lang/Object;J)V");
   }
 
-  private void addCheckedManagedConditionCode(MethodVisitor mv, Type[] params, int objParamIndex, Label nonSharedLabel,
+  private void addCheckedManagedConditionCode(MethodVisitor mv, Type[] params, int objParamIndex, int offsetParamIndex, Label nonSharedLabel,
                                               Label sharedLabel) {
+	Label checkPortableFieldLabel = new Label();
     mv.visitVarInsn(params[objParamIndex].getOpcode(ILOAD), objParamIndex + 1);
     mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "isManaged", "(Ljava/lang/Object;)Z");
+    mv.visitJumpInsn(IFEQ, nonSharedLabel);
+    mv.visitJumpInsn(GOTO, checkPortableFieldLabel);
+    mv.visitLabel(checkPortableFieldLabel);
+    mv.visitVarInsn(params[objParamIndex].getOpcode(ILOAD), objParamIndex + 1);
+    mv.visitVarInsn(params[offsetParamIndex].getOpcode(ILOAD), offsetParamIndex + 1);
+    mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "isFieldPortableByOffset", "(Ljava/lang/Object;J)Z");
     mv.visitJumpInsn(IFEQ, nonSharedLabel);
     mv.visitJumpInsn(GOTO, sharedLabel);
   }
@@ -122,7 +129,7 @@ public class DSOUnsafeAdapter extends ClassAdapter implements Opcodes, ClassAdap
     mv.visitLabel(l4);
     Label l5 = new Label();
     Label l6 = new Label();
-    addCheckedManagedConditionCode(mv, params, 0, l6, l5);
+    addCheckedManagedConditionCode(mv, params, 0, 1, l6, l5);
 
     mv.visitLabel(l6);
     invokeSuperMethod(mv, methodName, description, params);

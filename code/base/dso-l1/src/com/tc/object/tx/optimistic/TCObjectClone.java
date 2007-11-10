@@ -231,4 +231,8 @@ public class TCObjectClone implements TCObject {
     return null;
   }
 
+  public boolean isFieldPortableByOffset(long fieldOffset) {
+    throw new ImplementMe();
+  }
+
 }

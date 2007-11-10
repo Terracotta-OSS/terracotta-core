@@ -254,5 +254,9 @@ public class TCObjectImplTest extends BaseDSOTestCase {
     public boolean isEnum() {
       return false;
     }
+
+    public boolean isPortableField(long fieldOffset) {
+      throw new ImplementMe();
+    }
   }
 }

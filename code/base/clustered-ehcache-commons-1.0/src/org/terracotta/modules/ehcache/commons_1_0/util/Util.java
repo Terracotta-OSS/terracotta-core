@@ -10,12 +10,8 @@ import com.tc.properties.TCProperties;
 public class Util {
   private final static String LOCK_CONCURRENT = "CONCURRENT";
   
-  public static int hash(int h) {
-    h += ~(h << 9);
-    h ^= (h >>> 14);
-    h += (h << 4);
-    h ^= (h >>> 10);
-    return h;
+  public static int hash(Object obj, int limit) {
+    return com.tc.util.Util.hash(obj, limit);
   }
   
   public static int getEhcacheReadLockLevel() {

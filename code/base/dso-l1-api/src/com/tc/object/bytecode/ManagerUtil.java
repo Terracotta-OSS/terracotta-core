@@ -951,5 +951,15 @@ public class ManagerUtil {
   public static int getSessionLockType(String appName) {
     return ClassProcessorHelper.getSessionLockType(appName);
   }
+  
+  /**
+   * Returns true if the field represented by the offset is a portable field, i.e., not static and not dso transient
+   * @param pojo Object
+   * @param fieldOffset The index
+   * @return true if the field is portable and false otherwise 
+   */
+  public static boolean isFieldPortableByOffset(Object pojo, long fieldOffset) {
+    return getManager().isFieldPortableByOffset(pojo, fieldOffset);
+  }
 
 }

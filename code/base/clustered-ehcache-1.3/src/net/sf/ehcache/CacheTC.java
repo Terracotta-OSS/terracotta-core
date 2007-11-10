@@ -1445,9 +1445,7 @@ public class CacheTC implements Ehcache {
   }
 
   private int getStoreIndex(Object key) {
-    if (this.locks.length == 1) { return 0; }
-    int hashValue = Math.abs(Util.hash(key.hashCode()));
-    return hashValue % this.locks.length;
+    return Util.hash(key, locks.length);
   }
 
   private Object getLockObject(Object key) {

@@ -311,4 +311,11 @@ public interface TCObject extends Cacheable {
    * @return True if written 
    */
   public boolean dehydrateIfNew(DNAWriter writer);
+  
+  /**
+   * Returns true if the field represented by the offset is a portable field, i.e., not static and not dso transient
+   * @param fieldOffset The index
+   * @return true if the field is portable and false otherwise 
+   */
+  public boolean isFieldPortableByOffset(long fieldOffset);
 }

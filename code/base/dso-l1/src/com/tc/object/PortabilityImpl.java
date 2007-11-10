@@ -35,8 +35,8 @@ public class PortabilityImpl implements Portability {
     nonInstrumentedClass.add("java.lang.reflect.AccessibleObject");
     nonInstrumentedClass.add("java.util.concurrent.atomic.AtomicInteger");
     nonInstrumentedClass.add("java.util.concurrent.atomic.AtomicLong");
-    nonInstrumentedClass.add("java.util.concurrent.locks.AbstractQueuedSynchronizer");
-    nonInstrumentedClass.add("java.util.concurrent.locks.AbstractQueuedSynchronizer$Node");
+//    nonInstrumentedClass.add("java.util.concurrent.locks.AbstractQueuedSynchronizer");
+//    nonInstrumentedClass.add("java.util.concurrent.locks.AbstractQueuedSynchronizer$Node");
   }
 
   private final LiteralValues         literalValues        = new LiteralValues();

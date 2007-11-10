@@ -34,14 +34,13 @@ public class ReentrantReadWriteLockClassAdapter extends ClassAdapter implements 
   }
   
   public void visitEnd() {
-    //createGetSyncMethod();
     createHasQueuedThreadsMethod("hasQueuedThreads", "()Z");
     createHasQueuedThreadMethod("hasQueuedThread", "(Ljava/lang/Thread;)Z");
-    creageGetQueueLengthMethod("getQueueLength", "()I");
+    createGetQueueLengthMethod("getQueueLength", "()I");
     super.visitEnd();
   }
   
-  private void creageGetQueueLengthMethod(String methodName, String methodDesc) {
+  private void createGetQueueLengthMethod(String methodName, String methodDesc) {
     Type ret = Type.getReturnType(methodDesc);
     MethodVisitor mv = super.visitMethod(ACC_PUBLIC + ACC_FINAL, methodName, methodDesc, null, null);
     mv.visitCode();
@@ -56,6 +55,7 @@ public class ReentrantReadWriteLockClassAdapter extends ClassAdapter implements 
     mv.visitLabel(l2);
     mv.visitLineNumber(259, l2);
     mv.visitVarInsn(ALOAD, 0);
+    mv.visitFieldInsn(GETFIELD, "java/util/concurrent/locks/ReentrantReadWriteLock", "sync", "Ljava/util/concurrent/locks/ReentrantReadWriteLock$Sync;");
     mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "queueLength", "(Ljava/lang/Object;)I");
     mv.visitInsn(ret.getOpcode(IRETURN));
     mv.visitLabel(l1);
@@ -121,6 +121,7 @@ public class ReentrantReadWriteLockClassAdapter extends ClassAdapter implements 
     mv.visitLabel(l2);
     mv.visitLineNumber(259, l2);
     mv.visitVarInsn(ALOAD, 0);
+    mv.visitFieldInsn(GETFIELD, "java/util/concurrent/locks/ReentrantReadWriteLock", "sync", "Ljava/util/concurrent/locks/ReentrantReadWriteLock$Sync;");
     mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "queueLength", "(Ljava/lang/Object;)I");
     Label l3 = new Label();
     mv.visitJumpInsn(IFLE, l3);
@@ -144,22 +145,6 @@ public class ReentrantReadWriteLockClassAdapter extends ClassAdapter implements 
     mv.visitEnd();
   }
   
-  private void createGetSyncMethod() {
-    MethodVisitor mv = super.visitMethod(0, "getSync", "()Ljava/util/concurrent/locks/ReentrantReadWriteLock$Sync;", null, null);
-    mv.visitCode();
-    Label l0 = new Label();
-    mv.visitLabel(l0);
-    mv.visitLineNumber(1131, l0);
-    mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "java/util/concurrent/locks/ReentrantReadWriteLock", "sync", "Ljava/util/concurrent/locks/ReentrantReadWriteLock$Sync;");
-    mv.visitInsn(ARETURN);
-    Label l1 = new Label();
-    mv.visitLabel(l1);
-    mv.visitLocalVariable("this", "Ljava/util/concurrent/locks/ReentrantReadWriteLock;", null, l0, l1, 0);
-    mv.visitMaxs(1, 1);
-    mv.visitEnd();
-  }
-
   private final static class InitMethodAdapter extends MethodAdapter implements Opcodes {
     public InitMethodAdapter(MethodVisitor mv) {
       super(mv);

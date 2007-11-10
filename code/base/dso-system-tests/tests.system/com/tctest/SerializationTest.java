@@ -1,10 +1,12 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
 import org.apache.commons.io.IOUtils;
 
+import com.tc.exception.TCRuntimeException;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.object.TestClientObjectManager;
 import com.tc.object.bytecode.Manageable;
@@ -30,6 +32,9 @@ import java.io.ObjectOutputStream;
 import java.io.ObjectStreamClass;
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,8 +58,9 @@ import java.util.TreeSet;
  * instrumented version of collections/objects should be deserializable by uninstrumented versions and vice versa
  */
 public class SerializationTest extends BaseDSOTestCase {
+  private static final Set reentrantReadWriteLockInnerClassNames = new HashSet();
 
-  private static final Set disabled = new HashSet();
+  private static final Set disabled                              = new HashSet();
 
   static {
     disabled.add("java.util.concurrent.ConcurrentHashMap");
@@ -62,6 +68,9 @@ public class SerializationTest extends BaseDSOTestCase {
     disabled.add("java.util.concurrent.locks.ReentrantReadWriteLock$DsoLock");
     disabled.add("com.tcclient.util.concurrent.locks.ConditionObject");
     disabled.add("com.tcclient.util.concurrent.locks.ConditionObject$SyncCondition");
+
+    reentrantReadWriteLockInnerClassNames.add("java.util.concurrent.locks.ReentrantReadWriteLock$ReadLock");
+    reentrantReadWriteLockInnerClassNames.add("java.util.concurrent.locks.ReentrantReadWriteLock$WriteLock");
   }
 
   public void testSerialization() throws Exception {
@@ -97,13 +106,13 @@ public class SerializationTest extends BaseDSOTestCase {
   public void testIfTheTestIsRunningWithBootJar() throws Exception {
     assertTrue(isHashMapDSOInstrumented());
   }
-  
+
   public void testSubclassOfMapSerialization() throws Exception {
     validateSubclassOfMapSerialization(MyHashMap.class.getName());
-    
+
     validateSubclassOfMapSerialization(MyHashtable.class.getName());
   }
-  
+
   public void testSubclassofCollectionSerialization() throws Exception {
     validateSubclassOfCollectionSerialization(MyArrayList.class.getName());
     validateSubclassOfCollectionSerialization(MyHashSet.class.getName());
@@ -134,7 +143,7 @@ public class SerializationTest extends BaseDSOTestCase {
       Thread.currentThread().setContextClassLoader(originalLoader);
     }
   }
-  
+
   private void validateSubclassOfCollectionSerialization(String mapclassName) throws Exception {
     ClassLoader originalLoader = Thread.currentThread().getContextClassLoader();
 
@@ -171,7 +180,18 @@ public class SerializationTest extends BaseDSOTestCase {
     return false;
   }
 
+  private boolean handleSpecificSerializationTestIfNeeded(String className) throws Exception {
+    if (reentrantReadWriteLockInnerClassNames.contains(className)) {
+      checkSerializationForReentrantReadWriteLockInnerClass(className);
+      return true;
+    }
+    return false;
+  }
+
   private void checkSerialization(String className) throws Exception {
+    boolean handleSpecificSerializationTest = handleSpecificSerializationTestIfNeeded(className);
+    if (handleSpecificSerializationTest) { return; }
+
     if (className.startsWith("com.tc.") || (className.indexOf('$') > 0)) {
       // System.err.println("Skipping class " + className);
       return;
@@ -205,6 +225,33 @@ public class SerializationTest extends BaseDSOTestCase {
     if (canValidateExternal(o)) {
       validateExternalSerialization(o);
     }
+  }
+
+  private void checkSerializationForReentrantReadWriteLockInnerClass(String innerClassName) throws Exception {
+    Object lock = getReentrantReadWriteLockInnerClassInstance(innerClassName);
+
+    validateSerialization(lock);
+
+    if (canValidateExternal(lock)) {
+      validateExternalSerialization(lock);
+    }
+  }
+
+  private Object getReentrantReadWriteLockInnerClassInstance(String innerClassName) throws Exception {
+    Class reentrantReadWriteLockClass = Class.forName("java.util.concurrent.locks.ReentrantReadWriteLock");
+    Constructor cstr = reentrantReadWriteLockClass.getConstructor(new Class[] {});
+    Object reentrantReadWriteLock = cstr.newInstance(new Object[] {});
+
+    Class syncClass = Class.forName("java.util.concurrent.locks.ReentrantReadWriteLock$Sync");
+
+    Object sync = getReentrantReadWriteLockField(reentrantReadWriteLock, "sync");
+
+    Class innerClass = Class.forName(innerClassName);
+    cstr = innerClass.getDeclaredConstructor(new Class[] { reentrantReadWriteLockClass, syncClass });
+    cstr.setAccessible(true);
+    Object innerObject = cstr.newInstance(new Object[] { reentrantReadWriteLock, sync });
+
+    return innerObject;
   }
 
   private boolean canValidateExternal(Object o) {
@@ -302,8 +349,58 @@ public class SerializationTest extends BaseDSOTestCase {
     // using the same classloader that serialize it, i.e., IsolationClassLoader.
     ObjectInputStream ois = new MyObjectInputStream(new ByteArrayInputStream(data), loader);
     Object rv = ois.readObject();
+    verifyRun(rv);
     ois.close();
     return rv;
+  }
+
+  private static void verifyRun(Object obj) {
+    String className = obj.getClass().getName();
+    if (reentrantReadWriteLockInnerClassNames.contains(className)) {
+      invokeLockUnlockMethod(obj);
+    } else if ("java.util.concurrent.locks.ReentrantReadWriteLock".equals(className)) {
+      Object readLock = getReentrantReadWriteLockField(obj, "readerLock");
+      invokeLockUnlockMethod(readLock);
+      Object writeLock = getReentrantReadWriteLockField(obj, "writerLock");
+      invokeLockUnlockMethod(writeLock);
+    } else if ("java.util.concurrent.locks.ReentrantLock".equals(className)) {
+      invokeLockUnlockMethod(obj);
+    }
+  }
+
+  private static Object getReentrantReadWriteLockField(Object obj, String fieldName) {
+    try {
+      Field f = obj.getClass().getDeclaredField(fieldName);
+      f.setAccessible(true);
+      return f.get(obj);
+    } catch (SecurityException e) {
+      throw new TCRuntimeException(e);
+    } catch (NoSuchFieldException e) {
+      throw new TCRuntimeException(e);
+    } catch (IllegalArgumentException e) {
+      throw new TCRuntimeException(e);
+    } catch (IllegalAccessException e) {
+      throw new TCRuntimeException(e);
+    }
+  }
+
+  private static void invokeLockUnlockMethod(Object obj) {
+    try {
+      Method lockMethod = obj.getClass().getDeclaredMethod("lock", new Class[] {});
+      Method unlockMethod = obj.getClass().getDeclaredMethod("unlock", new Class[] {});
+      lockMethod.invoke(obj, new Object[] {});
+      unlockMethod.invoke(obj, new Object[] {});
+    } catch (SecurityException e) {
+      throw new TCRuntimeException(e);
+    } catch (NoSuchMethodException e) {
+      throw new TCRuntimeException(e);
+    } catch (IllegalArgumentException e) {
+      throw new TCRuntimeException(e);
+    } catch (IllegalAccessException e) {
+      throw new TCRuntimeException(e);
+    } catch (InvocationTargetException e) {
+      throw new TCRuntimeException(e);
+    }
   }
 
   private static byte[] serialize(Object obj) throws IOException {
@@ -451,7 +548,7 @@ public class SerializationTest extends BaseDSOTestCase {
       return value;
     }
   }
-  
+
   public static class MyHashtable extends Hashtable {
     private Object key;
     private Object value;
@@ -468,7 +565,7 @@ public class SerializationTest extends BaseDSOTestCase {
       return value;
     }
   }
-  
+
   public static class MyArrayList extends ArrayList {
     private Object index;
 
@@ -480,7 +577,7 @@ public class SerializationTest extends BaseDSOTestCase {
       return index;
     }
   }
-  
+
   public static class MyHashSet extends HashSet {
     private Object index;
 
@@ -495,8 +592,8 @@ public class SerializationTest extends BaseDSOTestCase {
 
   private static class MyObjectInputStream extends ObjectInputStream {
     private static final Set useCustomLoaderClasses = new HashSet();
-    private ClassLoader loader;
-    
+    private ClassLoader      loader;
+
     static {
       useCustomLoaderClasses.add(MyHashMap.class.getName());
       useCustomLoaderClasses.add(MyHashtable.class.getName());

@@ -51,10 +51,6 @@ public class Jdk15PreInstrumentedConfiguration
    }
 
    private void addJavaUtilConcurrentFutureTaskSpec() {
-      if (Vm.getMegaVersion() >= 1 && Vm.getMajorVersion() >= 6) {
-         getOrCreateSpec("java.util.concurrent.locks.AbstractOwnableSynchronizer");
-      }
-
       TransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.FutureTask$Sync");
       configHelper
             .addWriteAutolock("* java.util.concurrent.FutureTask$Sync.*(..)");

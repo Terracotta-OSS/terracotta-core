@@ -86,7 +86,7 @@ public class ExcludesConfiguration
       configHelper.addPermanentExcludePattern("java.util.concurrent.atomic.AtomicReferenceFieldUpdater*");
       configHelper.addPermanentExcludePattern("java.util.concurrent.atomic.AtomicStampedReference*");
       configHelper.addPermanentExcludePattern("java.util.concurrent.locks.AbstractQueuedLongSynchronizer*");
-      configHelper.addPermanentExcludePattern("java.util.concurrent.locks.AbstractQueuedSynchronizer*");
+      //configHelper.addPermanentExcludePattern("java.util.concurrent.locks.AbstractQueuedSynchronizer*");
       configHelper.addPermanentExcludePattern("java.util.concurrent.locks.LockSupport*");
    }
 

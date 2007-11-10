@@ -212,4 +212,11 @@ public interface TCClass {
    * @return Special generated logical extending class name or just the normal class name if not extending logical
    */
   public String getExtendingClassName();
+  
+  /**
+   * Returns true if the field represented by the offset is a portable field, i.e., not static and not dso transient
+   * @param fieldOffset The index
+   * @return true if the field is portable and false otherwise 
+   */
+  public boolean isPortableField(long fieldOffset);
 }

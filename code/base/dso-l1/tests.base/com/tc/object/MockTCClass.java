@@ -141,4 +141,8 @@ public class MockTCClass implements TCClass {
     return false;
   }
 
+  public boolean isPortableField(long fieldOffset) {
+    throw new ImplementMe();
+  }
+
 }

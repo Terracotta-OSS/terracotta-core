@@ -391,6 +391,13 @@ public class TCClassImpl implements TCClass {
       return sb.toString();
     }
   }
+  
+  public boolean isPortableField(long fieldOffset) {
+    String fieldName = getFieldNameByOffset(fieldOffset);
+    TCField tcField = getField(fieldName);
+    
+    return tcField.isPortable();
+  }
 
   public boolean isProxyClass() {
     return isProxyClass;

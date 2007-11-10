@@ -227,4 +227,8 @@ public class NullTCObject implements TCObject {
     //
   }
 
+  public boolean isFieldPortableByOffset(long fieldOffset) {
+    throw new ImplementMe();
+  }
+
 }

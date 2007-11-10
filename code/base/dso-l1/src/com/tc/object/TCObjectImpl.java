@@ -324,6 +324,10 @@ public abstract class TCObjectImpl implements TCObject {
     String fieldname = tcClazz.getFieldNameByOffset(fieldOffset);
     objectFieldChanged(classname, fieldname, newValue, index);
   }
+  
+  public boolean isFieldPortableByOffset(long fieldOffset) {
+    return tcClazz.isPortableField(fieldOffset);
+  }
 
   public String getFieldNameByOffset(long fieldOffset) {
     return tcClazz.getFieldNameByOffset(fieldOffset);

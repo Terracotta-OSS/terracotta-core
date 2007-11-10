@@ -46,6 +46,7 @@ public abstract class EhcacheTerracottaCommonsConfigurator extends TerracottaCon
     addExportedTcJarClass("com.tcclient.cache.Lock");
     addExportedTcJarClass("com.tcclient.cache.Timestamp");
     addExportedTcJarClass("com.tcclient.cache.GlobalKeySet");
+    addExportedTcJarClass("com.tc.util.Util");
     
     // explicitly excluding autolocking
     configHelper.addAutoLockExcludePattern("* com.tcclient.cache.CacheData.*(..)");
