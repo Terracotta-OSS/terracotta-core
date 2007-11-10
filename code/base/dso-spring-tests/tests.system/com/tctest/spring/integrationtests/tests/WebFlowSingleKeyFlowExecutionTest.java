@@ -4,10 +4,23 @@
  */
 package com.tctest.spring.integrationtests.tests;
 
+import com.tc.test.server.appserver.AppServerFactory;
+
+import java.util.Date;
+
 import junit.framework.Test;
 
 public class WebFlowSingleKeyFlowExecutionTest extends WebFlowTestBase {
 
+  public WebFlowSingleKeyFlowExecutionTest() {
+    // MNK-377
+    if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.WEBLOGIC &&
+        AppServerFactory.getCurrentAppServerMajorVersion().equals("9")) {
+      disableAllUntil(new Date(Long.MAX_VALUE));
+    }
+      
+  }
+  
   public static Test suite() {
     return new WebFlowTestSetup(WebFlowSingleKeyFlowExecutionTest.class);
   }
