@@ -20,6 +20,7 @@ import com.tc.object.cache.EvictionPolicy;
 import com.tc.object.cache.LRUEvictionPolicy;
 import com.tc.object.cache.NullCache;
 import com.tc.object.cache.TestCacheStats;
+import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
@@ -27,17 +28,27 @@ import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.LiteralAction;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
+import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
+import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.tx.TransactionID;
+import com.tc.object.tx.TxnBatchID;
+import com.tc.object.tx.TxnType;
+import com.tc.objectserver.context.ApplyCompleteEventContext;
+import com.tc.objectserver.context.ApplyTransactionContext;
+import com.tc.objectserver.context.CommitTransactionContext;
+import com.tc.objectserver.context.LookupEventContext;
 import com.tc.objectserver.context.ManagedObjectFaultingContext;
 import com.tc.objectserver.context.ManagedObjectFlushingContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
+import com.tc.objectserver.context.RecallObjectsContext;
 import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.core.api.GarbageCollector;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.TestDNA;
 import com.tc.objectserver.core.impl.MarkAndSweepGarbageCollector;
 import com.tc.objectserver.core.impl.TestManagedObject;
+import com.tc.objectserver.gtx.TestGlobalTransactionManager;
 import com.tc.objectserver.impl.InMemoryManagedObjectStore;
 import com.tc.objectserver.impl.ObjectInstanceMonitorImpl;
 import com.tc.objectserver.impl.ObjectManagerConfig;
@@ -64,10 +75,16 @@ import com.tc.objectserver.persistence.sleepycat.DBEnvironment;
 import com.tc.objectserver.persistence.sleepycat.SerializationAdapterFactory;
 import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor;
 import com.tc.objectserver.persistence.sleepycat.SleepycatSerializationAdapterFactory;
+import com.tc.objectserver.tx.ServerTransaction;
+import com.tc.objectserver.tx.ServerTransactionImpl;
+import com.tc.objectserver.tx.TestTransactionalStageCoordinator;
+import com.tc.objectserver.tx.TransactionSequencer;
+import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.stats.counter.sampled.SampledCounterImpl;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.SequenceID;
 import com.tc.util.concurrent.LifeCycleState;
 import com.tc.util.concurrent.StoppableThread;
 import com.tc.util.concurrent.ThreadUtil;
@@ -81,9 +98,11 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CyclicBarrier;
 
 /**
  * @author steve
@@ -101,6 +120,9 @@ public class ObjectManagerTest extends BaseDSOTestCase {
   private SampledCounterImpl                 objectfaultCounter;
   private TestPersistenceTransactionProvider persistenceTransactionProvider;
   private TestPersistenceTransaction         NULL_TRANSACTION;
+  private TestTransactionalStageCoordinator  coordinator;
+  private TestGlobalTransactionManager       gtxMgr;
+  private TransactionalObjectManagerImpl     txObjectManager;
 
   /**
    * Constructor for ObjectManagerTest.
@@ -150,6 +172,14 @@ public class ObjectManagerTest extends BaseDSOTestCase {
                                                persistenceTransactionProvider, faultSink, flushSink);
     new TestMOFaulter(this.objectManager, store, faultSink).start();
     new TestMOFlusher(this.objectManager, flushSink).start();
+  }
+
+  private void initTransactionObjectManager() {
+    TransactionSequencer sequencer = new TransactionSequencer();
+    coordinator = new TestTransactionalStageCoordinator();
+    gtxMgr = new TestGlobalTransactionManager();
+    txObjectManager = new TransactionalObjectManagerImpl(objectManager, sequencer, gtxMgr, coordinator);
+    objectManager.setTransactionalObjectManager(txObjectManager);
   }
 
   public void testShutdownAndSetGarbageCollector() throws Exception {
@@ -583,8 +613,8 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     return env;
   }
 
-  private Persistor newPersistor(boolean paranoid, DBEnvironment dbEnv,
-                                 SerializationAdapterFactory serializationAdapterFactory) throws Exception {
+  private Persistor newPersistor(DBEnvironment dbEnv, SerializationAdapterFactory serializationAdapterFactory)
+      throws Exception {
     Persistor persistor = new SleepycatPersistor(logger, dbEnv, serializationAdapterFactory);
     return persistor;
   }
@@ -602,27 +632,27 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     // sleepycat serializer, not paranoid
     DBEnvironment dbEnv = newDBEnvironment(paranoid);
     SerializationAdapterFactory saf = newSleepycatSerializationAdapterFactory(dbEnv);
-    Persistor persistor = newPersistor(paranoid, dbEnv, saf);
+    Persistor persistor = newPersistor(dbEnv, saf);
 
     testLookupInPersistentContext(persistor, paranoid);
 
     // custom serializer, not paranoid
     dbEnv = newDBEnvironment(paranoid);
     saf = newCustomSerializationAdapterFactory();
-    persistor = newPersistor(paranoid, dbEnv, saf);
+    persistor = newPersistor(dbEnv, saf);
     testLookupInPersistentContext(persistor, paranoid);
 
     // sleepycat serializer, paranoid
     paranoid = true;
     dbEnv = newDBEnvironment(paranoid);
     saf = newSleepycatSerializationAdapterFactory(dbEnv);
-    persistor = newPersistor(paranoid, dbEnv, saf);
+    persistor = newPersistor(dbEnv, saf);
     testLookupInPersistentContext(persistor, paranoid);
 
     // custom serializer, paranoid
     dbEnv = newDBEnvironment(paranoid);
     saf = newCustomSerializationAdapterFactory();
-    persistor = newPersistor(paranoid, dbEnv, saf);
+    persistor = newPersistor(dbEnv, saf);
     testLookupInPersistentContext(persistor, paranoid);
   }
 
@@ -807,9 +837,11 @@ public class ObjectManagerTest extends BaseDSOTestCase {
   private void testPhysicalObjectFacade(boolean paranoid) throws Exception {
     DBEnvironment dbEnv = newDBEnvironment(paranoid);
     SerializationAdapterFactory saf = newCustomSerializationAdapterFactory();
-    Persistor persistor = newPersistor(paranoid, dbEnv, saf);
+    Persistor persistor = newPersistor(dbEnv, saf);
     PersistenceTransactionProvider ptp = persistor.getPersistenceTransactionProvider();
-    this.objectStore = new PersistentManagedObjectStore(persistor.getManagedObjectPersistor());
+    PersistentManagedObjectStore persistantMOStore = new PersistentManagedObjectStore(persistor
+        .getManagedObjectPersistor());
+    this.objectStore = persistantMOStore;
     this.config.paranoid = paranoid;
     initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))), new NullCache(),
                       this.objectStore);
@@ -878,8 +910,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
       // expected
     }
 
-    this.objectStore.shutdown();
-
+    close(persistor, persistantMOStore);
     // XXX: change the object again, make sure the facade is "stable" (ie.
     // doesn't change)
   }
@@ -1163,6 +1194,259 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     // make sure the object manager calls notifyGCComplete
     assertTrue(gc.waitFor_notifyGCComplete_ToBeCalled(5000));
     gcCaller.join();
+  }
+
+  /**
+   * This test is written to expose an case which used to trigger an assertion error in ObjectManager when GC initiates
+   * recall in TransactionalObjectManager in persistence mode
+   */
+  public void testRecallNewObjects() throws Exception {
+    DBEnvironment dbEnv = newDBEnvironment(true);
+    SerializationAdapterFactory saf = newCustomSerializationAdapterFactory();
+    Persistor persistor = newPersistor(dbEnv, saf);
+    PersistenceTransactionProvider ptp = persistor.getPersistenceTransactionProvider();
+    PersistentManagedObjectStore persistentMOStore = new PersistentManagedObjectStore(persistor
+        .getManagedObjectPersistor());
+    this.objectStore = persistentMOStore;
+    this.config.paranoid = true;
+    initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))), new NullCache(),
+                      this.objectStore);
+    initObjectManager();
+    initTransactionObjectManager();
+
+    // this should disable the gc thread.
+    this.config.myGCThreadSleepTime = -1;
+    TestGarbageCollector gc = new TestGarbageCollector(objectManager);
+    objectManager.setGarbageCollector(gc);
+    objectManager.start();
+
+    /**
+     * STEP 1: Create an New object and check it out
+     */
+    Map changes = new HashMap();
+
+    changes.put(new ObjectID(1), new TestDNA(new ObjectID(1)));
+
+    ServerTransaction stxn1 = new ServerTransactionImpl(gtxMgr, new TxnBatchID(1), new TransactionID(1),
+                                                        new SequenceID(1), new LockID[0],
+                                                        new ClientID(new ChannelID(2)),
+                                                        new ArrayList(changes.values()), new ObjectStringSerializer(),
+                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
+                                                        DmiDescriptor.EMPTY_ARRAY);
+    List txns = new ArrayList();
+    txns.add(stxn1);
+
+    txObjectManager.addTransactions(txns);
+
+    // Lookup context should have been fired
+    LookupEventContext loc = (LookupEventContext) coordinator.lookupSink.queue.remove(0);
+    assertNotNull(loc);
+    assertTrue(coordinator.lookupSink.queue.isEmpty());
+
+    txObjectManager.lookupObjectsForTransactions();
+
+    // Apply should have been called as we have Object 1
+    ApplyTransactionContext aoc = (ApplyTransactionContext) coordinator.applySink.queue.remove(0);
+    assertTrue(stxn1 == aoc.getTxn());
+    assertNotNull(aoc);
+    assertTrue(coordinator.applySink.queue.isEmpty());
+
+    // Apply and initate commit the txn
+    txObjectManager.applyTransactionComplete(stxn1.getServerTransactionID());
+    ApplyCompleteEventContext acec = (ApplyCompleteEventContext) coordinator.applyCompleteSink.queue.remove(0);
+    assertNotNull(acec);
+    assertTrue(coordinator.applyCompleteSink.queue.isEmpty());
+
+    txObjectManager.processApplyComplete();
+    CommitTransactionContext ctc1 = (CommitTransactionContext) coordinator.commitSink.queue.remove(0);
+    assertNotNull(ctc1);
+    assertTrue(coordinator.commitSink.queue.isEmpty());
+
+    txObjectManager.commitTransactionsComplete(ctc1);
+    Collection applied = ctc1.getAppliedServerTransactionIDs();
+    assertTrue(applied.size() == 1);
+    assertEquals(stxn1.getServerTransactionID(), applied.iterator().next());
+    Collection objects = ctc1.getObjects();
+    assertTrue(objects.size() == 1);
+
+    /**
+     * STEP 2: Dont check back Object 1 yet, make another transaction with yet another object
+     */
+    changes.clear();
+    changes.put(new ObjectID(2), new TestDNA(new ObjectID(2)));
+
+    ServerTransaction stxn2 = new ServerTransactionImpl(gtxMgr, new TxnBatchID(2), new TransactionID(2),
+                                                        new SequenceID(1), new LockID[0],
+                                                        new ClientID(new ChannelID(2)),
+                                                        new ArrayList(changes.values()), new ObjectStringSerializer(),
+                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
+                                                        DmiDescriptor.EMPTY_ARRAY);
+
+    txns.clear();
+    txns.add(stxn2);
+
+    txObjectManager.addTransactions(txns);
+
+    // Lookup context should have been fired
+    loc = (LookupEventContext) coordinator.lookupSink.queue.remove(0);
+    assertNotNull(loc);
+    assertTrue(coordinator.lookupSink.queue.isEmpty());
+
+    txObjectManager.lookupObjectsForTransactions();
+
+    // Apply should have been called as we have Object 2
+    aoc = (ApplyTransactionContext) coordinator.applySink.queue.remove(0);
+    assertTrue(stxn2 == aoc.getTxn());
+    assertNotNull(aoc);
+    assertTrue(coordinator.applySink.queue.isEmpty());
+
+    /**
+     * STEP 3: Create a txn with Objects 1,2 and a new object 3
+     */
+    changes.clear();
+    changes.put(new ObjectID(1), new TestDNA(new ObjectID(1), true));
+    changes.put(new ObjectID(2), new TestDNA(new ObjectID(2), true));
+    changes.put(new ObjectID(3), new TestDNA(new ObjectID(3)));
+
+    ServerTransaction stxn3 = new ServerTransactionImpl(gtxMgr, new TxnBatchID(2), new TransactionID(2),
+                                                        new SequenceID(1), new LockID[0],
+                                                        new ClientID(new ChannelID(2)),
+                                                        new ArrayList(changes.values()), new ObjectStringSerializer(),
+                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
+                                                        DmiDescriptor.EMPTY_ARRAY);
+
+    txns.clear();
+    txns.add(stxn3);
+
+    txObjectManager.addTransactions(txns);
+
+    // Lookup context should have been fired
+    loc = (LookupEventContext) coordinator.lookupSink.queue.remove(0);
+    assertNotNull(loc);
+    assertTrue(coordinator.lookupSink.queue.isEmpty());
+
+    // This lookup should go pending since we don't have Object 1, since 2 is already checkedout only 1,3 should be
+    // requested.
+    txObjectManager.lookupObjectsForTransactions();
+
+    // Apply should not have been called as we don't have Object 1
+    assertTrue(coordinator.applySink.queue.isEmpty());
+
+    /**
+     * STEP 4: Commit but not release Object 2 so even when we check object 1 back stxn3 is still pending
+     */
+    // Apply and initiate commit the txn for object 2
+    txObjectManager.applyTransactionComplete(stxn2.getServerTransactionID());
+    acec = (ApplyCompleteEventContext) coordinator.applyCompleteSink.queue.remove(0);
+    assertNotNull(acec);
+    assertTrue(coordinator.applyCompleteSink.queue.isEmpty());
+
+    txObjectManager.processApplyComplete();
+    CommitTransactionContext ctc2 = (CommitTransactionContext) coordinator.commitSink.queue.remove(0);
+    assertNotNull(ctc2);
+    assertTrue(coordinator.commitSink.queue.isEmpty());
+
+    txObjectManager.commitTransactionsComplete(ctc2);
+    applied = ctc2.getAppliedServerTransactionIDs();
+    assertTrue(applied.size() == 1);
+    assertEquals(stxn2.getServerTransactionID(), applied.iterator().next());
+    objects = ctc2.getObjects();
+    assertTrue(objects.size() == 1);
+
+    /**
+     * STEP 4: Check in Object 1 thus releasing the blocked lookup for Object 1, 3
+     */
+
+    // Now check back Object 1
+    objectManager.releaseAll(ptp.nullTransaction(), ctc1.getObjects());
+
+    // Lookup context should have been fired
+    loc = (LookupEventContext) coordinator.lookupSink.queue.remove(0);
+    assertNotNull(loc);
+    assertTrue(coordinator.lookupSink.queue.isEmpty());
+
+    /**
+     * STEP 5 : Before lookup is initiated, initiate a GC pause
+     */
+    gc.requestGCPause();
+    // Doing in a separate thread since this will block
+    final CyclicBarrier cb = new CyclicBarrier(2);
+    Thread t = new Thread("GC Thread - testRecallNewObjects") {
+      public void run() {
+        objectManager.waitUntilReadyToGC();
+        try {
+          cb.await();
+        } catch (Exception e) {
+          e.printStackTrace();
+          throw new AssertionError(e);
+        }
+      }
+    };
+    t.start();
+    ThreadUtil.reallySleep(5000);
+
+    // Recall request should have be added.
+    RecallObjectsContext roc = (RecallObjectsContext) coordinator.recallSink.queue.remove(0);
+    assertNotNull(roc);
+    assertTrue(coordinator.recallSink.queue.isEmpty());
+
+    assertTrue(roc.recallAll());
+
+    // do recall - This used to cause an assertion error in persistent mode
+    txObjectManager.recallCheckedoutObject(roc);
+
+    // Check in Object 2 to make the GC go to paused state
+    objectManager.releaseAll(ptp.nullTransaction(), ctc2.getObjects());
+
+    cb.await();
+
+    assertTrue(gc.isPaused());
+
+    // Complete gc
+    objectManager.notifyGCComplete(Collections.EMPTY_SET);
+    assertFalse(gc.isPausingOrPaused());
+    assertFalse(gc.isPaused());
+
+    // Lookup context should have been fired
+    loc = (LookupEventContext) coordinator.lookupSink.queue.remove(0);
+    assertNotNull(loc);
+    assertTrue(coordinator.lookupSink.queue.isEmpty());
+
+    txObjectManager.lookupObjectsForTransactions();
+
+    // Apply should have been called for txn 3
+    aoc = (ApplyTransactionContext) coordinator.applySink.queue.remove(0);
+    assertTrue(stxn3 == aoc.getTxn());
+    assertNotNull(aoc);
+    assertTrue(coordinator.applySink.queue.isEmpty());
+
+    // Apply and initate commit the txn
+    txObjectManager.applyTransactionComplete(stxn3.getServerTransactionID());
+    acec = (ApplyCompleteEventContext) coordinator.applyCompleteSink.queue.remove(0);
+    assertNotNull(acec);
+    assertTrue(coordinator.applyCompleteSink.queue.isEmpty());
+
+    txObjectManager.processApplyComplete();
+    CommitTransactionContext ctc3 = (CommitTransactionContext) coordinator.commitSink.queue.remove(0);
+    assertNotNull(ctc3);
+    assertTrue(coordinator.commitSink.queue.isEmpty());
+
+    txObjectManager.commitTransactionsComplete(ctc3);
+    applied = ctc3.getAppliedServerTransactionIDs();
+    assertTrue(applied.size() == 1);
+    assertEquals(stxn3.getServerTransactionID(), applied.iterator().next());
+    objects = ctc3.getObjects();
+    assertTrue(objects.size() == 3);
+
+    // Now check back the objects
+    objectManager.releaseAll(ptp.nullTransaction(), ctc3.getObjects());
+
+    assertEquals(0, objectManager.getCheckedOutCount());
+    assertFalse(objectManager.isReferenced(new ObjectID(1)));
+    assertFalse(objectManager.isReferenced(new ObjectID(2)));
+    assertFalse(objectManager.isReferenced(new ObjectID(3)));
+
+    close(persistor, persistentMOStore);
   }
 
   private static class TestArrayDNA implements DNA {

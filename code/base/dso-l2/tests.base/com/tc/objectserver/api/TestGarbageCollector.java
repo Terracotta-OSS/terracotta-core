@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.api;
 
@@ -23,10 +24,10 @@ import java.util.List;
 import java.util.Set;
 
 public class TestGarbageCollector implements GarbageCollector {
-  public Set            collectedObjects  = new HashSet();
-  private boolean       collected         = false;
-  private boolean       isPausingOrPaused = false;
-  private boolean       isPaused          = false;
+  public Set            collectedObjects = new HashSet();
+  private boolean       collected        = false;
+  private boolean       isPausing        = false;
+  private boolean       isPaused         = false;
 
   private LinkedQueue   collectCalls;
   private LinkedQueue   notifyReadyToGCCalls;
@@ -65,7 +66,7 @@ public class TestGarbageCollector implements GarbageCollector {
   public synchronized void reset() {
     collectedObjects.clear();
     collected = false;
-    isPausingOrPaused = false;
+    isPausing = false;
     initQueues();
   }
 
@@ -123,7 +124,7 @@ public class TestGarbageCollector implements GarbageCollector {
   }
 
   public synchronized boolean isPausingOrPaused() {
-    return isPausingOrPaused;
+    return isPausing || isPaused;
   }
 
   public synchronized boolean isPaused() {
@@ -195,7 +196,7 @@ public class TestGarbageCollector implements GarbageCollector {
 
   public void notifyGCComplete() {
     try {
-      isPausingOrPaused = false;
+      isPausing = false;
       isPaused = false;
       notifyGCCompleteCalls.put(new Object());
     } catch (InterruptedException e) {
@@ -222,7 +223,7 @@ public class TestGarbageCollector implements GarbageCollector {
 
   public void requestGCPause() {
     try {
-      isPausingOrPaused = true;
+      isPausing = true;
       isPaused = false;
       requestGCCalls.put(new Object());
     } catch (InterruptedException e) {
@@ -286,7 +287,7 @@ public class TestGarbageCollector implements GarbageCollector {
 
   public void enableGC() {
     throw new ImplementMe();
-    
+
   }
 
   public boolean isDisabled() {

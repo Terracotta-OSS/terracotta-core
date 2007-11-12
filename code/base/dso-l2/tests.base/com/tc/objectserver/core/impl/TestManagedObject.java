@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.core.impl;
 
@@ -35,7 +36,8 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
   public final NoExceptionLinkedQueue setTransientStateCalls = new NoExceptionLinkedQueue();
   private ObjectID                    id;
   private ObjectID[]                  references;
-  private boolean                     isDirty;
+  public boolean                      isDirty;
+  public boolean                      isNew;
 
   public TestManagedObject(ObjectID id, ObjectID[] references) {
     this.id = id;
@@ -90,7 +92,6 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     this.references = references;
   }
 
-  public boolean isNew;
   public boolean isNew() {
     return this.isNew;
   }
@@ -102,8 +103,9 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
   public ManagedObjectReference getReference() {
     return this;
   }
-  
+
   boolean removeOnRelease;
+
   public void setRemoveOnRelease(boolean removeOnRelease) {
     this.removeOnRelease = removeOnRelease;
   }
@@ -113,6 +115,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
   }
 
   boolean referenced;
+
   public void markReference() {
     referenced = true;
   }
@@ -124,7 +127,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
   public boolean isReferenced() {
     return referenced;
   }
-  
+
   public ManagedObject getObject() {
     return this;
   }
@@ -151,7 +154,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
 
   TLinkable next;
   TLinkable previous;
-  
+
   public TLinkable getNext() {
     return this.next;
   }
@@ -171,9 +174,9 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
   public ManagedObjectState getManagedObjectState() {
     throw new ImplementMe();
   }
-  
+
   public String toString() {
-    return "TestManagedObject["+id+"]";
+    return "TestManagedObject[" + id + "]";
   }
 
   public boolean canEvict() {
@@ -184,7 +187,8 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     return;
   }
 
-  public void apply(DNA dna, TransactionID txnID, BackReferences includeIDs, ObjectInstanceMonitor instanceMonitor, boolean ignoreIfOlderDNA) throws DNAException {
+  public void apply(DNA dna, TransactionID txnID, BackReferences includeIDs, ObjectInstanceMonitor instanceMonitor,
+                    boolean ignoreIfOlderDNA) throws DNAException {
     throw new ImplementMe();
   }
 

@@ -77,11 +77,11 @@ public class TransactionalObjectManagerTest extends TCTestCase {
 
     txObjectManager.lookupObjectsForTransactions();
 
-    // for txn1 - ObjectID 1, 2/home/ssubbiah/2.2.1/code/base/tcbuild check_prep dso-l2 unit
+    // for txn1 - ObjectID 1, 2
     Object args[] = (Object[]) objectManager.lookupObjectForCreateIfNecessaryContexts.take();
     assertNotNull(args);
 
-    // Apply should not have been called as we dont have Obejct 1, 2
+    // Apply should have been called as we have Object 1, 2
     ApplyTransactionContext aoc = (ApplyTransactionContext) coordinator.applySink.queue.remove(0);
     assertTrue(stxn1 == aoc.getTxn());
     assertNotNull(aoc);

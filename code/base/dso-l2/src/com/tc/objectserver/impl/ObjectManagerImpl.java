@@ -439,7 +439,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       traverser.traverse(lookedUpObjects);
       lookedUpObjects = new HashSet();
       Set lookupObjectIDs = traverser.getObjectsToLookup();
-      if(lookupObjectIDs.isEmpty()) break;
+      if (lookupObjectIDs.isEmpty()) break;
       stateManager.removeReferencedFrom(nodeID, lookupObjectIDs);
       for (Iterator j = lookupObjectIDs.iterator(); j.hasNext();) {
         ObjectID id = (ObjectID) j.next();
@@ -455,7 +455,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return traverser.getPendingObjectsToLookup(lookedUpObjects);
   }
 
-  // TODO:: Multiple readonly checkouts, now that there are more than 1 thread faulting objects to the
+  // TODO:: Multiple read only checkouts, now that there are more than 1 thread faulting objects to the
   // client
   public void releaseReadOnly(ManagedObject object) {
     if (config.paranoid() && object.isDirty()) { throw new AssertionError("Object is dirty after a read-only checkout"
@@ -478,8 +478,11 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   public synchronized void releaseAll(Collection objects) {
     for (Iterator i = objects.iterator(); i.hasNext();) {
       ManagedObject mo = (ManagedObject) i.next();
-      if (config.paranoid()) {
-        Assert.assertFalse(mo.isDirty());
+      if (config.paranoid() && !mo.isNew() && mo.isDirty()) {
+        // It is possible to release new just created objects before it has a chance to get applied because of a recall
+        // due to a GC. Check out ObjectManagerTest.testRecallNewObjects()
+        throw new AssertionError("ObjectManager.releaseAll() called on dirty old objects : " + mo
+                                 + " total objects size : " + objects.size());
       }
       basicRelease(mo);
     }
