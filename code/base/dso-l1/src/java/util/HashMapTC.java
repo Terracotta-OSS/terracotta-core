@@ -160,21 +160,14 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
       // Managed Version
       synchronized (__tc_managed().getResolveLock()) {
         ManagerUtil.checkWriteAccess(this);
-        int sizeB4 = size();
-        Object orgKey;
-        Object val;
-        if (key == null) {
-          val = super.remove(key);
-          orgKey = key;
-        } else {
-          KeyWrapper kw = new KeyWrapper(key);
-          val = super.remove(kw);
-          orgKey = kw.getOriginalKey();
-        }
-        if (sizeB4 != size()) {
-          ManagerUtil.logicalInvoke(this, SerializationUtil.REMOVE_ENTRY_FOR_KEY_SIGNATURE, new Object[] { orgKey });
-        }
-        return lookUpIfNecessary(val);
+
+        Entry entry = removeEntryForKey(key);
+        if (entry == null) { return null; }
+
+        ManagerUtil.logicalInvoke(this, SerializationUtil.REMOVE_ENTRY_FOR_KEY_SIGNATURE,
+                                  new Object[] { entry.getKey() });
+
+        return lookUpIfNecessary(entry.getValue());
       }
     } else {
       return super.remove(key);
