@@ -180,18 +180,14 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
     if (__tc_isManaged()) {
       ManagerUtil.checkWriteAccess(this);
 
-      // XXX: we should really add a removeEntryForKey() method like HashMap to avoid doing two lookups
-      Entry entry = __tc_getEntry(key);
+      Entry entry = __tc_removeEntryForKey(key);
       if (entry == null) { return null; }
 
-      // read the original key before actually doing the remove()
-      Object origKey = entry.getKey();
+      Object rv = unwrapValueIfNecessary(entry.getValue());
 
-      Object removedValue = unwrapValueIfNecessary(super.remove(key));
+      ManagerUtil.logicalInvoke(this, "remove(Ljava/lang/Object;)Ljava/lang/Object;", new Object[] { entry.getKey() });
 
-      ManagerUtil.logicalInvoke(this, "remove(Ljava/lang/Object;)Ljava/lang/Object;", new Object[] { origKey });
-
-      return removedValue;
+      return rv;
     } else {
       return super.remove(key);
     }
@@ -211,15 +207,11 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
     if (__tc_isManaged()) {
       ManagerUtil.checkWriteAccess(this);
 
-      // XXX: we should really add a removeEntryForKey() method like HashMap to avoid doing two lookups
-      Entry entry = __tc_getEntry(key);
+      Entry entry = __tc_removeEntryForKey(key);
       if (entry == null) { return; }
 
-      Object removed = super.remove(key);
-      if (removed != null) {
-        ManagerUtil
-            .logicalInvoke(this, "remove(Ljava/lang/Object;)Ljava/lang/Object;", new Object[] { entry.getKey() });
-      }
+      ManagerUtil.logicalInvoke(this, "remove(Ljava/lang/Object;)Ljava/lang/Object;", new Object[] { entry.getKey() });
+
     } else {
       super.remove(key);
     }
@@ -334,6 +326,11 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
     throw new RuntimeException("This should never execute! Check BootJarTool");
   }
 
+  protected Map.Entry __tc_removeEntryForKey(Object key) {
+    // This method is instrumented during bootjar creation into the vanilla (which gets tainted) java.util.Hashtable.
+    throw new RuntimeException("This should never execute! Check BootJarTool");
+  }
+
   private static class ValuesWrapper {
 
     private Object value;
@@ -431,7 +428,7 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
       if (__tc_isManaged()) {
         synchronized (HashtableTC.this) {
           // This check is done to solve the chicken and egg problem. Should I modify the local copy or the remote copy
-          // ? (both has error checks that we want to take place before any modification is probagated
+          // ? (both has error checks that we want to take place before any modification is propagated
           if (value == null) throw new NullPointerException();
           ManagerUtil.checkWriteAccess(HashtableTC.this);
           ManagerUtil.logicalInvoke(HashtableTC.this, "put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
@@ -479,16 +476,12 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
 
           Entry entryToRemove = (Entry) o;
 
-          // XXX: two lookup badness!
-          Entry entry = __tc_getEntry(entryToRemove.getKey());
+          Entry entry = __tc_removeEntryForKey(entryToRemove.getKey());
           if (entry == null) { return false; }
 
-          if (entrySet.remove(o)) {
-            ManagerUtil.logicalInvoke(HashtableTC.this, "remove(Ljava/lang/Object;)Ljava/lang/Object;",
-                                      new Object[] { entry.getKey() });
-            return true;
-          }
-          return false;
+          ManagerUtil.logicalInvoke(HashtableTC.this, "remove(Ljava/lang/Object;)Ljava/lang/Object;",
+                                    new Object[] { entry.getKey() });
+          return true;
         }
       } else {
         return entrySet.remove(o);

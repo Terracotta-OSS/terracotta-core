@@ -62,7 +62,6 @@ import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.Clearable;
 import com.tc.object.bytecode.DataOutputStreamAdapter;
 import com.tc.object.bytecode.DuplicateMethodAdapter;
-import com.tc.object.bytecode.SetRemoveMethodAdapter;
 import com.tc.object.bytecode.HashtableClassAdapter;
 import com.tc.object.bytecode.JavaLangReflectArrayAdapter;
 import com.tc.object.bytecode.JavaLangReflectFieldAdapter;
@@ -95,6 +94,7 @@ import com.tc.object.bytecode.NullManager;
 import com.tc.object.bytecode.NullTCObject;
 import com.tc.object.bytecode.ReentrantLockClassAdapter;
 import com.tc.object.bytecode.ReentrantReadWriteLockClassAdapter;
+import com.tc.object.bytecode.SetRemoveMethodAdapter;
 import com.tc.object.bytecode.StringBufferAdapter;
 import com.tc.object.bytecode.StringGetCharsAdapter;
 import com.tc.object.bytecode.TCMap;
@@ -2045,18 +2045,18 @@ public class BootJarTool {
     String jMapClassNameDots = "java.util.Hashtable";
     String tcMapClassNameDots = "java.util.HashtableTC";
     Map instrumentedContext = new HashMap();
-    mergeClass(tcMapClassNameDots, jMapClassNameDots, instrumentedContext, HashtableClassAdapter.createMethod());
+    mergeClass(tcMapClassNameDots, jMapClassNameDots, instrumentedContext, HashtableClassAdapter.getMethods());
   }
 
   private final void addInstrumentedLinkedHashMap(Map instrumentedContext) {
     String jMapClassNameDots = "java.util.LinkedHashMap";
     String tcMapClassNameDots = "java.util.LinkedHashMapTC";
-    mergeClass(tcMapClassNameDots, jMapClassNameDots, instrumentedContext, null);
+    mergeClass(tcMapClassNameDots, jMapClassNameDots, instrumentedContext);
   }
 
   private void addInstrumentedReentrantReadWriteLock() {
     String methodPrefix = "__RWL" + ByteCodeUtil.TC_METHOD_PREFIX;
-  
+
     TransparencyClassSpec spec = config.getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock");
     spec.setCallConstructorOnLoad(true);
 
@@ -2088,7 +2088,7 @@ public class BootJarTool {
     spec.markPreInstrumented();
     spec = config.getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$FairSync");
     spec.setCallConstructorOnLoad(true);
-    spec.markPreInstrumented();    
+    spec.markPreInstrumented();
     spec = config.getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$NonfairSync");
     spec.setCallConstructorOnLoad(true);
     spec.markPreInstrumented();
@@ -2114,8 +2114,8 @@ public class BootJarTool {
       spec.markPreInstrumented();
     }
   }
-  
-    private void mergeReadWriteLockInnerClass(String tcInnerClassNameDots, String jInnerClassNameDots,
+
+  private void mergeReadWriteLockInnerClass(String tcInnerClassNameDots, String jInnerClassNameDots,
                                             String tcClassNameDots, String jClassNameDots, String srcInnerClassName,
                                             String targetInnerClassName, Map instrumentedContext, String methodPrefix) {
     String tcInnerClassNameSlashes = tcInnerClassNameDots.replace(ChangeClassNameHierarchyAdapter.DOT_DELIMITER,
@@ -2184,26 +2184,35 @@ public class BootJarTool {
     changeClassNameAndGetBytes(innerClassName, tcClassNameDots, jClassNameDots, instrumentedContext);
     changeClassName(innerClassName, tcClassNameDots, jClassNameDots, instrumentedContext, true);
   }
-  
+
   private void addInstrumentedHashMap() {
     String jMapClassNameDots = "java.util.HashMap";
     String tcMapClassNameDots = "java.util.HashMapTC";
     Map instrumentedContext = new HashMap();
-    mergeClass(tcMapClassNameDots, jMapClassNameDots, instrumentedContext, null);
+    mergeClass(tcMapClassNameDots, jMapClassNameDots, instrumentedContext);
 
     addInstrumentedLinkedHashMap(instrumentedContext);
   }
 
+  private final void mergeClass(String tcClassNameDots, String jClassNameDots, Map instrumentedContext) {
+    mergeClass(tcClassNameDots, jClassNameDots, instrumentedContext, null);
+  }
+
   private final void mergeClass(String tcClassNameDots, String jClassNameDots, Map instrumentedContext,
-                                final MethodNode replacedMethod) {
+                                final MethodNode[] replacedMethods) {
     byte[] tcData = getSystemBytes(tcClassNameDots);
 
     ClassReader tcCR = new ClassReader(tcData);
     ClassNode tcCN = new ClassNode() {
       public MethodVisitor visitMethod(int maccess, String mname, String mdesc, String msignature, String[] mexceptions) {
-        if (replacedMethod != null && mname.equals(replacedMethod.name) && mdesc.equals(replacedMethod.desc)) {
-          methods.add(replacedMethod);
-          return null;
+        if (replacedMethods != null) {
+          for (int i = 0; i < replacedMethods.length; i++) {
+            MethodNode replacedMethod = replacedMethods[i];
+            if (mname.equals(replacedMethod.name) && mdesc.equals(replacedMethod.desc)) {
+              methods.add(replacedMethod);
+              return null;
+            }
+          }
         }
         return super.visitMethod(maccess, mname, mdesc, msignature, mexceptions);
       }

@@ -74,7 +74,7 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
   }
 
   /*
-   * This method is overriden in LinkedHashMap. so any change here needs to be probagated to LinkedHashMap too.
+   * This method is overridden in LinkedHashMap. so any change here needs to be propagated to LinkedHashMap too.
    */
   public boolean containsValue(Object value) {
     if (__tc_isManaged()) {
@@ -99,7 +99,7 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
   }
 
   /*
-   * This method is overriden in LinkedHashMapTC. so any change here needs to be propagated to LinkedHashMapTC too.
+   * This method is overridden in LinkedHashMapTC. so any change here needs to be propagated to LinkedHashMapTC too.
    * XXX:: This method uses getEntry instead of a get and put to avoid changing the modCount in shared mode
    */
   public Object get(Object key) {
@@ -181,12 +181,7 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
    * synchronization.
    */
   public void __tc_applicator_remove(Object key) {
-    if (key == null) {
-      super.remove(key);
-    } else {
-      KeyWrapper kw = new KeyWrapper(key);
-      super.remove(kw);
-    }
+    super.remove(key);
   }
 
   /**
@@ -198,19 +193,16 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
       // Managed Version
       synchronized (__tc_managed().getResolveLock()) {
         ManagerUtil.checkWriteAccess(this);
-        int sizeB4 = size();
-        Object orgKey;
-        if (key == null) {
-          super.remove(key);
-          orgKey = key;
-        } else {
-          KeyWrapper kw = new KeyWrapper(key);
-          super.remove(kw);
-          orgKey = kw.getOriginalKey();
-        }
-        if (sizeB4 != size()) {
-          ManagerUtil.logicalInvoke(this, SerializationUtil.REMOVE_ENTRY_FOR_KEY_SIGNATURE, new Object[] { orgKey });
-        }
+
+        ManagerUtil.checkWriteAccess(this);
+
+        Entry entry = removeEntryForKey(key);
+        if (entry == null) { return; }
+
+        ManagerUtil.logicalInvoke(this, SerializationUtil.REMOVE_ENTRY_FOR_KEY_SIGNATURE,
+                                  new Object[] { entry.getKey() });
+
+        return;
       }
     } else {
       super.remove(key);
@@ -386,41 +378,7 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
   }
 
   /*
-   * This wrapper depends on the fact that key.equals() gets called on the wrapper instead of the otherway around
-   */
-  private static class KeyWrapper {
-
-    private final Object key;
-    private Object       orgKeyInstance;
-
-    public KeyWrapper(Object key) {
-      this.key = key;
-    }
-
-    public int hashCode() {
-      return key.hashCode();
-    }
-
-    public Object getOriginalKey() {
-      return orgKeyInstance;
-    }
-
-    // XXX:: Keys cant be ObjectIDs
-    public boolean equals(Object o) {
-      if (o == key) {
-        orgKeyInstance = key;
-        return true;
-      } else if (key.equals(o)) {
-        orgKeyInstance = o;
-        return true;
-      } else {
-        return false;
-      }
-    }
-  }
-
-  /*
-   * This wrapper depends on the fact that key.equals() gets called on the wrapper instead of the otherway around
+   * This wrapper depends on the fact that key.equals() gets called on the wrapper instead of the other way around
    */
   static class ValueWrapper {
 
