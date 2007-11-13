@@ -749,7 +749,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
       roe = new ReadOnlyException(READ_ONLY_TEXT, Thread.currentThread().getName(), vmId);
     }
     System.err.println(roe.getMessage());
-    throw roe;
+    return roe;
   }
 
   private void setTransaction(ClientTransaction tx) {
