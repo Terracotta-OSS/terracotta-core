@@ -346,10 +346,6 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.HASHMAP_REMOVE_LOG));
   }
 
-  public void addListRemoveLogSpec(String name) {
-    methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.LIST_REMOVE_LOG));
-  }
-
   public void addArrayCopyMethodCodeSpec(String name) {
     TransparencyCodeSpec codeSpec = new TransparencyCodeSpecImpl();
     codeSpec.setArraycopyInstrumentationReq(true);

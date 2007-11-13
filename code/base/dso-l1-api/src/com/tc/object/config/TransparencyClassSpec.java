@@ -357,12 +357,6 @@ public interface TransparencyClassSpec {
   public void addHashMapRemoveLogSpec(String name);
 
   /**
-   * Add logical method adapter to log calls to List.remove() impls
-   * @param name Method signature
-   */
-  public void addListRemoveLogSpec(String name);
-
-  /**
    * Add logical method adapter to log calls to System.arraycopy()
    * @param name Method signature
    */

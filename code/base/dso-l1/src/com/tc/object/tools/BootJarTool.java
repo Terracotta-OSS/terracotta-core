@@ -51,6 +51,7 @@ import com.tc.object.TCClass;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.AbstractStringBuilderAdapter;
 import com.tc.object.bytecode.AccessibleObjectAdapter;
+import com.tc.object.bytecode.ArrayListAdapter;
 import com.tc.object.bytecode.AtomicIntegerAdapter;
 import com.tc.object.bytecode.AtomicLongAdapter;
 import com.tc.object.bytecode.BufferedWriterAdapter;
@@ -290,7 +291,7 @@ public class BootJarTool {
    * Checks if the given bootJarFile is complete; meaning: - All the classes declared in the configurations
    * <additional-boot-jar-classes/> section is present in the boot jar. - And there are no user-classes present in the
    * boot jar that is not declared in the <additional-boot-jar-classes/> section
-   * 
+   *
    * @return <code>true</code> if the boot jar is complete.
    */
   private final boolean isBootJarComplete(File bootJarFile) {
@@ -308,7 +309,7 @@ public class BootJarTool {
    * Scans the boot JAR file for: - User-defined classes that are in the boot JAR but is not defined in the
    * <additional-boot-jar-classes/> section of the config - Class names declared in the config but are not in the boot
    * JAR
-   * 
+   *
    * @throws InvalidBootJarMetaDataException
    */
   private final Map compareBootJarContentsToUserSpec(File bootJarFile) throws InvalidBootJarMetaDataException {
@@ -1973,10 +1974,11 @@ public class BootJarTool {
     spec.addAlwaysLogSpec(SerializationUtil.REMOVE_FIRST_SIGNATURE);
     spec.addAlwaysLogSpec(SerializationUtil.REMOVE_LAST_SIGNATURE);
     spec.addAlwaysLogSpec(SerializationUtil.REMOVE_AT_SIGNATURE);
-    spec.addIfTrueLogSpec(SerializationUtil.REMOVE_SIGNATURE);
     spec.addAlwaysLogSpec(SerializationUtil.REMOVE_RANGE_SIGNATURE);
     spec.addMethodAdapter("listIterator(I)Ljava/util/ListIterator;", new LinkedListAdapter.ListIteratorAdapter());
+    spec.addMethodAdapter(SerializationUtil.REMOVE_SIGNATURE, new LinkedListAdapter.RemoveAdapter());
     spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
+    spec.addSupportMethodCreator(new LinkedListAdapter.RemoveMethodCreator());
     addSerializationInstrumentedCode(spec);
 
     spec = config.getOrCreateSpec("java.util.Vector", "com.tc.object.applicator.ListApplicator");
@@ -2013,10 +2015,13 @@ public class BootJarTool {
     spec.addAlwaysLogSpec(SerializationUtil.ADD_ALL_AT_SIGNATURE);
     spec.addAlwaysLogSpec(SerializationUtil.ADD_ALL_SIGNATURE);
     spec.addAlwaysLogSpec(SerializationUtil.REMOVE_AT_SIGNATURE);
-    spec.addIfTrueLogSpec(SerializationUtil.REMOVE_SIGNATURE);
     spec.addAlwaysLogSpec(SerializationUtil.REMOVE_RANGE_SIGNATURE);
     spec.addAlwaysLogSpec(SerializationUtil.SET_SIGNATURE);
     spec.addAlwaysLogSpec(SerializationUtil.CLEAR_SIGNATURE);
+    if (Vm.isJDK15Compliant()) {
+      spec.addMethodAdapter(SerializationUtil.REMOVE_SIGNATURE, new ArrayListAdapter.RemoveAdaptor());
+      spec.addSupportMethodCreator(new ArrayListAdapter.FastRemoveMethodCreator());
+    }
     spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
     addSerializationInstrumentedCode(spec);
   }
@@ -2051,7 +2056,7 @@ public class BootJarTool {
 
   private void addInstrumentedReentrantReadWriteLock() {
     String methodPrefix = "__RWL" + ByteCodeUtil.TC_METHOD_PREFIX;
-
+  
     TransparencyClassSpec spec = config.getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock");
     spec.setCallConstructorOnLoad(true);
 
@@ -2083,7 +2088,7 @@ public class BootJarTool {
     spec.markPreInstrumented();
     spec = config.getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$FairSync");
     spec.setCallConstructorOnLoad(true);
-    spec.markPreInstrumented();
+    spec.markPreInstrumented();    
     spec = config.getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$NonfairSync");
     spec.setCallConstructorOnLoad(true);
     spec.markPreInstrumented();
@@ -2109,8 +2114,8 @@ public class BootJarTool {
       spec.markPreInstrumented();
     }
   }
-
-  private void mergeReadWriteLockInnerClass(String tcInnerClassNameDots, String jInnerClassNameDots,
+  
+    private void mergeReadWriteLockInnerClass(String tcInnerClassNameDots, String jInnerClassNameDots,
                                             String tcClassNameDots, String jClassNameDots, String srcInnerClassName,
                                             String targetInnerClassName, Map instrumentedContext, String methodPrefix) {
     String tcInnerClassNameSlashes = tcInnerClassNameDots.replace(ChangeClassNameHierarchyAdapter.DOT_DELIMITER,
@@ -2179,7 +2184,7 @@ public class BootJarTool {
     changeClassNameAndGetBytes(innerClassName, tcClassNameDots, jClassNameDots, instrumentedContext);
     changeClassName(innerClassName, tcClassNameDots, jClassNameDots, instrumentedContext, true);
   }
-
+  
   private void addInstrumentedHashMap() {
     String jMapClassNameDots = "java.util.HashMap";
     String tcMapClassNameDots = "java.util.HashMapTC";
