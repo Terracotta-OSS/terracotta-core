@@ -321,14 +321,17 @@ public class CompilationUnitVisitor extends ASTVisitor {
   }
 
   public boolean visit(MethodDeclaration node) {
-    IMethod method = (IMethod)node.resolveBinding().getJavaElement();
-    MethodInfo methodInfo = PatternHelper.getHelper().getMethodInfo(method);
-    if(methodInfo instanceof JavaModelMethodInfo) {
-      JavaModelMethodInfo jmmi = (JavaModelMethodInfo)methodInfo;
-      jmmi.clearAnnotations();
-      for(Object o : node.modifiers()) {
-        if (o instanceof Annotation) {
-          jmmi.addAnnotation((Annotation)o);
+    IMethodBinding methodBinding = node.resolveBinding();
+    if(methodBinding != null) {
+      IMethod method = (IMethod)methodBinding.getJavaElement();
+      MethodInfo methodInfo = PatternHelper.getHelper().getMethodInfo(method);
+      if(methodInfo instanceof JavaModelMethodInfo) {
+        JavaModelMethodInfo jmmi = (JavaModelMethodInfo)methodInfo;
+        jmmi.clearAnnotations();
+        for(Object o : node.modifiers()) {
+          if (o instanceof Annotation) {
+            jmmi.addAnnotation((Annotation)o);
+          }
         }
       }
     }
