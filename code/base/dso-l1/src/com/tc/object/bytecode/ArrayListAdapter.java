@@ -22,6 +22,8 @@ public class ArrayListAdapter {
       MethodVisitor mv = cv.visitMethod(ACC_PRIVATE | ACC_SYNTHETIC, FAST_REMOVE_RENAMED, FAST_REMOVE_RENAMED_SIG,
                                         null, null);
       mv.visitCode();
+      mv.visitInsn(ACONST_NULL);
+      mv.visitVarInsn(ASTORE, 3);
       mv.visitVarInsn(ILOAD, 2);
       Label isSharedCheck1 = new Label();
       mv.visitJumpInsn(IFEQ, isSharedCheck1);
