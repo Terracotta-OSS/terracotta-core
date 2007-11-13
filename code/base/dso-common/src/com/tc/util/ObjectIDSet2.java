@@ -7,6 +7,10 @@ package com.tc.util;
 import com.tc.exception.ImplementMe;
 import com.tc.object.ObjectID;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,7 +21,7 @@ import java.util.NoSuchElementException;
  * This class is a an attempt to meet the shortcomings of ObjectIDSet. Mainly the performance of adds and removes when
  * the ObjectIDs are non-contiguous. It uses a balanced tree internally to store ranges instead of an arraylist
  */
-public class ObjectIDSet2 extends AbstractSet {
+public class ObjectIDSet2 extends AbstractSet implements Externalizable {
 
   private final AATree ranges;
   private int          size = 0;
@@ -38,6 +42,27 @@ public class ObjectIDSet2 extends AbstractSet {
       return;
     } else {
       addAll(c);
+    }
+  }
+
+  public void readExternal(ObjectInput in) throws IOException {
+    int _size = in.readInt();
+    this.size = _size;
+    while (_size > 0) {
+      long start = in.readLong();
+      long end = in.readLong();
+      Range r = new Range(start, end);
+      this.ranges.insert(r);
+      _size -= r.size();
+    }
+  }
+
+  public void writeExternal(ObjectOutput out) throws IOException {
+    out.writeInt(size);
+    for (Iterator i = ranges.iterator(); i.hasNext();) {
+      Range r = (Range) i.next();
+      out.writeLong(r.start);
+      out.writeLong(r.end);
     }
   }
 
@@ -120,6 +145,10 @@ public class ObjectIDSet2 extends AbstractSet {
       return "Range(" + start + "," + end + ")";
     }
 
+    public long size() {
+      return (isNull() ? 0 : end - start + 1); // since it is all inclusive
+    }
+
     public boolean isNull() {
       return start > end;
     }
@@ -146,7 +175,7 @@ public class ObjectIDSet2 extends AbstractSet {
       } else if (end == other.start - 1) {
         end = other.end;
       } else {
-        throw new AssertionError("Ranges : Merge is called on non contigues value : " + this + " and other Range is "
+        throw new AssertionError("Ranges : Merge is called on non contiguous value : " + this + " and other Range is "
                                  + other);
       }
     }
@@ -161,7 +190,7 @@ public class ObjectIDSet2 extends AbstractSet {
       } else if (lid >= start && lid <= end) {
         return false;
       } else {
-        throw new AssertionError("Ranges : Add is called on non contigues value : " + this + " but trying to add "
+        throw new AssertionError("Ranges : Add is called on non contiguous value : " + this + " but trying to add "
                                  + lid);
       }
     }

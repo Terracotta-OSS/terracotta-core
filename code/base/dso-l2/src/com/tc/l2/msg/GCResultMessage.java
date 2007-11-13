@@ -7,7 +7,6 @@ package com.tc.l2.msg;
 import com.tc.async.api.EventContext;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.util.Assert;
-import com.tc.util.ObjectIDSet2;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -28,14 +27,16 @@ public class GCResultMessage extends AbstractGroupMessage implements EventContex
     this.gcedOids = deleted;
   }
 
-  protected void basicReadExternal(int msgType, ObjectInput in) throws IOException {
+  protected void basicReadExternal(int msgType, ObjectInput in) throws IOException, ClassNotFoundException {
     Assert.assertEquals(GC_RESULT, msgType);
-    gcedOids = readObjectIDS(in, new ObjectIDSet2());
+    gcedOids = (Set) in.readObject();
   }
 
   protected void basicWriteExternal(int msgType, ObjectOutput out) throws IOException {
     Assert.assertEquals(GC_RESULT, msgType);
-    writeObjectIDS(out, gcedOids);
+    // XXX::Directly serializing instead of using writeObjectIDs() to avoid HUGE messages. Since the (wrapped) set is
+    // ObjectIDSet2 and since it has optimized externalization methods, this should result in far less data written out.
+    out.writeObject(gcedOids);
   }
 
   public Set getGCedObjectIDs() {

@@ -5,7 +5,7 @@
 package com.tc.l2.msg;
 
 import com.tc.object.ObjectID;
-import com.tc.util.SyncObjectIdSetImpl;
+import com.tc.util.ObjectIDSet2;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -24,7 +24,7 @@ public class ObjectListSyncMessageTest extends TestCase {
 
   public void setUp() {
     objectListSyncMessage = new ObjectListSyncMessage();
-    oids = new SyncObjectIdSetImpl();
+    oids = new ObjectIDSet2();
     oids.add(new ObjectID(1234));
     oids.add(new ObjectID(456));
     oids.add(new ObjectID(9068));

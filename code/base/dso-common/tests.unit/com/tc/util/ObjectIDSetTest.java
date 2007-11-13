@@ -7,6 +7,12 @@ package com.tc.util;
 import com.tc.object.ObjectID;
 import com.tc.test.TCTestCase;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,8 +31,9 @@ public class ObjectIDSetTest extends TCTestCase {
     public Set create(Collection c);
   }
 
-  // I am disabling these test coz it times out in Solaris for some reason. Threaddumps show that they are running
-  // iteratorRemoveTest. I think it jsut timesout.
+  /**
+   * This test is disabled since it is too slow and times out in slow boxes.
+   */
   public void DISABLEDtestObjectIDSet() {
     SetCreator creator = new SetCreator() {
       public Set create() {
@@ -134,6 +141,47 @@ public class ObjectIDSetTest extends TCTestCase {
     Assert.eval(clone.size() == 0);
     System.err.println("Time taken to run basic Test for " + small.getClass().getName() + " is "
                        + (System.currentTimeMillis() - test_start) + " ms");
+  }
+
+  public void testSerializationObjectIDSet2() throws Exception {
+    for (int i = 0; i < 20; i++) {
+      Set s = createRandomSetOfObjectIDs();
+      serializeAndVerify(s);
+    }
+  }
+
+  private void serializeAndVerify(Set s) throws Exception {
+    ObjectIDSet2 org = new ObjectIDSet2(s);
+    assertEquals(s, org);
+
+    ObjectIDSet2 ser = serializeAndRead(org);
+    assertEquals(s, ser);
+    assertEquals(org, ser);
+  }
+
+  private ObjectIDSet2 serializeAndRead(ObjectIDSet2 org) throws Exception {
+    ByteArrayOutputStream bo = new ByteArrayOutputStream();
+    ObjectOutput oo = new ObjectOutputStream(bo);
+    oo.writeObject(org);
+    System.err.println("Written ObjectIDSet2 size : " + org.size());
+    ByteArrayInputStream bi = new ByteArrayInputStream(bo.toByteArray());
+    ObjectInput oi = new ObjectInputStream(bi);
+    ObjectIDSet2 oids = (ObjectIDSet2) oi.readObject();
+    System.err.println("Read  ObjectIDSet2 size : " + oids.size());
+    return oids;
+  }
+
+  private Set createRandomSetOfObjectIDs() {
+    Set s = new HashSet();
+    SecureRandom sr = new SecureRandom();
+    long seed = sr.nextLong();
+    System.err.println("Random Set creation : Seed for Random is " + seed);
+    Random r = new Random(seed);
+    for (int i = 0; i < r.nextInt(100000); i++) {
+      s.add(new ObjectID(r.nextLong()));
+    }
+    System.err.println("Created a set of size : " + s.size());
+    return s;
   }
 
   public void testObjectIDSet2() {
