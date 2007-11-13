@@ -226,6 +226,35 @@ public class GenericSetTestApp extends GenericTestApp {
     }
   }
 
+  void testToArray2(Set set, boolean validate, int v) {
+    Object[] array = getArray(set);
+
+    if (validate) {
+      Assert.assertEquals(set.getClass(), E("January", v), array[0]);
+      Assert.assertEquals(set.getClass(), null, array[1]);
+    } else {
+      synchronized (set) {
+        set.add(E("January", v));
+      }
+
+      // ensure that the array is bigger than the set size
+      // This test case makes sure the array get's null terminated
+      Assert.assertEquals(1,  set.size());
+      Assert.assertEquals(2,  array.length);
+
+      // make sure the array contains no nulls
+      synchronized(array) {
+        Arrays.fill(array, new Object());
+      }
+
+      synchronized (array) {
+        Object[] returnArray = set.toArray(array);
+        Assert.assertTrue(returnArray == array);
+      }
+    }
+  }
+
+
   // Iterator interface testing methods.
   void testIteratorRemove(Set set, boolean validate, int v) {
     if (validate) {

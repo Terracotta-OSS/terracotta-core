@@ -717,6 +717,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     spec.addTHashSetAddLogSpec(SerializationUtil.ADD_SIGNATURE);
     spec.addTHashSetRemoveAtLogSpec(SerializationUtil.REMOVE_SIGNATURE);
     spec.addAlwaysLogSpec(SerializationUtil.CLEAR_SIGNATURE);
+    spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
 
     spec = getOrCreateSpec("gnu.trove.ToObjectArrayProcedure");
     spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);

@@ -607,6 +607,34 @@ public class GenericListTestApp extends GenericTestApp {
     }
   }
 
+  void testToArray2(List list, boolean validate, int v) {
+    Object[] array = getArray(list);
+
+    if (validate) {
+      Assert.assertEquals(list.getClass(), E("January", v), array[0]);
+      Assert.assertEquals(list.getClass(), null, array[1]);
+    } else {
+      synchronized (list) {
+        list.add(E("January", v));
+      }
+
+      // ensure that the array is bigger than the list size
+      // This test case makes sure the array get's null terminated
+      Assert.assertEquals(1, list.size());
+      Assert.assertEquals(2, array.length);
+
+      // make sure the array contains no nulls
+      synchronized (array) {
+        Arrays.fill(array, new Object());
+      }
+
+      synchronized (array) {
+        Object[] returnArray = list.toArray(array);
+        Assert.assertTrue(returnArray == array);
+      }
+    }
+  }
+
   // List Iterator testing methods.
   void testListIteratorSet1(List list, boolean validate, int v) {
 
