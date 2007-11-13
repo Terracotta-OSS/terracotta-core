@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -1043,35 +1042,6 @@ public class GenericMapTestApp extends GenericTestApp {
       assertMappingsEqual(array, map);
     }
   }
-
-  void testEntrySetToArray2(Map map, boolean validate, int v) {
-    Object[] array = getArray(map);
-
-    if (validate) {
-      if (canTestSharedArray(map)) {
-        assertMappingsEqual(array, map);
-      }
-    } else {
-      synchronized (map) {
-        map.putAll(getOrderSensitiveMappings(v));
-        map.entrySet().iterator().remove();
-      }
-
-      synchronized (array) {
-        Arrays.fill(array, new Object());
-      }
-
-      Assert.assertNoNullElements(array);
-      Assert.assertTrue(array.length > map.size());
-
-      synchronized (array) {
-        Object[] returnArray = map.entrySet().toArray(array);
-        Assert.assertTrue(returnArray == array);
-      }
-      assertMappingsEqual(array, map);
-    }
-  }
-
 
   void testKeySetToArray(Map map, boolean validate, int v) {
     Object[] array = getArray(map);
