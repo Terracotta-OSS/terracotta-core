@@ -784,6 +784,11 @@
               <bean name="clusteredBeanTwo"/>
             </beans>
 
+
+            <!-- Can be used to name the root corresponding to this application-context.
+              If not set, a unique root name is generated; Optional -->
+            <root-name>appContext</root-name>
+
             <!-- Specifies what event types published in this application
               context should be distributed to other cluster nodes (but still
               local within the same "logical" applicationcontext); Required. -->
