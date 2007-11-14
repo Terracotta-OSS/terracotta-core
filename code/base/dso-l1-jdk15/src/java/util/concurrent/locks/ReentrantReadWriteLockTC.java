@@ -10,6 +10,7 @@ import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.lockmanager.api.LockLevel;
+import com.tc.util.DebugUtil;
 import com.tc.util.concurrent.locks.TCLock;
 import com.tcclient.util.concurrent.locks.ConditionObject;
 
@@ -46,8 +47,15 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
 
     public boolean tryLock(long timeout, TimeUnit unit) {
       if (ManagerUtil.isManaged(lock)) {
+        if (DebugUtil.DEBUG) {
+          System.err.println("Timestamp before dso tryLock with level " + lockLevel + " -- " + System.currentTimeMillis());
+        }
         long timeoutInNanos = TimeUnit.NANOSECONDS.convert(timeout, unit);
-        return ManagerUtil.tryMonitorEnter(lock, timeoutInNanos, lockLevel);
+        boolean rv = ManagerUtil.tryMonitorEnter(lock, timeoutInNanos, lockLevel);
+        if (DebugUtil.DEBUG) {
+          System.err.println("Timestamp after dso tryLock with level " + lockLevel + " -- " + System.currentTimeMillis());
+        }
+        return rv;
       } else {
         return true;
       }
