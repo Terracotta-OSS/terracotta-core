@@ -18,12 +18,13 @@ import java.util.Set;
 
 public class ClusterStateMessage extends AbstractGroupMessage {
 
-  public static final int OBJECT_ID              = 0x00;
-  public static final int NEW_CONNECTION_CREATED = 0x01;
-  public static final int CONNECTION_DESTROYED   = 0x02;
-  public static final int GLOBAL_TRANSACTION_ID  = 0x03;
-  public static final int COMPLETE_STATE         = 0xF0;
-  public static final int OPERATION_SUCCESS      = 0xFF;
+  public static final int OBJECT_ID                    = 0x00;
+  public static final int NEW_CONNECTION_CREATED       = 0x01;
+  public static final int CONNECTION_DESTROYED         = 0x02;
+  public static final int GLOBAL_TRANSACTION_ID        = 0x03;
+  public static final int COMPLETE_STATE               = 0xF0;
+  public static final int OPERATION_FAILED_SPLIT_BRAIN = 0xFE;
+  public static final int OPERATION_SUCCESS            = 0xFF;
 
   private long            nextAvailableObjectID;
   private long            nextAvailableGID;
@@ -73,6 +74,7 @@ public class ClusterStateMessage extends AbstractGroupMessage {
           connectionIDs.add(readConnectionID(in));
         }
         break;
+      case OPERATION_FAILED_SPLIT_BRAIN:
       case OPERATION_SUCCESS:
         break;
       default:
@@ -103,6 +105,7 @@ public class ClusterStateMessage extends AbstractGroupMessage {
           writeConnectionID(conn, out);
         }
         break;
+      case OPERATION_FAILED_SPLIT_BRAIN:
       case OPERATION_SUCCESS:
         break;
       default:

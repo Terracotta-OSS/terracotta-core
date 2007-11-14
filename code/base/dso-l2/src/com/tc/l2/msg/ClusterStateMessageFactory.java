@@ -21,6 +21,11 @@ public class ClusterStateMessageFactory {
     return response;
   }
 
+  public static GroupMessage createNGSplitBrainResponse(ClusterStateMessage msg) {
+    ClusterStateMessage response = new ClusterStateMessage(ClusterStateMessage.OPERATION_FAILED_SPLIT_BRAIN, msg.getMessageID());
+    return response;
+  }
+
   public static GroupMessage createClusterStateMessage(ClusterState state) {
     ClusterStateMessage msg = new ClusterStateMessage(ClusterStateMessage.COMPLETE_STATE);
     msg.initMessage(state);

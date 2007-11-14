@@ -83,7 +83,15 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       Map nodeID2ObjectIDs = new LinkedHashMap();
       for (Iterator i = gr.getResponses().iterator(); i.hasNext();) {
         ObjectListSyncMessage msg = (ObjectListSyncMessage) i.next();
-        nodeID2ObjectIDs.put(msg.messageFrom(), msg.getObjectIDs());
+        if (msg.getType() == ObjectListSyncMessage.RESPONSE) {
+          nodeID2ObjectIDs.put(msg.messageFrom(), msg.getObjectIDs());
+        } else {
+          logger.error("Received wrong response for ObjectListSyncMessage Request  from " + msg.messageFrom()
+                       + " : msg : " + msg);
+          groupManager.zapNode(msg.messageFrom(), L2HAZapNodeRequestProcessor.PROGRAM_ERROR,
+                               "Recd wrong response from : " + msg.messageFrom() + " for ObjectListSyncMessage Request"
+                                   + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
+        }
       }
       if (!nodeID2ObjectIDs.isEmpty()) {
         gcMonitor.disableAndAdd2L2StateManager(nodeID2ObjectIDs);
@@ -193,11 +201,22 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
    * transactions from ACTIVE to PASSIVE. So the replicated transaction manager is initialized here.
    */
   private void handleObjectListRequest(NodeID nodeID, ObjectListSyncMessage clusterMsg) throws GroupException {
-    Assert.assertFalse(stateManager.isActiveCoordinator());
-    Set knownIDs = objectManager.getAllObjectIDs();
-    rTxnManager.init(knownIDs);
-    logger.info("Send response to Active's query : known id lists = " + knownIDs.size());
-    groupManager.sendTo(nodeID, ObjectListSyncMessageFactory.createObjectListSyncResponseMessage(clusterMsg, knownIDs));
+    if (!stateManager.isActiveCoordinator()) {
+      Set knownIDs = objectManager.getAllObjectIDs();
+      rTxnManager.init(knownIDs);
+      logger.info("Send response to Active's query : known id lists = " + knownIDs.size());
+      groupManager.sendTo(nodeID, ObjectListSyncMessageFactory
+          .createObjectListSyncResponseMessage(clusterMsg, knownIDs));
+    } else {
+      logger.error("Recd. ObjectListRequest when in ACTIVE state from " + nodeID + ". Zapping node ...");
+      groupManager.sendTo(nodeID, ObjectListSyncMessageFactory.createObjectListSyncFailedResponseMessage(clusterMsg));
+      // Now ZAP the node
+      groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.SPLIT_BRAIN, "Recd ObjectListRequest from : "
+                                                                            + nodeID
+                                                                            + " while in ACTIVE-COORDINATOR state"
+                                                                            + L2HAZapNodeRequestProcessor
+                                                                                .getErrorString(new Throwable()));
+    }
   }
 
   public boolean relayTransactions() {
@@ -287,7 +306,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
         }
       }
       if (toAdd) {
-        if(!ReplicatedObjectManagerImpl.this.add2L2StateManager(nodeID, oids)) {
+        if (!ReplicatedObjectManagerImpl.this.add2L2StateManager(nodeID, oids)) {
           logger.warn(nodeID + " is already added to L2StateManager, clearing our internal data structures.");
           syncCompleteFor(nodeID);
         }

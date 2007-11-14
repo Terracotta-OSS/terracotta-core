@@ -15,8 +15,9 @@ import java.util.Set;
 
 public class ObjectListSyncMessage extends AbstractGroupMessage {
 
-  public static final int REQUEST  = 0;
-  public static final int RESPONSE = 1;
+  public static final int REQUEST         = 0;
+  public static final int RESPONSE        = 1;
+  public static final int FAILED_RESPONSE = 2;
 
   private Set             oids;
 
@@ -34,9 +35,14 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
     this.oids = oids;
   }
 
+  public ObjectListSyncMessage(MessageID messageID, int type) {
+    super(type, messageID);
+  }
+
   protected void basicReadExternal(int msgType, ObjectInput in) throws IOException, ClassNotFoundException {
     switch (msgType) {
       case REQUEST:
+      case FAILED_RESPONSE:
         // Nothing to read
         break;
       case RESPONSE:
@@ -50,6 +56,7 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
   protected void basicWriteExternal(int msgType, ObjectOutput out) throws IOException {
     switch (msgType) {
       case REQUEST:
+      case FAILED_RESPONSE:
         // Nothing to write
         break;
       case RESPONSE:
@@ -77,6 +84,8 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
     switch (getType()) {
       case REQUEST:
         return "REQUEST";
+      case FAILED_RESPONSE:
+        return "FAILED_RESPONSE";
       case RESPONSE:
         return "RESPONSE";
       default:

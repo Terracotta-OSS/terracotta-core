@@ -18,4 +18,8 @@ public class ObjectListSyncMessageFactory {
     return new ObjectListSyncMessage(initiatingMsg.getMessageID(), ObjectListSyncMessage.RESPONSE, knownIDs);
   }
 
+  public static GroupMessage createObjectListSyncFailedResponseMessage(ObjectListSyncMessage initiatingMsg) {
+    return new ObjectListSyncMessage(initiatingMsg.getMessageID(), ObjectListSyncMessage.FAILED_RESPONSE );
+  }
+
 }
