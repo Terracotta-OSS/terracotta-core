@@ -43,7 +43,7 @@ public class DefaultSessionId implements SessionId {
 
   public String toString() {
     return getClass().getName() + "{ " + "key=" + getKey() + ", requestedId=" + getRequestedId() + ", externalId="
-           + getExternalId() + "}";
+           + getExternalId() + ", knownHop=" + knownServerHop + "}";
   }
 
   public String getExternalId() {

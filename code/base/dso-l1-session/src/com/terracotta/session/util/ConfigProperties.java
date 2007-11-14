@@ -42,6 +42,7 @@ public class ConfigProperties {
   public static final String    DEBUG_SERVER_HOPS_INTERVAL = PREFIX + "debug.hops.interval";
   public static final String    DEBUG_SESSION_INVALIDATE   = PREFIX + "debug.invalidate";
   public static final String    DELIMITER                  = PREFIX + "delimiter";
+  public static final String    DEBUG_SESSIONS             = PREFIX + "debug.sessions";
 
   public static final boolean   defaultCookiesEnabled      = true;
   public static final boolean   defaultTrackingEnabled     = true;
@@ -60,7 +61,7 @@ public class ConfigProperties {
   private final WebAppConfig    wac;
   private final TCProperties    props;
   private final ClassLoader     loader;
-  private final TCLogger      logger;
+  private final TCLogger        logger;
 
   public ConfigProperties(final WebAppConfig wac, ClassLoader loader) {
     this(wac, ManagerUtil.getTCProperties(), loader, ManagerUtil.getLogger("com.tc.session.ConfigProperties"));
@@ -190,6 +191,10 @@ public class ConfigProperties {
     final String wacVal = wac == null ? null : Boolean.toString(wac.__tc_session_getURLRewritingEnabled());
     final String boolVal = getStringVal(URL_REWRITE_ENABLED, wacVal, Boolean.toString(defaultUrlEnabled));
     return Boolean.valueOf(boolVal).booleanValue();
+  }
+
+  public boolean isDebugSessions() {
+    return props.getBoolean(DEBUG_SESSIONS);
   }
 
   public boolean getRequestLogBenchEnabled() {

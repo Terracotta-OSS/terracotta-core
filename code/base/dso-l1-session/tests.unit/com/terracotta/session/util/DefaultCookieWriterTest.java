@@ -26,8 +26,7 @@ public class DefaultCookieWriterTest extends TestCase {
   private SessionId               id;
 
   public final void setUp() {
-    writer = new DefaultCookieWriter(true, true, true, cookieName, null, ConfigProperties.defaultCookiePath, null, -1,
-                                     false);
+    writer = makeCookieWriter(true, true);
     req = new MockHttpServletRequest();
     res = new MockHttpServletResponse();
     id = new DefaultSessionId(idValue, idValue, idValue, Manager.LOCK_TYPE_WRITE, false);
@@ -47,11 +46,43 @@ public class DefaultCookieWriterTest extends TestCase {
   }
 
   public final void testWriteCookie() {
-    writer.writeCookie(req, res, id);
+    Cookie cookie = writer.writeCookie(req, res, id);
+    assertNotNull(cookie);
     Cookie[] cookies = res.getCookies();
     assertNotNull(cookies);
     assertEquals(1, cookies.length);
     checkCookie(cookieName, idValue, req.getContextPath(), cookies[0]);
+  }
+
+  public final void testWriteCookieDisabled() {
+    Cookie cookie;
+    Cookie[] cookies;
+
+    writer = makeCookieWriter(false, true);
+    cookie = writer.writeCookie(req, res, id);
+    assertNull(cookie);
+    cookies = res.getCookies();
+    assertNotNull(cookies);
+    assertEquals(0, cookies.length);
+
+    writer = makeCookieWriter(true, false);
+    cookie = writer.writeCookie(req, res, id);
+    assertNull(cookie);
+    cookies = res.getCookies();
+    assertNotNull(cookies);
+    assertEquals(0, cookies.length);
+
+    writer = makeCookieWriter(false, false);
+    cookie = writer.writeCookie(req, res, id);
+    assertNull(cookie);
+    cookies = res.getCookies();
+    assertNotNull(cookies);
+    assertEquals(0, cookies.length);
+  }
+
+  private DefaultCookieWriter makeCookieWriter(boolean trackingEnabled, boolean cookiesEnabled) {
+    return new DefaultCookieWriter(trackingEnabled, cookiesEnabled, true, cookieName, null,
+                                   ConfigProperties.defaultCookiePath, null, -1, false);
   }
 
   public final void testGetCookiePath() {

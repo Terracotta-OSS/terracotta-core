@@ -24,11 +24,6 @@ class TCSubProperties implements TCProperties {
     return category + "." + key;
   }
 
-  // TODO::REmovwe
-  protected boolean containsKey(String key) {
-    return key.startsWith(category + ".");
-  }
-
   public String getProperty(String key) {
     return properties.getProperty(getActualKey(key));
   }
@@ -63,5 +58,9 @@ class TCSubProperties implements TCProperties {
 
   public int getInt(String key, int defaultValue) {
     return properties.getInt(getActualKey(key), defaultValue);
+  }
+
+  public boolean getBoolean(String key, boolean defaultValue) {
+    return properties.getBoolean(getActualKey(key), defaultValue);
   }
 }

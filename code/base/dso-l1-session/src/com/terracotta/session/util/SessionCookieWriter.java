@@ -5,12 +5,13 @@ package com.terracotta.session.util;
 
 import com.terracotta.session.SessionId;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public interface SessionCookieWriter {
 
-  void writeCookie(HttpServletRequest req, HttpServletResponse res, SessionId id);
+  Cookie writeCookie(HttpServletRequest req, HttpServletResponse res, SessionId id);
 
   String encodeURL(String url, HttpServletRequest req);
 

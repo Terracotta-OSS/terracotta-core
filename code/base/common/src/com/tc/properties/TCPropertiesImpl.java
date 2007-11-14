@@ -64,6 +64,15 @@ public class TCPropertiesImpl implements TCProperties {
 
     // this happens last -- system properties have highest precedence
     processSystemProperties();
+
+    trimWhiteSpace();
+  }
+
+  private void trimWhiteSpace() {
+    for (Iterator i = props.entrySet().iterator(); i.hasNext(); ) {
+      Map.Entry entry = (Entry) i.next();
+      entry.setValue(((String)entry.getValue()).trim());
+    }
   }
 
   private void processSystemProperties() {
@@ -177,6 +186,12 @@ public class TCPropertiesImpl implements TCProperties {
     return Boolean.valueOf(val).booleanValue();
   }
 
+  public boolean getBoolean(String key, boolean defaultValue) {
+    String val = getProperty(key, true);
+    if (val == null) return defaultValue;
+    return Boolean.valueOf(val).booleanValue();
+  }
+
   public int getInt(String key) {
     String val = getProperty(key);
     return Integer.valueOf(val).intValue();
@@ -250,4 +265,6 @@ public class TCPropertiesImpl implements TCProperties {
     }
 
   }
+
+
 }

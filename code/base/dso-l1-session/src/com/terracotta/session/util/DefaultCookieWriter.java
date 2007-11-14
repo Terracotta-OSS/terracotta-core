@@ -56,14 +56,20 @@ public class DefaultCookieWriter implements SessionCookieWriter {
     this.idTag = ";" + this.cookieName.toLowerCase() + "=";
   }
 
-  public void writeCookie(HttpServletRequest req, HttpServletResponse res, SessionId id) {
+  public Cookie writeCookie(HttpServletRequest req, HttpServletResponse res, SessionId id) {
     Assert.pre(req != null);
     Assert.pre(res != null);
     Assert.pre(id != null);
 
     if (res.isCommitted()) { throw new IllegalStateException("response is already committed"); }
 
-    if (isTrackingEnabled && isCookieEnabled) res.addCookie(createCookie(req, id));
+    if (isTrackingEnabled && isCookieEnabled) {
+      Cookie rv = createCookie(req, id);
+      res.addCookie(rv);
+      return rv;
+    }
+
+    return null;
   }
 
   public String encodeRedirectURL(String url, HttpServletRequest req) {
