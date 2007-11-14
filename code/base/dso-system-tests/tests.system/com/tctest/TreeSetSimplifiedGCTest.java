@@ -4,12 +4,10 @@
  */
 package com.tctest;
 
-import java.util.Date;
-
 public class TreeSetSimplifiedGCTest extends GCTestBase {
 
   public TreeSetSimplifiedGCTest() {
-    disableAllUntil(new Date(Long.MAX_VALUE));
+    // disableAllUntil(new Date(Long.MAX_VALUE));
   }
   
   protected Class getApplicationClass() {
