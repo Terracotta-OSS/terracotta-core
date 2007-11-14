@@ -18,7 +18,6 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.text.DateFormat;
 import java.util.Date;
 
 import javax.management.remote.JMXConnector;
@@ -156,9 +155,10 @@ public class ServerPanel extends XContainer {
     setupConnectButton();
 
     Date activateDate = new Date(m_serverNode.getActivateTime());
-    String activateTime = DateFormat.getTimeInstance().format(activateDate);
+    String activateTime = activateDate.toString();
     String statusMsg = "Activated at " + activateTime;
 
+    System.out.println(statusMsg);
     setStatusLabel(statusMsg);
     m_acc.controller.addServerLog(m_serverNode.getConnectionContext());
     if(!isRuntimeInfoShowing()) {
@@ -177,7 +177,7 @@ public class ServerPanel extends XContainer {
     m_portField.setEditable(false);
 
     Date startDate = new Date(m_serverNode.getStartTime());
-    String startTime = DateFormat.getTimeInstance().format(startDate);
+    String startTime = startDate.toString();
     String statusMsg = "Started at " + startTime;
 
     setupConnectButton();
@@ -193,8 +193,7 @@ public class ServerPanel extends XContainer {
     m_hostField.setEditable(false);
     m_portField.setEditable(false);
 
-    Date now = new Date();
-    String startTime = DateFormat.getTimeInstance().format(now);
+    String startTime = new Date().toString();
     String statusMsg = "Initializing at " + startTime;
 
     setupConnectButton();
@@ -210,8 +209,7 @@ public class ServerPanel extends XContainer {
     m_hostField.setEditable(false);
     m_portField.setEditable(false);
 
-    Date now = new Date();
-    String startTime = DateFormat.getTimeInstance().format(now);
+    String startTime = new Date().toString();
     String statusMsg = "Standing by at " + startTime;
 
     setupConnectButton();
@@ -231,7 +229,7 @@ public class ServerPanel extends XContainer {
     m_hostField.setEditable(true);
     m_portField.setEditable(true);
 
-    String startTime = DateFormat.getTimeInstance().format(new Date());
+    String startTime = new Date().toString();
     String statusMsg = "Disconnected at " + startTime;
 
     setupConnectButton();
