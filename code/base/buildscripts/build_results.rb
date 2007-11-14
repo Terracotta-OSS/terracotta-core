@@ -105,7 +105,7 @@ class BuildResults
                           :includes => "**/testrun*/**",
                           :excludes => "**/*.jar,**/*.class,**/objectdb/**,**/*.war,**/*.rar,**/var/**,**/repository/**,**/META-INF/**")
               ant.fileset(:dir => @build_dir.to_s,
-                          :includes => "**/boot-jars/*.jar,**/build-config.local,**/war/*.war")
+                          :includes => "**/boot-jars/**,**/build-config.local,**/war/*.war")
           end
 
           puts "Done archiving build."
