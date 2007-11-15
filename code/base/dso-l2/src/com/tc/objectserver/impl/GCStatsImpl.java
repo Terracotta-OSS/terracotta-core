@@ -3,11 +3,14 @@
  */
 package com.tc.objectserver.impl;
 
-import java.io.Serializable;
-
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.objectserver.api.GCStats;
 
+import java.io.Serializable;
+
 public class GCStatsImpl implements GCStats, Serializable {
+  private static final TCLogger        logger                = TCLogging.getLogger(GCStatsImpl.class);
   private static final long NOT_INITIALIZED       = -1L;
 
   private final int         number;
@@ -76,7 +79,11 @@ public class GCStatsImpl implements GCStats, Serializable {
   }
 
   public synchronized void setElapsedTime(long time) {
-    validate(time);
+    if (time < 0L) {
+      // System timer moved backward.
+      logger.warn("Ssyetm timer moved backward, set GC ElapsedTime to 0");
+      time = 0;
+    }
     this.elapsedTime = time;
   }
 
