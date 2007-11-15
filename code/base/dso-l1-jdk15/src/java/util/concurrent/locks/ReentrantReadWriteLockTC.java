@@ -30,6 +30,12 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
       this.lock = lock;
       this.lockLevel = lockLevel;
     }
+    
+    private void logDebug(String message) {
+      if (DebugUtil.DEBUG) {
+        System.err.println(message);
+      }
+    }
 
     public void lock() {
       if (ManagerUtil.isManaged(lock)) {
@@ -47,14 +53,10 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
 
     public boolean tryLock(long timeout, TimeUnit unit) {
       if (ManagerUtil.isManaged(lock)) {
-        if (DebugUtil.DEBUG) {
-          System.err.println("Timestamp before dso tryLock with level " + lockLevel + " -- " + System.currentTimeMillis());
-        }
+        logDebug("Client " + ManagerUtil.getClientID() + " Timestamp before dso tryLock with level " + lockLevel + " -- " + System.currentTimeMillis());
         long timeoutInNanos = TimeUnit.NANOSECONDS.convert(timeout, unit);
         boolean rv = ManagerUtil.tryMonitorEnter(lock, timeoutInNanos, lockLevel);
-        if (DebugUtil.DEBUG) {
-          System.err.println("Timestamp after dso tryLock with level " + lockLevel + " -- " + System.currentTimeMillis());
-        }
+        logDebug("Client " + ManagerUtil.getClientID() + " Timestamp after dso tryLock with level " + lockLevel + " -- " + System.currentTimeMillis());
         return rv;
       } else {
         return true;

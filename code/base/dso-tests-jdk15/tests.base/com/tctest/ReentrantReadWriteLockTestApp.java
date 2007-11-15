@@ -952,6 +952,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
 
   private void basicTryWriteLockTimeoutTest(int index, ReentrantReadWriteLock lock) throws Exception {
     printTimeStamp(index, "basicTryWriteLockTimeoutTest");
+    DebugUtil.DEBUG = true;
 
     final WriteLock writeLock = lock.writeLock();
     if (index == 0) {
@@ -959,19 +960,25 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       try {
         barrier2.await();
         assertTryLockResult(isLocked);
+        printTimeStamp("Client " + ManagerUtil.getClientID() + ", index: " + index + " enter first barrier3");
         barrier3.await();
       } finally {
         unLockIfLocked(writeLock, isLocked);
       }
+      printTimeStamp("Client " + ManagerUtil.getClientID() + ", index: " + index + " enter last barrier3");
       barrier3.await();
     } else {
       barrier2.await();
       boolean isLocked = writeLock.tryLock(5, TimeUnit.SECONDS);
       assertTryLockResult(!isLocked);
       unLockIfLocked(writeLock, isLocked);
+      printTimeStamp("Client " + ManagerUtil.getClientID() + ", index: " + index + " enter first barrier3");
       barrier3.await();
+      printTimeStamp("Client " + ManagerUtil.getClientID() + ", index: " + index + " enter last barrier3");
       barrier3.await();
     }
+
+    DebugUtil.DEBUG = false;
     barrier.await();
   }
 

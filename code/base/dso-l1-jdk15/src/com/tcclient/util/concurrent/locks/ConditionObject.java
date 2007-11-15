@@ -7,6 +7,7 @@ package com.tcclient.util.concurrent.locks;
 import com.tc.exception.TCRuntimeException;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.lockmanager.api.LockLevel;
+import com.tc.util.DebugUtil;
 import com.tc.util.UnsafeUtil;
 import com.tc.util.concurrent.locks.TCLock;
 
@@ -21,12 +22,12 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 
 public class ConditionObject implements Condition, java.io.Serializable {
-  private transient List      waitingThreads;
-  private transient int       numOfWaitingThreards;
-  private transient Map       waitOnUnshared;
+  private transient List        waitingThreads;
+  private transient int         numOfWaitingThreards;
+  private transient Map         waitOnUnshared;
 
-  private final Lock originalLock;
-  private final SyncCondition realCondition;
+  private final Lock            originalLock;
+  private final SyncCondition   realCondition;
 
   private static long getSystemNanos() {
     return System.nanoTime();
@@ -49,14 +50,14 @@ public class ConditionObject implements Condition, java.io.Serializable {
   }
 
   private void fullRelease() {
-    while (((TCLock)originalLock).localHeldCount() > 0) {
+    while (((TCLock) originalLock).localHeldCount() > 0) {
       originalLock.unlock();
     }
   }
 
   private void reacquireLock(int numOfHolds) {
-    if (((TCLock)originalLock).localHeldCount() >= numOfHolds) { return; }
-    while (((TCLock)originalLock).localHeldCount() < numOfHolds) {
+    if (((TCLock) originalLock).localHeldCount() >= numOfHolds) { return; }
+    while (((TCLock) originalLock).localHeldCount() < numOfHolds) {
       originalLock.lock();
     }
   }
@@ -78,13 +79,19 @@ public class ConditionObject implements Condition, java.io.Serializable {
     return false;
   }
 
+  private void logDebug(String message) {
+    if (DebugUtil.DEBUG) {
+      System.err.println(message);
+    }
+  }
+
   public void await() throws InterruptedException {
     Thread currentThread = Thread.currentThread();
 
-    if (!((TCLock)originalLock).isHeldByCurrentThread()) { throw new IllegalMonitorStateException(); }
+    if (!((TCLock) originalLock).isHeldByCurrentThread()) { throw new IllegalMonitorStateException(); }
     if (Thread.interrupted()) { throw new InterruptedException(); }
 
-    int numOfHolds = ((TCLock)originalLock).localHeldCount();
+    int numOfHolds = ((TCLock) originalLock).localHeldCount();
 
     realCondition.incrementVersionIfSignalled();
     int version = realCondition.getVersion();
@@ -100,7 +107,9 @@ public class ConditionObject implements Condition, java.io.Serializable {
 
           addWaitOnUnshared();
           try {
+            logDebug("Client " + ManagerUtil.getClientID() + " awaiting on condition " + realCondition.hashCode());
             ManagerUtil.objectWait0(realCondition);
+            logDebug("Client " + ManagerUtil.getClientID() + " wake up on condition " + realCondition.hashCode());
           } finally {
             waitOnUnshared.remove(currentThread);
             waitingThreads.remove(currentThread);
@@ -123,9 +132,9 @@ public class ConditionObject implements Condition, java.io.Serializable {
   public void awaitUninterruptibly() {
     Thread currentThread = Thread.currentThread();
 
-    if (!((TCLock)originalLock).isHeldByCurrentThread()) { throw new IllegalMonitorStateException(); }
+    if (!((TCLock) originalLock).isHeldByCurrentThread()) { throw new IllegalMonitorStateException(); }
 
-    int numOfHolds = ((TCLock)originalLock).localHeldCount();
+    int numOfHolds = ((TCLock) originalLock).localHeldCount();
     boolean isInterrupted = false;
     realCondition.incrementVersionIfSignalled();
     int version = realCondition.getVersion();
@@ -171,10 +180,10 @@ public class ConditionObject implements Condition, java.io.Serializable {
   public long awaitNanos(long nanosTimeout) throws InterruptedException {
     Thread currentThread = Thread.currentThread();
 
-    if (!((TCLock)originalLock).isHeldByCurrentThread()) { throw new IllegalMonitorStateException(); }
+    if (!((TCLock) originalLock).isHeldByCurrentThread()) { throw new IllegalMonitorStateException(); }
     if (Thread.interrupted()) { throw new InterruptedException(); }
 
-    int numOfHolds = ((TCLock)originalLock).localHeldCount();
+    int numOfHolds = ((TCLock) originalLock).localHeldCount();
     realCondition.incrementVersionIfSignalled();
     int version = realCondition.getVersion();
     fullRelease();
@@ -233,7 +242,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
   }
 
   public void signal() {
-    if (!((TCLock)originalLock).isHeldByCurrentThread()) { throw new IllegalMonitorStateException(); }
+    if (!((TCLock) originalLock).isHeldByCurrentThread()) { throw new IllegalMonitorStateException(); }
 
     ManagerUtil.monitorEnter(realCondition, LockLevel.WRITE);
     UnsafeUtil.monitorEnter(realCondition);
@@ -253,12 +262,13 @@ public class ConditionObject implements Condition, java.io.Serializable {
   }
 
   public void signalAll() {
-    if (!((TCLock)originalLock).isHeldByCurrentThread()) { throw new IllegalMonitorStateException(); }
+    if (!((TCLock) originalLock).isHeldByCurrentThread()) { throw new IllegalMonitorStateException(); }
 
     ManagerUtil.monitorEnter(realCondition, LockLevel.WRITE);
     UnsafeUtil.monitorEnter(realCondition);
     boolean isLockInUnshared = isLockRealConditionInUnshared();
     try {
+      logDebug("Client " + ManagerUtil.getClientID() + " notifyAll on condition " + realCondition.hashCode());
       ManagerUtil.objectNotifyAll(realCondition);
       if (hasWaitOnUnshared()) {
         realCondition.notifyAll();
