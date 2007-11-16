@@ -4,7 +4,6 @@
  */
 package com.tcclient.cache;
 
-import com.tc.logging.TCLogger;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.util.DebugUtil;
 
@@ -15,8 +14,6 @@ import java.util.Date;
  * (timeToDie) cannot be reset, but may not be active. The idle timer is reset each time the item is used.
  */
 public class Timestamp {
-  private static final TCLogger logger = ManagerUtil.getLogger("com.tc.cache.Timestamp");
-
   private long                  timeToExpireMillis;                                      // Guarded by synchronized
                                                                                           // lock on "this"
   private final long            timeToDieMillis;
@@ -30,7 +27,7 @@ public class Timestamp {
     }
     
     if (DebugUtil.DEBUG) {
-      logger.info("Client " + ManagerUtil.getClientID() + " creating timestamp -- maxIdleMillis: " + maxIdleMillis + ", maxTTLMillis: " + maxTTLMillis + ", createTime: " + createTime);
+      System.err.println("Client " + ManagerUtil.getClientID() + " creating timestamp -- maxIdleMillis: " + maxIdleMillis + ", maxTTLMillis: " + maxTTLMillis + ", createTime: " + createTime);
     }
   }
 
@@ -39,7 +36,7 @@ public class Timestamp {
    */
   public synchronized long getInvalidatedTimeMillis() {
     if (DebugUtil.DEBUG) {
-      logger.info("Client " + ManagerUtil.getClientID() + " getInvalidatedTimeMillis -- timeToExpireMillis: " + timeToExpireMillis + ", timeToDieMillis: " + timeToDieMillis + ", current time: " + System.currentTimeMillis());
+      System.err.println("Client " + ManagerUtil.getClientID() + " getInvalidatedTimeMillis -- timeToExpireMillis: " + timeToExpireMillis + ", timeToDieMillis: " + timeToDieMillis + ", current time: " + System.currentTimeMillis());
     }
     if (timeToDieMillis <= 0) { 
       return timeToExpireMillis; 
