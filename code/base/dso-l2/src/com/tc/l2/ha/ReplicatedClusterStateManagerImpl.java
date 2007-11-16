@@ -97,7 +97,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
       groupManager
           .zapNode(
                    nodeID,
-                   (msg.getType() == ClusterStateMessage.OPERATION_FAILED_SPLIT_BRAIN ? L2HAZapNodeRequestProcessor.SPLIT_BRAIN
+                   (msg != null && msg.getType() == ClusterStateMessage.OPERATION_FAILED_SPLIT_BRAIN ? L2HAZapNodeRequestProcessor.SPLIT_BRAIN
                        : L2HAZapNodeRequestProcessor.PROGRAM_ERROR), "Recd wrong response from : "
                                                                      + nodeID
                                                                      + " while publishing Cluster State"
