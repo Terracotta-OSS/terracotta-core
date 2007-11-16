@@ -158,7 +158,6 @@ public class ServerPanel extends XContainer {
     String activateTime = activateDate.toString();
     String statusMsg = "Activated at " + activateTime;
 
-    System.out.println(statusMsg);
     setStatusLabel(statusMsg);
     m_acc.controller.addServerLog(m_serverNode.getConnectionContext());
     if(!isRuntimeInfoShowing()) {
