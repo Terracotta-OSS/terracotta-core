@@ -62,8 +62,6 @@ public class EhcacheEvictionTestApp extends AbstractErrorCatchingTransparentApp 
   }
 
   protected void runTest() throws Throwable {
-    DebugUtil.DEBUG = true;
-
     int index = barrier.barrier();
     if (index == 0) {
       // Even though the singleton field of CacheManager is a root, we
@@ -117,11 +115,11 @@ public class EhcacheEvictionTestApp extends AbstractErrorCatchingTransparentApp 
     barrier.barrier();
     verifyCacheManagerShutdown();
     barrier.barrier();
-
-    DebugUtil.DEBUG = false;
   }
 
   private void runSimplePutTimeToLiveTimeout(int index) throws Throwable {
+    DebugUtil.DEBUG = true;
+    
     if (index == 1) {
       doPut();
     }
@@ -143,6 +141,8 @@ public class EhcacheEvictionTestApp extends AbstractErrorCatchingTransparentApp 
     doGetNull(index);
 
     barrier.barrier();
+    
+    DebugUtil.DEBUG = false;
   }
 
   private void runSimplePutSimpleGet(int index) throws Throwable {
