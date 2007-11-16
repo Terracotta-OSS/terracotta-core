@@ -42,8 +42,8 @@ public class SessionConfigTest extends AbstractDeploymentTest {
   private boolean              weblogicOrWebsphere;
 
   public SessionConfigTest() {
-    boolean weblogicOrWebsphere = AppServerFactory.getCurrentAppServerId() == AppServerFactory.WEBLOGIC
-                                  || AppServerFactory.getCurrentAppServerId() == AppServerFactory.WEBSPHERE;
+    weblogicOrWebsphere = AppServerFactory.getCurrentAppServerId() == AppServerFactory.WEBLOGIC
+                          || AppServerFactory.getCurrentAppServerId() == AppServerFactory.WEBSPHERE;
   }
 
   public static Test suite() {
