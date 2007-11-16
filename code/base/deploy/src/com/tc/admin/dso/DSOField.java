@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin.dso;
 
@@ -9,6 +10,8 @@ import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.EnumInstance;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
+import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesImpl;
 
 import java.beans.PropertyChangeEvent;
 
@@ -28,35 +31,44 @@ public class DSOField extends DSOObject {
   private DSOObject                  m_cycleRoot;
   private boolean                    m_isLiteral;
 
-  private final static LiteralValues m_literals = new LiteralValues();
+  private static final String        CONSOLE_PROPS_SECTION = "console";
+  private static final String        SHOW_OBJECT_ID_PROP   = "showObjectID";
+  private static boolean             m_showObjectID;
+
+  private final static LiteralValues m_literals            = new LiteralValues();
+
+  static {
+    final TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor(CONSOLE_PROPS_SECTION);
+    m_showObjectID = props != null ? props.getBoolean(SHOW_OBJECT_ID_PROP, false) : false;
+  }
 
   public DSOField(ConnectionContext cc, String name, boolean isPrimitive, String type, Object value, DSOObject parent) {
     super(cc, parent);
 
-    if(type != null && (type.equals("java.util.Date") || type.equals("java.sql.Timestamp"))) {
+    if (type != null && (type.equals("java.util.Date") || type.equals("java.sql.Timestamp"))) {
       isPrimitive = true;
-      ManagedObjectFacade mof = (ManagedObjectFacade)value;
+      ManagedObjectFacade mof = (ManagedObjectFacade) value;
       value = mof.getFieldValue("date");
     }
-    
+
     m_name = name;
     m_isPrimitive = isPrimitive;
     m_type = type;
     m_value = value;
     m_isLiteral = isLiteral();
-    
+
     initFields();
     updateLabel();
   }
 
   private boolean isLiteral() {
-    if(m_value != null) {
+    if (m_value != null) {
       Class c = m_value.getClass();
       return !c.isArray() && m_literals.isLiteral(c.getName());
     }
     return false;
   }
-  
+
   public Object getFacade() {
     return m_value instanceof ManagedObjectFacade ? (ManagedObjectFacade) m_value : null;
   }
@@ -70,9 +82,9 @@ public class DSOField extends DSOObject {
 
     m_label = prefix;
 
-    if(m_isLiteral) {
-      if(m_value instanceof EnumInstance) {
-        EnumInstance enumInstance = (EnumInstance)m_value;
+    if (m_isLiteral) {
+      if (m_value instanceof EnumInstance) {
+        EnumInstance enumInstance = (EnumInstance) m_value;
         String enumType = enumInstance.getClassInstance().getName().asString();
         m_label = getName() + " (" + enumType + ")" + "=" + enumInstance;
       } else {
@@ -81,8 +93,16 @@ public class DSOField extends DSOObject {
     } else if (isCollection()) {
       ManagedObjectFacade mof = (ManagedObjectFacade) m_value;
       m_label += " [" + mof.getFacadeSize() + "/" + mof.getTrueObjectSize() + "]";
-    } else if(isPrimitive() || m_value == null || m_value instanceof String) {
+    } else if (isPrimitive() || m_value == null || m_value instanceof String) {
       m_label = prefix + "=" + m_value;
+    }
+
+    if (m_showObjectID) {
+      Object facade = getFacade();
+      if (facade instanceof ManagedObjectFacade) {
+        ManagedObjectFacade mof = (ManagedObjectFacade) facade;
+        m_label += " [" + mof.getObjectId().toLong() + "]";
+      }
     }
 
   }
@@ -179,7 +199,7 @@ public class DSOField extends DSOObject {
       try {
         result = createField(field, mof.getFieldValue(field), mof.getFieldType(field));
       } catch (Throwable t) {
-        //t.printStackTrace();
+        // t.printStackTrace();
       }
     }
 
