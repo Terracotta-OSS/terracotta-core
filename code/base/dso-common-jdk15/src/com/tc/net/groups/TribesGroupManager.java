@@ -370,9 +370,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
         return inode.getNodeID();
       }
     }
-    if (inode == null) {
-      fireNodeEvent(newNode, true);
-    }
+    fireNodeEvent(newNode, true);
     return newNode;
   }
 

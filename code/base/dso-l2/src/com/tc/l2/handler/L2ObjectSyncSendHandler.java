@@ -55,8 +55,12 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
     try {
       this.groupManager.sendTo(ackMsg.getDestinationID(), ackMsg);
     } catch (GroupException e) {
-      logger.error("ERROR sending ACKS: Caught exception while sending message to ACTIVE", e);
-      // To ZAP or Not to ZAP is the question !
+      String error = "ERROR sending ACKS: Caught exception while sending message to ACTIVE";
+      logger.error(error, e);
+      // try Zapping the active server so that a split brain war is initiated, at least we won't hold the whole cluster
+      // down.
+      groupManager.zapNode(ackMsg.getDestinationID(), L2HAZapNodeRequestProcessor.COMMUNICATION_TO_ACTIVE_ERROR,
+                           error + L2HAZapNodeRequestProcessor.getErrorString(e));
     }
   }
 
