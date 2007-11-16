@@ -82,8 +82,8 @@ public class TreeMapTestApp extends AbstractTransparentApp {
 
     barrier.barrier();
 
-    Assert.assertEquals(0, map.size());
-    Assert.assertEquals(0, map2.size());
+    Assert.assertEquals(0, getMapSize(map));
+    Assert.assertEquals(0, getMapSize(map2));
 
     barrier.barrier();
 
@@ -135,8 +135,8 @@ public class TreeMapTestApp extends AbstractTransparentApp {
 
     barrier.barrier();
 
-    Assert.assertEquals(getParticipantCount(), map.size());
-    Assert.assertEquals(getParticipantCount(), map2.size());
+    Assert.assertEquals(getParticipantCount(), getMapSize(map));
+    Assert.assertEquals(getParticipantCount(), getMapSize(map2));
 
     // synchronization here to have dso previous transactions completed for the object.
     synchronized (map) {
@@ -280,6 +280,12 @@ public class TreeMapTestApp extends AbstractTransparentApp {
     barrier.barrier();
 
   }
+  
+  private int getMapSize(TreeMap m) {
+    synchronized(m) {
+      return (m.size());
+    }
+  }
 
   private void clear() throws Exception {
     synchronized (map) {
@@ -361,7 +367,15 @@ public class TreeMapTestApp extends AbstractTransparentApp {
     
     config.addIncludePattern(testClass + "$*");
 
-    String methodExpression = "* " + testClass + "*.*(..)";
+    String methodExpression = "* " + testClass + "*.kigetMapSize(..)";
+    config.addReadAutolock(methodExpression);
+//    methodExpression = "* " + testClass + "*.*(..)";
+//    config.addWriteAutolock(methodExpression);
+    methodExpression = "* " + testClass + ".run*(..)";
+    config.addWriteAutolock(methodExpression);
+    methodExpression = "* " + testClass + ".clear(..)";
+    config.addWriteAutolock(methodExpression);
+    methodExpression = "* " + testClass + ".initializeMaps(..)";
     config.addWriteAutolock(methodExpression);
 
     spec.addRoot("map", "map");
