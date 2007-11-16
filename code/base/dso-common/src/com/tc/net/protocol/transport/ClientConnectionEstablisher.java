@@ -141,16 +141,13 @@ public class ClientConnectionEstablisher {
           } catch (MaxConnectionsExceededException e) {
             throw e;
           } catch (TCTimeoutException e) {
-            handleConnectException(e, false, cmt.logger);
+            handleConnectException(e, false, cmt.logger, connection);
           } catch (IOException e) {
-            handleConnectException(e, false, cmt.logger);
+            handleConnectException(e, false, cmt.logger, connection);
           } catch (Exception e) {
-            handleConnectException(e, true, cmt.logger);
+            handleConnectException(e, true, cmt.logger, connection);
           }
           
-          if (!connected && connection != null) {
-            connection.close(100);
-          }
         }
       }
       cmt.endIfDisconnected();
@@ -167,18 +164,19 @@ public class ClientConnectionEstablisher {
       cmt.logger.warn("Got restoreConnection request for ClientMessageTransport that is connected.  skipping");
     }
     for (int i = 0; !connected; i++) {
+      TCConnection connection = null;
       try {
-        TCConnection connection = connect(sa, cmt);
+        connection = connect(sa, cmt);
         cmt.reconnect(connection);
         connected = true;
       } catch (MaxConnectionsExceededException e) {
         // nothing
       } catch (TCTimeoutException e) {
-        handleConnectException(e, false, cmt.logger);
+        handleConnectException(e, false, cmt.logger, connection);
       } catch (IOException e) {
-        handleConnectException(e, false, cmt.logger);
+        handleConnectException(e, false, cmt.logger, connection);
       } catch (Exception e) {
-        handleConnectException(e, true, cmt.logger);
+        handleConnectException(e, true, cmt.logger, connection);
       }
       if (connected || System.currentTimeMillis() > deadline) {
         break;
@@ -190,7 +188,9 @@ public class ClientConnectionEstablisher {
     }
   }
 
-  private void handleConnectException(Exception e, boolean logFullException, TCLogger logger) {
+  private void handleConnectException(Exception e, boolean logFullException, TCLogger logger, TCConnection connection) {
+    if (connection != null) connection.close(100);
+    
     if (logger.isDebugEnabled() || logFullException) {
       logger.error("Connect Exception", e);
     } else {
