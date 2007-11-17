@@ -367,7 +367,7 @@ public class TreeMapTestApp extends AbstractTransparentApp {
     
     config.addIncludePattern(testClass + "$*");
 
-    String methodExpression = "* " + testClass + "*.kigetMapSize(..)";
+    String methodExpression = "* " + testClass + "*.getMapSize(..)";
     config.addReadAutolock(methodExpression);
 //    methodExpression = "* " + testClass + "*.*(..)";
 //    config.addWriteAutolock(methodExpression);
