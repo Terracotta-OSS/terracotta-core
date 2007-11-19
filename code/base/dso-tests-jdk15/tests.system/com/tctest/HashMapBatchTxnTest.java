@@ -4,6 +4,8 @@
  */
 package com.tctest;
 
+import com.tc.util.runtime.Vm;
+
 /*
  * Test case for CDV-253
  */
@@ -11,9 +13,12 @@ package com.tctest;
 public class HashMapBatchTxnTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 2;
-  
+
   public HashMapBatchTxnTest() {
-    //
+    // MNK-362
+    if (Vm.isIBM()) {
+      disableAllUntil("2007-12-04");
+    }
   }
 
   public void doSetUp(TransparentTestIface t) throws Exception {
@@ -24,5 +29,5 @@ public class HashMapBatchTxnTest extends TransparentTestBase {
   protected Class getApplicationClass() {
     return HashMapBatchTxnTestApp.class;
   }
- 
+
 }
