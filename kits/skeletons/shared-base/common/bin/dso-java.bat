@@ -13,10 +13,14 @@ goto end
 :haveArgs
 setlocal
 set TC_INSTALL_DIR=%~d0%~p0..
+for %%i in ("%TC_INSTALL_DIR%") do set TC_INSTALL_DIR=%%~fsi
+
 if not exist "%JAVA_HOME%" set JAVA_HOME=%TC_INSTALL_DIR%\jre
-call "%TC_INSTALL_DIR%\bin\dso-env.bat" -q
+FOR %%i IN ("%JAVA_HOME%") DO SET JAVA_HOME=%%~fsi
+
+call %TC_INSTALL_DIR%\bin\dso-env.bat -q
 set JAVA_OPTS=%TC_JAVA_OPTS% %JAVA_OPTS%
-"%JAVA_HOME%\bin\java" %JAVA_OPTS% %*
+%JAVA_HOME%\bin\java %JAVA_OPTS% %*
 endlocal
 
 :end

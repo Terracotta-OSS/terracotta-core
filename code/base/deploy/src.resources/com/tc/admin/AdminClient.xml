@@ -350,7 +350,7 @@
 				<tab title="Config">
 				   <scrollpane>
 				      <textarea class="com.tc.admin.common.XTextArea"
-				         name="ClassesConfigTextArea" editable="false" />
+				         name="ClassesConfigTextArea" editable="false" line-wrap="false"/>
 				   </scrollpane>
 				</tab>
 			</tabbedpane>

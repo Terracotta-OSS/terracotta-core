@@ -639,6 +639,8 @@ public class ServerNode extends ComponentNode
         }
       }
       m_acc.controller.nodeChanged(ServerNode.this);
+    } catch(Exception e) {
+      m_acc.log(e);
     } finally {
       m_tryAddingDSONode.set(false);
     }

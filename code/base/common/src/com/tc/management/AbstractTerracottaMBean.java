@@ -84,7 +84,7 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
       Listener lsnr = (Listener) i.next();
       if (lsnr.listener == listener && lsnr.filter == filter && lsnr.handback == obj) {
         removed = true;
-        i.remove();
+        notificationListeners.remove(lsnr);
       }
     }
 
@@ -98,7 +98,7 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
       Listener lsnr = (Listener) i.next();
       if (lsnr.listener == listener) {
         removed = true;
-        i.remove();
+        notificationListeners.remove(lsnr);
       }
     }
 

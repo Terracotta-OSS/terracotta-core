@@ -161,6 +161,12 @@ public class TCServerImpl extends SEDA implements TCServer {
     return startTime;
   }
 
+  public void updateActivateTime() {
+    if(activateTime == -1 && state.isActiveCoordinator()) {
+      activateTime = System.currentTimeMillis();
+    }
+  }
+
   public long getActivateTime() {
     return activateTime;
   }
@@ -270,7 +276,7 @@ public class TCServerImpl extends SEDA implements TCServer {
       // the following code starts the jmx server as well
       startDSOServer(stage.getSink());
 
-      activateTime = System.currentTimeMillis();
+      updateActivateTime();
 
       if (activationListener != null) {
         activationListener.serverActivated();

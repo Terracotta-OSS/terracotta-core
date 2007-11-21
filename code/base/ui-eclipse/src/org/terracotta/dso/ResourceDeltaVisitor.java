@@ -156,7 +156,7 @@ public class ResourceDeltaVisitor implements IResourceDeltaVisitor {
       ILaunchConfiguration launchConfig = launch.getLaunchConfiguration();
       try {
         String mainClass = launchConfig.getAttribute(IJavaLaunchConfigurationConstants.ATTR_MAIN_TYPE_NAME, (String)null);
-        if(mainClass.equals(ServerConstants.SERVER_MAIN_CLASS_NAME)) {
+        if(mainClass != null && mainClass.equals(ServerConstants.SERVER_MAIN_CLASS_NAME)) {
           String serverLaunchName = launchConfig.getName();
           String[] launchNameElems = decomposeServerLaunchName(serverLaunchName);
           String projName = launchNameElems[0];

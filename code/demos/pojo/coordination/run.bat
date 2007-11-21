@@ -23,11 +23,16 @@ rem
 
 setlocal
 set TC_INSTALL_DIR=%~d0%~p0..\..\..
+for %%i in ("%TC_INSTALL_DIR%") do set TC_INSTALL_DIR=%%~fsi
+
 cd %~d0%~p0
+
 if not exist "%JAVA_HOME%" set JAVA_HOME=%TC_INSTALL_DIR%\jre
+for %%i in ("%JAVA_HOME%") do set JAVA_HOME=%%~fsi
+
 set TC_CONFIG_PATH=tc-config.xml
-call "%TC_INSTALL_DIR%\bin\dso-env.bat" -q "%TC_CONFIG%"
+call %TC_INSTALL_DIR%\bin\dso-env.bat -q "%TC_CONFIG%"
 set CLASSPATH=classes;lib\concurrent-1.3.4.jar
 set JAVA_OPTS=%TC_JAVA_OPTS% %JAVA_OPTS%
-start "coordination" "%JAVA_HOME%\bin\java" %JAVA_OPTS% -cp %CLASSPATH% demo.coordination.Main %*
+start "coordination" %JAVA_HOME%\bin\java %JAVA_OPTS% -cp %CLASSPATH% demo.coordination.Main %*
 endlocal

@@ -60,13 +60,20 @@ public class Splash extends Dialog {
       title
     };
 
-    Process p = Runtime.getRuntime().exec(cmdarray);
+    final Process p = Runtime.getRuntime().exec(cmdarray);
     InputStreamDrainer errDrainer = new InputStreamDrainer(p.getErrorStream());
     StreamReader outReader = new StreamReader(
       p.getInputStream(),
       new OutputStreamListener() {
         public void triggerEncountered() {
+          Thread shutdownHook = new Thread() {
+            public void run() {
+              p.destroy();
+            }
+          };
+          Runtime.getRuntime().addShutdownHook(shutdownHook);
           callback.run();
+          Runtime.getRuntime().removeShutdownHook(shutdownHook);
         }
       },
       "GO");

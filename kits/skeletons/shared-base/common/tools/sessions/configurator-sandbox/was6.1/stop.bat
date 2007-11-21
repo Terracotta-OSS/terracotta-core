@@ -14,6 +14,7 @@ setlocal
 
 cd %~d0%~p0
 set WAS_SANDBOX=%CD%
+for %%i in ("%WAS_SANDBOX%") do set WAS_SANDBOX=%%~fsi
 set TC_INSTALL_DIR=%WAS_SANDBOX%\..\..\..\..
 
 if ""%1"" == ""-debug"" (

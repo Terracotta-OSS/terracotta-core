@@ -14,9 +14,12 @@ setlocal
 
 cd %~d0%~p0..
 set SANDBOX=%CD%
+for %%i in ("%SANDBOX%") do set SANDBOX=%%~fsi
+
 set TC_INSTALL_DIR=%SANDBOX%\..\..\..
 
 if not exist "%JAVA_HOME%" set JAVA_HOME=%TC_INSTALL_DIR%\jre
+for %%i in ("%JAVA_HOME%") do set JAVA_HOME=%%~fsi
 
 if "x%CATALINA_HOME%" == "x" (
   echo CATALINA_HOME must be set to a Tomcat5.0 installation.
@@ -27,6 +30,7 @@ if "x%CATALINA_HOME%" == "x" (
     exit 1
   )
 )
+for %%i in ("%CATALINA_HOME%") do set CATALINA_HOME=%%~fsi
 
 set CATALINA_BASE=%SANDBOX%\tomcat5.0\%1
 
@@ -38,7 +42,7 @@ rem --------------------------------------------------------------------
 if "%2" == "nodso" goto runCatalina
 
 set TC_CONFIG_PATH=%SANDBOX%\tomcat5.0\tc-config.xml
-call "%TC_INSTALL_DIR%\bin\dso-env.bat" -q "%TC_CONFIG%"
+call %TC_INSTALL_DIR%\bin\dso-env.bat -q "%TC_CONFIG%"
 
 if %ERRORLEVEL% NEQ 0 goto end
 
@@ -50,8 +54,8 @@ set JAVA_OPTS=%OPTS% %JAVA_OPTS%
 
 :runCatalina
 
-cd "%SANDBOX%"
-call "%CATALINA_HOME%\bin\catalina.bat" run
+cd %SANDBOX%
+call %CATALINA_HOME%\bin\catalina.bat run
 
 :end
 exit %ERRORLEVEL%

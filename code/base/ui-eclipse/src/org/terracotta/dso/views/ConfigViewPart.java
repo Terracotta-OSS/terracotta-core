@@ -600,36 +600,7 @@ public class ConfigViewPart extends ViewPart
   }
   
   public void selectionChanged(SelectionChangedEvent event) {
-    ISelection sel = event.getSelection();
-    
     fDeleteAction.setEnabled(fDeleteAction.canActionBeAdded());
-    
-    if(!sel.isEmpty()) {
-      if(sel instanceof StructuredSelection) {
-        StructuredSelection ss = (StructuredSelection)sel;
-        
-        if(ss.size() == 1) {
-          Object obj = ss.getFirstElement();
-          IMember member = null;
-          
-          if(obj instanceof RootWrapper) {
-            member = getField(((RootWrapper)obj).getFieldName());
-          } else if(obj instanceof QualifiedFieldName) {
-            member = getField(((QualifiedFieldName)obj).getStringValue());
-          } else if(obj instanceof QualifiedClassName) {
-            member = getType(((QualifiedClassName)obj).getStringValue());
-          } else if(obj instanceof BootClassWrapper) {
-            member = getType(((BootClassWrapper)obj).getClassName());
-          } else if(obj instanceof TransientFieldWrapper) {
-            member = getField(((TransientFieldWrapper)obj).getFieldName());
-          }
-          
-          if(member != null) {
-            ConfigUI.jumpToMember(member);
-          }
-        }
-      }
-    }
   }
   
   public void dispose() {
@@ -805,7 +776,36 @@ public class ConfigViewPart extends ViewPart
     }
   }
 
-  public void doubleClick(DoubleClickEvent event) {/**/}
+  public void doubleClick(DoubleClickEvent event) {
+    ISelection sel = event.getSelection();
+    
+    if(!sel.isEmpty()) {
+      if(sel instanceof StructuredSelection) {
+        StructuredSelection ss = (StructuredSelection)sel;
+        
+        if(ss.size() == 1) {
+          Object obj = ss.getFirstElement();
+          IMember member = null;
+          
+          if(obj instanceof RootWrapper) {
+            member = getField(((RootWrapper)obj).getFieldName());
+          } else if(obj instanceof QualifiedFieldName) {
+            member = getField(((QualifiedFieldName)obj).getStringValue());
+          } else if(obj instanceof QualifiedClassName) {
+            member = getType(((QualifiedClassName)obj).getStringValue());
+          } else if(obj instanceof BootClassWrapper) {
+            member = getType(((BootClassWrapper)obj).getClassName());
+          } else if(obj instanceof TransientFieldWrapper) {
+            member = getField(((TransientFieldWrapper)obj).getFieldName());
+          }
+          
+          if(member != null) {
+            ConfigUI.jumpToMember(member);
+          }
+        }
+      }
+    }
+  }
   
   public boolean visit(IResourceDelta delta) {
     if(fConfigViewer == null ||

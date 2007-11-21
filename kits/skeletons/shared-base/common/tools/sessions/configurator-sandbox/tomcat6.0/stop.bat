@@ -14,17 +14,21 @@ setlocal
 
 cd %~d0%~p0..
 set SANDBOX=%CD%
+for %%i in ("%SANDBOX%") do set SANDBOX=%%~fsi
+
 set TC_INSTALL_DIR=%SANDBOX%\..\..\..
 
 if not exist "%JAVA_HOME%" set JAVA_HOME=%TC_INSTALL_DIR%\jre
+for %%i in ("%JAVA_HOME%") do set JAVA_HOME=%%~fsi
 
 if not exist "%CATALINA_HOME%" (
   echo CATALINA_HOME of '%CATALINA_HOME%' does not exist.
   exit 1
 )
+for %%i in ("%CATALINA_HOME%") do set CATALINA_HOME=%%~fsi
 
 set CATALINA_BASE=%SANDBOX%\tomcat6.0\%1
 
-call "%CATALINA_HOME%\bin\shutdown.bat"
+call %CATALINA_HOME%\bin\shutdown.bat
 exit %ERRORLEVEL%
 endlocal

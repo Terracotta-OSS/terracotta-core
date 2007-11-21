@@ -13,7 +13,8 @@ import java.io.Serializable;
  * @author steve
  */
 public abstract class AbstractIdentifier implements Comparable, Serializable {
-  private static final long NULL_ID = -1;
+  private static final long serialVersionUID = 1396710277826990138L;
+  private static final long NULL_ID          = -1;
   private final long        id;
 
   /**

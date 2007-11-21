@@ -12,10 +12,10 @@ echo off
 
 setlocal
 
-rem for %%i in ("%BEA_HOME%") do set BEA_HOME=%%~fsi
+for %%i in ("%BEA_HOME%") do set BEA_HOME=%%~fsi
 
 set WL_HOME=%BEA_HOME%\weblogic81
-rem for %%i in ("%WL_HOME%") do set WL_HOME=%%~fsi
+for %%i in ("%WL_HOME%") do set WL_HOME=%%~fsi
 
 set PRODUCTION_MODE=
 set ADMIN_URL=t3://localhost:%1
@@ -26,7 +26,7 @@ if "%JAVA_HOME%" == "" (
   set JAVA_HOME=%BEA_HOME%\jdk142_11
 )
 
-rem for %%i in ("%JAVA_HOME%") do set JAVA_HOME=%%~fsi
+for %%i in ("%JAVA_HOME%") do set JAVA_HOME=%%~fsi
 
 call "%WL_HOME%\common\bin\commEnv.cmd"
 
@@ -34,7 +34,7 @@ set CLASSPATH=%WEBLOGIC_CLASSPATH%;%POINTBASE_CLASSPATH%;%JAVA_HOME%\jre\lib\rt.
 
 echo Stopping Weblogic Server...
 
-"%JAVA_HOME%\bin\java" -cp "%CLASSPATH%" weblogic.Admin FORCESHUTDOWN -url %ADMIN_URL% -username tc -password tc %SERVER_NAME%
+%JAVA_HOME%\bin\java -cp "%CLASSPATH%" weblogic.Admin FORCESHUTDOWN -url %ADMIN_URL% -username tc -password tc %SERVER_NAME%
 
 echo Done
 exit

@@ -158,6 +158,10 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   public void l2StateChanged(StateChangedEvent sce) {
     State state = sce.getCurrentState();
 
+    if(l2State.isActiveCoordinator()) {
+      server.updateActivateTime();
+    }
+    
     debugPrintln("*****  msg=[" + stateChangeNotificationInfo.getMsg(state) + "] attrName=["
                  + stateChangeNotificationInfo.getAttributeName(state) + "] attrType=["
                  + stateChangeNotificationInfo.getAttributeType(state) + "] stateName=[" + state.getName() + "]");

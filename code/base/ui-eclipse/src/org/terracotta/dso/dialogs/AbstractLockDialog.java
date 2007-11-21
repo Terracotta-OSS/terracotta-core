@@ -21,6 +21,8 @@ import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.Region;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StackLayout;
+import org.eclipse.swt.events.MouseAdapter;
+import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
@@ -294,8 +296,8 @@ public abstract class AbstractLockDialog extends AbstractApplicationEventDialog 
       item.setText(stackElemInfo.toString());
     }
 
-    fStackTable.addSelectionListener(new SelectionAdapter() {
-      public void widgetSelected(SelectionEvent e) {
+    fStackTable.addMouseListener(new MouseAdapter() {
+      public void mouseDoubleClick(MouseEvent e) {
         e.widget.getDisplay().asyncExec(new Runnable() {
           public void run() {
             handleStackElementSelectionChange(fStackTable.getSelectionIndex());

@@ -12,10 +12,10 @@ echo off
 
 setlocal
 
-rem for %%i in ("%BEA_HOME%") do set BEA_HOME=%%~fsi
+for %%i in ("%BEA_HOME%") do set BEA_HOME=%%~fsi
 
 set WL_HOME=%BEA_HOME%\weblogic92
-rem for %%i in ("%WL_HOME%") do set WL_HOME=%%~fsi
+for %%i in ("%WL_HOME%") do set WL_HOME=%%~fsi
 
 set PRODUCTION_MODE=
 set ADMIN_URL=t3://localhost:%1
@@ -26,7 +26,7 @@ if "%JAVA_HOME%" == "" (
   set JAVA_HOME=%BEA_HOME%\jdk150_10
 )
 
-rem for %%i in ("%JAVA_HOME%") do set JAVA_HOME=%%~fsi
+for %%i in ("%JAVA_HOME%") do set JAVA_HOME=%%~fsi
 
 call "%WL_HOME%\common\bin\commEnv.cmd"
 

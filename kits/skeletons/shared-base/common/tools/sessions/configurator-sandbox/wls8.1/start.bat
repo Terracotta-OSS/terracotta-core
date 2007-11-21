@@ -14,6 +14,8 @@ setlocal
 
 cd %~d0%~p0..
 set SANDBOX=%CD%
+for %%i in ("%SANDBOX%") do set SANDBOX=%%~fsi
+
 set TC_INSTALL_DIR=%SANDBOX%\..\..\..
 
 if "%JAVA_HOME%" == "" (
@@ -26,7 +28,9 @@ IF NOT EXIST "%JAVA_HOME%" (
   endlocal  
 )
 
-"%JAVA_HOME%\bin\java" -classpath "%TC_INSTALL_DIR%\lib\tc.jar" com.tc.CheckJavaVersion "1.4"
+for %%i in ("%JAVA_HOME%") do set JAVA_HOME=%%~fsi
+
+%JAVA_HOME%\bin\java -classpath %TC_INSTALL_DIR%\lib\tc.jar com.tc.CheckJavaVersion "1.4"
 if %ERRORLEVEL% NEQ 0 (
   echo Weblogic Server 8.1 requires Java 1.4. Exiting.
   goto end
@@ -35,7 +39,7 @@ if %ERRORLEVEL% NEQ 0 (
 if ""%2"" == ""nodso"" goto doRunWLS
 
 set TC_CONFIG_PATH=%SANDBOX%\wls8.1\tc-config.xml
-call "%TC_INSTALL_DIR%\bin\dso-env.bat" -q "%TC_CONFIG%"
+call %TC_INSTALL_DIR%\bin\dso-env.bat -q "%TC_CONFIG%"
 
 if %ERRORLEVEL% neq 0 goto end
 

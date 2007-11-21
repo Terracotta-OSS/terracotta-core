@@ -100,10 +100,10 @@ public class ServerTracker implements IDebugEventSetListener {
   }
 
   public boolean anyRunning(IJavaProject javaProj) {
-    Iterator iter = m_servers.keySet().iterator();
+    Iterator<IProcess> iter = m_servers.keySet().iterator();
 
     while (iter.hasNext()) {
-      IProcess proc = (IProcess) iter.next();
+      IProcess proc = iter.next();
       ServerInfo serverInfo = m_servers.get(proc);
       IJavaProject project = serverInfo.getJavaProject();
 
@@ -114,10 +114,10 @@ public class ServerTracker implements IDebugEventSetListener {
   }
 
   public ServerInfo getServerInfo(IJavaProject javaProj, String name) {
-    Iterator iter = m_servers.keySet().iterator();
+    Iterator<IProcess> iter = m_servers.keySet().iterator();
 
     while (iter.hasNext()) {
-      IProcess proc = (IProcess) iter.next();
+      IProcess proc = iter.next();
       ServerInfo serverInfo = m_servers.get(proc);
       String serverName = serverInfo.getName();
 
@@ -240,15 +240,18 @@ public class ServerTracker implements IDebugEventSetListener {
             setRunning(fJavaProject, Boolean.TRUE);
   
             ConnectionContext cc = fServerConnectionManager.getConnectionContext();
-            ObjectName on = cc.queryName(L2MBeanNames.DSO_APP_EVENTS.getCanonicalName());
-            if (on != null) {
-              new NonPortableObjectEvent(null, null);
-              cc.addNotificationListener(on, new DSOAppEventListener());
-              stopListening();
+            while(true) {
+              ObjectName on = cc.queryName(L2MBeanNames.DSO_APP_EVENTS.getCanonicalName());
+              if (on != null) {
+                cc.addNotificationListener(on, new DSOAppEventListener());
+                break;
+              }
+              ThreadUtil.reallySleep(250);
             }
           }
         }
-      } catch (Exception e) {/**/
+      } catch (Exception e) {
+        e.printStackTrace();
       }
     }
 
@@ -313,25 +316,15 @@ public class ServerTracker implements IDebugEventSetListener {
         connectListener);
     connectListener.setServerConnectionManager(connectManager);
     connectManager.setAutoConnect(true);
-
-//    new Thread() {
-//      public void run() {
-//        L2ConnectListener connectListener = new L2ConnectListener(javaProject, name);
-//        ServerConnectionManager connectManager = new ServerConnectionManager("localhost", jmxPort, false,
-//            connectListener);
-//        connectListener.setServerConnectionManager(connectManager);
-//        connectManager.setAutoConnect(true);
-//      }
-//    }.start();
   }
 
   public void cancelServer(IJavaProject javaProject) {
-    Iterator iter = m_servers.keySet().iterator();
+    Iterator<IProcess> iter = m_servers.keySet().iterator();
     IProcess proc;
     ServerInfo info;
 
     while (iter.hasNext()) {
-      proc = (IProcess) iter.next();
+      proc = iter.next();
       info = m_servers.get(proc);
 
       if (info.getJavaProject().equals(javaProject)) {
@@ -388,7 +381,7 @@ public class ServerTracker implements IDebugEventSetListener {
 
   private void doStopServer(IJavaProject targetProj, String targetName, IProgressMonitor monitor) throws IOException,
       DebugException {
-    Iterator iter = m_servers.keySet().iterator();
+    Iterator<IProcess> iter = m_servers.keySet().iterator();
     IProcess proc;
     ServerInfo serverInfo;
     IJavaProject javaProject;
@@ -396,8 +389,14 @@ public class ServerTracker implements IDebugEventSetListener {
     String name;
 
     while (iter.hasNext()) {
-      proc = (IProcess) iter.next();
+      proc = iter.next();
       serverInfo = m_servers.get(proc);
+
+      if(serverInfo.isTerminated()) {
+        monitor.done();
+        return;
+      }
+      
       javaProject = serverInfo.getJavaProject();
       jmxPort = serverInfo.getJmxPort();
       name = serverInfo.getName();
@@ -427,11 +426,11 @@ public class ServerTracker implements IDebugEventSetListener {
   }
 
   public void shutdownAllServers() {
-    Iterator iter = m_servers.values().iterator();
+    Iterator<ServerInfo> iter = m_servers.values().iterator();
     ServerInfo info;
 
     while (iter.hasNext()) {
-      info = (ServerInfo) iter.next();
+      info = iter.next();
       cancelServer(info.getJavaProject());
     }
   }

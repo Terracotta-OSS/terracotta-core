@@ -15,6 +15,8 @@ setlocal
 cd %~d0%~p0
 echo %~d0%~p0
 set WAS_SANDBOX=%CD%
+for %%i in ("%WAS_SANDBOX%") do set WAS_SANDBOX=%%~fsi
+
 set TC_INSTALL_DIR=%WAS_SANDBOX%\..\..\..\..
 
 echo WAS_SANDBOX : %WAS_SANDBOX%
@@ -41,7 +43,7 @@ IF NOT EXIST "%WAS_HOME%\java" (
 set JAVA_HOME=%WAS_HOME%\java
 
 set TC_CONFIG_PATH=%WAS_SANDBOX%\tc-config.xml
-call "%TC_INSTALL_DIR%\bin\dso-env.bat" -q "%TC_CONFIG%"
+call %TC_INSTALL_DIR%\bin\dso-env.bat -q "%TC_CONFIG%"
 if %ERRORLEVEL% neq 0 goto end
 
 
@@ -60,7 +62,7 @@ set JAVA_OPTIONS=%OPTS% %JAVA_OPTS%
 
 :doCheckProfile
 
-set WAS_POLICY="%WAS_HOME%/profiles/tc-%PORT%/properties/server.policy"
+set WAS_POLICY=%WAS_HOME%/profiles/tc-%PORT%/properties/server.policy
 
 @rem call "%WAS_HOME%/bin/manageprofiles.bat" -listProfiles | grep -q "tc-%PORT%"
 @rem if %ERRORLEVEL% neq 0 (
