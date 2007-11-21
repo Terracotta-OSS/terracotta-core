@@ -480,17 +480,16 @@ modules:
         - dso-memory-datastore
   - clustered-jetty-6.1:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
         module: true
       dependencies:
         - modules-common
         - aspectwerkz
+        - common
+        - common-api
         - dso-common
         - dso-l1-api
         - thirdparty-api
-        - dso-l2-common
-        - deploy
-        - dso-l2
         - thirdparty
   - clustered-lucene-2.0.0:
       options:

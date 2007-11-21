@@ -2,6 +2,8 @@
 <ivy-module version="1.0">
   <info organisation="ibiblio" module="deploy"/>
   <dependencies>
+	<dependency name="jetty" rev="6.0.1" org="testing"/>
+	<dependency name="jetty-util" rev="6.0.1" org="testing"/>
 	<dependency name="jfreechart" rev="1.0.0x" org="terracotta"/>
 	<dependency name="jmxremote_optional" rev="1.0.1_04-b58" org="terracotta"/>
 	<dependency name="jmxremote" rev="1.0.1_04" org="terracotta"/>
