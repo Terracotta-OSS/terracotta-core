@@ -25,15 +25,20 @@ rem
 setlocal
 cd %~d0%~p0
 set TC_INSTALL_DIR=..\..\..
+for %%i in ("%TC_INSTALL_DIR%") do set TC_INSTALL_DIR=%%~fsi
+
 set CATALINA_HOME=%TC_INSTALL_DIR%\vendors\tomcat5.5
+
 if not exist "%JAVA_HOME%" set JAVA_HOME=%TC_INSTALL_DIR%\jre
+for %%i in ("%JAVA_HOME%") do set JAVA_HOME=%%~fsi
+
 set TC_CONFIG_PATH=tc-config.xml
-call "%TC_INSTALL_DIR%\bin\dso-env.bat" -q "%TC_CONFIG%"
+call %TC_INSTALL_DIR%\bin\dso-env.bat -q "%TC_CONFIG%"
 set OPTS=%TC_JAVA_OPTS% -Dcom.sun.management.jmxremote
 set OPTS=%OPTS% -Dcom.sun.management.jmxremote.port=8091
 set OPTS=%OPTS% -Dcom.sun.management.jmxremote.authenticate=false
 set OPTS=%OPTS% -Dcom.sun.management.jmxremote.ssl=false
 set JAVA_OPTS=%OPTS% %JAVA_OPTS%
 set CATALINA_BASE=tomcat1
-start "terracotta for spring: jmx sample: 8081" "%CATALINA_HOME%\bin\catalina.bat" run
+start "terracotta for spring: jmx sample: 8081" %CATALINA_HOME%\bin\catalina.bat run
 endlocal

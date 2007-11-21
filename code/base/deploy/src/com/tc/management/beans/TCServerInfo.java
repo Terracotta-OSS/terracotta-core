@@ -7,6 +7,7 @@ package com.tc.management.beans;
 import com.tc.config.schema.L2Info;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.state.StateChangeListener;
+import com.tc.l2.state.StateManager;
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.server.TCServer;
 import com.tc.util.ProductInfo;
@@ -158,7 +159,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   public void l2StateChanged(StateChangedEvent sce) {
     State state = sce.getCurrentState();
 
-    if(l2State.isActiveCoordinator()) {
+    if(l2State.getState().equals(StateManager.ACTIVE_COORDINATOR)) {
       server.updateActivateTime();
     }
     

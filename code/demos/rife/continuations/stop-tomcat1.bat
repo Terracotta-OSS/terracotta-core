@@ -9,9 +9,14 @@ rem
 setlocal
 cd %~d0%~p0
 set TC_INSTALL_DIR=..\..\..
+for %%i in ("%TC_INSTALL_DIR%") do set TC_INSTALL_DIR=%%~fsi
+
 set CATALINA_HOME=%TC_INSTALL_DIR%\vendors\tomcat5.5
+
 if not exist "%JAVA_HOME%" set JAVA_HOME=%TC_INSTALL_DIR%\jre
+for %%i in ("%JAVA_HOME%") do set JAVA_HOME=%%~fsi
+
 set CATALINA_BASE=tomcat1
 echo "stopping terracotta for spring: webflow sample: 8081" 
-"%CATALINA_HOME%\bin\catalina.bat" stop
+%CATALINA_HOME%\bin\catalina.bat stop
 endlocal

@@ -162,7 +162,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   public void updateActivateTime() {
-    if(activateTime == -1 && state.isActiveCoordinator()) {
+    if(activateTime == -1) {
       activateTime = System.currentTimeMillis();
     }
   }
