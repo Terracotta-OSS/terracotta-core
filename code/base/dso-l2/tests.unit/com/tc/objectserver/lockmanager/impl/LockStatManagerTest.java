@@ -17,6 +17,7 @@ import com.tc.objectserver.api.TestSink;
 import com.tc.objectserver.lockmanager.api.LockHolder;
 import com.tc.objectserver.lockmanager.api.NullChannelManager;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Os;
 
 import java.util.Collection;
@@ -91,10 +92,10 @@ public class LockStatManagerTest extends TestCase {
       ThreadID s2 = new ThreadID(1);
 
       lockManager.requestLock(l1, cid1, s1, LockLevel.WRITE, sink);
-      Thread.sleep(5000);
+      ThreadUtil.reallySleep(5000);
       lockManager.unlock(l1, cid1, s1);
       lockManager.requestLock(l1, cid2, s2, LockLevel.READ, sink);
-      Thread.sleep(3000);
+      ThreadUtil.reallySleep(3000);
       lockManager.unlock(l1, cid2, s2);
       Collection c = lockStatManager.getTopAggregateLockHolderStats(100);
       Assert.assertEquals(1, c.size());
@@ -111,8 +112,6 @@ public class LockStatManagerTest extends TestCase {
       } else {
         Assert.assertTrue(avgHeldTimeInMillis >= 3990);
       }
-    } catch (InterruptedException e) {
-      // ignore
     } finally {
       resetLockManager();
     }
