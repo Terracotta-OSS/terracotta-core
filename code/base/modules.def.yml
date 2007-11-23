@@ -480,7 +480,7 @@ modules:
         - dso-memory-datastore
   - clustered-jetty-6.1:
       options:
-        jdk: J2SE-1.5
+        jdk: J2SE-1.4
         module: true
       dependencies:
         - modules-common
