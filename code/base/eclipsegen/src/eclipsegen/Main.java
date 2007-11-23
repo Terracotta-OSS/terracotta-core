@@ -55,7 +55,6 @@ public class Main {
     writeClasspathFiles(base, modules);
 
     writeSettings(base, modules);
-
   }
 
   @SuppressWarnings("unchecked")
