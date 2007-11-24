@@ -17,7 +17,7 @@ Terracotta
       - Unzip/untar the Terracotta software.
       - cd into the the top-level directory.
       - Launch the Welcome tool by entering the command:
-           ./bin/welcome.sh
+           ./welcome.sh
    Windows:
       - Run the Terracotta installer.
       - After a successful installation, the Welcome tool is launched.
