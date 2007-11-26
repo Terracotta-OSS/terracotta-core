@@ -22,19 +22,16 @@ class BuildEnvironment < Environment
       super(platform)
       @config_source = config_source
       @build_timestamp = Time.now
-      begin
-          svn_info = `svn info '#{root_dir}'`
-          if $? != 0
-            raise "will be caught below"
-          end
-          @svninfo = YAML::load(svn_info)
-      rescue Exception => e
-          @svninfo = {}
-          @svninfo["Last Changed Rev"] = "00"
-          @svninfo["Last Changed Author"] = "unknown-author"
-          @svninfo["Last Changed Date"] = "unknown-date"
-          @svninfo["URL"] = "unknown-url"
+      @svninfo = {}
+      @svninfo["Last Changed Rev"] = "00"
+      @svninfo["Last Changed Author"] = "unknown-author"
+      @svninfo["Last Changed Date"] = "unknown-date"
+      @svninfo["URL"] = "unknown-url"            
+      svn_info = `svn info '#{root_dir}'`
+      if $? == 0 && !svn_info.blank?        
+        @svninfo = YAML::load(svn_info)
       end
+      
   end
 
   # What's the latest revision on the local source base?
@@ -61,7 +58,7 @@ class BuildEnvironment < Environment
   # if not, try to parse from "svn info" command
   def current_branch
       return @branch unless @branch.blank?
-      if @branch.nil?
+      if @branch.nil? && !@svninfo["URL"].nil?
           case @svninfo["URL"]
               when /trunk/: @branch="trunk"
               when /branches\/private\/([^\/]+)/: @branch = $1
