@@ -34,8 +34,7 @@ class BuildEnvironment < Environment
         rescue
           # ignore
         end
-      end
-      puts "SVNINFO: #{@svninfo}"
+      end      
   end
 
   # What's the latest revision on the local source base?
