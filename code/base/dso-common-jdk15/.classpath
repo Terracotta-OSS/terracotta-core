@@ -6,6 +6,6 @@
   <classpathentry combineaccessrules="false" kind="src" path="/common"/>
   <classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
   <classpathentry combineaccessrules="false" kind="src" path="/dso-common"/>
-  <classpathentry exported="true" kind="lib" path="/dependencies/lib/catalina-tribes-6.0.11-20070521.jar"/>
+  <classpathentry exported="true" kind="lib" path="/dependencies/lib/catalina-tribes-6.0.11-20071126.jar"/>
   <classpathentry exported="true" kind="lib" path="/dependencies/lib/tomcat-juli-6.0.9.jar"/>
 </classpath>

@@ -48,6 +48,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
   private static final String                             USE_MCAST               = "mcast.enabled";
   private static final String                             USE_ORDER_INTERCEPTOR   = "tribes.orderinterceptor.enabled";
   private static final int                                SEND_OPTIONS_NO_ACK     = 0x00;
+  private static final String                             TRIBES_FAILURE_TIMEOUT  = "tribes.failuredetector.millis";
 
   private static final TCLogger                           logger                  = TCLogging
                                                                                       .getLogger(TribesGroupManager.class);
@@ -138,7 +139,9 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       tcp.setInterval(1000);
 
       // set up failure detector
+      final long ms = TCPropertiesImpl.getProperties().getPropertiesFor(L2_NHA).getLong(TRIBES_FAILURE_TIMEOUT);
       failuredetector = new TcpFailureDetector();
+      failuredetector.setConnectTimeout(ms);
 
       if (useOrderInterceptor) {
         OrderInterceptor oi = new OrderInterceptor();
