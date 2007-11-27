@@ -42,6 +42,8 @@ public abstract class EhcacheGlobalEvictionTestApp extends ServerCrashingAppBase
     final List errorList = Collections.synchronizedList(new ArrayList());
     final L1ClientWrapper l1Wrapper = new L1ClientWrapper(getHostName(), getPort(), new File(getConfigFilePath()));
 
+    addTestTcPropertiesFile(jvmArgs);
+    
     Thread t1 = new Thread(new Runnable() {
       public void run() {
         try {          

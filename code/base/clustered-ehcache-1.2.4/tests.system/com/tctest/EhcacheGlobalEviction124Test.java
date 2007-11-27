@@ -8,8 +8,7 @@ package com.tctest;
 public class EhcacheGlobalEviction124Test extends EhcacheGlobalEvictionTestBase {
 
   public EhcacheGlobalEviction124Test() {
-    // MNK-418
-    disableAllUntil("2008-01-15");
+    //
   }
   
   protected Class getApplicationClass() {
