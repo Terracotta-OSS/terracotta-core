@@ -12,6 +12,7 @@ import org.apache.commons.io.FileUtils;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
+import com.tc.object.bytecode.ManagerUtil;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -20,10 +21,11 @@ import com.tc.util.DebugUtil;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class EhcacheGlobalEvictionTestApp extends ServerCrashingAppBase {
-  private final static int NUM_OF_L1 = 2;
+  private final static int NUM_OF_L1 = 3;
 
   public EhcacheGlobalEvictionTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -31,59 +33,49 @@ public abstract class EhcacheGlobalEvictionTestApp extends ServerCrashingAppBase
 
   public void runTest() throws Throwable {
     basicGlobalEvictionTest();
-
   }
 
   private void basicGlobalEvictionTest() throws Exception {
     DebugUtil.DEBUG = true;
 
+    final List jvmArgs = new ArrayList();
+    final List errorList = Collections.synchronizedList(new ArrayList());
+    final L1ClientWrapper l1Wrapper = new L1ClientWrapper(getHostName(), getPort(), new File(getConfigFilePath()));
+
     Thread t1 = new Thread(new Runnable() {
       public void run() {
-        try {
-          spawnNewClient("0", L1Client.class, new String[] { "0" });
+        try {          
+          l1Wrapper.spawn("0", L1Client.class, new String[] { "0" }, jvmArgs);
         } catch (Exception e) {
-          e.printStackTrace(System.err);
+          errorList.add(e);
         }
       }
-
     });
+    
     Thread t2 = new Thread(new Runnable() {
       public void run() {
         try {
-          spawnNewClient("1", L1Client.class, new String[] { "1" });
+          l1Wrapper.spawn("1", L1Client.class, new String[] { "1" }, jvmArgs);
         } catch (Exception e) {
-          e.printStackTrace(System.err);
+          errorList.add(e);
         }
       }
-
     });
 
     t1.start();
     t2.start();
+    
+    Thread.sleep(60000L);
+    
+    t1.join();
+    t2.join();
 
-    Thread.sleep(60000);
+    if (errorList.size() > 0) {
+      throw (Exception)errorList.get(0);
+    }
+    
 
     DebugUtil.DEBUG = false;
-  }
-
-  protected ExtraL1ProcessControl spawnNewClient(String clientId, Class clientClass, String[] mainArgs)
-      throws Exception {
-    final String hostName = getHostName();
-    final int port = getPort();
-    final File configFile = new File(getConfigFilePath());
-    File workingDir = new File(configFile.getParentFile(), "client-" + clientId);
-    FileUtils.forceMkdir(workingDir);
-
-    List jvmArgs = new ArrayList();
-    addTestTcPropertiesFile(jvmArgs);
-    ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, clientClass, configFile.getAbsolutePath(),
-                                                             mainArgs, workingDir, jvmArgs);
-    client.start();
-    client.mergeSTDERR();
-    client.mergeSTDOUT();
-    client.waitFor();
-    System.err.println("\n### Started New Client");
-    return client;
   }
 
   public static class L1Client {
@@ -96,6 +88,8 @@ public abstract class EhcacheGlobalEvictionTestApp extends ServerCrashingAppBase
       if (index == 0) {
         cacheManager = getCacheManager();
       }
+
+      System.err.println("Client: " + ManagerUtil.getClientID() + ", index: " + index);
     }
 
     public static void main(String args[]) throws Exception {
@@ -144,8 +138,10 @@ public abstract class EhcacheGlobalEvictionTestApp extends ServerCrashingAppBase
       Assert.assertEquals(new Element("key16", "val16"), cache.get("key16"));
       Assert.assertEquals(6, cache.getSize());
 
+      barrier.barrier();
+      
       if (index == 0) {
-        Thread.sleep(10000);
+        Thread.sleep(24000);
 
         Assert.assertTrue(cache.isExpired(new Element("key04", "val04")));
         Assert.assertTrue(cache.isExpired(new Element("key05", "val05")));
@@ -153,6 +149,9 @@ public abstract class EhcacheGlobalEvictionTestApp extends ServerCrashingAppBase
         Assert.assertTrue(cache.isExpired(new Element("key14", "val14")));
         Assert.assertTrue(cache.isExpired(new Element("key15", "val15")));
         Assert.assertTrue(cache.isExpired(new Element("key16", "val16")));
+        
+        System.out.println("Cache content: " + cache);
+        
         Assert.assertEquals(0, cache.getSize());
       }
     }
@@ -165,6 +164,40 @@ public abstract class EhcacheGlobalEvictionTestApp extends ServerCrashingAppBase
       cache.put(new Element("key" + index + startValue, "val" + index + startValue));
       cache.put(new Element("key" + index + (startValue + 1), "val" + index + (startValue + 1)));
       cache.put(new Element("key" + index + (startValue + 2), "val" + index + (startValue + 2)));
+    }
+  }
+
+  private static class L1ClientWrapper {
+    private String hostname;
+    private int    port;
+    private File   configFile;
+
+    public L1ClientWrapper(String hostname, int port, File configFile) {
+      this.hostname = hostname;
+      this.port = port;
+      this.configFile = configFile;
+    }
+
+    public void spawn(String clientId, Class clientClass, String[] mainArgs, List jvmArgs) throws Exception {
+      ExtraL1ProcessControl client = spawnNewClient(clientId, clientClass, mainArgs, jvmArgs);
+      if (client.waitFor() != 0) { throw new Exception(clientClass.getName() + " exited with non zero code"); }
+    }
+
+    protected ExtraL1ProcessControl spawnNewClient(String clientId, Class clientClass, String[] mainArgs, List jvmArgs)
+        throws Exception {
+
+      File workingDir = new File(configFile.getParentFile(), "client-" + clientId);
+      FileUtils.forceMkdir(workingDir);
+
+      ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostname, port, clientClass, configFile
+          .getAbsolutePath(), mainArgs, workingDir, jvmArgs);
+      client.start();
+      System.err.println("\n### Started New Client");
+
+      client.mergeSTDERR();
+      client.mergeSTDOUT();
+
+      return client;
     }
   }
 
