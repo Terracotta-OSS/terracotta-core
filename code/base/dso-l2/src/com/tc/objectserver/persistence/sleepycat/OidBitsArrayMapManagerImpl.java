@@ -106,9 +106,9 @@ public final class OidBitsArrayMapManagerImpl extends SleepycatPersistorBase imp
       } catch (Throwable t) {
         logger.error("Error Reading Object IDs", t);
       } finally {
-        isPopulating = false;
         safeClose(cursor);
         safeCommit(tx);
+        isPopulating = false;
         set.stopPopulating(tmp);
         tmp = null;
       }
