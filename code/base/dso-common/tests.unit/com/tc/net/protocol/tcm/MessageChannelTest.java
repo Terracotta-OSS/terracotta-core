@@ -16,6 +16,8 @@ import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
+import com.tc.net.protocol.transport.WireProtocolMessage;
+import com.tc.net.protocol.transport.WireProtocolMessageSink;
 import com.tc.object.session.NullSessionManager;
 import com.tc.test.TCTestCase;
 import com.tc.util.SequenceGenerator;
@@ -25,6 +27,7 @@ import com.tc.util.concurrent.ThreadUtil;
 import gnu.trove.TLongHashSet;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -65,11 +68,16 @@ public class MessageChannelTest extends TCTestCase {
   }
 
   protected void setUp(int maxReconnectTries, boolean allowConnectionReplace) throws Exception {
-    setUp(maxReconnectTries, new PlainNetworkStackHarnessFactory(allowConnectionReplace), new PlainNetworkStackHarnessFactory(allowConnectionReplace));
+    setUp(maxReconnectTries, allowConnectionReplace, false);
+  }
+
+  protected void setUp(int maxReconnectTries, boolean allowConnectionReplace, boolean dumbSink) throws Exception {
+    setUp(maxReconnectTries, new PlainNetworkStackHarnessFactory(allowConnectionReplace),
+          new PlainNetworkStackHarnessFactory(allowConnectionReplace), dumbSink);
   }
 
   protected void setUp(int maxReconnectTries, NetworkStackHarnessFactory clientStackHarnessFactory,
-                       NetworkStackHarnessFactory serverStackHarnessFactory) throws Exception {
+                       NetworkStackHarnessFactory serverStackHarnessFactory, boolean dumbServerSink) throws Exception {
     super.setUp();
 
     clientWatcher = new MessageSendAndReceiveWatcher();
@@ -81,20 +89,35 @@ public class MessageChannelTest extends TCTestCase {
     clientComms = new CommunicationsManagerImpl(mm, clientStackHarnessFactory, new NullConnectionPolicy());
     serverComms = new CommunicationsManagerImpl(mm, serverStackHarnessFactory, new NullConnectionPolicy());
 
-    initListener(clientWatcher, serverWatcher);
+    initListener(clientWatcher, serverWatcher, dumbServerSink);
     this.clientChannel = createClientMessageChannel(maxReconnectTries);
     this.setUpClientReceiveSink();
   }
 
   private void initListener(final MessageSendAndReceiveWatcher myClientSenderWatcher,
-                            final MessageSendAndReceiveWatcher myServerSenderWatcher) throws IOException,
-      TCTimeoutException {
+                            final MessageSendAndReceiveWatcher myServerSenderWatcher, boolean dumbServerSink)
+      throws IOException, TCTimeoutException {
     if (lsnr != null) {
       lsnr.stop(WAIT);
     }
 
-    lsnr = serverComms.createListener(new NullSessionManager(), new TCSocketAddress(port), false,
-                                      new DefaultConnectionIdFactory());
+    if (dumbServerSink) {
+      lsnr = serverComms.createListener(new NullSessionManager(), new TCSocketAddress(port), false,
+                                        new DefaultConnectionIdFactory(), new WireProtocolMessageSink() {
+
+                                          public void putMessage(WireProtocolMessage message) {
+                                            // Thanks for the message.
+                                            // But i don't give you back anything
+                                            // as i am Dumb.
+                                          }
+                                        }
+
+      );
+    } else {
+      lsnr = serverComms.createListener(new NullSessionManager(), new TCSocketAddress(port), false,
+                                        new DefaultConnectionIdFactory());
+    }
+
     lsnr.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     lsnr.routeMessageType(TCMessageType.PING_MESSAGE, new TCMessageSink() {
       public void putMessage(TCMessage message) throws UnsupportedMessageTypeException {
@@ -152,6 +175,36 @@ public class MessageChannelTest extends TCTestCase {
     removed = channel.removeAttachment(key);
     assertNull(removed);
     assertNull(channel.getAttachment(key));
+  }
+
+  public void testOpenRaceWithAutoReconnect() throws Exception {
+    setUp(-1, false, true);
+
+    Thread t = new Thread() {
+      public void run() {
+        ThreadUtil.reallySleep(WAIT / 2);
+        serverComms.getConnectionManager().shutdown();
+        System.err.println("closed connections on server side");
+      }
+    };
+
+    t.start();
+
+    try {
+      clientChannel.open();
+      fail();
+    } catch (TCTimeoutException e) {
+      // expected;
+      System.err.println("Expected: got timeout exception for first open() : " + e);
+    }
+
+    try {
+      clientChannel.open();
+      fail();
+    } catch (ConnectException e) {
+      // expected
+      System.err.println("Expected: Connection Error: " + e);
+    }
   }
 
   public void testAutomaticReconnect() throws Exception {
@@ -217,7 +270,7 @@ public class MessageChannelTest extends TCTestCase {
       assertFalse(clientChannel.isConnected());
     }
 
-    initListener(this.clientWatcher, this.serverWatcher);
+    initListener(this.clientWatcher, this.serverWatcher, false);
     clientChannel.open();
     assertTrue(clientChannel.isConnected());
   }
@@ -368,8 +421,9 @@ public class MessageChannelTest extends TCTestCase {
   private ClientMessageChannel createClientMessageChannel(int maxReconnectTries) {
     ClientMessageChannel ch = clientComms
         .createClientChannel(new NullSessionManager(), maxReconnectTries, TCSocketAddress.LOOPBACK_IP, lsnr
-            .getBindPort(), WAIT, new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo("localhost", lsnr
-            .getBindPort()) }));
+            .getBindPort(), WAIT,
+                             new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo("localhost", lsnr
+                                 .getBindPort()) }));
     ch.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     return ch;
   }

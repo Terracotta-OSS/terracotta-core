@@ -9,6 +9,7 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
+import com.tc.net.protocol.transport.WireProtocolMessageSink;
 import com.tc.object.session.SessionProvider;
 
 /**
@@ -42,6 +43,11 @@ public interface CommunicationsManager {
   public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress addr,
                                         boolean transportDisconnectRemovesChannel,
                                         ConnectionIDFactory connectionIdFactory);
+
+  public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress addr,
+                                        boolean transportDisconnectRemovesChannel,
+                                        ConnectionIDFactory connectionIdFactory,
+                                        WireProtocolMessageSink wireProtoMsgSink);
 
   public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress addr,
                                         boolean transportDisconnectRemovesChannel,

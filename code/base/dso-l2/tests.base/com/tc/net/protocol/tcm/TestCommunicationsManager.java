@@ -10,6 +10,7 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
+import com.tc.net.protocol.transport.WireProtocolMessageSink;
 import com.tc.object.session.SessionProvider;
 
 public class TestCommunicationsManager implements CommunicationsManager {
@@ -52,6 +53,13 @@ public class TestCommunicationsManager implements CommunicationsManager {
 
   public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress address, boolean b,
                                         ConnectionIDFactory connectionIDFactory, Sink httpSink) {
+    throw new ImplementMe();
+  }
+
+  public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress addr,
+                                        boolean transportDisconnectRemovesChannel,
+                                        ConnectionIDFactory connectionIdFactory,
+                                        WireProtocolMessageSink wireProtoMsgSink) {
     throw new ImplementMe();
   }
 

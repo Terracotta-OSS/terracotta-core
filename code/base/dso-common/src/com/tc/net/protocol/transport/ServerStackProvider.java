@@ -36,6 +36,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
   private final ConnectionIDFactory              connectionIdFactory;
   private final ConnectionPolicy                 connectionPolicy;
   private final WireProtocolAdaptorFactory       wireProtocolAdaptorFactory;
+  private final WireProtocolMessageSink          wireProtoMsgsink;
   private final MessageTransportFactory          messageTransportFactory;
   private final List                             transportListeners = new ArrayList(1);
   private final TCLogger                         logger;
@@ -47,9 +48,21 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
                              TransportHandshakeMessageFactory handshakeMessageFactory,
                              ConnectionIDFactory connectionIdFactory, ConnectionPolicy connectionPolicy,
                              WireProtocolAdaptorFactory wireProtocolAdaptorFactory) {
+    this(logger, initialConnectionIDs, harnessFactory, channelFactory, messageTransportFactory,
+         handshakeMessageFactory, connectionIdFactory, connectionPolicy, wireProtocolAdaptorFactory, null);
+  }
+
+  public ServerStackProvider(TCLogger logger, Set initialConnectionIDs, NetworkStackHarnessFactory harnessFactory,
+                             ServerMessageChannelFactory channelFactory,
+                             MessageTransportFactory messageTransportFactory,
+                             TransportHandshakeMessageFactory handshakeMessageFactory,
+                             ConnectionIDFactory connectionIdFactory, ConnectionPolicy connectionPolicy,
+                             WireProtocolAdaptorFactory wireProtocolAdaptorFactory,
+                             WireProtocolMessageSink wireProtoMsgSink) {
     this.messageTransportFactory = messageTransportFactory;
     this.connectionPolicy = connectionPolicy;
     this.wireProtocolAdaptorFactory = wireProtocolAdaptorFactory;
+    this.wireProtoMsgsink = wireProtoMsgSink;
     Assert.assertNotNull(harnessFactory);
     this.harnessFactory = harnessFactory;
     this.channelFactory = channelFactory;
@@ -161,8 +174,12 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
    */
 
   public TCProtocolAdaptor getInstance() {
-    MessageSink sink = new MessageSink(createHandshakeErrorHandler());
-    return this.wireProtocolAdaptorFactory.newWireProtocolAdaptor(sink);
+    if (wireProtoMsgsink != null) {
+      return this.wireProtocolAdaptorFactory.newWireProtocolAdaptor(wireProtoMsgsink);
+    } else {
+      MessageSink sink = new MessageSink(createHandshakeErrorHandler());
+      return this.wireProtocolAdaptorFactory.newWireProtocolAdaptor(sink);
+    }
   }
 
   /*********************************************************************************************************************

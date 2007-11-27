@@ -8,6 +8,7 @@ import com.tc.async.api.Sink;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCListener;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
+import com.tc.net.protocol.transport.WireProtocolMessageSink;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
@@ -16,7 +17,7 @@ import java.util.Set;
 
 /**
  * A handle to a specific server port listener
- * 
+ *
  * @author teck
  */
 class NetworkListenerImpl implements NetworkListener {
@@ -30,17 +31,19 @@ class NetworkListenerImpl implements NetworkListener {
   private final boolean                   reuseAddr;
   private final ConnectionIDFactory       connectionIdFactory;
   private final Sink                      httpSink;
+  private final WireProtocolMessageSink wireProtoMsgSnk;
 
   // this cstr is intentionally not public, only the Comms Manager should be
   // creating them
   NetworkListenerImpl(TCSocketAddress addr, CommunicationsManagerImpl commsMgr, ChannelManagerImpl channelManager,
                       TCMessageFactory msgFactory, TCMessageRouter router, boolean reuseAddr,
-                      ConnectionIDFactory connectionIdFactory, Sink httpSink) {
+                      ConnectionIDFactory connectionIdFactory, Sink httpSink, WireProtocolMessageSink wireProtoMsgSnk) {
     this.commsMgr = commsMgr;
     this.channelManager = channelManager;
     this.addr = addr;
     this.connectionIdFactory = connectionIdFactory;
     this.httpSink = httpSink;
+    this.wireProtoMsgSnk = wireProtoMsgSnk;
     this.started = false;
     this.msgFactory = msgFactory;
     this.reuseAddr = reuseAddr;
@@ -51,13 +54,13 @@ class NetworkListenerImpl implements NetworkListener {
    * Start this listener listening on the network. You probably don't want to start a listener until you have properly
    * setup your protocol routes, since you might miss messages between the time the listener is <code>start()</code>
    * 'ed and the time you add your routes.
-   * 
+   *
    * @throws IOException if an IO error occurs (this will most likely be a problem binding to the specified
    *         port/address)
    */
   public synchronized void start(Set initialConnectionIDs) throws IOException {
     this.lsnr = commsMgr.createCommsListener(this.addr, this.channelManager, this.reuseAddr, initialConnectionIDs,
-                                             this.connectionIdFactory, this.httpSink);
+                                             this.connectionIdFactory, this.httpSink, this.wireProtoMsgSnk);
     this.started = true;
     commsMgr.registerListener(this);
   }
