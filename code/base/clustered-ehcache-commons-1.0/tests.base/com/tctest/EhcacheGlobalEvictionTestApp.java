@@ -25,7 +25,7 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class EhcacheGlobalEvictionTestApp extends ServerCrashingAppBase {
-  private final static int NUM_OF_L1 = 3;
+  private final static int NUM_OF_L1 = 2;
 
   public EhcacheGlobalEvictionTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
