@@ -17,7 +17,7 @@ public class HashMapBatchTxnTest extends TransparentTestBase {
   public HashMapBatchTxnTest() {
     // MNK-362
     if (Vm.isIBM()) {
-      disableAllUntil("2007-12-04");
+      //disableAllUntil("2007-12-04");
     }
   }
 

@@ -17,7 +17,7 @@ import java.util.concurrent.CyclicBarrier;
 import com.tc.util.runtime.Vm;
 
 public class HashMapBatchTxnTestApp extends AbstractTransparentApp {
-  int BATCHSIZE = (Vm.isIBM())? 500: 1000;
+  int BATCHSIZE = (Vm.isIBM())? 400: 1000;
   int BATCHES = 80;
   
   private final CyclicBarrier     barrier; 
