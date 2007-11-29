@@ -144,6 +144,13 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     // s.setReuseAddress(true);
     s.setTcpNoDelay(true);
 
+    // DEV-1141
+    try {
+      s.setKeepAlive(true);
+    } catch (IOException ioe) {
+      logger.warn("IOException trying to setKeepAlive()", ioe);
+    }
+
     return rv;
   }
 

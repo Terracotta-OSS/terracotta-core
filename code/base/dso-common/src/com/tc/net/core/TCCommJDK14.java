@@ -36,7 +36,7 @@ import java.util.Set;
 /**
  * JDK 1.4 (NIO) version of TCComm. Uses a single internal thread and a selector to manage channels associated with
  * <code>TCConnection</code>'s
- *
+ * 
  * @author teck
  */
 class TCCommJDK14 implements TCComm, TCListenerEventListener {
@@ -486,6 +486,13 @@ class TCCommJDK14 implements TCComm, TCListenerEventListener {
         s.setSendBufferSize(64 * 1024);
       } catch (IOException ioe) {
         logger.warn("IOException trying to setSendBufferSize()");
+      }
+
+      // DEV-1141
+      try {
+        s.setKeepAlive(true);
+      } catch (IOException ioe) {
+        logger.warn("IOException trying to setKeepAlive()", ioe);
       }
 
       try {
