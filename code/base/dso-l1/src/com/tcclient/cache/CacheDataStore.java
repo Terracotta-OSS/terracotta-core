@@ -168,6 +168,7 @@ public class CacheDataStore implements Serializable {
 
     CacheData cd = null;
     cd = findCacheDataUnlocked(key);
+    logDebug("Client " + ManagerUtil.getClientID() + " get [" + key + "] " + cd);
     if (cd != null) {
       if (!cd.isValid()) {
         missCountExpired++;
