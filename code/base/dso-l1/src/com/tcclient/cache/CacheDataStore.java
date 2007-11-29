@@ -198,6 +198,7 @@ public class CacheDataStore implements Serializable {
 
   public boolean isExpired(final Object key) {
     CacheData rv = findCacheDataUnlocked(key);
+    logDebug("Checking isExpired for key: " + key + " " + rv);
     return rv == null || !rv.isValid();
   }
 
