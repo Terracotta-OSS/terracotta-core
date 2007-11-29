@@ -93,6 +93,46 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     }
   }
 
+  private void tryLockTest(int index, ReentrantReadWriteLock lock) throws Exception {
+    printTimeStamp(index, "tryLockTest");
+
+    final ReadLock readLock = lock.readLock();
+    final WriteLock writeLock = lock.writeLock();
+
+    if (index == 0) {
+      writeLock.lock();
+      barrier2.await();
+      try {
+        Thread.sleep(10000);
+      } finally {
+        writeLock.unlock();
+      }
+      barrier2.await();
+    } else {
+      barrier2.await();
+      int count = 0;
+      for (int i = 0; i < 10; i++) {
+        if (!readLock.tryLock()) {
+          if (lock.isWriteLocked()) {
+            count++;
+          }
+        }
+      }
+      Assert.assertEquals(10, count);
+      barrier2.await();
+      count = 0;
+      for (int i = 0; i < 10; i++) {
+        if (!readLock.tryLock()) {
+          if (lock.isWriteLocked()) {
+            count++;
+          }
+        }
+      }
+      Assert.assertEquals(10, count);
+    }
+    barrier.await();
+  }
+
   private void readWriteLockTest(int index, ReentrantReadWriteLock readWriteLock, Condition condition) throws Exception {
     basicTryReadLockTest(index, readWriteLock);
     basicTryReadWriteLockTest(index, readWriteLock);
@@ -116,6 +156,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     basicConditionVariableTesting(index, readWriteLock.writeLock(), condition);
     basicConditionVariableWaitTesting(index, readWriteLock, condition);
     singleNodeConditionVariableTesting(index, readWriteLock.writeLock(), condition);
+    
+    tryLockTest(index, readWriteLock);
   }
 
   private void unsharedToSharedTest(int index, ReentrantReadWriteLock lock) throws Exception {

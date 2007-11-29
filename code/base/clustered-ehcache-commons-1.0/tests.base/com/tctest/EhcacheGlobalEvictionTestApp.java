@@ -9,10 +9,12 @@ import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Element;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
-import com.tc.object.bytecode.ManagerUtil;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -90,11 +92,16 @@ public abstract class EhcacheGlobalEvictionTestApp extends ServerCrashingAppBase
       if (index == 0) {
         cacheManager = getCacheManager();
       }
-
-      System.err.println("Client: " + ManagerUtil.getClientID() + ", index: " + index);
     }
 
     public static void main(String args[]) throws Exception {
+      Logger rootLogger = Logger.getRootLogger();
+      if (!rootLogger.getAllAppenders().hasMoreElements()) {
+          rootLogger.setLevel(org.apache.log4j.Level.DEBUG);
+          rootLogger.addAppender(new ConsoleAppender(
+                 new PatternLayout("%-5p [%t]: %m%n")));
+      }
+      
       DebugUtil.DEBUG = true;
 
       int index = Integer.parseInt(args[0]);
@@ -143,7 +150,7 @@ public abstract class EhcacheGlobalEvictionTestApp extends ServerCrashingAppBase
       barrier.barrier();
       
       if (index == 0) {
-        Thread.sleep(20000);
+        Thread.sleep(30000);
 
         Assert.assertTrue(cache.isExpired(new Element("key04", "val04")));
         Assert.assertTrue(cache.isExpired(new Element("key05", "val05")));

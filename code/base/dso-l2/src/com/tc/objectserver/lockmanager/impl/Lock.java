@@ -263,11 +263,18 @@ public class Lock {
 
     if (waiters.containsKey(txn)) throw new AssertionError("Attempt to request a lock in a Thread "
                                                            + "that is already part of the wait set. lock = " + this);
+    
+    enableClientStatIfNeeded(lockResponseSink, txn);
+    recordLockRequestStat(txn.getId().getNodeID(), txn.getId().getClientThreadID(), requestedLockLevel);
 
     // debug("requestLock - BEGIN -", txn, ",", LockLevel.toString(requestedLockLevel));
     // it is an error (probably originating from the client side) to
     // request a lock you already hold
     Holder holder = getHolder(txn);
+    if (noBlock && !timeout.needsToWait() && holder == null && (requestedLockLevel != LockLevel.READ || !this.isRead()) && (getHoldersCount() > 0 || hasGreedyHolders())) {
+      cannotAwardAndRespond(txn, requestedLockLevel, lockResponseSink);
+      return false;
+    }
 
     if (holder != null) {
       if (LockLevel.NIL_LOCK_LEVEL != (holder.getLockLevel() & requestedLockLevel)) {
@@ -276,8 +283,6 @@ public class Lock {
       }
     }
 
-    enableClientStatIfNeeded(lockResponseSink, txn);
-    recordLockRequestStat(txn.getId().getNodeID(), txn.getId().getClientThreadID(), requestedLockLevel);
     if (isPolicyGreedy()) {
       if (canAwardGreedilyOnTheClient(txn, requestedLockLevel)) {
         // These requests are the ones in the wire when the greedy lock was given out to the client.
@@ -327,11 +332,9 @@ public class Lock {
   private void queueRequest(ServerThreadContext txn, int requestedLockLevel, Sink lockResponseSink, boolean noBlock,
                             WaitInvocation timeout, WaitTimer waitTimer, WaitTimerCallback callback) {
     if (noBlock) {
-      if (timeout.needsToWait()) {
-        addPendingTryLockRequest(txn, requestedLockLevel, timeout, lockResponseSink, waitTimer, callback);
-      } else {
-        cannotAwardAndRespond(txn, requestedLockLevel, lockResponseSink);
-      }
+      // By the time it reaches here, timeout.needsToWait() must be true
+      Assert.assertTrue(timeout.needsToWait());
+      addPendingTryLockRequest(txn, requestedLockLevel, timeout, lockResponseSink, waitTimer, callback);
     } else {
       addPendingLockRequest(txn, requestedLockLevel, lockResponseSink);
     }

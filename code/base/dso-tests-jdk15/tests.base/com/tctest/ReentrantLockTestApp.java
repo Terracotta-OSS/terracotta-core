@@ -83,6 +83,8 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       tryLockTesting(root.getUnfairLock());
 
       threadInterruptedLockTesting(root.getUnfairLock());
+      
+      tryLockTest(root.getUnfairLock());
 
       System.err.println("Testing fair lock ...");
 
@@ -99,12 +101,47 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       tryLockTesting(root.getFairLock());
 
       threadInterruptedLockTesting(root.getFairLock());
+      
+      tryLockTest(root.getFairLock());
 
       barrier.await();
     } catch (Throwable t) {
       notifyError(t);
     }
   }
+  
+  private void tryLockTest(final ReentrantLock lock) throws Exception {
+    int index = barrier.await();
+
+    if (index == 0) {
+      lock.lock();
+      barrier2.await();
+      try {
+        Thread.sleep(10000);
+      } finally {
+        lock.unlock();
+      }
+      barrier2.await();
+    } else if (index == 1) {
+      barrier2.await();
+      int count = 0;
+      for (int i=0; i<100; i++) {
+        if (!lock.tryLock()) {
+          if (lock.isLocked()) count++;
+        }
+      }
+      Assert.assertEquals(100, count);
+      barrier2.await();
+      count = 0;
+      for (int i=0; i<100; i++) {
+        if (!lock.tryLock()) {
+          if (lock.isLocked()) count++;
+        }
+      }
+      Assert.assertEquals(100, count);
+    }
+    barrier.await();
+}
 
   private void sharedUnSharedTesting() throws Exception {
     int index = barrier.await();
