@@ -210,7 +210,7 @@ public abstract class ChangeClassNameHierarchyAdapter extends ClassAdapter imple
     String origSuperClassName = context.originalSuperClassNameSlashes;
     // -- need this when superClassNameAdapter and RootAdapter are merged context =
     // (ChangeContext)instrumentedContext.get(origSuperClassName);
-    String convertedSuperClassName = context.convertedClassNameSlashes;
+    // String convertedSuperClassName = context.convertedClassNameSlashes;
 
     Type returnType = Type.getReturnType(desc);
     MethodVisitor mv = cv.visitMethod(access, name, desc, signature, exceptions);

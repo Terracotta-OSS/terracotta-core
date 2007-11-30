@@ -18,33 +18,8 @@ import java.util.HashMapTC.ValueWrapper;
  */
 public abstract class LinkedHashMapTC extends LinkedHashMap implements Manageable {
 
-  // XXX:: Its dumb to store two copies of this
-  private final boolean accessOrder;
+  private boolean accessOrder;
 
-  public LinkedHashMapTC() {
-    super();
-    accessOrder = false;
-  }
-
-  public LinkedHashMapTC(int initialCapacity) {
-    super(initialCapacity);
-    accessOrder = false;
-  }
-
-  public LinkedHashMapTC(Map arg0) {
-    super(arg0);
-    accessOrder = false;
-  }
-
-  public LinkedHashMapTC(int initialCapacity, float loadFactor) {
-    super(initialCapacity, loadFactor);
-    accessOrder = false;
-  }
-
-  public LinkedHashMapTC(int initialCapacity, float loadFactor, boolean accessOrder) {
-    super(initialCapacity, loadFactor, accessOrder);
-    this.accessOrder = accessOrder;
-  }
 
   // This is pretty much a C&P of the one in HashMapTC
   public boolean containsValue(Object value) {

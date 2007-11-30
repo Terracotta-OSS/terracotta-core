@@ -10,6 +10,7 @@ import com.tc.asm.FieldVisitor;
 import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
+import com.tc.asm.commons.AdviceAdapter;
 import com.tc.asm.tree.ClassNode;
 import com.tc.asm.tree.FieldNode;
 import com.tc.asm.tree.InnerClassNode;
@@ -24,6 +25,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter implements Opcodes {
+  private static final String      TC_INIT          = ByteCodeUtil.TC_METHOD_PREFIX + "<init>";
+
   private final List               jInnerClassNames = new ArrayList();
   private final ClassNode          tcClassNode;
   private final String             jFullClassSlashes;
@@ -34,18 +37,26 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
   private String                   superName;
   private TransparencyClassAdapter dsoAdapter;
 
+  private final boolean            insertTCinit;
+
   public MergeTCToJavaClassAdapter(ClassVisitor cv, TransparencyClassAdapter dsoAdapter, String jFullClassDots,
-                                   String tcFullClassDots, ClassNode tcClassNode, Map instrumentedContext, String methodPrefix) {
+                                   String tcFullClassDots, ClassNode tcClassNode, Map instrumentedContext,
+                                   String methodPrefix, boolean insertTCinit) {
     super(cv);
-    
+    this.insertTCinit = insertTCinit;
+
+    if (insertTCinit) {
+      createTCInit(tcClassNode);
+    }
+
     List jInnerClasses = tcClassNode.innerClasses;
     for (Iterator i = jInnerClasses.iterator(); i.hasNext();) {
       InnerClassNode jInnerClass = (InnerClassNode) i.next();
       jInnerClassNames.add(jInnerClass.name);
-    }    
+    }
 
     this.tcClassNode = tcClassNode;
-    
+
     this.jFullClassSlashes = jFullClassDots.replace(DOT_DELIMITER, SLASH_DELIMITER);
     this.tcFullClassSlashes = tcFullClassDots.replace(DOT_DELIMITER, SLASH_DELIMITER);
 
@@ -55,10 +66,48 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
     this.dsoAdapter = dsoAdapter;
     this.methodPrefix = methodPrefix;
   }
-  
+
+  private static void createTCInit(ClassNode tcClassNode) {
+    // For now, we only allow the "TC" class to contain 1 constructor at most.
+    // This constructor body will be woven into all of the constructors present
+    // in the original class
+
+    List cstrs = new ArrayList();
+
+    for (Iterator i = tcClassNode.methods.iterator(); i.hasNext();) {
+      MethodNode mn = (MethodNode) i.next();
+
+      if (isInitMethod(mn.name)) {
+        cstrs.add(mn);
+      }
+    }
+
+    if (cstrs.size() > 1) {
+      //
+      throw new IllegalArgumentException(tcClassNode.name + " contains " + cstrs.size()
+                                         + " constructors, but only 1 is allowed");
+    }
+
+    MethodNode cstr = (MethodNode) cstrs.get(0);
+
+    if (!cstr.exceptions.isEmpty()) {
+      //
+      throw new IllegalArgumentException("constructor in TC class not allowed to throw checked exceptions: "
+                                         + cstr.exceptions);
+    }
+
+    MethodNode processed = new MethodNode();
+    cstr.accept(new TransformConstructorAdapter(processed, cstr.access, cstr.name, cstr.desc));
+
+    cstr.instructions = processed.instructions;
+    cstr.access = ACC_PRIVATE | ACC_SYNTHETIC;
+    cstr.name = TC_INIT;
+  }
+
   public MergeTCToJavaClassAdapter(ClassVisitor cv, TransparencyClassAdapter dsoAdapter, String jFullClassDots,
                                    String tcFullClassDots, ClassNode tcClassNode, Map instrumentedContext) {
-    this(cv, dsoAdapter, jFullClassDots, tcFullClassDots, tcClassNode, instrumentedContext, ByteCodeUtil.TC_METHOD_PREFIX);
+    this(cv, dsoAdapter, jFullClassDots, tcFullClassDots, tcClassNode, instrumentedContext,
+         ByteCodeUtil.TC_METHOD_PREFIX, true);
   }
 
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
@@ -106,6 +155,11 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
         || LogicalClassSerializationAdapter.READ_OBJECT_SIGNATURE.equals(methodDesc)) { //
       return new LogicalClassSerializationAdapter.LogicalClassSerializationMethodAdapter(mv, jFullClassSlashes);
     }
+
+    if (insertTCinit && isInitMethod(name)) {
+      mv = new AddTCInitCallAdapter(jFullClassSlashes, mv, access, name, desc);
+    }
+
     return mv;
   }
 
@@ -121,7 +175,9 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
 
     // hack for now
     if (("java/util/LinkedHashMap".equals(jFullClassSlashes) && "accessOrder".equals(name))
-        || ("java/util/concurrent/locks/ReentrantReadWriteLock".equals(jFullClassSlashes) && ("sync".equals(name) || "readerLock".equals(name) || "writerLock"
+        || ("java/util/concurrent/locks/ReentrantReadWriteLock".equals(jFullClassSlashes) && ("sync".equals(name)
+                                                                                              || "readerLock"
+                                                                                                  .equals(name) || "writerLock"
             .equals(name)))) {
       access = ~Modifier.FINAL & access;
     }
@@ -140,8 +196,8 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
     List tcMethods = tcClassNode.methods;
     for (Iterator i = tcMethods.iterator(); i.hasNext();) {
       MethodNode mNode = (MethodNode) i.next();
-      if (((mNode.access & ACC_ABSTRACT) != 0) ||
-          (isInitMethod(mNode.name) && (visitedMethods.contains(mNode.name + mNode.desc)))) {
+      if (((mNode.access & ACC_ABSTRACT) != 0)
+          || (isInitMethod(mNode.name) && (visitedMethods.contains(mNode.name + mNode.desc)))) {
         continue;
       }
       mNode.accept(new TCSuperClassAdapter(cv));
@@ -149,7 +205,7 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
     LogicalClassSerializationAdapter.addCheckSerializationOverrideMethod(cv, false);
   }
 
-  private boolean isInitMethod(String methodName) {
+  private static boolean isInitMethod(String methodName) {
     return "<init>".equals(methodName);
   }
 
@@ -170,10 +226,10 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
       }
     }
   }
-  
+
   private boolean tcInnerClassExistInJavaClass(InnerClassNode tcInnerClass) {
     return jInnerClassNames.contains(tcInnerClass.name);
-  }  
+  }
 
   private class TCSuperClassAdapter extends ClassAdapter implements Opcodes {
     public TCSuperClassAdapter(ClassVisitor cv) {
@@ -263,4 +319,44 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
 
     }
   }
+
+  private static class TransformConstructorAdapter extends AdviceAdapter {
+    private final MethodNode target;
+
+    public TransformConstructorAdapter(MethodNode mv, int access, String name, String desc) {
+      super(mv, access, name, desc);
+      this.target = mv;
+    }
+
+    protected void onMethodEnter() {
+      target.instructions.clear();
+    }
+
+    protected void onMethodExit(int opcode) {
+      //
+    }
+  }
+
+  private static class AddTCInitCallAdapter extends AdviceAdapter implements Opcodes {
+
+    private final String owner;
+
+    public AddTCInitCallAdapter(String owner, MethodVisitor mv, int access, String name, String desc) {
+      super(mv, access, name, desc);
+      this.owner = owner;
+    }
+
+    protected void onMethodEnter() {
+      //
+    }
+
+    protected void onMethodExit(int opcode) {
+      if (RETURN == opcode) {
+        super.visitVarInsn(ALOAD, 0);
+        super.visitMethodInsn(INVOKESPECIAL, owner, TC_INIT, "()V");
+      }
+    }
+
+  }
+
 }

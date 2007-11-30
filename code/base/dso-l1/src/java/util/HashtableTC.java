@@ -27,22 +27,6 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
   private volatile transient TCObject $__tc_MANAGED;
   private boolean                     evictionEnabled = true;
 
-  public HashtableTC() {
-    super();
-  }
-
-  public HashtableTC(int initialCapacity, float loadFactor) {
-    super(initialCapacity, loadFactor);
-  }
-
-  public HashtableTC(int initialCapacity) {
-    super(initialCapacity);
-  }
-
-  public HashtableTC(Map arg0) {
-    super(arg0);
-  }
-
   public synchronized void clear() {
     if (__tc_isManaged()) {
       ManagerUtil.checkWriteAccess(this);
@@ -231,7 +215,7 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
     int index = -1;
     for (Iterator i = entrySet.iterator(); i.hasNext();) {
       Map.Entry e = (Map.Entry) i.next();
-      if (!(e.getValue() instanceof ObjectID)) {
+      if (!(e.getValue() instanceof ValuesWrapper)) {
         index++;
         tmp[index] = e;
       }

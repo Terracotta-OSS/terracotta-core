@@ -33,22 +33,6 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
   private volatile transient TCObject $__tc_MANAGED;
   private boolean                     evictionEnabled = true;
 
-  public HashMapTC() {
-    super();
-  }
-
-  public HashMapTC(int initialCapacity, float loadFactor) {
-    super(initialCapacity, loadFactor);
-  }
-
-  public HashMapTC(int initialCapacity) {
-    super(initialCapacity);
-  }
-
-  public HashMapTC(Map map) {
-    super(map);
-  }
-
   public void clear() {
     if (__tc_isManaged()) {
       synchronized (__tc_managed().getResolveLock()) {

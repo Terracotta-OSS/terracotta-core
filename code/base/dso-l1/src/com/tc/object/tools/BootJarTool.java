@@ -2137,7 +2137,7 @@ public class BootJarTool {
                                                                           getClass().getClassLoader(), true, false);
     ClassVisitor cv = new SerialVersionUIDAdder(new MergeTCToJavaClassAdapter(cw, dsoAdapter, jInnerClassNameDots,
                                                                               tcInnerClassNameDots, tcCN,
-                                                                              instrumentedContext, methodPrefix));
+                                                                              instrumentedContext, methodPrefix, false));
     jCR.accept(cv, ClassReader.SKIP_FRAMES);
     jData = cw.toByteArray();
 
@@ -2174,7 +2174,7 @@ public class BootJarTool {
                                                                           getClass().getClassLoader(), true, true);
     ClassVisitor cv = new SerialVersionUIDAdder(new MergeTCToJavaClassAdapter(cw, dsoAdapter, jClassNameDots,
                                                                               tcClassNameDots, tcCN,
-                                                                              instrumentedContext, methodPrefix));
+                                                                              instrumentedContext, methodPrefix, true));
     jCR.accept(cv, ClassReader.SKIP_FRAMES);
     jData = cw.toByteArray();
     jData = doDSOTransform(jClassNameDots, jData);
