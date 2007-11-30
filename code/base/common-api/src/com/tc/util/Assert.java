@@ -260,7 +260,7 @@ public class Assert {
    * @param msg Message, should be non-null
    */
   public static void assertEquals(Object msg, int expected, int actual) {
-    if (expected != actual) { throw new TCAssertionError(msg.toString() + ": Expected <" + expected + "> but got <"
+    if (expected != actual) { throw new TCAssertionError(msg + ": Expected <" + expected + "> but got <"
         + actual + ">"); }
   }
 
