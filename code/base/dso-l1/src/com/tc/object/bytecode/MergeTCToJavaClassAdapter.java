@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter implements Opcodes {
-  private static final String      TC_INIT          = ByteCodeUtil.TC_METHOD_PREFIX + "<init>";
+  private static final String      TC_INIT          = ByteCodeUtil.TC_METHOD_PREFIX + "$$_init_$$";
 
   private final List               jInnerClassNames = new ArrayList();
   private final ClassNode          tcClassNode;
