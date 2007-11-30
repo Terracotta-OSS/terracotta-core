@@ -178,7 +178,7 @@ public class EhcacheEvictionTestApp extends AbstractErrorCatchingTransparentApp 
   private void runSimplePutTimeoutGet(int index) throws Throwable {
     if (index == 1) {
       doPut();
-      Thread.sleep((long) (TIME_TO_LIVE_IN_SECONDS * 1.5 * 1000));
+      Thread.sleep(TIME_TO_LIVE_IN_SECONDS * 3000);
       doGetNull(index);
     }
 

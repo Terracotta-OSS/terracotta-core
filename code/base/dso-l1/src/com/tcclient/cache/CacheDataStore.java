@@ -163,7 +163,6 @@ public class CacheDataStore implements Serializable {
   // }
 
   public Object get(final Object key) {
-    logDebug("Get [" + key + "]");
     Assert.pre(key != null);
 
     CacheData cd = null;

@@ -4,6 +4,9 @@
  */
 package com.tcclient.cache;
 
+import com.tc.object.bytecode.ManagerUtil;
+import com.tc.util.DebugUtil;
+
 import java.io.Serializable;
 
 /**
@@ -41,16 +44,20 @@ public class CacheData implements Serializable {
   }
 
   synchronized boolean isValid() {
+    logDebug("Client " + ManagerUtil.getClientID() + " value: " + value + " isValid -- invalidated: " + invalidated);
     if (invalidated) { return false; }
     return hasNotExpired() && isStillAlive();
   }
 
   private boolean hasNotExpired() {
+    logDebug("Client " + ManagerUtil.getClientID() + " hasNotExpired -- maxIdleTimeout: " + config.getMaxIdleTimeoutMillis() + " idleMillis: " + getIdleMillis());
     if (config.getMaxIdleTimeoutMillis() <= 0) { return true; }
     return getIdleMillis() < config.getMaxIdleTimeoutMillis();
   }
 
   private boolean isStillAlive() {
+    logDebug("Client " + ManagerUtil.getClientID() + " hasNotExpired -- maxTTL: " + config.getMaxTTLMillis() + " currentMillis: " + System.currentTimeMillis() + " timeToDie: " + getTimeToDieMillis());
+
     if (config.getMaxTTLMillis() <= 0) { return true; }
     return System.currentTimeMillis() <= getTimeToDieMillis();
   }
@@ -94,4 +101,9 @@ public class CacheData implements Serializable {
     return this.value.equals(cd.value);
   }
 
+  private void logDebug(String msg) {
+    if (DebugUtil.DEBUG) {
+      System.err.println(msg);
+    }
+  }
 }
