@@ -38,11 +38,9 @@ import java.util.Map;
  * select the subset to either terminate or restart. Selecting/deselecting the Terracotta Server or DSO Applications
  * nodes selects/deselects all child nodes. When all child nodes are selected/deselected, the parent node is made to
  * match.
- * 
  * <p>
  * When the resultCode is set, after the dialog is closed, if the resultCode was not CONTINUE_INDEX the passed in map of
  * server launches and the list of DSO Application launches are filtered according to users selection.
- * 
  * <p>
  * This dialog is used by ResourceDeltaVisitor after it notices the config file was saved.
  * 
@@ -83,7 +81,7 @@ public class RelaunchDialog extends MessageDialog implements SelectionListener {
 
   public RelaunchDialog(Shell shell, IProject project, Map<String, ILaunch> serverLaunches, List<ILaunch> launches) {
     super(shell, TITLE, null, MSG, MessageDialog.NONE, new String[] { CONTINUE_LABEL, TERMINATE_LABEL, RESTART_LABEL },
-        0);
+          0);
     setShellStyle(getShellStyle() | SWT.RESIZE);
     fProject = project;
     fServerLaunches = serverLaunches;
@@ -127,7 +125,7 @@ public class RelaunchDialog extends MessageDialog implements SelectionListener {
       while (iter.hasNext()) {
         ILaunch launch = iter.next();
         String label = computeName(launch);
-        if(label == null) {
+        if (label == null) {
           iter.remove();
           continue;
         }
@@ -155,7 +153,7 @@ public class RelaunchDialog extends MessageDialog implements SelectionListener {
     }
 
     gridData = new GridData(GridData.FILL_BOTH);
-    gridData.heightHint = Math.min(r.height, fTree.getItemHeight() * MAX_VISIBLE_LAUNCH_ITEMS)+10;
+    gridData.heightHint = Math.min(r.height, fTree.getItemHeight() * MAX_VISIBLE_LAUNCH_ITEMS) + 10;
     gridData.widthHint = Math.min(r.width, SWTUtil.textColumnsToPixels(fTree, 100));
     fTree.setLayoutData(gridData);
 
@@ -177,17 +175,19 @@ public class RelaunchDialog extends MessageDialog implements SelectionListener {
 
   protected void setReturnCode(int code) {
     super.setReturnCode(code);
-    
+
     if (code != CONTINUE_ID) {
-      int serverLaunchCount = fServersItem.getItemCount();
-      for (int i = 0; i < serverLaunchCount; i++) {
-        TreeItem item = fServersItem.getItem(i);
-        if (!item.getChecked()) {
-          fServerLaunches.values().remove(item.getData());
+      if (fServersItem != null) {
+        int serverLaunchCount = fServersItem.getItemCount();
+        for (int i = 0; i < serverLaunchCount; i++) {
+          TreeItem item = fServersItem.getItem(i);
+          if (!item.getChecked()) {
+            fServerLaunches.values().remove(item.getData());
+          }
         }
       }
 
-      if(fLaunchesItem != null) {
+      if (fLaunchesItem != null) {
         int launchCount = fLaunchesItem.getItemCount();
         for (int i = 0; i < launchCount; i++) {
           TreeItem item = fLaunchesItem.getItem(i);
@@ -208,14 +208,14 @@ public class RelaunchDialog extends MessageDialog implements SelectionListener {
   }
 
   private void handleCheckChanged(TreeItem item) {
+    TreeItem parentItem = item.getParentItem();
     boolean isChecked = item.getChecked();
-    if (item.getItemCount() > 0) {
+    if (parentItem == null) {
       for (int i = 0; i < item.getItemCount(); i++) {
         TreeItem child = item.getItem(i);
         child.setChecked(isChecked);
       }
     } else {
-      TreeItem parentItem = item.getParentItem();
       if (!isChecked) {
         parentItem.setChecked(false);
       } else if (allChildrenChecked(parentItem)) {
@@ -231,7 +231,7 @@ public class RelaunchDialog extends MessageDialog implements SelectionListener {
   }
 
   public void widgetDefaultSelected(SelectionEvent e) {
-  /**/
+    /**/
   }
 
   private static Rectangle mergeBounds(TreeItem item, Rectangle r) {
@@ -255,8 +255,8 @@ public class RelaunchDialog extends MessageDialog implements SelectionListener {
   protected String computeName(ILaunch launch) {
     String label = null;
     IProcess process = getProcess(launch);
-    if(process == null) { return null; }
-    
+    if (process == null) { return null; }
+
     ILaunchConfiguration config = process.getLaunch().getLaunchConfiguration();
     label = process.getAttribute(IProcess.ATTR_PROCESS_LABEL);
     if (label == null) {
