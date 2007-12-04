@@ -4,8 +4,9 @@
  */
 package com.tc.bytes;
 
-import com.tc.lang.Recyclable;
+import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
 
+import com.tc.lang.Recyclable;
 import java.nio.ByteBuffer;
 
 public interface TCByteBuffer extends Recyclable {
@@ -159,5 +160,7 @@ public interface TCByteBuffer extends Recyclable {
   public void commit();
 
   public void checkedOut();
-
+  
+  public BoundedLinkedQueue getBufferPool();
+  
 }

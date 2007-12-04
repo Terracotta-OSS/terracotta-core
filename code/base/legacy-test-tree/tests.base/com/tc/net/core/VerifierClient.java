@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.core;
 
@@ -30,6 +31,7 @@ public class VerifierClient implements Runnable {
   private final TCSocketAddress     addr;
   private final int                 clientNum;
   private final int                 dataSize;
+  private final boolean             addExtra;
   private final int                 numToSend;
   private final int                 maxDelay;
   private final int                 minDelay;
@@ -41,8 +43,8 @@ public class VerifierClient implements Runnable {
   private int                       sendCounter   = 0;
   private int                       numToRecv;
 
-  public VerifierClient(TCConnectionManager connMgr, TCSocketAddress addr, int dataSize, int numToSend, int minDelay,
-                        int maxDelay) {
+  public VerifierClient(TCConnectionManager connMgr, TCSocketAddress addr, int dataSize, boolean addExtra,
+                        int numToSend, int minDelay, int maxDelay) {
 
     if ((maxDelay < 0) || (minDelay < 0)) {
       // make formatter sane
@@ -55,6 +57,7 @@ public class VerifierClient implements Runnable {
     this.connMgr = connMgr;
     this.addr = addr;
     this.dataSize = dataSize;
+    this.addExtra = addExtra;
     this.minDelay = minDelay;
     this.maxDelay = maxDelay;
     this.numToSend = numToSend;
@@ -144,7 +147,7 @@ public class VerifierClient implements Runnable {
         wait();
       }
     }
-    
+
     checkForError();
 
     conn.close(TIMEOUT);
@@ -163,9 +166,10 @@ public class VerifierClient implements Runnable {
     // must use a multiple of 8 for the data in this message. Data is <id><counter><id><counter>....where id and
     // counter are both 4 byte ints
     int extra = 8 + (8 * random.nextInt(13));
-    TCByteBuffer data[] = TCByteBufferFactory.getFixedSizedInstancesForLength(false, 4096 * dataSize + extra);
+    TCByteBuffer data[] = TCByteBufferFactory.getFixedSizedInstancesForLength(false, 4096 * dataSize
+                                                                                     + (this.addExtra == true ? extra : 0));
 
-    if (this.dataSize == 0) {
+    if (this.dataSize == 0 && this.addExtra) {
       Assert.assertEquals(1, data.length);
     }
 

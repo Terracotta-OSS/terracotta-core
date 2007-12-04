@@ -103,4 +103,13 @@ public class MockConnectionManager implements TCConnectionManager {
     
   }
 
+  public void createWorkerCommThreads(int count) {
+    throw new ImplementMe();
+    
+  }
+
+  public TCComm getTcComm() {
+    throw new ImplementMe();
+  }
+
 }

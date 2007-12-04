@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.io;
 
@@ -274,10 +275,21 @@ public class TCByteBufferOutputStreamTest extends TCTestCase {
       os.write(b);
     }
 
+    
     TCByteBuffer[] bufs = os.toArray();
-    assertEquals(2, bufs.length);
-    assertEquals(4096, bufs[0].limit());
+    /*
+     * Consolidation with the new TCByteBuffer
+     * 
+     * buf 0 : 32 + 64 + 128 + 256 + 512 + 1024 + 2048 = 4064 ( < 4096 )
+     * buf 1 : 4096
+     * buf 2 : 32 
+     */
+    
+    
+    assertEquals(3, bufs.length);
+    assertEquals(4064, bufs[0].limit());
     assertEquals(4096, bufs[1].limit());
+    assertEquals(32, bufs[2].limit());
 
     compareData(baos.toByteArray(), bufs);
   }

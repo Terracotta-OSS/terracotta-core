@@ -224,4 +224,5 @@ public interface L2LockStatsManager {
   public boolean isLockStatisticsEnabled();
   
   public void clearAllStatsFor(NodeID nodeID);
+  
 }

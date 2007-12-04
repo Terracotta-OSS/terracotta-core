@@ -41,14 +41,18 @@ public class TCConnectionManagerJDK14 implements TCConnectionManager {
   private final ListenerEvents          listenerEvents;
 
   public TCConnectionManagerJDK14() {
+    this(0);
+  }
+
+  public TCConnectionManagerJDK14(int workerCommCount) {
     this.connEvents = new ConnectionEvents();
     this.listenerEvents = new ListenerEvents();
-    this.comm = new TCCommJDK14();
+    this.comm = new TCCommJDK14(workerCommCount);
     this.comm.start();
   }
 
   protected TCConnection createConnectionImpl(TCProtocolAdaptor adaptor, TCConnectionEventListener listener) {
-    return new TCConnectionJDK14(listener, comm, adaptor, this);
+    return new TCConnectionJDK14(listener, adaptor, this, comm.nioServiceThreadForNewConnection());
   }
 
   protected TCListener createListenerImpl(TCSocketAddress addr, ProtocolAdaptorFactory factory, int backlog,
@@ -71,8 +75,11 @@ public class TCConnectionManagerJDK14 implements TCConnectionManager {
       logger.debug("Bind: " + serverSocket.getLocalSocketAddress());
     }
 
-    TCListenerJDK14 rv = new TCListenerJDK14(ssc, factory, comm, getConnectionListener(), this);
-    comm.requestAcceptInterest(rv, ssc);
+    CoreNIOServices commThread = comm.nioServiceThreadForNewListener();
+
+    TCListenerJDK14 rv = new TCListenerJDK14(ssc, factory, getConnectionListener(), this, commThread);
+
+    commThread.registerListener(rv, ssc);
 
     return rv;
   }
@@ -100,8 +107,6 @@ public class TCConnectionManagerJDK14 implements TCConnectionManager {
 
     TCListener rv = createListenerImpl(addr, factory, backlog, reuseAddr);
     rv.addEventListener(listenerEvents);
-    rv.addEventListener(comm);
-    comm.listenerAdded(rv);
 
     synchronized (listeners) {
       listeners.add(rv);
@@ -165,6 +170,10 @@ public class TCConnectionManagerJDK14 implements TCConnectionManager {
         logger.error("Exception trying to close " + lsnr, e);
       }
     }
+  }
+  
+  public TCComm getTcComm() {
+    return this.comm;
   }
 
   public final synchronized void shutdown() {

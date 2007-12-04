@@ -236,6 +236,8 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
   public DistributedObjectServer(L2TVSConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
                                  ConnectionPolicy connectionPolicy, TCServerInfoMBean tcServerInfoMBean) {
     this(configSetupManager, threadGroup, connectionPolicy, new NullSink(), tcServerInfoMBean, new L2State());
+    
+    
   }
 
   public DistributedObjectServer(L2TVSConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
@@ -403,7 +405,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
       networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
     }
     communicationsManager = new CommunicationsManagerImpl(new NullMessageMonitor(), networkStackHarnessFactory,
-                                                          connectionPolicy);
+                                                          connectionPolicy, l2Properties.getInt("tccom.workerthreads"));
 
     final DSOApplicationEvents appEvents;
     try {

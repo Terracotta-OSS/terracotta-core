@@ -27,14 +27,13 @@ import java.util.Iterator;
 
 /**
  * TCListener implementation
- * 
+ *
  * @author teck
  */
 final class TCListenerJDK14 implements TCListener {
   protected final static TCLogger         logger          = TCLogging.getLogger(TCListener.class);
 
   private final ServerSocketChannel       ssc;
-  private final TCCommJDK14               comm;
   private final TCConnectionEventListener listener;
   private final TCConnectionManagerJDK14  parent;
   private final InetAddress               addr;
@@ -46,27 +45,32 @@ final class TCListenerJDK14 implements TCListener {
   private final SetOnceFlag               stopped         = new SetOnceFlag();
   private final CopyOnWriteArraySet       listeners       = new CopyOnWriteArraySet();
   private final ProtocolAdaptorFactory    factory;
+  private final CoreNIOServices           commNIOServiceThread;
 
-  TCListenerJDK14(ServerSocketChannel ssc, ProtocolAdaptorFactory factory, TCCommJDK14 comm,
-                  TCConnectionEventListener listener, TCConnectionManagerJDK14 managerJDK14) {
+  TCListenerJDK14(ServerSocketChannel ssc, ProtocolAdaptorFactory factory, TCConnectionEventListener listener,
+                  TCConnectionManagerJDK14 managerJDK14, CoreNIOServices commNIOServiceThread) {
     this.addr = ssc.socket().getInetAddress();
     this.port = ssc.socket().getLocalPort();
     this.sockAddr = new TCSocketAddress(this.addr, this.port);
     this.factory = factory;
     this.staticEvent = new TCListenerEvent(this);
     this.ssc = ssc;
-    this.comm = comm;
     this.listener = listener;
     this.parent = managerJDK14;
+    this.commNIOServiceThread = commNIOServiceThread;
   }
 
   protected void stopImpl(Runnable callback) {
-    comm.stopListener(ssc, callback);
+    commNIOServiceThread.stopListener(ssc, callback);
   }
 
   TCConnectionJDK14 createConnection(SocketChannel ch) {
+    return this.createConnection(ch, null);
+  }
+
+  TCConnectionJDK14 createConnection(SocketChannel ch, CoreNIOServices nioServiceThread) {
     TCProtocolAdaptor adaptor = getProtocolAdaptorFactory().getInstance();
-    TCConnectionJDK14 rv = new TCConnectionJDK14(listener, comm, adaptor, ch, parent);
+    TCConnectionJDK14 rv = new TCConnectionJDK14(listener, adaptor, ch, parent, nioServiceThread);
     rv.finishConnect();
     parent.newConnection(rv);
     return rv;

@@ -4,6 +4,8 @@
  */
 package com.tc.bytes;
 
+import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
+
 import com.tc.util.Assert;
 import com.tc.util.State;
 
@@ -17,30 +19,34 @@ import java.nio.ByteBuffer;
 // This would make the TCByteBuffer interface consistent w.r.t. exceptions (whilst being blind to JDK13 vs JDK14)
 public class TCByteBufferImpl implements TCByteBuffer {
 
-  private static final State INIT        = new State("INIT");
-  private static final State CHECKED_OUT = new State("CHECKED_OUT");
-  private static final State COMMITTED   = new State("COMMITTED");
+  private static final State       INIT        = new State("INIT");
+  private static final State       CHECKED_OUT = new State("CHECKED_OUT");
+  private static final State       COMMITTED   = new State("COMMITTED");
 
-  private final ByteBuffer   buffer;
-  private final TCByteBuffer root;
-  private State              state       = INIT;
+  private final ByteBuffer         buffer;
+  private final TCByteBuffer       root;
+  private final BoundedLinkedQueue bufPool;
+  private State                    state       = INIT;
 
-  TCByteBufferImpl(int capacity, boolean direct) {
+  TCByteBufferImpl(int capacity, boolean direct, BoundedLinkedQueue poolQueue) {
     if (direct) {
       buffer = ByteBuffer.allocateDirect(capacity);
     } else {
       buffer = ByteBuffer.allocate(capacity);
     }
+    bufPool = poolQueue;
     root = this;
   }
 
   private TCByteBufferImpl(ByteBuffer buf) {
     buffer = buf;
+    bufPool = null;
     this.root = null;
   }
 
   private TCByteBufferImpl(ByteBuffer buf, TCByteBuffer root) {
     buffer = buf;
+    bufPool = null;
     this.root = root;
   }
 
@@ -302,7 +308,7 @@ public class TCByteBufferImpl implements TCByteBuffer {
 
   public String toString() {
     return (buffer == null) ? "TCByteBufferJDK14(null buffer)" : "TCByteBufferJDK14@" + System.identityHashCode(this)
-        + "(" + buffer.toString() + ")";
+                                                                 + "(" + buffer.toString() + ")";
   }
 
   public boolean hasArray() {
@@ -384,7 +390,7 @@ public class TCByteBufferImpl implements TCByteBuffer {
 
   public final TCByteBuffer putUshort(int s) {
     if ((s > 0x0000FFFF) || (s < 0)) { throw new IllegalArgumentException(
-        "Unsigned integer value must be positive and <= (2^16)-1"); }
+                                                                          "Unsigned integer value must be positive and <= (2^16)-1"); }
 
     put((byte) ((s >> 8) & 0x000000FF));
     put((byte) (s & 0x000000FF));
@@ -479,7 +485,7 @@ public class TCByteBufferImpl implements TCByteBuffer {
 
   public final TCByteBuffer putUbyte(short value) {
     if ((value < 0) || (value > 0xFF)) { throw new IllegalArgumentException(
-        "Unsigned byte value must in range 0-255 inclusive"); }
+                                                                            "Unsigned byte value must in range 0-255 inclusive"); }
     put((byte) (value & 0xFF));
     return this;
   }
@@ -492,6 +498,10 @@ public class TCByteBufferImpl implements TCByteBuffer {
   public void checkedOut() {
     if (state == CHECKED_OUT) { throw new AssertionError("Already checked out"); }
     state = CHECKED_OUT;
+  }
+
+  public BoundedLinkedQueue getBufferPool() {
+    return bufPool;
   }
 
   /* This is the debug version. PLEASE DONT DELETE */

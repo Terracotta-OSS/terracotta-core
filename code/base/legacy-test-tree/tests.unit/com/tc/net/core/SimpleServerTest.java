@@ -10,8 +10,10 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.EchoSink;
+import com.tc.net.protocol.GenericNetworkHeader;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.test.TCTestCase;
+import com.tc.util.Assert;
 
 import java.io.File;
 
@@ -23,13 +25,13 @@ public class SimpleServerTest extends TCTestCase {
   private SimpleServer          server;
   private final SynchronizedRef error     = new SynchronizedRef(null);
 
-  protected void setUp() throws Exception {
+  protected void setUp(int serverThreadCount) throws Exception {
     connMgr = new TCConnectionManagerJDK14();
     server = new SimpleServer(new EchoSink(true, new EchoSink.ErrorListener() {
       public void error(Throwable t) {
         setError(t);
       }
-    }));
+    }), 0 /*PORT*/, serverThreadCount);
     server.start();
 
     if (useProxy) {
@@ -39,6 +41,10 @@ public class SimpleServerTest extends TCTestCase {
           .getProperty("java.io.tmpdir")));
       proxy.start();
     }
+  }
+
+  protected void setUp() throws Exception {
+    setUp(0);
   }
 
   private void setError(Throwable t) {
@@ -62,20 +68,101 @@ public class SimpleServerTest extends TCTestCase {
     runMultiClient(15, 5, 256, 2, 100, 150);
   }
 
+  public void testLargeMsgsOnMultiThSrv() throws Exception {
+    System.out.println("LARGE MESSAGES : on Multi Threaded Server : 4 threads and 15 clients");
+    runMultiClientOnMultiThSrv(4, 15, 5, 256, 2, 100, 150);
+  }
+
+  public void testLargeMsgsOnMultiThSrv2() throws Exception {
+    System.out.println("LARGE MESSAGES : on Multi Threaded Server : 5 threads and 15 clients");
+    runMultiClientOnMultiThSrv(5, 15, 5, 256, 2, 100, 150);
+  }
+  
+  public void testLargeMsgsOnMultiThSrv3() throws Exception {
+    System.out.println("LARGE MESSAGES : on Multi Threaded Server : 4 threads and 2 clients");
+    runMultiClientOnMultiThSrv(4, 2, 5, 256, 2, 100, 150);
+  }
+
   public void testSmallMessages() throws Exception {
     // these messages only take one buffer
     System.out.println("SMALLEST MESSAGES");
     runMultiClient(250, 20, 0, 100, 3, 5);
   }
 
+  public void testSmallMsgsOnMultiThSrv() throws Exception {
+    System.out.println("SMALLEST MESSAGES : on Multi Threaded Server : 4 threads and 250 clients");
+    runMultiClientOnMultiThSrv(4, 250, 20, 0, 100, 3, 5);
+  }
+
+  public void testSmallMsgsOnMultiThSrv2() throws Exception {
+    System.out.println("SMALLEST MESSAGES : on Multi Threaded Server : 3 threads and 250 clients");
+    runMultiClientOnMultiThSrv(3, 250, 20, 0, 100, 3, 5);
+  }
+
   public void testKindaSmallMessages() throws Exception {
     // these messages span at least two byte buffers
-    System.out.println("SMALL MESSAGES");
+    System.out.println("KINDA SMALL MESSAGES");
     runMultiClient(75, 10, 1, 100, 3, 7);
+  }
+
+  public void testKindaSmallMsgsOnMultiThSrv() throws Exception {
+    // these messages span at least two byte buffers
+    System.out.println("KINDA SMALLEST MESSAGES : on Multi Threaded Server : 0 threads (but 1 main listener) and 75 clients");
+    runMultiClientOnMultiThSrv(0, 75, 10, 1, 100, 3, 7);
+  }
+
+  public void testKindaSmallMsgsOnMultiThSrv2() throws Exception {
+    // these messages span at least two byte buffers
+    System.out.println("KINDA SMALLEST MESSAGES : on Multi Threaded Server : 1 thread and 75 clients");
+    runMultiClientOnMultiThSrv(1, 75, 10, 1, 100, 3, 7);
+  }
+  
+  public void testKindaSmallMsgsOnMultiThSrv3() throws Exception {
+    // these messages span at least two byte buffers
+    System.out.println("KINDA SMALLEST MESSAGES : on Multi Threaded Server : 5 threads and 3 clients");
+    runMultiClientOnMultiThSrv(5, 3, 10, 1, 100, 3, 7);
+  }
+
+  private void runMultiClientOnMultiThSrv(int numWorkerComms, int numClients, int maxConcurrent, final int dataSize,
+                                          final int numToSend, final int minDelay, final int maxDelay) throws Exception {
+    int HEADER = new GenericNetworkHeader().getHeaderByteLength();
+
+    int expNumClientPerWorkerComm = 0;
+    long expTotalBytesReadPerWorkerComm = 0;
+
+    setUp(numWorkerComms);
+
+    runMultiClient(numClients, maxConcurrent, dataSize, false, numToSend, minDelay, maxDelay);
+    TCConnectionManager svrConnMgr = server.getConnectionManager();
+    TCCommJDK14 svrComm = (TCCommJDK14) svrConnMgr.getTcComm();
+
+    // Verifications
+    // 1 verify total ACTIVE worker comm threads created
+    Assert.eval(svrComm.getWorkerCommsCount() == numWorkerComms);
+
+    for (int workerCommId = 0; workerCommId < numWorkerComms; workerCommId++) {
+      // 2 Verify now of clients assigned per worker comm thread
+      expNumClientPerWorkerComm = ((numClients / numWorkerComms) + (((numClients % numWorkerComms) / (workerCommId + 1)) >= 1 ? 1
+          : 0));
+      System.out.println("Wroker Comm Thread " + workerCommId + ": " + expNumClientPerWorkerComm + " Clients (exp:"
+                         + svrComm.getClientCountForWorkerComm(workerCommId) + ")");
+      Assert.eval(svrComm.getClientCountForWorkerComm(workerCommId) == expNumClientPerWorkerComm);
+
+      // 3 verify total num of bytes read per worker comm thread
+      expTotalBytesReadPerWorkerComm = (((4096 * dataSize) + (HEADER)) * numToSend) * expNumClientPerWorkerComm;
+      System.out.println("Wroker Comm Thread " + workerCommId + ": " + expTotalBytesReadPerWorkerComm + " BytesRead (exp:"
+                         + svrComm.getTotalbytesReadByWorkerComm(workerCommId) + ")");
+      Assert.eval(svrComm.getTotalbytesReadByWorkerComm(workerCommId) == expTotalBytesReadPerWorkerComm);
+    }
   }
 
   private void runMultiClient(int numClients, int maxConcurrent, final int dataSize, final int numToSend,
                               final int minDelay, final int maxDelay) throws Exception {
+    runMultiClient(numClients, maxConcurrent, dataSize, true, numToSend, minDelay, maxDelay);
+  }
+
+  private void runMultiClient(int numClients, int maxConcurrent, final int dataSize, boolean addExtra,
+                              final int numToSend, final int minDelay, final int maxDelay) throws Exception {
     long start = System.currentTimeMillis();
 
     try {
@@ -91,7 +178,8 @@ public class SimpleServerTest extends TCTestCase {
       }
 
       for (int i = 0; i < numClients; i++) {
-        pool.execute(new ClientTask(i, new VerifierClient(connMgr, addr, dataSize, numToSend, minDelay, maxDelay)));
+        pool.execute(new ClientTask(i, new VerifierClient(connMgr, addr, dataSize, addExtra, numToSend, minDelay,
+                                                          maxDelay)));
       }
 
       pool.shutdownAfterProcessingCurrentlyQueuedTasks();

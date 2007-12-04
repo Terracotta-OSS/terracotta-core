@@ -19,18 +19,27 @@ import java.io.IOException;
  * @author teck
  */
 public class SimpleServer {
-  final GenericNetworkMessageSink sink;
-  TCConnectionManager             connMgr = new TCConnectionManagerJDK14();
-  TCListener                      lsnr;
-  final int                       port;
+  final GenericNetworkMessageSink   sink;
+  private final TCConnectionManager connMgr;
+  TCListener                        lsnr;
+  final int                         port;
 
   public SimpleServer(GenericNetworkMessageSink sink) {
-    this(sink, 0);
+    this(sink, 0, 0);
   }
 
   public SimpleServer(GenericNetworkMessageSink sink, int port) {
+    this(sink, port, 0);
+  }
+  
+  public SimpleServer(GenericNetworkMessageSink sink, int port, int serverThreadCount) {
     this.sink = sink;
     this.port = port;
+    this.connMgr = new TCConnectionManagerJDK14(serverThreadCount);
+  }
+  
+  public TCConnectionManager getConnectionManager() {
+    return this.connMgr;
   }
 
   public void start() throws IOException {
