@@ -44,7 +44,7 @@ public class TimeExpiryMapTestApp extends AbstractTransparentApp {
     DebugUtil.DEBUG = true;
     if (index == 0) {
       dataRoot = new DataRoot();
-      dataRoot.setMap(new MockTimeExpiryMap(3, 50, 5));
+      dataRoot.setMap(new MockTimeExpiryMap(3, 50, 8));
     }
 
     barrier.barrier();
@@ -72,7 +72,7 @@ public class TimeExpiryMapTestApp extends AbstractTransparentApp {
 
     barrier.barrier();
 
-    Thread.sleep(10000);
+    Thread.sleep(15000);
 
     barrier.barrier();
 

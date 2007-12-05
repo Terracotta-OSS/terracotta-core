@@ -56,7 +56,7 @@ public class CacheData implements Serializable {
   }
 
   private boolean isStillAlive() {
-    logDebug("Client " + ManagerUtil.getClientID() + " hasNotExpired -- maxTTL: " + config.getMaxTTLMillis() + " currentMillis: " + System.currentTimeMillis() + " timeToDie: " + getTimeToDieMillis());
+    logDebug("Client " + ManagerUtil.getClientID() + " isStillAlive -- maxTTL: " + config.getMaxTTLMillis() + " currentMillis: " + System.currentTimeMillis() + " timeToDie: " + getTimeToDieMillis());
 
     if (config.getMaxTTLMillis() <= 0) { return true; }
     return System.currentTimeMillis() <= getTimeToDieMillis();
