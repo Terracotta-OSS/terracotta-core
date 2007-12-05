@@ -25,7 +25,7 @@ import java.util.Set;
 
 /**
  * JDK 1.4 implementation of TCConnectionManager interface
- * 
+ *
  * @author teck
  */
 public class TCConnectionManagerJDK14 implements TCConnectionManager {
@@ -33,12 +33,13 @@ public class TCConnectionManagerJDK14 implements TCConnectionManager {
   protected static final TCListener[]   EMPTY_LISTENER_ARRAY   = new TCListener[] {};
   protected static final TCLogger       logger                 = TCLogging.getLogger(TCConnectionManager.class);
 
-  protected final TCCommJDK14           comm;
+  private final TCCommJDK14             comm;
   private final Set                     connections            = new HashSet();
   private final Set                     listeners              = new HashSet();
   private final SetOnceFlag             shutdown               = new SetOnceFlag();
   private final ConnectionEvents        connEvents;
   private final ListenerEvents          listenerEvents;
+  private final SocketParams            socketParams;
 
   public TCConnectionManagerJDK14() {
     this(0);
@@ -47,12 +48,13 @@ public class TCConnectionManagerJDK14 implements TCConnectionManager {
   public TCConnectionManagerJDK14(int workerCommCount) {
     this.connEvents = new ConnectionEvents();
     this.listenerEvents = new ListenerEvents();
-    this.comm = new TCCommJDK14(workerCommCount);
+    this.socketParams = new SocketParams();
+    this.comm = new TCCommJDK14(workerCommCount, socketParams);
     this.comm.start();
   }
 
   protected TCConnection createConnectionImpl(TCProtocolAdaptor adaptor, TCConnectionEventListener listener) {
-    return new TCConnectionJDK14(listener, adaptor, this, comm.nioServiceThreadForNewConnection());
+    return new TCConnectionJDK14(listener, adaptor, this, comm.nioServiceThreadForNewConnection(), socketParams);
   }
 
   protected TCListener createListenerImpl(TCSocketAddress addr, ProtocolAdaptorFactory factory, int backlog,
@@ -171,7 +173,7 @@ public class TCConnectionManagerJDK14 implements TCConnectionManager {
       }
     }
   }
-  
+
   public TCComm getTcComm() {
     return this.comm;
   }

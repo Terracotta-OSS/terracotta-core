@@ -44,7 +44,7 @@ public class SimpleServerTest extends TCTestCase {
   }
 
   protected void setUp() throws Exception {
-    setUp(0);
+    //
   }
 
   private void setError(Throwable t) {
@@ -64,6 +64,7 @@ public class SimpleServerTest extends TCTestCase {
   }
 
   public void testLargeMessages() throws Exception {
+    setUp(0);
     System.out.println("LARGE MESSAGES");
     runMultiClient(15, 5, 256, 2, 100, 150);
   }
@@ -77,13 +78,14 @@ public class SimpleServerTest extends TCTestCase {
     System.out.println("LARGE MESSAGES : on Multi Threaded Server : 5 threads and 15 clients");
     runMultiClientOnMultiThSrv(5, 15, 5, 256, 2, 100, 150);
   }
-  
+
   public void testLargeMsgsOnMultiThSrv3() throws Exception {
     System.out.println("LARGE MESSAGES : on Multi Threaded Server : 4 threads and 2 clients");
     runMultiClientOnMultiThSrv(4, 2, 5, 256, 2, 100, 150);
   }
 
   public void testSmallMessages() throws Exception {
+    setUp(0);
     // these messages only take one buffer
     System.out.println("SMALLEST MESSAGES");
     runMultiClient(250, 20, 0, 100, 3, 5);
@@ -100,6 +102,7 @@ public class SimpleServerTest extends TCTestCase {
   }
 
   public void testKindaSmallMessages() throws Exception {
+    setUp(0);
     // these messages span at least two byte buffers
     System.out.println("KINDA SMALL MESSAGES");
     runMultiClient(75, 10, 1, 100, 3, 7);
@@ -116,7 +119,7 @@ public class SimpleServerTest extends TCTestCase {
     System.out.println("KINDA SMALLEST MESSAGES : on Multi Threaded Server : 1 thread and 75 clients");
     runMultiClientOnMultiThSrv(1, 75, 10, 1, 100, 3, 7);
   }
-  
+
   public void testKindaSmallMsgsOnMultiThSrv3() throws Exception {
     // these messages span at least two byte buffers
     System.out.println("KINDA SMALLEST MESSAGES : on Multi Threaded Server : 5 threads and 3 clients");
@@ -169,6 +172,7 @@ public class SimpleServerTest extends TCTestCase {
       final int numConcurrent = Math.min(maxConcurrent, numClients);
       PooledExecutor pool = new PooledExecutor(new LinkedQueue(), numConcurrent);
       pool.setKeepAliveTime(1000);
+      pool.setMinimumPoolSize(numConcurrent);
 
       final TCSocketAddress addr;
       if (proxy != null) {

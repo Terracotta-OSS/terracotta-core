@@ -15,14 +15,14 @@ import java.io.IOException;
 
 /**
  * A simple server instance that accepts GenericNetwork messages and delivers them to a sink
- * 
+ *
  * @author teck
  */
 public class SimpleServer {
-  final GenericNetworkMessageSink   sink;
-  private final TCConnectionManager connMgr;
-  TCListener                        lsnr;
-  final int                         port;
+  private final GenericNetworkMessageSink sink;
+  private final TCConnectionManager       connMgr;
+  private final int                       port;
+  private TCListener                      lsnr;
 
   public SimpleServer(GenericNetworkMessageSink sink) {
     this(sink, 0, 0);
@@ -31,13 +31,13 @@ public class SimpleServer {
   public SimpleServer(GenericNetworkMessageSink sink, int port) {
     this(sink, port, 0);
   }
-  
+
   public SimpleServer(GenericNetworkMessageSink sink, int port, int serverThreadCount) {
     this.sink = sink;
     this.port = port;
     this.connMgr = new TCConnectionManagerJDK14(serverThreadCount);
   }
-  
+
   public TCConnectionManager getConnectionManager() {
     return this.connMgr;
   }

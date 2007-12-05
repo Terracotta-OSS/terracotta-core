@@ -63,15 +63,18 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
   private final SynchronizedBoolean      connected           = new SynchronizedBoolean(false);
   private final SetOnceRef               localSocketAddress  = new SetOnceRef();
   private final SetOnceRef               remoteSocketAddress = new SetOnceRef();
+  private final SocketParams             socketParams;
   private volatile SocketChannel         channel;
 
   // for creating unconnected client connections
-  TCConnectionJDK14(TCConnectionEventListener listener, TCProtocolAdaptor adaptor, TCConnectionManagerJDK14 managerJDK14, CoreNIOServices nioServiceThread) {
-    this(listener, adaptor, null, managerJDK14, nioServiceThread);
+  TCConnectionJDK14(TCConnectionEventListener listener, TCProtocolAdaptor adaptor,
+                    TCConnectionManagerJDK14 managerJDK14, CoreNIOServices nioServiceThread, SocketParams socketParams) {
+    this(listener, adaptor, null, managerJDK14, nioServiceThread, socketParams);
   }
 
   TCConnectionJDK14(TCConnectionEventListener listener, TCProtocolAdaptor adaptor, SocketChannel ch,
-                    TCConnectionManagerJDK14 parent, CoreNIOServices nioServiceThread) {
+                    TCConnectionManagerJDK14 parent, CoreNIOServices nioServiceThread, SocketParams socketParams) {
+
     Assert.assertNotNull(parent);
     Assert.assertNotNull(adaptor);
 
@@ -81,6 +84,12 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     if (listener != null) addListener(listener);
 
     this.channel = ch;
+
+    if (ch != null) {
+      socketParams.applySocketParams(ch.socket());
+    }
+
+    this.socketParams = socketParams;
     this.commNIOServiceThread = nioServiceThread;
   }
 
@@ -138,20 +147,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
   private SocketChannel createChannel() throws IOException, SocketException {
     SocketChannel rv = SocketChannel.open();
     Socket s = rv.socket();
-
-    // TODO: provide config options for setting any and all socket options
-    s.setSendBufferSize(64 * 1024);
-    s.setReceiveBufferSize(64 * 1024);
-    // s.setReuseAddress(true);
-    s.setTcpNoDelay(true);
-
-    // DEV-1141
-    try {
-      s.setKeepAlive(true);
-    } catch (IOException ioe) {
-      logger.warn("IOException trying to setKeepAlive()", ioe);
-    }
-
+    socketParams.applySocketParams(s);
     return rv;
   }
 

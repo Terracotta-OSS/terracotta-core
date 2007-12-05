@@ -10,7 +10,7 @@ import com.tc.util.Assert;
 
 /**
  * The whole intention of this class is to manage the workerThreads for each Listener
- * 
+ *
  * @author Manoj G
  */
 public class TCWorkerCommManager {
@@ -22,17 +22,19 @@ public class TCWorkerCommManager {
   private final int               totalWorkerComm;
   private final CoreNIOServices[] workerCommThreads;
   private final int[]             workerCommClientCount;
+  private final SocketParams      socketParams;
 
   private int                     nextWorkerCommId;
   private boolean                 workerCommStarted      = false;
 
-  TCWorkerCommManager(int workerCommCount) {
+  TCWorkerCommManager(int workerCommCount, SocketParams socketParams) {
     if (workerCommCount <= 0) { throw new IllegalArgumentException("invalid worker count: " + workerCommCount); }
 
     logger.info("Creating " + workerCommCount + " worker comm threads.");
 
     this.nextWorkerCommId = INVALID_WORKER_COMM_ID;
     this.totalWorkerComm = workerCommCount;
+    this.socketParams = socketParams;
 
     workerCommThreads = new CoreNIOServices[workerCommCount];
     workerCommClientCount = new int[workerCommCount];
@@ -52,11 +54,10 @@ public class TCWorkerCommManager {
   }
 
   public void start() {
-
     workerCommStarted = true;
 
     for (int i = 0; i < workerCommThreads.length; i++) {
-      workerCommThreads[i] = new CoreNIOServices(WORKER_NAME_PREFIX + i, this);
+      workerCommThreads[i] = new CoreNIOServices(WORKER_NAME_PREFIX + i, this, socketParams);
       workerCommThreads[i].start();
     }
   }

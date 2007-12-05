@@ -10,7 +10,7 @@ import com.tc.logging.TCLogging;
 /**
  * JDK 1.4 (NIO) version of TCComm. Uses a single internal thread and a selector to manage channels associated with
  * <code>TCConnection</code>'s
- * 
+ *
  * @author teck
  */
 class TCCommJDK14 implements TCComm {
@@ -20,22 +20,24 @@ class TCCommJDK14 implements TCComm {
   private final TCWorkerCommManager workerCommMgr;
   private final CoreNIOServices     commThread;
   private final String              commThreadName = "TCComm Main Selector Thread";
+
   private volatile boolean          started        = false;
 
-  public TCCommJDK14() {
+  public TCCommJDK14(SocketParams socketParams) {
     // no worker threads for you ...
-    this(-1);
+    this(-1, socketParams);
   }
 
-  TCCommJDK14(int workerCommCount) {
+  TCCommJDK14(int workerCommCount, SocketParams socketParams) {
+
     if (workerCommCount > 0) {
-      workerCommMgr = new TCWorkerCommManager(workerCommCount);
+      workerCommMgr = new TCWorkerCommManager(workerCommCount, socketParams);
     } else {
       logger.info("Comm Worker Threads NOT requested");
       workerCommMgr = null;
     }
 
-    commThread = new CoreNIOServices(commThreadName, this, workerCommMgr);
+    this.commThread = new CoreNIOServices(commThreadName, workerCommMgr, socketParams);
   }
 
   public int getWorkerCommsCount() {
@@ -47,7 +49,7 @@ class TCCommJDK14 implements TCComm {
     if (workerCommMgr != null) { return workerCommMgr.getClientCountForWorkerComm(workerCommId); }
     return 0;
   }
-  
+
   public long getTotalbytesReadByWorkerComm(int workerCommId) {
     if (workerCommMgr != null) { return workerCommMgr.getBytesReadByWorkerComm(workerCommId); }
     return 0;

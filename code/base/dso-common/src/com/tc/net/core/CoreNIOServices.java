@@ -43,14 +43,11 @@ class CoreNIOServices extends Thread implements TCListenerEventListener {
   private final String              baseThreadName;
   private final TCWorkerCommManager workerCommMgr;
   private final List                listeners           = new ArrayList();
+  private final SocketParams        socketParams;
   private short                     status;
   private long                      bytesRead;
 
-  public CoreNIOServices(String commThreadName, TCWorkerCommManager workerCommManager) {
-    this(commThreadName, null, workerCommManager);
-  }
-
-  public CoreNIOServices(String commThreadName, TCCommJDK14 comm, TCWorkerCommManager workerCommManager) {
+  public CoreNIOServices(String commThreadName, TCWorkerCommManager workerCommManager, SocketParams socketParams) {
     setDaemon(true);
     setName(commThreadName);
 
@@ -58,6 +55,7 @@ class CoreNIOServices extends Thread implements TCListenerEventListener {
     this.selectorTasks = new LinkedQueue();
     this.status = NIO_THREAD_INIT;
 
+    this.socketParams = socketParams;
     this.baseThreadName = commThreadName;
     this.workerCommMgr = workerCommManager;
   }
@@ -457,30 +455,10 @@ class CoreNIOServices extends Thread implements TCListenerEventListener {
       final ServerSocketChannel ssc = (ServerSocketChannel) key.channel();
       sc = ssc.accept();
       sc.configureBlocking(false);
-      final Socket s = sc.socket();
-
-      try {
-        s.setSendBufferSize(64 * 1024);
-      } catch (IOException ioe) {
-        logger.warn("IOException trying to setSendBufferSize()");
-      }
-      
-      // DEV-1141
-      try {
-        s.setKeepAlive(true);
-      } catch (IOException ioe) {
-        logger.warn("IOException trying to setKeepAlive()", ioe);
-      }
-
-      try {
-        s.setTcpNoDelay(true);
-      } catch (IOException ioe) {
-        logger.warn("IOException trying to setTcpNoDelay()", ioe);
-      }
 
       if (workerCommMgr == null || !workerCommMgr.isStarted()) {
         // Single threaded server model
-        final TCConnectionJDK14 conn = lsnr.createConnection(sc, this);
+        final TCConnectionJDK14 conn = lsnr.createConnection(sc, this, socketParams);
         sc.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE, conn);
 
         return;
@@ -495,7 +473,7 @@ class CoreNIOServices extends Thread implements TCListenerEventListener {
 
     // Multi threaded server model
     final CoreNIOServices workerCommThread = workerCommMgr.getNextFreeWorkerComm();
-    final TCConnectionJDK14 conn = lsnr.createConnection(sc, workerCommThread);
+    final TCConnectionJDK14 conn = lsnr.createConnection(sc, workerCommThread, socketParams);
 
     workerCommThread.requestReadWriteInterest(conn, sc);
   }
