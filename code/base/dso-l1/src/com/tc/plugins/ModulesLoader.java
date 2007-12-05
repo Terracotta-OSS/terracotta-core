@@ -82,9 +82,12 @@ public class ModulesLoader {
 
   public static void initModules(final DSOClientConfigHelper configHelper, final ClassProvider classProvider,
                                  final boolean forBootJar) {
+    System.err.println("@@@@ initModules called");
+    
     EmbeddedOSGiRuntime osgiRuntime = null;
     synchronized (lock) {
       final Modules modules = configHelper.getModulesForInitialization();
+      System.err.println("@@@ Modules: " + modules.toString());
       if (modules == null) {
         consoleLogger.warn("Modules configuration might not have been properly initialized.");
         return;
@@ -158,7 +161,7 @@ public class ModulesLoader {
 
     if (additionalModuleList != null) {
       final String[] additionalModules = additionalModuleList.split(";");
-
+      System.err.println("@@@ additionalModules: " + Arrays.asList(additionalModules));
       Pattern pattern = Pattern.compile("(.+?)-([0-9\\.]+)-([0-9\\.\\-]+)");
       for (int i = 0; i < additionalModules.length; i++) {
         if (additionalModules[i].length() == 0) {
