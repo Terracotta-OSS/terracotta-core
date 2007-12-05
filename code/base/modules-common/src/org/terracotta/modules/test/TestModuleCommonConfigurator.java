@@ -13,8 +13,6 @@ import org.terracotta.modules.configuration.TerracottaConfiguratorModule;
  */
 public class TestModuleCommonConfigurator extends TerracottaConfiguratorModule {
   protected void addInstrumentation(final BundleContext context) {
-    System.err.println("@@@ in TestModuelCommonConfigurator:");
-    Thread.currentThread().dumpStack();
     Bundle thisBundle = getExportedBundle(context, getExportedBundleName());
     addExportedBundleClass(thisBundle, DummyClass.class.getName());
   }
