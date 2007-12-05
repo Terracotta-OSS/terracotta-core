@@ -20,6 +20,7 @@ import com.tc.objectserver.persistence.sleepycat.OidBitsArrayMapManagerImpl;
 import com.tc.objectserver.persistence.sleepycat.SleepycatCollectionFactory;
 import com.tc.objectserver.persistence.sleepycat.SleepycatCollectionsPersistor;
 import com.tc.objectserver.persistence.sleepycat.SleepycatSerializationAdapterFactory;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.SyncObjectIdSet;
 
@@ -40,6 +41,8 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
   PersistenceTransactionProvider       persistenceTransactionProvider;
   DBEnvironment                        env;
   private OidBitsArrayMapManagerImpl   oidManager;
+  private final String                 OID_FAST_LOAD = "l2.objectmanager.loadObjectID.fastLoad";
+
 
   public ManagedObjectPersistorImplTest() {
     //
@@ -47,6 +50,9 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
+    // test only with Oid fastLoad enabled
+    TCPropertiesImpl.setProperty(OID_FAST_LOAD, "true");
+    assertTrue( TCPropertiesImpl.getProperties().getBoolean(OID_FAST_LOAD));
     boolean paranoid = true;
     env = newDBEnvironment(paranoid);
     env.open();
