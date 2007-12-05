@@ -98,7 +98,7 @@ public class ModulesLoader {
         }
       } catch (Exception e) {
         System.err.println("Unable to initialize modules runtime; " + e.getMessage());
-        //e.printStackTrace();
+        logger.error(e); // at least log this exception, it's very frustrating if it is completely swallowed
         System.exit(-9);
       } finally {
         if (forBootJar) {
