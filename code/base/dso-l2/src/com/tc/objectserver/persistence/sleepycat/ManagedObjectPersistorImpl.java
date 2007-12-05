@@ -65,7 +65,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   private final Database                       objectDB;
   private final Database                       oidDB;
   private final SerializationAdapterFactory    saf;
-  private final CursorConfig                   oidDBCursorConfig;
+  private final CursorConfig                   dBCursorConfig;
   private final MutableSequence                objectIDSequence;
   private final Database                       rootDB;
   private final CursorConfig                   rootDBCursorConfig;
@@ -82,7 +82,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
 
   public ManagedObjectPersistorImpl(TCLogger logger, ClassCatalog classCatalog,
                                     SerializationAdapterFactory serializationAdapterFactory, Database objectDB,
-                                    Database oidDB, CursorConfig oidDBCursorConfig, MutableSequence objectIDSequence,
+                                    Database oidDB, CursorConfig dBCursorConfig, MutableSequence objectIDSequence,
                                     Database rootDB, CursorConfig rootDBCursorConfig,
                                     PersistenceTransactionProvider ptp,
                                     SleepycatCollectionsPersistor collectionsPersistor, boolean paranoid) {
@@ -91,7 +91,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
     this.saf = serializationAdapterFactory;
     this.objectDB = objectDB;
     this.oidDB = oidDB;
-    this.oidDBCursorConfig = oidDBCursorConfig;
+    this.dBCursorConfig = dBCursorConfig;
     this.objectIDSequence = objectIDSequence;
     this.rootDB = rootDB;
     this.rootDBCursorConfig = rootDBCursorConfig;
@@ -100,7 +100,11 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
     this.paranoid = paranoid;
 
     this.oidFastLoad = TCPropertiesImpl.getProperties().getBoolean(OID_FAST_LOAD);
-    this.oidManager = new OidBitsArrayMapManagerImpl(logger, paranoid, oidDB, ptp, oidDBCursorConfig);
+    if (this.oidFastLoad) {
+      this.oidManager = new OidBitsArrayMapManagerImpl(logger, paranoid, oidDB, ptp, dBCursorConfig);
+    } else {
+      this.oidManager = null;
+    }
   }
 
   public long nextObjectIDBatch(int batchSize) {
@@ -492,7 +496,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
       Cursor cursor = null;
       try {
         tx = ptp.newTransaction();
-        cursor = oidDB.openCursor(pt2nt(tx), oidDBCursorConfig);
+        cursor = objectDB.openCursor(pt2nt(tx), dBCursorConfig);
         DatabaseEntry key = new DatabaseEntry();
         DatabaseEntry value = new DatabaseEntry();
         while (OperationStatus.SUCCESS.equals(cursor.getNext(key, value, LockMode.DEFAULT))) {
