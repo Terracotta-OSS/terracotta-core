@@ -14,7 +14,7 @@ import org.terracotta.modules.configuration.TerracottaConfiguratorModule;
 public class TestModuleCommonConfigurator extends TerracottaConfiguratorModule {
   protected void addInstrumentation(final BundleContext context) {
     Bundle thisBundle = getExportedBundle(context, getExportedBundleName());
-    addExportedBundleClass(thisBundle, DummyClass.class.getName());
+    addExportedBundleClass(thisBundle, "org.terracotta.modules.test.DummyClass");
   }
   
   protected String getExportedBundleName() {
