@@ -1612,7 +1612,7 @@ public class BootJarTool {
     ClassReader cr = new ClassReader(orig);
     ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
 
-    ClassVisitor cv = new JavaLangStringAdapter(cw, Vm.VERSION, shouldIncludeStringBufferAndFriends());
+    ClassVisitor cv = new JavaLangStringAdapter(cw, Vm.VERSION, shouldIncludeStringBufferAndFriends(), Vm.isAzul());
     cr.accept(cv, ClassReader.SKIP_FRAMES);
 
     bootJar.loadClassIntoJar("java.lang.String", cw.toByteArray(), false);

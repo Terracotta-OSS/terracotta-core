@@ -141,4 +141,13 @@ public class Vm {
     return VERSION.isJRockit();
   }
 
+  /**
+   * True if Azul
+   *
+   * @return True if Azul VM
+   */
+  public static boolean isAzul() {
+    return VERSION.isAzul();
+  }
+
 }

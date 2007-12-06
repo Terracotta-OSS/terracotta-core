@@ -17,12 +17,14 @@ import com.tc.util.runtime.Vm;
 public class JavaLangStringAdapter extends ClassAdapter implements Opcodes {
 
   private final VmVersion vmVersion;
-  private final boolean portableStringBuffer;
+  private final boolean   portableStringBuffer;
+  private final boolean   isAzul;
 
-  public JavaLangStringAdapter(ClassVisitor cv, VmVersion vmVersion, boolean portableStringBuffer) {
+  public JavaLangStringAdapter(ClassVisitor cv, VmVersion vmVersion, boolean portableStringBuffer, boolean isAzul) {
     super(cv);
     this.vmVersion = vmVersion;
     this.portableStringBuffer = portableStringBuffer;
+    this.isAzul = isAzul;
   }
 
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
@@ -54,10 +56,14 @@ public class JavaLangStringAdapter extends ClassAdapter implements Opcodes {
     mv.visitCode();
     mv.visitVarInsn(ALOAD, 0);
     mv.visitFieldInsn(GETFIELD, "java/lang/String", "value", "[C");
-    mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "java/lang/String", "offset", "I");
+    if (!isAzul) {
+      mv.visitVarInsn(ALOAD, 0);
+      mv.visitFieldInsn(GETFIELD, "java/lang/String", "offset", "I");
+    }
     mv.visitVarInsn(ILOAD, 1);
-    mv.visitInsn(IADD);
+    if (!isAzul) {
+      mv.visitInsn(IADD);
+    }
     mv.visitVarInsn(ALOAD, 3);
     mv.visitVarInsn(ILOAD, 4);
     mv.visitVarInsn(ILOAD, 2);
@@ -68,19 +74,32 @@ public class JavaLangStringAdapter extends ClassAdapter implements Opcodes {
     mv.visitMaxs(0, 0);
     mv.visitEnd();
 
-    // Called from (Abstract)StringBuilder.insert|repace()
+    // Called from (Abstract)StringBuilder.insert|replace()
     mv = super.visitMethod(ACC_SYNTHETIC, "getCharsFast", "([CI)V", null, null);
     mv.visitCode();
-    mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "java/lang/String", "value", "[C");
-    mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "java/lang/String", "offset", "I");
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitVarInsn(ILOAD, 2);
-    mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "java/lang/String", "count", "I");
-    mv.visitMethodInsn(INVOKESTATIC, "java/lang/System", "arraycopy", "(Ljava/lang/Object;ILjava/lang/Object;II)V");
-    mv.visitInsn(RETURN);
+    if (isAzul) {
+      mv.visitVarInsn(ALOAD, 0);
+      mv.visitFieldInsn(GETFIELD, "java/lang/String", "value", "[C");
+      mv.visitInsn(ICONST_0);
+      mv.visitVarInsn(ALOAD, 1);
+      mv.visitVarInsn(ILOAD, 2);
+      mv.visitVarInsn(ALOAD, 0);
+      mv.visitFieldInsn(GETFIELD, "java/lang/String", "value", "[C");
+      mv.visitInsn(ARRAYLENGTH);
+      mv.visitMethodInsn(INVOKESTATIC, "java/lang/System", "arraycopy", "(Ljava/lang/Object;ILjava/lang/Object;II)V");
+      mv.visitInsn(RETURN);
+    } else {
+      mv.visitVarInsn(ALOAD, 0);
+      mv.visitFieldInsn(GETFIELD, "java/lang/String", "value", "[C");
+      mv.visitVarInsn(ALOAD, 0);
+      mv.visitFieldInsn(GETFIELD, "java/lang/String", "offset", "I");
+      mv.visitVarInsn(ALOAD, 1);
+      mv.visitVarInsn(ILOAD, 2);
+      mv.visitVarInsn(ALOAD, 0);
+      mv.visitFieldInsn(GETFIELD, "java/lang/String", "count", "I");
+      mv.visitMethodInsn(INVOKESTATIC, "java/lang/System", "arraycopy", "(Ljava/lang/Object;ILjava/lang/Object;II)V");
+      mv.visitInsn(RETURN);
+    }
     mv.visitMaxs(0, 0);
     mv.visitEnd();
   }
@@ -98,14 +117,16 @@ public class JavaLangStringAdapter extends ClassAdapter implements Opcodes {
     mv.visitVarInsn(ALOAD, 2);
     mv.visitFieldInsn(GETFIELD, "java/lang/String", "value", "[C");
     mv.visitFieldInsn(PUTFIELD, "java/lang/String", "value", "[C");
-    mv.visitVarInsn(ALOAD, 0);
-    mv.visitVarInsn(ALOAD, 2);
-    mv.visitFieldInsn(GETFIELD, "java/lang/String", "count", "I");
-    mv.visitFieldInsn(PUTFIELD, "java/lang/String", "count", "I");
-    mv.visitVarInsn(ALOAD, 0);
-    mv.visitVarInsn(ALOAD, 2);
-    mv.visitFieldInsn(GETFIELD, "java/lang/String", "offset", "I");
-    mv.visitFieldInsn(PUTFIELD, "java/lang/String", "offset", "I");
+    if (!isAzul) {
+      mv.visitVarInsn(ALOAD, 0);
+      mv.visitVarInsn(ALOAD, 2);
+      mv.visitFieldInsn(GETFIELD, "java/lang/String", "count", "I");
+      mv.visitFieldInsn(PUTFIELD, "java/lang/String", "count", "I");
+      mv.visitVarInsn(ALOAD, 0);
+      mv.visitVarInsn(ALOAD, 2);
+      mv.visitFieldInsn(GETFIELD, "java/lang/String", "offset", "I");
+      mv.visitFieldInsn(PUTFIELD, "java/lang/String", "offset", "I");
+    }
     mv.visitInsn(RETURN);
     mv.visitMaxs(0, 0);
     return null;
@@ -117,13 +138,18 @@ public class JavaLangStringAdapter extends ClassAdapter implements Opcodes {
     mv.visitVarInsn(ILOAD, 2);
     mv.visitVarInsn(ALOAD, 3);
     mv.visitVarInsn(ILOAD, 4);
-    mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "java/lang/String", "count", "I");
-    mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "java/lang/String", "offset", "I");
+
+    if (!isAzul) {
+      mv.visitVarInsn(ALOAD, 0);
+      mv.visitFieldInsn(GETFIELD, "java/lang/String", "count", "I");
+      mv.visitVarInsn(ALOAD, 0);
+      mv.visitFieldInsn(GETFIELD, "java/lang/String", "offset", "I");
+    }
+
     mv.visitVarInsn(ALOAD, 0);
     mv.visitFieldInsn(GETFIELD, "java/lang/String", "value", "[C");
-    mv.visitMethodInsn(INVOKESTATIC, JavaLangArrayHelpers.CLASS, "javaLangStringGetBytes", "(II[BIII[C)V");
+    mv.visitMethodInsn(INVOKESTATIC, JavaLangArrayHelpers.CLASS, "javaLangStringGetBytes", isAzul ? "(II[BI[C)V"
+        : "(II[BIII[C)V");
     mv.visitInsn(RETURN);
     mv.visitMaxs(0, 0);
     mv.visitEnd();

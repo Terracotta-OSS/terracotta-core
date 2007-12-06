@@ -22,13 +22,14 @@ public class VendorVmSignature {
   private static final String VM_VENDOR_SUN       = "hotspot";
   private static final String VM_VENDOR_IBM       = "ibm";
   private static final String VM_VENDOR_BEA       = "jrockit";
+  private static final String VM_VENDOR_AZUL      = "azul";
 
   private final String        signature;
 
   public VendorVmSignature(final Properties props) throws VendorVmSignatureException {
     signature = generateSignature(props);
   }
-  
+
   public VendorVmSignature() throws VendorVmSignatureException {
     this(System.getProperties());
   }
@@ -49,11 +50,13 @@ public class VendorVmSignature {
     String vendor = source.getProperty("java.vendor");
 
     if (vendor == null) { throw new VendorVmSignatureException("Cannot determine VM vendor: "
-        + "(\"java.vendor\" system property is null)"); }
+                                                               + "(\"java.vendor\" system property is null)"); }
 
     if (vendor.toLowerCase().startsWith("bea ")) { return VM_VENDOR_BEA; }
     if (vendor.toLowerCase().startsWith("apple ")) { return VM_VENDOR_SUN; }
     if (vendor.toLowerCase().startsWith("ibm ")) { return VM_VENDOR_IBM; }
+    if (vendor.toLowerCase().startsWith("azul ")) { return VM_VENDOR_AZUL; }
+
     if (vendor.toLowerCase().startsWith("sun ")) {
       final VmVersion vmVersion;
       try {
@@ -87,7 +90,7 @@ public class VendorVmSignature {
   private static String getOS(final Properties source) throws VendorVmSignatureException {
     final String osProp = source.getProperty("os.name");
     if (osProp == null) { throw new VendorVmSignatureException("Cannot determine operating system: "
-        + "(\"os.name\" system property is null)"); }
+                                                               + "(\"os.name\" system property is null)"); }
     final String lowerCaseOS = osProp.toLowerCase();
 
     if (lowerCaseOS.startsWith("windows")) { return OS_WINDOWS; }
@@ -106,7 +109,7 @@ public class VendorVmSignature {
         }
       } else {
         throw new VendorVmSignatureException("Cannot determine Solaris architecture: "
-            + "(\"os.arch\" system property is null)");
+                                             + "(\"os.arch\" system property is null)");
       }
     }
 
@@ -115,7 +118,7 @@ public class VendorVmSignature {
 
   private static void validateComponent(final String component) {
     if (component == null || component.indexOf('.') >= 0) { throw new AssertionError("Invalid component string: "
-        + component); }
+                                                                                     + component); }
   }
 
   public final String getSignature() {

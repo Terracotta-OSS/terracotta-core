@@ -35,7 +35,7 @@ if $cygwin; then
 fi
 
 if test -z "$DSO_BOOT_JAR"; then
-  DSO_BOOT_JAR_NAME="`"${JAVACMD}" -cp "${TC_JAR}" com.tc.object.tools.BootJarSignature|tr -d '\r'`"
+  DSO_BOOT_JAR_NAME="`"${JAVACMD}" ${JAVA_OPTS} -cp "${TC_JAR}" com.tc.object.tools.BootJarSignature|tr -d '\r'`"
   __BOOT_JAR_SIG_EXIT_CODE="$?"
   if test "$__BOOT_JAR_SIG_EXIT_CODE" != 0; then
     echo "$0: We were unable to determine the correct"

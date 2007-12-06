@@ -26,6 +26,7 @@ public final class VmVersion {
   private final String         patch;
   private final boolean        isIBM;
   private final boolean        isJRockit;
+  private final boolean        isAzul;
 
   /**
    * Construct with system properties, which will be parsed to determine version. Looks at properties like java.version,
@@ -36,7 +37,7 @@ public final class VmVersion {
    * @throws UnknownRuntimeVersionException If Java runtime version is unknown
    */
   public VmVersion(final Properties props) throws UnknownJvmVersionException, UnknownRuntimeVersionException {
-    this(javaVersion(props), runtimeVersion(props), isJRockit(props), isIBM(props));
+    this(javaVersion(props), runtimeVersion(props), isJRockit(props), isIBM(props), isAzul(props));
   }
 
   /**
@@ -50,9 +51,11 @@ public final class VmVersion {
    * @throws UnknownRuntimeVersionException If Java runtime version is unknown
    */
   private VmVersion(final String vendorVersion, final String runtimeVersion, final boolean isJRockit,
-                    final boolean isIBM) throws UnknownJvmVersionException, UnknownRuntimeVersionException {
+                    final boolean isIBM, final boolean isAzul) throws UnknownJvmVersionException,
+      UnknownRuntimeVersionException {
     this.isIBM = isIBM;
     this.isJRockit = isJRockit;
+    this.isAzul = isAzul;
     final Matcher versionMatcher = JVM_VERSION_PATTERN.matcher(vendorVersion);
     if (versionMatcher.matches()) {
       mega = Integer.parseInt(versionMatcher.group(1));
@@ -158,6 +161,13 @@ public final class VmVersion {
   }
 
   /**
+   * @return True if Azul VM
+   */
+  public boolean isAzul() {
+    return isAzul;
+  }
+
+  /**
    * @return True if BEA JRockit
    */
   public boolean isJRockit() {
@@ -213,13 +223,17 @@ public final class VmVersion {
     }
   }
 
+  private static boolean isAzul(Properties props) {
+    return props.getProperty("java.vendor", "").toLowerCase().indexOf("azul") >= 0;
+  }
+
   private static boolean isIBM(Properties props) {
     return props.getProperty("java.vendor", "").toLowerCase().startsWith("ibm ");
   }
 
   private static boolean isJRockit(Properties props) {
     return props.getProperty("jrockit.version") != null
-        || props.getProperty("java.vm.name", "").toLowerCase().indexOf("jrockit") >= 0;
+           || props.getProperty("java.vm.name", "").toLowerCase().indexOf("jrockit") >= 0;
   }
 
 }

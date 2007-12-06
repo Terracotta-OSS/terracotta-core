@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.bytecode.hook.impl;
 
@@ -19,6 +20,10 @@ public class JavaLangArrayHelpers {
     } else {
       System.arraycopy(src, srcPos, dest, destPos, length);
     }
+  }
+
+  public static void javaLangStringGetBytes(int srcBegin, int srcEnd, byte dst[], int dstBegin, char[] value) {
+    javaLangStringGetBytes(srcBegin, srcEnd, dst, dstBegin, value.length, 0, value);
   }
 
   /**
