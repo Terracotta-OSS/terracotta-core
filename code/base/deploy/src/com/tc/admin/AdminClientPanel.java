@@ -798,7 +798,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
 
       sb.append("id=");
       sb.append(URLEncoder.encode(Integer.toString(getIpAddress())));
-      sb.append("os-name=");
+      sb.append("&os-name=");
       sb.append(URLEncoder.encode(System.getProperty("os.name")));
       sb.append("&jvm-name=");
       sb.append(URLEncoder.encode(System.getProperty("java.vm.name")));
