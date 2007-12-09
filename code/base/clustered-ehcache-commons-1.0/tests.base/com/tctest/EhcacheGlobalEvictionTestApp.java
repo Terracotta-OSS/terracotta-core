@@ -138,6 +138,8 @@ public abstract class EhcacheGlobalEvictionTestApp extends ServerCrashingAppBase
       barrier.barrier();
 
       populateCache(cache, index, 4);
+      barrier.barrier();
+      
       Assert.assertEquals("Client " + ManagerUtil.getClientID(), new Element("key04", "val04"), cache.get("key04"));
       Assert.assertEquals("Client " + ManagerUtil.getClientID(), new Element("key05", "val05"), cache.get("key05"));
       Assert.assertEquals("Client " + ManagerUtil.getClientID(), new Element("key06", "val06"), cache.get("key06"));
