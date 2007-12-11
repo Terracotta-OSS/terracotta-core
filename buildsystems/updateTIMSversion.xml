@@ -1,4 +1,4 @@
-<project basedir="." default="">
+<project basedir=".." default="updateversion">
 
 <!-- Run from root of source tree to change version of TIMS -->
 
