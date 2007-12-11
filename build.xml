@@ -1,0 +1,11 @@
+<project basedir="." default="">
+
+<!-- Run from root of source tree to change version of TIMS -->
+
+<target name="updateversion">
+  <replace token='2.5.0.SNAPSHOT' value='2.5.0' dir="."/>
+  <replace token='2.5.0-SNAPSHOT' value='2.5.0' dir="."/>
+</target>
+ 
+</project>
+
