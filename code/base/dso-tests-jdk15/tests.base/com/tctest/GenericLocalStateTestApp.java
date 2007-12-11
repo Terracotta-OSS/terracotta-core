@@ -52,7 +52,7 @@ public abstract class GenericLocalStateTestApp extends AbstractErrorCatchingTran
 
     System.out.println("Waiting for mutation to finished...");
     await();
-    System.out.println("... done await()");
+    System.out.println("... done await(): gotExpectedException=" + gotExpectedException);
     
     wrapper.getHandler().setLockMode(curr_lockMode);
 
