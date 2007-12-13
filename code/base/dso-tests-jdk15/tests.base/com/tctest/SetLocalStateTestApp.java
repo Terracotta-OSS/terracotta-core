@@ -87,6 +87,7 @@ public class SetLocalStateTestApp extends GenericLocalStateTestApp {
 
   private Set initSet(Set set) {
     synchronized (set) {
+      set.clear();
       set.add("v1");
       set.add("v2");
       set.add("v3");
