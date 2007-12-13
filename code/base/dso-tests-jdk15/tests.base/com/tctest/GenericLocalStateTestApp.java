@@ -27,10 +27,6 @@ public abstract class GenericLocalStateTestApp extends AbstractErrorCatchingTran
     throw new ImplementMe();
   }
 
-  protected void populateData(Wrapper w) throws Throwable {
-    throw new ImplementMe();
-  }
-
   protected void testMutate(Object testTarget, LockMode lockMode, Class mutatorClass) throws Exception {
     System.out.println("-- Applying " + mutatorClass.getSimpleName() + " on " + testTarget.getClass().getSimpleName()
                        + " with lock " + lockMode);
