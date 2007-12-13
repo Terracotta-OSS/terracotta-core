@@ -5,7 +5,7 @@ package com.tctest;
 
 public class MapLocalStateTest extends TransparentTestBase {
 
-  public static final int NODE_COUNT = 2;
+  public static final int NODE_COUNT = 1;
 
   public MapLocalStateTest() {
     //

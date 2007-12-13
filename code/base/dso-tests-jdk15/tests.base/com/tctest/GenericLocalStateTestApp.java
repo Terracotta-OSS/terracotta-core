@@ -27,49 +27,33 @@ public abstract class GenericLocalStateTestApp extends AbstractErrorCatchingTran
     throw new ImplementMe();
   }
 
-  protected void testMutate(Wrapper wrapper, LockMode lockMode, Mutator mutator) throws Throwable {
-    int oldSize = wrapper.size();
-    LockMode curr_lockMode = wrapper.getHandler().getLockMode();
-    boolean gotExpectedException = false;
-    Throwable throwable = null;
-
-    if (await() == 0) {
-      System.out.println("Mutating: " + wrapper.getObject().getClass().getSimpleName() +
-                         " with " + mutator.getClass().getSimpleName() + " with lock " + lockMode);
-      wrapper.getHandler().setLockMode(lockMode);
-      try {
-        mutator.doMutate(wrapper.getProxy());
-      } catch (UnlockedSharedObjectException usoe) {
-        gotExpectedException = lockMode == LockMode.NONE;
-      } catch (ReadOnlyException roe) {
-        gotExpectedException = lockMode == LockMode.READ;
-      } catch (TCNonPortableObjectError ne) {
-        gotExpectedException = lockMode == LockMode.WRITE;
-      } catch (Throwable t) {
-        throwable = t;
-      }
-    }
-
-    System.out.println("Waiting for mutation to finished...");
-    await();
-    System.out.println("... done await(): gotExpectedException=" + gotExpectedException);
-    
-    wrapper.getHandler().setLockMode(curr_lockMode);
-
-    if (gotExpectedException) {
-      System.out.println("... validating...");
-      validate(oldSize, wrapper, lockMode, mutator);
-    }
-
-    if (throwable != null) {
-      System.err.println(" ---- ERROR DETECTED --- ");
-      throw throwable;
-    }
+  protected void populateData(Wrapper w) throws Throwable {
+    throw new ImplementMe();
   }
 
-  protected abstract int await();
+  protected void testMutate(Object testTarget, LockMode lockMode, Class mutatorClass) throws Exception {
+    System.out.println("-- Applying " + mutatorClass.getSimpleName() + " on " + testTarget.getClass().getSimpleName()
+                       + " with lock " + lockMode);
+    int before = testTarget.hashCode();
+    System.out.println("   Before mutate: " + testTarget);
+    Wrapper wrapper = new MyWrapper(mutatorClass, Mutator.class);
+    wrapper.getHandler().setLockMode(lockMode);
+    try {
+      ((Mutator) wrapper.getProxy()).doMutate(testTarget);
+    } catch (UnlockedSharedObjectException usoe) {
+      if (lockMode != LockMode.NONE) throw usoe;
+    } catch (ReadOnlyException roe) {
+      if (lockMode != LockMode.READ) throw roe;
+    } catch (TCNonPortableObjectError ne) {
+      if (lockMode != LockMode.WRITE) throw ne;
+    }
+    int after = testTarget.hashCode();
+    System.out.println("   After mutate: " + testTarget);
+    validate(before, after, testTarget, lockMode, mutatorClass);
+  }
 
-  protected abstract void validate(int oldSize, Wrapper wrapper, LockMode lockMode, Mutator mutator) throws Throwable;
+  protected abstract void validate(int before, int after, Object testTarget, LockMode lockMode, Class mutatorClass)
+      throws Exception;
 
   static enum LockMode {
     NONE, READ, WRITE
@@ -103,7 +87,7 @@ public abstract class GenericLocalStateTestApp extends AbstractErrorCatchingTran
           case WRITE:
             return invokeWithWriteLock(method, args);
           default:
-            throw new RuntimeException("Should'n happen");
+            throw new RuntimeException("Shouldn't happen");
         }
       } catch (InvocationTargetException e) {
         throw e.getTargetException();
@@ -111,15 +95,27 @@ public abstract class GenericLocalStateTestApp extends AbstractErrorCatchingTran
     }
 
     private Object invokeWithReadLock(Method method, Object[] args) throws Throwable {
-      synchronized (o) {
+      // System.out.println("invokeWithReadLock: " + method);
+      synchronized (args[0]) {
         return method.invoke(o, args);
       }
     }
 
     private Object invokeWithWriteLock(Method method, Object[] args) throws Throwable {
-      synchronized (o) {
+      // System.out.println("invokeWithWriteLock: " + method);
+      synchronized (args[0]) {
         return method.invoke(o, args);
       }
+    }
+  }
+
+  static class NonPortable implements Comparable {
+    public int compareTo(Object o) {
+      return 1;
+    }
+
+    public String toString() {
+      return "NonPortable object";
     }
   }
 
@@ -137,12 +133,12 @@ public abstract class GenericLocalStateTestApp extends AbstractErrorCatchingTran
     public void doMutate(Object o);
   }
 
-  static class CollectionWrapper implements Wrapper {
+  static class MyWrapper implements Wrapper {
     private Object  object;
     private Object  proxy;
     private Handler handler;
 
-    public CollectionWrapper(Class objectClass, Class interfaceClass) throws Exception {
+    public MyWrapper(Class objectClass, Class interfaceClass) throws Exception {
       object = objectClass.newInstance();
       handler = new Handler(object);
       proxy = Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] { interfaceClass }, handler);

@@ -21,94 +21,76 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.CyclicBarrier;
 
 /**
- * Test to make sure local object state is preserved when TC throws:
- * 
- * UnlockedSharedObjectException ReadOnlyException TCNonPortableObjectError
- * 
- * Set version
- * 
- * INT-186
+ * Test to make sure local object state is preserved when TC throws: UnlockedSharedObjectException ReadOnlyException
+ * TCNonPortableObjectError Set version INT-186
  * 
  * @author hhuynh
  */
 public class SetLocalStateTestApp extends GenericLocalStateTestApp {
-  private List<Wrapper> root       = new ArrayList<Wrapper>();
-  private CyclicBarrier barrier;
-  private Class[]       setClasses = new Class[] { HashSet.class, TreeSet.class, LinkedHashSet.class, THashSet.class };
+  private List<Set> root       = new ArrayList<Set>();
+  private Class[]   setClasses = new Class[] { HashSet.class, TreeSet.class, LinkedHashSet.class, THashSet.class };
 
   public SetLocalStateTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
-    barrier = new CyclicBarrier(cfg.getGlobalParticipantCount());
   }
 
   protected void runTest() throws Throwable {
-    if (await() == 0) {
-      createSets();
-    }
-    await();
+    initTest();
 
     for (LockMode lockMode : LockMode.values()) {
-      for (Wrapper w : root) {
-        testMutate(w, lockMode, new AddMutator());
-        testMutate(w, lockMode, new AddAllMutator());
-        testMutate(w, lockMode, new RemoveMutator());
-        testMutate(w, lockMode, new ClearMutator());
-        testMutate(w, lockMode, new RemoveAllMutator());
-        testMutate(w, lockMode, new RetainAllMutator());
-        testMutate(w, lockMode, new IteratorRemoveMutator());
+      for (Set set : root) {
+        testMutate(initSet(set), lockMode, AddMutator.class);
+        testMutate(initSet(set), lockMode, AddAllMutator.class);
+        testMutate(initSet(set), lockMode, RemoveMutator.class);
+        testMutate(initSet(set), lockMode, ClearMutator.class);
+        testMutate(initSet(set), lockMode, RemoveAllMutator.class);
+        testMutate(initSet(set), lockMode, RetainAllMutator.class);
+        testMutate(initSet(set), lockMode, IteratorRemoveMutator.class);
 
-        // failing - DEV-844
-        // testMutate(w, lockMode, new AddAllNonPortableMutator());
+        // failing - CDV-163
+        // testMutate(initSet(set), lockMode, AddAllNonPortableMutator.class);
       }
     }
   }
 
-  protected void validate(int oldSize, Wrapper wrapper, LockMode lockMode, Mutator mutator) throws Throwable {
-    int newSize = wrapper.size();
+  protected void validate(int before, int after, Object testTarget, LockMode lockMode, Class mutatorClass)
+      throws Exception {
     switch (lockMode) {
       case NONE:
       case READ:
-        Assert.assertEquals("Type: " + wrapper.getObject().getClass() + ", lock: " + lockMode, oldSize, newSize);
+        Assert.assertEquals(testTarget, before, after);
         break;
       case WRITE:
-        // nothing yet
+        Assert.assertTrue(testTarget, before != after);
         break;
       default:
         throw new RuntimeException("Shouldn't happen");
     }
 
-    if (mutator instanceof AddAllNonPortableMutator) {
-      for (Iterator it = ((Set) wrapper.getObject()).iterator(); it.hasNext();) {
+    if (mutatorClass.equals(AddAllNonPortableMutator.class)) {
+      for (Iterator it = ((Set) testTarget).iterator(); it.hasNext();) {
         Object o = it.next();
-        Assert.assertFalse("Type: " + wrapper.getObject().getClass() + ", lock: " + lockMode + ", " + o.getClass(),
-                           o instanceof NonPortable);
+        Assert.assertFalse("Found NonPortable instance: " + testTarget, o instanceof NonPortable);
       }
     }
   }
 
-  private void createSets() throws Exception {
-    Set data = new HashSet();
-    data.add("v1");
-    data.add("v2");
-    data.add("v3");
-
+  private void initTest() throws Exception {
     synchronized (root) {
       for (Class k : setClasses) {
-        Wrapper cw = new CollectionWrapper(k, Set.class);
-        ((Set) cw.getObject()).addAll(data);
-        root.add(cw);
+        root.add((Set) k.newInstance());
       }
     }
   }
 
-  protected int await() {
-    try {
-      return barrier.await();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+  private Set initSet(Set set) {
+    synchronized (set) {
+      set.add("v1");
+      set.add("v2");
+      set.add("v3");
+      return set;
     }
   }
 
@@ -119,29 +101,29 @@ public class SetLocalStateTestApp extends GenericLocalStateTestApp {
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
 
     config.addIncludePattern(testClass + "$*");
-    config.addExcludePattern(testClass + "$NonPortable");
     config.addIncludePattern(GenericLocalStateTestApp.class.getName() + "$*");
+    config.addExcludePattern(NonPortable.class.getName());
 
-    config.addWriteAutolock("* " + testClass + "*.createSets()");
-    config.addWriteAutolock("* " + testClass + "*.validate()");
+    config.addWriteAutolock("* " + testClass + "*.initSet(..)");
+    config.addWriteAutolock("* " + testClass + "*.initTest()");
+    config.addWriteAutolock("* " + testClass + "*.validate(..)");
     config.addReadAutolock("* " + testClass + "*.runTest()");
 
     spec.addRoot("root", "root");
-    spec.addRoot("barrier", "barrier");
 
     config.addReadAutolock("* " + Handler.class.getName() + "*.invokeWithReadLock(..)");
     config.addWriteAutolock("* " + Handler.class.getName() + "*.invokeWithWriteLock(..)");
     config.addWriteAutolock("* " + Handler.class.getName() + "*.setLockMode(..)");
   }
 
-  private static class AddMutator implements Mutator {
+  static class AddMutator implements Mutator {
     public void doMutate(Object o) {
       Set s = (Set) o;
       s.add("v4");
     }
   }
 
-  private static class AddAllMutator implements Mutator {
+  static class AddAllMutator implements Mutator {
     public void doMutate(Object o) {
       Set s = (Set) o;
       Set anotherSet = new HashSet();
@@ -150,7 +132,7 @@ public class SetLocalStateTestApp extends GenericLocalStateTestApp {
     }
   }
 
-  private static class AddAllNonPortableMutator implements Mutator {
+  static class AddAllNonPortableMutator implements Mutator {
     public void doMutate(Object o) {
       Set s = (Set) o;
       Set anotherSet = new HashSet();
@@ -163,21 +145,21 @@ public class SetLocalStateTestApp extends GenericLocalStateTestApp {
     }
   }
 
-  private static class RemoveMutator implements Mutator {
+  static class RemoveMutator implements Mutator {
     public void doMutate(Object o) {
       Set s = (Set) o;
       s.remove("v1");
     }
   }
 
-  private static class ClearMutator implements Mutator {
+  static class ClearMutator implements Mutator {
     public void doMutate(Object o) {
       Set s = (Set) o;
       s.clear();
     }
   }
 
-  private static class RemoveAllMutator implements Mutator {
+  static class RemoveAllMutator implements Mutator {
     public void doMutate(Object o) {
       Set s = (Set) o;
       Set a = new HashSet();
@@ -187,7 +169,7 @@ public class SetLocalStateTestApp extends GenericLocalStateTestApp {
     }
   }
 
-  private static class RetainAllMutator implements Mutator {
+  static class RetainAllMutator implements Mutator {
     public void doMutate(Object o) {
       Set s = (Set) o;
       Set a = new HashSet();
@@ -197,19 +179,13 @@ public class SetLocalStateTestApp extends GenericLocalStateTestApp {
     }
   }
 
-  private static class IteratorRemoveMutator implements Mutator {
+  static class IteratorRemoveMutator implements Mutator {
     public void doMutate(Object o) {
       Set s = (Set) o;
       for (Iterator it = s.iterator(); it.hasNext();) {
         it.next();
         it.remove();
       }
-    }
-  }
-
-  private static class NonPortable implements Comparable {
-    public int compareTo(Object o) {
-      return 1;
     }
   }
 }

@@ -5,7 +5,7 @@ package com.tctest;
 
 public class SetLocalStateTest extends TransparentTestBase {
 
-  public static final int NODE_COUNT = 2;
+  public static final int NODE_COUNT = 1;
 
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
