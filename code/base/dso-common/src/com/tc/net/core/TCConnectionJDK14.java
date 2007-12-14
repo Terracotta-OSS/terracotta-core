@@ -174,7 +174,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     return rv;
   }
 
-  public void doRead(ScatteringByteChannel sbc) {
+  public int doRead(ScatteringByteChannel sbc) {
     final boolean debug = logger.isDebugEnabled();
     final TCByteBuffer[] readBuffers = getReadBuffers();
 
@@ -213,27 +213,27 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
       }
 
       eventCaller.fireErrorEvent(eventListeners, this, ioe, null);
-      return;
+      return bytesRead;
     }
 
     if (readEOF) {
       if (bytesRead > 0) {
-        this.commNIOServiceThread.incrBytesRead(bytesRead);
         addNetworkData(readBuffers, bytesRead);
       }
 
       if (debug) logger.debug("EOF read on connection " + channel.toString());
 
       eventCaller.fireEndOfFileEvent(eventListeners, this);
-      return;
+      return bytesRead;
     }
 
     Assert.eval(bytesRead >= 0);
-    this.commNIOServiceThread.incrBytesRead(bytesRead);
 
     if (debug) logger.debug("Read " + bytesRead + " bytes on connection " + channel.toString());
 
     addNetworkData(readBuffers, bytesRead);
+
+    return bytesRead;
   }
 
   public void doWrite(GatheringByteChannel gbc) {

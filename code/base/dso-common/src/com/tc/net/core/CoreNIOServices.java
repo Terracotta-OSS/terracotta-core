@@ -1,6 +1,7 @@
 package com.tc.net.core;
 
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
+import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
 
 import com.tc.exception.TCInternalError;
 import com.tc.logging.TCLogger;
@@ -45,7 +46,7 @@ class CoreNIOServices extends Thread implements TCListenerEventListener {
   private final List                listeners           = new ArrayList();
   private final SocketParams        socketParams;
   private short                     status;
-  private long                      bytesRead;
+  private final SynchronizedLong    bytesRead           = new SynchronizedLong(0);
 
   public CoreNIOServices(String commThreadName, TCWorkerCommManager workerCommManager, SocketParams socketParams) {
     setDaemon(true);
@@ -432,7 +433,8 @@ class CoreNIOServices extends Thread implements TCListenerEventListener {
           }
 
           if (key.isReadable()) {
-            ((TCJDK14ChannelReader) key.attachment()).doRead((ScatteringByteChannel) key.channel());
+            int read = ((TCJDK14ChannelReader) key.attachment()).doRead((ScatteringByteChannel) key.channel());
+            this.bytesRead.add(read);
           }
 
           if (key.isValid() && key.isWritable()) {
@@ -504,12 +506,8 @@ class CoreNIOServices extends Thread implements TCListenerEventListener {
     }
   }
 
-  public void incrBytesRead(int readBytes) {
-    this.bytesRead += readBytes;
-  }
-
   public long getTotalBytesRead() {
-    return this.bytesRead;
+    return this.bytesRead.get();
   }
 
   private void handleRequest(final InterestRequest req) {

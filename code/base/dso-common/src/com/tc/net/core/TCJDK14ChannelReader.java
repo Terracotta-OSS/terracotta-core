@@ -9,9 +9,9 @@ import java.nio.channels.ScatteringByteChannel;
  * Interface used by comms thread to request reading from a channel. This interface makes it possible to slide a stack
  * of between the read calls and the socket. An example layer would be something that can deal with encrypt/decrypt of
  * the stream
- * 
+ *
  * @author teck
  */
 interface TCJDK14ChannelReader {
-  public void doRead(ScatteringByteChannel channel);
+  public int doRead(ScatteringByteChannel channel);
 }

@@ -53,7 +53,7 @@ public class TCWorkerCommManager {
     return workerCommThreads[nextWorkerCommId];
   }
 
-  public void start() {
+  public synchronized void start() {
     workerCommStarted = true;
 
     for (int i = 0; i < workerCommThreads.length; i++) {
@@ -62,14 +62,14 @@ public class TCWorkerCommManager {
     }
   }
 
-  public boolean isStarted() {
+  public synchronized boolean isStarted() {
     if (workerCommStarted == true) {
       Assert.eval(totalWorkerComm > 0);
     }
     return workerCommStarted;
   }
 
-  public void stop() {
+  public synchronized void stop() {
     if (isStarted()) {
       for (int i = 0; i < totalWorkerComm; i++) {
         workerCommThreads[i].requestStop();
@@ -77,7 +77,7 @@ public class TCWorkerCommManager {
     }
   }
 
-  public int getActiveWorkerCommsCount(boolean employedCommsOnly) {
+  public synchronized int getActiveWorkerCommsCount(boolean employedCommsOnly) {
     int count = 0;
     for (int i = 0; i < totalWorkerComm; i++) {
       if (workerCommThreads[i].isStarted()) {
@@ -91,12 +91,12 @@ public class TCWorkerCommManager {
     return count;
   }
 
-  public int getClientCountForWorkerComm(int workerCommId) {
+  public synchronized int getClientCountForWorkerComm(int workerCommId) {
     if (workerCommId >= 0 && workerCommId < totalWorkerComm) { return workerCommClientCount[workerCommId]; }
     return 0;
   }
 
-  public long getBytesReadByWorkerComm(int workerCommId) {
+  public synchronized long getBytesReadByWorkerComm(int workerCommId) {
     if (workerCommId >= 0 && workerCommId < totalWorkerComm) { return workerCommThreads[workerCommId]
         .getTotalBytesRead(); }
     return 0;
