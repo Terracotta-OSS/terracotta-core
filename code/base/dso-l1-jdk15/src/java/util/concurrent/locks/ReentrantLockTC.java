@@ -130,7 +130,7 @@ public class ReentrantLockTC extends ReentrantLock implements TCLock {
     }
     return isLocked;
   }
-  
+
   public boolean tryLock(long timeout, TimeUnit unit) throws InterruptedException {
     boolean isLocked = dsoTryLock(timeout, unit);
     if (isLocked || !ManagerUtil.isManaged(this)) {
@@ -139,14 +139,10 @@ public class ReentrantLockTC extends ReentrantLock implements TCLock {
     return isLocked;
   }
 
-  public Object getTCLockingObject() {
-    return this;
-  }
-
   public int localHeldCount() {
     return getHoldCount();
   }
-  
+
   public void validateInUnLockState() {
     if (super.isLocked()) { throw new TCObjectNotSharableException(
                                                            "You are attempting to share a ReentrantLock when it is in a locked state. Lock cannot be shared while locked."); }

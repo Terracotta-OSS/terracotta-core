@@ -83,7 +83,6 @@ import com.tc.object.msg.RequestManagedObjectMessageImpl;
 import com.tc.object.msg.RequestManagedObjectResponseMessage;
 import com.tc.object.msg.RequestRootMessageImpl;
 import com.tc.object.msg.RequestRootResponseMessage;
-import com.tc.object.net.ChannelStats;
 import com.tc.object.net.ChannelStatsImpl;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerImpl;
@@ -192,7 +191,7 @@ import javax.management.NotCompliantMBeanException;
 
 /**
  * Startup and shutdown point. Builds and starts the server
- * 
+ *
  * @author steve
  */
 public class DistributedObjectServer extends SEDA implements TCDumper {
@@ -483,7 +482,8 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     channelManager.addEventListener(cteh);
     channelManager.addEventListener(connectionIdFactory);
 
-    ChannelStats channelStats = new ChannelStatsImpl(sampledCounterManager, channelManager);
+    ChannelStatsImpl channelStats = new ChannelStatsImpl(sampledCounterManager, channelManager);
+    channelManager.addEventListener(channelStats);
 
     lockManager = new LockManagerImpl(channelManager, lockStatsManager);
     ObjectInstanceMonitorImpl instanceMonitor = new ObjectInstanceMonitorImpl();
@@ -579,7 +579,12 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
 
     final Stage jmxRemoteConnectStage = stageManager.createStage(ServerConfigurationContext.JMXREMOTE_CONNECT_STAGE,
                                                                  new ClientConnectEventHandler(), 1, maxStageSize);
-    cteh.setConnectStageSink(jmxRemoteConnectStage.getSink());
+
+    final Stage jmxRemoteDisconnectStage = stageManager
+        .createStage(ServerConfigurationContext.JMXREMOTE_DISCONNECT_STAGE, new ClientConnectEventHandler(), 1,
+                     maxStageSize);
+
+    cteh.setStages(jmxRemoteConnectStage.getSink(), jmxRemoteDisconnectStage.getSink());
     final Stage jmxRemoteTunnelStage = stageManager.createStage(ServerConfigurationContext.JMXREMOTE_TUNNEL_STAGE,
                                                                 cteh, 1, maxStageSize);
 

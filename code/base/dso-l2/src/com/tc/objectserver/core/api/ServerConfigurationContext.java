@@ -42,6 +42,7 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public static final String MANAGED_OBJECT_FLUSH_STAGE                         = "managed_object_flush_stage";
   public static final String JMXREMOTE_TUNNEL_STAGE                             = "jmxremote_tunnel_stage";
   public static final String JMXREMOTE_CONNECT_STAGE                            = "jmxremote_connect_stage";
+  public static final String JMXREMOTE_DISCONNECT_STAGE                         = "jmxremote_disconnect_stage";
   public static final String RECALL_OBJECTS_STAGE                               = "recall_objects_stage";
   public static final String L2_STATE_CHANGE_STAGE                              = "l2_state_change_stage";
   public static final String OBJECTS_SYNC_REQUEST_STAGE                         = "object_sync_request_stage";

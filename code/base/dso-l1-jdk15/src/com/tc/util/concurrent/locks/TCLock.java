@@ -6,9 +6,7 @@ package com.tc.util.concurrent.locks;
 import java.util.concurrent.locks.Lock;
 
 public interface TCLock extends Lock {
-  public Object getTCLockingObject();
-  
   public boolean isHeldByCurrentThread();
-  
+
   public int localHeldCount();
 }

@@ -26,13 +26,13 @@ import junit.framework.TestCase;
 public class ManagedObjectRequestHandlerTest extends TestCase {
 
   public void testObjectRequestCounter() {
-    TestChannelStats channelStats = new TestChannelStats();
     Counter channelReqCounter = new CounterImpl(666L);
     Counter channelRemCounter = new CounterImpl(69L);
+
     Counter requestCounter = new CounterImpl(0L);
     Counter removeCounter = new CounterImpl(0L);
-    channelStats.reqCounter = channelReqCounter;
-    channelStats.remCounter = channelRemCounter;
+
+    TestChannelStats channelStats = new TestChannelStats(channelReqCounter, channelRemCounter);
 
     TestServerConfigurationContext context = new TestServerConfigurationContext();
     context.clientStateManager = new TestClientStateManager();
@@ -70,19 +70,29 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
   }
 
   private static class TestChannelStats implements ChannelStats {
-    Counter remCounter;
-    Counter reqCounter;
+
+    private final Counter channelReqCounter;
+    private final Counter channelRemCounter;
+
+    public TestChannelStats(Counter channelReqCounter, Counter channelRemCounter) {
+      this.channelReqCounter = channelReqCounter;
+      this.channelRemCounter = channelRemCounter;
+    }
 
     public Counter getCounter(MessageChannel channel, String name) {
-      if (OBJECT_FLUSH_RATE.equals(name)) {
-        return remCounter;
-      } else if (OBJECT_REQUEST_RATE.equals(name)) { return reqCounter; }
       throw new RuntimeException(name);
     }
 
     public void notifyTransaction(NodeID nodeID) {
       throw new ImplementMe();
+    }
 
+    public void notifyObjectRemove(MessageChannel channel, int numObjectsRemoved) {
+      channelRemCounter.increment(numObjectsRemoved);
+    }
+
+    public void notifyObjectRequest(MessageChannel channel, int numObjectsRequested) {
+      channelReqCounter.increment(numObjectsRequested);
     }
   }
 

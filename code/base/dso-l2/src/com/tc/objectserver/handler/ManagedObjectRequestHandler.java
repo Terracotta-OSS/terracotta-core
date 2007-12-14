@@ -26,7 +26,7 @@ import java.util.Set;
 /**
  * Converts the request into a call to the objectManager with the proper next steps initialized I'm not convinced that
  * this stage is necessary. May be able to merge it with another stage.
- * 
+ *
  * @author steve
  */
 public class ManagedObjectRequestHandler extends AbstractEventHandler {
@@ -67,7 +67,6 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
   }
 
   private void handleEventFromClient(RequestManagedObjectMessage rmom) {
-
     MessageChannel channel = rmom.getChannel();
     Set requestedIDs = rmom.getObjectIDs();
     ClientID clientID = rmom.getClientID();
@@ -77,13 +76,13 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
     final int numObjectsRequested = requestedIDs.size();
     if (numObjectsRequested != 0) {
       globalObjectRequestCounter.increment(numObjectsRequested);
-      channelStats.getCounter(channel, ChannelStats.OBJECT_REQUEST_RATE).increment(numObjectsRequested);
+      channelStats.notifyObjectRequest(channel, numObjectsRequested);
     }
 
     final int numObjectsRemoved = removedIDs.size();
     if (numObjectsRemoved != 0) {
       globalObjectFlushCounter.increment(numObjectsRemoved);
-      channelStats.getCounter(channel, ChannelStats.OBJECT_FLUSH_RATE).increment(numObjectsRemoved);
+      channelStats.notifyObjectRemove(channel, numObjectsRemoved);
     }
 
     long t = System.currentTimeMillis();

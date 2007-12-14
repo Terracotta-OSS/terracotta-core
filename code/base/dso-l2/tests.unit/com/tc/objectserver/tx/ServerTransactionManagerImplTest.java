@@ -540,6 +540,14 @@ public class ServerTransactionManagerImplTest extends TestCase {
       }
     }
 
+    public void notifyObjectRemove(MessageChannel channel, int numObjectsRemoved) {
+      throw new ImplementMe();
+    }
+
+    public void notifyObjectRequest(MessageChannel channel, int numObjectsRequested) {
+      throw new ImplementMe();
+    }
+
   }
 
   private static class Root {

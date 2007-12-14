@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.net;
 
@@ -8,16 +9,18 @@ import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
 import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.stats.counter.Counter;
+import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.stats.counter.sampled.SampledCounterManager;
 
+import java.util.Iterator;
 import java.util.Map;
 
 /**
- * A helper class to make accessing channel specific stats objects a little
- * easier. This class is sorta yucky and definitely will need to evolve
+ * A helper class to make accessing channel specific stats objects a little easier. This class is sorta yucky and
+ * definitely will need to evolve
  */
-public class ChannelStatsImpl implements ChannelStats {
+public class ChannelStatsImpl implements ChannelStats, DSOChannelManagerEventListener {
 
   private static final String               DSO_STATS_MAP  = "dso_stats_map";
   private static final SampledCounterConfig DEFAULT_CONFIG = new SampledCounterConfig(1, 300, true, 0L);
@@ -41,10 +44,8 @@ public class ChannelStatsImpl implements ChannelStats {
     synchronized (statsMap) {
       if (statsMap.containsKey(name)) { return (Counter) statsMap.get(name); }
 
-      // XXX: We'll need a way to override this at some point, we'll probably
-      // want differing configs for the different
-      // counters, and not every counter needs to be one of the sampled type
-      // (probably)
+      // XXX: We'll need a way to override this at some point, we'll probably want differing configurations for the
+      // different counters, and not every counter needs to be one of the sampled type (probably)
       rv = counterManager.createCounter(DEFAULT_CONFIG);
       statsMap.put(name, rv);
       return rv;
@@ -66,6 +67,28 @@ public class ChannelStatsImpl implements ChannelStats {
     } catch (NoSuchChannelException e) {
       //
     }
+  }
+
+  public void channelCreated(MessageChannel channel) {
+    //
+  }
+
+  public void channelRemoved(MessageChannel channel) {
+    Map stats = (Map) channel.removeAttachment(DSO_STATS_MAP);
+    if (stats != null) {
+      for (Iterator i = stats.values().iterator(); i.hasNext();) {
+        SampledCounter counter = (SampledCounter) i.next();
+        counter.shutdown();
+      }
+    }
+  }
+
+  public void notifyObjectRemove(MessageChannel channel, int numObjectsRemoved) {
+    getCounter(channel, ChannelStats.OBJECT_FLUSH_RATE).increment(numObjectsRemoved);
+  }
+
+  public void notifyObjectRequest(MessageChannel channel, int numObjectsRequested) {
+    getCounter(channel, ChannelStats.OBJECT_REQUEST_RATE).increment(numObjectsRequested);
   }
 
 }

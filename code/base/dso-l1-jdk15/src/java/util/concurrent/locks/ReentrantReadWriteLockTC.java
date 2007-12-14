@@ -212,10 +212,6 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
       return new ConditionObject(this);
     }
 
-    public Object getTCLockingObject() {
-      return dsoLock.getDsoLock();
-    }
-
     public boolean isHeldByCurrentThread() {
       return sync.isHeldExclusively();
     }

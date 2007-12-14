@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.management.remote.protocol.terracotta;
 
@@ -12,13 +13,15 @@ import javax.management.remote.message.Message;
 
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.util.concurrent.SetOnceFlag;
 
 public final class TunnelingMessageConnection implements MessageConnection {
 
   private final LinkedList     inbox;
   private final MessageChannel channel;
-  private boolean              connected;
   private final boolean        isJmxConnectionServer;
+  private final SetOnceFlag    connected = new SetOnceFlag();
+  private final SetOnceFlag    closed    = new SetOnceFlag();
 
   /**
    * @param channel outgoing network channel, calls to {@link #writeMessage(Message)} will drop messages here and send
@@ -28,54 +31,48 @@ public final class TunnelingMessageConnection implements MessageConnection {
     this.isJmxConnectionServer = isJmxConnectionServer;
     this.inbox = new LinkedList();
     this.channel = channel;
-    connected = false;
   }
 
-  public synchronized void close() throws IOException {
-    checkConnected();
-    connected = false;
-    synchronized (inbox) {
+  public synchronized void close() {
+    if (closed.attemptSet()) {
       inbox.clear();
-      inbox.notifyAll();
+      notifyAll();
     }
   }
 
-  public synchronized void connect(final Map environment) throws IOException {
-    if (connected) { throw new IOException("Connection is already open"); }
-    if (!isJmxConnectionServer) {
-      JmxRemoteTunnelMessage connectMessage = (JmxRemoteTunnelMessage) channel
-          .createMessage(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE);
-      connectMessage.setInitConnection();
-      connectMessage.send();
+  public synchronized void connect(final Map environment) {
+    if (connected.attemptSet()) {
+      if (!isJmxConnectionServer) {
+        JmxRemoteTunnelMessage connectMessage = (JmxRemoteTunnelMessage) channel
+            .createMessage(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE);
+        connectMessage.setInitConnection();
+        connectMessage.send();
+      }
     }
-    connected = true;
   }
 
   public String getConnectionId() {
     return channel.getRemoteAddress().getStringForm();
   }
 
-  public Message readMessage() throws IOException, ClassNotFoundException {
-    Message inboundMessage = null;
-    while (inboundMessage == null) {
-      checkConnected();
-      synchronized (inbox) {
-        if (inbox.isEmpty()) {
-          try {
-            inbox.wait();
-          } catch (InterruptedException ie) {
-            throw new IOException("Interrupted while waiting for inbound message");
-          }
-        } else {
-          inboundMessage = (Message) inbox.removeFirst();
-          inbox.notifyAll();
+  public synchronized Message readMessage() throws IOException {
+    while (true) {
+      if (closed.isSet()) { throw new IOException("connection closed"); }
+
+      if (inbox.isEmpty()) {
+        try {
+          wait();
+        } catch (InterruptedException ie) {
+          throw new IOException("Interrupted while waiting for inbound message");
         }
       }
+
+      return (Message) inbox.removeFirst();
     }
-    return inboundMessage;
   }
 
-  public void writeMessage(final Message outboundMessage) throws IOException {
+  public synchronized void writeMessage(final Message outboundMessage) throws IOException {
+    if (closed.isSet()) { throw new IOException("connection closed"); }
     JmxRemoteTunnelMessage messageEnvelope = (JmxRemoteTunnelMessage) channel
         .createMessage(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE);
     messageEnvelope.setTunneledMessage(outboundMessage);
@@ -85,18 +82,10 @@ public final class TunnelingMessageConnection implements MessageConnection {
   /**
    * This should only be invoked from the SEDA event handler that receives incoming network messages.
    */
-  void incomingNetworkMessage(final Message inboundMessage) {
-    synchronized (this) {
-      if (!connected) return;
-    }
-    synchronized (inbox) {
-      inbox.addLast(inboundMessage);
-      inbox.notifyAll();
-    }
-  }
-
-  private synchronized void checkConnected() throws IOException {
-    if (!connected) { throw new IOException("Connection has been closed"); }
+  synchronized void incomingNetworkMessage(final Message inboundMessage) {
+    if (closed.isSet()) { return; }
+    inbox.addLast(inboundMessage);
+    notifyAll();
   }
 
 }
