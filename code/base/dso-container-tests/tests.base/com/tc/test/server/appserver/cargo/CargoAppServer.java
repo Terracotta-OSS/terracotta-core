@@ -100,7 +100,12 @@ public abstract class CargoAppServer extends AbstractAppServer {
             container.getConfiguration().setProperty(GeneralPropertySet.JVMARGS, jvmArgs);
           }
         } catch (ContainerException e) {
-          throw new RuntimeException(e);
+          // TODO: should reconsider this after upgrading WL9.2
+          // WL9.2 has some bug in shutting down
+          // We don't want to fail the test because of it
+          if (!e.getMessage().startsWith("Failed to stop the WebLogic 9.x container.")) {
+            throw new RuntimeException(e);
+          }
         }
       }
     }
