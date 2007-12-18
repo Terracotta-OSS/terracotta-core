@@ -12,6 +12,7 @@ import com.tc.test.server.appserver.glassfishv1.GlassfishV1AppServerFactory;
 import com.tc.test.server.appserver.jboss3x.JBoss3xAppServerFactory;
 import com.tc.test.server.appserver.jboss4x.JBoss4xAppServerFactory;
 import com.tc.test.server.appserver.jetty6x.Jetty6xAppServerFactory;
+import com.tc.test.server.appserver.resin3x.Resin3xAppServerFactory;
 import com.tc.test.server.appserver.tomcat5x.Tomcat5xAppServerFactory;
 import com.tc.test.server.appserver.was6x.Was6xAppServerFactory;
 import com.tc.test.server.appserver.wasce1x.Wasce1xAppServerFactory;
@@ -38,6 +39,7 @@ public abstract class AppServerFactory {
   public static final int          GLASSFISH = 4;
   public static final int          JETTY     = 5;
   public static final int          WEBSPHERE = 6;
+  public static final int          RESIN     = 7;
 
   protected final TestConfigObject config;
   private boolean                  licenseIsSet;
@@ -66,8 +68,9 @@ public abstract class AppServerFactory {
     int appId = getAppServerId(factoryName);
     switch (appId) {
       case TOMCAT:
-        if ("5".equals(majorVersion) ||
-            "6".equals(majorVersion)) return new Tomcat5xAppServerFactory(new ProtectedKey(), config);
+        if ("5".equals(majorVersion) || "6".equals(majorVersion)) return new Tomcat5xAppServerFactory(
+                                                                                                      new ProtectedKey(),
+                                                                                                      config);
       case WEBLOGIC:
         if ("8".equals(majorVersion)) return new Weblogic8xAppServerFactory(new ProtectedKey(), config);
         if ("9".equals(majorVersion)) return new Weblogic9xAppServerFactory(new ProtectedKey(), config);
@@ -82,6 +85,8 @@ public abstract class AppServerFactory {
         if ("6".equals(majorVersion)) return new Jetty6xAppServerFactory(new ProtectedKey(), config);
       case WEBSPHERE:
         if ("6".equals(majorVersion)) return new Was6xAppServerFactory(new ProtectedKey(), config);
+      case RESIN:
+        if ("3".equals(majorVersion)) return new Resin3xAppServerFactory(new ProtectedKey(), config);
     }
 
     throw new ImplementMe("App server named '" + factoryName + "' with major version " + majorVersion
@@ -128,15 +133,17 @@ public abstract class AppServerFactory {
       return JETTY;
     } else if (appserverName.equals("websphere")) {
       return WEBSPHERE;
+    } else if (appserverName.equals("resin")) {
+      return RESIN;      
     } else {
       throw new RuntimeException("App server [" + appserverName + "] is not yet defined!");
     }
   }
-  
+
   public static int getCurrentAppServerId() {
     return getAppServerId(TestConfigObject.getInstance().appserverFactoryName());
   }
-  
+
   public static String getCurrentAppServerMajorVersion() {
     return TestConfigObject.getInstance().appserverMajorVersion();
   }
