@@ -10,12 +10,14 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.util.ClassUtils;
 import org.springframework.web.context.support.ServletContextResource;
 
 import com.tc.aspectwerkz.joinpoint.StaticJoinPoint;
 import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
 
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -48,6 +50,9 @@ public class BeanDefinitionProtocol {
         location = ((FileSystemResource) resource).getPath();
       } else if (resource instanceof ServletContextResource) {
         location = ((ServletContextResource) resource).getPath();
+      } else if (resource instanceof UrlResource) {
+        URL url = ((UrlResource) resource).getURL();
+        location = url!=null ? url.toString() : resource.getDescription();
       } else {
         location = resource.getDescription();
       }
