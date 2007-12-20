@@ -26,6 +26,7 @@ import com.tc.object.tx.TxnType;
 import com.tc.object.tx.UnlockedSharedObjectException;
 import com.tc.object.tx.WaitInvocation;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
+import com.tc.object.util.ToggleableStrongReference;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
@@ -213,7 +214,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
     public Object lookupObject(ObjectID id) {
       throw new ImplementMe();
     }
-    
+
     public Object lookupObject(ObjectID id, ObjectID parentContext) {
       throw new ImplementMe();
     }
@@ -349,6 +350,10 @@ public class ManagerImplTest extends BaseDSOTestCase {
     }
 
     public Object cloneAndInvokeLogicalOperation(Object pojo, String methodName, Object[] parameters) {
+      throw new ImplementMe();
+    }
+
+    public ToggleableStrongReference getOrCreateToggleRef(TCObject tco, Object peer) {
       throw new ImplementMe();
     }
 

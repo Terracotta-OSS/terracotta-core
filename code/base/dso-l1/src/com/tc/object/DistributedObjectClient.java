@@ -107,6 +107,7 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
+import com.tc.util.ToggleableReferenceManager;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.sequence.BatchSequence;
 import com.tc.util.sequence.Sequence;
@@ -244,9 +245,13 @@ public class DistributedObjectClient extends SEDA {
     TCClassFactory classFactory = new TCClassFactoryImpl(new TCFieldFactory(config), config, classProvider);
     TCObjectFactory objectFactory = new TCObjectFactoryImpl(classFactory);
 
+    ToggleableReferenceManager toggleRefMgr = new ToggleableReferenceManager();
+    toggleRefMgr.start();
+
     objectManager = new ClientObjectManagerImpl(remoteObjectManager, config, idProvider, new ClockEvictionPolicy(-1),
                                                 runtimeLogger, channel.getChannelIDProvider(), classProvider,
-                                                classFactory, objectFactory, config.getPortability(), channel);
+                                                classFactory, objectFactory, config.getPortability(), channel,
+                                                toggleRefMgr);
 
     TCProperties cacheManagerProperties = l1Properties.getPropertiesFor("cachemanager");
     if (cacheManagerProperties.getBoolean("enabled")) {

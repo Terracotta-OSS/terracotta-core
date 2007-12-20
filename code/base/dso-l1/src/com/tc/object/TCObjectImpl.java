@@ -18,6 +18,7 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.field.TCField;
+import com.tc.object.util.ToggleableStrongReference;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
 import com.tc.util.Util;
@@ -55,7 +56,9 @@ public abstract class TCObjectImpl implements TCObject {
   protected TCObjectImpl(ReferenceQueue queue, ObjectID id, Object peer, TCClass clazz) {
     this.objectID = id;
     this.tcClazz = clazz;
-    setPeerObject(new WeakObjectReference(id, peer, queue));
+    if (peer != null) {
+      setPeerObject(new WeakObjectReference(id, peer, queue));
+    }
   }
 
   public boolean isShared() {
@@ -75,7 +78,7 @@ public abstract class TCObjectImpl implements TCObject {
   }
 
   public Object getPeerObject() {
-    return peerObject.get();
+    return peerObject == null ? null : peerObject.get();
   }
 
   protected void setPeerObject(WeakReference pojo) {
@@ -324,7 +327,7 @@ public abstract class TCObjectImpl implements TCObject {
     String fieldname = tcClazz.getFieldNameByOffset(fieldOffset);
     objectFieldChanged(classname, fieldname, newValue, index);
   }
-  
+
   public boolean isFieldPortableByOffset(long fieldOffset) {
     return tcClazz.isPortableField(fieldOffset);
   }
@@ -448,5 +451,14 @@ public abstract class TCObjectImpl implements TCObject {
   }
 
   protected abstract boolean isEvictable();
+
+  public ToggleableStrongReference getOrCreateToggleRef() {
+    Object peer = getPeerObject();
+    if (peer == null) {
+      throw new AssertionError("cannot create a toggle reference if peer object is gone");
+    }
+
+    return getObjectManager().getOrCreateToggleRef(this, peer);
+  }
 
 }

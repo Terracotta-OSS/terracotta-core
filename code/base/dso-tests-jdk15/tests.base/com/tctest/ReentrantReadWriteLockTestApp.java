@@ -47,8 +47,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   private final List                   queue                    = new LinkedList();
   private final Random                 random;
 
-  private int                          numOfPutters             = 1;
-  private int                          numOfGetters;
+  private final int                    numOfPutters             = 1;
+  private final int                    numOfGetters;
   private final boolean                isCrashTest;
 
   public ReentrantReadWriteLockTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
@@ -156,7 +156,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     basicConditionVariableTesting(index, readWriteLock.writeLock(), condition);
     basicConditionVariableWaitTesting(index, readWriteLock, condition);
     singleNodeConditionVariableTesting(index, readWriteLock.writeLock(), condition);
-    
+
     tryLockTest(index, readWriteLock);
   }
 
@@ -774,12 +774,12 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
 
     if (index == 0) {
       final CyclicBarrier localBarrier = new CyclicBarrier(3);
-      final List queue = new LinkedList();
+      final List localQueue = new LinkedList();
 
       Thread t1 = new Thread(new Runnable() {
         public void run() {
           try {
-            doPutter(1, lock, condition, queue, 1);
+            doPutter(1, lock, condition, localQueue, 1);
             localBarrier.await();
           } catch (Exception e) {
             throw new AssertionError(e);
@@ -790,7 +790,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       Thread t2 = new Thread(new Runnable() {
         public void run() {
           try {
-            doGetter(2, lock, condition, queue);
+            doGetter(2, lock, condition, localQueue);
             localBarrier.await();
           } catch (Exception e) {
             throw new AssertionError(e);
@@ -820,14 +820,14 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     barrier.await();
   }
 
-  private void doPutter(long id, WriteLock lock, Condition condition, List queue, int numOfGetters) throws Exception {
+  private void doPutter(long id, WriteLock lock, Condition condition, List Q, int getters) throws Exception {
     Thread.currentThread().setName("PUTTER-" + id);
 
     for (int i = 0; i < NUM_OF_PUTS; i++) {
       lock.lock();
       try {
         System.err.println("PUTTER-" + id + " Putting " + i);
-        queue.add(new WorkItem(String.valueOf(i)));
+        Q.add(new WorkItem(String.valueOf(i)));
         if (i % 2 == 0) {
           condition.signalAll();
         } else {
@@ -838,10 +838,10 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       }
     }
 
-    for (int i = 0; i < numOfGetters; i++) {
+    for (int i = 0; i < getters; i++) {
       lock.lock();
       try {
-        queue.add(WorkItem.STOP);
+        Q.add(WorkItem.STOP);
         condition.signalAll();
       } finally {
         lock.unlock();
@@ -849,7 +849,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     }
   }
 
-  private void doGetter(long id, WriteLock lock, Condition condition, List queue) throws Exception {
+  private void doGetter(long id, WriteLock lock, Condition condition, List Q) throws Exception {
     Thread.currentThread().setName("GETTER-" + id);
 
     int i = 0;
@@ -857,7 +857,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       lock.lock();
       lock.lock();
       try {
-        while (queue.size() == 0) {
+        while (Q.size() == 0) {
           int choice = i % 4;
           switch (choice) {
             case 0:
@@ -877,7 +877,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
           }
           i++;
         }
-        WorkItem wi = (WorkItem) queue.remove(0);
+        WorkItem wi = (WorkItem) Q.remove(0);
         if (wi.isStop()) { return; }
         System.err.println("GETTER- " + id + " removes " + wi);
 
@@ -1338,6 +1338,11 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     public synchronized void setLock(ReentrantReadWriteLock lock) {
       this.lock = lock;
     }
+
+    public synchronized ReentrantReadWriteLock getLock() {
+      return lock;
+    }
+
   }
 
   private static class WorkItem {

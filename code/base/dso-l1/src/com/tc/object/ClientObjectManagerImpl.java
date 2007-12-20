@@ -37,6 +37,7 @@ import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.object.tx.optimistic.TCObjectClone;
 import com.tc.object.util.IdentityWeakHashMap;
+import com.tc.object.util.ToggleableStrongReference;
 import com.tc.object.walker.ObjectGraphWalker;
 import com.tc.text.ConsoleNonPortableReasonFormatter;
 import com.tc.text.ConsoleParagraphFormatter;
@@ -45,6 +46,7 @@ import com.tc.text.ParagraphFormatter;
 import com.tc.text.StringFormatter;
 import com.tc.util.Assert;
 import com.tc.util.NonPortableReason;
+import com.tc.util.ToggleableReferenceManager;
 import com.tc.util.State;
 import com.tc.util.Util;
 import com.tc.util.concurrent.StoppableThread;
@@ -114,13 +116,15 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
   private final Set                            pendingCreateTCObjects  = new HashSet();
   private final Portability                    portability;
   private final DSOClientMessageChannel        channel;
+  private final ToggleableReferenceManager     referenceManager;
 
   private final boolean                        sendErrors              = System.getProperty("project.name") != null;
 
   public ClientObjectManagerImpl(RemoteObjectManager remoteObjectManager, DSOClientConfigHelper clientConfiguration,
                                  ObjectIDProvider idProvider, EvictionPolicy cache, RuntimeLogger runtimeLogger,
                                  ChannelIDProvider provider, ClassProvider classProvider, TCClassFactory classFactory,
-                                 TCObjectFactory objectFactory, Portability portability, DSOClientMessageChannel channel) {
+                                 TCObjectFactory objectFactory, Portability portability,
+                                 DSOClientMessageChannel channel, ToggleableReferenceManager referenceManager) {
     this.remoteObjectManager = remoteObjectManager;
     this.cache = cache;
     this.clientConfiguration = clientConfiguration;
@@ -128,6 +132,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     this.runtimeLogger = runtimeLogger;
     this.portability = portability;
     this.channel = channel;
+    this.referenceManager = referenceManager;
     this.logger = new ChannelIDLogger(provider, TCLogging.getLogger(ClientObjectManager.class));
     this.classProvider = classProvider;
     this.traverseTest = new NewObjectTraverseTest();
@@ -929,6 +934,10 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
 
   private void addToSharedFromRoot(Object root, NonPortableEventContext context) {
     shareObjectsTraverser.traverse(root, traverseTest, context);
+  }
+
+  public ToggleableStrongReference getOrCreateToggleRef(TCObject tco, Object peer) {
+    return referenceManager.getOrCreateFor(tco, peer);
   }
 
   private class AddManagedObjectAction implements TraversalAction {

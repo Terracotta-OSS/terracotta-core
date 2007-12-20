@@ -90,7 +90,7 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
                                        ClassProvider classProvider, TCClassFactory classFactory,
                                        TCObjectFactory objectFactory) {
       super(remoteObjectManager, clientConfiguration, idProvider, cache, runtimeLogger, provider, classProvider,
-            classFactory, objectFactory, new TestPortability(), null);
+            classFactory, objectFactory, new TestPortability(), null, null);
       }
 
     public boolean isPortable(Object obj) {

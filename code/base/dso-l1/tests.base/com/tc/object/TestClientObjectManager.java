@@ -11,6 +11,7 @@ import com.tc.object.bytecode.Manageable;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
+import com.tc.object.util.ToggleableStrongReference;
 import com.tc.util.Assert;
 
 import java.lang.ref.ReferenceQueue;
@@ -114,7 +115,7 @@ public class TestClientObjectManager implements ClientObjectManager {
   public Object lookupObject(ObjectID id) {
     return ((TCObject) objects.get(id)).getPeerObject();
   }
-  
+
   public Object lookupObject(ObjectID id, ObjectID parentContext) {
     return ((TCObject) objects.get(id)).getPeerObject();
   }
@@ -243,13 +244,17 @@ public class TestClientObjectManager implements ClientObjectManager {
   public void storeObjectHierarchy(Object pojo, ApplicationEventContext context) {
     throw new ImplementMe();
   }
-  
+
   public void sendApplicationEvent(Object pojo, ApplicationEvent event) {
     throw new ImplementMe();
   }
 
   public Object cloneAndInvokeLogicalOperation(Object pojo, String methodName, Object[] parameters) {
-    throw new ImplementMe();    
+    throw new ImplementMe();
+  }
+
+  public ToggleableStrongReference getOrCreateToggleRef(TCObject tco, Object peer) {
+    throw new ImplementMe();
   }
 
 }

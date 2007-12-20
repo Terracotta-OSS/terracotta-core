@@ -22,14 +22,14 @@ public class Traverser {
   private static final TraverseTest    NULL_TEST = new NullTraverseTest();
   private final TraversalAction        action;
   private final PortableObjectProvider portableObjectProvider;
-  private NonPortableEventContext      context;
 
   public Traverser(TraversalAction action, PortableObjectProvider portableObjectProvider) {
     this.action = action;
     this.portableObjectProvider = portableObjectProvider;
   }
 
-  private void addReferencedObjects(Map toBeVisited, Object start, Map visited, TraverseTest traverseTest) {
+  private void addReferencedObjects(Map toBeVisited, Object start, Map visited, TraverseTest traverseTest,
+                                    NonPortableEventContext context) {
     Class clazz = start.getClass();
 
     while (clazz != null) {
@@ -72,14 +72,13 @@ public class Traverser {
   }
 
   public void traverse(Object object, TraverseTest traverseTest, NonPortableEventContext ctx) {
-    this.context = ctx;
     Map visited = new IdentityHashMap();
     List toAdd = new ArrayList();
 
     visited.put(object, null);
 
     IdentityHashMap toBeVisited = new IdentityHashMap();
-    addReferencedObjects(toBeVisited, object, visited, traverseTest);
+    addReferencedObjects(toBeVisited, object, visited, traverseTest, ctx);
     toAdd.add(object);
 
     while (!toBeVisited.isEmpty()) {
@@ -87,7 +86,7 @@ public class Traverser {
         Object obj = i.next();
         visited.put(obj, null);
         toBeVisited.remove(obj);
-        addReferencedObjects(toBeVisited, obj, visited, traverseTest);
+        addReferencedObjects(toBeVisited, obj, visited, traverseTest, ctx);
         toAdd.add(obj); // action.visit() to be taken place after addReferencedObjects() so that
         // the manager of the referenced objects will only be set after the referenced
         // objects are obtained.

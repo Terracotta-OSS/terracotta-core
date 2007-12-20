@@ -38,6 +38,8 @@ import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.ClassAdapterBase;
 import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.DelegateMethodAdapter;
+import com.tc.object.bytecode.JavaUtilConcurrentLocksAQSAdapter;
+import com.tc.object.bytecode.JavaUtilConcurrentLocksRRWLSyncAdapter;
 import com.tc.object.bytecode.ManagerHelper;
 import com.tc.object.bytecode.ManagerHelperFactory;
 import com.tc.object.bytecode.SafeSerialVersionUIDAdder;
@@ -860,29 +862,31 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
    */
 
   private void addJDK15InstrumentedSpec() {
-    if (Vm.getMegaVersion() >= 1 && Vm.getMajorVersion() > 4) {
+    if (Vm.isJDK15Compliant()) {
+
       TransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock");
+      spec.markPreInstrumented();
       spec.setPreCreateMethod("validateInUnLockState");
       spec.setCallConstructorOnLoad(true);
       spec.setHonorTransient(true);
 
       spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$DsoLock");
       spec.setHonorTransient(true);
-      spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$ReadLockTC");
-      spec.setCallMethodOnLoad("init");
-      spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$WriteLockTC");
-      spec.setCallMethodOnLoad("init");
 
       spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$ReadLock");
+      spec.markPreInstrumented();
       spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$WriteLock");
+      spec.markPreInstrumented();
 
       spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$Sync");
       spec.setHonorTransient(true);
       spec.setCallConstructorOnLoad(true);
+      spec.setCustomClassAdapter(new JavaUtilConcurrentLocksRRWLSyncAdapter());
+      spec.markPreInstrumented();
+
       spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$FairSync");
       spec.setCallConstructorOnLoad(true);
-      spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$NonfairSync");
-      spec.setCallConstructorOnLoad(true);
+      spec.markPreInstrumented();
 
       spec = getOrCreateSpec("com.tcclient.util.concurrent.locks.ConditionObject");
       spec.disableWaitNotifyCodeSpec("signal()V");
@@ -908,14 +912,13 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     spec.setHonorTransient(true);
     spec.addTransient("state");
     spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
-
-    spec = getOrCreateSpec("java.util.concurrent.locks.AbstractQueuedSynchronizer$Node");
-    spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
+    spec.setCustomClassAdapter(new JavaUtilConcurrentLocksAQSAdapter());
     spec.markPreInstrumented();
 
     if (Vm.isJDK16Compliant()) {
       spec = getOrCreateSpec("java.util.concurrent.locks.AbstractOwnableSynchronizer");
       spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
+      spec.markPreInstrumented();
     }
   }
 

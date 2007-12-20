@@ -123,12 +123,12 @@ public class TCObjectPhysical extends TCObjectImpl {
       TCField field = tcClass.getField(fieldName);
       if (!field.canBeReference()) { return; }
 
-      ObjectID id = (ObjectID) getReferences().get(fieldName);
+      final ObjectID id = (ObjectID) getReferences().get(fieldName);
       // Already resolved
       if (id == null) { return; }
 
       Object setObject = null;
-      if (id != null && !id.isNull()) {
+      if (!id.isNull()) {
         try {
           setObject = getObjectManager().lookupObject(id);
         } catch (ClassNotFoundException e) {
@@ -146,7 +146,8 @@ public class TCObjectPhysical extends TCObjectImpl {
 
   public void literalValueChanged(Object newValue, Object oldValue) {
     getObjectManager().getTransactionManager().literalValueChanged(this, newValue, oldValue);
-    setPeerObject(new WeakObjectReference(getObjectID(), newValue, getObjectManager().getReferenceQueue()));
+    setPeerObject(newValue == null ? null : new WeakObjectReference(getObjectID(), newValue, getObjectManager()
+        .getReferenceQueue()));
   }
 
   /**
@@ -154,7 +155,8 @@ public class TCObjectPhysical extends TCObjectImpl {
    * applicator thread which has been synchronized on getResolveLock() in TCObjectImpl.hydrate().
    */
   public void setLiteralValue(Object newValue) {
-    setPeerObject(new WeakObjectReference(getObjectID(), newValue, getObjectManager().getReferenceQueue()));
+    setPeerObject(newValue == null ? null : new WeakObjectReference(getObjectID(), newValue, getObjectManager()
+        .getReferenceQueue()));
   }
 
   protected boolean isEvictable() {

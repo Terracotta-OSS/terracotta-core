@@ -7,30 +7,31 @@ package com.tc.object;
 import com.tc.object.cache.Cacheable;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.util.ToggleableStrongReference;
 
 import gnu.trove.TLinkable;
 
 /**
  * Terracotta class attached to each shared instance Object.  The TCObject may be a simple
- * object value or may have TCFields representing internal field values.  
+ * object value or may have TCFields representing internal field values.
  */
 public interface TCObject extends Cacheable {
   /** Indicates null object identifier */
   public static final Long NULL_OBJECT_ID = new Long(-1);
-  
+
   /** Indicates null field index */
   public static final int  NULL_INDEX     = -1;
 
-  /** 
+  /**
    * For Cacheable interface, set next linked item
    * @param link Next link
-   */  
+   */
   public void setNext(TLinkable link);
 
-  /** 
+  /**
    * For Cacheable interface, set previous linked item
    * @param link Previous link
-   */  
+   */
   public void setPrevious(TLinkable link);
 
   /**
@@ -211,13 +212,13 @@ public interface TCObject extends Cacheable {
   public void resolveReference(String fieldName);
 
   /**
-   * Fault in an array reference 
+   * Fault in an array reference
    * @param index Index when the peer object is an array
    */
   public void resolveArrayReference(int index);
 
   /**
-   * Fault in all references 
+   * Fault in all references
    */
   public void resolveAllReferences();
 
@@ -270,7 +271,7 @@ public interface TCObject extends Cacheable {
    * @return True if new
    */
   public boolean isNew();
-  
+
   /**
    * Set a field value change by offset
    * @param classname Class name
@@ -290,7 +291,7 @@ public interface TCObject extends Cacheable {
   /**
    * Invoke logical method
    * @param method Method indicator, as defined in {@link com.tc.object.SerializationUtil}
-   * @param methodSignature The signature description 
+   * @param methodSignature The signature description
    * @param params The parameter values
    */
   public void logicalInvoke(int method, String methodSignature, Object[] params);
@@ -308,14 +309,21 @@ public interface TCObject extends Cacheable {
   /**
    * Writes all of the object data to the given DNAWriter, iff object is new
    * @param writer The writer
-   * @return True if written 
+   * @return True if written
    */
   public boolean dehydrateIfNew(DNAWriter writer);
-  
+
   /**
    * Returns true if the field represented by the offset is a portable field, i.e., not static and not dso transient
    * @param fieldOffset The index
-   * @return true if the field is portable and false otherwise 
+   * @return true if the field is portable and false otherwise
    */
   public boolean isFieldPortableByOffset(long fieldOffset);
+
+  /**
+   * Get or create the toggleable strong reference for this shared object. The returned object can be used to
+   * ensure the peer object is strongly reachable and thus cannot be flushed by the memory manager
+   */
+  public ToggleableStrongReference getOrCreateToggleRef();
+
 }
