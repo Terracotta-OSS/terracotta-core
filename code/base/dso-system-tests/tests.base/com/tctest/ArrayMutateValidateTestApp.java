@@ -15,16 +15,14 @@ import java.util.List;
 
 public class ArrayMutateValidateTestApp extends AbstractMutateValidateTransparentApp {
 
-  private String[]     myArrayTestRoot;
-  private List         validationArray;
-  private int          iterationCount1;
-  private int          iterationCount2;
-  private int          iterationCount3;
-  private final String appId;
+  private final String[] myArrayTestRoot;
+  private final List     validationArray;
+  private final int      iterationCount1;
+  private final int      iterationCount2;
+  private final int      iterationCount3;
 
   public ArrayMutateValidateTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
-    this.appId = appId;
     myArrayTestRoot = new String[] { "hee", "hoo", "haa" };
     iterationCount1 = 9;
     iterationCount2 = 9;
@@ -33,31 +31,17 @@ public class ArrayMutateValidateTestApp extends AbstractMutateValidateTransparen
   }
 
   protected void mutate() throws Throwable {
+    doMutate(iterationCount1);
+    doMutate(iterationCount2);
+    doMutate(iterationCount3);
+  }
+
+  private void doMutate(int iterationCount) {
     synchronized (validationArray) {
-      for (int i = 0; i < iterationCount1; i++) {
+      for (int i = 0; i < iterationCount; i++) {
         int index = (i + 1) % myArrayTestRoot.length;
         String val = myArrayTestRoot[index];
         validationArray.add(val);
-
-        Thread.sleep(1000);
-      }
-    }
-    synchronized (validationArray) {
-      for (int i = 0; i < iterationCount2; i++) {
-        int index = (i + 1) % myArrayTestRoot.length;
-        String val = myArrayTestRoot[index];
-        validationArray.add(val);
-
-        Thread.sleep(1000);
-      }
-    }
-    synchronized (validationArray) {
-      for (int i = 0; i < iterationCount3; i++) {
-        int index = (i + 1) % myArrayTestRoot.length;
-        String val = myArrayTestRoot[index];
-        validationArray.add(val);
-
-        Thread.sleep(1000);
       }
     }
   }
