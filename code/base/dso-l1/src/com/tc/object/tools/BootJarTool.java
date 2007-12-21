@@ -522,7 +522,12 @@ public class BootJarTool {
       addInstrumentedProxy();
       addTreeMap();
       addInstrumentedAtomicInteger();
-      addInstrumentedAtomicLong();
+
+      if (!Vm.isAzul()) {
+        addInstrumentedAtomicLong();
+      } else {
+        Banner.warnBanner("Not including AtomicLong for Terracotta instrumentation");
+      }
 
       addIBMSpecific();
 
