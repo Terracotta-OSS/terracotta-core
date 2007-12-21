@@ -880,7 +880,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
       spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$Sync");
       spec.setHonorTransient(true);
-      spec.setCallConstructorOnLoad(true);
       spec.setCustomClassAdapter(new JavaUtilConcurrentLocksRRWLSyncAdapter());
       spec.markPreInstrumented();
 
@@ -897,11 +896,19 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       spec = getOrCreateSpec("com.tcclient.util.concurrent.locks.ConditionObject$SyncCondition");
       spec.setCallConstructorOnLoad(true);
 
+      spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantLock$Sync");
+      spec.setHonorTransient(true);
+      spec.setCustomClassAdapter(new JavaUtilConcurrentLocksRRWLSyncAdapter());
+      spec.markPreInstrumented();
+
+      spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantLock$FairSync");
+      spec.setCallConstructorOnLoad(true);
+      spec.markPreInstrumented();
+
       spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantLock");
-      spec.addTransient("sync");
       spec.setPreCreateMethod("validateInUnLockState");
       spec.setCallConstructorOnLoad(true);
-      spec.setHonorTransient(true);
+      spec.markPreInstrumented();
 
       addAbstractSynchronizerSpec();
     }

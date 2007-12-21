@@ -18,7 +18,10 @@ import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 import java.lang.ref.WeakReference;
 import java.util.Random;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 public class ReentrantReadWriteLockFlushFaultTest extends TransparentTestBase {
 
@@ -35,11 +38,13 @@ public class ReentrantReadWriteLockFlushFaultTest extends TransparentTestBase {
 
   public static class App extends AbstractErrorCatchingTransparentApp {
 
-    private static final long                     SLEEP    = 2000;
-    private static final int                      SIZE     = 8;
-    private static final int                      DURATION = 1000 * 60 * 3;
+    private static final long SLEEP      = 2000;
+    private static final int  SIZE       = 8;
+    private static final int  DURATION   = 1000 * 60 * 3;
 
-    private static final ReentrantReadWriteLock[] locks    = new ReentrantReadWriteLock[SIZE];
+    private final WriteLock[] writeLocks = new WriteLock[SIZE];
+    private final ReadLock[]  readLocks  = new ReadLock[SIZE];
+    private final Lock[]      locks      = new Lock[SIZE];
 
     public App(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
       super(appId, cfg, listenerProvider);
@@ -61,23 +66,28 @@ public class ReentrantReadWriteLockFlushFaultTest extends TransparentTestBase {
     private void initLocks() {
       synchronized (locks) {
         for (int i = 0; i < SIZE; i++) {
-          locks[i] = new ReentrantReadWriteLock();
+          locks[i] = new ReentrantLock();
+
+          ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
+          readLocks[i] = rwLock.readLock();
+          writeLocks[i] = rwLock.writeLock();
         }
       }
     }
 
     private WeakReference<Lock>[] lockAndWeaklyRef(boolean read) {
-      WeakReference<Lock>[] refs = new WeakReference[SIZE];
+      WeakReference<Lock>[] refs = new WeakReference[SIZE * 2];
 
-      for (int i = 0; i < SIZE; i++) {
-        final Lock lock;
-        if (read) {
-          lock = locks[i].readLock();
-        } else {
-          lock = locks[i].writeLock();
-        }
+      for (int i = 0, j = 0; j < refs.length; i++, j += 2) {
+
+        Lock lock = locks[i];
+        Lock rw = read ? readLocks[i] : writeLocks[i];
+
         lock.lock();
-        refs[i] = new WeakReference<Lock>(lock);
+        rw.lock();
+
+        refs[j] = new WeakReference<Lock>(lock);
+        refs[j + 1] = new WeakReference<Lock>(rw);
       }
 
       return refs;
@@ -101,13 +111,13 @@ public class ReentrantReadWriteLockFlushFaultTest extends TransparentTestBase {
     }
 
     private void unlockLockRefs(WeakReference<Lock>[] refs) {
-      for (int i = 0; i < SIZE; i++) {
+      for (int i = 0; i < refs.length; i++) {
         refs[i].get().unlock();
       }
     }
 
     private void assertRefs(WeakReference<Lock>[] refs, boolean notNull) {
-      for (int i = 0; i < SIZE; i++) {
+      for (int i = 0; i < refs.length; i++) {
         if (notNull) {
           Assert.assertNotNull("ref " + i, refs[i].get());
         } else {
@@ -124,57 +134,57 @@ public class ReentrantReadWriteLockFlushFaultTest extends TransparentTestBase {
       int last = -1;
       boolean read = false;
 
-      while (System.currentTimeMillis() < end) {
+      while (true) {
         if (last != -1) {
           if (read) {
-            Assert.assertEquals(1, locks[last].getReadLockCount());
-            locks[last].readLock().unlock();
+            readLocks[last].unlock();
           } else {
-            Assert.assertTrue(locks[last].isWriteLocked());
-            Assert.assertTrue(locks[last].isWriteLockedByCurrentThread());
-            Assert.assertEquals(1, locks[last].getWriteHoldCount());
-            locks[last].writeLock().unlock();
+            writeLocks[last].unlock();
           }
+          locks[last].unlock();
+        }
+
+        if (System.currentTimeMillis() > end) {
+          break;
         }
 
         last = random.nextInt(SIZE);
         read = random.nextBoolean();
 
         if (read) {
-          locks[last].readLock().lock();
+          readLocks[last].lock();
         } else {
-          locks[last].writeLock().lock();
+          writeLocks[last].lock();
         }
+        locks[last].lock();
 
         clearDsoManagedReferences();
-      }
-
-      // undo the last lock
-      if (read) {
-        locks[last].readLock().unlock();
-      } else {
-        locks[last].writeLock().unlock();
       }
     }
 
     private void clearDsoManagedReferences() {
-      TCObject tco = ManagerUtil.getObject(locks);
+      clearRefs(locks);
+      clearRefs(readLocks);
+      clearRefs(writeLocks);
 
+      System.gc();
+      ThreadUtil.reallySleep(SLEEP);
+
+      System.gc();
+      ThreadUtil.reallySleep(SLEEP);
+    }
+
+    private static void clearRefs(Object[] locks) {
+      TCObject tco = ManagerUtil.getObject(locks);
       tco.clearAccessed();
       tco.clearReferences(SIZE);
-
-      System.gc();
-      ThreadUtil.reallySleep(SLEEP);
-
-      System.gc();
-      ThreadUtil.reallySleep(SLEEP);
     }
 
     public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
       TransparencyClassSpec spec = config.getOrCreateSpec(App.class.getName());
       spec.addRoot("locks", "locks");
-
-      // config.addIncludePattern(ClassWithAnnotatedRoot.class.getName());
+      spec.addRoot("writeLocks", "writeLocks");
+      spec.addRoot("readLocks", " readLocks");
       config.addWriteAutolock("* " + App.class.getName() + "*.*(..)");
 
     }

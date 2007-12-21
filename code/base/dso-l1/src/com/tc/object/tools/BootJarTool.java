@@ -2304,10 +2304,6 @@ public class BootJarTool {
   }
 
   private void addInstrumentedReentrantLock() {
-    TransparencyClassSpec spec = config.getOrCreateSpec("java.util.concurrent.locks.ReentrantLock");
-    spec.addTransient("sync");
-    spec.setCallConstructorOnLoad(true);
-
     String jClassNameDots = "java.util.concurrent.locks.ReentrantLock";
     String tcClassNameDots = "java.util.concurrent.locks.ReentrantLockTC";
     Map instrumentedContext = new HashMap();
@@ -2315,6 +2311,8 @@ public class BootJarTool {
   }
 
   private void mergeReentrantLock(String tcClassNameDots, String jClassNameDots, Map instrumentedContext) {
+    String methodPrefix = "__RL" + ByteCodeUtil.TC_METHOD_PREFIX;
+
     byte[] tcData = getSystemBytes(tcClassNameDots);
     ClassReader tcCR = new ClassReader(tcData);
     ClassNode tcCN = new ClassNode();
@@ -2336,7 +2334,7 @@ public class BootJarTool {
                                                                           getClass().getClassLoader(), true, true);
     ClassVisitor cv = new SerialVersionUIDAdder(new MergeTCToJavaClassAdapter(cw, dsoAdapter, jClassNameDots,
                                                                               tcClassNameDots, tcCN,
-                                                                              instrumentedContext));
+                                                                              instrumentedContext, methodPrefix, true));
     jCR.accept(cv, ClassReader.SKIP_FRAMES);
     jData = cw.toByteArray();
     jData = doDSOTransform(jClassNameDots, jData);

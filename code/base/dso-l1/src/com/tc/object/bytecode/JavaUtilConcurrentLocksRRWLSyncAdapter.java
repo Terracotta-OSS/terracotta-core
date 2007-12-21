@@ -13,9 +13,13 @@ import com.tc.object.util.ToggleableStrongReference;
 
 public class JavaUtilConcurrentLocksRRWLSyncAdapter extends ClassAdapter implements ClassAdapterFactory, Opcodes {
 
+  // XXX: rename this class
+
   private static final String TOGGLE_REF_FIELD = ByteCodeUtil.TC_FIELD_PREFIX + "RRWLSyncToggleRef";
   private static final String TOGGLE_REF_CLASS = ToggleableStrongReference.class.getName().replace('.', '/');
   private static final String TOGGLE_REF_TYPE  = "L" + TOGGLE_REF_CLASS + ";";
+
+  private String              className;
 
   public JavaUtilConcurrentLocksRRWLSyncAdapter(ClassVisitor cv) {
     super(cv);
@@ -36,6 +40,11 @@ public class JavaUtilConcurrentLocksRRWLSyncAdapter extends ClassAdapter impleme
     super.visitEnd();
   }
 
+  public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+    super.visit(version, access, name, signature, superName, interfaces);
+    this.className = name;
+  }
+
   /**
    * When a managed sync changes to state zero, clear the hard reference (allowing it to be flushed. For all other
    * states, make sure the hard reference in place.
@@ -46,7 +55,6 @@ public class JavaUtilConcurrentLocksRRWLSyncAdapter extends ClassAdapter impleme
    *   if (tco != null) {
    *     if (__tc_RRWLToggleRef == null) {
    *       __tc_RRWLToggleRef = tco.getOrCreateToggleRef();
-   *
    *     }
    *     if (state == 0) {
    *       __tc_RRWLToggleRef.clearStrongRef();
@@ -71,28 +79,24 @@ public class JavaUtilConcurrentLocksRRWLSyncAdapter extends ClassAdapter impleme
     Label notManaged = new Label();
     mv.visitJumpInsn(IFNULL, notManaged);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "java/util/concurrent/locks/ReentrantReadWriteLock$Sync", TOGGLE_REF_FIELD,
-                      TOGGLE_REF_TYPE);
+    mv.visitFieldInsn(GETFIELD, className, TOGGLE_REF_FIELD, TOGGLE_REF_TYPE);
     Label nonNullToggleRef = new Label();
     mv.visitJumpInsn(IFNONNULL, nonNullToggleRef);
     mv.visitVarInsn(ALOAD, 0);
     mv.visitVarInsn(ALOAD, 2);
     mv.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "getOrCreateToggleRef", "()" + TOGGLE_REF_TYPE);
-    mv.visitFieldInsn(PUTFIELD, "java/util/concurrent/locks/ReentrantReadWriteLock$Sync", TOGGLE_REF_FIELD,
-                      TOGGLE_REF_TYPE);
+    mv.visitFieldInsn(PUTFIELD, className, TOGGLE_REF_FIELD, TOGGLE_REF_TYPE);
     mv.visitLabel(nonNullToggleRef);
     mv.visitVarInsn(ILOAD, 1);
     Label stateNonZero = new Label();
     mv.visitJumpInsn(IFNE, stateNonZero);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "java/util/concurrent/locks/ReentrantReadWriteLock$Sync", TOGGLE_REF_FIELD,
-                      TOGGLE_REF_TYPE);
+    mv.visitFieldInsn(GETFIELD, className, TOGGLE_REF_FIELD, TOGGLE_REF_TYPE);
     mv.visitMethodInsn(INVOKEINTERFACE, TOGGLE_REF_CLASS, "clearStrongRef", "()V");
     mv.visitJumpInsn(GOTO, notManaged);
     mv.visitLabel(stateNonZero);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "java/util/concurrent/locks/ReentrantReadWriteLock$Sync", TOGGLE_REF_FIELD,
-                      TOGGLE_REF_TYPE);
+    mv.visitFieldInsn(GETFIELD, className, TOGGLE_REF_FIELD, TOGGLE_REF_TYPE);
     mv.visitMethodInsn(INVOKEINTERFACE, TOGGLE_REF_CLASS, "strongRef", "()V");
     mv.visitLabel(notManaged);
     mv.visitInsn(RETURN);

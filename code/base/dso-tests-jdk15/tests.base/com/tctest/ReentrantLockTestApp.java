@@ -20,7 +20,6 @@ import com.tctest.runner.AbstractTransparentApp;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -83,7 +82,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       tryLockTesting(root.getUnfairLock());
 
       threadInterruptedLockTesting(root.getUnfairLock());
-      
+
       tryLockTest(root.getUnfairLock());
 
       System.err.println("Testing fair lock ...");
@@ -101,7 +100,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       tryLockTesting(root.getFairLock());
 
       threadInterruptedLockTesting(root.getFairLock());
-      
+
       tryLockTest(root.getFairLock());
 
       barrier.await();
@@ -109,7 +108,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       notifyError(t);
     }
   }
-  
+
   private void tryLockTest(final ReentrantLock lock) throws Exception {
     int index = barrier.await();
 
@@ -1149,7 +1148,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
 
     barrier.await();
   }
-  
+
   private void assertTryLockResult(boolean isLocked) {
     if (!isCrashTest) {
       Assert.assertTrue(isLocked);
@@ -1194,32 +1193,6 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
     }
   }
 
-  private class TestRunnable2 implements Runnable {
-    private ReentrantLock lock;
-
-    public TestRunnable2(ReentrantLock lock) {
-      this.lock = lock;
-    }
-
-    public void run() {
-      lock.lock();
-      try {
-        Thread.sleep(10000);
-      } catch (InterruptedException e) {
-        throw new TCRuntimeException(e);
-      } finally {
-        lock.unlock();
-        try {
-          barrier2.await();
-        } catch (InterruptedException e) {
-          throw new TCRuntimeException(e);
-        } catch (BrokenBarrierException e) {
-          throw new TCRuntimeException(e);
-        }
-      }
-    }
-  }
-
   private class InterruptedRunnable implements Runnable {
     private ReentrantLock lock;
 
@@ -1249,7 +1222,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
     }
   }
 
-  private class TestTryLockFailRunnable implements Runnable {
+  private static class TestTryLockFailRunnable implements Runnable {
     private String        lockId;
     private CyclicBarrier barrier;
 

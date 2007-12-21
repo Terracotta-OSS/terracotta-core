@@ -109,8 +109,8 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
          ByteCodeUtil.TC_METHOD_PREFIX, true);
   }
 
-  public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-    this.superName = superName;
+  public void visit(int version, int access, String name, String signature, String superClassName, String[] interfaces) {
+    this.superName = superClassName;
 
     List tcInterfaces = tcClassNode.interfaces;
     List jInterfaces = new ArrayList();
@@ -126,7 +126,7 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
     interfaces = new String[jInterfaces.size()];
     jInterfaces.toArray(interfaces);
     // super.visit(version, access, name, signature, superName, interfaces);
-    dsoAdapter.visit(version, access, name, signature, superName, interfaces);
+    dsoAdapter.visit(version, access, name, signature, superClassName, interfaces);
   }
 
   private String getNewName(String methodName) {
@@ -235,10 +235,10 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
       super(cv);
     }
 
-    public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+    public void visit(int version, int access, String name, String signature, String superClassName, String[] interfaces) {
       name = replaceClassName(name);
-      superName = replaceClassName(superName);
-      super.visit(version, access & ~ACC_ABSTRACT, name, signature, superName, interfaces);
+      superClassName = replaceClassName(superClassName);
+      super.visit(version, access & ~ACC_ABSTRACT, name, signature, superClassName, interfaces);
     }
 
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
