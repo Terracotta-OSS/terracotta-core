@@ -39,7 +39,7 @@ import com.tc.object.bytecode.ClassAdapterBase;
 import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.DelegateMethodAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentLocksAQSAdapter;
-import com.tc.object.bytecode.JavaUtilConcurrentLocksRRWLSyncAdapter;
+import com.tc.object.bytecode.AQSSubclassStrongReferenceAdapter;
 import com.tc.object.bytecode.ManagerHelper;
 import com.tc.object.bytecode.ManagerHelperFactory;
 import com.tc.object.bytecode.SafeSerialVersionUIDAdder;
@@ -880,7 +880,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
       spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$Sync");
       spec.setHonorTransient(true);
-      spec.setCustomClassAdapter(new JavaUtilConcurrentLocksRRWLSyncAdapter());
+      spec.setCustomClassAdapter(new AQSSubclassStrongReferenceAdapter());
       spec.markPreInstrumented();
 
       spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$FairSync");
@@ -898,7 +898,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
       spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantLock$Sync");
       spec.setHonorTransient(true);
-      spec.setCustomClassAdapter(new JavaUtilConcurrentLocksRRWLSyncAdapter());
+      spec.setCustomClassAdapter(new AQSSubclassStrongReferenceAdapter());
       spec.markPreInstrumented();
 
       spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantLock$FairSync");

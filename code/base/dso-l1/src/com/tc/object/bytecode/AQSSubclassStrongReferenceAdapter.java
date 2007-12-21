@@ -11,9 +11,12 @@ import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.object.util.ToggleableStrongReference;
 
-public class JavaUtilConcurrentLocksRRWLSyncAdapter extends ClassAdapter implements ClassAdapterFactory, Opcodes {
-
-  // XXX: rename this class
+/**
+ * This adapter is to add behavior to subclasses of AbstractQueuedSynchronizer(AQS). A transient field is added to store
+ * a toggle reference. When the state becomes non-zero, the toggle reference causes this object to be strongly
+ * referenced. The strong reference is cleared when the state returns to zero
+ */
+public class AQSSubclassStrongReferenceAdapter extends ClassAdapter implements ClassAdapterFactory, Opcodes {
 
   private static final String TOGGLE_REF_FIELD = ByteCodeUtil.TC_FIELD_PREFIX + "RRWLSyncToggleRef";
   private static final String TOGGLE_REF_CLASS = ToggleableStrongReference.class.getName().replace('.', '/');
@@ -21,16 +24,16 @@ public class JavaUtilConcurrentLocksRRWLSyncAdapter extends ClassAdapter impleme
 
   private String              className;
 
-  public JavaUtilConcurrentLocksRRWLSyncAdapter(ClassVisitor cv) {
+  public AQSSubclassStrongReferenceAdapter(ClassVisitor cv) {
     super(cv);
   }
 
-  public JavaUtilConcurrentLocksRRWLSyncAdapter() {
+  public AQSSubclassStrongReferenceAdapter() {
     super(null);
   }
 
   public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
-    return new JavaUtilConcurrentLocksRRWLSyncAdapter(visitor);
+    return new AQSSubclassStrongReferenceAdapter(visitor);
   }
 
   public void visitEnd() {
