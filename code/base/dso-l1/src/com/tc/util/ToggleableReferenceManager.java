@@ -9,8 +9,8 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
-import com.tc.object.TCObject;
 import com.tc.object.util.ToggleableStrongReference;
 
 import java.lang.ref.ReferenceQueue;
@@ -35,12 +35,13 @@ import java.util.Map;
  */
 public class ToggleableReferenceManager {
 
-  private static TCLogger       logger   = TCLogging.getLogger(ToggleableReferenceManager.class);
+  private static TCLogger              logger   = TCLogging.getLogger(ToggleableReferenceManager.class);
 
-  private final Map             refs     = new ConcurrentHashMap(64);
-  private final ReferenceQueue  refQueue = new ReferenceQueue();
-  private final QueueProcessor  queueProcessor;
-  private final SynchronizedInt cleared  = new SynchronizedInt(0);
+  private final Map                    refs     = new ConcurrentHashMap(64);
+  private final ReferenceQueue         refQueue = new ReferenceQueue();
+  private final QueueProcessor         queueProcessor;
+  private final SynchronizedInt        cleared  = new SynchronizedInt(0);
+  private volatile ClientObjectManager objManager;
 
   public ToggleableReferenceManager() {
     queueProcessor = new QueueProcessor(this, refQueue);
@@ -50,15 +51,17 @@ public class ToggleableReferenceManager {
     queueProcessor.start();
   }
 
-  public ToggleableStrongReference getOrCreateFor(TCObject tco, Object peer) {
-    if (tco == null) { throw new NullPointerException("null TCObject"); }
-    if (peer == null) { throw new NullPointerException("null peer object"); }
+  public void setObjectManager(ClientObjectManager clientObjManager) {
+    this.objManager = clientObjManager;
+  }
 
-    ObjectID id = tco.getObjectID();
+  public ToggleableStrongReference getOrCreateFor(ObjectID id, Object peer) {
+    if (id == null || id.isNull()) { throw new NullPointerException("null ObjectID"); }
+    if (peer == null) { throw new NullPointerException("null peer object"); }
 
     SometimesStrongAlwaysWeakReference rv = (SometimesStrongAlwaysWeakReference) refs.get(id);
     if (rv == null) {
-      rv = new SometimesStrongAlwaysWeakReference(tco, peer, refQueue);
+      rv = new SometimesStrongAlwaysWeakReference(id, peer, objManager, refQueue);
       refs.put(id, rv);
     }
     return rv;
@@ -83,17 +86,25 @@ public class ToggleableReferenceManager {
   }
 
   private static class SometimesStrongAlwaysWeakReference extends WeakReference implements ToggleableStrongReference {
-    private final TCObject tco;
-    private Object         strongReference;
+    private final ObjectID            id;
+    private Object                    strongReference;
+    private final ClientObjectManager objManager;
 
-    public SometimesStrongAlwaysWeakReference(TCObject tco, Object peer, ReferenceQueue refQueue) {
+    public SometimesStrongAlwaysWeakReference(ObjectID id, Object peer, ClientObjectManager objManager,
+                                              ReferenceQueue refQueue) {
       super(peer, refQueue);
-      this.tco = tco;
+      this.objManager = objManager;
+      this.id = id;
     }
 
     public void strongRef() {
-      Object peer = tco.getPeerObject();
-      if (peer == null) { throw new AssertionError("null peer for " + tco); }
+      final Object peer;
+      try {
+        peer = objManager.lookupObject(id);
+      } catch (ClassNotFoundException e) {
+        throw new AssertionError(e);
+      }
+      if (peer == null) { throw new AssertionError("null peer for " + id); }
       this.strongReference = peer;
     }
 
@@ -122,7 +133,7 @@ public class ToggleableReferenceManager {
       try {
         while (true) {
           SometimesStrongAlwaysWeakReference ref = (SometimesStrongAlwaysWeakReference) queue.remove();
-          mgr.remove(ref.tco.getObjectID());
+          mgr.remove(ref.id);
         }
       } catch (Throwable t) {
         logger.error("unhandled exception processing queue", t);

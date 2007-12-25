@@ -936,8 +936,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     shareObjectsTraverser.traverse(root, traverseTest, context);
   }
 
-  public ToggleableStrongReference getOrCreateToggleRef(TCObject tco, Object peer) {
-    return referenceManager.getOrCreateFor(tco, peer);
+  public ToggleableStrongReference getOrCreateToggleRef(ObjectID id, Object peer) {
+    return referenceManager.getOrCreateFor(id, peer);
   }
 
   private class AddManagedObjectAction implements TraversalAction {

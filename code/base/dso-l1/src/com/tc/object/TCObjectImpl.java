@@ -458,7 +458,7 @@ public abstract class TCObjectImpl implements TCObject {
       throw new AssertionError("cannot create a toggle reference if peer object is gone");
     }
 
-    return getObjectManager().getOrCreateToggleRef(this, peer);
+    return getObjectManager().getOrCreateToggleRef(objectID, peer);
   }
 
 }

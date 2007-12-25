@@ -353,7 +353,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public ToggleableStrongReference getOrCreateToggleRef(TCObject tco, Object peer) {
+    public ToggleableStrongReference getOrCreateToggleRef(ObjectID id, Object peer) {
       throw new ImplementMe();
     }
 

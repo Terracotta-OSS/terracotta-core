@@ -381,10 +381,10 @@ public interface ClientObjectManager {
   /**
    * Get or create the toggle reference for the given TCObject
    *
-   * @param tco The TCObjet
+   * @param objectID The TCObjet
    * @param peer The peer object
    * @return the toggle reference
    */
-  ToggleableStrongReference getOrCreateToggleRef(TCObject tco, Object peer);
+  ToggleableStrongReference getOrCreateToggleRef(ObjectID objectID, Object peer);
 
 }
