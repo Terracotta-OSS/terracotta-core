@@ -56,19 +56,16 @@ public final class TunnelingMessageConnection implements MessageConnection {
   }
 
   public synchronized Message readMessage() throws IOException {
-    while (true) {
+    while (inbox.isEmpty()) {
       if (closed.isSet()) { throw new IOException("connection closed"); }
-
-      if (inbox.isEmpty()) {
-        try {
-          wait();
-        } catch (InterruptedException ie) {
-          throw new IOException("Interrupted while waiting for inbound message");
-        }
+      try {
+        wait();
+      } catch (InterruptedException ie) {
+        throw new IOException("Interrupted while waiting for inbound message");
       }
-
-      return (Message) inbox.removeFirst();
     }
+
+    return (Message) inbox.removeFirst();
   }
 
   public synchronized void writeMessage(final Message outboundMessage) throws IOException {
