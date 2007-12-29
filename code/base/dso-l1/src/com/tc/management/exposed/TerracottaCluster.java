@@ -9,8 +9,8 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
 import com.tc.cluster.ClusterEventListener;
 import com.tc.management.AbstractTerracottaMBean;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import javax.management.AttributeChangeNotification;
 import javax.management.MBeanNotificationInfo;
@@ -27,17 +27,16 @@ public class TerracottaCluster extends AbstractTerracottaMBean implements Terrac
       NODE_CONNECTED, NODE_DISCONNECTED                };
   public static final String     DESCRIPTION            = "Terracotta Cluster Event Notification";
 
-  private final List             nodes;
+  private final Set              nodes;
 
   private String                 thisNodeId;
   private boolean                isThisNodeConnected;
 
   private final SynchronizedLong notificationSequence   = new SynchronizedLong(0L);
 
-  public TerracottaCluster()
-      throws NotCompliantMBeanException {
+  public TerracottaCluster() throws NotCompliantMBeanException {
     super(TerracottaClusterMBean.class, true);
-    nodes = new ArrayList();
+    nodes = new LinkedHashSet();
   }
 
   public void reset() {
@@ -83,7 +82,7 @@ public class TerracottaCluster extends AbstractTerracottaMBean implements Terrac
       nodes.remove(nodeId);
     }
     makeNotification(NODE_DISCONNECTED, nodeId);
-}
+  }
 
   /**
    * ClusterEventListener callback method...
