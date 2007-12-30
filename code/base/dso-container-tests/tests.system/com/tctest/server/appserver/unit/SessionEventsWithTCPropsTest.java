@@ -24,7 +24,7 @@ public class SessionEventsWithTCPropsTest extends AbstractOneServerDeploymentTes
   public SessionEventsWithTCPropsTest() {
     // DEV-1117
     if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.WEBLOGIC) {
-      disableAllUntil("2007-12-30");
+      disableAllUntil("2008-12-30");
     }
   }
 
