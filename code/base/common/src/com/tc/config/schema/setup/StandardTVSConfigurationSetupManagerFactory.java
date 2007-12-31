@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.setup;
 
@@ -31,6 +32,8 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
   public static final String  SERVER_NAME_ARGUMENT_WORD = "-n";
 
   private static final String L2_NAME_PROPERTY_NAME     = "tc.server.name";
+  private static final String DEFAULT_L2HOST_ADDR       = "0.0.0.0";                       // Wildcard IP
+  private static final String DEFAULT_L1HOST_ADDR       = "%i";
   public static final String  DEFAULT_CONFIG_SPEC       = "tc-config.xml";
   public static final String  DEFAULT_CONFIG_PATH       = "default-config.xml";
   public static final String  DEFAULT_CONFIG_URI        = "resource:///"
@@ -165,20 +168,26 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
   public L1TVSConfigurationSetupManager createL1TVSConfigurationSetupManager(TCLogger logger)
       throws ConfigurationSetupException {
     ConfigurationCreator configurationCreator = new StandardXMLFileConfigurationCreator(logger, this.configSpec,
-        this.cwd, this.beanFactory);
+                                                                                        this.cwd, this.beanFactory,
+                                                                                        DEFAULT_L1HOST_ADDR);
 
     L1TVSConfigurationSetupManager setupManager = new StandardL1TVSConfigurationSetupManager(configurationCreator,
-        this.defaultValueProvider, this.xmlObjectComparator, this.illegalChangeHandler);
+                                                                                             this.defaultValueProvider,
+                                                                                             this.xmlObjectComparator,
+                                                                                             this.illegalChangeHandler);
 
     return setupManager;
   }
 
   public L1TVSConfigurationSetupManager createL1TVSConfigurationSetupManager() throws ConfigurationSetupException {
     ConfigurationCreator configurationCreator = new StandardXMLFileConfigurationCreator(this.configSpec, this.cwd,
-        this.beanFactory);
+                                                                                        this.beanFactory,
+                                                                                        DEFAULT_L1HOST_ADDR);
 
     L1TVSConfigurationSetupManager setupManager = new StandardL1TVSConfigurationSetupManager(configurationCreator,
-        this.defaultValueProvider, this.xmlObjectComparator, this.illegalChangeHandler);
+                                                                                             this.defaultValueProvider,
+                                                                                             this.xmlObjectComparator,
+                                                                                             this.illegalChangeHandler);
 
     return setupManager;
   }
@@ -188,10 +197,11 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
     if (l2Name == null) l2Name = this.defaultL2Identifier;
 
     ConfigurationCreator configurationCreator;
-    configurationCreator = new StandardXMLFileConfigurationCreator(this.configSpec, this.cwd, this.beanFactory);
+    configurationCreator = new StandardXMLFileConfigurationCreator(this.configSpec, this.cwd, this.beanFactory,
+                                                                   DEFAULT_L2HOST_ADDR);
 
     return new StandardL2TVSConfigurationSetupManager(configurationCreator, l2Name, this.defaultValueProvider,
-        this.xmlObjectComparator, this.illegalChangeHandler);
+                                                      this.xmlObjectComparator, this.illegalChangeHandler);
   }
 
 }

@@ -19,9 +19,17 @@ import com.tc.util.PortChooser;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.RMIClientSocketFactory;
+import java.rmi.server.RMIServerSocketFactory;
+import java.rmi.server.RMISocketFactory;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,17 +54,20 @@ public class L2Management extends TerracottaManagement {
   private final L2TVSConfigurationSetupManager configurationSetupManager;
   private final TCServerInfoMBean              tcServerInfo;
   private final TCDumper                       tcDumper;
+  private final String                         defaultL2Host;
   private final ObjectManagementMonitor        objectManagementBean;
-  private final LockStatisticsMonitorMBean            lockStatistics;
+  private final LockStatisticsMonitorMBean     lockStatistics;
   private static final Map                     rmiRegistryMap = new HashMap();
 
-  public L2Management(TCServerInfoMBean tcServerInfo, LockStatisticsMonitorMBean lockStatistics, L2TVSConfigurationSetupManager configurationSetupManager,
-                      TCDumper tcDumper) throws MBeanRegistrationException, NotCompliantMBeanException,
+  public L2Management(TCServerInfoMBean tcServerInfo, LockStatisticsMonitorMBean lockStatistics,
+                      L2TVSConfigurationSetupManager configurationSetupManager, TCDumper tcDumper,
+                      String defaultL2HostAddr) throws MBeanRegistrationException, NotCompliantMBeanException,
       InstanceAlreadyExistsException {
     this.tcServerInfo = tcServerInfo;
     this.lockStatistics = lockStatistics;
     this.configurationSetupManager = configurationSetupManager;
     this.tcDumper = tcDumper;
+    this.defaultL2Host = defaultL2HostAddr;
 
     try {
       objectManagementBean = new ObjectManagementMonitor();
@@ -82,17 +93,64 @@ public class L2Management extends TerracottaManagement {
   /**
    * Keep track of RMI Registries by jmxPort. In 1.5 and forward you can create multiple RMI Registries in a single VM.
    */
-  private static Registry getRMIRegistry(int jmxPort) throws RemoteException {
+  private static Registry getRMIRegistry(int jmxPort, RMIClientSocketFactory csf, RMIServerSocketFactory ssf) throws RemoteException {
     Integer key = new Integer(jmxPort);
     Registry registry = (Registry) rmiRegistryMap.get(key);
     if (registry == null) {
-      rmiRegistryMap.put(key, registry = LocateRegistry.createRegistry(jmxPort));
+      rmiRegistryMap.put(key, registry = LocateRegistry.createRegistry(jmxPort, csf, ssf));
     }
     return registry;
   }
 
+  // DEV-1060
+  private static class BindAddrSocketFactory extends RMISocketFactory implements Serializable {
+    private final InetAddress bindAddr;
+
+    public BindAddrSocketFactory() {
+      this(null);
+    }
+
+    public BindAddrSocketFactory(InetAddress bindAddress) {
+      this.bindAddr = bindAddress;
+    }
+
+    public ServerSocket createServerSocket(int port) throws IOException {
+      return new ServerSocket(port, 0, this.bindAddr);
+    }
+
+    public Socket createSocket(String dummy, int port) throws IOException {
+      return new Socket(bindAddr, port);
+    }
+
+    public int hashCode() {
+      return bindAddr.hashCode();
+    }
+
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      } else if (obj == null || getClass() != obj.getClass()) { return false; }
+
+      BindAddrSocketFactory other = (BindAddrSocketFactory) obj;
+      return bindAddr.equals(other.bindAddr);
+    }
+  }
+
   public synchronized void start() throws Exception {
     int jmxPort = configurationSetupManager.commonl2Config().jmxPort().getInt();
+    String l2Host = configurationSetupManager.commonl2Config().host().getString();
+    InetAddress bindAddress = null;
+
+    if ((l2Host != null) && (l2Host.trim().length() == 0)) {
+      l2Host = defaultL2Host;
+    }
+
+    try {
+      bindAddress = InetAddress.getByName(l2Host);
+    } catch (UnknownHostException uhe) {
+      throw new TCRuntimeException("JMX : unable to resolove the host " + l2Host);
+    }
+
     if (jmxPort == 0) {
       jmxPort = new PortChooser().chooseRandomPort();
     }
@@ -101,6 +159,7 @@ public class L2Management extends TerracottaManagement {
     String authMsg = "Authentication OFF";
     String credentialsMsg = "";
     env.put("jmx.remote.x.server.connection.timeout", new Long(Long.MAX_VALUE));
+    env.put("jmx.remote.server.address.wildcard", "false");
     if (configurationSetupManager.commonl2Config().authentication()) {
       String pwd = configurationSetupManager.commonl2Config().authenticationPasswordFile();
       String access = configurationSetupManager.commonl2Config().authenticationAccessFile();
@@ -112,17 +171,22 @@ public class L2Management extends TerracottaManagement {
       credentialsMsg = "Credentials: " + configurationSetupManager.commonl2Config().authenticationPasswordFile() + " "
                        + configurationSetupManager.commonl2Config().authenticationAccessFile();
       url = new JMXServiceURL("service:jmx:rmi://");
-      RMIJRMPServerImpl server = new RMIJRMPServerImpl(jmxPort, null, null, env);
+      RMISocketFactory socketFactory = new BindAddrSocketFactory(bindAddress);
+      RMIClientSocketFactory csf = bindAddress.isAnyLocalAddress() ? null : socketFactory;
+      RMIServerSocketFactory ssf = socketFactory;
+      RMIJRMPServerImpl server = new RMIJRMPServerImpl(jmxPort, csf, ssf, env);
       jmxConnectorServer = new RMIConnectorServer(url, env, server, mBeanServer);
       jmxConnectorServer.start();
-      getRMIRegistry(jmxPort).bind("jmxrmi", server);
+      getRMIRegistry(jmxPort, csf, ssf).bind("jmxrmi", server);
+      String urlHost = bindAddress.isAnyLocalAddress() ? bindAddress.getCanonicalHostName() : l2Host;
       CustomerLogging.getConsoleLogger().info(
                                               "JMX Server started. " + authMsg + " - Available at URL["
-                                                  + "service:jmx:rmi:///jndi/rmi://localhost:" + jmxPort + "/jmxrmi"
-                                                  + "]");
+                                                  + "Service:jmx:rmi:///jndi/rmi://" + urlHost + ":" + jmxPort
+                                                  + "/jmxrmi" + "]");
       if (!credentialsMsg.equals("")) CustomerLogging.getConsoleLogger().info(credentialsMsg);
     } else {
-      url = new JMXServiceURL("jmxmp", "localhost", jmxPort);
+      // DEV-1060
+      url = new JMXServiceURL("jmxmp", l2Host, jmxPort);
       jmxConnectorServer = JMXConnectorServerFactory.newJMXConnectorServer(url, env, mBeanServer);
       jmxConnectorServer.start();
       CustomerLogging.getConsoleLogger().info("JMX Server started. Available at URL[" + url + "]");

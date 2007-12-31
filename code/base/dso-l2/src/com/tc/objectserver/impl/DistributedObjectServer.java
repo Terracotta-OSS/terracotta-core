@@ -181,6 +181,8 @@ import com.tc.util.startuplock.LocationNotCreatedException;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Properties;
@@ -235,8 +237,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
   public DistributedObjectServer(L2TVSConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
                                  ConnectionPolicy connectionPolicy, TCServerInfoMBean tcServerInfoMBean) {
     this(configSetupManager, threadGroup, connectionPolicy, new NullSink(), tcServerInfoMBean, new L2State());
-    
-    
+
   }
 
   public DistributedObjectServer(L2TVSConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
@@ -471,8 +472,24 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
 
     l2DSOConfig.changesInItemIgnored(l2DSOConfig.listenPort());
     int serverPort = l2DSOConfig.listenPort().getInt();
-    l1Listener = communicationsManager.createListener(sessionProvider,
-                                                      new TCSocketAddress(TCSocketAddress.WILDCARD_ADDR, serverPort),
+
+    // DEV-1060
+    InetAddress serverHost;
+    String l2Host = l2DSOConfig.host().getString();
+    Assert.assertNotNull(l2Host);
+    try {
+      if (l2Host.equalsIgnoreCase(TCSocketAddress.WILDCARD_IP)) {
+        serverHost = TCSocketAddress.WILDCARD_ADDR;
+      } else {
+        serverHost = InetAddress.getByName(l2Host);
+      }
+    } catch (UnknownHostException uhe) {
+      throw new TCRuntimeException("Unable to Resolve Address for the host " + l2Host);
+    }
+
+    logger.info("Server Bind Address: " + serverHost.getHostAddress());
+
+    l1Listener = communicationsManager.createListener(sessionProvider, new TCSocketAddress(serverHost, serverPort),
                                                       true, connectionIdFactory, httpSink);
 
     ClientTunnelingEventHandler cteh = new ClientTunnelingEventHandler();
@@ -877,7 +894,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
   }
 
   private void startJMXServer() throws Exception {
-    l2Management = new L2Management(tcServerInfoMBean, lockStatisticsMBean, configSetupManager, this);
+    l2Management = new L2Management(tcServerInfoMBean, lockStatisticsMBean, configSetupManager, this, TCSocketAddress.WILDCARD_IP);
 
     /*
      * Some tests use this if they run with jdk1.4 and start multiple in-process DistributedObjectServers. When we no
