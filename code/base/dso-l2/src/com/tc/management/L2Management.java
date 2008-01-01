@@ -207,6 +207,10 @@ public class L2Management extends TerracottaManagement {
   public MBeanServer getMBeanServer() {
     return mBeanServer;
   }
+  
+  public JMXConnectorServer getJMXConnServer() {
+    return jmxConnectorServer;
+  }
 
   public ObjectManagementMonitor findObjectManagementMonitorMBean() {
     return objectManagementBean;
