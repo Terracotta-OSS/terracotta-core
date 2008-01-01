@@ -26,8 +26,17 @@ public class ProxyConnectManagerImpl implements ProxyConnectManager {
   }
 
   public void setupProxy() {
+    setupProxy(null);
+  }
+
+  public void setupProxy(String dstHost) {
     try {
-      proxy = new TCPProxy(proxyPort, InetAddress.getLocalHost(), dsoPort, 0L, false, new File("."));
+      // DEV-1060
+      if (dstHost != null) {
+        proxy = new TCPProxy(proxyPort, InetAddress.getByName(dstHost), dsoPort, 0L, false, new File("."));
+      } else {
+        proxy = new TCPProxy(proxyPort, InetAddress.getLocalHost(), dsoPort, 0L, false, new File("."));
+      }
       proxy.setReuseAddress(true);
     } catch (Exception x) {
       throw new RuntimeException("setupProxy failed! " + x);

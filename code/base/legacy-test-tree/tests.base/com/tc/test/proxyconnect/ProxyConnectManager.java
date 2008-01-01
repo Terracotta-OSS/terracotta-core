@@ -21,5 +21,6 @@ public interface ProxyConnectManager {
 
   void close();
   void closeClientConnections();
+  void setupProxy(String dstHost);
 
 }
