@@ -794,8 +794,8 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     return this.l1Listener.getBindPort();
   }
   
-  public String getListenAddr() {
-    return this.l1Listener.getBindAddress().getHostAddress();
+  public InetAddress getListenAddr() {
+    return this.l1Listener.getBindAddress();
   }
 
   public synchronized void stop() {

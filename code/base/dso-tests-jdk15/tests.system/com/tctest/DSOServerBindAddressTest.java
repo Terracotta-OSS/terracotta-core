@@ -63,7 +63,11 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
 
     for (int i = 0; i < bindAddrs.length; i++) {
       new StartupHelper(group, new StartAction(i)).startUp();
-      assertEquals(server.getListenAddr(), bindAddrs[i]);
+      if (i == 0) {
+        Assert.eval(server.getListenAddr().isAnyLocalAddress());
+      } else {
+        assertEquals(server.getListenAddr().getHostAddress(), bindAddrs[i]);
+      }
       Assert.assertNotNull(server.getJMXConnServer());
       assertEquals(server.getJMXConnServer().getAddress().getHost(), bindAddrs[i]);
       server.stop();
