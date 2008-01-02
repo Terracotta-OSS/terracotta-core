@@ -18,7 +18,7 @@
 	</target>
 
 	<target name="build" depends="init" description="build the source ">
-		<javac target="1.4" source="1.4" srcdir="${src.dir}" destdir="${build.dir}" />
+		<javac target="1.5" source="1.5" srcdir="${src.dir}" destdir="${build.dir}" />
 		<copy todir="${build.images.dir}">
 			<fileset dir="${images.dir}" />
 		</copy>

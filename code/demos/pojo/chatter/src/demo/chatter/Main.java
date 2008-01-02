@@ -1,5 +1,5 @@
 /*
- @COPYRIGHT@
+ * @COPYRIGHT@
  */
 package demo.chatter;
 
@@ -10,12 +10,18 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
+import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
+import javax.management.InstanceNotFoundException;
 import javax.management.MBeanServer;
-import javax.management.MBeanServerFactory;
 import javax.management.MBeanServerNotification;
 import javax.management.Notification;
 import javax.management.NotificationFilter;
@@ -30,311 +36,372 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 
 /**
- *  Description of the Class
+ * Description of the Class
  *
- *@author    Terracotta, Inc.
+ * @author Terracotta, Inc.
  */
-public class Main extends JFrame implements ActionListener, ChatterDisplay,
-		WindowListener {
+public class Main extends JFrame implements ActionListener, ChatListener, NodeListProvider {
 
-	private final ChatManager chatManager = new ChatManager();
+  private final User        localUser;
+  private ChatManager       chatManager;
+  private MessageQueue      messageQueue;
+  private boolean           isServerDown = false;
 
-	private final JTextPane display = new JTextPane();
+  private final JTextPane   display      = new JTextPane();
+  private final JList       buddyList    = new JList();
+  private final JTextField  input        = new JTextField();
 
-	private User user;
+  private final Style       systemStyle;
+  private final Style       localUserStyle;
+  private final Style       remoteUserStyle;
 
-	private final JList buddyList = new JList();
+  private final Object      lock         = new Object();
+  private final MBeanServer mbeanServer;
+  private final ObjectName  clusterBean;
 
-	private boolean isServerDown = false;
-	private static final String CHATTER_SYSTEM = "SYSTEM";
+  public Main(String nodeId, MBeanServer mbeanServer, ObjectName clusterBean) throws Exception {
+    this.mbeanServer = mbeanServer;
+    this.clusterBean = clusterBean;
+    this.localUser = new User(nodeId);
 
-	public Main() {
-		try {
-			final String nodeId = registerForNotifications();
-			user = new User(nodeId, this);
-			populateCurrentUsers();
-			login();
-		} catch (final Exception e) {
-			throw new RuntimeException(e);
-		}
+    this.systemStyle = display.addStyle("systemStyle", null);
+    this.localUserStyle = display.addStyle("localUserStyle", null);
+    this.remoteUserStyle = display.addStyle("remoteUserStyle", null);
+  }
 
-		addWindowListener(this);
-		setDefaultLookAndFeelDecorated(true);
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		final Container content = getContentPane();
+  private void init() throws Exception {
+    setupUI();
 
-		display.setFont(new Font("Andale Mono", Font.PLAIN, 9));
-		display.setEditable(false);
-		display.setRequestFocusEnabled(false);
+    synchronized (lock) {
+      chatManager = new ChatManager();
+      messageQueue = new MessageQueue(chatManager);
+      messageQueue.start();
 
-		final JTextField input = new JTextField();
-		input.setFont(new Font("Andale Mono", Font.PLAIN, 9));
-		input.addActionListener(this);
-		final JScrollPane scroll = new JScrollPane(display);
-		final Random r = new Random();
-		final JLabel avatar = new JLabel(user.getName() + " (node id: "
-				+ user.getNodeId() + ")", new ImageIcon(getClass().getResource(
-				"/images/buddy" + r.nextInt(10) + ".gif")), JLabel.LEFT);
-		avatar.setForeground(Color.WHITE);
-		avatar.setFont(new Font("Georgia", Font.PLAIN, 16));
-		avatar.setVerticalTextPosition(JLabel.CENTER);
-		final JPanel buddypanel = new JPanel();
-		buddypanel.setBackground(Color.DARK_GRAY);
-		buddypanel.setLayout(new BorderLayout());
-		buddypanel.add(avatar, BorderLayout.CENTER);
+      chatManager.registerUser(localUser);
+      chatManager.setLocalListener(this);
 
-		final JPanel buddyListPanel = new JPanel();
-		buddyListPanel.setBackground(Color.WHITE);
-		buddyListPanel.add(buddyList);
-		buddyList.setFont(new Font("Andale Mono", Font.BOLD, 9));
+      registerJMXNotifications();
+      retainNodes();
+      populateCurrentUsers();
+    }
+  }
 
-		content.setLayout(new BorderLayout());
-		content.add(buddypanel, BorderLayout.NORTH);
-		content.add(scroll, BorderLayout.CENTER);
-		content.add(input, BorderLayout.SOUTH);
-		content.add(new JScrollPane(buddyListPanel), BorderLayout.EAST);
-		pack();
+  public Collection<String> getNodeList() {
+    Collection<String> allNodes = new HashSet<String>();
 
-		setTitle("Chatter: " + user.getName());
-		setSize(new Dimension(600, 400));
-		setVisible(true);
-		input.requestFocus();
-	}
+    try {
+      String[] allNodeIDs = (String[]) mbeanServer.getAttribute(clusterBean, "NodesInCluster");
+      for (int i = 0; i < allNodeIDs.length; i++) {
+        allNodes.add(allNodeIDs[i]);
+      }
+    } catch (Exception e) {
+      exit(e);
+    }
 
-	public void actionPerformed(final ActionEvent e) {
-		final JTextField input = (JTextField) e.getSource();
-		final String message = input.getText();
-		input.setText("");
-		(new Thread() {
-			public void run() {
-				chatManager.send(user, message);
-			}
-		}).start();
+    return allNodes;
+  }
 
-		if (isServerDown) {
-			updateMessage(user.getName(), message, true);
-		}
-	}
+  private void retainNodes() {
+    chatManager.retainNodes(this);
+  }
 
-	public void handleConnectedServer() {
-		isServerDown = false;
-		javax.swing.SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				Main.this.buddyList.setVisible(true);
-				Main.this.buddyList.setEnabled(true);
-			}
-		});
-	}
+  private void setupUI() {
+    setDefaultLookAndFeelDecorated(true);
+    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    final Container content = getContentPane();
 
-	public void handleDisconnectedServer() {
-		isServerDown = true;
-		updateMessage("The server is down; all of your messages will be queued until the server goes back up again.");
-		javax.swing.SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				Main.this.buddyList.setVisible(false);
-				Main.this.buddyList.setEnabled(false);
-			}
-		});
-	}
+    display.setFont(new Font("Andale Mono", Font.PLAIN, 9));
+    display.setEditable(false);
+    display.setRequestFocusEnabled(false);
 
-	public synchronized void handleDisconnectedUser(final String nodeId) {
-		chatManager.removeUser(nodeId);
-		populateCurrentUsers();
-	}
+    StyleConstants.setItalic(localUserStyle, true);
+    StyleConstants.setForeground(localUserStyle, Color.LIGHT_GRAY);
+    StyleConstants.setFontSize(localUserStyle, 9);
 
-	public synchronized void handleNewUser(final String username) {
-		populateCurrentUsers();
-	}
+    StyleConstants.setItalic(systemStyle, true);
+    StyleConstants.setForeground(systemStyle, Color.RED);
 
-	public void updateMessage(final String username, final String message,
-			final boolean isOwnMessage) {
-		javax.swing.SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					final Document doc = display.getDocument();
-					final Style style = display.addStyle("Style", null);
+    input.setFont(new Font("Andale Mono", Font.PLAIN, 9));
+    input.addActionListener(this);
+    final JScrollPane scroll = new JScrollPane(display);
+    final Random r = new Random();
+    final JLabel avatar = new JLabel(localUser.getName() + " (node id: " + localUser.getNodeId() + ")",
+                                     new ImageIcon(getClass().getResource("/images/buddy" + r.nextInt(10) + ".gif")),
+                                     SwingConstants.LEFT);
+    avatar.setForeground(Color.WHITE);
+    avatar.setFont(new Font("Georgia", Font.PLAIN, 16));
+    avatar.setVerticalTextPosition(SwingConstants.CENTER);
+    final JPanel buddypanel = new JPanel();
+    buddypanel.setBackground(Color.DARK_GRAY);
+    buddypanel.setLayout(new BorderLayout());
+    buddypanel.add(avatar, BorderLayout.CENTER);
 
-					if (isOwnMessage) {
-						StyleConstants.setItalic(style, true);
-						StyleConstants.setForeground(style, Color.LIGHT_GRAY);
-						StyleConstants.setFontSize(style, 9);
-					}
+    final JPanel buddyListPanel = new JPanel();
+    buddyListPanel.setBackground(Color.WHITE);
+    buddyListPanel.add(buddyList);
+    buddyList.setFont(new Font("Andale Mono", Font.BOLD, 9));
 
-					if (username.equals(CHATTER_SYSTEM)) {
-						StyleConstants.setItalic(style, true);
-						StyleConstants.setForeground(style, Color.RED);
-					} else {
-						StyleConstants.setBold(style, true);
-						doc.insertString(doc.getLength(), username + ": ",
-								style);
-					}
+    content.setLayout(new BorderLayout());
+    content.add(buddypanel, BorderLayout.NORTH);
+    content.add(scroll, BorderLayout.CENTER);
+    content.add(input, BorderLayout.SOUTH);
+    JScrollPane scrollPane = new JScrollPane(buddyListPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                             ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
-					StyleConstants.setBold(style, false);
-					doc.insertString(doc.getLength(), message, style);
-					doc.insertString(doc.getLength(), "\n", style);
+    content.add(scrollPane, BorderLayout.EAST);
+    pack();
 
-					display.setCaretPosition(doc.getLength());
-				} catch (final javax.swing.text.BadLocationException ble) {
-					System.err.println(ble.getMessage());
-				}
-			}
-		});
-	}
+    setTitle("Chatter: " + localUser.getName());
+    setSize(new Dimension(600, 400));
+  }
 
-	public void windowClosing(WindowEvent e) {
-		handleDisconnectedUser(user.getNodeId());
-	}
+  private void registerJMXNotifications() throws InstanceNotFoundException {
+    // listener for clustered bean events
+    final NotificationListener clusterEventsListener = new NotificationListener() {
+      public void handleNotification(Notification notification, Object handback) {
+        String nodeId = notification.getMessage();
+        if (notification.getType().endsWith("thisNodeConnected")) {
+          handleConnectedServer();
+        } else if (notification.getType().endsWith("thisNodeDisconnected")) {
+          handleDisconnectedServer();
+        } else if (notification.getType().endsWith("nodeDisconnected")) {
+          handleDisconnectedUser(nodeId);
+        }
+      }
+    };
 
-	public void windowActivated(WindowEvent e) {
-		// TODO Auto-generated method stub
-	}
+    // add listener for membership events
+    mbeanServer.addNotificationListener(clusterBean, clusterEventsListener, null, null);
+  }
 
-	public void windowClosed(WindowEvent e) {
-		// TODO Auto-generated method stub
-	}
+  private void startup() {
+    setVisible(true);
+    input.requestFocus();
+  }
 
-	public void windowDeactivated(WindowEvent e) {
-		// TODO Auto-generated method stub
-	}
+  public void actionPerformed(final ActionEvent e) {
+    final JTextField source = (JTextField) e.getSource();
+    final String message = source.getText();
+    source.setText("");
 
-	public void windowDeiconified(WindowEvent e) {
-		// TODO Auto-generated method stub
-	}
+    synchronized (lock) {
+      Message msg = new Message(localUser, message, isServerDown);
 
-	public void windowIconified(WindowEvent e) {
-		// TODO Auto-generated method stub
-	}
+      messageQueue.enqueue(msg);
 
-	public void windowOpened(WindowEvent e) {
-		// TODO Auto-generated method stub
-	}
+      if (isServerDown) {
+        displayMessage(message, localUserStyle);
+      }
+    }
+  }
 
-	void login() {
-		// ****************************************************
-		// Uncomment this section if you want incoming clients
-		// to see the history of messages.
-		// ****************************************************
-		// --- CODE BEGINS HERE ---
-		// final Message[] messages = chatManager.getMessages();
-		// for (int i = 0; i < messages.length; i++) {
-		// user.newMessage(messages[i]);
-		// }
-		// --- CODE ENDS HERE ---
-		synchronized (chatManager) {
-			chatManager.registerUser(user);
-		}
-	}
+  private void toggleList(boolean on) {
+    this.buddyList.setVisible(on);
+    this.buddyList.setEnabled(on);
+  }
 
-	private synchronized void populateCurrentUsers() {
-		DefaultListModel list = new DefaultListModel();
-		final Object[] currentUsers = chatManager.getCurrentUsers();
-		for (int i = 0; i < currentUsers.length; i++) {
-			list.addElement(new String(((User) currentUsers[i]).getName()));
-		}
-		buddyList.setModel(list);
-	}
+  private void handleConnectedServer() {
+    synchronized (lock) {
+      isServerDown = false;
+      systemMessage("The server is back up.");
 
-	private void updateMessage(final String message) {
-		updateMessage(CHATTER_SYSTEM, message, true);
-	}
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          retainNodes();
+          toggleList(true);
+        }
+      });
+    }
 
-	/**
-	 *  Registers this client for JMX notifications.
-	 *
-	 *@return                Description of the Returned Value
-	 *@exception  Exception  Description of Exception
-	 *@returns               This clients Node ID
-	 */
-	private String registerForNotifications() throws Exception {
-		final java.util.List servers = MBeanServerFactory.findMBeanServer(null);
-		if (servers.size() == 0) {
+  }
 
-			System.err
-					.println("WARNING: No JMX servers found, unable to register for notifications.");
-			return "0";
-		}
+  private void handleDisconnectedServer() {
+    synchronized (lock) {
+      isServerDown = true;
+      systemMessage("The server is down; all of your messages will be queued until the server comes back up again.");
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          toggleList(false);
+        }
+      });
+    }
+  }
 
-		final MBeanServer server = (MBeanServer) servers.get(0);
-		final ObjectName clusterBean = new ObjectName(
-				"org.terracotta:type=Terracotta Cluster,name=Terracotta Cluster Bean");
-		final ObjectName delegateName = ObjectName
-				.getInstance("JMImplementation:type=MBeanServerDelegate");
-		final java.util.List clusterBeanBag = new java.util.ArrayList();
+  private void handleDisconnectedUser(final String nodeId) {
+    synchronized (lock) {
+      chatManager.removeUser(nodeId);
+      populateCurrentUsers();
+    }
+  }
 
-		// listener for newly registered MBeans
-		final NotificationListener listener0 = new NotificationListener() {
-			public void handleNotification(Notification notification,
-					Object handback) {
-				synchronized (clusterBeanBag) {
-					clusterBeanBag.add(handback);
-					clusterBeanBag.notifyAll();
-				}
-			}
-		};
+  private void handleNewUser(final String username) {
+    synchronized (lock) {
+      populateCurrentUsers();
+    }
+  }
 
-		// filter to let only clusterBean passed through
-		final NotificationFilter filter0 = new NotificationFilter() {
-			public boolean isNotificationEnabled(Notification notification) {
-				if (notification.getType().equals("JMX.mbean.registered")
-						&& ((MBeanServerNotification) notification)
-								.getMBeanName().equals(clusterBean)) {
-					return true;
-				}
-				return false;
-			}
-		};
+  public void newMessage(Message message) {
+    User source = message.getUser();
+    boolean local = source == localUser;
 
-		// add our listener for clusterBean's registration
-		server.addNotificationListener(delegateName, listener0, filter0,
-				clusterBean);
+    if (local && message.wasAlreadyDisplayedLocally()) { return; }
 
-		// because of race condition, clusterBean might already have registered
-		// before we registered the listener
-		final java.util.Set allObjectNames = server.queryNames(null, null);
+    String displayMessage = (local ? "" : source.getName() + ": ") + message.getText();
+    displayMessage(displayMessage, local ? localUserStyle : remoteUserStyle);
+  }
 
-		if (!allObjectNames.contains(clusterBean)) {
-			synchronized (clusterBeanBag) {
-				while (clusterBeanBag.isEmpty()) {
-					clusterBeanBag.wait();
-				}
-			}
-		}
+  public void newUser(String username) {
+    handleNewUser(username);
+  }
 
-		// clusterBean is now registered, no need to listen for it
-		server.removeNotificationListener(delegateName, listener0);
+  private void displayMessage(final String message, final Style style) {
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        Document doc = display.getDocument();
+        try {
+          doc.insertString(doc.getLength(), message + "\n", style);
+        } catch (BadLocationException ble) {
+          exit(ble);
+        }
+        display.setCaretPosition(doc.getLength());
+      }
+    });
+  }
 
-		// listener for clustered bean events
-		final NotificationListener listener1 = new NotificationListener() {
-			public void handleNotification(Notification notification,
-					Object handback) {
-				String nodeId = notification.getMessage();
-				if (notification.getType().endsWith("thisNodeConnected")) {
-					handleConnectedServer();
-				}
-				if (notification.getType().endsWith("thisNodeDisconnected")) {
-					handleDisconnectedServer();
-				} else if (notification.getType().endsWith("nodeDisconnected")) {
-					handleDisconnectedUser(nodeId);
-				}
-			}
-		};
+  private void populateCurrentUsers() {
+    final DefaultListModel list = new DefaultListModel();
+    User[] currentUsers = chatManager.getCurrentUsers();
+    for (int i = 0; i < currentUsers.length; i++) {
+      list.addElement(currentUsers[i].getName());
+    }
 
-		// now that we have the clusterBean, add listener for membership events
-		server.addNotificationListener(clusterBean, listener1, null,
-				clusterBean);
-		return (server.getAttribute(clusterBean, "NodeId")).toString();
-	}
+    Runnable setList = new Runnable() {
+      public void run() {
+        buddyList.setModel(list);
+        buddyList.invalidate();
+        buddyList.repaint();
+      }
+    };
 
-	public static void main(final String[] args) {
-		javax.swing.SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				new Main();
-			}
-		});
-	}
+    if (SwingUtilities.isEventDispatchThread()) {
+      setList.run();
+    } else {
+      SwingUtilities.invokeLater(setList);
+    }
+  }
+
+  private void systemMessage(String message) {
+    displayMessage(message, systemStyle);
+  }
+
+  /**
+   * Ensures (waiting if needed) that the terracotta cluster bean is available
+   *
+   * @param mbeanServer
+   * @return The ObjectName of the terracotta cluster bean
+   */
+  private static ObjectName getClusterBean(MBeanServer server) throws Exception {
+    final ObjectName clusterBean = new ObjectName("org.terracotta:type=Terracotta Cluster,name=Terracotta Cluster Bean");
+    final ObjectName delegateName = ObjectName.getInstance("JMImplementation:type=MBeanServerDelegate");
+    final List<Object> clusterBeanBag = new ArrayList<Object>();
+
+    // listener for newly registered MBeans
+    final NotificationListener clusterBeanListener = new NotificationListener() {
+      public void handleNotification(Notification notification, Object handback) {
+        synchronized (clusterBeanBag) {
+          clusterBeanBag.add(handback);
+          clusterBeanBag.notifyAll();
+        }
+      }
+    };
+
+    // filter to let only clusterBean passed through
+    final NotificationFilter cluserBeanFilter = new NotificationFilter() {
+      public boolean isNotificationEnabled(Notification notification) {
+        return (notification.getType().equals("JMX.mbean.registered") && ((MBeanServerNotification) notification)
+            .getMBeanName().equals(clusterBean));
+
+      }
+    };
+
+    // add our listener for clusterBean's registration
+    server.addNotificationListener(delegateName, clusterBeanListener, cluserBeanFilter, clusterBean);
+
+    // because of race condition, clusterBean might already have registered
+    // before we registered the listener
+    final Set<ObjectName> allObjectNames = server.queryNames(null, null);
+
+    if (!allObjectNames.contains(clusterBean)) {
+      synchronized (clusterBeanBag) {
+        while (clusterBeanBag.isEmpty()) {
+          clusterBeanBag.wait();
+        }
+      }
+    }
+
+    // clusterBean is now registered, no need to listen for it
+    server.removeNotificationListener(delegateName, clusterBeanListener);
+
+    return clusterBean;
+  }
+
+  private static void exit(Throwable t) {
+    t.printStackTrace();
+    System.exit(1);
+  }
+
+  public static void main(final String[] args) throws Exception {
+    MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
+    ObjectName clusterBean = getClusterBean(mbeanServer);
+    String nodeId = mbeanServer.getAttribute(clusterBean, "NodeId").toString();
+
+    final Main main = new Main(nodeId, mbeanServer, clusterBean);
+    main.init();
+
+    javax.swing.SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        main.startup();
+      }
+    });
+  }
+
+  private static class MessageQueue extends Thread {
+    private final BlockingQueue<Message> msgQueue = new LinkedBlockingQueue<Message>(Integer.MAX_VALUE);
+    private final ChatManager            chatManager;
+
+    MessageQueue(ChatManager chatManager) {
+      this.chatManager = chatManager;
+      setDaemon(true);
+      setName("Offline Message Queue");
+    }
+
+    void enqueue(Message msg) {
+      try {
+        msgQueue.put(msg);
+      } catch (InterruptedException e) {
+        exit(e);
+      }
+    }
+
+    public void run() {
+      while (true) {
+        try {
+          Message msg = msgQueue.take();
+          chatManager.send(msg);
+        } catch (InterruptedException e) {
+          exit(e);
+        }
+      }
+    }
+  }
+
 }
