@@ -6,7 +6,7 @@ package com.tc.test.server.appserver.resin3x;
 import org.codehaus.cargo.container.InstalledLocalContainer;
 import org.codehaus.cargo.container.configuration.LocalConfiguration;
 import org.codehaus.cargo.container.property.GeneralPropertySet;
-import org.codehaus.cargo.container.resin.Resin2xInstalledLocalContainer;
+import org.codehaus.cargo.container.resin.Resin3xInstalledLocalContainer;
 
 import com.tc.test.server.appserver.cargo.CargoAppServer;
 import com.tc.test.server.util.AppServerUtil;
@@ -25,7 +25,8 @@ public final class Resin3xAppServer extends CargoAppServer {
   }
 
   protected InstalledLocalContainer container(LocalConfiguration config) {
-    return new Resin2xInstalledLocalContainer(config);
+    return new Resin3xInstalledLocalContainer(config);
+    
   }
 
   protected void setConfigProperties(LocalConfiguration config) throws Exception {
