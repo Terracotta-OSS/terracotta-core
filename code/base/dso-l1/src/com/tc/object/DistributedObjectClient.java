@@ -253,8 +253,6 @@ public class DistributedObjectClient extends SEDA {
                                                 classFactory, objectFactory, config.getPortability(), channel,
                                                 toggleRefMgr);
 
-    toggleRefMgr.setObjectManager(objectManager);
-
     TCProperties cacheManagerProperties = l1Properties.getPropertiesFor("cachemanager");
     if (cacheManagerProperties.getBoolean("enabled")) {
       this.cacheManager = new CacheManager(objectManager, new CacheConfigImpl(cacheManagerProperties), getThreadGroup());

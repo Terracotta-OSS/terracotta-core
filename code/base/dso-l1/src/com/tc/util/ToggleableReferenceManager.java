@@ -4,17 +4,16 @@
  */
 package com.tc.util;
 
-import EDU.oswego.cs.dl.util.concurrent.ConcurrentHashMap;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
 import com.tc.object.util.ToggleableStrongReference;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -27,21 +26,20 @@ import java.util.Map;
  * not a shared object and it strongly references the reference object (which can in sometimes strongly references the
  * pojo), one can ensure that a pojo is strongly reachable.<br>
  * <br>
- * The last interesting but it is that the reference map is automatically cleaned up when the pojo become weakly
+ * The last interesting bit it is that the reference map is automatically cleaned up when the pojo become weakly
  * referenced<br>
  * <br>
  * The correct use of toggleable references is from within a method of the target pojo (since you can be guaranteed that
- * "this" is strongly reachable at the time the reference is created)
+ * "this" is strongly reachable at the time the reference is created/toggled)
  */
 public class ToggleableReferenceManager {
 
-  private static TCLogger              logger   = TCLogging.getLogger(ToggleableReferenceManager.class);
+  private static TCLogger       logger   = TCLogging.getLogger(ToggleableReferenceManager.class);
 
-  private final Map                    refs     = new ConcurrentHashMap(64);
-  private final ReferenceQueue         refQueue = new ReferenceQueue();
-  private final QueueProcessor         queueProcessor;
-  private final SynchronizedInt        cleared  = new SynchronizedInt(0);
-  private volatile ClientObjectManager objManager;
+  private final Map             refs     = new HashMap();
+  private final ReferenceQueue  refQueue = new ReferenceQueue();
+  private final QueueProcessor  queueProcessor;
+  private final SynchronizedInt cleared  = new SynchronizedInt(0);
 
   public ToggleableReferenceManager() {
     queueProcessor = new QueueProcessor(this, refQueue);
@@ -51,18 +49,18 @@ public class ToggleableReferenceManager {
     queueProcessor.start();
   }
 
-  public void setObjectManager(ClientObjectManager clientObjManager) {
-    this.objManager = clientObjManager;
-  }
-
   public ToggleableStrongReference getOrCreateFor(ObjectID id, Object peer) {
     if (id == null || id.isNull()) { throw new NullPointerException("null ObjectID"); }
     if (peer == null) { throw new NullPointerException("null peer object"); }
 
-    SometimesStrongAlwaysWeakReference rv = (SometimesStrongAlwaysWeakReference) refs.get(id);
-    if (rv == null) {
-      rv = new SometimesStrongAlwaysWeakReference(id, peer, objManager, refQueue);
-      refs.put(id, rv);
+    SometimesStrongAlwaysWeakReference rv;
+
+    synchronized (refs) {
+      rv = (SometimesStrongAlwaysWeakReference) refs.get(id);
+      if (rv == null) {
+        rv = new SometimesStrongAlwaysWeakReference(id, peer, refQueue);
+        refs.put(id, rv);
+      }
     }
     return rv;
   }
@@ -79,31 +77,30 @@ public class ToggleableReferenceManager {
 
   private void remove(ObjectID id) {
     if (id == null) throw new AssertionError();
-    Object removed = refs.remove(id);
+
+    final Object removed;
+    synchronized (refs) {
+      removed = refs.remove(id);
+    }
+
     if (removed != null) {
       cleared.increment();
     }
   }
 
   private static class SometimesStrongAlwaysWeakReference extends WeakReference implements ToggleableStrongReference {
-    private final ObjectID            id;
-    private Object                    strongReference;
-    private final ClientObjectManager objManager;
+    private final ObjectID id;
+    private Object         strongReference;
 
-    public SometimesStrongAlwaysWeakReference(ObjectID id, Object peer, ClientObjectManager objManager,
-                                              ReferenceQueue refQueue) {
+    public SometimesStrongAlwaysWeakReference(ObjectID id, Object peer, ReferenceQueue refQueue) {
       super(peer, refQueue);
-      this.objManager = objManager;
       this.id = id;
     }
 
     public void strongRef() {
-      final Object peer;
-      try {
-        peer = objManager.lookupObject(id);
-      } catch (ClassNotFoundException e) {
-        throw new AssertionError(e);
-      }
+      final Object peer = get();
+      // Since this toggle ref should only be called from an instance method of the
+      // referent, this assertion should never go off
       if (peer == null) { throw new AssertionError("null peer for " + id); }
       this.strongReference = peer;
     }
@@ -137,6 +134,10 @@ public class ToggleableReferenceManager {
         }
       } catch (Throwable t) {
         logger.error("unhandled exception processing queue", t);
+
+        // It is unexpected that any exceptions will occur in this thread, re-throwing
+        // an assertion error should shutdown the client here
+        throw new AssertionError(t);
       }
     }
   }
