@@ -7,6 +7,7 @@ import org.codehaus.cargo.container.InstalledLocalContainer;
 import org.codehaus.cargo.container.configuration.LocalConfiguration;
 import org.codehaus.cargo.container.property.GeneralPropertySet;
 import org.codehaus.cargo.container.resin.Resin3xInstalledLocalContainer;
+import org.codehaus.cargo.container.resin.ResinPropertySet;
 
 import com.tc.test.server.appserver.cargo.CargoAppServer;
 import com.tc.test.server.util.AppServerUtil;
@@ -30,6 +31,9 @@ public final class Resin3xAppServer extends CargoAppServer {
   }
 
   protected void setConfigProperties(LocalConfiguration config) throws Exception {
-    config.setProperty(GeneralPropertySet.RMI_PORT, Integer.toString(AppServerUtil.getPort()));
+    config.setProperty(GeneralPropertySet.RMI_PORT, String.valueOf(AppServerUtil.getPort()));
+    config.setProperty(ResinPropertySet.CLUSTER_PORT, String.valueOf(AppServerUtil.getPort()));
+    config.setProperty(ResinPropertySet.INTERNAL_SOCKET_PORT, String.valueOf(AppServerUtil.getPort()));
+    config.setProperty(ResinPropertySet.KEEP_ALIVE_SOCKET_PORT, String.valueOf(AppServerUtil.getPort()));
   }
 }

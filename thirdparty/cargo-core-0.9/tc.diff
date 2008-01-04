@@ -963,6 +963,187 @@ Index: containers/jboss/src/main/resources/org/codehaus/cargo/container/internal
 +   </server>
 +
 +</service-bindings>
+Index: containers/resin/src/main/java/org/codehaus/cargo/container/resin/ResinPropertySet.java
+===================================================================
+--- containers/resin/src/main/java/org/codehaus/cargo/container/resin/ResinPropertySet.java	(revision 0)
++++ containers/resin/src/main/java/org/codehaus/cargo/container/resin/ResinPropertySet.java	(revision 0)
+@@ -0,0 +1,13 @@
++package org.codehaus.cargo.container.resin;
++
++/**
++ * Terracotta
++ * @author hhuynh
++ *
++ */
++public interface ResinPropertySet
++{
++    String KEEP_ALIVE_SOCKET_PORT = "resin.keepalive.port";
++    String CLUSTER_PORT = "resin.cluster.port";
++    String INTERNAL_SOCKET_PORT = "resin.internal.port";
++}
+
+Property changes on: containers/resin/src/main/java/org/codehaus/cargo/container/resin/ResinPropertySet.java
+___________________________________________________________________
+Name: svn:executable
+   + *
+Name: svn:mime-type
+   + text/x-java
+Name: svn:keywords
+   + Date Revision Author HeadURL Id
+Name: svn:eol-style
+   + native
+
+Index: containers/resin/src/main/java/org/codehaus/cargo/container/resin/Resin3xStandaloneLocalConfiguration.java
+===================================================================
+--- containers/resin/src/main/java/org/codehaus/cargo/container/resin/Resin3xStandaloneLocalConfiguration.java	(revision 1546)
++++ containers/resin/src/main/java/org/codehaus/cargo/container/resin/Resin3xStandaloneLocalConfiguration.java	(working copy)
+@@ -105,6 +105,10 @@
+         getAntUtils().addTokenToFilterChain(filterChain, "resin3x.logging.level",
+             getResinLoggingLevel(getPropertyValue(GeneralPropertySet.LOGGING)));
+ 
++        // Terracotta
++        getAntUtils().addTokenToFilterChain(filterChain, "resin3x.cluster.port",
++            getPropertyValue(ResinPropertySet.CLUSTER_PORT));
++        
+         return filterChain;
+     }
+ 
+Index: containers/resin/src/main/java/org/codehaus/cargo/container/resin/internal/AbstractResinInstalledLocalContainer.java
+===================================================================
+--- containers/resin/src/main/java/org/codehaus/cargo/container/resin/internal/AbstractResinInstalledLocalContainer.java	(revision 1546)
++++ containers/resin/src/main/java/org/codehaus/cargo/container/resin/internal/AbstractResinInstalledLocalContainer.java	(working copy)
+@@ -29,6 +29,7 @@
+ import org.codehaus.cargo.container.configuration.LocalConfiguration;
+ import org.codehaus.cargo.container.internal.AntContainerExecutorThread;
+ import org.codehaus.cargo.container.internal.ServletContainerCapability;
++import org.codehaus.cargo.container.resin.ResinPropertySet;
+ import org.codehaus.cargo.container.spi.AbstractInstalledLocalContainer;
+ import org.codehaus.cargo.container.spi.util.DefaultServerRun;
+ import org.codehaus.cargo.util.CargoException;
+@@ -87,6 +88,14 @@
+         File confDir = new File(getConfiguration().getHome(), "conf");
+         java.createArg().setFile(new File(confDir, "resin.conf"));
+ 
++        // Terracotta
++        java.createArg().setValue("-keepaliveport");
++        java.createArg().setValue(
++            getConfiguration().getPropertyValue(ResinPropertySet.KEEP_ALIVE_SOCKET_PORT));
++        java.createArg().setValue("-port");
++        java.createArg().setValue(
++            getConfiguration().getPropertyValue(ResinPropertySet.INTERNAL_SOCKET_PORT));
++
+         // Add settings specific to a given container version
+         startUpAdditions(java, classpath);
+ 
+@@ -104,6 +113,14 @@
+ 
+         java.createArg().setValue("-stop");
+ 
++        // Terracotta
++        java.createArg().setValue("-keepaliveport");
++        java.createArg().setValue(
++            getConfiguration().getPropertyValue(ResinPropertySet.KEEP_ALIVE_SOCKET_PORT));
++        java.createArg().setValue("-port");
++        java.createArg().setValue(
++            getConfiguration().getPropertyValue(ResinPropertySet.INTERNAL_SOCKET_PORT));
++
+         AntContainerExecutorThread resinRunner = new AntContainerExecutorThread(java);
+         resinRunner.start();
+     }
+Index: containers/resin/src/main/java/org/codehaus/cargo/container/resin/internal/ResinRun.java
+===================================================================
+--- containers/resin/src/main/java/org/codehaus/cargo/container/resin/internal/ResinRun.java	(revision 1546)
++++ containers/resin/src/main/java/org/codehaus/cargo/container/resin/internal/ResinRun.java	(working copy)
+@@ -26,6 +26,7 @@
+ import java.lang.reflect.Method;
+ import java.net.ServerSocket;
+ import java.util.ArrayList;
++import java.util.List;
+ 
+ import org.codehaus.cargo.container.ContainerException;
+ import org.codehaus.cargo.container.spi.util.DefaultServerRun;
+@@ -38,11 +39,12 @@
+ public class ResinRun extends DefaultServerRun
+ {
+     /**
+-     * Default keepalive socket port for Resin 3.x. We create a server socket on this port that
+-     * acts as a keepalive for Resin. When this socket closes Resin stops. This is a Resin feature.
++     * Default keepalive socket port for Resin 3.x. We create a server socket on this port that acts
++     * as a keepalive for Resin. When this socket closes Resin stops. This is a Resin feature.
++     * Terracotta modification: to allow multiple instances of resins
+      */
+-    public static final int DEFAULT_KEEPALIVE_SOCKET_PORT = 7778;
+-    
++    private static int KEEP_ALIVE_SOCKET_PORT = 7778;
++
+     /**
+      * The started Resin server class. We use <code>Object</code> instead of the Resin class so 
+      * that we don't need the Resin jars in the classpath to compile this class.
+@@ -74,8 +76,22 @@
+      */
+     public static void main(String[] args)
+     {
+-        ResinRun resin = new ResinRun(args);
+-
++        // Terracotta
++        List modifiedArgs = new ArrayList();
++        for (int i = 0; i < args.length; i++)
++        {
++            if (args[i].equals("-keepaliveport"))
++            {
++                KEEP_ALIVE_SOCKET_PORT = Integer.parseInt(args[i + 1]);
++                i++;
++            }
++            else
++            {
++                modifiedArgs.add(args[i]);
++            }
++        }
++        
++        ResinRun resin = new ResinRun((String[]) modifiedArgs.toArray(new String[0]));
+         resin.doRun();
+     }
+ 
+@@ -175,8 +191,8 @@
+                     // Note: We must not call accept() here as Resin is trying to connect with
+                     // us in its waitForExit() loop and if we do, Resin will exit before we tell
+                     // it to do so!
+-                    resin3xKeepAliveSocket = new ServerSocket(DEFAULT_KEEPALIVE_SOCKET_PORT);
+-                }                
++                    resin3xKeepAliveSocket = new ServerSocket(KEEP_ALIVE_SOCKET_PORT);
++                }
+                 catch (Exception e)
+                 {
+                     throw new ContainerException("Failed to create keepalive socket", e);
+@@ -306,7 +322,7 @@
+                     modifiedArgs[i] = args[i];
+                 }
+                 modifiedArgs[args.length] = "-socketwait";
+-                modifiedArgs[args.length + 1] = "" + DEFAULT_KEEPALIVE_SOCKET_PORT;
++                modifiedArgs[args.length + 1] = "" + KEEP_ALIVE_SOCKET_PORT;
+ 
+                 mainMethod.invoke(null, new Object[] {modifiedArgs});
+             }
+Index: containers/resin/src/main/resources/org/codehaus/cargo/container/internal/resources/resin3x/resin.conf
+===================================================================
+--- containers/resin/src/main/resources/org/codehaus/cargo/container/internal/resources/resin3x/resin.conf	(revision 1546)
++++ containers/resin/src/main/resources/org/codehaus/cargo/container/internal/resources/resin3x/resin.conf	(working copy)
+@@ -64,11 +64,13 @@
+     <!--
+        - The local cluster, used for load balancing and distributed
+        - backup.
++    -->
++    <!-- Terracotta: randomize cluster port to allow multiple instances -->
+     <cluster>
+-      <srun id="" host="127.0.0.1" port="6802" index="1"/>
++      <srun id="" host="127.0.0.1" port="@resin3x.cluster.port@" index="1"/>
+     </cluster>
+-    -->
+     
++    
+     <!--
+        - Enables/disables exceptions when the browser closes a connection.
+       -->
 Index: containers/tomcat/src/main/java/org/codehaus/cargo/container/tomcat/internal/AbstractCatalinaStandaloneLocalConfiguration.java
 ===================================================================
 --- containers/tomcat/src/main/java/org/codehaus/cargo/container/tomcat/internal/AbstractCatalinaStandaloneLocalConfiguration.java	(revision 1546)

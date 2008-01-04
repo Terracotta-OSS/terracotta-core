@@ -23,6 +23,7 @@ appserver=tomcat-5.5.25
 #appserver=websphere-6.1.0.7
 #appserver=glassfish-v1.ur1-p01-b02
 #appserver=wasce-1.0.1.2
+#appserver=resin-3.0.25
 
 # you only need one of these specified to run containter tests
 # if both specified, appserver.home takes precedent
