@@ -140,6 +140,7 @@ public class SessionConfigTest extends AbstractDeploymentTest {
   }
 
   public void testSessionTimeOutFromTCProperties() throws Exception {
+    if(AppServerFactory.getCurrentAppServerId() == AppServerFactory.JETTY) return;
     extraServerJvmArgs.put("com.tc.session.maxidle.seconds", String.valueOf(Integer.MAX_VALUE));
     init();
     WebConversation wc = new WebConversation();

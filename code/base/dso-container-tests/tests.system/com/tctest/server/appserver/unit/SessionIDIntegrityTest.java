@@ -46,7 +46,10 @@ public class SessionIDIntegrityTest extends AbstractTwoServerDeploymentTest {
   private void assertSessionIdIntegrity(String sessionId, String extra_id) {
     int appId = AppServerFactory.getCurrentAppServerId();
 
+    System.out.println("sessionId='"+sessionId+"' extra_id='"+extra_id+"'");
+    
     switch (appId) {
+      case AppServerFactory.JETTY:
       case AppServerFactory.TOMCAT:
       case AppServerFactory.WASCE:
       case AppServerFactory.JBOSS:

@@ -4,7 +4,7 @@
  */
 package com.tctest.webapp.listeners;
 
-import com.tctest.webapp.servlets.InvalidatorServlet;
+import com.tctest.webapp.servlets.ListenerReportingServlet;
 
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionEvent;
@@ -17,14 +17,14 @@ public class InvalidatorSessionListener implements HttpSessionListener {
 
   public void sessionCreated(HttpSessionEvent httpsessionevent) {
     System.err.println("### SessionListener.sessionCreated() is here!!!");
-    InvalidatorServlet.incrementCallCount("SessionListener.sessionCreated");
+    ListenerReportingServlet.incrementCallCount("SessionListener.sessionCreated");
   }
 
   public void sessionDestroyed(HttpSessionEvent httpsessionevent) {
     testAttributeAccess(httpsessionevent.getSession());
 
     System.err.println("### SessionListener.sessionDestroyed() is here!!!");
-    InvalidatorServlet.incrementCallCount("SessionListener.sessionDestroyed");
+    ListenerReportingServlet.incrementCallCount("SessionListener.sessionDestroyed");
   }
 
   private void testAttributeAccess(HttpSession session) {
@@ -40,7 +40,6 @@ public class InvalidatorSessionListener implements HttpSessionListener {
     for (int i = 0; i < attrs.length; i++) {
       String attr = attrs[i];
       session.getAttribute(attr);
-      session.removeAttribute(attr);
     }
   }
 

@@ -3,7 +3,7 @@
  */
 package com.tctest.webapp.listeners;
 
-import com.tctest.webapp.servlets.InvalidatorServlet;
+import com.tctest.webapp.servlets.ListenerReportingServlet;
 
 import javax.servlet.http.HttpSessionBindingEvent;
 import javax.servlet.http.HttpSessionBindingListener;
@@ -20,12 +20,12 @@ public class BindingListenerWithException implements HttpSessionBindingListener 
   }
 
   public void valueBound(HttpSessionBindingEvent arg0) {
-    InvalidatorServlet.incrementCallCount("BindingListener.valueBound");
+    ListenerReportingServlet.incrementCallCount("BindingListener.valueBound");
     throw new RuntimeException("Testing Exception Delivery");
   }
 
   public void valueUnbound(HttpSessionBindingEvent arg0) {
-    InvalidatorServlet.incrementCallCount("BindingListener.valueUnbound");
+    ListenerReportingServlet.incrementCallCount("BindingListener.valueUnbound");
     throw new RuntimeException("Testing Exception Delivery");
   }
 

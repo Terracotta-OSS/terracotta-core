@@ -15,18 +15,19 @@ public class AttributeListener implements HttpSessionAttributeListener {
     System.err.println("### AttributeListener() is here!!!");
   }
 
-  public void attributeAdded(HttpSessionBindingEvent httpsessionbindingevent) {
+  public void attributeAdded(HttpSessionBindingEvent e) {
     ListenerReportingServlet.incrementCallCount("AttributeListener.attributeAdded");
-    System.err.println("### AttributeListener.attributeAdded() is here!!!");
+    System.err.println("### AttributeListener.attributeAdded("+e.getName()+") is here!!!");
+    Thread.dumpStack();
   }
 
-  public void attributeRemoved(HttpSessionBindingEvent httpsessionbindingevent) {
-    System.err.println("### AttributeListener.attributeRemoved() is here!!!");
+  public void attributeRemoved(HttpSessionBindingEvent e) {
+    System.err.println("### AttributeListener.attributeRemoved("+e.getName()+") is here!!!");
     ListenerReportingServlet.incrementCallCount("AttributeListener.attributeRemoved");
   }
 
-  public void attributeReplaced(HttpSessionBindingEvent httpsessionbindingevent) {
-    System.err.println("### AttributeListener.attributeReplaced() is here!!!");
+  public void attributeReplaced(HttpSessionBindingEvent e) {
+    System.err.println("### AttributeListener.attributeReplaced("+e.getName()+") is here!!!");
     ListenerReportingServlet.incrementCallCount("AttributeListener.attributeReplaced");
   }
 }

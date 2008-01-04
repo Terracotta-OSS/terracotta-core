@@ -16,7 +16,7 @@ import java.util.Iterator;
 
 /**
  * ApplicationHelper
- *
+ * 
  * @author Eugene Kuleshov
  */
 public class ApplicationHelper {
@@ -27,6 +27,7 @@ public class ApplicationHelper {
   // Those prefixes defined in com.tc.object.loaders.Namespace which is not visible from this class
   private static final String TOMCAT_PREFIX   = "Tomcat.";
   private static final String WEBLOGIC_PREFIX = "Weblogic.";
+  private static final String JETTY_PREFIX    = "Jetty.";
 
   private String              appName;
   private DSOContext          dsoContext;
@@ -41,7 +42,7 @@ public class ApplicationHelper {
         String name = ((NamedClassLoader) cl).__tc_getClassLoaderName();
         logger.info("Application name " + name);
         if (name != null) {
-          if (name.startsWith(TOMCAT_PREFIX)) {
+          if (name.startsWith(TOMCAT_PREFIX) || name.startsWith(JETTY_PREFIX)) {
             name = name.substring(name.lastIndexOf('/') + 1);
           } else if (name.startsWith(WEBLOGIC_PREFIX)) {
             int n = name.lastIndexOf('@');

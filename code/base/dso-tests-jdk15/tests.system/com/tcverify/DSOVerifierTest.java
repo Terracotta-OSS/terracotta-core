@@ -179,7 +179,7 @@ public class DSOVerifierTest extends TCTestCase {
     L2ConfigBuilder l2Builder = L2ConfigBuilder.newMinimalInstance();
     l2Builder.setDSOPort(portChooser.chooseRandomPort());
     l2Builder.setJMXPort(portChooser.chooseRandomPort());
-    l2Builder.setName("localhost");
+    l2Builder.setHost("localhost");
 
     config.getServers().setL2s(new L2ConfigBuilder[] { l2Builder });
 

@@ -312,6 +312,7 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l1-jdk15
         - dso-l2-common
         # NOTE: The dependency on deploy is to allow DistributedTestRunner to instantiate
         # TCServerImpl via reflection.  However, classes in this module cannot refer directly
@@ -336,6 +337,7 @@ modules:
         - management
         - dso-l1-api
         - dso-l1
+        - dso-l1-jdk15
         - dso-l2-common
         - dso-l2
         - deploy
@@ -358,6 +360,7 @@ modules:
         - dso-l1-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l1-jdk15
         - dso-l2-common
         - dso-l2
         - deploy
@@ -380,6 +383,7 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l1-jdk15
         - dso-l2-common
         - dso-l2
         - deploy
@@ -400,11 +404,11 @@ modules:
         - linked-child-process
         - dso-l1-api
         - dso-l1
+        - dso-l1-jdk15
         - deploy
         - simulator
         - thirdparty-api
         - thirdparty
-        - dso-l1-jdk15
         - legacy-test-tree
         - dso-l2-common
         - dso-l2
@@ -422,6 +426,7 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l1-jdk15
         - dso-l2-common
         - dso-l2
         - deploy
@@ -447,6 +452,7 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l1-jdk15
         - dso-l2-common
         - deploy
         - dso-l2
@@ -478,19 +484,6 @@ modules:
         - thirdparty
         - legacy-test-tree
         - dso-memory-datastore
-  - clustered-jetty-6.1:
-      options:
-        jdk: J2SE-1.4
-        module: true
-      dependencies:
-        - modules-common
-        - aspectwerkz
-        - common
-        - common-api
-        - dso-common
-        - dso-l1-api
-        - thirdparty-api
-        - thirdparty
   - clustered-lucene-2.0.0:
       options:
         jdk: J2SE-1.5
@@ -505,6 +498,7 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l1-jdk15
         - dso-l2-common
         - deploy
         - dso-l2
@@ -525,6 +519,7 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l1-jdk15
         - dso-l2-common
         - deploy
         - dso-l2
@@ -548,6 +543,7 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l1-jdk15
         - dso-l2-common
         - deploy
         - dso-l2
@@ -572,6 +568,7 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l1-jdk15
         - dso-l2-common
         - deploy
         - dso-l2
@@ -586,6 +583,7 @@ modules:
         module: true
       dependencies:
         - dso-l1
+        - dso-l1-jdk15
         - dso-l1-api
         - common
         - common-api
@@ -612,6 +610,7 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l1-jdk15
         - dso-l2-common
         - deploy
         - dso-l2
@@ -636,6 +635,7 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l1-jdk15
         - dso-l2-common
         - dso-l2
         - simulator
@@ -661,6 +661,7 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l1-jdk15
         - dso-l2-common
         - deploy
         - dso-l2
@@ -714,6 +715,7 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l1-jdk15
         - dso-l1-session
         - management
         - simulator
@@ -738,6 +740,7 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l1-jdk15
         - dso-l2-common
         - deploy
         - dso-l2
@@ -764,6 +767,7 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l1-jdk15
         - dso-l2-common
         - deploy
         - dso-l2
@@ -786,6 +790,7 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l1-jdk15
         - dso-l2-common
         - deploy
         - dso-l2
@@ -811,6 +816,7 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l1-jdk15
         - dso-l2-common
         - deploy
         - dso-l2
@@ -863,7 +869,6 @@ module-groups:
     - dso-memory-datastore
   framework:
     - clustered-apache-struts-1.1
-    - clustered-jetty-6.1
     - clustered-lucene-2.0.0
     - clustered-commons-collections-3.1
     - clustered-cglib-2.1.3

@@ -28,80 +28,84 @@ import java.util.Properties;
  * This class is a singleton. This is <em>ONLY</em> because this is used all over the place, in JUnit tests.
  */
 public class TestConfigObject {
-  public static final String      NATIVE_LIB_LINUX_32               = "Linux";
+  public static final String      NATIVE_LIB_LINUX_32              = "Linux";
 
-  public static final String      NATIVE_LIB_LINUX_64               = "Linux64";
+  public static final String      NATIVE_LIB_LINUX_64              = "Linux64";
 
-  public static final String      UNIX_NATIVE_LIB_NAME              = "libGetPid.so";
+  public static final String      UNIX_NATIVE_LIB_NAME             = "libGetPid.so";
 
-  public static final String      WINDOWS_NATIVE_LIB_NAME           = "GetPid.dll";
+  public static final String      WINDOWS_NATIVE_LIB_NAME          = "GetPid.dll";
 
-  public static final String      OSX_NATIVE_LIB_NAME               = "libGetPid.jnilib";
+  public static final String      OSX_NATIVE_LIB_NAME              = "libGetPid.jnilib";
 
-  public static final String      TC_BASE_DIR                       = "tc.base-dir";
+  public static final String      TC_BASE_DIR                      = "tc.base-dir";
 
-  public static final String      SPRING_VARIANT                    = "spring";
+  public static final String      SPRING_VARIANT                   = "spring";
 
-  public static final String      WEBFLOW_VARIANT                   = "spring-webflow";
+  public static final String      WEBFLOW_VARIANT                  = "spring-webflow";
 
-  private static final TCLogger   logger                            = TCLogging.getLogger(TestConfigObject.class);
+  private static final TCLogger   logger                           = TCLogging.getLogger(TestConfigObject.class);
 
-  private static final String     OS_NAME                           = "os.name";
+  private static final String     OS_NAME                          = "os.name";
 
-  private static final String     DYNAMIC_PROPERTIES_PREFIX         = "tc.tests.info.";
+  private static final String     DYNAMIC_PROPERTIES_PREFIX        = "tc.tests.info.";
 
-  private static final String     STATIC_PROPERTIES_PREFIX          = "tc.tests.configuration.";
+  private static final String     STATIC_PROPERTIES_PREFIX         = "tc.tests.configuration.";
 
-  public static final String      PROPERTY_FILE_LIST_PROPERTY_NAME  = DYNAMIC_PROPERTIES_PREFIX + "property-files";
+  public static final String      PROPERTY_FILE_LIST_PROPERTY_NAME = DYNAMIC_PROPERTIES_PREFIX + "property-files";
 
-  private static final String     TEMP_DIRECTORY_ROOT               = DYNAMIC_PROPERTIES_PREFIX + "temp-root";
+  private static final String     TEMP_DIRECTORY_ROOT              = DYNAMIC_PROPERTIES_PREFIX + "temp-root";
 
-  private static final String     DATA_DIRECTORY_ROOT               = DYNAMIC_PROPERTIES_PREFIX + "data-root";
+  private static final String     DATA_DIRECTORY_ROOT              = DYNAMIC_PROPERTIES_PREFIX + "data-root";
 
-  private static final String     LINKED_CHILD_PROCESS_CLASSPATH    = DYNAMIC_PROPERTIES_PREFIX
-                                                                        + "linked-child-process-classpath";
+  private static final String     LINKED_CHILD_PROCESS_CLASSPATH   = DYNAMIC_PROPERTIES_PREFIX
+                                                                     + "linked-child-process-classpath";
 
-  private static final String     JVM_VERSION                       = DYNAMIC_PROPERTIES_PREFIX + "jvm.version";
-  private static final String     JVM_TYPE                          = DYNAMIC_PROPERTIES_PREFIX + "jvm.type";
-  private static final String     JVM_MODE                          = DYNAMIC_PROPERTIES_PREFIX + "jvm.mode";
+  private static final String     JVM_VERSION                      = DYNAMIC_PROPERTIES_PREFIX + "jvm.version";
+  private static final String     JVM_TYPE                         = DYNAMIC_PROPERTIES_PREFIX + "jvm.type";
+  private static final String     JVM_MODE                         = DYNAMIC_PROPERTIES_PREFIX + "jvm.mode";
 
-  private static final String     BOOT_JAR_NORMAL                   = DYNAMIC_PROPERTIES_PREFIX + "bootjars.normal";
+  private static final String     BOOT_JAR_NORMAL                  = DYNAMIC_PROPERTIES_PREFIX + "bootjars.normal";
 
-  private static final String     SESSION_CLASSPATH                 = DYNAMIC_PROPERTIES_PREFIX + "session.classpath";
+  private static final String     SESSION_CLASSPATH                = DYNAMIC_PROPERTIES_PREFIX + "session.classpath";
 
-  private static final String     AVAILABLE_VARIANTS_PREFIX         = DYNAMIC_PROPERTIES_PREFIX + "variants.available.";
-  private static final String     VARIANT_LIBRARIES_PREFIX          = DYNAMIC_PROPERTIES_PREFIX + "libraries.variants.";
-  private static final String     SELECTED_VARIANT_PREFIX           = DYNAMIC_PROPERTIES_PREFIX + "variants.selected.";
-  private static final String     DEFAULT_VARIANT_PREFIX            = STATIC_PROPERTIES_PREFIX + "variants.selected.";
+  private static final String     AVAILABLE_VARIANTS_PREFIX        = DYNAMIC_PROPERTIES_PREFIX + "variants.available.";
+  private static final String     VARIANT_LIBRARIES_PREFIX         = DYNAMIC_PROPERTIES_PREFIX + "libraries.variants.";
+  private static final String     SELECTED_VARIANT_PREFIX          = DYNAMIC_PROPERTIES_PREFIX + "variants.selected.";
+  private static final String     DEFAULT_VARIANT_PREFIX           = STATIC_PROPERTIES_PREFIX + "variants.selected.";
 
-  private static final String     EXECUTABLE_SEARCH_PATH            = DYNAMIC_PROPERTIES_PREFIX
-                                                                        + "executable-search-path";
+  private static final String     EXECUTABLE_SEARCH_PATH           = DYNAMIC_PROPERTIES_PREFIX
+                                                                     + "executable-search-path";
 
-  private static final String     JUNIT_TEST_TIMEOUT_INSECONDS      = DYNAMIC_PROPERTIES_PREFIX
-                                                                        + "junit-test-timeout-inseconds";
+  private static final String     JUNIT_TEST_TIMEOUT_INSECONDS     = DYNAMIC_PROPERTIES_PREFIX
+                                                                     + "junit-test-timeout-inseconds";
 
-  public static final String      APP_SERVER_REPOSITORY_URL_BASE    = STATIC_PROPERTIES_PREFIX + "appserver.repository";
+  public static final String      APP_SERVER_REPOSITORY_URL_BASE   = STATIC_PROPERTIES_PREFIX + "appserver.repository";
 
-  public static final String      APP_SERVER_HOME                   = STATIC_PROPERTIES_PREFIX + "appserver.home";
+  public static final String      APP_SERVER_HOME                  = STATIC_PROPERTIES_PREFIX + "appserver.home";
 
-  private static final String     APP_SERVER_FACTORY_NAME           = STATIC_PROPERTIES_PREFIX
-                                                                        + "appserver.factory.name";
+  private static final String     APP_SERVER_FACTORY_NAME          = STATIC_PROPERTIES_PREFIX
+                                                                     + "appserver.factory.name";
 
-  private static final String     APP_SERVER_MAJOR_VERSION          = STATIC_PROPERTIES_PREFIX
-                                                                        + "appserver.major-version";
+  private static final String     APP_SERVER_MAJOR_VERSION         = STATIC_PROPERTIES_PREFIX
+                                                                     + "appserver.major-version";
 
-  private static final String     APP_SERVER_MINOR_VERSION          = STATIC_PROPERTIES_PREFIX
-                                                                        + "appserver.minor-version";
+  private static final String     APP_SERVER_MINOR_VERSION         = STATIC_PROPERTIES_PREFIX
+                                                                     + "appserver.minor-version";
 
-  private static final String     TRANSPARENT_TESTS_MODE            = STATIC_PROPERTIES_PREFIX
-                                                                        + "transparent-tests.mode";
-  private static final String     SPRING_TESTS_TIMEOUT              = STATIC_PROPERTIES_PREFIX + "spring.tests.timeout";
+  private static final String     JETTY_TIM_REPO                   = STATIC_PROPERTIES_PREFIX + "jetty.tim.repo";
 
-  private static final String     SYSTEM_PROPERTIES_RESOURCE_NAME   = "/test-system-properties.properties";
+  private static final String     JETTY_TIM_BUNDLE                 = STATIC_PROPERTIES_PREFIX + "jetty.tim.bundle";
 
-  private static final String     L2_STARTUP_PREFIX                 = DYNAMIC_PROPERTIES_PREFIX + "l2.startup.";
-  public static final String      L2_STARTUP_MODE                   = L2_STARTUP_PREFIX + "mode";
-  public static final String      L2_STARTUP_JAVA_HOME              = L2_STARTUP_PREFIX + "jvm";
+  private static final String     TRANSPARENT_TESTS_MODE           = STATIC_PROPERTIES_PREFIX
+                                                                     + "transparent-tests.mode";
+  private static final String     SPRING_TESTS_TIMEOUT             = STATIC_PROPERTIES_PREFIX + "spring.tests.timeout";
+
+  private static final String     SYSTEM_PROPERTIES_RESOURCE_NAME  = "/test-system-properties.properties";
+
+  private static final String     L2_STARTUP_PREFIX                = DYNAMIC_PROPERTIES_PREFIX + "l2.startup.";
+  public static final String      L2_STARTUP_MODE                  = L2_STARTUP_PREFIX + "mode";
+  public static final String      L2_STARTUP_JAVA_HOME             = L2_STARTUP_PREFIX + "jvm";
 
   private static TestConfigObject INSTANCE;
 
@@ -135,7 +139,7 @@ public class TestConfigObject {
           }
 
           logger.info("Set " + systemProperties.size() + " system properties from resource '"
-              + SYSTEM_PROPERTIES_RESOURCE_NAME + "'.");
+                      + SYSTEM_PROPERTIES_RESOURCE_NAME + "'.");
         } finally {
           in.close();
         }
@@ -146,9 +150,10 @@ public class TestConfigObject {
   private static void loadEnv() throws IOException {
     initBaseDir();
 
-    if (!StringUtils.isBlank(System.getProperty(Directories.TC_INSTALL_ROOT_PROPERTY_NAME))) {
-      throw new RuntimeException("Don't set '"+Directories.TC_INSTALL_ROOT_PROPERTY_NAME+"' in tests.");
-    }
+    if (!StringUtils.isBlank(System.getProperty(Directories.TC_INSTALL_ROOT_PROPERTY_NAME))) { throw new RuntimeException(
+                                                                                                                          "Don't set '"
+                                                                                                                              + Directories.TC_INSTALL_ROOT_PROPERTY_NAME
+                                                                                                                              + "' in tests."); }
     System.setProperty(Directories.TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME, "true");
     System.setProperty(Directories.TC_LICENSE_LOCATION_PROPERTY_NAME, baseDir.getCanonicalPath());
   }
@@ -263,7 +268,7 @@ public class TestConfigObject {
   }
 
   /**
-   * Returns the version string for the current JVM.  Equivalent to
+   * Returns the version string for the current JVM. Equivalent to
    * <code>System.getProperty("java.runtime.version")</code>.
    */
   public String jvmVersion() {
@@ -271,7 +276,7 @@ public class TestConfigObject {
   }
 
   /**
-   * Returns the type of the current JVM.  Equivalent to <code>System.getProperty("java.vm.name")</code>.
+   * Returns the type of the current JVM. Equivalent to <code>System.getProperty("java.vm.name")</code>.
    */
   public String jvmName() {
     return System.getProperty("java.vm.name");
@@ -329,6 +334,20 @@ public class TestConfigObject {
 
   public String appserverMinorVersion() {
     String out = this.properties.getProperty(APP_SERVER_MINOR_VERSION);
+    Assert.assertNotBlank(out);
+    return out;
+  }
+
+  /**
+   * Can be null and will default to file://%(user.home)/.m2/repository
+   * @see ServerManager.prepareClientTcConfigForJetty
+   */
+  public String jettyTIMRepo() {
+    return this.properties.getProperty(JETTY_TIM_REPO);
+  }
+
+  public String jettyTIMBundle() {
+    String out = this.properties.getProperty(JETTY_TIM_BUNDLE);
     Assert.assertNotBlank(out);
     return out;
   }
@@ -401,7 +420,7 @@ public class TestConfigObject {
   private static final String[] ALL_TRANSPARENT_TESTS_MODES           = { TRANSPARENT_TESTS_MODE_NORMAL,
       TRANSPARENT_TESTS_MODE_CRASH, TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE };
 
-  private static File baseDir;
+  private static File           baseDir;
 
   public String transparentTestsMode() {
     return getProperty(TRANSPARENT_TESTS_MODE, TRANSPARENT_TESTS_MODE_NORMAL);

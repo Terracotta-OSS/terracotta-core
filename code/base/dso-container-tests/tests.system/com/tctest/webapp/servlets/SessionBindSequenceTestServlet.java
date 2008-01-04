@@ -4,22 +4,33 @@
  */
 package com.tctest.webapp.servlets;
 
-import com.tctest.webapp.listeners.InvalidatorBindingListener;
+import com.tctest.webapp.listeners.BindingListener;
+import com.tctest.webapp.listeners.BindingListenerWithException;
+import com.tctest.webapp.listeners.BindingSequenceListener;
 
 import java.io.IOException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public final class InvalidatorServlet extends ListenerReportingServlet {
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+public final class SessionBindSequenceTestServlet extends ListenerReportingServlet {
+  protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     final String action = req.getParameter("action");
     final String key = req.getParameter("key");
     String reply = "OK";
     if ("get".equals(action)) {
       reply = key + "=" + req.getSession().getAttribute(key);
     } else if ("set".equals(action)) {
-      req.getSession().setAttribute(key, new InvalidatorBindingListener(key));
+      req.getSession().setAttribute(key, new BindingListener(key));
+    } else if ("setwithexception".equals(action)) {
+      try {
+        req.getSession().setAttribute(key, new BindingListenerWithException(key));
+        reply = "Did not get expected exception!";
+      } catch (Throwable e) {
+        // this is expected
+      }
+    } else if ("setwithsequence".equals(action)) {
+      req.getSession().setAttribute(key, new BindingSequenceListener(key));
     } else if ("remove".equals(action)) {
       req.getSession().removeAttribute(key);
     } else if ("call_count".equals(action)) {

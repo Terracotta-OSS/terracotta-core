@@ -3,7 +3,7 @@
  */
 package com.tctest.webapp.listeners;
 
-import com.tctest.webapp.servlets.InvalidatorServlet;
+import com.tctest.webapp.servlets.ListenerReportingServlet;
 
 import javax.servlet.http.HttpSessionBindingEvent;
 import javax.servlet.http.HttpSessionBindingListener;
@@ -23,15 +23,12 @@ public final class InvalidatorBindingListener implements HttpSessionBindingListe
 
   public void valueBound(HttpSessionBindingEvent e) {
     System.err.println("### BindingListener.valueBound: " + e.getValue());
-    // the value being bound must not be in session yet...
-    Object o = e.getSession().getAttribute(e.getName());
-    if (o == null) InvalidatorServlet.incrementCallCount("BindingListener.valueBound");
-    else System.err.println("### Event sequence violated!!!");
+    ListenerReportingServlet.incrementCallCount("BindingListener.valueBound");
   }
 
   public void valueUnbound(HttpSessionBindingEvent e) {
     System.err.println("### BindingListener.valueUnbound: " + e.getValue());
-    InvalidatorServlet.incrementCallCount("BindingListener.valueUnbound");
+    ListenerReportingServlet.incrementCallCount("BindingListener.valueUnbound");
   }
 
   public String toString() {

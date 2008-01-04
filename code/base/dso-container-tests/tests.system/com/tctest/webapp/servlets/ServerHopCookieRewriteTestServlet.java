@@ -7,6 +7,8 @@ package com.tctest.webapp.servlets;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -14,10 +16,19 @@ import javax.servlet.http.HttpSession;
 
 public final class ServerHopCookieRewriteTestServlet extends HttpServlet {
 
-  private static final String ATTR_NAME = "test-attribute";
-  private static final String SESS_ID   = "session-id";
+  private static final String ATTR_NAME   = "test-attribute";
+  private static final String SESS_ID     = "session-id";
 
-  public static final String  DLM       = "!";
+  public static final String  DEFAULT_DLM = "!";
+
+  private String              dlm;
+
+  public void init(ServletConfig config) throws ServletException {
+    super.init(config);
+    if ((dlm = getInitParameter("session.delimiter")) == null) {
+      dlm = DEFAULT_DLM;
+    }
+  }
 
   public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     HttpSession session = request.getSession(true);
@@ -40,7 +51,7 @@ public final class ServerHopCookieRewriteTestServlet extends HttpServlet {
 
   private void hit3(HttpServletRequest request, HttpSession session, PrintWriter out) {
     if (session.isNew()) {
-      out.print("session is new for server 2; sessionId=" + session.getId());
+      out.print("session is new for server 3; sessionId=" + session.getId());
     } else if (isServerHop(session)) {
       out.print("is a server hop");
     } else {
@@ -65,6 +76,11 @@ public final class ServerHopCookieRewriteTestServlet extends HttpServlet {
         final String newKey = getKey(session.getId());
         final String oldServerId = getServerId((String) session.getAttribute(SESS_ID));
         final String newServerId = getServerId(session.getId());
+
+        System.out.println("session.getId()='" + session.getId() + "'");
+        System.out.println("oldKey='" + oldKey + "' newKey='" + newKey + "' oldServerId='" + oldServerId
+                           + "' newServerId='" + newServerId + "'");
+
         if (!session.getId().equals(req.getRequestedSessionId()) && newKey.equals(oldKey)
             && !newServerId.equals(oldServerId)) {
           out.print("OK");
@@ -77,13 +93,13 @@ public final class ServerHopCookieRewriteTestServlet extends HttpServlet {
   }
 
   private String getServerId(String s) {
-    if (s == null || s.trim().length() == 0 || s.indexOf(DLM) == -1) return null;
-    return s.substring(s.indexOf(DLM) + 1);
+    if (s == null || s.trim().length() == 0 || s.indexOf(dlm) == -1) return null;
+    return s.substring(s.indexOf(dlm) + 1);
   }
 
   private String getKey(String s) {
-    if (s == null || s.trim().length() == 0 || s.indexOf(DLM) == -1) return null;
-    return s.substring(0, s.indexOf(DLM));
+    if (s == null || s.trim().length() == 0 || s.indexOf(dlm) == -1) return null;
+    return s.substring(0, s.indexOf(dlm));
   }
 
   private void hit2(HttpServletRequest req, HttpSession session, PrintWriter out) {
@@ -123,11 +139,20 @@ public final class ServerHopCookieRewriteTestServlet extends HttpServlet {
 
   private static boolean isServerHop(HttpSession session) {
     try {
+      // TC Sessions
       Object sessionId = session.getClass().getMethod("getSessionId", new Class[] {}).invoke(session, new Object[] {});
       Boolean b = (Boolean) sessionId.getClass().getMethod("isServerHop", new Class[] {}).invoke(sessionId,
                                                                                                  new Object[] {});
       return b.booleanValue();
     } catch (Exception e) {
+      try {
+        // Jetty Sessions
+        Boolean b = (Boolean) session.getClass().getMethod("isServerHop", new Class[] {}).invoke(session,
+                                                                                                 new Object[] {});
+        return b.booleanValue();
+      } catch (Exception e2) {
+        /**/
+      }
       throw new RuntimeException(e);
     }
 

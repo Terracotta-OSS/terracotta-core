@@ -15,17 +15,20 @@ import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tc.test.server.util.TcConfigBuilder;
 import com.tctest.webapp.servlets.ServerHopCookieRewriteTestServlet;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import junit.framework.Test;
 
 public final class ServerHopCookieRewriteTest extends AbstractDeploymentTest {
   private static final String CONTEXT = "CookieRewrite";
   private static final String MAPPING = "ServerHopCookieRewriteTestServlet";
-  private Deployment deployment;
+  private Deployment          deployment;
 
   public static Test suite() {
     return new ServerTestSetup(ServerHopCookieRewriteTest.class);
   }
-  
+
   public void setUp() throws Exception {
     super.setUp();
     if (deployment == null) deployment = makeDeployment();
@@ -34,41 +37,42 @@ public final class ServerHopCookieRewriteTest extends AbstractDeploymentTest {
   public void testCookieRewrite() throws Exception {
     TcConfigBuilder tcConfigBuilder = new TcConfigBuilder();
     tcConfigBuilder.addWebApplication(CONTEXT);
-    
+
     WebApplicationServer server0 = createServer(tcConfigBuilder);
     server0.start();
-   
+
     WebApplicationServer server1 = createServer(tcConfigBuilder);
     server1.start();
-    
+
     WebConversation conversation = new WebConversation();
     WebResponse response = request(server0, "server=0", conversation);
     assertEquals("OK", response.getText().trim());
-    
+
     response = request(server1, "server=1", conversation);
     assertEquals("OK", response.getText().trim());
-    
+
     response = request(server0, "server=2", conversation);
     assertEquals("OK", response.getText().trim());
-    
+
     response = request(server0, "server=3", conversation);
     assertEquals("OK", response.getText().trim());
   }
-  
+
   private WebResponse request(WebApplicationServer server, String params, WebConversation con) throws Exception {
     return server.ping("/" + CONTEXT + "/" + MAPPING + "?" + params, con);
   }
-  
+
   private WebApplicationServer createServer(TcConfigBuilder configBuilder) throws Exception {
     WebApplicationServer server = makeWebApplicationServer(configBuilder);
     server.addWarDeployment(deployment, CONTEXT);
     int appId = AppServerFactory.getCurrentAppServerId();
     if (appId != AppServerFactory.WEBSPHERE) {
-      server.getServerParameters().appendSysProp("com.tc.session.delimiter", ServerHopCookieRewriteTestServlet.DLM);
+      server.getServerParameters().appendSysProp("com.tc.session.delimiter",
+                                                 ServerHopCookieRewriteTestServlet.DEFAULT_DLM);
     }
     return server;
   }
-  
+
   // public void testSessions() throws Exception {
   // int appId = AppServerFactory.getCurrentAppServerId();
   //
@@ -95,7 +99,12 @@ public final class ServerHopCookieRewriteTest extends AbstractDeploymentTest {
 
   private Deployment makeDeployment() throws Exception {
     DeploymentBuilder builder = makeDeploymentBuilder(CONTEXT + ".war");
-    builder.addServlet(MAPPING, "/" + MAPPING + "/*", ServerHopCookieRewriteTestServlet.class, null, false);
+    Map initParams = null;
+    if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.JETTY) {
+      initParams = new HashMap();
+      initParams.put("session.delimiter", ".");
+    }
+    builder.addServlet(MAPPING, "/" + MAPPING + "/*", ServerHopCookieRewriteTestServlet.class, initParams, false);
     return builder.makeDeployment();
   }
 }

@@ -11,7 +11,6 @@ import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tc.test.server.util.TcConfigBuilder;
 import com.tc.util.concurrent.ThreadUtil;
-import com.tctest.webapp.listeners.BindingListenerWithException;
 import com.tctest.webapp.listeners.InvalidatorAttributeListener;
 import com.tctest.webapp.listeners.InvalidatorBindingListener;
 import com.tctest.webapp.listeners.InvalidatorSessionListener;
@@ -46,14 +45,6 @@ public class SessionInvalidatorTest extends AbstractOneServerDeploymentTest {
     checkCallCount("SessionListener.sessionCreated", 1, wc);
     checkCallCount("BindingListener.valueBound", 1, wc);
 
-    // now set exception-throwing BindingListener..
-    checkResponse("OK", "action=setwithexception&key=attr2", wc);
-    // ... and check if it DID NOT made it there.
-    checkResponse("attr2=null", "action=get&key=attr2", wc);
-
-    checkCallCount("BindingListener.valueBound", 2, wc);
-    checkCallCount("BindingListener.valueUnbound", 0, wc);
-
     // set session max idle time
     checkResponse("OK", "action=setmax&key=3", wc);
 
@@ -71,7 +62,7 @@ public class SessionInvalidatorTest extends AbstractOneServerDeploymentTest {
 
     // now, put a string into session...
     checkResponse("OK", "action=set&key=attr1", wc);
-    checkCallCount("BindingListener.valueBound", 3, wc);
+    checkCallCount("BindingListener.valueBound", 2, wc);
 
     // set session max idle time
     checkResponse("OK", "action=setmax&key=5", wc);
@@ -119,7 +110,6 @@ public class SessionInvalidatorTest extends AbstractOneServerDeploymentTest {
       builder.addListener(InvalidatorAttributeListener.class);
       builder.addListener(InvalidatorSessionListener.class);
       builder.addListener(InvalidatorBindingListener.class);
-      builder.addListener(BindingListenerWithException.class);
     }
 
     protected void configureTcConfig(TcConfigBuilder clientConfig) {
@@ -127,7 +117,6 @@ public class SessionInvalidatorTest extends AbstractOneServerDeploymentTest {
       clientConfig.addInstrumentedClass(InvalidatorAttributeListener.class.getName());
       clientConfig.addInstrumentedClass(InvalidatorSessionListener.class.getName());
       clientConfig.addInstrumentedClass(InvalidatorBindingListener.class.getName());
-      clientConfig.addInstrumentedClass(BindingListenerWithException.class.getName());
     }
 
     protected void configureServerParamers(StandardAppServerParameters params) {

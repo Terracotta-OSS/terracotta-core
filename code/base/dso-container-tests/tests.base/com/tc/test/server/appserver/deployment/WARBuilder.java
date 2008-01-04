@@ -37,13 +37,13 @@ import java.util.StringTokenizer;
 import junit.framework.Assert;
 
 /*
-<!ELEMENT web-app (icon?, display-name?, description?, distributable?,
-context-param*, filter*, filter-mapping*, listener*, servlet*, 
-servlet-mapping*, session-config?, mime-mapping*, welcome-file-list?,
-error-page*, taglib*, resource-env-ref*, resource-ref*, 
-security-constraint*, login-config?, security-role*, env-entry*, 
-ejb-ref*,  ejb-local-ref*)>
-*/
+ <!ELEMENT web-app (icon?, display-name?, description?, distributable?,
+ context-param*, filter*, filter-mapping*, listener*, servlet*, 
+ servlet-mapping*, session-config?, mime-mapping*, welcome-file-list?,
+ error-page*, taglib*, resource-env-ref*, resource-ref*, 
+ security-constraint*, login-config?, security-role*, env-entry*, 
+ ejb-ref*,  ejb-local-ref*)>
+ */
 
 public class WARBuilder implements DeploymentBuilder {
 
@@ -64,7 +64,7 @@ public class WARBuilder implements DeploymentBuilder {
   private Set                    beanDefinitionFiles   = new HashSet();
 
   private Map                    contextParams         = new HashMap();
-  
+
   private Map                    sessionConfig         = new HashMap();
 
   private List                   listeners             = new ArrayList();
@@ -124,6 +124,7 @@ public class WARBuilder implements DeploymentBuilder {
     addLibs(warTask);
     addResources(warTask);
     warTask.execute();
+    warDirectoryPath.delete();
 
     return new WARDeployment(warFile);
   }
@@ -340,12 +341,12 @@ public class WARBuilder implements DeploymentBuilder {
         pw.println("    <url-pattern>" + definition.mapping + "</url-pattern>");
         pw.println("  </servlet-mapping>");
       }
-      
+
       for (Iterator it = sessionConfig.entrySet().iterator(); it.hasNext();) {
         Map.Entry entry = (Map.Entry) it.next();
         writeSessionConfig(pw, (String) entry.getKey(), (String) entry.getValue());
       }
-      
+
       if (!taglibs.isEmpty()) {
         pw.println("  <jsp-config>");
         for (Iterator it = taglibs.entrySet().iterator(); it.hasNext();) {
@@ -372,7 +373,7 @@ public class WARBuilder implements DeploymentBuilder {
     pw.println("    <param-value>" + value + "</param-value>");
     pw.println("  </context-param>");
   }
-  
+
   private void writeSessionConfig(PrintWriter pw, String name, String value) {
     logger.debug("Writing session config[" + name + "/" + value + "]");
     pw.println("  <session-config>");
@@ -544,7 +545,7 @@ public class WARBuilder implements DeploymentBuilder {
     sessionConfig.put(name, value);
     return this;
   }
-  
+
   public DeploymentBuilder addListener(Class listenerClass) {
     listeners.add(listenerClass);
     return this;
@@ -690,4 +691,3 @@ public class WARBuilder implements DeploymentBuilder {
   }
 
 }
-

@@ -7,6 +7,7 @@ package com.tctest.webapp.servlets;
 import com.tctest.webapp.listeners.BindingListener;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,7 +42,19 @@ public class ListenerReportingServlet extends HttpServlet {
     resp.flushBuffer();
   }
 
-  private synchronized static int getCallCount(String key) {
+  protected void sleep(int i) {
+    try {
+      Date now = new Date();
+      System.err.println("SERVLET: " + now + ": going to sleep for " + i + " millis");
+      Thread.sleep(i);
+      now = new Date();
+      System.err.println("SERVLET: " + now + ": woke up from sleeping for " + i + " millis");
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+  }
+  
+  protected synchronized static int getCallCount(String key) {
     Integer i = (Integer) callCounts.get(key);
     return i == null ? 0 : i.intValue();
   }

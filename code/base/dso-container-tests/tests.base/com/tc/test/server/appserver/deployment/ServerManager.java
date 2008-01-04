@@ -4,6 +4,7 @@
  */
 package com.tc.test.server.appserver.deployment;
 
+import com.tc.bundles.BundleSpec;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.test.TestConfigObject;
@@ -18,6 +19,7 @@ import com.tc.util.runtime.Vm;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -146,7 +148,7 @@ public class ServerManager {
     int appId = AppServerFactory.getCurrentAppServerId();
     switch (appId) {
       case AppServerFactory.JETTY:
-        aCopy.addModule(TIMUtil.JETTY_6_1, TIMUtil.getVersion(TIMUtil.JETTY_6_1));
+        prepareClientTcConfigForJetty(aCopy);
         break;
       case AppServerFactory.WEBSPHERE:
         aCopy.addModule(TIMUtil.WEBSPHERE_6_1_0_7, TIMUtil.getVersion(TIMUtil.WEBSPHERE_6_1_0_7));
@@ -158,6 +160,26 @@ public class ServerManager {
     return aCopy;
   }
 
+  private void prepareClientTcConfigForJetty(TcConfigBuilder clientConfig) {
+    String jettyTIMRepo = config.jettyTIMRepo();
+    if(jettyTIMRepo == null) {
+      File m2File = new File(System.getProperty("user.home")+File.separatorChar+".m2"+File.separatorChar+"repository");
+      try {
+        jettyTIMRepo = m2File.toURL().toString();
+      } catch(MalformedURLException murle) {
+        throw new RuntimeException(murle); 
+      }
+    }
+    clientConfig.addRepository(jettyTIMRepo);
+
+    String jettyTIMBundle = config.jettyTIMBundle();
+    if(jettyTIMBundle == null) {
+      throw new RuntimeException("test property 'tc.tests.configuration.jetty.tim.bundle' undefined");
+    }
+    BundleSpec spec = BundleSpec.newInstance(jettyTIMBundle);
+    clientConfig.addModule(spec.getName(), spec.getGroupId(), spec.getVersion());
+  }
+  
   void setServersToStop(List serversToStop) {
     this.serversToStop = serversToStop;
   }

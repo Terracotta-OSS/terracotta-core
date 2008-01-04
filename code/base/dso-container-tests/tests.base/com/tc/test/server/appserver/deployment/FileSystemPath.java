@@ -3,6 +3,8 @@
  */
 package com.tc.test.server.appserver.deployment;
 
+import org.apache.commons.io.FileUtils;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -79,8 +81,10 @@ public class FileSystemPath {
     return new FileSystemPath(path + "/" + subdirectoryPath);
   }
 
-  public void delete() {
-    path.delete();
+  public void delete() throws IOException {
+    if(path.exists()) {
+      FileUtils.forceDelete(path);
+    }
   }
 
   public FileSystemPath file(String fileName) {

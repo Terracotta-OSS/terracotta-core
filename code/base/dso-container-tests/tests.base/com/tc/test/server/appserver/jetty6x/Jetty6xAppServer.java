@@ -52,7 +52,7 @@ public class Jetty6xAppServer extends AbstractAppServer {
   public ServerResult start(ServerParameters parameters) throws Exception {
     AppServerParameters params = (AppServerParameters) parameters;
     return startJetty(params);
-  }
+  } 
 
   public void stop() throws Exception {
     final String[] cmd = new String[] { JAVA_CMD, "-DSTOP.PORT=" + stop_port, "-DSTOP.KEY=" + STOP_KEY, "-jar",
@@ -143,9 +143,10 @@ public class Jetty6xAppServer extends AbstractAppServer {
     workDir = new File(sandboxDirectory(), "work");
     workDir.mkdirs();
     
-    if (new File(instanceDir, "logs").mkdirs() == false) { throw new Exception(
-                                                                               "Can't create logs directory for jetty instance: "
-                                                                                   + instanceName); }
+    File logsDir = new File(instanceDir, "logs");
+    if (!logsDir.exists() && logsDir.mkdirs() == false) { throw new Exception("Can't create logs directory ("
+                                                                              + logsDir.getAbsolutePath()
+                                                                              + ") for jetty instance: " + instanceName); }
     setProperties(params, jetty_port, instanceDir);
     createConfigFile();
   }

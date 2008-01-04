@@ -33,6 +33,8 @@ public class SessionEventsWithTCPropsTest extends AbstractOneServerDeploymentTes
   }
 
   public void testListener() throws Exception {
+    if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.JETTY) return;
+    
     WebConversation wc = new WebConversation();
 
     // first, sanity check

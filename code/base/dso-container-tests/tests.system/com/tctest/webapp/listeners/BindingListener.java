@@ -24,13 +24,13 @@ public class BindingListener implements HttpSessionBindingListener {
   }
 
   public void valueBound(HttpSessionBindingEvent e) {
-    System.err.println("### BindingListener.valueBound");
+    System.err.println("### BindingListener.valueBound("+e.getName()+")");
     // the value being bound must not be in session yet...
     ListenerReportingServlet.incrementCallCount("BindingListener.valueBound");
   }
 
   public void valueUnbound(HttpSessionBindingEvent e) {
-    System.err.println("### BindingListener.valueUnbound");
+    System.err.println("### BindingListener.valueUnbound("+e.getName()+")");
     // the value being unbound must not be in session already...
     ListenerReportingServlet.incrementCallCount("BindingListener.valueUnbound");
   }

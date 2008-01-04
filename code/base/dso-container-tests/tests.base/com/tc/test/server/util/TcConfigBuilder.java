@@ -146,11 +146,16 @@ public class TcConfigBuilder {
     tcConfig.getApplication().getDso().getInstrumentedClasses().addExclude(pattern);
   }
 
-  public void addModule(String name, String version) {
+  public void addModule(String name, String groupId, String version) {
     ensureModules();
     Module newModule = tcConfig.getClients().getModules().insertNewModule(0);
     newModule.setName(name);
+    newModule.setGroupId(groupId);
     newModule.setVersion(version);
+  }
+  
+  public void addModule(String name, String version) {
+    addModule(name, "org.terracotta.modules", version);
   }
 
   public void addRepository(String location) {
