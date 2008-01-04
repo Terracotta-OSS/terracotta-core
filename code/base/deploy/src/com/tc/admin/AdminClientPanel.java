@@ -666,6 +666,32 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     return JOptionPane.CLOSED_OPTION;
   }
 
+  public static URL constructCheckURL(ProductInfo productInfo, int id) throws MalformedURLException {
+    String defaultPropsUrl = "http://www.terracotta.org/kit/reflector?kitID=default&pageID=update.properties";
+    String propsUrl = System.getProperty("terracotta.update-checker.url", defaultPropsUrl);
+    StringBuffer sb = new StringBuffer(propsUrl);
+
+    sb.append(defaultPropsUrl.equals(propsUrl) ? '&' : '?');
+
+    sb.append("id=");
+    sb.append(URLEncoder.encode(Integer.toString(id)));
+    sb.append("&os-name=");
+    sb.append(URLEncoder.encode(System.getProperty("os.name")));
+    sb.append("&jvm-name=");
+    sb.append(URLEncoder.encode(System.getProperty("java.vm.name")));
+    sb.append("&jvm-version=");
+    sb.append(URLEncoder.encode(System.getProperty("java.vm.version")));
+    sb.append("&platform=");
+    sb.append(URLEncoder.encode(System.getProperty("os.arch")));
+    sb.append("&tc-version=");
+    sb.append(URLEncoder.encode(productInfo.getVersion()));
+    sb.append("&tc-product=");
+    sb.append(productInfo.getLicense().equals(ProductInfo.DEFAULT_LICENSE) ? "oss" : "ee");
+    sb.append("&source=console");
+
+    return new URL(sb.toString());
+  }
+  
   class UpdateCheckerAction extends XAbstractAction {
     Dialog      m_updateCheckerDialog;
     ProductInfo m_productInfo;
@@ -789,33 +815,10 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     }
 
     URL constructCheckURL() throws MalformedURLException {
-      String defaultPropsUrl = "http://www.terracotta.org/kit/reflector?kitID=default&pageID=update.properties";
-      String propsUrl = System.getProperty("terracotta.update-checker.url", defaultPropsUrl);
-      StringBuffer sb = new StringBuffer(propsUrl);
-      ProductInfo productInfo = getProductInfo();
-
-      sb.append(defaultPropsUrl.equals(propsUrl) ? '&' : '?');
-
-      sb.append("id=");
-      sb.append(URLEncoder.encode(Integer.toString(getIpAddress())));
-      sb.append("&os-name=");
-      sb.append(URLEncoder.encode(System.getProperty("os.name")));
-      sb.append("&jvm-name=");
-      sb.append(URLEncoder.encode(System.getProperty("java.vm.name")));
-      sb.append("&jvm-version=");
-      sb.append(URLEncoder.encode(System.getProperty("java.vm.version")));
-      sb.append("&platform=");
-      sb.append(URLEncoder.encode(System.getProperty("os.arch")));
-      sb.append("&tc-version=");
-      sb.append(URLEncoder.encode(productInfo.getVersion()));
-      sb.append("&tc-product=");
-      sb.append(productInfo.getLicense().equals(ProductInfo.DEFAULT_LICENSE) ? "oss" : "ee");
-      sb.append("&source=console");
-
-      return new URL(sb.toString());
+      return AdminClientPanel.constructCheckURL(getProductInfo(), getIpAddressHash());
     }
 
-    private int getIpAddress() {
+    private int getIpAddressHash() {
       try {
         return InetAddress.getLocalHost().hashCode();
       } catch (UnknownHostException uhe) {
