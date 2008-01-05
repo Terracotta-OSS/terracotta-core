@@ -32,6 +32,12 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   private static final int TIMEOUT_DEFAULT     = 30 * 60;
 
   public AbstractDeploymentTest() {
+    // need more work to run tests with Jetty
+    // disable for now
+    if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.JETTY) {
+      disableAllUntil(new Date(Long.MAX_VALUE));
+    }
+    
     if (isSessionTest() && (AppServerFactory.getCurrentAppServerId() == AppServerFactory.GLASSFISH)) {
       disableAllUntil(new Date(Long.MAX_VALUE));
     }
