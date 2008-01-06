@@ -181,31 +181,31 @@ public class Main {
         output = output.substring(0, output.lastIndexOf(".resources"));
       }
 
-      ps.println("  <classpathentry kind=\"src\" output=\"build.eclipse/" + output + ".classes\" path=\"" + path
+      ps.println("\t<classpathentry kind=\"src\" output=\"build.eclipse/" + output + ".classes\" path=\"" + path
                  + "\"/>");
     }
 
     // JDK
     ps
-        .println("  <classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/"
+        .println("\t<classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/"
                  + module.getJdk().getEclipse() + "\"/>");
 
     // modules dependencies
     for (Iterator<String> i = module.getDependencies().iterator(); i.hasNext();) {
-      ps.println("  <classpathentry combineaccessrules=\"false\" kind=\"src\" path=\"/" + i.next() + "\"/>");
+      ps.println("\t<classpathentry combineaccessrules=\"false\" kind=\"src\" path=\"/" + i.next() + "\"/>");
     }
 
     // extra module jars
     for (int i = 0; i < moduleJars.length; i++) {
       String jar = moduleJars[i];
-      ps.println("  <classpathentry exported=\"true\" kind=\"lib\" path=\"" + jar + "\"/>");
+      ps.println("\t<classpathentry exported=\"true\" kind=\"lib\" path=\"" + jar + "\"/>");
 
     }
 
     // jars
     for (int i = 0; i < jars.length; i++) {
       String jar = jars[i];
-      ps.println("  <classpathentry exported=\"true\" kind=\"lib\" path=\"/dependencies/lib/" + jar + "\"/>");
+      ps.println("\t<classpathentry exported=\"true\" kind=\"lib\" path=\"/dependencies/lib/" + jar + "\"/>");
 
     }
 
