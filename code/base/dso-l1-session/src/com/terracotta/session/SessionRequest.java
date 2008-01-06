@@ -15,11 +15,11 @@ import javax.servlet.http.HttpSession;
 public class SessionRequest extends HttpServletRequestWrapper implements TerracottaRequest {
 
   // Attribute name for storing the Session in the request
-  private static final String SESSION_ATTRIBUTE_NAME = SessionRequest.class.getName() + ".session";
-  
+  private static final String       SESSION_ATTRIBUTE_NAME         = SessionRequest.class.getName() + ".session";
+
   // Attribute name for storing a Boolean.TRUE indicating the request has been forwarded
-  public static final String SESSION_FORWARD_ATTRIBUTE_NAME = SessionRequest.class.getName() + ".forward";
-  
+  public static final String        SESSION_FORWARD_ATTRIBUTE_NAME = SessionRequest.class.getName() + ".forward";
+
   private final HttpServletRequest  req;
   private final HttpServletResponse res;
   private SessionId                 requestedSessionId;
@@ -27,20 +27,25 @@ public class SessionRequest extends HttpServletRequestWrapper implements Terraco
   private final boolean             isForwarded;
   private final boolean             isSessionOwner;
   private final SessionManager      mgr;
+  private final String              rawRequestedSessionId;
+  private final SessionIDSource     source;
 
   public SessionRequest(SessionId requestedSessionId, HttpServletRequest req, HttpServletResponse res,
-                        SessionManager sessionManager) {
+                        SessionManager sessionManager, String rawRequestedSessionId, SessionIDSource source) {
     super(req);
 
     Assert.pre(req != null);
     Assert.pre(res != null);
     Assert.pre(sessionManager != null);
+    Assert.pre(source != null);
 
     this.req = req;
     this.res = res;
     this.mgr = sessionManager;
     this.requestedSessionId = requestedSessionId;
     this.requestStartMillis = System.currentTimeMillis();
+    this.rawRequestedSessionId = rawRequestedSessionId;
+    this.source = source;
     // in some cases, we could be multi-wrapping native requests.
     // in this case, we need to check if TC session has already been created
     HttpSession nativeSess = req.getSession(false);
@@ -50,7 +55,7 @@ public class SessionRequest extends HttpServletRequestWrapper implements Terraco
       setAttribute(SESSION_ATTRIBUTE_NAME, nativeSess);
     } else {
       this.isSessionOwner = true;
-      
+
       // Added by TerracottaDispatcher when requests get forwarded through
       Object fwdFlag = req.getAttribute(SESSION_FORWARD_ATTRIBUTE_NAME);
       this.isForwarded = (fwdFlag != null && fwdFlag.equals(Boolean.TRUE));
@@ -71,6 +76,22 @@ public class SessionRequest extends HttpServletRequestWrapper implements Terraco
     if (requestedSessionId == null) return false;
     Session sess = getTerracottaSession(false);
     return (sess != null && requestedSessionId.getKey().equals(sess.getSessionId().getKey()));
+  }
+
+  public String getRequestedSessionId() {
+    return rawRequestedSessionId;
+  }
+
+  public boolean isRequestedSessionIdFromCookie() {
+    return source.isCookie();
+  }
+
+  public boolean isRequestedSessionIdFromURL() {
+    return source.isURL();
+  }
+
+  public boolean isRequestedSessionIdFromUrl() {
+    return isRequestedSessionIdFromURL();
   }
 
   public String encodeRedirectURL(String url) {
@@ -110,7 +131,7 @@ public class SessionRequest extends HttpServletRequestWrapper implements Terraco
   public RequestDispatcher getRequestDispatcher(String path) {
     return new TerracottaDispatcher(super.getRequestDispatcher(path));
   }
-  
+
   void clearSession() {
     Assert.pre(getAttribute(SESSION_ATTRIBUTE_NAME) != null);
     removeAttribute(SESSION_ATTRIBUTE_NAME);
@@ -119,4 +140,3 @@ public class SessionRequest extends HttpServletRequestWrapper implements Terraco
   }
 
 }
-

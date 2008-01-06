@@ -20,7 +20,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/simulator"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty-api"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/httpunit-1.6.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/httpunit-1.6.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/spring-hibernate3-2.0-m4.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/spring-hibernate3-2.0-m5.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/xstream-1.0.2.jar"/>

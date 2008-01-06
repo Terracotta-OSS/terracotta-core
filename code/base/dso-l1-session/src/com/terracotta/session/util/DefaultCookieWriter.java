@@ -139,6 +139,7 @@ public class DefaultCookieWriter implements SessionCookieWriter {
 
     final HttpSession session = hreq.getSession(false);
     if (session == null) return false;
+
     if (hreq.isRequestedSessionIdFromCookie()) return false;
 
     return isEncodeable(hreq, session, location);
@@ -265,5 +266,13 @@ public class DefaultCookieWriter implements SessionCookieWriter {
     // if nothing is specified, use request context path
     String rv = req.getContextPath();
     return rv == null || rv.trim().length() == 0 ? ConfigProperties.defaultCookiePath : rv.trim();
+  }
+
+  public String getCookieName() {
+    return this.cookieName;
+  }
+
+  public String getPathParameterTag() {
+    return this.idTag;
   }
 }

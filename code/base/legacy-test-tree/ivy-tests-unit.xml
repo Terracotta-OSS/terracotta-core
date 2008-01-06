@@ -5,6 +5,6 @@
   	<dependency name="spring-hibernate3-2.0" rev="m4" org="terracotta"/>
   	<dependency name="spring-hibernate3" rev="2.0-m5" org="terracotta"/>
   	<dependency name="xstream" rev="1.0.2"/>
-  	<dependency name="httpunit" rev="1.6"/>
+  	<dependency name="httpunit" rev="1.6.2"/>
   </dependencies>
 </ivy-module>
