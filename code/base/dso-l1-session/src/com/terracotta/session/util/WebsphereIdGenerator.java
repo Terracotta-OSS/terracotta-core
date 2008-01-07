@@ -36,9 +36,17 @@ public class WebsphereIdGenerator extends DefaultIdGenerator {
   }
 
   public SessionId makeInstanceFromBrowserId(String requestedSessionId) {
-    if ((requestedSessionId != null) && (requestedSessionId.length() >= cacheIdLength)) {
-      // trim the cacheId from this point on
-      requestedSessionId = requestedSessionId.substring(cacheIdLength);
+    if (requestedSessionId != null) {
+      // trim the cacheId and cloneId from this point on
+
+      if (requestedSessionId.length() >= cacheIdLength) {
+        requestedSessionId = requestedSessionId.substring(cacheIdLength);
+      }
+
+      int dlmIndex = requestedSessionId.lastIndexOf(getDelimiter());
+      if (dlmIndex >= 0) {
+        requestedSessionId = requestedSessionId.substring(0, dlmIndex);
+      }
     }
 
     return super.makeInstanceFromBrowserId(requestedSessionId);

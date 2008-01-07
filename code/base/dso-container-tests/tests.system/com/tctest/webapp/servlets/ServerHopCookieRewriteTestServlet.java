@@ -128,12 +128,17 @@ public final class ServerHopCookieRewriteTestServlet extends HttpServlet {
     }
 
     String value = (String) session.getAttribute(ATTR_NAME);
-    if (!session.getId().equals(req.getRequestedSessionId()) && value == null) {
-      out.print("OK");
+    if (value != null) {
+      out.print("attribute already exists: " + value);
+      return;
+    }
+
+    if (!session.getId().equals(req.getRequestedSessionId())) {
       session.setAttribute(ATTR_NAME, "0");
       session.setAttribute(SESS_ID, session.getId());
+      out.print("OK");
     } else {
-      out.print("attribute already exists: " + value);
+      out.print("requested session ID equals actual session ID: " + session.getId());
     }
   }
 
