@@ -114,7 +114,7 @@ public class ModulesLoader {
     }
   }
 
-  private static void initModules(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper,
+  static void initModules(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper,
                                   final ClassProvider classProvider, final Module[] modules, final boolean forBootJar)
       throws BundleException {
 
@@ -294,21 +294,22 @@ public class ModulesLoader {
         }
         is.close();
       } catch (IOException ioe) {
-        String msg = "Unable to read configuration from bundle: " + bundle.getSymbolicName();
+        String msg = "Error reading configuration from bundle: " + bundle.getSymbolicName() + " located at " + bundle.getLocation();
         consoleLogger.warn(msg, ioe);
         logger.warn(msg, ioe);
+        throw new BundleException(msg, ioe);
       } catch (XmlException xmle) {
-        String msg = "Unable to parse configuration from bundle: " + bundle.getSymbolicName();
+        String msg = "Error parsing configuration from bundle: " + bundle.getSymbolicName() + " located at " + bundle.getLocation();
         consoleLogger.warn(msg, xmle);
         logger.warn(msg, xmle);
+        throw new BundleException(msg, xmle);
       } catch (ConfigurationSetupException cse) {
-        String msg = "Unable to load configuration from bundle: " + bundle.getSymbolicName();
+        String msg = "Invalid configuration in bundle: " + bundle.getSymbolicName() + " located at " + bundle.getLocation() + ": " + cse.getMessage();
         consoleLogger.warn(msg, cse);
         logger.warn(msg, cse);
+        throw new BundleException(msg, cse);
       } finally {
-        if (is != null) {
-          IOUtils.closeQuietly(is);
-        }
+        IOUtils.closeQuietly(is);
       }
     }
   }

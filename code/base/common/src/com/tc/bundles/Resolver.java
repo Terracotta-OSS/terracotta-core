@@ -15,6 +15,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.util.Assert;
 import com.terracottatech.config.Module;
 
 import java.io.File;
@@ -57,7 +58,11 @@ public class Resolver {
     }
 
     for (int i = 0; i < repositories.length; i++) {
-      repoLocations.add(repositories[i]);
+      if (!repositories[i].getProtocol().equalsIgnoreCase("file")) {
+        throw new BundleException(formatMessage(Message.WARN_REPOSITORY_PROTOCOL_UNSUPPORTED, new Object[] { repositories[i] }));
+      } else {
+        repoLocations.add(repositories[i]);
+      }
     }
 
     if (repoLocations.isEmpty()) { throw new RuntimeException(
@@ -177,11 +182,8 @@ public class Resolver {
   protected URL resolveBundle(BundleSpec spec) {
     for (int i = repositories.length - 1; i >= 0; i--) {
       final URL location = repositories[i];
-      // TODO: support other protocol besides file://
-      if (!location.getProtocol().equalsIgnoreCase("file")) {
-        warn(Message.WARN_REPOSITORY_PROTOCOL_UNSUPPORTED, new Object[] { location.getProtocol() });
-        continue;
-      }
+      // TODO: support other protocol besides file:// - for now this is being checked in the constructor
+      Assert.assertTrue(location.getProtocol().equalsIgnoreCase("file"));
 
       final File root = FileUtils.toFile(location);
       final File repository = new File(root, spec.getGroupId().replace('.', File.separatorChar));
