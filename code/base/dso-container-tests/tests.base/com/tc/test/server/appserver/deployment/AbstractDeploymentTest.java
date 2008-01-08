@@ -13,6 +13,8 @@ import com.tc.test.server.appserver.AppServerFactory;
 import com.tc.test.server.util.TcConfigBuilder;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -55,6 +57,13 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
     return true;
   }
 
+  /**
+   * override this method to pass extra arguments to the L2
+   */
+  protected Collection getExtraJvmArgsForL2() {
+    return Collections.EMPTY_LIST;
+  }
+
   public void runBare() throws Throwable {
 
     if (shouldDisable()) { return; }
@@ -71,7 +80,7 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   protected ServerManager getServerManager() {
     if (serverManager == null) {
       try {
-        serverManager = ServerManagerUtil.startAndBind(getClass(), isWithPersistentStore());
+        serverManager = ServerManagerUtil.startAndBind(getClass(), isWithPersistentStore(), getExtraJvmArgsForL2());
       } catch (Exception e) {
         throw new RuntimeException("Unable to create server manager; " + e.toString(), e);
       }

@@ -42,9 +42,9 @@ public final class RequestCountTest extends AbstractDeploymentTest {
   private TcConfigBuilder       configBuilder;
 
   public RequestCountTest() {
-    disableAllUntil("2008-01-15");
+    // disableAllUntil("2008-01-15");
   }
-  
+
   public static Test suite() {
     return new ServerTestSetup(RequestCountTest.class);
   }
@@ -94,7 +94,8 @@ public final class RequestCountTest extends AbstractDeploymentTest {
 
     final JMXConnector jmxConnector = getJMXConnector();
     final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
-    final long beanCutoffTime = System.currentTimeMillis() + (60 * 1000);
+    final long start = System.currentTimeMillis();
+    final long beanCutoffTime = start + (60 * 1000);
     Set beanSet = null;
     for (beanSet = TerracottaManagement.getAllSessionMonitorMBeans(mbs); beanSet.size() != nodeCount; beanSet = TerracottaManagement
         .getAllSessionMonitorMBeans(mbs)) {
@@ -107,11 +108,11 @@ public final class RequestCountTest extends AbstractDeploymentTest {
         logger.info("No session beans found, expecting " + nodeCount + " of them");
       }
       if (System.currentTimeMillis() > beanCutoffTime) {
-        final String errMsg = "Unable to find DSO client MBeans within 60 seconds of starting the node";
+        final String errMsg = "Unable to find DSO client MBeans within " + beanCutoffTime + "ms";
         logger.error(errMsg);
         fail(errMsg);
       } else {
-        logger.info("Unable to find DSO client MBeans after " + (beanCutoffTime - System.currentTimeMillis())
+        logger.info("Unable to find DSO client MBeans after " + (System.currentTimeMillis() - start)
                     + "ms, sleeping for 3 seconds");
         try {
           Thread.sleep(3000);
@@ -120,7 +121,7 @@ public final class RequestCountTest extends AbstractDeploymentTest {
         }
       }
     }
-    logger.info("We have all of our DSO client Mbeans after " + (beanCutoffTime - System.currentTimeMillis()) + ":");
+    logger.info("We have all of our DSO client Mbeans after " + (System.currentTimeMillis() - start) + "ms");
     for (final Iterator pos = beanSet.iterator(); pos.hasNext();) {
       logger.info("Session bean[" + ((ObjectName) pos.next()).getCanonicalName() + "]");
     }

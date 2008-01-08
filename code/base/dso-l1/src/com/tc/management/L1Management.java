@@ -4,6 +4,7 @@
  */
 package com.tc.management;
 
+import com.sun.jmx.remote.opt.util.EnvHelp;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -183,6 +184,7 @@ public final class L1Management extends TerracottaManagement {
       final Map environment = new HashMap();
       ProtocolProvider.addTerracottaJmxProvider(environment);
       environment.put(TunnelingMessageConnectionServer.TUNNELING_HANDLER, tunnelingHandler);
+      environment.put(EnvHelp.SERVER_CONNECTION_TIMEOUT, String.valueOf(Long.MAX_VALUE));
       url = new JMXServiceURL("terracotta", "localhost", 0);
       // Normally you should NOT do this in the client, but we have a modified version of jmxremote_optional.jar that
       // uses a daemon thread to wait for connections so we don't hang the client

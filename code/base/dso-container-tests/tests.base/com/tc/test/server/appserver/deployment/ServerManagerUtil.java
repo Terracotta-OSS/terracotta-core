@@ -1,24 +1,27 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test.server.appserver.deployment;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.util.Collection;
 
 public class ServerManagerUtil {
 
   protected static Log logger = LogFactory.getLog(ServerManagerUtil.class);
 
-  private static ServerManager start(Class testClass, boolean withPersistentStore) throws Exception {
+  private static ServerManager start(Class testClass, boolean withPersistentStore, Collection extraJvmArgs)
+      throws Exception {
     ServerManager existingServerManager = getExistingServerManager();
     if (existingServerManager != null) {
       logger.debug("Using existing ServerManager");
       return existingServerManager;
     }
     logger.debug("Creating server manager");
-    ServerManager serverManager = new ServerManager(testClass);
+    ServerManager serverManager = new ServerManager(testClass, extraJvmArgs);
     serverManager.start(withPersistentStore);
     return serverManager;
   }
@@ -39,8 +42,9 @@ public class ServerManagerUtil {
     return (ServerManager) serverManagerHolder.get();
   }
 
-  public static ServerManager startAndBind(Class testClass, boolean withPersistentStore) throws Exception {
-    ServerManager sm = start(testClass, withPersistentStore);
+  public static ServerManager startAndBind(Class testClass, boolean withPersistentStore, Collection extraJvmArgs)
+      throws Exception {
+    ServerManager sm = start(testClass, withPersistentStore, extraJvmArgs);
     serverManagerHolder.set(sm);
     return sm;
   }
@@ -51,7 +55,7 @@ public class ServerManagerUtil {
   }
 
   public static void stopAllWebServers(ServerManager serverManager) {
-    getExistingServerManager().stopAllWebServers();    
+    getExistingServerManager().stopAllWebServers();
   }
 
 }

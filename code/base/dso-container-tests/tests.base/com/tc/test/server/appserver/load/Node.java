@@ -19,6 +19,7 @@ import junit.framework.Assert;
 
 public class Node implements Runnable {
   protected static final TCLogger   logger = TCLogging.getLogger(Node.class);
+
   protected final long              duration;
   protected final int               numRequests[];
   protected final SynchronizedRef   error  = new SynchronizedRef(null);
@@ -34,7 +35,7 @@ public class Node implements Runnable {
   public Node(URL[] mutateUrls, URL[] validateUrls, int numSessions, long duration) {
     this.mutateUrls = mutateUrls;
     this.validateUrls = validateUrls;
-    conversations = createConversations(numSessions);
+    this.conversations = createConversations(numSessions);
     this.duration = duration;
     this.numRequests = new int[numSessions];
   }

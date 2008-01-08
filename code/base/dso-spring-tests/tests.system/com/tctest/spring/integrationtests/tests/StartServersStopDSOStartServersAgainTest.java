@@ -10,6 +10,8 @@ import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tctest.spring.bean.ISingleton;
 import com.tctest.spring.integrationtests.SpringDeploymentTest;
 
+import java.util.Collections;
+
 import junit.framework.Test;
 
 
@@ -19,15 +21,15 @@ public class StartServersStopDSOStartServersAgainTest extends SpringDeploymentTe
   private static final String  CONFIG_FILE_FOR_TEST          = "/tc-config-files/singleton-tc-config.xml";
 
   public static Test suite() {
-    return new ServerTestSetup(StartServersStopDSOStartServersAgainTest.class, true);
+    return new ServerTestSetup(StartServersStopDSOStartServersAgainTest.class, true, Collections.EMPTY_LIST);
   }
-  
+
   public StartServersStopDSOStartServersAgainTest() {
     //disableAllUntil("2010-03-01");
   }
-  
+
   public void testStartServersStopDSOStartServersAgain() throws Exception {
-    
+
     Deployment warPath = makeDeploymentBuilder("test-singleton.war")
         .addBeanDefinitionFile(BEAN_DEFINITION_FILE_FOR_TEST)
         .addRemoteService(REMOTE_SERVICE_NAME, "singleton", ISingleton.class)
@@ -63,20 +65,20 @@ public class StartServersStopDSOStartServersAgainTest extends SpringDeploymentTe
     ISingleton singleton4 = (ISingleton) server4.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
 
     assertCounterShared(singleton3, singleton4);
-    
+
     logger.info("*** Test completed");
   }
 
   private void assertCounterShared(ISingleton singleton1, ISingleton singleton2) {
     assertEquals(singleton1.getCounter(), singleton2.getCounter());
-    
+
     singleton1.incrementCounter();
     assertEquals(singleton1.getCounter(), singleton2.getCounter());
-    
+
     singleton2.incrementCounter();
     assertEquals(singleton2.getCounter(), singleton1.getCounter());
   }
-  
+
   public boolean isWithPersistentStore() {
     return true;
   }

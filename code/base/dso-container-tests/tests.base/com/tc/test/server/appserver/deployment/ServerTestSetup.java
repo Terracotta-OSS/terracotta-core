@@ -5,6 +5,8 @@
 package com.tc.test.server.appserver.deployment;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Enumeration;
 
 import junit.extensions.TestSetup;
@@ -12,19 +14,20 @@ import junit.framework.TestSuite;
 
 public class ServerTestSetup extends TestSetup {
 
-  private final Class   testClass;  
-  private ServerManager sm;
-  protected boolean     persistentMode   = false;
-  
+  private final Class      testClass;
+  private final Collection extraJvmArgs;
+  private final boolean    persistentMode;
+  private ServerManager    sm;
 
   public ServerTestSetup(Class testClass) {
-    super(new TestSuite(testClass));
-    this.testClass = testClass;
+    this(testClass, false, Collections.EMPTY_LIST);
   }
 
-  public ServerTestSetup(Class testClass, boolean persistentMode) {
-    this(testClass);
+  public ServerTestSetup(Class testClass, boolean persistentMode, Collection extraJvmArgs) {
+    super(new TestSuite(testClass));
+    this.testClass = testClass;
     this.persistentMode = persistentMode;
+    this.extraJvmArgs = extraJvmArgs;
   }
 
   protected void setUp() throws Exception {
@@ -41,7 +44,7 @@ public class ServerTestSetup extends TestSetup {
   protected ServerManager getServerManager() {
     if (sm == null) {
       try {
-        sm = ServerManagerUtil.startAndBind(testClass, isWithPersistentStore());
+        sm = ServerManagerUtil.startAndBind(testClass, isWithPersistentStore(), extraJvmArgs);
       } catch (Exception e) {
         throw new RuntimeException("Unable to create server manager", e);
       }
