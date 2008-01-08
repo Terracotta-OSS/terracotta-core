@@ -61,10 +61,6 @@ public class TestConfigObject {
   private static final String     LINKED_CHILD_PROCESS_CLASSPATH   = DYNAMIC_PROPERTIES_PREFIX
                                                                      + "linked-child-process-classpath";
 
-  private static final String     JVM_VERSION                      = DYNAMIC_PROPERTIES_PREFIX + "jvm.version";
-  private static final String     JVM_TYPE                         = DYNAMIC_PROPERTIES_PREFIX + "jvm.type";
-  private static final String     JVM_MODE                         = DYNAMIC_PROPERTIES_PREFIX + "jvm.mode";
-
   private static final String     BOOT_JAR_NORMAL                  = DYNAMIC_PROPERTIES_PREFIX + "bootjars.normal";
 
   private static final String     SESSION_CLASSPATH                = DYNAMIC_PROPERTIES_PREFIX + "session.classpath";
@@ -92,10 +88,6 @@ public class TestConfigObject {
 
   private static final String     APP_SERVER_MINOR_VERSION         = STATIC_PROPERTIES_PREFIX
                                                                      + "appserver.minor-version";
-
-  private static final String     JETTY_TIM_REPO                   = STATIC_PROPERTIES_PREFIX + "jetty.tim.repo";
-
-  private static final String     JETTY_TIM_BUNDLE                 = STATIC_PROPERTIES_PREFIX + "jetty.tim.bundle";
 
   private static final String     TRANSPARENT_TESTS_MODE           = STATIC_PROPERTIES_PREFIX
                                                                      + "transparent-tests.mode";
@@ -338,20 +330,6 @@ public class TestConfigObject {
     return out;
   }
 
-  /**
-   * Can be null and will default to file://%(user.home)/.m2/repository
-   * @see ServerManager.prepareClientTcConfigForJetty
-   */
-  public String jettyTIMRepo() {
-    return this.properties.getProperty(JETTY_TIM_REPO);
-  }
-
-  public String jettyTIMBundle() {
-    String out = this.properties.getProperty(JETTY_TIM_BUNDLE);
-    Assert.assertNotBlank(out);
-    return out;
-  }
-
   public String springTestsTimeout() {
     return this.properties.getProperty(SPRING_TESTS_TIMEOUT);
   }
@@ -416,9 +394,6 @@ public class TestConfigObject {
   public static final String    TRANSPARENT_TESTS_MODE_NORMAL         = "normal";
   public static final String    TRANSPARENT_TESTS_MODE_CRASH          = "crash";
   public static final String    TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE = "active-passive";
-
-  private static final String[] ALL_TRANSPARENT_TESTS_MODES           = { TRANSPARENT_TESTS_MODE_NORMAL,
-      TRANSPARENT_TESTS_MODE_CRASH, TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE };
 
   private static File           baseDir;
 

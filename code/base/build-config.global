@@ -38,13 +38,5 @@ maven.snapshot=true
 
 # BEGIN JETTY
 # to run tests with Jetty, check out the forge and execute "mvn clean install"
-# then you need to run the tests with tests-jdk=1.5 because the Jetty TIM
-# require jre1.5
-#appserver=jetty-6.1.5
-
-# defaults to Local Maven Repo at file:/%(user.home)/.m2/repository
-#tc.tests.configuration.jetty.tim.repo=file:/C:/Documents and Settings/gkeim/.m2/repository
-
-# Required to specify the Jetty bundle symbolic name
-#tc.tests.configuration.jetty.tim.bundle=org.mortbay.jetty.tim-jetty-6.1.4;bundle-version:=1.0.0.SNAPSHOT
+# then you need to run the tests with tests-jdk=1.5 because the Jetty TIM requires jre1.5
 # END JETTY
