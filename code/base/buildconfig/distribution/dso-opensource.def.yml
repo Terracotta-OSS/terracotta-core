@@ -71,6 +71,13 @@ bundled_components:
               - dso-l1-tomcat
               - dso-l1-tomcat50
               - dso-l1-tomcat55
+        - terracotta-api-version-PREALPHA:
+            install_directory: lib
+            modules:
+              - common-api
+              - dso-l1-api
+              - modules-common
+              - thirdparty-api
       # NOTE: this section also controls what goes into the 'tc.jar' file
       modules:
         - aspectwerkz:
@@ -149,3 +156,6 @@ postscripts:
         - artifact: tc-session
           file: lib/session/tc-session.jar
           pom: poms/tc-session-pom.xml
+        - artifact: terracotta-api
+          file: terracotta-api-version-PREALPHA.jar
+          pom: poms/terracotta-api-pom.xml
