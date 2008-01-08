@@ -22,11 +22,11 @@ import java.util.Map;
 public class TimeExpiryMemoryStore extends MemoryStore {
   private static final Log LOG = LogFactory.getLog(TimeExpiryMemoryStore.class.getName());
 
-  public TimeExpiryMemoryStore(Ehcache cache, Store diskStore, ConfigurationAccessor configAccessor) {
+  public TimeExpiryMemoryStore(Ehcache cache, Store diskStore) {
     super(cache, (DiskStore) diskStore);
-    
+
     try {
-      map = loadMapInstance(cache.getName(), configAccessor);
+      map = loadMapInstance(cache.getName());
       ((SpoolingTimeExpiryMap)map).initialize();
     } catch (CacheException e) {
       LOG.error(cache.getName() + "Cache: Cannot start TimeExpiryMemoryStore. Initial cause was " + e.getMessage(), e);
@@ -44,12 +44,12 @@ public class TimeExpiryMemoryStore extends MemoryStore {
     return threadIntervalSec;
   }
 
-  private Map loadMapInstance(String cacheName, ConfigurationAccessor configAccessor) throws CacheException {
+  private Map loadMapInstance(String cacheName) throws CacheException {
     try {
       Class.forName("com.tcclient.ehcache.TimeExpiryMap");
-      long threadIntervalSec = configAccessor.getDiskExpiryThreadIntervalSeconds(cache);
-      long timeToIdleSec = configAccessor.getTimeToIdleSeconds(cache);
-      long timeToLiveSec = configAccessor.getTimeToLiveSeconds(cache);
+      long threadIntervalSec = cache.getDiskExpiryThreadIntervalSeconds();
+      long timeToIdleSec = cache.getTimeToIdleSeconds();
+      long timeToLiveSec = cache.getTimeToLiveSeconds();
 
       threadIntervalSec = getThreadIntervalSeconds(threadIntervalSec, timeToIdleSec, timeToLiveSec);
 
