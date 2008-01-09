@@ -81,6 +81,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
                                       badSymbolicName, badSymbolicVersion, 
                                       null, null);
     
+    EmbeddedOSGiRuntime osgiRuntime = null;
     try {
       DSOClientConfigHelper configHelper = configHelper();
       
@@ -91,8 +92,8 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
      
       try {
         Modules modules = configHelper.getModulesForInitialization();
-        EmbeddedOSGiRuntime osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
-        ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false);
+        osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
+        ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false);        
         Assert.fail("Should get exception on invalid bundle");
         
       } catch(BundleException e) {
@@ -103,6 +104,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
       
     } finally {
       // Clean up the bundle we created
+      osgiRuntime.shutdown();
       generatedJar1.delete();
     }
   }
@@ -196,7 +198,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
    */
   public void testBadModuleXmlThrowsError() throws Exception {
     String badGroupId = "org.terracotta.modules";
-    String badArtifactId = "badconfig";
+    String badArtifactId = "badxml";
     String badVersion = "1.0.0";
     String badSymbolicName = badGroupId + "." + badArtifactId;
     
@@ -206,6 +208,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
                                       badSymbolicName, badVersion, 
                                       null, TC_CONFIG_MISSING_FIRST_CHAR);
     
+    EmbeddedOSGiRuntime osgiRuntime = null;
     try {
       DSOClientConfigHelper configHelper = configHelper();
       
@@ -216,7 +219,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
      
       try {
         Modules modules = configHelper.getModulesForInitialization();
-        EmbeddedOSGiRuntime osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
+        osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
         ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false);
         Assert.fail("Should get exception on invalid bundle");
         
@@ -228,6 +231,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
       
     } finally {
       // Clean up the bundle we created
+      osgiRuntime.shutdown();
       generatedJar1.delete();
     }
   }
@@ -247,6 +251,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
                                       badSymbolicName, badVersion, 
                                       null, TC_CONFIG_NO_ROOT_FIELD_OR_EXPR);
     
+    EmbeddedOSGiRuntime osgiRuntime = null;
     try {
       DSOClientConfigHelper configHelper = configHelper();
       
@@ -257,7 +262,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
      
       try {
         Modules modules = configHelper.getModulesForInitialization();
-        EmbeddedOSGiRuntime osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
+        osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
         ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false);
         Assert.fail("Should get exception on invalid config");
         
@@ -270,6 +275,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
       
     } finally {
       // Clean up the bundle we created
+      osgiRuntime.shutdown();
       generatedJar1.delete();
     }
   }
