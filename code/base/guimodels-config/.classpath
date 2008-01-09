@@ -5,5 +5,4 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/modules-common"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/osgi_R4_core-1.0.jar"/>
 </classpath>

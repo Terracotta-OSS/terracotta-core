@@ -20,5 +20,4 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/simulator"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty-api"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/osgi_R4_core-1.0.jar"/>
 </classpath>

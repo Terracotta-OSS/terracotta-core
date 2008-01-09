@@ -2,6 +2,5 @@
 <ivy-module version="1.0">
   <info organisation="ibiblio" module="excludes-config"/>
   <dependencies>
-    <dependency name="osgi_R4_core" rev="1.0" org="terracotta"/>
   </dependencies>
 </ivy-module>

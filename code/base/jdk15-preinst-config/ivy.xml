@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <ivy-module version="1.0">
   <info organisation="ibiblio" module="jdk15-preinst-config"/>
-  <dependencies>
-    <dependency name="osgi_R4_core" rev="1.0" org="terracotta"/>
+  <dependencies>    
   </dependencies>
 </ivy-module>

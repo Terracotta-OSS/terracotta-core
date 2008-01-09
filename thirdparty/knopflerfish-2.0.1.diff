@@ -1,10 +1,23 @@
---- StartLevelImpl.java.orig    2007-03-15 13:43:22.000000000 -0700
-+++ StartLevelImpl.java 2007-03-15 13:43:38.000000000 -0700
-@@ -91,6 +91,7 @@
+diff -ur knopflerfish_osgi_2.0.1/knopflerfish.org/osgi/framework/src/org/knopflerfish/framework/Framework.java knopflerfish_osgi_2.0.1.orig/knopflerfish.org/osgi/framework/src/org/knopflerfish/framework/Framework.java
+--- knopflerfish_osgi_2.0.1/knopflerfish.org/osgi/framework/src/org/knopflerfish/framework/Framework.java	2008-01-08 16:26:44.015625000 -0800
++++ knopflerfish_osgi_2.0.1.orig/knopflerfish.org/osgi/framework/src/org/knopflerfish/framework/Framework.java	2008-01-08 16:24:36.875000000 -0800
+@@ -234,7 +234,7 @@
+     }
+         
+     ProtectionDomain pd = null;
+-    if (false && System.getSecurityManager() != null) {
++    if (System.getSecurityManager() != null) {
+       try {
+         pd = getClass().getProtectionDomain();
+       } catch (Throwable t) {
+diff -ur knopflerfish_osgi_2.0.1/knopflerfish.org/osgi/framework/src/org/knopflerfish/framework/StartLevelImpl.java knopflerfish_osgi_2.0.1.orig/knopflerfish.org/osgi/framework/src/org/knopflerfish/framework/StartLevelImpl.java
+--- knopflerfish_osgi_2.0.1/knopflerfish.org/osgi/framework/src/org/knopflerfish/framework/StartLevelImpl.java	2008-01-08 16:26:26.453125000 -0800
++++ knopflerfish_osgi_2.0.1.orig/knopflerfish.org/osgi/framework/src/org/knopflerfish/framework/StartLevelImpl.java	2008-01-08 16:24:37.062500000 -0800
+@@ -91,7 +91,6 @@
      }
      Runnable firstJob = (Runnable)jobQueue.firstElement();
      wc   = new Thread(this, "startlevel job thread");
-+    wc.setDaemon(true);
+-    wc.setDaemon(true);
      synchronized (firstJob) {
        bRun = true;
        wc.start();

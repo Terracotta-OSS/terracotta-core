@@ -2,7 +2,6 @@
 <ivy-module version="1.0">
   <info organisation="ibiblio" module="modules-common"/>
   <dependencies>
-	<dependency name="knopflerfish" rev="2.0.1-tc" org="terracotta"/>
-	<dependency name="osgi_R4_core" rev="1.0" org="terracotta"/>
+	<dependency name="knopflerfish" rev="2.0.1-tc-20080108" org="terracotta"/>
   </dependencies>
 </ivy-module>
