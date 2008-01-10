@@ -157,7 +157,7 @@ class BuildModule
     def create_module_jar(ant, build_results)
       basedir  = build_results.classes_directory(subtree('src')).ensure_directory
       module_info = build_results.module_info(self)
-      ant.jar(:destfile => module_info.jarfile.to_s, :basedir => basedir.to_s, :manifest => module_info.manifest)
+      ant.jar(:destfile => module_info.jarfile.to_s, :basedir => basedir.to_s, :manifest => module_info.manifest.to_s)
       module_info
     end
 end
