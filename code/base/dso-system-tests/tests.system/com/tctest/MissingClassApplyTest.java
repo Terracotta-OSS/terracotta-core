@@ -9,7 +9,7 @@ public class MissingClassApplyTest extends TransparentTestBase {
   private static final int NODE_COUNT = 5;
 
   public MissingClassApplyTest() {
-    disableAllUntil("2008-12-10");
+    //
   }
 
   public void doSetUp(TransparentTestIface t) throws Exception {

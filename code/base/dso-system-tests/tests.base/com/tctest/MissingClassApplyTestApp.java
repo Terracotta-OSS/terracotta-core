@@ -12,12 +12,12 @@ import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.object.loaders.IsolationClassLoader;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
-import com.tctest.runner.AbstractTransparentApp;
+import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MissingClassApplyTestApp extends AbstractTransparentApp {
+public class MissingClassApplyTestApp extends AbstractErrorCatchingTransparentApp {
 
   private static final String MISSING_CLASS_NAME = MissingClassApplyTestApp.class.getName() + "$MissingClass";
   private List                root               = new ArrayList();
@@ -28,62 +28,52 @@ public class MissingClassApplyTestApp extends AbstractTransparentApp {
     System.err.println("\n### CTor.missingClass=" + MISSING_CLASS_NAME);
   }
 
-  public void run() {
-    try {
-      runTest();
-    } catch (Throwable t) {
-      notifyError(t);
-    }
-
-  }
-
-  private void runTest() throws Exception {
-
+  protected void runTest() throws Exception {
     final int nodeId = barrier.barrier();
     final boolean masterNode = nodeId == 0;
     System.err.println("\n### NodeId=" + nodeId + ", ThreadId=" + Thread.currentThread().getName());
     if (!masterNode) {
       final IsolationClassLoader icl = (IsolationClassLoader) getClass().getClassLoader();
-      icl.throwOnLoad(MISSING_CLASS_NAME, MISSING_CLASS_NAME + " should not be found in this node [nodeId=" + nodeId  + "]");
+      icl.throwOnLoad(MISSING_CLASS_NAME, MISSING_CLASS_NAME + " should not be found in this node [nodeId=" + nodeId
+                                          + "]");
     }
     barrier.barrier();
     // make sure that referencing MissingClass throws exception everywhere except the master node...
     checkClassAvailability(masterNode);
-    
+
     barrier.barrier();
     // make sure that we can push some updates to root
     if (masterNode) {
       add(new Object());
     }
+
     barrier.barrier();
     checkSize(1);
+
     barrier.barrier();
-    // make sure that update that refer to MissingClass don't throw exceptions in those nodes that don't have access to
-    // it
+    // make sure that updates that refer to MissingClass don't throw exceptions in those nodes
+    // that don't have access to it
     if (masterNode) {
       add(new MissingClass());
     }
+
+    barrier.barrier();
     if (!masterNode) {
       checkSize((masterNode) ? 2 : 1);
     }
+
     barrier.barrier();
     // just for fun, check class availability again
     checkClassAvailability(masterNode);
   }
 
   private void checkClassAvailability(final boolean masterNode) {
-    if (masterNode) {
+    try {
       new MissingClass();
-    } else {
-      Throwable exception = null;
-      try {
-        new MissingClass();
-      } catch (Throwable e) {
-        exception = e;
-      }
-      if (exception == null) {
-        notifyError("Expected exception was not thrown!");
-      }
+      if (!masterNode) { throw new AssertionError("expected exception was not thrown!"); }
+    } catch (Throwable t) {
+      if (!masterNode && t instanceof NoClassDefFoundError) return;
+      throw new RuntimeException("unexpected exception", t);
     }
   }
 

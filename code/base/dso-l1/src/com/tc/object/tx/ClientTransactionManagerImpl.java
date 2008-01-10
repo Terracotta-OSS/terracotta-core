@@ -463,7 +463,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
             .getDefiningLoaderDescription());
         tcobj = objectManager.lookup(dna.getObjectID());
       } catch (ClassNotFoundException cnfe) {
-        logger.warn("Could not apply change because class not local:" + dna.getTypeName());
+        logger.warn("Could not apply change because class not local: " + dna.getTypeName());
         continue;
       }
       // Important to have a hard reference to the object while we apply
@@ -474,7 +474,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
         try {
           tcobj.hydrate(dna, force);
         } catch (ClassNotFoundException cnfe) {
-          logger.warn("Could not apply change because class not local:" + cnfe.getMessage());
+          logger.warn("Could not apply change because class not local: " + cnfe.getMessage());
           throw new TCClassNotFoundException(cnfe);
         }
       }
