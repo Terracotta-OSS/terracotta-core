@@ -103,9 +103,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
       }
       
     } finally {
-      // Clean up the bundle we created
-      osgiRuntime.shutdown();
-      generatedJar1.delete();
+      shutdownAndCleanUpJars(osgiRuntime, new File[] { generatedJar1 });
     }
   }
     
@@ -193,7 +191,11 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
     configHelper.addRepository(repo);
     Modules modules = configHelper.getModulesForInitialization();
     EmbeddedOSGiRuntime osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
-    ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false);
+    try {
+      ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false);
+    } finally {
+      shutdownAndCleanUpJars(osgiRuntime, null);
+    }
   }
 
   
@@ -235,9 +237,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
       }
       
     } finally {
-      // Clean up the bundle we created
-      osgiRuntime.shutdown();
-      generatedJar1.delete();
+      shutdownAndCleanUpJars(osgiRuntime, new File[] { generatedJar1 });
     }
   }
   
@@ -279,9 +279,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
       }
       
     } finally {
-      // Clean up the bundle we created
-      osgiRuntime.shutdown();
-      generatedJar1.delete();
+      shutdownAndCleanUpJars(osgiRuntime, new File[] { generatedJar1 });
     }
   }
   
@@ -296,12 +294,22 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
   "</roots>" + 
   "</xml-fragment>";
 
-  /*
-     "<clients>" + 
-  "<modules>" + 
-  "<module name=\"badversion\" version=\"1.0.0-SNAPSHOT\"/>" + 
-  "</modules>" + 
-  "</clients>" + 
-*/
-   
+  private void shutdownAndCleanUpJars(EmbeddedOSGiRuntime osgiRuntime, File[] jars) {
+    // Shutdown and wait for open jar references to get cleaned up
+    if(osgiRuntime != null) {
+      osgiRuntime.shutdown();
+      try {
+        Thread.sleep(2000);
+      } catch(InterruptedException e) {
+        // ignore
+      }
+    }
+    
+    if(jars != null) {
+      for(int i=0; i<jars.length; i++) {
+        jars[i].delete();
+      }
+    }
+  }
+
 }
