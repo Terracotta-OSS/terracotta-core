@@ -903,11 +903,6 @@ END
               @jvm_set.alias(jvm_alias, name)
             end
           end
-        else
-          msg = "You must specify a valid #{name} JRE using one of the " +
-                  "following configuration properties: " +
-          search_names.join(', ')
-          raise(msg)
         end
       end
 
