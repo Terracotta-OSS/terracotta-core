@@ -181,6 +181,11 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
    */
   public void testRepositoryThatIsAFilePath() throws Exception {
     String repo = getTempDirectory().getAbsolutePath();
+    
+    // For Windoze, chop leading c: drive letter, just path part
+    if(repo.length() > 2 && repo.charAt(1)==':') {
+      repo = repo.substring(2);
+    }
 
     DSOClientConfigHelper configHelper = configHelper();
     ClassProvider classProvider = new MockClassProvider();
