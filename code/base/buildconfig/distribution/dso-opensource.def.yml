@@ -157,5 +157,5 @@ postscripts:
           file: lib/session/tc-session.jar
           pom: poms/tc-session-pom.xml
         - artifact: terracotta-api
-          file: terracotta-api-version-PREALPHA.jar
+          file: lib/terracotta-api-version-PREALPHA.jar
           pom: poms/terracotta-api-pom.xml
