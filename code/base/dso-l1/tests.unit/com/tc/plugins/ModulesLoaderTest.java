@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -76,10 +77,14 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
     String badSymbolicVersion = "TedNugent";
     
     // Create bundle jar based on these attributes
-    File tempDir = getTempDirectory();
+    // Note: on windows, when this osgi startup fails, the jar file is left 
+    // open and prevents deletion.  So, for this particular test, we write 
+    // instead to the java temp dir and mark to delete on exit
+    File tempDir = new File(System.getProperty("java.io.tmpdir"));
     File generatedJar1 = createBundle(tempDir, badGroupId, badArtifactId, badVersion, 
                                       badSymbolicName, badSymbolicVersion, 
                                       null, null);
+    generatedJar1.deleteOnExit();
     
     EmbeddedOSGiRuntime osgiRuntime = null;
     try {
@@ -103,7 +108,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
       }
       
     } finally {
-      shutdownAndCleanUpJars(osgiRuntime, new File[] { generatedJar1 });
+      shutdownAndCleanUpJars(osgiRuntime, null);
     }
   }
     
@@ -174,25 +179,24 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
   }
   
   /**
-   * Test that using a file path and not a file URL will not throw an exception - 
-   * the default protocol with a URL is file:// so it should work.
+   * Test that using a bad file URL throws an exception
    */
-  public void testRepositoryThatIsAFilePath() throws Exception {
-    String repo = getTempDirectory().getAbsolutePath();
-    
-    // For Windoze, chop leading c: drive letter, just path part
-    if(repo.length() > 2 && repo.charAt(1)==':') {
-      repo = repo.substring(2);
-    }
+  public void testBadRepositoryURL() throws Exception {
+    String repo = "this is the worst url ever";
 
     DSOClientConfigHelper configHelper = configHelper();
     ClassProvider classProvider = new MockClassProvider();
    
-    configHelper.addRepository(repo);
-    Modules modules = configHelper.getModulesForInitialization();
-    EmbeddedOSGiRuntime osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
+    EmbeddedOSGiRuntime osgiRuntime = null;
     try {
+      configHelper.addRepository(repo);
+      Modules modules = configHelper.getModulesForInitialization();
+      osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
       ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false);
+      fail("Expected exception on bogus repository URL: " + repo);
+
+    } catch(MalformedURLException e) {
+      checkErrorMessageContainsText(e, repo);            
     } finally {
       shutdownAndCleanUpJars(osgiRuntime, null);
     }
