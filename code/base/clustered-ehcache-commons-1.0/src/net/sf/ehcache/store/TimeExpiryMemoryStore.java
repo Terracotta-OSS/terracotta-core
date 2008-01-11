@@ -13,6 +13,8 @@ import org.apache.commons.logging.LogFactory;
 
 import com.tcclient.ehcache.TimeExpiryMap;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Map;
 
 /**
@@ -47,9 +49,30 @@ public class TimeExpiryMemoryStore extends MemoryStore {
   private Map loadMapInstance(String cacheName) throws CacheException {
     try {
       Class.forName("com.tcclient.ehcache.TimeExpiryMap");
-      long threadIntervalSec = cache.getDiskExpiryThreadIntervalSeconds();
-      long timeToIdleSec = cache.getTimeToIdleSeconds();
-      long timeToLiveSec = cache.getTimeToLiveSeconds();
+            
+      long threadIntervalSec = -1;
+      long timeToIdleSec = -1;
+      long timeToLiveSec = -1;
+//      try {
+//        Method method = cache.getClass().getMethod("getCacheConfiguration", new Class[0]);
+//        
+//        // Use ehcache 1.3.x call - cache.getCacheConfiguration()...
+//        long[] ehcache13Params = getConfigWithReflection(method);
+//        if(ehcache13Params != null) {
+//          threadIntervalSec = ehcache13Params[0];
+//          timeToIdleSec = ehcache13Params[1];
+//          timeToLiveSec = ehcache13Params[2];
+//        }
+//      } catch(NoSuchMethodException e) {
+//        // drop into default config block below
+//      } 
+      
+      if(threadIntervalSec == -1) {
+        // Use ehcache 1.2.x methods
+        threadIntervalSec = cache.getDiskExpiryThreadIntervalSeconds();
+        timeToIdleSec = cache.getTimeToIdleSeconds();
+        timeToLiveSec = cache.getTimeToLiveSeconds();
+      }
 
       threadIntervalSec = getThreadIntervalSeconds(threadIntervalSec, timeToIdleSec, timeToLiveSec);
 
@@ -65,6 +88,45 @@ public class TimeExpiryMemoryStore extends MemoryStore {
     }
   }
   
+  private long[] getConfigWithReflection(Method getConfigMethod) throws CacheException {
+    try {
+      Object config = getConfigMethod.invoke(cache, new Object[0]);
+      if(config == null) { 
+        return null;
+      }
+
+      Class cacheConfigClass = Class.forName("net.sf.ehcache.config.CacheConfiguration", true, cache.getClass().getClassLoader());
+      
+      String[] methods = new String[] {"getDiskExpiryThreadIntervalSeconds",
+                                       "getTimeToIdleSeconds",
+                                       "getTimeToLiveSeconds" };
+      long[] values = new long[methods.length];
+      for(int i=0; i<methods.length; i++) {
+        Method configMethod = cacheConfigClass.getMethod(methods[i], null);
+        Long value = (Long)configMethod.invoke(config, null);
+        values[i] = value.longValue();    
+      }
+  
+if(values[0] != cache.getDiskExpiryThreadIntervalSeconds()) System.out.println("disk: " + values[0] + " ex:" + cache.getDiskExpiryThreadIntervalSeconds());      
+if(values[1] != cache.getTimeToIdleSeconds()) System.out.println("idle: " + values[1] + " ex:" + cache.getTimeToIdleSeconds());      
+if(values[2] != cache.getTimeToLiveSeconds()) System.out.println("live: " + values[2] + " ex:" + cache.getTimeToLiveSeconds());      
+      
+      return values;
+      
+    } catch(Exception e) {
+      // Check if a normal CacheException occurs and just throw it
+      if(e instanceof InvocationTargetException) {
+        InvocationTargetException ite = (InvocationTargetException) e;
+        if(ite.getCause() instanceof CacheException) {
+          throw (CacheException) ite.getCause();
+        } // else fall through 
+      }
+      
+      // None of these should happen - if they do, it's bad
+      throw new CacheException("Unexpected exception obtaining cache configuration via reflection: " + e.getMessage(), e);
+    }
+  }
+
   public final synchronized void putData(Element element) throws CacheException {
     if (element != null) {
         ((SpoolingTimeExpiryMap)map).putData(element.getObjectKey(), element);
@@ -73,7 +135,9 @@ public class TimeExpiryMemoryStore extends MemoryStore {
   }
 
   public final void stopTimeMonitoring() {
-    ((SpoolingTimeExpiryMap) map).stopTimeMonitoring();
+    if(map != null) {
+      ((SpoolingTimeExpiryMap) map).stopTimeMonitoring();
+    }
   }
 
   public final void evictExpiredElements() {
