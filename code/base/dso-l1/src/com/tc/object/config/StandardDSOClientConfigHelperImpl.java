@@ -25,6 +25,7 @@ import com.tc.geronimo.transform.HostGBeanAdapter;
 import com.tc.geronimo.transform.MultiParentClassLoaderAdapter;
 import com.tc.geronimo.transform.ProxyMethodInterceptorAdapter;
 import com.tc.geronimo.transform.TomcatClassLoaderAdapter;
+import com.tc.jam.transform.ReflectClassBuilderAdapter;
 import com.tc.jboss.transform.MainAdapter;
 import com.tc.jboss.transform.UCLAdapter;
 import com.tc.logging.CustomerLogging;
@@ -758,6 +759,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     LockDefinition ld = new LockDefinitionImpl("setTextArea", ConfigLockLevel.WRITE);
     ld.commit();
     addLock("* test.event.*.setTextArea(..)", ld);
+
+    // hard code junk for Axis2 problem (CDV-525)
+    addCustomAdapter("org.codehaus.jam.internal.reflect.ReflectClassBuilder", new ReflectClassBuilderAdapter());
 
     /**
      * // ---------------------------- // implicit config-bundle - JAG // ---------------------------- //
