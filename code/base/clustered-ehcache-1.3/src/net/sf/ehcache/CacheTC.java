@@ -294,6 +294,7 @@ public class CacheTC implements Ehcache {
     configuration.setTimeToLiveSeconds(timeToLiveSeconds);
     configuration.setTimeToIdleSeconds(timeToIdleSeconds);
     configuration.setDiskPersistent(diskPersistent);
+    configuration.setDiskExpiryThreadIntervalSeconds(diskExpiryThreadIntervalSeconds);
     configuration.setMaxElementsOnDisk(maxElementsOnDisk);
 
     setName(name);
