@@ -18,6 +18,7 @@ import com.tc.util.DebugUtil;
 import com.tc.util.runtime.Vm;
 import com.tctest.runner.AbstractTransparentApp;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -45,6 +46,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   private final Condition              fairCondition            = fairReadWriteLockRoot.writeLock().newCondition();
 
   private final List                   queue                    = new LinkedList();
+  private final List                   shareableLockList        = new ArrayList();
   private final Random                 random;
 
   private final int                    numOfPutters             = 1;
@@ -75,6 +77,10 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
 
       unsharedToSharedTest(index, new ReentrantReadWriteLock());
 
+      unsharedToSharedReadLockTest(index, new ReentrantReadWriteLock());
+      
+      unsharedToSharedWriteLockTest(index, new ReentrantReadWriteLock());
+
       readWriteLockTest(index, nonFairReadWriteLockRoot, nonFairCondition);
       ReentrantReadWriteLock localLock = new ReentrantReadWriteLock();
       singleNodeConditionVariableTesting(index, localLock.writeLock(), localLock.writeLock().newCondition());
@@ -91,6 +97,46 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     } catch (Throwable t) {
       notifyError(t);
     }
+  }
+
+  private void unsharedToSharedReadLockTest(int index, ReentrantReadWriteLock lock) throws Exception {
+    if (index == 0) {
+      ReadLock readLock = lock.readLock();
+      readLock.lock();
+      try {
+        synchronized (shareableLockList) {
+          shareableLockList.add(readLock);
+        }
+        throw new AssertionError("Should have expected a TCObjectNotSharableException.");
+      } catch (TCObjectNotSharableException e) {
+        // expected
+      } finally {
+        readLock.unlock();
+      }
+      Assert.assertFalse(ManagerUtil.isManaged(lock));
+    }
+
+    barrier.await();
+  }
+  
+  private void unsharedToSharedWriteLockTest(int index, ReentrantReadWriteLock lock) throws Exception {
+    if (index == 0) {
+      WriteLock writeLock = lock.writeLock();
+      writeLock.lock();
+      try {
+        synchronized (shareableLockList) {
+          shareableLockList.add(writeLock);
+        }
+        throw new AssertionError("Should have expected a TCObjectNotSharableException.");
+      } catch (TCObjectNotSharableException e) {
+        // expected
+      } finally {
+        writeLock.unlock();
+      }
+      Assert.assertFalse(ManagerUtil.isManaged(lock));
+    }
+
+    barrier.await();
   }
 
   private void tryLockTest(int index, ReentrantReadWriteLock lock) throws Exception {
@@ -1321,6 +1367,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     spec.addRoot("nonFairCondition", "nonFairCondition");
     spec.addRoot("fairCondition", "fairCondition");
     spec.addRoot("queue", "queue");
+    spec.addRoot("shareableLockList", "shareableLockList");
   }
 
   private static class DataRoot {

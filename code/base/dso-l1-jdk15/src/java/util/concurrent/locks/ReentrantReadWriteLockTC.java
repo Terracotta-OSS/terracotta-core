@@ -130,6 +130,13 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
       super.unlock();
       dsoLock.unlock();
     }
+    
+    public void validateInUnLockState() {
+      boolean isLocked = sync.getReadLockCount() != 0;
+      if (isLocked) { throw new TCObjectNotSharableException(
+                                                             "You are attempting to share a ReentrantReadWriteLock.ReadLock when it is in a locked state. Lock cannot be shared while locked."); }
+    }
+
 
     public String toString() {
       if (ManagerUtil.isManaged(this)) {
@@ -218,6 +225,12 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
 
     public int localHeldCount() {
       return sync.getWriteHoldCount();
+    }
+    
+    public void validateInUnLockState() {
+      boolean isLocked = sync.isWriteLocked();
+      if (isLocked) { throw new TCObjectNotSharableException(
+                                                             "You are attempting to share a ReentrantReadWriteLock.WriteLock when it is in a locked state. Lock cannot be shared while locked."); }
     }
 
     private void readObject(java.io.ObjectInputStream s) throws java.io.IOException, ClassNotFoundException {

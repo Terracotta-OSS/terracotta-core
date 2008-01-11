@@ -902,7 +902,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
       spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$ReadLock");
       spec.markPreInstrumented();
+      spec.setPreCreateMethod("validateInUnLockState");
       spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$WriteLock");
+      spec.setPreCreateMethod("validateInUnLockState");
       spec.markPreInstrumented();
 
       spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$Sync");
