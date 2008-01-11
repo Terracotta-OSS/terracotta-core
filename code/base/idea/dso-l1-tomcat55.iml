@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module relativePaths="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../dso-l1-tomcat55">
+      <sourceFolder url="file://$MODULE_DIR$/../dso-l1-tomcat55/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../dso-l1-tomcat55/tests.unit" isTestSource="false" />
+    </content>
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="jdk" jdkName="J2SE-1.4" jdkType="JavaSDK" />
+    <orderEntry type="module" module-name="common" />
+    <orderEntry type="module" module-name="common-api" />
+    <orderEntry type="module" module-name="dso-l1" />
+    <orderEntry type="module" module-name="dso-l1-api" />
+    <orderEntry type="module" module-name="dso-l1-session" />
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/lib/catalina-5.5.25.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/lib/servlet-api-2.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/lib/tomcat-coyote-5.5.25.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/lib/tomcat-util-5.5.25.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntryProperties />
+  </component>
+</module>
+

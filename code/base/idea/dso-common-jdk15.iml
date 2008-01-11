@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module relativePaths="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_5" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../dso-common-jdk15">
+      <sourceFolder url="file://$MODULE_DIR$/../dso-common-jdk15/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../dso-common-jdk15/tests.unit" isTestSource="false" />
+    </content>
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="jdk" jdkName="J2SE-1.5" jdkType="JavaSDK" />
+    <orderEntry type="module" module-name="common" />
+    <orderEntry type="module" module-name="common-api" />
+    <orderEntry type="module" module-name="dso-common" />
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/lib/catalina-tribes-6.0.11-20071126.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/lib/tomcat-juli-6.0.9.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntryProperties />
+  </component>
+</module>
+

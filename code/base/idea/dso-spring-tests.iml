@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module relativePaths="true" type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="Spring" name="Spring">
+      <configuration>
+        <options>
+          <option name="enableValidation" value="true" />
+          <option name="reportErrorsAsWarnings" value="true" />
+        </options>
+        <customNs />
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../dso-spring-tests">
+      <sourceFolder url="file://$MODULE_DIR$/../dso-spring-tests/tests.base" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../dso-spring-tests/tests.system" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../dso-spring-tests/tests.system.resources" isTestSource="false" />
+    </content>
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="jdk" jdkName="J2SE-1.4" jdkType="JavaSDK" />
+    <orderEntry type="module" module-name="aspectwerkz" />
+    <orderEntry type="module" module-name="common" />
+    <orderEntry type="module" module-name="common-api" />
+    <orderEntry type="module" module-name="deploy" />
+    <orderEntry type="module" module-name="dso-common" />
+    <orderEntry type="module" module-name="dso-common-jdk15" />
+    <orderEntry type="module" module-name="dso-container-tests" />
+    <orderEntry type="module" module-name="dso-l1" />
+    <orderEntry type="module" module-name="dso-l1-api" />
+    <orderEntry type="module" module-name="dso-l1-jdk15" />
+    <orderEntry type="module" module-name="dso-l1-weblogic" />
+    <orderEntry type="module" module-name="dso-l2" />
+    <orderEntry type="module" module-name="dso-l2-common" />
+    <orderEntry type="module" module-name="dso-spring" />
+    <orderEntry type="module" module-name="legacy-test-tree" />
+    <orderEntry type="module" module-name="linked-child-process" />
+    <orderEntry type="module" module-name="management" />
+    <orderEntry type="module" module-name="simulator" />
+    <orderEntry type="module" module-name="thirdparty" />
+    <orderEntry type="module" module-name="thirdparty-api" />
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/lib/cglib-nodep-2.1_3.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/lib/commons-collections-3.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/lib/commons-dbcp-1.2.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/lib/commons-httpclient-3.0.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/lib/commons-pool-1.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/lib/dom4j-1.6.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/lib/ehcache-1.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/lib/hibernate-3.1.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/lib/hsqldb-1.7.2.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/lib/jakarta-oro-2.0.8.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/lib/jstl-1.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/lib/jtidy-4aug2000r7-dev.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/lib/standard-1.0.6.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntryProperties />
+  </component>
+</module>
+
