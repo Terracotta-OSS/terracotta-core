@@ -660,6 +660,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     spec.setHonorTransient(true);
     spec.addAlwaysLogSpec(SerializationUtil.URL_SET_SIGNATURE);
 
+    spec = getOrCreateSpec("java.util.Calendar");
+    spec = getOrCreateSpec("java.util.GregorianCalendar");
+    spec.setHonorTransient(true);
+
     /**
      * // ---------------------------- // implicit config-bundle - JAG // ----------------------------
      * addPermanentExcludePattern("java.util.WeakHashMap+"); addPermanentExcludePattern("java.lang.ref.*");
@@ -795,7 +799,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     if (WeblogicHelper.isWeblogicPresent()) {
       if (WeblogicHelper.isSupportedVersion()) {
         addAspectModule("weblogic.servlet.internal", "com.tc.weblogic.SessionAspectModule");
-        
+
         addCustomAdapter("weblogic.Server", new ServerAdapter());
         addCustomAdapter("weblogic.utils.classloaders.GenericClassLoader", new GenericClassLoaderAdapter());
         addCustomAdapter("weblogic.ejb20.ejbc.EjbCodeGenerator", new EJBCodeGeneratorAdapter());

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-  All content copyright (c) 2003-2006 Terracotta, Inc.,
-  except as may otherwise be noted in a separate copyright notice.
-  All rights reserved
+All content copyright (c) 2003-2006 Terracotta, Inc.,
+except as may otherwise be noted in a separate copyright notice.
+All rights reserved
 
 -->
 
@@ -16,7 +16,7 @@
     <dso>
       <instrumented-classes>
       </instrumented-classes>
-      
+    
       <additional-boot-jar-classes>
         <include>java.lang.StringBuffer</include>
         <include>java.lang.StringBuilder</include>
@@ -28,6 +28,13 @@
         <include>java.io.OutputStream</include>
         <include>java.io.StringWriter</include>
         <include>java.io.ByteArrayOutputStream</include>
+
+        <include>java.util.Calendar</include>
+        <include>java.util.TimeZone</include>
+        <include>java.util.SimpleTimeZone</include>
+        <include>java.util.GregorianCalendar</include>
+        <include>sun.util.BuddhistCalendar</include>
+        <include>sun.util.calendar.ZoneInfo</include>       
       </additional-boot-jar-classes>
 
       <locks>
