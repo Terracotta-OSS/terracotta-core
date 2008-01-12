@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,5 +67,9 @@ public class LabelNode extends AbstractInsnNode {
 
     public AbstractInsnNode clone(final Map labels) {
         return (LabelNode) labels.get(this);
+    }
+
+    public void resetLabel() {
+        label = null;
     }
 }

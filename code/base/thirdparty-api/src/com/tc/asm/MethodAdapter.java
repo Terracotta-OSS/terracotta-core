@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -102,8 +102,8 @@ public class MethodAdapter implements MethodVisitor {
         mv.visitVarInsn(opcode, var);
     }
 
-    public void visitTypeInsn(final int opcode, final String desc) {
-        mv.visitTypeInsn(opcode, desc);
+    public void visitTypeInsn(final int opcode, final String type) {
+        mv.visitTypeInsn(opcode, type);
     }
 
     public void visitFieldInsn(
@@ -144,15 +144,15 @@ public class MethodAdapter implements MethodVisitor {
         final int min,
         final int max,
         final Label dflt,
-        final Label labels[])
+        final Label[] labels)
     {
         mv.visitTableSwitchInsn(min, max, dflt, labels);
     }
 
     public void visitLookupSwitchInsn(
         final Label dflt,
-        final int keys[],
-        final Label labels[])
+        final int[] keys,
+        final Label[] labels)
     {
         mv.visitLookupSwitchInsn(dflt, keys, labels);
     }

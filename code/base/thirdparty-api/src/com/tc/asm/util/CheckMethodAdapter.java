@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@ import com.tc.asm.Opcodes;
 import com.tc.asm.Type;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A {@link MethodAdapter} that checks that its methods are properly used. More
@@ -72,12 +73,12 @@ public class CheckMethodAdapter extends MethodAdapter {
      * The already visited labels. This map associate Integer values to Label
      * keys.
      */
-    private HashMap labels;
+    private final Map labels;
 
     /**
      * Code of the visit method to be used for each opcode.
      */
-    private final static int[] TYPE;
+    private static final int[] TYPE;
 
     static {
         String s = "BBBBBBBBBBBBBBBBCCIAADDDDDAAAAAAAAAAAAAAAAAAAABBBBBBBBDD"
@@ -397,8 +398,8 @@ public class CheckMethodAdapter extends MethodAdapter {
         }
 
         if (type != Opcodes.F_CHOP) {
-        if (nLocal > 0 && (local == null || local.length < nLocal)) {
-            throw new IllegalArgumentException("Array local[] is shorter than nLocal");
+            if (nLocal > 0 && (local == null || local.length < nLocal)) {
+                throw new IllegalArgumentException("Array local[] is shorter than nLocal");
             }
             for (int i = 0; i < nLocal; ++i) {
                 checkFrameValue(local[i]);
@@ -506,9 +507,8 @@ public class CheckMethodAdapter extends MethodAdapter {
         checkLabel(label, false, "label");
         if (labels.get(label) != null) {
             throw new IllegalArgumentException("Already visited label");
-        } else {
-            labels.put(label, new Integer(labels.size()));
         }
+        labels.put(label, new Integer(labels.size()));
         mv.visitLabel(label);
     }
 
@@ -533,7 +533,7 @@ public class CheckMethodAdapter extends MethodAdapter {
         final int min,
         final int max,
         final Label dflt,
-        final Label labels[])
+        final Label[] labels)
     {
         checkStartCode();
         checkEndCode();
@@ -553,8 +553,8 @@ public class CheckMethodAdapter extends MethodAdapter {
 
     public void visitLookupSwitchInsn(
         final Label dflt,
-        final int keys[],
-        final Label labels[])
+        final int[] keys,
+        final Label[] labels)
     {
         checkEndCode();
         checkStartCode();
@@ -821,7 +821,7 @@ public class CheckMethodAdapter extends MethodAdapter {
             throw new IllegalArgumentException("Invalid " + msg
                     + " (must not be null or empty)");
         }
-        if (name.equals("<init>") || name.equals("<clinit>")) {
+        if ("<init>".equals(name) || "<clinit>".equals(name)) {
             return;
         }
         if (!Character.isJavaIdentifierStart(name.charAt(0))) {
@@ -1205,7 +1205,7 @@ public class CheckMethodAdapter extends MethodAdapter {
         if (c == '*') {
             return pos + 1;
         } else if (c == '+' || c == '-') {
-            pos = pos + 1;
+            pos++;
         }
         return checkFieldTypeSignature(signature, pos);
     }

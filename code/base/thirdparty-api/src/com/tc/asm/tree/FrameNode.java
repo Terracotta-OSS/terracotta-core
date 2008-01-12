@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 package com.tc.asm.tree;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -117,7 +118,7 @@ public class FrameNode extends AbstractInsnNode {
                 this.local = asList(nLocal, local);
                 break;
             case Opcodes.F_CHOP:
-                this.local = asList(nLocal, new Object[nLocal]);
+                this.local = asList(nLocal, local);
                 break;
             case Opcodes.F_SAME:
                 break;
@@ -150,7 +151,7 @@ public class FrameNode extends AbstractInsnNode {
                 mv.visitFrame(type, local.size(), asArray(local), 0, null);
                 break;
             case Opcodes.F_CHOP:
-                mv.visitFrame(type, local.size(), null, 0, null);
+                mv.visitFrame(type, local.size(), asArray(local), 0, null);
                 break;
             case Opcodes.F_SAME:
                 mv.visitFrame(type, 0, null, 0, null);
@@ -190,11 +191,7 @@ public class FrameNode extends AbstractInsnNode {
     // ------------------------------------------------------------------------
 
     private static List asList(final int n, final Object[] o) {
-        List l = new ArrayList(n);
-        for (int i = 0; i < n; ++i) {
-            l.add(o[i]);
-        }
-        return l;
+        return Arrays.asList(o).subList(0, n);
     }
 
     private static Object[] asArray(final List l) {

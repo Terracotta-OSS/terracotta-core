@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -142,7 +142,7 @@ public class EmptyVisitor implements
     public void visitVarInsn(final int opcode, final int var) {
     }
 
-    public void visitTypeInsn(final int opcode, final String desc) {
+    public void visitTypeInsn(final int opcode, final String type) {
     }
 
     public void visitFieldInsn(
@@ -177,14 +177,14 @@ public class EmptyVisitor implements
         final int min,
         final int max,
         final Label dflt,
-        final Label labels[])
+        final Label[] labels)
     {
     }
 
     public void visitLookupSwitchInsn(
         final Label dflt,
-        final int keys[],
-        final Label labels[])
+        final int[] keys,
+        final Label[] labels)
     {
     }
 

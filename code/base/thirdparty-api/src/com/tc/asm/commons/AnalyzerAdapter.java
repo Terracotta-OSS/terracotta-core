@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -63,10 +63,10 @@ public class AnalyzerAdapter extends MethodAdapter {
      * {@link Opcodes#DOUBLE},{@link Opcodes#NULL} or
      * {@link Opcodes#UNINITIALIZED_THIS} (long and double are represented by a
      * two elements, the second one being TOP). Reference types are represented
-     * by String objects (representing internal names, or type descriptors for
-     * array types), and uninitialized types by Label objects (this label
-     * designates the NEW instruction that created this uninitialized value).
-     * This field is <tt>null</tt> for unreacheable instructions.
+     * by String objects (representing internal names), and uninitialized types
+     * by Label objects (this label designates the NEW instruction that created
+     * this uninitialized value). This field is <tt>null</tt> for unreacheable
+     * instructions.
      */
     public List locals;
 
@@ -77,10 +77,10 @@ public class AnalyzerAdapter extends MethodAdapter {
      * {@link Opcodes#DOUBLE},{@link Opcodes#NULL} or
      * {@link Opcodes#UNINITIALIZED_THIS} (long and double are represented by a
      * two elements, the second one being TOP). Reference types are represented
-     * by String objects (representing internal names, or type descriptors for
-     * array types), and uninitialized types by Label objects (this label
-     * designates the NEW instruction that created this uninitialized value).
-     * This field is <tt>null</tt> for unreacheable instructions.
+     * by String objects (representing internal names), and uninitialized types 
+     * by Label objects (this label designates the NEW instruction that created
+     * this uninitialized value). This field is <tt>null</tt> for unreacheable
+     * instructions.
      */
     public List stack;
 
@@ -97,7 +97,7 @@ public class AnalyzerAdapter extends MethodAdapter {
      * types, and the associated internal name represents the NEW operand, i.e.
      * the final, initialized type value.
      */
-    private Map uninitializedTypes;
+    private final Map uninitializedTypes;
 
     /**
      * The maximum stack size of this method.
@@ -132,7 +132,7 @@ public class AnalyzerAdapter extends MethodAdapter {
         uninitializedTypes = new HashMap();
 
         if ((access & Opcodes.ACC_STATIC) == 0) {
-            if (name.equals("<init>")) {
+            if ("<init>".equals(name)) {
                 locals.add(Opcodes.UNINITIALIZED_THIS);
             } else {
                 locals.add(owner);
@@ -197,7 +197,7 @@ public class AnalyzerAdapter extends MethodAdapter {
         maxStack = Math.max(maxStack, this.stack.size());
     }
 
-    private void visitFrameTypes(
+    private static void visitFrameTypes(
         final int n,
         final Object[] types,
         final List result)
@@ -238,7 +238,7 @@ public class AnalyzerAdapter extends MethodAdapter {
         execute(opcode, var, null);
     }
 
-    public void visitTypeInsn(final int opcode, final String desc) {
+    public void visitTypeInsn(final int opcode, final String type) {
         if (opcode == Opcodes.NEW) {
             if (labels == null) {
                 Label l = new Label();
@@ -249,13 +249,13 @@ public class AnalyzerAdapter extends MethodAdapter {
                 }
             }
             for (int i = 0; i < labels.size(); ++i) {
-                uninitializedTypes.put(labels.get(i), desc);
+                uninitializedTypes.put(labels.get(i), type);
             }
         }
         if (mv != null) {
-            mv.visitTypeInsn(opcode, desc);
+            mv.visitTypeInsn(opcode, type);
         }
-        execute(opcode, 0, desc);
+        execute(opcode, 0, type);
     }
 
     public void visitFieldInsn(
@@ -361,7 +361,7 @@ public class AnalyzerAdapter extends MethodAdapter {
         final int min,
         final int max,
         final Label dflt,
-        final Label labels[])
+        final Label[] labels)
     {
         if (mv != null) {
             mv.visitTableSwitchInsn(min, max, dflt, labels);
@@ -373,8 +373,8 @@ public class AnalyzerAdapter extends MethodAdapter {
 
     public void visitLookupSwitchInsn(
         final Label dflt,
-        final int keys[],
-        final Label labels[])
+        final int[] keys,
+        final Label[] labels)
     {
         if (mv != null) {
             mv.visitLookupSwitchInsn(dflt, keys, labels);
@@ -456,7 +456,6 @@ public class AnalyzerAdapter extends MethodAdapter {
                 } else {
                     push(desc.substring(index + 1, desc.length() - 1));
                 }
-                return;
         }
     }
 
@@ -837,19 +836,11 @@ public class AnalyzerAdapter extends MethodAdapter {
                 break;
             case Opcodes.ANEWARRAY:
                 pop();
-                if (sarg.charAt(0) == '[') {
-                    pushDesc("[" + sarg);
-                } else {
-                    pushDesc("[L" + sarg + ";");
-                }
+                pushDesc("[" + Type.getObjectType(sarg));
                 break;
             case Opcodes.CHECKCAST:
                 pop();
-                if (sarg.charAt(0) == '[') {
-                    pushDesc(sarg);
-                } else {
-                    push(sarg);
-                }
+                pushDesc(Type.getObjectType(sarg).getDescriptor());
                 break;
             // case Opcodes.MULTIANEWARRAY:
             default:

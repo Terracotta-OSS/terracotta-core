@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@ package com.tc.asm;
  * file format. It can be used alone, to generate a Java class "from scratch",
  * or with one or more {@link ClassReader ClassReader} and adapter class visitor
  * to generate a modified class from one or more existing Java classes.
- * 
+ *
  * @author Eric Bruneton
  */
 public class ClassWriter implements ClassVisitor {
@@ -47,10 +47,10 @@ public class ClassWriter implements ClassVisitor {
      * {@link MethodVisitor} returned by the {@link #visitMethod visitMethod}
      * method will be ignored, and computed automatically from the signature and
      * the bytecode of each method.
-     * 
+     *
      * @see #ClassWriter(int)
      */
-    public final static int COMPUTE_MAXS = 1;
+    public static final int COMPUTE_MAXS = 1;
 
     /**
      * Flag to automatically compute the stack map frames of methods from
@@ -60,162 +60,162 @@ public class ClassWriter implements ClassVisitor {
      * {@link MethodVisitor#visitMaxs visitMaxs} method are also ignored and
      * recomputed from the bytecode. In other words, computeFrames implies
      * computeMaxs.
-     * 
+     *
      * @see #ClassWriter(int)
      */
-    public final static int COMPUTE_FRAMES = 2;
+    public static final int COMPUTE_FRAMES = 2;
 
     /**
      * The type of instructions without any argument.
      */
-    final static int NOARG_INSN = 0;
+    static final int NOARG_INSN = 0;
 
     /**
      * The type of instructions with an signed byte argument.
      */
-    final static int SBYTE_INSN = 1;
+    static final int SBYTE_INSN = 1;
 
     /**
      * The type of instructions with an signed short argument.
      */
-    final static int SHORT_INSN = 2;
+    static final int SHORT_INSN = 2;
 
     /**
      * The type of instructions with a local variable index argument.
      */
-    final static int VAR_INSN = 3;
+    static final int VAR_INSN = 3;
 
     /**
      * The type of instructions with an implicit local variable index argument.
      */
-    final static int IMPLVAR_INSN = 4;
+    static final int IMPLVAR_INSN = 4;
 
     /**
      * The type of instructions with a type descriptor argument.
      */
-    final static int TYPE_INSN = 5;
+    static final int TYPE_INSN = 5;
 
     /**
      * The type of field and method invocations instructions.
      */
-    final static int FIELDORMETH_INSN = 6;
+    static final int FIELDORMETH_INSN = 6;
 
     /**
      * The type of the INVOKEINTERFACE instruction.
      */
-    final static int ITFMETH_INSN = 7;
+    static final int ITFMETH_INSN = 7;
 
     /**
      * The type of instructions with a 2 bytes bytecode offset label.
      */
-    final static int LABEL_INSN = 8;
+    static final int LABEL_INSN = 8;
 
     /**
      * The type of instructions with a 4 bytes bytecode offset label.
      */
-    final static int LABELW_INSN = 9;
+    static final int LABELW_INSN = 9;
 
     /**
      * The type of the LDC instruction.
      */
-    final static int LDC_INSN = 10;
+    static final int LDC_INSN = 10;
 
     /**
      * The type of the LDC_W and LDC2_W instructions.
      */
-    final static int LDCW_INSN = 11;
+    static final int LDCW_INSN = 11;
 
     /**
      * The type of the IINC instruction.
      */
-    final static int IINC_INSN = 12;
+    static final int IINC_INSN = 12;
 
     /**
      * The type of the TABLESWITCH instruction.
      */
-    final static int TABL_INSN = 13;
+    static final int TABL_INSN = 13;
 
     /**
      * The type of the LOOKUPSWITCH instruction.
      */
-    final static int LOOK_INSN = 14;
+    static final int LOOK_INSN = 14;
 
     /**
      * The type of the MULTIANEWARRAY instruction.
      */
-    final static int MANA_INSN = 15;
+    static final int MANA_INSN = 15;
 
     /**
      * The type of the WIDE instruction.
      */
-    final static int WIDE_INSN = 16;
+    static final int WIDE_INSN = 16;
 
     /**
      * The instruction types of all JVM opcodes.
      */
-    static byte[] TYPE;
+    static final byte[] TYPE;
 
     /**
      * The type of CONSTANT_Class constant pool items.
      */
-    final static int CLASS = 7;
+    static final int CLASS = 7;
 
     /**
      * The type of CONSTANT_Fieldref constant pool items.
      */
-    final static int FIELD = 9;
+    static final int FIELD = 9;
 
     /**
      * The type of CONSTANT_Methodref constant pool items.
      */
-    final static int METH = 10;
+    static final int METH = 10;
 
     /**
      * The type of CONSTANT_InterfaceMethodref constant pool items.
      */
-    final static int IMETH = 11;
+    static final int IMETH = 11;
 
     /**
      * The type of CONSTANT_String constant pool items.
      */
-    final static int STR = 8;
+    static final int STR = 8;
 
     /**
      * The type of CONSTANT_Integer constant pool items.
      */
-    final static int INT = 3;
+    static final int INT = 3;
 
     /**
      * The type of CONSTANT_Float constant pool items.
      */
-    final static int FLOAT = 4;
+    static final int FLOAT = 4;
 
     /**
      * The type of CONSTANT_Long constant pool items.
      */
-    final static int LONG = 5;
+    static final int LONG = 5;
 
     /**
      * The type of CONSTANT_Double constant pool items.
      */
-    final static int DOUBLE = 6;
+    static final int DOUBLE = 6;
 
     /**
      * The type of CONSTANT_NameAndType constant pool items.
      */
-    final static int NAME_TYPE = 12;
+    static final int NAME_TYPE = 12;
 
     /**
      * The type of CONSTANT_Utf8 constant pool items.
      */
-    final static int UTF8 = 1;
+    static final int UTF8 = 1;
 
     /**
      * Normal type Item stored in the ClassWriter {@link ClassWriter#typeTable},
      * instead of the constant pool, in order to avoid clashes with normal
      * constant pool items in the ClassWriter constant pool's hash table.
      */
-    final static int TYPE_NORMAL = 13;
+    static final int TYPE_NORMAL = 13;
 
     /**
      * Uninitialized type Item stored in the ClassWriter
@@ -223,14 +223,14 @@ public class ClassWriter implements ClassVisitor {
      * avoid clashes with normal constant pool items in the ClassWriter constant
      * pool's hash table.
      */
-    final static int TYPE_UNINIT = 14;
+    static final int TYPE_UNINIT = 14;
 
     /**
      * Merged type Item stored in the ClassWriter {@link ClassWriter#typeTable},
      * instead of the constant pool, in order to avoid clashes with normal
      * constant pool items in the ClassWriter constant pool's hash table.
      */
-    final static int TYPE_MERGED = 15;
+    static final int TYPE_MERGED = 15;
 
     /**
      * The class reader from which this class writer was constructed, if any.
@@ -250,7 +250,7 @@ public class ClassWriter implements ClassVisitor {
     /**
      * The constant pool of this class.
      */
-    ByteVector pool;
+    final ByteVector pool;
 
     /**
      * The constant pool's hash table data.
@@ -265,17 +265,17 @@ public class ClassWriter implements ClassVisitor {
     /**
      * A reusable key used to look for items in the {@link #items} hash table.
      */
-    Item key;
+    final Item key;
 
     /**
      * A reusable key used to look for items in the {@link #items} hash table.
      */
-    Item key2;
+    final Item key2;
 
     /**
      * A reusable key used to look for items in the {@link #items} hash table.
      */
-    Item key3;
+    final Item key3;
 
     /**
      * A type table used to temporarily store internal names that will not
@@ -284,7 +284,7 @@ public class ClassWriter implements ClassVisitor {
      * map frames from scratch. This array associates to each index <tt>i</tt>
      * the Item whose index is <tt>i</tt>. All Item objects stored in this
      * array are also stored in the {@link #items} hash table. These two arrays
-     * allow to retrieve an Item from its index or, conversly, to get the index
+     * allow to retrieve an Item from its index or, conversely, to get the index
      * of an Item from its value. Each Item stores an internal name in its
      * {@link Item#strVal1} field.
      */
@@ -293,7 +293,7 @@ public class ClassWriter implements ClassVisitor {
     /**
      * Number of elements in the {@link #typeTable} array.
      */
-    private short typeCount; // TODO int?
+    private short typeCount;
 
     /**
      * The access flags of this class.
@@ -417,12 +417,12 @@ public class ClassWriter implements ClassVisitor {
      * <tt>true</tt> if the maximum stack size and number of local variables
      * must be automatically computed.
      */
-    private boolean computeMaxs;
+    private final boolean computeMaxs;
 
     /**
      * <tt>true</tt> if the stack map frames must be recomputed from scratch.
      */
-    private boolean computeFrames;
+    private final boolean computeFrames;
 
     /**
      * <tt>true</tt> if the stack map tables of this class are invalid. The
@@ -527,7 +527,7 @@ public class ClassWriter implements ClassVisitor {
 
     /**
      * Constructs a new {@link ClassWriter} object.
-     * 
+     *
      * @param flags option flags that can be used to modify the default behavior
      *        of this class. See {@link #COMPUTE_MAXS}, {@link #COMPUTE_FRAMES}.
      */
@@ -547,7 +547,7 @@ public class ClassWriter implements ClassVisitor {
      * Constructs a new {@link ClassWriter} object and enables optimizations for
      * "mostly add" bytecode transformations. These optimizations are the
      * following:
-     * 
+     *
      * <ul> <li>The constant pool from the original class is copied as is in
      * the new class, which saves time. New constant pool entries will be added
      * at the end if necessary, but unused constant pool entries <i>won't be
@@ -559,7 +559,7 @@ public class ClassWriter implements ClassVisitor {
      * that come from a {@link ClassWriter} (and not from a custom
      * {@link ClassAdapter} or any other {@link ClassVisitor} instance).</li>
      * </ul>
-     * 
+     *
      * @param classReader the {@link ClassReader} used to read the original
      *        class. It will be used to copy the entire constant pool from the
      *        original class and also to copy other fragments of original
@@ -589,7 +589,7 @@ public class ClassWriter implements ClassVisitor {
         this.access = access;
         this.name = newClass(name);
         thisName = name;
-        if (signature != null) {
+        if (ClassReader.SIGNATURES && signature != null) {
             this.signature = newUTF8(signature);
         }
         this.superName = superName == null ? 0 : newClass(superName);
@@ -626,6 +626,9 @@ public class ClassWriter implements ClassVisitor {
         final String desc,
         final boolean visible)
     {
+        if (!ClassReader.ANNOTATIONS) {
+            return null;
+        }
         ByteVector bv = new ByteVector();
         // write type, and reserve space for values count
         bv.putShort(newUTF8(desc)).putShort(0);
@@ -697,7 +700,7 @@ public class ClassWriter implements ClassVisitor {
 
     /**
      * Returns the bytecode of the class that was build with this class writer.
-     * 
+     *
      * @return the bytecode of the class that was build with this class writer.
      */
     public byte[] toByteArray() {
@@ -718,7 +721,7 @@ public class ClassWriter implements ClassVisitor {
             mb = mb.next;
         }
         int attributeCount = 0;
-        if (signature != 0) {
+        if (ClassReader.SIGNATURES && signature != 0) {
             ++attributeCount;
             size += 8;
             newUTF8("Signature");
@@ -755,12 +758,12 @@ public class ClassWriter implements ClassVisitor {
             size += 8 + innerClasses.length;
             newUTF8("InnerClasses");
         }
-        if (anns != null) {
+        if (ClassReader.ANNOTATIONS && anns != null) {
             ++attributeCount;
             size += 8 + anns.getSize();
             newUTF8("RuntimeVisibleAnnotations");
         }
-        if (ianns != null) {
+        if (ClassReader.ANNOTATIONS && ianns != null) {
             ++attributeCount;
             size += 8 + ianns.getSize();
             newUTF8("RuntimeInvisibleAnnotations");
@@ -793,7 +796,7 @@ public class ClassWriter implements ClassVisitor {
             mb = mb.next;
         }
         out.putShort(attributeCount);
-        if (signature != 0) {
+        if (ClassReader.SIGNATURES && signature != 0) {
             out.putShort(newUTF8("Signature")).putInt(2).putShort(signature);
         }
         if (sourceFile != 0) {
@@ -821,11 +824,11 @@ public class ClassWriter implements ClassVisitor {
             out.putInt(innerClasses.length + 2).putShort(innerClassesCount);
             out.putByteArray(innerClasses.data, 0, innerClasses.length);
         }
-        if (anns != null) {
+        if (ClassReader.ANNOTATIONS && anns != null) {
             out.putShort(newUTF8("RuntimeVisibleAnnotations"));
             anns.put(out);
         }
-        if (ianns != null) {
+        if (ClassReader.ANNOTATIONS && ianns != null) {
             out.putShort(newUTF8("RuntimeInvisibleAnnotations"));
             ianns.put(out);
         }
@@ -847,7 +850,7 @@ public class ClassWriter implements ClassVisitor {
     /**
      * Adds a number or string constant to the constant pool of the class being
      * build. Does nothing if the constant pool already contains a similar item.
-     * 
+     *
      * @param cst the value of the constant to be added to the constant pool.
      *        This parameter must be an {@link Integer}, a {@link Float}, a
      *        {@link Long}, a {@link Double}, a {@link String} or a
@@ -896,7 +899,7 @@ public class ClassWriter implements ClassVisitor {
      * build. Does nothing if the constant pool already contains a similar item.
      * <i>This method is intended for {@link Attribute} sub classes, and is
      * normally not needed by class generators or adapters.</i>
-     * 
+     *
      * @param cst the value of the constant to be added to the constant pool.
      *        This parameter must be an {@link Integer}, a {@link Float}, a
      *        {@link Long}, a {@link Double} or a {@link String}.
@@ -912,7 +915,7 @@ public class ClassWriter implements ClassVisitor {
      * nothing if the constant pool already contains a similar item. <i>This
      * method is intended for {@link Attribute} sub classes, and is normally not
      * needed by class generators or adapters.</i>
-     * 
+     *
      * @param value the String value.
      * @return the index of a new or already existing UTF8 item.
      */
@@ -932,7 +935,7 @@ public class ClassWriter implements ClassVisitor {
      * Does nothing if the constant pool already contains a similar item.
      * <i>This method is intended for {@link Attribute} sub classes, and is
      * normally not needed by class generators or adapters.</i>
-     * 
+     *
      * @param value the internal name of the class.
      * @return a new or already existing class reference item.
      */
@@ -952,7 +955,7 @@ public class ClassWriter implements ClassVisitor {
      * Does nothing if the constant pool already contains a similar item.
      * <i>This method is intended for {@link Attribute} sub classes, and is
      * normally not needed by class generators or adapters.</i>
-     * 
+     *
      * @param value the internal name of the class.
      * @return the index of a new or already existing class reference item.
      */
@@ -963,7 +966,7 @@ public class ClassWriter implements ClassVisitor {
     /**
      * Adds a field reference to the constant pool of the class being build.
      * Does nothing if the constant pool already contains a similar item.
-     * 
+     *
      * @param owner the internal name of the field's owner class.
      * @param name the field's name.
      * @param desc the field's descriptor.
@@ -986,7 +989,7 @@ public class ClassWriter implements ClassVisitor {
      * Does nothing if the constant pool already contains a similar item.
      * <i>This method is intended for {@link Attribute} sub classes, and is
      * normally not needed by class generators or adapters.</i>
-     * 
+     *
      * @param owner the internal name of the field's owner class.
      * @param name the field's name.
      * @param desc the field's descriptor.
@@ -1000,7 +1003,7 @@ public class ClassWriter implements ClassVisitor {
     /**
      * Adds a method reference to the constant pool of the class being build.
      * Does nothing if the constant pool already contains a similar item.
-     * 
+     *
      * @param owner the internal name of the method's owner class.
      * @param name the method's name.
      * @param desc the method's descriptor.
@@ -1029,7 +1032,7 @@ public class ClassWriter implements ClassVisitor {
      * Does nothing if the constant pool already contains a similar item.
      * <i>This method is intended for {@link Attribute} sub classes, and is
      * normally not needed by class generators or adapters.</i>
-     * 
+     *
      * @param owner the internal name of the method's owner class.
      * @param name the method's name.
      * @param desc the method's descriptor.
@@ -1048,7 +1051,7 @@ public class ClassWriter implements ClassVisitor {
     /**
      * Adds an integer to the constant pool of the class being build. Does
      * nothing if the constant pool already contains a similar item.
-     * 
+     *
      * @param value the int value.
      * @return a new or already existing int item.
      */
@@ -1066,7 +1069,7 @@ public class ClassWriter implements ClassVisitor {
     /**
      * Adds a float to the constant pool of the class being build. Does nothing
      * if the constant pool already contains a similar item.
-     * 
+     *
      * @param value the float value.
      * @return a new or already existing float item.
      */
@@ -1084,7 +1087,7 @@ public class ClassWriter implements ClassVisitor {
     /**
      * Adds a long to the constant pool of the class being build. Does nothing
      * if the constant pool already contains a similar item.
-     * 
+     *
      * @param value the long value.
      * @return a new or already existing long item.
      */
@@ -1103,7 +1106,7 @@ public class ClassWriter implements ClassVisitor {
     /**
      * Adds a double to the constant pool of the class being build. Does nothing
      * if the constant pool already contains a similar item.
-     * 
+     *
      * @param value the double value.
      * @return a new or already existing double item.
      */
@@ -1122,7 +1125,7 @@ public class ClassWriter implements ClassVisitor {
     /**
      * Adds a string to the constant pool of the class being build. Does nothing
      * if the constant pool already contains a similar item.
-     * 
+     *
      * @param value the String value.
      * @return a new or already existing string item.
      */
@@ -1142,7 +1145,7 @@ public class ClassWriter implements ClassVisitor {
      * nothing if the constant pool already contains a similar item. <i>This
      * method is intended for {@link Attribute} sub classes, and is normally not
      * needed by class generators or adapters.</i>
-     * 
+     *
      * @param name a name.
      * @param desc a type descriptor.
      * @return the index of a new or already existing name and type item.
@@ -1161,7 +1164,7 @@ public class ClassWriter implements ClassVisitor {
     /**
      * Adds the given internal name to {@link #typeTable} and returns its index.
      * Does nothing if the type table already contains this internal name.
-     * 
+     *
      * @param type the internal name to be added to the type table.
      * @return the index of this internal name in the type table.
      */
@@ -1178,7 +1181,7 @@ public class ClassWriter implements ClassVisitor {
      * Adds the given "uninitialized" type to {@link #typeTable} and returns its
      * index. This method is used for UNINITIALIZED types, made of an internal
      * name and a bytecode offset.
-     * 
+     *
      * @param type the internal name to be added to the type table.
      * @param offset the bytecode offset of the NEW instruction that created
      *        this UNINITIALIZED type value.
@@ -1198,7 +1201,7 @@ public class ClassWriter implements ClassVisitor {
 
     /**
      * Adds the given Item to {@link #typeTable}.
-     * 
+     *
      * @param item the value to be added to the type table.
      * @return the added Item, which a new Item instance with the same value as
      *         the given Item.
@@ -1224,7 +1227,7 @@ public class ClassWriter implements ClassVisitor {
      * method calls {@link #getCommonSuperClass} and caches the result in the
      * {@link #items} hash table to speedup future calls with the same
      * parameters.
-     * 
+     *
      * @param type1 index of an internal name in {@link #typeTable}.
      * @param type2 index of an internal name in {@link #typeTable}.
      * @return the index of the common super type of the two given types.
@@ -1248,11 +1251,11 @@ public class ClassWriter implements ClassVisitor {
      * Returns the common super type of the two given types. The default
      * implementation of this method <i>loads<i> the two given classes and uses
      * the java.lang.Class methods to find the common super class. It can be
-     * overriden to compute this common super type in other ways, in particular
+     * overridden to compute this common super type in other ways, in particular
      * without actually loading any class, or to take into account the class
      * that is currently being generated by this ClassWriter, which can of
      * course not be loaded since it is under construction.
-     * 
+     *
      * @param type1 the internal name of a class.
      * @param type2 the internal name of another class.
      * @return the internal name of the common super class of the two given
@@ -1264,8 +1267,8 @@ public class ClassWriter implements ClassVisitor {
         try {
             c = Class.forName(type1.replace('/', '.'));
             d = Class.forName(type2.replace('/', '.'));
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw new RuntimeException(e.toString());
         }
         if (c.isAssignableFrom(d)) {
             return type1;
@@ -1286,7 +1289,7 @@ public class ClassWriter implements ClassVisitor {
     /**
      * Returns the constant pool's hash table item which is equal to the given
      * item.
-     * 
+     *
      * @param key a constant pool item.
      * @return the constant pool's hash table item which is equal to the given
      *         item, or <tt>null</tt> if there is no such item.
@@ -1302,7 +1305,7 @@ public class ClassWriter implements ClassVisitor {
     /**
      * Puts the given item in the constant pool's hash table. The hash table
      * <i>must</i> not already contains this item.
-     * 
+     *
      * @param i the item to be added to the constant pool's hash table.
      */
     private void put(final Item i) {
@@ -1330,7 +1333,7 @@ public class ClassWriter implements ClassVisitor {
 
     /**
      * Puts one byte and two shorts into the constant pool.
-     * 
+     *
      * @param b a byte.
      * @param s1 a short.
      * @param s2 another short.

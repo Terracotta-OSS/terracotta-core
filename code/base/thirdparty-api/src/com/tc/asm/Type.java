@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -44,102 +44,102 @@ public class Type {
     /**
      * The sort of the <tt>void</tt> type. See {@link #getSort getSort}.
      */
-    public final static int VOID = 0;
+    public static final int VOID = 0;
 
     /**
      * The sort of the <tt>boolean</tt> type. See {@link #getSort getSort}.
      */
-    public final static int BOOLEAN = 1;
+    public static final int BOOLEAN = 1;
 
     /**
      * The sort of the <tt>char</tt> type. See {@link #getSort getSort}.
      */
-    public final static int CHAR = 2;
+    public static final int CHAR = 2;
 
     /**
      * The sort of the <tt>byte</tt> type. See {@link #getSort getSort}.
      */
-    public final static int BYTE = 3;
+    public static final int BYTE = 3;
 
     /**
      * The sort of the <tt>short</tt> type. See {@link #getSort getSort}.
      */
-    public final static int SHORT = 4;
+    public static final int SHORT = 4;
 
     /**
      * The sort of the <tt>int</tt> type. See {@link #getSort getSort}.
      */
-    public final static int INT = 5;
+    public static final int INT = 5;
 
     /**
      * The sort of the <tt>float</tt> type. See {@link #getSort getSort}.
      */
-    public final static int FLOAT = 6;
+    public static final int FLOAT = 6;
 
     /**
      * The sort of the <tt>long</tt> type. See {@link #getSort getSort}.
      */
-    public final static int LONG = 7;
+    public static final int LONG = 7;
 
     /**
      * The sort of the <tt>double</tt> type. See {@link #getSort getSort}.
      */
-    public final static int DOUBLE = 8;
+    public static final int DOUBLE = 8;
 
     /**
      * The sort of array reference types. See {@link #getSort getSort}.
      */
-    public final static int ARRAY = 9;
+    public static final int ARRAY = 9;
 
     /**
      * The sort of object reference type. See {@link #getSort getSort}.
      */
-    public final static int OBJECT = 10;
+    public static final int OBJECT = 10;
 
     /**
      * The <tt>void</tt> type.
      */
-    public final static Type VOID_TYPE = new Type(VOID);
+    public static final Type VOID_TYPE = new Type(VOID);
 
     /**
      * The <tt>boolean</tt> type.
      */
-    public final static Type BOOLEAN_TYPE = new Type(BOOLEAN);
+    public static final Type BOOLEAN_TYPE = new Type(BOOLEAN);
 
     /**
      * The <tt>char</tt> type.
      */
-    public final static Type CHAR_TYPE = new Type(CHAR);
+    public static final Type CHAR_TYPE = new Type(CHAR);
 
     /**
      * The <tt>byte</tt> type.
      */
-    public final static Type BYTE_TYPE = new Type(BYTE);
+    public static final Type BYTE_TYPE = new Type(BYTE);
 
     /**
      * The <tt>short</tt> type.
      */
-    public final static Type SHORT_TYPE = new Type(SHORT);
+    public static final Type SHORT_TYPE = new Type(SHORT);
 
     /**
      * The <tt>int</tt> type.
      */
-    public final static Type INT_TYPE = new Type(INT);
+    public static final Type INT_TYPE = new Type(INT);
 
     /**
      * The <tt>float</tt> type.
      */
-    public final static Type FLOAT_TYPE = new Type(FLOAT);
+    public static final Type FLOAT_TYPE = new Type(FLOAT);
 
     /**
      * The <tt>long</tt> type.
      */
-    public final static Type LONG_TYPE = new Type(LONG);
+    public static final Type LONG_TYPE = new Type(LONG);
 
     /**
      * The <tt>double</tt> type.
      */
-    public final static Type DOUBLE_TYPE = new Type(DOUBLE);
+    public static final Type DOUBLE_TYPE = new Type(DOUBLE);
 
     // ------------------------------------------------------------------------
     // Fields
@@ -151,21 +151,22 @@ public class Type {
     private final int sort;
 
     /**
-     * A buffer containing the descriptor of this Java type. This field is only
+     * A buffer containing the internal name of this Java type. This field is
+     * only used for reference types.
+     */
+    private final char[] buf;
+
+    /**
+     * The offset of the internal name of this Java type in {@link #buf buf}.
+     * This field is only used for reference types.
+     */
+    private final int off;
+
+    /**
+     * The length of the internal name of this Java type. This field is only
      * used for reference types.
      */
-    private char[] buf;
-
-    /**
-     * The offset of the descriptor of this Java type in {@link #buf buf}. This
-     * field is only used for reference types.
-     */
-    private int off;
-
-    /**
-     * The length of the descriptor of this Java type.
-     */
-    private int len;
+    private final int len;
 
     // ------------------------------------------------------------------------
     // Constructors
@@ -177,8 +178,7 @@ public class Type {
      * @param sort the sort of the primitive type to be constructed.
      */
     private Type(final int sort) {
-        this.sort = sort;
-        this.len = 1;
+        this(sort, null, 0, 1);
     }
 
     /**
@@ -205,6 +205,17 @@ public class Type {
      */
     public static Type getType(final String typeDescriptor) {
         return getType(typeDescriptor.toCharArray(), 0);
+    }
+
+    /**
+     * Returns the Java type corresponding to the given internal name.
+     * 
+     * @param internalName an internal name.
+     * @return the Java type corresponding to the given internal name.
+     */
+    public static Type getObjectType(final String internalName) {
+        char[] buf = internalName.toCharArray();
+        return new Type(buf[0] == '[' ? ARRAY : OBJECT, buf, 0, buf.length);
     }
 
     /**
@@ -238,24 +249,6 @@ public class Type {
             return getType(getDescriptor(c));
         }
     }
-    
-    /**
-     * Returns the {@link Type#OBJECT} type for the given internal class name.
-     * This is a shortcut method for <code>Type.getType("L"+name+";")</code>.
-     * <i>Note that opposed to {@link Type#getType(String)}, this method takes 
-     * internal class names and not class descriptor.</i> 
-     * 
-     * @param name an internal class name.
-     * @return the the {@link Type#OBJECT} type for the given class name.
-     */
-    public static Type getObjectType(String name) {
-        int l = name.length();
-        char[] buf = new char[l + 2];
-        buf[0] = 'L';
-        buf[l + 1] = ';';
-        name.getChars(0, l, buf, 1);
-        return new Type(OBJECT, buf, 0, l + 2);
-    }
 
     /**
      * Returns the Java types corresponding to the argument types of the given
@@ -286,7 +279,7 @@ public class Type {
         size = 0;
         while (buf[off] != ')') {
             args[size] = getType(buf, off);
-            off += args[size].len;
+            off += args[size].len + (args[size].sort == OBJECT ? 2 : 0);
             size += 1;
         }
         return args;
@@ -380,7 +373,7 @@ public class Type {
                 while (buf[off + len] != ';') {
                     ++len;
                 }
-                return new Type(OBJECT, buf, off, len + 1);
+                return new Type(OBJECT, buf, off + 1, len - 1);
         }
     }
 
@@ -458,19 +451,20 @@ public class Type {
                 return b.toString();
                 // case OBJECT:
             default:
-                return new String(buf, off + 1, len - 2).replace('/', '.');
+                return new String(buf, off, len).replace('/', '.');
         }
     }
 
     /**
-     * Returns the internal name of the class corresponding to this object type.
-     * The internal name of a class is its fully qualified name, where '.' are
-     * replaced by '/'. This method should only be used for an object type.
+     * Returns the internal name of the class corresponding to this object or
+     * array type. The internal name of a class is its fully qualified name (as
+     * returned by Class.getName(), where '.' are replaced by '/'. This method
+     * should only be used for an object or array type.
      * 
      * @return the internal name of the class corresponding to this object type.
      */
     public String getInternalName() {
-        return new String(buf, off + 1, len - 2);
+        return new String(buf, off, len);
     }
 
     // ------------------------------------------------------------------------
@@ -546,10 +540,14 @@ public class Type {
             case DOUBLE:
                 buf.append('D');
                 return;
-                // case ARRAY:
+            case ARRAY:
+                buf.append(this.buf, off, len);
+                return;
                 // case OBJECT:
             default:
+                buf.append('L');
                 buf.append(this.buf, off, len);
+                buf.append(';');
         }
     }
 
@@ -560,9 +558,10 @@ public class Type {
 
     /**
      * Returns the internal name of the given class. The internal name of a
-     * class is its fully qualified name, where '.' are replaced by '/'.
+     * class is its fully qualified name, as returned by Class.getName(), where
+     * '.' are replaced by '/'.
      * 
-     * @param c an object class.
+     * @param c an object or array class.
      * @return the internal name of the given class.
      */
     public static String getInternalName(final Class c) {
@@ -756,7 +755,7 @@ public class Type {
         if (sort != t.sort) {
             return false;
         }
-        if (sort == Type.OBJECT || sort == Type.ARRAY) {
+        if (sort == OBJECT || sort == ARRAY) {
             if (len != t.len) {
                 return false;
             }
@@ -776,7 +775,7 @@ public class Type {
      */
     public int hashCode() {
         int hc = 13 * sort;
-        if (sort == Type.OBJECT || sort == Type.ARRAY) {
+        if (sort == OBJECT || sort == ARRAY) {
             for (int i = off, end = i + len; i < end; i++) {
                 hc = 17 * (hc + buf[i]);
             }

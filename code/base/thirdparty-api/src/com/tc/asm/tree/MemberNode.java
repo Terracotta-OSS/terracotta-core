@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,7 @@ public abstract class MemberNode {
      * The runtime visible annotations of this class, field or method. This list
      * is a list of {@link AnnotationNode} objects. May be <tt>null</tt>.
      * 
-     * @associates com.tc.asm.tree.AnnotationNode
+     * @associates org.objectweb.asm.tree.AnnotationNode
      * @label visible
      */
     public List visibleAnnotations;
@@ -55,7 +55,7 @@ public abstract class MemberNode {
      * The runtime invisible annotations of this class, field or method. This
      * list is a list of {@link AnnotationNode} objects. May be <tt>null</tt>.
      * 
-     * @associates com.tc.asm.tree.AnnotationNode
+     * @associates org.objectweb.asm.tree.AnnotationNode
      * @label invisible
      */
     public List invisibleAnnotations;
@@ -64,14 +64,14 @@ public abstract class MemberNode {
      * The non standard attributes of this class, field or method. This list is
      * a list of {@link Attribute} objects. May be <tt>null</tt>.
      * 
-     * @associates com.tc.asm.Attribute
+     * @associates org.objectweb.asm.Attribute
      */
     public List attrs;
 
     /**
      * Constructs a new {@link MemberNode}.
      */
-    public MemberNode() {
+    protected MemberNode() {
     }
 
     /**

@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -50,7 +50,7 @@ import com.tc.asm.Opcodes;
  * <tt>Hello</tt> class is the following: <p> <blockquote>
  * 
  * <pre>
- * import com.tc.asm.*;
+ * import org.objectweb.asm.*;
  *
  * public class HelloDump implements Opcodes {
  *
@@ -131,12 +131,12 @@ public class ASMifierClassVisitor extends ASMifierAbstractVisitor implements
     /**
      * Pseudo access flag used to distinguish class access flags.
      */
-    private final static int ACCESS_CLASS = 262144;
+    private static final int ACCESS_CLASS = 262144;
 
     /**
      * Pseudo access flag used to distinguish field access flags.
      */
-    private final static int ACCESS_FIELD = 524288;
+    private static final int ACCESS_FIELD = 524288;
 
     /**
      * Pseudo access flag used to distinguish inner class flags.
@@ -166,7 +166,7 @@ public class ASMifierClassVisitor extends ASMifierAbstractVisitor implements
         if (args.length < 1 || args.length > 2) {
             ok = false;
         }
-        if (ok && args[0].equals("-debug")) {
+        if (ok && "-debug".equals(args[0])) {
             i = 1;
             flags = 0;
             if (args.length != 2) {
@@ -216,16 +216,16 @@ public class ASMifierClassVisitor extends ASMifierAbstractVisitor implements
     {
         String simpleName;
         int n = name.lastIndexOf('/');
-        if (n != -1) {
+        if (n == -1) {
+            simpleName = name;
+        } else {
             text.add("package asm." + name.substring(0, n).replace('/', '.')
                     + ";\n");
             simpleName = name.substring(n + 1);
-        } else {
-            simpleName = name;
         }
         text.add("import java.util.*;\n");
-        text.add("import com.tc.asm.*;\n");
-        text.add("import com.tc.asm.attrs.*;\n");
+        text.add("import org.objectweb.asm.*;\n");
+        text.add("import org.objectweb.asm.attrs.*;\n");
         text.add("public class " + simpleName + "Dump implements Opcodes {\n\n");
         text.add("public static byte[] dump () throws Exception {\n\n");
         text.add("ClassWriter cw = new ClassWriter(0);\n");
@@ -462,10 +462,10 @@ public class ASMifierClassVisitor extends ASMifierAbstractVisitor implements
             if (!first) {
                 buf.append(" + ");
             }
-            if ((access & ACCESS_CLASS) != 0) {
-                buf.append("ACC_SUPER");
-            } else {
+            if ((access & ACCESS_CLASS) == 0) {
                 buf.append("ACC_SYNCHRONIZED");
+            } else {
+                buf.append("ACC_SUPER");
             }
             first = false;
         }
@@ -569,7 +569,7 @@ public class ASMifierClassVisitor extends ASMifierAbstractVisitor implements
             first = false;
         }
         if (first) {
-            buf.append("0");
+            buf.append('0');
         }
     }
 }

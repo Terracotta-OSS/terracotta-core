@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -124,7 +124,7 @@ public class TraceClassVisitor extends TraceAbstractVisitor implements
         if (args.length < 1 || args.length > 2) {
             ok = false;
         }
-        if (ok && args[0].equals("-debug")) {
+        if (ok && "-debug".equals(args[0])) {
             i = 1;
             flags = 0;
             if (args.length != 2) {
@@ -219,7 +219,7 @@ public class TraceClassVisitor extends TraceAbstractVisitor implements
         }
         appendDescriptor(INTERNAL_NAME, name);
 
-        if (superName != null && !superName.equals("java/lang/Object")) {
+        if (superName != null && !"java/lang/Object".equals(superName)) {
             buf.append(" extends ");
             appendDescriptor(INTERNAL_NAME, superName);
             buf.append(' ');
@@ -365,7 +365,7 @@ public class TraceClassVisitor extends TraceAbstractVisitor implements
         if (value != null) {
             buf.append(" = ");
             if (value instanceof String) {
-                buf.append("\"").append(value).append("\"");
+                buf.append('\"').append(value).append('\"');
             } else {
                 buf.append(value);
             }

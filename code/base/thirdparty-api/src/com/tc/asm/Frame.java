@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -93,17 +93,17 @@ final class Frame {
      * Mask to get the dimension of a frame type. This dimension is a signed
      * integer between -8 and 7.
      */
-    final static int DIM = 0xF0000000;
+    static final int DIM = 0xF0000000;
 
     /**
      * Constant to be added to a type to get a type with one more dimension.
      */
-    final static int ARRAY_OF = 0x10000000;
+    static final int ARRAY_OF = 0x10000000;
 
     /**
      * Constant to be added to a type to get a type with one less dimension.
      */
-    final static int ELEMENT_OF = 0xF0000000;
+    static final int ELEMENT_OF = 0xF0000000;
 
     /**
      * Mask to get the kind of a frame type.
@@ -112,115 +112,115 @@ final class Frame {
      * @see #LOCAL
      * @see #STACK
      */
-    final static int KIND = 0xF000000;
+    static final int KIND = 0xF000000;
 
     /**
      * Mask to get the value of a frame type.
      */
-    final static int VALUE = 0xFFFFFF;
+    static final int VALUE = 0xFFFFFF;
 
     /**
      * Mask to get the kind of base types.
      */
-    final static int BASE_KIND = 0xFF00000;
+    static final int BASE_KIND = 0xFF00000;
 
     /**
      * Mask to get the value of base types.
      */
-    final static int BASE_VALUE = 0xFFFFF;
+    static final int BASE_VALUE = 0xFFFFF;
 
     /**
      * Kind of the types that are not relative to an input stack map frame.
      */
-    final static int BASE = 0x1000000;
+    static final int BASE = 0x1000000;
 
     /**
      * Base kind of the base reference types. The BASE_VALUE of such types is an
      * index into the type table.
      */
-    final static int OBJECT = BASE | 0x700000;
+    static final int OBJECT = BASE | 0x700000;
 
     /**
      * Base kind of the uninitialized base types. The BASE_VALUE of such types
      * in an index into the type table (the Item at that index contains both an
      * instruction offset and an internal class name).
      */
-    final static int UNINITIALIZED = BASE | 0x800000;
+    static final int UNINITIALIZED = BASE | 0x800000;
 
     /**
      * Kind of the types that are relative to the local variable types of an
      * input stack map frame. The value of such types is a local variable index.
      */
-    private final static int LOCAL = 0x2000000;
+    private static final int LOCAL = 0x2000000;
 
     /**
      * Kind of the the types that are relative to the stack of an input stack
      * map frame. The value of such types is a position relatively to the top of
      * this stack.
      */
-    private final static int STACK = 0x3000000;
+    private static final int STACK = 0x3000000;
 
     /**
      * The TOP type. This is a BASE type.
      */
-    final static int TOP = BASE | 0;
+    static final int TOP = BASE | 0;
 
     /**
      * The BOOLEAN type. This is a BASE type mainly used for array types.
      */
-    final static int BOOLEAN = BASE | 9;
+    static final int BOOLEAN = BASE | 9;
 
     /**
      * The BYTE type. This is a BASE type mainly used for array types.
      */
-    final static int BYTE = BASE | 10;
+    static final int BYTE = BASE | 10;
 
     /**
      * The CHAR type. This is a BASE type mainly used for array types.
      */
-    final static int CHAR = BASE | 11;
+    static final int CHAR = BASE | 11;
 
     /**
      * The SHORT type. This is a BASE type mainly used for array types.
      */
-    final static int SHORT = BASE | 12;
+    static final int SHORT = BASE | 12;
 
     /**
      * The INTEGER type. This is a BASE type.
      */
-    final static int INTEGER = BASE | 1;
+    static final int INTEGER = BASE | 1;
 
     /**
      * The FLOAT type. This is a BASE type.
      */
-    final static int FLOAT = BASE | 2;
+    static final int FLOAT = BASE | 2;
 
     /**
      * The DOUBLE type. This is a BASE type.
      */
-    final static int DOUBLE = BASE | 3;
+    static final int DOUBLE = BASE | 3;
 
     /**
      * The LONG type. This is a BASE type.
      */
-    final static int LONG = BASE | 4;
+    static final int LONG = BASE | 4;
 
     /**
      * The NULL type. This is a BASE type.
      */
-    final static int NULL = BASE | 5;
+    static final int NULL = BASE | 5;
 
     /**
      * The UNINITIALIZED_THIS type. This is a BASE type.
      */
-    final static int UNINITIALIZED_THIS = BASE | 6;
+    static final int UNINITIALIZED_THIS = BASE | 6;
 
     /**
      * The stack size variation corresponding to each JVM instruction. This
      * stack variation is equal to the size of the values produced by an
      * instruction, minus the size of the values consumed by this instruction.
      */
-    final static int[] SIZE;
+    static final int[] SIZE;
 
     /**
      * Computes the stack size variation corresponding to each JVM instruction.
@@ -604,7 +604,7 @@ final class Frame {
      * @param desc a type descriptor.
      * @return the int encoding of the given type.
      */
-    private int type(final ClassWriter cw, final String desc) {
+    private static int type(final ClassWriter cw, final String desc) {
         String t;
         int index = desc.charAt(0) == '(' ? desc.indexOf(')') + 1 : 0;
         switch (desc.charAt(index)) {
@@ -1210,7 +1210,7 @@ final class Frame {
                 String s = item.strVal1;
                 pop();
                 if (s.charAt(0) == '[') {
-                    push(cw, "[" + s);
+                    push(cw, '[' + s);
                 } else {
                     push(ARRAY_OF | OBJECT | cw.addType(s));
                 }
@@ -1337,7 +1337,7 @@ final class Frame {
      * @return <tt>true</tt> if the type array has been modified by this
      *         operation.
      */
-    private boolean merge(
+    private static boolean merge(
         final ClassWriter cw,
         int t,
         final int[] types,

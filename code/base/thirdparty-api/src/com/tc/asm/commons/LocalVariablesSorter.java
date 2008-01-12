@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,14 +42,14 @@ import com.tc.asm.Type;
  * of using it is via delegation: the next visitor in the chain can indeed add
  * new locals when needed by calling {@link #newLocal} on this adapter (this
  * requires a reference back to this {@link LocalVariablesSorter}).
- *
+ * 
  * @author Chris Nokleberg
  * @author Eugene Kuleshov
  * @author Eric Bruneton
  */
 public class LocalVariablesSorter extends MethodAdapter {
 
-    private final static Type OBJECT_TYPE = Type.getObjectType("java/lang/Object");
+    private static final Type OBJECT_TYPE = Type.getObjectType("java/lang/Object");
 
     /**
      * Mapping from old to new local variable indexes. A local variable at index
@@ -80,7 +80,7 @@ public class LocalVariablesSorter extends MethodAdapter {
 
     /**
      * Creates a new {@link LocalVariablesSorter}.
-     *
+     * 
      * @param access access flags of the adapted method.
      * @param desc the method's descriptor (see {@link Type Type}).
      * @param mv the method visitor to which this adapter delegates calls.
@@ -92,7 +92,7 @@ public class LocalVariablesSorter extends MethodAdapter {
     {
         super(mv);
         Type[] args = Type.getArgumentTypes(desc);
-        nextLocal = (Opcodes.ACC_STATIC & access) != 0 ? 0 : 1;
+        nextLocal = (Opcodes.ACC_STATIC & access) == 0 ? 1 : 0;
         for (int i = 0; i < args.length; i++) {
             nextLocal += args[i].getSize();
         }
@@ -151,9 +151,6 @@ public class LocalVariablesSorter extends MethodAdapter {
         final int index)
     {
         int newIndex = remap(index, Type.getType(desc));
-        if(newIndex==-1) {
-          throw new IllegalStateException("Unknown local variable " + index + " : " + name + " " + desc);
-        }
         mv.visitLocalVariable(name, desc, signature, start, end, newIndex);
     }
 
@@ -219,7 +216,7 @@ public class LocalVariablesSorter extends MethodAdapter {
 
     /**
      * Creates a new local variable of the given type.
-     *
+     * 
      * @param type the type of the local variable to be created.
      * @return the identifier of the newly created local variable.
      */
@@ -251,16 +248,16 @@ public class LocalVariablesSorter extends MethodAdapter {
                 break;
         }
         int local = nextLocal;
+        nextLocal += type.getSize();
         setLocalType(local, type);
         setFrameLocal(local, t);
-        nextLocal += type.getSize();
         return local;
     }
 
     /**
      * Sets the current type of the given local variable. The default
      * implementation of this method does nothing.
-     *
+     * 
      * @param local a local variable identifier, as returned by {@link #newLocal
      *        newLocal()}.
      * @param type the type of the value being stored in the local variable
@@ -291,17 +288,24 @@ public class LocalVariablesSorter extends MethodAdapter {
         }
         int value = mapping[key];
         if (value == 0) {
-            value = nextLocal + 1;
-            mapping[key] = value;
-            setLocalType(nextLocal, type);
-            nextLocal += type.getSize();
+            value = newLocalMapping(type);
+            setLocalType(value, type);
+            mapping[key] = value + 1;
+        } else {
+            value--;
         }
-        if (value - 1 != var) {
+        if (value != var) {
             changed = true;
         }
-        return value - 1;
+        return value;
     }
 
+    protected int newLocalMapping(final Type type) {
+        int local = nextLocal;
+        nextLocal += type.getSize();
+        return local;
+    }
+    
     private int remap(final int var, final int size) {
         if (var < firstLocal || !changed) {
             return var;

@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,15 +39,6 @@ import com.tc.asm.MethodVisitor;
  * @author Eric Bruneton
  */
 public class InsnNode extends AbstractInsnNode {
-
-    private final static InsnNode[] INSNS;
-
-    static {
-        INSNS = new InsnNode[255];
-        for (int i = 0; i < INSNS.length; ++i) {
-            INSNS[i] = new InsnNode(i);
-        }
-    }
 
     /**
      * Constructs a new {@link InsnNode}.

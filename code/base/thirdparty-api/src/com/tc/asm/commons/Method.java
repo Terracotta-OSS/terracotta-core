@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,7 +56,7 @@ public class Method {
     /**
      * Maps primitive Java type names to their descriptors.
      */
-    private final static Map DESCRIPTORS;
+    private static final Map DESCRIPTORS;
 
     static {
         DESCRIPTORS = new HashMap();
@@ -148,7 +148,6 @@ public class Method {
         if (space == -1 || start == -1 || end == -1) {
             throw new IllegalArgumentException();
         }
-        // TODO: Check validity of returnType, methodName and arguments.
         String returnType = method.substring(0, space);
         String methodName = method.substring(space + 1, start - 1).trim();
         StringBuffer sb = new StringBuffer();
@@ -171,7 +170,7 @@ public class Method {
     }
 
     private static String map(final String type, final boolean defaultPackage) {
-        if (type.equals("")) {
+        if ("".equals(type)) {
             return type;
         }
 

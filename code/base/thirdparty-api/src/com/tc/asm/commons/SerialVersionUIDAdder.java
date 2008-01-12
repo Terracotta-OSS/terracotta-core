@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 package com.tc.asm.commons;
 
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.security.MessageDigest;
@@ -210,7 +211,7 @@ public class SerialVersionUIDAdder extends ClassAdapter {
         final String[] exceptions)
     {
         if (computeSVUID) {
-            if (name.equals("<clinit>")) {
+            if ("<clinit>".equals(name)) {
                 hasStaticInitializer = true;
             }
             /*
@@ -228,9 +229,9 @@ public class SerialVersionUIDAdder extends ClassAdapter {
 
             // all non private methods
             if ((access & Opcodes.ACC_PRIVATE) == 0) {
-                if (name.equals("<init>")) {
+                if ("<init>".equals(name)) {
                     svuidConstructors.add(new Item(name, mods, desc));
-                } else if (!name.equals("<clinit>")) {
+                } else if (!"<clinit>".equals(name)) {
                     svuidMethods.add(new Item(name, mods, desc));
                 }
             }
@@ -251,7 +252,7 @@ public class SerialVersionUIDAdder extends ClassAdapter {
         final Object value)
     {
         if (computeSVUID) {
-            if (name.equals("serialVersionUID")) {
+            if ("serialVersionUID".equals(name)) {
                 // since the class already has SVUID, we won't be computing it.
                 computeSVUID = false;
                 hasSVUID = true;
@@ -308,10 +309,9 @@ public class SerialVersionUIDAdder extends ClassAdapter {
      * <code>isHasSVUID</code> to determine if the class already had an SVUID.
      * 
      * @return Returns the serial version UID
-     * @throws IOException
      */
     protected long computeSVUID() throws IOException {
-        ByteArrayOutputStream bos = null;
+        ByteArrayOutputStream bos;
         DataOutputStream dos = null;
         long svuid = 0;
 
@@ -439,13 +439,13 @@ public class SerialVersionUIDAdder extends ClassAdapter {
      * @param dotted a <code>boolean</code> value
      * @exception IOException if an error occurs
      */
-    private void writeItems(
+    private static void writeItems(
         final Collection itemCollection,
-        final DataOutputStream dos,
+        final DataOutput dos,
         final boolean dotted) throws IOException
     {
         int size = itemCollection.size();
-        Item items[] = (Item[]) itemCollection.toArray(new Item[size]);
+        Item[] items = (Item[]) itemCollection.toArray(new Item[size]);
         Arrays.sort(items);
         for (int i = 0; i < size; i++) {
             dos.writeUTF(items[i].name);
@@ -462,11 +462,11 @@ public class SerialVersionUIDAdder extends ClassAdapter {
 
     static class Item implements Comparable {
 
-        String name;
+        final String name;
 
-        int access;
+        final int access;
 
-        String desc;
+        final String desc;
 
         Item(final String name, final int access, final String desc) {
             this.name = name;

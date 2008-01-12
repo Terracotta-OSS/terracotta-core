@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -141,10 +141,9 @@ public interface MethodVisitor {
      *        {@link Opcodes#DOUBLE},{@link Opcodes#NULL} or
      *        {@link Opcodes#UNINITIALIZED_THIS} (long and double are
      *        represented by a single element). Reference types are represented
-     *        by String objects (representing internal names, or type
-     *        descriptors for array types), and uninitialized types by Label
-     *        objects (this label designates the NEW instruction that created
-     *        this uninitialized value).
+     *        by String objects (representing internal names), and uninitialized 
+     *        types by Label objects (this label designates the NEW instruction 
+     *        that created this uninitialized value).
      * @param nStack the number of operand stack elements in the visited frame.
      * @param stack the operand stack types in this frame. This array must not
      *        be modified. Its content has the same format as the "local" array.
@@ -211,15 +210,15 @@ public interface MethodVisitor {
 
     /**
      * Visits a type instruction. A type instruction is an instruction that
-     * takes a type descriptor as parameter.
+     * takes the internal name of a class as parameter.
      * 
      * @param opcode the opcode of the type instruction to be visited. This
      *        opcode is either NEW, ANEWARRAY, CHECKCAST or INSTANCEOF.
-     * @param desc the operand of the instruction to be visited. This operand is
-     *        must be a fully qualified class name in internal form, or the type
-     *        descriptor of an array type (see {@link Type Type}).
+     * @param type the operand of the instruction to be visited. This operand
+     *        must be the internal name of an object or array class (see {@link 
+     *        Type#getInternalName() getInternalName}).
      */
-    void visitTypeInsn(int opcode, String desc);
+    void visitTypeInsn(int opcode, String type);
 
     /**
      * Visits a field instruction. A field instruction is an instruction that
@@ -302,7 +301,7 @@ public interface MethodVisitor {
      * @param labels beginnings of the handler blocks. <tt>labels[i]</tt> is
      *        the beginning of the handler block for the <tt>min + i</tt> key.
      */
-    void visitTableSwitchInsn(int min, int max, Label dflt, Label labels[]);
+    void visitTableSwitchInsn(int min, int max, Label dflt, Label[] labels);
 
     /**
      * Visits a LOOKUPSWITCH instruction.
@@ -312,7 +311,7 @@ public interface MethodVisitor {
      * @param labels beginnings of the handler blocks. <tt>labels[i]</tt> is
      *        the beginning of the handler block for the <tt>keys[i]</tt> key.
      */
-    void visitLookupSwitchInsn(Label dflt, int keys[], Label labels[]);
+    void visitLookupSwitchInsn(Label dflt, int[] keys, Label[] labels);
 
     /**
      * Visits a MULTIANEWARRAY instruction.

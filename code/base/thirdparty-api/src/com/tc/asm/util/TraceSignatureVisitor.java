@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,7 @@ import com.tc.asm.signature.SignatureVisitor;
  */
 public class TraceSignatureVisitor implements SignatureVisitor {
 
-    private StringBuffer declaration;
+    private final StringBuffer declaration;
 
     private boolean isInterface;
 
@@ -120,11 +120,11 @@ public class TraceSignatureVisitor implements SignatureVisitor {
 
     public SignatureVisitor visitParameterType() {
         endFormals();
-        if (!seenParameter) {
+        if (seenParameter) {
+            declaration.append(", ");
+        } else {
             seenParameter = true;
             declaration.append('(');
-        } else {
-            declaration.append(", ");
         }
         startType();
         return this;
@@ -132,10 +132,10 @@ public class TraceSignatureVisitor implements SignatureVisitor {
 
     public SignatureVisitor visitReturnType() {
         endFormals();
-        if (!seenParameter) {
-            declaration.append('(');
-        } else {
+        if (seenParameter) {
             seenParameter = false;
+        } else {
+            declaration.append('(');
         }
         declaration.append(')');
         returnType = new StringBuffer();
@@ -198,9 +198,7 @@ public class TraceSignatureVisitor implements SignatureVisitor {
     }
 
     public void visitClassType(final String name) {
-        if (!"java/lang/Object".equals(name)) {
-            declaration.append(separator).append(name.replace('/', '.'));
-        } else {
+        if ("java/lang/Object".equals(name)) {
             // Map<java.lang.Object,java.util.List>
             // or
             // abstract public V get(Object key); (seen in Dictionary.class)
@@ -210,6 +208,8 @@ public class TraceSignatureVisitor implements SignatureVisitor {
             if (needObjectClass) {
                 declaration.append(separator).append(name.replace('/', '.'));
             }
+        } else {
+            declaration.append(separator).append(name.replace('/', '.'));
         }
         separator = "";
         argumentStack *= 2;
@@ -244,9 +244,9 @@ public class TraceSignatureVisitor implements SignatureVisitor {
             declaration.append(", ");
         }
 
-        if (tag == SignatureVisitor.EXTENDS) {
+        if (tag == EXTENDS) {
             declaration.append("? extends ");
-        } else if (tag == SignatureVisitor.SUPER) {
+        } else if (tag == SUPER) {
             declaration.append("? super ");
         }
 
@@ -288,13 +288,13 @@ public class TraceSignatureVisitor implements SignatureVisitor {
     }
 
     private void endType() {
-        if (arrayStack % 2 != 0) {
+        if (arrayStack % 2 == 0) {
+            arrayStack /= 2;
+        } else {
             while (arrayStack % 2 != 0) {
                 arrayStack /= 2;
                 declaration.append("[]");
             }
-        } else {
-            arrayStack /= 2;
         }
     }
 }

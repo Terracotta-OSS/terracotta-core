@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -130,7 +130,7 @@ public class SimpleVerifier extends BasicVerifier {
                 v = newValue(type.getElementType());
                 String desc = ((BasicValue) v).getType().getDescriptor();
                 for (int i = 0; i < type.getDimensions(); ++i) {
-                    desc = "[" + desc;
+                    desc = '[' + desc;
                 }
                 v = new BasicValue(Type.getType(desc));
             } else {
@@ -143,7 +143,7 @@ public class SimpleVerifier extends BasicVerifier {
     protected boolean isArrayValue(final Value value) {
         Type t = ((BasicValue) value).getType();
         return t != null
-                && (t.getDescriptor().equals("Lnull;") || t.getSort() == Type.ARRAY);
+                && ("Lnull;".equals(t.getDescriptor()) || t.getSort() == Type.ARRAY);
     }
 
     protected Value getElementValue(final Value objectArrayValue)
@@ -154,7 +154,7 @@ public class SimpleVerifier extends BasicVerifier {
             if (arrayType.getSort() == Type.ARRAY) {
                 return newValue(Type.getType(arrayType.getDescriptor()
                         .substring(1)));
-            } else if (arrayType.getDescriptor().equals("Lnull;")) {
+            } else if ("Lnull;".equals(arrayType.getDescriptor())) {
                 return objectArrayValue;
             }
         }
@@ -172,7 +172,7 @@ public class SimpleVerifier extends BasicVerifier {
                 return type == expectedType;
             case Type.ARRAY:
             case Type.OBJECT:
-                if (type.getDescriptor().equals("Lnull;")) {
+                if ("Lnull;".equals(type.getDescriptor())) {
                     return true;
                 } else if (type.getSort() == Type.OBJECT
                         || type.getSort() == Type.ARRAY)
@@ -196,10 +196,10 @@ public class SimpleVerifier extends BasicVerifier {
                 if (u != null
                         && (u.getSort() == Type.OBJECT || u.getSort() == Type.ARRAY))
                 {
-                    if (t.getDescriptor().equals("Lnull;")) {
+                    if ("Lnull;".equals(t.getDescriptor())) {
                         return w;
                     }
-                    if (u.getDescriptor().equals("Lnull;")) {
+                    if ("Lnull;".equals(u.getDescriptor())) {
                         return v;
                     }
                     if (isAssignableFrom(t, u)) {

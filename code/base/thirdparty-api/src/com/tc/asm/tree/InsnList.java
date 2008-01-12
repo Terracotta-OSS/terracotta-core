@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 package com.tc.asm.tree;
 
 import java.util.ListIterator;
+import java.util.NoSuchElementException;
 
 import com.tc.asm.MethodVisitor;
 
@@ -546,12 +547,26 @@ public class InsnList {
         removeAll(check);
     }
 
+    /**
+     * Reset all labels in the instruction list. This method should be called
+     * before reusing same instructions list between several
+     * <code>ClassWriter</code>s.
+     */
+    public void resetLabels() {
+        AbstractInsnNode insn = first;
+        while (insn != null) {
+            if (insn instanceof LabelNode) {
+                ((LabelNode) insn).resetLabel();
+            }
+            insn = insn.next;
+        }
+    }
     
     private final class InsnListIterator implements ListIterator {
         AbstractInsnNode next;
         AbstractInsnNode prev;
 
-        public InsnListIterator(int index) {
+        private InsnListIterator(int index) {
             if(index==size()) {
                 next = null;
                 prev = getLast();
@@ -566,6 +581,9 @@ public class InsnList {
         }
 
         public Object next() {
+            if (next == null) {
+                throw new NoSuchElementException();
+            }
             AbstractInsnNode result = next;
             prev = result;
             next = result.next;

@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@ class SmallSet extends AbstractSet implements Iterator {
 
     Object e1, e2;
 
-    final static SmallSet EMPTY_SET = new SmallSet(null, null);
+    static final Set EMPTY_SET = new SmallSet(null, null);
 
     SmallSet(final Object e1, final Object e2) {
         this.e1 = e1;

@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,52 +43,65 @@ public class Label {
      * an exception handler. It can be safely ignored in control flow graph
      * analysis algorithms (for optimization purposes).
      */
-    final static int DEBUG = 1;
+    static final int DEBUG = 1;
 
     /**
      * Indicates if the position of this label is known.
      */
-    final static int RESOLVED = 2;
+    static final int RESOLVED = 2;
 
     /**
      * Indicates if this label has been updated, after instruction resizing.
      */
-    final static int RESIZED = 4;
+    static final int RESIZED = 4;
 
     /**
      * Indicates if this basic block has been pushed in the basic block stack.
      * See {@link MethodWriter#visitMaxs visitMaxs}.
      */
-    final static int PUSHED = 8;
+    static final int PUSHED = 8;
 
     /**
      * Indicates if this label is the target of a jump instruction, or the start
      * of an exception handler.
      */
-    final static int TARGET = 16;
+    static final int TARGET = 16;
 
     /**
      * Indicates if a stack map frame must be stored for this label.
      */
-    final static int STORE = 32;
+    static final int STORE = 32;
 
     /**
      * Indicates if this label corresponds to a reachable basic block.
      */
-    final static int REACHABLE = 64;
+    static final int REACHABLE = 64;
 
     /**
      * Indicates if this basic block ends with a JSR instruction.
      */
-    final static int JSR = 128;
+    static final int JSR = 128;
 
     /**
      * Indicates if this basic block ends with a RET instruction.
      */
-    final static int RET = 256;
+    static final int RET = 256;
 
     /**
-     * Field used to associate user information to a label.
+     * Indicates if this basic block is the start of a subroutine.
+     */
+    static final int SUBROUTINE = 512;
+
+    /**
+     * Indicates if this subroutine basic block has been visited.
+     */
+    static final int VISITED = 1024;
+
+    /**
+     * Field used to associate user information to a label. Warning: this field
+     * is used by the ASM tree package. In order to use it with the ASM tree
+     * package you must override the {@link 
+     * com.tc.asm.tree.MethodNode#getLabelNode} method.
      */
     public Object info;
 
@@ -129,7 +142,11 @@ public class Label {
      * forward reference, while the second is the position of the first byte of
      * the forward reference itself. In fact the sign of the first integer
      * indicates if this reference uses 2 or 4 bytes, and its absolute value
-     * gives the position of the bytecode instruction.
+     * gives the position of the bytecode instruction. This array is also used
+     * as a bitset to store the subroutines to which a basic block belongs. This
+     * information is needed in {@linked  MethodWriter#visitMaxs}, after all
+     * forward references have been resolved. Hence the same array can be used
+     * for both purposes without problems.
      */
     private int[] srcAndRefPositions;
 
@@ -227,15 +244,6 @@ public class Label {
     public Label() {
     }
 
-    /**
-     * Constructs a new label.
-     * 
-     * @param debug if this label is only used for debug attributes.
-     */
-    Label(final boolean debug) {
-        this.status = debug ? DEBUG : 0;
-    }
-
     // ------------------------------------------------------------------------
     // Methods to compute offsets and to manage forward references
     // ------------------------------------------------------------------------
@@ -277,19 +285,19 @@ public class Label {
         final int source,
         final boolean wideOffset)
     {
-        if ((status & RESOLVED) != 0) {
-            if (wideOffset) {
-                out.putInt(position - source);
-            } else {
-                out.putShort(position - source);
-            }
-        } else {
+        if ((status & RESOLVED) == 0) {
             if (wideOffset) {
                 addReference(-1 - source, out.length);
                 out.putInt(-1);
             } else {
                 addReference(source, out.length);
                 out.putShort(-1);
+            }
+        } else {
+            if (wideOffset) {
+                out.putInt(position - source);
+            } else {
+                out.putShort(position - source);
             }
         }
     }
@@ -402,7 +410,105 @@ public class Label {
      * @return the first label of the series to which this label belongs.
      */
     Label getFirst() {
-        return frame == null ? this : frame.owner;
+        return !ClassReader.FRAMES || frame == null ? this : frame.owner;
+    }
+
+    // ------------------------------------------------------------------------
+    // Methods related to subroutines
+    // ------------------------------------------------------------------------
+
+    /**
+     * Returns true is this basic block belongs to the given subroutine.
+     * 
+     * @param id a subroutine id.
+     * @return true is this basic block belongs to the given subroutine.
+     */
+    boolean inSubroutine(final long id) {
+        if ((status & Label.VISITED) != 0) {
+            return (srcAndRefPositions[(int) (id >>> 32)] & (int) id) != 0;
+        }
+        return false;
+    }
+
+    /**
+     * Returns true if this basic block and the given one belong to a common
+     * subroutine.
+     * 
+     * @param block another basic block.
+     * @return true if this basic block and the given one belong to a common
+     *         subroutine.
+     */
+    boolean inSameSubroutine(final Label block) {
+        for (int i = 0; i < srcAndRefPositions.length; ++i) {
+            if ((srcAndRefPositions[i] & block.srcAndRefPositions[i]) != 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Marks this basic block as belonging to the given subroutine.
+     * 
+     * @param id a subroutine id.
+     * @param nbSubroutines the total number of subroutines in the method.
+     */
+    void addToSubroutine(final long id, final int nbSubroutines) {
+        if ((status & VISITED) == 0) {
+            status |= VISITED;
+            srcAndRefPositions = new int[(nbSubroutines - 1) / 32 + 1];
+        }
+        srcAndRefPositions[(int) (id >>> 32)] |= (int) id;
+    }
+    
+    /**
+     * Finds the basic blocks that belong to a given subroutine, and marks these
+     * blocks as belonging to this subroutine. This recursive method follows the
+     * control flow graph to find all the blocks that are reachable from the
+     * current block WITHOUT following any JSR target.
+     * 
+     * @param JSR a JSR block that jumps to this subroutine. If this JSR is not
+     *        null it is added to the successor of the RET blocks found in the
+     *        subroutine.
+     * @param id the id of this subroutine.
+     * @param nbSubroutines the total number of subroutines in the method.
+     */
+    void visitSubroutine(final Label JSR, final long id, final int nbSubroutines)
+    {
+        if (JSR != null) {
+            if ((status & VISITED) != 0) {
+                return;
+            }
+            status |= VISITED;
+            // adds JSR to the successors of this block, if it is a RET block
+            if ((status & RET) != 0) {
+                if (!inSameSubroutine(JSR)) {
+                    Edge e = new Edge();
+                    e.info = inputStackTop;
+                    e.successor = JSR.successors.successor;
+                    e.next = successors;
+                    successors = e;
+                }
+            }
+        } else {
+            // if this block already belongs to subroutine 'id', returns
+            if (inSubroutine(id)) {
+                return;
+            }
+            // marks this block as belonging to subroutine 'id'
+            addToSubroutine(id, nbSubroutines);            
+        }
+        // calls this method recursively on each successor, except JSR targets
+        Edge e = successors;
+        while (e != null) {
+            // if this block is a JSR block, then 'successors.next' leads
+            // to the JSR target (see {@link #visitJumpInsn}) and must therefore
+            // not be followed
+            if ((status & Label.JSR) == 0 || e != successors.next) {
+                e.successor.visitSubroutine(JSR, id, nbSubroutines);
+            }
+            e = e.next;
+        }
     }
 
     // ------------------------------------------------------------------------

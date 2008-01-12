@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -82,6 +82,9 @@ public class SourceValue implements Value {
     }
 
     public boolean equals(final Object value) {
+        if (!(value instanceof SourceValue)) {
+        	return false;
+        }
         SourceValue v = (SourceValue) value;
         return size == v.size && insns.equals(v.insns);
     }

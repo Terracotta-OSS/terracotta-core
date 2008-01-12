@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@ import com.tc.asm.FieldVisitor;
  */
 public class CheckFieldAdapter implements FieldVisitor {
 
-    private FieldVisitor fv;
+    private final FieldVisitor fv;
 
     private boolean end;
 

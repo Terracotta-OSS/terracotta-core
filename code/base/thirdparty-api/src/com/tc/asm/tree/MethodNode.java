@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -90,7 +90,7 @@ public class MethodNode extends MemberNode implements MethodVisitor {
      * The runtime visible parameter annotations of this method. These lists are
      * lists of {@link AnnotationNode} objects. May be <tt>null</tt>.
      * 
-     * @associates com.tc.asm.tree.AnnotationNode
+     * @associates org.objectweb.asm.tree.AnnotationNode
      * @label invisible parameters
      */
     public List[] visibleParameterAnnotations;
@@ -99,7 +99,7 @@ public class MethodNode extends MemberNode implements MethodVisitor {
      * The runtime invisible parameter annotations of this method. These lists
      * are lists of {@link AnnotationNode} objects. May be <tt>null</tt>.
      * 
-     * @associates com.tc.asm.tree.AnnotationNode
+     * @associates org.objectweb.asm.tree.AnnotationNode
      * @label visible parameters
      */
     public List[] invisibleParameterAnnotations;
@@ -108,7 +108,7 @@ public class MethodNode extends MemberNode implements MethodVisitor {
      * The instructions of this method. This list is a list of
      * {@link AbstractInsnNode} objects.
      * 
-     * @associates com.tc.asm.tree.AbstractInsnNode
+     * @associates org.objectweb.asm.tree.AbstractInsnNode
      * @label instructions
      */
     public InsnList instructions;
@@ -117,7 +117,7 @@ public class MethodNode extends MemberNode implements MethodVisitor {
      * The try catch blocks of this method. This list is a list of
      * {@link TryCatchBlockNode} objects.
      * 
-     * @associates com.tc.asm.tree.TryCatchBlockNode
+     * @associates org.objectweb.asm.tree.TryCatchBlockNode
      */
     public List tryCatchBlocks;
 
@@ -135,7 +135,7 @@ public class MethodNode extends MemberNode implements MethodVisitor {
      * The local variables of this method. This list is a list of
      * {@link LocalVariableNode} objects. May be <tt>null</tt>
      * 
-     * @associates com.tc.asm.tree.LocalVariableNode
+     * @associates org.objectweb.asm.tree.LocalVariableNode
      */
     public List localVariables;
 
@@ -237,9 +237,9 @@ public class MethodNode extends MemberNode implements MethodVisitor {
     {
         instructions.add(new FrameNode(type, nLocal, local == null
                 ? null
-                : labelNodes(local), nStack, stack == null
+                : getLabelNodes(local), nStack, stack == null
                 ? null
-                : labelNodes(stack)));
+                : getLabelNodes(stack)));
     }
 
     public void visitInsn(final int opcode) {
@@ -254,8 +254,8 @@ public class MethodNode extends MemberNode implements MethodVisitor {
         instructions.add(new VarInsnNode(opcode, var));
     }
 
-    public void visitTypeInsn(final int opcode, final String desc) {
-        instructions.add(new TypeInsnNode(opcode, desc));
+    public void visitTypeInsn(final int opcode, final String type) {
+        instructions.add(new TypeInsnNode(opcode, type));
     }
 
     public void visitFieldInsn(
@@ -277,11 +277,11 @@ public class MethodNode extends MemberNode implements MethodVisitor {
     }
 
     public void visitJumpInsn(final int opcode, final Label label) {
-        instructions.add(new JumpInsnNode(opcode, labelNode(label)));
+        instructions.add(new JumpInsnNode(opcode, getLabelNode(label)));
     }
 
     public void visitLabel(final Label label) {
-        instructions.add(labelNode(label));
+        instructions.add(getLabelNode(label));
     }
 
     public void visitLdcInsn(final Object cst) {
@@ -300,8 +300,8 @@ public class MethodNode extends MemberNode implements MethodVisitor {
     {
         instructions.add(new TableSwitchInsnNode(min,
                 max,
-                labelNode(dflt),
-                labelNodes(labels)));
+                getLabelNode(dflt),
+                getLabelNodes(labels)));
     }
 
     public void visitLookupSwitchInsn(
@@ -309,9 +309,9 @@ public class MethodNode extends MemberNode implements MethodVisitor {
         final int[] keys,
         final Label[] labels)
     {
-        instructions.add(new LookupSwitchInsnNode(labelNode(dflt),
+        instructions.add(new LookupSwitchInsnNode(getLabelNode(dflt),
                 keys,
-                labelNodes(labels)));
+                getLabelNodes(labels)));
     }
 
     public void visitMultiANewArrayInsn(final String desc, final int dims) {
@@ -324,9 +324,9 @@ public class MethodNode extends MemberNode implements MethodVisitor {
         final Label handler,
         final String type)
     {
-        tryCatchBlocks.add(new TryCatchBlockNode(labelNode(start),
-                labelNode(end),
-                labelNode(handler),
+        tryCatchBlocks.add(new TryCatchBlockNode(getLabelNode(start),
+                getLabelNode(end),
+                getLabelNode(handler),
                 type));
     }
 
@@ -341,13 +341,13 @@ public class MethodNode extends MemberNode implements MethodVisitor {
         localVariables.add(new LocalVariableNode(name,
                 desc,
                 signature,
-                labelNode(start),
-                labelNode(end),
+                getLabelNode(start),
+                getLabelNode(end),
                 index));
     }
 
     public void visitLineNumber(final int line, final Label start) {
-        instructions.add(new LineNumberNode(line, labelNode(start)));
+        instructions.add(new LineNumberNode(line, getLabelNode(start)));
     }
 
     public void visitMaxs(final int maxStack, final int maxLocals) {
@@ -355,27 +355,36 @@ public class MethodNode extends MemberNode implements MethodVisitor {
         this.maxLocals = maxLocals;
     }
 
-    private static LabelNode labelNode(final Label l) {
-        if (l.info == null) {
+    /**
+     * Returns the LabelNode corresponding to the given Label. Creates a new 
+     * LabelNode if necessary. The default implementation of this method uses
+     * the {@link Label#info} field to store associations between labels and
+     * label nodes.
+     * 
+     * @param l a Label.
+     * @return the LabelNode corresponding to l.
+     */    
+    protected LabelNode getLabelNode(final Label l) {
+        if (!(l.info instanceof LabelNode)) {
             l.info = new LabelNode(l);
         }
         return (LabelNode) l.info;
     }
 
-    private static LabelNode[] labelNodes(final Label[] l) {
+    private LabelNode[] getLabelNodes(final Label[] l) {
         LabelNode[] nodes = new LabelNode[l.length];
         for (int i = 0; i < l.length; ++i) {
-            nodes[i] = labelNode(l[i]);
+            nodes[i] = getLabelNode(l[i]);
         }
         return nodes;
     }
 
-    private static Object[] labelNodes(final Object[] objs) {
+    private Object[] getLabelNodes(final Object[] objs) {
         Object[] nodes = new Object[objs.length];
         for (int i = 0; i < objs.length; ++i) {
             Object o = objs[i];
             if (o instanceof Label) {
-                o = labelNode((Label) o);
+                o = getLabelNode((Label) o);
             }
             nodes[i] = o;
         }

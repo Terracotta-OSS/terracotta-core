@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -195,10 +195,10 @@ public class BasicVerifier extends BasicInterpreter {
                 expected2 = BasicValue.INT_VALUE;
                 break;
             case BALOAD:
-                if (!isSubTypeOf(value1, newValue(Type.getType("[Z")))) {
-                    expected1 = newValue(Type.getType("[B"));
-                } else {
+                if (isSubTypeOf(value1, newValue(Type.getType("[Z")))) {
                     expected1 = newValue(Type.getType("[Z"));
+                } else {
+                    expected1 = newValue(Type.getType("[B"));
                 }
                 expected2 = BasicValue.INT_VALUE;
                 break;
@@ -323,10 +323,10 @@ public class BasicVerifier extends BasicInterpreter {
                 expected3 = BasicValue.INT_VALUE;
                 break;
             case BASTORE:
-                if (!isSubTypeOf(value1, newValue(Type.getType("[Z")))) {
-                    expected1 = newValue(Type.getType("[B"));
-                } else {
+                if (isSubTypeOf(value1, newValue(Type.getType("[Z")))) {
                     expected1 = newValue(Type.getType("[Z"));
+                } else {
+                    expected1 = newValue(Type.getType("[B"));
                 }
                 expected3 = BasicValue.INT_VALUE;
                 break;
@@ -386,11 +386,7 @@ public class BasicVerifier extends BasicInterpreter {
             int i = 0;
             int j = 0;
             if (opcode != INVOKESTATIC) {
-                String own = ((MethodInsnNode) insn).owner;
-                if (own.charAt(0) != '[') { // can happen with JDK1.5 clone()
-                    own = "L" + own + ";";
-                }
-                Type owner = Type.getType(own);
+                Type owner = Type.getObjectType(((MethodInsnNode) insn).owner);
                 if (!isSubTypeOf((Value) values.get(i++), newValue(owner))) {
                     throw new AnalyzerException("Method owner",
                             newValue(owner),

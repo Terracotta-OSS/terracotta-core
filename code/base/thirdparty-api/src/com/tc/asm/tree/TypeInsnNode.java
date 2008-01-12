@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@ import com.tc.asm.MethodVisitor;
 public class TypeInsnNode extends AbstractInsnNode {
 
     /**
-     * The operand of this instruction. This operand is a type descriptor (see
+     * The operand of this instruction. This operand is an internal name (see
      * {@link com.tc.asm.Type}).
      */
     public String desc;
@@ -53,7 +53,7 @@ public class TypeInsnNode extends AbstractInsnNode {
      * @param opcode the opcode of the type instruction to be constructed. This
      *        opcode must be NEW, ANEWARRAY, CHECKCAST or INSTANCEOF.
      * @param desc the operand of the instruction to be constructed. This
-     *        operand is a type descriptor (see {@link com.tc.asm.Type}).
+     *        operand is an internal name (see {@link com.tc.asm.Type}).
      */
     public TypeInsnNode(final int opcode, final String desc) {
         super(opcode);

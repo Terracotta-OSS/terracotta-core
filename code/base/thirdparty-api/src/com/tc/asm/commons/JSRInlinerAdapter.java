@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,13 +64,13 @@ import com.tc.asm.tree.TryCatchBlockNode;
  */
 public class JSRInlinerAdapter extends MethodNode implements Opcodes {
 
-    private final static boolean LOGGING = false;
+    private static final boolean LOGGING = false;
 
     /**
      * The visitor to which we will emit a translation of this method without
      * internal subroutines.
      */
-    private MethodVisitor mv;
+    private final MethodVisitor mv;
 
     /**
      * For each label that is jumped to by a JSR, we create a Subroutine
@@ -186,9 +186,11 @@ public class JSRInlinerAdapter extends MethodNode implements Opcodes {
      * the execution of the subroutine. Invoked from
      * <code>markSubroutines()</code>.
      * 
-     * @param sub TODO.
-     * @param index TODO.
-     * @param anyvisited TODO.
+     * @param sub the subroutine whose instructions must be computed.
+     * @param index an instruction of this subroutine.
+     * @param anyvisited indexes of the already visited instructions, i.e.
+     *        marked as part of this subroutine or any previously computed
+     *        subroutine.
      */
     private void markSubroutineWalk(
         final Subroutine sub,
@@ -210,6 +212,7 @@ public class JSRInlinerAdapter extends MethodNode implements Opcodes {
                 TryCatchBlockNode trycatch = (TryCatchBlockNode) it.next();
 
                 if (LOGGING) {
+                    // TODO use of default toString().
                     log("Scanning try/catch " + trycatch);
                 }
 
@@ -224,7 +227,7 @@ public class JSRInlinerAdapter extends MethodNode implements Opcodes {
                 int nextbit = sub.instructions.nextSetBit(startindex);
                 if (nextbit != -1 && nextbit < endindex) {
                     if (LOGGING) {
-                        log("Adding exception handler: " + startindex + "-"
+                        log("Adding exception handler: " + startindex + '-'
                                 + endindex + " due to " + nextbit + " handler "
                                 + handlerindex);
                     }
@@ -240,9 +243,11 @@ public class JSRInlinerAdapter extends MethodNode implements Opcodes {
      * subroutine <code>sub</code>. Starts from <code>index</code>.
      * Invoked only by <code>markSubroutineWalk()</code>.
      * 
-     * @param sub TODO.
-     * @param index TODO.
-     * @param anyvisited TODO.
+     * @param sub the subroutine whose instructions must be computed.
+     * @param index an instruction of this subroutine.
+     * @param anyvisited indexes of the already visited instructions, i.e.
+     *        marked as part of this subroutine or any previously computed
+     *        subroutine.
      */
     private void markSubroutineWalkDFS(
         final Subroutine sub,
@@ -358,10 +363,12 @@ public class JSRInlinerAdapter extends MethodNode implements Opcodes {
      * this one to the <code>worklist</code> parameter, and new try/catch
      * blocks to <code>newTryCatchBlocks</code>.
      * 
-     * @param instant TODO.
-     * @param workList TODO.
-     * @param newInstructions TODO.
-     * @param newTryCatchBlocks TODO.
+     * @param instant the instantiation that must be performed.
+     * @param worklist list of the instantiations that remain to be done.
+     * @param newInstructions the instruction list to which the instantiated
+     *        code must be appended.
+     * @param newTryCatchBlocks the exception handler list to which the
+     *        instantiated handlers must be appended.
      */
     private void emitSubroutine(
         final Instantiation instant,
@@ -392,7 +399,8 @@ public class JSRInlinerAdapter extends MethodNode implements Opcodes {
                 LabelNode ilbl = (LabelNode) insn;
                 LabelNode remap = instant.rangeLabel(ilbl);
                 if (LOGGING) {
-                    log("Translating lbl #" + i + ":" + ilbl + " to " + remap);
+                    // TODO use of default toString().
+                    log("Translating lbl #" + i + ':' + ilbl + " to " + remap);
                 }
                 if (remap != duplbl) {
                     newInstructions.add(remap);
@@ -469,7 +477,8 @@ public class JSRInlinerAdapter extends MethodNode implements Opcodes {
             TryCatchBlockNode trycatch = (TryCatchBlockNode) it.next();
 
             if (LOGGING) {
-                log("try catch block original labels=" + trycatch.start + "-"
+                // TODO use of default toString().
+                log("try catch block original labels=" + trycatch.start + '-'
                         + trycatch.end + "->" + trycatch.handler);
             }
 
@@ -487,7 +496,8 @@ public class JSRInlinerAdapter extends MethodNode implements Opcodes {
             final LabelNode handler = instant.gotoLabel(trycatch.handler);
 
             if (LOGGING) {
-                log(" try catch block new labels=" + start + "-" + end + "->"
+                // TODO use of default toString().
+                log(" try catch block new labels=" + start + '-' + end + "->"
                         + handler);
             }
 
@@ -523,7 +533,7 @@ public class JSRInlinerAdapter extends MethodNode implements Opcodes {
         }
     }
 
-    private void log(final String str) {
+    private static void log(final String str) {
         System.err.println(str);
     }
 
@@ -586,7 +596,7 @@ public class JSRInlinerAdapter extends MethodNode implements Opcodes {
          */
         public final LabelNode returnLabel;
 
-        public Instantiation(final Instantiation prev, final Subroutine sub) {
+        private Instantiation(final Instantiation prev, final Subroutine sub) {
             previous = prev;
             subroutine = sub;
             for (Instantiation p = prev; p != null; p = p.previous) {
@@ -681,7 +691,7 @@ public class JSRInlinerAdapter extends MethodNode implements Opcodes {
          * 
          * @param l The label we will be translating
          * @return a label for use by a branch instruction in the inlined code
-         * @see #gotoTable
+         * @see #rangeLabel
          */
         public LabelNode gotoLabel(final LabelNode l) {
             // owner should never be null, because owner is only null

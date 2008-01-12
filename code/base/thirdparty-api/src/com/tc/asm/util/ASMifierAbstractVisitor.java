@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,11 +29,11 @@
  */
 package com.tc.asm.util;
 
-import java.util.HashMap;
-
 import com.tc.asm.AnnotationVisitor;
 import com.tc.asm.Attribute;
 import com.tc.asm.Type;
+
+import java.util.Map;
 
 /**
  * An abstract ASMifier visitor.
@@ -51,7 +51,7 @@ public class ASMifierAbstractVisitor extends AbstractVisitor {
      * The label names. This map associates String values to Label keys. It is
      * used only in ASMifierMethodVisitor.
      */
-    HashMap labelNames;
+    Map labelNames;
 
     /**
      * Constructs a new {@link ASMifierAbstractVisitor}.
@@ -95,7 +95,7 @@ public class ASMifierAbstractVisitor extends AbstractVisitor {
      */
     public void visitAttribute(final Attribute attr) {
         buf.setLength(0);
-        buf.append("// ATTRIBUTE ").append(attr.type).append("\n");
+        buf.append("// ATTRIBUTE ").append(attr.type).append('\n');
         if (attr instanceof ASMifiable) {
             buf.append("{\n");
             ((ASMifiable) attr).asmify(buf, "attr", labelNames);

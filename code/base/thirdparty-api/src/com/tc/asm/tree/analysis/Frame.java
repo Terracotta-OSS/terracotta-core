@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -257,7 +257,7 @@ public class Frame {
                 if (var > 0) {
                     Value local = getLocal(var - 1);
                     if (local != null && local.getSize() == 2) {
-                        setLocal(var + 1, interpreter.newValue(null));
+                        setLocal(var - 1, interpreter.newValue(null));
                     }
                 }
                 break;

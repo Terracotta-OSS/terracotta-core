@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -81,127 +81,129 @@ import com.tc.asm.Type;
  */
 public class GeneratorAdapter extends LocalVariablesSorter {
 
-    private final static Type BYTE_TYPE = Type.getObjectType("java/lang/Byte");
+    private static final String CLDESC = "Ljava/lang/Class;";
 
-    private final static Type BOOLEAN_TYPE = Type.getObjectType("java/lang/Boolean");
+    private static final Type BYTE_TYPE = Type.getObjectType("java/lang/Byte");
 
-    private final static Type SHORT_TYPE = Type.getObjectType("java/lang/Short");
+    private static final Type BOOLEAN_TYPE = Type.getObjectType("java/lang/Boolean");
 
-    private final static Type CHARACTER_TYPE = Type.getObjectType("java/lang/Character");
+    private static final Type SHORT_TYPE = Type.getObjectType("java/lang/Short");
 
-    private final static Type INTEGER_TYPE = Type.getObjectType("java/lang/Integer");
+    private static final Type CHARACTER_TYPE = Type.getObjectType("java/lang/Character");
 
-    private final static Type FLOAT_TYPE = Type.getObjectType("java/lang/Float");
+    private static final Type INTEGER_TYPE = Type.getObjectType("java/lang/Integer");
 
-    private final static Type LONG_TYPE = Type.getObjectType("java/lang/Long");
+    private static final Type FLOAT_TYPE = Type.getObjectType("java/lang/Float");
 
-    private final static Type DOUBLE_TYPE = Type.getObjectType("java/lang/Double");
+    private static final Type LONG_TYPE = Type.getObjectType("java/lang/Long");
 
-    private final static Type NUMBER_TYPE = Type.getObjectType("java/lang/Number");
+    private static final Type DOUBLE_TYPE = Type.getObjectType("java/lang/Double");
 
-    private final static Type OBJECT_TYPE = Type.getObjectType("java/lang/Object");
+    private static final Type NUMBER_TYPE = Type.getObjectType("java/lang/Number");
 
-    private final static Method BOOLEAN_VALUE = Method.getMethod("boolean booleanValue()");
+    private static final Type OBJECT_TYPE = Type.getObjectType("java/lang/Object");
 
-    private final static Method CHAR_VALUE = Method.getMethod("char charValue()");
+    private static final Method BOOLEAN_VALUE = Method.getMethod("boolean booleanValue()");
 
-    private final static Method INT_VALUE = Method.getMethod("int intValue()");
+    private static final Method CHAR_VALUE = Method.getMethod("char charValue()");
 
-    private final static Method FLOAT_VALUE = Method.getMethod("float floatValue()");
+    private static final Method INT_VALUE = Method.getMethod("int intValue()");
 
-    private final static Method LONG_VALUE = Method.getMethod("long longValue()");
+    private static final Method FLOAT_VALUE = Method.getMethod("float floatValue()");
 
-    private final static Method DOUBLE_VALUE = Method.getMethod("double doubleValue()");
+    private static final Method LONG_VALUE = Method.getMethod("long longValue()");
 
-    /**
-     * Constant for the {@link #math math} method.
-     */
-    public final static int ADD = Opcodes.IADD;
+    private static final Method DOUBLE_VALUE = Method.getMethod("double doubleValue()");
 
     /**
      * Constant for the {@link #math math} method.
      */
-    public final static int SUB = Opcodes.ISUB;
+    public static final int ADD = Opcodes.IADD;
 
     /**
      * Constant for the {@link #math math} method.
      */
-    public final static int MUL = Opcodes.IMUL;
+    public static final int SUB = Opcodes.ISUB;
 
     /**
      * Constant for the {@link #math math} method.
      */
-    public final static int DIV = Opcodes.IDIV;
+    public static final int MUL = Opcodes.IMUL;
 
     /**
      * Constant for the {@link #math math} method.
      */
-    public final static int REM = Opcodes.IREM;
+    public static final int DIV = Opcodes.IDIV;
 
     /**
      * Constant for the {@link #math math} method.
      */
-    public final static int NEG = Opcodes.INEG;
+    public static final int REM = Opcodes.IREM;
 
     /**
      * Constant for the {@link #math math} method.
      */
-    public final static int SHL = Opcodes.ISHL;
+    public static final int NEG = Opcodes.INEG;
 
     /**
      * Constant for the {@link #math math} method.
      */
-    public final static int SHR = Opcodes.ISHR;
+    public static final int SHL = Opcodes.ISHL;
 
     /**
      * Constant for the {@link #math math} method.
      */
-    public final static int USHR = Opcodes.IUSHR;
+    public static final int SHR = Opcodes.ISHR;
 
     /**
      * Constant for the {@link #math math} method.
      */
-    public final static int AND = Opcodes.IAND;
+    public static final int USHR = Opcodes.IUSHR;
 
     /**
      * Constant for the {@link #math math} method.
      */
-    public final static int OR = Opcodes.IOR;
+    public static final int AND = Opcodes.IAND;
 
     /**
      * Constant for the {@link #math math} method.
      */
-    public final static int XOR = Opcodes.IXOR;
+    public static final int OR = Opcodes.IOR;
+
+    /**
+     * Constant for the {@link #math math} method.
+     */
+    public static final int XOR = Opcodes.IXOR;
 
     /**
      * Constant for the {@link #ifCmp ifCmp} method.
      */
-    public final static int EQ = Opcodes.IFEQ;
+    public static final int EQ = Opcodes.IFEQ;
 
     /**
      * Constant for the {@link #ifCmp ifCmp} method.
      */
-    public final static int NE = Opcodes.IFNE;
+    public static final int NE = Opcodes.IFNE;
 
     /**
      * Constant for the {@link #ifCmp ifCmp} method.
      */
-    public final static int LT = Opcodes.IFLT;
+    public static final int LT = Opcodes.IFLT;
 
     /**
      * Constant for the {@link #ifCmp ifCmp} method.
      */
-    public final static int GE = Opcodes.IFGE;
+    public static final int GE = Opcodes.IFGE;
 
     /**
      * Constant for the {@link #ifCmp ifCmp} method.
      */
-    public final static int GT = Opcodes.IFGT;
+    public static final int GT = Opcodes.IFGT;
 
     /**
      * Constant for the {@link #ifCmp ifCmp} method.
      */
-    public final static int LE = Opcodes.IFLE;
+    public static final int LE = Opcodes.IFLE;
 
     /**
      * Access flags of the method visited by this adapter.
@@ -396,7 +398,58 @@ public class GeneratorAdapter extends LocalVariablesSorter {
         if (value == null) {
             mv.visitInsn(Opcodes.ACONST_NULL);
         } else {
-            mv.visitLdcInsn(value);
+            switch (value.getSort()) {
+                case Type.BOOLEAN:
+                    mv.visitFieldInsn(Opcodes.GETSTATIC,
+                            "java/lang/Boolean",
+                            "TYPE",
+                            CLDESC);
+                    break;
+                case Type.CHAR:
+                    mv.visitFieldInsn(Opcodes.GETSTATIC,
+                            "java/lang/Char",
+                            "TYPE",
+                            CLDESC);
+                    break;
+                case Type.BYTE:
+                    mv.visitFieldInsn(Opcodes.GETSTATIC,
+                            "java/lang/Byte",
+                            "TYPE",
+                            CLDESC);
+                    break;
+                case Type.SHORT:
+                    mv.visitFieldInsn(Opcodes.GETSTATIC,
+                            "java/lang/Short",
+                            "TYPE",
+                            CLDESC);
+                    break;
+                case Type.INT:
+                    mv.visitFieldInsn(Opcodes.GETSTATIC,
+                            "java/lang/Integer",
+                            "TYPE",
+                            CLDESC);
+                    break;
+                case Type.FLOAT:
+                    mv.visitFieldInsn(Opcodes.GETSTATIC,
+                            "java/lang/Float",
+                            "TYPE",
+                            CLDESC);
+                    break;
+                case Type.LONG:
+                    mv.visitFieldInsn(Opcodes.GETSTATIC,
+                            "java/lang/Long",
+                            "TYPE",
+                            CLDESC);
+                    break;
+                case Type.DOUBLE:
+                    mv.visitFieldInsn(Opcodes.GETSTATIC,
+                            "java/lang/Double",
+                            "TYPE",
+                            CLDESC);
+                    break;
+                default:
+                    mv.visitLdcInsn(value);
+            }
         }
     }
 
@@ -1277,13 +1330,7 @@ public class GeneratorAdapter extends LocalVariablesSorter {
      * @param type the instruction's operand.
      */
     private void typeInsn(final int opcode, final Type type) {
-        String desc;
-        if (type.getSort() == Type.ARRAY) {
-            desc = type.getDescriptor();
-        } else {
-            desc = type.getInternalName();
-        }
-        mv.visitTypeInsn(opcode, desc);
+        mv.visitTypeInsn(opcode, type.getInternalName());
     }
 
     /**

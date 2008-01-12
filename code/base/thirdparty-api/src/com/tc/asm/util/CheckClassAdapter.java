@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,6 +57,62 @@ import com.tc.asm.tree.analysis.SimpleVerifier;
  * <tt>visitField(ACC_PUBLIC, "i", "I", null)</tt> <tt>visitField(ACC_PUBLIC,
  * "i", "D", null)</tt>
  * will <i>not</i> be detected by this class adapter.
+ * 
+ * <p><code>CheckClassAdapter</code> can be also used to verify bytecode
+ * transformations in order to make sure transformed bytecode is sane. For
+ * example:
+ * 
+ * <pre>
+ *   InputStream is = ...; // get bytes for the source class
+ *   ClassReader cr = new ClassReader(is);
+ *   ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+ *   ClassVisitor cv = new <b>MyClassAdapter</b>(new CheckClassAdapter(cw));
+ *   cr.accept(cv, 0);
+ * 
+ *   StringWriter sw = new StringWriter();
+ *   PrintWriter pw = new PrintWriter(sw);
+ *   CheckClassAdapter.verify(new ClassReader(cw.toByteArray()), false, pw);
+ *   assertTrue(sw.toString(), sw.toString().length()==0);
+ * </pre>
+ * 
+ * Above code runs transformed bytecode trough the
+ * <code>CheckClassAdapter</code>. It won't be exactly the same verification
+ * as JVM does, but it run data flow analysis for the code of each method and
+ * checks that expectations are met for each method instruction.
+ * 
+ * <p>If method bytecode has errors, assertion text will show the erroneous
+ * instruction number and dump of the failed method with information about
+ * locals and stack slot for each instruction. For example (format is -
+ * insnNumber locals : stack):
+ * 
+ * <pre>
+ * org.objectweb.asm.tree.analysis.AnalyzerException: Error at instruction 71: Expected I, but found .
+ *   at org.objectweb.asm.tree.analysis.Analyzer.analyze(Analyzer.java:289)
+ *   at org.objectweb.asm.util.CheckClassAdapter.verify(CheckClassAdapter.java:135)
+ * ...
+ * remove()V
+ * 00000 LinkedBlockingQueue$Itr . . . . . . . .  :
+ *   ICONST_0
+ * 00001 LinkedBlockingQueue$Itr . . . . . . . .  : I
+ *   ISTORE 2
+ * 00001 LinkedBlockingQueue$Itr <b>.</b> I . . . . . .  :
+ * ...
+ * 
+ * 00071 LinkedBlockingQueue$Itr <b>.</b> I . . . . . .  : 
+ *   ILOAD 1
+ * 00072 <b>?</b>                
+ *   INVOKESPECIAL java/lang/Integer.<init> (I)V
+ * ...
+ * </pre>
+ * 
+ * In the above output you can see that variable 1 loaded by
+ * <code>ILOAD 1</code> instruction at position <code>00071</code> is not
+ * initialized. You can also see that at the beginning of the method (code
+ * inserted by the transformation) variable 2 is initialized.
+ * 
+ * <p>Note that when used like that, <code>CheckClassAdapter.verify()</code>
+ * can trigger additional class loading, because it is using
+ * <code>SimpleVerifier</code>.
  * 
  * @author Eric Bruneton
  */
@@ -125,11 +181,14 @@ public class CheckClassAdapter extends ClassAdapter {
         ClassNode cn = new ClassNode();
         cr.accept(new CheckClassAdapter(cn), ClassReader.SKIP_DEBUG);
 
+        Type syperType = cn.superName == null
+                ? null
+                : Type.getObjectType(cn.superName);
         List methods = cn.methods;
         for (int i = 0; i < methods.size(); ++i) {
             MethodNode method = (MethodNode) methods.get(i);
             Analyzer a = new Analyzer(new SimpleVerifier(Type.getObjectType(cn.name),
-                    Type.getObjectType(cn.superName),
+                    syperType,
                     false));
             try {
                 a.analyze(cn.name, method);
@@ -166,7 +225,7 @@ public class CheckClassAdapter extends ClassAdapter {
                     s.append(' ');
                 }
                 pw.print(Integer.toString(j + 100000).substring(1));
-                pw.print(" " + s + "\n  " + mv.buf); // mv.text.get(j));
+                pw.print(" " + s + " : " + mv.buf); // mv.text.get(j));
             }
             for (int j = 0; j < method.tryCatchBlocks.size(); ++j) {
                 ((TryCatchBlockNode) method.tryCatchBlocks.get(j)).accept(mv);
@@ -209,9 +268,8 @@ public class CheckClassAdapter extends ClassAdapter {
     {
         if (start) {
             throw new IllegalStateException("visit must be called only once");
-        } else {
-            start = true;
         }
+        start = true;
         checkState();
         checkAccess(access, Opcodes.ACC_PUBLIC + Opcodes.ACC_FINAL
                 + Opcodes.ACC_SUPER + Opcodes.ACC_INTERFACE
@@ -405,15 +463,15 @@ public class CheckClassAdapter extends ClassAdapter {
             throw new IllegalArgumentException("Invalid access flags: "
                     + access);
         }
-        int pub = (access & Opcodes.ACC_PUBLIC) != 0 ? 1 : 0;
-        int pri = (access & Opcodes.ACC_PRIVATE) != 0 ? 1 : 0;
-        int pro = (access & Opcodes.ACC_PROTECTED) != 0 ? 1 : 0;
+        int pub = (access & Opcodes.ACC_PUBLIC) == 0 ? 0 : 1;
+        int pri = (access & Opcodes.ACC_PRIVATE) == 0 ? 0 : 1;
+        int pro = (access & Opcodes.ACC_PROTECTED) == 0 ? 0 : 1;
         if (pub + pri + pro > 1) {
             throw new IllegalArgumentException("public private and protected are mutually exclusive: "
                     + access);
         }
-        int fin = (access & Opcodes.ACC_FINAL) != 0 ? 1 : 0;
-        int abs = (access & Opcodes.ACC_ABSTRACT) != 0 ? 1 : 0;
+        int fin = (access & Opcodes.ACC_FINAL) == 0 ? 0 : 1;
+        int abs = (access & Opcodes.ACC_ABSTRACT) == 0 ? 0 : 1;
         if (fin + abs > 1) {
             throw new IllegalArgumentException("final and abstract are mutually exclusive: "
                     + access);

@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,21 +40,21 @@ import com.tc.asm.Type;
  */
 public class BasicValue implements Value {
 
-    public final static Value UNINITIALIZED_VALUE = new BasicValue(null);
+    public static final Value UNINITIALIZED_VALUE = new BasicValue(null);
 
-    public final static Value INT_VALUE = new BasicValue(Type.INT_TYPE);
+    public static final Value INT_VALUE = new BasicValue(Type.INT_TYPE);
 
-    public final static Value FLOAT_VALUE = new BasicValue(Type.FLOAT_TYPE);
+    public static final Value FLOAT_VALUE = new BasicValue(Type.FLOAT_TYPE);
 
-    public final static Value LONG_VALUE = new BasicValue(Type.LONG_TYPE);
+    public static final Value LONG_VALUE = new BasicValue(Type.LONG_TYPE);
 
-    public final static Value DOUBLE_VALUE = new BasicValue(Type.DOUBLE_TYPE);
+    public static final Value DOUBLE_VALUE = new BasicValue(Type.DOUBLE_TYPE);
 
-    public final static Value REFERENCE_VALUE = new BasicValue(Type.getObjectType("java/lang/Object"));
+    public static final Value REFERENCE_VALUE = new BasicValue(Type.getObjectType("java/lang/Object"));
 
-    public final static Value RETURNADDRESS_VALUE = new BasicValue(null);
+    public static final Value RETURNADDRESS_VALUE = new BasicValue(null);
 
-    private Type type;
+    private final Type type;
 
     public BasicValue(final Type type) {
         this.type = type;

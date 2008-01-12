@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,55 +42,55 @@ class MethodWriter implements MethodVisitor {
     /**
      * Pseudo access flag used to denote constructors.
      */
-    final static int ACC_CONSTRUCTOR = 262144;
+    static final int ACC_CONSTRUCTOR = 262144;
 
     /**
      * Frame has exactly the same locals as the previous stack map frame and
      * number of stack items is zero.
      */
-    final static int SAME_FRAME = 0; // to 63 (0-3f)
+    static final int SAME_FRAME = 0; // to 63 (0-3f)
 
     /**
      * Frame has exactly the same locals as the previous stack map frame and
      * number of stack items is 1
      */
-    final static int SAME_LOCALS_1_STACK_ITEM_FRAME = 64; // to 127 (40-7f)
+    static final int SAME_LOCALS_1_STACK_ITEM_FRAME = 64; // to 127 (40-7f)
 
     /**
      * Reserved for future use
      */
-    final static int RESERVED = 128;
+    static final int RESERVED = 128;
 
     /**
      * Frame has exactly the same locals as the previous stack map frame and
      * number of stack items is 1. Offset is bigger then 63;
      */
-    final static int SAME_LOCALS_1_STACK_ITEM_FRAME_EXTENDED = 247; // f7
+    static final int SAME_LOCALS_1_STACK_ITEM_FRAME_EXTENDED = 247; // f7
 
     /**
      * Frame where current locals are the same as the locals in the previous
      * frame, except that the k last locals are absent. The value of k is given
      * by the formula 251-frame_type.
      */
-    final static int CHOP_FRAME = 248; // to 250 (f8-fA)
+    static final int CHOP_FRAME = 248; // to 250 (f8-fA)
 
     /**
      * Frame has exactly the same locals as the previous stack map frame and
      * number of stack items is zero. Offset is bigger then 63;
      */
-    final static int SAME_FRAME_EXTENDED = 251; // fb
+    static final int SAME_FRAME_EXTENDED = 251; // fb
 
     /**
      * Frame where current locals are the same as the locals in the previous
      * frame, except that k additional locals are defined. The value of k is
      * given by the formula frame_type-251.
      */
-    final static int APPEND_FRAME = 252; // to 254 // fc-fe
+    static final int APPEND_FRAME = 252; // to 254 // fc-fe
 
     /**
      * Full frame
      */
-    final static int FULL_FRAME = 255; // ff
+    static final int FULL_FRAME = 255; // ff
 
     /**
      * Indicates that the stack map frames must be recomputed from scratch. In
@@ -99,7 +99,7 @@ class MethodWriter implements MethodVisitor {
      * 
      * @see #compute
      */
-    private final static int FRAMES = 0;
+    private static final int FRAMES = 0;
 
     /**
      * Indicates that the maximum stack size and number of local variables must
@@ -107,14 +107,14 @@ class MethodWriter implements MethodVisitor {
      * 
      * @see #compute
      */
-    private final static int MAXS = 1;
+    private static final int MAXS = 1;
 
     /**
      * Indicates that nothing must be automatically computed.
      * 
      * @see #compute
      */
-    private final static int NOTHING = 2;
+    private static final int NOTHING = 2;
 
     /**
      * Next method writer (see {@link ClassWriter#firstMethod firstMethod}).
@@ -124,7 +124,7 @@ class MethodWriter implements MethodVisitor {
     /**
      * The class writer to which this method must be added.
      */
-    ClassWriter cw;
+    final ClassWriter cw;
 
     /**
      * Access flags of this method.
@@ -135,18 +135,18 @@ class MethodWriter implements MethodVisitor {
      * The index of the constant pool item that contains the name of this
      * method.
      */
-    private int name;
+    private final int name;
 
     /**
      * The index of the constant pool item that contains the descriptor of this
      * method.
      */
-    private int desc;
+    private final int desc;
 
     /**
      * The descriptor of this method.
      */
-    private String descriptor;
+    private final String descriptor;
 
     /**
      * The signature of this method.
@@ -207,6 +207,11 @@ class MethodWriter implements MethodVisitor {
      * <tt>null</tt>.
      */
     private AnnotationWriter[] ipanns;
+
+    /**
+     * The number of synthetic parameters of this method.
+     */
+    private int synthetics;
 
     /**
      * The non standard attributes of the method.
@@ -323,9 +328,9 @@ class MethodWriter implements MethodVisitor {
     private boolean resize;
 
     /**
-     * Indicates if the instructions contain at least one JSR instruction.
+     * The number of subroutines in this method.
      */
-    private boolean jsr;
+    private int subroutines;
 
     // ------------------------------------------------------------------------
 
@@ -342,17 +347,17 @@ class MethodWriter implements MethodVisitor {
     /**
      * Indicates what must be automatically computed.
      * 
-     * @see FRAMES
-     * @see MAXS
-     * @see NOTHING
+     * @see #FRAMES
+     * @see #MAXS
+     * @see #NOTHING
      */
-    private int compute;
+    private final int compute;
 
     /**
      * A list of labels. This list is the list of basic blocks in the method,
      * i.e. a list of Label objects linked to each other by their
      * {@link Label#successor} field, in the order they are visited by
-     * {@link visitLabel}, and starting with the first basic block.
+     * {@link MethodVisitor#visitLabel}, and starting with the first basic block.
      */
     private Label labels;
 
@@ -424,7 +429,9 @@ class MethodWriter implements MethodVisitor {
         this.name = cw.newUTF8(name);
         this.desc = cw.newUTF8(desc);
         this.descriptor = desc;
-        this.signature = signature;
+        if (ClassReader.SIGNATURES) {
+            this.signature = signature;
+        }
         if (exceptions != null && exceptions.length > 0) {
             exceptionCount = exceptions.length;
             this.exceptions = new int[exceptionCount];
@@ -434,7 +441,7 @@ class MethodWriter implements MethodVisitor {
         }
         this.compute = computeFrames ? FRAMES : (computeMaxs ? MAXS : NOTHING);
         if (computeMaxs || computeFrames) {
-            if (computeFrames && name.equals("<init>")) {
+            if (computeFrames && "<init>".equals(name)) {
                 this.access |= ACC_CONSTRUCTOR;
             }
             // updates maxLocals
@@ -455,6 +462,9 @@ class MethodWriter implements MethodVisitor {
     // ------------------------------------------------------------------------
 
     public AnnotationVisitor visitAnnotationDefault() {
+        if (!ClassReader.ANNOTATIONS) {
+            return null;
+        }
         annd = new ByteVector();
         return new AnnotationWriter(cw, false, annd, null, 0);
     }
@@ -463,6 +473,9 @@ class MethodWriter implements MethodVisitor {
         final String desc,
         final boolean visible)
     {
+        if (!ClassReader.ANNOTATIONS) {
+            return null;
+        }
         ByteVector bv = new ByteVector();
         // write type, and reserve space for values count
         bv.putShort(cw.newUTF8(desc)).putShort(0);
@@ -482,7 +495,16 @@ class MethodWriter implements MethodVisitor {
         final String desc,
         final boolean visible)
     {
+        if (!ClassReader.ANNOTATIONS) {
+            return null;
+        }
         ByteVector bv = new ByteVector();
+        if ("Ljava/lang/Synthetic;".equals(desc)) {
+            // workaround for a bug in javac with synthetic parameters
+            // see ClassReader.readParameterAnnotations
+            synthetics = Math.max(synthetics, parameter + 1);
+            return new AnnotationWriter(cw, false, bv, null, 0);
+        }
         // write type, and reserve space for values count
         bv.putShort(cw.newUTF8(desc)).putShort(0);
         AnnotationWriter aw = new AnnotationWriter(cw, true, bv, bv, 2);
@@ -522,7 +544,7 @@ class MethodWriter implements MethodVisitor {
         final int nStack,
         final Object[] stack)
     {
-        if (compute == FRAMES) {
+        if (!ClassReader.FRAMES || compute == FRAMES) {
             return;
         }
 
@@ -715,8 +737,8 @@ class MethodWriter implements MethodVisitor {
         }
     }
 
-    public void visitTypeInsn(final int opcode, final String desc) {
-        Item i = cw.newClassItem(desc);
+    public void visitTypeInsn(final int opcode, final String type) {
+        Item i = cw.newClassItem(type);
         // Label currentBlock = this.currentBlock;
         if (currentBlock != null) {
             if (compute == FRAMES) {
@@ -847,7 +869,10 @@ class MethodWriter implements MethodVisitor {
                 }
             } else {
                 if (opcode == Opcodes.JSR) {
-                    jsr = true;
+                    if ((label.status & Label.SUBROUTINE) == 0) {
+                        label.status |= Label.SUBROUTINE;
+                        ++subroutines;
+                    }
                     currentBlock.status |= Label.JSR;
                     addSuccessor(stackSize + 1, label);
                     // creates a Label for the next basic block
@@ -1033,7 +1058,7 @@ class MethodWriter implements MethodVisitor {
         final int min,
         final int max,
         final Label dflt,
-        final Label labels[])
+        final Label[] labels)
     {
         // adds the instruction to the bytecode of the method
         int source = code.length;
@@ -1050,8 +1075,8 @@ class MethodWriter implements MethodVisitor {
 
     public void visitLookupSwitchInsn(
         final Label dflt,
-        final int keys[],
-        final Label labels[])
+        final int[] keys,
+        final Label[] labels)
     {
         // adds the instruction to the bytecode of the method
         int source = code.length;
@@ -1178,7 +1203,7 @@ class MethodWriter implements MethodVisitor {
     }
 
     public void visitMaxs(final int maxStack, final int maxLocals) {
-        if (compute == FRAMES) {
+        if (ClassReader.FRAMES && compute == FRAMES) {
             // completes the control flow graph with exception handler blocks
             Handler handler = firstHandler;
             while (handler != null) {
@@ -1296,15 +1321,15 @@ class MethodWriter implements MethodVisitor {
                     b.info = Edge.EXCEPTION;
                     b.successor = h;
                     // adds it to the successors of 'l'
-                    if ((l.status & Label.JSR) != 0) {
+                    if ((l.status & Label.JSR) == 0) {
+                        b.next = l.successors;
+                        l.successors = b;
+                    } else {
                         // if l is a JSR block, adds b after the first two edges
                         // to preserve the hypothesis about JSR block successors
                         // order (see {@link #visitJumpInsn})
                         b.next = l.successors.next.next;
                         l.successors.next.next = b;
-                    } else {
-                        b.next = l.successors;
-                        l.successors = b;
                     }
                     // goes to the next label
                     l = l.successor;
@@ -1312,36 +1337,46 @@ class MethodWriter implements MethodVisitor {
                 handler = handler.next;
             }
 
-            if (jsr) {
+            if (subroutines > 0) {
                 // completes the control flow graph with the RET successors
                 /*
                  * first step: finds the subroutines. This step determines, for
-                 * each basic block, to which subroutine(s) it belongs, and
-                 * stores this set as a bit set in the {@link Label#status}
-                 * field. Subroutines are numbered with powers of two, from
-                 * 0x1000 to 0x80000000 (so there must be at most 20 subroutines
-                 * in a method).
+                 * each basic block, to which subroutine(s) it belongs.
                  */
                 // finds the basic blocks that belong to the "main" subroutine
-                int id = 0x1000;
-                findSubroutine(labels, id);
+                int id = 0;
+                labels.visitSubroutine(null, 1, subroutines);
                 // finds the basic blocks that belong to the real subroutines
                 Label l = labels;
                 while (l != null) {
                     if ((l.status & Label.JSR) != 0) {
                         // the subroutine is defined by l's TARGET, not by l
                         Label subroutine = l.successors.next.successor;
-                        // if this subroutine does not have an id yet...
-                        if ((subroutine.status & ~0xFFF) == 0) {
+                        // if this subroutine has not been visited yet...
+                        if ((subroutine.status & Label.VISITED) == 0) {
                             // ...assigns it a new id and finds its basic blocks
-                            id = id << 1;
-                            findSubroutine(subroutine, id);
+                            id += 1;
+                            subroutine.visitSubroutine(null, (id / 32L) << 32
+                                    | (1L << (id % 32)), subroutines);
                         }
                     }
                     l = l.successor;
                 }
                 // second step: finds the successors of RET blocks
-                findSubroutineSuccessors(0x1000, new Label[10], 0);
+                l = labels;
+                while (l != null) {
+                    if ((l.status & Label.JSR) != 0) {
+                        Label L = labels;
+                        while (L != null) {
+                            L.status &= ~Label.VISITED;
+                            L = L.successor;
+                        }
+                        // the subroutine is defined by l's TARGET, not by l
+                        Label subroutine = l.successors.next.successor;
+                        subroutine.visitSubroutine(l, 0, subroutines);
+                    }
+                    l = l.successor;
+                }
             }
 
             /*
@@ -1367,7 +1402,7 @@ class MethodWriter implements MethodVisitor {
                 if (blockMax > max) {
                     max = blockMax;
                 }
-                // analyses the successors of the block
+                // analyzes the successors of the block
                 Edge b = l.successors;
                 if ((l.status & Label.JSR) != 0) {
                     // ignores the first edge of JSR blocks (virtual successor)
@@ -1472,95 +1507,6 @@ class MethodWriter implements MethodVisitor {
             currentBlock.outputStackMax = maxStackSize;
         }
         currentBlock = null;
-    }
-
-    /**
-     * Finds the basic blocks that belong to a given subroutine, and marks these
-     * blocks as belonging to this subroutine (by using {@link Label#status} as
-     * a bit set (see {@link #visitMaxs}). This recursive method follows the
-     * control flow graph to find all the blocks that are reachable from the
-     * given block WITHOUT following any JSR target.
-     * 
-     * @param block a block that belongs to the subroutine
-     * @param id the id of this subroutine
-     */
-    private void findSubroutine(final Label block, final int id) {
-        // if 'block' is already marked as belonging to subroutine 'id', returns
-        if ((block.status & id) != 0) {
-            return;
-        }
-        // marks 'block' as belonging to subroutine 'id'
-        block.status |= id;
-        // calls this method recursively on each successor, except JSR targets
-        Edge e = block.successors;
-        while (e != null) {
-            // if 'block' is a JSR block, then 'block.successors.next' leads
-            // to the JSR target (see {@link #visitJumpInsn}) and must therefore
-            // not be followed
-            if ((block.status & Label.JSR) == 0 || e != block.successors.next) {
-                findSubroutine(e.successor, id);
-            }
-            e = e.next;
-        }
-    }
-
-    /**
-     * Finds the successors of the RET blocks of the specified subroutine, and
-     * of any nested subroutine it calls.
-     * 
-     * @param id id of the subroutine whose RET block successors must be found.
-     * @param JSRs the JSR blocks that were followed to reach this subroutine.
-     * @param nJSRs number of JSR blocks in the JSRs array.
-     */
-    private void findSubroutineSuccessors(
-        final int id,
-        final Label[] JSRs,
-        final int nJSRs)
-    {
-        // iterates over all the basic blocks...
-        Label l = labels;
-        while (l != null) {
-            // for those that belong to subroutine 'id'...
-            if ((l.status & id) != 0) {
-                if ((l.status & Label.JSR) != 0) {
-                    // finds the subroutine to which 'l' leads by following the
-                    // second edge of l.successors (see {@link #visitJumpInsn})
-                    int nId = l.successors.next.successor.status & ~0xFFF;
-                    if (nId != id) {
-                        // calls this method recursively with l pushed onto the
-                        // JSRs stack to find the successors of the RET blocks
-                        // of this nested subroutine 'nId'
-                        JSRs[nJSRs] = l;
-                        findSubroutineSuccessors(nId, JSRs, nJSRs + 1);
-                    }
-                } else if ((l.status & Label.RET) != 0) {
-                    /*
-                     * finds the JSR block in the JSRs stack that corresponds to
-                     * this RET block, and updates the successors of this RET
-                     * block accordingly. This corresponding JSR is the one that
-                     * leads to the subroutine to which the RET block belongs.
-                     * But the RET block can belong to several subroutines (if a
-                     * nested subroutine returns to its parent subroutine
-                     * implicitely, without a RET). So, in fact, the JSR that
-                     * corresponds to this RET is the first block in the JSRs
-                     * stack, starting from the bottom of the stack, that leads
-                     * to a subroutine to which the RET block belongs.
-                     */
-                    for (int i = 0; i < nJSRs; ++i) {
-                        int JSRstatus = JSRs[i].successors.next.successor.status;
-                        if (((JSRstatus & ~0xFFF) & (l.status & ~0xFFF)) != 0) {
-                            Edge e = new Edge();
-                            e.info = l.inputStackTop;
-                            e.successor = JSRs[i].successors.successor;
-                            e.next = l.successors;
-                            l.successors = e;
-                            break;
-                        }
-                    }
-                }
-            }
-            l = l.successor;
-        }
     }
 
     // ------------------------------------------------------------------------
@@ -1841,7 +1787,11 @@ class MethodWriter implements MethodVisitor {
         }
         if (resize) {
             // replaces the temporary jump opcodes introduced by Label.resolve.
-            resizeInstructions();
+            if (ClassReader.RESIZE) {
+                resizeInstructions();
+            } else {
+                throw new RuntimeException("Method code too large!");
+            }
         }
         int size = 8;
         if (code.length > 0) {
@@ -1886,34 +1836,34 @@ class MethodWriter implements MethodVisitor {
             cw.newUTF8("Deprecated");
             size += 6;
         }
-        if (signature != null) {
+        if (ClassReader.SIGNATURES && signature != null) {
             cw.newUTF8("Signature");
             cw.newUTF8(signature);
             size += 8;
         }
-        if (annd != null) {
+        if (ClassReader.ANNOTATIONS && annd != null) {
             cw.newUTF8("AnnotationDefault");
             size += 6 + annd.length;
         }
-        if (anns != null) {
+        if (ClassReader.ANNOTATIONS && anns != null) {
             cw.newUTF8("RuntimeVisibleAnnotations");
             size += 8 + anns.getSize();
         }
-        if (ianns != null) {
+        if (ClassReader.ANNOTATIONS && ianns != null) {
             cw.newUTF8("RuntimeInvisibleAnnotations");
             size += 8 + ianns.getSize();
         }
-        if (panns != null) {
+        if (ClassReader.ANNOTATIONS && panns != null) {
             cw.newUTF8("RuntimeVisibleParameterAnnotations");
-            size += 7 + 2 * panns.length;
-            for (int i = panns.length - 1; i >= 0; --i) {
+            size += 7 + 2 * (panns.length - synthetics);
+            for (int i = panns.length - 1; i >= synthetics; --i) {
                 size += panns[i] == null ? 0 : panns[i].getSize();
             }
         }
-        if (ipanns != null) {
+        if (ClassReader.ANNOTATIONS && ipanns != null) {
             cw.newUTF8("RuntimeInvisibleParameterAnnotations");
-            size += 7 + 2 * ipanns.length;
-            for (int i = ipanns.length - 1; i >= 0; --i) {
+            size += 7 + 2 * (ipanns.length - synthetics);
+            for (int i = ipanns.length - 1; i >= synthetics; --i) {
                 size += ipanns[i] == null ? 0 : ipanns[i].getSize();
             }
         }
@@ -1950,22 +1900,22 @@ class MethodWriter implements MethodVisitor {
         if ((access & Opcodes.ACC_DEPRECATED) != 0) {
             ++attributeCount;
         }
-        if (signature != null) {
+        if (ClassReader.SIGNATURES && signature != null) {
             ++attributeCount;
         }
-        if (annd != null) {
+        if (ClassReader.ANNOTATIONS && annd != null) {
             ++attributeCount;
         }
-        if (anns != null) {
+        if (ClassReader.ANNOTATIONS && anns != null) {
             ++attributeCount;
         }
-        if (ianns != null) {
+        if (ClassReader.ANNOTATIONS && ianns != null) {
             ++attributeCount;
         }
-        if (panns != null) {
+        if (ClassReader.ANNOTATIONS && panns != null) {
             ++attributeCount;
         }
-        if (ipanns != null) {
+        if (ClassReader.ANNOTATIONS && ipanns != null) {
             ++attributeCount;
         }
         if (attrs != null) {
@@ -2065,31 +2015,31 @@ class MethodWriter implements MethodVisitor {
         if ((access & Opcodes.ACC_DEPRECATED) != 0) {
             out.putShort(cw.newUTF8("Deprecated")).putInt(0);
         }
-        if (signature != null) {
+        if (ClassReader.SIGNATURES && signature != null) {
             out.putShort(cw.newUTF8("Signature"))
                     .putInt(2)
                     .putShort(cw.newUTF8(signature));
         }
-        if (annd != null) {
+        if (ClassReader.ANNOTATIONS && annd != null) {
             out.putShort(cw.newUTF8("AnnotationDefault"));
             out.putInt(annd.length);
             out.putByteArray(annd.data, 0, annd.length);
         }
-        if (anns != null) {
+        if (ClassReader.ANNOTATIONS && anns != null) {
             out.putShort(cw.newUTF8("RuntimeVisibleAnnotations"));
             anns.put(out);
         }
-        if (ianns != null) {
+        if (ClassReader.ANNOTATIONS && ianns != null) {
             out.putShort(cw.newUTF8("RuntimeInvisibleAnnotations"));
             ianns.put(out);
         }
-        if (panns != null) {
+        if (ClassReader.ANNOTATIONS && panns != null) {
             out.putShort(cw.newUTF8("RuntimeVisibleParameterAnnotations"));
-            AnnotationWriter.put(panns, out);
+            AnnotationWriter.put(panns, synthetics, out);
         }
-        if (ipanns != null) {
+        if (ClassReader.ANNOTATIONS && ipanns != null) {
             out.putShort(cw.newUTF8("RuntimeInvisibleParameterAnnotations"));
-            AnnotationWriter.put(ipanns, out);
+            AnnotationWriter.put(ipanns, synthetics, out);
         }
         if (attrs != null) {
             attrs.put(cw, null, 0, -1, -1, out);

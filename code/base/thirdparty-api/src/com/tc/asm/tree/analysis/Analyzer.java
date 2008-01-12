@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,7 +55,7 @@ import com.tc.asm.tree.VarInsnNode;
  */
 public class Analyzer implements Opcodes {
 
-    private Interpreter interpreter;
+    private final Interpreter interpreter;
 
     private int n;
 
@@ -131,7 +131,7 @@ public class Analyzer implements Opcodes {
         List subroutineCalls = new ArrayList();
         Map subroutineHeads = new HashMap();
         findSubroutine(0, main, subroutineCalls);
-        while (subroutineCalls.size() > 0) {
+        while (!subroutineCalls.isEmpty()) {
             JumpInsnNode jsr = (JumpInsnNode) subroutineCalls.remove(0);
             Subroutine sub = (Subroutine) subroutineHeads.get(jsr.label);
             if (sub == null) {
@@ -451,13 +451,13 @@ public class Analyzer implements Opcodes {
     {
         Frame oldFrame = frames[insn];
         Subroutine oldSubroutine = subroutines[insn];
-        boolean changes = false;
+        boolean changes;
 
         if (oldFrame == null) {
             frames[insn] = newFrame(frame);
             changes = true;
         } else {
-            changes |= oldFrame.merge(frame, interpreter);
+            changes = oldFrame.merge(frame, interpreter);
         }
 
         if (oldSubroutine == null) {
@@ -485,7 +485,7 @@ public class Analyzer implements Opcodes {
     {
         Frame oldFrame = frames[insn];
         Subroutine oldSubroutine = subroutines[insn];
-        boolean changes = false;
+        boolean changes;
 
         afterRET.merge(beforeJSR, access);
 
@@ -493,7 +493,7 @@ public class Analyzer implements Opcodes {
             frames[insn] = newFrame(afterRET);
             changes = true;
         } else {
-            changes |= oldFrame.merge(afterRET, access);
+            changes = oldFrame.merge(afterRET, access);
         }
 
         if (oldSubroutine != null && subroutineBeforeJSR != null) {

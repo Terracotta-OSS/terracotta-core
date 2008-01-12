@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@ public class StaticInitMerger extends ClassAdapter {
 
     private MethodVisitor clinit;
 
-    private String prefix;
+    private final String prefix;
 
     private int counter;
 
@@ -74,7 +74,7 @@ public class StaticInitMerger extends ClassAdapter {
         final String[] exceptions)
     {
         MethodVisitor mv;
-        if (name.equals("<clinit>")) {
+        if ("<clinit>".equals(name)) {
             int a = Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC;
             String n = prefix + counter++;
             mv = cv.visitMethod(a, n, desc, signature, exceptions);

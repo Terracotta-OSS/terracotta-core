@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,13 +45,13 @@ public abstract class AbstractVisitor {
     /**
      * The names of the Java Virtual Machine opcodes.
      */
-    public final static String[] OPCODES;
+    public static final String[] OPCODES;
     /**
      * Types for <code>operand</code> parameter of the
      * {@link com.tc.asm.MethodVisitor#visitIntInsn} method when
      * <code>opcode</code> is <code>NEWARRAY</code>.
      */
-    public final static String[] TYPES;
+    public static final String[] TYPES;
 
     static {
         String s = "NOP,ACONST_NULL,ICONST_M1,ICONST_0,ICONST_1,ICONST_2,"
@@ -180,7 +180,7 @@ public abstract class AbstractVisitor {
      * @param l a string tree, i.e., a string list that can contain other string
      *        lists, and so on recursively.
      */
-    void printList(final PrintWriter pw, final List l) {
+    static void printList(final PrintWriter pw, final List l) {
         for (int i = 0; i < l.size(); ++i) {
             Object o = l.get(i);
             if (o instanceof List) {

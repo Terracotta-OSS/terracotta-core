@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -79,7 +79,7 @@ public class CodeSizeEvaluator extends MethodAdapter implements Opcodes {
     }
 
     public void visitVarInsn(final int opcode, final int var) {
-        if (var < 4 && opcode != Opcodes.RET) {
+        if (var < 4 && opcode != RET) {
             minSize += 1;
             maxSize += 1;
         } else if (var >= 256) {
@@ -94,11 +94,11 @@ public class CodeSizeEvaluator extends MethodAdapter implements Opcodes {
         }
     }
 
-    public void visitTypeInsn(final int opcode, final String desc) {
+    public void visitTypeInsn(final int opcode, final String type) {
         minSize += 3;
         maxSize += 3;
         if (mv != null) {
-            mv.visitTypeInsn(opcode, desc);
+            mv.visitTypeInsn(opcode, type);
         }
     }
 

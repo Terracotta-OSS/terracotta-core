@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
+ * Copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -281,15 +281,20 @@ final class AnnotationWriter implements AnnotationVisitor {
      * Puts the given annotation lists into the given byte vector.
      * 
      * @param panns an array of annotation writer lists.
+     * @param off index of the first annotation to be written.
      * @param out where the annotations must be put.
      */
-    static void put(final AnnotationWriter[] panns, final ByteVector out) {
-        int size = 1 + 2 * panns.length;
-        for (int i = 0; i < panns.length; ++i) {
+    static void put(
+        final AnnotationWriter[] panns,
+        final int off,
+        final ByteVector out)
+    {
+        int size = 1 + 2 * (panns.length - off);
+        for (int i = off; i < panns.length; ++i) {
             size += panns[i] == null ? 0 : panns[i].getSize();
         }
-        out.putInt(size).putByte(panns.length);
-        for (int i = 0; i < panns.length; ++i) {
+        out.putInt(size).putByte(panns.length - off);
+        for (int i = off; i < panns.length; ++i) {
             AnnotationWriter aw = panns[i];
             AnnotationWriter last = null;
             int n = 0;
