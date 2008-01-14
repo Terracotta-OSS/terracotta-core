@@ -37,7 +37,7 @@ public class TestLockManager implements ClientLockManager {
     return;
   }
 
-  public void lock(LockID id, ThreadID threadID, int type) {
+  public void lock(LockID id, ThreadID threadID, int type, String lockType, String contextInfo) {
     locks.add(new Object[] { id, threadID, new Integer(type) });
   }
 
@@ -119,7 +119,7 @@ public class TestLockManager implements ClientLockManager {
     throw new ImplementMe();
   }
 
-  public boolean tryLock(LockID id, ThreadID threadID, WaitInvocation timeout, int type) {
+  public boolean tryLock(LockID id, ThreadID threadID, WaitInvocation timeout, int type, String lockType) {
     throw new ImplementMe();
   }
 
@@ -134,13 +134,16 @@ public class TestLockManager implements ClientLockManager {
   public void cannotAwardLock(SessionID sessionID, LockID id, ThreadID threadID, int type) {
     throw new ImplementMe();
   }
-
-  public void enableStat(LockID lockID, int lockStackTraceDepth, int lockStatCollectFrequency) {
+  
+  public void getLockSpecs() {
     throw new ImplementMe();
   }
 
-  public void disableStat(LockID lockID) {
+  public void setLockStatisticsConfig(int traceDepth, int gatherInterval) {
     throw new ImplementMe();
   }
 
+  public void setLockStatisticsEnabled(boolean statEnable) {
+    throw new ImplementMe();
+  }
 }

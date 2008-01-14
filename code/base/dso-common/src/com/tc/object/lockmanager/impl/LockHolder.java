@@ -2,7 +2,7 @@
  * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tc.objectserver.lockmanager.api;
+package com.tc.object.lockmanager.impl;
 
 import com.tc.net.groups.NodeID;
 import com.tc.object.lockmanager.api.LockID;
@@ -39,6 +39,10 @@ public class LockHolder implements Serializable {
   public LockHolder(LockID lockID, NodeID cid, String channelAddr, ThreadID threadID, int level) {
     this(lockID, cid, channelAddr, threadID, level, NON_SET_TIME_MILLIS);
   }
+  
+  public LockHolder(LockID lockID, NodeID cid, ThreadID threadID, long timeRequested) {
+    this(lockID, cid, null, threadID, LockLevel.NIL_LOCK_LEVEL, timeRequested);
+  }
 
   public LockID getLockID() {
     return this.lockID;
@@ -73,6 +77,7 @@ public class LockHolder implements Serializable {
       this.timeRequested = timeAcquired;
     }
     this.timeAcquired = timeAcquired;
+    getAndSetWaitTimeInMillis();
   }
 
   public void lockReleased() {
@@ -80,19 +85,23 @@ public class LockHolder implements Serializable {
     if (timeAcquired <= 0) {
       timeAcquired = timeReleased;
     }
+    getAndSetHeldTimeInMillis();
+  }
+  
+  public void computeWaitAndHeldTimeInMillis() {
+    if (timeAcquired <= 0) {
+      getAndSetWaitTimeInMillis();
+    } else {
+      getAndSetWaitTimeInMillis();
+      getAndSetHeldTimeInMillis();
+    }
   }
 
   public long getWaitTimeInMillis() {
-    if (waitTimeInMillis == NON_SET_TIME_MILLIS) {
-      getAndSetWaitTimeInMillis();
-    }
     return waitTimeInMillis;
   }
 
   public long getHeldTimeInMillis() {
-    if (heldTimeInMillis == NON_SET_TIME_MILLIS) {
-      getAndSetHeldTimeInMillis();
-    }
     return heldTimeInMillis;
   }
 

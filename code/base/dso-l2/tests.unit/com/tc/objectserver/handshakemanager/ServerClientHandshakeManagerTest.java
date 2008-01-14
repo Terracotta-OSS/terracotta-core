@@ -169,12 +169,12 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
 
     List lockContexts = new LinkedList();
 
-    lockContexts.add(new LockContext(new LockID("my lock"), clientID1, new ThreadID(10001), LockLevel.WRITE));
-    lockContexts.add(new LockContext(new LockID("my other lock)"), clientID1, new ThreadID(10002), LockLevel.READ));
+    lockContexts.add(new LockContext(new LockID("my lock"), clientID1, new ThreadID(10001), LockLevel.WRITE, String.class.getName()));
+    lockContexts.add(new LockContext(new LockID("my other lock)"), clientID1, new ThreadID(10002), LockLevel.READ, String.class.getName()));
     handshake.lockContexts.addAll(lockContexts);
 
     WaitContext waitContext = new WaitContext(new LockID("d;alkjd"), clientID1, new ThreadID(101), LockLevel.WRITE,
-                                              new WaitInvocation());
+                                              String.class.getName(), new WaitInvocation());
     handshake.waitContexts.add(waitContext);
     handshake.isChangeListener = true;
 

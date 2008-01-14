@@ -9,4 +9,8 @@ public class XTableModel extends DefaultTableModel {
   public XTableModel() {
     super();
   }
+  
+  public XTableModel(Object[] columnNames) {
+    super(columnNames, 0);
+  }
 }

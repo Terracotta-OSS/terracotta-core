@@ -85,7 +85,8 @@ public final class HibernateTerracottaConfigurator extends TerracottaConfigurato
     Bundle thisBundle = getExportedBundle(context, "org.terracotta.modules.clustered_hibernate_3.1.2");
     addExportedBundleClass(thisBundle, "org.terracotta.modules.hibernate_3_1_2.util.HibernateUtil");
 
-    configHelper.addExcludePattern("org.hibernate.type.TypeFactory");
+    // We need TypeFactory to be instrumented for QueryCache. Refer to DEV-1183 for details.
+    // configHelper.addExcludePattern("org.hibernate.type.TypeFactory");
     configHelper.addExcludePattern("org.hibernate.engine.Cascade");
     configHelper.addExcludePattern("org.hibernate.tuple.entity.AbstractEntityTuplizer");
     configHelper.addExcludePattern("org.hibernate.engine.TwoPhaseLoad");

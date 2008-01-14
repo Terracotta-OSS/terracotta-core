@@ -5,39 +5,70 @@ package com.tc.management;
 
 import com.tc.async.api.Sink;
 import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.net.DSOClientMessageChannel;
 
 public interface ClientLockStatManager {
   public final static ClientLockStatManager NULL_CLIENT_LOCK_STAT_MANAGER = new ClientLockStatManager() {
 
-    public void recordStackTrace(LockID lockID) {
+    public void setLockStatisticsConfig(int traceDepth, int gatherInterval) {
       // do nothing
     }
 
-    public void enableStackTrace(LockID lockID, int lockStackTraceDepth, int lockStatCollectFrequency) {
-      // do nothing
-    }
-
-    public boolean isStatEnabled(LockID lockID) {
+    public boolean isStatEnabled() {
       return false;
     }
 
-    public void disableStackTrace(LockID lockID) {
+    public void setLockStatisticsEnabled(boolean statEnable) {
       // do nothing
     }
 
     public void start(DSOClientMessageChannel channel, Sink sink) {
       // do nothing
     }
+
+    public void recordLockRequested(LockID lockID, ThreadID threadID, String contextInfo, int numberOfPendingLockRequests) {
+      // do nothing
+    }
+
+    public void recordLockAwarded(LockID lockID, ThreadID threadID) {
+      // do nothing
+    }
+    
+    public void recordLockReleased(LockID lockID, ThreadID threadID) {
+      // do nothing
+    }
+    
+    public void recordLockHopped(LockID lockID, ThreadID threadID) {
+      // do nothing
+    }
+    
+    public void recordLockRejected(LockID lockID, ThreadID threadID) {
+      // do nothing
+    }
+    
+    public void getLockSpecs() {
+      // do nothing
+    }
   };
   
   public void start(DSOClientMessageChannel channel, Sink sink);
   
-  public void recordStackTrace(LockID lockID);
+  public void recordLockRequested(LockID lockID, ThreadID threadID, String contextInfo, int numberOfPendingLockRequests);
   
-  public void enableStackTrace(LockID lockID, int lockStackTraceDepth, int lockStatCollectFrequency);
+  public void recordLockAwarded(LockID lockID, ThreadID threadID);
   
-  public void disableStackTrace(LockID lockID);
+  public void recordLockReleased(LockID lockID, ThreadID threadID);
   
-  public boolean isStatEnabled(LockID lockID);
+  public void recordLockHopped(LockID lockID, ThreadID threadID);
+  
+  public void recordLockRejected(LockID lockID, ThreadID threadID);
+  
+  public void setLockStatisticsConfig(int traceDepth, int gatherInterval);
+  
+  public void setLockStatisticsEnabled(boolean statEnable);
+  
+  public boolean isStatEnabled();
+  
+  public void getLockSpecs();
 }

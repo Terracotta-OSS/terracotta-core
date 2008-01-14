@@ -9,6 +9,7 @@ import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
+import com.tc.config.lock.LockContextInfo;
 import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.NullTCLogger;
@@ -62,11 +63,11 @@ public class ClientLockManagerTest extends TestCase {
     rmtLockManager.resetFlushCount();
 
     assertEquals(0, rmtLockManager.getFlushCount());
-    lockManager.lock(lockID_1, threadID_1, LockLevel.WRITE);
-    lockManager.lock(lockID_1, threadID_1, LockLevel.READ);
-    lockManager.lock(lockID_1, threadID_1, LockLevel.SYNCHRONOUS_WRITE);
-    lockManager.lock(lockID_1, threadID_1, LockLevel.WRITE);
-    lockManager.lock(lockID_1, threadID_1, LockLevel.SYNCHRONOUS_WRITE);
+    lockManager.lock(lockID_1, threadID_1, LockLevel.WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    lockManager.lock(lockID_1, threadID_1, LockLevel.READ, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    lockManager.lock(lockID_1, threadID_1, LockLevel.SYNCHRONOUS_WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    lockManager.lock(lockID_1, threadID_1, LockLevel.WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    lockManager.lock(lockID_1, threadID_1, LockLevel.SYNCHRONOUS_WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     assertEquals(0, rmtLockManager.getFlushCount());
     lockManager.unlock(lockID_1, threadID_1);
     assertEquals(1, rmtLockManager.getFlushCount());
@@ -83,11 +84,11 @@ public class ClientLockManagerTest extends TestCase {
     rmtLockManager.makeLocksGreedy();
 
     assertEquals(0, rmtLockManager.getFlushCount());
-    lockManager.lock(lockID_2, threadID_2, LockLevel.WRITE);
-    lockManager.lock(lockID_2, threadID_2, LockLevel.READ);
-    lockManager.lock(lockID_2, threadID_2, LockLevel.SYNCHRONOUS_WRITE);
-    lockManager.lock(lockID_2, threadID_2, LockLevel.WRITE);
-    lockManager.lock(lockID_2, threadID_2, LockLevel.SYNCHRONOUS_WRITE);
+    lockManager.lock(lockID_2, threadID_2, LockLevel.WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    lockManager.lock(lockID_2, threadID_2, LockLevel.READ, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    lockManager.lock(lockID_2, threadID_2, LockLevel.SYNCHRONOUS_WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    lockManager.lock(lockID_2, threadID_2, LockLevel.WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    lockManager.lock(lockID_2, threadID_2, LockLevel.SYNCHRONOUS_WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     assertEquals(0, rmtLockManager.getFlushCount());
     lockManager.unlock(lockID_2, threadID_2);
     assertEquals(1, rmtLockManager.getFlushCount());
@@ -111,14 +112,14 @@ public class ClientLockManagerTest extends TestCase {
     rmtLockManager.resetFlushCount();
 
     assertEquals(0, rmtLockManager.getFlushCount());
-    lockManager.lock(lockID_1, threadID_1, LockLevel.SYNCHRONOUS_WRITE);
+    lockManager.lock(lockID_1, threadID_1, LockLevel.SYNCHRONOUS_WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     assertEquals(0, rmtLockManager.getFlushCount());
     lockManager.unlock(lockID_1, threadID_1);
     assertEquals(1, rmtLockManager.getFlushCount());
 
     rmtLockManager.makeLocksGreedy();
 
-    lockManager.lock(lockID_2, threadID_2, LockLevel.SYNCHRONOUS_WRITE);
+    lockManager.lock(lockID_2, threadID_2, LockLevel.SYNCHRONOUS_WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     assertEquals(1, rmtLockManager.getFlushCount());
     lockManager.unlock(lockID_2, threadID_2);
     assertEquals(2, rmtLockManager.getFlushCount());
@@ -137,12 +138,12 @@ public class ClientLockManagerTest extends TestCase {
     rmtLockManager.resetFlushCount();
 
     assertEquals(0, rmtLockManager.getFlushCount());
-    lockManager.lock(lockID_1, threadID_1, LockLevel.SYNCHRONOUS_WRITE);
+    lockManager.lock(lockID_1, threadID_1, LockLevel.SYNCHRONOUS_WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     assertEquals(0, rmtLockManager.getFlushCount());
 
     WaitInvocation waitInvocation = new WaitInvocation();
     NoExceptionLinkedQueue barrier = new NoExceptionLinkedQueue();
-    WaitLockRequest waitLockRequest = new WaitLockRequest(lockID_1, threadID_1, LockLevel.SYNCHRONOUS_WRITE,
+    WaitLockRequest waitLockRequest = new WaitLockRequest(lockID_1, threadID_1, LockLevel.SYNCHRONOUS_WRITE, String.class.getName(),
                                                           waitInvocation);
     LockWaiter waiterThread = new LockWaiter(barrier, waitLockRequest, new Object());
     waiterThread.start();
@@ -153,11 +154,11 @@ public class ClientLockManagerTest extends TestCase {
 
     rmtLockManager.makeLocksGreedy();
 
-    lockManager.lock(lockID_2, threadID_2, LockLevel.SYNCHRONOUS_WRITE);
+    lockManager.lock(lockID_2, threadID_2, LockLevel.SYNCHRONOUS_WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     assertEquals(1, rmtLockManager.getFlushCount());
 
     waitInvocation = new WaitInvocation();
-    waitLockRequest = new WaitLockRequest(lockID_2, threadID_2, LockLevel.SYNCHRONOUS_WRITE, waitInvocation);
+    waitLockRequest = new WaitLockRequest(lockID_2, threadID_2, LockLevel.SYNCHRONOUS_WRITE, String.class.getName(), waitInvocation);
     waiterThread = new LockWaiter(barrier, waitLockRequest, new Object());
     waiterThread.start();
     o = barrier.take();
@@ -181,7 +182,7 @@ public class ClientLockManagerTest extends TestCase {
         this.awardBarrier = awardBarrier;
       }
 
-      public void tryRequestLock(LockID lockID, ThreadID threadID, WaitInvocation timeout, int lockType) {
+      public void tryRequestLock(LockID lockID, ThreadID threadID, WaitInvocation timeout, int type, String lockType) {
         try {
           requestBarrier.barrier();
           awardBarrier.barrier();
@@ -238,7 +239,7 @@ public class ClientLockManagerTest extends TestCase {
     });
     t1.start();
 
-    lockManager.tryLock(lockID1, txID, new WaitInvocation(0), LockLevel.WRITE);
+    lockManager.tryLock(lockID1, txID, new WaitInvocation(0), LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE);
 
   }
 
@@ -257,7 +258,7 @@ public class ClientLockManagerTest extends TestCase {
       }
     };
 
-    lockManager.lock(lockID1, tx1, LockLevel.WRITE); // Goes to RemoteLockManager
+    lockManager.lock(lockID1, tx1, LockLevel.WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO); // Goes to RemoteLockManager
 
     LockRequest request = (LockRequest) queue.poll(1000l);
     assertNotNull(request);
@@ -266,11 +267,11 @@ public class ClientLockManagerTest extends TestCase {
     assertEquals(LockLevel.WRITE, request.lockLevel());
 
     // None of these should end up in RemoteLockManager
-    lockManager.lock(lockID1, tx1, LockLevel.READ);
+    lockManager.lock(lockID1, tx1, LockLevel.READ, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     lockManager.unlock(lockID1, tx1);
     lockManager.unlock(lockID1, tx1);
-    lockManager.lock(lockID1, tx1, LockLevel.READ);
-    lockManager.lock(lockID1, tx2, LockLevel.READ);
+    lockManager.lock(lockID1, tx1, LockLevel.READ, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    lockManager.lock(lockID1, tx2, LockLevel.READ, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
 
     assertNull(queue.poll(1000l));
   }
@@ -284,7 +285,7 @@ public class ClientLockManagerTest extends TestCase {
     final Set waiters = new HashSet();
 
     heldLocks.add(new LockRequest(lockID1, tx1, LockLevel.WRITE));
-    lockManager.lock(lockID1, tx1, LockLevel.WRITE);
+    lockManager.lock(lockID1, tx1, LockLevel.WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     assertNotNull(rmtLockManager.lockRequestCalls.poll(1));
 
     NoExceptionLinkedQueue barrier = new NoExceptionLinkedQueue();
@@ -297,10 +298,10 @@ public class ClientLockManagerTest extends TestCase {
     // We don't add this lock request to the set of held locks because the
     // call to wait moves it to being not
     // held anymore.
-    lockManager.lock(lockID2, tx2, LockLevel.WRITE);
+    lockManager.lock(lockID2, tx2, LockLevel.WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     assertNotNull(rmtLockManager.lockRequestCalls.poll(1));
 
-    WaitLockRequest waitLockRequest = new WaitLockRequest(lockID2, tx2, LockLevel.WRITE, waitInvocation);
+    WaitLockRequest waitLockRequest = new WaitLockRequest(lockID2, tx2, LockLevel.WRITE, String.class.getName(), waitInvocation);
     waiters.add(waitLockRequest);
     final LockWaiter waiterThread = new LockWaiter(barrier, waitLockRequest, new Object());
     waiterThread.start();
@@ -406,8 +407,8 @@ public class ClientLockManagerTest extends TestCase {
     lockRequests.add(new LockRequest(readLock, tx2, readLockLevel));
     // lockRequests.add(new LockRequest(synchWriteLock, tx3, synchWriteLockLevel));
 
-    lockManager.lock(lockID, tx1, writeLockLevel);
-    lockManager.lock(readLock, tx2, readLockLevel);
+    lockManager.lock(lockID, tx1, writeLockLevel, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    lockManager.lock(readLock, tx2, readLockLevel, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     // lockManager.lock(synchWriteLock, tx3, synchWriteLockLevel);
 
     Set s = new HashSet();
@@ -437,7 +438,7 @@ public class ClientLockManagerTest extends TestCase {
     final WaitInvocation waitInvocation = new WaitInvocation();
     final Object waitObject = new Object();
     final NoExceptionLinkedQueue barrier = new NoExceptionLinkedQueue();
-    lockManager.lock(lockID, tx1, LockLevel.WRITE);
+    lockManager.lock(lockID, tx1, LockLevel.WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     Thread t = new LockWaiter(barrier, lockID, tx1, waitInvocation, waitObject);
     t.start();
     barrier.take();
@@ -477,7 +478,7 @@ public class ClientLockManagerTest extends TestCase {
       public void run() {
         try {
           flowControl.put("locker: Calling lock");
-          lockManager.lock(lockID, txID, lockType);
+          lockManager.lock(lockID, txID, lockType, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
           lockComplete.put("locker: lock complete.");
 
           // wait until I'm allowed to unlock...
@@ -488,7 +489,7 @@ public class ClientLockManagerTest extends TestCase {
           // wait until I'm allowed to call lock() again
           System.out.println(flowControl.take());
           rmtLockManager.lockResponder = rmtLockManager.NULL_LOCK_RESPONDER;
-          lockManager.lock(lockID, txID, lockType);
+          lockManager.lock(lockID, txID, lockType, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
           System.out.println("locker: Done calling lock again");
 
         } catch (Throwable e) {
@@ -618,15 +619,15 @@ public class ClientLockManagerTest extends TestCase {
     final ThreadID tid1 = new ThreadID(1);
 
     System.out.println("Get lock0 for tx0");
-    lockManager.lock(lid0, tid0, LockLevel.WRITE);
+    lockManager.lock(lid0, tid0, LockLevel.WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     System.out.println("Got lock0 for tx0");
-    lockManager.lock(lid0, tid0, LockLevel.WRITE);
+    lockManager.lock(lid0, tid0, LockLevel.WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     System.out.println("Got lock0 for tx0 AGAIN so the recursion lock is correct");
     final boolean[] done = new boolean[1];
     done[0] = false;
     Thread t = new Thread() {
       public void run() {
-        lockManager.lock(lid0, tid1, LockLevel.WRITE);
+        lockManager.lock(lid0, tid1, LockLevel.WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
         System.out.println("Got lock0 for tx1");
         done[0] = true;
       }
@@ -648,7 +649,7 @@ public class ClientLockManagerTest extends TestCase {
     ThreadID tid0 = new ThreadID(0);
     LockID lid0 = new LockID("0");
 
-    lockManager.lock(lid0, tid0, LockLevel.READ);
+    lockManager.lock(lid0, tid0, LockLevel.READ, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     assertEquals(1, rmtLockManager.getLockRequestCount());
     assertEquals(0, rmtLockManager.getUnlockRequestCount());
 
@@ -656,7 +657,7 @@ public class ClientLockManagerTest extends TestCase {
     assertEquals(1, rmtLockManager.getLockRequestCount());
     assertEquals(1, rmtLockManager.getUnlockRequestCount());
 
-    lockManager.lock(lid0, tid0, LockLevel.WRITE);
+    lockManager.lock(lid0, tid0, LockLevel.WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     assertEquals(2, rmtLockManager.getLockRequestCount());
     assertEquals(1, rmtLockManager.getUnlockRequestCount());
 
@@ -670,12 +671,12 @@ public class ClientLockManagerTest extends TestCase {
     ThreadID tid0 = new ThreadID(0);
     LockID lid0 = new LockID("0");
 
-    lockManager.lock(lid0, tid0, LockLevel.READ);
+    lockManager.lock(lid0, tid0, LockLevel.READ, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     assertEquals(1, rmtLockManager.getLockRequestCount());
 
     // upgrade lock
     try {
-      lockManager.lock(lid0, tid0, LockLevel.WRITE);
+      lockManager.lock(lid0, tid0, LockLevel.WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
       throw new AssertionError("Should have thrown a TCLockUpgradeNotSupportedError.");
     } catch (TCLockUpgradeNotSupportedError e) {
       // expected
@@ -688,14 +689,14 @@ public class ClientLockManagerTest extends TestCase {
     ThreadID tid0 = new ThreadID(0);
     LockID lid0 = new LockID("0");
 
-    lockManager.lock(lid0, tid0, LockLevel.READ);
+    lockManager.lock(lid0, tid0, LockLevel.READ, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     assertEquals(1, rmtLockManager.getLockRequestCount());
 
     final int count = 25;
 
     for (int i = 0; i < count; i++) {
       // get nested read locks
-      lockManager.lock(lid0, tid0, LockLevel.READ);
+      lockManager.lock(lid0, tid0, LockLevel.READ, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
       assertEquals(1, rmtLockManager.getLockRequestCount());
     }
 
@@ -716,12 +717,12 @@ public class ClientLockManagerTest extends TestCase {
     ThreadID tid0 = new ThreadID(0);
     LockID lid0 = new LockID("0");
 
-    lockManager.lock(lid0, tid0, LockLevel.WRITE);
+    lockManager.lock(lid0, tid0, LockLevel.WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     assertEquals(1, rmtLockManager.getLockRequestCount());
     assertEquals(0, rmtLockManager.getUnlockRequestCount());
 
     // downgrade lock
-    lockManager.lock(lid0, tid0, LockLevel.READ);
+    lockManager.lock(lid0, tid0, LockLevel.READ, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     assertEquals(1, rmtLockManager.getLockRequestCount());
     assertEquals(0, rmtLockManager.getUnlockRequestCount());
 
@@ -798,7 +799,7 @@ public class ClientLockManagerTest extends TestCase {
     }
 
     public void run() {
-      lockManager.lock(lid, tid, lockType);
+      lockManager.lock(lid, tid, lockType, LockContextInfo.NULL_LOCK_OBJECT_TYPE, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     }
   }
 }

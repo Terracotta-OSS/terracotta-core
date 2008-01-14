@@ -9,8 +9,8 @@ public class WaitLockRequest extends LockRequest {
 
   private final WaitInvocation call;
 
-  public WaitLockRequest(LockID lockID, ThreadID threadID, int lockType, WaitInvocation call ) {
-    super(lockID, threadID, lockType);
+  public WaitLockRequest(LockID lockID, ThreadID threadID, int lockLevel, String lockType, WaitInvocation call ) {
+    super(lockID, threadID, lockLevel, lockType);
     this.call = call;
   }
 

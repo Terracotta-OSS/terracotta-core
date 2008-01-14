@@ -10,17 +10,12 @@ import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.tx.WaitInvocation;
 
 import java.util.Collection;
-import java.util.Set;
 
 /**
  * The Lock Manager interface implemented at the L2
  */
 public interface LockManager {
   
-  public void enableClientStat(LockID lockID, Sink sink , int stackTraceDepth, int statCollectFrequency);
-  
-  public void disableClientStat(LockID lockID, Set statEnabledClients, Sink sink);
-
   public void notify(LockID lid, NodeID cid, ThreadID tid, boolean all, NotifiedWaiters addNotifiedWaitersTo);
 
   public void wait(LockID lid, NodeID cid, ThreadID tid, WaitInvocation waitInvocation, Sink lockResponseSink);
@@ -30,9 +25,9 @@ public interface LockManager {
   public void reestablishWait(LockID lid, NodeID cid, ThreadID tid, int level, WaitInvocation waitInvocation,
                               Sink lockResponseSink);
 
-  public boolean requestLock(LockID lockID, NodeID cid, ThreadID source, int level, Sink awardLockSink);
+  public boolean requestLock(LockID lockID, NodeID cid, ThreadID source, int level, String lockType, Sink awardLockSink);
 
-  public boolean tryRequestLock(LockID lockID, NodeID cid, ThreadID threadID, int level, WaitInvocation timeout, Sink awardLockSink);
+  public boolean tryRequestLock(LockID lockID, NodeID cid, ThreadID threadID, int level, String lockType, WaitInvocation timeout, Sink awardLockSink);
 
   public void unlock(LockID id, NodeID receiverID, ThreadID threadID);
 
@@ -43,6 +38,8 @@ public interface LockManager {
   public boolean hasPending(LockID id);
 
   public void clearAllLocksFor(NodeID cid);
+  
+  public void enableLockStatsForNodeIfNeeded(NodeID nid);
 
   public void scanForDeadlocks(DeadlockResults output);
 

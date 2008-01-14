@@ -72,6 +72,7 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSO
 
   private void channelCreated(NodeID nodeID) {
     broadcastClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_CONNECTED, nodeID);
+    transactionManager.nodeConnected(nodeID);
   }
 
   private void broadcastClusterMembershipMessage(int eventType, NodeID nodeID) {

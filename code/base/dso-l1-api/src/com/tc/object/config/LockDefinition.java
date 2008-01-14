@@ -40,6 +40,11 @@ public interface LockDefinition {
    * @see ConfigLockLevel
    */
   public int getLockLevelAsInt();
+  
+  /**
+   * @return Configuration text of the lock definition
+   */
+  public String getLockContextInfo();
 
   /**
    * @return True if auto lock, false if named lock

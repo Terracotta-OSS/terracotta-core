@@ -4,6 +4,8 @@
  */
 package com.tc.objectserver.lockmanager.api;
 
+import com.tc.object.lockmanager.impl.LockHolder;
+
 /**
  * Lock's management interface
  */

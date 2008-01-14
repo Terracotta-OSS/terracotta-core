@@ -5,7 +5,7 @@
 package com.tc.objectserver.lockmanager.impl;
 
 import com.tc.object.lockmanager.api.LockID;
-import com.tc.objectserver.lockmanager.api.LockHolder;
+import com.tc.object.lockmanager.impl.LockHolder;
 import com.tc.objectserver.lockmanager.api.LockMBean;
 import com.tc.objectserver.lockmanager.api.ServerLockRequest;
 import com.tc.objectserver.lockmanager.api.Waiter;

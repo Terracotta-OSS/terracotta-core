@@ -60,6 +60,10 @@ public final class NullManager implements Manager {
   public final void beginLock(String lockID, int type) {
     //
   }
+  
+  public final void beginLock(String lockID, int type, String lockType) {
+    //
+  }
 
   public final TCObject lookupExistingOrNull(Object obj) {
     return null;
@@ -245,6 +249,10 @@ public final class NullManager implements Manager {
 
   public boolean isFieldPortableByOffset(Object pojo, long fieldOffset) {
     throw new UnsupportedOperationException();
+  }
+
+  public void monitorEnter(Object obj, int type, String contextInfo) {
+    //
   }
 
 }

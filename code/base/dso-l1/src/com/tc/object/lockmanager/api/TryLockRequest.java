@@ -6,8 +6,8 @@ package com.tc.object.lockmanager.api;
 import com.tc.object.tx.WaitInvocation;
 
 public class TryLockRequest extends WaitLockRequest {
-  public TryLockRequest(LockID lockID, ThreadID threadID, int lockType, WaitInvocation call ) {
-    super(lockID, threadID, lockType, call);
+  public TryLockRequest(LockID lockID, ThreadID threadID, int lockLevel, String lockType, WaitInvocation call ) {
+    super(lockID, threadID, lockLevel, lockType, call);
     call.mark();
   }
 }

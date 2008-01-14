@@ -24,12 +24,12 @@ import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.ServerThreadID;
 import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.lockmanager.impl.LockHolder;
 import com.tc.object.tx.WaitInvocation;
 import com.tc.objectserver.api.TestSink;
 import com.tc.objectserver.context.LockResponseContext;
 import com.tc.objectserver.lockmanager.api.DeadlockChain;
 import com.tc.objectserver.lockmanager.api.DeadlockResults;
-import com.tc.objectserver.lockmanager.api.LockHolder;
 import com.tc.objectserver.lockmanager.api.LockMBean;
 import com.tc.objectserver.lockmanager.api.NullChannelManager;
 import com.tc.objectserver.lockmanager.api.ServerLockRequest;
@@ -122,14 +122,14 @@ public class GreedyLockManagerTest extends TestCase {
 
     lockManager.start();
 
-    lockManager.requestLock(lid1, cid1, tid1, LockLevel.WRITE, sink); // hold greedy
-    lockManager.requestLock(lid1, cid2, tid1, LockLevel.WRITE, sink); // pending
+    lockManager.requestLock(lid1, cid1, tid1, LockLevel.WRITE, null, sink); // hold greedy
+    lockManager.requestLock(lid1, cid2, tid1, LockLevel.WRITE, null, sink); // pending
 
-    lockManager.requestLock(lid2, cid1, tid1, LockLevel.READ, sink); // hold greedy
-    lockManager.requestLock(lid2, cid2, tid1, LockLevel.READ, sink); // hold greedy
-    lockManager.requestLock(lid2, cid3, tid1, LockLevel.WRITE, sink); // pending
+    lockManager.requestLock(lid2, cid1, tid1, LockLevel.READ, null, sink); // hold greedy
+    lockManager.requestLock(lid2, cid2, tid1, LockLevel.READ, null, sink); // hold greedy
+    lockManager.requestLock(lid2, cid3, tid1, LockLevel.WRITE, null, sink); // pending
 
-    lockManager.requestLock(lid3, cid1, tid1, LockLevel.WRITE, sink); // hold greedy
+    lockManager.requestLock(lid3, cid1, tid1, LockLevel.WRITE, null, sink); // hold greedy
 
     LockMBean[] lockBeans = lockManager.getAllLocks();
     assertEquals(3, lockBeans.length);
@@ -496,7 +496,7 @@ public class GreedyLockManagerTest extends TestCase {
     ShutdownThread shutdown = new ShutdownThread(shutdownSteps);
     try {
       lockManager.start();
-      lockManager.requestLock(lock1, cid1, tx1, LockLevel.WRITE, sink);
+      lockManager.requestLock(lock1, cid1, tx1, LockLevel.WRITE, null, sink);
       assertEquals(1, queue.size());
 
       shutdown.start();
@@ -517,13 +517,13 @@ public class GreedyLockManagerTest extends TestCase {
     try {
       // Test that the normal case works as expected...
       lockManager.start();
-      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, sink);
+      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, null, sink);
       assertEquals(1, queue.size());
       assertAwardGreedy((LockResponseContext) queue.get(0), lockID);
       queue.clear();
       lockManager.unlock(lockID, cid, ThreadID.VM_ID);
 
-      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, sink);
+      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, null, sink);
       assertEquals(1, queue.size());
       assertAwardGreedy((LockResponseContext) queue.get(0), lockID);
       queue.clear();
@@ -533,7 +533,7 @@ public class GreedyLockManagerTest extends TestCase {
       // "requestLock" method
       queue.clear();
       lockManager.stop();
-      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, sink);
+      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, null, sink);
       assertEquals(0, queue.size());
     } finally {
       lockManager.clearAllLocksFor(cid);
@@ -550,9 +550,9 @@ public class GreedyLockManagerTest extends TestCase {
       lockManager.start();
       // now try stacking locks and make sure that calling unlock doesn't grant
       // the pending locks but instead a recall is issued
-      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, sink);
+      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, null, sink);
       queue.clear();
-      lockManager.requestLock(lockID, new ClientID(new ChannelID(2)), new ThreadID(2), LockLevel.WRITE, sink);
+      lockManager.requestLock(lockID, new ClientID(new ChannelID(2)), new ThreadID(2), LockLevel.WRITE, null, sink);
       // the second lock should be pending but a recall should be issued.
       assertEquals(1, queue.size());
       LockResponseContext lrc = (LockResponseContext) sink.take();
@@ -576,9 +576,9 @@ public class GreedyLockManagerTest extends TestCase {
       lockManager.start();
       // now try stacking locks and make sure that calling unlock doesn't grant
       // the pending locks but instead a recall is issued
-      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, sink);
+      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, null, sink);
       queue.clear();
-      lockManager.requestLock(lockID, new ClientID(new ChannelID(2)), new ThreadID(2), LockLevel.WRITE, sink);
+      lockManager.requestLock(lockID, new ClientID(new ChannelID(2)), new ThreadID(2), LockLevel.WRITE, null, sink);
       // the second lock should be pending but a recall should be issued.
       assertEquals(1, queue.size());
       LockResponseContext lrc = (LockResponseContext) sink.take();
@@ -622,13 +622,13 @@ public class GreedyLockManagerTest extends TestCase {
 
     lockManager.start();
     // thread1 gets lock1
-    lockManager.requestLock(l1, c1, s1, LockLevel.WRITE, sink);
+    lockManager.requestLock(l1, c1, s1, LockLevel.WRITE, null, sink);
     // thread2 gets lock2
-    lockManager.requestLock(l2, c1, s2, LockLevel.WRITE, sink);
+    lockManager.requestLock(l2, c1, s2, LockLevel.WRITE, null, sink);
     // thread1 trys to get lock2 (blocks)
-    lockManager.requestLock(l2, c1, s1, LockLevel.WRITE, sink);
+    lockManager.requestLock(l2, c1, s1, LockLevel.WRITE, null, sink);
     // thread2 trys to get lock1 (blocks)
-    lockManager.requestLock(l1, c1, s2, LockLevel.WRITE, sink);
+    lockManager.requestLock(l1, c1, s2, LockLevel.WRITE, null, sink);
 
     TestDeadlockResults deadlocks = new TestDeadlockResults();
     lockManager.scanForDeadlocks(deadlocks);
@@ -675,20 +675,20 @@ public class GreedyLockManagerTest extends TestCase {
     lockManager.start();
 
     // thread1 holds all three read locks, thread2 has 2 of them
-    lockManager.requestLock(l3, c1, s1, LockLevel.READ, sink);
-    lockManager.requestLock(l4, c1, s1, LockLevel.READ, sink);
-    lockManager.requestLock(l5, c1, s1, LockLevel.READ, sink);
-    lockManager.requestLock(l3, c1, s2, LockLevel.READ, sink);
-    lockManager.requestLock(l4, c1, s2, LockLevel.READ, sink);
+    lockManager.requestLock(l3, c1, s1, LockLevel.READ, null, sink);
+    lockManager.requestLock(l4, c1, s1, LockLevel.READ, null, sink);
+    lockManager.requestLock(l5, c1, s1, LockLevel.READ, null, sink);
+    lockManager.requestLock(l3, c1, s2, LockLevel.READ, null, sink);
+    lockManager.requestLock(l4, c1, s2, LockLevel.READ, null, sink);
 
     // thread1 gets lock1
-    lockManager.requestLock(l1, c1, s1, LockLevel.WRITE, sink);
+    lockManager.requestLock(l1, c1, s1, LockLevel.WRITE, null, sink);
     // thread2 gets lock2
-    lockManager.requestLock(l2, c1, s2, LockLevel.WRITE, sink);
+    lockManager.requestLock(l2, c1, s2, LockLevel.WRITE, null, sink);
     // thread1 trys to get lock2 (blocks)
-    lockManager.requestLock(l2, c1, s1, LockLevel.WRITE, sink);
+    lockManager.requestLock(l2, c1, s1, LockLevel.WRITE, null, sink);
     // thread2 trys to get lock1 (blocks)
-    lockManager.requestLock(l1, c1, s2, LockLevel.WRITE, sink);
+    lockManager.requestLock(l1, c1, s2, LockLevel.WRITE, null, sink);
 
     TestDeadlockResults deadlocks = new TestDeadlockResults();
     lockManager.scanForDeadlocks(deadlocks);
@@ -763,7 +763,7 @@ public class GreedyLockManagerTest extends TestCase {
         LockID lock = locks[start + i];
         boolean read = random.nextInt(10) < 8; // 80% reads
         int level = read ? LockLevel.READ : LockLevel.WRITE;
-        boolean granted = lockManager.requestLock(lock, cid, tid, level, sink);
+        boolean granted = lockManager.requestLock(lock, cid, tid, level, null, sink);
         if (!granted) {
           break;
         }
@@ -823,18 +823,18 @@ public class GreedyLockManagerTest extends TestCase {
     lockManager.start();
 
     // thread1 gets lock1
-    lockManager.requestLock(l1, c0, s1, LockLevel.WRITE, sink);
+    lockManager.requestLock(l1, c0, s1, LockLevel.WRITE, null, sink);
     // thread2 gets lock2
-    lockManager.requestLock(l2, c0, s2, LockLevel.WRITE, sink);
+    lockManager.requestLock(l2, c0, s2, LockLevel.WRITE, null, sink);
     // thread3 gets lock3
-    lockManager.requestLock(l3, c0, s3, LockLevel.WRITE, sink);
+    lockManager.requestLock(l3, c0, s3, LockLevel.WRITE, null, sink);
 
     // thread1 trys to get lock2 (blocks)
-    lockManager.requestLock(l2, c0, s1, LockLevel.WRITE, sink);
+    lockManager.requestLock(l2, c0, s1, LockLevel.WRITE, null, sink);
     // thread2 trys to get lock3 (blocks)
-    lockManager.requestLock(l3, c0, s2, LockLevel.WRITE, sink);
+    lockManager.requestLock(l3, c0, s2, LockLevel.WRITE, null, sink);
     // thread3 trys to get lock1 (blocks)
-    lockManager.requestLock(l1, c0, s3, LockLevel.WRITE, sink);
+    lockManager.requestLock(l1, c0, s3, LockLevel.WRITE, null, sink);
 
     TestDeadlockResults deadlocks = new TestDeadlockResults();
     lockManager.scanForDeadlocks(deadlocks);

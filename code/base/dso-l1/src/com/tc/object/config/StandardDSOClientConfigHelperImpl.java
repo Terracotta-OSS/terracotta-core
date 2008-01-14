@@ -1365,6 +1365,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   public void addWriteAutolock(String methodPattern) {
     addAutolock(methodPattern, ConfigLockLevel.WRITE);
   }
+  
+  public void addWriteAutolock(String methodPattern, String lockContextInfo) {
+    addAutolock(methodPattern, ConfigLockLevel.WRITE, lockContextInfo);
+  }
 
   public void addSynchronousWriteAutolock(String methodPattern) {
     addAutolock(methodPattern, ConfigLockLevel.SYNCHRONOUS_WRITE);
@@ -1376,6 +1380,12 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   public void addAutolock(String methodPattern, ConfigLockLevel type) {
     LockDefinition lockDefinition = new LockDefinitionImpl(LockDefinition.TC_AUTOLOCK_NAME, type);
+    lockDefinition.commit();
+    addLock(methodPattern, lockDefinition);
+  }
+  
+  public void addAutolock(String methodPattern, ConfigLockLevel type, String configurationText) {
+    LockDefinition lockDefinition = new LockDefinitionImpl(LockDefinition.TC_AUTOLOCK_NAME, type, configurationText);
     lockDefinition.commit();
     addLock(methodPattern, lockDefinition);
   }

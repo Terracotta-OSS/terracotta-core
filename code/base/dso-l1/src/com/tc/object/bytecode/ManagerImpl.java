@@ -10,6 +10,7 @@ import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 import com.tc.cluster.Cluster;
 import com.tc.cluster.ClusterEventListener;
+import com.tc.config.lock.LockContextInfo;
 import com.tc.lang.StartupHelper;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
@@ -50,11 +51,11 @@ import java.util.Iterator;
 import java.util.Map;
 
 public class ManagerImpl implements Manager {
-  private static final TCLogger                    logger        = TCLogging.getLogger(Manager.class);
+  private static final TCLogger                    logger                 = TCLogging.getLogger(Manager.class);
 
-  private static final LiteralValues               literals      = new LiteralValues();
+  private static final LiteralValues               literals               = new LiteralValues();
 
-  private final SetOnceFlag                        clientStarted = new SetOnceFlag();
+  private final SetOnceFlag                        clientStarted          = new SetOnceFlag();
   private final DSOClientConfigHelper              config;
   private final ClassProvider                      classProvider;
   private final boolean                            startClient;
@@ -63,15 +64,15 @@ public class ManagerImpl implements Manager {
   private final Portability                        portability;
   private final Cluster                            cluster;
 
-  private RuntimeLogger                            runtimeLogger = new NullRuntimeLogger();
+  private RuntimeLogger                            runtimeLogger          = new NullRuntimeLogger();
   private ClientObjectManager                      objectManager;
   private ClientShutdownManager                    shutdownManager;
   private ClientTransactionManager                 txManager;
   private DistributedObjectClient                  dso;
   private DmiManager                               methodCallManager;
   private OptimisticTransactionManager             optimisticTransactionManager;
-  private SerializationUtil                        serializer    = new SerializationUtil();
-  private MethodDisplayNames                       methodDisplay = new MethodDisplayNames(serializer);
+  private SerializationUtil                        serializer             = new SerializationUtil();
+  private MethodDisplayNames                       methodDisplay          = new MethodDisplayNames(serializer);
 
   public ManagerImpl(DSOClientConfigHelper config, ClassProvider classProvider,
                      PreparedComponentsFromL2Connection connectionComponents) {
@@ -294,7 +295,15 @@ public class ManagerImpl implements Manager {
 
   public void beginLock(String lockID, int type) {
     try {
-      begin(lockID, type, null, null);
+      begin(lockID, type, null, null, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    } catch (Throwable t) {
+      Util.printLogAndRethrowError(t, logger);
+    }
+  }
+  
+  public void beginLock(String lockID, int type, String contextInfo) {
+    try {
+      begin(lockID, type, null, null, contextInfo);
     } catch (Throwable t) {
       Util.printLogAndRethrowError(t, logger);
     }
@@ -303,18 +312,22 @@ public class ManagerImpl implements Manager {
   public void beginVolatile(TCObject tcObject, String fieldName, int type) {
     if (tcObject == null) { throw new NullPointerException("beginVolatile called on a null TCObject"); }
 
-    begin(generateVolatileLockName(tcObject, fieldName), type, null, null);
+    begin(generateVolatileLockName(tcObject, fieldName), type, null, null, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
   }
 
-  private void begin(String lockID, int type, Object instance, TCObject tcobj) {
-    boolean locked = this.txManager.begin(lockID, type);
+  private void begin(String lockID, int type, Object instance, TCObject tcobj, String contextInfo) {
+    String lockType = instance == null? LockContextInfo.NULL_LOCK_OBJECT_TYPE : instance.getClass().getName();
+    
+    boolean locked = this.txManager.begin(lockID, type, lockType, contextInfo);
     if (locked && runtimeLogger.lockDebug()) {
       runtimeLogger.lockAcquired(lockID, type, instance, tcobj);
     }
   }
 
   private boolean tryBegin(String lockID, int type, Object instance, WaitInvocation timeout, TCObject tcobj) {
-    boolean locked = this.txManager.tryBegin(lockID, timeout, type);
+    String lockType = instance == null? LockContextInfo.NULL_LOCK_OBJECT_TYPE : instance.getClass().getName();
+    
+    boolean locked = this.txManager.tryBegin(lockID, timeout, type, lockType);
     if (locked && runtimeLogger.lockDebug()) {
       runtimeLogger.lockAcquired(lockID, type, instance, tcobj);
     }
@@ -443,11 +456,14 @@ public class ManagerImpl implements Manager {
     String lockName = getLockName(o);
     if (lockName == null) { return false; }
     boolean dsoMonitorEntered = txManager.isLockOnTopStack(lockName);
-    
+
     if (!dsoMonitorEntered && isManaged(o)) {
-      logger.info("Object " + o + " is a shared object, but a shared lock is not obtained within a locking context. This usually means the object get shared within a synchronized block/method.");
+      logger
+          .info("Object "
+                + o
+                + " is a shared object, but a shared lock is not obtained within a locking context. This usually means the object get shared within a synchronized block/method.");
     }
-    
+
     return dsoMonitorEntered;
   }
 
@@ -460,6 +476,10 @@ public class ManagerImpl implements Manager {
   }
 
   public void monitorEnter(Object obj, int type) {
+    monitorEnter(obj, type, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+  }
+
+  public void monitorEnter(Object obj, int type, String contextInfo) {
     if (obj == null) { throw new NullPointerException("monitorEnter called on a null object"); }
 
     TCObject tco = lookupExistingOrNull(obj);
@@ -468,9 +488,9 @@ public class ManagerImpl implements Manager {
       if (tco != null) {
         if (tco.autoLockingDisabled()) { return; }
 
-        begin(generateAutolockName(tco), type, obj, tco);
+        begin(generateAutolockName(tco), type, obj, tco, contextInfo);
       } else if (isLiteralAutolock(obj)) {
-        begin(generateLiteralLockName(obj), type, obj, null);
+        begin(generateLiteralLockName(obj), type, obj, null, contextInfo);
       }
     } catch (Throwable t) {
       Util.printLogAndRethrowError(t, logger);
@@ -630,11 +650,10 @@ public class ManagerImpl implements Manager {
   public Object lookupObject(ObjectID id) throws ClassNotFoundException {
     return this.objectManager.lookupObject(id);
   }
-  
+
   public Object lookupObject(ObjectID id, ObjectID parentContext) throws ClassNotFoundException {
     return this.objectManager.lookupObject(id, parentContext);
   }
-
 
   public boolean distributedMethodCall(Object receiver, String method, Object[] params, boolean runOnAllNodes) {
     TCObject tco = lookupExistingOrNull(receiver);

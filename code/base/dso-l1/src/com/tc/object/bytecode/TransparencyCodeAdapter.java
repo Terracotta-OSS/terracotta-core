@@ -27,6 +27,7 @@ import java.util.AbstractMap;
 public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
   private final boolean              isAutolock;
   private final int                  autoLockType;
+  private final String               autoLockContextInfo;
   private final ManagerHelper        mgrHelper;
   private final InstrumentationSpec  spec;
   private final MemberInfo           memberInfo;
@@ -38,12 +39,17 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
   private boolean                    visitInit = false;
   private boolean                    logicalInitVisited = false;
 
-  public TransparencyCodeAdapter(InstrumentationSpec spec, boolean isAutolock, int autoLockType, MethodVisitor mv,
+//  public TransparencyCodeAdapter(InstrumentationSpec spec, boolean isAutolock, int autoLockType, MethodVisitor mv,
+//                                 MemberInfo memberInfo, String originalName) {
+  public TransparencyCodeAdapter(InstrumentationSpec spec, LockDefinition autoLockDefinition, MethodVisitor mv,
                                  MemberInfo memberInfo, String originalName) {
     super(mv, memberInfo.getModifiers(), originalName, memberInfo.getSignature());
     this.spec = spec;
-    this.isAutolock = isAutolock;
-    this.autoLockType = autoLockType;
+    this.isAutolock = autoLockDefinition != null;
+    this.autoLockType = isAutolock? autoLockDefinition.getLockLevelAsInt():-1;
+    this.autoLockContextInfo = isAutolock? autoLockDefinition.getLockContextInfo():null;
+//    this.isAutolock = isAutolock;
+//    this.autoLockType = autoLockType;
     this.memberInfo = memberInfo;
 
     this.mgrHelper = spec.getManagerHelper();
@@ -317,6 +323,12 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     }
   }
   
+  private void callMonitorEnterWithContextInfo() {
+    super.visitLdcInsn(new Integer(autoLockType));
+    super.visitLdcInsn(autoLockContextInfo);
+    mgrHelper.callManagerMethod("monitorEnterWithContextInfo", this);
+  }
+  
   private void visitInsnForReadLock(int opCode) {
     switch(opCode) {
       case MONITORENTER:
@@ -324,8 +336,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
         super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "isDsoMonitored", "(Ljava/lang/Object;)Z");
         Label l1 = new Label();
         super.visitJumpInsn(IFEQ, l1);
-        super.visitLdcInsn(new Integer(autoLockType));
-        mgrHelper.callManagerMethod("monitorEnter", this);
+        callMonitorEnterWithContextInfo();
         Label l2 = new Label();
         super.visitJumpInsn(GOTO, l2);
         super.visitLabel(l1);
@@ -357,8 +368,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
               return;
             }
             super.visitInsn(DUP);
-            super.visitLdcInsn(new Integer(autoLockType));
-            mgrHelper.callManagerMethod("monitorEnter", this);
+            callMonitorEnterWithContextInfo();
             super.visitInsn(opCode);
           } else {
             super.visitInsn(opCode);

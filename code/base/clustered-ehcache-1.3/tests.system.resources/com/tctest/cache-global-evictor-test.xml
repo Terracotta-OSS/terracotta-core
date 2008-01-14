@@ -11,7 +11,7 @@
 
 	<cache name="sampleCache1" maxElementsInMemory="3"
 		maxElementsOnDisk="1000" eternal="false" overflowToDisk="false"
-		timeToIdleSeconds="50"
-		timeToLiveSeconds="6" memoryStoreEvictionPolicy="LFU" />
+		timeToIdleSeconds="100"
+		timeToLiveSeconds="20" memoryStoreEvictionPolicy="LFU" />
 
 </ehcache>

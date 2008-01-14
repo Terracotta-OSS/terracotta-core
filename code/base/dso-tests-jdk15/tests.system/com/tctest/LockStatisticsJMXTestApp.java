@@ -5,55 +5,54 @@
 package com.tctest;
 
 import com.tc.management.JMXConnectorProxy;
-import com.tc.management.L2LockStatsManagerImpl.LockStackTracesStat;
-import com.tc.management.L2LockStatsManagerImpl.LockStat;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.LockStatisticsMonitorMBean;
-import com.tc.net.groups.ClientID;
+import com.tc.management.lock.stats.LockSpec;
+import com.tc.management.lock.stats.LockStatElement;
 import com.tc.object.LiteralValues;
 import com.tc.object.bytecode.ByteCodeUtil;
+import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.ManagerUtil;
+import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.LockDefinition;
+import com.tc.object.config.LockDefinitionImpl;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.lockmanager.api.LockLevel;
-import com.tc.object.lockmanager.impl.TCStackTraceElement;
-import com.tc.objectserver.lockmanager.api.LockHolder;
-import com.tc.properties.TCProperties;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.remote.JMXConnector;
 
 public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
-  private static final LiteralValues   LITERAL_VALUES   = new LiteralValues();
+  private static final LiteralValues LITERAL_VALUES   = new LiteralValues();
+  private static final String NAMED_LOCK_NAME = "nameLock";
 
-  public static final String           CONFIG_FILE      = "config-file";
-  public static final String           PORT_NUMBER      = "port-number";
-  public static final String           HOST_NAME        = "host-name";
-  public static final String           JMX_PORT         = "jmx-port";
+  public static final String         CONFIG_FILE      = "config-file";
+  public static final String         PORT_NUMBER      = "port-number";
+  public static final String         HOST_NAME        = "host-name";
+  public static final String         JMX_PORT         = "jmx-port";
 
-  private final ApplicationConfig      config;
+  private final ApplicationConfig    config;
 
-  private final int                    initialNodeCount = getParticipantCount();
-  private final CyclicBarrier          barrier          = new CyclicBarrier(initialNodeCount);
-  private final CyclicBarrier          barrier2         = new CyclicBarrier(2);
-  private final HashMap<Integer, Long> indexToNodeMap   = new HashMap();
+  private final int                  initialNodeCount = getParticipantCount();
+  private final CyclicBarrier        barrier          = new CyclicBarrier(initialNodeCount);
+  private final CyclicBarrier        barrier2         = new CyclicBarrier(2);
+  private final Object               sharedRoot       = new TestClass();
 
-  private MBeanServerConnection        mbsc             = null;
-  private JMXConnector                 jmxc;
-  private LockStatisticsMonitorMBean   statMBean;
+  private MBeanServerConnection      mbsc             = null;
+  private JMXConnector               jmxc;
+  private LockStatisticsMonitorMBean statMBean;
 
   public LockStatisticsJMXTestApp(String appId, ApplicationConfig config, ListenerProvider listenerProvider) {
     super(appId, config, listenerProvider);
@@ -64,50 +63,58 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
 
     String testClass = LockStatisticsJMXTestApp.class.getName();
     String methodExpression = "* " + testClass + "*.*(..)";
-    config.addWriteAutolock(methodExpression);
+    config.addWriteAutolock(methodExpression, methodExpression);
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     config.addIncludePattern(testClass + "$*");
+    methodExpression = "* " + testClass + "$*.syncMethod(..)";
+    config.addWriteAutolock(methodExpression, methodExpression);
+    methodExpression = "* " + testClass + "$*.syncBlock(..)";
+    config.addWriteAutolock(methodExpression, methodExpression);
+    methodExpression = "* " + testClass + "$*.nameLockMethod(..)";
+    LockDefinition ld = new LockDefinitionImpl(NAMED_LOCK_NAME, ConfigLockLevel.WRITE, methodExpression);
+    ld.commit();
+    config.addLock(methodExpression, ld);
 
     // roots
     spec.addRoot("barrier", "barrier");
     spec.addRoot("barrier2", "barrier2");
-    spec.addRoot("indexToNodeMap", "indexToNodeMap");
+    spec.addRoot("sharedRoot", "sharedRoot");
   }
 
   public void run() {
     try {
       int index = barrier.await();
 
-      synchronized (indexToNodeMap) {
-        indexToNodeMap.put(new Integer(index), new Long(ManagerUtil.getClientID()));
-      }
-      String lockName = "lock0";
+      enableStackTraces(index, 2, 1);
+      testTryAutoLock(index, 2);
+      testAutoLock(index, 2);
+      testNameLock(index, 2);
       
-      testLockAggregateWaitTime(lockName, index);
-      
-      lockName = "lock1";
+      enableStackTraces(index, 0, 1);
 
-      testBasicStatistics(lockName, index);
+      String lockName = "lock0";
+      testServerLockAggregateWaitTime(lockName, index);
+
+      enableStackTraces(index, 1, 1);
+
+      lockName = "lock1";
+      testLockAggregateWaitTime(lockName, index);
 
       lockName = "lock2";
+      testBasicStatistics(lockName, index);
 
-      enableStackTraces(lockName, index);
+      lockName = "lock3";
 
-      testStackTracesStatistics(lockName, index, 1);
-      
-      enableStackTraces(lockName, index, 2, getClientLockStatCollectionFrequency());
+      enableStackTraces(index, 2, 1);
 
-      testStackTracesStatistics(lockName, index, 2);
-      
-      testLockHeldTime("lock3", "lock4", index);
-      
-      testLockWaitingTime("lock5", "lock6", index);
+      testCollectClientStatistics(lockName, index, 1);
+
     } catch (Throwable t) {
       notifyError(t);
     }
   }
-  
-    private void connect() throws Exception {
+
+  private void connect() throws Exception {
     echo("connecting to jmx server....");
     jmxc = new JMXConnectorProxy("localhost", Integer.parseInt(config.getAttribute(JMX_PORT)));
     mbsc = jmxc.getMBeanServerConnection();
@@ -122,45 +129,81 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
     }
   }
 
-  private void enableStackTraces(String lockName, int index) throws Throwable {
+  private void enableStackTraces(int index, int traceDepth, int gatherInterval) throws Throwable {
     if (index == 0) {
       connect();
-      statMBean.enableClientStackTrace(ByteCodeUtil.generateLiteralLockName(LITERAL_VALUES.valueFor(lockName), lockName));
+      statMBean.setLockStatisticsConfig(traceDepth, gatherInterval);
       disconnect();
     }
 
     barrier.await();
   }
   
-  private void enableStackTraces(String lockName, int index, int stackTraceDepth, int statCollectFrequency ) throws Throwable {
-    if (index == 0) {
-      connect();
-      statMBean.enableClientStackTrace(ByteCodeUtil.generateLiteralLockName(LITERAL_VALUES.valueFor(lockName), lockName), stackTraceDepth, statCollectFrequency);
-      disconnect();
-    }
-
-    barrier.await();
-  }
-  
-  private int getClientLockStatCollectionFrequency() {
-    TCProperties tcProperties = TCPropertiesImpl.getProperties().getPropertiesFor("l1.lock");
-    return tcProperties.getInt("collectFrequency");
-  }
-
-  private void testStackTracesStatistics(String lockName, int index, int depthOfEachStackTrace) throws Throwable {
+  private void testNameLock(int index, int traceDepth) throws Throwable {
     if (index == 0) {
       waitForAllToMoveOn();
       connect();
       Thread.sleep(2000);
-      verifyStackTraces(ByteCodeUtil.generateLiteralLockName(LITERAL_VALUES.valueFor(lockName), lockName), 2,
-                        2, depthOfEachStackTrace);
+      verifyClientStat(NAMED_LOCK_NAME, 1, traceDepth);
       disconnect();
     } else {
-      int clientLockStatCollectFrequency = getClientLockStatCollectionFrequency();
-      for (int i = 0; i < clientLockStatCollectFrequency+1; i++) {
+      TestClass tc = (TestClass)sharedRoot;
+      tc.nameLockMethod(1000);
+      waitForAllToMoveOn();
+    }
+    
+    waitForAllToMoveOn();
+  }
+
+  private void testAutoLock(int index, int traceDepth) throws Throwable {
+    if (index == 0) {
+      waitForAllToMoveOn();
+      connect();
+      Thread.sleep(2000);
+      String lockID = ByteCodeUtil.generateAutolockName(((Manageable)sharedRoot).__tc_managed().getObjectID());
+      verifyClientStat(lockID, TestClass.class.getName(), 2, traceDepth);
+      disconnect();
+    } else {
+      TestClass tc = (TestClass)sharedRoot;
+      tc.syncMethod(1000);
+      tc.syncBlock(2000);
+      waitForAllToMoveOn();
+    }
+    
+    waitForAllToMoveOn();
+  }
+  
+  private void testTryAutoLock(int index, int traceDepth) throws Throwable {
+    if (index == 0) {
+      waitForAllToMoveOn();
+      connect();
+      Thread.sleep(2000);
+      TestClass tc = (TestClass)sharedRoot;
+      String lockID = ByteCodeUtil.generateAutolockName(((Manageable)tc.getTryLock()).__tc_managed().getObjectID());
+      verifyClientStat(lockID, ReentrantLock.class.getName(), 1, traceDepth);
+      disconnect();
+    } else {
+      TestClass tc = (TestClass)sharedRoot;
+      tc.tryLockBlock(1000);
+      waitForAllToMoveOn();
+    }
+    
+    waitForAllToMoveOn();
+  }
+
+  private void testCollectClientStatistics(String lockName, int index, int traceDepth) throws Throwable {
+    if (index == 0) {
+      waitForAllToMoveOn();
+      connect();
+      Thread.sleep(2000);
+      verifyClientStat(ByteCodeUtil.generateLiteralLockName(LITERAL_VALUES.valueFor(lockName), lockName), 1, traceDepth);
+      disconnect();
+    } else {
+      int count = 2;
+      for (int i = 0; i < count; i++) {
         ManagerUtil.monitorEnter(lockName, LockLevel.READ);
       }
-      for (int i = 0; i < clientLockStatCollectFrequency+1; i++) {
+      for (int i = 0; i < count; i++) {
         ManagerUtil.monitorExit(lockName);
       }
 
@@ -169,45 +212,14 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
     waitForAllToMoveOn();
   }
   
-  private void testLockWaitingTime(String lockName1, String lockName2, int index) throws Throwable {
+  private void testServerLockAggregateWaitTime(String lockName, int index) throws Throwable {
     if (index == 0) {
       connect();
       waitForAllToMoveOn();
-      long waitTime1 = getLockWaitTime(lockName1, indexToNodeMap.get(new Integer(2)).longValue());
-      long waitTime2 = getLockWaitTime(lockName2, indexToNodeMap.get(new Integer(2)).longValue());
-      
-      Assert.assertTrue(waitTime2 > waitTime1);
-    } else if (index == 1) {
-      ManagerUtil.monitorEnter(lockName1, LockLevel.WRITE);
-      waitForTwoToMoveOn();
-      Thread.sleep(2000);
-      ManagerUtil.monitorExit(lockName1);
-      
-      ManagerUtil.monitorEnter(lockName2, LockLevel.WRITE);
-      waitForTwoToMoveOn();
-      Thread.sleep(4000);
-      ManagerUtil.monitorExit(lockName2);
-      waitForAllToMoveOn();
-    } else if (index == 2) {
-      waitForTwoToMoveOn();
-      ManagerUtil.monitorEnter(lockName1, LockLevel.WRITE);
-      ManagerUtil.monitorExit(lockName1);
-      waitForTwoToMoveOn();
-      ManagerUtil.monitorEnter(lockName2, LockLevel.WRITE);
-      ManagerUtil.monitorExit(lockName2);
-      waitForAllToMoveOn();
-    }
-    
-    waitForAllToMoveOn();
-  }
-  
-  private void testLockAggregateWaitTime(String lockName, int index) throws Throwable {
-    if (index == 0) {
-      connect();
-      waitForAllToMoveOn();
-      long avgWaitTimeInMillis = getAggregateAverageWaitTime(lockName);
-      long avgHeldTimeInMillis = getAggregateAverageHeldTime(lockName);
-      
+      String lockID = ByteCodeUtil.generateLiteralLockName(LITERAL_VALUES.valueFor(lockName), lockName);
+      long avgWaitTimeInMillis = getServerAggregateAverageWaitTime(lockID);
+      long avgHeldTimeInMillis = getServerAggregateAverageHeldTime(lockID);
+
       System.out.println("avgHeldTimeInMillis: " + avgHeldTimeInMillis);
       System.out.println("avgWaitTimeInMillis: " + avgWaitTimeInMillis);
       Assert.assertTrue(avgWaitTimeInMillis > 1000);
@@ -232,83 +244,78 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
     }
     waitForAllToMoveOn();
   }
-  
-  private void testLockHeldTime(String lockName1, String lockName2, int index) throws Throwable {
+
+  private void testLockAggregateWaitTime(String lockName, int index) throws Throwable {
     if (index == 0) {
       connect();
       waitForAllToMoveOn();
-      long heldTime1 = getLockHeldTime(lockName1, indexToNodeMap.get(new Integer(1)).longValue());
-      long heldTime2 = getLockHeldTime(lockName2, indexToNodeMap.get(new Integer(1)).longValue());
-      
-      Assert.assertTrue(heldTime2 > heldTime1);
+      String lockID = ByteCodeUtil.generateLiteralLockName(LITERAL_VALUES.valueFor(lockName), lockName);
+      long avgWaitTimeInMillis = getAggregateAverageWaitTime(lockID);
+      long avgHeldTimeInMillis = getAggregateAverageHeldTime(lockID);
+
+      System.out.println("avgHeldTimeInMillis: " + avgHeldTimeInMillis);
+      System.out.println("avgWaitTimeInMillis: " + avgWaitTimeInMillis);
+      Assert.assertTrue(avgWaitTimeInMillis > 1000);
+      Assert.assertTrue(avgHeldTimeInMillis > 2000);
     } else if (index == 1) {
-      ManagerUtil.monitorEnter(lockName1, LockLevel.WRITE);
+      ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
       waitForTwoToMoveOn();
       Thread.sleep(2000);
-      ManagerUtil.monitorExit(lockName1);
-      
-      ManagerUtil.monitorEnter(lockName2, LockLevel.WRITE);
+      ManagerUtil.monitorExit(lockName);
       waitForTwoToMoveOn();
-      Thread.sleep(4000);
-      ManagerUtil.monitorExit(lockName2);
+      ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
+      Thread.sleep(3000);
+      ManagerUtil.monitorExit(lockName);
       waitForAllToMoveOn();
     } else if (index == 2) {
       waitForTwoToMoveOn();
-      ManagerUtil.monitorEnter(lockName1, LockLevel.WRITE);
-      ManagerUtil.monitorExit(lockName1);
+      ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
       waitForTwoToMoveOn();
-      ManagerUtil.monitorEnter(lockName2, LockLevel.WRITE);
-      ManagerUtil.monitorExit(lockName2);
+      Thread.sleep(2000);
+      ManagerUtil.monitorExit(lockName);
       waitForAllToMoveOn();
     }
-    
     waitForAllToMoveOn();
   }
 
   private void testBasicStatistics(String lockName, int index) throws Throwable {
     if (index == 0) {
+      String lockID = ByteCodeUtil.generateLiteralLockName(LITERAL_VALUES.valueFor(lockName), lockName);
       connect();
       waitForAllToMoveOn();
 
-      verifyLockRequest(lockName, 1);
-      verifyLockHolder(lockName, indexToNodeMap.get(new Integer(1)).longValue());
-      verifyLockAwarded(lockName, indexToNodeMap.get(new Integer(1)).longValue(), true);
+      verifyLockRequest(lockID, 1);
+      verifyLockAwarded(lockID, 1);
       waitForAllToMoveOn();
-      
+
       Thread.sleep(1000);
-      verifyLockContended(lockName, 1);
-      verifyLockHolder(lockName, indexToNodeMap.get(new Integer(2)).longValue());
-      verifyLockAwarded(lockName, indexToNodeMap.get(new Integer(2)).longValue(), false);
+      verifyLockAwarded(lockID, 1);
       waitForTwoToMoveOn();
 
       waitForAllToMoveOn();
-      verifyLockRequest(lockName, 2);
-      verifyLockContended(lockName, 0);
-      verifyLockHolder(lockName, indexToNodeMap.get(new Integer(1)).longValue());
-      verifyLockHolder(lockName, indexToNodeMap.get(new Integer(2)).longValue());
-      verifyLockAwarded(lockName, indexToNodeMap.get(new Integer(2)).longValue(), true);
-      
+      verifyLockRequest(lockID, 2);
+      verifyLockAwarded(lockID, 2);
+
       waitForAllToMoveOn();
-      
+
       waitForAllToMoveOn();
-      
-      verifyLockHop(lockName, 3);
-      verifyStackTraces(lockName, 0, -1, -1);
+
+      verifyLockHop(lockID, 4);
       waitForAllToMoveOn();
       disconnect();
-      
+
     } else if (index == 1) {
       ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
       waitForAllToMoveOn();
       waitForAllToMoveOn();
-      
+
       waitForTwoToMoveOn();
       ManagerUtil.monitorExit(lockName);
-      
+
       waitForAllToMoveOn();
-      
+
       waitForAllToMoveOn();
-      
+
       ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
       waitForTwoToMoveOn();
       Thread.sleep(1000);
@@ -320,11 +327,11 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
       waitForAllToMoveOn();
       waitForAllToMoveOn();
       ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
-      
+
       waitForAllToMoveOn();
-      
+
       waitForAllToMoveOn();
-      
+
       Thread.sleep(1000);
       ManagerUtil.monitorExit(lockName);
       waitForTwoToMoveOn();
@@ -347,136 +354,168 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
   }
 
   private void verifyLockRequest(String lockName, int expectedValue) {
-    Collection c = statMBean.getTopRequested(10);
-    for (Iterator<LockStat> i = c.iterator(); i.hasNext();) {
-      LockStat s = i.next();
-      if (s.getLockID().asString().endsWith(lockName)) {
-        Assert.assertEquals(expectedValue, s.getNumOfLockRequested());
-        break;
+    Collection c = statMBean.getLockSpecs();
+    for (Iterator i = c.iterator(); i.hasNext();) {
+      LockSpec lsi = (LockSpec) i.next();
+      if (lsi.getLockID().asString().equals(lockName)) {
+        Assert.assertEquals(expectedValue, lsi.getClientStats().getNumOfLockRequested());
+        return;
       }
     }
+    throw new AssertionError(lockName + " cannot be found in the statistics.");
   }
 
-  private void verifyLockHolder(String lockName, long expectedValue) {
-    Collection c = statMBean.getTopHeld(100);
-    for (Iterator<LockHolder> i = c.iterator(); i.hasNext();) {
-      LockHolder s = i.next();
-      if (s.getLockID().asString().endsWith(lockName)) {
-        if (((ClientID) s.getNodeID()).getChannelID().toLong() == expectedValue) { return; }
+  private void verifyLockAwarded(String lockName, long expectedValue) {
+    Collection c = statMBean.getLockSpecs();
+    for (Iterator i = c.iterator(); i.hasNext();) {
+      LockSpec lsi = (LockSpec) i.next();
+      if (lsi.getLockID().asString().equals(lockName)) {
+        Assert.assertEquals(expectedValue, lsi.getClientStats().getNumOfLockAwarded());
+        return;
       }
     }
-    throw new AssertionError("Client " + expectedValue + " does not seem to hold lock " + lockName);
+    throw new AssertionError(lockName + " cannot be found in the statistics.");
   }
   
-  private void verifyLockAwarded(String lockName, long expectedValue, boolean isAwarded) {
-    Collection c = statMBean.getTopHeld(100);
-    for (Iterator<LockHolder> i = c.iterator(); i.hasNext();) {
-      LockHolder s = i.next();
-      if (s.getLockID().asString().endsWith(lockName)) {
-        if (((ClientID) s.getNodeID()).getChannelID().toLong() == expectedValue) {
-          if (isAwarded && s.getTimeAcquired() > 0) {
-            return;
-          }
-          if (!isAwarded && s.getTimeAcquired() > 0) {
-            throw new AssertionError("Client " + expectedValue + " should not have acquire the lock " + lockName);
-          }
-        }
+  private long getServerAggregateAverageHeldTime(String lockName) {
+    Collection c = statMBean.getLockSpecs();
+    for (Iterator i = c.iterator(); i.hasNext();) {
+      LockSpec lsi = (LockSpec) i.next();
+      if (lsi.getLockID().asString().equals(lockName)) {
+        return lsi.getServerStats().getAvgHeldTimeInMillis();
       }
     }
-    
-    if (isAwarded) {
-      throw new AssertionError("Client " + expectedValue + " does not seem to acquire the lock " + lockName);
-    }
+    return -1;
   }
-  
+
   private long getAggregateAverageHeldTime(String lockName) {
-    Collection c = statMBean.getTopAggregateLockHolderStats(500);
-    for (Iterator<LockStat> i=c.iterator(); i.hasNext(); ) {
-      LockStat s = i.next();
-      if (s.getLockID().asString().endsWith(lockName)) {
-        return s.getAvgHeldTimeInMillis();
+    Collection c = statMBean.getLockSpecs();
+    for (Iterator i = c.iterator(); i.hasNext();) {
+      LockSpec lsi = (LockSpec) i.next();
+      if (lsi.getLockID().asString().equals(lockName)) {
+        return lsi.getClientStats().getAvgHeldTimeInMillis();
       }
     }
     return -1;
   }
   
-  private long getAggregateAverageWaitTime(String lockName) {
-    Collection c = statMBean.getTopAggregateWaitingLocks(500);
-    for (Iterator<LockStat> i=c.iterator(); i.hasNext(); ) {
-      LockStat s = i.next();
-      if (s.getLockID().asString().endsWith(lockName)) {
-        return s.getAvgWaitTimeInMillis();
+  private long getServerAggregateAverageWaitTime(String lockName) {
+    Collection c = statMBean.getLockSpecs();
+    for (Iterator i = c.iterator(); i.hasNext();) {
+      LockSpec lsi = (LockSpec) i.next();
+      if (lsi.getLockID().asString().equals(lockName)) {
+        return lsi.getServerStats().getAvgWaitTimeToAwardInMillis();
       }
     }
     return -1;
-  }
-  
-  private long getLockHeldTime(String lockName, long channelID) {
-    Collection c = statMBean.getTopHeld(500);
-    for (Iterator<LockHolder> i = c.iterator(); i.hasNext();) {
-      LockHolder s = i.next();
-      if (s.getLockID().asString().endsWith(lockName)) {
-        if (((ClientID) s.getNodeID()).getChannelID().toLong() == channelID) {
-          return s.getAndSetHeldTimeInMillis();
-        }
-      }
-    }
-    throw new AssertionError(lockName + " does not exist.");
-  }
-  
-  private long getLockWaitTime(String lockName, long channelID) {
-    Collection c = statMBean.getTopHeld(500);
-    for (Iterator<LockHolder> i = c.iterator(); i.hasNext();) {
-      LockHolder s = i.next();
-      if (s.getLockID().asString().endsWith(lockName)) {
-        if (((ClientID) s.getNodeID()).getChannelID().toLong() == channelID) {
-          return s.getAndSetWaitTimeInMillis();
-        }
-      }
-    }
-    throw new AssertionError(lockName + " does not exist.");
   }
 
-  private void verifyLockContended(String lockName, int expectedValue) {
-    Collection c = statMBean.getTopContendedLocks(10);
-    for (Iterator<LockStat> i = c.iterator(); i.hasNext();) {
-      LockStat s = i.next();
-      if (s.getLockID().asString().endsWith(lockName)) {
-        Assert.assertEquals(expectedValue, s.getNumOfPendingRequests());
-        break;
+  private long getAggregateAverageWaitTime(String lockName) {
+    Collection c = statMBean.getLockSpecs();
+    for (Iterator i = c.iterator(); i.hasNext();) {
+      LockSpec lsi = (LockSpec) i.next();
+      if (lsi.getLockID().asString().equals(lockName)) {
+        return lsi.getClientStats().getAvgWaitTimeToAwardInMillis();
       }
     }
+    return -1;
   }
 
   private void verifyLockHop(String lockName, int expectedValue) {
-    Collection c = statMBean.getTopLockHops(10);
-    for (Iterator<LockStat> i = c.iterator(); i.hasNext();) {
-      LockStat s = i.next();
-      if (s.getLockID().asString().endsWith(lockName)) {
-        Assert.assertEquals(expectedValue, s.getNumOfLockHopRequests());
-        break;
+    Collection c = statMBean.getLockSpecs();
+    for (Iterator i = c.iterator(); i.hasNext();) {
+      LockSpec lsi = (LockSpec) i.next();
+      if (lsi.getLockID().asString().equals(lockName)) {
+        Assert.assertEquals(expectedValue, lsi.getClientStats().getNumOfLockHopRequests());
+        return;
+      }
+    }
+    throw new AssertionError(lockName + " cannot be found in the statistics.");
+  }
+
+  private void verifyClientStat(String lockName, int numOfClientsStackTraces, int traceDepth) {
+    Collection c = statMBean.getLockSpecs();
+    for (Iterator i = c.iterator(); i.hasNext();) {
+      LockSpec lsi = (LockSpec) i.next();
+      if (lsi.getLockID().asString().indexOf(lockName) != -1) {
+        Assert.assertEquals(numOfClientsStackTraces, lsi.children().size());
+        assertStackTracesDepth(lsi.children(), traceDepth);
+        return;
+      }
+    }
+  }
+  
+  private void verifyClientStat(String lockName, String lockType, int numOfClientsStackTraces, int traceDepth) {
+    Collection c = statMBean.getLockSpecs();
+    for (Iterator i = c.iterator(); i.hasNext();) {
+      LockSpec lsi = (LockSpec) i.next();
+      if (lsi.getLockID().asString().indexOf(lockName) != -1) {
+        Assert.assertEquals(lockType, lsi.getObjectType());
+
+        Assert.assertEquals(numOfClientsStackTraces, lsi.children().size());
+        assertStackTracesDepth(lsi.children(), traceDepth);
+        return;
       }
     }
   }
 
-  private void verifyStackTraces(String lockName, int numOfClientsStackTraces, int numOfStackTraces, int depthOfStackTraces) {
-    Collection c = statMBean.getStackTraces(lockName);
-    Assert.assertEquals(numOfClientsStackTraces, c.size());
-    
-    for (Iterator i=c.iterator(); i.hasNext(); ) {
-      LockStackTracesStat s = (LockStackTracesStat) i.next();
-      List oneStackTraces = s.getStackTraces();
-      Assert.assertEquals(numOfStackTraces, oneStackTraces.size());
-      for (Iterator j = oneStackTraces.iterator(); j.hasNext();) {
-        TCStackTraceElement tcStackTraceElement = (TCStackTraceElement)j.next();
-        StackTraceElement[] stackTracesElement = tcStackTraceElement.getStackTraceElements();
-        Assert.assertEquals(depthOfStackTraces, stackTracesElement.length);
-      }
-    }
+  private boolean assertStackTracesDepth(Collection traces, int expectedDepthOfStackTraces) {
+    if (traces.size() == 0 && expectedDepthOfStackTraces == 0) { return true; }
+    if (traces.size() == 0 || expectedDepthOfStackTraces == 0) { return false; }
+
+    LockStatElement lse = (LockStatElement) traces.iterator().next();
+    return assertStackTracesDepth(lse.children(), expectedDepthOfStackTraces - 1);
   }
 
   private static void echo(String msg) {
-    System.out.println(msg);
+    System.err.println(msg);
+  }
+
+  private static class TestClass {
+    private ReentrantLock rLock = new ReentrantLock();
+    
+    public synchronized void syncMethod(long time) {
+      try {
+        Thread.sleep(time);
+      } catch (InterruptedException e) {
+        throw new AssertionError(e);
+      }
+    }
+
+    public void syncBlock(long time) {
+      synchronized (this) {
+        try {
+          Thread.sleep(time);
+        } catch (InterruptedException e) {
+          throw new AssertionError(e);
+        }
+      }
+    }
+    
+    public void nameLockMethod(long time) {
+      try {
+        Thread.sleep(time);
+      } catch (InterruptedException e) {
+        throw new AssertionError(e);
+      }
+    }
+    
+    public void tryLockBlock(long time) {
+      boolean isLocked = rLock.tryLock();
+      if (isLocked) {
+        try {
+          Thread.sleep(time);
+        } catch (InterruptedException e) {
+          throw new AssertionError(e);
+        } finally {
+          rLock.unlock();
+        }
+      }
+    }
+    
+    public Object getTryLock() {
+      return rLock;
+    }
   }
 
 }

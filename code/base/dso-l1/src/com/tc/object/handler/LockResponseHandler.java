@@ -43,10 +43,6 @@ public class LockResponseHandler extends AbstractEventHandler {
       lockManager.cannotAwardLock(msg.getLocalSessionID(), msg.getLockID(), msg.getThreadID(), msg.getLockLevel());
     } else if (msg.isLockInfo()) {
       lockManager.queryLockCommit(msg.getThreadID(), msg.getGlobalLockInfo());
-    } else if (msg.isLockStatEnabled()) {
-      lockManager.enableStat(msg.getLockID(), msg.getStackTraceDepth(), msg.getStatCollectFrequency());
-    } else if (msg.isLockStatDisabled()) {
-      lockManager.disableStat(msg.getLockID());
     } else {
       logger.error("Unknown lock response message: " + msg);
     }

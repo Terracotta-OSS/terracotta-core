@@ -29,9 +29,9 @@ public interface ClientLockManager {
    *
    * @param obj
    */
-  public void lock(LockID id, ThreadID threadID, int type);
+  public void lock(LockID id, ThreadID threadID, int type, String lockType, String contextInfo);
 
-  public boolean tryLock(LockID id, ThreadID threadID, WaitInvocation timeout, int type);
+  public boolean tryLock(LockID id, ThreadID threadID, WaitInvocation timeout, int type, String lockType);
 
   /**
    * releases the lock so that others can have at it
@@ -100,7 +100,9 @@ public interface ClientLockManager {
 
   public void queryLockCommit(ThreadID threadID, GlobalLockInfo globalLockInfo);
   
-  public void enableStat(LockID lockID, int lockStackTraceDepth, int lockStatCollectFrequency);
+  public void setLockStatisticsConfig(int traceDepth, int gatherInterval);
   
-  public void disableStat(LockID lockID);
+  public void setLockStatisticsEnabled(boolean statEnable);
+  
+  public void getLockSpecs();
 }

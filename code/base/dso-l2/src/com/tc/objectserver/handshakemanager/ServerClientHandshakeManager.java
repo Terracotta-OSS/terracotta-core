@@ -136,13 +136,13 @@ public class ServerClientHandshakeManager {
 
       for (Iterator i = handshake.getPendingLockContexts().iterator(); i.hasNext();) {
         LockContext ctxt = (LockContext) i.next();
-        lockManager.requestLock(ctxt.getLockID(), ctxt.getNodeID(), ctxt.getThreadID(), ctxt.getLockLevel(),
+        lockManager.requestLock(ctxt.getLockID(), ctxt.getNodeID(), ctxt.getThreadID(), ctxt.getLockLevel(), ctxt.getLockType(),
                                 lockResponseSink);
       }
 
       for (Iterator i = handshake.getPendingTryLockContexts().iterator(); i.hasNext();) {
         TryLockContext ctxt = (TryLockContext) i.next();
-        lockManager.tryRequestLock(ctxt.getLockID(), ctxt.getNodeID(), ctxt.getThreadID(), ctxt.getLockLevel(), ctxt
+        lockManager.tryRequestLock(ctxt.getLockID(), ctxt.getNodeID(), ctxt.getThreadID(), ctxt.getLockLevel(), ctxt.getLockType(), ctxt
             .getWaitInvocation(), lockResponseSink);
       }
 

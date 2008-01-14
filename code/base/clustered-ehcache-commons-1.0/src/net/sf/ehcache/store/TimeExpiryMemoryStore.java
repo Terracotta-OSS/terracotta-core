@@ -84,9 +84,7 @@ public class TimeExpiryMemoryStore extends MemoryStore {
   }
 
   public final void stopTimeMonitoring() {
-    if(map != null) {
-      ((SpoolingTimeExpiryMap) map).stopTimeMonitoring();
-    }
+    ((SpoolingTimeExpiryMap) map).stopTimeMonitoring();
   }
 
   public final void evictExpiredElements() {

@@ -58,7 +58,7 @@ public class DmiManagerImpl implements DmiManager {
     final DistributedMethodCall dmc = new DistributedMethodCall(receiver, params, methodName, paramDesc);
     if (runtimeLogger.distributedMethodDebug()) runtimeLogger.distributedMethodCall(receiver.getClass().getName(), dmc
         .getMethodName(), dmc.getParameterDesc());
-    objMgr.getTransactionManager().begin(lockName, LockLevel.CONCURRENT);
+    objMgr.getTransactionManager().begin(lockName, LockLevel.CONCURRENT, lockName, "Distributed Invoke");
     try {
       final ObjectID receiverId = objMgr.lookupOrCreate(receiver).getObjectID();
       final ObjectID dmiCallId = objMgr.lookupOrCreate(dmc).getObjectID();

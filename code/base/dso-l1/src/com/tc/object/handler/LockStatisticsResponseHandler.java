@@ -5,7 +5,7 @@ package com.tc.object.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
-import com.tc.object.msg.LockStatisticsResponseMessage;
+import com.tc.management.lock.stats.LockStatisticsResponseMessage;
 
 public class LockStatisticsResponseHandler extends AbstractEventHandler {
 

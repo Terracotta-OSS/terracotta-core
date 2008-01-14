@@ -10,7 +10,7 @@ import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
 import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.management.L2LockStatsManager;
-import com.tc.management.L2LockStatsManagerImpl;
+import com.tc.management.lock.stats.L2LockStatisticsManagerImpl;
 import com.tc.net.groups.ClientID;
 import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -18,12 +18,12 @@ import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.ServerThreadID;
 import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.lockmanager.impl.LockHolder;
 import com.tc.object.tx.WaitInvocation;
 import com.tc.objectserver.api.TestSink;
 import com.tc.objectserver.context.LockResponseContext;
 import com.tc.objectserver.lockmanager.api.DeadlockChain;
 import com.tc.objectserver.lockmanager.api.DeadlockResults;
-import com.tc.objectserver.lockmanager.api.LockHolder;
 import com.tc.objectserver.lockmanager.api.LockMBean;
 import com.tc.objectserver.lockmanager.api.NullChannelManager;
 import com.tc.objectserver.lockmanager.api.ServerLockRequest;
@@ -100,7 +100,7 @@ public class LockManagerTest extends TestCase {
     ThreadID tid1 = new ThreadID(1);
     WaitInvocation wait = new WaitInvocation(Integer.MAX_VALUE);
 
-    L2LockStatsManager lockStatsManager = new L2LockStatsManagerImpl();
+    L2LockStatsManager lockStatsManager = new L2LockStatisticsManagerImpl();
     lockManager = new LockManagerImpl(new NullChannelManager() {
       public String getChannelAddress(NodeID nid) {
         if (cid1.equals(nid)) { return "127.0.0.1:6969"; }
@@ -110,21 +110,21 @@ public class LockManagerTest extends TestCase {
 
     lockManager.setLockPolicy(LockManagerImpl.ALTRUISTIC_LOCK_POLICY);
     lockManager.start();
-    lockStatsManager.start(new NullChannelManager(), lockManager, sink);
+    lockStatsManager.start(new NullChannelManager());
 
-    lockManager.requestLock(lid1, cid1, tid1, LockLevel.WRITE, sink); // hold
-    lockManager.requestLock(lid1, cid2, tid1, LockLevel.WRITE, sink); // pending
+    lockManager.requestLock(lid1, cid1, tid1, LockLevel.WRITE, String.class.getName(), sink); // hold
+    lockManager.requestLock(lid1, cid2, tid1, LockLevel.WRITE, String.class.getName(), sink); // pending
 
-    lockManager.requestLock(lid2, cid1, tid1, LockLevel.READ, sink); // hold
-    lockManager.requestLock(lid2, cid2, tid1, LockLevel.READ, sink); // hold
+    lockManager.requestLock(lid2, cid1, tid1, LockLevel.READ, String.class.getName(), sink); // hold
+    lockManager.requestLock(lid2, cid2, tid1, LockLevel.READ, String.class.getName(), sink); // hold
     try {
-      lockManager.requestLock(lid2, cid1, tid1, LockLevel.WRITE, sink); // try upgrade and fail
+      lockManager.requestLock(lid2, cid1, tid1, LockLevel.WRITE, String.class.getName(), sink); // try upgrade and fail
       throw new AssertionError("Should have thrown an TCLockUpgradeNotSupportedError.");
     } catch (TCLockUpgradeNotSupportedError e) {
       //
     }
 
-    lockManager.requestLock(lid3, cid1, tid1, LockLevel.WRITE, sink); // hold
+    lockManager.requestLock(lid3, cid1, tid1, LockLevel.WRITE, String.class.getName(), sink); // hold
     lockManager.wait(lid3, cid1, tid1, wait, sink); // wait
 
     LockMBean[] lockBeans = lockManager.getAllLocks();
@@ -443,7 +443,7 @@ public class LockManagerTest extends TestCase {
     ThreadID txID = new ThreadID(1);
 
     lockManager.start();
-    boolean granted = lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, sink);
+    boolean granted = lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, String.class.getName(), sink);
     assertTrue(granted);
 
     lockManager.wait(lockID, cid, txID, new WaitInvocation(1000), sink);
@@ -471,7 +471,7 @@ public class LockManagerTest extends TestCase {
 
     try {
       lockManager.start();
-      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, sink);
+      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, String.class.getName(), sink);
       assertEquals(1, queue.size());
 
       shutdown.start();
@@ -501,7 +501,7 @@ public class LockManagerTest extends TestCase {
     ShutdownThread shutdown = new ShutdownThread(shutdownSteps);
     try {
       lockManager.start();
-      lockManager.requestLock(lock1, cid1, tx1, LockLevel.WRITE, sink);
+      lockManager.requestLock(lock1, cid1, tx1, LockLevel.WRITE, String.class.getName(), sink);
       assertEquals(1, queue.size());
 
       shutdown.start();
@@ -526,11 +526,11 @@ public class LockManagerTest extends TestCase {
     try {
       // Test that the normal case works as expected...
       lockManager.start();
-      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, sink);
+      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, String.class.getName(), sink);
       assertEquals(1, queue.size());
       queue.clear();
       lockManager.unlock(lockID, cid, txID);
-      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, sink);
+      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, String.class.getName(), sink);
       assertEquals(1, queue.size());
       lockManager.unlock(lockID, cid, txID);
 
@@ -538,7 +538,7 @@ public class LockManagerTest extends TestCase {
       // "requestLock" method
       queue.clear();
       lockManager.stop();
-      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, sink);
+      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, String.class.getName(), sink);
       assertEquals(0, queue.size());
     } finally {
       lockManager.clearAllLocksFor(cid);
@@ -555,9 +555,9 @@ public class LockManagerTest extends TestCase {
       lockManager.start();
       // now try stacking locks and make sure that calling unlock doesn't grant
       // the pending locks.
-      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, sink);
+      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, String.class.getName(), sink);
       queue.clear();
-      lockManager.requestLock(lockID, cid, new ThreadID(2), LockLevel.WRITE, sink);
+      lockManager.requestLock(lockID, cid, new ThreadID(2), LockLevel.WRITE, String.class.getName(), sink);
       // the second lock should be pending.
       assertEquals(0, queue.size());
     } finally {
@@ -575,9 +575,9 @@ public class LockManagerTest extends TestCase {
       lockManager.start();
       // now try stacking locks and make sure that calling unlock doesn't grant
       // the pending locks.
-      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, sink);
+      lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, String.class.getName(), sink);
       queue.clear();
-      lockManager.requestLock(lockID, cid, new ThreadID(2), LockLevel.WRITE, sink);
+      lockManager.requestLock(lockID, cid, new ThreadID(2), LockLevel.WRITE, String.class.getName(), sink);
       // the second lock should be pending.
       assertEquals(0, queue.size());
 
@@ -603,24 +603,24 @@ public class LockManagerTest extends TestCase {
     ClientID c3 = new ClientID(new ChannelID(3));
     ClientID c4 = new ClientID(new ChannelID(4));
     lockManager.start();
-    lockManager.requestLock(l1, c1, s1, LockLevel.WRITE, sink);
+    lockManager.requestLock(l1, c1, s1, LockLevel.WRITE, String.class.getName(), sink);
     assertTrue(sink.size() == 1);
     System.out.println(sink.getInternalQueue().remove(0));
 
-    lockManager.requestLock(l1, c2, s1, LockLevel.WRITE, sink);
+    lockManager.requestLock(l1, c2, s1, LockLevel.WRITE, String.class.getName(), sink);
     assertTrue(sink.size() == 0);
     lockManager.unlock(l1, c1, s1);
     assertTrue(sink.size() == 1);
     System.out.println(sink.getInternalQueue().remove(0));
 
-    lockManager.requestLock(l1, c3, s1, LockLevel.READ, sink);
+    lockManager.requestLock(l1, c3, s1, LockLevel.READ, String.class.getName(), sink);
     assertTrue(sink.size() == 0);
     assertTrue(lockManager.hasPending(l1));
     lockManager.unlock(l1, c2, s1);
     assertTrue(sink.size() == 1);
     assertFalse(lockManager.hasPending(l1));
 
-    lockManager.requestLock(l1, c4, s1, LockLevel.WRITE, sink);
+    lockManager.requestLock(l1, c4, s1, LockLevel.WRITE, String.class.getName(), sink);
     assertTrue(lockManager.hasPending(l1));
     lockManager.unlock(l1, c3, s1);
     assertFalse(lockManager.hasPending(l1));
@@ -643,13 +643,13 @@ public class LockManagerTest extends TestCase {
 
     lockManager.start();
     // thread1 gets lock1
-    lockManager.requestLock(l1, c1, s1, LockLevel.WRITE, sink);
+    lockManager.requestLock(l1, c1, s1, LockLevel.WRITE, String.class.getName(), sink);
     // thread2 gets lock2
-    lockManager.requestLock(l2, c1, s2, LockLevel.WRITE, sink);
+    lockManager.requestLock(l2, c1, s2, LockLevel.WRITE, String.class.getName(), sink);
     // thread1 trys to get lock2 (blocks)
-    lockManager.requestLock(l2, c1, s1, LockLevel.WRITE, sink);
+    lockManager.requestLock(l2, c1, s1, LockLevel.WRITE, String.class.getName(), sink);
     // thread2 trys to get lock1 (blocks)
-    lockManager.requestLock(l1, c1, s2, LockLevel.WRITE, sink);
+    lockManager.requestLock(l1, c1, s2, LockLevel.WRITE, String.class.getName(), sink);
 
     TestDeadlockResults deadlocks = new TestDeadlockResults();
     lockManager.scanForDeadlocks(deadlocks);
@@ -693,20 +693,20 @@ public class LockManagerTest extends TestCase {
     lockManager.start();
 
     // thread1 holds all three read locks, thread2 has 2 of them
-    lockManager.requestLock(l3, c1, s1, LockLevel.READ, sink);
-    lockManager.requestLock(l4, c1, s1, LockLevel.READ, sink);
-    lockManager.requestLock(l5, c1, s1, LockLevel.READ, sink);
-    lockManager.requestLock(l3, c1, s2, LockLevel.READ, sink);
-    lockManager.requestLock(l4, c1, s2, LockLevel.READ, sink);
+    lockManager.requestLock(l3, c1, s1, LockLevel.READ, String.class.getName(), sink);
+    lockManager.requestLock(l4, c1, s1, LockLevel.READ, String.class.getName(), sink);
+    lockManager.requestLock(l5, c1, s1, LockLevel.READ, String.class.getName(), sink);
+    lockManager.requestLock(l3, c1, s2, LockLevel.READ, String.class.getName(), sink);
+    lockManager.requestLock(l4, c1, s2, LockLevel.READ, String.class.getName(), sink);
 
     // thread1 gets lock1
-    lockManager.requestLock(l1, c1, s1, LockLevel.WRITE, sink);
+    lockManager.requestLock(l1, c1, s1, LockLevel.WRITE, String.class.getName(), sink);
     // thread2 gets lock2
-    lockManager.requestLock(l2, c1, s2, LockLevel.WRITE, sink);
+    lockManager.requestLock(l2, c1, s2, LockLevel.WRITE, String.class.getName(), sink);
     // thread1 trys to get lock2 (blocks)
-    lockManager.requestLock(l2, c1, s1, LockLevel.WRITE, sink);
+    lockManager.requestLock(l2, c1, s1, LockLevel.WRITE, String.class.getName(), sink);
     // thread2 trys to get lock1 (blocks)
-    lockManager.requestLock(l1, c1, s2, LockLevel.WRITE, sink);
+    lockManager.requestLock(l1, c1, s2, LockLevel.WRITE, String.class.getName(), sink);
 
     TestDeadlockResults deadlocks = new TestDeadlockResults();
     lockManager.scanForDeadlocks(deadlocks);
@@ -734,14 +734,14 @@ public class LockManagerTest extends TestCase {
     lockManager.start();
 
     // thread1 gets lock1 (R)
-    lockManager.requestLock(l1, c0, s1, LockLevel.READ, sink);
+    lockManager.requestLock(l1, c0, s1, LockLevel.READ, String.class.getName(), sink);
     // thread2 gets lock1 (R)
-    lockManager.requestLock(l1, c0, s2, LockLevel.READ, sink);
+    lockManager.requestLock(l1, c0, s2, LockLevel.READ, String.class.getName(), sink);
 
     // thread1 requests upgrade
-    lockManager.requestLock(l1, c0, s1, LockLevel.WRITE, sink);
+    lockManager.requestLock(l1, c0, s1, LockLevel.WRITE, String.class.getName(), sink);
     // thread2 requests upgrade
-    lockManager.requestLock(l1, c0, s2, LockLevel.WRITE, sink);
+    lockManager.requestLock(l1, c0, s2, LockLevel.WRITE, String.class.getName(), sink);
 
     TestDeadlockResults deadlocks = new TestDeadlockResults();
     lockManager.scanForDeadlocks(deadlocks);
@@ -817,7 +817,7 @@ public class LockManagerTest extends TestCase {
         LockID lock = locks[start + i];
         boolean read = random.nextInt(10) < 8; // 80% reads
         int level = read ? LockLevel.READ : LockLevel.WRITE;
-        boolean granted = lockManager.requestLock(lock, cid, tid, level, sink);
+        boolean granted = lockManager.requestLock(lock, cid, tid, level, String.class.getName(), sink);
         if (!granted) {
           break;
         }
@@ -874,18 +874,18 @@ public class LockManagerTest extends TestCase {
     lockManager.start();
 
     // thread1 gets lock1
-    lockManager.requestLock(l1, c0, s1, LockLevel.WRITE, sink);
+    lockManager.requestLock(l1, c0, s1, LockLevel.WRITE, String.class.getName(), sink);
     // thread2 gets lock2
-    lockManager.requestLock(l2, c0, s2, LockLevel.WRITE, sink);
+    lockManager.requestLock(l2, c0, s2, LockLevel.WRITE, String.class.getName(), sink);
     // thread3 gets lock3
-    lockManager.requestLock(l3, c0, s3, LockLevel.WRITE, sink);
+    lockManager.requestLock(l3, c0, s3, LockLevel.WRITE, String.class.getName(), sink);
 
     // thread1 trys to get lock2 (blocks)
-    lockManager.requestLock(l2, c0, s1, LockLevel.WRITE, sink);
+    lockManager.requestLock(l2, c0, s1, LockLevel.WRITE, String.class.getName(), sink);
     // thread2 trys to get lock3 (blocks)
-    lockManager.requestLock(l3, c0, s2, LockLevel.WRITE, sink);
+    lockManager.requestLock(l3, c0, s2, LockLevel.WRITE, String.class.getName(), sink);
     // thread3 trys to get lock1 (blocks)
-    lockManager.requestLock(l1, c0, s3, LockLevel.WRITE, sink);
+    lockManager.requestLock(l1, c0, s3, LockLevel.WRITE, String.class.getName(), sink);
 
     TestDeadlockResults deadlocks = new TestDeadlockResults();
     lockManager.scanForDeadlocks(deadlocks);

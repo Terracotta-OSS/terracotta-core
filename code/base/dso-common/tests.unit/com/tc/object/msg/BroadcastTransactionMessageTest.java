@@ -67,7 +67,7 @@ public class BroadcastTransactionMessageTest extends TestCase {
     Collection notified = new LinkedList();
     Set lookupObjectIDs = new HashSet();
     for (int i = 0; i < 100; i++) {
-      notified.add(new LockContext(new LockID("" + (i + 1)), clientID, new ThreadID(i + 1), LockLevel.WRITE));
+      notified.add(new LockContext(new LockID("" + (i + 1)), clientID, new ThreadID(i + 1), LockLevel.WRITE, String.class.getName()));
       lookupObjectIDs.add(new ObjectID(i));
     }
     msg.initialize(changes, lookupObjectIDs, serializer, lockIDs, cid, txID, clientID, gtx, txnType,

@@ -60,19 +60,19 @@ public class TestRemoteLockManager implements RemoteLockManager {
   // by other transactions are not taken into consideration
   // *************************
 
-  public synchronized void requestLock(LockID lockID, ThreadID threadID, int lockType) {
+  public synchronized void requestLock(LockID lockID, ThreadID threadID, int lockLevel, String lockType) {
     lockRequests++;
-    lockRequestCalls.put(new Object[] { lockID, threadID, new Integer(lockType) });
+    lockRequestCalls.put(new Object[] { lockID, threadID, new Integer(lockLevel) });
 
     LockRequest request;
     if (isGreedy) {
-      request = new LockRequest(lockID, ThreadID.VM_ID, LockLevel.makeGreedy(lockType));
+      request = new LockRequest(lockID, ThreadID.VM_ID, LockLevel.makeGreedy(lockLevel), lockType);
     } else {
-      request = new LockRequest(lockID, threadID, lockType);
+      request = new LockRequest(lockID, threadID, lockLevel, lockType);
     }
 
     if (!locks.containsKey(lockID)) {
-      locks.put(lockID, new LinkedList(Arrays.asList(new Object[] { new Lock(threadID, lockType) })));
+      locks.put(lockID, new LinkedList(Arrays.asList(new Object[] { new Lock(threadID, lockLevel) })));
       lockResponder.respondToLockRequest(request);
       return;
     }
@@ -191,7 +191,7 @@ public class TestRemoteLockManager implements RemoteLockManager {
     throw new ImplementMe();
   }
 
-  public void tryRequestLock(LockID lockID, ThreadID threadID, WaitInvocation timeout, int lockType) {
+  public void tryRequestLock(LockID lockID, ThreadID threadID, WaitInvocation timeout, int type, String lockType) {
     //
   }
 }

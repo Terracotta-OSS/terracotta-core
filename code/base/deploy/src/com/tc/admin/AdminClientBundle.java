@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin;
 
@@ -11,227 +12,168 @@ public class AdminClientBundle extends ListResourceBundle {
   }
 
   static final Object[][] contents = {
-    {"sessions",
-     "Sessions"},
-     
-    {"title",
-     "Terracotta Administrator Console"},
+      { "sessions", "Sessions" },
 
-    {"new.server.action.label",
-     "New server"},
-       
-    {"quit.action.label",
-     "Quit"},
-       
-    {"connect.title",
-     "Connect to JMX Server"},
+      { "title", "Terracotta Administrator Console" },
 
-    {"connecting.to",
-     "Connecting to {0} ..."},
+      { "new.server.action.label", "New server" },
 
-    {"connected.to",
-     "Connected to {0}"},
+      { "quit.action.label", "Quit" },
 
-    {"cannot.connect.to",
-     "Unable to connect to {0}"},
+      { "connect.title", "Connect to JMX Server" },
 
-    {"cannot.connect.to.extended",
-     "Unable to connect to {0}: {1}"},
-     
-    {"service.unavailable",
-     "Service Unavailable: {0}"},
-     
-    {"unknown.host",
-     "Unknown host: {0}"},
-       
-    {"disconnecting.from",
-     "Disconnecting from {0} ..."},
+      { "connecting.to", "Connecting to {0} ..." },
 
-    {"disconnected.from",
-     "Disconnected from {0}"},
+      { "connected.to", "Connected to {0}" },
 
-    {"deleted.server",
-     "Deleted {0}"},
+      { "cannot.connect.to", "Unable to connect to {0}" },
 
-    {"server.properties.headings",
-     new String[] {"Name", "Value"}},
+      { "cannot.connect.to.extended", "Unable to connect to {0}: {1}" },
 
-    {"dso",
-     "DSO"},
+      { "service.unavailable", "Service Unavailable: {0}" },
 
-    {"dso.roots",
-     "Roots"},
+      { "unknown.host", "Unknown host: {0}" },
 
-    {"dso.locks",
-     "Locks"},
+      { "disconnecting.from", "Disconnecting from {0} ..." },
 
-    {"refresh.name",
-     "Refresh"},
+      { "disconnected.from", "Disconnected from {0}" },
 
-    {"dso.roots.refreshing",
-     "Refreshing roots..."},
+      { "deleted.server", "Deleted {0}" },
 
-    {"dso.deadlocks.detect",
-     "Detect deadlocks"},
+      { "server.properties.headings", new String[] { "Name", "Value" } },
 
-    {"dso.deadlocks.detecting",
-     "Detecting deadlocks..."},
+      { "dso", "DSO" },
 
-    {"dso.classes",
-     "Classes"},
+      { "dso.roots", "Roots" },
 
-    {"dso.allClasses",
-     "All classes"},
+      { "dso.locks", "Lock stats" },
 
-    {"dso.classes.refreshing",
-     "Refreshing classes..."},
+      {
+      "dso.locks.column.headings",
+      new String[] { "Lock", "<html>Times<br>Requested</html>", "<html>Times<br>Hopped</html>",
+      "<html>Average<br>Contenders</html>", "<html>Average<br>Acquire Time</html>", "<html>Average<br>Held Time</html>" } },
 
-    {"dso.classes.className",
-     "Class"},
+      {
+      "dso.locks.column.tips",
+      new String[] { "Lock identifier", "<html>Number of times this lock<br>was requested</html>",
+      "<html>Times an acquired greedy lock was<br>retracted from holding client and<br>granted to another</html>",
+      "<html>Average number of threads wishing<br>to acquire this lock at the time<br>it was granted</html>",
+      "<html>Average time between lock<br>request and grant</html>",
+      "<html>Average time grantee held<br>this lock</html>",
+      "<html>Average number of outstanding<br>locks held by acquiring thread<br>at grant time</html>" } },
 
-    {"dso.classes.instanceCount",
-     "Creation count since active server start"},
+      { "refresh.name", "Refresh" },
 
-    {"dso.locks.refreshing",
-     "Refreshing locks..."},
+      { "dso.roots.refreshing", "Refreshing roots..." },
 
-    {"dso.object.flush.rate",
-     "Object Flush Rate"},
+      { "dso.deadlocks.detect", "Detect deadlocks" },
 
-    {"dso.object.fault.rate",
-     "Object Fault Rate"},
+      { "dso.deadlocks.detecting", "Detecting deadlocks..." },
 
-    {"dso.transaction.rate",
-     "Transaction Rate"},
+      { "dso.classes", "Classes" },
 
-    {"dso.root.retrieving",
-     "Retrieving new DSO root..."},
+      { "dso.allClasses", "All classes" },
 
-    {"dso.root.new",
-     "Added new DSO root: "},
-    
-    {"clients",
-     "Clients"},
+      { "dso.classes.refreshing", "Refreshing classes..." },
 
-    {"dso.client.retrieving",
-     "Retrieving new DSO client..."},
+      { "dso.classes.className", "Class" },
 
-    {"dso.client.new",
-     "Added new DSO client: "},
+      { "dso.classes.instanceCount", "Creation count since active server start" },
 
-    {"dso.client.detaching",
-     "Detaching DSO client..."},
+      { "dso.locks.refreshing", "Refreshing locks..." },
 
-    {"dso.client.detached",
-     "Detached DSO client: "},
-    
-    {"dso.client.host",
-     "Host"},
+      { "dso.object.flush.rate", "Object Flush Rate" },
 
-    {"dso.client.port",
-     "Port"},
+      { "dso.object.fault.rate", "Object Fault Rate" },
 
-    {"dso.client.channelID",
-     "ChannelID"},
+      { "dso.transaction.rate", "Transaction Rate" },
 
-    {"dso.gcstats",
-     "Garbage collection"},
+      { "dso.root.retrieving", "Retrieving new DSO root..." },
 
-    {"map.entry",
-     "MapEntry"},
+      { "dso.root.new", "Added new DSO root: " },
 
-    {"log.error",
-     "ERROR"},
+      { "clients", "Clients" },
 
-    {"log.warn",
-     "WARN"},
+      { "dso.client.retrieving", "Retrieving new DSO client..." },
 
-    {"log.info",
-     "INFO"},
+      { "dso.client.new", "Added new DSO client: " },
 
-    {"dso.cache.rate.domain.label",
-     "Time"},
+      { "dso.client.detaching", "Detaching DSO client..." },
 
-    {"dso.cache.rate.range.label",
-     "Objects per second"},
+      { "dso.client.detached", "Detached DSO client: " },
 
-    {"dso.transaction.rate.range.label",
-     "Transactions per second"},
+      { "dso.client.host", "Host" },
 
-    {"dso.cache.activity",
-     "Cache activity"},
-    
-    {"dso.cache.miss.rate",
-     "Cache Miss Rate"},
-    
-    {"dso.cache.miss.rate.label",
-     "Cache Misses per second"},
+      { "dso.client.port", "Port" },
 
-    {"dso.gcstats.iteration",
-     "Iteration"},
+      { "dso.client.channelID", "ChannelID" },
 
-    {"dso.gcstats.startTime",
-     "Start time"},
+      { "dso.gcstats", "Garbage collection" },
 
-    {"dso.gcstats.elapsedTime",
-     "Elapsed time (ms.)"},
+      { "map.entry", "MapEntry" },
 
-    {"dso.gcstats.beginObjectCount",
-     "Begin object count"},
+      { "log.error", "ERROR" },
 
-    {"dso.gcstats.candidateGarbageCount",
-     "Candidate garbage count"},
+      { "log.warn", "WARN" },
 
-    {"dso.gcstats.actualGarbageCount",
-     "Actual garbage count"},
+      { "log.info", "INFO" },
 
-    {"dso.all.statistics",
-     "All statistics"},
+      { "dso.cache.rate.domain.label", "Time" },
 
-    {"file.menu.label",
-     "File"},
-     
-    {"help.menu.label",
-     "Help"},
-     
-    {"help.item.label",
-     "Terracotta Console Help..."},
-     
-    {"about.action.label",
-     "About Terracotta Console"},
+      { "dso.cache.rate.range.label", "Objects per second" },
 
-    {"update-checker.action.label",
-     "Update Checker..."},
-     
-    {"update-checker.connect.failed.msg",
-     "Unable to connect to update site."},
+      { "dso.transaction.rate.range.label", "Transactions per second" },
 
-    {"update-checker.current.msg",
-     "Your software is up-to-date."},
-      
-    {"update-checker.updates.available.msg",
-     "New Terracotta versions are now available."},
-       
-    {"update-checker.release-notes.label",
-     "Release notes"},
-        
-    {"update-checker.action.title",
-     "Terracotta Update Checker"},
-     
-    {"update-checker.last.checked.msg",
-     "Last checked: {0}"},
-     
-    {"version.check.enable.label",
-     "Check Server Version"},
+      { "dso.cache.activity", "Cache activity" },
 
-    {"version.check.disable.label",
-     "Disable version checks"},
-     
-    {"version.check.message",
-     "<html><h3>Version mismatch for {0}.</h3><br>"
-       + "<table border=0 cellspacing=1><tr><td align=right><b>Terracotta Server Version:</b></td><td>{1}"
-       + "</tr><tr><td align=right><b>AdminConsole Version:</b</td><td>{2}"
-       + "</td></tr></table><h3>Continue?</h3></html>"
-    }
-  };
+      { "dso.cache.miss.rate", "Cache Miss Rate" },
+
+      { "dso.cache.miss.rate.label", "Cache Misses per second" },
+
+      { "dso.gcstats.iteration", "Iteration" },
+
+      { "dso.gcstats.startTime", "Start time" },
+
+      { "dso.gcstats.elapsedTime", "Elapsed time (ms.)" },
+
+      { "dso.gcstats.beginObjectCount", "Begin object count" },
+
+      { "dso.gcstats.candidateGarbageCount", "Candidate garbage count" },
+
+      { "dso.gcstats.actualGarbageCount", "Actual garbage count" },
+
+      { "dso.all.statistics", "All statistics" },
+
+      { "file.menu.label", "File" },
+
+      { "help.menu.label", "Help" },
+
+      { "help.item.label", "Terracotta Console Help..." },
+
+      { "about.action.label", "About Terracotta Console" },
+
+      { "update-checker.action.label", "Update Checker..." },
+
+      { "update-checker.connect.failed.msg", "Unable to connect to update site." },
+
+      { "update-checker.current.msg", "Your software is up-to-date." },
+
+      { "update-checker.updates.available.msg", "New Terracotta versions are now available." },
+
+      { "update-checker.release-notes.label", "Release notes" },
+
+      { "update-checker.action.title", "Terracotta Update Checker" },
+
+      { "update-checker.last.checked.msg", "Last checked: {0}" },
+
+      { "version.check.enable.label", "Check Server Version" },
+
+      { "version.check.disable.label", "Disable version checks" },
+
+      {
+      "version.check.message",
+      "<html><h3>Version mismatch for {0}.</h3><br>"
+          + "<table border=0 cellspacing=1><tr><td align=right><b>Terracotta Server Version:</b></td><td>{1}"
+          + "</tr><tr><td align=right><b>AdminConsole Version:</b</td><td>{2}"
+          + "</td></tr></table><h3>Continue?</h3></html>" } };
 }

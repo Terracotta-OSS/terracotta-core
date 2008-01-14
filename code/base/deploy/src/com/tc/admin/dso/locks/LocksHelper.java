@@ -1,12 +1,13 @@
 /*
  * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
-package com.tc.admin.dso;
+package com.tc.admin.dso.locks;
 
 import com.tc.admin.AdminClient;
 import com.tc.admin.AdminClientContext;
 import com.tc.admin.BaseHelper;
 import com.tc.admin.ConnectionContext;
+import com.tc.admin.dso.DSOHelper;
 import com.tc.objectserver.lockmanager.api.DeadlockChain;
 import com.tc.objectserver.lockmanager.api.LockMBean;
 

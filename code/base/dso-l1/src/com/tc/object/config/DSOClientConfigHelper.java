@@ -103,6 +103,8 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   int getFaultCount();
 
   void addWriteAutolock(String methodPattern);
+  
+  void addWriteAutolock(String methodPattern, String lockContextInfo);
 
   void addSynchronousWriteAutolock(String methodPattern);
 
@@ -111,6 +113,8 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   void addReadAutolock(String methodPattern);
 
   void addAutolock(String methodPattern, ConfigLockLevel type);
+  
+  void addAutolock(String methodPattern, ConfigLockLevel type, String configurationText);
 
   void addAutoLockExcludePattern(String expression);
 

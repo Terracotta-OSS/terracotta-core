@@ -118,11 +118,11 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     return lockManager.isLocked(lockID, lockLevel);
   }
 
-  public void lock(String lockName, int lockLevel) {
-    final LockID lockID = lockManager.lockIDFor(lockName);
-    lockManager.lock(lockID, lockLevel);
-  }
-
+//  public void lock(String lockName, int lockLevel) {
+//    final LockID lockID = lockManager.lockIDFor(lockName);
+//    lockManager.lock(lockID, lockLevel, "");
+//  }
+//
   public void unlock(String lockName) {
     final LockID lockID = lockManager.lockIDFor(lockName);
     if (lockID != null) {
@@ -131,7 +131,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     }
   }
 
-  public boolean tryBegin(String lockName, WaitInvocation timeout, int lockLevel) {
+  public boolean tryBegin(String lockName, WaitInvocation timeout, int lockLevel, String lockType) {
     logTryBegin0(lockName, lockLevel);
 
     if (isTransactionLoggingDisabled() || objectManager.isCreationInProgress()) { return true; }
@@ -145,7 +145,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     }
 
     final LockID lockID = lockManager.lockIDFor(lockName);
-    boolean isLocked = lockManager.tryLock(lockID, timeout, lockLevel);
+    boolean isLocked = lockManager.tryLock(lockID, timeout, lockLevel, lockType);
     if (!isLocked) { return isLocked; }
 
     pushTxContext(lockID, txnType);
@@ -159,7 +159,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     return isLocked;
   }
 
-  public boolean begin(String lockName, int lockLevel) {
+  public boolean begin(String lockName, int lockLevel, String lockType, String contextInfo) {
     logBegin0(lockName, lockLevel);
 
     if (isTransactionLoggingDisabled() || objectManager.isCreationInProgress()) { return false; }
@@ -178,7 +178,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     }
 
     try {
-      lockManager.lock(lockID, lockLevel);
+      lockManager.lock(lockID, lockLevel, lockType, contextInfo);
       return true;
     } catch (TCLockUpgradeNotSupportedError e) {
       popTransaction(lockID);

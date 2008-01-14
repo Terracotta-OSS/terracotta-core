@@ -106,7 +106,7 @@ public class ClientHandshakeManager implements ChannelEventListener {
     logger.debug("Getting lock holders...");
     for (Iterator i = lockManager.addAllHeldLocksTo(new HashSet()).iterator(); i.hasNext();) {
       LockRequest request = (LockRequest) i.next();
-      LockContext ctxt = new LockContext(request.lockID(), cidp.getClientID(), request.threadID(), request.lockLevel());
+      LockContext ctxt = new LockContext(request.lockID(), cidp.getClientID(), request.threadID(), request.lockLevel(), request.lockType());
       handshakeMessage.addLockContext(ctxt);
     }
 
@@ -114,14 +114,14 @@ public class ClientHandshakeManager implements ChannelEventListener {
     for (Iterator i = lockManager.addAllWaitersTo(new HashSet()).iterator(); i.hasNext();) {
       WaitLockRequest request = (WaitLockRequest) i.next();
       WaitContext ctxt = new WaitContext(request.lockID(), cidp.getClientID(), request.threadID(),
-                                         request.lockLevel(), request.getWaitInvocation());
+                                         request.lockLevel(), request.lockType(), request.getWaitInvocation());
       handshakeMessage.addWaitContext(ctxt);
     }
 
     logger.debug("Getting pending lock requests...");
     for (Iterator i = lockManager.addAllPendingLockRequestsTo(new HashSet()).iterator(); i.hasNext();) {
       LockRequest request = (LockRequest) i.next();
-      LockContext ctxt = new LockContext(request.lockID(), cidp.getClientID(), request.threadID(), request.lockLevel());
+      LockContext ctxt = new LockContext(request.lockID(), cidp.getClientID(), request.threadID(), request.lockLevel(), request.lockType());
       handshakeMessage.addPendingLockContext(ctxt);
     }
 
@@ -129,7 +129,7 @@ public class ClientHandshakeManager implements ChannelEventListener {
     for (Iterator i = lockManager.addAllPendingTryLockRequestsTo(new HashSet()).iterator(); i.hasNext();) {
       TryLockRequest request = (TryLockRequest) i.next();
       LockContext ctxt = new TryLockContext(request.lockID(), cidp.getClientID(), request.threadID(), request
-          .lockLevel(), request.getWaitInvocation());
+          .lockLevel(), request.lockType(), request.getWaitInvocation());
       handshakeMessage.addPendingTryLockContext(ctxt);
     }
 

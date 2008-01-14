@@ -4,61 +4,43 @@
  */
 package com.tc.management;
 
-import com.tc.async.api.Sink;
+import com.tc.management.lock.stats.LockSpec;
+import com.tc.management.lock.stats.TCStackTraceElement;
 import com.tc.net.groups.NodeID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.net.DSOChannelManager;
-import com.tc.objectserver.lockmanager.api.LockHolder;
-import com.tc.objectserver.lockmanager.api.LockManager;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 public interface L2LockStatsManager {
   public final static L2LockStatsManager NULL_LOCK_STATS_MANAGER = new L2LockStatsManager() {
-    public void start(DSOChannelManager channelManager, LockManager lockManager, Sink sink) {
+    public void start(DSOChannelManager channelManager) {
       // do nothing
     }
     
-    public void enableClientStackTrace(LockID lockID) {
+    public void setLockStatisticsConfig(int traceDepth, int gatherInterval) {
       // do nothing
     }
     
-    public void enableClientStackTrace(LockID lockID, int stackTraceDepth, int statCollectFrequency) {
-      // do nothing
-    }
-    
-    public void disableClientStackTrace(LockID lockID) {
-      // do nothing
-    }
-    
-    public boolean isClientLockStackTraceEnable(LockID lockID) {
+    public boolean isClientStatEnabled() {
       return false;
     }
     
-    public void lockRequested(LockID lockID, NodeID nodeID, ThreadID threadID, int lockLevel) {
+    public void recordLockRequested(LockID lockID, NodeID nodeID, ThreadID threadID, String lockType, int numberOfPendingRequests) {
       // do nothing
     }
     
-    public void lockAwarded(LockID lockID, NodeID nodeID, ThreadID threadID, boolean isGreedy, long lockAwardTimestamp) {
+    public void recordLockAwarded(LockID lockID, NodeID nodeID, ThreadID threadID, boolean isGreedy, long lockAwardTimestamp) {
       // do nothing
     }
     
-    public void lockReleased(LockID lockID, NodeID nodeID, ThreadID threadID) {
+    public void recordLockReleased(LockID lockID, NodeID nodeID, ThreadID threadID) {
       // do nothing
     }
     
-    public void lockRejected(LockID lockID, NodeID nodeID, ThreadID threadID) {
-      // do nothing
-    }
-    
-    public void lockWait(LockID lockID) {
-      // do nothing
-    }
-    
-    public void lockNotified(LockID lockID, int n) {
+    public void recordLockRejected(LockID lockID, NodeID nodeID, ThreadID threadID) {
       // do nothing
     }
     
@@ -78,51 +60,15 @@ public interface L2LockStatsManager {
       return 0;
     }
     
-    public LockHolder getLockHolder(LockID lockID, NodeID nodeID, ThreadID threadID) {
-      return null;
-    }
-    
-    public Collection getTopLockStats(int n) {
-      return Collections.EMPTY_LIST;
-    }
-    
-    public Collection getTopLockHoldersStats(int n) {
-      return Collections.EMPTY_LIST;
-    }
-    
-    public Collection getTopWaitingLocks(int n) {
-      return Collections.EMPTY_LIST;
-    }
-    
-    public Collection getTopContendedLocks(int n) {
-      return Collections.EMPTY_LIST;
-    }
-    
-    public Collection getTopLockHops(int n) {
-      return Collections.EMPTY_LIST;
-    }
-
-    public void recordStackTraces(LockID lockID, NodeID nodeID, List stackTraces) {
+    public void recordClientStat(NodeID nodeID, Collection<TCStackTraceElement> lockStatElements) {
       // do nothing
     }
     
-    public Collection getStackTraces(LockID lockID) {
-      return Collections.EMPTY_LIST;
-    }
-
-    public boolean isLockStackTraceEnabledInClient(LockID lockID, NodeID nodeID) {
-      return false;
-    }
-
-    public void recordClientStackTraceEnabled(LockID lockID, NodeID nodeID) {
-      // do nothing
-    }
-
-    public int getLockStackTraceDepth(LockID lockID) {
+    public int getTraceDepth() {
       return 0;
     }
 
-    public int getLockStatCollectFrequency(LockID lockID) {
+    public int getGatherInterval() {
       return 0;
     }
     
@@ -134,60 +80,41 @@ public interface L2LockStatsManager {
       return false;
     }
     
-    public void enableLockStatistics() {
-      // do nothing
+    public void clearAllStatsFor(NodeID nodeID) {
+      //
     }
     
-    public void disableLockStatistics() {
-      // do nothing
+    public void enableStatsForNodeIfNeeded(NodeID nodeID) {
+      //
     }
 
-    public Collection getTopAggregateLockHolderStats(int n) {
+    public void recordLockHopRequested(LockID lockID) {
+      //
+    }
+    
+    public Collection<LockSpec> getLockSpecs() {
       return Collections.EMPTY_LIST;
     }
-
-    public Collection getTopAggregateWaitingLocks(int n) {
-      return Collections.EMPTY_LIST;
-    }
-
-    public void lockHopped(LockID lockID) {
-      // do nothing
-    }
-
-    public void clearAllStatsFor(NodeID nodeID) {
-      // do nothing
-    }
+    
   };
   
-  public void start(DSOChannelManager channelManager, LockManager lockManager, Sink sink);
+  public void start(DSOChannelManager channelManager);
   
-  public void enableClientStackTrace(LockID lockID);
+  public void setLockStatisticsConfig(int traceDepth, int gatherInterval);
   
-  public void enableClientStackTrace(LockID lockID, int stackTraceDepth, int statCollectFrequency);
+  public boolean isClientStatEnabled();
   
-  public void disableClientStackTrace(LockID lockID);
+  public void recordLockHopRequested(LockID lockID);
   
-  public boolean isClientLockStackTraceEnable(LockID lockID);
+  public void recordLockRequested(LockID lockID, NodeID nodeID, ThreadID threadID, String lockType, int numberOfPendingRequests);
   
-  public boolean isLockStackTraceEnabledInClient(LockID lockID, NodeID nodeID);
+  public void recordLockAwarded(LockID lockID, NodeID nodeID, ThreadID threadID, boolean isGreedy, long lockAwardTimestamp);
   
-  public void recordClientStackTraceEnabled(LockID lockID, NodeID nodeID);
+  public void recordLockReleased(LockID lockID, NodeID nodeID, ThreadID threadID);
   
-  public void lockHopped(LockID lockID);
+  public void recordLockRejected(LockID lockID, NodeID nodeID, ThreadID threadID);
   
-  public void lockRequested(LockID lockID, NodeID nodeID, ThreadID threadID, int lockLevel);
-
-  public void lockAwarded(LockID lockID, NodeID nodeID, ThreadID threadID, boolean isGreedy, long lockAwardTimestamp);
-  
-  public void lockReleased(LockID lockID, NodeID nodeID, ThreadID threadID);
-  
-  public void lockRejected(LockID lockID, NodeID nodeID, ThreadID threadID);
-  
-  public void lockWait(LockID lockID);
-  
-  public void lockNotified(LockID lockID, int n);
-  
-  public void recordStackTraces(LockID lockID, NodeID nodeID, List stackTraces);
+  public void recordClientStat(NodeID nodeID, Collection<TCStackTraceElement> lockStatElements);
   
   public long getNumberOfLockRequested(LockID lockID);
   
@@ -197,27 +124,11 @@ public interface L2LockStatsManager {
   
   public long getNumberOfLockHopRequests(LockID lockID);
   
-  public LockHolder getLockHolder(LockID lockID, NodeID nodeID, ThreadID threadID);
+  public Collection<LockSpec> getLockSpecs();
   
-  public Collection getTopLockStats(int n);
+  public int getTraceDepth();
   
-  public Collection getTopAggregateLockHolderStats(int n);
-  
-  public Collection getTopLockHoldersStats(int n);
-  
-  public Collection getTopAggregateWaitingLocks(int n);
-  
-  public Collection getTopWaitingLocks(int n);
-  
-  public Collection getTopContendedLocks(int n);
-  
-  public Collection getTopLockHops(int n);
-  
-  public Collection getStackTraces(LockID lockID);
-  
-  public int getLockStackTraceDepth(LockID lockID);
-  
-  public int getLockStatCollectFrequency(LockID lockID);
+  public int getGatherInterval();
   
   public void setLockStatisticsEnabled(boolean lockStatsEnabled);
 
@@ -225,4 +136,5 @@ public interface L2LockStatsManager {
   
   public void clearAllStatsFor(NodeID nodeID);
   
+  public void enableStatsForNodeIfNeeded(NodeID nodeID);
 }

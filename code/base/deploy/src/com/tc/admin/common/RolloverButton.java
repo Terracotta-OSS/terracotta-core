@@ -14,15 +14,18 @@ public class RolloverButton extends XButton {
   public RolloverButton() {
     super();
     setBorderPainted(false);
+    setContentAreaFilled(false);
     addMouseListener(new FlyoverListener());
   }
   
   class FlyoverListener extends MouseAdapter {
     public void mouseEntered(MouseEvent me) {
       setBorderPainted(true);
+      setContentAreaFilled(true);
     }
     public void mouseExited(MouseEvent me) {
       setBorderPainted(false);
+      setContentAreaFilled(false);
     }
   }
 }

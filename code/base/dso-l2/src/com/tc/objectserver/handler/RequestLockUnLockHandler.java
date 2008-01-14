@@ -34,9 +34,9 @@ public class RequestLockUnLockHandler extends AbstractEventHandler {
     ClientID cid = lrm.getClientID();
     ThreadID tid = lrm.getThreadID();
     if (lrm.isObtainLockRequest()) {
-      lockManager.requestLock(lid, cid, tid, lrm.getLockLevel(), lockResponseSink);
+      lockManager.requestLock(lid, cid, tid, lrm.getLockLevel(), lrm.getLockType(), lockResponseSink);
     } else if (lrm.isTryObtainLockRequest()) {
-      lockManager.tryRequestLock(lid, cid, tid, lrm.getLockLevel(), lrm.getWaitInvocation(), lockResponseSink);
+      lockManager.tryRequestLock(lid, cid, tid, lrm.getLockLevel(), lrm.getLockType(), lrm.getWaitInvocation(), lockResponseSink);
     } else if (lrm.isReleaseLockRequest()) {
       if (lrm.isWaitRelease()) {
         lockManager.wait(lid, cid, tid, lrm.getWaitInvocation(), lockResponseSink);

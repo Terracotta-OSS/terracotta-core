@@ -54,7 +54,8 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public static final String GROUP_EVENTS_DISPATCH_STAGE                        = "group_events_dispatch_stage";
   public static final String L2_STATE_MESSAGE_HANDLER_STAGE                     = "l2_state_message_handler_stage";
   public static final String GC_RESULT_PROCESSING_STAGE                         = "gc_result_processing_stage";
-  public static final String CLIENT_LOCK_STATISTICS_STAGE                       = "client_lock_statistics_stage";
+  public static final String CLIENT_LOCK_STATISTICS_RESPOND_STAGE               = "client_lock_statistics_respond_stage";
+  public static final String CLIENT_LOCK_STATISTICS_ENABLE_DISABLE_STAGE        = "client_lock_statistics_enable_disable_stage";
   public static final String TRANSACTION_LOWWATERMARK_STAGE                     = "transaction_lowwatermark_stage";
 
   public L2Coordinator getL2Coordinator();

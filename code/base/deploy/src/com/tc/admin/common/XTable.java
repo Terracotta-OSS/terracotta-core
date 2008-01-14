@@ -206,13 +206,13 @@ public class XTable extends Table {
   }
 
   public void columnMarginChanged(ChangeEvent e) {
-    boolean showing = isShowing();
+    boolean isValid = isValid();
     
-    if(showing) {
+    if(isValid) {
       m_columnPrefsTimer.stop();
     }
     super.columnMarginChanged(e);
-    if(showing) {
+    if(isValid) {
       m_columnPrefsTimer.start();
     }
   }

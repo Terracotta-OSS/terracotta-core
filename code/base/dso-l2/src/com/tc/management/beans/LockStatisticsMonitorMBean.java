@@ -4,35 +4,27 @@
  */
 package com.tc.management.beans;
 
+import com.tc.management.TerracottaMBean;
+import com.tc.management.lock.stats.LockSpec;
+
 import java.util.Collection;
 
-public interface LockStatisticsMonitorMBean {
+public interface LockStatisticsMonitorMBean extends TerracottaMBean {
+  public static final String   TRACE_DEPTH     = "com.tc.management.lock.traceDepth";
+  public static final String   GATHER_INTERVAL = "com.tc.management.lock.gatherInterval";
+  public static final String   TRACES_ENABLED  = "com.tc.management.lock.tracesEnabled";
+  public static final String[] ALL_EVENTS      = new String[] { TRACE_DEPTH, GATHER_INTERVAL, TRACES_ENABLED };
+  public static final String   DESCRIPTION     = "Terracotta Lock Statistics Event Notification";
 
-  public Collection getTopHeld(int n);
-  
-  public Collection getTopAggregateLockHolderStats(int n);
+  public Collection<LockSpec> getLockSpecs();
 
-  public Collection getTopRequested(int n);
-  
-  public Collection getTopWaitingLocks(int n);
-  
-  public Collection getTopAggregateWaitingLocks(int n);
+  public void setLockStatisticsConfig(int traceDepth, int gatherInterval);
 
-  public Collection getTopContendedLocks(int n);
-  
-  public Collection getTopLockHops(int n);
-  
-  public Collection getStackTraces(String lockID);
-  
-  public void enableClientStackTrace(String lockID);
-  
-  public void enableClientStackTrace(String lockID, int stackTraceDepth, int statCollectFrequency);
-  
-  public void disableClientStackTrace(String lockID);
-  
-  public boolean isClientStackTraceEnabled(String lockID);
-  
   public void setLockStatisticsEnabled(boolean lockStatsEnabled);
 
   public boolean isLockStatisticsEnabled();
+
+  public int getTraceDepth();
+
+  public int getGatherInterval();
 }

@@ -117,22 +117,6 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     }
   }
   
-  public void enableStat(LockID lockID, int lockStackTraceDepth, int lockStatCollectFrequency) {
-    synchronized (this) {
-      waitUntilRunning();
-      lockStatManager.enableStackTrace(lockID, lockStackTraceDepth, lockStatCollectFrequency);
-    }
-  }
-  
-  public void disableStat(LockID lockID) {
-    final ClientLock lock;
-
-    synchronized (this) {
-      waitUntilRunning();
-      lockStatManager.disableStackTrace(lockID);
-    }
-  }
-
   private GlobalLockInfo getLockInfo(LockID lockID, ThreadID threadID) {
     Object waitLock = addToPendingQueryLockRequest(lockID, threadID);
     remoteLockManager.queryLock(lockID, threadID);
@@ -229,25 +213,25 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     }
   }
 
-  public void lock(LockID lockID, ThreadID threadID, int type) {
+  public void lock(LockID lockID, ThreadID threadID, int type, String lockType, String contextInfo) {
     Assert.assertNotNull("threadID", threadID);
     final ClientLock lock;
 
     synchronized (this) {
       waitUntilRunning();
-      lock = getOrCreateLock(lockID);
+      lock = getOrCreateLock(lockID, lockType);
       lock.incUseCount();
     }
-    lock.lock(threadID, type);
+    lock.lock(threadID, type, contextInfo);
   }
 
-  public boolean tryLock(LockID lockID, ThreadID threadID, WaitInvocation timeout, int type) {
+  public boolean tryLock(LockID lockID, ThreadID threadID, WaitInvocation timeout, int type, String lockType) {
     Assert.assertNotNull("threadID", threadID);
     final ClientLock lock;
 
     synchronized (this) {
       waitUntilRunning();
-      lock = getOrCreateLock(lockID);
+      lock = getOrCreateLock(lockID, lockType);
       lock.incUseCount();
     }
     boolean isLocked = lock.tryLock(threadID, timeout, type);
@@ -411,10 +395,10 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     return (ClientLock) locksByID.get(id);
   }
 
-  private synchronized ClientLock getOrCreateLock(LockID id) {
+  private synchronized ClientLock getOrCreateLock(LockID id, String lockType) {
     ClientLock lock = (ClientLock) locksByID.get(id);
     if (lock == null) {
-      lock = new ClientLock(id, remoteLockManager, waitTimer, lockStatManager);
+      lock = new ClientLock(id, lockType, remoteLockManager, waitTimer, lockStatManager);
       locksByID.put(id, lock);
     }
     return lock;
@@ -459,6 +443,21 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
       lock.addAllPendingTryLockRequestsTo(c);
     }
     return c;
+  }
+  
+  public synchronized void setLockStatisticsConfig(int traceDepth, int gatherInterval) {
+    waitUntilRunning();
+    lockStatManager.setLockStatisticsConfig(traceDepth, gatherInterval);
+  }
+  
+  public synchronized void setLockStatisticsEnabled(boolean statEnable) {
+    waitUntilRunning();
+    lockStatManager.setLockStatisticsEnabled(statEnable);
+  }
+  
+  public synchronized void getLockSpecs() {
+    waitUntilRunning();
+    lockStatManager.getLockSpecs();
   }
 
   synchronized boolean haveLock(LockID lockID, ThreadID threadID, int lockType) {

@@ -97,7 +97,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
       objectManager.objects.put(id, new Object());
     }
 
-    WaitLockRequest waitLockRequest = new WaitLockRequest(new LockID("1"), new ThreadID(1), LockLevel.WRITE,
+    WaitLockRequest waitLockRequest = new WaitLockRequest(new LockID("1"), new ThreadID(1), LockLevel.WRITE, String.class.getName(),
                                                           new WaitInvocation());
     lockManager.outstandingWaitLockRequests.add(waitLockRequest);
 
@@ -274,7 +274,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     public NoExceptionLinkedQueue pauseContexts                      = new NoExceptionLinkedQueue();
     public NoExceptionLinkedQueue unpauseContexts                    = new NoExceptionLinkedQueue();
 
-    public void lock(LockID id, ThreadID threadID, int type) {
+    public void lock(LockID id, ThreadID threadID, int lockLevel, String lockType, String contextInfo) {
       return;
     }
 
@@ -372,7 +372,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public boolean tryLock(LockID id, ThreadID threadID, WaitInvocation timeout, int type) {
+    public boolean tryLock(LockID id, ThreadID threadID, WaitInvocation timeout, int type, String lockType) {
       throw new ImplementMe();
     }
 
@@ -384,11 +384,15 @@ public class ClientHandshakeManagerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public void enableStat(LockID lockID, int lockStackTraceDepth, int lockStatCollectFrequency) {
+    public void getLockSpecs() {
       throw new ImplementMe();
     }
 
-    public void disableStat(LockID lockID) {
+    public void setLockStatisticsConfig(int traceDepth, int gatherInterval) {
+      throw new ImplementMe();
+    }
+
+    public void setLockStatisticsEnabled(boolean statEnable) {
       throw new ImplementMe();
     }
   }

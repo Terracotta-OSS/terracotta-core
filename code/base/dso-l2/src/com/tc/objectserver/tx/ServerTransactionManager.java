@@ -20,6 +20,11 @@ public interface ServerTransactionManager {
    * called when a Node (Client or Server) leaves.
    */
   public void shutdownNode(NodeID nodeID);
+  
+  /**
+   * called with a Node is connected;
+   */
+  public void nodeConnected(NodeID nodeID);
 
   /**
    * Add "waiter/requestID" is waiting for clientID "waitee" to respond to my message send

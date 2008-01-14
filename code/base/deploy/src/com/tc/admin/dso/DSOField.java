@@ -39,7 +39,7 @@ public class DSOField extends DSOObject {
 
   static {
     final TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor(CONSOLE_PROPS_SECTION);
-    m_showObjectID = props != null ? props.getBoolean(SHOW_OBJECT_ID_PROP, false) : false;
+    m_showObjectID = props != null ? props.getBoolean(SHOW_OBJECT_ID_PROP) : true;
   }
 
   public DSOField(ConnectionContext cc, String name, boolean isPrimitive, String type, Object value, DSOObject parent) {
@@ -101,7 +101,7 @@ public class DSOField extends DSOObject {
       Object facade = getFacade();
       if (facade instanceof ManagedObjectFacade) {
         ManagedObjectFacade mof = (ManagedObjectFacade) facade;
-        m_label += " [" + mof.getObjectId().toLong() + "]";
+        m_label += " [@" + mof.getObjectId().toLong() + "]";
       }
     }
 

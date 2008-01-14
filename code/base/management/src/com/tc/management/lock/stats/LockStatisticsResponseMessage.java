@@ -2,7 +2,7 @@
  * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tc.object.msg;
+package com.tc.management.lock.stats;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutput;
@@ -10,29 +10,25 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.object.lockmanager.api.LockID;
-import com.tc.object.lockmanager.impl.TCStackTraceElement;
+import com.tc.object.msg.DSOMessageBase;
 import com.tc.object.session.SessionID;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 
 public class LockStatisticsResponseMessage extends DSOMessageBase {
 
   private final static byte TYPE                                  = 1;
-  private final static byte LOCK_ID                               = 2;
-  private final static byte NUMBER_OF_STACK_TRACE                 = 3;
-  private final static byte STACK_TRACE                           = 4;
+  private final static byte NUMBER_OF_LOCK_STAT_ELEMENTS          = 2;
+  private final static byte TC_STACK_TRACE_ELEMENT                = 3;
 
   // message types
   private final static byte LOCK_STATISTICS_RESPONSE_MESSAGE_TYPE = 1;
 
   private int               type;
-  private LockID            lockID;
-  private List              stackTraces;
+  private Collection        allTCStackTraceElements;
 
   public LockStatisticsResponseMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out,
                                        MessageChannel channel, TCMessageType type) {
@@ -46,14 +42,14 @@ public class LockStatisticsResponseMessage extends DSOMessageBase {
 
   protected void dehydrateValues() {
     putNVPair(TYPE, this.type);
-    putNVPair(LOCK_ID, lockID.asString());
-    put(stackTraces);
+    put(allTCStackTraceElements);
   }
 
-  private void put(Collection stackTraces) {
-    super.putNVPair(NUMBER_OF_STACK_TRACE, stackTraces.size());
-    for (Iterator i = stackTraces.iterator(); i.hasNext();) {
-      putNVPair(STACK_TRACE, (TCStackTraceElement) i.next());
+  private void put(Collection allTCStackTraceElements) {
+    super.putNVPair(NUMBER_OF_LOCK_STAT_ELEMENTS, allTCStackTraceElements.size());
+    for (Iterator i = allTCStackTraceElements.iterator(); i.hasNext();) {
+      TCStackTraceElement lse = (TCStackTraceElement) i.next();
+      putNVPair(TC_STACK_TRACE_ELEMENT, lse);
     }
   }
 
@@ -71,8 +67,6 @@ public class LockStatisticsResponseMessage extends DSOMessageBase {
       rv.append("UNKNOWN \n");
     }
 
-    rv.append(lockID).append(' ').append("Lock Type: ").append('\n');
-
     return rv.toString();
   }
 
@@ -81,34 +75,26 @@ public class LockStatisticsResponseMessage extends DSOMessageBase {
       case TYPE:
         this.type = getIntValue();
         return true;
-      case LOCK_ID:
-        this.lockID = new LockID(getStringValue());
-        return true;
-      case NUMBER_OF_STACK_TRACE:
+      case NUMBER_OF_LOCK_STAT_ELEMENTS:
         int numOfStackTraces = getIntValue();
-        this.stackTraces = new LinkedList();
+        this.allTCStackTraceElements = new ArrayList(numOfStackTraces);
         return true;
-      case STACK_TRACE:
-        TCStackTraceElement ste = new TCStackTraceElement();
-        getObject(ste);
-        this.stackTraces.add(ste);
+      case TC_STACK_TRACE_ELEMENT:
+        TCStackTraceElement lse = new TCStackTraceElement();
+        getObject(lse);
+        this.allTCStackTraceElements.add(lse);
         return true;
       default:
         return false;
     }
   }
-  
-  public LockID getLockID() {
-    return this.lockID;
-  }
-  
-  public List getStackTraces() {
-    return this.stackTraces;
+
+  public Collection getStackTraceElements() {
+    return this.allTCStackTraceElements;
   }
 
-  public void initialize(LockID lid, List stackTraces) {
-    this.lockID = lid;
-    this.stackTraces = stackTraces;
+  public void initialize(Collection allTCStackTraceElements) {
+    this.allTCStackTraceElements = allTCStackTraceElements;
     this.type = LOCK_STATISTICS_RESPONSE_MESSAGE_TYPE;
   }
 

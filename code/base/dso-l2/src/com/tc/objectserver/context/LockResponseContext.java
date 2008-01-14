@@ -26,16 +26,12 @@ public class LockResponseContext implements EventContext {
   public static final int      LOCK_WAIT_TIMEOUT  = 3;
   public static final int      LOCK_INFO          = 4;
   public static final int      LOCK_NOT_AWARDED   = 5;
-  public static final int      LOCK_STAT_ENABLED  = 6;
-  public static final int      LOCK_STAT_DISABLED = 7;
 
   private final LockID         lockID;
   private final ThreadID       threadID;
   private final int            level;
   private final NodeID         nodeID;
   private final int            responseType;
-  private final int            stackTraceDepth;
-  private final int            statCollectFrequency;
   private final GlobalLockInfo globalLockInfo;
 
   public LockResponseContext(LockID lockID, NodeID nodeID, ThreadID threadID, int level, int lockRequestQueueLength,
@@ -43,30 +39,27 @@ public class LockResponseContext implements EventContext {
     this(lockID, nodeID, threadID, level, new GlobalLockInfo(lockID, level, lockRequestQueueLength,
                                                              getGlobalLockHolderInfo(greedyHolders),
                                                              getGlobalLockHolderInfo(holders),
-                                                             getGlobalLockWaiterInfo(lockID, waiters)), type, -1, -1);
+                                                             getGlobalLockWaiterInfo(lockID, waiters)), type);
   }
 
   public LockResponseContext(LockID lockID, NodeID nodeID, ThreadID sourceID, int level, int type) {
-    this(lockID, nodeID, sourceID, level, null, type, -1, -1);
+    this(lockID, nodeID, sourceID, level, null, type);
   }
   
-  public LockResponseContext(LockID lockID, NodeID nodeID, ThreadID sourceID, int level, int type, int stackTraceDepth, int statCollectFrequency) {
-    this(lockID, nodeID, sourceID, level, null, type, stackTraceDepth, statCollectFrequency);
+  public LockResponseContext(LockID lockID, NodeID nodeID, ThreadID sourceID, int level, int type, int traceDepth, int gatherInterval) {
+    this(lockID, nodeID, sourceID, level, null, type);
   }
 
   private LockResponseContext(LockID lockID, NodeID nodeID, ThreadID sourceID, int level,
-                              GlobalLockInfo globalLockInfo, int type, int stackTraceDepth, int statCollectFrequency) {
+                              GlobalLockInfo globalLockInfo, int type) {
     this.lockID = lockID;
     this.nodeID = nodeID;
     this.threadID = sourceID;
     this.level = level;
     this.responseType = type;
     this.globalLockInfo = globalLockInfo;
-    this.stackTraceDepth = stackTraceDepth;
-    this.statCollectFrequency = statCollectFrequency;
     Assert.assertTrue(responseType == LOCK_AWARD || responseType == LOCK_RECALL || responseType == LOCK_WAIT_TIMEOUT
-                      || responseType == LOCK_INFO || responseType == LOCK_NOT_AWARDED
-                      || responseType == LOCK_STAT_ENABLED || responseType == LOCK_STAT_DISABLED);
+                      || responseType == LOCK_INFO || responseType == LOCK_NOT_AWARDED);
   }
 
   public NodeID getNodeID() {
@@ -87,14 +80,6 @@ public class LockResponseContext implements EventContext {
 
   public int getLockLevel() {
     return level;
-  }
-
-  public int getStackTraceDepth() {
-    return stackTraceDepth;
-  }
-
-  public int getStatCollectFrequency() {
-    return statCollectFrequency;
   }
 
   public GlobalLockInfo getGlobalLockInfo() {
@@ -119,14 +104,6 @@ public class LockResponseContext implements EventContext {
 
   public boolean isLockNotAwarded() {
     return (this.responseType == LOCK_NOT_AWARDED);
-  }
-
-  public boolean isLockStatEnabled() {
-    return (this.responseType == LOCK_STAT_ENABLED);
-  }
-
-  public boolean isLockStatDisabled() {
-    return (this.responseType == LOCK_STAT_DISABLED);
   }
 
   public String toString() {

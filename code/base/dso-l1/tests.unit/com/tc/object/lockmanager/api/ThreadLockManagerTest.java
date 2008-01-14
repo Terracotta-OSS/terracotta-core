@@ -5,6 +5,7 @@ package com.tc.object.lockmanager.api;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
+import com.tc.config.lock.LockContextInfo;
 import com.tc.object.lockmanager.impl.ThreadLockManagerImpl;
 import com.tc.object.tx.WaitInvocation;
 
@@ -30,12 +31,12 @@ public class ThreadLockManagerTest extends TestCase {
     final LockID lockID = new LockID("lock");
     final int lockLevel = LockLevel.WRITE;
     assertEquals(0, lm.locks.size());
-    tlm.lock(lockID, lockLevel);
+    tlm.lock(lockID, lockLevel, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     Object[] args = getLockCallArgs();
 
     verifyLockArgs(lockID, new ThreadID(1), lockLevel, args);
 
-    tlm.lock(lockID, lockLevel);
+    tlm.lock(lockID, lockLevel, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     args = getLockCallArgs();
     // calling lock in the same thread should result in the same thread id being used to call lock with.
     verifyLockArgs(lockID, new ThreadID(1), lockLevel, args);
@@ -44,7 +45,7 @@ public class ThreadLockManagerTest extends TestCase {
 
     Runnable getter = new Runnable() {
       public void run() {
-        tlm.lock(lockID, lockLevel);
+        tlm.lock(lockID, lockLevel, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
         try {
           barrier.barrier();
         } catch (InterruptedException e) {

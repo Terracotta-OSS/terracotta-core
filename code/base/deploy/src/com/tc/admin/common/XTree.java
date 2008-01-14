@@ -54,6 +54,10 @@ public class XTree extends org.dijon.Tree {
     addMouseListener(ml);
   }
 
+  public XTree(TreeModel model) {
+    this();
+    setModel(model);
+  }
   public void setPopupMenu(JPopupMenu popupMenu) {
     if(popupMenu != null) {
       add(m_popupMenu = popupMenu);

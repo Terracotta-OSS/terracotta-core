@@ -36,7 +36,7 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class LinkedBlockingQueueApplicator extends BaseApplicator {
-  private static final TCLogger logger                                  = TCLogging.getLogger(ListApplicator.class);
+  private static final TCLogger logger                                  = TCLogging.getLogger(LinkedBlockingQueueApplicator.class);
   private static final String   LINKED_BLOCKING_QUEUE_FIELD_NAME_PREFIX = LinkedBlockingQueue.class.getName() + ".";
   private static final String   TAKE_LOCK_FIELD_NAME                    = "takeLock";
   private static final String   PUT_LOCK_FIELD_NAME                     = "putLock";

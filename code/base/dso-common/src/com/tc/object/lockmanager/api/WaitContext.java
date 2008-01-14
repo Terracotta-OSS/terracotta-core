@@ -20,8 +20,8 @@ public class WaitContext extends LockContext {
 
   private WaitInvocation                     waitInvocation;
 
-  public WaitContext(LockID lockID, ClientID cid, ThreadID threadID, int lockLevel, WaitInvocation waitInvocation) {
-    super(lockID, cid, threadID, lockLevel);
+  public WaitContext(LockID lockID, ClientID cid, ThreadID threadID, int lockLevel, String lockType, WaitInvocation waitInvocation) {
+    super(lockID, cid, threadID, lockLevel, lockType);
     this.waitInvocation = waitInvocation;
   }
 

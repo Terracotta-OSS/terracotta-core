@@ -273,7 +273,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
         mv = cv.visitMethod(access, name, desc, signature, exceptions);
       }
 
-      return mv == null ? null : new TransparencyCodeAdapter(spec, isAutolock, lockLevel, mv, memberInfo, originalName);
+//      return mv == null ? null : new TransparencyCodeAdapter(spec, isAutolock, lockLevel, mv, memberInfo, originalName);
+      return mv == null ? null : new TransparencyCodeAdapter(spec, ld, mv, memberInfo, originalName);
     } catch (RuntimeException e) {
       handleInstrumentationException(e);
       throw e;
@@ -570,7 +571,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
   private void callTCBeginWithLock(LockDefinition lock, MethodVisitor c) {
     c.visitLdcInsn(ByteCodeUtil.generateNamedLockName(lock.getLockName()));
     c.visitLdcInsn(new Integer(lock.getLockLevelAsInt()));
-    spec.getManagerHelper().callManagerMethod("beginLock", c);
+    c.visitLdcInsn(lock.getLockContextInfo());
+    spec.getManagerHelper().callManagerMethod("beginLockWithContextInfo", c);
   }
 
   private void callTCBeginWithLockName(String lockName, int lockLevel, MethodVisitor mv) {
@@ -1174,7 +1176,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     Assert.eval("Can't call tc monitorexit from a static method.", !Modifier.isStatic(callingMethodModifier));
     ByteCodeUtil.pushThis(c);
     c.visitLdcInsn(new Integer(def.getLockLevelAsInt()));
-    spec.getManagerHelper().callManagerMethod("monitorEnter", c);
+    c.visitLdcInsn(def.getLockContextInfo());
+    spec.getManagerHelper().callManagerMethod("monitorEnterWithContextInfo", c);
   }
 
   private void addPrimitiveTypeZeroCompare(MethodVisitor mv, Type type, Label notZeroLabel) {

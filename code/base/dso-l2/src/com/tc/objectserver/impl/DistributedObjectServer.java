@@ -27,13 +27,15 @@ import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.L2LockStatsManager;
-import com.tc.management.L2LockStatsManagerImpl;
 import com.tc.management.L2Management;
 import com.tc.management.beans.L2State;
 import com.tc.management.beans.LockStatisticsMonitor;
 import com.tc.management.beans.LockStatisticsMonitorMBean;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
+import com.tc.management.lock.stats.L2LockStatisticsManagerImpl;
+import com.tc.management.lock.stats.LockStatisticsMessage;
+import com.tc.management.lock.stats.LockStatisticsResponseMessage;
 import com.tc.management.remote.connect.ClientConnectEventHandler;
 import com.tc.management.remote.protocol.terracotta.ClientTunnelingEventHandler;
 import com.tc.management.remote.protocol.terracotta.JmxRemoteTunnelMessage;
@@ -74,7 +76,6 @@ import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
 import com.tc.object.msg.JMXMessage;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockResponseMessage;
-import com.tc.object.msg.LockStatisticsResponseMessage;
 import com.tc.object.msg.MessageRecycler;
 import com.tc.object.msg.ObjectIDBatchRequestMessage;
 import com.tc.object.msg.ObjectIDBatchRequestResponseMessage;
@@ -277,10 +278,15 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
   }
 
   public synchronized void start() throws IOException, TCDatabaseException, LocationNotCreatedException,
-      FileNotCreatedException {
+      FileNotCreatedException, NotCompliantMBeanException {
 
-    L2LockStatsManager lockStatsManager = new L2LockStatsManagerImpl();
-    this.lockStatisticsMBean = new LockStatisticsMonitor(lockStatsManager);
+    L2LockStatsManager lockStatsManager = new L2LockStatisticsManagerImpl();
+    try {
+      this.lockStatisticsMBean = new LockStatisticsMonitor(lockStatsManager);
+    } catch (NotCompliantMBeanException ncmbe) {
+      throw new TCRuntimeException("Unable to construct the " + LockStatisticsMonitor.class.getName()
+                                   + " MBean; this is a programming error. Please go fix that class.", ncmbe);
+    }
 
     try {
       startJMXServer();
@@ -606,8 +612,8 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     final Stage jmxRemoteTunnelStage = stageManager.createStage(ServerConfigurationContext.JMXREMOTE_TUNNEL_STAGE,
                                                                 cteh, 1, maxStageSize);
 
-    final Stage clientLockStatisticsStage = stageManager
-        .createStage(ServerConfigurationContext.CLIENT_LOCK_STATISTICS_STAGE,
+    final Stage clientLockStatisticsRespondStage = stageManager
+        .createStage(ServerConfigurationContext.CLIENT_LOCK_STATISTICS_RESPOND_STAGE,
                      new ClientLockStatisticsHandler(lockStatsManager), 1, 1);
 
     l1Listener.addClassMapping(TCMessageType.BATCH_TRANSACTION_ACK_MESSAGE,
@@ -617,7 +623,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     l1Listener.addClassMapping(TCMessageType.LOCK_RESPONSE_MESSAGE, LockResponseMessage.class);
     l1Listener.addClassMapping(TCMessageType.LOCK_RECALL_MESSAGE, LockResponseMessage.class);
     l1Listener.addClassMapping(TCMessageType.LOCK_QUERY_RESPONSE_MESSAGE, LockResponseMessage.class);
-    l1Listener.addClassMapping(TCMessageType.LOCK_STAT_MESSAGE, LockResponseMessage.class);
+    l1Listener.addClassMapping(TCMessageType.LOCK_STAT_MESSAGE, LockStatisticsMessage.class);
     l1Listener.addClassMapping(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE, LockStatisticsResponseMessage.class);
     l1Listener.addClassMapping(TCMessageType.COMMIT_TRANSACTION_MESSAGE, CommitTransactionMessageImpl.class);
     l1Listener.addClassMapping(TCMessageType.REQUEST_ROOT_RESPONSE_MESSAGE, RequestRootResponseMessage.class);
@@ -651,8 +657,8 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     l1Listener.routeMessageType(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, jmxRemoteTunnelStage.getSink(),
                                 hydrateSink);
     l1Listener.routeMessageType(TCMessageType.CLIENT_JMX_READY_MESSAGE, jmxRemoteTunnelStage.getSink(), hydrateSink);
-    l1Listener.routeMessageType(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE, clientLockStatisticsStage.getSink(),
-                                hydrateSink);
+    l1Listener.routeMessageType(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE, clientLockStatisticsRespondStage
+        .getSink(), hydrateSink);
     l1Listener.routeMessageType(TCMessageType.COMPLETED_TRANSACTION_LOWWATERMARK_MESSAGE, txnLwmStage.getSink(),
                                 hydrateSink);
 
@@ -709,7 +715,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
 
     if (l2Properties.getBoolean("beanshell.enabled")) startBeanShell(l2Properties.getInt("beanshell.port"));
 
-    lockStatsManager.start(channelManager, lockManager, respondToLockRequestStage.getSink());
+    lockStatsManager.start(channelManager);
 
     if (networkedHA) {
       final Node thisNode = makeThisNode();

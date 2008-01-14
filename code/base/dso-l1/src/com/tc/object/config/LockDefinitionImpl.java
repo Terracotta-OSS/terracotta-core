@@ -7,9 +7,11 @@ package com.tc.object.config;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
 public class LockDefinitionImpl implements LockDefinition {
+  private final static String NULL_CONFIGURATION_TEST = "";
 
   private String             lockName         = TC_AUTOLOCK_NAME;
   private ConfigLockLevel    lockLevel;
+  private String             lockContextInfo;
 
   private boolean            isCommitted      = false;
   private boolean            autolock;
@@ -17,10 +19,15 @@ public class LockDefinitionImpl implements LockDefinition {
   public LockDefinitionImpl() {
     return;
   }
-
-  public LockDefinitionImpl(String lockName, ConfigLockLevel lockLevel) {
+  
+  public LockDefinitionImpl(String lockName, ConfigLockLevel lockLevel, String lockContextInfo) {
     setLockName(lockName);
     setLockLevel(lockLevel);
+    this.lockContextInfo = lockContextInfo;
+  }
+
+  public LockDefinitionImpl(String lockName, ConfigLockLevel lockLevel) {
+    this(lockName, lockLevel, NULL_CONFIGURATION_TEST);
   }
 
   public String toString() {
@@ -49,6 +56,10 @@ public class LockDefinitionImpl implements LockDefinition {
 
   public int getLockLevelAsInt() {
     return getLockLevel().getLevel();
+  }
+  
+  public String getLockContextInfo() {
+    return lockContextInfo;
   }
 
   public boolean isAutolock() {

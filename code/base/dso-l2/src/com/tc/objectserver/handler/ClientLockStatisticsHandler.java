@@ -6,11 +6,10 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
 import com.tc.management.L2LockStatsManager;
+import com.tc.management.lock.stats.LockStatisticsResponseMessage;
 import com.tc.net.groups.NodeID;
-import com.tc.object.lockmanager.api.LockID;
-import com.tc.object.msg.LockStatisticsResponseMessage;
 
-import java.util.List;
+import java.util.Collection;
 
 public class ClientLockStatisticsHandler extends AbstractEventHandler {
 
@@ -23,9 +22,8 @@ public class ClientLockStatisticsHandler extends AbstractEventHandler {
   public void handleEvent(EventContext context) {
     LockStatisticsResponseMessage lsrm = (LockStatisticsResponseMessage)context;
     NodeID nodeID = lsrm.getClientID();
-    LockID lockID = lsrm.getLockID();
-    List stackTraces = lsrm.getStackTraces();
-    lockStatsManager.recordStackTraces(lockID, nodeID, stackTraces);
+    Collection lockStatElements = lsrm.getStackTraceElements();
+    lockStatsManager.recordClientStat(nodeID, lockStatElements);
   }
 
 }

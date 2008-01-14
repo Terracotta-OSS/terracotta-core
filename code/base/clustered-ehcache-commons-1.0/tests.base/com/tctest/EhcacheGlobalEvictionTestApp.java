@@ -126,7 +126,7 @@ public abstract class EhcacheGlobalEvictionTestApp extends ServerCrashingAppBase
       Assert.assertEquals("Client " + ManagerUtil.getClientID(), new Element("key13", "val13"), cache.get("key13"));
       Assert.assertEquals("Client " + ManagerUtil.getClientID(), 6, cache.getSize());
 
-      Thread.sleep(30000);
+      Thread.sleep(40000);
       Assert.assertTrue("Client " + ManagerUtil.getClientID(), cache.isExpired(new Element("key01", "val01")));
       Assert.assertTrue("Client " + ManagerUtil.getClientID(), cache.isExpired(new Element("key02", "val02")));
       Assert.assertTrue("Client " + ManagerUtil.getClientID(), cache.isExpired(new Element("key03", "val03")));
@@ -151,7 +151,7 @@ public abstract class EhcacheGlobalEvictionTestApp extends ServerCrashingAppBase
       barrier.barrier();
       
       if (index == 0) {
-        Thread.sleep(30000);
+        Thread.sleep(80000);
 
         Assert.assertTrue(cache.isExpired(new Element("key04", "val04")));
         Assert.assertTrue(cache.isExpired(new Element("key05", "val05")));

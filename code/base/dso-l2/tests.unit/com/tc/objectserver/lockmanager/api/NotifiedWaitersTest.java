@@ -31,15 +31,15 @@ public class NotifiedWaitersTest extends TestCase {
 
     NotifiedWaiters ns = new NotifiedWaiters();
 
-    LockContext lr1 = new LockContext(lockID, clientID1, txID1, 0);
+    LockContext lr1 = new LockContext(lockID, clientID1, txID1, 0, String.class.getName());
     forChannel1.add(lr1);
     ns.addNotification(lr1);
 
-    LockContext lr2 = new LockContext(lockID, clientID1, txID2, 0);
+    LockContext lr2 = new LockContext(lockID, clientID1, txID2, 0, String.class.getName());
     forChannel1.add(lr2);
     ns.addNotification(lr2);
 
-    LockContext lr3 = new LockContext(lockID, clientID2, txID3, 0);
+    LockContext lr3 = new LockContext(lockID, clientID2, txID3, 0, String.class.getName());
     forChannel2.add(lr3);
     ns.addNotification(lr3);
 
