@@ -56,7 +56,7 @@ public class LockStatManagerTest extends TestCase {
     assertEquals(0, lockManager.getThreadContextCount());
     super.tearDown();
   }
-  
+
   public void testLockHeldAggregateDurationWithoutGreedy() {
     lockManager.setLockPolicy(LockManagerImpl.ALTRUISTIC_LOCK_POLICY);
     try {
@@ -80,32 +80,9 @@ public class LockStatManagerTest extends TestCase {
       long avgWaitTimeInMillis = lockStatisticsInfo.getServerStats().getAvgWaitTimeToAwardInMillis();
       System.out.println("Average held time in millis: " + avgHeldTimeInMillis);
       System.out.println("Average wait time in millis: " + avgWaitTimeInMillis);
-      Assert.assertTrue(avgHeldTimeInMillis >= 4000);
+      assertExpectedTime(4000, avgHeldTimeInMillis);
     } catch (InterruptedException e) {
       // ignore
-    } finally {
-      resetLockManager();
-    }
-  }
-  
-  public void testNestedDepth() {
-    try {
-      LockID l1 = new LockID("1");
-      LockID l2 = new LockID("2");
-      final ClientID cid1 = new ClientID(new ChannelID(1));
-      ThreadID s1 = new ThreadID(0);
-
-      lockManager.requestLock(l1, cid1, s1, LockLevel.WRITE, String.class.getName(), sink);
-      lockManager.requestLock(l2, cid1, s1, LockLevel.READ, String.class.getName(), sink);
-      lockManager.unlock(l2, cid1, ThreadID.VM_ID);
-      lockManager.unlock(l1, cid1, ThreadID.VM_ID);
-      lockManager.requestLock(l1, cid1, s1, LockLevel.WRITE, String.class.getName(), sink);
-      lockManager.unlock(l1, cid1, ThreadID.VM_ID);
-      Collection c = lockStatManager.getLockSpecs();
-      Iterator i = c.iterator();
-      LockSpec lockStatisticsInfo = (LockSpec) i.next();
-      long avgNestedLockDepth = lockStatisticsInfo.getServerStats().getAvgNestedLockDepth();
-      Assert.assertEquals(2, avgNestedLockDepth);
     } finally {
       resetLockManager();
     }
@@ -133,15 +110,42 @@ public class LockStatManagerTest extends TestCase {
       long avgWaitTimeInMillis = lockStatisticsInfo.getServerStats().getAvgWaitTimeToAwardInMillis();
       System.out.println("Average held time in millis: " + avgHeldTimeInMillis);
       System.out.println("Average wait time in millis: " + avgWaitTimeInMillis);
-      // Supported to be 4000 but changed to 3990
-      // This is due to System.currentTimeMillis() which is not that accurate,
-      // according to javadoc, the granularity can be in units of tens of milliseconds
-      if (Os.isWindows()) {
-        // on windows, System.currentTimeMills() only changes every 15-16 millis! It’s even worse on windows 95 (~55ms)
-        Assert.assertTrue(avgHeldTimeInMillis >= 3890);
-      } else {
-        Assert.assertTrue(avgHeldTimeInMillis >= 3990);
-      }
+      assertExpectedTime(4000, avgHeldTimeInMillis);
+    } finally {
+      resetLockManager();
+    }
+  }
+
+  private void assertExpectedTime(long expectedMinTime, long actualTime) {
+    // Supposed to be expectedMinTime but changed to expectedMinTime-10
+    // This is due to System.currentTimeMillis() which is not that accurate,
+    // according to javadoc, the granularity can be in units of tens of milliseconds
+    if (Os.isWindows()) {
+      // on windows, System.currentTimeMills() only changes every 15-16 millis! It’s even worse on windows 95 (~55ms)
+      Assert.assertTrue(actualTime >= (expectedMinTime - 110));
+    } else {
+      Assert.assertTrue(actualTime >= (expectedMinTime - 10));
+    }
+  }
+
+  public void testNestedDepth() {
+    try {
+      LockID l1 = new LockID("1");
+      LockID l2 = new LockID("2");
+      final ClientID cid1 = new ClientID(new ChannelID(1));
+      ThreadID s1 = new ThreadID(0);
+
+      lockManager.requestLock(l1, cid1, s1, LockLevel.WRITE, String.class.getName(), sink);
+      lockManager.requestLock(l2, cid1, s1, LockLevel.READ, String.class.getName(), sink);
+      lockManager.unlock(l2, cid1, ThreadID.VM_ID);
+      lockManager.unlock(l1, cid1, ThreadID.VM_ID);
+      lockManager.requestLock(l1, cid1, s1, LockLevel.WRITE, String.class.getName(), sink);
+      lockManager.unlock(l1, cid1, ThreadID.VM_ID);
+      Collection c = lockStatManager.getLockSpecs();
+      Iterator i = c.iterator();
+      LockSpec lockStatisticsInfo = (LockSpec) i.next();
+      long avgNestedLockDepth = lockStatisticsInfo.getServerStats().getAvgNestedLockDepth();
+      Assert.assertEquals(2, avgNestedLockDepth);
     } finally {
       resetLockManager();
     }
@@ -179,7 +183,8 @@ public class LockStatManagerTest extends TestCase {
     assertEquals(1, lockStatManager.getNumberOfLockRequested(l1));
     assertEquals(0, lockStatManager.getNumberOfPendingRequests(l1));
 
-    lockManager.requestLock(l1, cid2, s1, LockLevel.WRITE, String.class.getName(), sink); // c2 should pend and issue a recall
+    lockManager.requestLock(l1, cid2, s1, LockLevel.WRITE, String.class.getName(), sink); // c2 should pend and issue a
+    // recall
     assertEquals(2, lockStatManager.getNumberOfLockRequested(l1));
     assertEquals(0, lockStatManager.getNumberOfPendingRequests(l1));
     assertEquals(1, lockStatManager.getNumberOfLockHopRequests(l1));
@@ -193,7 +198,8 @@ public class LockStatManagerTest extends TestCase {
     assertEquals(1, lockStatManager.getNumberOfLockReleased(l1));
     assertEquals(1, lockStatManager.getNumberOfLockReleased(l1));
 
-    lockManager.requestLock(l1, cid1, s1, LockLevel.WRITE, String.class.getName(), sink); // c1 request again and issue a recall
+    lockManager.requestLock(l1, cid1, s1, LockLevel.WRITE, String.class.getName(), sink); // c1 request again and issue
+    // a recall
     assertEquals(4, lockStatManager.getNumberOfLockRequested(l1));
     assertEquals(1, lockStatManager.getNumberOfPendingRequests(l1));
     assertEquals(2, lockStatManager.getNumberOfLockHopRequests(l1));

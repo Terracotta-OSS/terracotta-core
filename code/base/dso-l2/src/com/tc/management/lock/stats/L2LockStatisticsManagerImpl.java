@@ -231,6 +231,8 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
   }
 
   public void enableStatsForNodeIfNeeded(NodeID nodeID) {
+    if (!lockStatisticsEnabled) { return; }
+    
     try {
       MessageChannel channel = channelManager.getActiveChannel(nodeID);
       int traceDepth = getTraceDepth();
