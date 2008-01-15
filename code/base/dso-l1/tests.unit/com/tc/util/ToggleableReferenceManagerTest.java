@@ -19,7 +19,7 @@ public class ToggleableReferenceManagerTest extends TestCase {
     mgr.start();
 
     ToggleableStrongReference toggleRef = mgr.getOrCreateFor(new ObjectID(1), peer);
-    toggleRef.strongRef();
+    toggleRef.strongRef(peer);
     peer = null;
 
     System.gc();

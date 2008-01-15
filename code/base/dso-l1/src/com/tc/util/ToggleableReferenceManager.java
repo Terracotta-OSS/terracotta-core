@@ -34,12 +34,12 @@ import java.util.Map;
  */
 public class ToggleableReferenceManager {
 
-  private static TCLogger       logger   = TCLogging.getLogger(ToggleableReferenceManager.class);
+  private static TCLogger              logger   = TCLogging.getLogger(ToggleableReferenceManager.class);
 
-  private final Map             refs     = new HashMap();
-  private final ReferenceQueue  refQueue = new ReferenceQueue();
-  private final QueueProcessor  queueProcessor;
-  private final SynchronizedInt cleared  = new SynchronizedInt(0);
+  private final Map                    refs     = new HashMap();
+  private final ReferenceQueue         refQueue = new ReferenceQueue();
+  private final QueueProcessor         queueProcessor;
+  private final SynchronizedInt        cleared  = new SynchronizedInt(0);
 
   public ToggleableReferenceManager() {
     queueProcessor = new QueueProcessor(this, refQueue);
@@ -89,23 +89,20 @@ public class ToggleableReferenceManager {
   }
 
   private static class SometimesStrongAlwaysWeakReference extends WeakReference implements ToggleableStrongReference {
-    private final ObjectID id;
-    private Object         strongReference;
+    private final ObjectID            id;
+    private Object                    strongReference;
 
     public SometimesStrongAlwaysWeakReference(ObjectID id, Object peer, ReferenceQueue refQueue) {
       super(peer, refQueue);
       this.id = id;
     }
 
-    public void strongRef() {
-      final Object peer = get();
-      // Since this toggle ref should only be called from an instance method of the
-      // referent, this assertion should never go off
-      if (peer == null) { throw new AssertionError("null peer for " + id); }
-      this.strongReference = peer;
+    public synchronized void strongRef(Object obj) {
+      if (obj == null) { throw new NullPointerException("null reference for " + id); }
+      this.strongReference = obj;
     }
 
-    public void clearStrongRef() {
+    public synchronized void clearStrongRef() {
       this.strongReference = null;
     }
 

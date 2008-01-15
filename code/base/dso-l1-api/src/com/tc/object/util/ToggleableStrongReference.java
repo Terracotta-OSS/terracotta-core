@@ -6,7 +6,7 @@ package com.tc.object.util;
 
 public interface ToggleableStrongReference {
 
-  public void strongRef();
+  public void strongRef(Object obj);
 
   public void clearStrongRef();
 
