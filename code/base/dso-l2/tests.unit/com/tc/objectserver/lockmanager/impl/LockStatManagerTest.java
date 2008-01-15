@@ -122,7 +122,7 @@ public class LockStatManagerTest extends TestCase {
     // according to javadoc, the granularity can be in units of tens of milliseconds
     if (Os.isWindows()) {
       // on windows, System.currentTimeMills() only changes every 15-16 millis! It’s even worse on windows 95 (~55ms)
-      Assert.assertTrue(actualTime >= (expectedMinTime - 110));
+      Assert.assertTrue(actualTime >= (expectedMinTime - 200));
     } else {
       Assert.assertTrue(actualTime >= (expectedMinTime - 10));
     }
