@@ -21,10 +21,9 @@ import java.io.InputStream;
 
 public class TcConfigBuilder {
 
-  private static final String DEFAULT_SERVER_HOST_4TESTS = "localhost";
-  private TcConfigDocument    tcConfigDocument;
-  private TcConfig            tcConfig;
-  private XmlOptions          xmlOptions;
+  private final TcConfigDocument tcConfigDocument;
+  private final TcConfig         tcConfig;
+  private XmlOptions             xmlOptions;
 
   public TcConfigBuilder() {
     this("default-tc-config.xml");
@@ -34,7 +33,6 @@ public class TcConfigBuilder {
     try {
       tcConfigDocument = new Loader().parse(getClass().getResourceAsStream(resourcePath));
       tcConfig = tcConfigDocument.getTcConfig();
-      checkHostForNull(tcConfig);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -44,7 +42,6 @@ public class TcConfigBuilder {
     try {
       tcConfigDocument = new Loader().parse(file);
       tcConfig = tcConfigDocument.getTcConfig();
-      checkHostForNull(tcConfig);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -53,17 +50,6 @@ public class TcConfigBuilder {
   private TcConfigBuilder(TcConfigDocument tcd) {
     tcConfigDocument = tcd;
     tcConfig = tcConfigDocument.getTcConfig();
-    checkHostForNull(tcConfig);
-  }
-
-  // WORKAROUD: Making existing tests work after DEV=1060 changes
-  private void checkHostForNull(TcConfig tcConfg) {
-    for (int i = 0; i < tcConfg.getServers().sizeOfServerArray(); i++) {
-      String serverHost = tcConfg.getServers().getServerArray(i).getHost();
-      if (serverHost == null) {
-        tcConfg.getServers().getServerArray(i).setHost(DEFAULT_SERVER_HOST_4TESTS);
-      }
-    }
   }
 
   public void setDsoPort(int portNo) {

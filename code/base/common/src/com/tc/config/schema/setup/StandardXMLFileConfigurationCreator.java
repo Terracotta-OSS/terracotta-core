@@ -47,44 +47,41 @@ import javax.xml.parsers.ParserConfigurationException;
  */
 public class StandardXMLFileConfigurationCreator implements ConfigurationCreator {
 
-  private static final TCLogger     consoleLogger                        = CustomerLogging.getConsoleLogger();
+  private static final TCLogger   consoleLogger                        = CustomerLogging.getConsoleLogger();
 
-  private static final long         GET_CONFIGURATION_TOTAL_TIMEOUT      = 5 * 60 * 1000;                     // five
+  private static final long       GET_CONFIGURATION_TOTAL_TIMEOUT      = 5 * 60 * 1000;                     // five
   // minutes
-  private static final long         GET_CONFIGURATION_ONE_SOURCE_TIMEOUT = 30 * 1000;                         // thirty
+  private static final long       GET_CONFIGURATION_ONE_SOURCE_TIMEOUT = 30 * 1000;                         // thirty
   // seconds
-  private static final long         MIN_RETRY_TIMEOUT                    = 5 * 1000;                          // five
+  private static final long       MIN_RETRY_TIMEOUT                    = 5 * 1000;                          // five
   // seconds
 
-  protected final String            configurationSpec;
-  protected final File              defaultDirectory;
-  protected final ConfigBeanFactory beanFactory;
+  private final String            configurationSpec;
+  private final File              defaultDirectory;
+  private final ConfigBeanFactory beanFactory;
+  private final TCLogger          logger;
 
-  private TCLogger                  logger;
-  private boolean                   loadedFromTrustedSource;
-  private String                    configDescription;
-  private File                      directoryLoadedFrom;
-  private String                    defaultHostAddress;
+  private String                  configDescription;
+  private boolean                 loadedFromTrustedSource;
+  private File                    directoryLoadedFrom;
 
   public StandardXMLFileConfigurationCreator(String configurationSpec, File defaultDirectory,
-                                             ConfigBeanFactory beanFactory, String defaultHostAddr) {
+                                             ConfigBeanFactory beanFactory) {
     this(TCLogging.getLogger(StandardXMLFileConfigurationCreator.class), configurationSpec, defaultDirectory,
-         beanFactory, defaultHostAddr);
+         beanFactory);
   }
 
   public StandardXMLFileConfigurationCreator(TCLogger logger, String configurationSpec, File defaultDirectory,
-                                             ConfigBeanFactory beanFactory, String defaultHostAddr) {
+                                             ConfigBeanFactory beanFactory) {
     Assert.assertNotBlank(configurationSpec);
     Assert.assertNotNull(defaultDirectory);
     Assert.assertNotNull(beanFactory);
-    Assert.assertNotBlank(defaultHostAddr);
 
     this.logger = logger;
     this.configurationSpec = configurationSpec;
     this.defaultDirectory = defaultDirectory;
     this.beanFactory = beanFactory;
     this.configDescription = null;
-    this.defaultHostAddress = defaultHostAddr;
   }
 
   private static final Pattern SERVER_PATTERN   = Pattern.compile("(.*):(.*)", Pattern.CASE_INSENSITIVE);
@@ -94,15 +91,16 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   // We require more than one character before the colon so that we don't mistake Windows-style directory paths as URLs.
   private static final Pattern URL_PATTERN      = Pattern.compile("[A-Za-z][A-Za-z]+://.*");
 
+  private static final String  WILDCARD_IP      = "0.0.0.0";
+
   private ConfigurationSource[] createConfigurationSources() throws ConfigurationSetupException {
     String[] components = configurationSpec.split(",");
     ConfigurationSource[] out = new ConfigurationSource[components.length];
 
     for (int i = 0; i < components.length; ++i) {
       String thisComponent = components[i];
-      ConfigurationSource source = null;
+      ConfigurationSource source = attemptToCreateServerSource(thisComponent);
 
-      if (source == null) source = attemptToCreateServerSource(thisComponent);
       if (source == null) source = attemptToCreateResourceSource(thisComponent);
       if (source == null) source = attemptToCreateURLSource(thisComponent);
       if (source == null) source = attemptToCreateFileSource(thisComponent);
@@ -331,8 +329,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
           // CDV-166: per our documentation in the schema itself, host is supposed to default to '%i' and name is
           // supposed to default to 'host:dso-port'
           if (!server.isSetHost() || server.getHost().trim().length() == 0) {
-            // DEV-1060: IF L2, host is supposed to default to WILDCARD IP
-            server.setHost(this.defaultHostAddress);
+            server.setHost("%i");
           }
           if (!server.isSetName() || server.getName().trim().length() == 0) {
             int dsoPort = server.getDsoPort();
@@ -347,9 +344,15 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
             }
             server.setName(server.getHost() + (dsoPort > 0 ? ":" + dsoPort : ""));
           }
+
+          if (!server.isSetBind() || server.getBind().trim().length() == 0) {
+            server.setBind(WILDCARD_IP);
+          }
+
           // CDV-77: add parameter expansion to the <server> attributes ('host' and 'name')
           server.setHost(ParameterSubstituter.substitute(server.getHost()));
           server.setName(ParameterSubstituter.substitute(server.getName()));
+          server.setBind(ParameterSubstituter.substitute(server.getBind()));
         }
       }
 

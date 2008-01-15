@@ -30,6 +30,7 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
   private final IntConfigItem     l2GroupPort;
   private final IntConfigItem     clientReconnectWindow;
   private final StringConfigItem  host;
+  private final StringConfigItem  bind;
 
   public NewL2DSOConfigObject(ConfigContext context) {
     super(context);
@@ -52,6 +53,7 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
     this.listenPort = this.context.intItem("dso-port");
     this.l2GroupPort = this.context.intItem("l2-group-port");
     this.host = this.context.stringItem("@host");
+    this.bind = this.context.stringItem("@bind");
   }
 
   public IntConfigItem listenPort() {
@@ -84,6 +86,10 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
 
   public IntConfigItem clientReconnectWindow() {
     return this.clientReconnectWindow;
+  }
+
+  public StringConfigItem bind() {
+    return this.bind;
   }
 
 }

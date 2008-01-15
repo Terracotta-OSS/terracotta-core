@@ -27,8 +27,9 @@ public interface NewL2DSOConfig extends NewConfig {
 
   IntConfigItem l2GroupPort();
 
-  public StringConfigItem host();
+  StringConfigItem host();
 
   IntConfigItem clientReconnectWindow();
 
+  StringConfigItem bind();
 }

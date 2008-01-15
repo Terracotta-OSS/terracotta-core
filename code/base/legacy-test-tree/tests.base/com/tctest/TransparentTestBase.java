@@ -8,7 +8,6 @@ import org.apache.commons.io.CopyUtils;
 
 import com.tc.config.schema.SettableConfigItem;
 import com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory;
-import com.tc.config.schema.setup.TestConfigBeanSet;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.management.beans.L2DumperMBean;
@@ -231,7 +230,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
     proxyMgr.setDsoPort(dsoPort);
     proxyMgr.setProxyPort(dsoProxyPort);
-    proxyMgr.setupProxy(TestConfigBeanSet.DEFAULT_HOST);
+    proxyMgr.setupProxy();
     setupProxyConnectTest(proxyMgr);
 
     ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(dsoPort);
@@ -272,7 +271,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     proxies = new TCPProxy[2];
 
     for (int i = 0; i < 2; i++) {
-      proxies[i] = new TCPProxy(proxyPorts[i], InetAddress.getByName("localhost"), l2GroupPorts[i], 0L, false, new File("."));
+      proxies[i] = new TCPProxy(proxyPorts[i], InetAddress.getLocalHost(), l2GroupPorts[i], 0L, false, new File("."));
       proxies[i].setReuseAddress(true);
       serverControls[i] = new ExtraProcessServerControl("localhost", dsoPorts[i], jmxPorts[i], configFiles[i]
           .getAbsolutePath(), true, serverNames[i], null, javaHome, true);
@@ -498,7 +497,6 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
                          + "', and thus will be skipped.");
     }
   }
-
 
   private void dumpServers() throws Exception {
     if (serverControl != null && serverControl.isRunning()) {

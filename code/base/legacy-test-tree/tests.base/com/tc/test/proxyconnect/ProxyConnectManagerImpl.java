@@ -9,7 +9,6 @@ import com.tc.util.PortChooser;
 
 import java.io.File;
 import java.net.InetAddress;
-import java.lang.RuntimeException;
 
 public class ProxyConnectManagerImpl implements ProxyConnectManager {
   private TCPProxy         proxy    = null;
@@ -26,17 +25,8 @@ public class ProxyConnectManagerImpl implements ProxyConnectManager {
   }
 
   public void setupProxy() {
-    setupProxy(null);
-  }
-
-  public void setupProxy(String dstHost) {
     try {
-      // DEV-1060
-      if (dstHost != null) {
-        proxy = new TCPProxy(proxyPort, InetAddress.getByName(dstHost), dsoPort, 0L, false, new File("."));
-      } else {
-        proxy = new TCPProxy(proxyPort, InetAddress.getLocalHost(), dsoPort, 0L, false, new File("."));
-      }
+      proxy = new TCPProxy(proxyPort, InetAddress.getLocalHost(), dsoPort, 0L, false, new File("."));
       proxy.setReuseAddress(true);
     } catch (Exception x) {
       throw new RuntimeException("setupProxy failed! " + x);

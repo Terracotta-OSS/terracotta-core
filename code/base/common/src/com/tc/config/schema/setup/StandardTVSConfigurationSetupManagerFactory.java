@@ -32,14 +32,12 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
   public static final String  SERVER_NAME_ARGUMENT_WORD = "-n";
 
   private static final String L2_NAME_PROPERTY_NAME     = "tc.server.name";
-  private static final String DEFAULT_L2HOST_ADDR       = "0.0.0.0";                       // Wildcard IP
-  private static final String DEFAULT_L1HOST_ADDR       = "%i";
   public static final String  DEFAULT_CONFIG_SPEC       = "tc-config.xml";
   public static final String  DEFAULT_CONFIG_PATH       = "default-config.xml";
   public static final String  DEFAULT_CONFIG_URI        = "resource:///"
-                                                            + StandardTVSConfigurationSetupManagerFactory.class
-                                                                .getPackage().getName().replace('.', '/') + "/"
-                                                            + DEFAULT_CONFIG_PATH;
+                                                          + StandardTVSConfigurationSetupManagerFactory.class
+                                                              .getPackage().getName().replace('.', '/') + "/"
+                                                          + DEFAULT_CONFIG_PATH;
 
   private final String        defaultL2Identifier;
   private final String        configSpec;
@@ -102,16 +100,17 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
     if (StringUtils.isBlank(this.configSpec)) {
       // formatting
       throw new ConfigurationSetupException("You must specify the location of the Terracotta "
-          + "configuration file for this process, using the " + "'" + CONFIG_FILE_PROPERTY_NAME + "' system property.");
+                                            + "configuration file for this process, using the " + "'"
+                                            + CONFIG_FILE_PROPERTY_NAME + "' system property.");
     }
 
     String cwdAsString = System.getProperty("user.dir");
     if (StringUtils.isBlank(cwdAsString)) {
       // formatting
       throw new ConfigurationSetupException(
-          "We can't find the working directory of the process; we need this to continue. "
-              + "(The system property 'user.dir' was " + (cwdAsString == null ? "null" : "'" + cwdAsString + "'")
-              + ".)");
+                                            "We can't find the working directory of the process; we need this to continue. "
+                                                + "(The system property 'user.dir' was "
+                                                + (cwdAsString == null ? "null" : "'" + cwdAsString + "'") + ".)");
     }
 
     this.cwd = new File(cwdAsString);
@@ -129,8 +128,8 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
 
       String potentialName = hostName;
 
-      if (potentialName != null && potentialName.indexOf(".") >= 0) potentialName = potentialName.substring(0,
-          potentialName.indexOf("."));
+      if (potentialName != null && potentialName.indexOf(".") >= 0) potentialName = potentialName
+          .substring(0, potentialName.indexOf("."));
       if (potentialName != null) potentialName = potentialName.trim();
 
       if (!StringUtils.isBlank(potentialName) && (!potentialName.equalsIgnoreCase("localhost"))) {
@@ -145,7 +144,7 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
     Options options = new Options();
 
     Option configFileOption = new Option("f", CONFIG_SPEC_ARGUMENT_NAME, true,
-        "the configuration file to use, specified as a file path or URL");
+                                         "the configuration file to use, specified as a file path or URL");
     configFileOption.setArgName("file-or-URL");
     configFileOption.setType(String.class);
 
@@ -168,8 +167,7 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
   public L1TVSConfigurationSetupManager createL1TVSConfigurationSetupManager(TCLogger logger)
       throws ConfigurationSetupException {
     ConfigurationCreator configurationCreator = new StandardXMLFileConfigurationCreator(logger, this.configSpec,
-                                                                                        this.cwd, this.beanFactory,
-                                                                                        DEFAULT_L1HOST_ADDR);
+                                                                                        this.cwd, this.beanFactory);
 
     L1TVSConfigurationSetupManager setupManager = new StandardL1TVSConfigurationSetupManager(configurationCreator,
                                                                                              this.defaultValueProvider,
@@ -181,8 +179,7 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
 
   public L1TVSConfigurationSetupManager createL1TVSConfigurationSetupManager() throws ConfigurationSetupException {
     ConfigurationCreator configurationCreator = new StandardXMLFileConfigurationCreator(this.configSpec, this.cwd,
-                                                                                        this.beanFactory,
-                                                                                        DEFAULT_L1HOST_ADDR);
+                                                                                        this.beanFactory);
 
     L1TVSConfigurationSetupManager setupManager = new StandardL1TVSConfigurationSetupManager(configurationCreator,
                                                                                              this.defaultValueProvider,
@@ -197,8 +194,7 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
     if (l2Name == null) l2Name = this.defaultL2Identifier;
 
     ConfigurationCreator configurationCreator;
-    configurationCreator = new StandardXMLFileConfigurationCreator(this.configSpec, this.cwd, this.beanFactory,
-                                                                   DEFAULT_L2HOST_ADDR);
+    configurationCreator = new StandardXMLFileConfigurationCreator(this.configSpec, this.cwd, this.beanFactory);
 
     return new StandardL2TVSConfigurationSetupManager(configurationCreator, l2Name, this.defaultValueProvider,
                                                       this.xmlObjectComparator, this.illegalChangeHandler);

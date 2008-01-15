@@ -610,6 +610,15 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute name="bind" type="non-blank-token" use="optional" default="0.0.0.0">
+      <xs:annotation>
+        <xs:documentation>
+          The address this server should bind its network listeners to. By default network listeners
+          will be available on all local addresses (ie. 0.0.0.0)
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+
   </xs:complexType>
 
   <xs:complexType name="client">

@@ -62,10 +62,10 @@
   -->
   <servers>
 
-    <!-- The host and symbolic name of the server; host defaults to "%i" (the machine's
-       IP address) and name defaults to "host:dso-port".  Expansion parameters may be
-       used in both attributes. -->
-    <server host="my.host.name" name="My Server Name">
+    <!-- The host, symbolic name and bind address of the server; host defaults to "%i" (the machine's
+       IP address), name defaults to "host:dso-port" and bind address defaults to "0.0.0.0".
+       Expansion parameters may be used in all attributes. -->
+    <server host="my.host.name" name="My Server Name" bind="0.0.0.0">
 
       <!-- Where should the server store its persistent data? (This includes
          stored object data for DSO.) This value undergoes parameter substitution

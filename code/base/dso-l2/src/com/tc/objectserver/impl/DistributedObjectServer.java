@@ -40,6 +40,7 @@ import com.tc.management.remote.connect.ClientConnectEventHandler;
 import com.tc.management.remote.protocol.terracotta.ClientTunnelingEventHandler;
 import com.tc.management.remote.protocol.terracotta.JmxRemoteTunnelMessage;
 import com.tc.management.remote.protocol.terracotta.L1JmxReady;
+import com.tc.net.AddressChecker;
 import com.tc.net.NIOWorkarounds;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.Node;
@@ -168,6 +169,7 @@ import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.stats.counter.sampled.SampledCounterManager;
 import com.tc.stats.counter.sampled.SampledCounterManagerImpl;
 import com.tc.util.Assert;
+import com.tc.util.PortChooser;
 import com.tc.util.ProductInfo;
 import com.tc.util.SequenceValidator;
 import com.tc.util.StartupLock;
@@ -183,7 +185,6 @@ import com.tc.util.startuplock.LocationNotCreatedException;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Properties;
@@ -278,7 +279,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
   }
 
   public synchronized void start() throws IOException, TCDatabaseException, LocationNotCreatedException,
-      FileNotCreatedException, NotCompliantMBeanException {
+      FileNotCreatedException {
 
     L2LockStatsManager lockStatsManager = new L2LockStatisticsManagerImpl();
     try {
@@ -288,8 +289,22 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
                                    + " MBean; this is a programming error. Please go fix that class.", ncmbe);
     }
 
+    NewL2DSOConfig l2DSOConfig = configSetupManager.dsoL2Config();
+
+    String bindAddress = l2DSOConfig.bind().getString();
+    if (bindAddress == null) {
+      // workaround for CDV-584
+      bindAddress = TCSocketAddress.WILDCARD_IP;
+    }
+
+    InetAddress bind = InetAddress.getByName(bindAddress);
+
+    AddressChecker addressChecker = new AddressChecker();
+    if (!addressChecker.isLegalBindAddress(bind)) { throw new IOException("Invalid bind address [" + bind
+                                                                          + "]. Local addresses are "
+                                                                          + addressChecker.getAllLocalAddresses()); }
     try {
-      startJMXServer();
+      startJMXServer(bind, configSetupManager.commonl2Config().jmxPort().getInt());
     } catch (Exception e) {
       String msg = "Unable to start the JMX server. Do you have another Terracotta Server running?";
       consoleLogger.error(msg);
@@ -300,7 +315,6 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     NIOWorkarounds.solaris10Workaround();
 
     configSetupManager.commonl2Config().changesInItemIgnored(configSetupManager.commonl2Config().dataPath());
-    NewL2DSOConfig l2DSOConfig = configSetupManager.dsoL2Config();
     l2DSOConfig.changesInItemIgnored(l2DSOConfig.persistenceMode());
     PersistenceMode persistenceMode = (PersistenceMode) l2DSOConfig.persistenceMode().getObject();
 
@@ -480,24 +494,8 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     l2DSOConfig.changesInItemIgnored(l2DSOConfig.listenPort());
     int serverPort = l2DSOConfig.listenPort().getInt();
 
-    // DEV-1060
-    InetAddress serverHost;
-    String l2Host = l2DSOConfig.host().getString();
-    Assert.assertNotNull(l2Host);
-    try {
-      if (l2Host.equalsIgnoreCase(TCSocketAddress.WILDCARD_IP)) {
-        serverHost = TCSocketAddress.WILDCARD_ADDR;
-      } else {
-        serverHost = InetAddress.getByName(l2Host);
-      }
-    } catch (UnknownHostException uhe) {
-      throw new TCRuntimeException("Unable to Resolve Address for the host " + l2Host);
-    }
-
-    logger.info("Server Bind Address: " + serverHost.getHostAddress());
-
-    l1Listener = communicationsManager.createListener(sessionProvider, new TCSocketAddress(serverHost, serverPort),
-                                                      true, connectionIdFactory, httpSink);
+    l1Listener = communicationsManager.createListener(sessionProvider, new TCSocketAddress(bind, serverPort), true,
+                                                      connectionIdFactory, httpSink);
 
     ClientTunnelingEventHandler cteh = new ClientTunnelingEventHandler();
 
@@ -563,9 +561,8 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
 
     stageManager.createStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE, new BroadcastChangeHandler(), 1,
                              maxStageSize);
-    Stage respondToLockRequestStage = stageManager
-        .createStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE, new RespondToRequestLockHandler(), 1,
-                     maxStageSize);
+    stageManager.createStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE,
+                             new RespondToRequestLockHandler(), 1, maxStageSize);
     Stage requestLock = stageManager.createStage(ServerConfigurationContext.REQUEST_LOCK_STAGE,
                                                  new RequestLockUnLockHandler(), 1, maxStageSize);
     ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(communicationsManager,
@@ -718,7 +715,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     lockStatsManager.start(channelManager);
 
     if (networkedHA) {
-      final Node thisNode = makeThisNode();
+      final Node thisNode = makeThisNode(bind);
       final Node[] allNodes = makeAllNodes();
       l2Coordinator.start(thisNode, allNodes);
     } else {
@@ -742,25 +739,25 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
       } catch (ConfigurationSetupException e) {
         throw new RuntimeException("Error getting l2 config for: " + l2s[i], e);
       }
-      rv[i] = makeNode(l2);
+      rv[i] = makeNode(l2, null);
     }
     return rv;
   }
 
-  private static Node makeNode(NewL2DSOConfig l2) {
+  private static Node makeNode(NewL2DSOConfig l2, String bind) {
     // NOTE: until we resolve Tribes stepping on TCComm's port
     // we'll use TCComm.port + 1 in Tribes
     int dsoPort = l2.listenPort().getInt();
     if (dsoPort == 0) {
-      return new Node(l2.host().getString(), dsoPort);
+      return new Node(l2.host().getString(), dsoPort, bind);
     } else {
-      return new Node(l2.host().getString(), l2.l2GroupPort().getInt());
+      return new Node(l2.host().getString(), l2.l2GroupPort().getInt(), bind);
     }
   }
 
-  private Node makeThisNode() {
+  private Node makeThisNode(InetAddress bind) {
     NewL2DSOConfig l2 = configSetupManager.dsoL2Config();
-    return makeNode(l2);
+    return makeNode(l2, bind.getHostAddress());
   }
 
   public boolean startActiveMode() throws IOException {
@@ -768,14 +765,21 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     Set existingConnections = Collections.unmodifiableSet(connectionIdFactory.loadConnectionIDs());
     context.getClientHandshakeManager().setStarting(existingConnections);
     l1Listener.start(existingConnections);
-    consoleLogger.info("Terracotta Server has started up as ACTIVE node on port " + l1Listener.getBindPort()
+    consoleLogger.info("Terracotta Server has started up as ACTIVE node on " + format(l1Listener)
                        + " successfully, and is now ready for work.");
     return true;
   }
 
+  private static String format(NetworkListener listener) {
+    StringBuilder sb = new StringBuilder(listener.getBindAddress().getHostAddress());
+    sb.append(':');
+    sb.append(listener.getBindPort());
+    return sb.toString();
+  }
+
   public boolean stopActiveMode() throws TCTimeoutException {
     // TODO:: Make this not take timeout and force stop
-    consoleLogger.info("Stopping ACTIVE Terracotta Server on port " + l1Listener.getBindPort() + ".");
+    consoleLogger.info("Stopping ACTIVE Terracotta Server on " + format(l1Listener) + ".");
     l1Listener.stop(10000);
     l1Listener.getChannelManager().closeAllChannels();
     return true;
@@ -799,7 +803,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
   public int getListenPort() {
     return this.l1Listener.getBindPort();
   }
-  
+
   public InetAddress getListenAddr() {
     return this.l1Listener.getBindAddress();
   }
@@ -903,13 +907,17 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
   public MBeanServer getMBeanServer() {
     return l2Management.getMBeanServer();
   }
-  
+
   public JMXConnectorServer getJMXConnServer() {
     return l2Management.getJMXConnServer();
   }
 
-  private void startJMXServer() throws Exception {
-    l2Management = new L2Management(tcServerInfoMBean, lockStatisticsMBean, configSetupManager, this, TCSocketAddress.WILDCARD_IP);
+  private void startJMXServer(InetAddress bind, int jmxPort) throws Exception {
+    if (jmxPort == 0) {
+      jmxPort = new PortChooser().chooseRandomPort();
+    }
+
+    l2Management = new L2Management(tcServerInfoMBean, lockStatisticsMBean, configSetupManager, this, bind, jmxPort);
 
     /*
      * Some tests use this if they run with jdk1.4 and start multiple in-process DistributedObjectServers. When we no
