@@ -50,7 +50,7 @@ public class ClientServerLockStatManagerGlue extends ClientServerLockManagerGlue
         if (lsm.isLockStatsEnableDisable()) {
           clientLockStatManager.setLockStatisticsConfig(lsm.getTraceDepth(), lsm.getGatherInterval());
         } else if (lsm.isGatherLockStatistics()) {
-          clientLockStatManager.getLockSpecs();
+          clientLockStatManager.requestLockSpecs();
         }
       } else if (ec instanceof LockStatisticsResponseMessage) {
         LockStatisticsResponseMessage lsrm = (LockStatisticsResponseMessage)ec;

@@ -455,9 +455,9 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     lockStatManager.setLockStatisticsEnabled(statEnable);
   }
   
-  public synchronized void getLockSpecs() {
+  public synchronized void requestLockSpecs() {
     waitUntilRunning();
-    lockStatManager.getLockSpecs();
+    lockStatManager.requestLockSpecs();
   }
 
   synchronized boolean haveLock(LockID lockID, ThreadID threadID, int lockType) {

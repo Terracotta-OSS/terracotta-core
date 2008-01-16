@@ -53,54 +53,50 @@ public class ClientLockStatisticsManagerImpl extends LockStatisticsManager imple
     this.sink = sink;
   }
 
-  public void recordLockRequested(LockID lockID, ThreadID threadID, String contextInfo, int numberOfPendingLockRequests) {
-    if (!isStatEnabled()) { return; }
+  public synchronized void recordLockRequested(LockID lockID, ThreadID threadID, String contextInfo,
+                                               int numberOfPendingLockRequests) {
+    if (!isClientStatEnabled()) { return; }
 
     StackTraceElement[] stackTraceElements = getStackTraceElements(lockStatConfig.getTraceDepth());
-    super.recordLockRequested(lockID, NULL_NODE_ID, threadID, stackTraceElements, contextInfo, numberOfPendingLockRequests);
+    super.recordLockRequested(lockID, NULL_NODE_ID, threadID, stackTraceElements, contextInfo,
+                              numberOfPendingLockRequests);
   }
 
-  public void recordLockAwarded(LockID lockID, ThreadID threadID) {
-    if (!isStatEnabled()) { return; }
+  public synchronized void recordLockAwarded(LockID lockID, ThreadID threadID) {
+    if (!isClientStatEnabled()) { return; }
 
     int nestedDepth = super.incrementNestedDepth(threadID);
     super.recordLockAwarded(lockID, NULL_NODE_ID, threadID, false, System.currentTimeMillis(), nestedDepth);
   }
-  
-  public void recordLockReleased(LockID lockID, ThreadID threadID) {
-    if (!isStatEnabled()) { return; }
+
+  public synchronized void recordLockReleased(LockID lockID, ThreadID threadID) {
+    if (!isClientStatEnabled()) { return; }
 
     super.decrementNestedDepth(threadID);
     super.recordLockReleased(lockID, NULL_NODE_ID, threadID);
   }
-  
-  public void recordLockHopped(LockID lockID, ThreadID threadID) {
-    if (!isStatEnabled()) { return; }
+
+  public synchronized void recordLockHopped(LockID lockID, ThreadID threadID) {
+    if (!isClientStatEnabled()) { return; }
 
     StackTraceElement[] stackTraceElements = getStackTraceElements(lockStatConfig.getTraceDepth());
-    
-    ClientLockStatisticsInfoImpl lsc = (ClientLockStatisticsInfoImpl)getLockStatInfo(lockID);
+
+    ClientLockStatisticsInfoImpl lsc = (ClientLockStatisticsInfoImpl) getLockStatInfo(lockID);
     if (lsc != null) {
       lsc.recordLockHopRequested(NULL_NODE_ID, threadID, stackTraceElements);
     }
   }
 
+  public synchronized void recordLockRejected(LockID lockID, ThreadID threadID) {
+    if (!isClientStatEnabled()) { return; }
 
-  
-  public void recordLockRejected(LockID lockID, ThreadID threadID) {
-    if (!isStatEnabled()) { return; }
-    
     super.recordLockRejected(lockID, NULL_NODE_ID, threadID);
   }
 
-  public void setLockStatisticsConfig(int traceDepth, int gatherInterval) {
+  public synchronized void setLockStatisticsConfig(int traceDepth, int gatherInterval) {
     disableLockStatistics();
     super.setLockStatisticsEnabled(true);
     super.setLockStatisticsConfig(traceDepth, gatherInterval);
-  }
-
-  public boolean isStatEnabled() {
-    return super.isClientStatEnabled();
   }
 
   protected LockStatisticsInfo newLockStatisticsContext(LockID lockID) {
@@ -109,6 +105,12 @@ public class ClientLockStatisticsManagerImpl extends LockStatisticsManager imple
 
   protected void disableLockStatistics() {
     super.clear();
+  }
+
+  private boolean isClientStatEnabled() {
+    if (!lockStatisticsEnabled) { return false; }
+
+    return lockStatConfig.getTraceDepth() > MIN_CLIENT_TRACE_DEPTH;
   }
 
   private Collection getLockStatElements(LockID lockID) {
@@ -191,14 +193,17 @@ public class ClientLockStatisticsManagerImpl extends LockStatisticsManager imple
     return false;
   }
 
-  public void getLockSpecs() {
-    Set allLockIDs = lockStats.keySet();
+  public void requestLockSpecs() {
     Collection allTCLockStatElements = new ArrayList();
-    for (Iterator i=allLockIDs.iterator(); i.hasNext(); ) {
-      LockID lockID = (LockID)i.next();
-      Collection lockStatElements = getLockStatElements(lockID);
-      
-      allTCLockStatElements.add(new TCStackTraceElement(lockID, lockStatElements));
+
+    synchronized (this) {
+      Set allLockIDs = lockStats.keySet();
+      for (Iterator i = allLockIDs.iterator(); i.hasNext();) {
+        LockID lockID = (LockID) i.next();
+        Collection lockStatElements = getLockStatElements(lockID);
+
+        allTCLockStatElements.add(new TCStackTraceElement(lockID, lockStatElements));
+      }
     }
     sink.add(createLockStatisticsResponseMessage(channel.channel(), allTCLockStatElements));
   }

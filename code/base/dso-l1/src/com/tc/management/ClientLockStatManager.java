@@ -15,10 +15,6 @@ public interface ClientLockStatManager {
       // do nothing
     }
 
-    public boolean isStatEnabled() {
-      return false;
-    }
-
     public void setLockStatisticsEnabled(boolean statEnable) {
       // do nothing
     }
@@ -47,7 +43,7 @@ public interface ClientLockStatManager {
       // do nothing
     }
     
-    public void getLockSpecs() {
+    public void requestLockSpecs() {
       // do nothing
     }
   };
@@ -68,7 +64,5 @@ public interface ClientLockStatManager {
   
   public void setLockStatisticsEnabled(boolean statEnable);
   
-  public boolean isStatEnabled();
-  
-  public void getLockSpecs();
+  public void requestLockSpecs();
 }

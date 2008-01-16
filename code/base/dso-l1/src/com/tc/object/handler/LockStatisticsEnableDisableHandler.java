@@ -24,7 +24,7 @@ public class LockStatisticsEnableDisableHandler extends AbstractEventHandler {
     } else if (msg.isLockStatsDisable()) {
       clientLockManager.setLockStatisticsEnabled(false);
     } else if (msg.isGatherLockStatistics()) {
-      clientLockManager.getLockSpecs();
+      clientLockManager.requestLockSpecs();
     }
   }
   

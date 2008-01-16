@@ -104,5 +104,5 @@ public interface ClientLockManager {
   
   public void setLockStatisticsEnabled(boolean statEnable);
   
-  public void getLockSpecs();
+  public void requestLockSpecs();
 }

@@ -384,7 +384,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public void getLockSpecs() {
+    public void requestLockSpecs() {
       throw new ImplementMe();
     }
 

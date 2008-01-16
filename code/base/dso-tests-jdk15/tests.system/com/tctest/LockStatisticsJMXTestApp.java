@@ -23,6 +23,7 @@ import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.runtime.Os;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.Collection;
@@ -212,6 +213,18 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
     waitForAllToMoveOn();
   }
   
+  private void assertExpectedTime(long expectedMinTime, long actualTime) {
+    // Supposed to be expectedMinTime but changed to expectedMinTime-10
+    // This is due to System.currentTimeMillis() which is not that accurate,
+    // according to javadoc, the granularity can be in units of tens of milliseconds
+    if (Os.isWindows()) {
+      // on windows, System.currentTimeMills() only changes every 15-16 millis! It’s even worse on windows 95 (~55ms)
+      Assert.assertTrue(actualTime >= (expectedMinTime - 200));
+    } else {
+      Assert.assertTrue(actualTime >= (expectedMinTime - 10));
+    }
+  }
+  
   private void testServerLockAggregateWaitTime(String lockName, int index) throws Throwable {
     if (index == 0) {
       connect();
@@ -222,8 +235,8 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
 
       System.out.println("avgHeldTimeInMillis: " + avgHeldTimeInMillis);
       System.out.println("avgWaitTimeInMillis: " + avgWaitTimeInMillis);
-      Assert.assertTrue(avgWaitTimeInMillis > 1000);
-      Assert.assertTrue(avgHeldTimeInMillis > 2000);
+      assertExpectedTime(1000, avgWaitTimeInMillis);
+      assertExpectedTime(2000, avgHeldTimeInMillis);
     } else if (index == 1) {
       ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
       waitForTwoToMoveOn();
@@ -255,8 +268,8 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
 
       System.out.println("avgHeldTimeInMillis: " + avgHeldTimeInMillis);
       System.out.println("avgWaitTimeInMillis: " + avgWaitTimeInMillis);
-      Assert.assertTrue(avgWaitTimeInMillis > 1000);
-      Assert.assertTrue(avgHeldTimeInMillis > 2000);
+      assertExpectedTime(1000, avgWaitTimeInMillis);
+      assertExpectedTime(2000, avgHeldTimeInMillis);
     } else if (index == 1) {
       ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
       waitForTwoToMoveOn();

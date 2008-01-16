@@ -135,7 +135,7 @@ public class TestLockManager implements ClientLockManager {
     throw new ImplementMe();
   }
   
-  public void getLockSpecs() {
+  public void requestLockSpecs() {
     throw new ImplementMe();
   }
 

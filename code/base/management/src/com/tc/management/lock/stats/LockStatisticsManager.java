@@ -85,12 +85,6 @@ public abstract class LockStatisticsManager implements Serializable {
     return lockStats;
   }
 
-  public boolean isClientStatEnabled() {
-    if (!lockStatisticsEnabled) { return false; }
-
-    return lockStatConfig.getTraceDepth() > MIN_CLIENT_TRACE_DEPTH;
-  }
-
   protected abstract void disableLockStatistics();
 
   protected abstract LockStatisticsInfo newLockStatisticsContext(LockID lockID);

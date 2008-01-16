@@ -24,10 +24,6 @@ public interface L2LockStatsManager {
       // do nothing
     }
     
-    public boolean isClientStatEnabled() {
-      return false;
-    }
-    
     public void recordLockRequested(LockID lockID, NodeID nodeID, ThreadID threadID, String lockType, int numberOfPendingRequests) {
       // do nothing
     }
@@ -101,8 +97,6 @@ public interface L2LockStatsManager {
   public void start(DSOChannelManager channelManager);
   
   public void setLockStatisticsConfig(int traceDepth, int gatherInterval);
-  
-  public boolean isClientStatEnabled();
   
   public void recordLockHopRequested(LockID lockID);
   
