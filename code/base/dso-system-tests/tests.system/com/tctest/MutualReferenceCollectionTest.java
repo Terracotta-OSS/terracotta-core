@@ -20,9 +20,8 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * DEV-1153: Deadlock if two threads hydrate a collection each referencing the other collection
- * 
- * If this test fails (deadlock), it will fail with a timeout.
+ * DEV-1153: Deadlock if two threads hydrate a collection each referencing the other collection If this test fails
+ * (deadlock), it will fail with a timeout.
  */
 public class MutualReferenceCollectionTest extends TransparentTestBase {
   private static final int NODE_COUNT = 2;
@@ -37,9 +36,9 @@ public class MutualReferenceCollectionTest extends TransparentTestBase {
   }
 
   public static class App extends AbstractErrorCatchingTransparentApp {
-    private CyclicBarrier barrier  = new CyclicBarrier(NODE_COUNT);
-    private List          evenList = new ArrayList();
-    private List          oddList  = new ArrayList();
+    private CyclicBarrier barrier    = new CyclicBarrier(NODE_COUNT);
+    private List          firstList  = new ArrayList();
+    private List          secondList = new ArrayList();
 
     public App(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
       super(appId, cfg, listenerProvider);
@@ -47,17 +46,18 @@ public class MutualReferenceCollectionTest extends TransparentTestBase {
 
     protected void runTest() throws Throwable {
       initLists();
-      
-      ListWorker worker1 = new ListWorker(evenList);
-      ListWorker worker2 = new ListWorker(oddList);
-      
+
+      CyclicBarrier readBarrier = new CyclicBarrier(2);
+      ListWorker worker1 = new ListWorker(readBarrier, firstList);
+      ListWorker worker2 = new ListWorker(readBarrier, secondList);
+
       barrier.barrier();
-      
+
       worker1.start();
       worker2.start();
       worker1.join();
       worker2.join();
-      
+
       if (worker1.getError() != null) { throw worker1.getError(); }
       if (worker2.getError() != null) { throw worker2.getError(); }
     }
@@ -67,19 +67,19 @@ public class MutualReferenceCollectionTest extends TransparentTestBase {
      */
     private void initLists() throws Exception {
       if (barrier.barrier() == 0) {
-        synchronized (evenList) {
-          for (int i = 0; i < 10000; i += 2) {
-            evenList.add(new Integer(i));
+        synchronized (firstList) {
+          for (int i = 0; i < 20000; i++) {
+            firstList.add(new Object());
           }
           // reference oddList
-          evenList.add(oddList);
+          firstList.add(secondList);
         }
-        synchronized (oddList) {
-          for (int i = 1; i < 10000; i += 2) {
-            oddList.add(new Integer(i));
+        synchronized (secondList) {
+          for (int i = 1; i < 20000; i++) {
+            secondList.add(new Object());
           }
           // reference evenList
-          oddList.add(evenList);
+          secondList.add(firstList);
         }
       }
       barrier.barrier();
@@ -89,8 +89,8 @@ public class MutualReferenceCollectionTest extends TransparentTestBase {
       String testClassName = App.class.getName();
       TransparencyClassSpec spec = config.getOrCreateSpec(testClassName);
       spec.addRoot("barrier", "barrier");
-      spec.addRoot("evenList", "evenList");
-      spec.addRoot("oddList", "oddList");
+      spec.addRoot("firstList", "firstList");
+      spec.addRoot("secondList", "secondList");
       String methodExpression = "* " + testClassName + "*.*(..)";
       config.addWriteAutolock(methodExpression);
 
@@ -101,10 +101,12 @@ public class MutualReferenceCollectionTest extends TransparentTestBase {
     }
 
     private static class ListWorker extends Thread {
-      private Throwable error;
-      private List      list;
+      private Throwable     error;
+      private CyclicBarrier readBarrier;
+      private List          list;
 
-      public ListWorker(List list) {
+      public ListWorker(CyclicBarrier readBarrier, List list) {
+        this.readBarrier = readBarrier;
         this.list = list;
       }
 
@@ -113,13 +115,14 @@ public class MutualReferenceCollectionTest extends TransparentTestBase {
         synchronized (list) {
           for (Iterator it = list.iterator(); it.hasNext();) {
             it.next();
-            Thread.sleep(5 + (int)(Math.random() * 10));
+            Thread.sleep(5 + (int) (Math.random() * 10));
           }
         }
       }
 
       public void run() {
         try {
+          readBarrier.barrier();
           System.out.println("Client " + ManagerUtil.getClientID() + ", thread " + getName() + ": start work...");
           doWork();
           System.out.println("Client " + ManagerUtil.getClientID() + ", thread " + getName() + ": Done");
