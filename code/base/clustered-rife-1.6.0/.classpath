@@ -26,6 +26,5 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/simulator"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty-api"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jtidy-4aug2000r7-dev.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/rife-1.6-jdk15.jar"/>
 </classpath>

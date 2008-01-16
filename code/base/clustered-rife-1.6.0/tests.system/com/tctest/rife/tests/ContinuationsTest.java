@@ -167,7 +167,7 @@ public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
 		// start the addition by accessing the first server
 		WebResponse response1 = doQueryStringRequest(server0, url, null);
 		form = response1.getFormWithName("getanswer");
-		assertEquals(": true", response1.getTitle());
+		assertEquals(" : true", response1.getTitle());
 		assertNotNull(form);
 		form.setCheckbox("start", true);
 

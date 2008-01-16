@@ -7,7 +7,6 @@
     <dependency name="commons-httpclient" rev="3.0.1"/>
     <dependency name="cargo-core-uberjar" rev="0.9-tc-20080103" org="terracotta"/>
     <dependency name="httpunit" rev="1.6.2"/>
-    <dependency name="jtidy" rev="4aug2000r7-dev"/>
     <dependency name="spring" rev="2.0.1" org="terracotta"/>
     <dependency name="hibernate" rev="3.1.2" org="terracotta"/>
     <dependency name="dom4j" rev="1.6.1"/>
@@ -23,5 +22,7 @@
     <dependency name="jboss-jmx" rev="4.0.5" org="terracotta"/>
     <dependency name="jboss-system" rev="4.0.5" org="terracotta"/>
     <dependency name="jboss-xml-binding" rev="4.0.5" org="terracotta"/>
+    <dependency name="nekohtml" rev="1.9.6"/>
+    <dependency name="xerces" rev="2.4.0"/>
   </dependencies>
 </ivy-module>

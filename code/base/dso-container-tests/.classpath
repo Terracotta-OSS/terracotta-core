@@ -43,6 +43,7 @@
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jboss-xml-binding-4.0.5.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jsr107cache-1.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jta-1.0.1b.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jtidy-4aug2000r7-dev.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/nekohtml-1.9.6.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/spring-2.0.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/xerces-2.4.0.jar"/>
 </classpath>
