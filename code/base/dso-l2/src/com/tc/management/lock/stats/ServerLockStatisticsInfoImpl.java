@@ -138,7 +138,11 @@ public class ServerLockStatisticsInfoImpl implements LockSpec, LockStatisticsInf
 
   public void aggregateLockHoldersData() {
     mergeLockStatElements();
+    
+    // For the client stat, we need to aggregate the children statistics back to the top level
     clientStatElement.aggregateLockStat();
+    // For the server stat, since there is no child for server stat, the recursive part of the aggregateLockHoldersData() will
+    // be skipped.
     serverStatElement.aggregateLockHoldersData(serverStat, 0);
   }
 

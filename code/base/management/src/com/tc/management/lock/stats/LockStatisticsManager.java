@@ -131,6 +131,7 @@ public abstract class LockStatisticsManager implements Serializable {
     private final static int DEFAULT_TRACE_DEPTH     = 1;
 
     private int              traceDepth              = DEFAULT_TRACE_DEPTH;
+    // Currently, the gatherInterval data is not being honored.
     private int              gatherInterval          = DEFAULT_GATHER_INTERVAL;
 
     public LockStatConfig() {
