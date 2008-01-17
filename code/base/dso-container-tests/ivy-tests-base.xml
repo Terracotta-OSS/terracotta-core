@@ -23,6 +23,6 @@
     <dependency name="jboss-system" rev="4.0.5" org="terracotta"/>
     <dependency name="jboss-xml-binding" rev="4.0.5" org="terracotta"/>
     <dependency name="nekohtml" rev="1.9.6"/>
-    <dependency name="xerces" rev="2.4.0"/>
+    <dependency name="xercesImpl" rev="2.9.0" org="terracotta"/>
   </dependencies>
 </ivy-module>
