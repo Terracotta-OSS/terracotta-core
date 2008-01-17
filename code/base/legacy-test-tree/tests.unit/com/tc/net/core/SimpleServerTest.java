@@ -31,7 +31,7 @@ public class SimpleServerTest extends TCTestCase {
       public void error(Throwable t) {
         setError(t);
       }
-    }), 0 /*PORT*/, serverThreadCount);
+    }), 0 /* PORT */, serverThreadCount);
     server.start();
 
     if (useProxy) {
@@ -110,7 +110,8 @@ public class SimpleServerTest extends TCTestCase {
 
   public void testKindaSmallMsgsOnMultiThSrv() throws Exception {
     // these messages span at least two byte buffers
-    System.out.println("KINDA SMALLEST MESSAGES : on Multi Threaded Server : 0 threads (but 1 main listener) and 75 clients");
+    System.out
+        .println("KINDA SMALLEST MESSAGES : on Multi Threaded Server : 0 threads (but 1 main listener) and 75 clients");
     runMultiClientOnMultiThSrv(0, 75, 10, 1, 100, 3, 7);
   }
 
@@ -130,9 +131,6 @@ public class SimpleServerTest extends TCTestCase {
                                           final int numToSend, final int minDelay, final int maxDelay) throws Exception {
     int HEADER = new GenericNetworkHeader().getHeaderByteLength();
 
-    int expNumClientPerWorkerComm = 0;
-    long expTotalBytesReadPerWorkerComm = 0;
-
     setUp(numWorkerComms);
 
     runMultiClient(numClients, maxConcurrent, dataSize, false, numToSend, minDelay, maxDelay);
@@ -140,21 +138,21 @@ public class SimpleServerTest extends TCTestCase {
     TCCommJDK14 svrComm = (TCCommJDK14) svrConnMgr.getTcComm();
 
     // Verifications
-    // 1 verify total ACTIVE worker comm threads created
-    Assert.eval(svrComm.getWorkerCommsCount() == numWorkerComms);
 
     for (int workerCommId = 0; workerCommId < numWorkerComms; workerCommId++) {
-      // 2 Verify now of clients assigned per worker comm thread
-      expNumClientPerWorkerComm = ((numClients / numWorkerComms) + (((numClients % numWorkerComms) / (workerCommId + 1)) >= 1 ? 1
+      // 1. Verify nun of clients assigned per worker comm thread
+      int expNumClientPerWorkerComm = ((numClients / numWorkerComms) + (((numClients % numWorkerComms) / (workerCommId + 1)) >= 1 ? 1
           : 0));
-      System.out.println("Wroker Comm Thread " + workerCommId + ": " + expNumClientPerWorkerComm + " Clients (exp:"
-                         + svrComm.getClientCountForWorkerComm(workerCommId) + ")");
-      Assert.eval(svrComm.getClientCountForWorkerComm(workerCommId) == expNumClientPerWorkerComm);
 
-      // 3 verify total num of bytes read per worker comm thread
-      expTotalBytesReadPerWorkerComm = (((4096 * dataSize) + (HEADER)) * numToSend) * expNumClientPerWorkerComm;
-      System.out.println("Wroker Comm Thread " + workerCommId + ": " + expTotalBytesReadPerWorkerComm + " BytesRead (exp:"
-                         + svrComm.getTotalbytesReadByWorkerComm(workerCommId) + ")");
+      int actual = svrComm.getClientCountForWorkerComm(workerCommId);
+      System.out.println("Wroker Comm Thread " + workerCommId + ": " + actual + " Clients (exp:"
+                         + expNumClientPerWorkerComm + ")");
+      Assert.assertEquals("thread " + workerCommId, expNumClientPerWorkerComm, actual);
+
+      // 2. verify total num of bytes read per worker comm thread
+      long expTotalBytesReadPerWorkerComm = (((4096 * dataSize) + (HEADER)) * numToSend) * expNumClientPerWorkerComm;
+      System.out.println("Wroker Comm Thread " + workerCommId + ": " + expTotalBytesReadPerWorkerComm
+                         + " BytesRead (exp:" + svrComm.getTotalbytesReadByWorkerComm(workerCommId) + ")");
       Assert.eval(svrComm.getTotalbytesReadByWorkerComm(workerCommId) == expTotalBytesReadPerWorkerComm);
     }
   }

@@ -6,7 +6,7 @@ package com.tc.net.core;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.util.Assert;
+import com.tc.util.concurrent.SetOnceFlag;
 
 /**
  * The whole intention of this class is to manage the workerThreads for each Listener
@@ -17,89 +17,64 @@ public class TCWorkerCommManager {
   private static final TCLogger   logger                 = TCLogging.getLogger(TCWorkerCommManager.class);
 
   private static final String     WORKER_NAME_PREFIX     = "TCWorkerComm # ";
-  private static final short      INVALID_WORKER_COMM_ID = -1;
 
   private final int               totalWorkerComm;
   private final CoreNIOServices[] workerCommThreads;
   private final int[]             workerCommClientCount;
-  private final SocketParams      socketParams;
+  private final SetOnceFlag       started                = new SetOnceFlag();
+  private final SetOnceFlag       stopped                = new SetOnceFlag();
 
-  private int                     nextWorkerCommId;
-  private boolean                 workerCommStarted      = false;
+  private int                     nextWorkerCommId = 0;
 
   TCWorkerCommManager(int workerCommCount, SocketParams socketParams) {
     if (workerCommCount <= 0) { throw new IllegalArgumentException("invalid worker count: " + workerCommCount); }
 
     logger.info("Creating " + workerCommCount + " worker comm threads.");
 
-    this.nextWorkerCommId = INVALID_WORKER_COMM_ID;
     this.totalWorkerComm = workerCommCount;
-    this.socketParams = socketParams;
 
     workerCommThreads = new CoreNIOServices[workerCommCount];
+    for (int i = 0; i < workerCommThreads.length; i++) {
+      workerCommThreads[i] = new CoreNIOServices(WORKER_NAME_PREFIX + i, this, socketParams);
+    }
+
     workerCommClientCount = new int[workerCommCount];
   }
 
-  public synchronized CoreNIOServices getNextFreeWorkerComm() {
-    int iter = 0;
-    do {
-      nextWorkerCommId++;
-      nextWorkerCommId = nextWorkerCommId % totalWorkerComm;
+  public synchronized CoreNIOServices getNextWorkerComm() {
+    int id = nextWorkerCommId;
+    nextWorkerCommId = ++nextWorkerCommId % totalWorkerComm;
 
-      iter += 1;
-      if (iter >= 2 * totalWorkerComm) return null; // XXX: bug
-    } while (workerCommThreads[nextWorkerCommId].isStarted() != true);
-    workerCommClientCount[nextWorkerCommId]++;
-    return workerCommThreads[nextWorkerCommId];
+    workerCommClientCount[id]++;
+    return workerCommThreads[id];
   }
 
   public synchronized void start() {
-    workerCommStarted = true;
-
-    for (int i = 0; i < workerCommThreads.length; i++) {
-      workerCommThreads[i] = new CoreNIOServices(WORKER_NAME_PREFIX + i, this, socketParams);
-      workerCommThreads[i].start();
+    if (started.attemptSet()) {
+      for (int i = 0; i < workerCommThreads.length; i++) {
+        workerCommThreads[i].start();
+      }
+    } else {
+      throw new IllegalStateException("already started");
     }
-  }
-
-  public synchronized boolean isStarted() {
-    if (workerCommStarted == true) {
-      Assert.eval(totalWorkerComm > 0);
-    }
-    return workerCommStarted;
   }
 
   public synchronized void stop() {
-    if (isStarted()) {
+    if (!started.isSet()) { return; }
+
+    if (stopped.attemptSet()) {
       for (int i = 0; i < totalWorkerComm; i++) {
         workerCommThreads[i].requestStop();
       }
     }
   }
 
-  public synchronized int getActiveWorkerCommsCount(boolean employedCommsOnly) {
-    int count = 0;
-    for (int i = 0; i < totalWorkerComm; i++) {
-      if (workerCommThreads[i].isStarted()) {
-        if (employedCommsOnly) {
-          if (workerCommClientCount[i] > 0) count += 1;
-        } else {
-          count += 1;
-        }
-      }
-    }
-    return count;
-  }
-
   public synchronized int getClientCountForWorkerComm(int workerCommId) {
-    if (workerCommId >= 0 && workerCommId < totalWorkerComm) { return workerCommClientCount[workerCommId]; }
-    return 0;
+    return workerCommClientCount[workerCommId];
   }
 
   public synchronized long getBytesReadByWorkerComm(int workerCommId) {
-    if (workerCommId >= 0 && workerCommId < totalWorkerComm) { return workerCommThreads[workerCommId]
-        .getTotalBytesRead(); }
-    return 0;
+    return workerCommThreads[workerCommId].getTotalBytesRead();
   }
 
 }
