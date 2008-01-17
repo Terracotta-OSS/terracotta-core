@@ -4,17 +4,10 @@
  */
 package com.tc.object.net;
 
-import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
-
 import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.stats.counter.Counter;
-import com.tc.stats.counter.sampled.SampledCounter;
-import com.tc.stats.counter.sampled.SampledCounterConfig;
-import com.tc.stats.counter.sampled.SampledCounterManager;
-
-import java.util.Iterator;
-import java.util.Map;
+import com.tc.stats.counter.CounterManager;
 
 /**
  * A helper class to make accessing channel specific stats objects a little easier. This class is sorta yucky and
@@ -22,42 +15,45 @@ import java.util.Map;
  */
 public class ChannelStatsImpl implements ChannelStats, DSOChannelManagerEventListener {
 
-  private static final String               DSO_STATS_MAP  = "dso_stats_map";
-  private static final SampledCounterConfig DEFAULT_CONFIG = new SampledCounterConfig(1, 300, true, 0L);
+  private final CounterManager    counterManager;
+  private final DSOChannelManager channelManager;
 
-  private final SampledCounterManager       counterManager;
-  private final DSOChannelManager           channelManager;
-
-  public ChannelStatsImpl(SampledCounterManager counterManager, DSOChannelManager channelManager) {
+  public ChannelStatsImpl(CounterManager counterManager, DSOChannelManager channelManager) {
     this.counterManager = counterManager;
     this.channelManager = channelManager;
   }
 
   public Counter getCounter(MessageChannel channel, String name) {
-    return getCounter(getStatsMap(channel), name);
+    Counter rv = (Counter) channel.getAttachment(name);
+    if (rv == null) { throw new NullPointerException(
+                                                     "StatsMap returned null ! Probably not initialized. Check ChannelStats Interface. "); }
+    return rv;
   }
 
-  private Counter getCounter(Map statsMap, String name) {
-    Counter rv = (Counter) statsMap.get(name);
-    if (rv != null) return rv;
-
-    synchronized (statsMap) {
-      if (statsMap.containsKey(name)) { return (Counter) statsMap.get(name); }
-
-      // XXX: We'll need a way to override this at some point, we'll probably want differing configurations for the
-      // different counters, and not every counter needs to be one of the sampled type (probably)
-      rv = counterManager.createCounter(DEFAULT_CONFIG);
-      statsMap.put(name, rv);
-      return rv;
+  public void channelCreated(MessageChannel channel) {
+    for (int i = 0; i < STATS_CONFIG.length; i++) {
+      Object[] config = STATS_CONFIG[i];
+      Counter counter = counterManager.createCounter(config[1]);
+      channel.addAttachment((String) config[0], counter, true);
     }
-
   }
 
-  private static Map getStatsMap(MessageChannel channel) {
-    Map rv = (Map) channel.getAttachment(DSO_STATS_MAP);
-    if (rv != null) { return rv; }
-    channel.addAttachment(DSO_STATS_MAP, new ConcurrentReaderHashMap(), false);
-    return (Map) channel.getAttachment(DSO_STATS_MAP);
+  public void channelRemoved(MessageChannel channel) {
+    for (int i = 0; i < STATS_CONFIG.length; i++) {
+      Object[] config = STATS_CONFIG[i];
+      Counter counter = (Counter) channel.removeAttachment((String) config[0]);
+      if (counter != null) {
+        counterManager.shutdownCounter(counter);
+      }
+    }
+  }
+
+  public void notifyObjectRemove(MessageChannel channel, int numObjectsRemoved) {
+    getCounter(channel, ChannelStats.OBJECT_FLUSH_RATE).increment(numObjectsRemoved);
+  }
+
+  public void notifyObjectRequest(MessageChannel channel, int numObjectsRequested) {
+    getCounter(channel, ChannelStats.OBJECT_REQUEST_RATE).increment(numObjectsRequested);
   }
 
   public void notifyTransaction(NodeID nodeID) {
@@ -69,26 +65,22 @@ public class ChannelStatsImpl implements ChannelStats, DSOChannelManagerEventLis
     }
   }
 
-  public void channelCreated(MessageChannel channel) {
-    //
-  }
-
-  public void channelRemoved(MessageChannel channel) {
-    Map stats = (Map) channel.removeAttachment(DSO_STATS_MAP);
-    if (stats != null) {
-      for (Iterator i = stats.values().iterator(); i.hasNext();) {
-        SampledCounter counter = (SampledCounter) i.next();
-        counter.shutdown();
-      }
+  public void notifyTransactionBroadcastedTo(NodeID nodeID) {
+    try {
+      MessageChannel channel = channelManager.getActiveChannel(nodeID);
+      getCounter(channel, PENDING_TRANSACTIONS).increment();
+    } catch (NoSuchChannelException e) {
+      //
     }
   }
 
-  public void notifyObjectRemove(MessageChannel channel, int numObjectsRemoved) {
-    getCounter(channel, ChannelStats.OBJECT_FLUSH_RATE).increment(numObjectsRemoved);
-  }
-
-  public void notifyObjectRequest(MessageChannel channel, int numObjectsRequested) {
-    getCounter(channel, ChannelStats.OBJECT_REQUEST_RATE).increment(numObjectsRequested);
+  public void notifyTransactionAckedFrom(NodeID nodeID) {
+    try {
+      MessageChannel channel = channelManager.getActiveChannel(nodeID);
+      getCounter(channel, PENDING_TRANSACTIONS).decrement();
+    } catch (NoSuchChannelException e) {
+      //
+    }
   }
 
 }

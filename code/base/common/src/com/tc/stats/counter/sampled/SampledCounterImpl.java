@@ -50,7 +50,7 @@ public class SampledCounterImpl extends CounterImpl implements SampledCounter {
     }
   }
 
-  TimerTask getTimerTask() {
+  public TimerTask getTimerTask() {
     return this.samplerTask;
   }
 

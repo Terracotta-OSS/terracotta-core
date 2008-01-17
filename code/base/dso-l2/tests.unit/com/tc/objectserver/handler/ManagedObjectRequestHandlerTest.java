@@ -94,6 +94,16 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
     public void notifyObjectRequest(MessageChannel channel, int numObjectsRequested) {
       channelReqCounter.increment(numObjectsRequested);
     }
+
+    public void notifyTransactionAckedFrom(NodeID nodeID) {
+      throw new ImplementMe();
+      
+    }
+
+    public void notifyTransactionBroadcastedTo(NodeID nodeID) {
+      throw new ImplementMe();
+      
+    }
   }
 
 }

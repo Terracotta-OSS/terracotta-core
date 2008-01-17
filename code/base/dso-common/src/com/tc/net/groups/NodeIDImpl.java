@@ -118,4 +118,8 @@ public class NodeIDImpl implements NodeID {
     out.writeInt(length);
     out.write(this.uid);
   }
+
+  public byte getType() {
+    return L2_NODE_TYPE;
+  }
 }

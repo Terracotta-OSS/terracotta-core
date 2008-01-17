@@ -156,7 +156,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
       fireClientDisconnectedEvent(deadNodeID);
     }
   }
-  
+
   public void nodeConnected(NodeID nodeID) {
     lockManager.enableLockStatsForNodeIfNeeded(nodeID);
   }
@@ -194,7 +194,10 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     if (ci != null) {
       ci.addWaitee(waitee, txnID);
     } else {
-      logger.warn("Not adding to Wating for Ack since Waiter not found in the states map: " + waiter);
+      logger.warn("Not adding to Waiting for Ack since Waiter not found in the states map: " + waiter);
+    }
+    if (isActive() && waitee.getType() == NodeID.L1_NODE_TYPE) {
+      channelStats.notifyTransactionBroadcastedTo(waitee);
     }
   }
 
@@ -213,6 +216,12 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   }
 
   public void acknowledgement(NodeID waiter, TransactionID txnID, NodeID waitee) {
+
+    // NOTE ::TODO Sometime you can get double notification for the same txn in server restart cases. In those cases the
+    // accounting could be messed up. The counter is set to have a min of zero to avoid ugly negative values.
+    if (isActive() && waitee.getType() == NodeID.L1_NODE_TYPE) {
+      channelStats.notifyTransactionAckedFrom(waitee);
+    }
 
     TransactionAccount transactionAccount = getTransactionAccount(waiter);
     if (transactionAccount == null) {

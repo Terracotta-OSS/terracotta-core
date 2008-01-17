@@ -4,6 +4,7 @@
  */
 package com.tc.stats;
 
+import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.TimeStampedCounterValue;
 import com.tc.stats.statistics.CountStatistic;
@@ -21,6 +22,13 @@ public class StatsUtil {
     // TODO: we could include the min/max/avg in the returned stat
     stat.setLastSampleTime(sample.getTimestamp());
     stat.setCount(sample.getCounterValue());
+    return stat;
+  }
+
+  public static CountStatistic makeCountStat(Counter counter) {
+    CountStatisticImpl stat = new CountStatisticImpl();
+    stat.setLastSampleTime(System.currentTimeMillis());
+    stat.setCount(counter.getValue());
     return stat;
   }
 

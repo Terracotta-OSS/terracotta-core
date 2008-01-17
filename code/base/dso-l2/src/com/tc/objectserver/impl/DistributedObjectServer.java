@@ -164,10 +164,10 @@ import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
 import com.tc.objectserver.tx.TransactionalStagesCoordinatorImpl;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.stats.counter.CounterManager;
+import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
-import com.tc.stats.counter.sampled.SampledCounterManager;
-import com.tc.stats.counter.sampled.SampledCounterManagerImpl;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tc.util.ProductInfo;
@@ -196,7 +196,7 @@ import javax.management.remote.JMXConnectorServer;
 
 /**
  * Startup and shutdown point. Builds and starts the server
- *
+ * 
  * @author steve
  */
 public class DistributedObjectServer extends SEDA implements TCDumper {
@@ -212,7 +212,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
   private ServerConfigurationContext           context;
   private ObjectManagerImpl                    objectManager;
   private TransactionalObjectManagerImpl       txnObjectManager;
-  private SampledCounterManager                sampledCounterManager;
+  private CounterManager                       sampledCounterManager;
   private LockManager                          lockManager;
   private ServerManagementContext              managementContext;
   private StartupLock                          startupLock;
@@ -449,9 +449,11 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     l2DSOConfig.changesInItemIgnored(l2DSOConfig.garbageCollectionVerbose());
     boolean verboseGC = l2DSOConfig.garbageCollectionVerbose().getBoolean();
     if (gcEnabled) logger.debug("Verbose GC enabled: " + verboseGC);
-    sampledCounterManager = new SampledCounterManagerImpl();
-    SampledCounter objectCreationRate = sampledCounterManager.createCounter(new SampledCounterConfig(1, 900, true, 0L));
-    SampledCounter objectFaultRate = sampledCounterManager.createCounter(new SampledCounterConfig(1, 900, true, 0L));
+    sampledCounterManager = new CounterManagerImpl();
+    SampledCounter objectCreationRate = (SampledCounter) sampledCounterManager
+        .createCounter(new SampledCounterConfig(1, 900, true, 0L));
+    SampledCounter objectFaultRate = (SampledCounter) sampledCounterManager
+        .createCounter(new SampledCounterConfig(1, 900, true, 0L));
     ObjectManagerStatsImpl objMgrStats = new ObjectManagerStatsImpl(objectCreationRate, objectFaultRate);
 
     SequenceValidator sequenceValidator = new SequenceValidator(0);
@@ -511,7 +513,8 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     ObjectInstanceMonitorImpl instanceMonitor = new ObjectInstanceMonitorImpl();
     TransactionBatchManager transactionBatchManager = new TransactionBatchManagerImpl();
     TransactionAcknowledgeAction taa = new TransactionAcknowledgeActionImpl(channelManager, transactionBatchManager);
-    SampledCounter globalTxnCounter = sampledCounterManager.createCounter(new SampledCounterConfig(1, 300, true, 0L));
+    SampledCounter globalTxnCounter = (SampledCounter) sampledCounterManager
+        .createCounter(new SampledCounterConfig(1, 300, true, 0L));
 
     final TransactionStore transactionStore = new TransactionStoreImpl(transactionPersistor,
                                                                        globalTransactionIDSequence);
@@ -573,10 +576,10 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
                              maxStageSize);
     channelManager.addEventListener(channelLifeCycleHandler);
 
-    SampledCounter globalObjectFaultCounter = sampledCounterManager.createCounter(new SampledCounterConfig(1, 300,
-                                                                                                           true, 0L));
-    SampledCounter globalObjectFlushCounter = sampledCounterManager.createCounter(new SampledCounterConfig(1, 300,
-                                                                                                           true, 0L));
+    SampledCounter globalObjectFaultCounter = (SampledCounter) sampledCounterManager
+        .createCounter(new SampledCounterConfig(1, 300, true, 0L));
+    SampledCounter globalObjectFlushCounter = (SampledCounter) sampledCounterManager
+        .createCounter(new SampledCounterConfig(1, 300, true, 0L));
     Stage objectRequest = stageManager.createStage(ServerConfigurationContext.MANAGED_OBJECT_REQUEST_STAGE,
                                                    new ManagedObjectRequestHandler(globalObjectFaultCounter,
                                                                                    globalObjectFlushCounter,

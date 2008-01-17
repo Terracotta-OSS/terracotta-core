@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.stats;
 
@@ -8,6 +9,7 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.ChannelStats;
+import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.statistics.CountStatistic;
 import com.tc.stats.statistics.Statistic;
@@ -22,6 +24,7 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
   private final SampledCounter txnRate;
   private final SampledCounter flushRate;
   private final SampledCounter faultRate;
+  private final Counter        pendingTransactions;
 
   public DSOClient(final MessageChannel channel, final ChannelStats channelStats) throws NotCompliantMBeanException {
     super(DSOClientMBean.class, false);
@@ -29,6 +32,7 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     this.txnRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.TXN_RATE);
     this.flushRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.OBJECT_FLUSH_RATE);
     this.faultRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.OBJECT_REQUEST_RATE);
+    this.pendingTransactions = channelStats.getCounter(channel, ChannelStats.PENDING_TRANSACTIONS);
   }
 
   public void reset() {
@@ -55,6 +59,10 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
 
   public CountStatistic getObjectFlushRate() {
     return StatsUtil.makeCountStat(flushRate);
+  }
+  
+  public CountStatistic getPendingTransactionsCount() {
+    return StatsUtil.makeCountStat(pendingTransactions);
   }
 
   public Statistic[] getStatistics(final String[] names) {

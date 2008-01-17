@@ -23,9 +23,6 @@ import java.io.ObjectOutput;
  */
 public class NodeIDSerializer implements TCSerializable {
 
-  private static final byte CLIENT_ID    = 0x01;
-  private static final byte NODE_ID_IMPL = 0x02;
-
   private NodeID            nodeID;
 
   public NodeIDSerializer() {
@@ -41,19 +38,9 @@ public class NodeIDSerializer implements TCSerializable {
   }
 
   public static void writeNodeID(NodeID n, ObjectOutput out) throws IOException {
-    byte type = getType(n);
+    byte type = n.getType();
     out.writeByte(type);
     n.writeExternal(out);
-  }
-
-  private static byte getType(NodeID nodeID) {
-    if (nodeID instanceof ClientID) {
-      return CLIENT_ID;
-    } else if (nodeID instanceof NodeIDImpl) {
-      return NODE_ID_IMPL;
-    } else {
-      throw new AssertionError("Unknown type : " + nodeID.getClass().getName() + " : " + nodeID);
-    }
   }
 
   public static NodeID readNodeID(ObjectInput in) throws IOException, ClassNotFoundException {
@@ -65,9 +52,9 @@ public class NodeIDSerializer implements TCSerializable {
 
   private static NodeID getImpl(byte type) {
     switch (type) {
-      case CLIENT_ID:
+      case NodeID.L1_NODE_TYPE:
         return new ClientID();
-      case NODE_ID_IMPL:
+      case NodeID.L2_NODE_TYPE:
         return new NodeIDImpl();
       default:
         throw new AssertionError("Unknown type : " + type);
@@ -109,8 +96,7 @@ public class NodeIDSerializer implements TCSerializable {
   }
 
   public void serializeTo(TCByteBufferOutput serialOutput) {
-    serialOutput.writeByte(getType(this.nodeID));
+    serialOutput.writeByte(this.nodeID.getType());
     this.nodeID.serializeTo(serialOutput);
   }
-
 }

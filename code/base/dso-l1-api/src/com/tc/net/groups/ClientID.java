@@ -77,4 +77,8 @@ public class ClientID implements NodeID {
     serialOutput.writeLong(this.channelID.toLong());
   }
 
+  public byte getType() {
+    return L1_NODE_TYPE;
+  }
+
 }

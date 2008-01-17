@@ -548,6 +548,14 @@ public class ServerTransactionManagerImplTest extends TestCase {
       throw new ImplementMe();
     }
 
+    public void notifyTransactionAckedFrom(NodeID nodeID) {
+      //NOP
+    }
+
+    public void notifyTransactionBroadcastedTo(NodeID nodeID) {
+      //NOP
+    }
+
   }
 
   private static class Root {
