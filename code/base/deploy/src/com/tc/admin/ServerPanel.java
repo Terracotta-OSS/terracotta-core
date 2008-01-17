@@ -156,15 +156,14 @@ public class ServerPanel extends XContainer {
 
     Date activateDate = new Date(m_serverNode.getActivateTime());
     String activateTime = activateDate.toString();
-    String statusMsg = "Activated at " + activateTime;
 
-    setStatusLabel(statusMsg);
+    setStatusLabel(m_acc.format("server.activated.label", new Object[]{activateTime}));
     m_acc.controller.addServerLog(m_serverNode.getConnectionContext());
     if(!isRuntimeInfoShowing()) {
       showRuntimeInfo();
     }
 
-    m_acc.controller.setStatus(m_serverNode + " activated at " + activateTime);
+    m_acc.controller.setStatus(m_acc.format("server.activated.status", new Object[] {m_serverNode, activateTime}));
   }
 
   /**
@@ -177,15 +176,14 @@ public class ServerPanel extends XContainer {
 
     Date startDate = new Date(m_serverNode.getStartTime());
     String startTime = startDate.toString();
-    String statusMsg = "Started at " + startTime;
 
     setupConnectButton();
-    setStatusLabel(statusMsg);
+    setStatusLabel(m_acc.format("server.started.label", new Object[] {startTime}));
     if(!isRuntimeInfoShowing()) {
       showRuntimeInfo();
     }
 
-    m_acc.controller.setStatus("Started " + m_serverNode + " at " + startTime);
+    m_acc.controller.setStatus(m_acc.format("server.started.status", new Object[] {m_serverNode, startTime}));
   }
 
   void passiveUninitialized() {
@@ -193,15 +191,14 @@ public class ServerPanel extends XContainer {
     m_portField.setEditable(false);
 
     String startTime = new Date().toString();
-    String statusMsg = "Initializing at " + startTime;
 
     setupConnectButton();
-    setStatusLabel(statusMsg);
+    setStatusLabel(m_acc.format("server.initializing.label", new Object[] {startTime}));
     if(!isRuntimeInfoShowing()) {
       showRuntimeInfo();
     }
 
-    m_acc.controller.setStatus("Initializing " + m_serverNode + " at " + startTime);
+    m_acc.controller.setStatus(m_acc.format("server.initializing.status", new Object[] {m_serverNode, startTime}));
   }
 
   void passiveStandby() {
@@ -209,15 +206,14 @@ public class ServerPanel extends XContainer {
     m_portField.setEditable(false);
 
     String startTime = new Date().toString();
-    String statusMsg = "Standing by at " + startTime;
 
     setupConnectButton();
-    setStatusLabel(statusMsg);
+    setStatusLabel(m_acc.format("server.standingby.label", new Object[] {startTime}));
     if(!isRuntimeInfoShowing()) {
       showRuntimeInfo();
     }
 
-    m_acc.controller.setStatus(m_serverNode + " standing by at " + startTime);
+    m_acc.controller.setStatus(m_acc.format("server.standingby.status", new Object[] {m_serverNode, startTime}));
   }
 
   private void disconnect() {
@@ -229,14 +225,13 @@ public class ServerPanel extends XContainer {
     m_portField.setEditable(true);
 
     String startTime = new Date().toString();
-    String statusMsg = "Disconnected at " + startTime;
 
     setupConnectButton();
-    setStatusLabel(statusMsg);
+    setStatusLabel(m_acc.format("server.disconnected.label", new Object[] {startTime}));
     hideRuntimeInfo();
 
     m_acc.controller.removeServerLog(m_serverNode.getConnectionContext());
-    m_acc.controller.setStatus(m_serverNode + " disconnected at " + startTime);
+    m_acc.controller.setStatus(m_acc.format("server.disconnected.status", new Object[] {m_serverNode, startTime}));
   }
 
   void setStatusLabel(String msg) {

@@ -42,6 +42,26 @@ public class AdminClientBundle extends ListResourceBundle {
 
       { "server.properties.headings", new String[] { "Name", "Value" } },
 
+      { "server.activated.status", "{0} activated on {1}" },
+
+      { "server.activated.label", "Activated on {0}" },
+
+      { "server.started.status", "Started {0} on {1}" },
+
+      { "server.started.label", "Started on {0}" },
+
+      { "server.initializing.status", "Initializing {0} on {1}" },
+
+      { "server.initializing.label", "Initializing on {0}" },
+      
+      { "server.standingby.status", "{0} standing by on {1}" },
+
+      { "server.standingby.label", "Standing by on {0}" },
+
+      { "server.disconnected.status", "{0} disconnected on {1}" },
+
+      { "server.disconnected.label", "Disconnected on {0}" },
+
       { "dso", "DSO" },
 
       { "dso.roots", "Roots" },
@@ -57,7 +77,7 @@ public class AdminClientBundle extends ListResourceBundle {
       "dso.locks.column.tips",
       new String[] { "Lock identifier", "<html>Number of times this lock<br>was requested</html>",
       "<html>Times an acquired greedy lock was<br>retracted from holding client and<br>granted to another</html>",
-      "<html>Average number of threads wishing<br>to acquire this lock at the time<br>it was granted</html>",
+      "<html>Average number of threads wishing<br>to acquire this lock at the time<br>it was requested</html>",
       "<html>Average time between lock<br>request and grant</html>",
       "<html>Average time grantee held<br>this lock</html>",
       "<html>Average number of outstanding<br>locks held by acquiring thread<br>at grant time</html>" } },

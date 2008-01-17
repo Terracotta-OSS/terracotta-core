@@ -237,7 +237,6 @@ public class ConfigLoader {
     XmlCursor c = x.newCursor();
     while(!c.isContainer()) c.toNextToken();
     c.getAllNamespaces(nsMap);
-    System.err.println(nsMap.toString());
     c.dispose();
   }
 
