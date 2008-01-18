@@ -11,10 +11,17 @@
     <include>
       <class-expression>net.sf.ehcache.*..*</class-expression>
     </include>
+
+    <include>
+      <class-expression>net.sf.ehcache.CacheManager</class-expression>
+      <on-load>
+        <execute><![CDATA[self.cacheManagerEventListenerRegistry = new net.sf.ehcache.event.CacheManagerEventListenerRegistry();]]></execute>
+      </on-load>
+    </include>
   </instrumented-classes>
 
   <transient-fields>
-    <field-name>net.sf.ehcache.CacheManager.cacheManagerEventListener</field-name>
+    <field-name>net.sf.ehcache.CacheManager.cacheManagerEventListenerRegistry</field-name>
     <field-name>net.sf.ehcache.CacheManager.cacheManagerPeerListener</field-name>
     <field-name>net.sf.ehcache.CacheManager.cacheManagerPeerProvider</field-name>
     <field-name>net.sf.ehcache.CacheManager.shutdownHook</field-name>

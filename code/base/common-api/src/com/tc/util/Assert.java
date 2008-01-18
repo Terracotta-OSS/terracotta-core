@@ -253,6 +253,16 @@ public class Assert {
   }
 
   /**
+   * Assert expected and actual values are equal
+   *
+   * @param expected Expected value
+   * @param actual Actual value
+   */
+  public static void assertEquals(long expected, long actual) {
+    if (expected != actual) { throw new TCAssertionError("Expected <" + expected + "> but got <" + actual + ">"); }
+  }
+
+  /**
    * Assert expected and actual values are equal and return what as a message
    *
    * @param expected Expected value
