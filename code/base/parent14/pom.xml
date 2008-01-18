@@ -277,7 +277,7 @@
       <dependency>
         <groupId>berkeleydb</groupId>
         <artifactId>je</artifactId>
-        <version>3.2.68</version>
+        <version>3.2.70</version>
       </dependency>
       <!--
       <dependency>
