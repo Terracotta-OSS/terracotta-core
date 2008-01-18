@@ -26,6 +26,9 @@ public class TribesSendLargeMessageTest extends TCTestCase {
   private static final long     millionOids = 1024 * 1024;
 
   public TribesSendLargeMessageTest() {
+    // Per Ey, tribe is being replaced
+    disableAllUntil("2008-06-01");
+    
     // use random mcast port for testing purpose.
     useRandomMcastPort();
   }
