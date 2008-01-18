@@ -877,34 +877,10 @@ END
     # This is where the 'run-1.4-tests-with-1.5' property comes into play; we assign the
     # 'tests-1.4' JVM to a 1.4 or 1.5 JVM, based on how this property is set.
     def find_jvms
-      
+
       return @jvm_set if @jvm_set
 
-      @jvm_set = JVMSet.new
-
-      jdk_defs = YAML.load_file('jdk.def.yml')
-      jdk_defs.each do |name, attributes|
-        min_version = attributes['min_version']
-        max_version = attributes['max_version']
-        search_names = attributes['env']
-
-        unless min_version && max_version && search_names
-          raise "Invalid JVM specification: #{name}"
-        end
-
-        search_names = [search_names].flatten
-
-        jvm = JVM.from_config(platform, config_source, name,
-                              min_version, max_version, *search_names)
-        if jvm
-          @jvm_set.set(name, jvm)
-          if aliases = attributes['alias']
-            [aliases].flatten.each do |jvm_alias|
-              @jvm_set.alias(jvm_alias, name)
-            end
-          end
-        end
-      end
+      @jvm_set = JVMSet.new(YAML.load_file('jdk.def.yml'))
 
       @jvm_set.add_config_jvm('tests-jdk')
       @jvm_set.add_config_jvm('jdk')
