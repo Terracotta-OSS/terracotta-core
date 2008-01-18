@@ -6,6 +6,7 @@ package com.tc.object.net;
 
 import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.stats.StatsConfig;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.CounterManager;
 
@@ -25,23 +26,35 @@ public class ChannelStatsImpl implements ChannelStats, DSOChannelManagerEventLis
 
   public Counter getCounter(MessageChannel channel, String name) {
     Counter rv = (Counter) channel.getAttachment(name);
-    if (rv == null) { throw new NullPointerException(
-                                                     "StatsMap returned null ! Probably not initialized. Check ChannelStats Interface. "); }
+    if (rv == null) {
+      createStatsCountersIfNeeded(channel, name);
+      rv = (Counter) channel.getAttachment(name);
+      if (rv == null) throw new NullPointerException("StatsCounter : " + name + " not attached to channel "
+                                                     + channel.getChannelID()
+                                                     + " ! Probably not initialized. Check ChannelStats Interface. ");
+    }
     return rv;
   }
 
-  public void channelCreated(MessageChannel channel) {
-    for (int i = 0; i < STATS_CONFIG.length; i++) {
-      Object[] config = STATS_CONFIG[i];
-      Counter counter = counterManager.createCounter(config[1]);
-      channel.addAttachment((String) config[0], counter, true);
+  private synchronized void createStatsCountersIfNeeded(MessageChannel channel, String name) {
+    Counter rv = (Counter) channel.getAttachment(name);
+    if (rv == null) {
+      for (int i = 0; i < STATS_CONFIG.length; i++) {
+        StatsConfig config = STATS_CONFIG[i];
+        Counter counter = counterManager.createCounter(config.getCounterConfig());
+        channel.addAttachment(config.getStatsName(), counter, true);
+      }
     }
+  }
+
+  public void channelCreated(MessageChannel channel) {
+    // NOP
   }
 
   public void channelRemoved(MessageChannel channel) {
     for (int i = 0; i < STATS_CONFIG.length; i++) {
-      Object[] config = STATS_CONFIG[i];
-      Counter counter = (Counter) channel.removeAttachment((String) config[0]);
+      StatsConfig config = STATS_CONFIG[i];
+      Counter counter = (Counter) channel.removeAttachment(config.getStatsName());
       if (counter != null) {
         counterManager.shutdownCounter(counter);
       }

@@ -6,7 +6,7 @@ package com.tc.stats.counter;
 
 
 public interface CounterManager {  
-  Counter createCounter(Object config);
+  Counter createCounter(CounterConfig config);
   
   void shutdown();
 

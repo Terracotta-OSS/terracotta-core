@@ -4,20 +4,15 @@
  */
 package com.tc.stats.counter;
 
-public class BoundedCounterConfig {
+public class BoundedCounterConfig extends CounterConfig {
 
-  private final long initialValue;
   private final long min;
   private final long max;
 
   public BoundedCounterConfig(long initialValue, long min, long max) {
-    this.initialValue = initialValue;
+    super(initialValue);
     this.min = min;
     this.max = max;
-  }
-
-  public long getInitialValue() {
-    return initialValue;
   }
 
   public long getMinBound() {
@@ -26,5 +21,9 @@ public class BoundedCounterConfig {
 
   public long getMaxBound() {
     return max;
+  }
+
+  public Counter createCounter() {
+    return new BoundedCounter(getInitialValue(), min, max);
   }
 }

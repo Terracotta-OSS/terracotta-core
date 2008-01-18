@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.stats.counter.sampled;
 
@@ -17,6 +18,7 @@ public class SampledCounterImpl extends CounterImpl implements SampledCounter {
   private final LossyStack        history;
   private final boolean           resetOnSample;
   private final TimerTask         samplerTask;
+  private final long              intervalMillis;
   private TimeStampedCounterValue min;
   private TimeStampedCounterValue max;
   private Double                  average = null;
@@ -24,6 +26,7 @@ public class SampledCounterImpl extends CounterImpl implements SampledCounter {
   public SampledCounterImpl(SampledCounterConfig config) {
     super(config.getInitialValue());
 
+    this.intervalMillis = config.getIntervalSecs() * 1000;
     this.history = new LossyStack(config.getHistorySize());
     this.resetOnSample = config.isResetOnSample();
 
@@ -52,6 +55,10 @@ public class SampledCounterImpl extends CounterImpl implements SampledCounter {
 
   public TimerTask getTimerTask() {
     return this.samplerTask;
+  }
+
+  public long getIntervalMillis() {
+    return intervalMillis;
   }
 
   synchronized void recordSample() {

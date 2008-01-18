@@ -5,7 +5,6 @@
 package com.tc.stats.counter;
 
 import com.tc.stats.counter.sampled.SampledCounter;
-import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.stats.counter.sampled.SampledCounterImpl;
 import com.tc.util.TCTimerImpl;
 
@@ -28,29 +27,17 @@ public class CounterManagerImpl implements CounterManager {
     }
   }
 
-  public synchronized Counter createCounter(Object config) {
+  public synchronized Counter createCounter(CounterConfig config) {
     if (shutdown) { throw new IllegalStateException("counter manager is shutdown"); }
     if (config == null) { throw new NullPointerException("config cannot be null"); }
 
-    if (config instanceof CounterConfig) {
-      CounterConfig cc = (CounterConfig) config;
-      Counter counter = new CounterImpl(cc.getInitialValue());
-      return counter;
-    } else if (config instanceof BoundedCounterConfig) {
-      BoundedCounterConfig bcc = (BoundedCounterConfig) config;
-      Counter counter = new BoundedCounter(bcc.getInitialValue(), bcc.getMinBound(), bcc.getMaxBound());
-      return counter;
-    } else if (config instanceof SampledCounterConfig) {
-      SampledCounterConfig scc = (SampledCounterConfig) config;
-      SampledCounterImpl counter;
-      counter = new SampledCounterImpl(scc);
-
-      final long period = scc.getIntervalSecs() * 1000;
-      timer.schedule(counter.getTimerTask(), period, period);
-      return counter;
-    } else {
-      throw new AssertionError("Wrong config : " + config);
+    Counter counter = config.createCounter();
+    if (counter instanceof SampledCounterImpl) {
+      SampledCounterImpl sampledCounter = (SampledCounterImpl) counter;
+      timer.schedule(sampledCounter.getTimerTask(), sampledCounter.getIntervalMillis(), sampledCounter
+          .getIntervalMillis());
     }
+    return counter;
 
   }
 

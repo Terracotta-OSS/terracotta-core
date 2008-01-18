@@ -3,7 +3,7 @@
  */
 package com.tc.stats.counter;
 
-public final class CounterConfig {
+public class CounterConfig {
 
   private final long initialValue;
 
@@ -11,7 +11,11 @@ public final class CounterConfig {
     this.initialValue = initialValue;
   }
   
-  public long getInitialValue() {
+  public final long getInitialValue() {
     return initialValue;
+  }
+
+  public Counter createCounter() {
+    return new CounterImpl(initialValue);
   }
 }
