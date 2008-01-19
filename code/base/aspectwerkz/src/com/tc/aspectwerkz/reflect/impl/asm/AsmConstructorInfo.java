@@ -20,12 +20,12 @@ public class AsmConstructorInfo extends AsmMemberInfo implements ConstructorInfo
     /**
      * A list with the parameter type names.
      */
-    private String[] m_parameterTypeNames = null;
+    private final String[] m_parameterTypeNames;
 
     /**
      * A list with the exception type names.
      */
-    private String[] m_exceptionTypeNames = null;
+    private final String[] m_exceptionTypeNames;
 
     /**
      * A list with the parameter types.
@@ -83,9 +83,9 @@ public class AsmConstructorInfo extends AsmMemberInfo implements ConstructorInfo
     public String getSignature() {
         return AsmHelper.getConstructorDescriptor(this);
     }
-    
+
     public String getGenericsSignature() {
-      return m_member.signature; 
+      return m_member.signature;
     }
 
     /**

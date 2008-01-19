@@ -35,7 +35,7 @@ public class JavaMethodInfo extends JavaMemberInfo implements MethodInfo {
   /**
    * The signature of the method.
    */
-  private String m_signature;
+  private final String m_signature;
 
   /**
    * Creates a new method meta data instance.
@@ -72,7 +72,7 @@ public class JavaMethodInfo extends JavaMemberInfo implements MethodInfo {
   public String getSignature() {
     return m_signature;
   }
-  
+
   public String getGenericsSignature() {
     // XXX implement
     throw new RuntimeException();
@@ -92,7 +92,7 @@ public class JavaMethodInfo extends JavaMemberInfo implements MethodInfo {
    *
    * @return the return type
    */
-  public ClassInfo getReturnType() {
+  public synchronized ClassInfo getReturnType() {
     if (m_returnType == null) {
       Class returnTypeClass = ((Method) m_member).getReturnType();
       if (m_classInfoRepository.hasClassInfo(returnTypeClass.getName())) {
@@ -110,7 +110,7 @@ public class JavaMethodInfo extends JavaMemberInfo implements MethodInfo {
    *
    * @return the parameter types
    */
-  public ClassInfo[] getParameterTypes() {
+  public synchronized ClassInfo[] getParameterTypes() {
     if (m_parameterTypes == null) {
       Class[] parameterTypes = ((Method) m_member).getParameterTypes();
       m_parameterTypes = new ClassInfo[parameterTypes.length];
@@ -146,7 +146,7 @@ public class JavaMethodInfo extends JavaMemberInfo implements MethodInfo {
    *
    * @return the exception types
    */
-  public ClassInfo[] getExceptionTypes() {
+  public synchronized ClassInfo[] getExceptionTypes() {
     if (m_exceptionTypes == null) {
       Class[] exceptionTypes = ((Method) m_member).getExceptionTypes();
       m_exceptionTypes = new ClassInfo[exceptionTypes.length];

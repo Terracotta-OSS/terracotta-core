@@ -21,7 +21,7 @@ public class AsmFieldInfo extends AsmMemberInfo implements FieldInfo {
   /**
    * The field type name.
    */
-  private String m_typeName;
+  private final String m_typeName;
 
   /**
    * The field type.
@@ -70,7 +70,7 @@ public class AsmFieldInfo extends AsmMemberInfo implements FieldInfo {
   public String getSignature() {
     return AsmHelper.getFieldDescriptor(this);
   }
-  
+
   public String getGenericsSignature() {
     return m_member.signature;
   }
@@ -80,7 +80,7 @@ public class AsmFieldInfo extends AsmMemberInfo implements FieldInfo {
    *
    * @return the type
    */
-  public ClassInfo getType() {
+  public synchronized ClassInfo getType() {
     if (m_type == null) {
       m_type = AsmClassInfo.getClassInfo(m_typeName, (ClassLoader) m_loaderRef.get());
     }

@@ -20,7 +20,7 @@ public class AsmMethodInfo extends AsmMemberInfo implements MethodInfo {
   /**
    * The return type name.
    */
-  private String      m_returnTypeName     = null;
+  private final String      m_returnTypeName;
 
   /**
    * A list with the parameter names as they appear in the source code. This information may not be available.
@@ -30,12 +30,12 @@ public class AsmMethodInfo extends AsmMemberInfo implements MethodInfo {
   /**
    * A list with the parameter type names.
    */
-  protected String[]    m_parameterTypeNames = null;
+  protected final String[]    m_parameterTypeNames;
 
   /**
    * A list with the exception type names.
    */
-  private String[]    m_exceptionTypeNames = null;
+  private final String[]    m_exceptionTypeNames;
 
   /**
    * The return type.
@@ -110,7 +110,7 @@ public class AsmMethodInfo extends AsmMemberInfo implements MethodInfo {
    *
    * @return the return type
    */
-  public ClassInfo getReturnType() {
+  public synchronized ClassInfo getReturnType() {
     if (m_returnType == null) {
       m_returnType = AsmClassInfo.getClassInfo(m_returnTypeName, (ClassLoader) m_loaderRef.get());
     }

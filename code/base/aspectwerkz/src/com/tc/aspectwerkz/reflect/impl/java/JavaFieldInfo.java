@@ -26,7 +26,7 @@ public class JavaFieldInfo extends JavaMemberInfo implements FieldInfo {
   /**
    * The signature of the field.
    */
-  private String m_signature;
+  private final String m_signature;
 
   /**
    * Creates a new field java instance.
@@ -63,7 +63,7 @@ public class JavaFieldInfo extends JavaMemberInfo implements FieldInfo {
   public String getSignature() {
     return m_signature;
   }
-  
+
   public String getGenericsSignature() {
     // XXX implement
     throw new RuntimeException();
@@ -83,7 +83,7 @@ public class JavaFieldInfo extends JavaMemberInfo implements FieldInfo {
    *
    * @return the type
    */
-  public ClassInfo getType() {
+  public synchronized ClassInfo getType() {
     if (m_type == null) {
       Class type = ((Field) m_member).getType();
       if (m_classInfoRepository.hasClassInfo(type.getName())) {
