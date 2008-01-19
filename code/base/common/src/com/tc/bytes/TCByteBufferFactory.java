@@ -7,7 +7,6 @@ package com.tc.bytes;
 import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
 
 import com.tc.lang.TCThreadGroup;
-import com.tc.logging.LossyTCLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesImpl;
@@ -17,7 +16,7 @@ import com.tc.util.Assert;
  * TCByteBuffer source that hides JDK dependencies and that can pool instances. Instance pooling is likely to be a good
  * idea for fixed size buffers and definitely a good idea for java 1.4 direct buffers (since their
  * allocation/deallocation is more expensive than regular java objects).
- * 
+ *
  * @author teck
  */
 public class TCByteBufferFactory {
@@ -29,8 +28,7 @@ public class TCByteBufferFactory {
                                                                               "tc.bytebuffer.threadlocal.pool.maxcount",
                                                                               2000));
   private static final int                commonPoolMaxBufCount   = (TCPropertiesImpl.getProperties()
-                                                                      .getInt(
-                                                                              "tc.bytebuffer.common.pool.maxcount",
+                                                                      .getInt("tc.bytebuffer.common.pool.maxcount",
                                                                               3000));
 
   // always use ThreadLocal variables for accessing the buffer pools.
@@ -42,9 +40,9 @@ public class TCByteBufferFactory {
                                                                       if (TCThreadGroup.currentThreadInTCThreadGroup()) {
                                                                         return new BoundedLinkedQueue(poolMaxBufCount);
                                                                       } else {
-                                                                        logger.info("Buf pool direct for "
-                                                                                    + Thread.currentThread().getName()
-                                                                                    + " - using Common Pool");
+                                                                        logger.debug("Buf pool direct for "
+                                                                                     + Thread.currentThread().getName()
+                                                                                     + " - using Common Pool");
                                                                         return directCommonFreePool;
                                                                       }
                                                                     }
@@ -54,29 +52,20 @@ public class TCByteBufferFactory {
                                                                       if (TCThreadGroup.currentThreadInTCThreadGroup()) {
                                                                         return new BoundedLinkedQueue(poolMaxBufCount);
                                                                       } else {
-                                                                        logger.info("Buf pool nonDirect for "
-                                                                                    + Thread.currentThread().getName()
-                                                                                    + " - using Common Pool");
+                                                                        logger.debug("Buf pool nonDirect for "
+                                                                                     + Thread.currentThread().getName()
+                                                                                     + " - using Common Pool");
                                                                         return nonDirectCommonFreePool;
                                                                       }
                                                                     }
                                                                   };
-  /*
-   * private static final ThreadLocal bufLog = new ThreadLocal() { protected Object initialValue() { logger.info("Buf
-   * pool 1 for " + Thread.currentThread().getName() + " set to dir-buf-pool " + directFreePool.get().hashCode());
-   * logger.info("Buf pool 2 for " + Thread.currentThread().getName() + " set to dir-buf-pool " +
-   * nonDirectFreePool.get().hashCode()); return new Integer(12345); } };
-   */
 
   private static final int                DEFAULT_FIXED_SIZE      = 4096;
-
-  // XXX: make me configurable (one time only, fixed sized buffers need to stay the same size!)
   private static final int                fixedBufferSize         = DEFAULT_FIXED_SIZE;
 
   private static final TCByteBuffer[]     EMPTY_BB_ARRAY          = new TCByteBuffer[0];
 
   private static final TCLogger           logger                  = TCLogging.getLogger(TCByteBufferFactory.class);
-  private static final TCLogger           lossyLogger             = new LossyTCLogger(logger);
 
   private static final TCByteBuffer       ZERO_BYTE_BUFFER        = TCByteBufferImpl.wrap(new byte[0]);
 
@@ -102,7 +91,7 @@ public class TCByteBufferFactory {
 
   /**
    * Get a single variable sized TCByteBuffer instance Note: These are not pooled (yet)
-   * 
+   *
    * @param size The desired minimum capacity of the buffer. The actual capacity may be higher. The buffer's limit will
    *        be equal to it's capacity.
    * @param direct True to hint that the buffer should be a direct buffer (ie. not on the Java heap). A direct buffer
@@ -145,7 +134,7 @@ public class TCByteBufferFactory {
 
   /**
    * Get enough fixed sized TCByteBuffer instances to contain the given number of bytes
-   * 
+   *
    * @param direct True to hint that the buffers should be direct buffers (ie. not on the Java heap). Direct buffers
    *        will never be returned if this parameter is false. Direct buffers may or MAY NOT returned if the parameter
    *        is true. The returned buffers may be a mix of direct and non-direct
@@ -200,12 +189,10 @@ public class TCByteBufferFactory {
     try {
       if ((buf = (TCByteBuffer) poolQueue.poll(0)) != null) {
         buf.checkedOut();
-      } else {
-        lossyLogger.info(Thread.currentThread().getName() + "'s " + (direct ? "direct" : "non-direct")
-                         + " buffer pool Empty ..");
       }
     } catch (InterruptedException e) {
-      throw new AssertionError(e);
+      logger.warn("interrupted while getting buffer from pool", e);
+      return null;
     }
     return buf;
   }
@@ -223,21 +210,16 @@ public class TCByteBufferFactory {
     if (disablePooling) { return; }
 
     if (buf.capacity() == fixedBufferSize) {
-
-      // hey buf, which bufferpool you belong to ?
       BoundedLinkedQueue bufferPool = buf.getBufferPool();
-      Assert.eval(bufferPool != null);
       buf.commit();
 
-      try {
-        if (!bufferPool.offer(buf, 0)) {
-          lossyLogger.info("Skipped offer to " + Thread.currentThread().getName()
-                           + "'s buf pool. current size " + bufferPool.size());
+      if (bufferPool != null) {
+        try {
+          bufferPool.offer(buf, 0);
+        } catch (InterruptedException e) {
+          logger.warn("interrupted while trying to return buffer", e);
         }
-      } catch (InterruptedException e) {
-        throw new AssertionError(e);
       }
-
     }
   }
 
