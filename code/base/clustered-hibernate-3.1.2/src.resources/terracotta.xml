@@ -10,6 +10,12 @@
   <instrumented-classes>
   </instrumented-classes>
 
+  <!-- temporary fix for DEV-920 -->
+  <roots>
+    <root>
+      <field-name>org.hibernate.cache.EhCacheProvider.manager</field-name> 
+    </root>
+  </roots>
   <locks>
     <autolock auto-synchronized="true">
       <method-expression>* org.hibernate.cache.ReadWriteCache$Lock.*(..)</method-expression>
