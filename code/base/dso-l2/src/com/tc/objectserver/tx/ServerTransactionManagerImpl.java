@@ -5,6 +5,7 @@
 package com.tc.objectserver.tx;
 
 import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
+import EDU.oswego.cs.dl.util.concurrent.Latch;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -180,9 +181,27 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   }
 
   public void goToActiveMode() {
+    waitForTxnsToComplete();
     state = ACTIVE_MODE;
     resentTxnSequencer.goToActiveMode();
     lwmProvider.goToActiveMode();
+  }
+
+  private void waitForTxnsToComplete() {
+    final Latch latch = new Latch();
+    logger.info("Waiting for txns to complete");
+    callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionLister() {
+      public void onCompletion() {
+        logger.info("No more txns in the system.");
+        latch.release();
+      }
+    });
+    try {
+      latch.acquire();
+    } catch (InterruptedException e) {
+      throw new AssertionError(e);
+    }
+
   }
 
   public GlobalTransactionID getLowGlobalTransactionIDWatermark() {
