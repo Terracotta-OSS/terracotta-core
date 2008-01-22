@@ -118,7 +118,7 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     /**/
   }
 
-  public void addAspectModule(String pattern, String moduleName) {
+  public void addAspectModule(String classNamePrefix, String moduleName) {
     /**/
   }
 

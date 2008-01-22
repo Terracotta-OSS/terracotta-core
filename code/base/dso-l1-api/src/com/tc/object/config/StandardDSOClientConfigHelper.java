@@ -14,7 +14,7 @@ public interface StandardDSOClientConfigHelper {
 
   void allowCGLIBInstrumentation();
 
-  void addAspectModule(String pattern, String moduleName);
+  void addAspectModule(String classNamePrefix, String moduleName);
 
   // HACK: duplicated from DSOApplicationConfig
 

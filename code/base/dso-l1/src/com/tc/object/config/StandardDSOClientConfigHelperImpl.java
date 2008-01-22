@@ -1817,11 +1817,11 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     throw new UnsupportedOperationException();
   }
 
-  public void addAspectModule(String pattern, String moduleName) {
-    List modules = (List) this.aspectModules.get(pattern);
+  public void addAspectModule(String classNamePrefix, String moduleName) {
+    List modules = (List) this.aspectModules.get(classNamePrefix);
     if (modules == null) {
       modules = new ArrayList();
-      this.aspectModules.put(pattern, modules);
+      this.aspectModules.put(classNamePrefix, modules);
     }
     modules.add(moduleName);
   }
