@@ -48,6 +48,14 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
     return m_clients;
   }
 
+  private boolean haveClient(ObjectName objectName) {
+    if (m_clients == null) return false;
+    for (DSOClient client : m_clients) {
+      if (client.getObjectName().equals(objectName)) { return true; }
+    }
+    return false;
+  }
+  
   public void handleNotification(final Notification notice, final Object handback) {
     String type = notice.getType();
 
@@ -74,6 +82,8 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
       acc.setStatus(acc.getMessage("dso.client.retrieving"));
 
       ObjectName clientObjectName = (ObjectName) notice.getSource();
+      if(haveClient(clientObjectName)) return;
+      
       DSOClient client = new DSOClient(m_cc, clientObjectName);
       ArrayList<DSOClient> list = new ArrayList<DSOClient>(Arrays.asList(m_clients));
 

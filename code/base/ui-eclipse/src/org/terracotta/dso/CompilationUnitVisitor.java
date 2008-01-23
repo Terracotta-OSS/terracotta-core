@@ -190,7 +190,6 @@ public class CompilationUnitVisitor extends ASTVisitor {
       m_ast = (CompilationUnit)parser.createAST(monitor);
       m_ast.accept(CompilationUnitVisitor.this);
       
-      m_plugin.updateDecorators();
       m_configHelper.validateAll();
     }
   }
@@ -244,7 +243,7 @@ public class CompilationUnitVisitor extends ASTVisitor {
             type = typeFromTypeBinding(binding);
 
             String fullName = PatternHelper.getFullyQualifiedName(type);
-            if (m_plugin.isBootClass(fullName)) {
+            if (m_plugin.isBootClass(m_project, fullName) || m_configHelper.isBootJarClass(fullName)) {
               addMarker("bootJarTypeMarker", "BootJar Type", t);
             } else if (m_configHelper.isAdaptable(fullName)) {
               addMarker("adaptedTypeReferenceMarker", "DSO Instrumented Type Reference", t);
@@ -265,7 +264,7 @@ public class CompilationUnitVisitor extends ASTVisitor {
           if(type != null) {
             String fullName = PatternHelper.getFullyQualifiedName(type);
         
-            if(m_plugin.isBootClass(fullName)) {
+            if(m_plugin.isBootClass(m_project, fullName) || m_configHelper.isBootJarClass(fullName)) {
               addMarker("bootJarTypeMarker", "BootJar Type", superType);
             } else if(m_configHelper.isAdaptable(fullName)) {
               addMarker("adaptedTypeReferenceMarker", "DSO Instrumented Type Reference", superType);
@@ -307,7 +306,7 @@ public class CompilationUnitVisitor extends ASTVisitor {
       if(type != null) {
         String fullName = PatternHelper.getFullyQualifiedName(type);
   
-        if(m_plugin.isBootClass(fullName)) {
+        if(m_plugin.isBootClass(m_project, fullName) || m_configHelper.isBootJarClass(fullName)) {
           addMarker("bootJarTypeMarker", "BootJar Type", typeNode);
         } else if(m_configHelper.isAdaptable(fullName)) {
           addMarker("adaptedTypeReferenceMarker", "DSO Instrumented Type Reference", typeNode);
@@ -362,7 +361,7 @@ public class CompilationUnitVisitor extends ASTVisitor {
       ITypeBinding declaringType = binding.getDeclaringClass();      
       String       fullName      = declaringType.getQualifiedName();
 
-      if(m_plugin.isBootClass(fullName)) {
+      if(m_plugin.isBootClass(m_project, fullName) || m_configHelper.isBootJarClass(fullName)) {
         addMarker("bootJarTypeMarker", "BootJar Type", node.getName());
       } else if(m_configHelper.isAdaptable(fullName)) {
         addMarker("adaptedTypeReferenceMarker", "DSO Instrumented Type Reference", node.getName());
@@ -379,7 +378,7 @@ public class CompilationUnitVisitor extends ASTVisitor {
     if(binding != null) {
       String fullName = binding.getQualifiedName();
   
-      if(m_plugin.isBootClass(fullName)) {
+      if(m_plugin.isBootClass(m_project, fullName) || m_configHelper.isBootJarClass(fullName)) {
         addMarker("bootJarTypeMarker", "BootJar Type", type);
       } else if(m_configHelper.isAdaptable(fullName)) {
         addMarker("adaptedTypeReferenceMarker", "DSO Instrumented Type Reference", type);
@@ -404,22 +403,8 @@ public class CompilationUnitVisitor extends ASTVisitor {
     IVariableBinding binding = node.resolveBinding();
     
     if(binding != null) {
-//      if(binding.isField()) {
-//        String parentClass = getQualifiedName(binding.getDeclaringClass());
-//        String fieldName   = parentClass+"."+binding.getName();
-//  
-//        if(m_configHelper.isRoot(fieldName)) {
-//          addMarker("rootMarker", "DSO Root Field", node.getName());
-//        } else if(m_configHelper.isTransient(fieldName)) {
-//          addMarker("transientFieldMarker", "DSO Transient Field", node.getName());
-//          
-//          if(!m_configHelper.isAdaptable(parentClass) && !m_configHelper.declaresRoot(parentClass)) {
-//            addProblemMarker("DeclaringTypeNotInstrumentedMarker", "Declaring type not instrumented", node.getName());
-//          }
-//        }
-//      }
-      
-      if(m_plugin.isBootClass(binding.getType().getQualifiedName())) {
+      String fullName = binding.getType().getQualifiedName();
+      if(m_plugin.isBootClass(m_project, fullName) || m_configHelper.isBootJarClass(fullName)) {
         addMarker("bootJarTypeMarker", "BootJar Type", node.getType());
       }
     }
@@ -460,7 +445,7 @@ public class CompilationUnitVisitor extends ASTVisitor {
 
       String typeName = binding.getType().getQualifiedName();
       
-      if(m_plugin.isBootClass(typeName)) {
+      if(m_plugin.isBootClass(m_project, typeName) || m_configHelper.isBootJarClass(typeName)) {
         addMarker("bootJarTypeMarker", "BootJar Type", getType(node));
       } else if(m_configHelper.isAdaptable(typeName)) {
         addMarker("adaptedTypeReferenceMarker", "DSO Instrumented Type Reference", getType(node));
@@ -602,7 +587,8 @@ public class CompilationUnitVisitor extends ASTVisitor {
     MarkerUtilities.setCharStart(map, startPos);
     MarkerUtilities.setCharEnd(map, endPos);
     MarkerUtilities.setLineNumber(map, line);
-    
+    map.put(IMarker.SEVERITY, Integer.valueOf(IMarker.SEVERITY_INFO));
+
     createMarker(m_res, map, markerID);
   }
   
@@ -623,20 +609,25 @@ public class CompilationUnitVisitor extends ASTVisitor {
 
   private void createMarker(IResource resource, Map attributes, String markerType) {
     try {
-      MarkerUtilities.createMarker(m_res, attributes, "org.terracotta.dso."+markerType);
+      IMarker marker = resource.createMarker("org.terracotta.dso."+markerType);
+      marker.setAttributes(attributes);
     } catch(CoreException ce) {
-      ce.printStackTrace();
+      m_plugin.openError("Creating marker", ce);
     }
   }
   
   protected void clearTerracottaMarkers() {
-    try {
-      m_res.deleteMarkers("org.terracotta.dso.baseMarker", true, IResource.DEPTH_ZERO);
-    } catch(Exception e) {/**/}
+    if (m_res.exists() && m_res.getProject().isOpen()) {
+      try {
+        m_res.deleteMarkers("org.terracotta.dso.baseMarker", true, IResource.DEPTH_ZERO);
+      } catch (Exception e) {/**/
+      }
 
-    try {
-      m_res.deleteMarkers("org.terracotta.dso.ConfigProblemMarker", true, IResource.DEPTH_ZERO);
-    } catch(Exception e) {/**/}
+      try {
+        m_res.deleteMarkers("org.terracotta.dso.ConfigProblemMarker", true, IResource.DEPTH_ZERO);
+      } catch (Exception e) {/**/
+      }
+    }
   }
 
   public boolean visit(AnnotationTypeDeclaration node) {return false;}

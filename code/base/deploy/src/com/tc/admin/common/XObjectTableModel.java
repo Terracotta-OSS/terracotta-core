@@ -6,6 +6,8 @@ package com.tc.admin.common;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -455,11 +457,15 @@ public class XObjectTableModel extends AbstractTableModel {
   }
 
   protected Object xgetValueAt(int row, int col) {
+    return xgetObjectValueAt(getObjectAt(row), col);
+  }
+
+  protected Object xgetObjectValueAt(Object o, int col) {
     Method method = getFieldGetter(col);
 
     if(method != null) {
       try {
-        return method.invoke(getObjectAt(row), new Object[] {});
+        return method.invoke(o, new Object[] {});
       }
       catch(Exception e) {
         return e.getMessage();
@@ -472,7 +478,7 @@ public class XObjectTableModel extends AbstractTableModel {
 
     return "";
   }
-
+  
   public void setValueAt(Object value, int row, int col) {
     Method setter = getShowingFieldSetter(col);
 
@@ -485,25 +491,16 @@ public class XObjectTableModel extends AbstractTableModel {
     }
   }
 
-  private boolean compareAdjacentRows(int direction, int row, int col) {
-    Comparable prev = (Comparable)xgetValueAt(row-1, col);
-    Object     next = xgetValueAt(row, col);
-    int        diff = prev.compareTo(next);
-    
-    return (direction == DOWN) ? (diff > 0) : (diff < 0);
-  }
-
-  public void sortColumn(int col, int direction) {
-    int count = getRowCount();
-
-    for(int i = 0; i < count; i++) {
-      for(int j = i; j > 0 && compareAdjacentRows(direction, j, col); j--) {
-        Object tmp = getObjectAt(j);
-
-        m_objects.set(j, getObjectAt(j-1));
-        m_objects.set(j-1, tmp);
+  public void sortColumn(final int col, final int direction) {
+    Comparator c = new Comparator<Object>() {
+      public int compare(Object o1, Object o2) {
+        Comparable prev = (Comparable) xgetObjectValueAt(o1, col);
+        Object next = xgetObjectValueAt(o2, col);
+        int diff = prev.compareTo(next);
+        return (direction == SwingConstants.SOUTH) ? diff : -diff;
       }
-    }
+    };
+    Collections.sort(m_objects, c);
 
     fireTableDataChanged();
   }

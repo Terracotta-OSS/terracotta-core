@@ -153,7 +153,9 @@
                     <empty-border/>
                    </border>
                   <children>
-                    <scrollpane name="TableScroller"/>
+	                <scrollpane>
+	                  <table class="com.tc.admin.dso.locks.LockTreeTable" name="LockTreeTable"/>
+	                </scrollpane>
                     <container>
                       <children>
                         <label text="Find:"/>

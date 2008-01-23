@@ -35,7 +35,7 @@ public class AdaptedTypeDecorator extends LabelProvider implements ILightweightL
     if (plugin != null && plugin.hasTerracottaNature(project)) {
       ConfigurationHelper config = plugin.getConfigurationHelper(project);
 
-      if (config != null && (config.isAdaptable(type) || TcPlugin.getDefault().isBootClass(type))) {
+      if (config != null && (config.isAdaptable(type) || TcPlugin.getDefault().isBootClass(project, type))) {
         decoration.addOverlay(m_imageDesc);
       }
     }

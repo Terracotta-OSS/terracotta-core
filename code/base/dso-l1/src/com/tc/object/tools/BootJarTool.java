@@ -27,6 +27,7 @@ import com.tc.config.Directories;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory;
 import com.tc.exception.ExceptionWrapper;
 import com.tc.exception.ExceptionWrapperImpl;
 import com.tc.exception.TCNotSupportedMethodException;
@@ -2472,7 +2473,8 @@ public class BootJarTool {
       System.exit(1);
     }
 
-    if (!commandLine.hasOption("f")) {
+    if (!commandLine.hasOption("f")
+        && System.getProperty(TVSConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME) == null) {
       String cwd = System.getProperty("user.dir");
       File localConfig = new File(cwd, DEFAULT_CONFIG_SPEC);
       String configSpec;

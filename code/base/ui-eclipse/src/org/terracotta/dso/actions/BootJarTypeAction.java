@@ -22,26 +22,25 @@ import org.terracotta.dso.TcPlugin;
 
 public class BootJarTypeAction extends BaseAction {
   private IType m_type;
-  
+
   public BootJarTypeAction() {
     super("Boot Jar", AS_CHECK_BOX);
   }
-  
+
   public void setType(IType type) {
     setJavaElement(m_type = type);
-    
-    boolean isBootClass = TcPlugin.getDefault().isBootClass(type); 
+
+    boolean isBootClass = TcPlugin.getDefault().isBootClass(type.getJavaProject().getProject(), type);
     setEnabled(!isBootClass);
     setChecked(isBootClass || getConfigHelper().isBootJarClass(type));
   }
-  
+
   public void performAction() {
     ConfigurationHelper helper = getConfigHelper();
-    
-    if(isChecked()) {
+
+    if (isChecked()) {
       helper.ensureBootJarClass(m_type);
-    }
-    else {
+    } else {
       helper.ensureNotBootJarClass(m_type);
     }
 

@@ -5,6 +5,7 @@ package org.terracotta.dso;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationType;
@@ -14,14 +15,20 @@ import org.eclipse.debug.core.Launch;
 import org.eclipse.debug.core.model.IProcess;
 import org.eclipse.debug.core.model.IStreamMonitor;
 import org.eclipse.debug.core.model.IStreamsProxy;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
+import org.eclipse.jdt.launching.IVMInstall;
+import org.eclipse.jdt.launching.IVMInstall3;
 import org.eclipse.jdt.launching.JavaLaunchDelegate;
+import org.eclipse.jdt.launching.JavaRuntime;
 
 import com.tc.object.tools.BootJarSignature;
 import com.tc.object.tools.UnsupportedVMException;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.File;
+import java.util.Map;
+import java.util.Properties;
 
 public class BootJarHelper implements IJavaLaunchConfigurationConstants {
   private static BootJarHelper m_helper;
@@ -50,7 +57,7 @@ public class BootJarHelper implements IJavaLaunchConfigurationConstants {
    * Retrieve the name of the default bootjar.
    */
   public String getBootJarName() throws CoreException {
-    return getBootJarName(null);
+    return getBootJarName((String)null);
   }
   
   /**
@@ -128,5 +135,22 @@ public class BootJarHelper implements IJavaLaunchConfigurationConstants {
    */
   public File getBootJarFile() throws CoreException {
     return getBootJarPath().toFile();
+  }
+  
+  public String getBootJarName(IJavaProject javaProject) {
+    try {
+      IVMInstall vmInstall = JavaRuntime.getVMInstall(javaProject);
+      if (vmInstall == null) vmInstall = JavaRuntime.getDefaultVMInstall();
+      if (vmInstall instanceof IVMInstall3) {
+        String[] props = { "java.version", "java.vendor", "java.runtime.version", "java.vm.name", "os.name" };
+        Map sysProps = ((IVMInstall3) vmInstall).evaluateSystemProperties(props, new NullProgressMonitor());
+        Properties properties = new Properties();
+        properties.putAll(sysProps);
+        return BootJarSignature.getBootJarName(properties);
+      }
+    } catch (Exception ignore) {
+      ignore.printStackTrace();
+    }
+    return null;
   }
 }

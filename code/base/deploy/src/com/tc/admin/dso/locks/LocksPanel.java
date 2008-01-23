@@ -7,10 +7,11 @@ package com.tc.admin.dso.locks;
 import org.dijon.Button;
 import org.dijon.ContainerResource;
 import org.dijon.Label;
-import org.dijon.ScrollPane;
 import org.dijon.Spinner;
 import org.dijon.TextArea;
 import org.dijon.ToggleButton;
+
+import EDU.oswego.cs.dl.util.concurrent.misc.SwingWorker;
 
 import com.tc.admin.AdminClient;
 import com.tc.admin.AdminClientContext;
@@ -20,16 +21,20 @@ import com.tc.admin.common.XObjectTable;
 import com.tc.admin.common.XTreeCellRenderer;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.LockStatisticsMonitorMBean;
+import com.tc.management.lock.stats.LockSpec;
 
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.text.ParseException;
+import java.util.Collection;
+import java.util.HashSet;
 
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.Notification;
@@ -52,48 +57,45 @@ import javax.swing.table.TableModel;
 import javax.swing.tree.TreePath;
 
 public class LocksPanel extends XContainer implements NotificationListener {
-  private ConnectionContext          fConnectionContext;
-  private LocksNode                  fLocksNode;
-  private LockStatisticsMonitorMBean fLockStats;
-  private ToggleButton               fEnableButton;
-  private ToggleButton               fDisableButton;
-  private boolean                    fLocksPanelEnabled;
-  private Spinner                    fTraceDepthSpinner;
-  private ChangeListener             fTraceDepthSpinnerChangeListener;
-  private Timer                      fTraceDepthChangeTimer;
-  private int                        fLastTraceDepth;
-  private Button                     fRefreshButton;
-  private JTabbedPane                fLocksTabbedPane;
-  private LockTreeTable              fTreeTable;
-  private LockTreeTableModel         fTreeTableModel;
-  private LockTreeTableModel         fEmptyTreeTableModel;
-  private JTextField                 fClientLocksFindField;
-  private JButton                    fClientLocksFindNextButton;
-  private JButton                    fClientLocksFindPreviousButton;
-  private XObjectTable               fServerLocksTable;
-  private ServerLockTableModel       fServerLockTableModel;
-  private JTextField                 fServerLocksFindField;
-  private JButton                    fServerLocksFindNextButton;
-  private JButton                    fServerLocksFindPreviousButton;
-  private TextArea                   fTraceText;
-  private Label                      fConfigLabel;
-  private TextArea                   fConfigText;
+  private ConnectionContext           fConnectionContext;
+  private LocksNode                   fLocksNode;
+  private LockStatisticsMonitorMBean  fLockStats;
+  private ToggleButton                fEnableButton;
+  private ToggleButton                fDisableButton;
+  private boolean                     fLocksPanelEnabled;
+  private Spinner                     fTraceDepthSpinner;
+  private ChangeListener              fTraceDepthSpinnerChangeListener;
+  private Timer                       fTraceDepthChangeTimer;
+  private int                         fLastTraceDepth;
+  private Button                      fRefreshButton;
+  private JTabbedPane                 fLocksTabbedPane;
+  private LockTreeTable               fTreeTable;
+  private LockTreeTableModel          fTreeTableModel;
+  private JTextField                  fClientLocksFindField;
+  private JButton                     fClientLocksFindNextButton;
+  private JButton                     fClientLocksFindPreviousButton;
+  private XObjectTable                fServerLocksTable;
+  private ServerLockTableModel        fServerLockTableModel;
+  private JTextField                  fServerLocksFindField;
+  private JButton                     fServerLocksFindNextButton;
+  private JButton                     fServerLocksFindPreviousButton;
+  private TextArea                    fTraceText;
+  private Label                       fConfigLabel;
+  private TextArea                    fConfigText;
+
+  private static Collection<LockSpec> EMPTY_LOCK_SPEC_COLLECTION = new HashSet<LockSpec>();
 
   public LocksPanel(ConnectionContext cc, LocksNode locksNode) {
     super();
 
     fLocksNode = locksNode;
     fLocksNode.setRenderer(new XTreeCellRenderer() {
-      public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel,
-                                                    boolean expanded, boolean leaf, int row,
-                                                    boolean focused)
-      {
-        Component comp =
-          super.getTreeCellRendererComponent(
-            tree, value, sel, expanded, leaf, row, focused);
-        if(fEnableButton.isSelected()) {
+      public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded,
+                                                    boolean leaf, int row, boolean focused) {
+        Component comp = super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, focused);
+        if (fEnableButton.isSelected()) {
           m_label.setForeground(sel ? Color.white : Color.red);
-          m_label.setText(fLocksNode.getBaseLabel()+" (enabled)");
+          m_label.setText(fLocksNode.getBaseLabel() + " (enabled)");
         }
         return comp;
       }
@@ -139,19 +141,14 @@ public class LocksPanel extends XContainer implements NotificationListener {
     fRefreshButton = (Button) findComponent("RefreshButton");
     fRefreshButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent ae) {
-        fTreeTableModel.init();
-        fTreeTable.sort();
-
-        fServerLockTableModel.init();
-        fServerLocksTable.sort();
+        refresh();
       }
     });
     fLocksTabbedPane = (JTabbedPane) findComponent("LocksTabbedPane");
-    fTreeTableModel = createLocksTreeTableModel();
-    fEmptyTreeTableModel = new EmptyLockTreeTableModel(fLockStats);
-    fTreeTable = new LockTreeTable(fEmptyTreeTableModel, cntx.prefs.node("LockTreeTable"));
-    ScrollPane tableScroller = (ScrollPane) findComponent("TableScroller");
-    tableScroller.setViewportView(fTreeTable);
+    fTreeTableModel = new LockTreeTableModel(EMPTY_LOCK_SPEC_COLLECTION);
+    fTreeTable = (LockTreeTable) findComponent("LockTreeTable");
+    fTreeTable.setTreeTableModel(fTreeTableModel);
+    fTreeTable.setPreferences(cntx.prefs.node("LockTreeTable"));
     fTreeTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
     fTreeTable.addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
@@ -191,8 +188,11 @@ public class LocksPanel extends XContainer implements NotificationListener {
     fClientLocksFindPreviousButton = (JButton) findComponent("ClientLocksFindPreviousButton");
     fClientLocksFindPreviousButton.setMargin(margin);
     fClientLocksFindPreviousButton.addActionListener(findPreviousAction);
-    
+
     fServerLocksTable = (XObjectTable) findComponent("ServerLocksTable");
+    fServerLockTableModel = new ServerLockTableModel(EMPTY_LOCK_SPEC_COLLECTION);
+    fServerLocksTable.setModel(fServerLockTableModel);
+
     fServerLocksFindField = (JTextField) findComponent("ServerLocksFindField");
     fServerLocksFindField.addActionListener(findNextAction);
     fServerLocksFindNextButton = (JButton) findComponent("ServerLocksFindNextButton");
@@ -218,17 +218,21 @@ public class LocksPanel extends XContainer implements NotificationListener {
 
   private boolean testSelectMatch(JTable table, String text, int row) {
     String lockLabel = table.getModel().getValueAt(row, 0).toString();
-    if(lockLabel.contains(text)) {
+    if (lockLabel.contains(text)) {
       table.setRowSelectionInterval(row, row);
+      Rectangle cellRect = table.getCellRect(row, 0, false);
+      if (cellRect != null) {
+        table.scrollRectToVisible(cellRect);
+      }
       return true;
     }
     return false;
   }
-  
+
   private void doSearch(boolean next) {
     JTable table;
     JTextField textfield;
-    if(fLocksTabbedPane.getSelectedIndex() == 0) {
+    if (fLocksTabbedPane.getSelectedIndex() == 0) {
       table = fTreeTable;
       textfield = fClientLocksFindField;
     } else {
@@ -237,32 +241,32 @@ public class LocksPanel extends XContainer implements NotificationListener {
     }
     findLock(table, textfield.getText().trim(), next);
   }
-  
+
   private void findLock(JTable table, String text, boolean next) {
     TableModel model = table.getModel();
     int currRow = table.getSelectedRow();
     int rowCount = model.getRowCount();
-    
-    if(next) {
-      int startRow = (currRow == rowCount-1) ? 0 : currRow+1;
-      for(int i = startRow; i < rowCount; i++) {
-        if(testSelectMatch(table, text, i)) return;
+
+    if (next) {
+      int startRow = (currRow == rowCount - 1) ? 0 : currRow + 1;
+      for (int i = startRow; i < rowCount; i++) {
+        if (testSelectMatch(table, text, i)) return;
       }
-      for(int i = 0; i < currRow; i++) {
-        if(testSelectMatch(table, text, i)) return;
+      for (int i = 0; i < currRow; i++) {
+        if (testSelectMatch(table, text, i)) return;
       }
     } else {
-      int startRow = (currRow == 0) ? rowCount-1 : currRow-1;
-      for(int i = startRow; i >= 0; i--) {
-        if(testSelectMatch(table, text, i)) return;
+      int startRow = (currRow == 0) ? rowCount - 1 : currRow - 1;
+      for (int i = startRow; i >= 0; i--) {
+        if (testSelectMatch(table, text, i)) return;
       }
-      for(int i = rowCount-1; i > currRow; i--) {
-        if(testSelectMatch(table, text, i)) return;
+      for (int i = rowCount - 1; i > currRow; i--) {
+        if (testSelectMatch(table, text, i)) return;
       }
     }
     Toolkit.getDefaultToolkit().beep();
   }
-  
+
   class TraceDepthSpinnerChangeListener implements ChangeListener {
     public void stateChanged(ChangeEvent e) {
       fTraceDepthChangeTimer.stop();
@@ -286,28 +290,40 @@ public class LocksPanel extends XContainer implements NotificationListener {
   }
 
   private void setLocksPanelEnabled(boolean enabled) {
-    fTreeTable.setEnabled(enabled);
-    fConfigLabel.setEnabled(enabled);
-    fConfigText.setEnabled(enabled);
     fRefreshButton.setEnabled(enabled);
     fLockStats.setLockStatisticsEnabled(enabled);
-    
-    if ((fLocksPanelEnabled = enabled) == true) {
-      fTreeTable.setTreeTableModel(fTreeTableModel = createLocksTreeTableModel());
-      fServerLocksTable.setModel(fServerLockTableModel = new ServerLockTableModel(fLockStats));
-      fEnableButton.setSelected(true);
-      fDisableButton.setSelected(false);
-    } else {
-      fTreeTable.setTreeTableModel(fEmptyTreeTableModel);
-      fServerLocksTable.setModel(ServerLockTableModel.EMPTY_MODEL);
-      fConfigText.setText("");
-      fEnableButton.setSelected(false);
-      fDisableButton.setSelected(true);
-    }
 
-    fTraceText.setText("");
-    fConfigLabel.setText("");
+    fLocksPanelEnabled = enabled;
+    fEnableButton.setSelected(enabled);
+    fDisableButton.setSelected(!enabled);
+
     fLocksNode.notifyChanged();
+  }
+
+  private void refresh() {
+    final String label = fRefreshButton.getText();
+    fRefreshButton.setText("Wait...");
+    fRefreshButton.setEnabled(false);
+    SwingWorker worker = new SwingWorker() {
+      public Object construct() {
+        Collection<LockSpec> lockSpecs = fLockStats.getLockSpecs();
+        fTreeTableModel = new LockTreeTableModel(lockSpecs);
+        fServerLockTableModel = new ServerLockTableModel(lockSpecs);
+        return null;
+      }
+
+      public void finished() {
+        fTreeTable.setTreeTableModel(fTreeTableModel);
+        fTreeTable.sort();
+        
+        fServerLocksTable.setModel(fServerLockTableModel);
+        fServerLocksTable.sort();
+        
+        fRefreshButton.setText(label);
+        fRefreshButton.setEnabled(true);
+      }
+    };
+    worker.start();
   }
 
   private int getSpinnerValue(JSpinner spinner) {
@@ -339,10 +355,6 @@ public class LocksPanel extends XContainer implements NotificationListener {
 
   private int getTraceDepth() {
     return getSpinnerValue(fTraceDepthSpinner);
-  }
-
-  private LockTreeTableModel createLocksTreeTableModel() {
-    return new LockTreeTableModel(fLockStats);
   }
 
   public void handleNotification(Notification notification, Object handback) {

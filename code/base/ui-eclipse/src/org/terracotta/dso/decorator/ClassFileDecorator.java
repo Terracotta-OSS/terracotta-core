@@ -36,7 +36,7 @@ public class ClassFileDecorator extends LabelProvider implements ILightweightLab
 
     if (plugin != null && plugin.hasTerracottaNature(project)) {
       ConfigurationHelper config = plugin.getConfigurationHelper(project);
-      BootClassHelper helper = BootClassHelper.getHelper();
+      BootClassHelper helper = plugin.getBootClassHelper(project);
 
       if (helper != null && config != null && (config.isAdaptable(classFile) || helper.isAdaptable(classFile))) {
         decoration.addOverlay(m_imageDesc);

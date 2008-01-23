@@ -6,15 +6,15 @@ package com.tc.admin.dso.locks;
 
 import com.tc.admin.AdminClient;
 import com.tc.admin.common.XObjectTableModel;
-import com.tc.management.beans.LockStatisticsMonitorMBean;
 import com.tc.management.lock.stats.LockSpec;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 
 public class ServerLockTableModel extends XObjectTableModel {
-  LockStatisticsMonitorMBean               fLockStats;
-
   static protected String[]                cNames      = (String[]) AdminClient.getContext()
                                                            .getObject("dso.locks.column.headings");
   static protected String[]                cFields     = { "Name", "Requested", "Hops", "Waiters", "AcquireTime",
@@ -28,22 +28,25 @@ public class ServerLockTableModel extends XObjectTableModel {
     super(LockSpecWrapper.class, cFields, cNames);
   }
 
-  public ServerLockTableModel(LockStatisticsMonitorMBean lockStats) {
+  public ServerLockTableModel(Collection<LockSpec> lockInfos) {
     this();
-    fLockStats = lockStats;
-    init();
-  }
-
-  public void init() {
-    clear();
-    Collection<LockSpec> lockInfos = fLockStats.getLockSpecs();
+    ArrayList list = new ArrayList<LockSpecWrapper>();
     Iterator<LockSpec> iter = lockInfos.iterator();
     while (iter.hasNext()) {
-      add(new LockSpecWrapper(iter.next()));
+      list.add(new LockSpecWrapper(iter.next()));
     }
-    fireTableDataChanged();
+    Collections.sort(list, new Comparator<LockSpecWrapper>() {
+      public int compare(LockSpecWrapper o1, LockSpecWrapper o2) {
+        return o1.getName().compareTo(o2.getName());
+      }
+    });
+    add(list);
   }
 
+  public void notifyChanged() {
+    fireTableDataChanged();
+  }
+  
   public static String columnTip(int column) {
     return cTips[column];
   }

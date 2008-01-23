@@ -50,7 +50,6 @@ import org.terracotta.dso.editors.xmlbeans.XmlObjectStructureListener;
 import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
-import java.io.IOException;
 import java.text.MessageFormat;
 
 public class ConfigurationEditor extends MultiPageEditorPart
@@ -556,7 +555,7 @@ public class ConfigurationEditor extends MultiPageEditorPart
     String xmlText = doc.get();
     try {
       plugin.setConfigurationFromString(m_project, xmlText);
-    } catch (IOException ioe) {
+    } catch (Exception e) {
       disablePanels();
     }
   }

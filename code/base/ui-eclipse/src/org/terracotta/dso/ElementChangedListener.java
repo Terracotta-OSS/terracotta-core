@@ -38,10 +38,11 @@ public class ElementChangedListener implements IElementChangedListener {
       case IJavaElementDelta.CHANGED:
       case IJavaElementDelta.ADDED:
       {
-        if((flags & IJavaElementDelta.F_CONTENT) != 0 ||
-           (flags & IJavaElementDelta.F_PRIMARY_RESOURCE) != 0 ||
+        if(/*(flags & IJavaElementDelta.F_CONTENT) != 0 ||
+           (flags & IJavaElementDelta.F_PRIMARY_RESOURCE) != 0 ||*/
+           (flags & IJavaElementDelta.F_AST_AFFECTED) != 0/* ||
            ((flags & IJavaElementDelta.F_CHILDREN) != 0 &&
-            (flags & IJavaElementDelta.F_FINE_GRAINED) != 0))
+            (flags & IJavaElementDelta.F_FINE_GRAINED) != 0)*/)
         {
           IJavaElement elem = delta.getElement();
                   

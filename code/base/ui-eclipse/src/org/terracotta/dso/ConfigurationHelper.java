@@ -42,6 +42,7 @@ import org.terracotta.dso.editors.ConfigurationEditor;
 
 import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.aspectwerkz.reflect.MethodInfo;
+import com.tc.object.NonInstrumentedClasses;
 import com.terracottatech.config.AdditionalBootJarClasses;
 import com.terracottatech.config.Application;
 import com.terracottatech.config.Autolock;
@@ -83,18 +84,36 @@ import java.util.HashMap;
  */
 
 public class ConfigurationHelper {
-  private TcPlugin      m_plugin;
-  private IProject      m_project;
-  private IJavaProject  m_javaProject;
-  private PatternHelper m_patternHelper;
+  private TcPlugin               m_plugin;
+  private IProject               m_project;
+  private IJavaProject           m_javaProject;
+  private PatternHelper          m_patternHelper;
+  private NonInstrumentedClasses m_nonInstrumentedClasses;
 
   public ConfigurationHelper(IProject project) {
     m_plugin = TcPlugin.getDefault();
     m_project = project;
     m_javaProject = JavaCore.create(m_project);
     m_patternHelper = PatternHelper.getHelper();
+    m_nonInstrumentedClasses = new NonInstrumentedClasses();
   }
 
+  public boolean isInstrumentationNotNeeded(final ICompilationUnit cu) {
+    return isInstrumentationNotNeeded(cu.findPrimaryType());
+  }
+ 
+  public boolean isInstrumentationNotNeeded(final IClassFile cf) {
+    return isInstrumentationNotNeeded(cf.findPrimaryType());
+  }
+  
+  public boolean isInstrumentationNotNeeded(final IType type) {
+    return isInstrumentationNotNeeded(type.getFullyQualifiedName('$'));
+  }
+  
+  public boolean isInstrumentationNotNeeded(final String classname) {
+    return m_nonInstrumentedClasses.isInstrumentationNotNeeded(classname);
+  }
+  
   public boolean isAdaptable(IJavaElement element) {
     if (element instanceof ICompilationUnit) {
       return isAdaptable((ICompilationUnit) element);
@@ -124,7 +143,7 @@ public class ConfigurationHelper {
   }
 
   public boolean isAdaptable(IType type) {
-    if (type != null) { return m_plugin.isBootClass(type) || isTypeAdaptable(type); }
+    if (type != null) { return m_plugin.isBootClass(m_project, type) || isTypeAdaptable(type); }
     return false;
   }
 
@@ -148,7 +167,7 @@ public class ConfigurationHelper {
     }
     return null;
   }
-  
+
   public boolean isTypeAdaptable(IType type) {
     TcConfig config = getConfig();
 
@@ -156,19 +175,15 @@ public class ConfigurationHelper {
       InstrumentedClasses instrumentedClasses = getInstrumentedClasses();
       if (instrumentedClasses != null) {
         Boolean adaptable = isTypeAdaptable(type, instrumentedClasses);
-        if(adaptable != null) {
-          return adaptable;
-        }
+        if (adaptable != null) { return adaptable; }
       }
-      
+
       ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
-      if(modulesConfig != null) {
+      if (modulesConfig != null) {
         instrumentedClasses = modulesConfig.getApplication().getInstrumentedClasses();
-        if(instrumentedClasses != null) {
+        if (instrumentedClasses != null) {
           Boolean adaptable = isTypeAdaptable(type, instrumentedClasses);
-          if(adaptable != null) {
-            return adaptable;
-          }
+          if (adaptable != null) { return adaptable; }
         }
       }
     }
@@ -196,7 +211,7 @@ public class ConfigurationHelper {
     }
     return null;
   }
-  
+
   public boolean isAdaptable(IPackageDeclaration packageDecl) {
     TcConfig config = getConfig();
 
@@ -241,7 +256,7 @@ public class ConfigurationHelper {
     }
     return null;
   }
-  
+
   public boolean isAdaptable(IPackageFragment fragment) {
     TcConfig config = getConfig();
 
@@ -302,7 +317,7 @@ public class ConfigurationHelper {
     }
     return null;
   }
-  
+
   public boolean isAdaptable(String classExpr) {
     TcConfig config = getConfig();
 
@@ -324,7 +339,7 @@ public class ConfigurationHelper {
       }
     }
 
-    return m_plugin.isBootClass(classExpr);
+    return m_plugin.isBootClass(m_project, classExpr);
   }
 
   public Include includeRuleFor(String classExpr) {
@@ -585,7 +600,8 @@ public class ConfigurationHelper {
   }
 
   public void ensureAdaptable(String classExpr, MultiChangeSignaller signaller) {
-    if (!isAdaptable(classExpr)) {
+    if(isInstrumentationNotNeeded(classExpr)) return;
+    if (isAdaptable(classExpr)) {
       internalEnsureAdaptable(classExpr, signaller);
     }
   }
@@ -604,6 +620,7 @@ public class ConfigurationHelper {
   }
 
   public void internalEnsureAdaptable(String classExpr, MultiChangeSignaller signaller) {
+    if(isInstrumentationNotNeeded(classExpr)) return;
     addIncludeRule(classExpr);
     signaller.includeRulesChanged = true;
   }
@@ -856,7 +873,7 @@ public class ConfigurationHelper {
     }
     return null;
   }
-  
+
   public boolean isExcluded(IPackageFragment fragment) {
     TcConfig config = getConfig();
 
@@ -865,15 +882,15 @@ public class ConfigurationHelper {
 
       if (instrumentedClasses != null) {
         Boolean excluded = isExcluded(fragment, instrumentedClasses);
-        if(excluded != null) { return excluded; }
+        if (excluded != null) { return excluded; }
       }
-      
+
       ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
       if (modulesConfig != null) {
         instrumentedClasses = modulesConfig.getApplication().getInstrumentedClasses();
         if (instrumentedClasses != null) {
           Boolean excluded = isExcluded(fragment, instrumentedClasses);
-          if(excluded != null) { return excluded; }
+          if (excluded != null) { return excluded; }
         }
       }
     }
@@ -917,7 +934,7 @@ public class ConfigurationHelper {
     }
     return null;
   }
-  
+
   public boolean isExcluded(String classExpr) {
     TcConfig config = getConfig();
 
@@ -926,15 +943,15 @@ public class ConfigurationHelper {
 
       if (instrumentedClasses != null) {
         Boolean excluded = isExcluded(classExpr, instrumentedClasses);
-        if(excluded != null) { return excluded; }
+        if (excluded != null) { return excluded; }
       }
-      
+
       ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
       if (modulesConfig != null) {
         instrumentedClasses = modulesConfig.getApplication().getInstrumentedClasses();
         if (instrumentedClasses != null) {
           Boolean excluded = isExcluded(classExpr, instrumentedClasses);
-          if(excluded != null) { return excluded; }
+          if (excluded != null) { return excluded; }
         }
       }
     }
@@ -1219,9 +1236,9 @@ public class ConfigurationHelper {
     }
     return null;
   }
-  
+
   public boolean isRoot(IField field) {
-    if(field == null) return false;
+    if (field == null) return false;
 
     TcConfig config = getConfig();
     if (config != null) {
@@ -1229,15 +1246,15 @@ public class ConfigurationHelper {
 
       if (roots != null) {
         Boolean isRoot = isRoot(field, roots);
-        if(isRoot != null) { return isRoot; }
+        if (isRoot != null) { return isRoot; }
       }
-      
+
       ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
       if (modulesConfig != null) {
         roots = modulesConfig.getApplication().getRoots();
         if (roots != null) {
           Boolean isRoot = isRoot(field, roots);
-          if(isRoot != null) { return isRoot; }
+          if (isRoot != null) { return isRoot; }
         }
       }
     }
@@ -1459,7 +1476,7 @@ public class ConfigurationHelper {
     }
     return null;
   }
-  
+
   public boolean isTransient(String fieldName) {
     TcConfig config = getConfig();
 
@@ -1468,7 +1485,7 @@ public class ConfigurationHelper {
 
       if (transientFields != null) {
         Boolean isTransient = isTransient(fieldName, transientFields);
-        if(isTransient != null) { return isTransient; }
+        if (isTransient != null) { return isTransient; }
       }
 
       ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
@@ -1476,7 +1493,7 @@ public class ConfigurationHelper {
         transientFields = modulesConfig.getApplication().getTransientFields();
         if (transientFields != null) {
           Boolean isTransient = isTransient(fieldName, transientFields);
-          if(isTransient != null) { return isTransient; }
+          if (isTransient != null) { return isTransient; }
         }
       }
     }
@@ -1647,7 +1664,7 @@ public class ConfigurationHelper {
     }
     return null;
   }
-  
+
   public boolean isDistributedMethod(MethodInfo methodInfo) {
     TcConfig config = getConfig();
 
@@ -1656,15 +1673,15 @@ public class ConfigurationHelper {
 
       if (distributedMethods != null) {
         Boolean isDistributedMethod = isDistributedMethod(methodInfo, distributedMethods);
-        if(isDistributedMethod != null) { return isDistributedMethod; }
+        if (isDistributedMethod != null) { return isDistributedMethod; }
       }
-      
+
       ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
       if (modulesConfig != null) {
         distributedMethods = modulesConfig.getApplication().getDistributedMethods();
         if (distributedMethods != null) {
           Boolean isDistributedMethod = isDistributedMethod(methodInfo, distributedMethods);
-          if(isDistributedMethod != null) { return isDistributedMethod; }
+          if (isDistributedMethod != null) { return isDistributedMethod; }
         }
       }
     }
@@ -1785,14 +1802,14 @@ public class ConfigurationHelper {
       Locks locks = getLocks();
 
       if (locks != null) {
-        for (int i = locks.sizeOfAutolockArray()-1; i >= 0 ; i--) {
+        for (int i = locks.sizeOfAutolockArray() - 1; i >= 0; i--) {
           Autolock autolock = locks.getAutolockArray(i);
           String expr = autolock.getMethodExpression();
 
           if (m_patternHelper.matchesMember(expr, methodInfo)) { return autolock; }
         }
-        
-        for (int i = locks.sizeOfNamedLockArray()-1; i >= 0 ; i--) {
+
+        for (int i = locks.sizeOfNamedLockArray() - 1; i >= 0; i--) {
           NamedLock namedLock = locks.getNamedLockArray(i);
           String expr = namedLock.getMethodExpression();
 
@@ -1803,7 +1820,7 @@ public class ConfigurationHelper {
 
     return null;
   }
-  
+
   public boolean isAutolocked(IMethod method) {
     try {
       if (!method.getDeclaringType().isInterface()) {
@@ -1827,7 +1844,7 @@ public class ConfigurationHelper {
     }
     return null;
   }
-  
+
   public boolean isAutolocked(MethodInfo methodInfo) {
     TcConfig config = getConfig();
 
@@ -1836,7 +1853,7 @@ public class ConfigurationHelper {
 
       if (locks != null) {
         Boolean isAutolocked = isAutolocked(methodInfo, locks);
-        if(isAutolocked != null) { return isAutolocked; }
+        if (isAutolocked != null) { return isAutolocked; }
       }
 
       ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
@@ -1844,7 +1861,7 @@ public class ConfigurationHelper {
         locks = modulesConfig.getApplication().getLocks();
         if (locks != null) {
           Boolean isAutolocked = isAutolocked(methodInfo, locks);
-          if(isAutolocked != null) { return isAutolocked; }
+          if (isAutolocked != null) { return isAutolocked; }
         }
       }
     }
@@ -1875,7 +1892,7 @@ public class ConfigurationHelper {
     }
     return null;
   }
-  
+
   public boolean isAutolocked(IType type) {
     try {
       if (type.isInterface()) { return false; }
@@ -1888,15 +1905,15 @@ public class ConfigurationHelper {
 
       if (locks != null) {
         Boolean isAutolocked = isAutolocked(type, locks);
-        if(isAutolocked != null) { return isAutolocked; }
+        if (isAutolocked != null) { return isAutolocked; }
       }
-      
+
       ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
       if (modulesConfig != null) {
         locks = modulesConfig.getApplication().getLocks();
         if (locks != null) {
           Boolean isAutolocked = isAutolocked(type, locks);
-          if(isAutolocked != null) { return isAutolocked; }
+          if (isAutolocked != null) { return isAutolocked; }
         }
       }
     }
@@ -2000,7 +2017,7 @@ public class ConfigurationHelper {
     }
     return null;
   }
-  
+
   public boolean isNameLocked(MethodInfo methodInfo) {
     TcConfig config = getConfig();
 
@@ -2009,15 +2026,15 @@ public class ConfigurationHelper {
 
       if (locks != null) {
         Boolean isNameLocked = isNameLocked(methodInfo, locks);
-        if(isNameLocked != null) { return isNameLocked; }
+        if (isNameLocked != null) { return isNameLocked; }
       }
-      
+
       ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
       if (modulesConfig != null) {
         locks = modulesConfig.getApplication().getLocks();
         if (locks != null) {
           Boolean isNameLocked = isNameLocked(methodInfo, locks);
-          if(isNameLocked != null) { return isNameLocked; }
+          if (isNameLocked != null) { return isNameLocked; }
         }
       }
     }
@@ -2047,7 +2064,7 @@ public class ConfigurationHelper {
     }
     return null;
   }
-  
+
   public boolean isNameLocked(IType type) {
     try {
       if (type.isInterface()) { return false; }
@@ -2060,15 +2077,15 @@ public class ConfigurationHelper {
 
       if (locks != null) {
         Boolean isNameLocked = isNameLocked(type, locks);
-        if(isNameLocked != null) { return isNameLocked; }
+        if (isNameLocked != null) { return isNameLocked; }
       }
-      
+
       ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
       if (modulesConfig != null) {
         locks = modulesConfig.getApplication().getLocks();
         if (locks != null) {
           Boolean isNameLocked = isNameLocked(type, locks);
-          if(isNameLocked != null) { return isNameLocked; }
+          if (isNameLocked != null) { return isNameLocked; }
         }
       }
     }
@@ -2087,7 +2104,7 @@ public class ConfigurationHelper {
     }
     return null;
   }
-  
+
   public boolean isNameLocked(IPackageDeclaration packageDecl) {
     TcConfig config = getConfig();
 
@@ -2096,15 +2113,15 @@ public class ConfigurationHelper {
 
       if (locks != null) {
         Boolean isNameLocked = isNameLocked(packageDecl, locks);
-        if(isNameLocked != null) { return isNameLocked; }
+        if (isNameLocked != null) { return isNameLocked; }
       }
-      
+
       ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
       if (modulesConfig != null) {
         locks = modulesConfig.getApplication().getLocks();
         if (locks != null) {
           Boolean isNameLocked = isNameLocked(packageDecl, locks);
-          if(isNameLocked != null) { return isNameLocked; }
+          if (isNameLocked != null) { return isNameLocked; }
         }
       }
     }
@@ -2125,7 +2142,7 @@ public class ConfigurationHelper {
     }
     return null;
   }
-  
+
   public boolean isNameLocked(IPackageFragment fragment) {
     TcConfig config = getConfig();
 
@@ -2134,7 +2151,7 @@ public class ConfigurationHelper {
 
       if (locks != null) {
         Boolean isNameLocked = isNameLocked(fragment, locks);
-        if(isNameLocked != null) { return isNameLocked; }
+        if (isNameLocked != null) { return isNameLocked; }
       }
 
       ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
@@ -2142,7 +2159,7 @@ public class ConfigurationHelper {
         locks = modulesConfig.getApplication().getLocks();
         if (locks != null) {
           Boolean isNameLocked = isNameLocked(fragment, locks);
-          if(isNameLocked != null) { return isNameLocked; }
+          if (isNameLocked != null) { return isNameLocked; }
         }
       }
     }
@@ -2417,7 +2434,7 @@ public class ConfigurationHelper {
     signaller.signal(m_project);
     return lock;
   }
-  
+
   public Autolock addNewAutolock(final String expr, final LockLevel.Enum level, MultiChangeSignaller signaller) {
     Locks locks = ensureLocks();
     Autolock lock = locks.addNewAutolock();
@@ -3148,13 +3165,13 @@ public class ConfigurationHelper {
     }
     return null;
   }
-  
+
   public boolean isBootJarClass(String className) {
     AdditionalBootJarClasses abjc = getAdditionalBootJarClasses();
 
     if (abjc != null) {
       Boolean isBootJarClass = isBootJarClass(className, abjc);
-      if(isBootJarClass != null) { return isBootJarClass; }
+      if (isBootJarClass != null) { return isBootJarClass; }
     }
 
     ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
@@ -3162,7 +3179,7 @@ public class ConfigurationHelper {
       abjc = modulesConfig.getApplication().getAdditionalBootJarClasses();
       if (abjc != null) {
         Boolean isBootJarClass = isBootJarClass(className, abjc);
-        if(isBootJarClass != null) { return isBootJarClass; }
+        if (isBootJarClass != null) { return isBootJarClass; }
       }
     }
 
@@ -3206,6 +3223,7 @@ public class ConfigurationHelper {
   }
 
   public void ensureBootJarClass(String className, MultiChangeSignaller signaller) {
+    if(isInstrumentationNotNeeded(className)) return;
     if (!isBootJarClass(className)) {
       internalEnsureBootJarClass(className, signaller);
     }
@@ -3218,6 +3236,7 @@ public class ConfigurationHelper {
   }
 
   public void internalEnsureBootJarClass(String className, MultiChangeSignaller signaller) {
+    if(isInstrumentationNotNeeded(className)) return;
     ensureAdditionalBootJarClasses().addInclude(className);
     signaller.bootClassesChanged = true;
   }
@@ -3387,13 +3406,8 @@ public class ConfigurationHelper {
     }
   }
 
-  private static String[]          PRIMITIVE_NAMES = new String[] {
-    "java.lang.String",
-    "java.lang.Integer",
-    "java.lang.Boolean",
-    "java.lang.Double",
-    "java.lang.Character",
-    "java.lang.Byte"                              };
+  private static String[]          PRIMITIVE_NAMES = new String[] { "java.lang.String", "java.lang.Integer",
+      "java.lang.Boolean", "java.lang.Double", "java.lang.Character", "java.lang.Byte" };
 
   private static ArrayList<String> PRIMITIVES      = new ArrayList<String>(Arrays.asList(PRIMITIVE_NAMES));
 
@@ -3415,7 +3429,7 @@ public class ConfigurationHelper {
       IType fieldType = getFieldType(field);
 
       if (fieldType != null && !isInterface(fieldType) && !isPrimitive(fieldType) && !isAdaptable(fieldType)
-          && !isBootJarClass(fieldType) && !m_plugin.isBootClass(fieldType)) {
+          && !isBootJarClass(fieldType) && !m_plugin.isBootClass(m_project, fieldType)) {
         String fullName = PatternHelper.getFullyQualifiedName(fieldType);
         msg = "Root type '" + fullName + "' not instrumented";
       }
@@ -3818,28 +3832,38 @@ public class ConfigurationHelper {
     }
   }
 
-  private void validateBootJarClass(String classExpr) {
+  private void validateBootJarClass(String classname) {
     String msg = null;
-    String expr = classExpr;
+    String expr = classname;
 
     if (expr != null) {
       expr = expr.trim();
     }
 
-    try {
-      if (expr != null && JdtUtils.findType(m_javaProject, expr) == null) {
-        msg = "Cannot resolve type '" + expr + "'";
+    if(isInstrumentationNotNeeded(classname)) {
+      msg = "Type '"+classname+"' should never be instrumented";
+    } else {
+      BootClassHelper bch = m_plugin.getBootClassHelper(m_project);
+      
+      if(bch != null && bch.isAdaptable(classname)) {
+        msg = "Type '"+classname+"' is a pre-instrumented (default) boot type";
+      } else {
+        try {
+          if (expr != null && JdtUtils.findType(m_javaProject, expr) == null) {
+            msg = "Cannot resolve type '" + expr + "'";
+          }
+        } catch (JavaModelException jme) {
+          msg = "Cannot resolve type '" + expr + "'";
+        }
       }
-    } catch (JavaModelException jme) {
-      msg = "Cannot resolve type '" + expr + "'";
     }
-
+    
     if (msg != null) {
-      reportConfigProblem(classExpr, msg, BOOT_CLASS_PROBLEM_MARKER);
+      reportConfigProblem(classname, msg, BOOT_CLASS_PROBLEM_MARKER);
     }
   }
 
-  private static String MODULE_PROBLEM_MARKER = "org.terracotta.dso.ModuleProblemMarker";
+  private static String MODULE_PROBLEM_MARKER      = "org.terracotta.dso.ModuleProblemMarker";
   private static String MODULE_REPO_PROBLEM_MARKER = "org.terracotta.dso.ModuleRepoProblemMarker";
 
   private void validateModules() {
@@ -3847,23 +3871,23 @@ public class ConfigurationHelper {
     clearConfigProblemMarkersOfType(MODULE_REPO_PROBLEM_MARKER);
 
     Modules modules = getModules();
-    if(modules != null) {
+    if (modules != null) {
       ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
-      
-      for(String repo : modules.getRepositoryArray()) {
+
+      for (String repo : modules.getRepositoryArray()) {
         try {
           URL url = new URL(repo);
           url.openStream().close();
-        } catch(Exception e) {
+        } catch (Exception e) {
           reportConfigProblem(repo, e.getMessage(), MODULE_REPO_PROBLEM_MARKER);
         }
       }
-      
-      for(Module module : modules.getModuleArray()) {
+
+      for (Module module : modules.getModuleArray()) {
         ModuleInfo moduleInfo = modulesConfig.getModuleInfo(module);
-        if(moduleInfo != null) {
+        if (moduleInfo != null) {
           BundleException error = moduleInfo.getError();
-          if(error != null) {
+          if (error != null) {
             String text = module.getName();
             reportConfigProblem(text, error.getMessage(), MODULE_PROBLEM_MARKER);
           }
@@ -3871,7 +3895,7 @@ public class ConfigurationHelper {
       }
     }
   }
-  
+
   private void reportConfigProblem(String configText, String msg, String markerType) {
     ConfigurationEditor editor = m_plugin.getConfigurationEditor(m_project);
 
@@ -3952,7 +3976,7 @@ public class ConfigurationHelper {
     TcConfig config = getConfig();
     return config != null ? config.getClients() : null;
   }
-  
+
   private Application getApplication() {
     TcConfig config = getConfig();
     return config != null ? config.getApplication() : null;

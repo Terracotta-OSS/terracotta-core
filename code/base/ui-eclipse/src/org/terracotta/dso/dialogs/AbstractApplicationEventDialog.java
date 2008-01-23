@@ -76,7 +76,6 @@ import com.terracottatech.config.OnLoad;
 import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -367,8 +366,8 @@ public abstract class AbstractApplicationEventDialog extends MessageDialog {
       if (configEditor == null) {
         plugin.saveConfiguration(project);
       }
-    } catch (IOException ioe) {
-      ioe.printStackTrace();
+    } catch (Exception e) {
+      e.printStackTrace();
     }
   }
 

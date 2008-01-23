@@ -19,6 +19,7 @@ import java.util.prefs.Preferences;
 import javax.swing.JComponent;
 import javax.swing.JTable;
 import javax.swing.JTree;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.border.BevelBorder;
@@ -28,6 +29,7 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.TreeSelectionModel;
 
 public class LockTreeTable extends JTreeTable {
   protected int               fSortColumn;
@@ -42,28 +44,37 @@ public class LockTreeTable extends JTreeTable {
   private static final String SORT_COLUMN_PREF_KEY    = "SortColumn";
   private static final String SORT_DIRECTION_PREF_KEY = "SortDirection";
 
-  LockTreeTable(TreeTableModel treeTableModel, Preferences prefs) {
-    super(treeTableModel);
+  public LockTreeTable() {
+    super();
 
-    fPreferences = prefs;
-    fSortColumn = prefs.getInt(SORT_COLUMN_PREF_KEY, 1);
-    fSortDirection = prefs.getInt(SORT_DIRECTION_PREF_KEY, DOWN);
     fArrowLabel = new ArrowLabel();
-
+    getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     getTableHeader().addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent me) {
         if (me.getClickCount() == 2) {
-          int col = columnAtPoint(me.getPoint());
-
           setSortDirection(toggleSortDirection());
-          setSortColumn(col);
+          setSortColumn(columnAtPoint(me.getPoint()));
         }
       }
     });
     getTableHeader().setDefaultRenderer(fColumnRenderer = new TableColumnRenderer());
     setDefaultRenderer(Long.class, new StatValueRenderer());
   }
+  
+  LockTreeTable(TreeTableModel treeTableModel, Preferences prefs) {
+    this();
+    setTreeTableModel(treeTableModel);
+    setPreferences(prefs);
+  }
 
+  public void setPreferences(Preferences prefs) {
+    if((fPreferences = prefs) != null) {
+      fSortColumn = prefs.getInt(SORT_COLUMN_PREF_KEY, 1);
+      fSortDirection = prefs.getInt(SORT_DIRECTION_PREF_KEY, DOWN);
+    }
+  }
+  
   public void setTreeTableModel(TreeTableModel model) {
     super.setTreeTableModel(model);
     DefaultTreeCellRenderer renderer = (DefaultTreeCellRenderer) tree.getCellRenderer();
@@ -89,8 +100,10 @@ public class LockTreeTable extends JTreeTable {
   }
 
   private void putPreferenceInt(String key, int value) {
-    fPreferences.putInt(key, value);
-    PrefsHelper.getHelper().flush(fPreferences);
+    if (fPreferences != null) {
+      fPreferences.putInt(key, value);
+      PrefsHelper.getHelper().flush(fPreferences);
+    }
   }
 
   private void internalSetSortDirection(int direction) {

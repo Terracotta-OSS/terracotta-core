@@ -4,32 +4,31 @@
  */
 package com.tc.admin.dso.locks;
 
-import com.tc.management.beans.LockStatisticsMonitorMBean;
 import com.tc.management.lock.stats.LockSpec;
 import com.tc.management.lock.stats.LockStats;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 
 public class RootLockNode extends BasicLockNode {
-  LockStatisticsMonitorMBean fLockStats;
   LockStats                  fStats = new LockStats();
   LockNode[]                 fChildren;
 
-  RootLockNode(LockStatisticsMonitorMBean lockStats) {
-    fLockStats = lockStats;
-    init();
-  }
-
-  protected void init() {
-    Collection<LockSpec> lockInfos = fLockStats.getLockSpecs();
+  RootLockNode(Collection<LockSpec> lockInfos) {
     ArrayList<LockSpecNode> list = new ArrayList<LockSpecNode>();
     Iterator<LockSpec> iter = lockInfos.iterator();
 
     while (iter.hasNext()) {
       list.add(new LockSpecNode(iter.next()));
     }
+    Collections.sort(list, new Comparator<LockSpecNode>() {
+      public int compare(LockSpecNode o1, LockSpecNode o2) {
+        return o1.getName().compareTo(o2.getName());
+      }
+    });
     fChildren = list.toArray(new LockSpecNode[0]);
   }
 

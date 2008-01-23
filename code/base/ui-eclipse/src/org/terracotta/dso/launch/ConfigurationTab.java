@@ -264,26 +264,16 @@ public class ConfigurationTab extends AbstractLaunchConfigurationTab implements 
   
   public void performApply(ILaunchConfigurationWorkingCopy configuration) {
     String serverSpec = fServerText.getText().trim();
-    if(serverSpec != null && serverSpec.length() > 0) {
-      configuration.setAttribute(ID_SERVER_SPEC, serverSpec);
+    configuration.setAttribute(ID_SERVER_SPEC, serverSpec != null && serverSpec.length() > 0 ? serverSpec : null);
+
+    if (fConfigFileButton.getSelection()) {
+      String spec = fConfigFileText.getText().trim();
+      configuration.setAttribute(ID_CONFIG_FILE_SPEC, spec != null && spec.length() > 0 ? spec : null);
+      configuration.setAttribute(ID_CONFIG_SERVER_SPEC, (String) null);
     } else {
-      configuration.setAttribute(ID_SERVER_SPEC, (String)null);      
-    }
-    
-    if(fConfigFileButton.getSelection()) {
-      String configSpec = fConfigFileText.getText().trim();
-      if(configSpec != null && configSpec.length() > 0) {
-        configuration.setAttribute(ID_CONFIG_FILE_SPEC, configSpec);
-      } else {
-        configuration.setAttribute(ID_CONFIG_FILE_SPEC, (String)null);
-      }
-    } else {
-      String configSpec = fConfigServerText.getText().trim();
-      if(configSpec != null && configSpec.length() > 0) {
-        configuration.setAttribute(ID_CONFIG_SERVER_SPEC, configSpec);
-      } else {
-        configuration.setAttribute(ID_CONFIG_SERVER_SPEC, (String)null);
-      }
+      String spec = fConfigServerText.getText().trim();
+      configuration.setAttribute(ID_CONFIG_SERVER_SPEC, spec != null && spec.length() > 0 ? spec : null);
+      configuration.setAttribute(ID_CONFIG_FILE_SPEC, (String) null);
     }
   }
 

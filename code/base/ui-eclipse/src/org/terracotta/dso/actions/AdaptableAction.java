@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.terracotta.dso.actions;
 
@@ -18,40 +19,37 @@ public class AdaptableAction extends BaseAction {
   public AdaptableAction() {
     super("Instrumented", AS_CHECK_BOX);
   }
-  
+
   /**
    * The IJavaElement must be one of IType, IPackageFragment, or IJavaProject.
    */
   public void setJavaElement(IJavaElement element) {
-    if(!(element instanceof IType            ||
-         element instanceof IPackageFragment ||
-         element instanceof IJavaProject))
-    {
-      throw new IllegalArgumentException(
-        "Java element must be IType, IPackageFragment, or IJavaProject");
-    }
-    
+    if (!(element instanceof IType || element instanceof IPackageFragment || element instanceof IJavaProject)) { throw new IllegalArgumentException(
+                                                                                                                                                    "Java element must be IType, IPackageFragment, or IJavaProject"); }
     super.setJavaElement(element);
-    
-    if(element instanceof IType) {
-      IType   type        = (IType)element;
-      boolean isBootClass = TcPlugin.getDefault().isBootClass(type); 
 
-      setEnabled(!isBootClass);
-      setChecked(isBootClass || getConfigHelper().isAdaptable(type));
-    }
-    else {
-      setChecked(getConfigHelper().isAdaptable(element));
-    }
-  }
+    if (element instanceof IType) {
+      IType type = (IType) element;
+      if(getConfigHelper().isInstrumentationNotNeeded(type)) {
+        setEnabled(false);
+        setChecked(false); 
+      } else {
+        boolean isBootClass = TcPlugin.getDefault().isBootClass(type.getJavaProject().getProject(), type);
   
+        setEnabled(!isBootClass);
+        setChecked(isBootClass || getConfigHelper().isAdaptable(type));
+      }
+    } else {
+      setChecked(getConfigHelper().isAdaptable(element));
+    } 
+  }
+
   public void performAction() {
     ConfigurationHelper helper = getConfigHelper();
 
-    if(isChecked()) {
+    if (isChecked()) {
       helper.ensureAdaptable(m_element);
-    }
-    else {
+    } else {
       helper.ensureNotAdaptable(m_element);
     }
 

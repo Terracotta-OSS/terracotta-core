@@ -21,10 +21,13 @@ import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationType;
 import org.eclipse.debug.core.ILaunchManager;
+import org.eclipse.debug.core.model.IProcess;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
+import org.terracotta.dso.actions.BuildBootJarAction;
 import org.terracotta.dso.actions.ManageServerAction;
 import org.terracotta.dso.dialogs.RelaunchDialog;
 
@@ -71,16 +74,39 @@ public class ResourceDeltaVisitor implements IResourceDeltaVisitor {
     
     switch(kind) {
       case IResourceDelta.CHANGED: {
+        if((flags & IResourceDelta.MARKERS) != 0) {
+          return false;
+        }
+        
         if((flags & IResourceDelta.CONTENT) != 0) {
           if(res instanceof IFile) {
-            IFile  file = (IFile)res;
-            IPath  path = file.getLocation();
-            String ext  = path.getFileExtension();
+            IFile file = (IFile) res;
+            IPath path = file.getLocation();
+            String ext = path.getFileExtension();
+            int segmentCount = path.segmentCount();
+            
+            if(segmentCount == 2 && path.segment(segmentCount-1).equals(".classpath")) {
+              final IJavaProject javaProject = JavaCore.create(project);
+              
+              if(BootClassHelper.canGetBootTypes(javaProject)) {
+                plugin.setBootClassHelper(project, new BootClassHelper(javaProject));
+              } else {
+                Job job = new Job("Building bootjar") {
+                  public IStatus run(IProgressMonitor monitor) {
+                    try {
+                      new BuildBootJarAction(javaProject).run(monitor);
+                    } catch(Exception e) {
+                      plugin.openError("Building bootjar", e);
+                    }
+                    return Status.OK_STATUS;
+                  }
+                };
+                job.schedule();
+              }
+              return false;
+            }
             
             if(ext.equals("xml")) {
-//              if((flags & IResourceDelta.MARKERS) != 0) {
-//                return false;
-//              }
               if(plugin.getConfigurationFile(project).equals(res)) {
                 final boolean queryRestart = plugin.getQueryRestartOption(project);
                 final boolean wasIgnoringChange = fIgnoreNextConfigChange;
@@ -152,7 +178,8 @@ public class ResourceDeltaVisitor implements IResourceDeltaVisitor {
     final Map<String, ILaunch> serverLaunches = new HashMap<String, ILaunch>();
     
     for (ILaunch launch : launchManager.getLaunches()) {
-      if (launch.isTerminated()) continue;
+      IProcess[] processes = launch.getProcesses();
+      if (launch.isTerminated() || processes == null || processes.length == 0) continue;
       ILaunchConfiguration launchConfig = launch.getLaunchConfiguration();
       try {
         String mainClass = launchConfig.getAttribute(IJavaLaunchConfigurationConstants.ATTR_MAIN_TYPE_NAME, (String)null);

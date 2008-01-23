@@ -10,6 +10,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.variables.IStringVariableManager;
@@ -35,9 +36,11 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 import org.terracotta.dso.BootJarHelper;
 import org.terracotta.dso.ClasspathProvider;
+import org.terracotta.dso.ConfigSpec;
 import org.terracotta.dso.ConfigurationHelper;
 import org.terracotta.dso.ServerTracker;
 import org.terracotta.dso.TcPlugin;
+import org.terracotta.dso.ConfigSpec.Type;
 import org.terracotta.dso.actions.BuildBootJarAction;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -101,7 +104,8 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
         vmArgs += " -Dtc.server=" + serverProp;
       }
       
-      String configProp = " -Dtc.config=\"" + getConfigSpec(wc) + "\"";
+      ConfigSpec configSpec = getConfigSpec(wc);
+      String configProp = " -Dtc.config=\"" + configSpec + "\"";
       
       IVMInstall vmInstall = fLaunchDelegate.getVMInstall(wc);
       String portablePath = null;
@@ -121,7 +125,7 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
       IFile localBootJar = project.getFile(bootJarName);
       IPath bootPath;
       
-      testEnsureBootJar(plugin, javaProject, localBootJar, jreContainerPath);
+      testEnsureBootJar(plugin, javaProject, configSpec, localBootJar, jreContainerPath);
       
       if(localBootJar.exists()) {
         bootPath = localBootJar.getLocation();
@@ -170,12 +174,12 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
   private void testEnsureBootJar(
     final TcPlugin     plugin,
     final IJavaProject javaProject,
+    final ConfigSpec   configSpec,
     final IFile        bootJar,
     final String       jreContainerPath)
   {
     IProject            project                 = javaProject.getProject();
     ConfigurationHelper configHelper            = plugin.getConfigurationHelper(project);
-    IFile               configFile              = plugin.getConfigurationFile(project);
     boolean             stdBootJarExists        = false;
     boolean             configHasBootJarClasses = configHelper.hasBootJarClasses();
     boolean             configHasModules        = configHelper.hasModules();
@@ -184,18 +188,22 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
       stdBootJarExists = BootJarHelper.getHelper().getBootJarFile().exists();
     } catch(CoreException ce) {/**/}
     
-    if(!stdBootJarExists || (configFile != null && configHasBootJarClasses)) {
+    if(!stdBootJarExists || (configSpec.isFile() && configHasBootJarClasses)) {
       try {
         bootJar.refreshLocal(IResource.DEPTH_ZERO, null);
       } catch(CoreException ce) {/**/}
       
-      long bootStamp = bootJar.getLocation().toFile().lastModified();
-      long confStamp = configFile.getLocation().toFile().lastModified();
+      long bootStamp = 0, confStamp = 0;
+      if(configSpec.isFile() && bootJar.exists()) {
+        bootStamp = bootJar.getLocation().toFile().lastModified();
+        confStamp = new Path(configSpec.getSpec()).toFile().lastModified();
+      }
       
-      if(!bootJar.exists() || ((configHasModules || configHasBootJarClasses) && bootStamp < confStamp)) {
+      if(configSpec.isServer() || !bootJar.exists() || ((configHasModules || configHasBootJarClasses) && bootStamp < confStamp)) {
         Display.getDefault().syncExec(new Runnable() {
           public void run() {
             BuildBootJarAction bbja = new BuildBootJarAction(javaProject);
+            bbja.setConfigSpec(configSpec);
             bbja.setJREContainerPath(jreContainerPath);
             bbja.run((IAction)null);
           }
@@ -204,17 +212,20 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
     }
   }
   
-  private String getConfigSpec(ILaunchConfigurationWorkingCopy wc) throws CoreException {
+  private ConfigSpec getConfigSpec(ILaunchConfigurationWorkingCopy wc) throws CoreException {
     IJavaProject javaProject = fLaunchDelegate.getJavaProject(wc);
     IProject project = javaProject.getProject();
     IFile configFile = TcPlugin.getDefault().getConfigurationFile(project);
     IPath configPath = configFile != null ? configFile.getLocation() : null;
-    String configSpec;
+    String spec;
+    ConfigSpec configSpec;
     
-    if((configSpec = wc.getAttribute(ID_CONFIG_SERVER_SPEC, (String)null)) == null) {
-      configSpec = wc.getAttribute(ID_CONFIG_FILE_SPEC, toOSString(configPath));
+    if((spec = wc.getAttribute(ID_CONFIG_SERVER_SPEC, (String)null)) == null) {
+      spec = wc.getAttribute(ID_CONFIG_FILE_SPEC, toOSString(configPath));
       IStringVariableManager variableManager = VariablesPlugin.getDefault().getStringVariableManager();
-      configSpec = variableManager.performStringSubstitution(configSpec);
+      configSpec = new ConfigSpec(variableManager.performStringSubstitution(spec), Type.FILE);
+    } else {
+      configSpec = new ConfigSpec(spec, Type.SERVER);
     }
     
     return configSpec;

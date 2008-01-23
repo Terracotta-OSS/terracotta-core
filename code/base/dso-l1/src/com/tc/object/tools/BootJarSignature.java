@@ -15,7 +15,7 @@ public class BootJarSignature {
 
   private final String signature;
 
-  BootJarSignature(final Properties props) throws UnsupportedVMException {
+  public BootJarSignature(final Properties props) throws UnsupportedVMException {
     try {
       VendorVmSignature vendorVmSignature = new VendorVmSignature(props);
       this.signature = vendorVmSignature.getSignature();
@@ -62,6 +62,11 @@ public class BootJarSignature {
     return BootJar.JAR_NAME_PREFIX + signatureForThisVM + ".jar";
   }
 
+  public static String getBootJarName(Properties properties) throws UnsupportedVMException {
+    BootJarSignature signature = new BootJarSignature(properties);
+    return BootJar.JAR_NAME_PREFIX + signature + ".jar";
+  }
+  
   /**
    * README: This main() method is called from the dso-java[.bat] script. It isn't for simple test purposes or anything.
    * Specificallly, there is a contract here.....running main() should output the expected name of the dso boot jar for

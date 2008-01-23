@@ -994,7 +994,8 @@
        markerType="org.terracotta.dso.nameLockedMarker"/>
      <type name="org.terracotta.dso.autolockedAnnotation"
        markerType="org.terracotta.dso.autolockedMarker"/>
-     <type name="org.terracotta.dso.rootAnnotation"/>
+     <type name="org.terracotta.dso.rootAnnotation"
+       markerType="org.terracotta.dso.rootMarker"/>
      <type name="org.terracotta.dso.distributedMethodAnnotation"
        markerType="org.terracotta.dso.distributedMethodMarker"/>
      <type name="org.terracotta.dso.transientFieldAnnotation"
@@ -1452,7 +1453,7 @@
 	  <actionSet id="org.eclipse.jdt.debug.ui.JDTDebugActionSet"/>
       <view id="org.terracotta.dso.ui.views.configView" 
             relative="org.eclipse.jdt.ui.PackageExplorer" 
-            relationship="below"
+            relationship="bottom"
 			ratio="0.50"
             visible="true"/>
       <viewShortcut id="org.terracotta.dso.ui.views.configView"/>

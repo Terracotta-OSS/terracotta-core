@@ -43,8 +43,6 @@ import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
-import org.eclipse.jdt.core.IPackageFragment;
-import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.internal.core.BinaryMember;
@@ -100,7 +98,6 @@ import org.terracotta.dso.dialogs.ConfigProblemsDialog;
 import org.terracotta.dso.editors.ConfigurationEditor;
 import org.terracotta.dso.wizards.ProjectWizard;
 
-import com.tc.admin.common.InputStreamDrainer;
 import com.tc.bundles.EmbeddedOSGiEventHandler;
 import com.tc.bundles.EmbeddedOSGiRuntime;
 import com.tc.bundles.Resolver;
@@ -113,8 +110,6 @@ import com.tc.object.util.JarResourceLoader;
 import com.tc.plugins.ModulesLoader;
 import com.tc.server.ServerConstants;
 import com.tc.util.Assert;
-import com.tc.util.concurrent.ThreadUtil;
-import com.tc.util.runtime.Os;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.Module;
@@ -172,7 +167,6 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
   private XmlOptions                m_xmlOptions;
   private DecoratorUpdateAction     m_decoratorUpdateAction;
   private ArrayList<IProjectAction> m_projectActionList;
-  private BootClassHelper           m_bootClassHelper;
   private ConfigurationEventManager m_configurationEventManager;
 
   public static final String        PLUGIN_ID                           = "org.terracotta.dso";
@@ -200,32 +194,25 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     return PLUGIN_ID;
   }
 
-  public BootClassHelper getBootClassHelper() {
-    return m_bootClassHelper;
+  public boolean isBootClass(final IProject project, final ICompilationUnit module) {
+    return module != null && isBootClass(project, module.findPrimaryType());
   }
 
-  public boolean isBootClass(final ICompilationUnit module) {
-    if (m_bootClassHelper != null) { return module != null ? isBootClass(module.findPrimaryType()) : false; }
-    return false;
-  }
-
-  public boolean isBootClass(final IClassFile classFile) {
-    if (m_bootClassHelper != null && classFile != null) {
-      try {
-        return isBootClass(classFile.getType());
-      } catch (Exception e) {/**/
-      }
+  public boolean isBootClass(final IProject project, final IClassFile classFile) {
+    try {
+      return classFile != null && isBootClass(project, classFile.getType());
+    } catch (Exception e) {/**/
     }
     return false;
   }
 
-  public boolean isBootClass(final IType type) {
-    if (m_bootClassHelper != null && type != null) { return isBootClass(PatternHelper.getFullyQualifiedName(type)); }
-    return false;
+  public boolean isBootClass(final IProject project, final IType type) {
+    return isBootClass(project, PatternHelper.getFullyQualifiedName(type));
   }
 
-  public boolean isBootClass(String name) {
-    return m_bootClassHelper != null ? m_bootClassHelper.isAdaptable(name) : false;
+  public boolean isBootClass(final IProject project, String name) {
+    BootClassHelper bch = getBootClassHelper(project);
+    return bch != null ? bch.isAdaptable(name) : false;
   }
 
   public void registerProjectAction(IProjectAction action) {
@@ -289,64 +276,6 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     // SourceMethod and BinaryMember are internal types
     manager.registerAdapters(factory, SourceMethod.class);
     manager.registerAdapters(factory, BinaryMember.class);
-
-    try {
-      m_bootClassHelper = BootClassHelper.initialize();
-    } catch (Exception e) {
-      buildBootJarForThisVM();
-    }
-  }
-
-  private static String getJavaCmd() {
-    String javaCmd = System.getProperty("java.home") + File.separatorChar + "bin" + File.separatorChar + "java";
-    if (Os.isWindows()) {
-      javaCmd += ".exe";
-    }
-    return javaCmd;
-  }
-
-  private void buildBootJarForThisVM() {
-    new Thread() {
-      public void run() {
-        try {
-          IPath tcJarPath = TcPlugin.getDefault().getLibDirPath().append("tc.jar");
-          File bootJarFile = BootJarHelper.getHelper().getBootJarFileForThisVM();
-
-          System.setProperty("tc.install-root", getLocation().toOSString());
-
-          String[] args = {
-            getJavaCmd(),
-            "-cp",
-            tcJarPath.toOSString(),
-            "com.tc.object.tools.BootJarTool",
-            "-q",
-            "-o",
-            bootJarFile.getAbsolutePath() };
-
-          Process p = Runtime.getRuntime().exec(args);
-
-          InputStreamDrainer outReader = new InputStreamDrainer(p.getInputStream());
-          InputStreamDrainer errReader = new InputStreamDrainer(p.getErrorStream());
-
-          outReader.start();
-          errReader.start();
-
-          while (true) {
-            try {
-              p.waitFor();
-              break;
-            } catch (InterruptedException ie) {/**/
-            }
-
-            ThreadUtil.reallySleep(1000);
-          }
-
-          m_bootClassHelper = BootClassHelper.initialize();
-        } catch (Throwable t) {
-          openError("Plugin Initialization Error", t);
-        }
-      }
-    }.start();
   }
 
   public void stop(BundleContext context) throws Exception {
@@ -435,7 +364,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
         }
         description.setNatureIds(natureList.toArray(new String[0]));
         project.setDescription(description, monitor);
-        project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
+        //project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
         monitor.worked(1);
 
         monitor.beginTask("Closing configuration editor", 4);
@@ -454,31 +383,15 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
         monitor.worked(3);
 
         monitor.beginTask("Removing markers", 4);
-        IPackageFragment[] fragments = m_javaProject.getPackageFragments();
-        ICompilationUnit[] cus;
-        IResource file;
-
-        for (int i = 0; i < fragments.length; i++) {
-          if (fragments[i].getKind() == IPackageFragmentRoot.K_SOURCE) {
-            cus = fragments[i].getCompilationUnits();
-
-            for (int j = 0; j < cus.length; j++) {
-              file = cus[j].getResource();
-              monitor.subTask(file.getLocation().toString());
-              file.deleteMarkers("org.terracotta.dso.baseMarker", true, IResource.DEPTH_INFINITE);
-            }
-          }
-        }
+        project.deleteMarkers("org.terracotta.dso.baseMarker", true, IResource.DEPTH_INFINITE);
 
         IFile configFile = getConfigurationFile(m_javaProject.getProject());
         if (configFile != null && configFile.exists()) {
           clearSAXMarkers(configFile);
         }
 
-        clearConfigProblemMarkers(project);
         clearConfigurationSessionProperties(project);
         notifyProjectActions(project);
-        updateDecorators();
         fireConfigurationChange(project);
 
         monitor.worked(4);
@@ -550,11 +463,9 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
 
       if (servers != null) {
         Server[] serverArr = servers.getServerArray();
-        Server server;
 
         for (int i = 0; i < serverArr.length; i++) {
-          server = serverArr[i];
-
+          Server server = serverArr[i];
           if (name.equals(server.getName())) { return server.getJmxPort(); }
         }
       }
@@ -566,7 +477,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
   /**
    * Instantiate the config information, either from the serialized form, or directly from the config document.
    */
-  private void loadConfiguration(IProject project) throws XmlException, IOException, CoreException,
+  private void loadConfiguration(IProject project) throws Exception,
       ConcurrentModificationException {
     if (!project.isOpen()) { return; }
 
@@ -616,11 +527,10 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       }
       
       setSessionProperty(project, CONFIGURATION, config);
-
-      if (config != null) {
-        getConfigurationHelper(project).validateAll();
-        fireConfigurationChange(project);
-      }
+      setBootClassHelper(project, new BootClassHelper(JavaCore.create(project)));
+      
+      getConfigurationHelper(project).validateAll();
+      fireConfigurationChange(project);
     }
   }
 
@@ -740,22 +650,36 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       try {
         final DsoApplication application = DsoApplication.Factory.parse(is);
         if (application != null) {
+          ArrayList errors = new ArrayList();
+          XmlOptions opts = new XmlOptions();
+          opts.setErrorListener(errors);
+          if(!application.validate(opts)) moduleInfo.setError(new BundleException("Bundle XML fragment invalid"));
           modulesConfig.setModuleApplication(moduleInfo, application);
         }
       } catch(Exception e) {
-        /**/
+        moduleInfo.setError(new BundleException("Failed to parse bundle XML fragment", e));
       } finally {
-        if (is != null) {
-          IOUtils.closeQuietly(is);
-        }
+        IOUtils.closeQuietly(is);
       }
     }
   }
 
+  public BootClassHelper getBootClassHelper(IProject project) {
+    BootClassHelper bch = (BootClassHelper)getSessionProperty(project, BOOT_CLASS_HELPER);
+    if(bch == null) {
+      setBootClassHelper(project, bch = new BootClassHelper(JavaCore.create(project)));
+    }
+    return bch;
+  }
+  
+  public void setBootClassHelper(IProject project, BootClassHelper helper) {
+    setSessionProperty(project, BOOT_CLASS_HELPER, helper);
+  }
+  
   /**
    * Instantiate the config information from the passed-in text.
    */
-  private void loadConfiguration(IProject project, String xmlText) throws XmlException,
+  private void loadConfiguration(IProject project, String xmlText) throws Exception,
       ConcurrentModificationException, IOException {
     IFile configFile = getConfigurationFile(project);
 
@@ -792,11 +716,10 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       }
 
       setSessionProperty(project, CONFIGURATION, config);
+      setBootClassHelper(project, new BootClassHelper(JavaCore.create(project)));
 
-      if (config != null) {
-        getConfigurationHelper(project).validateAll();
-        fireConfigurationChange(project);
-      }
+      getConfigurationHelper(project).validateAll();
+      fireConfigurationChange(project);
     }
   }
 
@@ -902,15 +825,17 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
    * Sets the new config information from the passed-in text. This is invoked by the ConfigurationEditor after the user
    * modifies its contents manually.
    */
-  public void setConfigurationFromString(IProject project, String xmlText) throws IOException {
+  public void setConfigurationFromString(IProject project, String xmlText) throws Exception {
     TcConfig config = null;
 
     try {
       loadConfiguration(project, xmlText);
       config = (TcConfig) getSessionProperty(project, CONFIGURATION);
-    } catch (XmlException e) {
+    } catch (XmlException xmle) {
       LineLengths lineLengths = getConfigurationLineLengths(project);
-      handleXmlException(getConfigurationFile(project), lineLengths, e);
+      handleXmlException(getConfigurationFile(project), lineLengths, xmle);
+    } catch(Exception e) {
+      throw e;
     }
 
     if (config == null) {
@@ -957,30 +882,34 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     return doc;
   }
 
-  public synchronized TcConfig getConfiguration(IProject project) {
-    TcConfig config = (TcConfig) getSessionProperty(project, CONFIGURATION);
-
-    if (config == null) {
-      try {
-        loadConfiguration(project);
-        config = (TcConfig) getSessionProperty(project, CONFIGURATION);
-      } catch (XmlException e) {
-        LineLengths lineLengths = getConfigurationLineLengths(project);
-        handleXmlException(getConfigurationFile(project), lineLengths, e);
-      } catch (Exception e) {
-        /**/
-      } catch (NoClassDefFoundError noClassDef) {
-        noClassDef.printStackTrace();
-      }
-
+  public TcConfig getConfiguration(IProject project) {
+    if(project == null) return null;
+    
+    synchronized(project) {
+      TcConfig config = (TcConfig) getSessionProperty(project, CONFIGURATION);
+  
       if (config == null) {
-        config = BAD_CONFIG;
-        setSessionProperty(project, CONFIGURATION, config);
-        fireConfigurationChange(project);
+        try {
+          loadConfiguration(project);
+          config = (TcConfig) getSessionProperty(project, CONFIGURATION);
+        } catch (XmlException e) {
+          LineLengths lineLengths = getConfigurationLineLengths(project);
+          handleXmlException(getConfigurationFile(project), lineLengths, e);
+        } catch (Exception e) {
+          /**/
+        } catch (NoClassDefFoundError noClassDef) {
+          noClassDef.printStackTrace();
+        }
+  
+        if (config == null) {
+          config = BAD_CONFIG;
+          setSessionProperty(project, CONFIGURATION, config);
+          fireConfigurationChange(project);
+        }
       }
+      
+      return config;
     }
-
-    return config;
   }
 
   public void handleXmlException(IFile configFile, LineLengths lineLengths, XmlException e) {
@@ -1063,41 +992,56 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
   }
 
   public void reloadConfiguration(IProject project) {
-    clearConfigurationSessionProperties(project);
-    getConfiguration(project);
+    if(project == null) return;
 
-    ConfigurationEditor[] configEditors = getConfigurationEditors(project);
-    for (int i = 0; i < configEditors.length; i++) {
-      IFileEditorInput fileEditorInput = (IFileEditorInput) configEditors[i].getEditorInput();
-      IFile file = fileEditorInput.getFile();
-
-      configEditors[i].newInputFile(file);
+    synchronized(project) {
+      clearConfigurationSessionProperties(project);
+      getConfiguration(project);
+  
+      ConfigurationEditor[] configEditors = getConfigurationEditors(project);
+      for (int i = 0; i < configEditors.length; i++) {
+        IFileEditorInput fileEditorInput = (IFileEditorInput) configEditors[i].getEditorInput();
+        IFile file = fileEditorInput.getFile();
+        configEditors[i].newInputFile(file);
+      }
     }
   }
 
-  public synchronized void clearConfigurationSessionProperties(IProject project) {
-    IFile file = getConfigurationFile(project);
-    if (file != null && file.exists()) {
-      setSessionProperty(file, ACTIVE_CONFIGURATION_FILE, null);
+  public void clearConfigurationSessionProperties(IProject project) {
+    if(project == null) return;
+    
+    synchronized(project) {
+      IFile file = getConfigurationFile(project);
+      if (file != null && file.exists()) {
+        setSessionProperty(file, ACTIVE_CONFIGURATION_FILE, null);
+      }
+  
+      setSessionProperty(project, CONFIGURATION_LINE_LENGTHS, null);
+      setSessionProperty(project, CONFIGURATION_FILE, null);
+      setSessionProperty(project, CONFIGURATION, null);
+  
+      setConfigurationFileDirty(project, Boolean.FALSE);
     }
-
-    setSessionProperty(project, CONFIGURATION_LINE_LENGTHS, null);
-    setSessionProperty(project, CONFIGURATION_FILE, null);
-    setSessionProperty(project, CONFIGURATION, null);
-
-    setConfigurationFileDirty(project, Boolean.FALSE);
   }
 
   public void setConfigurationFileDirty(IProject project, Boolean dirty) {
-    setSessionProperty(project, IS_DIRTY, dirty);
+    if(project == null) return;
+
+    synchronized(project) {
+      setSessionProperty(project, IS_DIRTY, dirty);
+    }
   }
 
   public boolean isConfigurationFileDirty(IProject project) {
-    if (project.isOpen()) {
-      Boolean dirty = (Boolean) getSessionProperty(project, IS_DIRTY);
-      return dirty != null ? dirty.booleanValue() : false;
+    if(project == null) throw new IllegalArgumentException("Project is null");
+    
+    synchronized(project) {
+      if (project.isOpen()) {
+        Boolean dirty = (Boolean) getSessionProperty(project, IS_DIRTY);
+        return dirty != null ? dirty.booleanValue() : false;
+      }
+      return false;
     }
-    return false;
   }
 
   public void ignoreNextConfigChange() {
@@ -1579,7 +1523,9 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
 
   public void fireConfigurationChange(IProject project) {
     m_configurationEventManager.fireConfigurationChange(project);
-    JavaSetupParticipant.inspectAll();
+    if(hasTerracottaNature(project)) {
+      JavaSetupParticipant.inspectAll();
+    }
     updateDecorators();
   }
 

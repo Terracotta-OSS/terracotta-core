@@ -30,23 +30,28 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IActionDelegate;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.PlatformUI;
+import org.terracotta.dso.BootClassHelper;
 import org.terracotta.dso.BootJarHelper;
 import org.terracotta.dso.ClasspathProvider;
+import org.terracotta.dso.ConfigSpec;
 import org.terracotta.dso.ProjectNature;
 import org.terracotta.dso.TcPlugin;
 import org.terracotta.dso.dialogs.ExceptionDialog;
 
 import com.tc.util.concurrent.ThreadUtil;
 
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 
 public class BuildBootJarAction extends Action implements IActionDelegate, IWorkbenchWindowActionDelegate,
     IJavaLaunchConfigurationConstants, IProjectAction, IRunnableWithProgress {
   private IJavaProject        m_javaProject;
+  private ConfigSpec          m_configSpec;
   private IAction             m_action;
   private String              m_jreContainerPath;
   private IProcess            m_process;
@@ -67,6 +72,10 @@ public class BuildBootJarAction extends Action implements IActionDelegate, IWork
     m_javaProject = javaProject;
   }
 
+  public void setConfigSpec(ConfigSpec configSpec) {
+    m_configSpec = configSpec;
+  }
+
   public void setJREContainerPath(String path) {
     m_jreContainerPath = path;
   }
@@ -75,25 +84,29 @@ public class BuildBootJarAction extends Action implements IActionDelegate, IWork
     try {
       IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
       window.run(true, true, this);
-    }
-    catch(Exception e) {
+    } catch (Exception e) {
+      e.printStackTrace();
       Throwable t = e.getCause();
-      ExceptionDialog dialog = new ExceptionDialog(TcPlugin.getStandardDisplay().getActiveShell(), EXCEPTION_TITLE,
-          EXCEPTION_MESSAGE, t.getMessage());
-      dialog.open();
+      if (Display.getCurrent() != null) {
+        ExceptionDialog dialog = new ExceptionDialog(TcPlugin.getStandardDisplay().getActiveShell(), EXCEPTION_TITLE,
+                                                     EXCEPTION_MESSAGE, t.getMessage());
+        dialog.open();
+      } else {
+        TcPlugin.getDefault().openError("Building bootjar", t);
+      }
     }
   }
-  
+
   public void run(IProgressMonitor monitor) throws InvocationTargetException {
     try {
       monitor.beginTask("Creating DSO BootJar...", IProgressMonitor.UNKNOWN);
       doFinish(monitor);
       monitor.done();
-    } catch(Exception e) {
+    } catch (Exception e) {
       throw new InvocationTargetException(e);
     }
   }
-  
+
   private void doFinish(final IProgressMonitor monitor) throws Exception {
     ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
     ILaunchConfigurationType type = manager.getLaunchConfigurationType(ID_JAVA_APPLICATION);
@@ -117,7 +130,7 @@ public class BuildBootJarAction extends Action implements IActionDelegate, IWork
     String portablePath = m_jreContainerPath;
     if (portablePath == null) {
       IRuntimeClasspathEntry jreEntry = JavaRuntime.computeJREEntry(m_javaProject);
-      if(jreEntry != null) {
+      if (jreEntry != null) {
         IPath jrePath = jreEntry.getPath();
         if (jrePath != null) {
           portablePath = jrePath.makeAbsolute().toPortableString();
@@ -132,8 +145,6 @@ public class BuildBootJarAction extends Action implements IActionDelegate, IWork
     IPath outPath = project.getLocation().append(bootJarName);
     String args = "-v -w -o " + toOSString(outPath);
 
-    if(configPath != null) args +=  " -f " + toOSString(configPath);
-
     String origVMArgs = wc.getAttribute(ATTR_VM_ARGUMENTS, "") + " ";
     String vmargs;
     IPath jarPath = TcPlugin.getDefault().getLibDirPath().append("tc.jar");
@@ -142,8 +153,11 @@ public class BuildBootJarAction extends Action implements IActionDelegate, IWork
       vmargs = "-Dtc.install-root=\"" + installPath + "\"";
     } else {
       vmargs = "-Dtc.classpath=\"" + ClasspathProvider.makeDevClasspath() + "\" -Dtc.install-root=\""
-        + System.getProperty("tc.install-root") + "\"";
+               + System.getProperty("tc.install-root") + "\"";
     }
+
+    if (m_configSpec != null) vmargs += " -Dtc.config=\"" + m_configSpec.getSpec() + "\"";
+    else if (configPath != null) args += " -f " + toOSString(configPath);
 
     wc.setAttribute(ATTR_VM_ARGUMENTS, vmargs + origVMArgs);
     wc.setAttribute(ATTR_CLASSPATH_PROVIDER, CLASSPATH_PROVIDER);
@@ -185,6 +199,12 @@ public class BuildBootJarAction extends Action implements IActionDelegate, IWork
       throw new RuntimeException(errMonitor.getContents());
     } else {
       project.refreshLocal(IResource.DEPTH_INFINITE, null);
+      
+      File outFile = outPath.toFile();
+      if (outFile.exists()) { // it better exist, the process didn't return an error code
+        BootClassHelper.cacheBootTypes(outFile);
+      }
+      plugin.setBootClassHelper(project, new BootClassHelper(m_javaProject, bootJarName));
     }
 
     m_process = null;
@@ -239,10 +259,10 @@ public class BuildBootJarAction extends Action implements IActionDelegate, IWork
   }
 
   public void dispose() {
-  /**/
+    /**/
   }
 
   public void init(IWorkbenchWindow window) {
-  /**/
+    /**/
   }
 }

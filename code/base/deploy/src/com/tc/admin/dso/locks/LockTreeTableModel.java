@@ -6,7 +6,11 @@ package com.tc.admin.dso.locks;
 
 import com.tc.admin.common.treetable.AbstractTreeTableModel;
 import com.tc.admin.common.treetable.TreeTableModel;
-import com.tc.management.beans.LockStatisticsMonitorMBean;
+import com.tc.management.lock.stats.LockSpec;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
 
 import javax.swing.SwingConstants;
 import javax.swing.tree.TreePath;
@@ -20,8 +24,8 @@ public class LockTreeTableModel extends AbstractTreeTableModel {
 
   private RootLockNode      fRoot;
 
-  public LockTreeTableModel(LockStatisticsMonitorMBean lockStats) {
-    this(new RootLockNode(lockStats));
+  public LockTreeTableModel(Collection<LockSpec> lockInfos) {
+    this(new RootLockNode(lockInfos));
   }
 
   public LockTreeTableModel(RootLockNode root) {
@@ -29,34 +33,24 @@ public class LockTreeTableModel extends AbstractTreeTableModel {
     fRoot = (RootLockNode) getRoot();
   }
 
-  public void init() {
-    fRoot.init();
+  public void notifyChanged() {
     fireTreeStructureChanged(this, new TreePath[] { new TreePath(fRoot) }, null, null);
   }
 
-  /**
-   * All the elements of LockNode are either String or Long, which are comparable's.
-   */
-  private boolean compareAdjacentNodes(LockNode[] nodes, int direction, int row, int col) {
-    Comparable prev = (Comparable) nodes[row - 1].getValueAt(col);
-    Object next = nodes[row].getValueAt(col);
-    int diff = prev.compareTo(next);
+  private void sort(LockNode[] nodes, final int col, final int direction) {
+    if (nodes == null || nodes.length == 0) return;
 
-    return (direction == SwingConstants.SOUTH) ? (diff > 0) : (diff < 0);
-  }
-
-  private void sort(LockNode[] nodes, int col, int direction) {
-    int count = nodes.length;
-
-    for (int i = 0; i < count; i++) {
-      for (int j = i; j > 0 && compareAdjacentNodes(nodes, direction, j, col); j--) {
-        LockNode tmp = nodes[j];
-        nodes[j] = nodes[j - 1];
-        nodes[j - 1] = tmp;
+    Comparator c = new Comparator<LockNode>() {
+      public int compare(LockNode o1, LockNode o2) {
+        Comparable prev = (Comparable) o1.getValueAt(col);
+        Object next = o2.getValueAt(col);
+        int diff = prev.compareTo(next);
+        return (direction == SwingConstants.SOUTH) ? diff : -diff;
       }
-    }
+    };
+    Arrays.sort(nodes, c);
 
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < nodes.length; i++) {
       sort(nodes[i].children(), col, direction);
     }
   }

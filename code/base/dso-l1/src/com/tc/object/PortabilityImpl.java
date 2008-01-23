@@ -21,26 +21,12 @@ import java.util.Map;
 
 public class PortabilityImpl implements Portability {
 
-  private static final Class          OBJECT_CLASS         = Object.class;
-  private static final List           nonInstrumentedClass = new ArrayList();
-
-  static {
-    nonInstrumentedClass.add("java.lang.Object");
-    nonInstrumentedClass.add("java.lang.Number");
-    nonInstrumentedClass.add("java.util.AbstractList");
-    nonInstrumentedClass.add("java.util.AbstractCollection");
-    nonInstrumentedClass.add("java.util.AbstractQueue");
-    nonInstrumentedClass.add("java.util.Dictionary");
-    nonInstrumentedClass.add("java.lang.Enum");
-    nonInstrumentedClass.add("java.lang.reflect.AccessibleObject");
-    nonInstrumentedClass.add("java.util.concurrent.atomic.AtomicInteger");
-    nonInstrumentedClass.add("java.util.concurrent.atomic.AtomicLong");
-  }
-
-  private final LiteralValues         literalValues        = new LiteralValues();
-  private final Map                   portableCache        = new ConcurrentHashMap();
-  private final Map                   physicalCache        = new ConcurrentHashMap();
-  private final DSOClientConfigHelper config;
+  private static final Class                  OBJECT_CLASS           = Object.class;
+  private static final NonInstrumentedClasses nonInstrumentedClasses = new NonInstrumentedClasses();
+  private final LiteralValues                 literalValues          = new LiteralValues();
+  private final Map                           portableCache          = new ConcurrentHashMap();
+  private final Map                           physicalCache          = new ConcurrentHashMap();
+  private final DSOClientConfigHelper         config;
 
   public PortabilityImpl(DSOClientConfigHelper config) {
     this.config = config;
@@ -96,7 +82,7 @@ public class PortabilityImpl implements Portability {
       }
     }
 
-    if(uninstrumentedSupers.size() > 0 || reasonCode == NonPortableReason.CLASS_NOT_IN_BOOT_JAR) {
+    if (uninstrumentedSupers.size() > 0 || reasonCode == NonPortableReason.CLASS_NOT_IN_BOOT_JAR) {
       NonPortableReason reason = new NonPortableReason(topLevelClass, reasonCode);
       for (Iterator i = uninstrumentedSupers.iterator(); i.hasNext();) {
         reason.addErroneousSuperClass((Class) i.next());
@@ -142,7 +128,7 @@ public class PortabilityImpl implements Portability {
   }
 
   public boolean isInstrumentationNotNeeded(String clazzName) {
-    return nonInstrumentedClass.contains(clazzName);
+    return nonInstrumentedClasses.isInstrumentationNotNeeded(clazzName);
   }
 
   public boolean isClassPhysicallyInstrumented(Class clazz) {

@@ -24,14 +24,17 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.ui.JavaUIStatus;
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.window.ApplicationWindow;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
+import org.terracotta.dso.BootClassHelper;
 import org.terracotta.dso.ProjectNature;
 import org.terracotta.dso.TcPlugin;
+import org.terracotta.dso.actions.BuildBootJarAction;
 
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
@@ -112,6 +115,7 @@ public class ProjectWizard extends Wizard {
   public void doFinish(IProgressMonitor monitor)
     throws CoreException
   {
+    int stepIndex = 1;
     String step = "Adding Terracotta nature";
     
     monitor.beginTask(step, IProgressMonitor.UNKNOWN);
@@ -120,7 +124,7 @@ public class ProjectWizard extends Wizard {
     } catch(Throwable t) {
       handleProblem(step, t, monitor);
     }
-    monitor.worked(1);
+    monitor.worked(stepIndex++);
     
     monitor.subTask(step = "Creating Terracotta folder");
     try {
@@ -128,15 +132,25 @@ public class ProjectWizard extends Wizard {
     } catch(Throwable t) {
       handleProblem(step, t, monitor);
     }
-    monitor.worked(2);
+    monitor.worked(stepIndex++);
 
-    monitor.subTask(step = "Inspecting classes");
-    try {
-      inspectProject(monitor);
-    } catch(Throwable t) {
-      handleProblem(step, t, monitor);
+    if(!BootClassHelper.canGetBootTypes(m_javaProject)) {
+      monitor.subTask(step = "Building BootJar");
+      try {
+        buildBootJar(monitor);
+      } catch(Throwable t) {
+        handleProblem(step, t, monitor);
+      }
+      monitor.worked(stepIndex++);
     }
-    monitor.worked(3);
+    
+//    monitor.subTask(step = "Inspecting classes");
+//    try {
+//      inspectProject(monitor);
+//    } catch(Throwable t) {
+//      handleProblem(step, t, monitor);
+//    }
+//    monitor.worked(stepIndex++);
 
     TcPlugin.getDefault().updateDecorators();
     TcPlugin.getDefault().notifyProjectActions(m_javaProject.getProject());
@@ -304,7 +318,12 @@ public class ProjectWizard extends Wizard {
       }
     }
   }
-  
+
+  private void buildBootJar(IProgressMonitor monitor) {
+    BuildBootJarAction bbja = new BuildBootJarAction(m_javaProject);
+    bbja.run((IAction)null);
+  }
+
   public boolean canFinish() {
     return m_page.isPageComplete();
   }

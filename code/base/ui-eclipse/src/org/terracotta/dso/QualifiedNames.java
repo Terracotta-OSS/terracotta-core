@@ -43,6 +43,11 @@ public interface QualifiedNames {
                         "DomainConfig");
 
   public static final QualifiedName
+    BOOT_CLASS_HELPER =
+      new QualifiedName(TERRACOTTA_QUALIFIER,
+                        "BootClassHelper");
+  
+  public static final QualifiedName
     MODULES_CONFIGURATION =
       new QualifiedName(TERRACOTTA_QUALIFIER,
                         "ModulesConfig");

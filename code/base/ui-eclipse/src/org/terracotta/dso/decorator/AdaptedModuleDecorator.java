@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.terracotta.dso.decorator;
 
@@ -14,9 +15,8 @@ import org.terracotta.dso.ConfigurationHelper;
 import org.terracotta.dso.TcPlugin;
 
 /**
- * Adorns Java modules whose primary-type is instrumented.
-
- * The adornment appears in the Package Explorer amd Outline view.
+ * Adorns Java modules whose primary-type is instrumented. The adornment appears in the Package Explorer amd Outline
+ * view.
  * 
  * @see org.eclipse.jface.viewers.LabelProvider
  * @see org.terracotta.dso.ConfigurationHelper.isAdaptable
@@ -36,7 +36,7 @@ public class AdaptedModuleDecorator extends LabelProvider implements ILightweigh
     if (plugin != null && plugin.hasTerracottaNature(project)) {
       ConfigurationHelper config = plugin.getConfigurationHelper(project);
 
-      if (config != null && (config.isAdaptable(cu) || TcPlugin.getDefault().isBootClass(cu))) {
+      if (config != null && (config.isAdaptable(cu) || TcPlugin.getDefault().isBootClass(project, cu))) {
         decoration.addOverlay(m_imageDesc);
       }
     }

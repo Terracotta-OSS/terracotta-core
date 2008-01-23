@@ -21,29 +21,27 @@ public class ExcludedTypeAction extends BaseAction {
   public ExcludedTypeAction() {
     super("Excluded", AS_CHECK_BOX);
   }
-  
+
   public void setJavaElement(IJavaElement element) {
     super.setJavaElement(element);
-    
-    if(element instanceof IType) {
-      IType   type        = (IType)element;
-      boolean isBootClass = TcPlugin.getDefault().isBootClass(type); 
-      
+
+    if (element instanceof IType) {
+      IType type = (IType) element;
+      boolean isBootClass = TcPlugin.getDefault().isBootClass(type.getJavaProject().getProject(), type);
+
       setEnabled(!isBootClass);
       setChecked(!isBootClass && getConfigHelper().isExcluded(type));
-    }
-    else {
+    } else {
       setChecked(getConfigHelper().isExcluded(element));
     }
   }
-  
+
   public void performAction() {
     ConfigurationHelper helper = getConfigHelper();
-    
-    if(isChecked()) {
+
+    if (isChecked()) {
       helper.ensureExcluded(m_element);
-    }
-    else {
+    } else {
       helper.ensureNotExcluded(m_element);
     }
 
