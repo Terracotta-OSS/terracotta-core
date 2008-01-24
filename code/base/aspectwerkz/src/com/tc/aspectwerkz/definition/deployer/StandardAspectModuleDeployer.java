@@ -143,7 +143,9 @@ public class StandardAspectModuleDeployer implements AspectModuleDeployer {
 
   private void loadModule(String moduleName) {
     try {
-      Class aspectModuleClass = getClass().getClassLoader().loadClass(moduleName);
+      Class aspectModuleClass = Class.forName(moduleName, true, getClass().getClassLoader());
+      //Class aspectModuleClass = getClass().getClassLoader().loadClass(moduleName);
+      //Class aspectModuleClass = m_loader.loadClass(moduleName);
       AspectModule aspectModule = (AspectModule) aspectModuleClass.newInstance();
       aspectModule.deploy(this);
     } catch (Throwable e) {
