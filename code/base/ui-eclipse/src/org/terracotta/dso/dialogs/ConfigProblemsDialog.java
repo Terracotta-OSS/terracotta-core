@@ -41,7 +41,7 @@ public class ConfigProblemsDialog extends MessageDialog {
   private static String  DISABLE_CONFIG_WARNINGS_MSG = "Always proceed even if there are config problems";
 
   private static String  TITLE                       = "Terracotta";
-  private static String  MSG                         = "The are problems with the Terracotta configuration. Continue?";
+  private static String  MSG                         = "There are problems with the Terracotta configuration. Continue?";
 
   private static Image   ERROR_IMG                   = getSharedImage("IMG_OBJS_ERROR_PATH");
   private static Image   WARNING_IMG                 = getSharedImage("IMG_OBJS_WARNING_PATH");
