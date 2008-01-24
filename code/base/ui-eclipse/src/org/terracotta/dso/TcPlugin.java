@@ -259,7 +259,11 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
 
     IPath tcInstallPath = getLocation();
     if (tcInstallPath != null) {
-      System.setProperty("tc.install", tcInstallPath.toString());
+      String installRootProp = "tc.install-root";
+      String installRoot = System.getProperty(installRootProp);
+      if(installRoot == null) {
+        System.setProperty(installRootProp, tcInstallPath.toString());
+      }
     }
 
     m_xmlOptions = createXmlOptions();
