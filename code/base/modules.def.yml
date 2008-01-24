@@ -645,32 +645,6 @@ modules:
         - legacy-test-tree
         - clustered-ehcache-commons-1.0
         - dso-system-tests
-  - clustered-hibernate-3.1.2:
-      options:
-        jdk: J2SE-1.4
-        module: true
-      dependencies:
-        - modules-common
-        - clustered-cglib-2.1.3
-        - aspectwerkz
-        - linked-child-process
-        - common-api
-        - common
-        - dso-common
-        - management
-        - dso-common-jdk15
-        - dso-l1-api
-        - dso-l1
-        - dso-l1-jdk15
-        - dso-l2-common
-        - deploy
-        - dso-l2
-        - simulator
-        - thirdparty-api
-        - thirdparty
-        - legacy-test-tree
-        - dso-memory-datastore
-        - clustered-ehcache-commons-1.0
   - clustered-websphere-6.1.0.7:
       options:
         jdk: J2SE-1.5
@@ -715,7 +689,6 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
-        - dso-l1-jdk15
         - dso-l1-session
         - management
         - simulator
@@ -724,7 +697,59 @@ modules:
         - legacy-test-tree
         - dso-l2-common
         - dso-l2
-        - deploy                
+        - deploy
+  - clustered-hibernate-3.1.2:
+      options:
+        jdk: J2SE-1.4
+        module: true
+      dependencies:
+        - modules-common
+        - clustered-cglib-2.1.3
+        - dso-container-tests
+        - aspectwerkz
+        - linked-child-process
+        - common-api
+        - common
+        - dso-common
+        - management
+        - dso-common-jdk15
+        - dso-l1-api
+        - dso-l1
+        - dso-l2-common
+        - deploy
+        - dso-l2
+        - simulator
+        - thirdparty-api
+        - thirdparty
+        - legacy-test-tree
+        - dso-memory-datastore
+        - clustered-ehcache-commons-1.0
+  - clustered-hibernate-3.2.5:
+      options:
+        jdk: J2SE-1.4
+        module: true
+      dependencies:
+        - modules-common
+        - clustered-cglib-2.1.3
+        - dso-container-tests
+        - aspectwerkz
+        - linked-child-process
+        - common-api
+        - common
+        - dso-common
+        - management
+        - dso-common-jdk15
+        - dso-l1-api
+        - dso-l1
+        - dso-l2-common
+        - deploy
+        - dso-l2
+        - simulator
+        - thirdparty-api
+        - thirdparty
+        - legacy-test-tree
+        - dso-memory-datastore
+        - clustered-ehcache-commons-1.0
   - clustered-rife-1.6.0:
       options:
         jdk: J2SE-1.5
@@ -836,6 +861,7 @@ module-groups:
     - dso-container-tests
     - clustered-rife-1.6.0
     - clustered-wicket-1.3
+    - clustered-hibernate-3.2.5
   spring:
     - dso-spring
     - dso-spring-aj
@@ -877,6 +903,7 @@ module-groups:
     - clustered-ehcache-1.3
     - clustered-ehcache-1.2.4
     - clustered-hibernate-3.1.2
+    - clustered-hibernate-3.2.5
     - clustered-websphere-6.1.0.7
     - clustered-wicket-1.3
     - excludes-config

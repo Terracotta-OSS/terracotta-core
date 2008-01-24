@@ -17,6 +17,9 @@ import com.tc.management.lock.stats.LockSpec;
 import com.tc.management.lock.stats.LockStatElement;
 import com.tc.management.lock.stats.LockStatisticsMessage;
 import com.tc.management.lock.stats.LockStatisticsResponseMessage;
+import com.tc.management.lock.stats.TCStackTraceElement;
+import com.tc.net.groups.ClientID;
+import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -56,6 +59,8 @@ import com.tc.util.Assert;
 import java.lang.reflect.Constructor;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 
 import junit.framework.TestCase;
 
@@ -68,11 +73,13 @@ public class ClientServerLockStatisticsTest extends TestCase {
   private ClientLockStatManager           clientLockStatManager;
   private L2LockStatsManager              serverLockStatManager;
   private ChannelID                       channelId1 = new ChannelID(1);
+  private ClientMessageChannel channel1;
+  private TestSink sink;
 
   protected void setUp() throws Exception {
     super.setUp();
 
-    TestSink sink = new TestSink();
+    sink = new TestSink();
     sessionManager = new TestSessionManager();
     clientServerGlue = new ClientServerLockStatManagerGlue(sessionManager, sink);
     clientLockStatManager = new ClientLockStatisticsManagerImpl();
@@ -84,11 +91,47 @@ public class ClientServerLockStatisticsTest extends TestCase {
     serverLockManager = new LockManagerImpl(nullChannelManager, serverLockStatManager);
     serverLockManager.setLockPolicy(LockManagerImpl.ALTRUISTIC_LOCK_POLICY);
 
-    ClientMessageChannel channel1 = new TestClientMessageChannel(channelId1, sink);
+    channel1 = new TestClientMessageChannel(channelId1, sink);
     serverLockStatManager.start(new TestChannelManager(channel1));
 
     clientLockStatManager.start(new TestClientChannel(channel1), sink);
     clientServerGlue.set(clientLockManager, serverLockManager, clientLockStatManager, serverLockStatManager);
+  }
+  
+  public void testClientDisconnect() {
+    final CyclicBarrier localBarrier = new CyclicBarrier(2);
+    DSOChannelManager nullChannelManager = new NullChannelManager();
+    serverLockStatManager = new MockL2LockStatManagerImpl(localBarrier);
+    serverLockManager = new LockManagerImpl(nullChannelManager, serverLockStatManager);
+
+    serverLockStatManager.start(new TestChannelManager(channel1));
+    clientServerGlue.set(clientLockManager, serverLockManager, clientLockStatManager, serverLockStatManager);
+    
+    final LockID l1 = new LockID("1");
+    final ThreadID tx1 = new ThreadID(1);
+    final ThreadID tx2 = new ThreadID(1);
+    
+    Thread t1 = new Thread(new Runnable() {
+      public void run() {
+        serverLockManager.clearAllLocksFor(new ClientID(channelId1));
+        try {
+          localBarrier.await();
+        } catch (InterruptedException e) {
+          throw new AssertionError(e);
+        } catch (BrokenBarrierException e) {
+          throw new AssertionError(e);
+        }
+      }
+    });
+    serverLockStatManager.setLockStatisticsConfig(1, 1);
+    clientLockManager.lock(l1, tx1, LockLevel.WRITE, null, "lock manually");
+    t1.start();
+    Collection c = serverLockStatManager.getLockSpecs();
+    Assert.assertEquals(1, c.size());
+    LockSpec lockSpec = (LockSpec)c.iterator().next();
+    Assert.assertEquals(0, lockSpec.children().size());
+    
+    clientLockManager.unlock(l1, tx2);
   }
 
   public void testCollectLockStackTraces() {
@@ -318,4 +361,25 @@ public class ClientServerLockStatisticsTest extends TestCase {
       throw new ImplementMe();
     }
   }
+  
+  private static class MockL2LockStatManagerImpl extends L2LockStatisticsManagerImpl {
+    private final CyclicBarrier barrier;
+    
+    public MockL2LockStatManagerImpl(CyclicBarrier barrier) {
+      super();
+      this.barrier = barrier;
+    }
+    
+    public void recordClientStat(NodeID nodeID, Collection<TCStackTraceElement> stackTraceElements) {
+      try {
+        barrier.await();
+        super.recordClientStat(nodeID, stackTraceElements);
+      } catch (InterruptedException e) {
+        throw new AssertionError(e);
+      } catch (BrokenBarrierException e) {
+        throw new AssertionError(e);
+      }
+    }
+  }
+
 }

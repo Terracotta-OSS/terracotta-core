@@ -424,6 +424,7 @@ public class CacheDataStore implements Serializable {
 
       try {
         final Timestamp dtm = findTimestampUnlocked(timestampEntry.getKey());
+        logDebug("checking validation key: " + timestampEntry.getKey() + ", dtm: " + dtm);
         if (dtm == null) continue;
         totalCnt++;
         if (dtm.getInvalidatedTimeMillis() < System.currentTimeMillis()) {

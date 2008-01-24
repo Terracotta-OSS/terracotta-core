@@ -4,6 +4,8 @@
 
 package com.tctest.domain;
 
+import com.tctest.domain.Person;
+
 
 public class Account {
 

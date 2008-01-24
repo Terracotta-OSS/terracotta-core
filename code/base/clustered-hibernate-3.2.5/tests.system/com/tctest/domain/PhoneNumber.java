@@ -4,6 +4,8 @@
 
 package com.tctest.domain;
 
+import com.tctest.domain.PhoneNumber;
+
 import java.io.Serializable;
 
 /**

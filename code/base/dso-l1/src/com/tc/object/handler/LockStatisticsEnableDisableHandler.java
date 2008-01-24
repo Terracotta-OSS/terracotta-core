@@ -25,6 +25,8 @@ public class LockStatisticsEnableDisableHandler extends AbstractEventHandler {
       clientLockManager.setLockStatisticsEnabled(false);
     } else if (msg.isGatherLockStatistics()) {
       clientLockManager.requestLockSpecs();
+    } else {
+      throw new AssertionError("Invalid tasks type from Lock Statistics Message.");
     }
   }
   

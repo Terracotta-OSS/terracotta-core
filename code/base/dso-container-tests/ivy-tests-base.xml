@@ -8,7 +8,6 @@
     <dependency name="cargo-core-uberjar" rev="0.9-tc-20080103" org="terracotta"/>
     <dependency name="httpunit" rev="1.6.2"/>
     <dependency name="spring" rev="2.0.1" org="terracotta"/>
-    <dependency name="hibernate" rev="3.1.2" org="terracotta"/>
     <dependency name="dom4j" rev="1.6.1"/>
     <dependency name="cglib-nodep" rev="2.1_3" org="terracotta"/>
     <dependency name="jta" rev="1.0.1b" org="terracotta"/>

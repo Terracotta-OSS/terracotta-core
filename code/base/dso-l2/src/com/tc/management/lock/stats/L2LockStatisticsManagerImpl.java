@@ -29,7 +29,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
   private static final TCLogger logger                   = TCLogging.getLogger(L2LockStatisticsManagerImpl.class);
 
   private DSOChannelManager     channelManager;
-  private final Set<NodeID>     lockSpecRequestedNodeIDs = new HashSet<NodeID>();
+  protected final Set<NodeID>   lockSpecRequestedNodeIDs = new HashSet<NodeID>();
 
   private final static void sendLockStatisticsEnableDisableMessage(MessageChannel channel, boolean statsEnable,
                                                                    int traceDepth, int gatherInterval) {
@@ -97,10 +97,10 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
 
     sendLockStatisticsEnableDisableMessageIfNeeded(traceDepth, gatherInterval);
   }
-  
+
   public void setLockStatisticsEnabled(boolean statEnable) {
     super.setLockStatisticsEnabled(statEnable);
-    
+
     sendLockStatisticsEnableDisableMessageIfNeeded(lockStatConfig.getTraceDepth(), lockStatConfig.getGatherInterval());
   }
 
@@ -150,20 +150,23 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
   }
 
   public synchronized void recordClientStat(NodeID nodeID, Collection<TCStackTraceElement> stackTraceElements) {
-    if (stackTraceElements.size() > 0) {
-      for (Iterator<TCStackTraceElement> i = stackTraceElements.iterator(); i.hasNext();) {
-        TCStackTraceElement tcStackTraceElement = i.next();
-        LockID lockID = tcStackTraceElement.getLockID();
-        Collection lockStatElements = tcStackTraceElement.getLockStatElements();
+    boolean nodeWaitingForStat = lockSpecRequestedNodeIDs.remove(nodeID);
 
-        ServerLockStatisticsInfoImpl lsc = (ServerLockStatisticsInfoImpl) getOrCreateLockStatInfo(lockID);
-        lsc.setLockStatElements(nodeID, lockStatElements);
+    if (nodeWaitingForStat) {
+      if (stackTraceElements.size() > 0) {
+        for (Iterator<TCStackTraceElement> i = stackTraceElements.iterator(); i.hasNext();) {
+          TCStackTraceElement tcStackTraceElement = i.next();
+          LockID lockID = tcStackTraceElement.getLockID();
+          Collection lockStatElements = tcStackTraceElement.getLockStatElements();
+
+          ServerLockStatisticsInfoImpl lsc = (ServerLockStatisticsInfoImpl) getOrCreateLockStatInfo(lockID);
+          lsc.setLockStatElements(nodeID, lockStatElements);
+        }
       }
-    }
 
-    lockSpecRequestedNodeIDs.remove(nodeID);
-    if (lockSpecRequestedNodeIDs.isEmpty()) {
-      notifyAll();
+      if (lockSpecRequestedNodeIDs.isEmpty()) {
+        notifyAll();
+      }
     }
   }
 
@@ -223,16 +226,21 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
   }
 
   public synchronized void clearAllStatsFor(NodeID nodeID) {
-    lockSpecRequestedNodeIDs.remove(nodeID);
-    for (Iterator<ServerLockStatisticsInfoImpl> i = lockStats.values().iterator(); i.hasNext();) {
-      ServerLockStatisticsInfoImpl lsc = i.next();
-      lsc.clearAllStatsFor(nodeID);
+    boolean statExistForNode = lockSpecRequestedNodeIDs.remove(nodeID);
+    if (statExistForNode) {
+      for (Iterator<ServerLockStatisticsInfoImpl> i = lockStats.values().iterator(); i.hasNext();) {
+        ServerLockStatisticsInfoImpl lsc = i.next();
+        lsc.clearAllStatsFor(nodeID);
+      }
+      if (lockSpecRequestedNodeIDs.isEmpty()) {
+        notifyAll();
+      }
     }
   }
 
   public void enableStatsForNodeIfNeeded(NodeID nodeID) {
     if (!lockStatisticsEnabled) { return; }
-    
+
     try {
       MessageChannel channel = channelManager.getActiveChannel(nodeID);
       int traceDepth = getTraceDepth();
@@ -244,7 +252,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
       logger.warn(e);
     }
   }
-  
+
   private void sendLockStatisticsEnableDisableMessageIfNeeded(int traceDepth, int gatherInterval) {
     if (isLockStatisticsEnabled()) {
       MessageChannel[] channels = channelManager.getActiveChannels();

@@ -2,7 +2,7 @@
  * All content copyright (c) 2003-2007 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tctest.server.appserver.unit;
+package com.tctest;
 
 import net.sf.ehcache.Cache;
 import net.sf.jsr107cache.CacheListener;
@@ -19,21 +19,20 @@ import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tc.test.server.util.TcConfigBuilder;
 import com.tc.util.TIMUtil;
-import com.tctest.webapp.servlets.ContainerHibernateTestServlet;
 
 import java.io.PrintWriter;
 import java.util.Date;
 
 import junit.framework.Test;
 
-public class ContainerHibernateTest extends AbstractTwoServerDeploymentTest {
+public class ContainerHibernate325Test extends AbstractTwoServerDeploymentTest {
   private static final String CONFIG_FILE_FOR_TEST = "/tc-config-files/hibernate-tc-config.xml";
 
   public static Test suite() {
     return new ContainerHibernateTestSetup();
   }
 
-  public ContainerHibernateTest() {
+  public ContainerHibernate325Test() {
     if (shouldDisable()) {
       disableAllUntil(new Date(Long.MAX_VALUE));
     }
@@ -64,7 +63,7 @@ public class ContainerHibernateTest extends AbstractTwoServerDeploymentTest {
     private NetworkServerControl derbyServer;
 
     private ContainerHibernateTestSetup() {
-      super(ContainerHibernateTest.class, CONFIG_FILE_FOR_TEST, "events");
+      super(ContainerHibernate325Test.class, CONFIG_FILE_FOR_TEST, "events");
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -98,7 +97,7 @@ public class ContainerHibernateTest extends AbstractTwoServerDeploymentTest {
 
     protected void configureTcConfig(TcConfigBuilder clientConfig) {
       clientConfig.addModule(TIMUtil.EHCACHE_1_3, TIMUtil.getVersion(TIMUtil.EHCACHE_1_3));
-      clientConfig.addModule(TIMUtil.HIBERNATE_3_1_2, TIMUtil.getVersion(TIMUtil.HIBERNATE_3_1_2));
+      clientConfig.addModule(TIMUtil.HIBERNATE_3_2_5, TIMUtil.getVersion(TIMUtil.HIBERNATE_3_2_5));
     }
     
     public void setUp() throws Exception {

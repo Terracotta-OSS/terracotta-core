@@ -4,6 +4,8 @@
 
 package com.tctest.domain;
 
+import com.tctest.domain.Event;
+
 import java.util.HashSet;
 import java.util.Set;
 

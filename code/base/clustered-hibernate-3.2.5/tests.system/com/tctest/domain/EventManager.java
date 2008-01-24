@@ -2,6 +2,12 @@ package com.tctest.domain;
 
 import org.hibernate.Session;
 
+import com.tctest.domain.Account;
+import com.tctest.domain.Event;
+import com.tctest.domain.HibernateUtil;
+import com.tctest.domain.Person;
+import com.tctest.domain.PhoneNumber;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;

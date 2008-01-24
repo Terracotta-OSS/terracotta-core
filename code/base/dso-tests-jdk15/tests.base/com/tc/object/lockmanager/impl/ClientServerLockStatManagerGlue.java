@@ -42,8 +42,6 @@ public class ClientServerLockStatManagerGlue extends ClientServerLockManagerGlue
         if (lrc.isLockAward()) {
           clientLockManager.awardLock(sessionProvider.getSessionID(), lrc.getLockID(), lrc.getThreadID(), lrc
               .getLockLevel());
-//        } else if (lrc.isLockStatEnabled()) {
-//          clientLockStatManager.setLockStatisticsConfig(lrc.getStatTraceDepth(), lrc.getStatGatherInterval());
         }
       } else if (ec instanceof LockStatisticsMessage) {
         LockStatisticsMessage lsm = (LockStatisticsMessage)ec;

@@ -22,6 +22,7 @@ public class TIMUtil {
   public static final String      EHCACHE_1_2_4;
   public static final String      EHCACHE_1_3;
   public static final String      HIBERNATE_3_1_2;
+  public static final String      HIBERNATE_3_2_5;
   public static final String      IBATIS_2_2_0;
   public static final String      LUCENE_2_0_0;
   public static final String      RIFE_1_6_0;
@@ -45,6 +46,7 @@ public class TIMUtil {
     EHCACHE_1_2_4 = lookup(".*ehcache-1.2.4");
     EHCACHE_1_3 = lookup(".*ehcache-1.3");
     HIBERNATE_3_1_2 = lookup(".*hibernate-3.1.2");
+    HIBERNATE_3_2_5 = lookup(".*hibernate-3.2.5");
     IBATIS_2_2_0 = lookup(".*iBatis-2.2.0");
     LUCENE_2_0_0 = lookup(".*lucene-2.0.0");
     RIFE_1_6_0 = lookup(".*rife-1.6.0");
