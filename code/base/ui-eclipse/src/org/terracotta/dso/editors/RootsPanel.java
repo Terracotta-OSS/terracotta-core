@@ -181,10 +181,14 @@ public class RootsPanel extends ConfigurationEditorPanel {
     String sansWhitespace = StringUtils.deleteWhitespace(fieldNameOrExpression);
     if(fieldNameOrExpression.length() != sansWhitespace.length()) {
       root.setFieldExpression(fieldNameOrExpression);
-      root.unsetFieldName();
+      if(root.isSetFieldName()) {
+        root.unsetFieldName();
+      }
     } else {
       root.setFieldName(fieldNameOrExpression);
-      root.unsetFieldName();
+      if(root.isSetFieldExpression()) {
+        root.unsetFieldExpression();
+      }
     }
     createTableItem(root);
 
