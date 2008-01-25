@@ -29,7 +29,7 @@ public class ReflectorTest extends TestCase {
   protected void setUp() throws Exception {
     URL url = new URL(reflectorUrl);
     
-    String expiredDate = "2008-01-02";
+    String expiredDate = "2008-01-30";
     if (System.currentTimeMillis() > new SimpleDateFormat("yyyy-MM-dd").parse(expiredDate).getTime()) {      
       reflector.load(url.openStream());
     } else {
