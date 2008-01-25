@@ -8,13 +8,16 @@ import com.meterware.httpunit.HeadMethodWebRequest;
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
+import com.tc.util.runtime.Vm;
 
 import java.net.URL;
 import java.text.SimpleDateFormat;
-import java.util.HashMap;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import junit.framework.TestCase;
 
@@ -22,36 +25,44 @@ import junit.framework.TestCase;
  * Test reflector links INT-404
  */
 public class ReflectorTest extends TestCase {
-  private static final String reflectorUrl = "http://svn.terracotta.org/svn/tc/reflector/reflector.properties";
-  private Properties          reflector    = new Properties();
-  private Map                 brokenLinks  = new HashMap();
+  private static final String reflectorUrl  = "http://svn.terracotta.org/svn/tc/reflector/reflector.properties";
+  private Properties          reflector     = new Properties();
+  private Set                 brokenLinks   = new HashSet();
+  private Set                 excludedLinks = new HashSet();
 
   protected void setUp() throws Exception {
     URL url = new URL(reflectorUrl);
-    
-    String expiredDate = "2008-01-30";
-    if (System.currentTimeMillis() > new SimpleDateFormat("yyyy-MM-dd").parse(expiredDate).getTime()) {      
-      reflector.load(url.openStream());
+
+    Date disabledUntilDate = new SimpleDateFormat("yyyy-MM-dd").parse("2008-01-01");
+
+    if (disabledUntilDate.after(new Date())) {
+      System.out.println("Test disabled till: " + disabledUntilDate);
     } else {
-      System.out.println("Test disabled till: " + expiredDate);
+      reflector.load(url.openStream());
     }
-      
+
+    // excluded links - no need to check
+    excludedLinks.add("iqcs.depguide");
+    excludedLinks.add("default.update.properties");
   }
 
   public void testBrokenLinks() throws Exception {
+    // only run this test with jdk1.4 to reduce the amount
+    // of unnecessary runs
+    if (!Vm.isJDK14()) return;
+
     for (Iterator it = reflector.entrySet().iterator(); it.hasNext();) {
       Map.Entry e = (Map.Entry) it.next();
-      if (e.getValue().toString().indexOf("svn.terracotta.org") > 0) continue;
+      if (excludedLinks.contains(e.getKey())) continue;
+      System.out.println("Checking link: " + e.getKey() + " = " + e.getValue());
       assertNotBroken((String) e.getKey(), (String) e.getValue());
     }
 
+    // report broken links
     if (brokenLinks.size() > 0) {
       StringBuffer keys = new StringBuffer();
-      System.err.println("Broken links:");
-      for (Iterator it = brokenLinks.entrySet().iterator(); it.hasNext();) {
-        Map.Entry e = (Map.Entry) it.next();
-        System.err.println(e.getKey() + " = " + e.getValue());
-        keys.append((String)e.getKey()).append("\n");
+      for (Iterator it = brokenLinks.iterator(); it.hasNext();) {
+        keys.append((String) it.next()).append("\n");
       }
       fail("Broken links found on reflector. Please let Orion or Fiona know.\n" + keys.toString());
     }
@@ -62,7 +73,7 @@ public class ReflectorTest extends TestCase {
     WebConversation wc = new WebConversation();
     WebResponse response = wc.getResource(request);
     if (response.getResponseCode() != 200) {
-      brokenLinks.put(desc, link);
+      brokenLinks.add(desc + " = " + link);
     }
   }
 }
