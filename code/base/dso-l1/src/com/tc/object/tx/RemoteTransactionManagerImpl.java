@@ -36,10 +36,12 @@ import java.util.Map.Entry;
 
 /**
  * Sends off committed transactions
- * 
+ *
  * @author steve
  */
 public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
+
+  private static final long                FLUSH_WAIT_INTERVAL         = 15 * 1000;
 
   private static final long                TIMEOUT                     = 30000L;
 
@@ -169,16 +171,15 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   }
 
   public void flush(LockID lockID) {
+    final long start = System.currentTimeMillis();
     boolean isInterrupted = false;
     Collection c;
     synchronized (lock) {
       while ((!(c = lockAccounting.getTransactionsFor(lockID)).isEmpty())) {
         try {
-          long waitTime = 15 * 1000;
-          long t0 = System.currentTimeMillis();
-          lock.wait(waitTime);
-          if ((System.currentTimeMillis() - t0) > waitTime) {
-            logger.info("Flush for " + lockID + " took longer than: " + waitTime
+          lock.wait(FLUSH_WAIT_INTERVAL);
+          if ((System.currentTimeMillis() - start) > FLUSH_WAIT_INTERVAL) {
+            logger.info("Flush for " + lockID + " took longer than: " + FLUSH_WAIT_INTERVAL
                         + "ms. # Transactions not yet Acked = " + c.size() + "\n");
           }
         } catch (InterruptedException e) {
@@ -454,7 +455,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     public void run() {
       try {
         TransactionID lwm = getCompletedTransactionIDLowWaterMark();
-        if(lwm.isNull()) return;
+        if (lwm.isNull()) return;
         CompletedTransactionLowWaterMarkMessage ctm = channel.getCompletedTransactionLowWaterMarkMessageFactory()
             .newCompletedTransactionLowWaterMarkMessage();
         ctm.initialize(lwm);

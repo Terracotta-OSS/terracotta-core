@@ -15,7 +15,7 @@ import com.tctest.runner.AbstractTransparentApp;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CyclicBarrier;
 
-public class ConcurrentHashMapSwapingTestApp extends AbstractTransparentApp {
+public class ConcurrentHashMapSwappingTestApp extends AbstractTransparentApp {
   public static final String      GC_TEST_KEY         = "gc-test";
 
   private static final int        DEFAULT_NUM_OF_PUT  = 2000;
@@ -32,7 +32,7 @@ public class ConcurrentHashMapSwapingTestApp extends AbstractTransparentApp {
   private final int               numOfPut;
   private final int               numOfLoop;
 
-  public ConcurrentHashMapSwapingTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
+  public ConcurrentHashMapSwappingTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     barrier = new CyclicBarrier(getParticipantCount());
 
@@ -115,7 +115,7 @@ public class ConcurrentHashMapSwapingTestApp extends AbstractTransparentApp {
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    String testClass = ConcurrentHashMapSwapingTestApp.class.getName();
+    String testClass = ConcurrentHashMapSwappingTestApp.class.getName();
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
 
     config.addIncludePattern(testClass + "$*", false, false, true);

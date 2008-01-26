@@ -3,7 +3,7 @@
  */
 package com.tctest;
 
-public class ConcurrentHashMapSwapingTest extends TransparentTestBase {
+public class ConcurrentHashMapSwappingTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 4;
 
@@ -13,7 +13,7 @@ public class ConcurrentHashMapSwapingTest extends TransparentTestBase {
   }
 
   protected Class getApplicationClass() {
-    return ConcurrentHashMapSwapingTestApp.class;
+    return ConcurrentHashMapSwappingTestApp.class;
   }
 
 }

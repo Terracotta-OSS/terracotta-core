@@ -1153,7 +1153,15 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
         if (removed != null) {
           Object pr = removed.getPeerObject();
           if (pr != null) {
-            int cleared = removed.clearReferences(toClear);
+            // We don't want to take dso locks while clearing since it will happen inside the scope of the resolve lock (see CDV-596)
+            txManager.disableTransactionLogging();
+            final int cleared;
+            try {
+              cleared = removed.clearReferences(toClear);
+            } finally {
+              txManager.enableTransactionLogging();
+            }
+
             totalReferencesCleared += cleared;
             if (debug) {
               logger.debug("Clearing:" + removed.getObjectID() + " class:" + pr.getClass() + " Total cleared =  "
