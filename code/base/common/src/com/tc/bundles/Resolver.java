@@ -404,7 +404,7 @@ public class Resolver {
 
   private String warn(final Message message, final Object[] arguments) {
     final String msg = formatMessage(message, arguments);
-    consoleLogger.warn(msg);
+    logger.warn(msg);
     return msg;
   }
 
