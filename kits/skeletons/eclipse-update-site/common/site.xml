@@ -11,6 +11,10 @@
       <category name="dso"/>
    </feature>
 
+   <feature url="features/org.terracotta.dso_2.5.1.r6823_v20080124.jar" id="org.terracotta.dso" version="2.5.1.r6823_v20080124">
+      <category name="dso"/>
+   </feature>
+   
    <feature url="features/org.terracotta.dso_2.5.0.r6472_v20071210.jar" id="org.terracotta.dso" version="2.5.0.r6472_v20071210">
       <category name="dso"/>
    </feature>
