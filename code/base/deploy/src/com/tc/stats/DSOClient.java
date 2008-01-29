@@ -4,6 +4,8 @@
  */
 package com.tc.stats;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -20,11 +22,13 @@ import javax.management.NotCompliantMBeanException;
 
 public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean {
 
-  private final MessageChannel channel;
-  private final SampledCounter txnRate;
-  private final SampledCounter flushRate;
-  private final SampledCounter faultRate;
-  private final Counter        pendingTransactions;
+  private static final TCLogger logger = TCLogging.getLogger(DSOClient.class);
+
+  private final MessageChannel  channel;
+  private final SampledCounter  txnRate;
+  private final SampledCounter  flushRate;
+  private final SampledCounter  faultRate;
+  private final Counter         pendingTransactions;
 
   public DSOClient(final MessageChannel channel, final ChannelStats channelStats) throws NotCompliantMBeanException {
     super(DSOClientMBean.class, false);
@@ -60,7 +64,7 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
   public CountStatistic getObjectFlushRate() {
     return StatsUtil.makeCountStat(flushRate);
   }
-  
+
   public CountStatistic getPendingTransactionsCount() {
     return StatsUtil.makeCountStat(pendingTransactions);
   }
@@ -80,6 +84,11 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     }
 
     return result;
+  }
+
+  public void killClient() {
+    logger.warn("Killing Client on JMX Request :" + channel);
+    channel.close();
   }
 
 }

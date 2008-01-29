@@ -24,4 +24,5 @@ public interface DSOClientMBean extends TerracottaMBean {
 
   Statistic[] getStatistics(String[] names);
 
+  void killClient();
 }
