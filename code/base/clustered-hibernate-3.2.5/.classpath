@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry output="build.eclipse/src.classes" kind="src" path="src"/>
-	<classpathentry output="build.eclipse/src.classes" kind="src" path="src.resources"/>
-	<classpathentry output="build.eclipse/tests.system.classes" kind="src" path="tests.system"/>
-	<classpathentry output="build.eclipse/tests.system.classes" kind="src" path="tests.system.resources"/>
+	<classpathentry kind="src" output="build.eclipse/src.classes" path="src"/>
+	<classpathentry kind="src" output="build.eclipse/src.classes" path="src.resources"/>
+	<classpathentry kind="src" output="build.eclipse/tests.system.classes" path="tests.system"/>
+	<classpathentry kind="src" output="build.eclipse/tests.system.classes" path="tests.system.resources"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/aspectwerkz"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/clustered-cglib-2.1.3"/>
@@ -13,6 +13,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/deploy"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-common-jdk15"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-container-tests"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l2"/>
@@ -26,14 +27,12 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty-api"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/cglib-nodep-2.1_3.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/derby-10.2.2.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/derbyclient-10.2.2.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/derbynet-10.2.2.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/dom4j-1.6.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/ehcache-1.2.4.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/hibernate-3.2.5.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/hsqldb-1.7.2.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jta-1.0.1b.jar"/>
-	<classpathentry sourcepath="C:/Program Files/hibernate-3.2.5/hibernate-3.2/src" kind="lib" path="/dependencies/lib/hibernate-3.2.5.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/dso-container-tests"/>
-	<classpathentry kind="lib" path="/dependencies/lib/derby-10.2.2.0.jar"/>
-	<classpathentry kind="lib" path="/dependencies/lib/derbyclient-10.2.2.0.jar"/>
-	<classpathentry kind="lib" path="/dependencies/lib/derbynet-10.2.2.0.jar"/>
-	<classpathentry kind="output" path="bin"/>
 </classpath>
