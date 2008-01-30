@@ -4,6 +4,8 @@
  */
 package com.tctest;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -16,6 +18,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CyclicBarrier;
 
 public class ConcurrentHashMapSwappingTestApp extends AbstractTransparentApp {
+  private static final TCLogger   logger              = TCLogging
+                                                          .getTestingLogger(ConcurrentHashMapSwappingTestApp.class);
   public static final String      GC_TEST_KEY         = "gc-test";
 
   private static final int        DEFAULT_NUM_OF_PUT  = 2000;
@@ -92,13 +96,16 @@ public class ConcurrentHashMapSwappingTestApp extends AbstractTransparentApp {
     Assert.assertEquals(MAX_KEY_VALUE, mapRoot.size());
 
     for (int i = 0; i < MAX_KEY_VALUE; i++) {
-      int useVal = i % MAX_KEY_VALUE;
+      int useVal = i;
       if (i % 100 == 0) System.err.println("Getting key: " + useVal);
       Object key = new HashKey(useVal);
       if (key.hashCode() == System.identityHashCode(key)) {
         String assertionMsg = "Getting key: " + useVal + ", hashCode: " + key.hashCode() + ", identityHashCode: "
                               + System.identityHashCode(key);
-        throw new AssertionError(assertionMsg);
+        logger.warn(assertionMsg);
+        while (System.identityHashCode(key) == key.hashCode()) {
+          key = new HashKey(useVal);
+        }
       }
       Assert.assertEquals(new HashValue(useVal), mapRoot.get(key));
     }
