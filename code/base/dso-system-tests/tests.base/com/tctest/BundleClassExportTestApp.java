@@ -18,10 +18,13 @@ public class BundleClassExportTestApp extends AbstractErrorCatchingTransparentAp
   }
 
   protected void runTest() throws Throwable {
-    Class.forName("org.terracotta.modules.test.DummyClass");
+    //Class.forName("org.terracotta.modules.test.DummyClass");
+    
+    // CDV-598
+    getClass().getClassLoader().loadClass("org.terracotta.modules.test.DummyClass");
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    //config.addModule(TIMUtil.MODULES_COMMON, TIMUtil.getVersion(TIMUtil.MODULES_COMMON));
+    //
   }
 }
