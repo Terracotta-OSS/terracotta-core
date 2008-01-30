@@ -1,9 +1,9 @@
 package com.tctest;
 
-public class BundleClassExportTest extends TransparentTestBase {
+public class BundleClassExportLoadClassTest extends TransparentTestBase {
   public static final int NODE_COUNT = 1;
 
-  public BundleClassExportTest() {
+  public BundleClassExportLoadClassTest() {
     // CDV-598
     disableAllUntil("2008-06-30");
   }
@@ -14,6 +14,6 @@ public class BundleClassExportTest extends TransparentTestBase {
   }
 
   protected Class getApplicationClass() {
-    return BundleClassExportTestApp.class;
+    return BundleClassExportLoadClassTestApp.class;
   }
 }
