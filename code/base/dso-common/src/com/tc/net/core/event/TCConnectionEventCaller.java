@@ -14,10 +14,16 @@ import java.util.List;
 
 // calls each event only once
 public class TCConnectionEventCaller {
+  private static final int  CONNECT      = 1;
+  private static final int  EOF          = 2;
+  private static final int  ERROR        = 3;
+  private static final int  CLOSE        = 4;
+
   private final SetOnceFlag connectEvent = new SetOnceFlag();
   private final SetOnceFlag eofEvent     = new SetOnceFlag();
   private final SetOnceFlag errorEvent   = new SetOnceFlag();
   private final SetOnceFlag closeEvent   = new SetOnceFlag();
+
   private final TCLogger    logger;
 
   public TCConnectionEventCaller(TCLogger logger) {
@@ -28,71 +34,60 @@ public class TCConnectionEventCaller {
                              final TCNetworkMessage context) {
     if (errorEvent.attemptSet()) {
       final TCConnectionErrorEvent event = new TCConnectionErrorEvent(conn, exception, context);
-      fireErrorEvent(eventListeners, event, logger);
-    }
-  }
-
-  public static void fireErrorEvent(List eventListeners, final TCConnectionErrorEvent event, final TCLogger logger) {
-    for (Iterator iter = eventListeners.iterator(); iter.hasNext();) {
-      TCConnectionEventListener listener = (TCConnectionEventListener) iter.next();
-      try {
-        listener.errorEvent(event);
-      } catch (Exception e) {
-        logger.error("Unhandled exception in event handler", e);
-      }
+      fireEvent(eventListeners, event, logger, ERROR);
     }
   }
 
   public void fireConnectEvent(List eventListeners, TCConnection conn) {
     if (connectEvent.attemptSet()) {
       final TCConnectionEvent event = new TCConnectionEvent(conn);
-      fireConnectEvent(eventListeners, event, logger);
-    }
-  }
-
-  public static void fireConnectEvent(List eventListeners, final TCConnectionEvent event, final TCLogger logger) {
-    for (Iterator iter = eventListeners.iterator(); iter.hasNext();) {
-      TCConnectionEventListener listener = (TCConnectionEventListener) iter.next();
-      try {
-        listener.connectEvent(event);
-      } catch (Exception e) {
-        logger.error("Unhandled exception in event handler", e);
-      }
+      fireEvent(eventListeners, event, logger, CONNECT);
     }
   }
 
   public void fireEndOfFileEvent(List eventListeners, TCConnection conn) {
     if (eofEvent.attemptSet()) {
       final TCConnectionEvent event = new TCConnectionEvent(conn);
-      fireEndOfFileEvent(eventListeners, event, logger);
-    }
-  }
-
-  public static void fireEndOfFileEvent(List eventListeners, final TCConnectionEvent event, final TCLogger logger) {
-    for (Iterator iter = eventListeners.iterator(); iter.hasNext();) {
-      TCConnectionEventListener listener = (TCConnectionEventListener) iter.next();
-      try {
-        listener.endOfFileEvent(event);
-      } catch (Exception e) {
-        logger.error("Unhandled exception in event handler", e);
-      }
+      fireEvent(eventListeners, event, logger, EOF);
     }
   }
 
   public void fireCloseEvent(List eventListeners, TCConnection conn) {
     if (closeEvent.attemptSet()) {
       final TCConnectionEvent event = new TCConnectionEvent(conn);
-      fireCloseEvent(eventListeners, event, logger);
+      fireEvent(eventListeners, event, logger, CLOSE);
     }
   }
 
-  public static void fireCloseEvent(List eventListeners, final TCConnectionEvent event, TCLogger logger) {
+  private static void fireEvent(List eventListeners, TCConnectionEvent event, TCLogger logger, int type) {
     for (Iterator iter = eventListeners.iterator(); iter.hasNext();) {
       TCConnectionEventListener listener = (TCConnectionEventListener) iter.next();
       try {
-        listener.closeEvent(event);
+        switch (type) {
+          case CONNECT: {
+            listener.connectEvent(event);
+            break;
+          }
+          case EOF: {
+            listener.endOfFileEvent(event);
+            break;
+          }
+          case ERROR: {
+            // cast is yucky here :-(
+            listener.errorEvent((TCConnectionErrorEvent) event);
+            break;
+          }
+          case CLOSE: {
+            listener.closeEvent(event);
+            break;
+          }
+          default: {
+            throw new AssertionError("unknown event type: " + type);
+          }
+        }
       } catch (Exception e) {
         logger.error("Unhandled exception in event handler", e);
+        throw new RuntimeException(e);
       }
     }
   }

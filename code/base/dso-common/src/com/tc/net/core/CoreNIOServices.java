@@ -61,7 +61,7 @@ class CoreNIOServices extends Thread implements TCListenerEventListener {
       selectLoop();
     } catch (Throwable t) {
       logger.error("Unhandled exception from selectLoop", t);
-      t.printStackTrace();
+      throw new RuntimeException(t);
     } finally {
       dispose(selector, selectorTasks);
     }
