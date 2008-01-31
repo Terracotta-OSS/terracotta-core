@@ -8,6 +8,9 @@
 # to a module-group as below (spring, dso, container, etc...)
 
 modules:
+  - reflector-test:
+      options:
+        jdk: J2SE-1.5
   - linked-child-process:
       options:
         jdk: J2SE-1.4
@@ -857,6 +860,8 @@ modules:
         - modules-common
 # these groups are used by the monkeys to run tests in each module.
 module-groups:
+  reflector:
+    - reflector-test
   container:
     - dso-container-tests
     - clustered-rife-1.6.0
