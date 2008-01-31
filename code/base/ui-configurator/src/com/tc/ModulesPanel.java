@@ -143,8 +143,7 @@ public class ModulesPanel extends XContainer implements TableModelListener {
     m_modulesTableModel.clear();
     m_repositoriesTableModel.clear();
     if (m_modules != null) {
-      //m_repositoriesTableModel.set(m_modules.xgetRepositoryArray());
-      m_repositoriesTableModel.set(m_modules.getRepositoryArray());
+      m_repositoriesTableModel.set(m_modules.xgetRepositoryArray());
       m_modulesTableModel.set(m_modules.getModuleArray());
     }
   }
