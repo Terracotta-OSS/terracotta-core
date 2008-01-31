@@ -435,6 +435,11 @@ END
     check_one('AssertTest')
   end
 
+  # monkey target to test reflector links
+  def check_reflector
+    check_one('ReflectorTest')
+  end
+  
   # Target that runs tests for all modules which are not assigned to a module group.
   # This is to ensure that modules that are not assigned to a group are executed by
   # the 'alltests' monkey.
