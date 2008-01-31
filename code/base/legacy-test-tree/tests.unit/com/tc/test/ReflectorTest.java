@@ -8,7 +8,6 @@ import com.meterware.httpunit.HeadMethodWebRequest;
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
-import com.tc.util.runtime.Vm;
 
 import java.net.URL;
 import java.text.SimpleDateFormat;
