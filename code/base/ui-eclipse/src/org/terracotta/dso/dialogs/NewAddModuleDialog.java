@@ -93,6 +93,8 @@ public class NewAddModuleDialog extends MessageDialog {
     });
     fGroupIdCombo.addFocusListener(new FocusAdapter() {
       public void focusLost(FocusEvent e) {
+        Shell shell = getShell();
+        if(shell == null || shell.isDisposed()) return;
         String text = fGroupIdCombo.getText();
         if (fGroupIdCombo.indexOf(text) == -1) {
           fGroupIdCombo.add(text);
@@ -105,6 +107,7 @@ public class NewAddModuleDialog extends MessageDialog {
     fTable = new Table(comp, SWT.BORDER | SWT.MULTI | SWT.FULL_SELECTION | SWT.V_SCROLL);
     fTable.setHeaderVisible(true);
     fTable.setLinesVisible(true);
+    SWTUtil.makeTableColumnsResizeWeightedWidth(comp, fTable, new int[] { 2, 2, 1 });
     GridData gridData = new GridData(GridData.FILL_BOTH);
     gridData.heightHint = SWTUtil.tableRowsToPixels(fTable, 10);
     gridData.widthHint = SWTUtil.textColumnsToPixels(fTable, 100);
@@ -128,11 +131,12 @@ public class NewAddModuleDialog extends MessageDialog {
     column2.pack();
     column2.addSelectionListener(fColumnSelectionListener);
 
-    SWTUtil.makeTableColumnsResizeWeightedWidth(comp, fTable, new int[] { 2, 2, 1 });
-
+    populateTable();
+    fTable.setFocus();
+    
     fTable.addMouseMoveListener(new MouseMoveListener() {
       public void mouseMove(MouseEvent e) {
-        String tip = null;
+        String tip = null; 
         TableItem item = fTable.getItem(new Point(e.x, e.y));
         if (item != null) {
           ItemData itemData = (ItemData) item.getData();
@@ -141,8 +145,6 @@ public class NewAddModuleDialog extends MessageDialog {
         fPathLabel.setText(tip);
       }
     });
-
-    populateTable();
 
     fPathLabel = new CLabel(comp, SWT.NONE);
     fPathLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));

@@ -152,7 +152,7 @@ public final class SWTUtil {
         Rectangle area = tablePanel.getClientArea();
         Point preferredSize = table.computeSize(SWT.DEFAULT, SWT.DEFAULT);
         int width = area.width - 2 * table.getBorderWidth();
-        if (preferredSize.y > area.height + table.getHeaderHeight()) {
+        if ((preferredSize.y  + table.getHeaderHeight()) > area.height) {
           Point vBarSize = table.getVerticalBar().getSize();
           width -= vBarSize.x + 1; // don't know why +1 is needed, but it is
         }
