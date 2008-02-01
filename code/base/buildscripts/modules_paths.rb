@@ -267,10 +267,10 @@ class BuildSubtree
     # dependent upon.
     def full_classpath(build_results, type)
         out = PathSet.new
+        out << module_only_classpath(build_results, type)
         dependent_subtrees do |dependent_subtree|
             out << dependent_subtree.module_only_classpath(build_results, type)
         end
-        out << module_only_classpath(build_results, type)
         out
     end
 
