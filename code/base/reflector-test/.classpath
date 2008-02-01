@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" output="build.eclipse/tests.unit.classes" path="tests.unit"/>
+	<classpathentry kind="src" output="build.eclipse/tests.unit.classes" path="tests.system"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/httpunit-1.6.2.jar"/>
 	<classpathentry kind="lib" path="/dependencies/lib/junit-3.8.1.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
+	<classpathentry kind="output" path="bin"/>
 </classpath>

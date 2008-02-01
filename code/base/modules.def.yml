@@ -11,6 +11,8 @@ modules:
   - reflector-test:
       options:
         jdk: J2SE-1.5
+      dependencies:
+        - common
   - linked-child-process:
       options:
         jdk: J2SE-1.4

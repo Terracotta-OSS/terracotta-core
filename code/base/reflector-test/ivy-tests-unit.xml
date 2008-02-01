@@ -2,7 +2,9 @@
 <ivy-module version="1.0">
   <info organisation="ibiblio" module="reflector-test-tests-unit"/>
   <dependencies>
-  	<dependency name="httpunit" rev="1.6.2"/>
+    <dependency name="ant" rev="1.6.5"/>
+    <dependency name="ant" rev="junit-1.6.5"/>
+    <dependency name="httpunit" rev="1.6.2"/>
     <dependency name="junit" rev="3.8.1"/>
   </dependencies>
 </ivy-module>

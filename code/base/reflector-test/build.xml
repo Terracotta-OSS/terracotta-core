@@ -4,7 +4,7 @@
   target: resolve              
   ================================= -->
   <target name="resolve" description="--> retreive dependencies with ivy">
-  	<ivy:resolve file="${basedir}/ivy-tests-unit.xml"/>
+  	<ivy:resolve file="${basedir}/ivy-tests-system.xml"/>
     <ivy:retrieve pattern="${ivy.dependencies.dir}/[artifact]-[revision].[ext]"/>
   </target>
   
