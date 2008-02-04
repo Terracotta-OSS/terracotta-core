@@ -6,6 +6,7 @@ package com.tc.l2.msg;
 
 import com.tc.async.api.OrderedEventContext;
 import com.tc.bytes.TCByteBuffer;
+import com.tc.lang.Recyclable;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.NodeID;
 import com.tc.net.groups.NodeIDSerializer;
@@ -25,7 +26,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class RelayedCommitTransactionMessage extends AbstractGroupMessage implements OrderedEventContext,
-    GlobalTransactionIDGenerator {
+    GlobalTransactionIDGenerator, Recyclable {
 
   public static final int        RELAYED_COMMIT_TXN_MSG_TYPE = 0;
 
@@ -35,11 +36,17 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
   private NodeID                 nodeID;
   private long                   sequenceID;
 
+  /**
+   * This message is recycled only at the read end (passive)
+   */
+  private final boolean          recyclable;
+
   private GlobalTransactionID    lowWaterMark;
 
   // To make serialization happy
   public RelayedCommitTransactionMessage() {
     super(-1);
+    recyclable = true;
   }
 
   public RelayedCommitTransactionMessage(NodeID nodeID, TCByteBuffer[] batchData, ObjectStringSerializer serializer,
@@ -51,6 +58,7 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
     this.sid2gid = sid2gid;
     this.sequenceID = seqID;
     this.lowWaterMark = lowWaterMark;
+    this.recyclable = false;
   }
 
   public NodeID getClientID() {
@@ -122,6 +130,16 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
 
   public long getSequenceID() {
     return sequenceID;
+  }
+
+  /**
+   * This message is recycled only at the read end (passive)
+   */
+  public void recycle() {
+    Assert.assertTrue(recyclable);
+    for (int i = 0; i < batchData.length; i++) {
+      batchData[i].recycle();
+    }
   }
 
 }

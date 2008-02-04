@@ -3,6 +3,8 @@
  */
 package com.tc.object.msg;
 
+import com.tc.lang.Recyclable;
+
 import java.util.Set;
 
 public interface MessageRecycler {
@@ -12,7 +14,7 @@ public interface MessageRecycler {
    * the set of keys that needs to be processed before the message can be recycled. These
    * keys should be unique across the calls.
    */
-  public void addMessage(DSOMessageBase message, Set keys);
+  public void addMessage(Recyclable message, Set keys);
   
   /*
    * Indicates that the key is processed. The message associated with the key will be recycled

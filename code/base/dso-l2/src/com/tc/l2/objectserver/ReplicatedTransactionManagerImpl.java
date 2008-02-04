@@ -12,6 +12,7 @@ import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.msg.ObjectSyncResetMessage;
 import com.tc.l2.msg.ObjectSyncResetMessageFactory;
 import com.tc.l2.state.StateManager;
+import com.tc.lang.Recyclable;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.groups.GroupException;
@@ -23,6 +24,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.impl.VersionizedDNAWrapper;
 import com.tc.object.gtx.GlobalTransactionID;
+import com.tc.object.msg.MessageRecycler;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.tx.ServerTransaction;
@@ -63,13 +65,16 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
 
   private final ServerGlobalTransactionManager         gtxm;
 
+  private final MessageRecycler                        recycler;
+
   public ReplicatedTransactionManagerImpl(GroupManager groupManager, OrderedSink objectsSyncSink,
                                           ServerTransactionManager transactionManager,
-                                          ServerGlobalTransactionManager gtxm) {
+                                          ServerGlobalTransactionManager gtxm, MessageRecycler recycler) {
     this.groupManager = groupManager;
     this.objectsSyncSink = objectsSyncSink;
     this.transactionManager = transactionManager;
     this.gtxm = gtxm;
+    this.recycler = recycler;
     groupManager.registerForMessages(ObjectSyncResetMessage.class, this);
     this.delegate = passiveUninitTxnMgr;
   }
@@ -86,8 +91,8 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     delegate.clearTransactionsBelowLowWaterMark(lowGlobalTransactionIDWatermark);
   }
 
-  public synchronized void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns) {
-    delegate.addCommitedTransactions(nodeID, txnIDs, txns);
+  public synchronized void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns, Recyclable message) {
+    delegate.addCommitedTransactions(nodeID, txnIDs, txns, message);
   }
 
   public synchronized void addObjectSyncTransaction(ServerTransaction txn) {
@@ -148,7 +153,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
 
   private final class NullPassiveTransactionManager implements PassiveTransactionManager {
 
-    public void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns) {
+    public void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns, Recyclable message) {
       // There could still be some messages in the queue that arrives after the node becomes ACTIVE
       logger.warn("NullPassiveTransactionManager :: Ignoring commit Txn Messages from " + nodeID);
     }
@@ -160,11 +165,13 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     public void clearTransactionsBelowLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark) {
       throw new AssertionError("Recd. LowWaterMark while in ACTIVE state : " + lowGlobalTransactionIDWatermark);
     }
+
   }
 
   private final class PassiveStandbyTransactionManager implements PassiveTransactionManager {
 
-    public void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns) {
+    public void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns, Recyclable message) {
+      recycler.addMessage(message, txnIDs);
       addIncommingTransactions(nodeID, txnIDs, txns);
     }
 
@@ -188,7 +195,9 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     ObjectIDSet2          existingOIDs = new ObjectIDSet2();
     PendingChangesAccount pca          = new PendingChangesAccount();
 
-    public void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns) {
+    // NOTE::XXX:: MEssages are not REcylced in Passive Uninitialized state because of complicated pruning
+    // code. Messages may have to live longer than Txn acks.
+    public void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns, Recyclable message) {
       Assert.assertEquals(txnIDs.size(), txns.size());
       LinkedHashMap prunedTransactionsMap = pruneTransactions(txns);
       Collection prunedTxns = prunedTransactionsMap.values();

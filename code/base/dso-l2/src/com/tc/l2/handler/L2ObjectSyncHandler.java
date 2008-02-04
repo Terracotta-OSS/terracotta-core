@@ -69,8 +69,6 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
     sendSink.add(msg);
   }
 
-  // TODO::Recycle msg after use. NOTE:: If you are implementing recycling, checkout ReplicatedTransactionManager's
-  // PASSIVE-UNINITIALIZED pruned changes code. Messgaes may have to live longer than Txn acks.
   private Set processCommitTransactionMessage(RelayedCommitTransactionMessage commitMessage) {
     try {
       final TransactionBatchReader reader = batchReaderFactory.newTransactionBatchReader(commitMessage);
@@ -80,7 +78,7 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
       while ((txn = reader.getNextTransaction()) != null) {
         txns.put(txn.getServerTransactionID(), txn);
       }
-      rTxnManager.addCommitedTransactions(reader.getNodeID(), txns.keySet(), txns.values());
+      rTxnManager.addCommitedTransactions(reader.getNodeID(), txns.keySet(), txns.values(), commitMessage);
       return txns.keySet();
     } catch (IOException e) {
       throw new AssertionError(e);

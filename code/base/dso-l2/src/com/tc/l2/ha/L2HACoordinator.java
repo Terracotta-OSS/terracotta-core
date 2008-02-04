@@ -47,6 +47,7 @@ import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupManagerFactory;
 import com.tc.net.groups.Node;
 import com.tc.net.groups.NodeID;
+import com.tc.object.msg.MessageRecycler;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -83,19 +84,19 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
   public L2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server, StageManager stageManager,
                          PersistentMapStore clusterStateStore, ObjectManager objectManager,
                          ServerTransactionManager transactionManager, ServerGlobalTransactionManager gtxm,
-                         DSOChannelManager channelManager, NewHaConfig haConfig) {
+                         DSOChannelManager channelManager, NewHaConfig haConfig, MessageRecycler recycler) {
     this.consoleLogger = consoleLogger;
     this.server = server;
     this.haConfig = haConfig;
 
-    init(stageManager, clusterStateStore, objectManager, transactionManager, gtxm, channelManager);
+    init(stageManager, clusterStateStore, objectManager, transactionManager, gtxm, channelManager, recycler);
   }
 
   private void init(StageManager stageManager, PersistentMapStore clusterStateStore, ObjectManager objectManager,
                     ServerTransactionManager transactionManager, ServerGlobalTransactionManager gtxm,
-                    DSOChannelManager channelManager) {
+                    DSOChannelManager channelManager, MessageRecycler recycler) {
     try {
-      basicInit(stageManager, clusterStateStore, objectManager, transactionManager, gtxm, channelManager);
+      basicInit(stageManager, clusterStateStore, objectManager, transactionManager, gtxm, channelManager, recycler);
     } catch (GroupException e) {
       logger.error(e);
       throw new AssertionError(e);
@@ -104,7 +105,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
 
   private void basicInit(StageManager stageManager, PersistentMapStore clusterStateStore, ObjectManager objectManager,
                          ServerTransactionManager transactionManager, ServerGlobalTransactionManager gtxm,
-                         DSOChannelManager channelManager) throws GroupException {
+                         DSOChannelManager channelManager, MessageRecycler recycler) throws GroupException {
 
     this.clusterState = new ClusterState(clusterStateStore, server.getManagedObjectStore(), server
         .getConnectionIdFactory(), gtxm.getGlobalTransactionIDSequenceProvider());
@@ -153,7 +154,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
         .getConnectionIdFactory(), stageManager.getStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE).getSink());
 
     OrderedSink orderedObjectsSyncSink = new OrderedSink(logger, objectsSyncSink);
-    this.rTxnManager = new ReplicatedTransactionManagerImpl(groupManager, orderedObjectsSyncSink, transactionManager, gtxm);
+    this.rTxnManager = new ReplicatedTransactionManagerImpl(groupManager, orderedObjectsSyncSink, transactionManager, gtxm, recycler);
 
     this.rObjectManager = new ReplicatedObjectManagerImpl(groupManager, stateManager, l2ObjectStateManager,
                                                           rTxnManager, objectManager, transactionManager,

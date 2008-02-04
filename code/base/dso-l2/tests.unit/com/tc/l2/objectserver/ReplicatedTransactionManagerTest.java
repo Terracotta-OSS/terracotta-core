@@ -6,6 +6,7 @@ package com.tc.l2.objectserver;
 
 import com.tc.async.impl.MockSink;
 import com.tc.async.impl.OrderedSink;
+import com.tc.lang.Recyclable;
 import com.tc.logging.TCLogging;
 import com.tc.net.groups.ClientID;
 import com.tc.net.groups.SingleNodeGroupManager;
@@ -16,6 +17,7 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.msg.NullMessageRecycler;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
@@ -54,7 +56,7 @@ public class ReplicatedTransactionManagerTest extends TestCase {
     txnMgr = new TestServerTransactionManager();
     gtxm = new TestGlobalTransactionManager();
     rtm = new ReplicatedTransactionManagerImpl(grpMgr, new OrderedSink(TCLogging
-        .getLogger(ReplicatedTransactionManagerTest.class), new MockSink()), txnMgr, gtxm);
+        .getLogger(ReplicatedTransactionManagerTest.class), new MockSink()), txnMgr, gtxm, new NullMessageRecycler());
   }
 
   /**
@@ -69,38 +71,40 @@ public class ReplicatedTransactionManagerTest extends TestCase {
     // two objects are already present
     rtm.init(knownIds);
 
+    NullRecyclableMessage message = new NullRecyclableMessage();
+
     LinkedHashMap txns = createTxns(1, 1, 2, false);
-    rtm.addCommitedTransactions(clientID, txns.keySet(), txns.values());
+    rtm.addCommitedTransactions(clientID, txns.keySet(), txns.values(), message);
 
     // Since both are know oids, transactions should pass thru
     assertAndClear(txns.values());
 
     // create a txn containing a new Object (OID 3)
     txns = createTxns(1, 3, 1, true);
-    rtm.addCommitedTransactions(clientID, txns.keySet(), txns.values());
+    rtm.addCommitedTransactions(clientID, txns.keySet(), txns.values(), message);
 
     // Should go thru too
     assertAndClear(txns.values());
 
     // Now create a txn with all three objects
     txns = createTxns(1, 1, 3, false);
-    rtm.addCommitedTransactions(clientID, txns.keySet(), txns.values());
+    rtm.addCommitedTransactions(clientID, txns.keySet(), txns.values(), message);
 
     // Since all are known oids, transactions should pass thru
     assertAndClear(txns.values());
 
     // Now create a txn with all unknown ObjectIDs (4,5,6)
     txns = createTxns(1, 4, 3, false);
-    rtm.addCommitedTransactions(clientID, txns.keySet(), txns.values());
+    rtm.addCommitedTransactions(clientID, txns.keySet(), txns.values(), message);
 
     // None should be sent thru
     assertTrue(txnMgr.incomingTxns.isEmpty());
 
     // Create more txns with all unknown ObjectIDs (7,8,9)
     LinkedHashMap txns1 = createTxns(1, 7, 1, false);
-    rtm.addCommitedTransactions(clientID, txns1.keySet(), txns1.values());
+    rtm.addCommitedTransactions(clientID, txns1.keySet(), txns1.values(), message);
     LinkedHashMap txns2 = createTxns(1, 8, 2, false);
-    rtm.addCommitedTransactions(clientID, txns2.keySet(), txns2.values());
+    rtm.addCommitedTransactions(clientID, txns2.keySet(), txns2.values(), message);
 
     // None should be sent thru
     assertTrue(txnMgr.incomingTxns.isEmpty());
@@ -119,7 +123,7 @@ public class ReplicatedTransactionManagerTest extends TestCase {
 
     // Now send transaction complete for txn1, with new Objects (10), this should clear pending changes for 7
     txns = createTxns(1, 10, 1, true);
-    rtm.addCommitedTransactions(clientID, txns.keySet(), txns.values());
+    rtm.addCommitedTransactions(clientID, txns.keySet(), txns.values(), message);
     rtm.clearTransactionsBelowLowWaterMark(getNextLowWaterMark(txns1.values()));
     assertAndClear(txns.values());
 
@@ -224,6 +228,14 @@ public class ReplicatedTransactionManagerTest extends TestCase {
       map.put(tx.getServerTransactionID(), tx);
     }
     return map;
+  }
+
+  private static class NullRecyclableMessage implements Recyclable {
+
+    public void recycle() {
+      return;
+    }
+
   }
 
 }

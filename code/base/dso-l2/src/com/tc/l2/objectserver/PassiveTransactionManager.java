@@ -4,6 +4,7 @@
  */
 package com.tc.l2.objectserver;
 
+import com.tc.lang.Recyclable;
 import com.tc.net.groups.NodeID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.objectserver.tx.ServerTransaction;
@@ -13,7 +14,7 @@ import java.util.Set;
 
 public interface PassiveTransactionManager {
 
-  public void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns);
+  public void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns, Recyclable message);
 
   public void addObjectSyncTransaction(ServerTransaction txn);
 

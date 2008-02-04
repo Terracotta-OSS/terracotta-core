@@ -4,6 +4,8 @@
  */
 package com.tc.object.msg;
 
+import com.tc.lang.Recyclable;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -22,7 +24,7 @@ public class MessageRecyclerImpl implements MessageRecycler {
     super();
   }
 
-  public synchronized void addMessage(DSOMessageBase message, Set keys) {
+  public synchronized void addMessage(Recyclable message, Set keys) {
     if (!keys.isEmpty()) {
       final Set lkeys = new HashSet(keys.size());
       RecycleItem ri = new RecycleItem(message, lkeys);
@@ -36,7 +38,7 @@ public class MessageRecyclerImpl implements MessageRecycler {
       message.recycle();
     }
     if (messages.size() > MAX_MESSAGES_TO_HOLD) {
-      // Let GC take care of it. We dont want a OOME !
+      // Let GC take care of it. We don't want a OOME !
       RecycleItem ri = (RecycleItem) messages.removeLast();
       remove(ri);
     }
@@ -55,7 +57,7 @@ public class MessageRecyclerImpl implements MessageRecycler {
       keys.remove(key);
       if (keys.isEmpty()) {
         messages.remove(ri);
-        DSOMessageBase message = ri.getMessage();
+        Recyclable message = ri.getMessage();
         message.recycle();
         return true;
       }
@@ -64,15 +66,15 @@ public class MessageRecyclerImpl implements MessageRecycler {
   }
 
   static final class RecycleItem {
-    DSOMessageBase message;
+    Recyclable message;
     Set            keys;
 
-    RecycleItem(DSOMessageBase message, Set keys) {
+    RecycleItem(Recyclable message, Set keys) {
       this.message = message;
       this.keys = keys;
     }
 
-    public DSOMessageBase getMessage() {
+    public Recyclable getMessage() {
       return message;
     }
 

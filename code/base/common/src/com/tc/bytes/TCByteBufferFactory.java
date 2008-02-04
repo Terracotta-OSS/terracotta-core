@@ -139,7 +139,7 @@ public class TCByteBufferFactory {
    *        will never be returned if this parameter is false. Direct buffers may or MAY NOT returned if the parameter
    *        is true. The returned buffers may be a mix of direct and non-direct
    * @param length
-   * @return an array of TCByteBuffer instances (with length always >= 1). The limit of the last buffer may be less then
+   * @return an array of TCByteBuffer instances. The limit of the last buffer may be less then
    *         it's capacity to adjust for the given length
    */
   public static TCByteBuffer[] getFixedSizedInstancesForLength(final boolean direct, final int length) {

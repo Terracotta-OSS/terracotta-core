@@ -4,8 +4,8 @@
  */
 package com.tc.l2.objectserver;
 
-import com.tc.exception.ImplementMe;
 import com.tc.l2.context.StateChangedEvent;
+import com.tc.lang.Recyclable;
 import com.tc.net.groups.NodeID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.objectserver.tx.ServerTransaction;
@@ -15,37 +15,33 @@ import java.util.Set;
 
 public class NonReplicatedTransactionManager implements ReplicatedTransactionManager {
 
-  public void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns, Collection completedTxnIDs) {
-    throw new ImplementMe();
+  public void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns, Recyclable message) {
+    throw new AssertionError("Shouldn't be called");
   }
 
   public void addObjectSyncTransaction(ServerTransaction txn) {
-    throw new ImplementMe();
+    throw new AssertionError("Shouldn't be called");
   }
 
   public void goActive() {
-    throw new ImplementMe();
+    throw new AssertionError("Shouldn't be called");
   }
 
   public void publishResetRequest(NodeID nodeID) {
-    throw new ImplementMe();
+    throw new AssertionError("Shouldn't be called");
   }
 
   public void l2StateChanged(StateChangedEvent sce) {
-    throw new ImplementMe();
+    throw new AssertionError("Shouldn't be called");
   }
 
   public void init(Set knownObjectIDs) {
-    throw new ImplementMe();
-  }
-
-  public void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns) {
-    throw new ImplementMe();
-    
+    throw new AssertionError("Shouldn't be called");
   }
 
   public void clearTransactionsBelowLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark) {
-    throw new ImplementMe();
+    throw new AssertionError("Shouldn't be called");
   }
+
 
 }

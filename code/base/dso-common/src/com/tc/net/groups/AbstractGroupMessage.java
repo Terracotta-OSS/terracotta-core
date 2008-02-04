@@ -90,12 +90,14 @@ public abstract class AbstractGroupMessage implements GroupMessage {
   }
   
   protected void writeByteBuffers(ObjectOutput out, TCByteBuffer[] buffers) throws IOException {
-    out.writeInt(buffers.length);
+    int total = 0;
+    for (int i = 0; i < buffers.length; i++) {
+      total += buffers[i].limit();
+    }
+    out.writeInt(total);
     for (int i = 0; i < buffers.length; i++) {
       TCByteBuffer buffer = buffers[i];
-      int length = buffer.limit();
-      out.writeInt(length);
-      out.write(buffer.array(), buffer.arrayOffset(), length);
+      out.write(buffer.array(), buffer.arrayOffset(), buffer.limit());
     }
   }
 
@@ -108,18 +110,19 @@ public abstract class AbstractGroupMessage implements GroupMessage {
   }
   
   protected TCByteBuffer[] readByteBuffers(ObjectInput in) throws IOException {
-    int size = in.readInt();
-    TCByteBuffer buffers[] = new TCByteBuffer[size];
+    int total = in.readInt();
+    TCByteBuffer buffers[] = TCByteBufferFactory.getFixedSizedInstancesForLength(false, total);
     for (int i = 0; i < buffers.length; i++) {
-      int length = in.readInt();
-      byte bytes[] = new byte[length];
+      byte bytes[] = buffers[i].array();
       int start = 0;
+      int length = Math.min(bytes.length, total);
+      total -= length;
       while (length > 0) {
         int read = in.read(bytes, start, length);
         start += read;
         length -= read;
       }
-      buffers[i] = TCByteBufferFactory.wrap(bytes);
+      buffers[i].rewind();
     }
     return buffers;
   }
