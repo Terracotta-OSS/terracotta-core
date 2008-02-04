@@ -42,7 +42,7 @@ public final class RequestCountTest extends AbstractDeploymentTest {
   private TcConfigBuilder       configBuilder;
 
   public RequestCountTest() {
-    disableAllUntil("2008-02-04");
+    disableAllUntil("2008-03-04");
   }
 
   public static Test suite() {
