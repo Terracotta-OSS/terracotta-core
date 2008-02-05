@@ -6,6 +6,7 @@ package com.tc.l2.msg;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.net.groups.AbstractGroupMessageTest;
 import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -88,35 +89,8 @@ public class RelayedCommitTransactionMessageTest extends TestCase {
 
     TCByteBuffer[] tcbb = rctm.getBatchData();
     TCByteBuffer[] tcbb1 = rctm1.getBatchData();
-    assertEquals(tcbb.length, tcbb1.length);
-    for (int i = 0; i < tcbb.length; i++) {
-      assertEquals(tcbb[i].getBoolean(), tcbb1[i].getBoolean());
-      assertEquals(tcbb[i].hasArray(), tcbb1[i].hasArray());
-      assertEquals(tcbb[i].hasRemaining(), tcbb1[i].hasRemaining());
-      assertEquals(tcbb[i].isDirect(), tcbb1[i].isDirect());
-      assertEquals(tcbb[i].isReadOnly(), tcbb1[i].isReadOnly());
-      byte[] byteArray = tcbb[i].array();
-      byte[] byteArray1 = tcbb1[i].array();
-      assertEquals(byteArray.length, byteArray1.length);
-      for (int j = 0; j < byteArray.length; j++) {
-        assertEquals(byteArray[j], byteArray1[j]);
-      }
-      assertEquals(tcbb[i].arrayOffset(), tcbb1[i].arrayOffset());
-      assertEquals(tcbb[i].capacity(), tcbb1[i].capacity());
-      assertEquals(tcbb[i].get(), tcbb1[i].get());
-      assertEquals(tcbb[i].getChar(), tcbb1[i].getChar());
-      assertEquals(tcbb[i].getInt(), tcbb1[i].getInt());
-      assertEquals(tcbb[i].getLong(), tcbb1[i].getLong());
-      assertEquals(tcbb[i].getShort(), tcbb1[i].getShort());
-      assertEquals(tcbb[i].getUbyte(), tcbb1[i].getUbyte());
-      assertEquals(tcbb[i].getUint(), tcbb1[i].getUint());
-      assertEquals(tcbb[i].getUshort(), tcbb1[i].getUshort());
-      assertEquals(tcbb[i].limit(), tcbb1[i].limit());
-      assertEquals(tcbb[i].position(), tcbb1[i].position());
-      assertEquals(tcbb[i].remaining(), tcbb1[i].remaining());
-
-      assertEquals(rctm.getSequenceID(), rctm1.getSequenceID());
-    }
+    AbstractGroupMessageTest.checkEquals(tcbb, tcbb1);
+    assertEquals(rctm.getSequenceID(), rctm1.getSequenceID());
   }
 
   private RelayedCommitTransactionMessage writeAndRead(RelayedCommitTransactionMessage rctm) throws Exception {

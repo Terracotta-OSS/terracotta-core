@@ -9,6 +9,7 @@ import com.tc.async.impl.MockSink;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.l2.context.ManagedObjectSyncContext;
+import com.tc.net.groups.AbstractGroupMessageTest;
 import com.tc.net.groups.NodeID;
 import com.tc.net.groups.NodeIDImpl;
 import com.tc.object.ObjectID;
@@ -71,34 +72,9 @@ public class ObjectSyncMessageTest extends TestCase {
     assertTrue(oids1.isEmpty());
 
     TCByteBuffer[] dnas1 = osm1.getUnprocessedDNAs();
-    assertEquals(tcByteBufferArray.length, dnas1.length);
-    for (int i = 0; i < tcByteBufferArray.length; i++) {
-      assertEquals(tcByteBufferArray[i].getBoolean(), dnas1[i].getBoolean());
-      assertEquals(tcByteBufferArray[i].hasArray(), dnas1[i].hasArray());
-      assertEquals(tcByteBufferArray[i].hasRemaining(), dnas1[i].hasRemaining());
-      assertEquals(tcByteBufferArray[i].isDirect(), dnas1[i].isDirect());
-      assertEquals(tcByteBufferArray[i].isReadOnly(), dnas1[i].isReadOnly());
-      byte[] byteArray = tcByteBufferArray[i].array();
-      byte[] byteArray1 = dnas1[i].array();
-      assertEquals(byteArray.length, byteArray1.length);
-      for (int j = 0; j < byteArray.length; j++) {
-        assertEquals(byteArray[j], byteArray1[j]);
-      }
-      assertEquals(tcByteBufferArray[i].arrayOffset(), dnas1[i].arrayOffset());
-      assertEquals(tcByteBufferArray[i].capacity(), dnas1[i].capacity());
-      assertEquals(tcByteBufferArray[i].get(), dnas1[i].get());
-      assertEquals(tcByteBufferArray[i].getChar(), dnas1[i].getChar());
-      assertEquals(tcByteBufferArray[i].getInt(), dnas1[i].getInt());
-      assertEquals(tcByteBufferArray[i].getLong(), dnas1[i].getLong());
-      assertEquals(tcByteBufferArray[i].getShort(), dnas1[i].getShort());
-      assertEquals(tcByteBufferArray[i].getUbyte(), dnas1[i].getUbyte());
-      assertEquals(tcByteBufferArray[i].getUint(), dnas1[i].getUint());
-      assertEquals(tcByteBufferArray[i].getUshort(), dnas1[i].getUshort());
-      assertEquals(tcByteBufferArray[i].limit(), dnas1[i].limit());
-      assertEquals(tcByteBufferArray[i].position(), dnas1[i].position());
-      assertEquals(tcByteBufferArray[i].remaining(), dnas1[i].remaining());
-    }
-
+    
+    AbstractGroupMessageTest.checkEquals(tcByteBufferArray, dnas1);
+    
     assertEquals(osm.getSequenceID(), osm1.getSequenceID());
   }
 

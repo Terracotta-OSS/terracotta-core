@@ -37,7 +37,7 @@ public class AbstractGroupMessageTest extends TestCase {
     checkEquals(msg.getBuffers(), msg1.getBuffers());
   }
 
-  private void checkEquals(TCByteBuffer[] expected, TCByteBuffer[] actual) {
+  public static void checkEquals(TCByteBuffer[] expected, TCByteBuffer[] actual) {
     System.out.println("expected length = " + expected.length + " actual length = " + actual.length);
     int j = 0;
     for (int i = 0; i < expected.length; i++) {
