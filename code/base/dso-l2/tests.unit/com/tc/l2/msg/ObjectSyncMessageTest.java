@@ -8,8 +8,8 @@ import com.tc.async.api.Sink;
 import com.tc.async.impl.MockSink;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.bytes.TCByteBufferTestUtil;
 import com.tc.l2.context.ManagedObjectSyncContext;
-import com.tc.net.groups.AbstractGroupMessageTest;
 import com.tc.net.groups.NodeID;
 import com.tc.net.groups.NodeIDImpl;
 import com.tc.object.ObjectID;
@@ -73,7 +73,7 @@ public class ObjectSyncMessageTest extends TestCase {
 
     TCByteBuffer[] dnas1 = osm1.getUnprocessedDNAs();
     
-    AbstractGroupMessageTest.checkEquals(tcByteBufferArray, dnas1);
+    TCByteBufferTestUtil.checkEquals(tcByteBufferArray, dnas1);
     
     assertEquals(osm.getSequenceID(), osm1.getSequenceID());
   }

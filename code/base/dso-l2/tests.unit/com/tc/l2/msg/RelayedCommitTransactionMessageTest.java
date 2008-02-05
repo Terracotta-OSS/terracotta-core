@@ -6,7 +6,7 @@ package com.tc.l2.msg;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
-import com.tc.net.groups.AbstractGroupMessageTest;
+import com.tc.bytes.TCByteBufferTestUtil;
 import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -89,7 +89,7 @@ public class RelayedCommitTransactionMessageTest extends TestCase {
 
     TCByteBuffer[] tcbb = rctm.getBatchData();
     TCByteBuffer[] tcbb1 = rctm1.getBatchData();
-    AbstractGroupMessageTest.checkEquals(tcbb, tcbb1);
+    TCByteBufferTestUtil.checkEquals(tcbb, tcbb1);
     assertEquals(rctm.getSequenceID(), rctm1.getSequenceID());
   }
 

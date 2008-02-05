@@ -6,6 +6,7 @@ package com.tc.net.groups;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.bytes.TCByteBufferTestUtil;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -34,23 +35,7 @@ public class AbstractGroupMessageTest extends TestCase {
     ObjectInputStream ois = new ObjectInputStream(bai);
     SomeMessage msg1 = (SomeMessage) ois.readObject();
 
-    checkEquals(msg.getBuffers(), msg1.getBuffers());
-  }
-
-  public static void checkEquals(TCByteBuffer[] expected, TCByteBuffer[] actual) {
-    System.out.println("expected length = " + expected.length + " actual length = " + actual.length);
-    int j = 0;
-    for (int i = 0; i < expected.length; i++) {
-      while (expected[i].remaining() > 0) {
-        byte expectedValue = expected[i].get();
-        while (actual[j].remaining() == 0) {
-          j++;
-        }
-        if (actual[j].get() != expectedValue) { throw new AssertionError("Data is not the same " + i + " " + j + " "
-                                                                         + expected[i] + " " + actual[j]
-                                                                         + " expected Value = " + expectedValue); }
-      }
-    }
+    TCByteBufferTestUtil.checkEquals(msg.getBuffers(), msg1.getBuffers());
   }
 
   private TCByteBuffer[] createRandomBuffers() {
