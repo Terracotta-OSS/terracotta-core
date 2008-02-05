@@ -32,7 +32,7 @@ public class ReflectorTest extends TestCase {
   protected void setUp() throws Exception {
     URL url = new URL(reflectorUrl);
 
-    Date disabledUntilDate = new SimpleDateFormat("yyyy-MM-dd").parse("2008-02-05");
+    Date disabledUntilDate = new SimpleDateFormat("yyyy-MM-dd").parse("2008-01-05");
 
     if (disabledUntilDate.after(new Date())) {
       System.out.println("Test disabled till: " + disabledUntilDate);
