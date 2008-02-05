@@ -300,6 +300,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   end
 
   def check_ee_build
+    check_one('AssertTest')
     publish_enterprise_packages
   end
     
