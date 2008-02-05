@@ -300,7 +300,6 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   end
 
   def check_ee_build
-    check_short
     publish_enterprise_packages
   end
     
