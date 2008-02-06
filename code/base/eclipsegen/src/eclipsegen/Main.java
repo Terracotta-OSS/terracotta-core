@@ -190,6 +190,13 @@ public class Main {
         .println("\t<classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/"
                  + module.getJdk().getEclipse() + "\"/>");
 
+    // jars
+    for (int i = 0; i < jars.length; i++) {
+      String jar = jars[i];
+      ps.println("\t<classpathentry exported=\"true\" kind=\"lib\" path=\"/dependencies/lib/" + jar + "\"/>");
+
+    }
+
     // modules dependencies
     for (Iterator<String> i = module.getDependencies().iterator(); i.hasNext();) {
       ps.println("\t<classpathentry combineaccessrules=\"false\" kind=\"src\" path=\"/" + i.next() + "\"/>");
@@ -199,13 +206,6 @@ public class Main {
     for (int i = 0; i < moduleJars.length; i++) {
       String jar = moduleJars[i];
       ps.println("\t<classpathentry exported=\"true\" kind=\"lib\" path=\"" + jar + "\"/>");
-
-    }
-
-    // jars
-    for (int i = 0; i < jars.length; i++) {
-      String jar = jars[i];
-      ps.println("\t<classpathentry exported=\"true\" kind=\"lib\" path=\"/dependencies/lib/" + jar + "\"/>");
 
     }
 
