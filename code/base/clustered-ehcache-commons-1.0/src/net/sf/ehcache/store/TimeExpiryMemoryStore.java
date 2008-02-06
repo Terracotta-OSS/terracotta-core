@@ -23,7 +23,7 @@ public class TimeExpiryMemoryStore extends MemoryStore {
   private static final Log LOG = LogFactory.getLog(TimeExpiryMemoryStore.class.getName());
 
   public TimeExpiryMemoryStore(Ehcache cache, Store diskStore) {
-    super(cache, (DiskStore) diskStore);
+    super(cache, diskStore);
 
     try {
       map = loadMapInstance(cache.getName());
@@ -62,17 +62,17 @@ public class TimeExpiryMemoryStore extends MemoryStore {
           timeToIdleSec = cache.getCacheConfiguration().getTimeToIdleSeconds();
           timeToLiveSec = cache.getCacheConfiguration().getTimeToLiveSeconds();
         } // else fall through and get the old way
-        
+
       } catch(NoSuchMethodException e) {
         // ignore and fall through - must be ehcache 1.2.x
       }
-      
+
       if(threadIntervalSec < 0) {
         threadIntervalSec = cache.getDiskExpiryThreadIntervalSeconds();
         timeToIdleSec = cache.getTimeToIdleSeconds();
-        timeToLiveSec = cache.getTimeToLiveSeconds();        
+        timeToLiveSec = cache.getTimeToLiveSeconds();
       }
-      
+
       threadIntervalSec = getThreadIntervalSeconds(threadIntervalSec, timeToIdleSec, timeToLiveSec);
 
       Map candidateMap = new SpoolingTimeExpiryMap(threadIntervalSec, timeToIdleSec, timeToLiveSec, cacheName);
@@ -86,7 +86,7 @@ public class TimeExpiryMemoryStore extends MemoryStore {
       throw new CacheException(cache.getName() + "Cache: Cannot find com.tcclient.ehcache.TimeExpiryMap.");
     }
   }
-  
+
   public final synchronized void putData(Element element) throws CacheException {
     if (element != null) {
         ((SpoolingTimeExpiryMap)map).putData(element.getObjectKey(), element);
@@ -123,13 +123,13 @@ public class TimeExpiryMemoryStore extends MemoryStore {
   public final synchronized void clearStatistics() {
     ((SpoolingTimeExpiryMap) map).clearStatistics();
   }
-  
+
   public final class SpoolingTimeExpiryMap extends TimeExpiryMap {
 
     public SpoolingTimeExpiryMap(long timeToIdleSec, long maxIdleSec, long timeToLiveSec, String cacheName) {
       super(timeToIdleSec, maxIdleSec, timeToLiveSec, cacheName);
     }
-    
+
 // Notification are not supported yet
 //    protected final synchronized void processExpired(Object key, Object value) {
 //      // If cache is null, the cache has been disposed and the invalidator thread will be stopping soon.

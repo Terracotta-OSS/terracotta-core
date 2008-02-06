@@ -33,6 +33,8 @@ public abstract class EhcacheGlobalEvictionTestBase extends ServerCrashingTestBa
     initializeTestRunner();
   }
 
+  protected abstract String getEhcacheVersion();
+
   protected void createConfig(TerracottaConfigBuilder cb) {
     cb.getServers().getL2s()[0].setPersistenceMode(L2ConfigBuilder.PERSISTENCE_MODE_TEMPORARY_SWAP_ONLY);
 
@@ -41,7 +43,8 @@ public abstract class EhcacheGlobalEvictionTestBase extends ServerCrashingTestBa
     String barrierClassName = CyclicBarrier.class.getName();
 
     L1ConfigBuilder l1Config = cb.getClient();
-    l1Config.addModule(TIMUtil.EHCACHE_1_2_4, TIMUtil.getVersion(TIMUtil.EHCACHE_1_2_4));
+
+    l1Config.addModule(getEhcacheVersion(), TIMUtil.getVersion(getEhcacheVersion()));
 
     LockConfigBuilder lock1 = new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
     lock1.setMethodExpression("* " + testClassName + "*.*(..)");
