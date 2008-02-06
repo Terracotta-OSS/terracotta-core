@@ -1408,10 +1408,6 @@ public class CacheTC implements Ehcache {
     return guid.hashCode();
   }
 
-  public CacheConfiguration getCacheConfiguration() {
-    return null;
-  }
-
   private int getStoreIndex(Object key) {
     return Util.hash(key, locks.length);
   }

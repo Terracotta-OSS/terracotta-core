@@ -14,9 +14,6 @@
 
     <include>
       <class-expression>net.sf.ehcache.CacheManager</class-expression>
-      <on-load>
-        <execute><![CDATA[self.cacheManagerEventListenerRegistry = new net.sf.ehcache.event.CacheManagerEventListenerRegistry();]]></execute>
-      </on-load>
     </include>
   </instrumented-classes>
 

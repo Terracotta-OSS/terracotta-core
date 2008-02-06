@@ -73,16 +73,16 @@ public abstract class MemoryStoreTC implements Store {
    * @param diskStore
    * @return an instance of a MemoryStore, configured with the appropriate eviction policy
    */
-  public static MemoryStore create(Ehcache cache, Store diskStore) {
+  public static MemoryStore create(Ehcache cache, DiskStore diskStore) {
     MemoryStore memoryStore = null;
     MemoryStoreEvictionPolicy policy = cache.getMemoryStoreEvictionPolicy();
 
     if (policy.equals(MemoryStoreEvictionPolicy.LRU)) {
-      memoryStore = new LruMemoryStore(cache, (DiskStore)diskStore);
+      memoryStore = new LruMemoryStore(cache, diskStore);
     } else if (policy.equals(MemoryStoreEvictionPolicy.FIFO)) {
-      memoryStore = new FifoMemoryStore(cache, (DiskStore)diskStore);
+      memoryStore = new FifoMemoryStore(cache, diskStore);
     } else if (policy.equals(MemoryStoreEvictionPolicy.LFU)) {
-      memoryStore = new LfuMemoryStore(cache, (DiskStore)diskStore);
+      memoryStore = new LfuMemoryStore(cache, diskStore);
     }
     return memoryStore;
   }
