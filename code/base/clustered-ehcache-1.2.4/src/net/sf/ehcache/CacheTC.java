@@ -1,7 +1,6 @@
 package net.sf.ehcache;
 
 import net.sf.ehcache.bootstrap.BootstrapCacheLoader;
-import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.event.CacheEventListener;
 import net.sf.ehcache.event.RegisteredEventListeners;
 import net.sf.ehcache.store.DiskStore;
