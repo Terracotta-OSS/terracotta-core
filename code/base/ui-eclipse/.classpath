@@ -3,18 +3,6 @@
 	<classpathentry kind="src" output="build.eclipse/src.classes" path="src"/>
 	<classpathentry kind="src" output="build.eclipse/src.classes" path="src.resources"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/aspectwerkz"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/deploy"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/dso-common"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/dso-common-jdk15"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1-api"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/dso-l2"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/dso-l2-common"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty-api"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.core.commands-3.3.0.I20070605-0010.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.core.contenttype-3.2.100.v20070319.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.core.filebuffers-3.3.0.v20070606-0010.jar"/>
@@ -54,4 +42,16 @@
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.ui.workbench-3.3.0.I20070608-1100.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.ui.workbench.texteditor-3.3.0.v20070606-0010.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/runtime_registry_compatibility-x.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/aspectwerkz"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/deploy"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-common"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-common-jdk15"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1-api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-l2"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-l2-common"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty-api"/>
 </classpath>

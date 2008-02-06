@@ -3,6 +3,10 @@
 	<classpathentry kind="src" output="build.eclipse/tests.base.classes" path="tests.base"/>
 	<classpathentry kind="src" output="build.eclipse/tests.unit.classes" path="tests.unit"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/httpunit-1.6.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/spring-hibernate3-2.0-m4.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/spring-hibernate3-2.0-m5.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/xstream-1.0.2.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/aspectwerkz"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
@@ -20,8 +24,4 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/simulator"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty-api"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/httpunit-1.6.2.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/spring-hibernate3-2.0-m4.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/spring-hibernate3-2.0-m5.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/xstream-1.0.2.jar"/>
 </classpath>

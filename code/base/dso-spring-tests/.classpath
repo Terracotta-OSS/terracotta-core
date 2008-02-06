@@ -4,6 +4,17 @@
 	<classpathentry kind="src" output="build.eclipse/tests.system.classes" path="tests.system"/>
 	<classpathentry kind="src" output="build.eclipse/tests.system.classes" path="tests.system.resources"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/cglib-nodep-2.1_3.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/commons-collections-3.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/commons-dbcp-1.2.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/commons-pool-1.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/dom4j-1.6.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/ehcache-1.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/hibernate-3.1.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/hsqldb-1.7.2.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jakarta-oro-2.0.8.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jstl-1.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/standard-1.0.6.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/aspectwerkz"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
@@ -24,15 +35,4 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/simulator"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty-api"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/cglib-nodep-2.1_3.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/commons-collections-3.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/commons-dbcp-1.2.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/commons-pool-1.2.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/dom4j-1.6.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/ehcache-1.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/hibernate-3.1.2.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/hsqldb-1.7.2.2.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jakarta-oro-2.0.8.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jstl-1.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/standard-1.0.6.jar"/>
 </classpath>

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="lib" path="/dependencies/lib/ehcache-1.2.4.jar"/>
 	<classpathentry kind="src" output="build.eclipse/src.classes" path="src"/>
 	<classpathentry kind="src" output="build.eclipse/src.classes" path="src.resources"/>
 	<classpathentry kind="src" output="build.eclipse/tests.base.classes" path="tests.base"/>
@@ -8,6 +7,7 @@
 	<classpathentry kind="src" output="build.eclipse/tests.system.classes" path="tests.system"/>
 	<classpathentry kind="src" output="build.eclipse/tests.system.classes" path="tests.system.resources"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/ehcache-1.2.4.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/aspectwerkz"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/clustered-ehcache-commons-1.0"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
@@ -28,5 +28,4 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/simulator"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty-api"/>
-	<classpathentry kind="output" path="bin"/>
 </classpath>
