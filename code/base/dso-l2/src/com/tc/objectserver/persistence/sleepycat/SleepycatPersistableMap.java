@@ -15,10 +15,9 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.util.Conversion;
 
-import gnu.trove.THashMap;
-
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -30,12 +29,12 @@ public class SleepycatPersistableMap implements Map {
   /*
    * This map contains the mappings already in the database
    */
-  private final Map             map         = new THashMap(0);
+  private final Map             map         = new HashMap(0);
 
   /*
    * This map contains the newly added mappings that are not in the database yet
    */
-  private final Map             delta       = new THashMap(0);
+  private final Map             delta       = new HashMap(0);
 
   private final long            id;
   private int                   removeCount = 0;
