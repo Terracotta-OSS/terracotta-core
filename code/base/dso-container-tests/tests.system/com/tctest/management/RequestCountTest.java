@@ -42,7 +42,7 @@ public final class RequestCountTest extends AbstractDeploymentTest {
   private TcConfigBuilder       configBuilder;
 
   public RequestCountTest() {
-    disableAllUntil("2008-03-04");
+    //
   }
 
   public static Test suite() {
@@ -94,8 +94,9 @@ public final class RequestCountTest extends AbstractDeploymentTest {
 
     final JMXConnector jmxConnector = getJMXConnector();
     final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
+    final long timeout = 60 * 1000;
     final long start = System.currentTimeMillis();
-    final long beanCutoffTime = start + (60 * 1000);
+    final long beanCutoffTime = start + timeout;
     Set beanSet = null;
     for (beanSet = TerracottaManagement.getAllSessionMonitorMBeans(mbs); beanSet.size() != nodeCount; beanSet = TerracottaManagement
         .getAllSessionMonitorMBeans(mbs)) {
@@ -108,7 +109,7 @@ public final class RequestCountTest extends AbstractDeploymentTest {
         logger.info("No session beans found, expecting " + nodeCount + " of them");
       }
       if (System.currentTimeMillis() > beanCutoffTime) {
-        final String errMsg = "Unable to find DSO client MBeans within " + beanCutoffTime + "ms";
+        final String errMsg = "Unable to find DSO client MBeans within " + timeout + "ms";
         logger.error(errMsg);
         fail(errMsg);
       } else {

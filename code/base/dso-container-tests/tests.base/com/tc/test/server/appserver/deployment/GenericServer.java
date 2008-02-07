@@ -356,7 +356,19 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
       File tempFile = File.createTempFile("tc-classpath", parameters.instanceName());
       tempFile.deleteOnExit();
       fos = new FileOutputStream(tempFile);
-      fos.write(System.getProperty("java.class.path").getBytes());
+
+      // XXX: total hack to make RequestCountTest pass on 1.4 VMs
+      String[] paths = System.getProperty("java.class.path").split(File.pathSeparator);
+      StringBuffer cp = new StringBuffer();
+      for (int i = 0; i < paths.length; i++) {
+        String path = paths[i];
+        if (path.endsWith("jboss-jmx-4.0.5.jar")) {
+          continue;
+        }
+        cp.append(path).append(File.pathSeparatorChar);
+      }
+
+      fos.write(cp.toString().getBytes());
 
       return tempFile.toURI().toString();
     } catch (IOException ioe) {
