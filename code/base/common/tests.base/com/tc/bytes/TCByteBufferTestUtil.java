@@ -14,10 +14,10 @@ public class TCByteBufferTestUtil {
     for (int i = 0; i < expected.length; i++) {
       while (expected[i].remaining() > 0) {
         byte expectedValue = expected[i].get();
-        if (!actual[j].hasRemaining()) {
+        while (!actual[j].hasRemaining()) {
           j++;
+          if (j >= actual.length) { throw new AssertionError("ran out of buffers: " + j); }
         }
-        if (j >= actual.length) { throw new AssertionError("ran out of buffers: " + j); }
 
         byte actualValue = actual[j].get();
         if (actualValue != expectedValue) {
