@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.bytes;
 
@@ -13,16 +14,23 @@ public class TCByteBufferTestUtil {
     for (int i = 0; i < expected.length; i++) {
       while (expected[i].remaining() > 0) {
         byte expectedValue = expected[i].get();
-        while (actual[j].remaining() == 0) {
+        if (!actual[j].hasRemaining()) {
           j++;
         }
-        if (actual[j].get() != expectedValue) { throw new AssertionError("Data is not the same " + i + " " + j + " "
-                                                                         + expected[i] + " " + actual[j]
-                                                                         + " expected Value = " + expectedValue); }
+        if (j >= actual.length) { throw new AssertionError("ran out of buffers: " + j); }
+
+        byte actualValue = actual[j].get();
+        if (actualValue != expectedValue) {
+          //
+          throw new AssertionError("Data is not the same, " + actualValue + "!=" + expectedValue + " at expected[" + i
+                                   + "] and actual[" + j + "]");
+        }
       }
     }
-    Assert.assertEquals(actual.length, j + 1);
-    Assert.assertEquals(0, actual[j].remaining());
+
+    if (actual.length != 0) {
+      Assert.assertEquals(actual.length, j + 1);
+      Assert.assertEquals(0, actual[j].remaining());
+    }
   }
-  
 }
