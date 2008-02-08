@@ -41,6 +41,7 @@ import com.tc.stats.DSO;
 import com.tc.stats.DSOMBean;
 import com.tc.util.Assert;
 
+import java.io.File;
 import java.util.Date;
 
 import javax.management.InstanceAlreadyExistsException;
@@ -162,7 +163,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   public void updateActivateTime() {
-    if(activateTime == -1) {
+    if (activateTime == -1) {
       activateTime = System.currentTimeMillis();
     }
   }
@@ -282,7 +283,7 @@ public class TCServerImpl extends SEDA implements TCServer {
         activationListener.serverActivated();
       }
 
-      if(updateCheckEnabled()) {
+      if (updateCheckEnabled()) {
         UpdateCheckAction.start(TCServerImpl.this, updateCheckPeriodDays());
       }
     }
@@ -297,7 +298,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   private int updateCheckPeriodDays() {
     return configurationSetupManager.updateCheckConfig().periodDays().getInt();
   }
-  
+
   protected void startServer() throws Exception {
     new StartupHelper(getThreadGroup(), new StartAction()).startUp();
   }
@@ -315,20 +316,30 @@ public class TCServerImpl extends SEDA implements TCServer {
     httpServer.addConnector(tcConnector);
 
     WebAppContext context = new WebAppContext("", "/");
+
+    // setting to null means to not apply the default web.xml -- this is to not
+    // include the jsp servlet which will trigger creation of temp directories
+    context.setDefaultsDescriptor(null);
+
+    context.setAttribute(ConfigServlet.CONFIG_ATTRIBUTE, this.configurationSetupManager);
+
+    File userDir = new File(System.getProperty("user.dir"));
+    if (userDir.canWrite()) {
+      try {
+        context.setTempDirectory(userDir);
+      } catch (Exception e) {
+        logger.warn("cannot setup jetty temp dir -- will allow jetty to pick temp dir [" + e.getMessage() + "]");
+      }
+    }
     ServletHandler servletHandler = new ServletHandler();
 
     /**
      * We don't serve up any files, just hook in a few servlets. It's required the ResourceBase be non-null.
      */
-    context.setResourceBase(System.getProperty("user.dir"));
+    context.setResourceBase(userDir.getAbsolutePath());
 
-    ServletHolder holder;
-    holder = servletHandler.addServletWithMapping(VersionServlet.class.getName(), "/version");
-    servletHandler.addServlet(holder);
-
-    context.setAttribute(ConfigServlet.CONFIG_ATTRIBUTE, this.configurationSetupManager);
-    holder = servletHandler.addServletWithMapping(ConfigServlet.class.getName(), "/config");
-    servletHandler.addServlet(holder);
+    createAndAddServlet(servletHandler, VersionServlet.class.getName(), "/version");
+    createAndAddServlet(servletHandler, ConfigServlet.class.getName(), "/config");
 
     context.setServletHandler(servletHandler);
     httpServer.addHandler(context);
@@ -339,6 +350,12 @@ public class TCServerImpl extends SEDA implements TCServer {
       consoleLogger.warn("Couldn't start HTTP server", e);
       throw e;
     }
+  }
+
+  private static void createAndAddServlet(ServletHandler servletHandler, String servletClassName, String path) {
+    ServletHolder holder = servletHandler.addServletWithMapping(servletClassName, path);
+    holder.setInitParameter("scratchdir", "jsp"); // avoid jetty from creating a "jsp" directory
+    servletHandler.addServlet(holder);
   }
 
   public void dump() {
