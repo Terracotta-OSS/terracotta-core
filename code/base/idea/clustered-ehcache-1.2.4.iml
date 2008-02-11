@@ -12,6 +12,15 @@
     </content>
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="jdk" jdkName="J2SE-1.4" jdkType="JavaSDK" />
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/lib/ehcache-1.2.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntry type="module" module-name="aspectwerkz" />
     <orderEntry type="module" module-name="clustered-ehcache-commons-1.0" />
     <orderEntry type="module" module-name="common" />
@@ -32,15 +41,6 @@
     <orderEntry type="module" module-name="simulator" />
     <orderEntry type="module" module-name="thirdparty" />
     <orderEntry type="module" module-name="thirdparty-api" />
-    <orderEntry type="module-library" exported="">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../dependencies/lib/ehcache-1.2.4.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntryProperties />
   </component>
 </module>

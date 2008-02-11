@@ -151,15 +151,6 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../dependencies/lib/je-3.2.68.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library" exported="">
-      <library>
-        <CLASSES>
           <root url="jar://$MODULE_DIR$/../dependencies/lib/jmxremote-1.0.1_04.jar!/" />
         </CLASSES>
         <JAVADOC />
@@ -296,6 +287,15 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../dependencies/lib/xmlpublic-2.1.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/lib/je-3.2.70.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
