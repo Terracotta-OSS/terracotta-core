@@ -282,8 +282,8 @@ public class NewAddModuleDialog extends MessageDialog {
       for (TableItem item : items) {
         Module module = fModules.addNewModule();
         module.setGroupId(groupId);
-        module.setName(item.getText(1).replace('-', '_'));
-        module.setVersion(item.getText(2).replace('-', '.'));
+        module.setName(item.getText(1));
+        module.setVersion(item.getText(2));
       }
       if (m_valueListener != null) m_valueListener.setValue(fModules);
     }
