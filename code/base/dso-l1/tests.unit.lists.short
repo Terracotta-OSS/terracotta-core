@@ -3,3 +3,4 @@ ClientLockManagerTest
 ClientTransactionManagerTest
 RemoteTransactionManagerTest
 HashMapTCTest
+ModulesLoaderTest
