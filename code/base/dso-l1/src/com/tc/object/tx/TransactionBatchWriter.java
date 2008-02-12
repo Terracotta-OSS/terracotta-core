@@ -31,17 +31,18 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class TransactionBatchWriter implements ClientTransactionBatch {
-  private final static TCLogger logger = TCLogging.getLogger(TransactionBatchWriter.class);
+  private final static TCLogger                 logger                 = TCLogging
+                                                                           .getLogger(TransactionBatchWriter.class);
 
   private final CommitTransactionMessageFactory commitTransactionMessageFactory;
   private final TxnBatchID                      batchID;
-  private final LinkedHashMap                   transactionData            = new LinkedHashMap();
+  private final LinkedHashMap                   transactionData        = new LinkedHashMap();
   private final ObjectStringSerializer          serializer;
   private final DNAEncoding                     encoding;
-  private int                                   txns2Serialize             = 0;
-  private final List                            batchDataOutputStreams     = new ArrayList();
-  private short                                 outstandingWriteCount      = 0;
-  private int                                   bytesWritten               = 0;
+  private int                                   txns2Serialize         = 0;
+  private final List                            batchDataOutputStreams = new ArrayList();
+  private short                                 outstandingWriteCount  = 0;
+  private int                                   bytesWritten           = 0;
 
   public TransactionBatchWriter(TxnBatchID batchID, ObjectStringSerializer serializer, DNAEncoding encoding,
                                 CommitTransactionMessageFactory commitTransactionMessageFactory) {
@@ -101,10 +102,10 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     if (sid.isNull()) throw new AssertionError("SequenceID is null: " + txn);
     out.writeLong(sid.toLong());
 
-    LockID[] locks = txn.getAllLockIDs();
-    out.writeInt(locks.length);
-    for (int i = 0, n = locks.length; i < n; i++) {
-      out.writeString(locks[i].asString());
+    List locks = txn.getAllLockIDs();
+    out.writeInt(locks.size());
+    for (int i = 0, n = locks.size(); i < n; i++) {
+      out.writeString(((LockID) locks.get(i)).asString());
     }
 
     Map newRoots = txn.getNewRoots();
@@ -142,7 +143,8 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     transactionData.put(txn.getTransactionID(), new TransactionDescriptor(sequenceID, out.toArray(), txn
         .getReferencesOfObjectsInTxn()));
     if (DebugUtil.DEBUG) {
-      logger.info("Add transaction " + txn.getTransactionID() + " sequenceID: " + sequenceID + " bytes written: " + out.getBytesWritten() + " aggregate bytes written: " + bytesWritten);
+      logger.info("Add transaction " + txn.getTransactionID() + " sequenceID: " + sequenceID + " bytes written: "
+                  + out.getBytesWritten() + " aggregate bytes written: " + bytesWritten);
     }
   }
 

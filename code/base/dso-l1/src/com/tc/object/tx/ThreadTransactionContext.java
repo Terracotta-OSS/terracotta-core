@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.tx;
 
@@ -7,7 +8,9 @@ import com.tc.object.lockmanager.api.LockID;
 import com.tc.util.Assert;
 import com.tc.util.Stack;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * We have two concepts. Transactions which carry changes/creates etc... And the locks That are associated with those
@@ -36,27 +39,25 @@ public class ThreadTransactionContext {
     currentTransaction = null;
     return ctx;
   }
-  
+
   public TransactionContext peekContext(LockID id) {
     if (transactionStack.isEmpty()) return null;
     int len = transactionStack.size();
     TransactionContext tc = null;
-    int i=len-1;
-    for (; i>=0; i--) {
+    int i = len - 1;
+    for (; i >= 0; i--) {
       tc = (TransactionContext) transactionStack.get(i);
-      if (tc.getLockID().equals(id)) {
-        return tc;
-      }
+      if (tc.getLockID().equals(id)) { return tc; }
     }
     return null;
   }
-  
+
   public ClientTransaction popCurrentTransaction(LockID id) {
     int len = transactionStack.size();
     boolean found = false;
     TransactionContext tc = null;
-    int i=len-1;
-    for (; i>=0; i--) {
+    int i = len - 1;
+    for (; i >= 0; i--) {
       tc = (TransactionContext) transactionStack.get(i);
       if (tc.getLockID().equals(id)) {
         found = true;
@@ -64,13 +65,13 @@ public class ThreadTransactionContext {
       }
     }
     if (found) {
-      for (int j=i+1; j<len; j++) {
-        tc = (TransactionContext)transactionStack.get(j);
+      for (int j = i + 1; j < len; j++) {
+        tc = (TransactionContext) transactionStack.get(j);
         tc.removeLock(id);
       }
       transactionStack.remove(i);
     }
-    
+
     ClientTransaction ctx = currentTransaction;
     currentTransaction = null;
     return ctx;
@@ -80,18 +81,18 @@ public class ThreadTransactionContext {
     transactionStack.push(new TransactionContextImpl(id, txType, getAllLockIDs(id)));
   }
 
-  private LockID[] getAllLockIDs(LockID id) {
-    LockID[] lids = new LockID[transactionStack.size() + 1];
-    lids[0] = id;
-    for (int i = 1; i < lids.length; i++) {
+  private List getAllLockIDs(LockID id) {
+    List lids = new ArrayList();
+    lids.add(id);
+    for (int i = 1; i < transactionStack.size(); i++) {
       TransactionContext tc = (TransactionContext) transactionStack.get(i - 1);
-      lids[i] = tc.getLockID();
+      lids.add(tc.getLockID());
     }
     return lids;
   }
-  
+
   public void removeLock(LockID id) {
-    for (Iterator i=transactionStack.iterator(); i.hasNext(); ) {
+    for (Iterator i = transactionStack.iterator(); i.hasNext();) {
       TransactionContext tc = (TransactionContext) i.next();
       if (id.equals(tc.getLockID())) {
         i.remove();

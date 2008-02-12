@@ -20,7 +20,6 @@ import com.tc.util.TCTimerImpl;
 import com.tc.util.Util;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -36,7 +35,7 @@ import java.util.Map.Entry;
 
 /**
  * Sends off committed transactions
- *
+ * 
  * @author steve
  */
 public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
@@ -221,7 +220,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   private void commitInternal(ClientTransaction txn) {
     TransactionID txID = txn.getTransactionID();
     if (!txn.isConcurrent()) {
-      lockAccounting.add(txID, Arrays.asList(txn.getAllLockIDs()));
+      lockAccounting.add(txID, txn.getAllLockIDs());
     }
 
     long start = System.currentTimeMillis();

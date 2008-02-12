@@ -13,6 +13,7 @@ import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.Notify;
 import com.tc.util.SequenceID;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,8 +48,8 @@ public class TestClientTransaction implements ClientTransaction {
     return lockID;
   }
 
-  public LockID[] getAllLockIDs() {
-    return (LockID[]) allLockIDs.toArray(new LockID[allLockIDs.size()]);
+  public List getAllLockIDs() {
+    return new ArrayList(allLockIDs);
   }
 
   public TransactionID getTransactionID() {

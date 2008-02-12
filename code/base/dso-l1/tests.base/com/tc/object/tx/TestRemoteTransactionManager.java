@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.tx;
 
@@ -10,18 +11,19 @@ import com.tc.object.session.SessionID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
  * @author steve
  */
 public class TestRemoteTransactionManager implements RemoteTransactionManager {
-//  public final NoExceptionLinkedQueue resendOutstandingContexts = new NoExceptionLinkedQueue();
-//  public final NoExceptionLinkedQueue pauseCalls                = new NoExceptionLinkedQueue();
-//  public final NoExceptionLinkedQueue unpauseCalls              = new NoExceptionLinkedQueue();
-  public final NoExceptionLinkedQueue isChangeListenerCalls     = new NoExceptionLinkedQueue();
+  // public final NoExceptionLinkedQueue resendOutstandingContexts = new NoExceptionLinkedQueue();
+  // public final NoExceptionLinkedQueue pauseCalls = new NoExceptionLinkedQueue();
+  // public final NoExceptionLinkedQueue unpauseCalls = new NoExceptionLinkedQueue();
+  public final NoExceptionLinkedQueue isChangeListenerCalls = new NoExceptionLinkedQueue();
 
-  public LockID[]                     ids;
+  public List                         ids;
   public Map                          changes;
   public TransactionID                txID;
   public Map                          newRoots;
@@ -52,17 +54,17 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
   }
 
   public void resendOutstanding() {
-    //this.resendOutstandingContexts.put(new Object());
+    // this.resendOutstandingContexts.put(new Object());
     throw new ImplementMe();
   }
 
   public void pause() {
-    //this.pauseCalls.put(new Object());
+    // this.pauseCalls.put(new Object());
     throw new ImplementMe();
   }
 
   public void unpause() {
-    //this.pauseCalls.put(new Object());
+    // this.pauseCalls.put(new Object());
     throw new ImplementMe();
   }
 

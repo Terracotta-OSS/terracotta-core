@@ -412,7 +412,7 @@ public class RemoteTransactionManagerTest extends TestCase {
   private ClientTransaction makeTransaction() {
     int num = number.increment();
     LockID lid = new LockID("lock" + num);
-    TransactionContext tc = new TransactionContextImpl(lid, TxnType.NORMAL, new LockID[] { lid });
+    TransactionContext tc = new TransactionContextImpl(lid, TxnType.NORMAL);
     ClientTransaction txn = new ClientTransactionImpl(new TransactionID(num), new NullRuntimeLogger());
     txn.setTransactionContext(tc);
     txn.fieldChanged(new MockTCObject(new ObjectID(num), this), "class", "class.field", new ObjectID(num), -1);
@@ -423,8 +423,8 @@ public class RemoteTransactionManagerTest extends TestCase {
 
     public final TxnBatchID  batchID;
 
-    public final LinkedQueue addTxQueue        = new LinkedQueue();
-    private final LinkedList transactions      = new LinkedList();
+    public final LinkedQueue addTxQueue   = new LinkedQueue();
+    private final LinkedList transactions = new LinkedList();
 
     public TestTransactionBatch(TxnBatchID batchID) {
       this.batchID = batchID;

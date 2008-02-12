@@ -77,7 +77,7 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
     this.waitTimer = waitTimer;
     this.lockStatManager = lockStatManager;
   }
-  
+
   private void recordLockRejected(ThreadID threadID) {
     lockStatManager.recordLockRejected(lockID, threadID);
   }
@@ -85,15 +85,15 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
   private void recordLockRequested(ThreadID threadID, String contextInfo) {
     lockStatManager.recordLockRequested(lockID, threadID, contextInfo, pendingLockRequests.size());
   }
-  
+
   private void recordLockAwarded(ThreadID threadID) {
     lockStatManager.recordLockAwarded(lockID, threadID);
   }
-  
+
   private void recordLockReleased(ThreadID threadID) {
     lockStatManager.recordLockReleased(lockID, threadID);
   }
-  
+
   private void recordLockHoppedStat(ThreadID threadID) {
     lockStatManager.recordLockHopped(lockID, threadID);
   }
@@ -174,13 +174,13 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
       waitLock = addToPendingLockRequest(requesterID, type, timeout, noBlock);
       if (greediness.isNotGreedy()) {
         remoteLockRequest(requesterID, type, timeout, noBlock);
-//        recordLockHoppedStat(requesterID);
-//        // debug("lock - remote requestLock ", requesterID, LockLevel.toString(type));
-//        if (noBlock) {
-//          remoteLockManager.tryRequestLock(lockID, requesterID, timeout, type);
-//        } else {
-//          remoteLockManager.requestLock(lockID, requesterID, type);
-//        }
+        // recordLockHoppedStat(requesterID);
+        // // debug("lock - remote requestLock ", requesterID, LockLevel.toString(type));
+        // if (noBlock) {
+        // remoteLockManager.tryRequestLock(lockID, requesterID, timeout, type);
+        // } else {
+        // remoteLockManager.requestLock(lockID, requesterID, type);
+        // }
       } else {
         // If the lock already granted to another thread greedily within the same JVM and if
         // it is a tryLock request with a timeout, schedule a local timer.
@@ -214,7 +214,7 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
     Util.selfInterruptIfNeeded(isInterrupted);
     // debug("lock - GOT IT - ", requesterID, LockLevel.toString(type));
   }
-  
+
   private void remoteLockRequest(ThreadID requesterID, int type, WaitInvocation timeout, boolean noBlock) {
     recordLockHoppedStat(requesterID);
     // debug("lock - remote requestLock ", requesterID, LockLevel.toString(type));
@@ -1284,7 +1284,7 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
       /*
        * server_level is not changed to NIL_LOCK_LEVEL even though the server will release the lock as we need to know
        * what state we were holding before wait on certain scenarios like server crash etc.
-       *
+       * 
        * @see ClientLockManager.notified
        */
       return this.server_level;

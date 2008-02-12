@@ -51,7 +51,7 @@ public interface ClientTransaction {
    * Get all locks associated with this transaction
    * @return All locks
    */
-  public LockID[] getAllLockIDs();
+  public List getAllLockIDs();
 
   /**
    * Get transaction identifier

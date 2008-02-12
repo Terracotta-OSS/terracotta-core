@@ -105,11 +105,11 @@ public class TransactionBatchTest extends TestCase {
     List tx1Notifies = new LinkedList();
     // A nested transaction (all this buys us is more than 1 lock in a txn)
     LockID lid1 = new LockID("1");
-    TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, new LockID[] { lid1 });
+    TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL);
     ClientTransaction tmp = new ClientTransactionImpl(new TransactionID(101), new NullRuntimeLogger());
     tmp.setTransactionContext(tc);
     LockID lid2 = new LockID("2");
-    tc = new TransactionContextImpl(lid2, TxnType.NORMAL, new LockID[] { lid1, lid2 });
+    tc = new TransactionContextImpl(lid2, TxnType.NORMAL, Arrays.asList(new LockID[] { lid1, lid2 }));
     ClientTransaction txn1 = new ClientTransactionImpl(new TransactionID(1), new NullRuntimeLogger());
     txn1.setTransactionContext(tc);
 
@@ -122,7 +122,7 @@ public class TransactionBatchTest extends TestCase {
       txn1.addNotify(notify);
     }
 
-    tc = new TransactionContextImpl(new LockID("3"), TxnType.CONCURRENT, new LockID[] { new LockID("3") });
+    tc = new TransactionContextImpl(new LockID("3"), TxnType.CONCURRENT);
     ClientTransaction txn2 = new ClientTransactionImpl(new TransactionID(2), new NullRuntimeLogger());
     txn2.setTransactionContext(tc);
 

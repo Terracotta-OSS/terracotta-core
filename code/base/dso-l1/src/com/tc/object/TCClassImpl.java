@@ -67,7 +67,7 @@ public class TCClassImpl implements TCClass {
   private final Field                    parentField;
   private final static SerializationUtil SERIALIZATION_UTIL     = new SerializationUtil();
   private final boolean                  useNonDefaultConstructor;
-  private Map                            offsetToFields;
+  private Map                            offsetToFieldNames;
   private final ClientObjectManager      objectManager;
   private final boolean                  isProxyClass;
   private final boolean                  isEnum;
@@ -347,9 +347,9 @@ public class TCClassImpl implements TCClass {
   }
 
   private synchronized void setupFieldOffsetIfNecessary() {
-    if (offsetToFields != null) { return; }
+    if (offsetToFieldNames != null) { return; }
 
-    offsetToFields = new HashMap();
+    offsetToFieldNames = new HashMap();
     if (unsafe != null) {
       try {
         Field[] fields = peer.equals(Object.class) ? new Field[0] : peer.getDeclaredFields();
@@ -359,7 +359,7 @@ public class TCClassImpl implements TCClass {
           try {
             if (!Modifier.isStatic(fields[i].getModifiers())) {
               fields[i].setAccessible(true);
-              offsetToFields.put(new Long(unsafe.objectFieldOffset(fields[i])), fields[i]);
+              offsetToFieldNames.put(new Long(unsafe.objectFieldOffset(fields[i])), makeFieldName(fields[i]));
               // System.err.println("Thread " + Thread.currentThread().getName() + ", class: " + getName() + ", field: "
               // + fields[i].getName() + ", offset: " + unsafe.objectFieldOffset(fields[i]));
             }
@@ -373,11 +373,18 @@ public class TCClassImpl implements TCClass {
     }
   }
 
+  private String makeFieldName(Field field) {
+    StringBuffer sb = new StringBuffer(field.getDeclaringClass().getName());
+    sb.append(".");
+    sb.append(field.getName());
+    return sb.toString();
+  }
+
   public String getFieldNameByOffset(long fieldOffset) {
     Long fieldOffsetObj = new Long(fieldOffset);
     setupFieldOffsetIfNecessary();
 
-    Field field = (Field) this.offsetToFields.get(fieldOffsetObj);
+    String field = (String) this.offsetToFieldNames.get(fieldOffsetObj);
     if (field == null) {
       if (superclazz != null) {
         return superclazz.getFieldNameByOffset(fieldOffset);
@@ -385,10 +392,7 @@ public class TCClassImpl implements TCClass {
         throw new AssertionError("Field does not exist for offset: " + fieldOffset);
       }
     } else {
-      StringBuffer sb = new StringBuffer(field.getDeclaringClass().getName());
-      sb.append(".");
-      sb.append(field.getName());
-      return sb.toString();
+      return field;
     }
   }
   

@@ -9,15 +9,17 @@ import com.tc.object.TCObject;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.util.SequenceID;
 
+import java.util.List;
+
 /**
  * Base class for client transaction implementations
  */
 abstract class AbstractClientTransaction implements ClientTransaction {
 
-  private SequenceID              seqID = SequenceID.NULL_ID;
-  private final TransactionID     txID;
-  private TransactionContext      transactionContext;
-  private boolean                 alreadyCommittedFlag;
+  private SequenceID          seqID = SequenceID.NULL_ID;
+  private final TransactionID txID;
+  private TransactionContext  transactionContext;
+  private boolean             alreadyCommittedFlag;
 
   AbstractClientTransaction(TransactionID txID) {
     this.txID = txID;
@@ -42,7 +44,7 @@ abstract class AbstractClientTransaction implements ClientTransaction {
     return transactionContext.getType();
   }
 
-  public LockID[] getAllLockIDs() {
+  public List getAllLockIDs() {
     return transactionContext.getAllLockIDs();
   }
 
@@ -106,9 +108,7 @@ abstract class AbstractClientTransaction implements ClientTransaction {
   }
 
   private void assertNotReadOnlyTxn() {
-    if (transactionContext.getType() == TxnType.READ_ONLY) {
-      throw new AssertionError("fail to perform read only check");
-    }
+    if (transactionContext.getType() == TxnType.READ_ONLY) { throw new AssertionError("fail to perform read only check"); }
   }
 
   public void setAlreadyCommitted() {
