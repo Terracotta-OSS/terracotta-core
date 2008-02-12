@@ -102,10 +102,10 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     if (sid.isNull()) throw new AssertionError("SequenceID is null: " + txn);
     out.writeLong(sid.toLong());
 
-    List locks = txn.getAllLockIDs();
+    Collection locks = txn.getAllLockIDs();
     out.writeInt(locks.size());
-    for (int i = 0, n = locks.size(); i < n; i++) {
-      out.writeString(((LockID) locks.get(i)).asString());
+    for (Iterator i = locks.iterator(); i.hasNext();) {
+      out.writeString(((LockID) i.next()).asString());
     }
 
     Map newRoots = txn.getNewRoots();
