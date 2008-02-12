@@ -9,6 +9,7 @@ import org.terracotta.modules.configuration.TerracottaConfiguratorModule;
 
 import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.LockDefinition;
+import com.tc.object.config.TransparencyClassSpec;
 
 public class SpringConfiguration
       extends TerracottaConfiguratorModule {
@@ -64,6 +65,10 @@ public class SpringConfiguration
       configHelper.addIncludePattern("org.springframework.core.enums.*", false, false, false);
       configHelper.addIncludePattern("org.springframework.binding..*", true, false, false);
       configHelper.addIncludePattern("org.springframework.validation..*", true, false, false);
+      
+      // used by Spring AOP/AspectJ
+      TransparencyClassSpec spec = configHelper.getOrCreateSpec("org.springframework.aop.support.AopUtils");
+      spec.setCustomClassAdapter(new AopUtilsClassAdapter());
    }
    
    private void configSpringWebFlowTypes() {
