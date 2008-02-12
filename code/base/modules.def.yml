@@ -88,6 +88,7 @@ modules:
         - modules-common
         - dso-l1-api
         - common-api
+        - thirdparty-api
   - standard-config:
       options:
         jdk: J2SE-1.4
