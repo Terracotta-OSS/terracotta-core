@@ -107,16 +107,16 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
     lock(threadID, type, null, false, contextInfo);
   }
 
-  private void lock(ThreadID threadID, int type, WaitInvocation timeout, boolean noBlock, String contextInfo) {
-    int lockType = type;
+  private void lock(ThreadID threadID, final int type, WaitInvocation timeout, boolean noBlock, String contextInfo) {
+    int effectiveType = type;
     if (LockLevel.isSynchronous(type)) {
       if (!LockLevel.isSynchronousWrite(type)) { throw new AssertionError(
                                                                           "Only Synchronous WRITE lock is supported now"); }
-      lockType = LockLevel.WRITE;
+      effectiveType = LockLevel.WRITE;
     }
-    basicLock(threadID, lockType, timeout, noBlock, contextInfo);
-    if (lockType != type) {
-      awardSynchronous(threadID, lockType);
+    basicLock(threadID, effectiveType, timeout, noBlock, contextInfo);
+    if (effectiveType != type) {
+      awardSynchronous(threadID, effectiveType);
     }
   }
 
@@ -174,13 +174,6 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
       waitLock = addToPendingLockRequest(requesterID, type, timeout, noBlock);
       if (greediness.isNotGreedy()) {
         remoteLockRequest(requesterID, type, timeout, noBlock);
-        // recordLockHoppedStat(requesterID);
-        // // debug("lock - remote requestLock ", requesterID, LockLevel.toString(type));
-        // if (noBlock) {
-        // remoteLockManager.tryRequestLock(lockID, requesterID, timeout, type);
-        // } else {
-        // remoteLockManager.requestLock(lockID, requesterID, type);
-        // }
       } else {
         // If the lock already granted to another thread greedily within the same JVM and if
         // it is a tryLock request with a timeout, schedule a local timer.
@@ -1284,7 +1277,7 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
       /*
        * server_level is not changed to NIL_LOCK_LEVEL even though the server will release the lock as we need to know
        * what state we were holding before wait on certain scenarios like server crash etc.
-       * 
+       *
        * @see ClientLockManager.notified
        */
       return this.server_level;
