@@ -59,7 +59,7 @@ public class Resolver {
 
     for (int i = 0; i < repositories.length; i++) {
       if (!repositories[i].getProtocol().equalsIgnoreCase("file")) {
-        throw new BundleException(formatMessage(Message.WARN_REPOSITORY_PROTOCOL_UNSUPPORTED, new Object[] { canonicalPath(repositories[i]) }));
+        throw new BundleException(formatMessage(Message.WARN_REPOSITORY_PROTOCOL_UNSUPPORTED, new Object[] { repositories[i] }));
       } else {
         repoLocations.add(repositories[i]);
       }
@@ -137,38 +137,45 @@ public class Resolver {
     return urls;
   }
 
-  /**
-   */
   private Collection findJars(File rootLocation, String groupId, String name, String version) {
-    // sample input:
-    //  rootLocation = file://repo
-    //  groupId = org.foo.bar
-    //  name = tim_foobar != tim-foobar (names are taken as-is, no normalization occurs)
-    //  version = 1.0.0.SNAPSHOT == 1.0.0-SNAPSHOT (will be normalized to use x.x.x-q format if needed)
-    String _version = version;
-    if (version.matches("^\\p{Digit}+\\.\\p{Digit}+\\.\\p{Digit}+\\.\\p{Alnum}+$")) {
-      String[] _v = version.split("\\.");
-      _version = _v[0] + "." + _v[1] + "." + _v[2] + "-" + _v[3];
-    }
-    
-    String jarName = name + "-" + _version + ".jar";                                        // tim_foobar-1.0.0-SNAPSHOT.jar
-    File groupLocation = new File(rootLocation, groupId.replace('.', File.separatorChar));  // file://repo/org/foo/bar
-    File nameLocation = new File(groupLocation, name);                                      // file://repo/org/foo/bar/tim_foobar
-    File versionLocation = new File(nameLocation, _version);                                // file://repo/org/foo/bar/tim_foobar/1.0.0-SNAPSHOT
-    File mavenLocation = new File(versionLocation, jarName);                                // file://repo/org/foo/bar/tim_foobar/1.0.0-SNAPSHOT/tim_foobar-1.0.0-SNAPSHOT.jar
-    File flatLocation = new File(rootLocation, jarName);                                    // file://repo/tim_foobar-1.0.0-SNAPSHOT.jar
+    File groupLocation = new File(rootLocation, groupId.replace('.', File.separatorChar));
+    File nameLocation = new File(groupLocation, name);
+    File versionLocation = new File(nameLocation, version);
     final Collection jars = new ArrayList();
 
-    // expect to find TIM jar file in a Maven-like organized directory
-    // using the TIM name as-is and a (possibly) massaged the version number...
-    if (mavenLocation.isFile())                                                             // find file in file://repo/../1.0.0-SNAPSHOT/
-      jars.add(mavenLocation);
+    File exactLocation = new File(versionLocation, name + "-" + version + ".jar");
+    if(exactLocation.exists() && exactLocation.isFile()) {
+      jars.add(exactLocation);
+    }
     
-    // also collect the TIM jar file found at the top of the repository
-    if (flatLocation.isFile())                                                              // find file in file://repo/
-      jars.add(flatLocation);
+    if (jars.isEmpty()) {
+      if (versionLocation.isDirectory()) {
+        jars.addAll(FileUtils.listFiles(versionLocation, JAR_EXTENSIONS, false));
+      }
+    } else {
+      return jars;
+    }
 
-    // and return the list of jars
+    if (jars.isEmpty()) {
+      if (nameLocation.isDirectory()) {
+        jars.addAll(FileUtils.listFiles(nameLocation, JAR_EXTENSIONS, !versionLocation.isDirectory()));
+      }
+    } else {
+      return jars;
+    }
+
+    if (jars.isEmpty()) {
+      if (groupLocation.isDirectory()) {
+        jars.addAll(FileUtils.listFiles(groupLocation, JAR_EXTENSIONS, !nameLocation.isDirectory()));
+      }
+    } else {
+      return jars;
+    }
+
+    if (jars.isEmpty() && rootLocation.isDirectory()) {
+      jars.addAll(FileUtils.listFiles(rootLocation, JAR_EXTENSIONS, !groupLocation.isDirectory()));
+    } 
+
     return jars;
   }
 
@@ -181,11 +188,11 @@ public class Resolver {
       final File root = FileUtils.toFile(location);
       final File repository = new File(root, spec.getGroupId().replace('.', File.separatorChar));
       if (!repository.exists() || !repository.isDirectory()) {
-        warn(Message.WARN_REPOSITORY_UNRESOLVED, new Object[] { canonicalPath(repository) });
+        warn(Message.WARN_REPOSITORY_UNRESOLVED, new Object[] { repository.getAbsolutePath() });
         continue;
       }
 
-      final Collection jars = findJars(root, spec.getGroupId(), spec.getName().replace('_', '-'), spec.getVersion());
+      final Collection jars = findJars(root, spec.getGroupId(), spec.getName(), spec.getVersion());
       for (final Iterator j = jars.iterator(); j.hasNext();) {
         final File bundleFile = (File) j.next();
         if (!bundleFile.isFile()) {
@@ -203,7 +210,7 @@ public class Resolver {
           try {
             return bundleFile.toURL();
           } catch (MalformedURLException e) {
-            fatal(Message.ERROR_BUNDLE_MALFORMED_URL, new Object[] { bundleFile.getName() }); // should this be fatal???
+            fatal(Message.ERROR_BUNDLE_MALFORMED_URL, new Object[] { bundleFile.getName() }); // should be fatal???
             return null;
           }
         }
@@ -236,6 +243,7 @@ public class Resolver {
       for (final Iterator j = jars.iterator(); j.hasNext();) {
         final File jar = (File) j.next();
         final Manifest manifest = getManifest(jar);
+        
         if(isBundleMatch(jar, manifest, symname, osgiVersion)) {
           try {
             return addToRegistry(jar.toURL(), manifest);
@@ -263,7 +271,7 @@ public class Resolver {
           return true;
         }
       } catch (NumberFormatException e) { // thrown by parseVersion()
-        consoleLogger.warn("Bad manifest bundle version in jar='" + canonicalPath(jarFile) + "', version='"
+        consoleLogger.warn("Bad manifest bundle version in jar='" + jarFile.getAbsolutePath() + "', version='"
                     + manifestVersion + "'.  Skipping...", e);
       }
     }
@@ -297,21 +305,10 @@ public class Resolver {
     final StringBuffer repos = new StringBuffer();
     for (int j = 0; j < repositories.length; j++) {
       if (j > 0) repos.append(";");
-      repos.append(canonicalPath(repositories[j]));
+      repos.append(repositories[j]);
     }
+
     return repos.toString();
-  }
-
-  private String canonicalPath(URL url) {
-    return canonicalPath(FileUtils.toFile(url));
-  }
-
-  private String canonicalPath(File path) {
-    try {
-      return path.getCanonicalPath();
-    } catch (IOException e) {
-      return path.toString();
-    }
   }
 
   private void resolveAdditionalModules() throws BundleException {
@@ -343,7 +340,7 @@ public class Resolver {
     final Manifest manifest = getManifest(location);
     if (manifest == null) {
       final String msg = fatal(Message.ERROR_BUNDLE_UNREADABLE, new Object[] { FileUtils.toFile(location).getName(),
-      canonicalPath(FileUtils.toFile(location).getParentFile()) });
+      FileUtils.toFile(location).getParent() });
       throw new InvalidBundleManifestException(msg);
     }
 

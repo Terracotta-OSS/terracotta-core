@@ -184,11 +184,7 @@ public class ModulesLoader {
           module.setGroupId(groupId);
         }
 
-        // we do a substitution from _ to - because the list is expected to be
-        // using the OSGi restricted convention for bundleSymbolicNames (see
-        // the entry in tc.properties - l1.modules.default); but via tc-config 
-        // whatever the user has listed is taken literally.
-        module.setName(component.replace('_', '-') + "-" + componentVersion);
+        module.setName(component + "-" + componentVersion);
         module.setVersion(moduleVersion);
         modules.add(module);
       }
