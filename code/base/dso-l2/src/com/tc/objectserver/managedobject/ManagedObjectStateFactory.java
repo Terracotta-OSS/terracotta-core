@@ -26,7 +26,7 @@ import java.util.Map;
  */
 public class ManagedObjectStateFactory {
 
-  private static final LiteralValues               literalValues       = (LiteralValues) new LiteralValues();
+  private static final LiteralValues               literalValues       = new LiteralValues();
   private static final Map                          classNameToStateMap = new ConcurrentHashMap();
   private final ManagedObjectChangeListenerProvider listenerProvider;
   private final StringIndex                         stringIndex;
