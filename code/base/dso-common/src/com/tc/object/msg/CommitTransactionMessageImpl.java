@@ -6,7 +6,7 @@ package com.tc.object.msg;
 
 import com.tc.async.api.EventContext;
 import com.tc.bytes.TCByteBuffer;
-import com.tc.io.TCByteBufferOutput;
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.lang.Recyclable;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
@@ -30,7 +30,7 @@ public class CommitTransactionMessageImpl extends DSOMessageBase implements Even
   // the write side
   private TCByteBuffer[]         batchData;
 
-  public CommitTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out,
+  public CommitTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                       MessageChannel channel, TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }

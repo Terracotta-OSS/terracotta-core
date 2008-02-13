@@ -53,7 +53,7 @@ public class NodeIDImpl implements NodeID {
     return false;
   }
 
-  public byte[] getUID() {
+  byte[] getUID() {
     return uid;
   }
 

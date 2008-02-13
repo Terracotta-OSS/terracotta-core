@@ -17,7 +17,6 @@ import com.tc.logging.TCLogging;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupEventsListener;
-import com.tc.net.groups.GroupManagerFactory;
 import com.tc.net.groups.GroupMessage;
 import com.tc.net.groups.GroupMessageListener;
 import com.tc.net.groups.Node;
@@ -389,7 +388,7 @@ public class StateManagerTest extends TCTestCase {
   private StateManager createStateManageNode(int localIndex, ChangeSink[] sinks, TribesGroupManager[] groupMgr,
                                              L2StateMessageStage[] messageStage) throws Exception {
 
-    TribesGroupManager gm = (TribesGroupManager) GroupManagerFactory.createGroupManager();
+    TribesGroupManager gm = new TribesGroupManager();
     groupMgr[localIndex] = gm;
     MyGroupEventListener gel = new MyGroupEventListener();
     MyListener l = new MyListener();

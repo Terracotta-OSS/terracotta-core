@@ -32,7 +32,7 @@ public class NetworkListenerTest extends TestCase {
   public void setUp() throws Exception {
     super.setUp();
     commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),
-                                             new NullConnectionPolicy());
+                                             new NullConnectionPolicy(), 0);
   }
 
   public void tearDown() throws Exception {

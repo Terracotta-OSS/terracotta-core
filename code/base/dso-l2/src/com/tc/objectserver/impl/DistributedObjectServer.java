@@ -239,6 +239,8 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
 
   private LockStatisticsMonitorMBean           lockStatisticsMBean;
 
+  private final TCThreadGroup                  threadGroup;
+
   // used by a test
   public DistributedObjectServer(L2TVSConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
                                  ConnectionPolicy connectionPolicy, TCServerInfoMBean tcServerInfoMBean) {
@@ -261,6 +263,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     this.httpSink = httpSink;
     this.tcServerInfoMBean = tcServerInfoMBean;
     this.l2State = l2State;
+    this.threadGroup = threadGroup;
   }
 
   public void dump() {
@@ -696,9 +699,9 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     boolean networkedHA = configSetupManager.haConfig().isNetworkedActivePassive();
     if (networkedHA) {
       logger.info("L2 Networked HA Enabled ");
-      l2Coordinator = new L2HACoordinator(consoleLogger, this, stageManager, persistor.getClusterStateStore(),
-                                          objectManager, transactionManager, gtxm, channelManager, configSetupManager
-                                              .haConfig(), recycler);
+      l2Coordinator = new L2HACoordinator(configSetupManager, threadGroup, consoleLogger, this, stageManager, persistor
+          .getClusterStateStore(), objectManager, transactionManager, gtxm, channelManager, configSetupManager
+          .haConfig(), recycler);
       l2Coordinator.getStateManager().registerForStateChangeEvents(l2State);
     } else {
       l2State.setState(StateManager.ACTIVE_COORDINATOR);

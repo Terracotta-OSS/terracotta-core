@@ -15,13 +15,11 @@ public class HydrateHandler extends AbstractEventHandler {
     HydrateContext hc = (HydrateContext) context;
     TCMessage message = hc.getMessage();
 
-    final MessageChannel channel = message.getChannel();
-    final ChannelID channelID = channel.getChannelID();
     try {
       message.hydrate();
     } catch (Throwable t) {
       try {
-        logger.error("Error hydrating message of type " + message.getMessageType() + " on channel " + channelID, t);
+        logger.error("Error hydrating message of type " + message.getMessageType(), t);
       } catch (Throwable t2) {
         // oh well
       }

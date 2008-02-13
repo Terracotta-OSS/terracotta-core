@@ -5,7 +5,7 @@
 package com.tc.object.msg;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.io.TCByteBufferOutput;
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.groups.NodeID;
 import com.tc.net.groups.NodeIDSerializer;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -27,7 +27,7 @@ public class AcknowledgeTransactionMessageImpl extends DSOMessageBase implements
   private TransactionID     requestID;
   private NodeID            requesterID;
 
-  public AcknowledgeTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out,
+  public AcknowledgeTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                            MessageChannel channel, TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }

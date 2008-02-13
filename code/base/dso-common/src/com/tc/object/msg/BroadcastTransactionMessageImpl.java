@@ -7,6 +7,7 @@ package com.tc.object.msg;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCSerializable;
 import com.tc.net.groups.NodeID;
 import com.tc.net.groups.NodeIDSerializer;
@@ -73,7 +74,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   private GlobalTransactionID    lowWatermark;
   private ObjectStringSerializer serializer;
 
-  public BroadcastTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out,
+  public BroadcastTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                          MessageChannel channel, TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }

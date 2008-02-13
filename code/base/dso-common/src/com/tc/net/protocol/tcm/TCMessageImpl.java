@@ -5,9 +5,8 @@
 package com.tc.net.protocol.tcm;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferInputStream;
-import com.tc.io.TCByteBufferOutput;
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCSerializable;
 import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.AbstractTCNetworkMessage;
@@ -28,14 +27,14 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   private final MessageChannel    channel;
   private int                     nvCount;
 
-  private TCByteBufferOutput      out;
+  private TCByteBufferOutputStream out;
   private TCByteBufferInputStream bbis;
   private int                     messageVersion;
 
   /**
    * Creates a new TCMessage to write data into (ie. to send to the network)
    */
-  protected TCMessageImpl(MessageMonitor monitor, TCByteBufferOutput output, MessageChannel channel, TCMessageType type) {
+  protected TCMessageImpl(MessageMonitor monitor, TCByteBufferOutputStream output, MessageChannel channel, TCMessageType type) {
     super(new TCMessageHeaderImpl(type));
     this.monitor = monitor;
     this.type = type;
@@ -76,8 +75,13 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   }
 
   // use me to read directly from the message data (as opposed to using the name-value mechanism)
-  protected TCByteBufferInput getInputStream() {
+  protected TCByteBufferInputStream getInputStream() {
     return this.bbis;
+  }
+  
+//use me to write directly to the message data (as opposed to using the name-value mechanism)
+  protected TCByteBufferOutputStream getOutputStream() {
+    return this.out;
   }
 
   // use me to write directly to the message data (as opposed to using the name-value mechanism)
@@ -292,6 +296,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
 
   protected void putNVPair(byte name, byte[] bytes) {
     nvCount++;
+    out.write(name);
     out.writeInt(bytes.length);
     out.write(bytes);
   }

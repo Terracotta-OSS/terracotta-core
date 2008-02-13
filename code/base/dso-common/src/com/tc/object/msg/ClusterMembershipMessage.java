@@ -5,7 +5,7 @@
 package com.tc.object.msg;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.io.TCByteBufferOutput;
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
@@ -22,7 +22,7 @@ public class ClusterMembershipMessage extends DSOMessageBase {
   private int               eventType;
   private String            nodeId;
 
-  public ClusterMembershipMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
+  public ClusterMembershipMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel,
                                   TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }

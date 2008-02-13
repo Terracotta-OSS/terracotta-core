@@ -66,7 +66,7 @@ public class Ping implements TCMessageSink {
   public void ping() throws Exception {
     CommunicationsManager comms = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                 new PlainNetworkStackHarnessFactory(),
-                                                                new NullConnectionPolicy());
+                                                                new NullConnectionPolicy(), 0);
 
     ClientMessageChannel channel = null;
     try {

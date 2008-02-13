@@ -4,7 +4,6 @@
 package com.tc.net.protocol.tcm.msgs;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
@@ -26,7 +25,7 @@ public class PingMessage extends DSOMessageBase {
 
   private long              sequence = -1;
 
-  public PingMessage(SessionID sessionID,MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel, TCMessageType type) {
+  public PingMessage(SessionID sessionID,MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel, TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 

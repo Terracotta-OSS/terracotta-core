@@ -70,7 +70,7 @@ public class MessageTransportTest extends TCTestCase {
     connManager = new MockConnectionManager();
     connManager.setConnection(clientConnection);
     commsManager = new CommunicationsManagerImpl(new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),
-                                                 connManager, new NullConnectionPolicy());
+                                                 connManager, new NullConnectionPolicy(), 0, new DisabledHealthCheckerConfigImpl());
     lsnr = commsManager.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
                                        new DefaultConnectionIdFactory());
     lsnr.start(Collections.EMPTY_SET);

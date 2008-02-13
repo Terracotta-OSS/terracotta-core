@@ -5,7 +5,6 @@
 package com.tc.object.msg;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -40,7 +39,7 @@ import junit.framework.TestCase;
 public class BroadcastTransactionMessageTest extends TestCase {
 
   private BroadcastTransactionMessageImpl msg;
-  private TCByteBufferOutput              out;
+  private TCByteBufferOutputStream        out;
   private MessageMonitor                  monitor;
   private MessageChannel                  channel;
 

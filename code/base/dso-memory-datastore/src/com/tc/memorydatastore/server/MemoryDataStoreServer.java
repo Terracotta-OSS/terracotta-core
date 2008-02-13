@@ -66,7 +66,7 @@ public class MemoryDataStoreServer {
 
   private void setupListener(int serverPort) {
     this.communicationManager = new CommunicationsManagerImpl(new NullMessageMonitor(),
-        new PlainNetworkStackHarnessFactory(), new NullConnectionPolicy());
+        new PlainNetworkStackHarnessFactory(), new NullConnectionPolicy(), 0);
     this.lsnr = communicationManager.createListener(new NullSessionManager(), new TCSocketAddress(
         TCSocketAddress.WILDCARD_ADDR, serverPort), true, new DefaultConnectionIdFactory());
   }

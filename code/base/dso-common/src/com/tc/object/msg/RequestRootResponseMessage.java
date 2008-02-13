@@ -5,7 +5,7 @@ package com.tc.object.msg;
 
 import com.tc.async.api.EventContext;
 import com.tc.bytes.TCByteBuffer;
-import com.tc.io.TCByteBufferOutput;
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -25,7 +25,7 @@ public class RequestRootResponseMessage extends DSOMessageBase implements EventC
   private String            rootName;
   private ObjectID          rootID;
 
-  public RequestRootResponseMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel, TCMessageType type) {
+  public RequestRootResponseMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel, TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 

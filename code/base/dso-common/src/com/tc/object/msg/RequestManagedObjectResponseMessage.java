@@ -6,7 +6,7 @@ package com.tc.object.msg;
 
 import com.tc.async.api.EventContext;
 import com.tc.bytes.TCByteBuffer;
-import com.tc.io.TCByteBufferOutput;
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -39,7 +39,7 @@ public class RequestManagedObjectResponseMessage extends DSOMessageBase implemen
   private TCByteBuffer[]         dnaData;
   private int                    dnaCount;
 
-  public RequestManagedObjectResponseMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out,
+  public RequestManagedObjectResponseMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                              MessageChannel channel, TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }

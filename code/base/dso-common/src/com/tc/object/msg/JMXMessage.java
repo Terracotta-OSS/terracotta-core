@@ -8,6 +8,7 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.TCRuntimeException;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCSerializable;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
@@ -27,7 +28,7 @@ public class JMXMessage extends DSOMessageBase implements TCSerializable {
   private static final byte JMX_OBJECT = 0;
   private Object            jmxObject;
 
-  public JMXMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
+  public JMXMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel,
                     TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }

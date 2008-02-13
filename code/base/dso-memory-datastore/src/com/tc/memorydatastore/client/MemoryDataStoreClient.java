@@ -34,7 +34,7 @@ public class MemoryDataStoreClient implements MemoryDataMap {
   private final static CommunicationsManager communicationsManager = new CommunicationsManagerImpl(
                                                                        new NullMessageMonitor(),
                                                                        new PlainNetworkStackHarnessFactory(),
-                                                                       new NullConnectionPolicy());
+                                                                       new NullConnectionPolicy(), 0);
 
   private ClientMessageChannel               channel;
   private final Map                          pendingRequests       = new HashMap();

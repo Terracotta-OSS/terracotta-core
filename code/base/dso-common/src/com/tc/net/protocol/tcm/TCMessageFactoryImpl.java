@@ -8,7 +8,6 @@ import org.apache.commons.lang.ArrayUtils;
 import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionProvider;
@@ -17,7 +16,7 @@ import java.lang.reflect.Constructor;
 import java.util.Map;
 
 public class TCMessageFactoryImpl implements TCMessageFactory {
-  private static final Class[]            SIG1            = new Class[] { SessionID.class, MessageMonitor.class, TCByteBufferOutput.class,
+  private static final Class[]            SIG1            = new Class[] { SessionID.class, MessageMonitor.class, TCByteBufferOutputStream.class,
       MessageChannel.class, TCMessageType.class          };
   private static final Class[]            SIG2            = new Class[] { SessionID.class, MessageMonitor.class,
       MessageChannel.class, TCMessageHeader.class, TCByteBuffer[].class };

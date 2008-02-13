@@ -104,9 +104,9 @@ public class ChannelManagerTest extends TestCase {
 
   public void testTransportDisconnectRemovesChannel() throws Exception {
     CommunicationsManager clientComms = new CommunicationsManagerImpl(monitor, new PlainNetworkStackHarnessFactory(),
-                                                                      new NullConnectionPolicy());
+                                                                      new NullConnectionPolicy(), 0);
     CommunicationsManager serverComms = new CommunicationsManagerImpl(monitor, new PlainNetworkStackHarnessFactory(),
-                                                                      new NullConnectionPolicy());
+                                                                      new NullConnectionPolicy(), 0);
     try {
       NetworkListener lsnr = serverComms.createListener(sessionManager,
                                                         new TCSocketAddress(TCSocketAddress.LOOPBACK_ADDR, 0), true,

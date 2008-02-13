@@ -5,7 +5,7 @@
 package com.tc.object.msg;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.io.TCByteBufferOutput;
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -37,7 +37,7 @@ public class LockResponseMessage extends DSOMessageBase {
   private int               lockLevel;
   private GlobalLockInfo    globalLockInfo;
 
-  public LockResponseMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out,
+  public LockResponseMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                              MessageChannel channel, TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }

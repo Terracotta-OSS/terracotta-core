@@ -92,7 +92,7 @@ public class TribesGroupManagerTest extends TCTestCase {
   // }
 
   public void testIfTribesGroupManagerLoads() throws Exception {
-    GroupManager gm = GroupManagerFactory.createGroupManager();
+    GroupManager gm = new TribesGroupManager();
     assertNotNull(gm);
     assertEquals(TribesGroupManager.class.getName(), gm.getClass().getName());
   }

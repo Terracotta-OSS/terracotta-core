@@ -7,6 +7,7 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.TCRuntimeException;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCSerializable;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
@@ -35,7 +36,7 @@ public final class JmxRemoteTunnelMessage extends DSOMessageBase implements TCSe
   private Message           tunneledMessage;
   private byte              flag;
 
-  public JmxRemoteTunnelMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
+  public JmxRemoteTunnelMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel,
                                 TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
     flag = DATA_FLAG;

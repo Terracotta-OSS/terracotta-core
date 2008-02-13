@@ -4,7 +4,7 @@
 package com.tc.management.remote.protocol.terracotta;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.io.TCByteBufferOutput;
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -19,7 +19,7 @@ import com.tc.object.session.SessionID;
  */
 public class L1JmxReady extends DSOMessageBase {
 
-	public L1JmxReady(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out,
+	public L1JmxReady(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
 			MessageChannel channel, TCMessageType type) {
 		super(sessionID, monitor, out, channel, type);
 	}

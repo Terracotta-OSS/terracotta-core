@@ -5,7 +5,7 @@
 package com.tc.object.msg;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.io.TCByteBufferOutput;
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCSerializable;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
@@ -48,7 +48,7 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   private boolean           requestObjectIDs;
   private String            clientVersion            = "UNKNOW";
 
-  public ClientHandshakeMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
+  public ClientHandshakeMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel,
                                     TCMessageType messageType) {
     super(sessionID, monitor, out, channel, messageType);
   }
