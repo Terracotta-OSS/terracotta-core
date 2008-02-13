@@ -8,7 +8,6 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.dijon.Button;
@@ -596,13 +595,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
    * Returns if the major and minor elements of the passed version strings match.
    */
   private static boolean versionsMatch(String v1, String v2) {
-    if(v1.equals(v2)) { return true; }
-    
-    String[] v1Elems = StringUtils.split(v1, '.');
-    String[] v2Elems = StringUtils.split(v2, '.');
-
-    return v1Elems != null && v2Elems != null && v1Elems.length == v2Elems.length && v1Elems.length > 1
-           && v1Elems[0].equals(v2Elems[0]) && v1Elems[1].equals(v2Elems[1]);
+    return v1.equals(v2);
   }
 
   public boolean testServerMatch(ServerNode serverNode) {
@@ -617,7 +610,6 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
 
     // The version string that comes from the server is of the form "Terracotta 2.4", while
     // the default ProductInfo.getVersion is just the raw version number string: "2.4"
-
     if (spaceIndex != -1) {
       serverVersion = serverVersion.substring(spaceIndex + 1);
     }
