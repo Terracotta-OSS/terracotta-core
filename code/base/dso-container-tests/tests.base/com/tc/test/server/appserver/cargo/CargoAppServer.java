@@ -103,7 +103,9 @@ public abstract class CargoAppServer extends AbstractAppServer {
           // TODO: should reconsider this after upgrading WL9.2
           // WL9.2 has some bug in shutting down
           // We don't want to fail the test because of it
-          if (!e.getMessage().startsWith("Failed to stop the WebLogic 9.x container.")) {
+          if (e.getMessage().startsWith("Failed to stop the WebLogic 9.x container.")) {
+            System.err.println("Failed to stop WL92. This is a known issue. Ignoring....");
+          } else {
             throw new RuntimeException(e);
           }
         }
