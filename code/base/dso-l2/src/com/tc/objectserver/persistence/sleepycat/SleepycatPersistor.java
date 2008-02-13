@@ -164,7 +164,7 @@ public class SleepycatPersistor implements Persistor {
       try {
         if (tx != null) tx.abort();
       } catch (DatabaseException e) {
-        // This doesnt throw an exception as we dont want to create a Red herring.
+        // This doesn't throw an exception as we don't want to create a Red herring.
         logger.error("Error on abortOnError", e);
       }
 
@@ -179,7 +179,7 @@ public class SleepycatPersistor implements Persistor {
         try {
           cursor.close();
         } catch (DatabaseException e) {
-          // This doesnt throw an exception as we dont want to create a Red herring.
+          // This doesn't throw an exception as we don't want to create a Red herring.
           logger.error("Error on abortOnError", e);
         }
       }

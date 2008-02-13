@@ -14,6 +14,7 @@ import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.managedobject.MapManagedObjectState;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
+import com.tc.objectserver.persistence.api.PersistentCollectionsUtil;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
@@ -35,18 +36,16 @@ import java.util.Map;
 import java.util.Set;
 
 public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPersistor {
-  private final MemoryDataStoreClient          objectDB;
-  private final MutableSequence                objectIDSequence;
-  private final MemoryDataStoreClient          rootDB;
-  private long                                 saveCount;
-  private final TCLogger                       logger;
-  private final MemoryStoreCollectionsPersistor   collectionsPersistor;
+  private final MemoryDataStoreClient           objectDB;
+  private final MutableSequence                 objectIDSequence;
+  private final MemoryDataStoreClient           rootDB;
+  private long                                  saveCount;
+  private final TCLogger                        logger;
+  private final MemoryStoreCollectionsPersistor collectionsPersistor;
 
-  public MemoryStoreManagedObjectPersistor(TCLogger logger, 
-                                        MemoryDataStoreClient objectDB,
-                                        MutableSequence objectIDSequence,
-                                        MemoryDataStoreClient rootDB, 
-                                        MemoryStoreCollectionsPersistor collectionsPersistor) {
+  public MemoryStoreManagedObjectPersistor(TCLogger logger, MemoryDataStoreClient objectDB,
+                                           MutableSequence objectIDSequence, MemoryDataStoreClient rootDB,
+                                           MemoryStoreCollectionsPersistor collectionsPersistor) {
     this.logger = logger;
     this.objectDB = objectDB;
     this.objectIDSequence = objectIDSequence;
@@ -129,7 +128,7 @@ public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPer
 
   private void loadCollection(ManagedObject mo) throws IOException, ClassNotFoundException {
     ManagedObjectState state = mo.getManagedObjectState();
-    if (state.getType() == ManagedObjectState.MAP_TYPE || state.getType() == ManagedObjectState.PARTIAL_MAP_TYPE) {
+    if (PersistentCollectionsUtil.isPersistableCollectionType(state.getType())) {
       MapManagedObjectState mapState = (MapManagedObjectState) state;
       Assert.assertNull(mapState.getMap());
       mapState.setMap(collectionsPersistor.loadMap(mo.getID()));
@@ -143,7 +142,7 @@ public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPer
       basicSaveObject(managedObject);
     } catch (IOException e) {
       throw new TCRuntimeException(e);
-    } 
+    }
   }
 
   private boolean basicSaveObject(ManagedObject managedObject) throws IOException {
@@ -160,7 +159,7 @@ public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPer
 
   private void basicSaveCollection(ManagedObject managedObject) throws IOException {
     ManagedObjectState state = managedObject.getManagedObjectState();
-    if (state.getType() == ManagedObjectState.MAP_TYPE || state.getType() == ManagedObjectState.PARTIAL_MAP_TYPE) {
+    if (PersistentCollectionsUtil.isPersistableCollectionType(state.getType())) {
       MapManagedObjectState mapState = (MapManagedObjectState) state;
       MemoryStorePersistableMap map = (MemoryStorePersistableMap) mapState.getMap();
       collectionsPersistor.saveMap(map);
@@ -235,7 +234,6 @@ public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPer
     return (Conversion.long2Bytes(objectID.toLong()));
   }
 
-
   private byte[] managedObjectToData(ManagedObject mo) throws IOException {
     ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
     new ObjectOutputStream(byteStream).writeObject(mo);
@@ -270,5 +268,5 @@ public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPer
       set.stopPopulating(tmp);
     }
 
-   }
+  }
 }

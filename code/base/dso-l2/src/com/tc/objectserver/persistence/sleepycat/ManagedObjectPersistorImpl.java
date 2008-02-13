@@ -21,6 +21,7 @@ import com.tc.objectserver.managedobject.MapManagedObjectState;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
+import com.tc.objectserver.persistence.api.PersistentCollectionsUtil;
 import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor.SleepycatPersistorBase;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrinter;
@@ -63,7 +64,6 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   private static final Object                  MO_PERSISTOR_VALUE = "Complete";
 
   private final Database                       objectDB;
-  private final Database                       oidDB;
   private final SerializationAdapterFactory    saf;
   private final CursorConfig                   dBCursorConfig;
   private final MutableSequence                objectIDSequence;
@@ -73,7 +73,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   private final TCLogger                       logger;
   private final PersistenceTransactionProvider ptp;
   private final ClassCatalog                   classCatalog;
-  SerializationAdapter                         serializationAdapter;
+  private SerializationAdapter                 serializationAdapter;
   private final SleepycatCollectionsPersistor  collectionsPersistor;
   private final String                         OID_FAST_LOAD      = "l2.objectmanager.loadObjectID.fastLoad";
   private final boolean                        oidFastLoad;
@@ -90,7 +90,6 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
     this.classCatalog = classCatalog;
     this.saf = serializationAdapterFactory;
     this.objectDB = objectDB;
-    this.oidDB = oidDB;
     this.dBCursorConfig = dBCursorConfig;
     this.objectIDSequence = objectIDSequence;
     this.rootDB = rootDB;
@@ -252,7 +251,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   private void loadCollection(PersistenceTransaction tx, ManagedObject mo) throws IOException, ClassNotFoundException,
       TCDatabaseException {
     ManagedObjectState state = mo.getManagedObjectState();
-    if (state.getType() == ManagedObjectState.MAP_TYPE || state.getType() == ManagedObjectState.PARTIAL_MAP_TYPE) {
+    if (PersistentCollectionsUtil.isPersistableCollectionType(state.getType())) {
       MapManagedObjectState mapState = (MapManagedObjectState) state;
       Assert.assertNull(mapState.getMap());
       try {
@@ -310,7 +309,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   private void basicSaveCollection(PersistenceTransaction tx, ManagedObject managedObject) throws IOException,
       TCDatabaseException {
     ManagedObjectState state = managedObject.getManagedObjectState();
-    if (state.getType() == ManagedObjectState.MAP_TYPE || state.getType() == ManagedObjectState.PARTIAL_MAP_TYPE) {
+    if (PersistentCollectionsUtil.isPersistableCollectionType(state.getType())) {
       MapManagedObjectState mapState = (MapManagedObjectState) state;
       SleepycatPersistableMap map = (SleepycatPersistableMap) mapState.getMap();
       try {

@@ -37,7 +37,7 @@ public class ManagedObjectStateSerializer implements Serializer {
     return MANAGED_OBJECT_STATE;
   }
 
-  public static ManagedObjectStateFactory getStateFactory() {
+  private ManagedObjectStateFactory getStateFactory() {
     return ManagedObjectStateFactory.getInstance();
   }
 

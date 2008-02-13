@@ -149,7 +149,7 @@ public class ManagedObjectStateFactory {
       case ManagedObjectState.LINKED_HASHMAP_TYPE:
         return new LinkedHashMapManagedObjectState(classID);
       case ManagedObjectState.TREE_MAP_TYPE:
-        return new TreeMapManagedObjectState(classID);
+        return new TreeMapManagedObjectState(classID, persistentCollectionFactory.createPersistentMap(oid));
       case ManagedObjectState.SET_TYPE:
         return new SetManagedObjectState(classID);
       case ManagedObjectState.TREE_SET_TYPE:
@@ -161,7 +161,7 @@ public class ManagedObjectStateFactory {
       case ManagedObjectState.DATE_TYPE:
         return new DateManagedObjectState(classID);
       case ManagedObjectState.CONCURRENT_HASHMAP_TYPE:
-        return new ConcurrentHashMapManagedObjectState(classID);
+        return new ConcurrentHashMapManagedObjectState(classID, persistentCollectionFactory.createPersistentMap(oid));
       case ManagedObjectState.URL_TYPE:
         return new URLManagedObjectState(classID);
     }

@@ -5,7 +5,6 @@
 package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
-import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LiteralAction;
@@ -16,16 +15,13 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 
 /**
  * state for maps
  */
-public class ConcurrentHashMapManagedObjectState extends MapManagedObjectState {
+public class ConcurrentHashMapManagedObjectState extends PartialMapManagedObjectState {
   private static final String SEGMENT_MASK_FIELD_NAME  = "java.util.concurrent.ConcurrentHashMap.segmentMask";
   private static final String SEGMENT_SHIFT_FIELD_NAME = "java.util.concurrent.ConcurrentHashMap.segmentShift";
   private static final String SEGMENT_FIELD_NAME       = "java.util.concurrent.ConcurrentHashMap.segments";
@@ -34,11 +30,7 @@ public class ConcurrentHashMapManagedObjectState extends MapManagedObjectState {
   private Object              segmentShift;
   private ObjectID[]          segments                 = null;
 
-  protected ConcurrentHashMapManagedObjectState(long classID) {
-    super(classID, new HashMap());
-  }
-
-  protected ConcurrentHashMapManagedObjectState(ObjectInput in) throws IOException {
+  private ConcurrentHashMapManagedObjectState(ObjectInput in) throws IOException {
     super(in);
   }
 
@@ -98,16 +90,7 @@ public class ConcurrentHashMapManagedObjectState extends MapManagedObjectState {
 
   public void dehydrate(ObjectID objectID, DNAWriter writer) {
     dehydrateFields(objectID, writer);
-    dehydrateMapKeyValuesPair(objectID, writer);
-  }
-
-  private void dehydrateMapKeyValuesPair(ObjectID objectID, DNAWriter writer) {
-    for (Iterator i = references.entrySet().iterator(); i.hasNext();) {
-      Entry entry = (Entry) i.next();
-      Object key = entry.getKey();
-      Object value = entry.getValue();
-      writer.addLogicalAction(SerializationUtil.PUT, new Object[] { key, value });
-    }
+    super.dehydrate(objectID, writer);
   }
 
   private void dehydrateFields(ObjectID objectID, DNAWriter writer) {
@@ -147,12 +130,6 @@ public class ConcurrentHashMapManagedObjectState extends MapManagedObjectState {
         writeField(out, SEGMENT_FIELD_NAME + i, segments[i]);
       }
     }
-    out.writeInt(references.size());
-    for (Iterator i = references.entrySet().iterator(); i.hasNext();) {
-      Entry entry = (Entry) i.next();
-      out.writeObject(entry.getKey());
-      out.writeObject(entry.getValue());
-    }
   }
 
   private static void readField(ObjectInput in, ConcurrentHashMapManagedObjectState mo, int index)
@@ -186,12 +163,6 @@ public class ConcurrentHashMapManagedObjectState extends MapManagedObjectState {
       }
     }
 
-    int size = in.readInt();
-    Map map = new HashMap(size);
-    for (int i = 0; i < size; i++) {
-      map.put(in.readObject(), in.readObject());
-    }
-    mo.references = map;
     return mo;
   }
 
@@ -205,6 +176,6 @@ public class ConcurrentHashMapManagedObjectState extends MapManagedObjectState {
     return ((segmentMask == mo.segmentMask) || (segmentMask != null && segmentMask.equals(mo.segmentMask)))
            && ((segmentShift == mo.segmentShift) || (segmentShift != null && segmentShift.equals(mo.segmentShift)))
            && ((segments == mo.segments) || (segments != null && Arrays.equals(segments, mo.segments)))
-           && references.equals(mo.references);
+           && super.basicEquals(o);
   }
 }

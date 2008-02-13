@@ -16,11 +16,8 @@ import com.tc.util.Assert;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 
 /**
  * state for tree maps
@@ -29,12 +26,12 @@ public class TreeMapManagedObjectState extends MapManagedObjectState implements 
   static final String COMPARATOR_FIELDNAME = "java.util.TreeMap.comparator";
   private ObjectID    comparator           = null;
 
-  TreeMapManagedObjectState(long classID) {
-    super(classID, new HashMap());
+  private TreeMapManagedObjectState(ObjectInput in) throws IOException {
+    super(in);
   }
 
-  protected TreeMapManagedObjectState(ObjectInput in) throws IOException {
-    super(in);
+  public TreeMapManagedObjectState(long classID, Map map) {
+    super(classID, map);
   }
 
   public void apply(ObjectID objectID, DNACursor cursor, BackReferences includeIDs) throws IOException {
@@ -93,12 +90,6 @@ public class TreeMapManagedObjectState extends MapManagedObjectState implements 
       out.writeBoolean(true);
       out.writeLong(comparator.toLong());
     }
-    out.writeInt(references.size());
-    for (Iterator i = references.entrySet().iterator(); i.hasNext();) {
-      Entry entry = (Entry) i.next();
-      out.writeObject(entry.getKey());
-      out.writeObject(entry.getValue());
-    }
   }
 
   protected boolean basicEquals(LogicalManagedObjectState o) {
@@ -107,22 +98,12 @@ public class TreeMapManagedObjectState extends MapManagedObjectState implements 
            && super.basicEquals(o);
   }
 
-  static MapManagedObjectState readFrom(ObjectInput in) throws IOException, ClassNotFoundException {
+  static MapManagedObjectState readFrom(ObjectInput in) throws IOException {
     TreeMapManagedObjectState tm = new TreeMapManagedObjectState(in);
-    ObjectID comparator;
     if (in.readBoolean()) {
-      comparator = new ObjectID(in.readLong());
-    } else {
-      comparator = null;
+      tm.comparator = new ObjectID(in.readLong());
     }
-    int size = in.readInt();
-    Map map = new HashMap(size);
-    for (int i = 0; i < size; i++) {
-      map.put(in.readObject(), in.readObject());
-    }
-    tm.references = map;
-    tm.comparator = comparator;
-    
+
     return tm;
   }
 }
