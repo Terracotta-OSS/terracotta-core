@@ -21,7 +21,7 @@ public interface ManagedObjectState {
 
   /*
    * If you are adding new State objects, you need to add Serialization support in ManagedObjectStateFactory
-   * 
+   *
    * The unit test ManagedObjectStateSerializationTest will also need to have a test case for
    * each of these types, which is defined to be public static final. This will ensure that
    * Serialization support is added to ManagedObjectStateFactory.
@@ -38,26 +38,25 @@ public interface ManagedObjectState {
   public static final byte TREE_MAP_TYPE           = 0x0a;
   public static final byte QUEUE_TYPE              = 0x0b;
   public static final byte CONCURRENT_HASHMAP_TYPE = 0x0c;
-  public static final byte PROXY_TYPE              = 0x0d;
-  public static final byte PARTIAL_MAP_TYPE        = 0x0e;
-  public static final byte URL_TYPE                = 0x0f;
+  public static final byte PARTIAL_MAP_TYPE        = 0x0d;
+  public static final byte URL_TYPE                = 0x0e;
 
   public void apply(ObjectID objectID, DNACursor cursor, BackReferences includeIDs) throws IOException;
 
   public Set getObjectReferences();
 
   public void addObjectReferencesTo(ManagedObjectTraverser traverser);
-  
+
   public void dehydrate(ObjectID objectID, DNAWriter writer);
-  
+
   public ManagedObjectFacade createFacade(ObjectID objectID, String className, int limit);
-  
+
   public byte getType();
-  
+
   public String getClassName();
-  
+
   public String getLoaderDescription();
-  
+
   public void writeTo(ObjectOutput o) throws IOException;
 
   // The readFrom() method is currently a static implementation in each state object till I figure out

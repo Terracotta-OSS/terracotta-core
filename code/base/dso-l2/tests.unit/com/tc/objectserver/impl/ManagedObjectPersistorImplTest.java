@@ -26,20 +26,16 @@ import com.tc.util.SyncObjectIdSet;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Random;
 
 public class ManagedObjectPersistorImplTest extends TCTestCase {
   private static final TCLogger        logger = TCLogging.getTestingLogger(ManagedObjectPersistorImplTest.class);
   private ManagedObjectPersistorImpl   managedObjectPersistor;
-  private Map                          map;
-  private TestManagedObjectPersistor   persistor;
   private PersistentManagedObjectStore objectStore;
-  PersistenceTransactionProvider       persistenceTransactionProvider;
-  DBEnvironment                        env;
+  private PersistenceTransactionProvider       persistenceTransactionProvider;
+  private DBEnvironment                        env;
   private OidBitsArrayMapManagerImpl   oidManager;
   private final String                 OID_FAST_LOAD = "l2.objectmanager.loadObjectID.fastLoad";
 
@@ -69,8 +65,6 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
                                                                 .getRootDatabase(), rootDBCursorConfig,
                                                             persistenceTransactionProvider,
                                                             sleepycatCollectionsPersistor, env.isParanoidMode());
-    map = new HashMap();
-    persistor = new TestManagedObjectPersistor(map);
     objectStore = new PersistentManagedObjectStore(managedObjectPersistor);
     oidManager = managedObjectPersistor.getOidManager();
   }
@@ -90,8 +84,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
     assertTrue(dbHome.exists());
     assertTrue(dbHome.isDirectory());
     System.out.println("DB Home: " + dbHome);
-    DBEnvironment env = new DBEnvironment(paranoid, dbHome);
-    return env;
+    return new DBEnvironment(paranoid, dbHome);
   }
 
   private Collection createRandomObjects(int num) {

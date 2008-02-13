@@ -58,6 +58,11 @@ public abstract class AbstractTestManagedObjectState extends TestCase {
   }
 
   public void basicTestUnit(String className, final byte type, TestDNACursor cursor, int objCount) throws Exception {
+    basicTestUnit(className, type, cursor, objCount, true);
+  }
+
+  public void basicTestUnit(String className, final byte type, TestDNACursor cursor, int objCount,
+                            boolean verifyReadWrite) throws Exception {
     ManagedObjectState state = createManagedObjectState(className, cursor);
     state.apply(objectID, cursor, new BackReferences());
 
@@ -68,7 +73,9 @@ public abstract class AbstractTestManagedObjectState extends TestCase {
     basicDehydrate(cursor, objCount, state);
 
     // writeTo, readFrom and equal
-    basicReadWriteEqual(type, state);
+    if (verifyReadWrite) {
+      basicReadWriteEqual(type, state);
+    }
   }
 
   protected void basicAPI(String className, final byte type, TestDNACursor cursor, int objCount,

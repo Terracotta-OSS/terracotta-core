@@ -325,7 +325,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
     if (managedObjects.isEmpty()) return;
     Object failureContext = null;
 
-    // XXX:: We are sorting so that we maintain lock ordering when writting to sleepycat (check
+    // XXX:: We are sorting so that we maintain lock ordering when writing to sleepycat (check
     // SleepycatPersistableMap.basicClear()). This is done under the assumption that this method is not called
     // twice with the same transaction
     Object old = persistenceTransaction.setProperty(MO_PERSISTOR_KEY, MO_PERSISTOR_VALUE);

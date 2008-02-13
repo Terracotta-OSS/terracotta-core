@@ -4,29 +4,40 @@
  */
 package com.tc.objectserver.managedobject;
 
+import com.sleepycat.je.CursorConfig;
 import com.tc.exception.ImplementMe;
-import com.tc.io.serializer.TCObjectInputStream;
-import com.tc.io.serializer.TCObjectOutputStream;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LiteralAction;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
+import com.tc.object.tx.TransactionID;
+import com.tc.objectserver.api.NullObjectInstanceMonitor;
+import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
-import com.tc.objectserver.persistence.impl.InMemoryPersistor;
-import com.tc.text.Banner;
+import com.tc.objectserver.core.api.TestDNA;
+import com.tc.objectserver.persistence.api.PersistenceTransaction;
+import com.tc.objectserver.persistence.impl.TestMutableSequence;
+import com.tc.objectserver.persistence.impl.TestPersistenceTransactionProvider;
+import com.tc.objectserver.persistence.sleepycat.DBEnvironment;
+import com.tc.objectserver.persistence.sleepycat.ManagedObjectPersistorImpl;
+import com.tc.objectserver.persistence.sleepycat.SleepycatCollectionFactory;
+import com.tc.objectserver.persistence.sleepycat.SleepycatCollectionsPersistor;
+import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor;
+import com.tc.objectserver.persistence.sleepycat.SleepycatSerializationAdapterFactory;
+import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -34,27 +45,51 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import junit.framework.TestCase;
+public class ManagedObjectStateSerializationTest extends TCTestCase {
+  private final TCLogger                     logger   = TCLogging.getTestingLogger(getClass());
+  private final ObjectID                           objectID = new ObjectID(2000);
 
-public class ManagedObjectStateSerializationTest extends TestCase {
-  private static final String                 loaderDesc = "System.loader";
-
-  private ObjectID                            objectID;
-  private ManagedObjectChangeListenerProvider listenerProvider;
+  private DBEnvironment                      env;
+  private ManagedObjectPersistorImpl         managedObjectPersistor;
+  private TestPersistenceTransactionProvider ptp;
 
   public void setUp() throws Exception {
     super.setUp();
-    listenerProvider = new NullManagedObjectChangeListenerProvider();
+
+    env = newDBEnvironment();
+    SleepycatSerializationAdapterFactory sleepycatSerializationAdapterFactory = new SleepycatSerializationAdapterFactory();
+
+    SleepycatPersistor persistor = new SleepycatPersistor(logger, env, sleepycatSerializationAdapterFactory);
+
+    CursorConfig dbCursorConfig = new CursorConfig();
+    ptp = new TestPersistenceTransactionProvider();
+    CursorConfig rootDBCursorConfig = new CursorConfig();
+    SleepycatCollectionFactory sleepycatCollectionFactory = new SleepycatCollectionFactory();
+    SleepycatCollectionsPersistor sleepycatCollectionsPersistor = new SleepycatCollectionsPersistor(logger, env
+        .getMapsDatabase(), sleepycatCollectionFactory);
+
+    managedObjectPersistor = new ManagedObjectPersistorImpl(logger, env.getClassCatalogWrapper().getClassCatalog(),
+                                                            sleepycatSerializationAdapterFactory, env
+                                                                .getObjectDatabase(), env.getOidDatabase(),
+                                                            dbCursorConfig, new TestMutableSequence(), env
+                                                                .getRootDatabase(), rootDBCursorConfig, ptp,
+                                                            sleepycatCollectionsPersistor, env.isParanoidMode());
+
+    NullManagedObjectChangeListenerProvider listenerProvider = new NullManagedObjectChangeListenerProvider();
     ManagedObjectStateFactory.disableSingleton(true);
-    ManagedObjectStateFactory.createInstance(listenerProvider, new InMemoryPersistor());
-    objectID = new ObjectID(2000);
+    ManagedObjectStateFactory.createInstance(listenerProvider, persistor);
+  }
+
+  private DBEnvironment newDBEnvironment() throws Exception {
+    File dbHome = new File(this.getTempDirectory(), getClass().getName() + "db");
+    dbHome.mkdirs();
+    return new DBEnvironment(true, dbHome);
   }
 
   protected void tearDown() throws Exception {
     super.tearDown();
+    env.close();
     ManagedObjectStateFactory.disableSingleton(false);
-    objectID = null;
-    listenerProvider = null;
   }
 
   public void testCheckIfMissingAnyManagedObjectType() throws Exception {
@@ -104,9 +139,6 @@ public class ManagedObjectStateSerializationTest extends TestCase {
           case ManagedObjectState.CONCURRENT_HASHMAP_TYPE:
             testConcurrentHashMap();
             break;
-          case ManagedObjectState.PROXY_TYPE:
-            testProxy();
-            break;
           case ManagedObjectState.URL_TYPE:
             testURL();
             break;
@@ -116,27 +148,6 @@ public class ManagedObjectStateSerializationTest extends TestCase {
         }
       }
     }
-  }
-
-  public void testProxy() throws Exception {
-    String CLASSLOADER_FIELD_NAME = "java.lang.reflect.Proxy.loader";
-    String INTERFACES_FIELD_NAME = "java.lang.reflect.Proxy.interfaces";
-    String INVOCATION_HANDLER_FIELD_NAME = "java.lang.reflect.Proxy.h";
-
-    MyInvocationHandler handler = new MyInvocationHandler();
-    Proxy myProxy = (Proxy) Proxy.newProxyInstance(this.getClass().getClassLoader(), new Class[] { MyProxyInf1.class,
-        MyProxyInf2.class }, handler);
-    String className = myProxy.getClass().getName();
-
-    TestDNACursor cursor = new TestDNACursor();
-
-    cursor.addPhysicalAction(CLASSLOADER_FIELD_NAME, myProxy.getClass().getClassLoader(), true);
-    cursor.addPhysicalAction(INTERFACES_FIELD_NAME, myProxy.getClass().getInterfaces(), true);
-    cursor.addPhysicalAction(INVOCATION_HANDLER_FIELD_NAME, new ObjectID(2002), true);
-
-    ManagedObjectState state = applyValidation(className, cursor);
-
-    serializationValidation(state, cursor, ManagedObjectState.PHYSICAL_TYPE);
   }
 
   public void testPhysical() throws Exception {
@@ -244,12 +255,6 @@ public class ManagedObjectStateSerializationTest extends TestCase {
   }
 
   public void testTreeMap() throws Exception {
-    if (true) {
-      Banner.warnBanner(getName()
-                        + " is disabled until we can figure out how to deal with the partial map read/write here");
-      return;
-    }
-
     String className = "java.util.TreeMap";
     String COMPARATOR_FIELDNAME = "java.util.TreeMap.comparator";
 
@@ -286,12 +291,6 @@ public class ManagedObjectStateSerializationTest extends TestCase {
   }
 
   public void testConcurrentHashMap() throws Exception {
-    if (true) {
-      Banner.warnBanner(getName()
-                        + " is disabled until we can figure out how to deal with the partial map read/write here");
-      return;
-    }
-
     String className = "java.util.concurrent.ConcurrentHashMap";
     String SEGMENT_MASK_FIELD_NAME = className + ".segmentMask";
     String SEGMENT_SHIFT_FIELD_NAME = className + ".segmentShift";
@@ -326,41 +325,28 @@ public class ManagedObjectStateSerializationTest extends TestCase {
     serializationValidation(state, cursor, ManagedObjectState.URL_TYPE);
   }
 
-  private ManagedObjectState applyValidation(String className, DNACursor dnaCursor) throws Exception {
-    ManagedObjectState state = apply(className, dnaCursor);
+  protected ManagedObjectState applyValidation(String className, DNACursor dnaCursor) throws Exception {
+    ManagedObject mo = new ManagedObjectImpl(objectID);
+
+    TestDNA dna = new TestDNA(dnaCursor);
+    dna.typeName = className;
+    mo.apply(dna, new TransactionID(1), new BackReferences(), new NullObjectInstanceMonitor(), false);
+
+    PersistenceTransaction txn = ptp.newTransaction();
+    managedObjectPersistor.saveObject(txn, mo);
+    txn.commit();
+
+    ManagedObjectState state = mo.getManagedObjectState();
     TestDNAWriter dnaWriter = dehydrate(state);
     validate(dnaCursor, dnaWriter);
 
     return state;
   }
 
-  private void serializationValidation(ManagedObjectState state, DNACursor dnaCursor, byte type) throws Exception {
-    byte[] buffer = writeTo(state);
-    TestDNAWriter dnaWriter = readFrom(type, buffer);
+  protected void serializationValidation(ManagedObjectState state, DNACursor dnaCursor, byte type) throws Exception {
+    ManagedObject loaded = managedObjectPersistor.loadObjectByID(objectID);
+    TestDNAWriter dnaWriter = dehydrate(loaded.getManagedObjectState());
     validate(dnaCursor, dnaWriter);
-  }
-
-  private byte[] writeTo(ManagedObjectState state) throws Exception {
-    ByteArrayOutputStream bout = new ByteArrayOutputStream();
-    TCObjectOutputStream out = new TCObjectOutputStream(bout);
-    state.writeTo(out);
-
-    return bout.toByteArray();
-  }
-
-  private TestDNAWriter readFrom(byte type, byte[] buffer) throws Exception {
-    ByteArrayInputStream bin = new ByteArrayInputStream(buffer);
-    TCObjectInputStream in = new TCObjectInputStream(bin);
-
-    ManagedObjectState state = ManagedObjectStateFactory.getInstance().readManagedObjectStateFrom(in, type);
-    return dehydrate(state);
-  }
-
-  private ManagedObjectState apply(String className, DNACursor dnaCursor) throws Exception {
-    ManagedObjectState state = ManagedObjectStateFactory.getInstance().createState(new ObjectID(1), ObjectID.NULL_ID,
-                                                                                   className, loaderDesc, dnaCursor);
-    state.apply(objectID, dnaCursor, new BackReferences());
-    return state;
   }
 
   private TestDNAWriter dehydrate(ManagedObjectState state) throws Exception {
@@ -516,7 +502,7 @@ public class ManagedObjectStateSerializationTest extends TestCase {
     }
   }
 
-  public class TestDNACursor implements DNACursor {
+  public static class TestDNACursor implements DNACursor {
     private List actions = new ArrayList();
     private int  current = -1;
 

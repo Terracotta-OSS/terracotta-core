@@ -17,7 +17,7 @@ public class MapManagedObjectStateTest extends AbstractTestManagedObjectState {
     String SEGMENT_FIELD_NAME = className + ".segments";
 
     TestDNACursor cursor = new TestDNACursor();
-    
+
     cursor.addPhysicalAction(SEGMENT_MASK_FIELD_NAME, new Integer(10), false);
     cursor.addPhysicalAction(SEGMENT_SHIFT_FIELD_NAME, new Integer(20), false);
     cursor.addLiteralAction(new Integer(2));
@@ -28,9 +28,9 @@ public class MapManagedObjectStateTest extends AbstractTestManagedObjectState {
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2004), new ObjectID(2005) });
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2009), new ObjectID(2010) });
 
-    basicTestUnit(className, ManagedObjectState.CONCURRENT_HASHMAP_TYPE, cursor, 7);
+    basicTestUnit(className, ManagedObjectState.CONCURRENT_HASHMAP_TYPE, cursor, 7, false);
   }
-  
+
   public void testTreeMap() throws Exception {
     String className = "java.util.TreeMap";
     String COMPARATOR_FIELDNAME = "java.util.TreeMap.comparator";
@@ -40,8 +40,8 @@ public class MapManagedObjectStateTest extends AbstractTestManagedObjectState {
     cursor.addPhysicalAction(COMPARATOR_FIELDNAME, new ObjectID(2001), true);
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2002), new ObjectID(2003) });
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2004), new ObjectID(2005) });
-    
-    basicTestUnit(className, ManagedObjectState.TREE_MAP_TYPE, cursor, 5);
+
+    basicTestUnit(className, ManagedObjectState.TREE_MAP_TYPE, cursor, 5, false);
   }
 
   public void testLinkedHashMap() throws Exception {
@@ -54,7 +54,7 @@ public class MapManagedObjectStateTest extends AbstractTestManagedObjectState {
 
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2002), new ObjectID(2003) });
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2004), new ObjectID(2005) });
-    
+
     basicTestUnit(className, ManagedObjectState.LINKED_HASHMAP_TYPE, cursor, 4);
   }
 
@@ -66,7 +66,7 @@ public class MapManagedObjectStateTest extends AbstractTestManagedObjectState {
 
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2012), new ObjectID(2003) });
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2004), new ObjectID(2015) });
-    
+
     basicTestUnit(className, ManagedObjectState.MAP_TYPE, cursor, 4);
     // failed on equal, no implementation for basicWriteTo()
   }
