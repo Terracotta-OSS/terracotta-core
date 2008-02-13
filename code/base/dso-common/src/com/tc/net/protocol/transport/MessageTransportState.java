@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.transport;
 
@@ -21,8 +22,8 @@ public class MessageTransportState {
   // public static final MessageTransportState STATE_SYN_ACK_SENT = new
   // MessageTransportState("SYN_ACK_SENT");
   /**
-   * The client sends a SYN with a connection id that we can't reconnect to
-   * (e.g. we can't find the corresponding server-side stack).
+   * The client sends a SYN with a connection id that we can't reconnect to (e.g. we can't find the corresponding
+   * server-side stack).
    */
   public static final MessageTransportState STATE_SYN_ACK_ERROR = new MessageTransportState("SYN_ACK_ERROR");
 
@@ -31,9 +32,15 @@ public class MessageTransportState {
    */
   public static final MessageTransportState STATE_ESTABLISHED   = new MessageTransportState("ESTABLISHED");
 
+  // Transport Closed
+  public static final MessageTransportState STATE_CLOSED        = new MessageTransportState("CLOSED");
+
+  // Transport got disconnected -- probably health checker didnt like the client
+  public static final MessageTransportState STATE_DISCONNECTED  = new MessageTransportState("DISCONNECTED");
+
   /**
-   * End state-- if the client is disconnected and isn't going to reconnect or
-   * if there is a handshake error (server or client)
+   * End state-- if the client is disconnected and isn't going to reconnect or if there is a handshake error (server or
+   * client)
    */
   public static final MessageTransportState STATE_END           = new MessageTransportState("END");
 

@@ -20,22 +20,28 @@ import com.tc.net.protocol.NetworkStackHarness;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.transport.ClientConnectionEstablisher;
 import com.tc.net.protocol.transport.ClientMessageTransport;
+import com.tc.net.protocol.transport.ConnectionHealthChecker;
+import com.tc.net.protocol.transport.ConnectionHealthCheckerImpl;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionPolicy;
+import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
+import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.MessageTransportFactory;
 import com.tc.net.protocol.transport.MessageTransportListener;
+import com.tc.net.protocol.transport.ConnectionHealthCheckerEchoImpl;
 import com.tc.net.protocol.transport.ServerMessageTransport;
 import com.tc.net.protocol.transport.ServerStackProvider;
 import com.tc.net.protocol.transport.TransportHandshakeErrorContext;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandler;
 import com.tc.net.protocol.transport.TransportHandshakeMessage;
 import com.tc.net.protocol.transport.TransportHandshakeMessageFactory;
-import com.tc.net.protocol.transport.TransportHandshakeMessageFactoryImpl;
+import com.tc.net.protocol.transport.TransportMessageFactoryImpl;
 import com.tc.net.protocol.transport.WireProtocolAdaptorFactoryImpl;
 import com.tc.net.protocol.transport.WireProtocolMessageSink;
 import com.tc.object.session.SessionProvider;
+import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
 
 import java.io.IOException;
@@ -45,7 +51,7 @@ import java.util.Set;
 
 /**
  * Communications manager for setting up listners and creating client connections
- *
+ * 
  * @author teck
  */
 public class CommunicationsManagerImpl implements CommunicationsManager {
@@ -56,9 +62,10 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   private final TCConnectionManager              connectionManager;
   private final boolean                          privateConnMgr;
   private final NetworkStackHarnessFactory       stackHarnessFactory;
-  private final TransportHandshakeMessageFactory transportHandshakeMessageFactory;
+  private final TransportHandshakeMessageFactory transportMessageFactory;
   private final MessageMonitor                   monitor;
   private final ConnectionPolicy                 connectionPolicy;
+  private ConnectionHealthChecker                connectionHealthChecker;
 
   /**
    * Create a communications manager. This implies that one or more network handling threads will be started on your
@@ -66,31 +73,42 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
    */
   public CommunicationsManagerImpl(MessageMonitor monitor, NetworkStackHarnessFactory stackHarnessFactory,
                                    ConnectionPolicy connectionPolicy) {
-    this(monitor, stackHarnessFactory, null, connectionPolicy, 0);
+    this(monitor, stackHarnessFactory, null, connectionPolicy, 0, new DisabledHealthCheckerConfigImpl());
   }
 
   public CommunicationsManagerImpl(MessageMonitor monitor, NetworkStackHarnessFactory stackHarnessFactory,
                                    ConnectionPolicy connectionPolicy, int workerCommCount) {
-    this(monitor, stackHarnessFactory, null, connectionPolicy, workerCommCount);
+    this(monitor, stackHarnessFactory, null, connectionPolicy, workerCommCount, new DisabledHealthCheckerConfigImpl());
   }
 
   public CommunicationsManagerImpl(MessageMonitor monitor, NetworkStackHarnessFactory stackHarnessFactory,
                                    TCConnectionManager connMgr, ConnectionPolicy connectionPolicy) {
-    this(monitor, stackHarnessFactory, connMgr, connectionPolicy, 0);
+    this(monitor, stackHarnessFactory, connMgr, connectionPolicy, 0, new DisabledHealthCheckerConfigImpl());
+  }
+
+  public CommunicationsManagerImpl(MessageMonitor monitor, NetworkStackHarnessFactory stackHarnessFactory,
+                                   ConnectionPolicy connectionPolicy, HealthCheckerConfig config) {
+    this(monitor, stackHarnessFactory, null, connectionPolicy, 0, config);
+  }
+
+  public CommunicationsManagerImpl(MessageMonitor monitor, NetworkStackHarnessFactory stackHarnessFactory,
+                                   ConnectionPolicy connectionPolicy, int workerCommCount, HealthCheckerConfig config) {
+    this(monitor, stackHarnessFactory, null, connectionPolicy, workerCommCount, config);
   }
 
   /**
    * Create a comms manager with the given connection manager. This cstr is mostly for testing, or in the event that you
    * actually want to use an explicit connection manager
-   *
+   * 
    * @param connMgr the connection manager to use
    * @param serverDescriptors
    */
   public CommunicationsManagerImpl(MessageMonitor monitor, NetworkStackHarnessFactory stackHarnessFactory,
-                                   TCConnectionManager connMgr, ConnectionPolicy connectionPolicy, int workerCommCount) {
+                                   TCConnectionManager connMgr, ConnectionPolicy connectionPolicy, int workerCommCount,
+                                   HealthCheckerConfig healthCheckerConfig) {
 
     this.monitor = monitor;
-    this.transportHandshakeMessageFactory = new TransportHandshakeMessageFactoryImpl();
+    this.transportMessageFactory = new TransportMessageFactoryImpl();
     this.connectionPolicy = connectionPolicy;
     this.stackHarnessFactory = stackHarnessFactory;
     privateConnMgr = (connMgr == null);
@@ -100,6 +118,14 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     } else {
       this.connectionManager = connMgr;
     }
+
+    Assert.eval(healthCheckerConfig != null);
+    if (healthCheckerConfig.isHealthCheckerEnabled()) {
+      connectionHealthChecker = new ConnectionHealthCheckerImpl(healthCheckerConfig, connectionManager);
+    } else {
+      connectionHealthChecker = new ConnectionHealthCheckerEchoImpl();
+    }
+    connectionHealthChecker.start();
   }
 
   public TCConnectionManager getConnectionManager() {
@@ -112,6 +138,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
 
   public void shutdown() {
     if (shutdown.attemptSet()) {
+      connectionHealthChecker.stop();
       if (privateConnMgr) {
         connectionManager.shutdown();
       }
@@ -138,7 +165,6 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                                                new TCMessageRouterImpl(), sessionProvider);
 
     MessageTransportFactory transportFactory = new MessageTransportFactory() {
-
       public MessageTransport createNewTransport() {
         TransportHandshakeErrorHandler handshakeErrorHandler = new TransportHandshakeErrorHandler() {
 
@@ -172,8 +198,9 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                                                                                   maxReconnectTries,
                                                                                                   timeout);
         ClientMessageTransport cmt = new ClientMessageTransport(clientConnectionEstablisher, handshakeErrorHandler,
-                                                                transportHandshakeMessageFactory,
+                                                                transportMessageFactory,
                                                                 new WireProtocolAdaptorFactoryImpl());
+        cmt.addTransportListener(connectionHealthChecker);
         return cmt;
       }
 
@@ -189,8 +216,8 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                                  List transportListeners) {
         throw new AssertionError();
       }
-
     };
+
     NetworkStackHarness stackHarness = this.stackHarnessFactory.createClientHarness(transportFactory, rv,
                                                                                     new MessageTransportListener[0]);
 
@@ -259,7 +286,6 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                  Sink httpSink, WireProtocolMessageSink wireProtocolMessageSink) throws IOException {
 
     MessageTransportFactory transportFactory = new MessageTransportFactory() {
-
       public MessageTransport createNewTransport() {
         throw new AssertionError();
       }
@@ -269,6 +295,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                                  List transportListeners) {
         MessageTransport rv = new ServerMessageTransport(connectionID, handler, handshakeMessageFactory);
         rv.addTransportListeners(transportListeners);
+        rv.addTransportListener(connectionHealthChecker);
         return rv;
       }
 
@@ -278,16 +305,16 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                                  List transportListeners) {
         MessageTransport rv = new ServerMessageTransport(connectionId, connection, handler, handshakeMessageFactory);
         rv.addTransportListeners(transportListeners);
+        rv.addTransportListener(connectionHealthChecker);
         return rv;
       }
-
     };
 
     ServerStackProvider stackProvider = new ServerStackProvider(TCLogging.getLogger(ServerStackProvider.class),
                                                                 initialConnectionIDs, stackHarnessFactory,
                                                                 channelFactory, transportFactory,
-                                                                this.transportHandshakeMessageFactory,
-                                                                connectionIdFactory, this.connectionPolicy,
+                                                                this.transportMessageFactory, connectionIdFactory,
+                                                                this.connectionPolicy,
                                                                 new WireProtocolAdaptorFactoryImpl(httpSink),
                                                                 wireProtocolMessageSink);
     return connectionManager.createListener(addr, stackProvider, Constants.DEFAULT_ACCEPT_QUEUE_DEPTH, resueAddr);
@@ -307,6 +334,17 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     synchronized (listeners) {
       listeners.remove(lsnr);
     }
+  }
+
+  /* Following routines are strictly for testing only */
+  public ConnectionHealthChecker getConnHealthChecker() {
+    return this.connectionHealthChecker;
+  }
+
+  public void setConnHealthChecker(ConnectionHealthChecker checker) {
+    this.connectionHealthChecker.stop();
+    this.connectionHealthChecker = checker;
+    this.connectionHealthChecker.start();
   }
 
 }

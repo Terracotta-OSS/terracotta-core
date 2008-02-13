@@ -69,8 +69,8 @@ public class WireProtocolAdaptorImpl extends AbstractTCProtocolAdaptor implement
     WireProtocolHeader wph = (WireProtocolHeader) hdr;
     final WireProtocolMessage rv;
 
-    if (wph.isTransportHandshakeMessage()) {
-      rv = new TransportHandshakeMessageImpl(source, wph, data);
+    if (wph.isTransportHandshakeMessage() || wph.isHealthCheckProbeMessage()) {
+      rv = new TransportMessageImpl(source, wph, data);
     } else {
       rv = new WireProtocolMessageImpl(source, wph, data);
     }

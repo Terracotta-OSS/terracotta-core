@@ -118,4 +118,8 @@ public class MockTCConnection implements TCConnection {
     throw new ImplementMe();
   }
 
+  public long getIdleReceiveTime() {
+    throw new ImplementMe();
+  }
+
 }

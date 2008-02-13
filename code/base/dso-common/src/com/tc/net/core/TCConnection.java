@@ -29,6 +29,11 @@ public interface TCConnection extends NetworkMessageSink {
    * received)
    */
   public long getIdleTime();
+  
+  /**
+   * Returns a long representing the number of milliseconds since last data received on this connection. 
+   */
+  public long getIdleReceiveTime();
 
   /**
    * Add the given connection event listener. Re-adding an existing listener will have no effect (ie. the listener will

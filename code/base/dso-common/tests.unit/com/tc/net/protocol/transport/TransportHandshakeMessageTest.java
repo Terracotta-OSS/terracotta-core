@@ -10,11 +10,11 @@ import junit.framework.TestCase;
 public class TransportHandshakeMessageTest extends TestCase {
 
   private TransportHandshakeMessage            message;
-  private TransportHandshakeMessageFactoryImpl factory;
+  private TransportMessageFactoryImpl factory;
 
   public void setUp() throws Exception {
 
-    factory = new TransportHandshakeMessageFactoryImpl();
+    factory = new TransportMessageFactoryImpl();
 
   }
 
@@ -28,7 +28,7 @@ public class TransportHandshakeMessageTest extends TestCase {
 
     WireProtocolHeader header = new WireProtocolHeader();
     header.setProtocol(WireProtocolHeader.PROTOCOL_TRANSPORT_HANDSHAKE);
-    message = new TransportHandshakeMessageImpl(null, header, payload);
+    message = new TransportMessageImpl(null, header, payload);
     assertEquals(isMaxConnectionsExceeded, message.isMaxConnectionsExceeded());
     assertEquals(maxConnections, message.getMaxConnections());
   }

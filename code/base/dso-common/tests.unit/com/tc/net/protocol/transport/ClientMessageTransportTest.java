@@ -43,7 +43,7 @@ public class ClientMessageTransportTest extends TCTestCase {
     this.connectionManager = new MockConnectionManager();
     this.connection = new MockTCConnection();
     this.connectionManager.setConnection(connection);
-    this.transportMessageFactory = new TransportHandshakeMessageFactoryImpl();
+    this.transportMessageFactory = new TransportMessageFactoryImpl();
     handshakeErrorHandler = new TransportHandshakeErrorHandler() {
 
       public void handleHandshakeError(TransportHandshakeErrorContext e) {

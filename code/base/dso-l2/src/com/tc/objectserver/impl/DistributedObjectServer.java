@@ -57,6 +57,7 @@ import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionPolicy;
+import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.object.cache.CacheConfigImpl;
 import com.tc.object.cache.CacheManager;
 import com.tc.object.cache.EvictionPolicy;
@@ -431,7 +432,9 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     int numCommWorkers = getCommWorkerCount(l2Properties);
 
     communicationsManager = new CommunicationsManagerImpl(new NullMessageMonitor(), networkStackHarnessFactory,
-                                                          connectionPolicy, numCommWorkers);
+                                                          connectionPolicy, numCommWorkers,
+                                                          new HealthCheckerConfigImpl(l2Properties
+                                                              .getPropertiesFor("healthCheck.l1"), "DSO Server"));
 
     final DSOApplicationEvents appEvents;
     try {

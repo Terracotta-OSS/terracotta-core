@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.transport;
 
@@ -8,7 +9,7 @@ import com.tc.util.Assert;
 
 class MessageTransportStatus {
   private MessageTransportState state;
-  private TCLogger logger;
+  private TCLogger              logger;
 
   MessageTransportStatus(MessageTransportState initialState, TCLogger logger) {
     this.state = initialState;
@@ -20,7 +21,7 @@ class MessageTransportStatus {
   }
 
   private void stateChange(MessageTransportState newState) {
-    
+
     if (logger.isDebugEnabled()) {
       logger.debug("Changing from " + state.toString() + " to " + newState.toString());
     }
@@ -41,6 +42,14 @@ class MessageTransportStatus {
     stateChange(MessageTransportState.STATE_ESTABLISHED);
   }
 
+  synchronized void closed() {
+    stateChange(MessageTransportState.STATE_CLOSED);
+  }
+
+  synchronized void disconnect() {
+    stateChange(MessageTransportState.STATE_DISCONNECTED);
+  }
+
   synchronized void end() {
     stateChange(MessageTransportState.STATE_END);
   }
@@ -48,7 +57,7 @@ class MessageTransportStatus {
   synchronized boolean isStart() {
     return this.state.equals(MessageTransportState.STATE_START);
   }
-  
+
   public boolean isRestart() {
     return this.state.equals(MessageTransportState.STATE_RESTART);
   }

@@ -6,7 +6,7 @@ package com.tc.net.protocol.transport;
 import com.tc.net.core.TCConnection;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
-public class MockTransportHandshakeMessageFactory implements TransportHandshakeMessageFactory {
+public class MockTransportMessageFactory implements TransportHandshakeMessageFactory {
 
   public TransportHandshakeMessage    syn;
   public TransportHandshakeMessage    ack;

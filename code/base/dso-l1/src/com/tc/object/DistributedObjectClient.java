@@ -38,6 +38,7 @@ import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.HydrateHandler;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
@@ -193,7 +194,9 @@ public class DistributedObjectClient extends SEDA {
     // //////////////////////////////////
 
     communicationsManager = new CommunicationsManagerImpl(new NullMessageMonitor(), networkStackHarnessFactory,
-                                                          new NullConnectionPolicy());
+                                                          new NullConnectionPolicy(),
+                                                          new HealthCheckerConfigImpl(l1Properties
+                                                              .getPropertiesFor("healthCheck.l2"), "DSO Client"));
 
     logger.debug("Created CommunicationsManager.");
 

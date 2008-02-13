@@ -40,7 +40,7 @@ import java.util.List;
 
 /**
  * JDK14 (nio) implementation of TCConnection
- *
+ * 
  * @author teck
  */
 final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJDK14ChannelWriter {
@@ -54,7 +54,8 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
 
   private final TCConnectionManagerJDK14 parent;
   private final TCConnectionEventCaller  eventCaller         = new TCConnectionEventCaller(logger);
-  private final SynchronizedLong         lastActivityTime    = new SynchronizedLong(System.currentTimeMillis());
+  private final SynchronizedLong         lastDataWriteTime   = new SynchronizedLong(System.currentTimeMillis());
+  private final SynchronizedLong         lastDataReceiveTime = new SynchronizedLong(System.currentTimeMillis());
   private final SynchronizedLong         connectTime         = new SynchronizedLong(NO_CONNECT_TIME);
   private final List                     eventListeners      = new CopyOnWriteArrayList();
   private final TCProtocolAdaptor        protocolAdaptor;
@@ -475,7 +476,12 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
   }
 
   public final long getIdleTime() {
-    return System.currentTimeMillis() - lastActivityTime.get();
+    return System.currentTimeMillis()
+           - (lastDataWriteTime.get() > lastDataReceiveTime.get() ? lastDataWriteTime.get() : lastDataReceiveTime.get());
+  }
+
+  public final long getIdleReceiveTime() {
+    return System.currentTimeMillis() - lastDataReceiveTime.get();
   }
 
   public final synchronized void connect(TCSocketAddress addr, int timeout) throws IOException, TCTimeoutException {
@@ -497,7 +503,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
   }
 
   public final void putMessage(TCNetworkMessage message) {
-    lastActivityTime.set(System.currentTimeMillis());
+    lastDataWriteTime.set(System.currentTimeMillis());
 
     // if (!isConnected() || isClosed()) {
     // logger.warn("Ignoring message sent to non-connected connection");
@@ -531,7 +537,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
   }
 
   private final void addNetworkData(TCByteBuffer[] data, int length) {
-    lastActivityTime.set(System.currentTimeMillis());
+    lastDataReceiveTime.set(System.currentTimeMillis());
 
     try {
       protocolAdaptor.addReadData(this, data, length);

@@ -60,7 +60,7 @@ public class MessageTransportTest extends TCTestCase {
     DefaultConnectionIdFactory connectionIDProvider = new DefaultConnectionIdFactory();
     this.connectionId = connectionIDProvider.nextConnectionId();
 
-    this.transportHandshakeMessageFactory = new TransportHandshakeMessageFactoryImpl();
+    this.transportHandshakeMessageFactory = new TransportMessageFactoryImpl();
     serverConnection = new MockTCConnection();
     serverConnection.isConnected(true);
 

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.transport;
 
@@ -12,7 +13,7 @@ import com.tc.util.Assert;
 
 public class ServerMessageTransport extends MessageTransportBase {
 
-  private static final TCLogger smtLogger  = TCLogging.getLogger(ServerMessageTransport.class);
+  private static final TCLogger smtLogger = TCLogging.getLogger(ServerMessageTransport.class);
 
   public ServerMessageTransport(ConnectionID connectionID, TransportHandshakeErrorHandler handshakeErrorHandler,
                                 TransportHandshakeMessageFactory messageFactory) {
@@ -21,9 +22,8 @@ public class ServerMessageTransport extends MessageTransportBase {
   }
 
   /**
-   * Constructor for when you want a transport that you can specify a connection
-   * (e.g., in a server). This constructor will create an open MessageTransport
-   * ready for use.
+   * Constructor for when you want a transport that you can specify a connection (e.g., in a server). This constructor
+   * will create an open MessageTransport ready for use.
    */
   public ServerMessageTransport(ConnectionID connectionId, TCConnection conn,
                                 TransportHandshakeErrorHandler handshakeErrorHandler,
@@ -50,12 +50,9 @@ public class ServerMessageTransport extends MessageTransportBase {
         verifyAndHandleAck(message);
         message.recycle();
         return;
-      } else if (verifyHandshakeMessage(message)) {
-        handleHandshakeError(new TransportHandshakeErrorContext("Unexpected handshake message in state: " + status),
-                             (TransportHandshakeMessage) message);
-        return;
       }
     }
+    // ReceiveToReceiveLayer(message) takes care of verifying the handshake message
     super.receiveToReceiveLayer(message);
   }
 
@@ -78,11 +75,7 @@ public class ServerMessageTransport extends MessageTransportBase {
   }
 
   private boolean verifyAck(WireProtocolMessage message) {
-    return message instanceof TransportHandshakeMessage && ((TransportHandshakeMessage)message).isAck();
-  }
-
-  private boolean verifyHandshakeMessage(WireProtocolMessage message) {
-    return message instanceof TransportHandshakeMessage;
+    return message instanceof TransportHandshakeMessage && ((TransportHandshakeMessage) message).isAck();
   }
 
   private final class RestartConnectionAttacher implements ConnectionAttacher {

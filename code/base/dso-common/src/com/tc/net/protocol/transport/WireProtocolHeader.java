@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.transport;
 
@@ -49,11 +50,12 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader {
   public static final short   PROTOCOL_TCM                 = 1;
   public static final short   PROTOCOL_TRANSPORT_HANDSHAKE = 2;
   public static final short   PROTOCOL_OOOP                = 3;
+  public static final short   PROTOCOL_HEALTHCHECK_PROBES  = 4;
 
   private static final int    MAGIC_NUM                    = 0xAAAAAAAA;
 
   public static final short[] VALID_PROTOCOLS              = new short[] { PROTOCOL_TCM, PROTOCOL_TRANSPORT_HANDSHAKE,
-      PROTOCOL_OOOP                                       };
+      PROTOCOL_OOOP, PROTOCOL_HEALTHCHECK_PROBES          };
 
   // 15 32-bit words max
   static final short          MAX_LENGTH                   = 15 * 4;
@@ -231,17 +233,16 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader {
 
     if (totalLength < MIN_LENGTH) { throw new WireProtocolHeaderFormatException(
                                                                                 "Total length ("
-                                                                                                                                                                + totalLength
-                                                                                                                                                                + ") can not be less than minimum header size ("
-                                                                                                                                                                + MIN_LENGTH
-                                                                                                                                                                + ")"); }
+                                                                                    + totalLength
+                                                                                    + ") can not be less than minimum header size ("
+                                                                                    + MIN_LENGTH + ")"); }
 
     if (totalLength < getHeaderByteLength()) { throw new WireProtocolHeaderFormatException(
                                                                                            "Total length ("
-                                                                                                                                                                                      + totalLength
-                                                                                                                                                                                      + ") can not be less than actual header length ("
-                                                                                                                                                                                      + getHeaderByteLength()
-                                                                                                                                                                                      + ")"); }
+                                                                                               + totalLength
+                                                                                               + ") can not be less than actual header length ("
+                                                                                               + getHeaderByteLength()
+                                                                                               + ")"); }
 
     // validate the checksum
     if (!isChecksumValid()) { throw new WireProtocolHeaderFormatException("Invalid Checksum"); }
@@ -250,11 +251,11 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader {
 
     if (getDestinationPort() == 0) { throw new WireProtocolHeaderFormatException("Destination port cannot be zero"); }
 
-    //    if (Arrays.equals(getDestinationAddress(), FOUR_ZERO_BYTES)) { throw new WireProtocolHeaderFormatException(
-    //                                                                                                               "Destination address cannot be 0.0.0.0"); }
+    // if (Arrays.equals(getDestinationAddress(), FOUR_ZERO_BYTES)) { throw new WireProtocolHeaderFormatException(
+    // "Destination address cannot be 0.0.0.0"); }
     //
-    //    if (Arrays.equals(getSourceAddress(), FOUR_ZERO_BYTES)) { throw new WireProtocolHeaderFormatException(
-    //                                                                                                          "Source address cannot be 0.0.0.0"); }
+    // if (Arrays.equals(getSourceAddress(), FOUR_ZERO_BYTES)) { throw new WireProtocolHeaderFormatException(
+    // "Source address cannot be 0.0.0.0"); }
 
     // TODO: validate options (once they exist)
   }
@@ -319,6 +320,9 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader {
       case PROTOCOL_OOOP: {
         return "OOOP";
       }
+      case PROTOCOL_HEALTHCHECK_PROBES: {
+        return "HEALTHCHECK_PROBES";
+      }
       case PROTOCOL_TRANSPORT_HANDSHAKE: {
         return "TRANSPORT HANDSHAKE";
       }
@@ -342,5 +346,9 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader {
 
   public boolean isTransportHandshakeMessage() {
     return getProtocol() == PROTOCOL_TRANSPORT_HANDSHAKE;
+  }
+  
+  public boolean isHealthCheckProbeMessage() {
+    return getProtocol() == PROTOCOL_HEALTHCHECK_PROBES;
   }
 }

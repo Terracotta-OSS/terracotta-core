@@ -9,7 +9,7 @@ import com.tc.net.core.MockTCConnection;
 import com.tc.net.core.TestTCConnection;
 import com.tc.net.protocol.IllegalReconnectException;
 import com.tc.net.protocol.StackNotFoundException;
-import com.tc.net.protocol.transport.MockTransportHandshakeMessageFactory.CallContext;
+import com.tc.net.protocol.transport.MockTransportMessageFactory.CallContext;
 import com.tc.test.TCTestCase;
 
 import java.util.HashSet;
@@ -20,7 +20,7 @@ public class ServerStackProviderTest extends TCTestCase {
   private ServerStackProvider                  provider;
   private MockStackHarnessFactory              harnessFactory;
   private MockNetworkStackHarness              harness;
-  private MockTransportHandshakeMessageFactory transportHandshakeMessageFactory;
+  private MockTransportMessageFactory transportHandshakeMessageFactory;
   private ConnectionID                         connId;
   private ConnectionIDFactory                  connectionIdFactory;
   private TestConnectionPolicy                 connectionPolicy;
@@ -42,7 +42,7 @@ public class ServerStackProviderTest extends TCTestCase {
     this.connectionIdFactory = new TestConnectionIDFactory();
 
     transportFactory = new MockMessageTransportFactory();
-    transportHandshakeMessageFactory = new MockTransportHandshakeMessageFactory();
+    transportHandshakeMessageFactory = new MockTransportMessageFactory();
     connectionPolicy = new TestConnectionPolicy();
     wpaFactory = new TestWireProtocolAdaptorFactory();
     this.provider = new ServerStackProvider(TCLogging.getLogger(ServerStackProvider.class), new HashSet(),
@@ -92,7 +92,7 @@ public class ServerStackProviderTest extends TCTestCase {
     // The connected client count should have been incremented
     assertEquals(1, connectionPolicy.clientConnected);
     // make sure that the transport message factory was called with the proper arguments
-    MockTransportHandshakeMessageFactory.CallContext args = (CallContext) transportHandshakeMessageFactory.createSynAckCalls
+    MockTransportMessageFactory.CallContext args = (CallContext) transportHandshakeMessageFactory.createSynAckCalls
         .poll(0);
     assertEquals(new Boolean(connectionPolicy.maxConnectionsExceeded), args.getIsMaxConnectionsExceeded());
     assertEquals(new Integer(connectionPolicy.maxConnections), args.getMaxConnections());

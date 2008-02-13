@@ -46,6 +46,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   private byte[]                                   destinationAddress;
   private int                                      destinationPort;
   private boolean                                  allowConnectionReplace = false;
+  private ConnectionHealthCheckerContext           healthCheckerContext   = null;
 
   protected MessageTransportBase(MessageTransportState initialState,
                                  TransportHandshakeErrorHandler handshakeErrorHandler,
@@ -60,6 +61,14 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
 
   public void setAllowConnectionReplace(boolean allow) {
     this.allowConnectionReplace = allow;
+  }
+
+  public synchronized void setHealthCheckerContext(ConnectionHealthCheckerContext context) {
+    healthCheckerContext = context;
+  }
+
+  public synchronized ConnectionHealthCheckerContext getHealthCheckerContext() {
+    return healthCheckerContext;
   }
 
   public final ConnectionID getConnectionId() {
@@ -90,9 +99,16 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
 
   protected final void receiveToReceiveLayer(WireProtocolMessage message) {
     Assert.assertNotNull(receiveLayer);
-    if (message instanceof TransportHandshakeMessage) { throw new AssertionError("Wrong handshake message from: "
-                                                                                 + message.getSource()); }
-
+    if (message.getMessageProtocol() == WireProtocolHeader.PROTOCOL_TRANSPORT_HANDSHAKE) {
+      throw new AssertionError("Wrong handshake message from: " + message.getSource());
+    } else if (message.getMessageProtocol() == WireProtocolHeader.PROTOCOL_HEALTHCHECK_PROBES) {
+      Assert.assertNotNull(healthCheckerContext);
+      if (this.healthCheckerContext.receiveProbe((HealthCheckerProbeMessage) message)) {
+        // Proper health checker probe message. The context would have taken care of processing.
+        return;
+      }
+      throw new AssertionError("Wrong HealthChecker Probe message from: " + message.getSource());
+    }
     this.receiveLayer.receive(message.getPayload());
     message.getWireProtocolHeader().recycle();
   }
@@ -105,6 +121,14 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
    * Moves the MessageTransport state to closed and closes the underlying connection, if any.
    */
   public void close() {
+    terminate(false);
+  }
+
+  public void disconnect() {
+    terminate(true);
+  }
+
+  private void terminate(boolean disconnect) {
     synchronized (isOpen) {
       if (!isOpen.get()) {
         // see DEV-659: we used to throw an assertion error here if already closed
@@ -112,7 +136,13 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
         return;
       }
       isOpen.set(false);
-      fireTransportClosedEvent();
+      if (disconnect) {
+        if (!this.status.isEnd()) this.status.disconnect();
+        fireTransportDisconnectedEvent();
+      } else {
+        if (!this.status.isEnd()) this.status.closed();
+        fireTransportClosedEvent();
+      }
     }
 
     synchronized (status) {
@@ -172,7 +202,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
    */
   public final boolean isConnected() {
     synchronized (status) {
-      return this.status.isEstablished();
+      return ((getConnection() != null) && getConnection().isConnected() && this.status.isEstablished());
     }
   }
 
