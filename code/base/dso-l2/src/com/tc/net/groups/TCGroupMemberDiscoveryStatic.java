@@ -100,7 +100,10 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     }
 
     manager.registerForGroupEvents(this);
-
+    
+    // run once before deamon thread does job
+    openChannels();
+    
     Thread discover = new Thread(new Runnable() {
       public void run() {
         while (!stopAttempt.get()) {
@@ -113,6 +116,9 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     }, "Static Member discovery");
     discover.setDaemon(true);
     discover.start();
+    
+    // Yield for discovery to run before startElection in L2HACoordinator.start().
+    Thread.yield();
   }
 
   /*
