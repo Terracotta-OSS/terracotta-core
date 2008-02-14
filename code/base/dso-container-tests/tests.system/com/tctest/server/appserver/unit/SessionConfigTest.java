@@ -7,6 +7,7 @@ package com.tctest.server.appserver.unit;
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
 import com.tc.test.server.appserver.AppServerFactory;
+import com.tc.test.server.appserver.AppServerInfo;
 import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.GenericServer;
@@ -140,7 +141,7 @@ public class SessionConfigTest extends AbstractDeploymentTest {
   }
 
   public void testSessionTimeOutFromTCProperties() throws Exception {
-    if(AppServerFactory.getCurrentAppServerId() == AppServerFactory.JETTY) return;
+    if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.JETTY) return;
     extraServerJvmArgs.put("com.tc.session.maxidle.seconds", String.valueOf(Integer.MAX_VALUE));
     init();
     WebConversation wc = new WebConversation();
@@ -191,12 +192,13 @@ public class SessionConfigTest extends AbstractDeploymentTest {
   private void addSessionDescriptor() throws Exception {
     if (descriptors.size() == 0) return;
 
-    switch (AppServerFactory.getCurrentAppServerId()) {
+    AppServerInfo appInfo = AppServerFactory.getCurrentAppServerInfo();
+    switch (appInfo.getId()) {
       case AppServerFactory.WEBLOGIC:
-        if (AppServerFactory.getCurrentAppServerMajorVersion().equals("8")) {
+        if (appInfo.getMajor().equals("8")) {
           builder.addResourceFullpath(RESOURCE_ROOT, (String) descriptors.get("wl81"), "WEB-INF/weblogic.xml");
         }
-        if (AppServerFactory.getCurrentAppServerMajorVersion().equals("9")) {
+        if (appInfo.getMajor().equals("9")) {
           builder.addResourceFullpath(RESOURCE_ROOT, (String) descriptors.get("wl92"), "WEB-INF/weblogic.xml");
         }
         break;

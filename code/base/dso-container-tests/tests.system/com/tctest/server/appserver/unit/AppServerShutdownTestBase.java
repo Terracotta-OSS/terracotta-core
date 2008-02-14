@@ -7,6 +7,7 @@ package com.tctest.server.appserver.unit;
 import com.meterware.httpunit.WebConversation;
 import com.tc.process.HeartBeatService;
 import com.tc.test.ProcessInfo;
+import com.tc.test.server.appserver.AppServerFactory;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.GenericServer;
@@ -14,6 +15,8 @@ import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tc.test.server.util.TcConfigBuilder;
 import com.tc.util.runtime.Os;
 import com.tctest.webapp.servlets.ShutdownNormallyServlet;
+
+import java.util.Date;
 
 public class AppServerShutdownTestBase extends AbstractTwoServerDeploymentTest {
   private static final String CONTEXT                = "AppServerShutdownTest";
@@ -23,6 +26,10 @@ public class AppServerShutdownTestBase extends AbstractTwoServerDeploymentTest {
   private final boolean       dsoEnabled;
 
   public AppServerShutdownTestBase(boolean dsoEnabled) {
+    // weblogic-9.2.mp2 has a problem of shutting down
+    if (AppServerFactory.isCurrentAppServer("weblogic-9.2.mp2")) {
+      disableAllUntil(new Date(Long.MAX_VALUE));
+    }
     this.dsoEnabled = dsoEnabled;
   }
 

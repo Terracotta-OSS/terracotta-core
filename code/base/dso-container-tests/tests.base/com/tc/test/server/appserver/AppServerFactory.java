@@ -134,7 +134,7 @@ public abstract class AppServerFactory {
     } else if (appserverName.equals("websphere")) {
       return WEBSPHERE;
     } else if (appserverName.equals("resin")) {
-      return RESIN;      
+      return RESIN;
     } else {
       throw new RuntimeException("App server [" + appserverName + "] is not yet defined!");
     }
@@ -144,7 +144,19 @@ public abstract class AppServerFactory {
     return getAppServerId(TestConfigObject.getInstance().appserverFactoryName());
   }
 
-  public static String getCurrentAppServerMajorVersion() {
-    return TestConfigObject.getInstance().appserverMajorVersion();
+  public static AppServerInfo getCurrentAppServerInfo() {
+    AppServerInfo info = new AppServerInfo();
+    info.setId(getAppServerId(TestConfigObject.getInstance().appserverFactoryName()));
+    info.setName(TestConfigObject.getInstance().appserverFactoryName());
+    info.setMajor(TestConfigObject.getInstance().appserverMajorVersion());
+    info.setMinor(TestConfigObject.getInstance().appserverMinorVersion());
+    return info;
+  }
+
+  public static boolean isCurrentAppServer(String appServerQualifiedName) {
+    String current = TestConfigObject.getInstance().appserverFactoryName() + "-"
+                     + TestConfigObject.getInstance().appserverMajorVersion() + "."
+                     + TestConfigObject.getInstance().appserverMinorVersion();
+    return current.equals(appServerQualifiedName);
   }
 }

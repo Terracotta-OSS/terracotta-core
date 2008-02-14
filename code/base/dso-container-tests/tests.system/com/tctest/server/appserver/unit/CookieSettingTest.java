@@ -6,6 +6,7 @@ package com.tctest.server.appserver.unit;
 
 import com.meterware.httpunit.WebResponse;
 import com.tc.test.server.appserver.AppServerFactory;
+import com.tc.test.server.appserver.AppServerInfo;
 import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
 import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
@@ -92,12 +93,13 @@ public class CookieSettingTest extends AbstractDeploymentTest {
     builder.addSessionConfig("session-timeout", "69");
 
     // add container specific descriptor
-    if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.WEBLOGIC) {
-      if (AppServerFactory.getCurrentAppServerMajorVersion().equals("8")) {
+    AppServerInfo appInfo = AppServerFactory.getCurrentAppServerInfo();
+    if (appInfo.getId() == AppServerFactory.WEBLOGIC) {
+      if (appInfo.getMajor().equals("8")) {
         builder.addResourceFullpath("/com/tctest/server/appserver/unit/cookiesettingtest", "weblogic81.xml",
                                     "WEB-INF/weblogic.xml");
       }
-      if (AppServerFactory.getCurrentAppServerMajorVersion().equals("9")) {
+      if (appInfo.getMajor().equals("9")) {
         builder.addResourceFullpath("/com/tctest/server/appserver/unit/cookiesettingtest", "weblogic92.xml",
                                     "WEB-INF/weblogic.xml");
       }
