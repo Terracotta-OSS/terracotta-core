@@ -60,7 +60,7 @@ public class DNAWriterImpl implements DNAWriter {
     encoding.encodeArray(array, output, length);
   }
 
-  public void addClassLoaderAction(String classLoaderFieldName, Object value) {
+  public void addClassLoaderAction(String classLoaderFieldName, ClassLoader value) {
     actionCount++;
     output.writeByte(DNAEncodingImpl.PHYSICAL_ACTION_TYPE);
     serializer.writeFieldName(output, classLoaderFieldName);
@@ -79,7 +79,7 @@ public class DNAWriterImpl implements DNAWriter {
 
   /**
    * NOTE::README:XXX: This method is called from instrumented code in the L2.
-   * 
+   *
    * @see PhysicalStateClassLoader.createBasicDehydrateMethod()
    */
   public void addPhysicalAction(String fieldName, Object value, boolean canBeReferenced) {

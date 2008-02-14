@@ -51,7 +51,7 @@ public class TestDNAWriter implements DNAWriter {
     //
   }
 
-  public void addClassLoaderAction(String classLoaderFieldName, Object value) {
+  public void addClassLoaderAction(String classLoaderFieldName, ClassLoader value) {
     //
 
   }

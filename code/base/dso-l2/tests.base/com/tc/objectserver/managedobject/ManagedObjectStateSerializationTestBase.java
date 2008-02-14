@@ -1,110 +1,127 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
 package com.tc.objectserver.managedobject;
 
+import com.sleepycat.je.CursorConfig;
 import com.tc.exception.ImplementMe;
-import com.tc.io.serializer.TCObjectInputStream;
-import com.tc.io.serializer.TCObjectOutputStream;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LiteralAction;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
+import com.tc.object.tx.TransactionID;
+import com.tc.objectserver.api.NullObjectInstanceMonitor;
+import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
-import com.tc.objectserver.persistence.impl.InMemoryPersistor;
+import com.tc.objectserver.core.api.TestDNA;
+import com.tc.objectserver.persistence.api.PersistenceTransaction;
+import com.tc.objectserver.persistence.impl.TestMutableSequence;
+import com.tc.objectserver.persistence.impl.TestPersistenceTransactionProvider;
+import com.tc.objectserver.persistence.sleepycat.DBEnvironment;
+import com.tc.objectserver.persistence.sleepycat.ManagedObjectPersistorImpl;
+import com.tc.objectserver.persistence.sleepycat.SleepycatCollectionFactory;
+import com.tc.objectserver.persistence.sleepycat.SleepycatCollectionsPersistor;
+import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor;
+import com.tc.objectserver.persistence.sleepycat.SleepycatSerializationAdapterFactory;
+import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
-import junit.framework.TestCase;
+public class ManagedObjectStateSerializationTestBase extends TCTestCase {
+  private final TCLogger                     logger   = TCLogging.getTestingLogger(getClass());
+  private final ObjectID                     objectID = new ObjectID(2000);
 
-public abstract class AbstractTestManagedObjectState extends TestCase {
-  protected static final String                 loaderDesc = "System.loader";
-  protected ObjectID                            objectID;
-  protected ManagedObjectChangeListenerProvider listenerProvider;
+  private DBEnvironment                      env;
+  private ManagedObjectPersistorImpl         managedObjectPersistor;
+  private TestPersistenceTransactionProvider ptp;
 
   public void setUp() throws Exception {
     super.setUp();
-    listenerProvider = new NullManagedObjectChangeListenerProvider();
+
+    env = newDBEnvironment();
+    SleepycatSerializationAdapterFactory sleepycatSerializationAdapterFactory = new SleepycatSerializationAdapterFactory();
+
+    SleepycatPersistor persistor = new SleepycatPersistor(logger, env, sleepycatSerializationAdapterFactory);
+
+    CursorConfig dbCursorConfig = new CursorConfig();
+    ptp = new TestPersistenceTransactionProvider();
+    CursorConfig rootDBCursorConfig = new CursorConfig();
+    SleepycatCollectionFactory sleepycatCollectionFactory = new SleepycatCollectionFactory();
+    SleepycatCollectionsPersistor sleepycatCollectionsPersistor = new SleepycatCollectionsPersistor(logger, env
+        .getMapsDatabase(), sleepycatCollectionFactory);
+
+    managedObjectPersistor = new ManagedObjectPersistorImpl(logger, env.getClassCatalogWrapper().getClassCatalog(),
+                                                            sleepycatSerializationAdapterFactory, env
+                                                                .getObjectDatabase(), env.getOidDatabase(),
+                                                            dbCursorConfig, new TestMutableSequence(), env
+                                                                .getRootDatabase(), rootDBCursorConfig, ptp,
+                                                            sleepycatCollectionsPersistor, env.isParanoidMode());
+
+    NullManagedObjectChangeListenerProvider listenerProvider = new NullManagedObjectChangeListenerProvider();
     ManagedObjectStateFactory.disableSingleton(true);
-    ManagedObjectStateFactory.createInstance(listenerProvider, new InMemoryPersistor());
-    objectID = new ObjectID(2000);
+    ManagedObjectStateFactory.createInstance(listenerProvider, persistor);
+  }
+
+  private DBEnvironment newDBEnvironment() throws Exception {
+    File dbHome = new File(this.getTempDirectory(), getClass().getName() + "db");
+    dbHome.mkdirs();
+    return new DBEnvironment(true, dbHome);
   }
 
   protected void tearDown() throws Exception {
     super.tearDown();
+    env.close();
     ManagedObjectStateFactory.disableSingleton(false);
-    objectID = null;
-    listenerProvider = null;
   }
 
-  protected ManagedObjectState createManagedObjectState(String className, TestDNACursor cursor) throws Exception {
-    ManagedObjectState state = ManagedObjectStateFactory.getInstance().createState(new ObjectID(1), ObjectID.NULL_ID,
-                                                                                   className, loaderDesc, cursor);
+  protected ManagedObjectState applyValidation(String className, DNACursor dnaCursor) throws Exception {
+    ManagedObject mo = new ManagedObjectImpl(objectID);
+
+    TestDNA dna = new TestDNA(dnaCursor);
+    dna.typeName = className;
+    mo.apply(dna, new TransactionID(1), new BackReferences(), new NullObjectInstanceMonitor(), false);
+
+    PersistenceTransaction txn = ptp.newTransaction();
+    managedObjectPersistor.saveObject(txn, mo);
+    txn.commit();
+
+    ManagedObjectState state = mo.getManagedObjectState();
+    TestDNAWriter dnaWriter = dehydrate(state);
+    validate(dnaCursor, dnaWriter);
+
     return state;
   }
 
-  public void basicTestUnit(String className, final byte type, TestDNACursor cursor, int objCount) throws Exception {
-    basicTestUnit(className, type, cursor, objCount, true);
+  protected void serializationValidation(ManagedObjectState state, DNACursor dnaCursor, byte type) throws Exception {
+    ManagedObject loaded = managedObjectPersistor.loadObjectByID(objectID);
+    TestDNAWriter dnaWriter = dehydrate(loaded.getManagedObjectState());
+    validate(dnaCursor, dnaWriter);
   }
 
-  public void basicTestUnit(String className, final byte type, TestDNACursor cursor, int objCount,
-                            boolean verifyReadWrite) throws Exception {
-    ManagedObjectState state = createManagedObjectState(className, cursor);
-    state.apply(objectID, cursor, new BackReferences());
-
-    // API verification
-    basicAPI(className, type, cursor, objCount, state);
-
-    // dehydrate
-    basicDehydrate(cursor, objCount, state);
-
-    // writeTo, readFrom and equal
-    if (verifyReadWrite) {
-      basicReadWriteEqual(type, state);
-    }
-  }
-
-  protected void basicAPI(String className, final byte type, TestDNACursor cursor, int objCount,
-                          ManagedObjectState state) {
-    Assert.assertEquals("BackReferences object size", objCount, state.getObjectReferences().size());
-    Assert.assertTrue(state.getType() == type);
-    Assert.assertTrue("ClassName:" + state.getClassName(), state.getClassName().equals(className));
-
-  }
-
-  protected void basicDehydrate(TestDNACursor cursor, int objCount, ManagedObjectState state) {
+  private TestDNAWriter dehydrate(ManagedObjectState state) throws Exception {
     TestDNAWriter dnaWriter = new TestDNAWriter();
     state.dehydrate(objectID, dnaWriter);
-    cursor.reset();
-    cursor.next();
-    while (cursor.next()) {
-      Object action = cursor.getAction();
-      Assert.assertTrue(dnaWriter.containsAction(action));
-    }
+    return dnaWriter;
   }
 
-  protected void basicReadWriteEqual(final byte type, ManagedObjectState state) throws Exception {
-    ByteArrayOutputStream bout = new ByteArrayOutputStream();
-    TCObjectOutputStream out = new TCObjectOutputStream(bout);
-    state.writeTo(out);
-    ByteArrayInputStream bin = new ByteArrayInputStream(bout.toByteArray());
-    TCObjectInputStream in = new TCObjectInputStream(bin);
-    ManagedObjectState state2 = ManagedObjectStateFactory.getInstance().readManagedObjectStateFrom(in, type);
-    Assert.assertTrue(state.equals(state2));
+  private void validate(DNACursor dnaCursor, TestDNAWriter writer) throws Exception {
+    Assert.assertEquals(dnaCursor.getActionCount(), writer.getActionCount());
+    dnaCursor.reset();
+    while (dnaCursor.next()) {
+      Object action = dnaCursor.getAction();
+      Assert.assertTrue(writer.containsAction(action));
+    }
   }
 
   public class TestDNAWriter implements DNAWriter {
@@ -156,7 +173,7 @@ public abstract class AbstractTestManagedObjectState extends TestCase {
       return logicalActions.size() + physicalActions.size() + literalActions.size();
     }
 
-    protected boolean containsAction(Object targetAction) {
+    private boolean containsAction(Object targetAction) {
       if (targetAction instanceof LogicalAction) {
         return containsLogicalAction((LogicalAction) targetAction);
       } else if (targetAction instanceof PhysicalAction) {
@@ -245,7 +262,7 @@ public abstract class AbstractTestManagedObjectState extends TestCase {
     }
   }
 
-  public class TestDNACursor implements DNACursor {
+  public static class TestDNACursor implements DNACursor {
     private List actions = new ArrayList();
     private int  current = -1;
 
@@ -294,35 +311,4 @@ public abstract class AbstractTestManagedObjectState extends TestCase {
     }
   }
 
-  public interface MyProxyInf1 {
-    public int getValue();
-
-    public void setValue(int i);
-  }
-
-  public interface MyProxyInf2 {
-    public String getStringValue();
-
-    public void setStringValue(String str);
-  }
-
-  public static class MyInvocationHandler implements InvocationHandler {
-    private Map values       = new HashMap();
-    private Map stringValues = new HashMap();
-
-    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-      if (method.getName().equals("getValue")) {
-        return values.get(proxy);
-      } else if (method.getName().equals("setValue")) {
-        values.put(proxy, args[0]);
-        return null;
-      } else if (method.getName().equals("setStringValue")) {
-        stringValues.put(proxy, args[0]);
-        return null;
-      } else if (method.getName().equals("getStringValue")) {
-        return stringValues.get(proxy);
-      } else if (method.getName().equals("hashCode")) { return new Integer(System.identityHashCode(proxy)); }
-      return null;
-    }
-  }
 }

@@ -134,9 +134,9 @@ public class DNAEncodingImpl implements DNAEncoding {
     return this.policy;
   }
 
-  public void encodeClassLoader(Object value, TCDataOutput output) {
+  public void encodeClassLoader(ClassLoader value, TCDataOutput output) {
     output.writeByte(TYPE_ID_JAVA_LANG_CLASSLOADER);
-    writeString(classProvider.getLoaderDescriptionFor((ClassLoader) value), output);
+    writeString(classProvider.getLoaderDescriptionFor(value), output);
   }
 
   /**
@@ -192,7 +192,7 @@ public class DNAEncodingImpl implements DNAEncoding {
         writeEnumInstance((EnumInstance) value, output);
         break;
       case LiteralValues.JAVA_LANG_CLASSLOADER:
-        encodeClassLoader(value, output);
+        encodeClassLoader((ClassLoader) value, output);
         break;
       case LiteralValues.JAVA_LANG_CLASSLOADER_HOLDER:
         output.writeByte(TYPE_ID_JAVA_LANG_CLASSLOADER_HOLDER);
@@ -431,7 +431,7 @@ public class DNAEncodingImpl implements DNAEncoding {
         byte[] b2 = readByteArray(input);
         return new BigDecimal(new String(b2));
 //      case TYPE_ID_URL:
-//        {        
+//        {
 //          String protocol = input.readString();
 //          String host = input.readString();
 //          int port = input.readInt();

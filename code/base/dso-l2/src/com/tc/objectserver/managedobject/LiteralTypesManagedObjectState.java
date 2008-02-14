@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class LiteralTypesManagedObjectState extends AbstractManagedObjectState implements PrettyPrintable {
-  private Object references;
+  private Object reference;
 
   LiteralTypesManagedObjectState() {
     super();
@@ -55,11 +55,11 @@ public class LiteralTypesManagedObjectState extends AbstractManagedObjectState i
     LiteralAction a = (LiteralAction) cursor.getAction();
     // PhysicalAction a = cursor.getPhysicalAction();
     // Assert.assertTrue(a.isLiteralType());
-    references = a.getObject();
+    reference = a.getObject();
   }
 
   public void dehydrate(ObjectID objectID, DNAWriter writer) {
-    writer.addLiteralValue(references);
+    writer.addLiteralValue(reference);
   }
 
   public String toString() {
@@ -73,7 +73,7 @@ public class LiteralTypesManagedObjectState extends AbstractManagedObjectState i
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     PrettyPrinter rv = out;
     out = out.print(getClass().getName()).duplicateAndIndent().println();
-    out.indent().print("references: " + references).println();
+    out.indent().print("references: " + reference).println();
     out.indent().print("listener: " + getListener()).println();
     return rv;
   }
@@ -82,7 +82,7 @@ public class LiteralTypesManagedObjectState extends AbstractManagedObjectState i
     // NOTE: limit is ignored for literal object facades
 
     Map dataCopy = new HashMap();
-    dataCopy.put(className, references);
+    dataCopy.put(className, reference);
 
     return new PhysicalManagedObjectFacade(objectID, ObjectID.NULL_ID, className, dataCopy, false, DNA.NULL_ARRAY_SIZE,
                                            false);
@@ -101,34 +101,34 @@ public class LiteralTypesManagedObjectState extends AbstractManagedObjectState i
   }
 
   public void writeTo(ObjectOutput o) throws IOException {
-    o.writeObject(references);
+    o.writeObject(reference);
   }
 
   static LiteralTypesManagedObjectState readFrom(ObjectInput in) throws IOException, ClassNotFoundException {
     LiteralTypesManagedObjectState lmos = new LiteralTypesManagedObjectState();
-    lmos.references = in.readObject();
+    lmos.reference = in.readObject();
     return lmos;
   }
 
   protected boolean basicEquals(AbstractManagedObjectState o) {
     LiteralTypesManagedObjectState lmos = (LiteralTypesManagedObjectState) o;
-    return references.equals(lmos.references);
+    return reference.equals(lmos.reference);
   }
 
   public String getClassName() {
-    Assert.assertNotNull(references);
+    Assert.assertNotNull(reference);
 
-    if (references instanceof ClassInstance) {
+    if (reference instanceof ClassInstance) {
       return "java.lang.Class";
-    } else if (references instanceof ClassLoaderInstance) {
+    } else if (reference instanceof ClassLoaderInstance) {
       return "java.lang.ClassLoader";
-    } else if (references instanceof UTF8ByteDataHolder) {
+    } else if (reference instanceof UTF8ByteDataHolder) {
       return "java.lang.String";
-    } else if (references instanceof EnumInstance) {
+    } else if (reference instanceof EnumInstance) {
       return "java.lang.Enum";
     }
 
-    return references.getClass().getName();
+    return reference.getClass().getName();
   }
 
   public String getLoaderDescription() {

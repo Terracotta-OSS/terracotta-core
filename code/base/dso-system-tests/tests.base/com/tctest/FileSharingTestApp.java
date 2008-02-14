@@ -176,7 +176,7 @@ public class FileSharingTestApp extends AbstractTransparentApp {
       return dna;
     }
 
-    public void addClassLoaderAction(String classLoaderFieldName, Object value) {
+    public void addClassLoaderAction(String classLoaderFieldName, ClassLoader value) {
       //
 
     }

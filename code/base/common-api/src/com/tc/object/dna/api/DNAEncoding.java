@@ -47,14 +47,14 @@ public interface DNAEncoding {
   /**
    * Encode a classloader object onto an output stream
    * @param value The classloader
-   * @param output The output 
+   * @param output The output
    */
-  public abstract void encodeClassLoader(Object value, TCDataOutput output);
+  public abstract void encodeClassLoader(ClassLoader value, TCDataOutput output);
 
   /**
    * Encode an object onto an output stream
    * @param value The object
-   * @param output The output 
+   * @param output The output
    */
   public abstract void encode(Object value, TCDataOutput output);
 
@@ -67,14 +67,14 @@ public interface DNAEncoding {
   /**
    * Encode an array onto an output stream, automatically determine array length
    * @param value The array
-   * @param output The output 
+   * @param output The output
    */
   public abstract void encodeArray(Object value, TCDataOutput output);
 
   /**
    * Encode an array onto an output stream
    * @param value The array
-   * @param output The output 
+   * @param output The output
    * @param length The length of the array to encode
    */
   public abstract void encodeArray(Object value, TCDataOutput output, int length);

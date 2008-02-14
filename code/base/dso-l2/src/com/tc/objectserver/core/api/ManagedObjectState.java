@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.core.api;
 
@@ -20,11 +21,10 @@ import java.util.Set;
 public interface ManagedObjectState {
 
   /*
-   * If you are adding new State objects, you need to add Serialization support in ManagedObjectStateFactory
-   *
-   * The unit test ManagedObjectStateSerializationTest will also need to have a test case for
-   * each of these types, which is defined to be public static final. This will ensure that
-   * Serialization support is added to ManagedObjectStateFactory.
+   * If you are adding new State objects, you need to add Serialization support in ManagedObjectStateFactory The unit
+   * test ManagedObjectStateSerializationTest will also need to have a test case for each of these types, which is
+   * defined to be public static final. This will ensure that Serialization support is added to
+   * ManagedObjectStateFactory.
    */
   public static final byte PHYSICAL_TYPE           = 0x01;
   public static final byte DATE_TYPE               = 0x02;
@@ -38,8 +38,9 @@ public interface ManagedObjectState {
   public static final byte TREE_MAP_TYPE           = 0x0a;
   public static final byte QUEUE_TYPE              = 0x0b;
   public static final byte CONCURRENT_HASHMAP_TYPE = 0x0c;
-  public static final byte PARTIAL_MAP_TYPE        = 0x0d;
-  public static final byte URL_TYPE                = 0x0e;
+  public static final byte PROXY_TYPE              = 0x0d;
+  public static final byte PARTIAL_MAP_TYPE        = 0x0e;
+  public static final byte URL_TYPE                = 0x0f;
 
   public void apply(ObjectID objectID, DNACursor cursor, BackReferences includeIDs) throws IOException;
 
