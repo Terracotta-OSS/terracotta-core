@@ -6,7 +6,6 @@ package com.tctest;
 
 import com.tc.async.api.Sink;
 import com.tc.exception.ImplementMe;
-import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.logging.NullTCLogger;
 import com.tc.management.ClientLockStatManager;
@@ -59,7 +58,6 @@ import com.tc.util.Assert;
 
 import java.lang.reflect.Constructor;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
@@ -78,7 +76,7 @@ public class ClientServerLockStatisticsTest extends TCTestCase {
 
   public ClientServerLockStatisticsTest() {
     // MNK-444
-    disableAllUntil(new Date(Long.MAX_VALUE));
+    // disableAllUntil(new Date(Long.MAX_VALUE));
   }
 
   protected void setUp() throws Exception {
@@ -238,7 +236,7 @@ public class ClientServerLockStatisticsTest extends TCTestCase {
 
       try {
         Constructor constructor = theClass.getConstructor(new Class[] { SessionID.class, MessageMonitor.class,
-            TCByteBufferOutput.class, MessageChannel.class, TCMessageType.class });
+            TCByteBufferOutputStream.class, MessageChannel.class, TCMessageType.class });
         TCMessageImpl message = (TCMessageImpl) constructor.newInstance(new Object[] { SessionID.NULL_ID,
             new NullMessageMonitor(), new TCByteBufferOutputStream(4, 4096, false), this, type });
         // message.seal();
