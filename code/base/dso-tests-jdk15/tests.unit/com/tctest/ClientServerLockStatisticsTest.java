@@ -54,17 +54,17 @@ import com.tc.object.session.TestSessionManager;
 import com.tc.objectserver.api.TestSink;
 import com.tc.objectserver.lockmanager.api.NullChannelManager;
 import com.tc.objectserver.lockmanager.impl.LockManagerImpl;
+import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 
 import java.lang.reflect.Constructor;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 
-import junit.framework.TestCase;
-
-public class ClientServerLockStatisticsTest extends TestCase {
+public class ClientServerLockStatisticsTest extends TCTestCase {
 
   private ClientLockManagerImpl           clientLockManager;
   private LockManagerImpl                 serverLockManager;
@@ -73,8 +73,13 @@ public class ClientServerLockStatisticsTest extends TestCase {
   private ClientLockStatManager           clientLockStatManager;
   private L2LockStatsManager              serverLockStatManager;
   private ChannelID                       channelId1 = new ChannelID(1);
-  private ClientMessageChannel channel1;
-  private TestSink sink;
+  private ClientMessageChannel            channel1;
+  private TestSink                        sink;
+
+  public ClientServerLockStatisticsTest() {
+    // MNK-444
+    disableAllUntil(new Date(Long.MAX_VALUE));
+  }
 
   protected void setUp() throws Exception {
     super.setUp();
@@ -97,7 +102,7 @@ public class ClientServerLockStatisticsTest extends TestCase {
     clientLockStatManager.start(new TestClientChannel(channel1), sink);
     clientServerGlue.set(clientLockManager, serverLockManager, clientLockStatManager, serverLockStatManager);
   }
-  
+
   public void testClientDisconnect() {
     final CyclicBarrier localBarrier = new CyclicBarrier(2);
     DSOChannelManager nullChannelManager = new NullChannelManager();
@@ -106,11 +111,11 @@ public class ClientServerLockStatisticsTest extends TestCase {
 
     serverLockStatManager.start(new TestChannelManager(channel1));
     clientServerGlue.set(clientLockManager, serverLockManager, clientLockStatManager, serverLockStatManager);
-    
+
     final LockID l1 = new LockID("1");
     final ThreadID tx1 = new ThreadID(1);
     final ThreadID tx2 = new ThreadID(1);
-    
+
     Thread t1 = new Thread(new Runnable() {
       public void run() {
         serverLockManager.clearAllLocksFor(new ClientID(channelId1));
@@ -128,9 +133,9 @@ public class ClientServerLockStatisticsTest extends TestCase {
     t1.start();
     Collection c = serverLockStatManager.getLockSpecs();
     Assert.assertEquals(1, c.size());
-    LockSpec lockSpec = (LockSpec)c.iterator().next();
+    LockSpec lockSpec = (LockSpec) c.iterator().next();
     Assert.assertEquals(0, lockSpec.children().size());
-    
+
     clientLockManager.unlock(l1, tx2);
   }
 
@@ -203,26 +208,26 @@ public class ClientServerLockStatisticsTest extends TestCase {
     clientServerGlue.stop();
     super.tearDown();
   }
-  
+
   private static class TestChannelManager extends NullChannelManager {
     private MessageChannel channel;
-    
+
     public TestChannelManager(MessageChannel channel) {
       this.channel = channel;
     }
-    
+
     public MessageChannel[] getActiveChannels() {
-      return new MessageChannel[] {channel};
+      return new MessageChannel[] { channel };
     }
   }
-  
+
   private static class TestClientMessageChannel extends MockMessageChannel implements ClientMessageChannel {
     private Sink sink;
-    
+
     public TestClientMessageChannel(ChannelID channelId, Sink sink) {
       super(channelId);
       super.registerType(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE, LockStatisticsResponseMessage.class);
-      super.registerType(TCMessageType. LOCK_STAT_MESSAGE, LockStatisticsMessage.class);
+      super.registerType(TCMessageType.LOCK_STAT_MESSAGE, LockStatisticsMessage.class);
       this.sink = sink;
     }
 
@@ -236,13 +241,13 @@ public class ClientServerLockStatisticsTest extends TestCase {
             TCByteBufferOutput.class, MessageChannel.class, TCMessageType.class });
         TCMessageImpl message = (TCMessageImpl) constructor.newInstance(new Object[] { SessionID.NULL_ID,
             new NullMessageMonitor(), new TCByteBufferOutputStream(4, 4096, false), this, type });
-        //message.seal();
+        // message.seal();
         return message;
       } catch (Exception e) {
         throw new ImplementMe("Failed", e);
       }
     }
-    
+
     public void send(TCNetworkMessage message) {
       super.send(message);
       sink.add(message);
@@ -361,15 +366,15 @@ public class ClientServerLockStatisticsTest extends TestCase {
       throw new ImplementMe();
     }
   }
-  
+
   private static class MockL2LockStatManagerImpl extends L2LockStatisticsManagerImpl {
     private final CyclicBarrier barrier;
-    
+
     public MockL2LockStatManagerImpl(CyclicBarrier barrier) {
       super();
       this.barrier = barrier;
     }
-    
+
     public void recordClientStat(NodeID nodeID, Collection<TCStackTraceElement> stackTraceElements) {
       try {
         barrier.await();
