@@ -35,6 +35,7 @@ import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
+import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.object.session.NullSessionManager;
@@ -43,6 +44,7 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.handler.ReceiveGroupMessageHandler;
 import com.tc.objectserver.handler.TCGroupHandshakeMessageHandler;
 import com.tc.objectserver.handler.TCGroupMemberDiscoveryHandler;
+import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
@@ -99,6 +101,7 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
   private Stage                                                     receiveGroupMessageStage;
   private Stage                                                     handshakeMessageStage;
   private Stage                                                     discoveryStage;
+  private TCProperties                                              l2Properties;
 
   /*
    * Setup a communication manager which can establish channel from either sides.
@@ -160,8 +163,11 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
                                               new TCGroupMemberDiscoveryHandler(this), 4, maxStageSize);
 
     final NetworkStackHarnessFactory networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
-    communicationsManager = new CommunicationsManagerImpl(new NullMessageMonitor(), networkStackHarnessFactory, null,
-                                                          this.connectionPolicy);
+    l2Properties = TCPropertiesImpl.getProperties().getPropertiesFor("l2");
+    communicationsManager = new CommunicationsManagerImpl(new NullMessageMonitor(), networkStackHarnessFactory,
+                                                          this.connectionPolicy,
+                                                          new HealthCheckerConfigImpl(l2Properties
+                                                              .getPropertiesFor("healthCheck.l2"), "TCGroupManager"));
 
     groupListener = communicationsManager.createListener(new NullSessionManager(), socketAddress, true,
                                                          new DefaultConnectionIdFactory());
@@ -475,9 +481,9 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
 
     if (m == null) {
       String errInfo = "Received message for non-exist member from " + channel.getRemoteAddress() + " to "
-                  + channel.getLocalAddress() + " Node: " + channelToNodeID.get(channel) + " msg: " + message;
+                       + channel.getLocalAddress() + " Node: " + channelToNodeID.get(channel) + " msg: " + message;
       TCGroupHandshakeStateMachine stateMachine = getHandshakeStateMachine(channel);
-      if (stateMachine != null && stateMachine .isFailureState()) {
+      if (stateMachine != null && stateMachine.isFailureState()) {
         // message received after node left
         logger.warn(errInfo);
         return;
@@ -735,7 +741,7 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
     public final void start() {
       switchToState(initialState());
     }
-    
+
     public synchronized boolean isFailureState() {
       return (current == STATE_FAILURE);
     }
