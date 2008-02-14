@@ -4,12 +4,14 @@
  */
 package com.tctest.spring.integrationtests.tests;
 
+import com.tc.test.server.appserver.deployment.ServerTestSetup;
+
 import junit.framework.Test;
 
 public class WebFlowDefaultFlowTest extends WebFlowTestBase {
 
   public static Test suite() {
-    return new WebFlowTestSetup(WebFlowDefaultFlowTest.class);
+    return new ServerTestSetup(WebFlowDefaultFlowTest.class);
   }
 
   public void testDefaultFlowExecution() throws Exception {

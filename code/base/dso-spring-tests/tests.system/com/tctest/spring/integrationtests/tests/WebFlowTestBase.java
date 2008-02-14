@@ -7,31 +7,32 @@ package com.tctest.spring.integrationtests.tests;
 
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
-import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
+import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tctest.spring.bean.WebFlowBean;
-import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
+import com.tctest.spring.integrationtests.SpringDeploymentTest;
 
 import java.util.Collections;
 
 /**
- * Test Spring WebFlow fail-over
- *
- * LKC-1175: Test: Spring WebFlow fail-over https://jira.terracotta.lan/jira/browse/LKC-1175
- *
- * Test startup Test fail-over More??
- *
- * Spring Webflow flows are stateful (by nature), they are backed up by the HttpContext so it will be a no brainer to
- * support. Need to work out config, if it is needed and if so what it should be.
- *
- * 1. ContinuationFlowExecutionRepositoryFactory 2. DefaultFlowExecutionRepositoryFactory 3.
- * SingleKeyFlowExecutionRepositoryFactory (extends 2)
+ * Test Spring WebFlow fail-over LKC-1175: Test: Spring WebFlow fail-over
+ * https://jira.terracotta.lan/jira/browse/LKC-1175 Test startup Test fail-over More?? Spring Webflow flows are stateful
+ * (by nature), they are backed up by the HttpContext so it will be a no brainer to support. Need to work out config, if
+ * it is needed and if so what it should be. 1. ContinuationFlowExecutionRepositoryFactory 2.
+ * DefaultFlowExecutionRepositoryFactory 3. SingleKeyFlowExecutionRepositoryFactory (extends 2)
  */
-public class WebFlowTestBase extends AbstractTwoServerDeploymentTest {
+public class WebFlowTestBase extends SpringDeploymentTest {
+  private static final String  CONTEXT   = "webflow";
+  private static final String  TC_CONFIG = "/tc-config-files/webflow-tc-config.xml";
+
+  private WebApplicationServer server0;
+  private WebApplicationServer server1;
+  private WebApplicationServer server2;
+  private WebApplicationServer server3;
 
   public WebFlowTestBase() {
-    // this.disableAllUntil("2006-12-01");
+    //
   }
 
   protected void tearDown() throws Exception {
@@ -39,7 +40,52 @@ public class WebFlowTestBase extends AbstractTwoServerDeploymentTest {
     stopAllWebServers();
   }
 
+  private Deployment makeDeployment() throws Exception {
+    DeploymentBuilder builder = makeDeploymentBuilder(CONTEXT + ".war");
+
+    builder
+        .addDirectoryOrJARContainingClass(org.apache.taglibs.standard.Version.class)
+        // standard-1.0.6.jar
+        .addDirectoryOrJARContainingClass(javax.servlet.jsp.jstl.core.Config.class)
+        // spring-webflow-1.0-rc3.jar
+        .addDirectoryOrJARContainingClass(
+                                          org.springframework.webflow.engine.builder.xml.XmlFlowRegistryFactoryBean.class)
+        // spring-webflow-1.0-rc4.jar
+        .addDirectoryOrJARContainingClass(org.springframework.binding.convert.Converter.class)
+        // spring-binding-1.0-rc3.jar
+        .addDirectoryOrJARContainingClass(org.apache.commons.codec.StringDecoder.class)
+        // commons-codec-1.3.jar
+        .addDirectoryOrJARContainingClass(ognl.Ognl.class)
+        // ognl-2.7.jar
+        .addDirectoryOrJARContainingClass(EDU.oswego.cs.dl.util.concurrent.ReentrantLock.class)
+        // concurrent-1.3.4.jar for SWF on jdk1.4
+
+        .addResource("/web-resources", "webflow.jsp", "WEB-INF").addResource("/com/tctest/spring", "webflow.xml",
+                                                                             "WEB-INF")
+        .addResource("/com/tctest/spring", "webflow-beans.xml", "WEB-INF")
+        .addResource("/com/tctest/spring", "webflow-servlet.xml", "WEB-INF").addResource("/web-resources",
+                                                                                         "weblogic.xml", "WEB-INF")
+
+        .addServlet("webflow", "*.htm", org.springframework.web.servlet.DispatcherServlet.class,
+                    Collections.singletonMap("contextConfigLocation", "/WEB-INF/webflow-servlet.xml"), true);
+
+    builder.addDirectoryContainingResource(TC_CONFIG);
+    return builder.makeDeployment();
+  }
+
+  private WebApplicationServer createServer(Deployment deployment) throws Exception {
+    WebApplicationServer server = makeWebApplicationServer(TC_CONFIG);
+    server.addWarDeployment(deployment, CONTEXT);
+    return server;
+  }
+
   protected void checkWebFlow(String controller, boolean withStepBack) throws Exception {
+    Deployment deployment = makeDeployment();
+    server0 = createServer(deployment);
+    server1 = createServer(deployment);
+    server2 = createServer(deployment);
+    server3 = createServer(deployment);
+
     server0.start();
 
     WebConversation webConversation1 = new WebConversation();
@@ -63,28 +109,31 @@ public class WebFlowTestBase extends AbstractTwoServerDeploymentTest {
     server0.stop();
     server1.stop(); // both servers are down
 
-    server0.start();
+    server2.start();
 
     if (withStepBack) {
       // step back
-      Response response3a = request(server0, webConversation1, response2.flowExecutionKey, "valueB1", controller);
+      Response response3a = request(server2, webConversation1, response2.flowExecutionKey, "valueB1", controller);
       assertTrue("Expecting non-empty flow execution key; " + response3a, response3a.flowExecutionKey.length() > 0);
       assertEquals("Invalid state; " + response3a, WebFlowBean.STATEC, response3a.result);
       assertEquals("Invalid value; " + response3a, "valueB1", response3a.valueB);
     }
 
     // throw away the step back and continue
-    Response response4 = request(server0, webConversation1, response3.flowExecutionKey, "valueC", controller);
+    Response response4 = request(server2, webConversation1, response3.flowExecutionKey, "valueC", controller);
     assertTrue("Expecting non-empty flow execution key; " + response4, response4.flowExecutionKey.length() > 0);
     assertEquals("Invalid state; " + response4, WebFlowBean.STATED, response4.result);
     assertEquals("Invalid value; " + response4, "valueC", response4.valueC);
 
-    server1.start();
+    server3.start();
 
-    Response response5 = request(server1, webConversation1, response4.flowExecutionKey, "valueD", controller);
+    Response response5 = request(server3, webConversation1, response4.flowExecutionKey, "valueD", controller);
     // flowExecutionKey is empty since flow is completed
     assertEquals("Invalid state; " + response5, WebFlowBean.COMPLETE, response5.result);
     assertEquals("Invalid value; " + response5, "valueD", response5.valueD);
+
+    server2.stop();
+    server3.stop();
   }
 
   private Response request(WebApplicationServer server, WebConversation conversation, String flowExecutionKey,
@@ -101,142 +150,6 @@ public class WebFlowTestBase extends AbstractTwoServerDeploymentTest {
 
     WebResponse response = server.ping("/webflow/" + controllerName + "?" + params, conversation);
     return new Response(response.getText().trim());
-  }
-
-  // public void DONTtestHighlow() throws Exception {
-  // if(server1.isStopped()) {
-  // server1.start();
-  // }
-  //
-  // WebConversation webConversation1 = new WebConversation();
-  //
-  // String flowExecutionKey = null;
-  // int lowGuess = 0;
-  // int highGuess = 100;
-  // int n = 0;
-  // while(n<100) {
-  // int guess = (highGuess-lowGuess)/2 + lowGuess;
-  // String response = takeGuess(server1, webConversation1, guess, flowExecutionKey);
-  // String[] params = response.split(";");
-  // assertTrue("Expected at least two parameters: "+response, params.length>1);
-  //
-  // if(HigherLowerGame.CORRECT.equals(params[0])) {
-  // break;
-  // } else if(HigherLowerGame.TOO_HIGH.equals(params[0])) {
-  // highGuess = guess;
-  // } else if(HigherLowerGame.TOO_LOW.equals(params[0])) {
-  // lowGuess = guess;
-  // } else if(HigherLowerGame.INVALID.equals(params[0])) {
-  // fail("Invalid execution "+params[1]);
-  // }
-  //
-  // flowExecutionKey = params[1];
-  // }
-  // assertTrue("Too many iterations", n<100);
-  // }
-
-  // private String takeGuess(WebApplicationServer server, WebConversation conversation, int newGuess, String
-  // flowExecutionKey) throws Exception {
-  // String params = "guess="+newGuess;
-  // if(flowExecutionKey!=null) {
-  // params += "&_flowExecutionKey="+flowExecutionKey.trim();
-  // } else {
-  // params += "&_flowId=higherlower";
-  // }
-  // params += "&_eventId=submit";
-  //
-  // WebResponse response = server.ping("/higherlower/higherlower.htm?"+params, conversation);
-  // return response.getText().trim();
-  // }
-
-  static class WebFlowTestSetup extends SpringTwoServerTestSetup {
-
-    public WebFlowTestSetup(Class testClass) {
-      super(testClass, "/tc-config-files/webflow-tc-config.xml", "webflow");
-      setStart(false);
-    }
-
-    protected void configureWar(DeploymentBuilder builder) {
-      builder
-          // .addDirectoryOrJARContainingClass(WebFlowTestSetup.class)
-          // .addDirectoryContainingResource("/tc-config-files/webflow-tc-config.xml")
-
-          .addDirectoryOrJARContainingClass(org.apache.taglibs.standard.Version.class)
-          // standard-1.0.6.jar
-          .addDirectoryOrJARContainingClass(javax.servlet.jsp.jstl.core.Config.class)
-          // jstl-1.0.jar
-          // .addDirectoryOrJARContainingClass(org.springframework.webflow.registry.XmlFlowRegistryFactoryBean.class) //
-          // spring-webflow-1.0-rc3.jar
-          .addDirectoryOrJARContainingClass(
-                                            org.springframework.webflow.engine.builder.xml.XmlFlowRegistryFactoryBean.class)
-          // spring-webflow-1.0-rc4.jar
-          .addDirectoryOrJARContainingClass(org.springframework.binding.convert.Converter.class)
-          // spring-binding-1.0-rc3.jar
-          .addDirectoryOrJARContainingClass(org.apache.commons.codec.StringDecoder.class)
-          // commons-codec-1.3.jar
-          .addDirectoryOrJARContainingClass(ognl.Ognl.class)
-          // ognl-2.7.jar
-          .addDirectoryOrJARContainingClass(EDU.oswego.cs.dl.util.concurrent.ReentrantLock.class)
-          // concurrent-1.3.4.jar for SWF on jdk1.4
-
-          .addResource("/web-resources", "webflow.jsp", "WEB-INF").addResource("/com/tctest/spring", "webflow.xml",
-                                                                               "WEB-INF")
-          .addResource("/com/tctest/spring", "webflow-beans.xml", "WEB-INF").addResource("/com/tctest/spring",
-                                                                                         "webflow-servlet.xml",
-                                                                                         "WEB-INF")
-          .addResource("/web-resources", "weblogic.xml", "WEB-INF")
-
-          .addServlet("webflow", "*.htm", org.springframework.web.servlet.DispatcherServlet.class,
-                      Collections.singletonMap("contextConfigLocation", "/WEB-INF/webflow-servlet.xml"), true);
-
-    }
-
-    // protected void setUp() throws Exception {
-    // super.setUp();
-    //
-    // try {
-    //
-    // Deployment deployment2 = makeDeploymentBuilder("webflow.war")
-    // .addDirectoryOrJARContainingClass(WebFlowTestSetup.class)
-    // .addDirectoryContainingResource("/tc-config-files/webflow-tc-config.xml")
-    //
-    // .addDirectoryOrJARContainingClass(org.apache.taglibs.standard.Version.class) // standard-1.0.6.jar
-    // .addDirectoryOrJARContainingClass(javax.servlet.jsp.jstl.core.Config.class) // jstl-1.0.jar
-    // // .addDirectoryOrJARContainingClass(org.springframework.webflow.registry.XmlFlowRegistryFactoryBean.class) //
-    // spring-webflow-1.0-rc3.jar
-    // .addDirectoryOrJARContainingClass(org.springframework.webflow.engine.builder.xml.XmlFlowRegistryFactoryBean.class)
-    // // spring-webflow-1.0-rc4.jar
-    // .addDirectoryOrJARContainingClass(org.springframework.binding.convert.Converter.class) //
-    // spring-binding-1.0-rc3.jar
-    // .addDirectoryOrJARContainingClass(org.apache.commons.codec.StringDecoder.class) // commons-codec-1.3.jar
-    // .addDirectoryOrJARContainingClass(ognl.Ognl.class) // ognl-2.7.jar
-    // .addDirectoryOrJARContainingClass(EDU.oswego.cs.dl.util.concurrent.ReentrantLock.class) // concurrent-1.3.4.jar
-    // for SWF on jdk1.4
-    //
-    // .addResource("/web-resources", "webflow.jsp", "WEB-INF")
-    // .addResource("/com/tctest/spring", "webflow.xml", "WEB-INF")
-    // .addResource("/com/tctest/spring", "webflow-beans.xml", "WEB-INF")
-    // .addResource("/com/tctest/spring", "webflow-servlet.xml", "WEB-INF")
-    // .addResource("/web-resources", "weblogic.xml", "WEB-INF")
-    //
-    // .addServlet("webflow", "*.htm", org.springframework.web.servlet.DispatcherServlet.class,
-    // Collections.singletonMap("contextConfigLocation", "/WEB-INF/webflow-servlet.xml"), true)
-    // .makeDeployment();
-    //
-    // server1 = createServer()
-    // .addWarDeployment(deployment2, "webflow");
-    //
-    // server2 = createServer()
-    // .addWarDeployment(deployment2, "webflow");
-    // } catch (Exception ex) {
-    // ex.printStackTrace();
-    // }
-    // }
-    //
-    // private WebApplicationServer createServer() throws Exception {
-    // return sm.makeWebApplicationServer("/tc-config-files/webflow-tc-config.xml");
-    // }
-
   }
 
   private static class Response {

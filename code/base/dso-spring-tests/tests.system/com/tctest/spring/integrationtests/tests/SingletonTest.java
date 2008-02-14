@@ -97,19 +97,4 @@ public class SingletonTest extends SpringDeploymentTest {
 
     return builder.makeDeployment();
   }
-
-  /*
-   * public StandardTerracottaAppServerConfig buildTCConfig() { StandardTerracottaAppServerConfig tcConfigBuilder =
-   * getConfigBuilder(); SpringConfigBuilder springConfigBuilder =
-   * tcConfigBuilder.getConfigBuilder().getApplication().getSpring(); SpringApplicationConfigBuilder application =
-   * springConfigBuilder.getApplications()[0]; application.setName("test-singleton");
-   * SpringApplicationContextConfigBuilder applicationContext = application.getApplicationContexts()[0];
-   * applicationContext.setPaths(new String[] { "*.xml" }); applicationContext.addBean("singleton");
-   * tcConfigBuilder.build(); logger.debug(tcConfigBuilder.toString()); return tcConfigBuilder; }
-   */
-
-  // Causes a hang
-  // public void testSingleton2() throws Exception {
-  // testSingleton();
-  // }
 }
