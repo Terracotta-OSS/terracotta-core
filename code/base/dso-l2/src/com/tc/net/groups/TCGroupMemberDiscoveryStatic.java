@@ -116,9 +116,6 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     }, "Static Member discovery");
     discover.setDaemon(true);
     discover.start();
-    
-    // Yield for discovery to run before startElection in L2HACoordinator.start().
-    Thread.yield();
   }
 
   /*
