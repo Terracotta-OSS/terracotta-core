@@ -67,9 +67,6 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
           case ManagedObjectState.CONCURRENT_HASHMAP_TYPE:
             testConcurrentHashMap();
             break;
-          case ManagedObjectState.PROXY_TYPE:
-            testProxy();
-            break;
           case ManagedObjectState.URL_TYPE:
             testURL();
             break;
