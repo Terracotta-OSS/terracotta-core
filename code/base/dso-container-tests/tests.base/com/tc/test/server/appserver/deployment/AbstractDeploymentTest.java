@@ -36,12 +36,11 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   public AbstractDeploymentTest() {
     // need more work to run tests with Jetty
     // disable for now
-    int appId = TestConfigObject.getInstance().appServerId();
-    if (appId == AppServerInfo.JETTY) {
+    if (appServerInfo().getId() == AppServerInfo.JETTY) {
       disableAllUntil(new Date(Long.MAX_VALUE));
     }
 
-    if (isSessionTest() && (appId == AppServerInfo.GLASSFISH)) {
+    if (isSessionTest() && (appServerInfo().getId() == AppServerInfo.GLASSFISH)) {
       disableAllUntil(new Date(Long.MAX_VALUE));
     }
   }
@@ -56,6 +55,10 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
 
   protected boolean isSessionTest() {
     return true;
+  }
+
+  protected AppServerInfo appServerInfo() {
+    return TestConfigObject.getInstance().appServerInfo();
   }
 
   /**

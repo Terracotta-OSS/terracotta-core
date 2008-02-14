@@ -7,7 +7,6 @@ package com.tctest.server.appserver.unit;
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
 import com.tc.test.AppServerInfo;
-import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
 import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
@@ -22,11 +21,10 @@ import java.util.Map;
 import junit.framework.Test;
 
 public final class ServerHopCookieRewriteTest extends AbstractDeploymentTest {
-  private static final String  CONTEXT = "CookieRewrite";
-  private static final String  MAPPING = "ServerHopCookieRewriteTestServlet";
-  private static AppServerInfo appInfo = TestConfigObject.getInstance().appServerInfo();
+  private static final String CONTEXT = "CookieRewrite";
+  private static final String MAPPING = "ServerHopCookieRewriteTestServlet";
 
-  private Deployment           deployment;
+  private Deployment          deployment;
 
   public static Test suite() {
     return new ServerTestSetup(ServerHopCookieRewriteTest.class);
@@ -68,7 +66,7 @@ public final class ServerHopCookieRewriteTest extends AbstractDeploymentTest {
   private WebApplicationServer createServer(TcConfigBuilder configBuilder) throws Exception {
     WebApplicationServer server = makeWebApplicationServer(configBuilder);
     server.addWarDeployment(deployment, CONTEXT);
-    int appId = appInfo.getId();
+    int appId = appServerInfo().getId();
     if (appId != AppServerInfo.WEBSPHERE) {
       server.getServerParameters().appendSysProp("com.tc.session.delimiter",
                                                  ServerHopCookieRewriteTestServlet.DEFAULT_DLM);
@@ -79,7 +77,7 @@ public final class ServerHopCookieRewriteTest extends AbstractDeploymentTest {
   private Deployment makeDeployment() throws Exception {
     DeploymentBuilder builder = makeDeploymentBuilder(CONTEXT + ".war");
     Map initParams = null;
-    if (appInfo.getId() == AppServerInfo.JETTY) {
+    if (appServerInfo().getId() == AppServerInfo.JETTY) {
       initParams = new HashMap();
       initParams.put("session.delimiter", ".");
     }

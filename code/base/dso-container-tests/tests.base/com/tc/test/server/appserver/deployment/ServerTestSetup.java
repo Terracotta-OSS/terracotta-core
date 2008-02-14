@@ -4,6 +4,9 @@
  */
 package com.tc.test.server.appserver.deployment;
 
+import com.tc.test.AppServerInfo;
+import com.tc.test.TestConfigObject;
+
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,6 +53,10 @@ public class ServerTestSetup extends TestSetup {
       }
     }
     return sm;
+  }
+
+  public AppServerInfo appServerInfo() {
+    return TestConfigObject.getInstance().appServerInfo();
   }
 
   public DeploymentBuilder makeDeploymentBuilder() throws IOException {

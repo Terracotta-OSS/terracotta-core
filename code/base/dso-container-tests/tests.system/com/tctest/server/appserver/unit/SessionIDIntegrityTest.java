@@ -6,7 +6,6 @@ package com.tctest.server.appserver.unit;
 
 import com.meterware.httpunit.WebConversation;
 import com.tc.test.AppServerInfo;
-import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
@@ -45,7 +44,7 @@ public class SessionIDIntegrityTest extends AbstractTwoServerDeploymentTest {
   }
 
   private void assertSessionIdIntegrity(String sessionId, String extra_id) {
-    int appId = TestConfigObject.getInstance().appServerId();
+    int appId = appServerInfo().getId();
 
     System.out.println("sessionId='" + sessionId + "' extra_id='" + extra_id + "'");
 

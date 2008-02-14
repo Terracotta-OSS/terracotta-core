@@ -6,7 +6,6 @@ package com.tctest.server.appserver.unit;
 
 import com.meterware.httpunit.WebConversation;
 import com.tc.test.AppServerInfo;
-import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.StandardAppServerParameters;
 import com.tc.test.server.appserver.deployment.AbstractOneServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
@@ -24,13 +23,12 @@ import java.util.Date;
 import junit.framework.Test;
 
 public class SessionBindSequenceTest extends AbstractOneServerDeploymentTest {
-  private static final String        CONTEXT                 = "SessionBindSequenceTest";
-  private static final String        SERVLET                 = "SessionBindSequenceTestServlet";
-  private static final AppServerInfo appInfo                 = TestConfigObject.getInstance().appServerInfo();
+  private static final String CONTEXT                 = "SessionBindSequenceTest";
+  private static final String SERVLET                 = "SessionBindSequenceTestServlet";
 
-  private static final int           invalidatorSleepSeconds = 1;
-  private static final int           defaultMaxIdleSeconds   = 5;
-  private static final int           waitFactor              = 4;
+  private static final int    invalidatorSleepSeconds = 1;
+  private static final int    defaultMaxIdleSeconds   = 5;
+  private static final int    waitFactor              = 4;
 
   public static Test suite() {
     return new SessionBindSequenceTestSetup();
@@ -52,7 +50,7 @@ public class SessionBindSequenceTest extends AbstractOneServerDeploymentTest {
     // now set exception-throwing BindingListener..
     checkResponse("OK", "action=setwithexception&key=attr2", wc);
     // ... and check if it DID NOT made it there. Since Jetty binds before announcing, value will be set
-    String expectedVal = appInfo.getId() == AppServerInfo.JETTY ? "attr2" : "null";
+    String expectedVal = appServerInfo().getId() == AppServerInfo.JETTY ? "attr2" : "null";
     checkResponse("attr2=" + expectedVal, "action=get&key=attr2", wc);
 
     checkCallCount("BindingListener.valueBound", 2, wc);
@@ -65,7 +63,7 @@ public class SessionBindSequenceTest extends AbstractOneServerDeploymentTest {
 
     // Jetty puts the value in the session prior to announcing to listeners and the servlet won't increment
     // the attribute value if it is already present.
-    int bslBoundCount = appInfo.getId() == AppServerInfo.JETTY ? 0 : 1;
+    int bslBoundCount = appServerInfo().getId() == AppServerInfo.JETTY ? 0 : 1;
     // Note that attr3 will still be Unbound
     int bslUnboundCount = 1;
     checkCallCount("BindSequenceListener.valueBound", bslBoundCount, wc);
