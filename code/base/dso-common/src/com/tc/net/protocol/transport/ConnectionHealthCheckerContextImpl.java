@@ -15,7 +15,6 @@ import com.tc.net.core.event.TCConnectionErrorEvent;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.net.protocol.NullProtocolAdaptor;
-import com.tc.util.Assert;
 import com.tc.util.State;
 
 /**
@@ -89,9 +88,6 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
 
   private boolean initSocketConnectProbe() {
 
-    Assert.eval(!currentState.equals(SOCKET_CONNECT));
-    Assert.eval(!currentState.equals(DEAD));
-
     // trigger the socket connect
     conn = connectionManager.createConnection(new NullProtocolAdaptor());
     conn.addListener(this);
@@ -134,9 +130,8 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
         probeReplyNotRecievedCount.increment();
         changeState(AWAIT_PINGREPLY);
       } else if (config.isSocketConnectOnPingFail()) {
-        if (initSocketConnectProbe()) {
-          changeState(SOCKET_CONNECT);
-        } else {
+        changeState(SOCKET_CONNECT);
+        if (!initSocketConnectProbe()) {
           changeState(DEAD);
         }
       } else {
@@ -199,7 +194,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     // Async connect goes thru
     socketConnectSuccessCount++;
     if (socketConnectSuccessCount < config.getMaxSocketConnectCount()) {
-      if (logger.isDebugEnabled()) logger.debug("Peer might be in Long GC");
+      if (logger.isDebugEnabled()) logger.debug("Peer might be in Long GC.");
       initProbeCycle();
     } else {
       if (logger.isDebugEnabled()) logger.debug("Peer might be in Long GC. But its too long. No more retries");

@@ -55,6 +55,7 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
     Assert.eval(!currentState.equals(SOCKETCONNECT_IN_PROGRESS));
     socketConnectNoReplyWaitCount = 0;
     try {
+      conn.addListener(this);
       conn.asynchConnect(peerNodeAddr);
     } catch (IOException e) {
       if (conn != null) conn.removeListener(this);
@@ -104,7 +105,6 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
 
   public synchronized void connectEvent(TCConnectionEvent event) {
     // Async connect goes thru
-    if (logger.isDebugEnabled()) logger.debug("Peer might be in Long GC");
     conn.asynchClose();
     reset();
     changeState(SOCKETCONNECT_IDLE);
