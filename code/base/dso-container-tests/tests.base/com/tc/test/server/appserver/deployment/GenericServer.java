@@ -24,6 +24,7 @@ import org.xml.sax.SAXException;
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
 import com.tc.management.JMXConnectorProxy;
+import com.tc.test.AppServerInfo;
 import com.tc.test.TestConfigObject;
 import com.tc.test.server.ServerResult;
 import com.tc.test.server.appserver.AppServer;
@@ -102,9 +103,9 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
       parameters.appendJvmArgs("-XX:+HeapDumpOnOutOfMemoryError");
     }
 
-    int appId = AppServerFactory.getCurrentAppServerId();
+    int appId = config.appServerId();
     // glassfish fails with these options on
-    if (appId != AppServerFactory.GLASSFISH) {
+    if (appId != AppServerInfo.GLASSFISH) {
       parameters.appendSysProp("com.sun.management.jmxremote");
       parameters.appendSysProp("com.sun.management.jmxremote.authenticate", false);
       parameters.appendSysProp("com.sun.management.jmxremote.ssl", false);
@@ -126,14 +127,14 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
 
     // app server specific system props
     switch (appId) {
-      case AppServerFactory.TOMCAT:
-      case AppServerFactory.JBOSS:
+      case AppServerInfo.TOMCAT:
+      case AppServerInfo.JBOSS:
         parameters.appendJvmArgs("-Djvmroute=" + serverInstanceName);
         break;
-      case AppServerFactory.WEBSPHERE:
+      case AppServerInfo.WEBSPHERE:
         parameters.appendSysProp("javax.management.builder.initial", "");
         break;
-      case AppServerFactory.WEBLOGIC:
+      case AppServerInfo.WEBLOGIC:
         // bumped up because ContainerHibernateTest was failing with WL 9
         parameters.appendJvmArgs("-XX:MaxPermSize=128m");
         parameters.appendJvmArgs("-Xms128m -Xmx256m");

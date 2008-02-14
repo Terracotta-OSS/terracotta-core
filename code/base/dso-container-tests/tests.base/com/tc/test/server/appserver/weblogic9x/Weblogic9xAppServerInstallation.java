@@ -1,8 +1,10 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test.server.appserver.weblogic9x;
 
+import com.tc.test.AppServerInfo;
 import com.tc.test.server.appserver.AbstractAppServerInstallation;
 
 import java.io.File;
@@ -12,9 +14,8 @@ import java.io.File;
  */
 public final class Weblogic9xAppServerInstallation extends AbstractAppServerInstallation {
 
-  public Weblogic9xAppServerInstallation(File home, File workingDir, String majorVersion, String minorVersion)
-      throws Exception {
-    super(home, workingDir, majorVersion, minorVersion);
+  public Weblogic9xAppServerInstallation(File home, File workingDir, AppServerInfo appServerInfo) throws Exception {
+    super(home, workingDir, appServerInfo);
   }
 
   public String serverType() {

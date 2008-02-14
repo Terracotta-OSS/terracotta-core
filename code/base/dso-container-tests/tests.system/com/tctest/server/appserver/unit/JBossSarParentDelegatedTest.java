@@ -4,7 +4,8 @@
  */
 package com.tctest.server.appserver.unit;
 
-import com.tc.test.server.appserver.AppServerFactory;
+import com.tc.test.AppServerInfo;
+import com.tc.test.TestConfigObject;
 import com.tc.util.runtime.Vm;
 
 import java.util.Date;
@@ -14,13 +15,13 @@ import junit.framework.Test;
 public class JBossSarParentDelegatedTest extends JBossSarTest {
 
   public JBossSarParentDelegatedTest() {
-    if (AppServerFactory.getCurrentAppServerId() != AppServerFactory.JBOSS || Vm.isJDK14()) {
+    if (TestConfigObject.getInstance().appServerId() != AppServerInfo.JBOSS || Vm.isJDK14()) {
       disableAllUntil(new Date(Long.MAX_VALUE));
     }
     parentDelegation = true;
   }
 
-  public void testSar() throws Exception {    
+  public void testSar() throws Exception {
     doTest();
   }
 

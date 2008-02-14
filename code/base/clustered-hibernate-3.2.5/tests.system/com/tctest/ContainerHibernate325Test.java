@@ -13,7 +13,8 @@ import org.apache.log4j.Logger;
 
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
-import com.tc.test.server.appserver.AppServerFactory;
+import com.tc.test.AppServerInfo;
+import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
@@ -26,7 +27,8 @@ import java.util.Date;
 import junit.framework.Test;
 
 public class ContainerHibernate325Test extends AbstractTwoServerDeploymentTest {
-  private static final String CONFIG_FILE_FOR_TEST = "/tc-config-files/hibernate-tc-config.xml";
+  private static final String  CONFIG_FILE_FOR_TEST = "/tc-config-files/hibernate-tc-config.xml";
+  private static AppServerInfo appInfo              = TestConfigObject.getInstance().appServerInfo();
 
   public static Test suite() {
     return new ContainerHibernateTestSetup();
@@ -40,8 +42,8 @@ public class ContainerHibernate325Test extends AbstractTwoServerDeploymentTest {
 
   public boolean shouldDisable() {
     // MNK-287
-    int id = AppServerFactory.getCurrentAppServerId();
-    boolean wasceOrWebSphere = (id == AppServerFactory.WASCE || id == AppServerFactory.WEBSPHERE);
+    int id = appInfo.getId();
+    boolean wasceOrWebSphere = (id == AppServerInfo.WASCE || id == AppServerInfo.WEBSPHERE);
     return super.shouldDisable() || wasceOrWebSphere;
   }
 
@@ -77,7 +79,7 @@ public class ContainerHibernate325Test extends AbstractTwoServerDeploymentTest {
       builder.addDirectoryOrJARContainingClass(Cache.class); // ehcache-1.3.0.jar
       builder.addDirectoryOrJARContainingClass(CacheListener.class); // jsr107cache-1.0.jar
 
-      if (AppServerFactory.getCurrentAppServerId() != AppServerFactory.JBOSS) {
+      if (appInfo.getId() != AppServerInfo.JBOSS) {
         builder.addDirectoryOrJARContainingClass(Logger.class); // log4j
         builder.addDirectoryOrJARContainingClass(LogFactory.class); // common-loggings
       }
@@ -99,7 +101,7 @@ public class ContainerHibernate325Test extends AbstractTwoServerDeploymentTest {
       clientConfig.addModule(TIMUtil.EHCACHE_1_3, TIMUtil.getVersion(TIMUtil.EHCACHE_1_3));
       clientConfig.addModule(TIMUtil.HIBERNATE_3_2_5, TIMUtil.getVersion(TIMUtil.HIBERNATE_3_2_5));
     }
-    
+
     public void setUp() throws Exception {
       derbyServer = new NetworkServerControl();
       derbyServer.start(new PrintWriter(System.out));

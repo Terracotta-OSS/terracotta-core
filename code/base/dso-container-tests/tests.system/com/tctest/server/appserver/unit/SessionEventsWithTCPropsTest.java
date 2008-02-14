@@ -5,7 +5,8 @@
 package com.tctest.server.appserver.unit;
 
 import com.meterware.httpunit.WebConversation;
-import com.tc.test.server.appserver.AppServerFactory;
+import com.tc.test.AppServerInfo;
+import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.StandardAppServerParameters;
 import com.tc.test.server.appserver.deployment.AbstractOneServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
@@ -18,12 +19,13 @@ import com.tctest.webapp.servlets.ListenerReportingServlet;
 import junit.framework.Test;
 
 public class SessionEventsWithTCPropsTest extends AbstractOneServerDeploymentTest {
-  private static final String CONTEXT = "SessionEventsWithTCPropsTest";
-  private static final String MAPPING = "ListenerReportingServlet";
+  private static final String  CONTEXT = "SessionEventsWithTCPropsTest";
+  private static final String  MAPPING = "ListenerReportingServlet";
+  private static AppServerInfo appInfo = TestConfigObject.getInstance().appServerInfo();
 
   public SessionEventsWithTCPropsTest() {
     // DEV-1117
-    if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.WEBLOGIC) {
+    if (appInfo.getId() == AppServerInfo.WEBLOGIC) {
       disableAllUntil("2008-12-30");
     }
   }
@@ -33,8 +35,8 @@ public class SessionEventsWithTCPropsTest extends AbstractOneServerDeploymentTes
   }
 
   public void testListener() throws Exception {
-    if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.JETTY) return;
-    
+    if (appInfo.getId() == AppServerInfo.JETTY) return;
+
     WebConversation wc = new WebConversation();
 
     // first, sanity check

@@ -5,8 +5,8 @@
 package com.tctest.server.appserver.unit;
 
 import com.meterware.httpunit.WebResponse;
-import com.tc.test.server.appserver.AppServerFactory;
-import com.tc.test.server.appserver.AppServerInfo;
+import com.tc.test.AppServerInfo;
+import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
 import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
@@ -37,6 +37,7 @@ public class CookieSettingTest extends AbstractDeploymentTest {
   private static TcConfigBuilder      tcConfigBuilder;
   private static WebApplicationServer server0;
   private static WebApplicationServer server1;
+  private static AppServerInfo        appInfo = TestConfigObject.getInstance().appServerInfo();
 
   public CookieSettingTest() {
     //
@@ -93,8 +94,7 @@ public class CookieSettingTest extends AbstractDeploymentTest {
     builder.addSessionConfig("session-timeout", "69");
 
     // add container specific descriptor
-    AppServerInfo appInfo = AppServerFactory.getCurrentAppServerInfo();
-    if (appInfo.getId() == AppServerFactory.WEBLOGIC) {
+    if (appInfo.getId() == AppServerInfo.WEBLOGIC) {
       if (appInfo.getMajor().equals("8")) {
         builder.addResourceFullpath("/com/tctest/server/appserver/unit/cookiesettingtest", "weblogic81.xml",
                                     "WEB-INF/weblogic.xml");
@@ -109,9 +109,10 @@ public class CookieSettingTest extends AbstractDeploymentTest {
   }
 
   private void setCookieForWebsphere(WebApplicationServer server) throws Exception {
-    if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.WEBSPHERE) {
+    if (TestConfigObject.getInstance().appServerInfo().getId() == AppServerInfo.WEBSPHERE) {
       System.out.println("Setting cookie for websphere...");
-      File cookieSettingsScript = TCFileUtils.getResourceFile("/com/tctest/server/appserver/unit/cookiesettingtest/cookiesettings.py");
+      File cookieSettingsScript = TCFileUtils
+          .getResourceFile("/com/tctest/server/appserver/unit/cookiesettingtest/cookiesettings.py");
       Was6xAppServer wasServer = (Was6xAppServer) ((GenericServer) server).getAppServer();
       wasServer.setExtraScript(cookieSettingsScript);
     }
@@ -142,9 +143,9 @@ public class CookieSettingTest extends AbstractDeploymentTest {
       }
 
       if (key.toUpperCase().endsWith("SESSIONID")) {
-        switch (AppServerFactory.getCurrentAppServerId()) {
-          case AppServerFactory.WEBLOGIC:
-          case AppServerFactory.WEBSPHERE:
+        switch (appInfo.getId()) {
+          case AppServerInfo.WEBLOGIC:
+          case AppServerInfo.WEBSPHERE:
             assertEquals(key.toUpperCase(), "CUSTOMSESSIONID");
             break;
           default:

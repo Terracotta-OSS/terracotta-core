@@ -22,8 +22,8 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.context.request.SessionScope;
 import org.springframework.web.servlet.DispatcherServlet;
 
+import com.tc.test.AppServerInfo;
 import com.tc.test.TestConfigObject;
-import com.tc.test.server.appserver.AppServerFactory;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.ProxyBuilder;
@@ -59,7 +59,7 @@ public class CustomScopedBeanTest extends AbstractTwoServerDeploymentTest {
 
   public CustomScopedBeanTest() {
     // MNK-352, MNK-353
-    if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.WEBLOGIC) {
+    if (TestConfigObject.getInstance().appServerId() == AppServerInfo.WEBLOGIC) {
       disableAllUntil("2008-12-01");
     }
 
@@ -81,7 +81,7 @@ public class CustomScopedBeanTest extends AbstractTwoServerDeploymentTest {
 
       HttpClient clientS1C2 = new HttpClientWithParams(Collections.singletonMap(ConversationScope.CONV_KEY, "(2)"));
       clientS1C2.setState(clientS1C1.getState()); // share state across the clients, they should be in the same session
-                                                  // now
+      // now
       initCtx.put(ProxyBuilder.HTTP_CLIENT_KEY, clientS1C2);
 
       beanN1C2 = (ITestFacade) server0.getProxy(ITestFacade.class, APP_NAME + "/http/" + FASADE_NAME, initCtx);

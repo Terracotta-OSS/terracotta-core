@@ -6,7 +6,8 @@ package com.tctest.server.appserver.unit;
 
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
-import com.tc.test.server.appserver.AppServerFactory;
+import com.tc.test.AppServerInfo;
+import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
 import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
@@ -21,9 +22,11 @@ import java.util.Map;
 import junit.framework.Test;
 
 public final class ServerHopCookieRewriteTest extends AbstractDeploymentTest {
-  private static final String CONTEXT = "CookieRewrite";
-  private static final String MAPPING = "ServerHopCookieRewriteTestServlet";
-  private Deployment          deployment;
+  private static final String  CONTEXT = "CookieRewrite";
+  private static final String  MAPPING = "ServerHopCookieRewriteTestServlet";
+  private static AppServerInfo appInfo = TestConfigObject.getInstance().appServerInfo();
+
+  private Deployment           deployment;
 
   public static Test suite() {
     return new ServerTestSetup(ServerHopCookieRewriteTest.class);
@@ -65,42 +68,18 @@ public final class ServerHopCookieRewriteTest extends AbstractDeploymentTest {
   private WebApplicationServer createServer(TcConfigBuilder configBuilder) throws Exception {
     WebApplicationServer server = makeWebApplicationServer(configBuilder);
     server.addWarDeployment(deployment, CONTEXT);
-    int appId = AppServerFactory.getCurrentAppServerId();
-    if (appId != AppServerFactory.WEBSPHERE) {
+    int appId = appInfo.getId();
+    if (appId != AppServerInfo.WEBSPHERE) {
       server.getServerParameters().appendSysProp("com.tc.session.delimiter",
                                                  ServerHopCookieRewriteTestServlet.DEFAULT_DLM);
     }
     return server;
   }
 
-  // public void testSessions() throws Exception {
-  // int appId = AppServerFactory.getCurrentAppServerId();
-  //
-  // final String[] args;
-  //
-  // if (AppServerFactory.WEBSPHERE == appId) {
-  // args = new String[] {};
-  // } else {
-  // args = new String[] { "-Dcom.tc.session.delimiter=" + ServerHopCookieRewriteTestServlet.DLM };
-  // }
-  //
-  // int port0 = startAppServer(true, new Properties(), args).serverPort();
-  // int port1 = startAppServer(true, new Properties(), args).serverPort();
-  //
-  // URL url0 = new URL(createUrl(port0, ServerHopCookieRewriteTestServlet.class) + "?server=0");
-  // URL url1 = new URL(createUrl(port1, ServerHopCookieRewriteTestServlet.class) + "?server=1");
-  // URL url2 = new URL(createUrl(port0, ServerHopCookieRewriteTestServlet.class) + "?server=2");
-  // URL url3 = new URL(createUrl(port0, ServerHopCookieRewriteTestServlet.class) + "?server=3");
-  // assertEquals("OK", HttpUtil.getResponseBody(url0, client));
-  // assertEquals("OK", HttpUtil.getResponseBody(url1, client));
-  // assertEquals("OK", HttpUtil.getResponseBody(url2, client));
-  // assertEquals("OK", HttpUtil.getResponseBody(url3, client));
-  // }
-
   private Deployment makeDeployment() throws Exception {
     DeploymentBuilder builder = makeDeploymentBuilder(CONTEXT + ".war");
     Map initParams = null;
-    if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.JETTY) {
+    if (appInfo.getId() == AppServerInfo.JETTY) {
       initParams = new HashMap();
       initParams.put("session.delimiter", ".");
     }

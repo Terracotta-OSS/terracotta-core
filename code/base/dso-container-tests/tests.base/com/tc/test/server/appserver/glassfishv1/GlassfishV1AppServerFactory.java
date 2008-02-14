@@ -13,7 +13,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.tc.test.TestConfigObject;
+import com.tc.test.AppServerInfo;
 import com.tc.test.server.appserver.AppServer;
 import com.tc.test.server.appserver.AppServerFactory;
 import com.tc.test.server.appserver.AppServerInstallation;
@@ -39,8 +39,8 @@ import javax.xml.transform.stream.StreamResult;
 public final class GlassfishV1AppServerFactory extends AppServerFactory {
 
   // This class may only be instantiated by its parent which contains the ProtectedKey
-  public GlassfishV1AppServerFactory(ProtectedKey protectedKey, TestConfigObject config) {
-    super(protectedKey, config);
+  public GlassfishV1AppServerFactory(ProtectedKey protectedKey) {
+    super(protectedKey);
   }
 
   public AppServerParameters createParameters(String instanceName, Properties props) {
@@ -51,7 +51,7 @@ public final class GlassfishV1AppServerFactory extends AppServerFactory {
     return new GlassfishV1AppServer((GlassfishV1AppServerInstallation) installation);
   }
 
-  private void doSetup(GlassfishV1AppServerInstallation install) throws IOException, Exception {        
+  private void doSetup(GlassfishV1AppServerInstallation install) throws IOException, Exception {
     File installDir = install.serverInstallDirectory();
     File configDir = new File(installDir, "config");
     File domainsDir = new File(installDir, "domains");
@@ -129,9 +129,9 @@ public final class GlassfishV1AppServerFactory extends AppServerFactory {
     FileUtils.writeStringToFile(antScript, sw.toString(), "UTF-8");
   }
 
-  public AppServerInstallation createInstallation(File home, File workingDir) throws Exception {
-    GlassfishV1AppServerInstallation install = new GlassfishV1AppServerInstallation(home, workingDir, config.appserverMajorVersion(), config
-        .appserverMinorVersion());
+  public AppServerInstallation createInstallation(File home, File workingDir, AppServerInfo appServerInfo)
+      throws Exception {
+    GlassfishV1AppServerInstallation install = new GlassfishV1AppServerInstallation(home, workingDir, appServerInfo);
     doSetup(install);
     return install;
   }

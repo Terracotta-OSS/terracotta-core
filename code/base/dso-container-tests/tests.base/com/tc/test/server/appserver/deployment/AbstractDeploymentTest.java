@@ -7,9 +7,9 @@ package com.tc.test.server.appserver.deployment;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.tc.test.AppServerInfo;
 import com.tc.test.TCTestCase;
 import com.tc.test.TestConfigObject;
-import com.tc.test.server.appserver.AppServerFactory;
 import com.tc.test.server.util.TcConfigBuilder;
 
 import java.util.ArrayList;
@@ -36,11 +36,12 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   public AbstractDeploymentTest() {
     // need more work to run tests with Jetty
     // disable for now
-    if (AppServerFactory.getCurrentAppServerId() == AppServerFactory.JETTY) {
+    int appId = TestConfigObject.getInstance().appServerId();
+    if (appId == AppServerInfo.JETTY) {
       disableAllUntil(new Date(Long.MAX_VALUE));
     }
-    
-    if (isSessionTest() && (AppServerFactory.getCurrentAppServerId() == AppServerFactory.GLASSFISH)) {
+
+    if (isSessionTest() && (appId == AppServerInfo.GLASSFISH)) {
       disableAllUntil(new Date(Long.MAX_VALUE));
     }
   }

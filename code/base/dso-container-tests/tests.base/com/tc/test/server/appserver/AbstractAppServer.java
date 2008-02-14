@@ -52,25 +52,8 @@ public abstract class AbstractAppServer implements AppServer {
    */
   protected final File serverInstallDirectory() {
     if (!installation.isRepoInstall()) return installation.serverInstallDirectory();
-    return new File(installation.serverInstallDirectory() + File.separator + serverType() + "-" + majorVersion() + "."
-                    + minorVersion());
+    return new File(installation.serverInstallDirectory() + File.separator + installation.appServerInfo().toString());
 
-  }
-
-  /**
-   * The server name is used to create a parent directory for the server install directory which the appserver
-   * implementation refers to as it's home directory.
-   */
-  protected final String serverType() {
-    return installation.serverType();
-  }
-
-  protected final String majorVersion() {
-    return installation.majorVersion();
-  }
-
-  protected final String minorVersion() {
-    return installation.minorVersion();
   }
 
   protected final File sandboxDirectory() {

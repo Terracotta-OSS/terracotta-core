@@ -5,7 +5,8 @@
 package com.tctest.server.appserver.unit;
 
 import com.meterware.httpunit.WebConversation;
-import com.tc.test.server.appserver.AppServerFactory;
+import com.tc.test.AppServerInfo;
+import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
@@ -44,21 +45,21 @@ public class SessionIDIntegrityTest extends AbstractTwoServerDeploymentTest {
   }
 
   private void assertSessionIdIntegrity(String sessionId, String extra_id) {
-    int appId = AppServerFactory.getCurrentAppServerId();
+    int appId = TestConfigObject.getInstance().appServerId();
 
-    System.out.println("sessionId='"+sessionId+"' extra_id='"+extra_id+"'");
-    
+    System.out.println("sessionId='" + sessionId + "' extra_id='" + extra_id + "'");
+
     switch (appId) {
-      case AppServerFactory.JETTY:
-      case AppServerFactory.TOMCAT:
-      case AppServerFactory.WASCE:
-      case AppServerFactory.JBOSS:
+      case AppServerInfo.JETTY:
+      case AppServerInfo.TOMCAT:
+      case AppServerInfo.WASCE:
+      case AppServerInfo.JBOSS:
         assertTrue(sessionId.endsWith("." + extra_id));
         break;
-      case AppServerFactory.WEBLOGIC:
+      case AppServerInfo.WEBLOGIC:
         assertTrue(Pattern.matches("\\S+!-?\\d+", sessionId));
         break;
-      case AppServerFactory.WEBSPHERE:
+      case AppServerInfo.WEBSPHERE:
         assertTrue(Pattern.matches("0000\\S+:\\S+", sessionId));
         break;
       default:

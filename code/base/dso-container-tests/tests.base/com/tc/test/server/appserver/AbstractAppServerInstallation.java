@@ -6,6 +6,7 @@ package com.tc.test.server.appserver;
 
 import org.apache.commons.io.FileUtils;
 
+import com.tc.test.AppServerInfo;
 import com.tc.util.Assert;
 
 import java.io.File;
@@ -16,23 +17,20 @@ import java.io.File;
  */
 public abstract class AbstractAppServerInstallation implements AppServerStartupEnvironment {
 
-  private final String  majorVersion;
-  private final String  minorVersion;
-  private final File    workingDirectory;
-  private final File    serverInstall;
-  private final File    dataDirectory;
-  private final File    sandboxDirectory;
-  private final boolean isRepoInstall;
+  private final AppServerInfo appServerInfo;
+  private final File          workingDirectory;
+  private final File          serverInstall;
+  private final File          dataDirectory;
+  private final File          sandboxDirectory;
+  private final boolean       isRepoInstall;
 
   /**
    * Use existing installation (example: CATALINA_HOME)
    */
-  public AbstractAppServerInstallation(File home, File workingDir, String majorVersion, String minorVersion)
-      throws Exception {
+  public AbstractAppServerInstallation(File home, File workingDir, AppServerInfo appServerInfo) throws Exception {
     Assert.assertTrue(home.isDirectory());
     Assert.assertTrue(workingDir.isDirectory());
-    this.majorVersion = majorVersion;
-    this.minorVersion = minorVersion;
+    this.appServerInfo = appServerInfo;
     this.serverInstall = home;
     this.isRepoInstall = false;
     this.workingDirectory = workingDir;
@@ -40,7 +38,7 @@ public abstract class AbstractAppServerInstallation implements AppServerStartupE
     this.sandboxDirectory = workingDirectory;
     // description file for the working directory with filename indicating the server type. Can add more desciptive
     // information if needed.
-    new File(workingDir + File.separator + serverType() + "-" + majorVersion + "." + minorVersion).createNewFile();
+    new File(workingDir + File.separator + appServerInfo.toString()).createNewFile();
 
   }
 
@@ -49,14 +47,6 @@ public abstract class AbstractAppServerInstallation implements AppServerStartupE
   }
 
   public abstract String serverType();
-
-  public final String majorVersion() {
-    return majorVersion;
-  }
-
-  public final String minorVersion() {
-    return minorVersion;
-  }
 
   public final void uninstall() throws Exception {
     FileUtils.deleteDirectory(workingDirectory.getParentFile());
@@ -76,5 +66,9 @@ public abstract class AbstractAppServerInstallation implements AppServerStartupE
 
   public boolean isRepoInstall() {
     return isRepoInstall;
+  }
+  
+  public AppServerInfo appServerInfo() {
+    return appServerInfo;
   }
 }

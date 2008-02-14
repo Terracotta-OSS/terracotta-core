@@ -4,7 +4,7 @@
  */
 package com.tc.test.server.appserver.weblogic8x;
 
-import com.tc.test.TestConfigObject;
+import com.tc.test.AppServerInfo;
 import com.tc.test.server.appserver.AppServer;
 import com.tc.test.server.appserver.AppServerFactory;
 import com.tc.test.server.appserver.AppServerInstallation;
@@ -21,8 +21,8 @@ import java.util.Properties;
 public final class Weblogic8xAppServerFactory extends AppServerFactory {
 
   // This class may only be instantiated by it's parent which contains the ProtectedKey
-  public Weblogic8xAppServerFactory(ProtectedKey protectedKey, TestConfigObject config) {
-    super(protectedKey, config);
+  public Weblogic8xAppServerFactory(ProtectedKey protectedKey) {
+    super(protectedKey);
   }
 
   public AppServerParameters createParameters(String instanceName, Properties props) {
@@ -33,8 +33,8 @@ public final class Weblogic8xAppServerFactory extends AppServerFactory {
     return new Weblogic8xAppServer((Weblogic8xAppServerInstallation) installation);
   }
 
-  public AppServerInstallation createInstallation(File home, File workingDir) throws Exception {
-    return new Weblogic8xAppServerInstallation(home, workingDir, config.appserverMajorVersion(), config
-        .appserverMinorVersion());
+  public AppServerInstallation createInstallation(File home, File workingDir, AppServerInfo appServerInfo)
+      throws Exception {
+    return new Weblogic8xAppServerInstallation(home, workingDir, appServerInfo);
   }
 }

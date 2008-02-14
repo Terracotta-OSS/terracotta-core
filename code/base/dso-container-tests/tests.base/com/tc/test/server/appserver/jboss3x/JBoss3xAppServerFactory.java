@@ -4,7 +4,7 @@
  */
 package com.tc.test.server.appserver.jboss3x;
 
-import com.tc.test.TestConfigObject;
+import com.tc.test.AppServerInfo;
 import com.tc.test.server.appserver.AppServer;
 import com.tc.test.server.appserver.AppServerFactory;
 import com.tc.test.server.appserver.AppServerInstallation;
@@ -21,8 +21,8 @@ import java.util.Properties;
 public final class JBoss3xAppServerFactory extends AppServerFactory {
 
   // This class may only be instantiated by its parent which contains the ProtectedKey
-  public JBoss3xAppServerFactory(ProtectedKey protectedKey, TestConfigObject config) {
-    super(protectedKey, config);
+  public JBoss3xAppServerFactory(ProtectedKey protectedKey) {
+    super(protectedKey);
   }
 
   public AppServerParameters createParameters(String instanceName, Properties props) {
@@ -33,8 +33,8 @@ public final class JBoss3xAppServerFactory extends AppServerFactory {
     return new JBoss3xAppServer((JBoss3xAppServerInstallation) installation);
   }
 
-  public AppServerInstallation createInstallation(File home, File workingDir) throws Exception {
-    return new JBoss3xAppServerInstallation(home, workingDir, config.appserverMajorVersion(), config
-        .appserverMinorVersion());
+  public AppServerInstallation createInstallation(File home, File workingDir, AppServerInfo appServerInfo)
+      throws Exception {
+    return new JBoss3xAppServerInstallation(home, workingDir, appServerInfo);
   }
 }

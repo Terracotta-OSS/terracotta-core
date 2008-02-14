@@ -13,7 +13,8 @@ import org.jboss.xb.QNameBuilder;
 
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
-import com.tc.test.server.appserver.AppServerFactory;
+import com.tc.test.AppServerInfo;
+import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.JARBuilder;
@@ -34,7 +35,7 @@ public class JBossSarTest extends AbstractTwoServerDeploymentTest {
   protected boolean           parentDelegation = false;
 
   public JBossSarTest() {
-    if (AppServerFactory.getCurrentAppServerId() != AppServerFactory.JBOSS || Vm.isJDK14()) {
+    if (TestConfigObject.getInstance().appServerId() != AppServerInfo.JBOSS || Vm.isJDK14()) {
       disableAllUntil(new Date(Long.MAX_VALUE));
     }
   }
@@ -57,7 +58,7 @@ public class JBossSarTest extends AbstractTwoServerDeploymentTest {
     Thread.sleep(10 * 1000);
   }
 
-  public void testSar() throws Exception {    
+  public void testSar() throws Exception {
     doTest();
   }
 
@@ -67,7 +68,7 @@ public class JBossSarTest extends AbstractTwoServerDeploymentTest {
     System.out.println("server0 response: " + resp.getText());
     assertTrue(resp.getText().startsWith("OK"));
     assertContains("YMCA", resp.getText());
-    
+
     resp = request(server1, "", new WebConversation());
     System.out.println("server1 response: " + resp.getText());
     assertTrue(resp.getText().startsWith("OK"));

@@ -7,6 +7,7 @@ package com.tc.test.server.appserver.deployment;
 import com.tc.bundles.BundleSpec;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.test.AppServerInfo;
 import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.AppServerFactory;
 import com.tc.test.server.appserver.AppServerInstallation;
@@ -49,7 +50,7 @@ public class ServerManager {
   public ServerManager(final Class testClass, Collection extraJvmArgs) throws Exception {
     PropertiesHackForRunningInEclipse.initializePropertiesWhenRunningInEclipse();
     config = TestConfigObject.getInstance();
-    factory = AppServerFactory.createFactoryFromProperties(config);
+    factory = AppServerFactory.createFactoryFromProperties();
     installDir = config.appserverServerInstallDir();
     tempDir = TempDirectoryUtil.getTempDirectory(testClass);
     sandbox = AppServerUtil.createSandbox(tempDir);
@@ -152,12 +153,12 @@ public class ServerManager {
     aCopy.setDsoPort(getServerTcConfig().getDsoPort());
     aCopy.setJmxPort(getServerTcConfig().getJmxPort());
 
-    int appId = AppServerFactory.getCurrentAppServerId();
+    int appId = config.appServerId();
     switch (appId) {
-      case AppServerFactory.JETTY:
+      case AppServerInfo.JETTY:
         prepareClientTcConfigForJetty(aCopy);
         break;
-      case AppServerFactory.WEBSPHERE:
+      case AppServerInfo.WEBSPHERE:
         aCopy.addModule(TIMUtil.WEBSPHERE_6_1_0_7, TIMUtil.getVersion(TIMUtil.WEBSPHERE_6_1_0_7));
         break;
       default:

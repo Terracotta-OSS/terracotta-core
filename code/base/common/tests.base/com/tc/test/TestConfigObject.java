@@ -102,6 +102,58 @@ public class TestConfigObject {
   private static TestConfigObject INSTANCE;
 
   private final Properties        properties;
+  private final AppServerInfo     appServerInfo;
+
+  private TestConfigObject() throws IOException {
+    this.properties = new Properties();
+    StringBuffer loadedFrom = new StringBuffer();
+
+    loadEnv();
+    loadSystemProperties();
+
+    int filesRead = 0;
+
+    // *DO NOT* hardcode system properties in here just to make tests easier
+    // to run in Eclipse.
+    // Doing so makes it a *great* deal harder to modify the build system.
+    // All you need to do
+    // to run tests in Eclipse is to run 'tcbuild check_prep <module-name>
+    // <test-type>' before
+    // you run your tests.
+    //
+    // If these things are too hard for you to do, please come talk to the
+    // build team. Hardcoding
+    // properties here can make our lives very difficult.
+
+    String[] components = {};
+    if (System.getProperty(PROPERTY_FILE_LIST_PROPERTY_NAME) != null) {
+      components = System.getProperty(PROPERTY_FILE_LIST_PROPERTY_NAME).split(File.pathSeparator);
+    }
+
+    for (int i = components.length - 1; i >= 0; --i) {
+      File thisFile = new File(components[i]);
+      if (thisFile.exists()) {
+        Properties theseProperties = new Properties();
+        theseProperties.load(new FileInputStream(thisFile));
+        this.properties.putAll(theseProperties);
+        if (filesRead > 0) loadedFrom.append(", ");
+        loadedFrom.append("'" + thisFile.getAbsolutePath() + "'");
+        ++filesRead;
+      }
+    }
+
+    if (filesRead > 0) loadedFrom.append(", ");
+    loadedFrom.append("system properties");
+
+    this.properties.putAll(System.getProperties());
+
+    appServerInfo = new AppServerInfo();
+    appServerInfo.setName(properties.getProperty(APP_SERVER_FACTORY_NAME, "unknown"));
+    appServerInfo.setMajor(properties.getProperty(APP_SERVER_MAJOR_VERSION, "unknown"));
+    appServerInfo.setMinor(properties.getProperty(APP_SERVER_MINOR_VERSION, "unknown"));
+
+    logger.info("Loaded test configuration from " + loadedFrom.toString());
+  }
 
   public static synchronized TestConfigObject getInstance() {
     if (INSTANCE == null) {
@@ -164,52 +216,6 @@ public class TestConfigObject {
     buf.append("The value of the system property " + TC_BASE_DIR + " is not valid.");
     buf.append(" The value is: \"").append(value).append("\"");
     throw new RuntimeException(buf.toString());
-  }
-
-  private TestConfigObject() throws IOException {
-    this.properties = new Properties();
-    StringBuffer loadedFrom = new StringBuffer();
-
-    loadEnv();
-    loadSystemProperties();
-
-    int filesRead = 0;
-
-    // *DO NOT* hardcode system properties in here just to make tests easier
-    // to run in Eclipse.
-    // Doing so makes it a *great* deal harder to modify the build system.
-    // All you need to do
-    // to run tests in Eclipse is to run 'tcbuild check_prep <module-name>
-    // <test-type>' before
-    // you run your tests.
-    //
-    // If these things are too hard for you to do, please come talk to the
-    // build team. Hardcoding
-    // properties here can make our lives very difficult.
-
-    String[] components = {};
-    if (System.getProperty(PROPERTY_FILE_LIST_PROPERTY_NAME) != null) {
-      components = System.getProperty(PROPERTY_FILE_LIST_PROPERTY_NAME).split(File.pathSeparator);
-    }
-
-    for (int i = components.length - 1; i >= 0; --i) {
-      File thisFile = new File(components[i]);
-      if (thisFile.exists()) {
-        Properties theseProperties = new Properties();
-        theseProperties.load(new FileInputStream(thisFile));
-        this.properties.putAll(theseProperties);
-        if (filesRead > 0) loadedFrom.append(", ");
-        loadedFrom.append("'" + thisFile.getAbsolutePath() + "'");
-        ++filesRead;
-      }
-    }
-
-    if (filesRead > 0) loadedFrom.append(", ");
-    loadedFrom.append("system properties");
-
-    this.properties.putAll(System.getProperties());
-
-    logger.info("Loaded test configuration from " + loadedFrom.toString());
   }
 
   private String getProperty(String key, String defaultValue) {
@@ -312,22 +318,12 @@ public class TestConfigObject {
     return this.properties.getProperty(APP_SERVER_HOME);
   }
 
-  public String appserverFactoryName() {
-    String out = this.properties.getProperty(APP_SERVER_FACTORY_NAME);
-    Assert.assertNotBlank(out);
-    return out;
+  public AppServerInfo appServerInfo() {
+    return appServerInfo;
   }
-
-  public String appserverMajorVersion() {
-    String out = this.properties.getProperty(APP_SERVER_MAJOR_VERSION);
-    Assert.assertNotBlank(out);
-    return out;
-  }
-
-  public String appserverMinorVersion() {
-    String out = this.properties.getProperty(APP_SERVER_MINOR_VERSION);
-    Assert.assertNotBlank(out);
-    return out;
+  
+  public int appServerId() {
+    return appServerInfo.getId();
   }
 
   public String springTestsTimeout() {
@@ -391,11 +387,11 @@ public class TestConfigObject {
     return Integer.parseInt(getProperty(JUNIT_TEST_TIMEOUT_INSECONDS, "900"));
   }
 
-  public static final String    TRANSPARENT_TESTS_MODE_NORMAL         = "normal";
-  public static final String    TRANSPARENT_TESTS_MODE_CRASH          = "crash";
-  public static final String    TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE = "active-passive";
+  public static final String TRANSPARENT_TESTS_MODE_NORMAL         = "normal";
+  public static final String TRANSPARENT_TESTS_MODE_CRASH          = "crash";
+  public static final String TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE = "active-passive";
 
-  private static File           baseDir;
+  private static File        baseDir;
 
   public String transparentTestsMode() {
     return getProperty(TRANSPARENT_TESTS_MODE, TRANSPARENT_TESTS_MODE_NORMAL);

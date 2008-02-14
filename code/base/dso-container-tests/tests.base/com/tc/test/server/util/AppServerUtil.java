@@ -8,8 +8,8 @@ import org.apache.commons.io.FileUtils;
 
 import com.tc.process.HeartBeatService;
 import com.tc.test.TestConfigObject;
-import com.tc.test.server.appserver.AppServerInstallation;
 import com.tc.test.server.appserver.AppServerFactory;
+import com.tc.test.server.appserver.AppServerInstallation;
 import com.tc.text.Banner;
 import com.tc.util.PortChooser;
 import com.tc.util.concurrent.ThreadUtil;
@@ -74,7 +74,7 @@ public class AppServerUtil {
     shutdown();
     archive(from, to);
   }
-  
+
   public static void forceShutdownAndArchive(File from, File to) {
     System.out.println("Send kill signal to app servers...");
     HeartBeatService.sendKillSignalToChildren();
@@ -94,7 +94,7 @@ public class AppServerUtil {
     } else {
       sandbox = new File(tempDir, "sandbox");
     }
-    
+
     try {
       if (sandbox.exists()) {
         if (sandbox.isDirectory()) {
@@ -114,12 +114,12 @@ public class AppServerUtil {
     return sandbox;
   }
 
-  public static AppServerInstallation createAppServerInstallation(AppServerFactory appServerFactory,
-                                                                  File installDir, File sandbox) throws Exception {
+  public static AppServerInstallation createAppServerInstallation(AppServerFactory appServerFactory, File installDir,
+                                                                  File sandbox) throws Exception {
     AppServerInstallation installation = null;
     String appserverHome = config.appserverHome();
     if (appserverHome != null && !appserverHome.trim().equals("")) {
-      installation = appServerFactory.createInstallation(new File(appserverHome), sandbox);
+      installation = appServerFactory.createInstallation(new File(appserverHome), sandbox, config.appServerInfo());
     } else {
       throw new AssertionError("No appserver found! You must define: " + TestConfigObject.APP_SERVER_HOME);
     }
@@ -141,6 +141,6 @@ public class AppServerUtil {
       } catch (IOException e) {
         e.printStackTrace();
       }
-    }    
+    }
   }
 }

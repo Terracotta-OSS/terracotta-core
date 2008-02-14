@@ -3,6 +3,8 @@
  */
 package com.tc.test.server.appserver;
 
+import com.tc.test.AppServerInfo;
+
 import java.io.File;
 
 /**
@@ -15,11 +17,7 @@ interface AppServerStartupEnvironment extends AppServerInstallation {
 
   File serverInstallDirectory();
 
-  String serverType();
-
-  String majorVersion();
-
-  String minorVersion();
+  AppServerInfo appServerInfo();
 
   boolean isRepoInstall();
 }
