@@ -131,7 +131,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     }
   }
 
-  public boolean tryBegin(String lockName, WaitInvocation timeout, int lockLevel, String lockType) {
+  public boolean tryBegin(String lockName, WaitInvocation timeout, int lockLevel, String lockObjectType) {
     logTryBegin0(lockName, lockLevel);
 
     if (isTransactionLoggingDisabled() || objectManager.isCreationInProgress()) { return true; }
@@ -145,7 +145,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     }
 
     final LockID lockID = lockManager.lockIDFor(lockName);
-    boolean isLocked = lockManager.tryLock(lockID, timeout, lockLevel, lockType);
+    boolean isLocked = lockManager.tryLock(lockID, timeout, lockLevel, lockObjectType);
     if (!isLocked) { return isLocked; }
 
     pushTxContext(lockID, txnType);
@@ -159,7 +159,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     return isLocked;
   }
 
-  public boolean begin(String lockName, int lockLevel, String lockType, String contextInfo) {
+  public boolean begin(String lockName, int lockLevel, String lockObjectType, String contextInfo) {
     logBegin0(lockName, lockLevel);
 
     if (isTransactionLoggingDisabled() || objectManager.isCreationInProgress()) { return false; }
@@ -178,7 +178,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     }
 
     try {
-      lockManager.lock(lockID, lockLevel, lockType, contextInfo);
+      lockManager.lock(lockID, lockLevel, lockObjectType, contextInfo);
       return true;
     } catch (TCLockUpgradeNotSupportedError e) {
       popTransaction(lockID);

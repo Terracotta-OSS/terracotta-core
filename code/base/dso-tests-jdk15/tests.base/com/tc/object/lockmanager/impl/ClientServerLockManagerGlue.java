@@ -62,8 +62,8 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
     eventNotifier.start();
   }
 
-  public void requestLock(LockID lockID, ThreadID threadID, int type, String lockType) {
-    serverLockManager.requestLock(lockID, clientID, threadID, type, lockType, sink);
+  public void requestLock(LockID lockID, ThreadID threadID, int lockType, String lockObjectType) {
+    serverLockManager.requestLock(lockID, clientID, threadID, lockType, lockObjectType, sink);
   }
 
   public void releaseLock(LockID lockID, ThreadID threadID) {
@@ -188,8 +188,8 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
     serverLockManager.queryLock(lockID, clientID, threadID, sink);
   }
 
-  public void tryRequestLock(LockID lockID, ThreadID threadID, int type, String lockType) {
-    serverLockManager.tryRequestLock(lockID, clientID, threadID, type, lockType, new WaitInvocation(0), sink);
+  public void tryRequestLock(LockID lockID, ThreadID threadID, int lockType, String lockObjectType) {
+    serverLockManager.tryRequestLock(lockID, clientID, threadID, lockType, lockObjectType, new WaitInvocation(0), sink);
   }
 
   public void interrruptWait(LockID lockID, ThreadID threadID) {
@@ -197,7 +197,7 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
 
   }
 
-  public void tryRequestLock(LockID lockID, ThreadID threadID, WaitInvocation timeout, int type, String lockType) {
-    serverLockManager.tryRequestLock(lockID, clientID, threadID, type, lockType, timeout, sink);
+  public void tryRequestLock(LockID lockID, ThreadID threadID, WaitInvocation timeout, int lockType, String lockObjectType) {
+    serverLockManager.tryRequestLock(lockID, clientID, threadID, lockType, lockObjectType, timeout, sink);
   }
 }

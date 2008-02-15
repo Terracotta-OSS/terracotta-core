@@ -316,18 +316,18 @@ public class ManagerImpl implements Manager {
   }
 
   private void begin(String lockID, int type, Object instance, TCObject tcobj, String contextInfo) {
-    String lockType = instance == null? LockContextInfo.NULL_LOCK_OBJECT_TYPE : instance.getClass().getName();
+    String lockObjectClass = instance == null? LockContextInfo.NULL_LOCK_OBJECT_TYPE : instance.getClass().getName();
     
-    boolean locked = this.txManager.begin(lockID, type, lockType, contextInfo);
+    boolean locked = this.txManager.begin(lockID, type, lockObjectClass, contextInfo);
     if (locked && runtimeLogger.lockDebug()) {
       runtimeLogger.lockAcquired(lockID, type, instance, tcobj);
     }
   }
 
   private boolean tryBegin(String lockID, int type, Object instance, WaitInvocation timeout, TCObject tcobj) {
-    String lockType = instance == null? LockContextInfo.NULL_LOCK_OBJECT_TYPE : instance.getClass().getName();
+    String lockObjectType = instance == null? LockContextInfo.NULL_LOCK_OBJECT_TYPE : instance.getClass().getName();
     
-    boolean locked = this.txManager.tryBegin(lockID, timeout, type, lockType);
+    boolean locked = this.txManager.tryBegin(lockID, timeout, type, lockObjectType);
     if (locked && runtimeLogger.lockDebug()) {
       runtimeLogger.lockAcquired(lockID, type, instance, tcobj);
     }

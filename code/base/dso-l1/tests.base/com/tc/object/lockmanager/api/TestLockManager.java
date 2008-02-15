@@ -37,8 +37,8 @@ public class TestLockManager implements ClientLockManager {
     return;
   }
 
-  public void lock(LockID id, ThreadID threadID, int type, String lockType, String contextInfo) {
-    locks.add(new Object[] { id, threadID, new Integer(type) });
+  public void lock(LockID id, ThreadID threadID, int lockType, String lockObjectType, String contextInfo) {
+    locks.add(new Object[] { id, threadID, new Integer(lockType) });
   }
 
   public void wait(LockID lockID, ThreadID transactionID, WaitInvocation call, Object waitLock,
@@ -119,7 +119,7 @@ public class TestLockManager implements ClientLockManager {
     throw new ImplementMe();
   }
 
-  public boolean tryLock(LockID id, ThreadID threadID, WaitInvocation timeout, int type, String lockType) {
+  public boolean tryLock(LockID id, ThreadID threadID, WaitInvocation timeout, int lockType, String lockObjectType) {
     throw new ImplementMe();
   }
 

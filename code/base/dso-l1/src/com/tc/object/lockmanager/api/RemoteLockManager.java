@@ -19,9 +19,9 @@ public interface RemoteLockManager {
   
   public void interrruptWait(LockID lockID, ThreadID threadID);
   
-  public void requestLock(LockID lockID, ThreadID threadID, int type, String lockType);
+  public void requestLock(LockID lockID, ThreadID threadID, int lockType, String lockObjectType);
   
-  public void tryRequestLock(LockID lockID, ThreadID threadID, WaitInvocation timeout, int Type, String lockType);
+  public void tryRequestLock(LockID lockID, ThreadID threadID, WaitInvocation timeout, int lockType, String lockObjectType);
 
   public void releaseLock(LockID lockID, ThreadID threadID);
   

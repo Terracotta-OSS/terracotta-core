@@ -9,9 +9,9 @@ public interface ThreadLockManager {
 
   public LockID lockIDFor(String lockName);
 
-  public void lock(LockID lockID, int lockLevel, String lockType, String contextInfo);
+  public void lock(LockID lockID, int lockLevel, String lockObjectType, String contextInfo);
   
-  public boolean tryLock(LockID lockID, WaitInvocation timeout, int lockLevel, String lockType);
+  public boolean tryLock(LockID lockID, WaitInvocation timeout, int lockLevel, String lockObjectType);
 
   public void wait(LockID lockID, WaitInvocation call, Object object, WaitListener waitListener) throws InterruptedException;
 

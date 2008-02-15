@@ -274,7 +274,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     public NoExceptionLinkedQueue pauseContexts                      = new NoExceptionLinkedQueue();
     public NoExceptionLinkedQueue unpauseContexts                    = new NoExceptionLinkedQueue();
 
-    public void lock(LockID id, ThreadID threadID, int lockLevel, String lockType, String contextInfo) {
+    public void lock(LockID id, ThreadID threadID, int lockLevel, String lockObjectType, String contextInfo) {
       return;
     }
 
@@ -372,7 +372,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public boolean tryLock(LockID id, ThreadID threadID, WaitInvocation timeout, int type, String lockType) {
+    public boolean tryLock(LockID id, ThreadID threadID, WaitInvocation timeout, int level, String lockObjectType) {
       throw new ImplementMe();
     }
 

@@ -39,10 +39,10 @@ public class MockTransactionManager implements ClientTransactionManager {
     return rv;
   }
 
-  public boolean begin(String lock, int type, String lockType, String contextInfo) {
+  public boolean begin(String lock, int lockType, String lockObjectType, String contextInfo) {
     // System.err.println(this + ".begin(" + lock + ")");
 
-    begins.add(new Begin(lock, type));
+    begins.add(new Begin(lock, lockType));
     return true;
   }
 
@@ -163,7 +163,7 @@ public class MockTransactionManager implements ClientTransactionManager {
     throw new ImplementMe();
   }
 
-  public boolean tryBegin(String lock, WaitInvocation timeout, int lockLevel, String lockType) {
+  public boolean tryBegin(String lock, WaitInvocation timeout, int lockLevel, String lockObjectType) {
     throw new ImplementMe();
   }
 

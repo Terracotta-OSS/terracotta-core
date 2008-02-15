@@ -213,28 +213,28 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     }
   }
 
-  public void lock(LockID lockID, ThreadID threadID, int type, String lockType, String contextInfo) {
+  public void lock(LockID lockID, ThreadID threadID, int lockType, String lockObjectType, String contextInfo) {
     Assert.assertNotNull("threadID", threadID);
     final ClientLock lock;
 
     synchronized (this) {
       waitUntilRunning();
-      lock = getOrCreateLock(lockID, lockType);
+      lock = getOrCreateLock(lockID, lockObjectType);
       lock.incUseCount();
     }
-    lock.lock(threadID, type, contextInfo);
+    lock.lock(threadID, lockType, contextInfo);
   }
 
-  public boolean tryLock(LockID lockID, ThreadID threadID, WaitInvocation timeout, int type, String lockType) {
+  public boolean tryLock(LockID lockID, ThreadID threadID, WaitInvocation timeout, int lockType, String lockObjectType) {
     Assert.assertNotNull("threadID", threadID);
     final ClientLock lock;
 
     synchronized (this) {
       waitUntilRunning();
-      lock = getOrCreateLock(lockID, lockType);
+      lock = getOrCreateLock(lockID, lockObjectType);
       lock.incUseCount();
     }
-    boolean isLocked = lock.tryLock(threadID, timeout, type);
+    boolean isLocked = lock.tryLock(threadID, timeout, lockType);
     if (!isLocked) {
       synchronized (this) {
         lock.decUseCount();
@@ -395,10 +395,10 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     return (ClientLock) locksByID.get(id);
   }
 
-  private synchronized ClientLock getOrCreateLock(LockID id, String lockType) {
+  private synchronized ClientLock getOrCreateLock(LockID id, String lockObjectType) {
     ClientLock lock = (ClientLock) locksByID.get(id);
     if (lock == null) {
-      lock = new ClientLock(id, lockType, remoteLockManager, waitTimer, lockStatManager);
+      lock = new ClientLock(id, lockObjectType, remoteLockManager, waitTimer, lockStatManager);
       locksByID.put(id, lock);
     }
     return lock;

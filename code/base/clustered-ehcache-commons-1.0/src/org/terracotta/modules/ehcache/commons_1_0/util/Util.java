@@ -3,8 +3,8 @@
  */
 package org.terracotta.modules.ehcache.commons_1_0.util;
 
-import com.tc.config.lock.LockLevel;
 import com.tc.object.bytecode.ManagerUtil;
+import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.properties.TCProperties;
 
 public class Util {

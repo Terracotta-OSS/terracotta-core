@@ -52,7 +52,7 @@ public class LockRequestMessage extends DSOMessageBase implements LockRequestMes
   private static final byte                  LOCK_CONTEXT                    = 11;
   private static final byte                  PENDING_LOCK_CONTEXT            = 12;
   private static final byte                  PENDING_TRY_LOCK_CONTEXT        = 13;
-  private static final byte                  LOCK_TYPE                       = 14;
+  private static final byte                  LOCK_OBJECT_TYPE                = 14;
 
   // request types
   private final static byte                  UNITIALIZED_REQUEST_TYPE        = -1;
@@ -62,9 +62,9 @@ public class LockRequestMessage extends DSOMessageBase implements LockRequestMes
   private final static byte                  QUERY_LOCK_REQUEST_TYPE         = 4;
   private final static byte                  TRY_OBTAIN_LOCK_REQUEST_TYPE    = 5;
   private final static byte                  INTERRUPT_WAIT_REQUEST_TYPE     = 6;
-  
+
   private final static String                UNINITIALED_LOCK_TYPE           = "";
-  
+
   private final Set                          lockContexts                    = new HashSet();
   private final Set                          waitContexts                    = new HashSet();
   private final Set                          pendingLockContexts             = new HashSet();
@@ -72,7 +72,7 @@ public class LockRequestMessage extends DSOMessageBase implements LockRequestMes
 
   private LockID                             lockID                          = LockID.NULL_ID;
   private int                                lockLevel                       = LockLevel.NIL_LOCK_LEVEL;
-  private String                             lockType                        = UNINITIALED_LOCK_TYPE;
+  private String                             lockObjectType                  = UNINITIALED_LOCK_TYPE;
   private ThreadID                           threadID                        = ThreadID.NULL_ID;
   private byte                               requestType                     = UNITIALIZED_REQUEST_TYPE;
   private boolean                            withWait;
@@ -93,7 +93,7 @@ public class LockRequestMessage extends DSOMessageBase implements LockRequestMes
   protected void dehydrateValues() {
     putNVPair(LOCK_ID, lockID.asString());
     putNVPair(LOCK_LEVEL, lockLevel);
-    putNVPair(LOCK_TYPE, lockType);
+    putNVPair(LOCK_OBJECT_TYPE, lockObjectType);
     putNVPair(THREAD_ID, threadID.toLong());
 
     putNVPair(REQUEST_TYPE, requestType);
@@ -186,8 +186,8 @@ public class LockRequestMessage extends DSOMessageBase implements LockRequestMes
       case LOCK_LEVEL:
         lockLevel = getIntValue();
         return true;
-      case LOCK_TYPE:
-        lockType = getStringValue();
+      case LOCK_OBJECT_TYPE:
+        lockObjectType = getStringValue();
         return true;
       case THREAD_ID:
         threadID = new ThreadID(getLongValue());
@@ -240,9 +240,9 @@ public class LockRequestMessage extends DSOMessageBase implements LockRequestMes
   public int getLockLevel() {
     return lockLevel;
   }
-  
+
   public String getLockType() {
-    return lockType;
+    return lockObjectType;
   }
 
   public boolean isNotifyAll() {
@@ -347,18 +347,18 @@ public class LockRequestMessage extends DSOMessageBase implements LockRequestMes
                UNITIALIZED_WAIT_TIME, -1);
   }
 
-  public void initializeObtainLock(LockID lid, ThreadID id, int type, String lockType) {
-    initialize(lid, id, type, OBTAIN_LOCK_REQUEST_TYPE, false, false, UNITIALIZED_WAIT_TIME, UNITIALIZED_WAIT_TIME, -1);
-    if (lockType != null) {
-      this.lockType = lockType;
+  public void initializeObtainLock(LockID lid, ThreadID id, int lockLevel, String lockObjectType) {
+    initialize(lid, id, lockLevel, OBTAIN_LOCK_REQUEST_TYPE, false, false, UNITIALIZED_WAIT_TIME, UNITIALIZED_WAIT_TIME, -1);
+    if (lockObjectType != null) {
+      this.lockObjectType = lockObjectType;
     }
   }
 
-  public void initializeTryObtainLock(LockID lid, ThreadID id, WaitInvocation timeout, int type, String lockType) {
-    initialize(lid, id, type, TRY_OBTAIN_LOCK_REQUEST_TYPE, false, false, timeout.getMillis(), timeout.getNanos(),
+  public void initializeTryObtainLock(LockID lid, ThreadID id, WaitInvocation timeout, int lockLevel, String lockObjectType) {
+    initialize(lid, id, lockLevel, TRY_OBTAIN_LOCK_REQUEST_TYPE, false, false, timeout.getMillis(), timeout.getNanos(),
                timeout.getSignature().getArgCount());
-    if (lockType != null) {
-      this.lockType = lockType;
+    if (lockObjectType != null) {
+      this.lockObjectType = lockObjectType;
     }
   }
 

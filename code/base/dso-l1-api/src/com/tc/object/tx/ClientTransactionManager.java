@@ -27,7 +27,7 @@ public interface ClientTransactionManager {
    * @param lockLevel Lock level
    * @return If begun
    */
-  public boolean begin(String lock, int lockLevel, String lockType, String contextInfo);
+  public boolean begin(String lock, int lockLevel, String lockObjectType, String contextInfo);
 
   /**
    * Try with wait() to begin a thread local transaction.
@@ -36,7 +36,7 @@ public interface ClientTransactionManager {
    * @param lockLevel Lock level
    * @return If begun
    */
-  public boolean tryBegin(String lock, WaitInvocation timeout, int lockLevel, String lockType);
+  public boolean tryBegin(String lock, WaitInvocation timeout, int lockLevel, String lockObjectType);
 
   /**
    * Commit a thread local current transaction

@@ -39,17 +39,17 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     this.gtxManager = gtxManager;
   }
 
-  public void requestLock(LockID lockID, ThreadID threadID, int type, String lockType) {
-    Assert.assertTrue(LockLevel.isDiscrete(type));
+  public void requestLock(LockID lockID, ThreadID threadID, int lockType, String lockObjectType) {
+    Assert.assertTrue(LockLevel.isDiscrete(lockType));
     LockRequestMessage req = createRequest();
-    req.initializeObtainLock(lockID, threadID, type, lockType);
+    req.initializeObtainLock(lockID, threadID, lockType, lockObjectType);
     req.send();
   }
 
-  public void tryRequestLock(LockID lockID, ThreadID threadID, WaitInvocation timeout, int type, String lockType) {
-    Assert.assertTrue(LockLevel.isDiscrete(type));
+  public void tryRequestLock(LockID lockID, ThreadID threadID, WaitInvocation timeout, int lockType, String lockObjectType) {
+    Assert.assertTrue(LockLevel.isDiscrete(lockType));
     LockRequestMessage req = createRequest();
-    req.initializeTryObtainLock(lockID, threadID, timeout, type, lockType);
+    req.initializeTryObtainLock(lockID, threadID, timeout, lockType, lockObjectType);
     req.send();
   }
 
