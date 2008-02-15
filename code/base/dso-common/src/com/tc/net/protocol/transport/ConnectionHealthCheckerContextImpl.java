@@ -62,10 +62,9 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     this.maxProbeCountWithoutReply = config.getPingProbes();
     this.config = config;
     this.connectionManager = connMgr;
-    this.logger = TCLogging.getLogger(ConnectionHealthCheckerImpl.class.getName() + ": "
+    this.logger = TCLogging.getLogger(ConnectionHealthCheckerImpl.class.getName() + ". "
                                       + config.getHealthCheckerName() + "(" + mtb.getConnectionId() + ")");
-    logger.setLevel(LogLevel.DEBUG); // XXX should be removed before pacheco release
-    if (logger.isDebugEnabled()) logger.debug("Health monitoring agent started");
+    logger.info("Health monitoring agent started");
   }
 
   /* all callers of this method are already synchronized */
@@ -139,7 +138,10 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
       }
     }
 
-    if (currentState.equals(DEAD)) { return false; }
+    if (currentState.equals(DEAD)) {
+      logger.info("is DEAD.");
+      return false;
+    }
     return true;
   }
 

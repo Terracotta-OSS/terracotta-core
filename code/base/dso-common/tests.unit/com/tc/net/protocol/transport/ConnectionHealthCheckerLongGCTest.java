@@ -8,6 +8,8 @@ import com.tc.async.api.Stage;
 import com.tc.async.impl.StageManagerImpl;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
+import com.tc.logging.LogLevel;
+import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
@@ -30,6 +32,7 @@ import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.session.NullSessionManager;
 import com.tc.test.TCTestCase;
+import com.tc.util.PortChooser;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -40,6 +43,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
   CommunicationsManager serverComms;
   CommunicationsManager clientComms;
   NetworkListener       serverLsnr;
+  TCLogger              logger    = TCLogging.getLogger(ConnectionHealthCheckerImpl.class);
   TCPProxy              proxy     = null;
   int                   proxyPort = 0;
 
@@ -47,6 +51,9 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     super.setUp();
 
     NetworkStackHarnessFactory networkStackHarnessFactory;
+
+    logger.setLevel(LogLevel.DEBUG);
+
     if (false /* TCPropertiesImpl.getProperties().getBoolean("l1.reconnect.enabled") */) {
       StageManagerImpl stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(TCLogging
           .getLogger(StageManagerImpl.class))));
@@ -100,9 +107,10 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     serverLsnr.start(new HashSet());
 
     int serverPort = serverLsnr.getBindPort();
-    proxyPort = serverPort + 1;
+    proxyPort = new PortChooser().chooseRandomPort();
     proxy = new TCPProxy(proxyPort, serverLsnr.getBindAddress(), serverPort, 0, false, null);
     proxy.start();
+
   }
 
   ClientMessageChannel createClientMsgCh() {
@@ -198,7 +206,6 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     /* By Now, the client should have been chuked out */
     assertEquals(0, connHC.getTotalConnsUnderMonitor());
 
-    closeCommsMgr();
   }
 
   public void testL1ExtraCheckL2() throws Exception {
@@ -240,7 +247,6 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     ThreadUtil.reallySleep(getFullExtraCheckTime(hcConfig));
     assertEquals(0, connHC.getTotalConnsUnderMonitor());
 
-    closeCommsMgr();
   }
 
   public void testL2ExtraCheckL1WithProxyDelay() throws Exception {
@@ -281,13 +287,18 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     /* By Now, the client should be chuked out */
     assertEquals(0, connHC.getTotalConnsUnderMonitor());
 
-    closeCommsMgr();
   }
 
   protected void closeCommsMgr() throws Exception {
     if (serverLsnr != null) serverLsnr.stop(1000);
     if (serverComms != null) serverComms.shutdown();
     if (clientComms != null) clientComms.shutdown();
+  }
+
+  public void tearDown() throws Exception {
+    super.tearDown();
+    logger.setLevel(LogLevel.INFO);
+    closeCommsMgr();
   }
 
 }

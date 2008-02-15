@@ -39,7 +39,6 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     monitorThreadEngine = new HealthCheckerMonitorThreadEngine(healthCheckerConfig, connManager, logger);
     monitorThread = new Thread(monitorThreadEngine, "HealthChecker");
     monitorThread.setDaemon(true);
-    logger.info("HealthChecker - Enabled");
   }
 
   public void start() {

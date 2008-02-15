@@ -135,12 +135,13 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
         logger.warn("Can only close an open connection");
         return;
       }
-      isOpen.set(false);
       if (disconnect) {
         if (!this.status.isEnd()) this.status.disconnect();
-        fireTransportDisconnectedEvent();
+        // Dont fire any events here. Anyway asynchClose is triggered below and we are expected to receive a closeEvent
+        // and upon which we open up the OOO Reconnect window
       } else {
         if (!this.status.isEnd()) this.status.closed();
+        isOpen.set(false);
         fireTransportClosedEvent();
       }
     }
@@ -160,6 +161,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
 
     synchronized (status) {
       if (!status.isEstablished()) {
+        if (!message.isSealed()) message.seal();
         logger.warn("Ignoring message sent to non-established transport: " + message);
         return;
       }

@@ -8,6 +8,8 @@ import com.tc.async.api.Stage;
 import com.tc.async.impl.StageManagerImpl;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
+import com.tc.logging.LogLevel;
+import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
@@ -30,6 +32,7 @@ import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.session.NullSessionManager;
 import com.tc.test.TCTestCase;
+import com.tc.util.PortChooser;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -40,6 +43,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
   CommunicationsManager serverComms;
   CommunicationsManager clientComms;
   NetworkListener       serverLsnr;
+  TCLogger              logger    = TCLogging.getLogger(ConnectionHealthCheckerImpl.class);
   TCPProxy              proxy     = null;
   int                   proxyPort = 0;
 
@@ -47,6 +51,9 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
     super.setUp();
 
     NetworkStackHarnessFactory networkStackHarnessFactory;
+
+    logger.setLevel(LogLevel.DEBUG);
+
     if (true /* TCPropertiesImpl.getProperties().getBoolean("l1.reconnect.enabled") */) {
       StageManagerImpl stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(TCLogging
           .getLogger(StageManagerImpl.class))));
@@ -100,7 +107,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
     serverLsnr.start(new HashSet());
 
     int serverPort = serverLsnr.getBindPort();
-    proxyPort = serverPort + 1;
+    proxyPort = new PortChooser().chooseRandomPort();
     proxy = new TCPProxy(proxyPort, serverLsnr.getBindAddress(), serverPort, 0, false, null);
     proxy.start();
   }
@@ -195,8 +202,6 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
 
     System.out.println("Sleeping for " + getMinSleepTimeToConirmDeath(hcConfig));
     ThreadUtil.reallySleep(getMinSleepTimeToConirmDeath(hcConfig));
-
-    closeCommsMgr();
   }
 
   public void testL2CloseL1Reconnect() throws Exception {
@@ -206,7 +211,8 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
     clientMsgCh.open();
 
     // Verifications
-    ConnectionHealthCheckerImpl connHC = (ConnectionHealthCheckerImpl) ((CommunicationsManagerImpl) serverComms).getConnHealthChecker();
+    ConnectionHealthCheckerImpl connHC = (ConnectionHealthCheckerImpl) ((CommunicationsManagerImpl) serverComms)
+        .getConnHealthChecker();
     assertNotNull(connHC);
 
     while (!connHC.isRunning() && (connHC.getTotalConnsUnderMonitor() != 1)) {
@@ -240,8 +246,6 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
 
     /* By Now, the client would have reconnected */
     assertEquals(1, connHC.getTotalConnsUnderMonitor());
-
-    closeCommsMgr();
   }
 
   protected void closeCommsMgr() throws Exception {
@@ -250,4 +254,9 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
     if (clientComms != null) clientComms.shutdown();
   }
 
+  public void tearDown() throws Exception {
+    super.tearDown();
+    logger.setLevel(LogLevel.INFO);
+    closeCommsMgr();
+  }
 }

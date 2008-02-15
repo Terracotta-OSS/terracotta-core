@@ -4,6 +4,9 @@
  */
 package com.tc.net.protocol.transport;
 
+import com.tc.logging.LogLevel;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
@@ -31,11 +34,14 @@ public class ConnectionHealthCheckerTest extends TCTestCase {
   CommunicationsManager serverComms;
   CommunicationsManager clientComms;
   NetworkListener       serverLsnr;
+  TCLogger              logger = TCLogging.getLogger(ConnectionHealthCheckerImpl.class);
 
   protected void setUp(HealthCheckerConfig serverHCConf, HealthCheckerConfig clientHCConf) throws Exception {
     super.setUp();
 
     NetworkStackHarnessFactory networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
+
+    logger.setLevel(LogLevel.DEBUG);
 
     if (serverHCConf != null) {
       serverComms = new CommunicationsManagerImpl(new NullMessageMonitor(), networkStackHarnessFactory,
@@ -154,7 +160,6 @@ public class ConnectionHealthCheckerTest extends TCTestCase {
     assertTrue(connHC.getTotalProbesSentOnAllConns() > 0);
 
     clientMsgCh.close();
-    closeCommsMgr();
   }
 
   public void testL2ProbingL1AndClientClose() throws Exception {
@@ -186,6 +191,9 @@ public class ConnectionHealthCheckerTest extends TCTestCase {
 
     clientMsgCh.close();
     System.out.println("ClientMessasgeChannel Closed");
+    
+    System.out.println("Sleeping for " + getMinSleepTimeToConirmDeath(hcConfig));
+    ThreadUtil.reallySleep(getMinSleepTimeToConirmDeath(hcConfig));
 
     while (connHC.getTotalConnsUnderMonitor() != 0) {
       ThreadUtil.reallySleep(1000);
@@ -193,7 +201,6 @@ public class ConnectionHealthCheckerTest extends TCTestCase {
     }
 
     System.out.println("Success");
-    closeCommsMgr();
   }
 
   public void testL1L2ProbingBothsideAndClientClose() throws Exception {
@@ -243,7 +250,6 @@ public class ConnectionHealthCheckerTest extends TCTestCase {
     ThreadUtil.reallySleep(getMinSleepTimeToSendFirstProbe(hcConfig));
     assertEquals(1, connHC.getTotalConnsUnderMonitor());
 
-    closeCommsMgr();
   }
 
   public void testL2ProbingL1AndClientUnResponsive() throws Exception {
@@ -275,7 +281,6 @@ public class ConnectionHealthCheckerTest extends TCTestCase {
 
     assertEquals(0, connHC.getTotalConnsUnderMonitor());
 
-    closeCommsMgr();
   }
 
   public void testL1ProbingL2AndServerUnResponsive() throws Exception {
@@ -307,7 +312,6 @@ public class ConnectionHealthCheckerTest extends TCTestCase {
 
     assertEquals(0, connHC.getTotalConnsUnderMonitor());
 
-    closeCommsMgr();
   }
 
   public void testL2L1WrongConfig() throws Exception {
@@ -329,13 +333,18 @@ public class ConnectionHealthCheckerTest extends TCTestCase {
       System.out.println("Got the Expected error");
     }
 
-    closeCommsMgr();
   }
 
   protected void closeCommsMgr() throws Exception {
     if (serverLsnr != null) serverLsnr.stop(1000);
     if (serverComms != null) serverComms.shutdown();
     if (clientComms != null) clientComms.shutdown();
+  }
+
+  public void tearDown() throws Exception {
+    super.tearDown();
+    logger.setLevel(LogLevel.INFO);
+    closeCommsMgr();
   }
 
 }
