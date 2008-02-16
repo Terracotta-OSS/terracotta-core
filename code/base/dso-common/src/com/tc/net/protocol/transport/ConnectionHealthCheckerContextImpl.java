@@ -6,7 +6,6 @@ package com.tc.net.protocol.transport;
 
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
 
-import com.tc.logging.LogLevel;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.core.TCConnection;
@@ -21,7 +20,7 @@ import com.tc.util.State;
  * A HealthChecker Context takes care of sending and receiving probe signals, book-keeping, sending additional probes
  * and all the logic to monitor peers health. One Context per Transport is assigned as soon as a TC Connection is
  * Established.
- * 
+ *
  * @author Manoj
  */
 
