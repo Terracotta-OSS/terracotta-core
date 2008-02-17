@@ -10,6 +10,7 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.DebugUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.ArrayList;
@@ -373,6 +374,7 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
   }
 
   private void basicRunTask(int index, FutureTask task) throws Exception {
+    DebugUtil.DEBUG = true;
     if (index == 0) {
       root.setTask(task);
     }
@@ -383,12 +385,13 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
 
       root.getTask().run();
     }
-
+    
     Assert.assertEquals(root, root.getTask().get());
 
     Assert.assertTrue(root.getTask().isDone());
-
+    
     barrier.await();
+    DebugUtil.DEBUG = false;
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {

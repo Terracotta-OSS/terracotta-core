@@ -3,6 +3,9 @@
  */
 package java.util.concurrent;
 
+import com.tc.object.bytecode.ManagerUtil;
+import com.tc.util.DebugUtil;
+
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -103,6 +106,9 @@ public class FutureTaskTC implements Future, Runnable {
       runner = null;
       proxyRunner = null;
       ran.signalAll();
+      if (DebugUtil.DEBUG) {
+        System.err.println(ManagerUtil.getClientID() + " managedTryReleaseShared signalled");
+      }
       return true;
     }
 
@@ -147,10 +153,20 @@ public class FutureTaskTC implements Future, Runnable {
     }
 
     Object innerGet() throws InterruptedException, ExecutionException {
+      if (DebugUtil.DEBUG) {
+        System.err.println(ManagerUtil.getClientID() + " attempting to lock in innerGet");
+      }
+
       lock.lock();
       try {
         while (tryAcquireShared() < 0) {
+          if (DebugUtil.DEBUG) {
+            System.err.println(ManagerUtil.getClientID() + " tryAcquireShared < 0 - going to wait.");
+          }
           ran.await();
+        }
+        if (DebugUtil.DEBUG) {
+          System.err.println(ManagerUtil.getClientID() + " innerGet finished waiting");
         }
       } finally {
         lock.unlock();
