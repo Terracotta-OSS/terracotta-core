@@ -226,7 +226,7 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
     getStageManager().stopAll();
     discover.stop();
     groupListener.stop(timeout);
-    communicationsManager.getConnectionManager().asynchCloseAllConnections();
+    communicationsManager.shutdown();
     for (TCGroupMember m : members.values()) {
       notifyAnyPendingRequests(m);
     }
