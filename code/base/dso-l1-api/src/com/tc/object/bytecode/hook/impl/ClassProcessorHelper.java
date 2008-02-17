@@ -39,6 +39,12 @@ import java.util.logging.LogManager;
  */
 public class ClassProcessorHelper {
 
+  // Setting this system property will delay the timing of when the DSO client is initialized. With the default
+  // behavior, the debug subsystem of the VM will not be started until after the DSO client starts up. This means it is
+  // impossible to use the debugger during dso client startup. Setting this flag to true will allow debugging, but at
+  // the expense of the fixes applied for CDV-424 and DEV-959
+  private static final String                TC_BOOT_DEBUG_SYSPROP   = "tc.boot.debug";
+
   // Directory where Terracotta jars (and dependencies) can be found
   private static final String                TC_INSTALL_ROOT_SYSPROP = "tc.install-root";
 
@@ -52,6 +58,8 @@ public class ClassProcessorHelper {
   // Used for converting resource names into class names
   private static final String                CLASS_SUFFIX            = ".class";
   private static final int                   CLASS_SUFFIX_LENGTH     = CLASS_SUFFIX.length();
+
+  private static final boolean               DELAY_BOOT;
 
   private static final boolean               GLOBAL_MODE_DEFAULT     = true;
 
@@ -82,6 +90,8 @@ public class ClassProcessorHelper {
       // TC functionalities. This is needed for the IBM JDK when Hashtable is
       // instrumented for auto-locking in the bootjar.
       Class.forName(DSOContext.class.getName());
+
+      DELAY_BOOT = Boolean.valueOf(System.getProperty(TC_BOOT_DEBUG_SYSPROP)).booleanValue();
 
       String global = System.getProperty("tc.dso.globalmode", null);
       if (global != null) {
@@ -525,7 +535,6 @@ public class ClassProcessorHelper {
    * @param len Length of class data
    * @param pd Protection domain for class
    * @return Modified class array
-   *
    * @see ClassLoaderPreProcessorImpl
    */
   public static byte[] defineClass0Pre(ClassLoader caller, String name, byte[] b, int off, int len, ProtectionDomain pd) {
@@ -539,6 +548,9 @@ public class ClassProcessorHelper {
     if (isAWDependency(name)) { return b; }
     if (isDSODependency(name)) { return b; }
 
+    if (DELAY_BOOT) {
+      init();
+    }
     if (!initState.isInitialized()) { return b; }
 
     ManagerUtil.enable();
@@ -649,6 +661,8 @@ public class ClassProcessorHelper {
   }
 
   public static void loggingInitialized() {
+    if (DELAY_BOOT) return;
+
     final boolean attempt;
 
     synchronized (ClassProcessorHelper.class) {
@@ -659,6 +673,8 @@ public class ClassProcessorHelper {
   }
 
   public static void systemLoaderInitialized() {
+    if (DELAY_BOOT) return;
+
     final boolean attempt;
 
     synchronized (ClassProcessorHelper.class) {
