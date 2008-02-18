@@ -595,7 +595,7 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
         GroupMessage msg = i.next();
         if (nodeID.equals(msg.messageFrom())) return msg;
       }
-      Assert.fail("Missing response message from " + nodeID);
+      logger.warn("Missing response message from " + nodeID);
       return null;
     }
 
@@ -633,6 +633,7 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
     }
 
     public synchronized void notifyMemberDead(TCGroupMember member) {
+      logger.warn("Remove dead member from waitFor response list, dead member: " + member.getPeerNodeID());
       waitFor.remove(member.getPeerNodeID());
       notifyAll();
     }
