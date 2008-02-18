@@ -4,6 +4,7 @@
 package com.tctest;
 
 import com.tc.exception.TCRuntimeException;
+import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -375,6 +376,9 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
 
   private void basicRunTask(int index, FutureTask task) throws Exception {
     DebugUtil.DEBUG = true;
+    if (DebugUtil.DEBUG) {
+      System.err.println("Client " + ManagerUtil.getClientID() + " running basicRunTask");
+    }
     if (index == 0) {
       root.setTask(task);
     }
@@ -386,6 +390,9 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
       root.getTask().run();
     }
     
+    if (DebugUtil.DEBUG) {
+      System.err.println("Client " + ManagerUtil.getClientID() + " trying task.get()");
+    }
     Assert.assertEquals(root, root.getTask().get());
 
     Assert.assertTrue(root.getTask().isDone());

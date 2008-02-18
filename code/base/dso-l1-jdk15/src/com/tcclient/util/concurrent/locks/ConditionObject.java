@@ -5,6 +5,7 @@
 package com.tcclient.util.concurrent.locks;
 
 import com.tc.exception.TCRuntimeException;
+import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.util.DebugUtil;
@@ -107,9 +108,9 @@ public class ConditionObject implements Condition, java.io.Serializable {
 
           addWaitOnUnshared();
           try {
-            logDebug("Client " + ManagerUtil.getClientID() + " awaiting on condition " + realCondition.hashCode());
+            logDebug("Client " + ManagerUtil.getClientID() + " awaiting on condition " + realCondition.hashCode() + " " + ((Manageable)realCondition).__tc_managed());
             ManagerUtil.objectWait0(realCondition);
-            logDebug("Client " + ManagerUtil.getClientID() + " wake up on condition " + realCondition.hashCode());
+            logDebug("Client " + ManagerUtil.getClientID() + " wake up on condition " + realCondition.hashCode() + " " + ((Manageable)realCondition).__tc_managed());
           } finally {
             waitOnUnshared.remove(currentThread);
             waitingThreads.remove(currentThread);
@@ -268,7 +269,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
     UnsafeUtil.monitorEnter(realCondition);
     boolean isLockInUnshared = isLockRealConditionInUnshared();
     try {
-      logDebug("Client " + ManagerUtil.getClientID() + " notifyAll on condition " + realCondition.hashCode());
+      logDebug("Client " + ManagerUtil.getClientID() + " notifyAll on condition " + realCondition.hashCode() + " " + ((Manageable)realCondition).__tc_managed());
       ManagerUtil.objectNotifyAll(realCondition);
       if (hasWaitOnUnshared()) {
         realCondition.notifyAll();
