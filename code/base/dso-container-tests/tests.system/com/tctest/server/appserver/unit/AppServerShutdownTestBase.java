@@ -26,7 +26,7 @@ public class AppServerShutdownTestBase extends AbstractTwoServerDeploymentTest {
 
   public AppServerShutdownTestBase(boolean dsoEnabled) {
     // weblogic-9.2.mp2 has a problem of shutting down
-    if (appServerInfo().equals("weblogic-9.2.mp2")) {
+    if (appServerInfo().toString().equals("weblogic-9.2.mp2")) {
       disableAllUntil(new Date(Long.MAX_VALUE));
     }
     this.dsoEnabled = dsoEnabled;
