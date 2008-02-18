@@ -557,6 +557,7 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
       logger.warn("Ignoreing Zap node request since " + zapNodeRequestProcessor + " asked us to : " + nodeID
                   + " type = " + type + " reason = " + reason);
     } else {
+      discover.nodeZapped(nodeID);
       long weights[] = zapNodeRequestProcessor.getCurrentNodeWeights();
       logger.warn("Zapping node : " + nodeID + " type = " + type + " reason = " + reason + " my weight = "
                   + Arrays.toString(weights));
@@ -659,6 +660,7 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
   private final class ZapNodeRequestRouter implements GroupMessageListener {
 
     public void messageReceived(NodeID fromNode, GroupMessage msg) {
+      discover.nodeZapped(fromNode);
       GroupZapNodeMessage zapMsg = (GroupZapNodeMessage) msg;
       zapNodeRequestProcessor.incomingZapNodeRequest(msg.messageFrom(), zapMsg.getZapNodeType(), zapMsg.getReason(),
                                                      zapMsg.getWeights());

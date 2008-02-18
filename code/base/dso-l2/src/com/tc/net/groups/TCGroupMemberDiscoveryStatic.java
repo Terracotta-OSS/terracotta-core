@@ -100,10 +100,10 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     }
 
     manager.registerForGroupEvents(this);
-    
+
     // run once before deamon thread does job
     openChannels();
-    
+
     Thread discover = new Thread(new Runnable() {
       public void run() {
         while (!stopAttempt.get()) {
@@ -155,6 +155,11 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     notifyAll();
   }
 
+  public void nodeZapped(NodeID nodeID) {
+    String nodeName = ((NodeIdComparable) nodeID).getName();
+    nodeStateMap.get(nodeName).nodeZapped();
+  }
+
   public synchronized void pauseDiscovery() {
     while (joinedNodes == (nodeStateMap.size() - 1) && !stopAttempt.get()) {
       try {
@@ -174,6 +179,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     private final DiscoveryState STATE_IO_EXCEPTION    = new IOExceptionState();
     private final DiscoveryState STATE_UNKNOWN_HOST    = new UnknownHostState();
     private final DiscoveryState STATE_MEMBER_IN_GROUP = new MemberInGroupState();
+    private final DiscoveryState STATE_NODE_ZAPPED     = new NodeZappedState();
 
     private DiscoveryState       current;
     private DiscoveryState       previousBadState;
@@ -277,7 +283,11 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     }
 
     synchronized void nodeLeft() {
-      switchToState(STATE_INIT);
+      if (current != STATE_NODE_ZAPPED) switchToState(STATE_INIT);
+    }
+
+    synchronized void nodeZapped() {
+      switchToState(STATE_NODE_ZAPPED);
     }
 
     /*
@@ -313,7 +323,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
       public InitState() {
         super("Init");
       }
-      
+
       public void enter() {
         // do nothing
       }
@@ -330,7 +340,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
       public ConnectingState() {
         super("Connecting");
       }
-      
+
       public void enter() {
         // do nothing
       }
@@ -373,9 +383,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
 
       public boolean isTimeToConnect() {
         // check 60 times then every min
-        if (badCount < 60) {
-          return true;
-        }
+        if (badCount < 60) { return true; }
         if (System.currentTimeMillis() > (timestamp + DISCOVERY_INTERVAL_MS * 60)) {
           timestamp = System.currentTimeMillis();
           return true;
@@ -431,6 +439,31 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
         // check every 5 min
         if (System.currentTimeMillis() > (timestamp + 1000 * 60 * 5)) {
           timestamp = System.currentTimeMillis();
+          return true;
+        } else {
+          return false;
+        }
+      }
+    }
+
+    /*
+     * NodeZappedState --
+     */
+    private class NodeZappedState extends DiscoveryState {
+      public NodeZappedState() {
+        super("Node-Zapped");
+      }
+
+      public void enter() {
+        super.enter();
+        timestamp = System.currentTimeMillis();
+      }
+
+      public boolean isTimeToConnect() {
+        // Pause discovery for 5 min after node zapped
+        if (System.currentTimeMillis() > (timestamp + 1000 * 60 * 5)) {
+          timestamp = System.currentTimeMillis();
+          switchToState(STATE_INIT);
           return true;
         } else {
           return false;

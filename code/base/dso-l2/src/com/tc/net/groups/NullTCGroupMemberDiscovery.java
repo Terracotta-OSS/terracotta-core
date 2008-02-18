@@ -42,4 +42,8 @@ public class NullTCGroupMemberDiscovery implements TCGroupMemberDiscovery {
     return;
   }
 
+  public void nodeZapped(NodeID nodeID) {
+    return;
+  }
+
 }
