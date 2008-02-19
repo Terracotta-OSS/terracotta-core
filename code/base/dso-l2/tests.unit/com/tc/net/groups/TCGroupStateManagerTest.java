@@ -28,6 +28,8 @@ import com.tc.util.concurrent.ThreadUtil;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class TCGroupStateManagerTest extends TCTestCase {
 
@@ -276,6 +278,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
   private void nodesJoinLater(int nodes) throws Exception {
     System.out.println("*** Testing " + nodes + " nodes join at later time.");
 
+    final LinkedBlockingQueue<NodeID> joinedNodes = new LinkedBlockingQueue<NodeID>();
     NodeID[] ids = new NodeID[nodes];
     ChangeSink[] sinks = new ChangeSink[nodes];
     TCGroupManagerImpl[] groupMgr = new TCGroupManagerImpl[nodes];
@@ -304,9 +307,8 @@ public class TCGroupStateManagerTest extends TCTestCase {
     // move following join nodes to passive-standby
     groupMgr[0].registerForGroupEvents(new MyGroupEventListener(groupMgr[0].getLocalNodeID()) {
       public void nodeJoined(NodeID nodeID) {
-        System.out.println("*** moveNodeToPassiveStandby -> " + nodeID);
-        managers[0].moveNodeToPassiveStandby(nodeID);
-        // managers[0].publishActiveState(nodeID);
+        // save nodeID for moving to passive
+        joinedNodes.add(nodeID);
       }
     });
 
@@ -314,6 +316,16 @@ public class TCGroupStateManagerTest extends TCTestCase {
     for (int i = 1; i < nodes; ++i) {
       ids[i] = groupMgr[i].join(allNodes[i], allNodes);
     }
+    
+    ThreadUtil.reallySleep(1000);
+    int nodesNeedToMoveToPassive = nodes - 1;
+    while(nodesNeedToMoveToPassive > 0) {
+      NodeID toBePassiveNode = joinedNodes.poll(5000, TimeUnit.MILLISECONDS);
+      System.out.println("*** moveNodeToPassiveStandby -> " + toBePassiveNode);
+      managers[0].moveNodeToPassiveStandby(toBePassiveNode);
+      --nodesNeedToMoveToPassive;
+    }
+    assertTrue(nodesNeedToMoveToPassive == 0);
 
     ThreadUtil.reallySleep(1000 * nodes);
     // verification: first node must be active
