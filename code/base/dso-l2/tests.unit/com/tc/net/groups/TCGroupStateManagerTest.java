@@ -36,7 +36,8 @@ public class TCGroupStateManagerTest extends TCTestCase {
   private TCThreadGroup         threadGroup;
 
   public TCGroupStateManagerTest() {
-    //disableAllUntil("2008-02-26");
+    // MNK-448
+    disableAllUntil("2008-03-15");
   }
 
   public void setUp() {
