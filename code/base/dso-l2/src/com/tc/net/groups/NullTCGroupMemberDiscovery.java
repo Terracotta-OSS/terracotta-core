@@ -26,7 +26,7 @@ public class NullTCGroupMemberDiscovery implements TCGroupMemberDiscovery {
     return;
   }
 
-  public void stop() {
+  public void stop(long timeout) {
     return;
   }
 

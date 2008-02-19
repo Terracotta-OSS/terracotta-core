@@ -10,7 +10,7 @@ public interface TCGroupMemberDiscovery extends GroupEventsListener {
 
   public void start() throws GroupException;
 
-  public void stop();
+  public void stop(long timeout);
 
   public void setupNodes(Node local, Node[] nodes);
   

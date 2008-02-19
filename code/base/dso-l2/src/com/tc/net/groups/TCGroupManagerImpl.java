@@ -224,7 +224,7 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
   public void stop(long timeout) throws TCTimeoutException {
     isStopped.set(true);
     getStageManager().stopAll();
-    discover.stop();
+    discover.stop(timeout);
     groupListener.stop(timeout);
     communicationsManager.shutdown();
     for (TCGroupMember m : members.values()) {

@@ -39,6 +39,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
   private final TCGroupManagerImpl                 manager;
   private Node                                     local;
   private Integer                                  joinedNodes                     = 0;
+  private Integer                                  connectingCount                 = 0;
 
   public TCGroupMemberDiscoveryStatic(TCGroupManagerImpl manager) {
     this.manager = manager;
@@ -67,10 +68,11 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     Assert.assertNotNull(stateMachine);
     Node node = stateMachine.getNode();
 
-    if (stateMachine.isMemberInGroup()) { return; }
+    if (stateMachine.isMemberInGroup() || stopAttempt.get()) { return; }
 
     try {
       if (logger.isDebugEnabled()) logger.debug(getLocalNodeID().toString() + " opens channel to " + node);
+      incConnectingCount();
       manager.openChannel(node.getHost(), node.getPort(), stateMachine);
       stateMachine.connected();
     } catch (TCTimeoutException e) {
@@ -85,6 +87,8 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     } catch (IOException e) {
       stateMachine.connetIOException();
       stateMachine.loggerWarn("Node:" + node + " " + e);
+    } finally {
+      decConnectingCount();
     }
   }
 
@@ -134,8 +138,37 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     }
   }
 
-  public void stop() {
+  private void incConnectingCount() {
+    synchronized (local) {
+      ++connectingCount;
+    }
+  }
+
+  private void decConnectingCount() {
+    synchronized (local) {
+      --connectingCount;
+      if (connectingCount == 0) local.notifyAll();
+    }
+  }
+
+  private void waitTillNoConnecting(long timeout) {
+    synchronized (local) {
+      if (connectingCount > 0) {
+        try {
+          local.wait(timeout);
+        } catch (InterruptedException e) {
+          logger.debug("Timeouted while waiting for connecting completed");
+        }
+      }
+    }
+  }
+
+  public void stop(long timeout) {
     stopAttempt.set(true);
+    
+    // wait for all connections completed to avoid
+    // IllegalStateException in TCConnectionManagerJDK14.checkShutdown()
+    waitTillNoConnecting(timeout);
   }
 
   public Node getLocalNode() {
