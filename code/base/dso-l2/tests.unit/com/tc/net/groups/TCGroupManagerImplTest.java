@@ -120,6 +120,22 @@ public class TCGroupManagerImplTest extends TestCase {
 
     tearGroups();
   }
+  
+  public void testOpenZappedNode() throws Exception {
+    setupGroups(2);
+
+    groups[0].addZappedNode(groups[1].getLocalNodeID());
+    
+    groups[0].join(nodes[0], nodes);
+    groups[1].join(nodes[1], nodes);
+    Thread.sleep(2000);
+
+    assertEquals(0, groups[0].size());
+    assertEquals(0, groups[1].size());
+
+    tearGroups();
+  }
+
 
   /*
    * Both open channel to each other, only one direction to keep

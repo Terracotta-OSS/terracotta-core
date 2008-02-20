@@ -49,7 +49,6 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
-import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.sequence.SimpleSequence;
 
 import java.io.IOException;
@@ -91,6 +90,8 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
   private final ConcurrentHashMap<MessageChannel, NodeIdComparable> channelToNodeID             = new ConcurrentHashMap<MessageChannel, NodeIdComparable>();
   private final ConcurrentHashMap<NodeIdComparable, TCGroupMember>  members                     = new ConcurrentHashMap<NodeIdComparable, TCGroupMember>();
   private final Timer                                               handshakeTimer              = new Timer(true);
+  private final Set<NodeID>                                         zappedSet                   = Collections
+                                                                                                    .synchronizedSet(new HashSet<NodeID>());
 
   private CommunicationsManager                                     communicationsManager;
   private NetworkListener                                           groupListener;
@@ -550,6 +551,7 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
   }
 
   public void zapNode(NodeID nodeID, int type, String reason) {
+    zappedSet.add(nodeID);
     TCGroupMember m = getMember(nodeID);
     if (m == null) {
       logger.warn("Ignoring Zap node request since Member is null");
@@ -568,10 +570,12 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
         logger.error("Error sending ZapNode Request to " + nodeID + " msg = " + msg);
       }
       logger.warn("Removing member " + m + " from group");
-      // wait a little bit, hope other end receives it
-      ThreadUtil.reallySleep(100);
-      memberDisappeared(m, false);
+      memberDisappeared(m, true);
     }
+  }
+
+  private boolean isZappedNode(NodeID nodeID) {
+    return (zappedSet.contains(nodeID));
   }
 
   private static class GroupResponseImpl implements GroupResponse {
@@ -871,7 +875,12 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
 
       public void execute(TCGroupHandshakeMessage msg) {
         setPeerNodeID(msg);
-        switchToState(STATE_TRY_ADD_MEMBER);
+        if (!manager.isZappedNode(peerNodeID)) {
+          switchToState(STATE_TRY_ADD_MEMBER);
+        } else {
+          logger.warn("Abort connecting to zapped node. " + stateInfo(current));
+          switchToState(STATE_FAILURE);
+        }
       }
 
       void setPeerNodeID(TCGroupHandshakeMessage msg) {
@@ -910,8 +919,12 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
         boolean isOkToJoin = msg.isOkMessage();
         if (!member.isHighPriorityNode()) {
           if (isOkToJoin) {
-            Assert.assertTrue(manager.tryAddMember(member));
-            member.eventFiringInProcess();
+            isOkToJoin = manager.tryAddMember(member);
+            if (isOkToJoin) {
+              member.eventFiringInProcess();
+            } else {
+              logger.warn("Unexpected bad handshake, abort connection.");
+            }
           }
           signalToJoin(isOkToJoin);
         }
@@ -976,6 +989,13 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
       }
     }
 
+  }
+
+  /*
+   * for testing purpose only
+   */
+  void addZappedNode(NodeID nodeID) {
+    zappedSet.add(nodeID);
   }
 
 }
