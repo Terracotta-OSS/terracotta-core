@@ -33,5 +33,7 @@ public interface WebApplicationServer extends Server {
   public int getPort();
 
   public File getWorkingDirectory();
+  
+  public File getTcConfigFile();
 
 }

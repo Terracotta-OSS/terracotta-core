@@ -70,6 +70,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
   private ProxyBuilder                      proxyBuilder    = null;
   private File                              workingDir;
   private String                            serverInstanceName;
+  private final File                        tcConfigFile;
 
   public GenericServer(TestConfigObject config, AppServerFactory factory, AppServerInstallation installation,
                        FileSystemPath tcConfigPath, int serverId, File tempDir) throws Exception {
@@ -85,9 +86,9 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     this.serverInstanceName = SERVER + serverId;
     this.parameters = (StandardAppServerParameters) factory.createParameters(serverInstanceName);
     this.workingDir = new File(installation.sandboxDirectory(), serverInstanceName);
+    this.tcConfigFile = new File(tempDir, "tc-config.xml");
 
     File bootJarFile = new File(config.normalBootJar());
-    File tcConfigFile = new File(tempDir, "tc-config.xml");
     tcConfigbuilder.saveToFile(tcConfigFile);
 
     if (dsoEnabled()) {
@@ -399,5 +400,9 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
       server = factory.createAppServer(installation);
     }
     return server;
+  }
+
+  public File getTcConfigFile() {
+    return tcConfigFile;
   }
 }
