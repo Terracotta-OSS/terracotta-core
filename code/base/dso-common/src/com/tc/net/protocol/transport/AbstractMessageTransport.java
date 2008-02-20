@@ -4,13 +4,14 @@
  */
 package com.tc.net.protocol.transport;
 
+import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
+
 import com.tc.logging.ConnectionIDProvider;
 import com.tc.logging.ConnectionIdLogger;
 import com.tc.logging.TCLogger;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 public abstract class AbstractMessageTransport implements MessageTransport, ConnectionIDProvider {
@@ -21,7 +22,7 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
   private static final int           CLOSED          = 4;
 
   protected final ConnectionIdLogger logger;
-  private final List                 listeners       = new LinkedList();
+  private final List                 listeners       = new CopyOnWriteArrayList();
 
   public AbstractMessageTransport(TCLogger logger) {
     this.logger = new ConnectionIdLogger(this, logger);
@@ -30,7 +31,7 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
   public ConnectionIdLogger getLogger() {
     return logger;
   }
-  
+
   public final void addTransportListeners(List toAdd) {
     for (Iterator i = toAdd.iterator(); i.hasNext();) {
       MessageTransportListener l = (MessageTransportListener) i.next();
@@ -80,25 +81,23 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
   }
 
   private void fireTransportEvent(int type) {
-    synchronized (listeners) {
-      for (Iterator i = listeners.iterator(); i.hasNext();) {
-        MessageTransportListener listener = (MessageTransportListener) i.next();
-        switch (type) {
-          case DISCONNECTED:
-            listener.notifyTransportDisconnected(this);
-            break;
-          case CONNECTED:
-            listener.notifyTransportConnected(this);
-            break;
-          case CONNECT_ATTEMPT:
-            listener.notifyTransportConnectAttempt(this);
-            break;
-          case CLOSED:
-            listener.notifyTransportClosed(this);
-            break;
-          default:
-            throw new AssertionError("Unknown transport event: " + type);
-        }
+    for (Iterator i = listeners.iterator(); i.hasNext();) {
+      MessageTransportListener listener = (MessageTransportListener) i.next();
+      switch (type) {
+        case DISCONNECTED:
+          listener.notifyTransportDisconnected(this);
+          break;
+        case CONNECTED:
+          listener.notifyTransportConnected(this);
+          break;
+        case CONNECT_ATTEMPT:
+          listener.notifyTransportConnectAttempt(this);
+          break;
+        case CLOSED:
+          listener.notifyTransportClosed(this);
+          break;
+        default:
+          throw new AssertionError("Unknown transport event: " + type);
       }
     }
   }
