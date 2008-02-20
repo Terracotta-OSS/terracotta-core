@@ -1,11 +1,17 @@
+<%@ page import="com.tc.object.bytecode.Manageable" %>
+
 <%
-	String cmdParam = request.getParameter("cmd");
-    if ("insert".equals(cmdParam)) {
+    String cmdParam = request.getParameter("cmd");
+    if ("getClass".equals(cmdParam)) {
+      out.println(getClass());
+    } else if ("isManagable".equals(cmdParam)) {
+      out.println(Manageable.class.isAssignableFrom(getClass()));
+    } else if ("insert".equals(cmdParam)) {
       session.setAttribute("hung", "daman");
       out.println("OK");
     } else if ("query".equals(cmdParam)) {
       String data = (String) session.getAttribute("hung");
-      if (data != null && data.equals("daman")) {
+      if ("daman".equals(data)) {
         out.println("OK");
       } else {
         out.println("ERROR: " + data);
