@@ -273,13 +273,14 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
 
   public NodeID join(Node thisNode, Node[] allNodes) throws GroupException {
 
+    // discover must be started before listener thread to avoid missing nodeJoined group events.
+    discover.setupNodes(thisNode, allNodes);
+    discover.start();
     try {
       groupListener.start(new HashSet());
     } catch (IOException e) {
       throw new GroupException(e);
     }
-    discover.setupNodes(thisNode, allNodes);
-    discover.start();
     return (getNodeID());
   }
 
