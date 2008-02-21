@@ -148,6 +148,8 @@ public class CacheManager implements MemoryEventsListener {
       }
       if (overshoot <= 0) { return 0; }
       int objects2Evict = overshoot + ((calculatedCacheSize * config.getPercentageToEvict()) / 100);
+      // it is possible for higher percentage to evict, the calculated value crosses the current count limit : CDV-592
+      if (objects2Evict > currentCount) objects2Evict = currentCount;
       return objects2Evict;
     }
 
