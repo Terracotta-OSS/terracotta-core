@@ -23,7 +23,7 @@ public class StandardLoaderServlet extends HttpServlet {
     resp.getWriter().print("OK");
   }
 
-  static class Inner {
+  public static class Inner {
     //
   }
 }
