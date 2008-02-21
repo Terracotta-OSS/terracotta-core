@@ -90,10 +90,8 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
   private final ConcurrentHashMap<MessageChannel, NodeIdComparable> channelToNodeID             = new ConcurrentHashMap<MessageChannel, NodeIdComparable>();
   private final ConcurrentHashMap<NodeIdComparable, TCGroupMember>  members                     = new ConcurrentHashMap<NodeIdComparable, TCGroupMember>();
   private final Timer                                               handshakeTimer              = new Timer(true);
-  private final Set<NodeID>                                         zappedNodeSet               = Collections
+  private final Set<NodeID>                                         zappedSet                   = Collections
                                                                                                     .synchronizedSet(new HashSet<NodeID>());
-  private final Set<MessageChannel>                                 zappedChannelSet            = Collections
-                                                                                                    .synchronizedSet(new HashSet<MessageChannel>());
 
   private CommunicationsManager                                     communicationsManager;
   private NetworkListener                                           groupListener;
@@ -483,11 +481,6 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
       return;
     }
 
-    if (isZappedChannel(channel)) {
-      logger.warn("Dropped message from zapped node. msg: " + message + " channel: " + channel);
-      return;
-    }
-
     if (m == null) {
       String errInfo = "Received message for non-exist member from " + channel.getRemoteAddress() + " to "
                        + channel.getLocalAddress() + " Node: " + channelToNodeID.get(channel) + " msg: " + message;
@@ -559,11 +552,7 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
   }
 
   public void zapNode(NodeID nodeID, int type, String reason) {
-    if (nodeID == null) {
-      logger.error("zapNode with null nodeID");
-      return;
-    }
-    addToZappedSet(nodeID);
+    zappedSet.add(nodeID);
     TCGroupMember m = getMember(nodeID);
     if (m == null) {
       logger.warn("Ignoring Zap node request since Member is null");
@@ -586,22 +575,8 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
     }
   }
 
-  private void addToZappedSet(NodeID nodeID) {
-    zappedNodeSet.add(nodeID);
-    TCGroupMember m = getMember(nodeID);
-    if (m == null) {
-      logger.error("Zapped a non-exist member " + nodeID);
-      return;
-    }
-    zappedChannelSet.add(m.getChannel());
-  }
-
   private boolean isZappedNode(NodeID nodeID) {
-    return (zappedNodeSet.contains(nodeID));
-  }
-
-  private boolean isZappedChannel(MessageChannel channel) {
-    return (zappedChannelSet.contains(channel));
+    return (zappedSet.contains(nodeID));
   }
 
   private static class GroupResponseImpl implements GroupResponse {
@@ -1021,7 +996,7 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
    * for testing purpose only
    */
   void addZappedNode(NodeID nodeID) {
-    addToZappedSet(nodeID);
+    zappedSet.add(nodeID);
   }
 
 }
