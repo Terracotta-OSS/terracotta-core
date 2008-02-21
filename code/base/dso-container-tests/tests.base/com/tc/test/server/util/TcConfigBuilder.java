@@ -52,6 +52,16 @@ public class TcConfigBuilder {
     tcConfig = tcConfigDocument.getTcConfig();
   }
 
+  public void setDsoHost(String host) {
+    ensureServers();
+    tcConfig.getServers().getServerArray(0).setHost(host);
+  }
+
+  public String getDsoHost() {
+    ensureServers();
+    return tcConfig.getServers().getServerArray(0).getHost();
+  }
+
   public void setDsoPort(int portNo) {
     ensureServers();
     tcConfig.getServers().getServerArray(0).setDsoPort(portNo);
@@ -139,7 +149,7 @@ public class TcConfigBuilder {
     newModule.setGroupId(groupId);
     newModule.setVersion(version);
   }
-  
+
   public void addModule(String name, String version) {
     addModule(name, "org.terracotta.modules", version);
   }
