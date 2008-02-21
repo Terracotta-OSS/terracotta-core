@@ -110,8 +110,8 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
       if (!status.isClosed()) {
         Assert.assertNotNull(this.sendLayer);
         this.sendLayer.close();
+        status.close();
       }
-      status.close();
     }
   }
 
