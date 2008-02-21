@@ -87,7 +87,7 @@ public class TimeExpiryMemoryStore extends MemoryStore {
     }
   }
 
-  public final synchronized void putData(Element element) throws CacheException {
+  public final void putData(Element element) throws CacheException {
     if (element != null) {
         ((SpoolingTimeExpiryMap)map).putData(element.getObjectKey(), element);
         doPut(element);
@@ -104,23 +104,23 @@ public class TimeExpiryMemoryStore extends MemoryStore {
     ((SpoolingTimeExpiryMap) map).evictExpiredElements();
   }
 
-  public final synchronized int getHitCount() {
+  public final int getHitCount() {
     return ((SpoolingTimeExpiryMap) map).getHitCount();
   }
 
-  public final synchronized int getMissCountExpired() {
+  public final int getMissCountExpired() {
     return ((SpoolingTimeExpiryMap) map).getMissCountExpired();
   }
 
-  public final synchronized int getMissCountNotFound() {
+  public final int getMissCountNotFound() {
     return ((SpoolingTimeExpiryMap) map).getMissCountNotFound();
   }
 
-  public final synchronized boolean isExpired(final Object key) {
+  public final boolean isExpired(final Object key) {
     return ((SpoolingTimeExpiryMap) map).isExpired(key);
   }
 
-  public final synchronized void clearStatistics() {
+  public final void clearStatistics() {
     ((SpoolingTimeExpiryMap) map).clearStatistics();
   }
 
