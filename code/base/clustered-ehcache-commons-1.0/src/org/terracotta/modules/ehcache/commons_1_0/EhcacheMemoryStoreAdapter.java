@@ -8,8 +8,6 @@ import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.object.bytecode.ClassAdapterFactory;
 
-import java.lang.reflect.Modifier;
-
 public class EhcacheMemoryStoreAdapter extends ClassAdapter implements ClassAdapterFactory, Opcodes {
   public EhcacheMemoryStoreAdapter() {
     super(null);
@@ -24,9 +22,6 @@ public class EhcacheMemoryStoreAdapter extends ClassAdapter implements ClassAdap
   }
 
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-    if (!Modifier.isStatic(access)) {
-      access &= (~ACC_SYNCHRONIZED);
-     }
     MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
     if ("create".equals(name)
         && ("(Lnet/sf/ehcache/Ehcache;Lnet/sf/ehcache/store/DiskStore;)Lnet/sf/ehcache/store/MemoryStore;".equals(desc) || "(Lnet/sf/ehcache/Ehcache;Lnet/sf/ehcache/store/Store;)Lnet/sf/ehcache/store/MemoryStore;"
