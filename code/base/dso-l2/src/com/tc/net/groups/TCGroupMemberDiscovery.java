@@ -18,6 +18,4 @@ public interface TCGroupMemberDiscovery extends GroupEventsListener {
   
   public void discoveryHandler(EventContext context);
   
-  public void nodeZapped(NodeID nodeID);
-
 }
