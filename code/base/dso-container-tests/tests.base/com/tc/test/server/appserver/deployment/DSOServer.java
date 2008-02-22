@@ -60,7 +60,8 @@ public class DSOServer extends AbstractStoppable {
   private File writeConfig() throws IOException {
     File configFile = new File(workingDir, SERVER_TEST_CONFIG);
     if (configBuilder != null) {
-      configBuilder.saveToFile(configFile);
+      configBuilder.setTcConfigFile(configFile);
+      configBuilder.saveToFile();
     } else {
       TerracottaConfigBuilder builder = TerracottaConfigBuilder.newMinimalInstance();
       builder.getSystem().setConfigurationModel("development");
@@ -96,7 +97,7 @@ public class DSOServer extends AbstractStoppable {
   public int getAdminPort() {
     return adminPort;
   }
-  
+
   public List getJvmArgs() {
     return jvmArgs;
   }

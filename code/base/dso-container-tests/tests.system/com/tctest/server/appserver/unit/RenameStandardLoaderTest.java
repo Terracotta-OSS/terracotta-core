@@ -31,9 +31,6 @@ public class RenameStandardLoaderTest extends AbstractOneServerDeploymentTest {
   }
 
   public void testSession() throws Exception {
-    System.out.println("DSO port: " + getServerManager().getServerTcConfig().getDsoPort());
-    System.out.println("tc-config file: " + server0.getTcConfigFile());
-
     WebConversation conversation = new WebConversation();
 
     WebResponse response1 = request(server0, "cmd=insert", conversation);
@@ -84,6 +81,8 @@ public class RenameStandardLoaderTest extends AbstractOneServerDeploymentTest {
       
       fieldName = StandardLoaderApp.class.getName() + ".sharedMap";
       tcConfigBuilder.addRoot(fieldName, rootName);
+      methodExpression = "* " + StandardLoaderApp.class.getName() + ".*(..)";
+      tcConfigBuilder.addAutoLock(methodExpression, "read");
     }
 
   }

@@ -14,16 +14,17 @@ public class StandardLoaderApp {
   private final Map sharedMap = new HashMap();
 
   public static void main(String[] args) {
-     new StandardLoaderApp().doTest();
+    new StandardLoaderApp().doTest();
   }
-  
+
   private void doTest() {
-    Object obj = sharedMap.get("1");
-    if (obj instanceof StandardLoaderServlet.Inner) {
-      System.out.println("OK");
-    }
-    else {
-      System.exit(1);
+    synchronized (sharedMap) {
+      Object obj = sharedMap.get("1");
+      if (obj instanceof StandardLoaderServlet.Inner) {
+        System.out.println("OK");
+      } else {
+        System.exit(1);
+      }
     }
   }
 

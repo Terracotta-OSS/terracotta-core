@@ -24,6 +24,15 @@ public class TcConfigBuilder {
   private final TcConfigDocument tcConfigDocument;
   private final TcConfig         tcConfig;
   private XmlOptions             xmlOptions;
+  private File                   tcConfigFile = new File("tc-config.xml");
+
+  public File getTcConfigFile() {
+    return tcConfigFile;
+  }
+
+  public void setTcConfigFile(File tcConfigFile) {
+    this.tcConfigFile = tcConfigFile;
+  }
 
   public TcConfigBuilder() {
     this("default-tc-config.xml");
@@ -42,6 +51,7 @@ public class TcConfigBuilder {
     try {
       tcConfigDocument = new Loader().parse(file);
       tcConfig = tcConfigDocument.getTcConfig();
+      tcConfigFile = file;
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -176,12 +186,12 @@ public class TcConfigBuilder {
     return tcConfigDocument.toString();
   }
 
-  public void saveToFile(File filename) throws IOException {
+  public void saveToFile() throws IOException {
     InputStream is = null;
     FileOutputStream fos = null;
     try {
       is = tcConfigDocument.newInputStream(getXmlOptions());
-      fos = new FileOutputStream(filename);
+      fos = new FileOutputStream(tcConfigFile);
       IOUtils.copy(tcConfigDocument.newInputStream(getXmlOptions()), fos);
     } finally {
       IOUtils.closeQuietly(fos);

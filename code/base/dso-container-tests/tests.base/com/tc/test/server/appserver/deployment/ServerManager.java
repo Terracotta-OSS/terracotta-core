@@ -30,22 +30,23 @@ import junit.framework.Assert;
 
 public class ServerManager {
 
-  protected static TCLogger      logger         = TCLogging.getLogger(ServerManager.class);
-  private static int             appServerIndex = 0;
-  private final boolean          DEBUG_MODE     = false;
+  protected static TCLogger           logger         = TCLogging.getLogger(ServerManager.class);
+  private static int                  appServerIndex = 0;
+  private final boolean               DEBUG_MODE     = false;
 
-  private List                   serversToStop  = new ArrayList();
-  private DSOServer              dsoServer;
+  private List                        serversToStop  = new ArrayList();
+  private DSOServer                   dsoServer;
 
-  private final TestConfigObject config;
-  private AppServerFactory       factory;
-  private AppServerInstallation  installation;
-  private File                   sandbox;
-  private File                   tempDir;
-  private File                   installDir;
-  private File                   warDir;
-  private TcConfigBuilder        serverTcConfig = new TcConfigBuilder();
-  private final Collection       jvmArgs;
+  private final TestConfigObject      config;
+  private final AppServerFactory      factory;
+  private final AppServerInstallation installation;
+  private final File                  sandbox;
+  private final File                  tempDir;
+  private final File                  installDir;
+  private final File                  warDir;
+  private final File                  tcConfigFile;
+  private final TcConfigBuilder       serverTcConfig = new TcConfigBuilder();
+  private final Collection            jvmArgs;
 
   public ServerManager(final Class testClass, Collection extraJvmArgs) throws Exception {
     PropertiesHackForRunningInEclipse.initializePropertiesWhenRunningInEclipse();
@@ -53,6 +54,7 @@ public class ServerManager {
     factory = AppServerFactory.createFactoryFromProperties();
     installDir = config.appserverServerInstallDir();
     tempDir = TempDirectoryUtil.getTempDirectory(testClass);
+    tcConfigFile = new File(tempDir, "tc-config.xml");
     sandbox = AppServerUtil.createSandbox(tempDir);
     warDir = new File(sandbox, "war");
     jvmArgs = extraJvmArgs;
@@ -125,17 +127,18 @@ public class ServerManager {
   }
 
   /**
-   * tcConfigPath: resource path
+   * tcConfigResourcePath: resource path
    */
-  public WebApplicationServer makeWebApplicationServer(String tcConfigPath) throws Exception {
-    return makeWebApplicationServer(new TcConfigBuilder(tcConfigPath));
+  public WebApplicationServer makeWebApplicationServer(String tcConfigResourcePath) throws Exception {
+    return makeWebApplicationServer(new TcConfigBuilder(tcConfigResourcePath));
   }
 
   public WebApplicationServer makeWebApplicationServer(TcConfigBuilder tcConfigBuilder) throws Exception {
     int i = ServerManager.appServerIndex++;
 
     WebApplicationServer appServer = new GenericServer(config, factory, installation,
-                                                       prepareClientTcConfig(tcConfigBuilder), i, tempDir);
+                                                       prepareClientTcConfig(tcConfigBuilder).getTcConfigFile(), i,
+                                                       tempDir);
     addServerToStop(appServer);
     return appServer;
   }
@@ -148,8 +151,9 @@ public class ServerManager {
     return pathToTcConfigFile;
   }
 
-  private TcConfigBuilder prepareClientTcConfig(TcConfigBuilder clientConfig) {
+  private TcConfigBuilder prepareClientTcConfig(TcConfigBuilder clientConfig) throws IOException {
     TcConfigBuilder aCopy = clientConfig.copy();
+    aCopy.setTcConfigFile(tcConfigFile);
     aCopy.setDsoPort(getServerTcConfig().getDsoPort());
     aCopy.setJmxPort(getServerTcConfig().getJmxPort());
 
@@ -164,7 +168,7 @@ public class ServerManager {
       default:
         // nothing for now
     }
-
+    aCopy.saveToFile();
     return aCopy;
   }
 
@@ -218,5 +222,9 @@ public class ServerManager {
 
   public TcConfigBuilder getServerTcConfig() {
     return serverTcConfig;
+  }
+
+  public File getTcConfigFile() {
+    return tcConfigFile;
   }
 }
