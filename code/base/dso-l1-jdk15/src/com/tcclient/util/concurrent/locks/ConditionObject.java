@@ -24,8 +24,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 
 public class ConditionObject implements Condition, java.io.Serializable {
-  private static final TCLogger              logger = ManagerUtil.getLogger("com.tc.util.concurrent.locks.ConditionObject");
-  
   private transient List        waitingThreads;
   private transient int         numOfWaitingThreards;
   private transient Map         waitOnUnshared;
@@ -85,7 +83,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
 
   private void logDebug(String message) {
     if (DebugUtil.DEBUG) {
-      logger.info(message);
+      System.err.println(message);
     }
   }
 
