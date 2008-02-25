@@ -348,7 +348,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     FileOutputStream fos = null;
 
     try {
-      File tempFile = File.createTempFile("tc-classpath", parameters.instanceName());
+      File tempFile = new File(workingDir, "tc-classpath." + parameters.instanceName());
       tempFile.deleteOnExit();
       fos = new FileOutputStream(tempFile);
 
