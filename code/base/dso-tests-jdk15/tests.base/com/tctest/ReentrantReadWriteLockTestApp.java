@@ -78,7 +78,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       unsharedToSharedTest(index, new ReentrantReadWriteLock());
 
       unsharedToSharedReadLockTest(index, new ReentrantReadWriteLock());
-      
+
       unsharedToSharedWriteLockTest(index, new ReentrantReadWriteLock());
 
       readWriteLockTest(index, nonFairReadWriteLockRoot, nonFairCondition);
@@ -118,7 +118,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
 
     barrier.await();
   }
-  
+
   private void unsharedToSharedWriteLockTest(int index, ReentrantReadWriteLock lock) throws Exception {
     if (index == 0) {
       WriteLock writeLock = lock.writeLock();
@@ -243,7 +243,6 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   }
 
   private void tryReadWriteLockSingleNodeTest(final int index, ReentrantReadWriteLock lock) throws Exception {
-    DebugUtil.DEBUG = true;
     printTimeStamp(index, "tryReadWriteLockSingleNodeTest");
 
     final ReadLock readLock = lock.readLock();
@@ -338,7 +337,6 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       writeLock.unlock();
     }
 
-    DebugUtil.DEBUG = false;
     barrier.await();
   }
 
@@ -713,9 +711,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     }
     barrier.await();
 
-    if (DebugUtil.DEBUG) {
-      System.err.println("Client id: " + ManagerUtil.getClientID() + ", index: " + index);
-    }
+    logDebug("Client id: " + ManagerUtil.getClientID() + ", index: " + index);
 
     if (index == 0) {
       writeLock.lock();
@@ -767,10 +763,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       boolean isLocked = readLock.tryLock(1, TimeUnit.SECONDS);
       assertTryLockResult(!isLocked);
       unLockIfLocked(readLock, isLocked);
-      if (DebugUtil.DEBUG) {
-        System.err.println("Client " + ManagerUtil.getClientID() + " in tryReadLockMultiNodeTest last test, isLocked: "
-                           + isLocked);
-      }
+      logDebug("Client " + ManagerUtil.getClientID() + " in tryReadLockMultiNodeTest last test, isLocked: " + isLocked);
     }
     barrier.await();
   }
@@ -876,8 +869,10 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
         Q.add(new WorkItem(String.valueOf(i)));
         if (i % 2 == 0) {
           condition.signalAll();
+          logDebug("PUTTER-" + id + " signalAll");
         } else {
           condition.signal();
+          logDebug("PUTTER-" + id + " signal");
         }
       } finally {
         lock.unlock();
@@ -889,6 +884,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       try {
         Q.add(WorkItem.STOP);
         condition.signalAll();
+        logDebug("PUTTER-" + id + " putting STOP in queue");
       } finally {
         lock.unlock();
       }
@@ -907,16 +903,20 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
           int choice = i % 4;
           switch (choice) {
             case 0:
+              logDebug("GETTER- " + id + " await");
               condition.await();
               break;
             case 1:
+              logDebug("GETTER- " + id + " awaitUninterruptibly");
               condition.awaitUninterruptibly();
               break;
             case 2:
+              logDebug("GETTER- " + id + " await millis");
               long millis = random.nextInt(10000);
               condition.await(millis, TimeUnit.MILLISECONDS);
               break;
             case 3:
+              logDebug("GETTER- " + id + " await nanos");
               long nanos = random.nextInt(10000);
               condition.awaitNanos(nanos);
               break;
@@ -1040,7 +1040,6 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
 
   private void basicTryWriteLockTimeoutTest(int index, ReentrantReadWriteLock lock) throws Exception {
     printTimeStamp(index, "basicTryWriteLockTimeoutTest");
-    DebugUtil.DEBUG = true;
 
     final WriteLock writeLock = lock.writeLock();
     if (index == 0) {
@@ -1066,7 +1065,6 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       barrier3.await();
     }
 
-    DebugUtil.DEBUG = false;
     barrier.await();
   }
 
@@ -1185,7 +1183,6 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   }
 
   private void basicSingleNodeReadThenWriteLockingTest(int index, ReentrantReadWriteLock lock) throws Exception {
-    DebugUtil.DEBUG = true;
     printTimeStamp(index, "basicSingleNodeReadThenWriteLockingTest");
 
     final ReadLock readLock = lock.readLock();
@@ -1284,7 +1281,6 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       localBarrier2.await();
     }
 
-    DebugUtil.DEBUG = false;
     barrier.await();
   }
 
@@ -1345,6 +1341,12 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
 
   private void printTimeStamp(String methodName) throws Exception {
     System.err.println("Running " + methodName + " -- time: " + (new Date()));
+  }
+
+  private void logDebug(String msg) {
+    if (DebugUtil.DEBUG) {
+      System.err.println(msg);
+    }
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {

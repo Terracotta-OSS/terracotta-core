@@ -5,6 +5,7 @@
 package com.tcclient.util.concurrent.locks;
 
 import com.tc.exception.TCRuntimeException;
+import com.tc.logging.TCLogger;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.lockmanager.api.LockLevel;
@@ -23,6 +24,8 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 
 public class ConditionObject implements Condition, java.io.Serializable {
+  private static final TCLogger              logger = ManagerUtil.getLogger("com.tc.util.concurrent.locks.ConditionObject");
+  
   private transient List        waitingThreads;
   private transient int         numOfWaitingThreards;
   private transient Map         waitOnUnshared;
@@ -82,7 +85,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
 
   private void logDebug(String message) {
     if (DebugUtil.DEBUG) {
-      System.err.println(message);
+      logger.info(message);
     }
   }
 
@@ -152,7 +155,9 @@ public class ConditionObject implements Condition, java.io.Serializable {
 
             addWaitOnUnshared();
             try {
+              logDebug("Client " + ManagerUtil.getClientID() + " awaitingUninterruptibly on condition " + realCondition.hashCode() + " " + ((Manageable)realCondition).__tc_managed());
               ManagerUtil.objectWait0(realCondition);
+              logDebug("Client " + ManagerUtil.getClientID() + " wake up Uninterruptibly on condition " + realCondition.hashCode() + " " + ((Manageable)realCondition).__tc_managed());
               break;
             } catch (InterruptedException e) {
               isInterrupted = true;
@@ -307,7 +312,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
   private void writeObject(java.io.ObjectOutputStream s) throws java.io.IOException {
     s.defaultWriteObject();
   }
-
+  
   public static class SyncCondition implements java.io.Serializable {
     private final static byte SIGNALLED     = 0;
     private final static byte NOT_SIGNALLED = 1;
