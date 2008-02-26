@@ -348,8 +348,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     FileOutputStream fos = null;
 
     try {
-      File tempFile = new File(workingDir, "tc-classpath." + parameters.instanceName());
-      tempFile.deleteOnExit();
+      File tempFile = new File(installation.sandboxDirectory(), "tc-classpath." + parameters.instanceName());      
       fos = new FileOutputStream(tempFile);
 
       // XXX: total hack to make RequestCountTest pass on 1.4 VMs
