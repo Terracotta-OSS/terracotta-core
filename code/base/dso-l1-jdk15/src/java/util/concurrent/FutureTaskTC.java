@@ -163,6 +163,9 @@ public class FutureTaskTC implements Future, Runnable {
       }
 
       lock.lock();
+      if (DebugUtil.DEBUG) {
+        System.err.println(ManagerUtil.getClientID() + " locked in innerGet");
+      }
       try {
         while (tryAcquireShared() < 0) {
           if (DebugUtil.DEBUG) {
@@ -297,6 +300,9 @@ public class FutureTaskTC implements Future, Runnable {
           try {
             managedTryReleaseShared();
           } finally {
+            if (DebugUtil.DEBUG) {
+              System.err.println(ManagerUtil.getClientID() + " returned from managedTryReleaseShared.");
+            }
             lock.unlock();
           }
         }
