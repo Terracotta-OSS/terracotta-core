@@ -9,7 +9,6 @@ import com.tc.objectserver.core.api.ManagedObjectState;
 
 public class ArrayManagedObjectStateTest extends AbstractTestManagedObjectState {
 
-/*
   public void testIntegerArray() throws Exception {
     String className = "[java.lang.Integer";
     TestDNACursor cursor = new TestDNACursor();
@@ -17,9 +16,7 @@ public class ArrayManagedObjectStateTest extends AbstractTestManagedObjectState 
     cursor.addArrayAction(new Integer[] { new Integer(2002), new Integer(2003) });
 
     basicTestUnit(className, ManagedObjectState.ARRAY_TYPE, cursor, 0);
-    // failed when readFrom back, the literalType changed from 0 (Integer) to 10 (Object)
   }
-  */
   
   public void testObjectArray() throws Exception {
     String className = "[java.lang.Object";

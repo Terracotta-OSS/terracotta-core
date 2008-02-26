@@ -210,8 +210,14 @@ public class ArrayManagedObjectState extends LogicalManagedObjectState implement
 
   protected boolean basicEquals(LogicalManagedObjectState other) {
     ArrayManagedObjectState amo = (ArrayManagedObjectState) other;
-    return size == amo.size && isPrimitive == amo.isPrimitive && literalType == amo.literalType
-           && equals(arrayData, amo.arrayData, literalType);
+    if (!(size == amo.size && isPrimitive == amo.isPrimitive)) return false;
+    if (isPrimitive) {
+      return literalType == amo.literalType && equals(arrayData, amo.arrayData, literalType);
+    } else {
+      // DNAEncordingImpl decodes all non primitive array into Object[]
+      return (literalType == LiteralValues.OBJECT || amo.literalType == LiteralValues.OBJECT) 
+        && equals(arrayData, amo.arrayData, LiteralValues.OBJECT);
+    }
   }
 
   private static boolean equals(Object a1, Object a2, int type) {
