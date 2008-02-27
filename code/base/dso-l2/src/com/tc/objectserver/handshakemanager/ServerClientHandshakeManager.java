@@ -83,7 +83,7 @@ public class ServerClientHandshakeManager {
     return state == STARTED;
   }
 
-  public void notifyClientConnect(ClientHandshakeMessage handshake) throws ClientHandshakeException {
+  public synchronized void notifyClientConnect(ClientHandshakeMessage handshake) throws ClientHandshakeException {
     ClientID clientID = handshake.getClientID();
     logger.info("Client connected " + clientID);
     synchronized (this) {
