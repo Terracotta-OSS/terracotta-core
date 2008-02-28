@@ -378,7 +378,9 @@ public class ClassProcessorHelper {
 
         tcLoader = createTCLoader();
 
-        registerStandardLoaders();
+        if (USE_GLOBAL_CONTEXT) {
+          registerStandardLoaders();
+        }
 
         // do this before doing anything with the TC loader
         initTCLogging();
