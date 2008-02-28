@@ -126,7 +126,7 @@ public class ClassProcessorHelper {
 
   /**
    * Get resource URL
-   *
+   * 
    * @param name Resource name
    * @param cl Loading classloader
    * @return URL to load resource from
@@ -154,7 +154,7 @@ public class ClassProcessorHelper {
 
   /**
    * Get TC class definition
-   *
+   * 
    * @param name Class name
    * @param cl Classloader
    * @return Class bytes
@@ -378,6 +378,8 @@ public class ClassProcessorHelper {
 
         tcLoader = createTCLoader();
 
+        registerStandardLoaders();
+
         // do this before doing anything with the TC loader
         initTCLogging();
 
@@ -394,6 +396,26 @@ public class ClassProcessorHelper {
         throw new AssertionError(); // shouldn't get here
       }
     }
+  }
+
+  private static void registerStandardLoaders() {
+    ClassLoader loader1 = ClassLoader.getSystemClassLoader();
+    ClassLoader loader2 = loader1.getParent();
+    ClassLoader loader3 = loader2.getParent();
+
+    final ClassLoader sunSystemLoader;
+    final ClassLoader extSystemLoader;
+
+    if (loader3 != null) { // user is using alternate system loader
+      sunSystemLoader = loader2;
+      extSystemLoader = loader3;
+    } else {
+      sunSystemLoader = loader1;
+      extSystemLoader = loader2;
+    }
+
+    registerGlobalLoader((NamedClassLoader) sunSystemLoader);
+    registerGlobalLoader((NamedClassLoader) extSystemLoader);
   }
 
   private static void initTCLogging() throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException,
@@ -446,7 +468,7 @@ public class ClassProcessorHelper {
 
   /**
    * Check whether this web app is using DSO sessions
-   *
+   * 
    * @param appName Web app name
    * @return True if DSO sessions enabled
    */
@@ -464,7 +486,7 @@ public class ClassProcessorHelper {
 
   /**
    * WARNING: Used by test framework only
-   *
+   * 
    * @param loader Loader
    * @param context DSOContext
    */
@@ -497,7 +519,7 @@ public class ClassProcessorHelper {
 
   /**
    * Get the DSOContext for this classloader
-   *
+   * 
    * @param cl Loader
    * @return Context
    */
@@ -527,7 +549,7 @@ public class ClassProcessorHelper {
    * XXX::NOTE:: Do NOT optimize to return same input byte array if the class was instrumented (I can't imagine why we
    * would). Our instrumentation in java.lang.ClassLoader checks the returned byte array to see if the class is
    * instrumented or not to maintain the array offset.
-   *
+   * 
    * @param caller Loader defining class
    * @param name Class name
    * @param b Data
@@ -567,7 +589,7 @@ public class ClassProcessorHelper {
 
   /**
    * Post process class during definition
-   *
+   * 
    * @param clazz Class being defined
    * @param caller Classloader doing definition
    */
@@ -607,7 +629,7 @@ public class ClassProcessorHelper {
 
   /**
    * Check whether this is an AspectWerkz dependency
-   *
+   * 
    * @param className Class name
    * @return True if AspectWerkz dependency
    */
@@ -623,7 +645,7 @@ public class ClassProcessorHelper {
 
   /**
    * Check whether this is a DSO dependency
-   *
+   * 
    * @param className Class name
    * @return True if DSO dependency
    */
@@ -638,7 +660,7 @@ public class ClassProcessorHelper {
 
   /**
    * Get type of lock used by sessions
-   *
+   * 
    * @param appName Web app context
    * @return Lock type
    */

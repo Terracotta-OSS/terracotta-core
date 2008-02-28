@@ -4,6 +4,9 @@
  */
 package com.tctest.webapp.servlets;
 
+import com.tc.object.loaders.NamedClassLoader;
+import com.tc.util.StringUtil;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,10 +20,18 @@ public class StandardLoaderServlet extends HttpServlet {
   private final Map sharedMap = new HashMap();
 
   protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-    synchronized (sharedMap) {
-      sharedMap.put("1", new Inner());
+    String cmd = req.getParameter("cmd");
+    if ("getClassLoaderName".equals(cmd)) {
+      NamedClassLoader loader = (NamedClassLoader) this.getClass().getClassLoader();
+      resp.getWriter().print(loader.__tc_getClassLoaderName());
+    } else if ("putInstance".equals(cmd)) {
+      synchronized (sharedMap) {
+        sharedMap.put("1", new Inner());
+        resp.getWriter().print("OK");
+      }
+    } else {
+      resp.getWriter().print("Unknown cmd=" + StringUtil.safeToString(cmd));
     }
-    resp.getWriter().print("OK");
   }
 
   public static class Inner {

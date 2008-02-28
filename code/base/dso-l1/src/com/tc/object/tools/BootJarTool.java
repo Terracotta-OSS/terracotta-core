@@ -292,7 +292,7 @@ public class BootJarTool {
    * Checks if the given bootJarFile is complete; meaning: - All the classes declared in the configurations
    * <additional-boot-jar-classes/> section is present in the boot jar. - And there are no user-classes present in the
    * boot jar that is not declared in the <additional-boot-jar-classes/> section
-   *
+   * 
    * @return <code>true</code> if the boot jar is complete.
    */
   private final boolean isBootJarComplete(File bootJarFile) {
@@ -310,7 +310,7 @@ public class BootJarTool {
    * Scans the boot JAR file for: - User-defined classes that are in the boot JAR but is not defined in the
    * <additional-boot-jar-classes/> section of the config - Class names declared in the config but are not in the boot
    * JAR
-   *
+   * 
    * @throws InvalidBootJarMetaDataException
    */
   private final Map compareBootJarContentsToUserSpec(File bootJarFile) throws InvalidBootJarMetaDataException {
@@ -1649,14 +1649,15 @@ public class BootJarTool {
     byte[] orig = getSystemBytes("sun.misc.Launcher$AppClassLoader");
     ClassReader cr = new ClassReader(orig);
     ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    ClassVisitor cv = new StandardClassLoaderAdapter(cw, Namespace.getStandardSystemLoaderName());
+    ClassVisitor cv = new StandardClassLoaderAdapter(cw, Namespace.getStandardSystemLoaderName(),
+                                                     "com.tc.loader.system.name");
     cr.accept(cv, ClassReader.SKIP_FRAMES);
     bootJar.loadClassIntoJar("sun.misc.Launcher$AppClassLoader", cw.toByteArray(), false);
 
     orig = getSystemBytes("sun.misc.Launcher$ExtClassLoader");
     cr = new ClassReader(orig);
     cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    cv = new StandardClassLoaderAdapter(cw, Namespace.getStandardExtensionsLoaderName());
+    cv = new StandardClassLoaderAdapter(cw, Namespace.getStandardExtensionsLoaderName(), "com.tc.loader.ext.name");
     cr.accept(cv, ClassReader.SKIP_FRAMES);
     bootJar.loadClassIntoJar("sun.misc.Launcher$ExtClassLoader", cw.toByteArray(), false);
   }
