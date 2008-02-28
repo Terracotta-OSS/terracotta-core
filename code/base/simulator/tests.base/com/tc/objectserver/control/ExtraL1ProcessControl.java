@@ -10,7 +10,6 @@ import com.tc.util.Assert;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.Iterator;
 import java.util.List;
 
 public class ExtraL1ProcessControl extends ExtraProcessServerControl {
@@ -25,13 +24,6 @@ public class ExtraL1ProcessControl extends ExtraProcessServerControl {
     this.mainClass = mainClass;
     this.mainArgs = mainArgs;
     this.directory = directory;
-
-    if (extraJvmArgs != null) {
-      for (Iterator i = extraJvmArgs.iterator(); i.hasNext();) {
-        String next = (String) i.next();
-        this.jvmArgs.add(next);
-      }
-    }
 
     setJVMArgs();
   }
