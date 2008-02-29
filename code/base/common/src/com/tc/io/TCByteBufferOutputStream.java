@@ -32,7 +32,7 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
   private final int              maxBlockSize;
   private final DataOutputStream dos;
 
-  // The "buffers" list is accesed by index in the Mark class, thus it should not be a linked list
+  // The "buffers" list is accessed by index in the Mark class, thus it should not be a linked list
   private List                   buffers                    = new ArrayList();
   private Map                    localBuffers               = new IdentityHashMap();
   private TCByteBuffer           current;
