@@ -149,6 +149,31 @@ public class SessionConfigTest extends AbstractDeploymentTest {
     assertEquals(Integer.MAX_VALUE, actual);
   }
 
+  public void testResetTimeoutToLowerValue() throws Exception {
+    // CDV-634
+    if (true) return;
+
+    init();
+    int timeoutValue = 30;
+    WebConversation wc = new WebConversation();
+
+    System.out.println("Setting timeout value to: " + timeoutValue);
+    WebResponse response = request(server, "testcase=testResetTimeoutToLowerValue&hit=0&timeout=" + timeoutValue, wc);
+    assertEquals("OK", response.getText().trim());
+
+    System.out.println("About to sleep for: " + (timeoutValue / 2));
+    Thread.sleep(1000 * (timeoutValue / 2));
+
+    System.out.println("Setting timeout value to: " + (timeoutValue / 2));
+    response = request(server, "testcase=testResetTimeoutToLowerValue&hit=1&value=ABC&timeout=" + (timeoutValue / 2),
+                       wc);
+    assertEquals("OK", response.getText().trim());
+
+    System.out.println("Retrieving previous stored value in session...");
+    response = request(server, "testcase=testResetTimeoutToLowerValue&hit=2&value=ABC", wc);
+    assertEquals("OK", response.getText().trim());
+  }
+
   private void initWithSessionTimeout(int timeOutInMinutes) throws Exception {
     createTestDeployment();
     builder.addSessionConfig("session-timeout", String.valueOf(timeOutInMinutes));

@@ -55,6 +55,29 @@ public final class SessionConfigServlet extends HttpServlet {
           out.println("session has expired. isNew() returns " + session.isNew());
         }
       }
+    } else if ("testResetTimeoutToLowerValue".equals(testCase)) {
+      int hit = Integer.parseInt(request.getParameter("hit"));
+      int timeout;
+      switch (hit) {
+        case 0:
+          timeout = Integer.parseInt(request.getParameter("timeout"));
+          session.setMaxInactiveInterval(timeout);
+          break;
+        case 1:
+          timeout = Integer.parseInt(request.getParameter("timeout"));
+          session.setMaxInactiveInterval(timeout);
+          session.setAttribute("value", request.getParameter("value"));
+          break;
+        case 2:
+          String value = request.getParameter("value");
+          String storedValue = (String)session.getAttribute("value");
+          if (!value.equals(storedValue)) {
+            out.println("expected <" + value + "> but got <" + storedValue + ">");
+          }
+          break;
+        default:
+          out.println("Wrong hit");
+      }
     }
     out.println("OK");
   }
