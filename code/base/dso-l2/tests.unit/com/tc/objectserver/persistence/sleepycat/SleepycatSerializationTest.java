@@ -143,7 +143,6 @@ public class SleepycatSerializationTest extends TCTestCase {
       ManagedObjectImpl loaded = (ManagedObjectImpl) mop.loadObjectByID(test.getID());
       assertFalse(test.isDirty());
       assertFalse(loaded.isDirty());
-      assertFalse(test.isNew());
       assertFalse(loaded.isNew());
       assertTrue(test.isEqual(loaded));
       assertNotSame(test, loaded);
@@ -343,7 +342,6 @@ public class SleepycatSerializationTest extends TCTestCase {
     ManagedObjectImpl rv = new ManagedObjectImpl(objectID);
     assertTrue(rv.isNew());
     rv.apply(dna, new TransactionID(++transactionSequence), new BackReferences(), imo, false);
-    assertFalse(rv.isNew());
     return rv;
   }
 
@@ -366,7 +364,6 @@ public class SleepycatSerializationTest extends TCTestCase {
     TestDNA dna = newPhysicalDNA(false);
     assertTrue(rv.isNew());
     rv.apply(dna, new TransactionID(++transactionSequence), new BackReferences(), imo, false);
-    assertFalse(rv.isNew());
     return rv;
   }
 

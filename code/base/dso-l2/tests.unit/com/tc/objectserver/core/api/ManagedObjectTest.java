@@ -39,7 +39,6 @@ public class ManagedObjectTest extends TCTestCase {
     Map instances = instanceMonitor.getInstanceCounts();
     assertEquals(0, instances.size());
     mo.apply(dna, new TransactionID(1), new BackReferences(), instanceMonitor, false);
-    assertFalse(mo.isNew());
 
     instances = instanceMonitor.getInstanceCounts();
     assertEquals(1, instances.size());
