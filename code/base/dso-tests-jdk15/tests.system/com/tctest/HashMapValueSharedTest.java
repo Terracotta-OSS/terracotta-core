@@ -17,9 +17,14 @@ import java.util.concurrent.CyclicBarrier;
 
 /**
  * Test case for DEV-1283
+ * To cause OOME, the following constants to said values:
+ *   THREADS_PER_NODE_COUNT = 20
+ *   NODE_COUNT = 5
+ *   NUM_OF_OBJ_PER_THREAD = 10000
  */
 public class HashMapValueSharedTest extends GCTestBase {
-
+  
+  
   private static final int THREADS_PER_NODE_COUNT = 8;
   private static final int NODE_COUNT = 2;
 
