@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class ArrayManagedObjectState extends LogicalManagedObjectState implements PrettyPrintable {
-  private static final LiteralValues LITERAL_VALUES = (LiteralValues) new LiteralValues();
+  private static final LiteralValues LITERAL_VALUES = new LiteralValues();
 
   private Object                      arrayData;
   private int                         size           = DNA.NULL_ARRAY_SIZE;

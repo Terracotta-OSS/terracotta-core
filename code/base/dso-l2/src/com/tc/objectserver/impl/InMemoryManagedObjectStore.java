@@ -48,14 +48,18 @@ public class InMemoryManagedObjectStore implements ManagedObjectStore {
 
   public synchronized void commitObject(PersistenceTransaction tx, ManagedObject managedObject) {
     assertNotInShutdown();
-    assertContains(managedObject);
+    // Nothing to do here since its in memory DB
+    // We are calling addNewObject after commit now so that OidFastLoad can create OID records for new Objects
+    // assertContains(managedObject);
   }
 
   public synchronized void commitAllObjects(PersistenceTransaction tx, Collection managedObjects) {
     assertNotInShutdown();
-    for (Iterator i = managedObjects.iterator(); i.hasNext();) {
-      assertContains((ManagedObject) i.next());
-    }
+    // Nothing to do here since its in memory DB
+    // We are calling addNewObject after commit now so that OidFastLoad can create OID records for new Objects
+    // for (Iterator i = managedObjects.iterator(); i.hasNext();) {
+    // assertContains((ManagedObject) i.next());
+    // }
   }
 
   private void removeObjectByID(PersistenceTransaction tx, ObjectID id) {
@@ -105,10 +109,10 @@ public class InMemoryManagedObjectStore implements ManagedObjectStore {
     if (inShutdown) throw new ShutdownError();
   }
 
-  private synchronized void assertContains(ManagedObject managedObject) {
-    if (!containsObject(managedObject.getID())) throw new AssertionError("Object store does not contain "
-                                                                         + managedObject);
-  }
+  // private synchronized void assertContains(ManagedObject managedObject) {
+  // if (!containsObject(managedObject.getID())) throw new AssertionError("Object store does not contain "
+  // + managedObject);
+  // }
 
   public ObjectID getRootID(String name) {
     return (ObjectID) (roots.containsKey(name) ? roots.get(name) : ObjectID.NULL_ID);

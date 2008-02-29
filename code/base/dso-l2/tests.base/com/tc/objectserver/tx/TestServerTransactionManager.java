@@ -104,4 +104,8 @@ public class TestServerTransactionManager implements ServerTransactionManager {
   public void nodeConnected(NodeID nodeID) {
     throw new ImplementMe();
   }
+
+  public int getTotalPendingTransactionsCount() {
+    throw new ImplementMe();
+  }
 }

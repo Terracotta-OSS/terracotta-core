@@ -220,9 +220,13 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
       for (Iterator i = new ObjectIDSet2(toBeVisited).iterator(); i.hasNext();) {
         ObjectID id = (ObjectID) i.next();
         if (lifeCycleState.isStopRequested()) return;
-        ManagedObject obj = objectManager.getObjectByID(id);
+        ManagedObject obj = objectManager.getObjectByIDOrNull(id);
         toBeVisited.remove(id);
-
+        if (obj == null) {
+          logger.warn("Looked up a new Object before its initialized, skipping : " + id);
+          continue;
+        }
+        
         for (Iterator r = obj.getObjectReferences().iterator(); r.hasNext();) {
           ObjectID mid = (ObjectID) r.next();
           if (mid.isNull() || !managedObjectIds.contains(mid)) continue;
@@ -355,7 +359,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
       logger.warn("GC Thread did not stop");
     }
   }
-  
+
   public boolean isStarted() {
     return this.started;
   }

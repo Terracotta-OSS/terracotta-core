@@ -44,26 +44,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ServerTransactionManagerImpl implements ServerTransactionManager, ServerTransactionManagerMBean,
     GlobalTransactionManager {
 
-  private static final TCLogger                         logger              = TCLogging
-                                                                                .getLogger(ServerTransactionManager.class);
+  private static final TCLogger                         logger                   = TCLogging
+                                                                                     .getLogger(ServerTransactionManager.class);
 
-  private static final State                            PASSIVE_MODE        = new State("PASSIVE-MODE");
-  private static final State                            ACTIVE_MODE         = new State("ACTIVE-MODE");
+  private static final State                            PASSIVE_MODE             = new State("PASSIVE-MODE");
+  private static final State                            ACTIVE_MODE              = new State("ACTIVE-MODE");
 
   // TODO::FIXME::Change this to concurrent hashmap with top level txn accounting
-  private final Map                                     transactionAccounts = Collections
-                                                                                .synchronizedMap(new HashMap());
+  private final Map                                     transactionAccounts      = Collections
+                                                                                     .synchronizedMap(new HashMap());
   private final ClientStateManager                      stateManager;
   private final ObjectManager                           objectManager;
   private final ResentTransactionSequencer              resentTxnSequencer;
   private final TransactionAcknowledgeAction            action;
   private final LockManager                             lockManager;
-  private final List                                    rootEventListeners  = new CopyOnWriteArrayList();
-  private final List                                    txnEventListeners   = new CopyOnWriteArrayList();
+  private final List                                    rootEventListeners       = new CopyOnWriteArrayList();
+  private final List                                    txnEventListeners        = new CopyOnWriteArrayList();
   private final GlobalTransactionIDLowWaterMarkProvider lwmProvider;
 
   private final Counter                                 transactionRateCounter;
@@ -74,7 +75,8 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
   private final ServerTransactionLogger                 txnLogger;
 
-  private volatile State                                state               = PASSIVE_MODE;
+  private volatile State                                state                    = PASSIVE_MODE;
+  private final AtomicInteger                           totalPendingTransactions = new AtomicInteger(0);
 
   public ServerTransactionManagerImpl(ServerGlobalTransactionManager gtxm, TransactionStore transactionStore,
                                       LockManager lockManager, ClientStateManager stateManager,
@@ -228,6 +230,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
   private void acknowledge(NodeID waiter, TransactionID txnID) {
     final ServerTransactionID serverTxnID = new ServerTransactionID(waiter, txnID);
+    totalPendingTransactions.decrementAndGet();
     fireTransactionCompleteEvent(serverTxnID);
     if (isActive()) {
       action.acknowledgeTransaction(serverTxnID);
@@ -236,8 +239,9 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
   public void acknowledgement(NodeID waiter, TransactionID txnID, NodeID waitee) {
 
-    // NOTE ::TODO Sometime you can get double notification for the same txn in server restart cases. In those cases the
-    // accounting could be messed up. The counter is set to have a min of zero to avoid ugly negative values.
+    // NOTE ::Sometime you can get double notification for the same txn in server restart cases. In those cases the
+    // accounting could be messed up. The counter is set to have a minimum bound of zero to avoid ugly negative values.
+    // @see ChannelStatsImpl
     if (isActive() && waitee.getType() == NodeID.L1_NODE_TYPE) {
       channelStats.notifyTransactionAckedFrom(waitee);
     }
@@ -335,6 +339,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     final boolean active = isActive();
     TransactionAccount ci = getOrCreateTransactionAccount(source);
     ci.incommingTransactions(txnIDs);
+    totalPendingTransactions.addAndGet(txnIDs.size());
     for (Iterator i = txns.iterator(); i.hasNext();) {
       final ServerTransaction txn = (ServerTransaction) i.next();
       final ServerTransactionID stxnID = txn.getServerTransactionID();
@@ -347,6 +352,10 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
     fireIncomingTransactionsEvent(source, txnIDs);
     resentTxnSequencer.addTransactions(txns);
+  }
+
+  public int getTotalPendingTransactionsCount() {
+    return totalPendingTransactions.get();
   }
 
   private boolean isActive() {
@@ -593,5 +602,4 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
 
   }
-
 }

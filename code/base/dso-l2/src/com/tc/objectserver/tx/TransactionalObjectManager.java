@@ -13,7 +13,7 @@ import java.util.Collection;
 public interface TransactionalObjectManager {
 
   public void addTransactions(Collection txns);
-
+  
   public void lookupObjectsForTransactions();
 
   public boolean applyTransactionComplete(ServerTransactionID stxnID);

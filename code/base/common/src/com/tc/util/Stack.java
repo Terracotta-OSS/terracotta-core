@@ -21,6 +21,7 @@ public class Stack {
    * Creates an empty Stack.
    */
   public Stack() {
+    // Creates an empty Stack.
   }
 
   /**

@@ -63,7 +63,6 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
     rTxnManager.clearTransactionsBelowLowWaterMark(lowGlobalTransactionIDWatermark);
   }
 
-  // TODO:: Implement throttling between active/passive
   private void ackTransactions(RelayedCommitTransactionMessage commitMessage, Set serverTxnIDs) {
     ServerTxnAckMessage msg = ServerTxnAckMessageFactory.createServerTxnAckMessage(commitMessage, serverTxnIDs);
     sendSink.add(msg);

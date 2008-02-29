@@ -46,7 +46,7 @@ public class ManagedObjectSerializer implements Serializer {
       rv.version = version;
       rv.state = state;
       rv.setIsDirty(false);
-      rv.setBasicIsNew(false);
+      rv.setIsNew(false);
       return rv;
     } catch (Exception e) {
       throw new TCRuntimeException(e);

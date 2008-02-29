@@ -93,6 +93,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private final Sink                           faultSink;
   private final Sink                           flushSink;
   private TransactionalObjectManager           txnObjectMgr             = new NullTransactionalObjectManager();
+  private int                                  preFetchedCount          = 0;
 
   public ObjectManagerImpl(ObjectManagerConfig config, ThreadGroup gcThreadGroup, ClientStateManager stateManager,
                            ManagedObjectStore objectStore, EvictionPolicy cache,
@@ -201,7 +202,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
    * For management use only (see interface documentation)
    */
   public ManagedObjectFacade lookupFacade(ObjectID id, int limit) throws NoSuchObjectException {
-    final ManagedObject object = lookup(id, true);
+    final ManagedObject object = lookup(id, true, false);
     if (object == null) { throw new NoSuchObjectException(id); }
 
     try {
@@ -211,10 +212,10 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
   }
 
-  private ManagedObject lookup(ObjectID id, boolean missingOk) {
+  private ManagedObject lookup(ObjectID id, boolean missingOk, boolean lookupNewObjects) {
     syncAssertNotInShutdown();
 
-    WaitForLookupContext waitContext = new WaitForLookupContext(id, missingOk);
+    WaitForLookupContext waitContext = new WaitForLookupContext(id, missingOk, lookupNewObjects);
     ObjectManagerLookupContext context = new ObjectManagerLookupContext(waitContext, true);
     basicLookupObjectsFor(ClientID.NULL_ID, context, -1);
 
@@ -226,7 +227,20 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   public ManagedObject getObjectByID(ObjectID id) {
-    return lookup(id, false);
+    return lookup(id, false, false);
+  }
+
+  /**
+   * This method lookups objects just like getObjectByID except it returns null if the object is still new.
+   */
+  public ManagedObject getObjectByIDOrNull(ObjectID id) {
+    ManagedObject mo = lookup(id, false, true);
+    if (mo.isNew()) {
+      logger.warn("Returning null since looking up " + id + " which is still a new Object : " + mo);
+      releaseReadOnly(mo);
+      return null;
+    }
+    return mo;
   }
 
   private void markReferenced(ManagedObjectReference reference) {
@@ -257,14 +271,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     ManagedObjectReference rv = getReference(id);
 
     if (rv == null) {
-      // Request Faulting in a different stage and give back a "Referenced" proxy
-      ManagedObjectFaultingContext mofc = new ManagedObjectFaultingContext(id, context.removeOnRelease());
-      faultSink.add(mofc);
-
-      // don't account for a cache "miss" unless this was a real request
-      // originating from a client
-      stats.cacheMiss();
-      rv = addNewReference(new FaultingManagedObjectReference(id));
+      rv = initiateFaultingFor(id, context.removeOnRelease());
     } else if (rv instanceof FaultingManagedObjectReference) {
       // Check to see if the retrieve was complete and the Object is missing
       FaultingManagedObjectReference fmr = (FaultingManagedObjectReference) rv;
@@ -291,6 +298,17 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return rv;
   }
 
+  private ManagedObjectReference initiateFaultingFor(ObjectID id, boolean removeOnRelease) {
+    // Request Faulting in a different stage and give back a "Referenced" proxy
+    ManagedObjectFaultingContext mofc = new ManagedObjectFaultingContext(id, removeOnRelease);
+    faultSink.add(mofc);
+
+    // don't account for a cache "miss" unless this was a real request
+    // originating from a client
+    stats.cacheMiss();
+    return addNewReference(new FaultingManagedObjectReference(id));
+  }
+
   public synchronized void addFaultedObject(ObjectID oid, ManagedObject mo, boolean removeOnRelease) {
     FaultingManagedObjectReference fmor;
     if (mo == null) {
@@ -315,6 +333,23 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     postRelease();
   }
 
+  public synchronized void preFetchObjectsAndCreate(Set oids, Set newOids) {
+    createNewObjects(newOids);
+    preFetchObjects(oids);
+  }
+
+  private void preFetchObjects(Set oids) {
+    for (Iterator i = oids.iterator(); i.hasNext();) {
+      ObjectID id = (ObjectID) i.next();
+      ManagedObjectReference rv = getReference(id);
+      if (rv == null) {
+        // This object is not in the cache, initiate faulting for the object
+        if (++preFetchedCount % 1000 == 0) logger.info("Prefetched " + preFetchedCount + " objects");
+        initiateFaultingFor(id, false);
+      }
+    }
+  }
+
   private ManagedObjectReference addNewReference(ManagedObject obj, boolean isRemoveOnRelease) throws AssertionError {
     ManagedObjectReference newReference = obj.getReference();
     newReference.setRemoveOnRelease(isRemoveOnRelease);
@@ -323,7 +358,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   private ManagedObjectReference addNewReference(ManagedObjectReference newReference) {
-    Assert.assertNull(references.put(newReference.getObjectID(), newReference));
+    Object oldRef = references.put(newReference.getObjectID(), newReference);
+    if (oldRef != null) { throw new AssertionError("Object was not null. Reference already present : old = " + oldRef
+                                                   + " : new = " + newReference); }
     Assert.assertTrue(newReference.getNext() == null && newReference.getPrevious() == null);
 
     if (!newReference.isRemoveOnRelease()) {
@@ -393,25 +430,26 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     Set ids = context.getLookupIDs();
     for (Iterator i = ids.iterator(); i.hasNext();) {
       ObjectID id = (ObjectID) i.next();
-      if (newObjectIDs.contains(id)) continue;
       // We don't check available flag before doing calling getOrLookupReference() for two reasons.
       // 1) To get the right hit/miss count and
       // 2) to Fault objects that are not available
       ManagedObjectReference reference = getOrLookupReference(context, id);
       if (reference == null) {
         continue;
-      } else if (available && reference.isReferenced()) {
+      } else if (available && (reference.isReferenced() || (reference.isNew() && !newObjectIDs.contains(id)))) {
         available = false;
+        if (!reference.isReferenced() && reference.isNew()) {
+          logger.warn("Making " + context + " pending since reference " + reference + " is new and not in "
+                      + newObjectIDs);
+        }
         // Setting only the first referenced object to process Pending. If objects are being faulted in, then this
         // will ensure that we don't run processPending multiple times unnecessarily.
         addBlocked(nodeID, context, maxReachableObjects, id);
       }
-
       objects.add(reference);
     }
 
     if (available) {
-      createNewObjectsAndAddTo(objects, newObjectIDs);
       Set processLater = addReachableObjectsIfNecessary(nodeID, maxReachableObjects, objects);
       ObjectManagerLookupResults results = new ObjectManagerLookupResultsImpl(processObjectsRequest(objects),
                                                                               processLater);
@@ -422,12 +460,11 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return available;
   }
 
-  private void createNewObjectsAndAddTo(Set objects, Set newObjectIDs) {
+  public synchronized void createNewObjects(Set newObjectIDs) {
     for (Iterator i = newObjectIDs.iterator(); i.hasNext();) {
       ObjectID oid = (ObjectID) i.next();
       ManagedObject mo = new ManagedObjectImpl(oid);
       createObject(mo);
-      objects.add(mo.getReference());
     }
   }
 
@@ -445,7 +482,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         ObjectID id = (ObjectID) j.next();
         ManagedObjectReference newRef = getReference(id);
         // Note : Objects are looked up only if it is in the memory and not referenced
-        if (newRef != null && !newRef.isReferenced()) {
+        if (newRef != null && !newRef.isReferenced() && !newRef.isNew()) {
           if (objects.add(newRef)) {
             lookedUpObjects.add(newRef);
           }
@@ -455,13 +492,12 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return traverser.getPendingObjectsToLookup(lookedUpObjects);
   }
 
-  // TODO:: Multiple read only checkouts, now that there are more than 1 thread faulting objects to the
-  // client
   public void releaseReadOnly(ManagedObject object) {
-    if (config.paranoid() && object.isDirty()) { throw new AssertionError("Object is dirty after a read-only checkout"
-                                                                          + object); }
+    if (config.paranoid() && !object.isNew() && object.isDirty()) { throw new AssertionError(
+                                                                                             "Object is dirty after a read-only checkout "
+                                                                                                 + object); }
     synchronized (this) {
-      basicRelease(object);
+      basicReleaseReadOnly(object);
       postRelease();
     }
   }
@@ -475,7 +511,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   }
 
-  public synchronized void releaseAll(Collection objects) {
+  public synchronized void releaseAllReadOnly(Collection objects) {
     for (Iterator i = objects.iterator(); i.hasNext();) {
       ManagedObject mo = (ManagedObject) i.next();
       if (config.paranoid() && !mo.isNew() && mo.isDirty()) {
@@ -484,7 +520,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         throw new AssertionError("ObjectManager.releaseAll() called on dirty old objects : " + mo
                                  + " total objects size : " + objects.size());
       }
-      basicRelease(mo);
+      basicReleaseReadOnly(mo);
     }
     postRelease();
   }
@@ -550,9 +586,24 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private void basicRelease(ManagedObject object) {
     ManagedObjectReference mor = object.getReference();
+    updateNewFlagAndCreateIfNecessary(object);
     removeReferenceIfNecessary(mor);
     unmarkReferenced(mor);
     makeUnBlocked(object.getID());
+  }
+
+  private void basicReleaseReadOnly(ManagedObject object) {
+    ManagedObjectReference mor = object.getReference();
+    removeReferenceIfNecessary(mor);
+    unmarkReferenced(mor);
+    makeUnBlocked(object.getID());
+  }
+
+  private void updateNewFlagAndCreateIfNecessary(ManagedObject object) {
+    if (object.isNew()) {
+      objectStore.addNewObject(object);
+      object.setIsNew(false);
+    }
   }
 
   private void removeReferenceIfNecessary(ManagedObjectReference mor) {
@@ -576,7 +627,12 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   public synchronized void waitUntilReadyToGC() {
     checkAndNotifyGC();
     txnObjectMgr.recallAllCheckedoutObject();
+    int count = 0;
     while (!collector.isPaused()) {
+      if (count++ > 2) {
+        logger.warn("Still waiting for object to be checked back in. collector state is not paused. checkout count = "
+                    + checkedOutCount);
+      }
       try {
         this.wait(10000);
       } catch (InterruptedException e) {
@@ -649,7 +705,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   public synchronized void createObject(ManagedObject object) {
     syncAssertNotInShutdown();
     Assert.eval(object.getID().toLong() != -1);
-    objectStore.addNewObject(object);
+    // Not adding to the store yet since this transaction containing the new objects is not yet applied.
+    // objectStore.addNewObject(object);
     addNewReference(object, false);
     stats.newObjectCreated();
   }
@@ -885,10 +942,12 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     private final Set      lookupIDs = new HashSet();
     private boolean        resultSet = false;
     private ManagedObject  result;
+    private final boolean  lookupNewObjects;
 
-    public WaitForLookupContext(ObjectID id, boolean missingOk) {
+    public WaitForLookupContext(ObjectID id, boolean missingOk, boolean lookupNewObjects) {
       this.lookupID = id;
       this.missingOk = missingOk;
+      this.lookupNewObjects = lookupNewObjects;
       lookupIDs.add(id);
     }
 
@@ -908,7 +967,11 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
 
     public Set getNewObjectIDs() {
-      return Collections.EMPTY_SET;
+      if (lookupNewObjects) {
+        return lookupIDs;
+      } else {
+        return Collections.EMPTY_SET;
+      }
     }
 
     public synchronized void setResults(ObjectManagerLookupResults results) {

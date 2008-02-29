@@ -158,7 +158,7 @@ public class TestObjectManager implements ObjectManager {
     throw new ImplementMe();
   }
 
-  public void releaseAll(Collection objects) {
+  public void releaseAllReadOnly(Collection objects) {
     releaseAll(null, objects);
   }
 
@@ -199,6 +199,18 @@ public class TestObjectManager implements ObjectManager {
   }
 
   public GarbageCollector getGarbageCollector() {
+    throw new ImplementMe();
+  }
+
+  public void preFetchObjectsAndCreate(Set oids, Set newOids) {
+    throw new ImplementMe();
+  }
+
+  public void createNewObjects(Set ids) {
+    throw new ImplementMe();
+  }
+
+  public ManagedObject getObjectByIDOrNull(ObjectID id) {
     throw new ImplementMe();
   }
 

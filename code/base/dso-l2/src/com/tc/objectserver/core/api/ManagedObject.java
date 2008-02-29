@@ -40,6 +40,8 @@ public interface ManagedObject {
   public ManagedObjectFacade createFacade(int limit);
 
   public boolean isNew();
+  
+  public void setIsNew(boolean isNew);
 
   public ManagedObjectState getManagedObjectState();
 

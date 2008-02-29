@@ -250,10 +250,6 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
     throw new ImplementMe();
   }
 
-  public void createObject(ManagedObject object) {
-    throw new ImplementMe();
-  }
-
   public void createRoot(String name, ObjectID id) {
     throw new ImplementMe();
   }
@@ -291,7 +287,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
     throw new ImplementMe();
   }
 
-  public void releaseAll(Collection objects) {
+  public void releaseAllReadOnly(Collection objects) {
     releaseAll(transactionProvider.nullTransaction(), objects);
   }
 
@@ -325,6 +321,22 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
 
   public Map getRootNamesToIDsMap() {
     throw new ImplementMe();
+  }
+
+  public void preFetchObjectsAndCreate(Set oids, Set newOids) {
+    throw new ImplementMe();
+  }
+
+  public void createNewObjects(Set ids) {
+    throw new ImplementMe();
+  }
+
+  public ManagedObject getObjectByIDOrNull(ObjectID id) {
+    ManagedObject mo = getObjectByID(id);
+    if(mo != null && mo.isNew()) {
+      return null;
+    }
+    return mo;
   }
 
 }

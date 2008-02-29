@@ -38,7 +38,6 @@ public class ManagedObjectSerializerTest extends TestCase {
     TestDNA dna = newDNA(1);
     ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
     mo.apply(dna, new TransactionID(1), new BackReferences(), imo, false);
-    assertFalse(mo.isNew());
 
     ByteArrayOutputStream baout = new ByteArrayOutputStream();
     TCObjectOutputStream out = new TCObjectOutputStream(baout);
@@ -48,7 +47,6 @@ public class ManagedObjectSerializerTest extends TestCase {
         .toByteArray())));
 
     assertFalse(mo2.isDirty());
-    assertFalse(mo2.isNew());
     mo.setIsDirty(false);
     assertNotSame(mo, mo2);
     assertTrue(mo.isEqual(mo2));

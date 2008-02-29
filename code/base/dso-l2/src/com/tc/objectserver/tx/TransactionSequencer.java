@@ -6,29 +6,29 @@ package com.tc.objectserver.tx;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.util.Assert;
+import com.tc.util.MergableLinkedList;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
 public class TransactionSequencer {
 
-  private static final TCLogger logger      = TCLogging.getLogger(TransactionSequencer.class);
+  private static final TCLogger    logger      = TCLogging.getLogger(TransactionSequencer.class);
 
-  private final Set             pendingTxns = new HashSet();
+  private final Set                pendingTxns = new HashSet();
 
-  private final LinkedList      txnQ        = new LinkedList();
-  private final LinkedList      blockedQ    = new LinkedList();
+  private final MergableLinkedList txnQ        = new MergableLinkedList();
+  private final MergableLinkedList blockedQ    = new MergableLinkedList();
 
-  private final BlockedSet      locks       = new BlockedSet();
-  private final BlockedSet      objects     = new BlockedSet();
+  private final BlockedSet         locks       = new BlockedSet();
+  private final BlockedSet         objects     = new BlockedSet();
 
-  private int                   txnsCount;
-  private boolean               reconcile   = false;
+  private int                      txnsCount;
+  private boolean                  reconcile   = false;
 
   public synchronized void addTransactions(Collection txns) {
     if (false) log_incoming(txns);
@@ -62,9 +62,8 @@ public class TransactionSequencer {
 
   private void reconcileIfNeeded() {
     if (reconcile) {
-      // Add to begining
-      txnQ.addAll(0, blockedQ);
-      blockedQ.clear();
+      // Add blockedQ to the beginning of txnQ, this call will also clear blockedQ
+      txnQ.mergeToFront(blockedQ);
       locks.clearBlocked();
       objects.clearBlocked();
       reconcile = false;

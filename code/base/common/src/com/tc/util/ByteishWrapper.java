@@ -17,10 +17,6 @@ class ByteishWrapper implements ByteishBuffer {
   private ByteBuffer   nioBuf;
   private TCByteBuffer tcBuf;
 
-  private ByteishWrapper() {
-    throw new TCRuntimeException("Private constructor should not be called");
-  }
-
   ByteishWrapper(ByteBuffer nioBuf, TCByteBuffer tcBuf) {
     if (nioBuf != null) {
       this.nioBuf = nioBuf;

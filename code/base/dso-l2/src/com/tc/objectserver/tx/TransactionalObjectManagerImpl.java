@@ -25,7 +25,6 @@ import com.tc.util.Assert;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -77,8 +76,25 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
 
   // ProcessTransactionHandler Method
   public void addTransactions(Collection txns) {
+    createAndPreFetchObjectsFor(txns);
     sequencer.addTransactions(txns);
     txnStageCoordinator.initiateLookup();
+  }
+
+  private void createAndPreFetchObjectsFor(Collection txns) {
+    Set oids = new HashSet(txns.size() * 10);
+    Set newOids = new HashSet(txns.size() * 10);
+    for (Iterator i = txns.iterator(); i.hasNext();) {
+      ServerTransaction txn = (ServerTransaction) i.next();
+      newOids.addAll(txn.getNewObjectIDs());
+      for (Iterator j = txn.getObjectIDs().iterator(); j.hasNext();) {
+        ObjectID oid = (ObjectID) j.next();
+        if (!newOids.contains(oid)) {
+          oids.add(oid);
+        }
+      }
+    }
+    objectManager.preFetchObjectsAndCreate(oids, newOids);
   }
 
   // LookupHandler Method
@@ -89,7 +105,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       if (txn == null) break;
       ServerTransactionID stxID = txn.getServerTransactionID();
       if (gtxm.initiateApply(stxID)) {
-        lookupObjectsForApplyAndAddToSink(txn, true);
+        lookupObjectsForApplyAndAddToSink(txn);
       } else {
         // These txns are already applied, hence just sending it to the next stage.
         txnStageCoordinator.addToApplyStage(new ApplyTransactionContext(txn));
@@ -103,7 +119,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     }
   }
 
-  public synchronized void lookupObjectsForApplyAndAddToSink(ServerTransaction txn, boolean newTxn) {
+  public synchronized void lookupObjectsForApplyAndAddToSink(ServerTransaction txn) {
     Collection oids = txn.getObjectIDs();
     // log("lookupObjectsForApplyAndAddToSink(): START : " + txn.getServerTransactionID() + " : " + oids);
     Set newRequests = new HashSet();
@@ -126,8 +142,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     // TODO:: make cache and stats right
     LookupContext lookupContext = null;
     if (!newRequests.isEmpty()) {
-      lookupContext = new LookupContext(newRequests, (newTxn ? txn.getNewObjectIDs() : Collections.EMPTY_SET), txn
-          .getServerTransactionID());
+      lookupContext = new LookupContext(newRequests, txn.getNewObjectIDs(), txn.getServerTransactionID());
       if (objectManager.lookupObjectsFor(txn.getSourceID(), lookupContext)) {
         addLookedupObjects(lookupContext);
       } else {
@@ -262,7 +277,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     List copy = pendingTxnList.copy();
     for (Iterator i = copy.iterator(); i.hasNext();) {
       ServerTransaction txn = (ServerTransaction) i.next();
-      lookupObjectsForApplyAndAddToSink(txn, false);
+      lookupObjectsForApplyAndAddToSink(txn);
     }
   }
 
@@ -370,7 +385,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       }
       if (!recalledObjects.isEmpty()) {
         logger.info("Recalling " + recalledObjects.size() + " Objects to ObjectManager");
-        objectManager.releaseAll(recalledObjects.values());
+        objectManager.releaseAllReadOnly(recalledObjects.values());
       }
     }
   }

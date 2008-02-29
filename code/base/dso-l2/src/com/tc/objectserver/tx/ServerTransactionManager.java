@@ -45,8 +45,8 @@ public interface ServerTransactionManager {
   public boolean isWaiting(NodeID waiter, TransactionID requestID);
 
   /**
-   * received an acknowledgement from the client that the changes in the given transaction have been applied. This could
-   * potentially trigger an acknowledgement to the orginating client.
+   * received an acknowledgment from the client that the changes in the given transaction have been applied. This could
+   * potentially trigger an acknowledgment to the originating client.
    * 
    * @param waiter - NodeID of the sender of the message that is waiting for a response
    * @param requesterID - The id of the request sent by the channel ID that is waiting for a response
@@ -63,14 +63,14 @@ public interface ServerTransactionManager {
   public void apply(ServerTransaction txn, Map objects, BackReferences includeIDs, ObjectInstanceMonitor instanceMonitor);
 
   /**
-   * Commits all the changes in objects and releases the objects This could potentially trigger an acknowledgement to
-   * the orginating client.
+   * Commits all the changes in objects and releases the objects This could potentially trigger an acknowledgment to
+   * the originating client.
    */
   public void commit(PersistenceTransactionProvider ptxp, Collection objects, Map newRoots,
                      Collection appliedServerTransactionIDs);
 
   /**
-   * The broadcast stage is completed. This could potentially trigger an acknowledgement to the orginating client.
+   * The broadcast stage is completed. This could potentially trigger an acknowledgment to the originating client.
    */
   public void broadcasted(NodeID waiter, TransactionID requestID);
 
@@ -96,5 +96,7 @@ public interface ServerTransactionManager {
   public void start(Set cids);
 
   public void goToActiveMode();
+
+  public int getTotalPendingTransactionsCount();
 
 }

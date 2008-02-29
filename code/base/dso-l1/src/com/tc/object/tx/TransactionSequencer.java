@@ -149,9 +149,6 @@ public class TransactionSequencer {
         break;
       } catch (InterruptedException e) {
         isInterrupted = true;
-        if (returnValue != null) {
-          break;
-        }
       }
     }
     Util.selfInterruptIfNeeded(isInterrupted);
