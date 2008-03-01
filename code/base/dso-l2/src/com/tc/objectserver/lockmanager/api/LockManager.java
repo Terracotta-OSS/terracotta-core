@@ -4,17 +4,19 @@
 package com.tc.objectserver.lockmanager.api;
 
 import com.tc.async.api.Sink;
+import com.tc.logging.DumpHandler;
 import com.tc.net.groups.NodeID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.tx.WaitInvocation;
+import com.tc.text.PrettyPrintable;
 
 import java.util.Collection;
 
 /**
  * The Lock Manager interface implemented at the L2
  */
-public interface LockManager {
+public interface LockManager extends DumpHandler, PrettyPrintable {
   
   public void notify(LockID lid, NodeID cid, ThreadID tid, boolean all, NotifiedWaiters addNotifiedWaitersTo);
 
@@ -50,6 +52,5 @@ public interface LockManager {
   public void recallCommit(LockID lid, NodeID cid, Collection lockContexts, Collection waitContexts,
                            Collection pendingLockContexts, Collection pendingTryLockContexts, Sink lockResponseSink);
 
-  public void dump();
 
 }
