@@ -17,6 +17,7 @@ import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.PhysicalManagedObjectFacade;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+import com.tc.text.PrettyPrinterImpl;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -158,7 +159,7 @@ public abstract class PhysicalManagedObjectState extends AbstractManagedObjectSt
     // XXX: Um... this is gross.
     StringWriter writer = new StringWriter();
     PrintWriter pWriter = new PrintWriter(writer);
-    new PrettyPrinter(pWriter).visit(this);
+    new PrettyPrinterImpl(pWriter).visit(this);
     return writer.getBuffer().toString();
   }
 

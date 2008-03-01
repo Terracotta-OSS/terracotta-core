@@ -19,6 +19,7 @@ import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.PhysicalManagedObjectFacade;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
 
 import java.io.IOException;
@@ -66,7 +67,7 @@ public class LiteralTypesManagedObjectState extends AbstractManagedObjectState i
     // XXX: Um... this is gross.
     StringWriter writer = new StringWriter();
     PrintWriter pWriter = new PrintWriter(writer);
-    new PrettyPrinter(pWriter).visit(this);
+    new PrettyPrinterImpl(pWriter).visit(this);
     return writer.getBuffer().toString();
   }
 

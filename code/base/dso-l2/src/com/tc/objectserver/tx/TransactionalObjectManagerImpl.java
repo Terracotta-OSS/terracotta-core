@@ -19,6 +19,7 @@ import com.tc.objectserver.context.RecallObjectsContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrinter;
+import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
 
 import java.io.PrintWriter;
@@ -395,7 +396,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   public String dump() {
     StringWriter writer = new StringWriter();
     PrintWriter pw = new PrintWriter(writer);
-    new PrettyPrinter(pw).visit(this);
+    new PrettyPrinterImpl(pw).visit(this);
     writer.flush();
     return writer.toString();
   }

@@ -32,6 +32,7 @@ import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.api.TransactionStore;
 import com.tc.stats.counter.Counter;
 import com.tc.text.PrettyPrinter;
+import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
 import com.tc.util.State;
 
@@ -118,7 +119,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   public String dump() {
     StringWriter writer = new StringWriter();
     PrintWriter pw = new PrintWriter(writer);
-    new PrettyPrinter(pw).visit(this);
+    new PrettyPrinterImpl(pw).visit(this);
     writer.flush();
     return writer.toString();
   }

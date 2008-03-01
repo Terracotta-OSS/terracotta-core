@@ -9,7 +9,7 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
-import com.tc.text.PrettyPrinter;
+import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.SyncObjectIdSet;
 import com.tc.util.SyncObjectIdSetImpl;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
@@ -57,7 +57,7 @@ public class TestManagedObjectPersistor implements ManagedObjectPersistor {
     map.remove(id);
   }
 
-  public void prettyPrint(PrettyPrinter out) {
+  public void prettyPrint(PrettyPrinterImpl out) {
     return;
   }
 

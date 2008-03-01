@@ -6,6 +6,7 @@ package com.tc.objectserver.impl;
 
 import com.tc.async.api.Sink;
 import com.tc.exception.TCRuntimeException;
+import com.tc.logging.DumpHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.groups.ClientID;
@@ -39,7 +40,9 @@ import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.tx.NullTransactionalObjectManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
 import com.tc.util.Counter;
 import com.tc.util.ObjectIDSet2;
@@ -60,7 +63,7 @@ import java.util.Set;
 /**
  * Manages access to all the Managed objects in the system.
  */
-public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeListener, ObjectManagerMBean, Evictable {
+public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeListener, ObjectManagerMBean, Evictable, DumpHandler, PrettyPrintable {
 
   private static final TCLogger                logger                   = TCLogging.getLogger(ObjectManager.class);
 
@@ -697,7 +700,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   public String dump() {
     StringWriter writer = new StringWriter();
     PrintWriter pw = new PrintWriter(writer);
-    new PrettyPrinter(pw).visit(this);
+    new PrettyPrinterImpl(pw).visit(this);
     writer.flush();
     return writer.toString();
   }

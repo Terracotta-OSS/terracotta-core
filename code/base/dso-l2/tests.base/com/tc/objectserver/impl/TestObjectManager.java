@@ -19,7 +19,7 @@ import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.impl.TestManagedObject;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
-import com.tc.text.PrettyPrinter;
+import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.ObjectIDSet2;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
@@ -141,7 +141,7 @@ public class TestObjectManager implements ObjectManager {
     }
   }
 
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+  public PrettyPrinterImpl prettyPrint(PrettyPrinterImpl out) {
     throw new ImplementMe();
   }
 

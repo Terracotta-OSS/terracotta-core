@@ -32,6 +32,7 @@ import com.tc.objectserver.lockmanager.api.LockWaitContext;
 import com.tc.objectserver.lockmanager.api.NotifiedWaiters;
 import com.tc.objectserver.lockmanager.api.TCIllegalMonitorStateException;
 import com.tc.text.PrettyPrinter;
+import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
 
 import java.io.PrintWriter;
@@ -111,7 +112,7 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, WaitTimer
   public synchronized String dump() {
     StringWriter writer = new StringWriter();
     PrintWriter pw = new PrintWriter(writer);
-    new PrettyPrinter(pw).visit(this);
+    new PrettyPrinterImpl(pw).visit(this);
     writer.flush();
     return writer.toString();
   }

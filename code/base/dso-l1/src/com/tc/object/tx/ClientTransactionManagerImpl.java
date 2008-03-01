@@ -32,6 +32,7 @@ import com.tc.object.session.SessionID;
 import com.tc.object.util.ReadOnlyException;
 import com.tc.text.Banner;
 import com.tc.text.PrettyPrinter;
+import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
 
@@ -824,7 +825,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
   public String dump() {
     StringWriter writer = new StringWriter();
     PrintWriter pw = new PrintWriter(writer);
-    new PrettyPrinter(pw).visit(this);
+    new PrettyPrinterImpl(pw).visit(this);
     writer.flush();
     return writer.toString();
   }

@@ -46,6 +46,7 @@ import com.tc.text.NonPortableReasonFormatter;
 import com.tc.text.ParagraphFormatter;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+import com.tc.text.PrettyPrinterImpl;
 import com.tc.text.StringFormatter;
 import com.tc.util.Assert;
 import com.tc.util.NonPortableReason;
@@ -1191,7 +1192,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
   public String dump() {
     StringWriter writer = new StringWriter();
     PrintWriter pw = new PrintWriter(writer);
-    new PrettyPrinter(pw).visit(this);
+    new PrettyPrinterImpl(pw).visit(this);
     writer.flush();
     return writer.toString();
   }

@@ -4,7 +4,6 @@
 package com.tc.object.cache;
 
 import com.tc.text.PrettyPrinter;
-
 import gnu.trove.TLinkedList;
 
 import java.util.Collection;

@@ -5,7 +5,6 @@ package com.tc.objectserver.persistence.api;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.SyncObjectIdSet;
 
 import java.util.Collection;
@@ -36,8 +35,6 @@ public interface ManagedObjectPersistor {
 
   public void deleteAllObjectsByID(PersistenceTransaction tx, Collection ids);
   
-  public void prettyPrint(PrettyPrinter out);
-
   public Map loadRootNamesToIDs();
 
 }

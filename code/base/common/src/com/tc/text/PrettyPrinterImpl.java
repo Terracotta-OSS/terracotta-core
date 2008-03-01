@@ -10,7 +10,7 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-public class PrettyPrinter {
+public class PrettyPrinterImpl implements PrettyPrinter {
 
   private static final String   INDENT        = "--> ";
 
@@ -23,11 +23,11 @@ public class PrettyPrinter {
 
   private boolean               autoflush     = true;
 
-  public PrettyPrinter(PrintWriter out) {
+  public PrettyPrinterImpl(PrintWriter out) {
     this(INDENT, out, new IdentityHashMap());
   }
 
-  private PrettyPrinter(String prefix, PrintWriter out, IdentityHashMap visited) {
+  private PrettyPrinterImpl(String prefix, PrintWriter out, IdentityHashMap visited) {
     this.prefix = new StringBuffer(prefix);
     this.out = out;
     this.visited = visited;
@@ -81,7 +81,7 @@ public class PrettyPrinter {
   }
 
   public PrettyPrinter duplicateAndIndent() {
-    PrettyPrinter rv = duplicate();
+    PrettyPrinterImpl rv = duplicate();
     rv.indentPrefix();
     return rv;
   }
@@ -91,8 +91,8 @@ public class PrettyPrinter {
     prefix.insert(prefix.indexOf("-->"), "    +");
   }
 
-  private PrettyPrinter duplicate() {
-    return new PrettyPrinter(prefix.toString(), out, this.visited);
+  private PrettyPrinterImpl duplicate() {
+    return new PrettyPrinterImpl(prefix.toString(), out, this.visited);
   }
 
   public PrettyPrinter visit(Object o) {

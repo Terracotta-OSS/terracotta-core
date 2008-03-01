@@ -25,6 +25,7 @@ import com.tc.object.tx.WaitInvocation;
 import com.tc.text.ConsoleParagraphFormatter;
 import com.tc.text.ParagraphFormatter;
 import com.tc.text.PrettyPrinter;
+import com.tc.text.PrettyPrinterImpl;
 import com.tc.text.StringFormatter;
 import com.tc.util.Assert;
 import com.tc.util.State;
@@ -546,7 +547,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   public synchronized String dump() {
     StringWriter writer = new StringWriter();
     PrintWriter pw = new PrintWriter(writer);
-    new PrettyPrinter(pw).visit(this);
+    new PrettyPrinterImpl(pw).visit(this);
     writer.flush();
     return writer.toString();
   }

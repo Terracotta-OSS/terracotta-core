@@ -24,6 +24,7 @@ import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.api.PersistentCollectionsUtil;
 import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor.SleepycatPersistorBase;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
@@ -43,7 +44,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase implements ManagedObjectPersistor {
+public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase implements ManagedObjectPersistor, PrettyPrintable {
 
   private static final Comparator              MO_COMPARATOR      = new Comparator() {
                                                                     public int compare(Object o1, Object o2) {
@@ -471,10 +472,11 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
     return getSerializationAdapter().deserializeManagedObject(entry);
   }
 
-  public void prettyPrint(PrettyPrinter out) {
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.println(this.getClass().getName());
     out = out.duplicateAndIndent();
     out.println("db: " + objectDB);
+    return out;
   }
 
   /*
