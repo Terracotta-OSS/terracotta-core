@@ -31,9 +31,14 @@ import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.session.SessionID;
 import com.tc.object.util.ReadOnlyException;
 import com.tc.text.Banner;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -118,11 +123,11 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     return lockManager.isLocked(lockID, lockLevel);
   }
 
-//  public void lock(String lockName, int lockLevel) {
-//    final LockID lockID = lockManager.lockIDFor(lockName);
-//    lockManager.lock(lockID, lockLevel, "");
-//  }
-//
+  // public void lock(String lockName, int lockLevel) {
+  // final LockID lockID = lockManager.lockIDFor(lockName);
+  // lockManager.lock(lockID, lockLevel, "");
+  // }
+  //
   public void unlock(String lockName) {
     final LockID lockID = lockManager.lockIDFor(lockName);
     if (lockID != null) {
@@ -814,6 +819,34 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
 
   public void addDmiDescriptor(DmiDescriptor dd) {
     getTransaction().addDmiDescritor(dd);
+  }
+
+  public String dump() {
+    StringWriter writer = new StringWriter();
+    PrintWriter pw = new PrintWriter(writer);
+    new PrettyPrinter(pw).visit(this);
+    writer.flush();
+    return writer.toString();
+  }
+
+  public void dump(Writer writer) {
+    try {
+      writer.write(dump());
+      writer.flush();
+    } catch (IOException e) {
+      throw new AssertionError(e);
+    }
+  }
+
+  public void dumpToLogger() {
+    logger.info(dump());
+  }
+
+  public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
+
+    out.println(getClass().getName());
+    return out;
+
   }
 
   private static final String READ_ONLY_TEXT = "Current transaction with read-only access attempted to modify a shared object.  "

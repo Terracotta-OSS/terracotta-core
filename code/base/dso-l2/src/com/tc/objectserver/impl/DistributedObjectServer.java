@@ -23,6 +23,7 @@ import com.tc.l2.ha.L2HACoordinator;
 import com.tc.l2.ha.L2HADisabledCooridinator;
 import com.tc.l2.state.StateManager;
 import com.tc.lang.TCThreadGroup;
+import com.tc.logging.CallbackDumpAdapter;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -131,7 +132,6 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.impl.ClientStateManagerImpl;
 import com.tc.objectserver.l1.impl.TransactionAcknowledgeAction;
 import com.tc.objectserver.l1.impl.TransactionAcknowledgeActionImpl;
-import com.tc.objectserver.lockmanager.api.LockManager;
 import com.tc.objectserver.lockmanager.api.LockManagerMBean;
 import com.tc.objectserver.lockmanager.impl.LockManagerImpl;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListenerProviderImpl;
@@ -161,6 +161,7 @@ import com.tc.objectserver.tx.ServerTransactionManagerImpl;
 import com.tc.objectserver.tx.TransactionBatchManager;
 import com.tc.objectserver.tx.TransactionBatchManagerImpl;
 import com.tc.objectserver.tx.TransactionSequencer;
+import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
 import com.tc.objectserver.tx.TransactionalStagesCoordinatorImpl;
 import com.tc.properties.TCProperties;
@@ -214,13 +215,13 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
   private CommunicationsManager                communicationsManager;
   private ServerConfigurationContext           context;
   private ObjectManagerImpl                    objectManager;
-  private TransactionalObjectManagerImpl       txnObjectManager;
+  private TransactionalObjectManager           txnObjectManager;
   private CounterManager                       sampledCounterManager;
-  private LockManager                          lockManager;
+  private LockManagerImpl                      lockManager;
   private ServerManagementContext              managementContext;
   private StartupLock                          startupLock;
 
-  private ClientStateManagerImpl               clientStateManager;
+  private ClientStateManager                   clientStateManager;
 
   private ManagedObjectStore                   objectStore;
   private Persistor                            persistor;
@@ -268,19 +269,19 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
 
   public void dump() {
     if (this.lockManager != null) {
-      this.lockManager.dump();
+      this.lockManager.dumpToLogger();
     }
 
     if (this.objectManager != null) {
-      this.objectManager.dump();
+      this.objectManager.dumpToLogger();
     }
 
     if (this.txnObjectManager != null) {
-      this.txnObjectManager.dump();
+      this.objectManager.dumpToLogger();
     }
 
     if (this.transactionManager != null) {
-      this.transactionManager.dump();
+      this.objectManager.dumpToLogger();
     }
   }
 
@@ -489,6 +490,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     objectManager.setStatsListener(objMgrStats);
     objectManager.setGarbageCollector(new MarkAndSweepGarbageCollector(objectManager, clientStateManager, verboseGC));
     managedObjectChangeListenerProvider.setListener(objectManager);
+
     l2Management.findObjectManagementMonitorMBean()
         .registerGCController(new GCComptrollerImpl(objectManagerConfig, objectManager.getGarbageCollector()));
 
@@ -521,6 +523,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     channelManager.addEventListener(channelStats);
 
     lockManager = new LockManagerImpl(channelManager, lockStatsManager);
+    threadGroup.addCallbackOnExitHandler(new CallbackDumpAdapter(lockManager));
     ObjectInstanceMonitorImpl instanceMonitor = new ObjectInstanceMonitorImpl();
     TransactionBatchManager transactionBatchManager = new TransactionBatchManagerImpl();
     TransactionAcknowledgeAction taa = new TransactionAcknowledgeActionImpl(channelManager, transactionBatchManager);
@@ -537,11 +540,14 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     TransactionalStagesCoordinatorImpl txnStageCoordinator = new TransactionalStagesCoordinatorImpl(stageManager);
     txnObjectManager = new TransactionalObjectManagerImpl(objectManager, new TransactionSequencer(), gtxm,
                                                           txnStageCoordinator);
+    threadGroup.addCallbackOnExitHandler(new CallbackDumpAdapter(txnObjectManager));
     objectManager.setTransactionalObjectManager(txnObjectManager);
+    threadGroup.addCallbackOnExitHandler(new CallbackDumpAdapter(objectManager));
     transactionManager = new ServerTransactionManagerImpl(gtxm, transactionStore, lockManager, clientStateManager,
                                                           objectManager, txnObjectManager, taa, globalTxnCounter,
                                                           channelStats, new ServerTransactionManagerConfig(l2Properties
                                                               .getPropertiesFor("transactionmanager")));
+    threadGroup.addCallbackOnExitHandler(new CallbackDumpAdapter(transactionManager));
 
     MessageRecycler recycler = new CommitTransactionMessageRecycler(transactionManager);
     ObjectRequestManager objectRequestManager = new ObjectRequestManagerImpl(objectManager, transactionManager);

@@ -8,7 +8,9 @@ import com.tc.object.lockmanager.impl.GlobalLockInfo;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.WaitInvocation;
+import com.tc.text.PrettyPrinter;
 
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -144,6 +146,24 @@ public class TestLockManager implements ClientLockManager {
   }
 
   public void setLockStatisticsEnabled(boolean statEnable) {
+    throw new ImplementMe();
+  }
+
+  public String dump() {
+    throw new ImplementMe();
+  }
+
+  public void dump(Writer writer) {
+    throw new ImplementMe();
+    
+  }
+
+  public void dumpToLogger() {
+    throw new ImplementMe();
+    
+  }
+
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
     throw new ImplementMe();
   }
 }

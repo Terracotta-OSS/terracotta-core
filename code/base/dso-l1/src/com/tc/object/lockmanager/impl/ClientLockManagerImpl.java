@@ -24,11 +24,16 @@ import com.tc.object.session.SessionManager;
 import com.tc.object.tx.WaitInvocation;
 import com.tc.text.ConsoleParagraphFormatter;
 import com.tc.text.ParagraphFormatter;
+import com.tc.text.PrettyPrinter;
 import com.tc.text.StringFormatter;
 import com.tc.util.Assert;
 import com.tc.util.State;
 import com.tc.util.Util;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -536,5 +541,32 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     public void run() {
       lockManager.runGC();
     }
+  }
+
+  public synchronized String dump() {
+    StringWriter writer = new StringWriter();
+    PrintWriter pw = new PrintWriter(writer);
+    new PrettyPrinter(pw).visit(this);
+    writer.flush();
+    return writer.toString();
+  }
+
+  public void dump(Writer writer) {
+    try {
+      writer.write(dump());
+      writer.flush();
+    } catch (IOException e) {
+      throw new AssertionError(e);
+    }
+  }
+
+  public void dumpToLogger() {
+    logger.info(dump());
+  }
+
+  public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
+    out.println(getClass().getName());
+    out.indent().print("locks: ").visit(locksByID).println();
+    return out;
   }
 }

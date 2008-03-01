@@ -10,8 +10,10 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.managedobject.BackReferences;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -44,10 +46,6 @@ public class TestServerTransactionManager implements ServerTransactionManager {
   }
 
   public void acknowledgement(NodeID waiter, TransactionID requestID, NodeID waitee) {
-    throw new ImplementMe();
-  }
-
-  public void dump() {
     throw new ImplementMe();
   }
 
@@ -102,6 +100,24 @@ public class TestServerTransactionManager implements ServerTransactionManager {
   }
 
   public void nodeConnected(NodeID nodeID) {
+    throw new ImplementMe();
+  }
+
+  public String dump() {
+    throw new ImplementMe();
+  }
+
+  public void dump(Writer writer) {
+    throw new ImplementMe();
+    
+  }
+
+  public void dumpToLogger() {
+    throw new ImplementMe();
+    
+  }
+
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
     throw new ImplementMe();
   }
 

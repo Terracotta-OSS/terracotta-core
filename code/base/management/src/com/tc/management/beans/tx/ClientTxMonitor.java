@@ -9,7 +9,6 @@ import java.util.Map;
 
 import javax.management.NotCompliantMBeanException;
 import javax.management.openmbean.CompositeData;
-import javax.management.openmbean.OpenDataException;
 import javax.management.openmbean.TabularData;
 
 import com.tc.management.AbstractTerracottaMBean;
@@ -104,7 +103,7 @@ public final class ClientTxMonitor extends AbstractTerracottaMBean implements Cl
     return (int) writesPerObject.getAverage();
   }
 
-  public TabularData getObjectCreationCountByClass() throws OpenDataException {
+  public TabularData getObjectCreationCountByClass() {
     TabularData tabularData = ClassCreationCount.newTabularDataInstance();
     CompositeData compositeData;
 

@@ -3,9 +3,11 @@
  */
 package com.tc.object.lockmanager.api;
 
+import com.tc.logging.DumpHandler;
 import com.tc.object.lockmanager.impl.GlobalLockInfo;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.WaitInvocation;
+import com.tc.text.PrettyPrintable;
 
 import java.util.Collection;
 
@@ -14,7 +16,7 @@ import java.util.Collection;
  *
  * @author steve
  */
-public interface ClientLockManager {
+public interface ClientLockManager extends DumpHandler, PrettyPrintable {
 
   public void pause();
 

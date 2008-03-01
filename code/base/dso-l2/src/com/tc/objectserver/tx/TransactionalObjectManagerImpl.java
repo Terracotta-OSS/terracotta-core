@@ -18,11 +18,12 @@ import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.context.RecallObjectsContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 
 import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -39,7 +40,7 @@ import java.util.Map.Entry;
  * This class keeps track of locally checked out objects for applys and maintain the objects to txnid mapping in the
  * server. It wraps calls going to object manager from lookup, apply, commit stages
  */
-public class TransactionalObjectManagerImpl implements TransactionalObjectManager, PrettyPrintable {
+public class TransactionalObjectManagerImpl implements TransactionalObjectManager {
 
   private static final TCLogger                logger                  = TCLogging
                                                                            .getLogger(TransactionalObjectManagerImpl.class);
@@ -390,10 +391,25 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     }
   }
 
-  public void dump() {
-    PrintWriter pw = new PrintWriter(System.err);
+ 
+  public String dump() {
+    StringWriter writer = new StringWriter();
+    PrintWriter pw = new PrintWriter(writer);
     new PrettyPrinter(pw).visit(this);
+    writer.flush();
+    return writer.toString();
+  }
+  
+  
+
+  public void dump(Writer writer) {
+    PrintWriter pw = new PrintWriter(writer);
+    pw.write(dump());
     pw.flush();
+  }
+
+  public void dumpToLogger() {
+    logger.info(dump());
   }
 
   public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {

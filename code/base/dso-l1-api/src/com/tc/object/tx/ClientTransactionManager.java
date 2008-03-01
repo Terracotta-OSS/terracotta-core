@@ -3,11 +3,13 @@
  */
 package com.tc.object.tx;
 
+import com.tc.logging.DumpHandler;
 import com.tc.net.protocol.tcm.ChannelIDProvider;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.session.SessionID;
+import com.tc.text.PrettyPrintable;
 
 import java.util.Collection;
 import java.util.List;
@@ -19,7 +21,7 @@ import java.util.Set;
  *
  * @author steve
  */
-public interface ClientTransactionManager {
+public interface ClientTransactionManager extends DumpHandler, PrettyPrintable {
 
   /**
    * Begin a thread local transaction 

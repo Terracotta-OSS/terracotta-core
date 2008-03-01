@@ -38,12 +38,14 @@ import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.WaitInvocation;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.SequenceID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.sequence.BatchSequence;
 import com.tc.util.sequence.BatchSequenceProvider;
 import com.tc.util.sequence.BatchSequenceReceiver;
 
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -394,6 +396,24 @@ public class ClientHandshakeManagerTest extends TCTestCase {
 
     public void setLockStatisticsEnabled(boolean statEnable) {
       throw new ImplementMe();
+    }
+
+    public String dump() {
+      throw new ImplementMe();
+    }
+
+    public void dump(Writer writer) {
+      throw new ImplementMe();
+      
+    }
+
+    public void dumpToLogger() {
+      throw new ImplementMe();
+      
+    }
+
+    public PrettyPrinter prettyPrint(PrettyPrinter out) {
+      return null;
     }
   }
 

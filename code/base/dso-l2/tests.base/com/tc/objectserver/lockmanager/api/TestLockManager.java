@@ -12,7 +12,9 @@ import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.tx.WaitInvocation;
+import com.tc.text.PrettyPrinter;
 
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -108,10 +110,8 @@ public class TestLockManager implements LockManager {
       this.lockResponseSink = lockResponseSink;
     }
   }
-
-  public void dump() {
-    throw new ImplementMe();
-  }
+  
+  
 
   public void queryLock(LockID lockID, NodeID cid, ThreadID threadID, Sink lockResponseSink) {
     throw new ImplementMe();
@@ -133,5 +133,23 @@ public class TestLockManager implements LockManager {
 
   public void enableLockStatsForNodeIfNeeded(NodeID nid) {
     throw new ImplementMe();
+  }
+
+  public String dump() {
+    return null;
+  }
+
+  public void dump(Writer writer) {
+    throw new ImplementMe();
+    
+  }
+
+  public void dumpToLogger() {
+    throw new ImplementMe();
+    
+  }
+
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    return null;
   }
 }

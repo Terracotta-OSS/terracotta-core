@@ -4,17 +4,19 @@
  */
 package com.tc.objectserver.tx;
 
+import com.tc.logging.DumpHandler;
 import com.tc.net.groups.NodeID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.managedobject.BackReferences;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
+import com.tc.text.PrettyPrintable;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-public interface ServerTransactionManager {
+public interface ServerTransactionManager extends DumpHandler, PrettyPrintable {
 
   /**
    * called when a Node (Client or Server) leaves.
@@ -73,8 +75,6 @@ public interface ServerTransactionManager {
    * The broadcast stage is completed. This could potentially trigger an acknowledgment to the originating client.
    */
   public void broadcasted(NodeID waiter, TransactionID requestID);
-
-  public void dump();
 
   /**
    * Notifies the transaction managed that the given transaction is being skipped

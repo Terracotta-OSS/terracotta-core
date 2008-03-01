@@ -4,6 +4,8 @@
  */
 package com.tc.lang;
 
+import com.tc.logging.CallbackOnExitHandler;
+
 public class TCThreadGroup extends ThreadGroup {
 
   private static final String    CLASS_NAME = TCThreadGroup.class.getName();
@@ -26,5 +28,8 @@ public class TCThreadGroup extends ThreadGroup {
   public void uncaughtException(Thread thread, Throwable throwable) {
     throwableHandler.handleThrowable(thread, throwable);
   }
-
+  
+  public void addCallbackOnExitHandler( CallbackOnExitHandler callbackOnExitHandler ) {
+    throwableHandler.addCallbackOnExitHandler(callbackOnExitHandler);
+  }
 }

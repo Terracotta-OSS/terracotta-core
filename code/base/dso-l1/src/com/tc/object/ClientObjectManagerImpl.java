@@ -9,6 +9,7 @@ import com.tc.exception.TCNonPortableObjectError;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.ChannelIDLogger;
 import com.tc.logging.CustomerLogging;
+import com.tc.logging.DumpHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.protocol.tcm.ChannelIDProvider;
@@ -43,6 +44,8 @@ import com.tc.text.ConsoleNonPortableReasonFormatter;
 import com.tc.text.ConsoleParagraphFormatter;
 import com.tc.text.NonPortableReasonFormatter;
 import com.tc.text.ParagraphFormatter;
+import com.tc.text.PrettyPrintable;
+import com.tc.text.PrettyPrinter;
 import com.tc.text.StringFormatter;
 import com.tc.util.Assert;
 import com.tc.util.NonPortableReason;
@@ -51,8 +54,10 @@ import com.tc.util.State;
 import com.tc.util.Util;
 import com.tc.util.concurrent.StoppableThread;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
@@ -71,7 +76,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class ClientObjectManagerImpl implements ClientObjectManager, PortableObjectProvider, Evictable {
+public class ClientObjectManagerImpl implements ClientObjectManager, PortableObjectProvider, Evictable, DumpHandler, PrettyPrintable {
 
   private static final State                   PAUSED                  = new State("PAUSED");
   private static final State                   STARTING                = new State("STARTING");
@@ -1153,7 +1158,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
         if (removed != null) {
           Object pr = removed.getPeerObject();
           if (pr != null) {
-            // We don't want to take dso locks while clearing since it will happen inside the scope of the resolve lock (see CDV-596)
+            // We don't want to take dso locks while clearing since it will happen inside the scope of the resolve lock
+            // (see CDV-596)
             txManager.disableTransactionLogging();
             final int cleared;
             try {
@@ -1180,6 +1186,35 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
   // XXX:: Not synchronizing to improve performance, should be called only during cache eviction
   private int idToManaged_size() {
     return idToManaged.size();
+  }
+
+  public String dump() {
+    StringWriter writer = new StringWriter();
+    PrintWriter pw = new PrintWriter(writer);
+    new PrettyPrinter(pw).visit(this);
+    writer.flush();
+    return writer.toString();
+  }
+
+  public void dump(Writer writer) {
+    try {
+      writer.write(dump());
+      writer.flush();
+    } catch (IOException e) {
+      throw new AssertionError(e);
+    }
+  }
+
+  public void dumpToLogger() {
+    logger.info(dump());
+  }
+
+  public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
+    out.println(getClass().getName());
+    out.indent().print("roots Map: ").println(new Integer(roots.size()));
+    out.indent().print("idToManaged size: ").println(new Integer(idToManaged.size()));
+    out.indent().print("pojoToManaged size: ").println(new Integer(pojoToManaged.size()));
+    return out;
   }
 
 }

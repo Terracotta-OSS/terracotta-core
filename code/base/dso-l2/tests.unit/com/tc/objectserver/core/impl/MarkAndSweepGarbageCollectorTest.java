@@ -21,6 +21,7 @@ import com.tc.objectserver.persistence.impl.NullPersistenceTransactionProvider;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet2;
 
+import java.io.Writer;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -283,10 +284,6 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
     return;
   }
 
-  public void dump() {
-    throw new ImplementMe();
-  }
-
   public void releaseAllReadOnly(Collection objects) {
     releaseAll(transactionProvider.nullTransaction(), objects);
   }
@@ -323,6 +320,20 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
     throw new ImplementMe();
   }
 
+  public void dump(Writer writer) {
+    throw new ImplementMe();
+    
+  }
+
+  public void dumpToLogger() {
+    throw new ImplementMe();
+    
+  }
+
+  public String dump() {
+    throw new ImplementMe();
+  }
+  
   public void preFetchObjectsAndCreate(Set oids, Set newOids) {
     throw new ImplementMe();
   }

@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.api;
 
+import com.tc.logging.DumpHandler;
 import com.tc.net.groups.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
@@ -24,7 +25,7 @@ import java.util.Set;
  * 
  * @author steve
  */
-public interface ObjectManager extends ManagedObjectProvider, PrettyPrintable {
+public interface ObjectManager extends ManagedObjectProvider, DumpHandler, PrettyPrintable {
 
   public void stop();
 
@@ -55,7 +56,7 @@ public interface ObjectManager extends ManagedObjectProvider, PrettyPrintable {
   /**
    * Looks up the objects associated with the Object Lookups from the clients. What it does is if all the objects are
    * available it calls setResult() o ObjectManagerResultsContext. If not then it calls makesPending on
-   * ObjectManagerResultsContext and hangs on to the request until it can be fullfilled.
+   * ObjectManagerResultsContext and hangs on to the request until it can be fulfilled.
    * 
    * @param nodeID - nodeID of the client that is interested in lookup
    * @param maxCount - max number of objects reachable from the requested objects that should be looked up
@@ -67,7 +68,7 @@ public interface ObjectManager extends ManagedObjectProvider, PrettyPrintable {
   /**
    * Looks up the objects associated with the transaction. What it does is if all the objects are available to be
    * updated it calls setResult() on ObjectManagerResultsContext. If not then it calls makesPending on
-   * ObjectManagerResultsContext and hangs on to the request until it can be fullfilled.
+   * ObjectManagerResultsContext and hangs on to the request until it can be fulfilled.
    * 
    * @param nodeID - nodeID of the client that is interested in lookup
    * @param context - ResultContext that gets notifications.
@@ -109,8 +110,6 @@ public interface ObjectManager extends ManagedObjectProvider, PrettyPrintable {
   public void setStatsListener(ObjectManagerStatsListener listener);
 
   public void start();
-
-  public void dump();
 
   public int getCheckedOutCount();
 

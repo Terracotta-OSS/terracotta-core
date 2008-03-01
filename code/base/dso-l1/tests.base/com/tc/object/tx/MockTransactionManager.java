@@ -12,7 +12,9 @@ import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.session.SessionID;
+import com.tc.text.PrettyPrinter;
 
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -185,5 +187,23 @@ public class MockTransactionManager implements ClientTransactionManager {
 
   public boolean isLockOnTopStack(String lockName) {
     return false;
+  }
+
+  public String dump() {
+    throw new ImplementMe();
+  }
+
+  public void dump(Writer writer) {
+    throw new ImplementMe();
+    
+  }
+
+  public void dumpToLogger() {
+    throw new ImplementMe();
+    
+  }
+
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    throw new ImplementMe();
   }
 }

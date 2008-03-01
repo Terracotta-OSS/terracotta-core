@@ -5,12 +5,14 @@
 package com.tc.object;
 
 import com.tc.exception.TCNonPortableObjectError;
+import com.tc.logging.DumpHandler;
 import com.tc.object.appevent.ApplicationEvent;
 import com.tc.object.appevent.ApplicationEventContext;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.object.util.ToggleableStrongReference;
+import com.tc.text.PrettyPrintable;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
@@ -20,7 +22,7 @@ import java.util.Map;
 /**
  * Manages client-side (L1) object state in a VM.
  */
-public interface ClientObjectManager {
+public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
 
   /**
    * Find a class based on the class name and the classloader name

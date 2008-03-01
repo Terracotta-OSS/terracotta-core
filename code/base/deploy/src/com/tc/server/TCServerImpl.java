@@ -66,7 +66,8 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   private final L2TVSConfigurationSetupManager configurationSetupManager;
   private final ConnectionPolicy               connectionPolicy;
-
+  
+ 
   /**
    * This should only be used for tests.
    */
@@ -84,6 +85,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     Assert.assertNotNull(manager);
     this.configurationSetupManager = manager;
   }
+  
 
   public L2Info[] infoForAllL2s() {
     String[] allKnownL2s = this.configurationSetupManager.allCurrentlyKnownServers();

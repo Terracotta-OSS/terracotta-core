@@ -38,15 +38,15 @@ import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.tx.NullTransactionalObjectManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
-import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.Counter;
 import com.tc.util.ObjectIDSet2;
 import com.tc.util.concurrent.StoppableThread;
-
 import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -110,7 +110,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     this.references = new HashMap(10000);
   }
 
-  public void setTransactionalObjectManager(TransactionalObjectManagerImpl txnObjectManager) {
+  public void setTransactionalObjectManager(TransactionalObjectManager txnObjectManager) {
     this.txnObjectMgr = txnObjectManager;
   }
 
@@ -206,6 +206,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     if (object == null) { throw new NoSuchObjectException(id); }
 
     try {
+
       return object.createFacade(limit);
     } finally {
       releaseReadOnly(object);
@@ -689,9 +690,21 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     objectStore.commitAllObjects(persistenceTransaction, managedObjects);
   }
 
-  public void dump() {
-    PrintWriter pw = new PrintWriter(System.err);
+  public void dumpToLogger() {
+    logger.info(dump());
+  }
+
+  public String dump() {
+    StringWriter writer = new StringWriter();
+    PrintWriter pw = new PrintWriter(writer);
     new PrettyPrinter(pw).visit(this);
+    writer.flush();
+    return writer.toString();
+  }
+
+  public void dump(Writer writer) {
+    PrintWriter pw = new PrintWriter(writer);
+    pw.write(dump());
     pw.flush();
   }
 
@@ -799,7 +812,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private void addBlocked(NodeID nodeID, ObjectManagerLookupContext context, int maxReachableObjects,
                           ObjectID blockedOid) {
     pending.makeBlocked(blockedOid, new Pending(nodeID, context, maxReachableObjects));
-
     if (context.getProcessedCount() % 500 == 499) {
       logger.warn("Reached " + context.getProcessedCount() + " Pending size : " + pending.size()
                   + " : basic look up for : " + context + " maxReachable depth : " + maxReachableObjects);

@@ -12,8 +12,10 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.object.util.ToggleableStrongReference;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 
+import java.io.Writer;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.Collection;
@@ -254,6 +256,24 @@ public class TestClientObjectManager implements ClientObjectManager {
   }
 
   public ToggleableStrongReference getOrCreateToggleRef(ObjectID id, Object peer) {
+    throw new ImplementMe();
+  }
+
+  public String dump() {
+    throw new ImplementMe();
+  }
+
+  public void dump(Writer writer) {
+    throw new ImplementMe();
+    
+  }
+
+  public void dumpToLogger() {
+    throw new ImplementMe();
+    
+  }
+
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
     throw new ImplementMe();
   }
 

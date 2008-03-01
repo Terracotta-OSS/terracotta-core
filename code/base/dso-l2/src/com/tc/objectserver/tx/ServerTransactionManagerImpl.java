@@ -31,9 +31,13 @@ import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.api.TransactionStore;
 import com.tc.stats.counter.Counter;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.State;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -111,11 +115,28 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
   }
 
-  public void dump() {
-    StringBuffer buf = new StringBuffer("ServerTransactionManager\n");
-    buf.append("transactionAccounts: " + transactionAccounts);
-    buf.append("\n/ServerTransactionManager");
-    System.err.println(buf.toString());
+  public String dump() {
+    StringWriter writer = new StringWriter();
+    PrintWriter pw = new PrintWriter(writer);
+    new PrettyPrinter(pw).visit(this);
+    writer.flush();
+    return writer.toString();
+  }
+
+  public void dump(Writer writer) {
+    PrintWriter pw = new PrintWriter(writer);
+    pw.write(dump());
+    pw.flush();
+  }
+
+  public void dumpToLogger() {
+    logger.info(dump());
+  }
+
+  public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
+    out.println(getClass().getName());
+    out.indent().print("transactionAccounts: ").visit(transactionAccounts).println();
+    return out;
   }
 
   /**

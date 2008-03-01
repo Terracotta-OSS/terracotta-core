@@ -23,6 +23,7 @@ import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet2;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
+import java.io.Writer;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -154,10 +155,6 @@ public class TestObjectManager implements ObjectManager {
     throw new ImplementMe();
   }
 
-  public void dump() {
-    throw new ImplementMe();
-  }
-
   public void releaseAllReadOnly(Collection objects) {
     releaseAll(null, objects);
   }
@@ -200,6 +197,20 @@ public class TestObjectManager implements ObjectManager {
 
   public GarbageCollector getGarbageCollector() {
     throw new ImplementMe();
+  }
+
+  public String dump() {
+    throw new ImplementMe();
+  }
+
+  public void dump(Writer writer) {
+    throw new ImplementMe();
+
+  }
+
+  public void dumpToLogger() {
+    throw new ImplementMe();
+
   }
 
   public void preFetchObjectsAndCreate(Set oids, Set newOids) {
