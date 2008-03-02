@@ -31,7 +31,7 @@ public class TransactionSequencer {
   private int                      txnsCount;
   private boolean                  reconcile   = false;
 
-  public synchronized void addTransactions(Collection txnLookupContexts) {
+  public synchronized void addTransactionLookupContexts(Collection<TransactionLookupContext> txnLookupContexts) {
     if (false) log_incoming(txnLookupContexts);
     txnQ.addAll(txnLookupContexts);
     txnsCount += txnLookupContexts.size();

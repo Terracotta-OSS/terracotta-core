@@ -16,6 +16,7 @@ import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
+import com.tc.objectserver.context.TransactionLookupContext;
 import com.tc.objectserver.core.api.TestDNA;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
@@ -24,6 +25,7 @@ import com.tc.util.SequenceID;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -58,16 +60,25 @@ public class TransactionSequencerTest extends TCTestCase {
   // Nothing is pending - disjoint anyway
   public void testNoPendingDisjointTxn() throws Exception {
     List txns = createDisjointTxns(5);
-    sequencer.addTransactions(txns);
+    sequencer.addTransactionLookupContexts(createTxnLookupContexts(txns));
     assertEquals(txns, getAllTxnsPossible());
     assertFalse(sequencer.isPending(txns));
+  }
+
+  private Collection<TransactionLookupContext> createTxnLookupContexts(List txns) {
+    List contexts = new ArrayList();
+    for (Iterator i = txns.iterator(); i.hasNext();) {
+      ServerTransaction txn = (ServerTransaction) i.next();
+      contexts.add(new TransactionLookupContext(txn, true));
+    }
+    return contexts;
   }
 
   // Test 2
   // Nothing is pending - not disjoint though
   public void testNoPendingJointTxn() throws Exception {
     List txns = createIntersectingLocksTxns(5);
-    sequencer.addTransactions(txns);
+    sequencer.addTransactionLookupContexts(createTxnLookupContexts(txns));
     assertEquals(txns, getAllTxnsPossible());
     assertFalse(sequencer.isPending(txns));
   }
@@ -76,7 +87,7 @@ public class TransactionSequencerTest extends TCTestCase {
   // txn goes pending - disjoint anyway
   public void testPendingDisJointTxn() throws Exception {
     List txns = createDisjointTxns(5);
-    sequencer.addTransactions(txns);
+    sequencer.addTransactionLookupContexts(createTxnLookupContexts(txns));
     ServerTransaction t1 = sequencer.getNextTxnLookupContextToProcess().getTransaction();
     assertNotNull(t1);
     // Make it pending
@@ -85,11 +96,11 @@ public class TransactionSequencerTest extends TCTestCase {
     txns.remove(t1);
     assertEquals(txns, getAllTxnsPossible());
     assertTrue(sequencer.isPending(Arrays.asList(new Object[] { t1 })));
-    // Nomore txns
+    // No more txns
     assertNull(sequencer.getNextTxnLookupContextToProcess());
     sequencer.makeUnpending(t1);
     assertFalse(sequencer.isPending(Arrays.asList(new Object[] { t1 })));
-    // Nomore txns
+    // No more txns
     assertNull(sequencer.getNextTxnLookupContextToProcess());
   }
 
@@ -97,7 +108,7 @@ public class TransactionSequencerTest extends TCTestCase {
   // txn goes pending - intersecting set
   public void testPendingJointAtLocksTxn() throws Exception {
     List txns = createIntersectingLocksTxns(5);
-    sequencer.addTransactions(txns);
+    sequencer.addTransactionLookupContexts(createTxnLookupContexts(txns));
     ServerTransaction t1 = sequencer.getNextTxnLookupContextToProcess().getTransaction();
     assertNotNull(t1);
     // Make it pending
@@ -118,7 +129,7 @@ public class TransactionSequencerTest extends TCTestCase {
   // txn goes pending - intersecting set
   public void testPendingJointAtObjectsTxn() throws Exception {
     List txns = createIntersectingObjectsTxns(5);
-    sequencer.addTransactions(txns);
+    sequencer.addTransactionLookupContexts(createTxnLookupContexts(txns));
     ServerTransaction t1 = sequencer.getNextTxnLookupContextToProcess().getTransaction();
     assertNotNull(t1);
     // Make it pending
@@ -139,7 +150,7 @@ public class TransactionSequencerTest extends TCTestCase {
   // txn goes pending - intersecting set
   public void testPendingJointAtBothLocksAndObjectsTxn() throws Exception {
     List txns = createIntersectingLocksObjectsTxns(5);
-    sequencer.addTransactions(txns);
+    sequencer.addTransactionLookupContexts(createTxnLookupContexts(txns));
     ServerTransaction t1 = sequencer.getNextTxnLookupContextToProcess().getTransaction();
     assertNotNull(t1);
     // Make it pending
@@ -161,7 +172,7 @@ public class TransactionSequencerTest extends TCTestCase {
   public void testErrorConditions() throws Exception {
     // Call makepending twice
     List txns = createDisjointTxns(5);
-    sequencer.addTransactions(txns);
+    sequencer.addTransactionLookupContexts(createTxnLookupContexts(txns));
     ServerTransaction t1 = sequencer.getNextTxnLookupContextToProcess().getTransaction();
     assertNotNull(t1);
     sequencer.makePending(t1);
@@ -218,7 +229,7 @@ public class TransactionSequencerTest extends TCTestCase {
     txns.add(txn2);
     txns.add(txn3);
     txns.add(txn4);
-    sequencer.addTransactions(txns);
+    sequencer.addTransactionLookupContexts(createTxnLookupContexts(txns));
 
     sequencer.makePending(sequencer.getNextTxnLookupContextToProcess().getTransaction());
     sequencer.makePending(sequencer.getNextTxnLookupContextToProcess().getTransaction());
@@ -272,7 +283,7 @@ public class TransactionSequencerTest extends TCTestCase {
     txns.add(txn2);
     txns.add(txn3);
     txns.add(txn4);
-    sequencer.addTransactions(txns);
+    sequencer.addTransactionLookupContexts(createTxnLookupContexts(txns));
 
     sequencer.makePending(sequencer.getNextTxnLookupContextToProcess().getTransaction());
     sequencer.makePending(sequencer.getNextTxnLookupContextToProcess().getTransaction());
@@ -337,17 +348,18 @@ public class TransactionSequencerTest extends TCTestCase {
         txns.add(createRandomTxn(rnd.nextInt(3) + 1, versionsIn, rnd, lock++));
       }
 
-      sequencer.addTransactions(txns);
+      sequencer.addTransactionLookupContexts(createTxnLookupContexts(txns));
 
-      ServerTransaction next = null;
-      while ((next = sequencer.getNextTxnLookupContextToProcess().getTransaction()) != null) {
+      TransactionLookupContext next = null;
+      while ((next = sequencer.getNextTxnLookupContextToProcess()) != null) {
         if (rnd.nextInt(3) == 0) {
-          sequencer.makePending(next);
-          pending.add(next);
+          ServerTransaction txn = next.getTransaction();
+          sequencer.makePending(txn);
+          pending.add(next.getTransaction());
           continue;
         }
 
-        processTransaction(next, versionsRecv);
+        processTransaction(next.getTransaction(), versionsRecv);
 
         if (pending.size() > 0 && rnd.nextInt(4) == 0) {
           for (int i = 0, n = rnd.nextInt(pending.size()); i < n; i++) {
@@ -398,9 +410,9 @@ public class TransactionSequencerTest extends TCTestCase {
 
   private List getAllTxnsPossible() {
     List txns = new ArrayList();
-    ServerTransaction txn;
-    while ((txn = sequencer.getNextTxnLookupContextToProcess().getTransaction()) != null) {
-      txns.add(txn);
+    TransactionLookupContext txnLC;
+    while ((txnLC = sequencer.getNextTxnLookupContextToProcess()) != null) {
+      txns.add(txnLC.getTransaction());
     }
     return txns;
   }
@@ -412,9 +424,9 @@ public class TransactionSequencerTest extends TCTestCase {
     while (count-- > 0) {
       int e = start + j;
       txns.add(new ServerTransactionImpl(gidGenerator, new TxnBatchID(batchID), new TransactionID(txnID++),
-                                         new SequenceID(sqID++), createLocks(start, e), clientID,
-                                         createDNAs(start, e), new ObjectStringSerializer(), Collections.EMPTY_MAP,
-                                         TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY));
+                                         new SequenceID(sqID++), createLocks(start, e), clientID, createDNAs(start, e),
+                                         new ObjectStringSerializer(), Collections.EMPTY_MAP, TxnType.NORMAL,
+                                         new LinkedList(), DmiDescriptor.EMPTY_ARRAY));
       start = e + 1;
     }
     return txns;
@@ -427,9 +439,10 @@ public class TransactionSequencerTest extends TCTestCase {
     while (count-- > 0) {
       int e = start + j;
       txns.add(new ServerTransactionImpl(gidGenerator, new TxnBatchID(batchID), new TransactionID(txnID++),
-                                         new SequenceID(sqID++), createLocks(start, e + j), clientID,
-                                         createDNAs(start, e), new ObjectStringSerializer(), Collections.EMPTY_MAP,
-                                         TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY));
+                                         new SequenceID(sqID++), createLocks(start, e + j), clientID, createDNAs(start,
+                                                                                                                 e),
+                                         new ObjectStringSerializer(), Collections.EMPTY_MAP, TxnType.NORMAL,
+                                         new LinkedList(), DmiDescriptor.EMPTY_ARRAY));
       start = e + 1;
     }
     return txns;
@@ -442,10 +455,9 @@ public class TransactionSequencerTest extends TCTestCase {
     while (count-- > 0) {
       int e = start + j;
       txns.add(new ServerTransactionImpl(gidGenerator, new TxnBatchID(batchID), new TransactionID(txnID++),
-                                         new SequenceID(sqID++), createLocks(start, e), clientID, createDNAs(start,
-                                                                                                              e + j),
-                                         new ObjectStringSerializer(), Collections.EMPTY_MAP, TxnType.NORMAL,
-                                         new LinkedList(), DmiDescriptor.EMPTY_ARRAY));
+                                         new SequenceID(sqID++), createLocks(start, e), clientID,
+                                         createDNAs(start, e + j), new ObjectStringSerializer(), Collections.EMPTY_MAP,
+                                         TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY));
       start = e + 1;
     }
     return txns;

@@ -80,7 +80,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   // ProcessTransactionHandler Method
   public void addTransactions(Collection txns) {
     Collection txnLookupContexts = createAndPreFetchObjectsFor(txns);
-    sequencer.addTransactions(txnLookupContexts);
+    sequencer.addTransactionLookupContexts(txnLookupContexts);
     txnStageCoordinator.initiateLookup();
   }
 
