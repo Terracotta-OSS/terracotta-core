@@ -77,7 +77,7 @@ public class TransactionSequencerTest extends TCTestCase {
   public void testPendingDisJointTxn() throws Exception {
     List txns = createDisjointTxns(5);
     sequencer.addTransactions(txns);
-    ServerTransaction t1 = sequencer.getNextTxnToProcess();
+    ServerTransaction t1 = sequencer.getNextTxnLookupContextToProcess().getTransaction();
     assertNotNull(t1);
     // Make it pending
     sequencer.makePending(t1);
@@ -86,11 +86,11 @@ public class TransactionSequencerTest extends TCTestCase {
     assertEquals(txns, getAllTxnsPossible());
     assertTrue(sequencer.isPending(Arrays.asList(new Object[] { t1 })));
     // Nomore txns
-    assertNull(sequencer.getNextTxnToProcess());
+    assertNull(sequencer.getNextTxnLookupContextToProcess());
     sequencer.makeUnpending(t1);
     assertFalse(sequencer.isPending(Arrays.asList(new Object[] { t1 })));
     // Nomore txns
-    assertNull(sequencer.getNextTxnToProcess());
+    assertNull(sequencer.getNextTxnLookupContextToProcess());
   }
 
   // Test 4
@@ -98,7 +98,7 @@ public class TransactionSequencerTest extends TCTestCase {
   public void testPendingJointAtLocksTxn() throws Exception {
     List txns = createIntersectingLocksTxns(5);
     sequencer.addTransactions(txns);
-    ServerTransaction t1 = sequencer.getNextTxnToProcess();
+    ServerTransaction t1 = sequencer.getNextTxnLookupContextToProcess().getTransaction();
     assertNotNull(t1);
     // Make it pending
     sequencer.makePending(t1);
@@ -106,7 +106,7 @@ public class TransactionSequencerTest extends TCTestCase {
     txns.remove(t1);
 
     // Since locks are common no txn should be available
-    assertNull(sequencer.getNextTxnToProcess());
+    assertNull(sequencer.getNextTxnLookupContextToProcess());
     assertTrue(sequencer.isPending(Arrays.asList(new Object[] { t1 })));
     sequencer.makeUnpending(t1);
     assertFalse(sequencer.isPending(Arrays.asList(new Object[] { t1 })));
@@ -119,7 +119,7 @@ public class TransactionSequencerTest extends TCTestCase {
   public void testPendingJointAtObjectsTxn() throws Exception {
     List txns = createIntersectingObjectsTxns(5);
     sequencer.addTransactions(txns);
-    ServerTransaction t1 = sequencer.getNextTxnToProcess();
+    ServerTransaction t1 = sequencer.getNextTxnLookupContextToProcess().getTransaction();
     assertNotNull(t1);
     // Make it pending
     sequencer.makePending(t1);
@@ -127,7 +127,7 @@ public class TransactionSequencerTest extends TCTestCase {
     txns.remove(t1);
 
     // Since locks are common no txn should be available
-    assertNull(sequencer.getNextTxnToProcess());
+    assertNull(sequencer.getNextTxnLookupContextToProcess());
     assertTrue(sequencer.isPending(Arrays.asList(new Object[] { t1 })));
     sequencer.makeUnpending(t1);
     assertFalse(sequencer.isPending(Arrays.asList(new Object[] { t1 })));
@@ -140,7 +140,7 @@ public class TransactionSequencerTest extends TCTestCase {
   public void testPendingJointAtBothLocksAndObjectsTxn() throws Exception {
     List txns = createIntersectingLocksObjectsTxns(5);
     sequencer.addTransactions(txns);
-    ServerTransaction t1 = sequencer.getNextTxnToProcess();
+    ServerTransaction t1 = sequencer.getNextTxnLookupContextToProcess().getTransaction();
     assertNotNull(t1);
     // Make it pending
     sequencer.makePending(t1);
@@ -148,7 +148,7 @@ public class TransactionSequencerTest extends TCTestCase {
     txns.remove(t1);
 
     // Since locks are common no txn should be available
-    assertNull(sequencer.getNextTxnToProcess());
+    assertNull(sequencer.getNextTxnLookupContextToProcess());
     assertTrue(sequencer.isPending(Arrays.asList(new Object[] { t1 })));
     sequencer.makeUnpending(t1);
     assertFalse(sequencer.isPending(Arrays.asList(new Object[] { t1 })));
@@ -162,7 +162,7 @@ public class TransactionSequencerTest extends TCTestCase {
     // Call makepending twice
     List txns = createDisjointTxns(5);
     sequencer.addTransactions(txns);
-    ServerTransaction t1 = sequencer.getNextTxnToProcess();
+    ServerTransaction t1 = sequencer.getNextTxnLookupContextToProcess().getTransaction();
     assertNotNull(t1);
     sequencer.makePending(t1);
     assertTrue(sequencer.isPending(txns));
@@ -173,8 +173,8 @@ public class TransactionSequencerTest extends TCTestCase {
       // expected
     }
 
-    // Call make unpending for something that is not pendin
-    ServerTransaction t2 = sequencer.getNextTxnToProcess();
+    // Call make unpending for something that is not pending
+    ServerTransaction t2 = sequencer.getNextTxnLookupContextToProcess().getTransaction();
     assertNotNull(t2);
     try {
       sequencer.makeUnpending(t2);
@@ -220,20 +220,20 @@ public class TransactionSequencerTest extends TCTestCase {
     txns.add(txn4);
     sequencer.addTransactions(txns);
 
-    sequencer.makePending(sequencer.getNextTxnToProcess());
-    sequencer.makePending(sequencer.getNextTxnToProcess());
+    sequencer.makePending(sequencer.getNextTxnLookupContextToProcess().getTransaction());
+    sequencer.makePending(sequencer.getNextTxnLookupContextToProcess().getTransaction());
 
     Object o;
-    o = sequencer.getNextTxnToProcess();
+    o = sequencer.getNextTxnLookupContextToProcess();
     Assert.assertNull(o);
-    o = sequencer.getNextTxnToProcess();
+    o = sequencer.getNextTxnLookupContextToProcess();
     Assert.assertNull(o);
 
     sequencer.makeUnpending(txn2);
     sequencer.makeUnpending(txn1);
 
-    ServerTransaction shouldBe3 = sequencer.getNextTxnToProcess();
-    ServerTransaction shouldBe4 = sequencer.getNextTxnToProcess();
+    ServerTransaction shouldBe3 = sequencer.getNextTxnLookupContextToProcess().getTransaction();
+    ServerTransaction shouldBe4 = sequencer.getNextTxnLookupContextToProcess().getTransaction();
 
     Assert.assertEquals(txn3, shouldBe3);
     Assert.assertEquals(txn4, shouldBe4);
@@ -274,20 +274,20 @@ public class TransactionSequencerTest extends TCTestCase {
     txns.add(txn4);
     sequencer.addTransactions(txns);
 
-    sequencer.makePending(sequencer.getNextTxnToProcess());
-    sequencer.makePending(sequencer.getNextTxnToProcess());
+    sequencer.makePending(sequencer.getNextTxnLookupContextToProcess().getTransaction());
+    sequencer.makePending(sequencer.getNextTxnLookupContextToProcess().getTransaction());
 
     Object o;
-    o = sequencer.getNextTxnToProcess();
+    o = sequencer.getNextTxnLookupContextToProcess();
     Assert.assertNull(o);
-    o = sequencer.getNextTxnToProcess();
+    o = sequencer.getNextTxnLookupContextToProcess();
     Assert.assertNull(o);
 
     sequencer.makeUnpending(txn2);
     sequencer.makeUnpending(txn1);
 
-    ServerTransaction shouldBe3 = sequencer.getNextTxnToProcess();
-    ServerTransaction shouldBe4 = sequencer.getNextTxnToProcess();
+    ServerTransaction shouldBe3 = sequencer.getNextTxnLookupContextToProcess().getTransaction();
+    ServerTransaction shouldBe4 = sequencer.getNextTxnLookupContextToProcess().getTransaction();
 
     Assert.assertEquals(txn3, shouldBe3);
     Assert.assertEquals(txn4, shouldBe4);
@@ -340,7 +340,7 @@ public class TransactionSequencerTest extends TCTestCase {
       sequencer.addTransactions(txns);
 
       ServerTransaction next = null;
-      while ((next = sequencer.getNextTxnToProcess()) != null) {
+      while ((next = sequencer.getNextTxnLookupContextToProcess().getTransaction()) != null) {
         if (rnd.nextInt(3) == 0) {
           sequencer.makePending(next);
           pending.add(next);
@@ -399,7 +399,7 @@ public class TransactionSequencerTest extends TCTestCase {
   private List getAllTxnsPossible() {
     List txns = new ArrayList();
     ServerTransaction txn;
-    while ((txn = sequencer.getNextTxnToProcess()) != null) {
+    while ((txn = sequencer.getNextTxnLookupContextToProcess().getTransaction()) != null) {
       txns.add(txn);
     }
     return txns;

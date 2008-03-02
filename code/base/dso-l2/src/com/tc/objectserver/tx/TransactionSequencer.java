@@ -5,6 +5,7 @@ package com.tc.objectserver.tx;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.objectserver.context.TransactionLookupContext;
 import com.tc.util.Assert;
 import com.tc.util.MergableLinkedList;
 
@@ -30,30 +31,31 @@ public class TransactionSequencer {
   private int                      txnsCount;
   private boolean                  reconcile   = false;
 
-  public synchronized void addTransactions(Collection txns) {
-    if (false) log_incoming(txns);
-    txnQ.addAll(txns);
-    txnsCount += txns.size();
+  public synchronized void addTransactions(Collection txnLookupContexts) {
+    if (false) log_incoming(txnLookupContexts);
+    txnQ.addAll(txnLookupContexts);
+    txnsCount += txnLookupContexts.size();
   }
 
-  private void log_incoming(Collection txns) {
-    for (Iterator i = txns.iterator(); i.hasNext();) {
-      ServerTransaction txn = (ServerTransaction) i.next();
-      logger.info("Incoming : " + txn);
+  private void log_incoming(Collection lookupContexts) {
+    for (Iterator i = lookupContexts.iterator(); i.hasNext();) {
+      TransactionLookupContext lookupContext = (TransactionLookupContext) i.next();
+      logger.info("Incoming : " + lookupContext);
     }
   }
 
-  public synchronized ServerTransaction getNextTxnToProcess() {
+  public synchronized TransactionLookupContext getNextTxnLookupContextToProcess() {
     reconcileIfNeeded();
     while (!txnQ.isEmpty()) {
 
-      ServerTransaction txn = (ServerTransaction) txnQ.removeFirst();
+      TransactionLookupContext lookupContext = (TransactionLookupContext) txnQ.removeFirst();
+      ServerTransaction txn = lookupContext.getTransaction();
       if (isBlocked(txn)) {
-        addBlocked(txn);
+        addBlocked(lookupContext);
       } else {
-        if (false) log_outgoing(txn);
+        if (false) log_outgoing(lookupContext);
         txnsCount--;
-        return txn;
+        return lookupContext;
       }
     }
     if (false) log_no_txns_to_process();
@@ -70,10 +72,11 @@ public class TransactionSequencer {
     }
   }
 
-  private void addBlocked(ServerTransaction txn) {
+  private void addBlocked(TransactionLookupContext lookupContext) {
+    ServerTransaction txn = lookupContext.getTransaction();
     locks.addBlocked(Arrays.asList(txn.getLockIDs()));
     objects.addBlocked(txn.getObjectIDs());
-    blockedQ.add(txn);
+    blockedQ.add(lookupContext);
   }
 
   private void log_no_txns_to_process() {
@@ -83,8 +86,8 @@ public class TransactionSequencer {
     }
   }
 
-  private void log_outgoing(ServerTransaction txn) {
-    logger.info("Outgoing : " + txn);
+  private void log_outgoing(TransactionLookupContext lookupContext) {
+    logger.info("Outgoing : " + lookupContext);
   }
 
   private boolean isBlocked(ServerTransaction txn) {
