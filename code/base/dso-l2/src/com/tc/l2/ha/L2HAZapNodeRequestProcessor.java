@@ -12,7 +12,6 @@ import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.NodeID;
 import com.tc.net.groups.ZapNodeRequestProcessor;
-import com.tc.util.Assert;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -55,7 +54,6 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
   }
 
   public long[] getCurrentNodeWeights() {
-    Assert.assertTrue(stateManager.isActiveCoordinator());
     return factory.generateWeightSequence();
   }
 
