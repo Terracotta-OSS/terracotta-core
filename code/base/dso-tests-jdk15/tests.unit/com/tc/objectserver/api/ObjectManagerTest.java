@@ -2335,10 +2335,9 @@ public class ObjectManagerTest extends BaseDSOTestCase {
       while (true) {
         try {
           ManagedObjectFaultingContext ec = (ManagedObjectFaultingContext) faultSink.take();
-          synchronized (this) {
-            objectManager.addFaultedObject(ec.getId(), store.getObjectByID(ec.getId()), ec.isRemoveOnRelease());
-            sinkContext.postProcess();
-          }
+          objectManager.addFaultedObject(ec.getId(), store.getObjectByID(ec.getId()), ec.isRemoveOnRelease());
+          sinkContext.postProcess();
+
         } catch (InterruptedException e) {
           throw new AssertionError(e);
         }
@@ -2364,10 +2363,8 @@ public class ObjectManagerTest extends BaseDSOTestCase {
       while (true) {
         try {
           ManagedObjectFlushingContext ec = (ManagedObjectFlushingContext) flushSink.take();
-          synchronized (this) {
-            objectManager.flushAndEvict(ec.getObjectToFlush());
-            sinkContext.postProcess();
-          }
+          objectManager.flushAndEvict(ec.getObjectToFlush());
+          sinkContext.postProcess();
         } catch (InterruptedException e) {
           throw new AssertionError(e);
         }
