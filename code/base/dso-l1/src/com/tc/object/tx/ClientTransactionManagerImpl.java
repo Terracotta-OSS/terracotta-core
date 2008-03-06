@@ -794,7 +794,10 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     ThreadTransactionLoggingStack txnStack = (ThreadTransactionLoggingStack) txnLogging.get();
     Assert.assertNotNull(txnStack);
     final int size = txnStack.decrement();
-    Assert.assertTrue("size=" + size, size >= 0);
+
+    if (size < 0) {
+      throw new AssertionError("size=" + size);
+    }
   }
 
   public boolean isTransactionLoggingDisabled() {
