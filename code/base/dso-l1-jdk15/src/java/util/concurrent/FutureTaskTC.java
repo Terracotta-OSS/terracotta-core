@@ -293,7 +293,13 @@ public class FutureTaskTC implements Future, Runnable {
           try {
             managedInnerSet(o);
           } finally {
+            if (DebugUtil.DEBUG) {
+              System.err.println(ManagerUtil.getClientID() + " going to unlock after managedInnerSet");
+            }
             lock.unlock();
+            if (DebugUtil.DEBUG) {
+              System.err.println(ManagerUtil.getClientID() + " innerRun unlock after managedInnerSet.");
+            }
           }
         } else {
           lock.lock();
