@@ -336,21 +336,30 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
   }
 
+  /**
+   * Earlier this method used to call releaseAll and then explicitly do a commit on the txn. But that implies that the
+   * objects are released for other lookups before it it committed to disk. This is good for performance reason but
+   * imposes a problem. The clients could read an object that has changes but it not committed to the disk yet and If
+   * the server crashes then transactions are resent and may be re-applied in the clients when it should not have
+   * re-applied. To avoid this we now commit inline before releasing the objects.
+   * 
+   * @see ObjectManagerImpl.releaseAll() for more details.
+   */
   public void commit(PersistenceTransactionProvider ptxp, Collection objects, Map newRoots,
                      Collection appliedServerTransactionIDs) {
     PersistenceTransaction ptx = ptxp.newTransaction();
-    release(ptx, objects, newRoots);
     gtxm.commitAll(ptx, appliedServerTransactionIDs);
-    ptx.commit();
+    // This call commits the transaction too.
+    objectManager.releaseAll(ptx, objects);
+    fireRootCreatedEvents(newRoots);
     committed(appliedServerTransactionIDs);
   }
 
-  private void release(PersistenceTransaction ptx, Collection objects, Map newRoots) {
-    // change done so now we can release the objects
-    objectManager.releaseAll(ptx, objects);
-
-    // NOTE: important to have released all objects in the TXN before
-    // calling this event as the listeners tries to lookup for the object and blocks
+  /**
+   * NOTE: Its important to have released all objects in the TXN before calling this event as the listeners tries to
+   * lookup for the object and blocks
+   */
+  private void fireRootCreatedEvents(Map newRoots) {
     for (Iterator i = newRoots.entrySet().iterator(); i.hasNext();) {
       Map.Entry entry = (Entry) i.next();
       fireRootCreatedEvent((String) entry.getKey(), (ObjectID) entry.getValue());

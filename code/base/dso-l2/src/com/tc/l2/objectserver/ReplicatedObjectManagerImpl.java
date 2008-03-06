@@ -131,7 +131,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       return;
     }
     objectManager.notifyGCComplete(gcedOids);
-    logger.info("Removed " + gcedOids.size() + "objects from passive ObjectManager from last GC from Active");
+    logger.info("Removed " + gcedOids.size() + " objects from passive ObjectManager from last GC from Active");
   }
 
   private void handleClusterObjectMessage(NodeID nodeID, ObjectListSyncMessage clusterMsg) {

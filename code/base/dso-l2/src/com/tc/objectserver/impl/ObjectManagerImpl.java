@@ -63,7 +63,8 @@ import java.util.Set;
 /**
  * Manages access to all the Managed objects in the system.
  */
-public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeListener, ObjectManagerMBean, Evictable, DumpHandler, PrettyPrintable {
+public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeListener, ObjectManagerMBean, Evictable,
+    DumpHandler, PrettyPrintable {
 
   private static final TCLogger                logger                   = TCLogging.getLogger(ObjectManager.class);
 
@@ -137,8 +138,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       if (!obj.isNew()) toFlush.add(obj);
     }
     PersistenceTransaction tx = newTransaction();
-    flushAll(tx, toFlush);
-    tx.commit();
+    flushAllAndCommit(tx, toFlush);
   }
 
   public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
@@ -507,7 +507,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   public void release(PersistenceTransaction persistenceTransaction, ManagedObject object) {
-    if (config.paranoid()) flush(persistenceTransaction, object);
+    if (config.paranoid()) flushAndCommit(persistenceTransaction, object);
     synchronized (this) {
       basicRelease(object);
       postRelease();
@@ -529,8 +529,18 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     postRelease();
   }
 
+  /**
+   * We used to not call txn.commit() here. But that implies that the objects are released for other lookups before it is
+   * committed to disk. This is good for performance reason but imposes a problem. The clients could read an object that
+   * has changes but it not committed to the disk yet and If the server crashes then transactions are resent and may be
+   * re-applied in the clients when it should not have re-applied. To avoid this we now commit in-line before releasing
+   * the objects. (A wise man in the company once said that the performance of broken code is zero)
+   * <p>
+   * TODO:: Implement a mechanism where Objects are marked pending to commit and give it out for other transactions but
+   * not for client lookups.
+   */
   public void releaseAll(PersistenceTransaction persistenceTransaction, Collection managedObjects) {
-    if (config.paranoid()) flushAll(persistenceTransaction, managedObjects);
+    if (config.paranoid()) flushAllAndCommit(persistenceTransaction, managedObjects);
     synchronized (this) {
       for (Iterator i = managedObjects.iterator(); i.hasNext();) {
         basicRelease((ManagedObject) i.next());
@@ -685,12 +695,14 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
   }
 
-  private void flush(PersistenceTransaction persistenceTransaction, ManagedObject managedObject) {
+  private void flushAndCommit(PersistenceTransaction persistenceTransaction, ManagedObject managedObject) {
     objectStore.commitObject(persistenceTransaction, managedObject);
+    persistenceTransaction.commit();
   }
 
-  private void flushAll(PersistenceTransaction persistenceTransaction, Collection managedObjects) {
+  private void flushAllAndCommit(PersistenceTransaction persistenceTransaction, Collection managedObjects) {
     objectStore.commitAllObjects(persistenceTransaction, managedObjects);
+    persistenceTransaction.commit();
   }
 
   public void dumpToLogger() {
@@ -889,8 +901,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   public void flushAndEvict(List objects2Flush) {
     PersistenceTransaction tx = newTransaction();
     int size = objects2Flush.size();
-    flushAll(tx, objects2Flush);
-    tx.commit();
+    flushAllAndCommit(tx, objects2Flush);
     evicted(objects2Flush);
     flushCount.decrement(size);
   }

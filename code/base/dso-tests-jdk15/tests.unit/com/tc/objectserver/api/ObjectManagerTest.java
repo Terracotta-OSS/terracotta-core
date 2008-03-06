@@ -781,7 +781,6 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     PersistenceTransaction tx = ptp.newTransaction();
     objectManager.release(tx, lookedUpViaLookupObjectsForCreateIfNecessary);
-    tx.commit();
 
     ManagedObject lookedUpViaLookup = objectManager.getObjectByID(id);
     assertEquals(1, lookedUpViaLookupObjectsForCreateIfNecessary.getObjectReferences().size());
@@ -790,7 +789,6 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     tx = ptp.newTransaction();
     objectManager.release(tx, lookedUpViaLookup);
-    tx.commit();
 
     // now do another lookup, change, and commit cycle
     responseContext = new TestResultsContext(ids, Collections.EMPTY_SET);
@@ -808,7 +806,6 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     // lookedUpViaLookupObjectsForCreateIfNecessary.commit();
     tx = ptp.newTransaction();
     objectManager.release(tx, lookedUpViaLookupObjectsForCreateIfNecessary);
-    tx.commit();
 
     lookedUpViaLookup = objectManager.getObjectByID(id);
     assertEquals(1, lookedUpViaLookupObjectsForCreateIfNecessary.getObjectReferences().size());
@@ -913,7 +910,6 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     PersistenceTransaction tx = ptp.newTransaction();
     this.objectManager.release(tx, mo);
-    tx.commit();
 
     ManagedObjectFacade facade;
     try {
@@ -1422,7 +1418,6 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     // Now check back Object 1
     PersistenceTransaction dbtxn = ptp.newTransaction();
     objectManager.releaseAll(dbtxn, ctc1.getObjects());
-    dbtxn.commit();
 
     // Lookup context should have been fired
     loc = (LookupEventContext) coordinator.lookupSink.queue.remove(0);
@@ -1462,7 +1457,6 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     // Check in Object 2 to make the GC go to paused state
     dbtxn = ptp.newTransaction();
     objectManager.releaseAll(dbtxn, ctc2.getObjects());
-    dbtxn.commit();
 
     cb.await();
 
@@ -1486,7 +1480,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     assertNotNull(aoc);
     assertTrue(coordinator.applySink.queue.isEmpty());
 
-    // Apply and initate commit the txn
+    // Apply and initiate commit the txn
     applyTxn(aoc);
     txObjectManager.applyTransactionComplete(stxn3.getServerTransactionID());
     acec = (ApplyCompleteEventContext) coordinator.applyCompleteSink.queue.remove(0);
@@ -1508,7 +1502,6 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     // Now check back the objects
     dbtxn = ptp.newTransaction();
     objectManager.releaseAll(dbtxn, ctc3.getObjects());
-    dbtxn.commit();
 
     assertEquals(0, objectManager.getCheckedOutCount());
     assertFalse(objectManager.isReferenced(new ObjectID(1)));

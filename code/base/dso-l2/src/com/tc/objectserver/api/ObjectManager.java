@@ -21,14 +21,13 @@ import java.util.Set;
 /**
  * manages all access to objects on the server. This will be single threaded and only accessed via it's event handler.
  * 
- * @author steve
  */
 public interface ObjectManager extends ManagedObjectProvider {
 
   public void stop();
 
   /**
-   * release object so that if anyone needs it they can have it
+   * releases the object and commits the transaction, so that if anyone needs it they can have it
    * 
    * @param object
    */
@@ -45,7 +44,7 @@ public interface ObjectManager extends ManagedObjectProvider {
   public void releaseReadOnly(ManagedObject object);
 
   /**
-   * Release all objects in the given collection.
+   * Release all objects in the given collection and commits the transaction too.
    * 
    * @param collection
    */
