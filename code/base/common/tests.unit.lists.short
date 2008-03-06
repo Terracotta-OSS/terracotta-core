@@ -1,2 +1,3 @@
 TCByteBufferInputStreamTest
 TCByteBufferOutputStreamTest
+MavenToOSGiTest
