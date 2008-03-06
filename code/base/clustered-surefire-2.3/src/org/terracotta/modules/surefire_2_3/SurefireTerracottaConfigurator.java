@@ -14,7 +14,7 @@ import com.tc.object.config.ConfigLockLevel;
  */
 public class SurefireTerracottaConfigurator extends TerracottaConfiguratorModule {
 
-  private static final String CLUSTERED_SUREFIRE_BUNDLE_NAME = "org.terracotta.modules.clustered_surefire_2.3";
+  private static final String CLUSTERED_SUREFIRE_BUNDLE_NAME = "org.terracotta.modules.clustered-surefire-2.3";
 
   protected void addInstrumentation(BundleContext context) {
     configHelper.addCustomAdapter("junit.framework.TestSuite", new JUnitTestSuiteAdapter());
