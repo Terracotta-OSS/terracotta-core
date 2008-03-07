@@ -63,7 +63,8 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
 
     managedObjectPersistor = new ManagedObjectPersistorImpl(logger, env.getClassCatalogWrapper().getClassCatalog(),
                                                             sleepycatSerializationAdapterFactory, env
-                                                                .getObjectDatabase(), env.getOidDatabase(),
+                                                                .getObjectDatabase(), env.getOidDatabase(), env
+                                                                .getOidLogDatabase(), env.getOidLogSequeneceDB(),
                                                             dbCursorConfig, new TestMutableSequence(), env
                                                                 .getRootDatabase(), rootDBCursorConfig, ptp,
                                                             sleepycatCollectionsPersistor, env.isParanoidMode());
