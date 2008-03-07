@@ -19,6 +19,13 @@ import java.util.Map;
 
 public class ManagedObjectTest extends TCTestCase {
 
+  /*
+   * Have getTempDirectory to return a new temp directory, not to cleanup existing one.
+   */
+  protected boolean cleanTempDir() {
+    return false;
+  }
+
   public void testBasics() throws Exception {
     ObjectInstanceMonitor instanceMonitor = new ObjectInstanceMonitorImpl();
     ObjectID objectID = new ObjectID(1);
