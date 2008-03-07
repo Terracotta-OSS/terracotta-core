@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class FastObjectIDManagerImpl extends SleepycatPersistorBase implements ObjectIDManager {
   private static final TCLogger                logger                   = TCLogging
                                                                             .getTestingLogger(FastObjectIDManagerImpl.class);
-  private final static int                     SEQUENCE_BATCH_SIZE      = 2000;
+  private final static int                     SEQUENCE_BATCH_SIZE      = 50000;
   // property
   public final static String                   LOAD_OBJECTID_PROPERTIES = "l2.objectmanager.loadObjectID";
   private final static String                  LONGS_PER_DISK_ENTRY     = "longsPerDiskEntry";
