@@ -29,7 +29,8 @@ public interface TerracottaMBean {
   boolean isEnabled();
 
   /**
-   * This method will be called each time the bean is enabled/disabled
+   * This method will be called each time the bean is disabled when it was
+   * enabled beforehand
    */
   void reset();
 

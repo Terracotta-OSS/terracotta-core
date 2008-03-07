@@ -23,14 +23,11 @@ public class L2MBeanNames {
 
   static {
     try {
-      TC_SERVER_INFO = TerracottaManagement.createObjectName(Type.Server, Subsystem.None, null, "Terracotta Server",
-                                                             false);
+      TC_SERVER_INFO = TerracottaManagement.createObjectName(Type.Server, Subsystem.None, null, "Terracotta Server", false);
       LOGGER = TerracottaManagement.createObjectName(Type.Server, Subsystem.None, null, "Logger", false);
-      DSO = TerracottaManagement.createObjectName(Type.Server, Subsystem.None, null, "DSO", false);
-      DSO_APP_EVENTS = TerracottaManagement.createObjectName(Type.Server, Subsystem.None, null, "Application Events",
-                                                             false);
-      OBJECT_MANAGEMENT = TerracottaManagement.createObjectName(Type.Server, Subsystem.ObjectManagement, null,
-                                                                "ObjectManagement", true);
+      DSO = TerracottaManagement.createObjectName(Type.Server, Subsystem.None, null, "DSO", true);
+      DSO_APP_EVENTS = TerracottaManagement.createObjectName(Type.Server, Subsystem.None, null, "Application Events", false);
+      OBJECT_MANAGEMENT = TerracottaManagement.createObjectName(Type.Server, Subsystem.ObjectManagement, null, "ObjectManagement", true);
       DUMPER = TerracottaManagement.createObjectName(Type.Server, Subsystem.None, null, "L2Dumper", false);
       LOCK_STATISTICS = TerracottaManagement.createObjectName(Type.Server, Subsystem.None, null, "Terracotta Lock Statistics", false);
     } catch (MalformedObjectNameException mone) {
@@ -39,5 +36,4 @@ public class L2MBeanNames {
       throw new RuntimeException(npe);
     }
   }
-
 }

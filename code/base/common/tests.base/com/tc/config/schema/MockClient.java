@@ -296,11 +296,35 @@ public class MockClient implements Client {
 
   public void setModules(Modules modules) {
     throw new ImplementMe();
-
   }
 
   public void unsetModules() {
     throw new ImplementMe();
   }
 
+  public String getStatistics() {
+    throw new ImplementMe();
+  }
+
+  public boolean isSetStatistics() {
+    throw new ImplementMe();
+  }
+
+  public void setStatistics(String arg0) {
+    throw new ImplementMe();
+    
+  }
+
+  public void unsetStatistics() {
+    throw new ImplementMe();
+    
+  }
+
+  public Path xgetStatistics() {
+    throw new ImplementMe();
+  }
+
+  public void xsetStatistics(Path arg0) {
+    throw new ImplementMe();
+  }
 }

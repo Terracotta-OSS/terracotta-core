@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.logging;
 
@@ -13,32 +14,64 @@ import java.util.Iterator;
 
 public class InstrumentationLoggerImpl implements InstrumentationLogger {
 
-  private final DSOInstrumentationLoggingOptions opts;
-  private final TCLogger                         logger;
+  private final TCLogger logger;
+
+  private boolean        classInclusion;
+  private boolean        lockInsertion;
+  private boolean        transientRootWarning;
+  private boolean        rootInsertion;
+  private boolean        distMethodCallInsertion;
 
   public InstrumentationLoggerImpl(DSOInstrumentationLoggingOptions opts) {
-    this.opts = opts;
     this.logger = CustomerLogging.getDSOInstrumentationLogger();
+
+    if (opts != null) {
+      this.classInclusion = opts.logClass().getBoolean();
+      this.lockInsertion = opts.logLocks().getBoolean();
+      this.transientRootWarning = opts.logTransientRoot().getBoolean();
+      this.rootInsertion = opts.logRoots().getBoolean();
+      this.distMethodCallInsertion = opts.logDistributedMethods().getBoolean();
+    }
   }
 
-  public boolean classInclusion() {
-    return opts.logClass().getBoolean();
+  public void setClassInclusion(boolean classInclusion) {
+    this.classInclusion = classInclusion;
   }
 
-  public boolean lockInsertion() {
-    return opts.logLocks().getBoolean();
+  public boolean getClassInclusion() {
+    return this.classInclusion;
   }
 
-  public boolean transientRootWarning() {
-    return opts.logTransientRoot().getBoolean();
+  public void setLockInsertion(boolean lockInsertion) {
+    this.lockInsertion = lockInsertion;
   }
 
-  public boolean rootInsertion() {
-    return opts.logRoots().getBoolean();
+  public boolean getLockInsertion() {
+    return this.lockInsertion;
   }
 
-  public boolean distMethodCallInsertion() {
-    return opts.logDistributedMethods().getBoolean();
+  public void setTransientRootWarning(boolean transientRootWarning) {
+    this.transientRootWarning = transientRootWarning;
+  }
+
+  public boolean getTransientRootWarning() {
+    return this.transientRootWarning;
+  }
+
+  public void setRootInsertion(boolean rootInsertion) {
+    this.rootInsertion = rootInsertion;
+  }
+
+  public boolean getRootInsertion() {
+    return this.rootInsertion;
+  }
+
+  public void setDistMethodCallInsertion(boolean distMethodCallInsertion) {
+    this.distMethodCallInsertion = distMethodCallInsertion;
+  }
+
+  public boolean getDistMethodCallInsertion() {
+    return this.distMethodCallInsertion;
   }
 
   public void classIncluded(String className) {

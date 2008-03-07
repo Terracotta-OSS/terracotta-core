@@ -22,6 +22,7 @@ import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -134,6 +135,10 @@ public class StageManagerImpl implements StageManager {
       stats[i] = getStage(names[i]).getSink().getStats(MONITOR_DELAY);
     }
     return stats;
+  }
+
+  public synchronized Collection getStages() {
+    return stages.values();
   }
 
   static class StageMonitors {

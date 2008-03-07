@@ -10,7 +10,6 @@
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/commons-httpclient-3.0.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jetty-6.0.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jetty-util-6.0.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jfreechart-1.0.0x.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jline-0.9.9.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jmxremote-1.0.1_04.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jmxremote_optional-1.0.1_04-b58.jar"/>
@@ -28,4 +27,8 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/management"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty-api"/>
+	<classpathentry kind="lib" path="/dependencies/lib/rrd4j-2.0.2.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-statistics"/>
+	<classpathentry kind="lib" path="/dependencies/lib/jfreechart-1.0.7.jar"/>
+	<classpathentry kind="lib" path="/dependencies/lib/jcommon-1.0.12.jar"/>
 </classpath>

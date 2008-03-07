@@ -16,4 +16,8 @@ public interface DSOGlobalServerStats {
   
   ObjectManagerStats getObjectManagerStats();
 
+  SampledCounter getBroadcastCounter();
+
+  SampledCounter getChangesCounter();
+
 }

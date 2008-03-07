@@ -31,6 +31,8 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.event.DmiManager;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.lockmanager.api.LockLevel;
+import com.tc.object.logging.InstrumentationLogger;
+import com.tc.object.logging.InstrumentationLoggerImpl;
 import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.tx.ClientTransactionManager;
@@ -65,6 +67,8 @@ public class ManagerImpl implements Manager {
   private final Cluster                            cluster;
 
   private RuntimeLogger                            runtimeLogger          = new NullRuntimeLogger();
+  private final InstrumentationLogger              instrumentationLogger;
+
   private ClientObjectManager                      objectManager;
   private ClientShutdownManager                    shutdownManager;
   private ClientTransactionManager                 txManager;
@@ -94,6 +98,7 @@ public class ManagerImpl implements Manager {
     this.portability = config.getPortability();
     this.txManager = txManager;
     this.config = config;
+    this.instrumentationLogger = new InstrumentationLoggerImpl(config.instrumentationLoggingOptions());
     this.startClient = startClient;
     this.classProvider = classProvider;
     this.connectionComponents = connectionComponents;
@@ -319,7 +324,7 @@ public class ManagerImpl implements Manager {
     String lockObjectClass = instance == null? LockContextInfo.NULL_LOCK_OBJECT_TYPE : instance.getClass().getName();
     
     boolean locked = this.txManager.begin(lockID, type, lockObjectClass, contextInfo);
-    if (locked && runtimeLogger.lockDebug()) {
+    if (locked && runtimeLogger.getLockDebug()) {
       runtimeLogger.lockAcquired(lockID, type, instance, tcobj);
     }
   }
@@ -328,7 +333,7 @@ public class ManagerImpl implements Manager {
     String lockObjectType = instance == null? LockContextInfo.NULL_LOCK_OBJECT_TYPE : instance.getClass().getName();
     
     boolean locked = this.txManager.tryBegin(lockID, timeout, type, lockObjectType);
-    if (locked && runtimeLogger.lockDebug()) {
+    if (locked && runtimeLogger.getLockDebug()) {
       runtimeLogger.lockAcquired(lockID, type, instance, tcobj);
     }
     return locked;
@@ -379,7 +384,7 @@ public class ManagerImpl implements Manager {
 
   private void managedObjectNotify(Object obj, TCObject tco, boolean all) {
     try {
-      if (runtimeLogger.waitNotifyDebug()) {
+      if (runtimeLogger.getWaitNotifyDebug()) {
         runtimeLogger.objectNotify(all, obj, tco);
       }
       this.txManager.notify(generateAutolockName(tco), all, obj);
@@ -394,7 +399,7 @@ public class ManagerImpl implements Manager {
     if (tco != null) {
       try {
         WaitInvocation call = new WaitInvocation();
-        if (runtimeLogger.waitNotifyDebug()) {
+        if (runtimeLogger.getWaitNotifyDebug()) {
           runtimeLogger.objectWait(call, obj, tco);
         }
         this.txManager.wait(generateAutolockName(tco), call, obj);
@@ -413,7 +418,7 @@ public class ManagerImpl implements Manager {
     if (tco != null) {
       try {
         WaitInvocation call = new WaitInvocation(millis);
-        if (runtimeLogger.waitNotifyDebug()) {
+        if (runtimeLogger.getWaitNotifyDebug()) {
           runtimeLogger.objectWait(call, obj, tco);
         }
         this.txManager.wait(generateAutolockName(tco), call, obj);
@@ -433,7 +438,7 @@ public class ManagerImpl implements Manager {
     if (tco != null) {
       try {
         WaitInvocation call = new WaitInvocation(millis, nanos);
-        if (runtimeLogger.waitNotifyDebug()) {
+        if (runtimeLogger.getWaitNotifyDebug()) {
           runtimeLogger.objectWait(call, obj, tco);
         }
         this.txManager.wait(generateAutolockName(tco), call, obj);
@@ -799,6 +804,10 @@ public class ManagerImpl implements Manager {
     return TCLogging.getLogger(loggerName);
   }
 
+  public InstrumentationLogger getInstrumentationLogger() {
+    return instrumentationLogger;
+  }
+  
   private static class MethodDisplayNames {
 
     private final Map display = new HashMap();
@@ -877,7 +886,7 @@ public class ManagerImpl implements Manager {
   public DmiManager getDmiManager() {
     return this.methodCallManager;
   }
-  
+
   public boolean isFieldPortableByOffset(Object pojo, long fieldOffset) {
     TCObject tcObj = lookupExistingOrNull(pojo);
     return tcObj != null && tcObj.isFieldPortableByOffset(fieldOffset);

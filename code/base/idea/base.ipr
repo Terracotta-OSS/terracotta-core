@@ -47,6 +47,8 @@
         <option name="NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND" value="99" />
         <option name="IMPORT_LAYOUT_TABLE">
           <value>
+            <package name="EDU" withSubpackages="true" />
+            <emptyLine />
             <package name="org" withSubpackages="true" />
             <emptyLine />
             <package name="com" withSubpackages="true" />
@@ -187,6 +189,12 @@
               <file url="file://$PROJECT_DIR$/../dso-container-tests/tests.system.resources/com/tctest/server/appserver/unit/hibernate.cfg.xml" />
             </files>
           </module>
+          <module name="clustered-hibernate-3.2.5">
+            <files>
+              <file url="file://$PROJECT_DIR$/../clustered-hibernate-3.2.5/build.eclipse/tests.system.classes/com/tctest/server/appserver/unit/hibernate.cfg.xml" />
+              <file url="file://$PROJECT_DIR$/../clustered-hibernate-3.2.5/tests.system.resources/com/tctest/server/appserver/unit/hibernate.cfg.xml" />
+            </files>
+          </module>
         </modules>
       </facet-type>
     </autodetection-disabled>
@@ -214,7 +222,7 @@
     <option name="GENERATE_NO_WARNINGS" value="false" />
     <option name="DEPRECATION" value="true" />
     <option name="ADDITIONAL_OPTIONS_STRING" value="" />
-    <option name="MAXIMUM_HEAP_SIZE" value="128" />
+    <option name="MAXIMUM_HEAP_SIZE" value="512" />
   </component>
   <component name="JavadocGenerationManager">
     <option name="OUTPUT_DIRECTORY" />
@@ -383,6 +391,7 @@
       <module fileurl="file://$PROJECT_DIR$/clustered-ehcache-1.3.iml" filepath="$PROJECT_DIR$/clustered-ehcache-1.3.iml" />
       <module fileurl="file://$PROJECT_DIR$/clustered-ehcache-commons-1.0.iml" filepath="$PROJECT_DIR$/clustered-ehcache-commons-1.0.iml" />
       <module fileurl="file://$PROJECT_DIR$/clustered-hibernate-3.1.2.iml" filepath="$PROJECT_DIR$/clustered-hibernate-3.1.2.iml" />
+      <module fileurl="file://$PROJECT_DIR$/clustered-hibernate-3.2.5.iml" filepath="$PROJECT_DIR$/clustered-hibernate-3.2.5.iml" />
       <module fileurl="file://$PROJECT_DIR$/clustered-iBatis-2.2.0.iml" filepath="$PROJECT_DIR$/clustered-iBatis-2.2.0.iml" />
       <module fileurl="file://$PROJECT_DIR$/clustered-lucene-2.0.0.iml" filepath="$PROJECT_DIR$/clustered-lucene-2.0.0.iml" />
       <module fileurl="file://$PROJECT_DIR$/clustered-rife-1.6.0.iml" filepath="$PROJECT_DIR$/clustered-rife-1.6.0.iml" />
@@ -413,6 +422,8 @@
       <module fileurl="file://$PROJECT_DIR$/dso-spring-aj.iml" filepath="$PROJECT_DIR$/dso-spring-aj.iml" />
       <module fileurl="file://$PROJECT_DIR$/dso-spring-crash-tests.iml" filepath="$PROJECT_DIR$/dso-spring-crash-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/dso-spring-tests.iml" filepath="$PROJECT_DIR$/dso-spring-tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/dso-statistics.iml" filepath="$PROJECT_DIR$/dso-statistics.iml" />
+      <module fileurl="file://$PROJECT_DIR$/dso-statistics-tests.iml" filepath="$PROJECT_DIR$/dso-statistics-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/dso-system-tests.iml" filepath="$PROJECT_DIR$/dso-system-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/dso-tests-jdk15.iml" filepath="$PROJECT_DIR$/dso-tests-jdk15.iml" />
       <module fileurl="file://$PROJECT_DIR$/dso-weblogic-stubs.iml" filepath="$PROJECT_DIR$/dso-weblogic-stubs.iml" />
@@ -426,6 +437,7 @@
       <module fileurl="file://$PROJECT_DIR$/linked-child-process.iml" filepath="$PROJECT_DIR$/linked-child-process.iml" />
       <module fileurl="file://$PROJECT_DIR$/management.iml" filepath="$PROJECT_DIR$/management.iml" />
       <module fileurl="file://$PROJECT_DIR$/modules-common.iml" filepath="$PROJECT_DIR$/modules-common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/reflector-test.iml" filepath="$PROJECT_DIR$/reflector-test.iml" />
       <module fileurl="file://$PROJECT_DIR$/simulator.iml" filepath="$PROJECT_DIR$/simulator.iml" />
       <module fileurl="file://$PROJECT_DIR$/spring-config.iml" filepath="$PROJECT_DIR$/spring-config.iml" />
       <module fileurl="file://$PROJECT_DIR$/standard-config.iml" filepath="$PROJECT_DIR$/standard-config.iml" />
@@ -495,8 +507,5 @@
   <component name="com.intellij.profile.ui.ErrorOptionsConfigurable">
     <option name="myLastEditedConfigurable" />
   </component>
-  <UsedPathMacros>
-    <macro name="M2_REPO" />
-  </UsedPathMacros>
 </project>
 

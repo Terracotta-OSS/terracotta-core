@@ -42,6 +42,10 @@ import java.util.Map;
 
 public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper, DSOClientConfigHelper {
 
+  public String rawConfigText() {
+    return null;
+  }
+  
   public String[] getMissingRootDeclarations(ClassInfo classInfo) {
     return new String[0];
   }

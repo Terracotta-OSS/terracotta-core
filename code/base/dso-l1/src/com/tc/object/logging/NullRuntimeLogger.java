@@ -13,11 +13,11 @@ public class NullRuntimeLogger implements RuntimeLogger {
     super();
   }
 
-  public boolean lockDebug() {
+  public boolean getLockDebug() {
     return false;
   }
 
-  public boolean fieldChangeDebug() {
+  public boolean getFieldChangeDebug() {
     return false;
   }
 
@@ -29,7 +29,7 @@ public class NullRuntimeLogger implements RuntimeLogger {
     return;
   }
 
-  public boolean newManagedObjectDebug() {
+  public boolean getNewManagedObjectDebug() {
     return false;
   }
 
@@ -37,7 +37,7 @@ public class NullRuntimeLogger implements RuntimeLogger {
     return;
   }
 
-  public boolean waitNotifyDebug() {
+  public boolean getWaitNotifyDebug() {
     return false;
   }
 
@@ -49,7 +49,7 @@ public class NullRuntimeLogger implements RuntimeLogger {
     return;
   }
 
-  public boolean distributedMethodDebug() {
+  public boolean getDistributedMethodDebug() {
     return false;
   }
 
@@ -61,7 +61,7 @@ public class NullRuntimeLogger implements RuntimeLogger {
     return;
   }
 
-  public boolean arrayChangeDebug() {
+  public boolean getArrayChangeDebug() {
     return false;
   }
 
@@ -73,8 +73,59 @@ public class NullRuntimeLogger implements RuntimeLogger {
     return;
   }
 
-  public boolean nonPortableDump() {
+  public boolean getNonPortableDump() {
     return false;
   }
 
+  public boolean getAutoLockDetails() {
+    return false;
+  }
+
+  public boolean getCaller() {
+    return false;
+  }
+
+  public boolean getFullStack() {
+    return false;
+  }
+
+  public void setArrayChangeDebug(boolean arrayChangeDebug) {
+    /**/
+  }
+
+  public void setAutoLockDetails(boolean autoLockDetails) {
+    /**/
+  }
+
+  public void setCaller(boolean caller) {
+    /**/
+  }
+
+  public void setDistributedMethodDebug(boolean distributedMethodDebug) {
+    /**/
+  }
+
+  public void setFieldChangeDebug(boolean fieldChangeDebug) {
+    /**/
+  }
+
+  public void setFullStack(boolean fullStack) {
+    /**/
+  }
+
+  public void setLockDebug(boolean lockDebug) {
+    /**/
+  }
+
+  public void setNewManagedObjectDebug(boolean newObjectDebug) {
+    /**/
+  }
+
+  public void setNonPortableDump(boolean nonPortableDump) {
+    /**/
+  }
+
+  public void setWaitNotifyDebug(boolean waitNotifyDebug) {
+    /**/
+  }
 }

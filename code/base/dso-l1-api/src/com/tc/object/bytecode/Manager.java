@@ -11,6 +11,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.event.DmiManager;
 import com.tc.object.lockmanager.api.LockLevel;
+import com.tc.object.logging.InstrumentationLogger;
 import com.tc.properties.TCProperties;
 
 import java.lang.reflect.Field;
@@ -423,6 +424,11 @@ public interface Manager {
    */
   public TCLogger getLogger(String loggerName);
 
+  /**
+   * Get the instrumentation logger
+   */
+  InstrumentationLogger getInstrumentationLogger();
+  
   /**
    * @return Session monitor MBean
    */

@@ -4,10 +4,12 @@
  */
 package com.tc.stats.counter;
 
+import java.io.Serializable;
+
 /**
  * A simple counter implementation
  */
-public class CounterImpl implements Counter {
+public class CounterImpl implements Counter, Serializable {
   private long value;
   private long min;
   private long max;

@@ -21,37 +21,42 @@ public interface InstrumentationLogger {
    * before calls to {@link #classIncluded(String)}).
    * @return True if should log
    */
-  boolean classInclusion();
-
+  boolean getClassInclusion();
+  void setClassInclusion(boolean classInclusion);
+  
   /**
    * Determine whether to log when a lock is inserted (checked before calls to 
    * {@link #autolockInserted(String, String, String, LockDefinition)} or 
    * {@link #lockInserted(String, String, String, LockDefinition[])}).
    * @return True if should log
    */
-  boolean lockInsertion();
-
+  boolean getLockInsertion();
+  void setLockInsertion(boolean lockInsertion);
+  
   /**
    * Determine whether to log when a root is inserted (checked before calls to
    * {@link #rootInserted(String, String, String, boolean)}).
    * @return True if should log
    */
-  boolean rootInsertion();
-
+  boolean getRootInsertion();
+  void setRootInsertion(boolean rootInsertion);
+  
   /**
    * Determine whether to log when a DMI call is inserted (checked before calls 
    * to {@link #distMethodCallInserted(String, String, String)}).
    * @return True if should log
    */
-  boolean distMethodCallInsertion();
-
+  boolean getDistMethodCallInsertion();
+  void setDistMethodCallInsertion(boolean distMethodClassInsertion);
+  
   /**
    * Determine whether to log transient root warnings (checked before calls to
    * {@link #transientRootWarning(String, String)).
    * @return True if should log
    */
-  boolean transientRootWarning();
-
+  boolean getTransientRootWarning();
+  void setTransientRootWarning(boolean transientRootWarning);
+  
   ///////////////////////////////
   // log methods
   ///////////////////////////////

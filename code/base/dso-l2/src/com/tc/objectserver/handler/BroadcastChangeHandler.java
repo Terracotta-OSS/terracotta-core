@@ -22,6 +22,7 @@ import com.tc.objectserver.context.ManagedObjectRequestContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.tx.ServerTransactionManager;
+import com.tc.stats.counter.sampled.SampledCounter;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,6 +42,16 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
   private ServerTransactionManager transactionManager;
   private Sink                     managedObjectRequestSink;
   private Sink                     respondObjectRequestSink;
+
+
+  private SampledCounter broadcastCounter;
+  private SampledCounter changeCounter;
+
+
+  public BroadcastChangeHandler(SampledCounter broadcastCounter, SampledCounter changeCounter) {
+    this.broadcastCounter = broadcastCounter;
+    this.changeCounter = changeCounter;
+  }
 
   public void handleEvent(EventContext context) {
     BroadcastChangeContext bcc = (BroadcastChangeContext) context;
@@ -88,6 +99,9 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
                                    notifiedWaiters, newRoots, dmi);
 
         responseMessage.send();
+
+        broadcastCounter.increment();
+        changeCounter.increment(prunedChanges.size());
       }
     }
     transactionManager.broadcasted(committerID, txnID);

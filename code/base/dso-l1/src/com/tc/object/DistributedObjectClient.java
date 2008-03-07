@@ -109,6 +109,11 @@ import com.tc.object.tx.TransactionBatchFactory;
 import com.tc.object.tx.TransactionBatchWriterFactory;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.statistics.StatisticsAgentSubSystem;
+import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
+import com.tc.statistics.retrieval.actions.SRAMemoryUsage;
+import com.tc.statistics.retrieval.actions.SRAStageQueueDepths;
+import com.tc.statistics.retrieval.actions.SRASystemProperties;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
@@ -151,6 +156,7 @@ public class DistributedObjectClient extends SEDA {
   private L1Management                             l1Management;
   private TCProperties                             l1Properties;
   private DmiManager                               dmiManager;
+  private StatisticsAgentSubSystem                 statisticsAgentSubSystem;
 
   public DistributedObjectClient(DSOClientConfigHelper config, TCThreadGroup threadGroup, ClassProvider classProvider,
                                  PreparedComponentsFromL2Connection connectionComponents, Manager manager,
@@ -168,6 +174,15 @@ public class DistributedObjectClient extends SEDA {
 
   public void setPauseListener(PauseListener pauseListener) {
     this.pauseListener = pauseListener;
+  }
+
+  private void populateStatisticsRetrievalRegistry(StatisticsRetrievalRegistry registry, StageManager stageManager) {
+    registry.registerActionInstance(new SRAMemoryUsage());
+    registry.registerActionInstance(new SRASystemProperties());
+    registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRACpu");
+    registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRACpuCombined");
+    registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRAThreadDump");
+    registry.registerActionInstance(new SRAStageQueueDepths(stageManager));
   }
 
   public void start() {
@@ -273,9 +288,16 @@ public class DistributedObjectClient extends SEDA {
       logger.warn("CacheManager is Disabled");
     }
 
+    // setup statistics subsystem
+    statisticsAgentSubSystem = new StatisticsAgentSubSystem();
+    if (statisticsAgentSubSystem.setup(config.getNewCommonL1Config())) {
+      populateStatisticsRetrievalRegistry(statisticsAgentSubSystem.getStatisticsRetrievalRegistry(), stageManager);
+    }
+    
     // Set up the JMX management stuff
     final TunnelingEventHandler teh = new TunnelingEventHandler(channel.channel());
-    l1Management = new L1Management(teh);
+    l1Management = new L1Management(teh, statisticsAgentSubSystem, runtimeLogger, manager.getInstrumentationLogger(), config
+        .rawConfigText());
     l1Management.start();
 
     txManager = new ClientTransactionManagerImpl(channel.getChannelIDProvider(), objectManager,
@@ -418,10 +440,20 @@ public class DistributedObjectClient extends SEDA {
     }
     clientHandshakeManager.waitForHandshake();
 
+    if (statisticsAgentSubSystem.isActive()) {
+      statisticsAgentSubSystem.setDefaultAgentDifferentiator("L1/"+channel.channel().getChannelID().toLong());
+    }
+
     cluster.addClusterEventListener(l1Management.getTerracottaCluster());
   }
 
   public void stop() {
+    try {
+      statisticsAgentSubSystem.cleanup();
+    } catch (Throwable e) {
+      logger.warn(e);
+    }
+
     manager.stop();
   }
 
@@ -464,5 +496,4 @@ public class DistributedObjectClient extends SEDA {
   public DmiManager getDmiManager() {
     return dmiManager;
   }
-
 }

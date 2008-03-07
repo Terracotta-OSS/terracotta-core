@@ -76,7 +76,7 @@ public class ClassProcessorHelper {
   private static final StandardClassProvider globalProvider          = new StandardClassProvider();
 
   private static URLClassLoader              tcLoader;
-  private static DSOContext                  gloalContext;
+  private static DSOContext                  globalContext;
 
   private static final boolean               TRACE;
   private static final PrintStream           TRACE_STREAM;
@@ -386,7 +386,7 @@ public class ClassProcessorHelper {
         initTCLogging();
 
         if (USE_GLOBAL_CONTEXT) {
-          gloalContext = createGlobalContext();
+          globalContext = createGlobalContext();
         }
 
         initState.initialized();
@@ -460,8 +460,8 @@ public class ClassProcessorHelper {
   public static void shutdown() {
     if (!USE_GLOBAL_CONTEXT) { throw new IllegalStateException("Not global DSO mode"); }
     try {
-      if (gloalContext != null) {
-        gloalContext.getManager().stop();
+      if (globalContext != null) {
+        globalContext.getManager().stop();
       }
     } catch (Throwable t) {
       t.printStackTrace();
@@ -509,7 +509,7 @@ public class ClassProcessorHelper {
    * WARNING: used by test framework only
    */
   public static Manager getManager(ClassLoader caller) {
-    if (USE_GLOBAL_CONTEXT) { return gloalContext.getManager(); }
+    if (USE_GLOBAL_CONTEXT) { return globalContext.getManager(); }
 
     DSOContext context;
     synchronized (contextMap) {
@@ -526,7 +526,7 @@ public class ClassProcessorHelper {
    * @return Context
    */
   public static DSOContext getContext(ClassLoader cl) {
-    if (USE_GLOBAL_CONTEXT) return gloalContext;
+    if (USE_GLOBAL_CONTEXT) return globalContext;
 
     synchronized (contextMap) {
       return (DSOContext) contextMap.get(cl);
@@ -610,11 +610,11 @@ public class ClassProcessorHelper {
    * @return Global Manager
    */
   public static Manager getGlobalManager() {
-    return gloalContext.getManager();
+    return globalContext.getManager();
   }
 
   private static ClassPreProcessor getPreProcessor(ClassLoader caller) {
-    if (USE_GLOBAL_CONTEXT) { return gloalContext; }
+    if (USE_GLOBAL_CONTEXT) { return globalContext; }
 
     synchronized (contextMap) {
       return (ClassPreProcessor) contextMap.get(caller);
@@ -622,7 +622,7 @@ public class ClassProcessorHelper {
   }
 
   private static ClassPostProcessor getPostProcessor(ClassLoader caller) {
-    if (USE_GLOBAL_CONTEXT) { return gloalContext; }
+    if (USE_GLOBAL_CONTEXT) { return globalContext; }
 
     synchronized (contextMap) {
       return (ClassPostProcessor) contextMap.get(caller);
@@ -667,7 +667,7 @@ public class ClassProcessorHelper {
    * @return Lock type
    */
   public static int getSessionLockType(String appName) {
-    return gloalContext.getSessionLockType(appName);
+    return globalContext.getSessionLockType(appName);
   }
 
   private static void traceNamedLoader(final NamedClassLoader ncl) {

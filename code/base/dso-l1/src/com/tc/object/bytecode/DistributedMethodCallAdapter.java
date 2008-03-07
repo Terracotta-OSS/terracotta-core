@@ -89,7 +89,7 @@ public class DistributedMethodCallAdapter implements MethodAdapter, Opcodes {
   }
 
   private void addDistributedCall(MethodVisitor mv, String name, String desc) {
-    if (instrumentationLogger.distMethodCallInsertion()) {
+    if (instrumentationLogger.getDistMethodCallInsertion()) {
       instrumentationLogger.distMethodCallInserted(className, name, desc);
     }
 

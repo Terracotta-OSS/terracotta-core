@@ -9,6 +9,7 @@ import org.apache.commons.collections.set.ListOrderedSet;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2MBeanNames;
+import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ObjectID;
 import com.tc.object.net.ChannelStats;
@@ -26,11 +27,13 @@ import com.tc.objectserver.lockmanager.api.LockManagerMBean;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.tx.ServerTransactionManagerEventListener;
 import com.tc.objectserver.tx.ServerTransactionManagerMBean;
+import com.tc.stats.counter.Counter;
 import com.tc.stats.statistics.CountStatistic;
 import com.tc.stats.statistics.DoubleStatistic;
 import com.tc.stats.statistics.Statistic;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -260,6 +263,19 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
         logger.error("Unable to register DSO client MBean", e);
       }
     }
+  }
+
+  public Map<String, Counter> getAllPendingRequests() {
+    HashMap map = new HashMap<String, Counter>();
+    MessageChannel[] channels = channelMgr.getActiveChannels();
+    if (channels != null && channels.length > 0) {
+      for (MessageChannel channel : channels) {
+        TCSocketAddress remoteAddr = channel.getRemoteAddress();
+        Counter counter = channelStats.getCounter(channel, ChannelStats.PENDING_TRANSACTIONS);
+        map.put(remoteAddr.getCanonicalStringForm(), counter);
+      }
+    }
+    return map;
   }
 
   private class TransactionManagerListener implements ServerTransactionManagerEventListener {

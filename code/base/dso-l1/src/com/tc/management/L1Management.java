@@ -10,6 +10,14 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.L1MBeanNames;
 import com.tc.management.beans.MBeanNames;
+import com.tc.management.beans.l1.L1Info;
+import com.tc.management.beans.l1.L1InfoMBean;
+import com.tc.management.beans.logging.InstrumentationLogging;
+import com.tc.management.beans.logging.InstrumentationLoggingMBean;
+import com.tc.management.beans.logging.RuntimeLogging;
+import com.tc.management.beans.logging.RuntimeLoggingMBean;
+import com.tc.management.beans.logging.RuntimeOutputOptions;
+import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
 import com.tc.management.beans.sessions.SessionMonitor;
 import com.tc.management.beans.sessions.SessionMonitorMBean;
 import com.tc.management.beans.tx.ClientTxMonitor;
@@ -19,6 +27,9 @@ import com.tc.management.exposed.TerracottaCluster;
 import com.tc.management.remote.protocol.ProtocolProvider;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
 import com.tc.management.remote.protocol.terracotta.TunnelingMessageConnectionServer;
+import com.tc.object.logging.InstrumentationLogger;
+import com.tc.object.logging.RuntimeLogger;
+import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.runtime.Vm;
 
@@ -41,27 +52,39 @@ import javax.management.remote.JMXServiceURL;
 
 public final class L1Management extends TerracottaManagement {
 
-  private static final TCLogger       logger = TCLogging.getLogger(L1Management.class);
+  private static final TCLogger        logger = TCLogging.getLogger(L1Management.class);
 
-  private final SetOnceFlag           started;
-  private final TunnelingEventHandler tunnelingHandler;
-  private final Object                mBeanServerLock;
-  private MBeanServer                 mBeanServer;
+  private final SetOnceFlag            started;
+  private final TunnelingEventHandler  tunnelingHandler;
+  private final Object                 mBeanServerLock;
+  private MBeanServer                  mBeanServer;
 
-  private final ClientTxMonitor       clientTxBean;
-  private final SessionMonitor        internalSessionBean;
-  private final SessionsProduct       publicSessionBean;
-  private final TerracottaCluster     clusterBean;
+  private final ClientTxMonitor        clientTxBean;
+  private final SessionMonitor         internalSessionBean;
+  private final SessionsProduct        publicSessionBean;
+  private final TerracottaCluster      clusterBean;
+  private final L1Info                 l1InfoBean;
+  private final InstrumentationLogging instrumentationLoggingBean;
+  private final RuntimeOutputOptions   runtimeOutputOptionsBean;
+  private final RuntimeLogging         runtimeLoggingBean;
 
-  public L1Management(final TunnelingEventHandler tunnelingHandler) {
+  private final StatisticsAgentSubSystem statisticsAgentSubSystem;
+
+  public L1Management(final TunnelingEventHandler tunnelingHandler, final StatisticsAgentSubSystem statisticsAgentSubSystem, RuntimeLogger runtimeLogger,
+                      InstrumentationLogger instrumentationLogger, String rawConfigText) {
     super();
     started = new SetOnceFlag();
     this.tunnelingHandler = tunnelingHandler;
+    this.statisticsAgentSubSystem = statisticsAgentSubSystem;
     try {
       clientTxBean = new ClientTxMonitor();
       internalSessionBean = new SessionMonitor();
       publicSessionBean = new SessionsProduct(internalSessionBean, clientTxBean);
       clusterBean = new TerracottaCluster();
+      l1InfoBean = new L1Info(rawConfigText);
+      instrumentationLoggingBean = new InstrumentationLogging(instrumentationLogger);
+      runtimeOutputOptionsBean = new RuntimeOutputOptions(runtimeLogger);
+      runtimeLoggingBean = new RuntimeLogging(runtimeLogger);
     } catch (NotCompliantMBeanException ncmbe) {
       throw new TCRuntimeException(
                                    "Unable to construct one of the L1 MBeans: this is a programming error in one of those beans",
@@ -72,6 +95,7 @@ public final class L1Management extends TerracottaManagement {
 
   public synchronized void start() {
     started.set();
+
     Thread registrationThread = new Thread(new Runnable() {
 
       private final int MAX_ATTEMPTS = 60 * 5;
@@ -119,6 +143,10 @@ public final class L1Management extends TerracottaManagement {
     if (objectName.equals(MBeanNames.CLIENT_TX_INTERNAL)) return clientTxBean;
     else if (objectName.equals(MBeanNames.SESSION_INTERNAL)) return internalSessionBean;
     else if (objectName.equals(L1MBeanNames.SESSION_PRODUCT_PUBLIC)) return publicSessionBean;
+    else if (objectName.equals(L1MBeanNames.L1INFO_PUBLIC)) return l1InfoBean;
+    else if (objectName.equals(L1MBeanNames.INSTRUMENTATION_LOGGING_PUBLIC)) return instrumentationLoggingBean;
+    else if (objectName.equals(L1MBeanNames.RUNTIME_OUTPUT_OPTIONS_PUBLIC)) return runtimeOutputOptionsBean;
+    else if (objectName.equals(L1MBeanNames.RUNTIME_LOGGING_PUBLIC)) return runtimeLoggingBean;
     else {
       synchronized (mBeanServerLock) {
         if (mBeanServer != null) { return findMBean(objectName, mBeanInterface, mBeanServer); }
@@ -137,6 +165,22 @@ public final class L1Management extends TerracottaManagement {
 
   public TerracottaCluster getTerracottaCluster() {
     return clusterBean;
+  }
+
+  public L1InfoMBean findL1InfoMBean() {
+    return l1InfoBean;
+  }
+
+  public InstrumentationLoggingMBean findInstrumentationLoggingMBean() {
+    return instrumentationLoggingBean;
+  }
+
+  public RuntimeOutputOptionsMBean findRuntimeOutputOptionsMBean() {
+    return runtimeOutputOptionsBean;
+  }
+
+  public RuntimeLoggingMBean findRuntimeLoggingMBean() {
+    return runtimeLoggingBean;
   }
 
   private void attemptToRegister() throws InstanceAlreadyExistsException, MBeanRegistrationException,
@@ -167,7 +211,13 @@ public final class L1Management extends TerracottaManagement {
     mBeanServer.registerMBean(clientTxBean, MBeanNames.CLIENT_TX_INTERNAL);
     mBeanServer.registerMBean(internalSessionBean, MBeanNames.SESSION_INTERNAL);
     mBeanServer.registerMBean(publicSessionBean, L1MBeanNames.SESSION_PRODUCT_PUBLIC);
-    mBeanServer.registerMBean(clusterBean, L1MBeanNames.CLUSTER_BEAN_PUBLIC);
+    if (statisticsAgentSubSystem.isActive()) {
+      statisticsAgentSubSystem.registerMBeans(mBeanServer);
+    }
+    mBeanServer.registerMBean(l1InfoBean, L1MBeanNames.L1INFO_PUBLIC);
+    mBeanServer.registerMBean(instrumentationLoggingBean, L1MBeanNames.INSTRUMENTATION_LOGGING_PUBLIC);
+    mBeanServer.registerMBean(runtimeOutputOptionsBean, L1MBeanNames.RUNTIME_OUTPUT_OPTIONS_PUBLIC);
+    mBeanServer.registerMBean(runtimeLoggingBean, L1MBeanNames.RUNTIME_LOGGING_PUBLIC);
   }
 
   private void addJMXConnectors() {
@@ -182,6 +232,7 @@ public final class L1Management extends TerracottaManagement {
     }
     try {
       final Map environment = new HashMap();
+      environment.put("jmx.remote.x.server.connection.timeout", new Long(Long.MAX_VALUE));
       ProtocolProvider.addTerracottaJmxProvider(environment);
       environment.put(TunnelingMessageConnectionServer.TUNNELING_HANDLER, tunnelingHandler);
       environment.put(EnvHelp.SERVER_CONNECTION_TIMEOUT, String.valueOf(Long.MAX_VALUE));
@@ -209,5 +260,4 @@ public final class L1Management extends TerracottaManagement {
                                                                                    new Class[0]);
     return (MBeanServer) getPlatformMBeanServerMethod.invoke(null, new Object[0]);
   }
-
 }

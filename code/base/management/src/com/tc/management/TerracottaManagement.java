@@ -31,7 +31,8 @@ public abstract class TerracottaManagement {
     public static final Type DsoClient   = new Type(MANAGEMENT_RESOURCES.getDsoClientType());
     public static final Type Sessions    = new Type(MANAGEMENT_RESOURCES.getSessionsType());
     public static final Type Server      = new Type(MANAGEMENT_RESOURCES.getTerracottaServerType());
-    public static final Type Cluster      = new Type(MANAGEMENT_RESOURCES.getTerracottaClusterType());
+    public static final Type Cluster     = new Type(MANAGEMENT_RESOURCES.getTerracottaClusterType());
+    public static final Type Agent       = new Type(MANAGEMENT_RESOURCES.getTerracottaAgentType());
 
     private final String     type;
 
@@ -55,6 +56,8 @@ public abstract class TerracottaManagement {
     public static final Subsystem Tx               = new Subsystem(MANAGEMENT_RESOURCES.getTransactionSubsystem());
     public static final Subsystem Locking          = new Subsystem(MANAGEMENT_RESOURCES.getLockingSubsystem());
     public static final Subsystem ObjectManagement = new Subsystem(MANAGEMENT_RESOURCES.getObjectManagementSubsystem());
+    public static final Subsystem Logging          = new Subsystem(MANAGEMENT_RESOURCES.getLoggingSubsystem());
+    public static final Subsystem Statistics       = new Subsystem(MANAGEMENT_RESOURCES.getStatisticsSubsystem());
     public static final Subsystem None             = new Subsystem(MANAGEMENT_RESOURCES.getNoneSubsystem());
 
     private final String          subsystem;

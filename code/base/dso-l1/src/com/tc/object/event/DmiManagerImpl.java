@@ -56,7 +56,7 @@ public class DmiManagerImpl implements DmiManager {
     final String methodName = method.substring(0, method.indexOf('('));
     final String paramDesc = method.substring(method.indexOf('('));
     final DistributedMethodCall dmc = new DistributedMethodCall(receiver, params, methodName, paramDesc);
-    if (runtimeLogger.distributedMethodDebug()) runtimeLogger.distributedMethodCall(receiver.getClass().getName(), dmc
+    if (runtimeLogger.getDistributedMethodDebug()) runtimeLogger.distributedMethodCall(receiver.getClass().getName(), dmc
         .getMethodName(), dmc.getParameterDesc());
     objMgr.getTransactionManager().begin(lockName, LockLevel.CONCURRENT, lockName, "Distributed Invoke");
     try {
@@ -79,7 +79,7 @@ public class DmiManagerImpl implements DmiManager {
 
   public void invoke(DistributedMethodCall dmc) {
     try {
-      if (runtimeLogger.distributedMethodDebug()) runtimeLogger.distributedMethodCall(dmc.getReceiver().getClass()
+      if (runtimeLogger.getDistributedMethodDebug()) runtimeLogger.distributedMethodCall(dmc.getReceiver().getClass()
           .getName(), dmc.getMethodName(), dmc.getParameterDesc());
       feedBack.set(TRUE);
       invoke0(dmc);

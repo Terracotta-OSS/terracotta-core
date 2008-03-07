@@ -17,6 +17,8 @@ public interface L1TVSConfigurationSetupManager {
 
   boolean loadedFromTrustedSource();
 
+  String rawConfigText();
+  
   NewCommonL1Config commonL1Config();
 
   L2ConfigForL1 l2Config();

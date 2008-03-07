@@ -41,6 +41,10 @@ class ManagementResources {
     return TerracottaManagement.quoteIfNecessary(resources.getString("type.l2"));
   }
 
+  String getTerracottaAgentType() {
+    return TerracottaManagement.quoteIfNecessary(resources.getString("type.agent"));
+  }
+
   String getTransactionSubsystem() {
     return TerracottaManagement.quoteIfNecessary(resources.getString("subsystem.tx"));
   }
@@ -53,9 +57,15 @@ class ManagementResources {
     return TerracottaManagement.quoteIfNecessary(resources.getString("subsystem.object-management"));
   }
 
+  String getLoggingSubsystem() {
+    return TerracottaManagement.quoteIfNecessary(resources.getString("subsystem.logging"));
+  }
+  
+  String getStatisticsSubsystem() {
+    return TerracottaManagement.quoteIfNecessary(resources.getString("subsystem.statistics"));
+  }
+
   String getNoneSubsystem() {
     return TerracottaManagement.quoteIfNecessary(resources.getString("subsystem.none"));
   }
-
-
 }

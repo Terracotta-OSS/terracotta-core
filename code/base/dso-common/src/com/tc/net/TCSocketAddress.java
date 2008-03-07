@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net;
 
@@ -63,6 +64,9 @@ public class TCSocketAddress {
     }
   }
 
+  private String                  stringForm;
+  private String                  canonicalStringForm;
+
   public static byte[] getLoopbackBytes() {
     return (byte[]) LOOPBACK_BYTES.clone();
   }
@@ -72,11 +76,12 @@ public class TCSocketAddress {
   }
 
   // TODO: add a constructor that takes the output of toStringForm() and
-  //       reconsitutes a TCSocketAddress instance
+  // reconsitutes a TCSocketAddress instance
 
   public TCSocketAddress(ConnectionInfo connInfo) throws UnknownHostException {
     this(connInfo.getHostname(), connInfo.getPort());
   }
+
   /**
    * Creates an address for localhost on the given port
    * 
@@ -162,9 +167,24 @@ public class TCSocketAddress {
    * @return string form of this address
    */
   public String getStringForm() {
-    StringBuffer buf = new StringBuffer();
-    buf.append(addr.getHostAddress()).append(":").append(port);
-    return buf.toString();
+    if (stringForm == null) {
+      StringBuffer buf = new StringBuffer();
+      buf.append(addr.getHostAddress()).append(":").append(port);
+      stringForm = buf.toString();
+    }
+    return stringForm;
+  }
+
+  /**
+   * Return string form using canonical host name.
+   */
+  public String getCanonicalStringForm() {
+    if (canonicalStringForm == null) {
+      StringBuffer buf = new StringBuffer();
+      buf.append(addr.getCanonicalHostName()).append(":").append(port);
+      canonicalStringForm = buf.toString();
+    }
+    return canonicalStringForm;
   }
 
   public static boolean isValidPort(int port) {

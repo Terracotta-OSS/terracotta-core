@@ -16,6 +16,7 @@
     <orderEntry type="module" module-name="dso-common" />
     <orderEntry type="module" module-name="dso-common-jdk15" />
     <orderEntry type="module" module-name="dso-l1-api" />
+    <orderEntry type="module" module-name="dso-statistics" />
     <orderEntry type="module" module-name="management" />
     <orderEntry type="module" module-name="thirdparty" />
     <orderEntry type="module" module-name="thirdparty-api" />

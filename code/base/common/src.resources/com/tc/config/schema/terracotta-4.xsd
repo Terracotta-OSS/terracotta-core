@@ -539,6 +539,32 @@
           </xs:documentation>
         </xs:annotation>
       </xs:element>
+      <xs:element name="statistics" type="path" minOccurs="0"
+        default="statistics">
+        <xs:annotation>
+          <xs:documentation>
+            In which directory should the server store statistics
+            data that is being buffered? Again, this value undergoes
+            parameter substitution before being used; thus, a value
+            like 'statistics-data-%h' would expand to
+            'statistics-data' if running on host
+            'artichoke'.
+
+            If this is a relative path, then it is
+            interpreted relative to the current working
+            directory of the server (that is, the directory
+            you were in when you started server). It is thus
+            recommended that you specify an absolute path
+            here.
+
+            Default: 'statistics'
+
+            This places the 'statistics' directory in the
+            directory you were in when you invoked
+            'start-tc-server'.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
       <xs:element name="dso-port" type="port" minOccurs="0"
         default="9510">
         <xs:annotation>
@@ -684,6 +710,38 @@
             program that uses Terracotta services (your
             client), and calls that directory, for example,
             'logs-10.0.0.57' if the machine that the client
+            is on has assigned IP address 10.0.0.57.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="statistics" type="path" minOccurs="0"
+        default="statistics-%i">
+        <xs:annotation>
+          <xs:documentation>
+            Where should the client store statistics
+            data that is being buffered
+
+            This value undergoes parameter substitution
+            before being used; thus, a value like
+            'statistics-data-%h' would expand to
+            'statistics-data-banana' if running on host
+            'banana'.
+
+            If this is a relative path, then it is
+            interpreted relative to the current working
+            directory of the client (that is, the directory
+            you were in when you started the program that
+            uses Terracotta services). It is thus
+            recommended that you specify an absolute path
+            here.
+
+            Default: 'statistics-%i';
+
+            this places the logs in a directory relative to
+            the directory you were in when you invoked the
+            program that uses Terracotta services (your
+            client), and calls that directory, for example,
+            'statistics-10.0.0.57' if the machine that the client
             is on has assigned IP address 10.0.0.57.
           </xs:documentation>
         </xs:annotation>

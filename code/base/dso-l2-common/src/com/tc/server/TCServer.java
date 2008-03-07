@@ -27,6 +27,8 @@ public interface TCServer {
   
   void shutdown();
 
+  String getConfig();
+  
   String getDescriptionOfCapabilities();
 
   L2Info[] infoForAllL2s();

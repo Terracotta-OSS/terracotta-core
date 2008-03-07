@@ -19,17 +19,17 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
 
   private final TCLogger        logger;
 
-  private final boolean         lockDebug;
-  private final boolean         fieldChangeDebug;
-  private final boolean         arrayChangeDebug;
-  private final boolean         newManagedObjectDebug;
-  private final boolean         distributedMethodDebug;
-  private final boolean         nonPortableDump;
-  private final boolean         waitNotifyDebug;
+  private boolean               lockDebug;
+  private boolean               fieldChangeDebug;
+  private boolean               arrayChangeDebug;
+  private boolean               newManagedObjectDebug;
+  private boolean               distributedMethodDebug;
+  private boolean               nonPortableDump;
+  private boolean               waitNotifyDebug;
 
-  private final boolean         fullStack;
-  private final boolean         caller;
-  private final boolean         autoLockDetails;
+  private boolean               fullStack;
+  private boolean               caller;
+  private boolean               autoLockDetails;
 
   public RuntimeLoggerImpl(DSOClientConfigHelper configHelper) {
     this.logger = CustomerLogging.getDSORuntimeLogger();
@@ -49,34 +49,86 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
     this.autoLockDetails = configHelper.runtimeOutputOptions().doAutoLockDetails().getBoolean();
   }
 
-  public boolean lockDebug() {
+  public void setLockDebug(boolean lockDebug) {
+    this.lockDebug = lockDebug;
+  }
+
+  public boolean getLockDebug() {
     return this.lockDebug;
   }
 
-  public boolean fieldChangeDebug() {
+  public void setFieldChangeDebug(boolean fieldChangeDebug) {
+    this.fieldChangeDebug = fieldChangeDebug;
+  }
+  
+  public boolean getFieldChangeDebug() {
     return this.fieldChangeDebug;
   }
 
-  public boolean arrayChangeDebug() {
+  public void setArrayChangeDebug(boolean arrayChangeDebug) {
+    this.arrayChangeDebug = arrayChangeDebug;
+  }
+  
+  public boolean getArrayChangeDebug() {
     return this.arrayChangeDebug;
   }
 
-  public boolean newManagedObjectDebug() {
+  public void setNewManagedObjectDebug(boolean newManagedObjectDebug) {
+    this.newManagedObjectDebug = newManagedObjectDebug;
+  }
+  
+  public boolean getNewManagedObjectDebug() {
     return this.newManagedObjectDebug;
   }
 
-  public boolean waitNotifyDebug() {
+  public void setWaitNotifyDebug(boolean waitNotifyDebug) {
+    this.waitNotifyDebug = waitNotifyDebug;
+  }
+  
+  public boolean getWaitNotifyDebug() {
     return this.waitNotifyDebug;
   }
 
-  public boolean distributedMethodDebug() {
+  public void setDistributedMethodDebug(boolean distributedMethodDebug) {
+    this.distributedMethodDebug = distributedMethodDebug;
+  }
+  
+  public boolean getDistributedMethodDebug() {
     return this.distributedMethodDebug;
   }
 
-  public boolean nonPortableDump() {
+  public void setNonPortableDump(boolean nonPortableDump) {
+    this.nonPortableDump = nonPortableDump;
+  }
+
+  public boolean getNonPortableDump() {
     return this.nonPortableDump;
   }
 
+  public void setFullStack(boolean fullStack) {
+    this.fullStack = fullStack;
+  }
+  
+  public boolean getFullStack() {
+    return this.fullStack;
+  }
+  
+  public void setCaller(boolean caller) {
+    this.caller = caller;
+  }
+  
+  public boolean getCaller() {
+    return this.caller;
+  }
+  
+  public void setAutoLockDetails(boolean autoLockDetails) {
+    this.autoLockDetails = autoLockDetails;
+  }
+  
+  public boolean getAutoLockDetails() {
+    return this.autoLockDetails;
+  }
+  
   public void lockAcquired(String lockName, int level, Object instance, TCObject tcObject) {
     boolean isAutoLock = ByteCodeUtil.isAutolockName(lockName);
 

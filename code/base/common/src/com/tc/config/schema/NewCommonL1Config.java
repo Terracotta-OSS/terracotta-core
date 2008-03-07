@@ -10,7 +10,7 @@ import com.terracottatech.config.Modules;
 /**
  * Contains methods for L1 DSO.
  */
-public interface NewCommonL1Config extends NewConfig {
+public interface NewCommonL1Config extends NewConfig, NewStatisticsConfig {
 
   FileConfigItem logsPath();
 

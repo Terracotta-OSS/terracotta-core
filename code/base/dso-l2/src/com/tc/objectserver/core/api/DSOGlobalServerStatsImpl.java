@@ -9,17 +9,23 @@ import com.tc.stats.counter.sampled.SampledCounter;
 
 public class DSOGlobalServerStatsImpl implements DSOGlobalServerStats {
 
-  private final SampledCounter         faultCounter;
-  private final SampledCounter         flushCounter;
-  private final SampledCounter         txnCounter;
+  private final SampledCounter faultCounter;
+  private final SampledCounter flushCounter;
+  private final SampledCounter txnCounter;
   private final ObjectManagerStatsImpl objMgrStats;
 
+  private final SampledCounter broadcastCounter;
+  private final SampledCounter changesCounter;
+
   public DSOGlobalServerStatsImpl(SampledCounter flushCounter, SampledCounter faultCounter, SampledCounter txnCounter,
-                                  ObjectManagerStatsImpl objMgrStats) {
+                                  ObjectManagerStatsImpl objMgrStats, SampledCounter broadcastCounter,
+                                  SampledCounter changesCounter) {
     this.flushCounter = flushCounter;
     this.faultCounter = faultCounter;
     this.txnCounter = txnCounter;
     this.objMgrStats = objMgrStats;
+    this.broadcastCounter = broadcastCounter;
+    this.changesCounter = changesCounter;
   }
 
   public SampledCounter getObjectFlushCounter() {
@@ -38,4 +44,11 @@ public class DSOGlobalServerStatsImpl implements DSOGlobalServerStats {
     return this.txnCounter;
   }
 
+  public SampledCounter getBroadcastCounter() {
+    return broadcastCounter;
+  }
+
+  public SampledCounter getChangesCounter() {
+    return changesCounter;
+  }
 }

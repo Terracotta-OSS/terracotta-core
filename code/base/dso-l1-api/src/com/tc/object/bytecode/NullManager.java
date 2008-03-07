@@ -10,6 +10,7 @@ import com.tc.management.beans.sessions.SessionMonitorMBean;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.event.DmiManager;
+import com.tc.object.logging.InstrumentationLogger;
 import com.tc.properties.TCProperties;
 
 import java.lang.reflect.Field;
@@ -253,6 +254,10 @@ public final class NullManager implements Manager {
 
   public void monitorEnter(Object obj, int type, String contextInfo) {
     //
+  }
+
+  public InstrumentationLogger getInstrumentationLogger() {
+    throw new UnsupportedOperationException();
   }
 
 }

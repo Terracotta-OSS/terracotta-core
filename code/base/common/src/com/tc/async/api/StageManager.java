@@ -1,6 +1,9 @@
 package com.tc.async.api;
 
 import com.tc.logging.TCLoggerProvider;
+import com.tc.stats.Stats;
+
+import java.util.Collection;
 
 /*
  * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
@@ -24,4 +27,7 @@ public interface StageManager {
 
   public void setLoggerProvider(TCLoggerProvider loggerProvider);
 
+  public Stats[] getStats();
+
+  public Collection getStages();
 }

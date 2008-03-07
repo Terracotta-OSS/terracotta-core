@@ -50,7 +50,7 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
   public String getRemoteAddress() {
     TCSocketAddress addr = channel.getRemoteAddress();
     if (addr == null) { return "not connected"; }
-    return addr.getStringForm();
+    return addr.getCanonicalStringForm();
   }
 
   public CountStatistic getTransactionRate() {
@@ -90,5 +90,4 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     logger.warn("Killing Client on JMX Request :" + channel);
     channel.close();
   }
-
 }

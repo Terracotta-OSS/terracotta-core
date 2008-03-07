@@ -16,20 +16,36 @@ public interface RuntimeLogger {
   // logging options
   // /////////////////////////////
 
-  boolean lockDebug();
+  void setLockDebug(boolean lockDebug);
+  boolean getLockDebug();
 
-  boolean fieldChangeDebug();
+  void setFieldChangeDebug(boolean fieldChangeDebug);
+  boolean getFieldChangeDebug();
 
-  boolean arrayChangeDebug();
+  void setArrayChangeDebug(boolean arrayChangeDebug);
+  boolean getArrayChangeDebug();
 
-  boolean newManagedObjectDebug();
+  void setNewManagedObjectDebug(boolean newObjectDebug);
+  boolean getNewManagedObjectDebug();
 
-  boolean distributedMethodDebug();
+  void setDistributedMethodDebug(boolean distributedMethodDebug);
+  boolean getDistributedMethodDebug();
 
-  boolean waitNotifyDebug();
+  void setWaitNotifyDebug(boolean waitNotifyDebug);
+  boolean getWaitNotifyDebug();
 
-  boolean nonPortableDump();
+  void setNonPortableDump(boolean nonPortableDump);
+  boolean getNonPortableDump();
 
+  void setFullStack(boolean fullStack);
+  boolean getFullStack();
+  
+  void setCaller(boolean caller);
+  boolean getCaller();
+  
+  void setAutoLockDetails(boolean autoLockDetails);
+  boolean getAutoLockDetails();
+  
   // /////////////////////////////
   // log methods
   // /////////////////////////////

@@ -64,6 +64,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   private String                  configDescription;
   private boolean                 loadedFromTrustedSource;
   private File                    directoryLoadedFrom;
+  private String                  rawConfigText;
 
   public StandardXMLFileConfigurationCreator(String configurationSpec, File defaultDirectory,
                                              ConfigBeanFactory beanFactory) {
@@ -284,7 +285,8 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     StringWriter sw = new StringWriter();
     CopyUtils.copy(in, sw);
 
-    logger.info("Successfully loaded configuration from the " + descrip + ". Config is:\n\n" + sw.toString());
+    rawConfigText = sw.toString();
+    logger.info("Successfully loaded configuration from the " + descrip + ". Config is:\n\n" + rawConfigText);
   }
 
   private void loadConfigurationData(InputStream in, boolean trustedSource, String descrip,
@@ -386,6 +388,10 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     return loadedFromTrustedSource;
   }
 
+  public String rawConfigText() {
+    return rawConfigText;
+  }
+  
   public String describeSources() {
     if (configDescription == null) {
       return "The configuration specified by '" + configurationSpec + "'";

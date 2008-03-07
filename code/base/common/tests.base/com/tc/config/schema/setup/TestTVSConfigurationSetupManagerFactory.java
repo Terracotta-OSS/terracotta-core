@@ -245,8 +245,10 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
     // these yourself before you use this config. If you don't, you'll write all over the place as we create 'data' and
     // 'logs' directories willy-nilly. Don't do that.
     ((SettableConfigItem) l1CommonConfig().logsPath()).setValue(BOGUS_FILENAME);
+    ((SettableConfigItem) l1CommonConfig().statisticsPath()).setValue(BOGUS_FILENAME);
     ((SettableConfigItem) l2CommonConfig().dataPath()).setValue(BOGUS_FILENAME);
     ((SettableConfigItem) l2CommonConfig().logsPath()).setValue(BOGUS_FILENAME);
+    ((SettableConfigItem) l2CommonConfig().statisticsPath()).setValue(BOGUS_FILENAME);
   }
 
   public void activateConfigurationChange() throws ConfigurationSetupException {

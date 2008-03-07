@@ -272,6 +272,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     removeTomcatAdapters();
   }
 
+  public String rawConfigText() {
+    return configSetupManager.rawConfigText();
+  }
+  
   public void allowCGLIBInstrumentation() {
     this.allowCGLIBInstrumentation = true;
   }

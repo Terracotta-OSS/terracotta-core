@@ -152,7 +152,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
         return;
       }
 
-      if (m_instrumentationLogger.classInclusion()) {
+      if (m_instrumentationLogger.getClassInclusion()) {
         m_instrumentationLogger.classIncluded(className);
       }
 

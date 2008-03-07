@@ -28,8 +28,13 @@ public class ZipBuilder implements ArchiveBuilder {
   private final ZipOutputStream zout;
   private final HashSet         dirSet   = new HashSet();
   private final HashSet         entrySet = new HashSet();
+  private final boolean         verbose;
 
   public ZipBuilder(File archiveFile, boolean useCompression) throws IOException {
+    this(archiveFile, useCompression, false);
+  }
+
+  public ZipBuilder(File archiveFile, boolean useCompression, boolean verbose) throws IOException {
     zout = getArchiveOutputStream(archiveFile);
     if (useCompression) {
       zout.setMethod(ZipEntry.DEFLATED);
@@ -38,6 +43,7 @@ public class ZipBuilder implements ArchiveBuilder {
       zout.setMethod(ZipEntry.STORED);
       zout.setLevel(0);
     }
+    this.verbose = verbose;
   }
 
   public final void putTraverseDirectory(File dir, String dirName) throws IOException {
@@ -62,7 +68,7 @@ public class ZipBuilder implements ArchiveBuilder {
     entry.setSize(0);
     entry.setCrc(0);
     zout.putNextEntry(entry);
-    System.out.println(dirEntry);
+    if (verbose) System.out.println(dirEntry);
   }
 
   public final void putEntry(String file, byte[] bytes) throws IOException {
@@ -74,7 +80,7 @@ public class ZipBuilder implements ArchiveBuilder {
     entry.setCrc(getCrc32(bytes));
     zout.putNextEntry(entry);
     zout.write(bytes, 0, bytes.length);
-    System.out.println(fileEntry);
+    if (verbose) System.out.println(fileEntry);
   }
 
   public final void finish() throws IOException {
@@ -124,9 +130,6 @@ public class ZipBuilder implements ArchiveBuilder {
         }
         zis.closeEntry();
       }
-    } catch (IOException e) {
-      e.printStackTrace();
-      throw e;
     } finally {
       if (zis != null) zis.close();
     }

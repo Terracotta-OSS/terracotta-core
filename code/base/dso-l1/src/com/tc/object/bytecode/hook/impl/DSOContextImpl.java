@@ -26,7 +26,7 @@ import com.tc.object.config.IncompleteBootJarException;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.config.UnverifiedBootJarException;
 import com.tc.object.loaders.ClassProvider;
-import com.tc.object.logging.InstrumentationLoggerImpl;
+import com.tc.object.logging.InstrumentationLogger;
 import com.tc.plugins.ModulesLoader;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
@@ -51,6 +51,7 @@ public class DSOContextImpl implements DSOContext {
 
   private final DSOClientConfigHelper               configHelper;
   private final Manager                             manager;
+  private final InstrumentationLogger               instrumentationLogger;
   private final WeavingStrategy                     weavingStrategy;
 
   /**
@@ -81,8 +82,8 @@ public class DSOContextImpl implements DSOContext {
 
     this.configHelper = configHelper;
     this.manager = manager;
-    weavingStrategy = new DefaultWeavingStrategy(configHelper, new InstrumentationLoggerImpl(configHelper
-        .instrumentationLoggingOptions()));
+    this.instrumentationLogger = manager.getInstrumentationLogger();
+    weavingStrategy = new DefaultWeavingStrategy(configHelper, instrumentationLogger);
 
     ModulesLoader.initModules(configHelper, classProvider, false);
     validateBootJar();
@@ -246,7 +247,7 @@ public class DSOContextImpl implements DSOContext {
   public int getSessionLockType(String appName) {
     return configHelper.getSessionLockType(appName);
   }
-  
+
   public URL getClassResource(String className) {
     return configHelper.getClassResource(className);
   }

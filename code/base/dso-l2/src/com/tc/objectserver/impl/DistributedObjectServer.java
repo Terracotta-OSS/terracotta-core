@@ -4,9 +4,6 @@
  */
 package com.tc.objectserver.impl;
 
-import bsh.EvalError;
-import bsh.Interpreter;
-
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
@@ -167,6 +164,17 @@ import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
 import com.tc.objectserver.tx.TransactionalStagesCoordinatorImpl;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.statistics.StatisticsAgentSubSystem;
+import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
+import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
+import com.tc.statistics.retrieval.actions.SRAL2BroadcastCount;
+import com.tc.statistics.retrieval.actions.SRAL2BroadcastPerTransaction;
+import com.tc.statistics.retrieval.actions.SRAL2ChangesPerBroadcast;
+import com.tc.statistics.retrieval.actions.SRAL2ToL1FaultRate;
+import com.tc.statistics.retrieval.actions.SRAL2TransactionCount;
+import com.tc.statistics.retrieval.actions.SRAMemoryUsage;
+import com.tc.statistics.retrieval.actions.SRAStageQueueDepths;
+import com.tc.statistics.retrieval.actions.SRASystemProperties;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
@@ -196,6 +204,9 @@ import java.util.Set;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 import javax.management.remote.JMXConnectorServer;
+
+import bsh.EvalError;
+import bsh.Interpreter;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -240,6 +251,9 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
   private ConnectionIDFactoryImpl              connectionIdFactory;
 
   private LockStatisticsMonitorMBean           lockStatisticsMBean;
+
+  private StatisticsAgentSubSystem             statisticsAgentSubSystem;
+  private StatisticsGatewayMBeanImpl           statisticsGateway;
 
   private final TCThreadGroup                  threadGroup;
 
@@ -286,8 +300,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     }
   }
 
-  public synchronized void start() throws IOException, TCDatabaseException, LocationNotCreatedException,
-      FileNotCreatedException {
+  public synchronized void start() throws IOException, TCDatabaseException, LocationNotCreatedException, FileNotCreatedException {
 
     L2LockStatsManager lockStatsManager = new L2LockStatisticsManagerImpl();
     try {
@@ -297,6 +310,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
                                    + " MBean; this is a programming error. Please go fix that class.", ncmbe);
     }
 
+    // perform the DSO network config verification
     NewL2DSOConfig l2DSOConfig = configSetupManager.dsoL2Config();
 
     String bindAddress = l2DSOConfig.bind().getString();
@@ -311,6 +325,24 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     if (!addressChecker.isLegalBindAddress(bind)) { throw new IOException("Invalid bind address [" + bind
                                                                           + "]. Local addresses are "
                                                                           + addressChecker.getAllLocalAddresses()); }
+
+    // setup the statistics subsystem
+    statisticsAgentSubSystem = new StatisticsAgentSubSystem();
+    statisticsAgentSubSystem.setup(configSetupManager.commonl2Config());
+    if (TCSocketAddress.WILDCARD_IP.equals(bindAddress) ||
+        TCSocketAddress.LOOPBACK_IP.equals(bindAddress)) {
+      statisticsAgentSubSystem.setDefaultAgentIp(InetAddress.getLocalHost().getHostAddress());
+    } else {
+      statisticsAgentSubSystem.setDefaultAgentIp(bind.getHostAddress());
+    }
+    try {
+      statisticsGateway = new StatisticsGatewayMBeanImpl();
+    } catch (NotCompliantMBeanException e) {
+      throw new TCRuntimeException("Unable to construct the " + StatisticsGatewayMBeanImpl.class.getName()
+                                   + " MBean; this is a programming error. Please go fix that class.", e);
+    }
+
+    // start the JMX server
     try {
       startJMXServer(bind, configSetupManager.commonl2Config().jmxPort().getInt());
     } catch (Exception e) {
@@ -511,6 +543,8 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     l2DSOConfig.changesInItemIgnored(l2DSOConfig.listenPort());
     int serverPort = l2DSOConfig.listenPort().getInt();
 
+    statisticsAgentSubSystem.setDefaultAgentDifferentiator("L2/"+serverPort);
+
     l1Listener = communicationsManager.createListener(sessionProvider, new TCSocketAddress(bind, serverPort), true,
                                                       connectionIdFactory, httpSink);
 
@@ -531,6 +565,19 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     TransactionAcknowledgeAction taa = new TransactionAcknowledgeActionImpl(channelManager, transactionBatchManager);
     SampledCounter globalTxnCounter = (SampledCounter) sampledCounterManager
         .createCounter(new SampledCounterConfig(1, 300, true, 0L));
+
+    SampledCounter broadcastCounter = (SampledCounter)sampledCounterManager.
+      createCounter(new SampledCounterConfig(1, 300, true, 0L));
+    SampledCounter changeCounter = (SampledCounter)sampledCounterManager.
+      createCounter(new SampledCounterConfig(1, 300, true, 0L));
+
+    SampledCounter globalObjectFaultCounter = (SampledCounter)sampledCounterManager
+      .createCounter(new SampledCounterConfig(1, 300, true, 0L));
+    SampledCounter globalObjectFlushCounter = (SampledCounter)sampledCounterManager
+      .createCounter(new SampledCounterConfig(1, 300, true, 0L));
+
+    DSOGlobalServerStats serverStats = new DSOGlobalServerStatsImpl(globalObjectFlushCounter, globalObjectFaultCounter,
+      globalTxnCounter, objMgrStats, broadcastCounter, changeCounter);
 
     final TransactionStore transactionStore = new TransactionStoreImpl(transactionPersistor,
                                                                        globalTransactionIDSequence);
@@ -581,8 +628,9 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     Stage rootRequest = stageManager.createStage(ServerConfigurationContext.MANAGED_ROOT_REQUEST_STAGE,
                                                  new RequestRootHandler(), 1, maxStageSize);
 
-    stageManager.createStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE, new BroadcastChangeHandler(), 1,
-                             maxStageSize);
+    BroadcastChangeHandler broadcastChangeHandler = new BroadcastChangeHandler(broadcastCounter, changeCounter);
+    stageManager.createStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE,
+      broadcastChangeHandler, 1, maxStageSize);
     stageManager.createStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE,
                              new RespondToRequestLockHandler(), 1, maxStageSize);
     Stage requestLock = stageManager.createStage(ServerConfigurationContext.REQUEST_LOCK_STAGE,
@@ -595,10 +643,6 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
                              maxStageSize);
     channelManager.addEventListener(channelLifeCycleHandler);
 
-    SampledCounter globalObjectFaultCounter = (SampledCounter) sampledCounterManager
-        .createCounter(new SampledCounterConfig(1, 300, true, 0L));
-    SampledCounter globalObjectFlushCounter = (SampledCounter) sampledCounterManager
-        .createCounter(new SampledCounterConfig(1, 300, true, 0L));
     Stage objectRequest = stageManager.createStage(ServerConfigurationContext.MANAGED_OBJECT_REQUEST_STAGE,
                                                    new ManagedObjectRequestHandler(globalObjectFaultCounter,
                                                                                    globalObjectFlushCounter,
@@ -621,10 +665,10 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
                                                     new JMXEventsHandler(appEvents), 1, maxStageSize);
 
     final Stage jmxRemoteConnectStage = stageManager.createStage(ServerConfigurationContext.JMXREMOTE_CONNECT_STAGE,
-                                                                 new ClientConnectEventHandler(), 1, maxStageSize);
+                                                                 new ClientConnectEventHandler(statisticsGateway), 1, maxStageSize);
 
     final Stage jmxRemoteDisconnectStage = stageManager
-        .createStage(ServerConfigurationContext.JMXREMOTE_DISCONNECT_STAGE, new ClientConnectEventHandler(), 1,
+        .createStage(ServerConfigurationContext.JMXREMOTE_DISCONNECT_STAGE, new ClientConnectEventHandler(statisticsGateway), 1,
                      maxStageSize);
 
     cteh.setStages(jmxRemoteConnectStage.getSink(), jmxRemoteDisconnectStage.getSink());
@@ -686,23 +730,12 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     logger.debug("Client Reconnect Window: " + reconnectTimeout + " seconds");
     reconnectTimeout *= 1000;
     ServerClientHandshakeManager clientHandshakeManager = new ServerClientHandshakeManager(
-                                                                                           TCLogging
-                                                                                               .getLogger(ServerClientHandshakeManager.class),
-                                                                                           channelManager,
-                                                                                           transactionManager,
-                                                                                           sequenceValidator,
-                                                                                           clientStateManager,
-                                                                                           lockManager,
-                                                                                           stageManager
-                                                                                               .getStage(
-                                                                                                         ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE)
-                                                                                               .getSink(),
-                                                                                           objectStore,
-                                                                                           new TCTimerImpl(
-                                                                                                           "Reconnect timer",
-                                                                                                           true),
-                                                                                           reconnectTimeout,
-                                                                                           persistent, consoleLogger);
+        TCLogging.getLogger(ServerClientHandshakeManager.class),
+        channelManager, transactionManager, sequenceValidator, clientStateManager, lockManager,
+        stageManager
+          .getStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE)
+          .getSink(),
+        objectStore, new TCTimerImpl("Reconnect timer", true), reconnectTimeout, persistent, consoleLogger);
 
     boolean networkedHA = configSetupManager.haConfig().isNetworkedActivePassive();
     if (networkedHA) {
@@ -723,8 +756,9 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
 
     stageManager.startAll(context);
 
-    DSOGlobalServerStats serverStats = new DSOGlobalServerStatsImpl(globalObjectFlushCounter, globalObjectFaultCounter,
-                                                                    globalTxnCounter, objMgrStats);
+
+    // populate the statistics retrieval registry
+    populateStatisticsRetrievalRegistry(serverStats, getStageManager());
 
     // XXX: yucky casts
     managementContext = new ServerManagementContext(transactionManager, (ObjectManagerMBean) objectManager,
@@ -746,6 +780,23 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     }
   }
 
+  private void populateStatisticsRetrievalRegistry(DSOGlobalServerStats serverStats, StageManager stageManager) {
+    if (statisticsAgentSubSystem.isActive()) {
+      StatisticsRetrievalRegistry registry = statisticsAgentSubSystem.getStatisticsRetrievalRegistry();
+      registry.registerActionInstance(new SRAL2ToL1FaultRate(serverStats));
+      registry.registerActionInstance(new SRAMemoryUsage());
+      registry.registerActionInstance(new SRASystemProperties());
+      registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRACpu");
+      registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRACpuCombined");
+      registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRAThreadDump");
+      registry.registerActionInstance(new SRAL2TransactionCount(serverStats));
+      registry.registerActionInstance(new SRAL2BroadcastCount(serverStats));
+      registry.registerActionInstance(new SRAL2ChangesPerBroadcast(serverStats));
+      registry.registerActionInstance(new SRAL2BroadcastPerTransaction(serverStats));
+      registry.registerActionInstance(new SRAStageQueueDepths(stageManager));
+    }
+  }
+
   private int getCommWorkerCount(TCProperties props) {
     int def = Math.min(Runtime.getRuntime().availableProcessors(), MAX_DEFAULT_COMM_THREADS);
     return props.getInt("tccom.workerthreads", def);
@@ -753,7 +804,6 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
 
   public boolean isBlocking() {
     return startupLock != null && startupLock.isBlocking();
-
   }
 
   private Node[] makeAllNodes() {
@@ -835,7 +885,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     return this.l1Listener.getBindAddress();
   }
 
-  public synchronized void stop() {
+  public synchronized void stop(){
     try {
       if (lockManager != null) lockManager.stop();
     } catch (InterruptedException e) {
@@ -892,6 +942,18 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
       logger.error("Error shutting down jmx server", t);
     }
 
+    try {
+      statisticsAgentSubSystem.cleanup();
+    } catch (Throwable e) {
+      logger.warn(e);
+    }
+
+    try {
+      statisticsGateway.cleanup();
+    } catch (Throwable e) {
+      logger.warn(e);
+    }
+
     basicStop();
   }
 
@@ -944,7 +1006,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
       jmxPort = new PortChooser().chooseRandomPort();
     }
 
-    l2Management = new L2Management(tcServerInfoMBean, lockStatisticsMBean, configSetupManager, this, bind, jmxPort);
+    l2Management = new L2Management(tcServerInfoMBean, lockStatisticsMBean, statisticsAgentSubSystem, statisticsGateway, configSetupManager, this, bind, jmxPort);
 
     /*
      * Some tests use this if they run with jdk1.4 and start multiple in-process DistributedObjectServers. When we no
@@ -956,6 +1018,8 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
   }
 
   private void stopJMXServer() throws Exception {
+    statisticsAgentSubSystem.disableJMX();
+
     try {
       if (l2Management != null) {
         l2Management.stop();

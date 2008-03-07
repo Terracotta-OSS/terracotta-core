@@ -4,7 +4,8 @@
   <dependencies>
 	<dependency name="jetty" rev="6.0.1"/>
 	<dependency name="jetty-util" rev="6.0.1" org="terracotta"/>
-	<dependency name="jfreechart" rev="1.0.0x" org="terracotta"/>
+	<dependency name="jfreechart" rev="1.0.7" org="terracotta"/>
+	<dependency name="jcommon" rev="1.0.12" org="terracotta"/>
 	<dependency name="jmxremote_optional" rev="1.0.1_04-b58" org="terracotta"/>
 	<dependency name="jmxremote" rev="1.0.1_04" org="terracotta"/>
 	<dependency name="appframe" rev="1.0" org="terracotta"/>
@@ -12,5 +13,8 @@
 	<dependency name="jline" rev="0.9.9" org="terracotta"/>
 	<dependency name="commons-httpclient" rev="3.0.1"/>
 	<dependency name="commons-codec" rev="1.3"/>
+	<dependency name="convertor" rev="2.0.2" org="terracotta"/>
+	<dependency name="inspector" rev="2.0.2" org="terracotta"/>
+	<dependency name="rrd4j" rev="2.0.2" org="terracotta"/>
   </dependencies>
 </ivy-module>

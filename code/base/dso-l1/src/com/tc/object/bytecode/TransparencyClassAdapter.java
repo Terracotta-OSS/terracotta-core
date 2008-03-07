@@ -74,7 +74,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
       boolean isRoot = fieldInfo == null ? false : getTransparencyClassSpec().isRootInThisClass(fieldInfo);
       boolean isTransient = getTransparencyClassSpec().isTransient(access, spec.getClassInfo(), fieldName);
       if (isTransient && isRoot) {
-        if (instrumentationLogger.transientRootWarning()) {
+        if (instrumentationLogger.getTransientRootWarning()) {
           instrumentationLogger.transientRootWarning(this.spec.getClassNameDots(), fieldName);
         }
       }
@@ -222,7 +222,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
       int lockLevel = -1;
       if (isAutolock) {
         lockLevel = ld.getLockLevelAsInt();
-        if (instrumentationLogger.lockInsertion()) {
+        if (instrumentationLogger.getLockInsertion()) {
           instrumentationLogger.autolockInserted(this.spec.getClassNameDots(), name, desc, ld);
         }
       }
@@ -302,7 +302,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
   // }
 
   private void logCustomerLockMethod(String name, final String desc, LockDefinition[] locks) {
-    if (instrumentationLogger.lockInsertion()) {
+    if (instrumentationLogger.getLockInsertion()) {
       instrumentationLogger.lockInserted(this.spec.getClassNameDots(), name, desc, locks);
     }
   }
@@ -922,7 +922,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     try {
       if (isRoot(methodAccess, name)) {
         boolean isStaticRoot = Modifier.isStatic(methodAccess);
-        if (instrumentationLogger.rootInsertion()) {
+        if (instrumentationLogger.getRootInsertion()) {
           instrumentationLogger.rootInserted(spec.getClassNameDots(), name, desc, isStaticRoot);
         }
 

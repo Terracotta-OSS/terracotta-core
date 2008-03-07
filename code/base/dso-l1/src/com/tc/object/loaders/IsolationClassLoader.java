@@ -73,7 +73,7 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
     classProvider.registerNamedLoader(this);
     return new ManagerImpl(startClient, objectManager, txManager, theConfig, classProvider, connectionComponents, false);
   }
-
+ 
   public void stop() {
     this.manager.stop();
   }

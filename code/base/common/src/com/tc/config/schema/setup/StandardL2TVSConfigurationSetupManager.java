@@ -5,7 +5,6 @@
 package com.tc.config.schema.setup;
 
 import org.apache.xmlbeans.XmlObject;
-import org.apache.xmlbeans.XmlOptions;
 
 import com.tc.capabilities.AbstractCapabilitiesFactory;
 import com.tc.capabilities.Capabilities;
@@ -28,19 +27,13 @@ import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.object.config.schema.NewL2DSOConfigObject;
 import com.tc.object.config.schema.PersistenceMode;
 import com.tc.util.Assert;
-import com.terracottatech.config.Application;
-import com.terracottatech.config.Client;
 import com.terracottatech.config.Ha;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
-import com.terracottatech.config.System;
-import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.UpdateCheck;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 import java.util.HashMap;
@@ -344,35 +337,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
   }
 
   public InputStream rawConfigFile() {
-    // This MUST piece together the configuration from our currently-active bean repositories. If we just read the
-    // actual config file we got on startup, we'd be sending out, well, the config we got on startup -- which might be
-    // quite different from our current config, if an L1 came in and overrode our config.
-
-    TcConfigDocument doc = TcConfigDocument.Factory.newInstance();
-    TcConfigDocument.TcConfig config = doc.addNewTcConfig();
-
-    System system = (System) this.systemBeanRepository().bean();
-    Client client = (Client) this.clientBeanRepository().bean();
-    Servers servers = (Servers) this.serversBeanRepository().bean();
-    Application application = (Application) this.applicationsRepository().repositoryFor(
-        TVSConfigurationSetupManagerFactory.DEFAULT_APPLICATION_NAME).bean();
-
-    if (system != null) config.setSystem(system);
-    if (client != null) config.setClients(client);
-    if (servers != null) config.setServers(servers);
-    if (application != null) config.setApplication(application);
-
-    StringWriter sw = new StringWriter();
-    XmlOptions options = new XmlOptions().setSavePrettyPrint().setSavePrettyPrintIndent(4);
-
-    try {
-      doc.save(sw, options);
-    } catch (IOException ioe) {
-      throw Assert.failure("Unexpected failure writing to in-memory streams", ioe);
-    }
-
-    String text = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n\n" + sw.toString();
-
+    String text = configurationCreator.rawConfigText();
     try {
       return new ByteArrayInputStream(text.getBytes("UTF-8"));
     } catch (UnsupportedEncodingException uee) {

@@ -36,6 +36,11 @@ public interface ConfigurationCreator {
    */
   boolean loadedFromTrustedSource();
   
+  /**
+   * Return the config text as retrieved from source.
+   */
+  String rawConfigText();
+  
   String describeSources();
 
 }

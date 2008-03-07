@@ -10,15 +10,7 @@
     <orderEntry type="module" module-name="common-api" />
     <orderEntry type="module" module-name="dso-l1-api" />
     <orderEntry type="module" module-name="modules-common" />
-    <orderEntry type="module-library" exported="">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../dependencies/lib/osgi_R4_core-1.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
+    <orderEntry type="module" module-name="thirdparty-api" />
     <orderEntryProperties />
   </component>
 </module>

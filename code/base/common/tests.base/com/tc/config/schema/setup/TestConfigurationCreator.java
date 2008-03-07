@@ -72,6 +72,10 @@ public class TestConfigurationCreator implements ConfigurationCreator {
     }
   }
 
+  public String rawConfigText() {
+    return null;
+  }
+  
   public File directoryConfigurationLoadedFrom() {
     return null;
   }

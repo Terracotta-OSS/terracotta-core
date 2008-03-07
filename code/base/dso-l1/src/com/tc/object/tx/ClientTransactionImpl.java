@@ -63,7 +63,7 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   }
 
   protected void basicLiteralValueChanged(TCObject source, Object newValue, Object oldValue) {
-    if (runtimeLogger.fieldChangeDebug()) {
+    if (runtimeLogger.getFieldChangeDebug()) {
       runtimeLogger.literalValueChanged(source, newValue);
     }
 
@@ -74,7 +74,7 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   }
 
   protected void basicFieldChanged(TCObject source, String classname, String fieldname, Object newValue, int index) {
-    if (runtimeLogger.fieldChangeDebug()) {
+    if (runtimeLogger.getFieldChangeDebug()) {
       runtimeLogger.fieldChanged(source, classname, fieldname, newValue, index);
     }
 
@@ -82,7 +82,7 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   }
 
   protected void basicArrayChanged(TCObject source, int startPos, Object array, int length) {
-    if (runtimeLogger.arrayChangeDebug()) {
+    if (runtimeLogger.getArrayChangeDebug()) {
       runtimeLogger.arrayChanged(source, startPos, array);
     }
 
@@ -94,7 +94,7 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   }
 
   protected void basicCreate(TCObject object) {
-    if (runtimeLogger.newManagedObjectDebug()) {
+    if (runtimeLogger.getNewManagedObjectDebug()) {
       runtimeLogger.newManagedObject(object);
     }
 

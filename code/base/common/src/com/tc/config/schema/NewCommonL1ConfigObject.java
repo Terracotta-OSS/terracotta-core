@@ -17,6 +17,7 @@ import com.terracottatech.config.Modules;
 public class NewCommonL1ConfigObject extends BaseNewConfigObject implements NewCommonL1Config {
 
   private final FileConfigItem logsPath;
+  private final FileConfigItem statisticsPath;
   private final Modules        modules;
 
   public NewCommonL1ConfigObject(ConfigContext context) {
@@ -25,7 +26,9 @@ public class NewCommonL1ConfigObject extends BaseNewConfigObject implements NewC
 
     this.context.ensureRepositoryProvides(Client.class);
 
-    logsPath = this.context.substitutedFileItem("logs");
+    this.logsPath = this.context.substitutedFileItem("logs");
+    this.statisticsPath = context.configRelativeSubstitutedFileItem("statistics");
+    
     final Client client = (Client) this.context.bean();
     modules = client != null && client.isSetModules() ? client.getModules() : null;
     
@@ -39,6 +42,10 @@ public class NewCommonL1ConfigObject extends BaseNewConfigObject implements NewC
 
   public FileConfigItem logsPath() {
     return this.logsPath;
+  }
+
+  public FileConfigItem statisticsPath() {
+    return this.statisticsPath;
   }
 
   public Modules modules() {

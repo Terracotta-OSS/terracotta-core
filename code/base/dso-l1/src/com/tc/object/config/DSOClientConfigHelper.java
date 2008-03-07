@@ -32,7 +32,8 @@ import java.util.Map;
  * perspective of generating a configuration file.
  */
 public interface DSOClientConfigHelper extends DSOApplicationConfig {
-
+  String rawConfigText();
+  
   String[] getMissingRootDeclarations(ClassInfo classInfo);
 
   boolean shouldBeAdapted(ClassInfo classInfo);

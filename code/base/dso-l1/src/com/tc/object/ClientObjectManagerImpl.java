@@ -912,7 +912,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
   }
 
   private void dumpObjectHierarchy0(Object root, NonPortableEventContext context) {
-    if (runtimeLogger.nonPortableDump()) {
+    if (runtimeLogger.getNonPortableDump()) {
       NonPortableWalkVisitor visitor = new NonPortableWalkVisitor(CustomerLogging.getDSORuntimeLogger(), this,
                                                                   this.clientConfiguration, root);
       ObjectGraphWalker walker = new ObjectGraphWalker(root, visitor, visitor);

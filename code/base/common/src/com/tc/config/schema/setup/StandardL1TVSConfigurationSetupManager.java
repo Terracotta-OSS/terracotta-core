@@ -65,6 +65,10 @@ public class StandardL1TVSConfigurationSetupManager extends BaseTVSConfiguration
     logsPath.addListener(new LogSettingConfigItemListener(TCLogging.PROCESS_TYPE_L1));
   }
 
+  public String rawConfigText() {
+    return configurationCreator.rawConfigText();
+  }
+  
   public boolean loadedFromTrustedSource() {
     return this.loadedFromTrustedSource;
   }

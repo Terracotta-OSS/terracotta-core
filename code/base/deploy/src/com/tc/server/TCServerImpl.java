@@ -4,6 +4,7 @@
  */
 package com.tc.server;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.servlet.ServletHandler;
@@ -37,11 +38,16 @@ import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.impl.DistributedObjectServer;
+import com.tc.statistics.StatisticsGathererSubSystem;
+import com.tc.statistics.beans.StatisticsMBeanNames;
+import com.tc.statistics.beans.impl.StatisticsLocalGathererMBeanImpl;
 import com.tc.stats.DSO;
 import com.tc.stats.DSOMBean;
 import com.tc.util.Assert;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Date;
 
 import javax.management.InstanceAlreadyExistsException;
@@ -68,6 +74,8 @@ public class TCServerImpl extends SEDA implements TCServer {
   private final ConnectionPolicy               connectionPolicy;
   
  
+  private final StatisticsGathererSubSystem    statisticsGathererSubSystem;
+
   /**
    * This should only be used for tests.
    */
@@ -84,6 +92,9 @@ public class TCServerImpl extends SEDA implements TCServer {
     this.connectionPolicy = connectionPolicy;
     Assert.assertNotNull(manager);
     this.configurationSetupManager = manager;
+
+    statisticsGathererSubSystem = new StatisticsGathererSubSystem();
+    statisticsGathererSubSystem.setup(manager.commonl2Config());
   }
   
 
@@ -174,6 +185,15 @@ public class TCServerImpl extends SEDA implements TCServer {
     return activateTime;
   }
 
+  public String getConfig() {
+    try {
+      InputStream is = configurationSetupManager.rawConfigFile();
+      return IOUtils.toString(is);
+    } catch(IOException ioe) {
+      return ioe.getLocalizedMessage();
+    }
+  }
+  
   public int getDSOListenPort() {
     if (dsoServer != null) { return dsoServer.getListenPort(); }
     throw new IllegalStateException("DSO Server not running");
@@ -324,6 +344,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     context.setDefaultsDescriptor(null);
 
     context.setAttribute(ConfigServlet.CONFIG_ATTRIBUTE, this.configurationSetupManager);
+    context.setAttribute(StatisticsGathererServlet.GATHERER_ATTRIBUTE, this.statisticsGathererSubSystem);
 
     File userDir = new File(System.getProperty("user.dir"));
     if (userDir.canWrite()) {
@@ -342,6 +363,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
     createAndAddServlet(servletHandler, VersionServlet.class.getName(), "/version");
     createAndAddServlet(servletHandler, ConfigServlet.class.getName(), "/config");
+    createAndAddServlet(servletHandler, StatisticsGathererServlet.class.getName(), "/statistics-gatherer/*");
 
     context.setServletHandler(servletHandler);
     httpServer.addHandler(context);
@@ -374,6 +396,8 @@ public class TCServerImpl extends SEDA implements TCServer {
     DSOMBean dso = new DSO(mgmtContext, mBeanServer);
     mBeanServer.registerMBean(dso, L2MBeanNames.DSO);
     mBeanServer.registerMBean(mgmtContext.getDSOAppEventsMBean(), L2MBeanNames.DSO_APP_EVENTS);
+    StatisticsLocalGathererMBeanImpl local_gatherer = new StatisticsLocalGathererMBeanImpl(statisticsGathererSubSystem, configurationSetupManager.commonl2Config());
+    mBeanServer.registerMBean(local_gatherer, StatisticsMBeanNames.STATISTICS_GATHERER);
   }
 
   // TODO: check that this is not needed then remove
@@ -406,5 +430,4 @@ public class TCServerImpl extends SEDA implements TCServer {
       dsoServer.startBeanShell(port);
     }
   }
-
 }

@@ -12,6 +12,7 @@ import com.tc.async.api.AddPredicate;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Source;
+import com.tc.async.api.StageQueueStats;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLoggerProvider;
@@ -213,7 +214,7 @@ public class StageQueueImpl implements Sink, Source {
     // NOP
   }
 
-  public static abstract class StageQueueStatsCollector implements Stats {
+  public static abstract class StageQueueStatsCollector implements StageQueueStats {
 
     public void logDetails(TCLogger statsLogger) {
       statsLogger.info(getDetails());
@@ -240,9 +241,11 @@ public class StageQueueImpl implements Sink, Source {
 
   public static class NullStageQueueStatsCollector extends StageQueueStatsCollector {
 
-    private String name;
+    private final String name;
+    private final String trimmedName;
 
     public NullStageQueueStatsCollector(String stage) {
+      this.trimmedName = stage.trim();
       this.name = makeWidth(stage, 40);
     }
 
@@ -261,14 +264,24 @@ public class StageQueueImpl implements Sink, Source {
     public void reset() {
       // NOOP
     }
+
+    public String getName() {
+      return trimmedName;
+    }
+
+    public int getDepth() {
+      return -1;
+    }
   }
 
   public static class StageQueueStatsCollectorImpl extends StageQueueStatsCollector {
 
     private int    count = 0;
-    private String name;
+    private final String name;
+    private final String trimmedName;
 
     public StageQueueStatsCollectorImpl(String stage) {
+      this.trimmedName = stage.trim();
       this.name = makeWidth(stage, 40);
     }
 
@@ -286,6 +299,14 @@ public class StageQueueImpl implements Sink, Source {
 
     public synchronized void reset() {
       count = 0;
+    }
+
+    public String getName() {
+      return trimmedName;
+    }
+
+    public int getDepth() {
+      return count;
     }
   }
 

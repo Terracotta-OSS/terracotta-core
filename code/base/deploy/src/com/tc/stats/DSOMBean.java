@@ -9,6 +9,9 @@ import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.lockmanager.api.DeadlockChain;
 import com.tc.objectserver.lockmanager.api.LockMBean;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
+import com.tc.stats.counter.Counter;
+
+import java.util.Map;
 
 import javax.management.ObjectName;
 
@@ -36,6 +39,8 @@ public interface DSOMBean extends DSOStats, TerracottaMBean {
 
   DSOClassInfo[] getClassInfo();
 
+  Map<String, Counter> getAllPendingRequests();
+  
   DeadlockChain[] scanForDeadLocks();
 
   ManagedObjectFacade lookupFacade(ObjectID objectID, int limit) throws NoSuchObjectException;

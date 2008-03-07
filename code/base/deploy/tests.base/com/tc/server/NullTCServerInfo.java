@@ -8,6 +8,8 @@ import com.tc.config.schema.L2Info;
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.management.beans.TCServerInfoMBean;
 
+import java.util.Map;
+
 import javax.management.NotCompliantMBeanException;
 
 public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServerInfoMBean {
@@ -40,6 +42,10 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
     return null;
   }
 
+  public int getDSOListenPort() {
+    return 0;
+  }
+  
   public long getStartTime() {
     return 0;
   }
@@ -88,4 +94,19 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
     //
   }
 
+  public Map getStatistics() {
+    return null;
+  }
+  
+  public String takeThreadDump(long requestMillis) {
+    return null;
+  }
+  
+  public String getEnvironment() {
+    return null;
+  }
+
+  public String getConfig() {
+    return null;
+  }
 }

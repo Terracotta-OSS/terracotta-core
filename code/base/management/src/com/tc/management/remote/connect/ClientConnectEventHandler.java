@@ -12,10 +12,11 @@ import com.tc.management.TerracottaMBean;
 import com.tc.management.TerracottaManagement;
 import com.tc.management.remote.protocol.ProtocolProvider;
 import com.tc.management.remote.protocol.terracotta.ClientProvider;
-import com.tc.management.remote.protocol.terracotta.TunnelingMessageConnection;
 import com.tc.management.remote.protocol.terracotta.ClientTunnelingEventHandler.L1ConnectionMessage;
+import com.tc.management.remote.protocol.terracotta.TunnelingMessageConnection;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.statistics.StatisticsGateway;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -26,10 +27,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.management.ListenerNotFoundException;
+import javax.management.MBeanInfo;
+import javax.management.MBeanNotificationInfo;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
+import javax.management.NotCompliantMBeanException;
 import javax.management.Notification;
+import javax.management.NotificationBroadcaster;
 import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
@@ -41,6 +47,12 @@ import javax.management.remote.JMXServiceURL;
 import javax.management.remote.generic.ConnectionClosedException;
 
 public class ClientConnectEventHandler extends AbstractEventHandler {
+
+  private final StatisticsGateway statisticsGateway;
+
+  public ClientConnectEventHandler(StatisticsGateway statisticsGateway) {
+    this.statisticsGateway = statisticsGateway;
+  }
 
   private static final class ConnectorClosedFilter implements NotificationFilter {
 
@@ -79,6 +91,44 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
     }
   }
 
+  class ProxyStandardMBean extends StandardMBean implements NotificationBroadcaster {
+    ProxyStandardMBean(Object proxy, Class interfaceClass) throws NotCompliantMBeanException {
+      super(proxy, interfaceClass);
+    }
+
+    protected String getClassName(MBeanInfo info) {
+      Object proxy = getImplementation();
+      if(proxy instanceof NotificationBroadcaster) {
+        return NotificationBroadcaster.class.getName();
+      }
+      return super.getClassName(info);
+    }
+
+    public void addNotificationListener(NotificationListener listener, NotificationFilter filter, Object handback)
+        throws IllegalArgumentException {
+      Object proxy = getImplementation();
+      if(proxy instanceof NotificationBroadcaster) {
+        ((NotificationBroadcaster)proxy).addNotificationListener(listener, filter, handback);
+      }
+    }
+
+    public MBeanNotificationInfo[] getNotificationInfo() {
+      Object proxy = getImplementation();
+      if(proxy instanceof NotificationBroadcaster) {
+        return ((NotificationBroadcaster)proxy).getNotificationInfo();
+      }
+      return new MBeanNotificationInfo[0];
+    }
+
+    public void removeNotificationListener(NotificationListener listener) throws ListenerNotFoundException {
+      Object proxy = getImplementation();
+      if(proxy instanceof NotificationBroadcaster) {
+        ((NotificationBroadcaster)proxy).removeNotificationListener(listener);
+      }
+    }
+
+  }
+  
   private void addJmxConnection(final L1ConnectionMessage msg) {
     final MessageChannel channel = msg.getChannel();
     final TCSocketAddress remoteAddress = channel != null ? channel.getRemoteAddress() : null;
@@ -102,14 +152,18 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
         ProtocolProvider.addTerracottaJmxProvider(environment);
         environment.put(ClientProvider.JMX_MESSAGE_CHANNEL, channel);
         environment.put(ClientProvider.CONNECTION_LIST, channelIdToMsgConnection);
-        environment.put("jmx.remote.x.request.timeout", "60000");
+        environment.put("jmx.remote.x.request.timeout", new Long(Long.MAX_VALUE));
         environment.put("jmx.remote.x.client.connection.check.period", new Long(0));
+        environment.put("jmx.remote.x.server.connection.timeout", new Long(Long.MAX_VALUE));
 
         final JMXConnector jmxConnector;
         try {
           jmxConnector = JMXConnectorFactory.connect(serviceURL, environment);
 
           final MBeanServerConnection l1MBeanServerConnection = jmxConnector.getMBeanServerConnection();
+
+          statisticsGateway.addStatisticsAgent(channel.getChannelID(), l1MBeanServerConnection);
+
           Set mBeans = l1MBeanServerConnection.queryNames(null, TerracottaManagement.matchAllTerracottaMBeans());
           List modifiedObjectNames = new ArrayList();
           for (Iterator iter = mBeans.iterator(); iter.hasNext();) {
@@ -119,10 +173,10 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
                   .newProxyInstance(l1MBeanServerConnection, objName, TerracottaMBean.class, false);
               ObjectName modifiedObjName = TerracottaManagement.addNodeInfo(objName, channel.getRemoteAddress());
               Class interfaceClass = Class.forName(mBeanProxy.getInterfaceClassName());
+              boolean isNotificationBroadcaster = mBeanProxy.isNotificationBroadcaster();
               Object obj = MBeanServerInvocationHandler.newProxyInstance(l1MBeanServerConnection, objName,
-                                                                         interfaceClass, mBeanProxy
-                                                                             .isNotificationBroadcaster());
-              l2MBeanServer.registerMBean(new StandardMBean(obj, interfaceClass), modifiedObjName);
+                                                                         interfaceClass, isNotificationBroadcaster);
+              l2MBeanServer.registerMBean(new ProxyStandardMBean(obj, interfaceClass), modifiedObjName);
               modifiedObjectNames.add(modifiedObjName);
             } catch (Exception e) {
               if (isConnectionException(e)) {
@@ -201,6 +255,8 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
         if (channelIdToJmxConnector.containsKey(channel.getChannelID())) {
           final JMXConnector jmxConnector = (JMXConnector) channelIdToJmxConnector.remove(channel.getChannelID());
           if (jmxConnector != null) {
+            statisticsGateway.removeStatisticsAgent(channel.getChannelID());
+            
             try {
               jmxConnector.close();
             } catch (IOException ioe) {
