@@ -208,6 +208,7 @@ modules:
         - common
         - dso-l1-api
         - dso-common
+        - thirdparty-api
   - dso-l2-common:
       options:
         jdk: J2SE-1.4
