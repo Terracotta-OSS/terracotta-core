@@ -7,7 +7,6 @@ package com.tc.bundles;
 import org.apache.commons.io.FileUtils;
 import org.osgi.framework.BundleException;
 
-import com.tc.bundles.exception.BundleSpecException;
 import com.tc.bundles.exception.InvalidBundleManifestException;
 import com.tc.bundles.exception.MissingBundleException;
 import com.tc.logging.CustomerLogging;
@@ -54,23 +53,20 @@ public class Resolver {
     try {
       injectDefaultRepositories(repoLocations);
     } catch (MalformedURLException mue) {
-      final String msg = "Failed to inject default repositories";
-      fatal(msg);
-      throw new BundleException(msg, mue);
+      throw new BundleException("Failed to inject default repositories", mue);
     }
 
     for (int i = 0; i < repositories.length; i++) {
       if (!repositories[i].getProtocol().equalsIgnoreCase("file")) {
-        final String msg = formatMessage(Message.WARN_REPOSITORY_PROTOCOL_UNSUPPORTED,
-                                         new Object[] { canonicalPath(repositories[i]) });
-        throw new BundleException(msg);
+        throw new BundleException(formatMessage(Message.WARN_REPOSITORY_PROTOCOL_UNSUPPORTED,
+                                                new Object[] { canonicalPath(repositories[i]) }));
       } else {
         repoLocations.add(repositories[i]);
       }
     }
 
-    if (repoLocations.isEmpty())  
-      throw new RuntimeException("No module repositories have been specified via the com.tc.l1.modules.repositories system property");
+    if (repoLocations.isEmpty()) { throw new RuntimeException(
+                                                              "No module repositories have been specified via the com.tc.l1.modules.repositories system property"); }
 
     this.repositories = (URL[]) repoLocations.toArray(new URL[0]);
   }
@@ -104,16 +100,16 @@ public class Resolver {
     final String name = module.getName();
     final String version = module.getVersion();
     final String groupId = module.getGroupId();
-    
     final URL location = resolveLocation(name, version, groupId);
+
     if (location == null) {
-      final String msg = fatal(Message.ERROR_BUNDLE_UNRESOLVED, new Object[] { name, version,
-          groupId, repositoriesToString() });
-      fatal(msg);
+      final String msg = fatal(Message.ERROR_BUNDLE_UNRESOLVED, new Object[] { module.getName(), module.getVersion(),
+          module.getGroupId(), repositoriesToString() });
       throw new MissingBundleException(msg);
     }
 
     logger.info("Resolved module " + groupId + ":" + name + ":" + version + " from " + location);
+
     resolveDependencies(location);
     return location;
   }
@@ -122,8 +118,11 @@ public class Resolver {
     resolveDefaultModules();
     resolveAdditionalModules();
 
-      for (int i = 0; (modules != null) && (i < modules.length); i++) 
+    if (modules != null) {
+      for (int i = 0; i < modules.length; i++) {
         resolve(modules[i]);
+      }
+    }
 
     return getResolvedUrls();
   }
@@ -186,7 +185,7 @@ public class Resolver {
         continue;
       }
 
-      final Collection jars = findJars(root, spec.getGroupId(), spec.getName(), spec.getVersion());
+      final Collection jars = findJars(root, spec.getGroupId(), spec.getName().replace('_', '-'), spec.getVersion());
       for (final Iterator j = jars.iterator(); j.hasNext();) {
         final File bundleFile = (File) j.next();
         if (!bundleFile.isFile()) {
@@ -345,7 +344,6 @@ public class Resolver {
     if (manifest == null) {
       final String msg = fatal(Message.ERROR_BUNDLE_UNREADABLE, new Object[] { FileUtils.toFile(location).getName(),
           canonicalPath(FileUtils.toFile(location).getParentFile()) });
-      fatal(msg);
       throw new InvalidBundleManifestException(msg);
     }
 
@@ -358,23 +356,13 @@ public class Resolver {
     addToRegistry(location, manifest);
   }
 
-  private void validateBundleSpec(final BundleSpec spec) throws BundleException {
-    if (!spec.isVersionSpecified()) {
-      BundleSpecException bse = BundleSpecException.unspecifiedVersion(spec);
-      fatal(bse.getMessage());
-      throw bse;
-    }
-  }
-  
   private void ensureBundle(final BundleSpec spec) throws BundleException {
-    validateBundleSpec(spec);
     URL required = findInRegistry(spec);
     if (required == null) {
       required = resolveBundle(spec);
       if (required == null) {
         final String msg = fatal(Message.ERROR_BUNDLE_DEPENDENCY_UNRESOLVED, new Object[] { spec.getName(),
             spec.getVersion(), spec.getGroupId(), repositoriesToString() });
-        fatal(msg);
         throw new MissingBundleException(msg);
       }
       addToRegistry(required, getManifest(required));
@@ -425,10 +413,6 @@ public class Resolver {
 
   private String fatal(final Message message, final Object[] arguments) {
     final String msg = formatMessage(message, arguments);
-    return fatal(msg);
-  }
-  
-  private String fatal(final String msg) {
     consoleLogger.fatal(msg);
     return msg;
   }

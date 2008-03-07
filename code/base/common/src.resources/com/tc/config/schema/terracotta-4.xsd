@@ -334,8 +334,8 @@
         section.
       </xs:documentation>
     </xs:annotation>
-    <xs:attribute name="name" type="xs:string" use="required" />
-    <xs:attribute name="version" type="xs:string" use="required" />
+    <xs:attribute name="name" type="xs:string" />
+    <xs:attribute name="version" type="xs:string" />
     <xs:attribute name="group-id" type="xs:string" default="org.terracotta.modules" />
   </xs:complexType>
 

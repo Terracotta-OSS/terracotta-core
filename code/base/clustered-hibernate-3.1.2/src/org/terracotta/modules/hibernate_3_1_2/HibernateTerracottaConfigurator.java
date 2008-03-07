@@ -82,7 +82,7 @@ public final class HibernateTerracottaConfigurator extends TerracottaConfigurato
     spec = configHelper.getOrCreateSpec("org.hibernate.cache.EhCacheProvider");
     spec.setCustomClassAdapter(factory);
 
-    Bundle thisBundle = getExportedBundle(context, "org.terracotta.modules.clustered-hibernate-3.1.2");
+    Bundle thisBundle = getExportedBundle(context, "org.terracotta.modules.clustered_hibernate_3.1.2");
     addExportedBundleClass(thisBundle, "org.terracotta.modules.hibernate_3_1_2.util.HibernateUtil");
 
     // We need TypeFactory to be instrumented for QueryCache. Refer to DEV-1183 for details.

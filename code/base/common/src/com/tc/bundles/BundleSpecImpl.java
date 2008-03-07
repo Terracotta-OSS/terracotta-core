@@ -46,7 +46,7 @@ final class BundleSpecImpl extends BundleSpec {
       attributes.put(pairs[0], pairs[1].replaceAll("\\\"", ""));
     }
   }
-  
+
   public String getSymbolicName() {
     return this.symbolicName;
   }
@@ -78,34 +78,29 @@ final class BundleSpecImpl extends BundleSpec {
   }
 
   public String getVersion() {
-    return isVersionSpecified() ? getVersionSpec() : "(any-version)";
+    final String bundleversion = (String) attributes.get(PROP_KEY_BUNDLE_VERSION);
+    return (bundleversion == null) ? "(any-version)" : bundleversion;
   }
-  
+
   public boolean isOptional() {
     final String resolution = (String) attributes.get(PROP_KEY_RESOLUTION);
     return (resolution != null) && resolution.equals("optional");
   }
 
-  public boolean isVersionSpecified() {
-    return getVersionSpec().length() > 0; 
-  }
-  
-  private String getVersionSpec() {
-    final String verspec = (String) attributes.get(PROP_KEY_BUNDLE_VERSION);
-    return (verspec == null) ? "" : verspec;
-  }
-
-  public boolean isCompatible(final String symbolicName, final String version) {
+  public boolean isCompatible(final String symname, final String version) {
     // symbolic-names must match
-    if (!BundleSpec.isMatchingSymbolicName(this.symbolicName, symbolicName)) return false;
+    if (!BundleSpec.isMatchingSymbolicName(this.symbolicName, symname)) return false;
 
-    // if symbolic-names are matching, then check for version compatibility -
-    // and if no specific bundle-version required/specified so it must be compatible with the version
-    if (!isVersionSpecified()) return true;
+    // if symbolic-names are matching, then check for version compatibility
+    String spec = (String) attributes.get(PROP_KEY_BUNDLE_VERSION);
 
-    // otherwise check if the version is within range of the specified required version 
+    // no specific bundle-version required/specified
+    // so it must be compatible with the version
+    if (spec == null) return true;
+
     final Version target = new Version(version);
-    VersionRange range = new VersionRange(getVersionSpec());
+    VersionRange range = new VersionRange(spec);
+
     return range.withinRange(target);
   }
 }

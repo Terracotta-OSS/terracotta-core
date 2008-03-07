@@ -46,9 +46,8 @@ public class MavenToOSGi {
    * </pre>
    * 
    * However, I've seen errors from Knoplerfish using - in symbolic names, so we are 
-   * currently replacing anything other than alphanumeric, dash, or underscore with 
-   * an underscore. If groupId and artifact are both null or empty string, then you'll 
-   * see some 
+   * currently replacing anything other than alphanumeric or _ with _.  If groupId and artifact are
+   * both null or empty string, then you'll see some 
    * 
    * @param groupId Maven groupId, like "org.terracotta.modules", might be null
    * @param artifactId Maven artifactId, like "tim-terracotta-cache", might be null

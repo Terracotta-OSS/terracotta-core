@@ -97,8 +97,7 @@ public class ModulesLoader {
           getModulesCustomApplicatorSpecs(osgiRuntime, configHelper);
         }
       } catch (Exception e) {
-        //System.err.println("Unable to initialize modules runtime; " + e.getMessage());
-        //e.printStackTrace();
+        System.err.println("Unable to initialize modules runtime; " + e.getMessage());
         logger.error(e); // at least log this exception, it's very frustrating if it is completely swallowed
         System.exit(-9);
       } finally {
@@ -185,7 +184,11 @@ public class ModulesLoader {
           module.setGroupId(groupId);
         }
 
-        module.setName(component + "-" + componentVersion);
+        // we do a substitution from _ to - because the list is expected to be
+        // using the OSGi restricted convention for bundleSymbolicNames (see
+        // the entry in tc.properties - l1.modules.default); but via tc-config 
+        // whatever the user has listed is taken literally.
+        module.setName(component.replace('_', '-') + "-" + componentVersion);
         module.setVersion(moduleVersion);
         modules.add(module);
       }
