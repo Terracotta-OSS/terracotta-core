@@ -1274,7 +1274,7 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
       /*
        * server_level is not changed to NIL_LOCK_LEVEL even though the server will release the lock as we need to know
        * what state we were holding before wait on certain scenarios like server crash etc.
-       * 
+       *
        * @see ClientLockManager.notified
        */
       return this.server_level;
@@ -1309,44 +1309,42 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
 
   private static class LevelCounter {
     // This class assumes there are only 3 lock levels, READ, WRITE, and CONCURRENT, and its value being 1, 2, and 4. If
-    // one change the
-    // value in the LockLevel class, this may need to be reviewed.
+    // one change the value in the LockLevel class, this may need to be reviewed.
     private int[] levelCounter = new int[3];
 
-    private void assertLevel(int level) {
-      if (!LockLevel.isRead(level) && !LockLevel.isWrite(level) && !LockLevel.isConcurrent(level)) { throw new AssertionError(
-                                                                                                                              "Unrecognized level."); }
-    }
-
-    private int getIndex(int level) {
-      int rv = (int) (Math.log(level) / Math.log(2)); // log2(level)
-      return rv;
+    private static int getIndex(int level) {
+      switch (level) {
+        case LockLevel.READ:
+          return 0;
+        case LockLevel.WRITE:
+          return 1;
+        case LockLevel.CONCURRENT:
+          return 2;
+        default:
+          throw new AssertionError("unexpected level: " + level);
+      }
     }
 
     public void put(int level, int count) {
-      assertLevel(level);
       levelCounter[getIndex(level)] = count;
     }
 
     public void increment(int level) {
-      assertLevel(level);
       levelCounter[getIndex(level)]++;
     }
 
     public int get(int level) {
-      assertLevel(level);
       return levelCounter[getIndex(level)];
     }
 
     public boolean contains(int level) {
-      assertLevel(level);
       return levelCounter[getIndex(level)] > 0;
     }
 
     public int remove(int level) {
-      assertLevel(level);
-      int rv = levelCounter[getIndex(level)];
-      levelCounter[getIndex(level)] = 0;
+      int index = getIndex(level);
+      int rv = levelCounter[index];
+      levelCounter[index] = 0;
       return rv;
     }
   }
