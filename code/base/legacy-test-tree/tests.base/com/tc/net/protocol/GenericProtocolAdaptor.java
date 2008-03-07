@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol;
 
@@ -10,7 +11,7 @@ import com.tc.net.core.TCConnection;
 
 /**
  * A generic protocol adaptor (only useful for testing)
- * 
+ *
  * @author teck
  */
 public class GenericProtocolAdaptor extends AbstractTCProtocolAdaptor {
@@ -36,11 +37,10 @@ public class GenericProtocolAdaptor extends AbstractTCProtocolAdaptor {
   }
 
   public void addReadData(TCConnection source, TCByteBuffer[] data, int length) throws TCProtocolException {
-    final boolean msgDone = processIncomingData(source, data, length);
+    GenericNetworkMessage msg = (GenericNetworkMessage) processIncomingData(source, data, length);
 
-    if (msgDone) {
+    if (msg != null) {
       try {
-        GenericNetworkMessage msg = (GenericNetworkMessage) collectMessage();
         sink.putMessage(msg);
       } finally {
         init();

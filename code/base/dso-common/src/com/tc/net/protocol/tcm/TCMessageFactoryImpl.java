@@ -1,93 +1,99 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.tcm;
-
-import org.apache.commons.lang.ArrayUtils;
 
 import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionProvider;
 
-import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.Map;
 
 public class TCMessageFactoryImpl implements TCMessageFactory {
-  private static final Class[]            SIG1            = new Class[] { SessionID.class, MessageMonitor.class, TCByteBufferOutputStream.class,
-      MessageChannel.class, TCMessageType.class          };
-  private static final Class[]            SIG2            = new Class[] { SessionID.class, MessageMonitor.class,
-      MessageChannel.class, TCMessageHeader.class, TCByteBuffer[].class };
-  private static final TCMessageFinalizer NULL_FINALIZER  = new NullFinalizer();
-
-  private final Map                       typeOnlyCstr    = new ConcurrentReaderHashMap();
-  private final Map                       typeAndDataCstr = new ConcurrentReaderHashMap();
-  private final TCMessageFinalizer        finalizer;
-  private final MessageMonitor            monitor;
-  private final SessionProvider           sessionProvider;
+  private final Map             factories = new ConcurrentReaderHashMap();
+  private final MessageMonitor  monitor;
+  private final SessionProvider sessionProvider;
 
   public TCMessageFactoryImpl(SessionProvider sessionProvider, MessageMonitor monitor) {
-    this(sessionProvider, monitor, NULL_FINALIZER);
-  }
-
-  public TCMessageFactoryImpl(SessionProvider sessionProvider, MessageMonitor monitor, TCMessageFinalizer finalizer) {
     this.sessionProvider = sessionProvider;
     this.monitor = monitor;
-    this.finalizer = finalizer;
   }
-  
+
   public TCMessage createMessage(MessageChannel source, TCMessageType type) throws UnsupportedMessageTypeException {
-    return createMessage(lookupConstructor(type, typeOnlyCstr), new Object[] { sessionProvider.getSessionID(), monitor,
-        new TCByteBufferOutputStream(4, 4096, false), source, type });
+    GeneratedMessageFactory factory = lookupFactory(type);
+    return factory.createMessage(sessionProvider.getSessionID(), monitor, new TCByteBufferOutputStream(4, 4096, false),
+                                 source, type);
   }
 
   public TCMessage createMessage(MessageChannel source, TCMessageType type, TCMessageHeader header, TCByteBuffer[] data) {
-    return createMessage(lookupConstructor(type, typeAndDataCstr), new Object[] { sessionProvider.getSessionID(), monitor, source, header, data });
+    GeneratedMessageFactory factory = lookupFactory(type);
+    return factory.createMessage(sessionProvider.getSessionID(), monitor, source, header, data);
   }
 
   public void addClassMapping(TCMessageType type, Class msgClass) {
     if ((type == null) || (msgClass == null)) { throw new IllegalArgumentException(); }
 
-    Constructor cstr1 = getConstructor(msgClass, SIG1);
-    Constructor cstr2 = getConstructor(msgClass, SIG2);
+    // This strange synchronization is for things like system tests that will end up using the same
+    // message class, but with different TCMessageFactoryImpl instances
+    synchronized (msgClass.getName().intern()) {
+      GeneratedMessageFactory factory = (GeneratedMessageFactory) factories.get(type);
+      if (factory == null) {
+        factories.put(type, createFactory(type, msgClass));
+      } else {
+        throw new IllegalStateException("message already has class mapping: " + type);
+      }
 
-    synchronized (this) {
-      typeOnlyCstr.put(type, cstr1);
-      typeAndDataCstr.put(type, cstr2);
     }
   }
 
-  private static Constructor lookupConstructor(TCMessageType type, Map map) {
-    Constructor rv = (Constructor) map.get(type);
-    if (rv == null) { throw new RuntimeException("No class registerted for type " + type); }
-    return rv;
+  private String generatedFactoryClassName(TCMessageType type) {
+    return getClass().getName() + "$" + type.getTypeName() + "Factory";
   }
 
-  private static Constructor getConstructor(Class msgClass, Class[] signature) {
+  private GeneratedMessageFactory createFactory(TCMessageType type, Class msgClass) {
+    String factoryClassName = generatedFactoryClassName(type);
+
+    ClassLoader loader = msgClass.getClassLoader();
+
+    Class c = null;
     try {
-      return msgClass.getDeclaredConstructor(signature);
-    } catch (Exception e) {
-      throw new IllegalArgumentException(e.getClass().getName() + ": " + e.getMessage());
+      // The factory class might already exist in the target loader
+      c = loader.loadClass(factoryClassName);
+    } catch (ClassNotFoundException e) {
+      c = defineFactory(factoryClassName, type, msgClass, loader);
     }
-  }
 
-  private TCMessage createMessage(Constructor cstr, Object[] args) {
     try {
-      TCMessage rv = (TCMessage) cstr.newInstance(args);
-      finalizer.finalizeMessage(rv);
-      return rv;
+      return (GeneratedMessageFactory) c.newInstance();
     } catch (Exception e) {
-      System.err.println("Args; " + ArrayUtils.toString(args));
       throw new RuntimeException(e);
     }
   }
 
-  private static final class NullFinalizer implements TCMessageFinalizer {
-    public final void finalizeMessage(TCMessage message) {
-      return;
+  private Class defineFactory(String className, TCMessageType type, Class msgClass, ClassLoader loader) {
+    try {
+      byte[] clazz = GeneratedMessageFactoryClassCreator.create(className, msgClass);
+
+      Method defineClass = ClassLoader.class.getDeclaredMethod("defineClass", new Class[] { String.class, byte[].class,
+          Integer.TYPE, Integer.TYPE });
+      defineClass.setAccessible(true);
+
+      Class c = (Class) defineClass.invoke(loader, new Object[] { className, clazz, new Integer(0),
+          new Integer(clazz.length) });
+      return c;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
+  }
+
+  private GeneratedMessageFactory lookupFactory(TCMessageType type) {
+    GeneratedMessageFactory factory = (GeneratedMessageFactory) factories.get(type);
+    if (factory == null) { throw new RuntimeException("No factory for type " + type); }
+    return factory;
   }
 
 }

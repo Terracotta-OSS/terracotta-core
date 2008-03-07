@@ -105,6 +105,7 @@ modules:
         - common-api
         - common
         - dso-l1-api
+        - thirdparty-api
   - dso-common-jdk15:
       options:
         jdk: J2SE-1.5

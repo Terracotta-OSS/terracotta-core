@@ -15,7 +15,7 @@ import com.tc.net.protocol.TCProtocolException;
 
 /**
  * Connection adaptor to parse wire protocol messages
- * 
+ *
  * @author teck
  */
 public class WireProtocolAdaptorImpl extends AbstractTCProtocolAdaptor implements WireProtocolAdaptor {
@@ -29,11 +29,10 @@ public class WireProtocolAdaptorImpl extends AbstractTCProtocolAdaptor implement
   }
 
   public void addReadData(TCConnection source, TCByteBuffer[] data, int length) throws TCProtocolException {
-    final boolean msgDone = this.processIncomingData(source, data, length);
+    final WireProtocolMessage msg = (WireProtocolMessage) this.processIncomingData(source, data, length);
 
-    if (msgDone) {
+    if (msg != null) {
       try {
-        WireProtocolMessage msg = getWireProtocolMessage();
         // TODO: validate the src/dest IP and port in header against the connection it came in on
 
         if (logger.isDebugEnabled()) {
@@ -53,11 +52,6 @@ public class WireProtocolAdaptorImpl extends AbstractTCProtocolAdaptor implement
     return new WireProtocolHeader();
   }
 
-  private WireProtocolMessage getWireProtocolMessage() {
-    WireProtocolMessage rv = (WireProtocolMessage) collectMessage();
-    return rv;
-  }
-
   protected int computeDataLength(TCNetworkHeader header) {
     WireProtocolHeader wph = (WireProtocolHeader) header;
     return wph.getTotalPacketLength() - wph.getHeaderByteLength();
@@ -69,7 +63,7 @@ public class WireProtocolAdaptorImpl extends AbstractTCProtocolAdaptor implement
     WireProtocolHeader wph = (WireProtocolHeader) hdr;
     final WireProtocolMessage rv;
 
-    if (wph.isTransportHandshakeMessage() || wph.isHealthCheckProbeMessage()) {
+    if (wph.isHandshakeOrHealthCheckMessage()) {
       rv = new TransportMessageImpl(source, wph, data);
     } else {
       rv = new WireProtocolMessageImpl(source, wph, data);

@@ -14,10 +14,10 @@ import com.tc.util.Conversion;
 /**
  * This class models the header portion of a TC wire protocol message. NOTE: This class makes no attempt to be thread
  * safe! All concurrent access must be syncronized
- * 
+ *
  * <pre>
- *        0                   1                   2                   3   
- *        0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
+ *        0                   1                   2                   3
+ *        0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
  *        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *        |Version|   HL  |Type of Service|  Time to Live |    Protocol   |
  *        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -36,7 +36,7 @@ import com.tc.util.Conversion;
  *        |     Options                                |    Padding       |
  *        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * </pre>
- * 
+ *
  * @author teck
  */
 
@@ -344,11 +344,9 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader {
     return 4 * getHeaderLength();
   }
 
-  public boolean isTransportHandshakeMessage() {
-    return getProtocol() == PROTOCOL_TRANSPORT_HANDSHAKE;
-  }
-  
-  public boolean isHealthCheckProbeMessage() {
-    return getProtocol() == PROTOCOL_HEALTHCHECK_PROBES;
+  public boolean isHandshakeOrHealthCheckMessage() {
+    final short proto = getProtocol();
+    return proto == PROTOCOL_TRANSPORT_HANDSHAKE || proto == PROTOCOL_HEALTHCHECK_PROBES;
+
   }
 }

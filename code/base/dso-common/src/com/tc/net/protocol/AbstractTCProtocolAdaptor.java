@@ -9,8 +9,6 @@ import com.tc.logging.TCLogger;
 import com.tc.net.core.TCConnection;
 import com.tc.util.Assert;
 
-import java.util.LinkedList;
-
 /**
  * Base class for protocol adaptors
  *
@@ -21,7 +19,6 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
   protected static final int      MODE_DATA         = 2;
 
   private final TCLogger          logger;
-  private final LinkedList        collectedMessages = new LinkedList();
   private int                     dataBytesNeeded;
   private AbstractTCNetworkHeader header;
   private TCByteBuffer[]          dataBuffers;
@@ -73,19 +70,13 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
 
   abstract protected int computeDataLength(TCNetworkHeader hdr);
 
-  protected final TCNetworkMessage collectMessage() {
-    synchronized (this.collectedMessages) {
-      return (TCNetworkMessage) collectedMessages.removeFirst();
-    }
-  }
-
   protected final void init() {
     mode = MODE_HEADER;
     dataBuffers = null;
     header = getNewProtocolHeader();
   }
 
-  protected final boolean processIncomingData(TCConnection source, TCByteBuffer[] data, final int length)
+  protected final TCNetworkMessage processIncomingData(TCConnection source, TCByteBuffer[] data, final int length)
       throws TCProtocolException {
     if (mode == MODE_HEADER) { return processHeaderData(source, data); }
 
@@ -104,17 +95,17 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
     return TCByteBufferFactory.getFixedSizedInstancesForLength(false, length);
   }
 
-  private boolean processHeaderData(TCConnection source, final TCByteBuffer[] data) throws TCProtocolException {
+  private TCNetworkMessage processHeaderData(TCConnection source, final TCByteBuffer[] data) throws TCProtocolException {
     Assert.eval(data.length == 1);
     Assert.eval(data[0] == this.header.getDataBuffer());
 
-    if (!this.header.isHeaderLengthAvail()) { return false; }
+    if (!this.header.isHeaderLengthAvail()) { return null; }
 
     final TCByteBuffer buf = data[0];
     final int headerLength = this.header.getHeaderByteLength();
     final int bufferLength = buf.limit();
 
-    if (headerLength == AbstractTCNetworkHeader.LENGTH_NOT_AVAIL) { return false; }
+    if (headerLength == AbstractTCNetworkHeader.LENGTH_NOT_AVAIL) { return null; }
 
     if ((headerLength < header.minLength) || (headerLength > header.maxLength) || (headerLength < bufferLength)) {
       // header data is screwed
@@ -124,12 +115,12 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
 
     if (bufferLength != headerLength) {
       // maybe we should support a way to swap out the header buffer for a larger sized one
-      // instead of always manadating that the backing buffer behind a header have
+      // instead of always mandating that the backing buffer behind a header have
       // enough capacity for the largest possible header for the given protocol. Just a thought
 
       // protocol header is bigger than min length, adjust buffer limit and continue
       buf.limit(headerLength);
-      return false;
+      return null;
     } else {
       Assert.eval(bufferLength == headerLength);
 
@@ -143,23 +134,20 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
         if (this.dataBytesNeeded < 0) { throw new TCProtocolException("Negative data size detected: "
                                                                       + this.dataBytesNeeded); }
 
-        // allow for message types with zero length data payloads
+        // allow for message types with zero length data payload
         if (0 == this.dataBytesNeeded) {
-          synchronized (this.collectedMessages) {
-            this.collectedMessages.addLast(createMessage(source, this.header, null));
-          }
-          return true;
+          return createMessage(source, this.header, null);
         }
 
-        return false;
+        return null;
       } else {
         // protocol header not completely read yet, do nothing
-        return false;
+        return null;
       }
     }
   }
 
-  private boolean processPayloadData(TCConnection source, final TCByteBuffer[] data) throws TCProtocolException {
+  private TCNetworkMessage processPayloadData(TCConnection source, final TCByteBuffer[] data) throws TCProtocolException {
     for (int i = 0; i < data.length; i++) {
       final TCByteBuffer buffer = data[i];
 
@@ -184,17 +172,13 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
         logger.debug("Message complete on connection " + source + ": " + msg.toString());
       }
 
-      synchronized (collectedMessages) {
-        collectedMessages.addLast(msg);
-      }
-
-      return true;
+      return msg;
     }
 
     Assert.eval(dataBytesNeeded > 0);
 
     // data portion not done, try again later
-    return false;
+    return null;
   }
 
 }
