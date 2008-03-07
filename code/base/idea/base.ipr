@@ -495,5 +495,8 @@
   <component name="com.intellij.profile.ui.ErrorOptionsConfigurable">
     <option name="myLastEditedConfigurable" />
   </component>
+  <UsedPathMacros>
+    <macro name="M2_REPO" />
+  </UsedPathMacros>
 </project>
 

@@ -78,7 +78,7 @@ public class ThreadDumpUtil {
     }
 
     String text = sb.toString();
-    logger.info(text);
+    //logger.info(text);
 
     return text;
   }
