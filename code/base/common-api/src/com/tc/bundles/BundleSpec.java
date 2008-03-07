@@ -35,8 +35,10 @@ public abstract class BundleSpec {
 
   public abstract boolean isCompatible(final String symname, final String version);
 
+  public abstract boolean isVersionSpecified();
+  
   public final static boolean isMatchingSymbolicName(final String arg0, final String arg1) {
-    return (arg0 != null) && (arg1 != null) && arg0.replace('-', '_').equalsIgnoreCase(arg1.replace('-', '_'));
+    return (arg0 != null) && (arg1 != null) && arg0.equalsIgnoreCase(arg1);
   }
 
   public static final String[] getRequirements(final Manifest manifest) {

@@ -84,7 +84,7 @@ public final class HibernateTerracottaConfigurator extends TerracottaConfigurato
     spec = configHelper.getOrCreateSpec("org.hibernate.cache.EhCacheProvider");
     spec.setCustomClassAdapter(factory);
 
-    Bundle thisBundle = getExportedBundle(context, "org.terracotta.modules.clustered_hibernate_3.2.5");
+    Bundle thisBundle = getExportedBundle(context, "org.terracotta.modules.clustered-hibernate-3.2.5");
     addExportedBundleClass(thisBundle, "org.terracotta.modules.hibernate_3_2_5.util.HibernateUtil");
     addExportedBundleClass(thisBundle, "org.terracotta.modules.hibernate_3_2_5.object.applicator.HibernateProxyApplicator");
 

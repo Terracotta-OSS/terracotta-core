@@ -71,7 +71,7 @@ public class MavenToOSGi {
       throw new IllegalArgumentException("Maven groupId and artifactId are both null or empty, at least one must be defined.");
     }
     
-    return replaceInvalidChars(name);
+    return name;
   }
 
   /**
