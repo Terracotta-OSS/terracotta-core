@@ -40,7 +40,7 @@ import java.util.List;
 
 /**
  * JDK14 (nio) implementation of TCConnection
- * 
+ *
  * @author teck
  */
 final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJDK14ChannelWriter {
@@ -65,6 +65,9 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
   private final SetOnceRef               localSocketAddress  = new SetOnceRef();
   private final SetOnceRef               remoteSocketAddress = new SetOnceRef();
   private final SocketParams             socketParams;
+  private final SynchronizedLong         totalRead           = new SynchronizedLong(0);
+  private final SynchronizedLong         totalWrite          = new SynchronizedLong(0);
+
   private volatile SocketChannel         channel;
 
   // for creating unconnected client connections
@@ -176,6 +179,12 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
   }
 
   public int doRead(ScatteringByteChannel sbc) {
+    int read = doReadInternal(sbc);
+    totalRead.add(read);
+    return read;
+  }
+
+  private int doReadInternal(ScatteringByteChannel sbc) {
     final boolean debug = logger.isDebugEnabled();
     final TCByteBuffer[] readBuffers = getReadBuffers();
 
@@ -282,6 +291,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
       }
 
       if (debug) logger.debug("Wrote " + bytesWritten + " bytes on connection " + channel.toString());
+      totalWrite.add(bytesWritten);
 
       if (context.done()) {
         contextsToRemove++;
@@ -457,6 +467,8 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     buf.append(']');
 
     buf.append(" idle=").append(getIdleTime()).append("ms");
+
+    buf.append(" [").append(totalRead.get()).append(" read, ").append(totalWrite.get()).append(" write]");
 
     return buf.toString();
   }
