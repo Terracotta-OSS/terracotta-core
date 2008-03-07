@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.io;
 
@@ -12,11 +13,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UTFDataFormatException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Use me to write data to a set of TCByteBuffer instances. <br>
@@ -34,7 +32,9 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
 
   // The "buffers" list is accessed by index in the Mark class, thus it should not be a linked list
   private List                   buffers                    = new ArrayList();
-  private Map                    localBuffers               = new IdentityHashMap();
+
+  private final List             localBuffers               = new ArrayList();
+
   private TCByteBuffer           current;
   private boolean                closed;
   private int                    written;
@@ -196,9 +196,14 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
       }
     }
 
-    current = TCByteBufferFactory.getInstance(direct, blockSize);
+    current = newBuffer(blockSize);
     blockSize = current.capacity();
-    localBuffers.put(current, current);
+  }
+
+  private TCByteBuffer newBuffer(int size) {
+    TCByteBuffer rv = TCByteBufferFactory.getInstance(direct, size);
+    localBuffers.add(rv);
+    return rv;
   }
 
   private void finalizeBuffers() {
@@ -210,20 +215,18 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
     current = null;
 
     List finalBufs = new ArrayList();
-    TCByteBuffer[] bufs = new TCByteBuffer[buffers.size()];
-    bufs = (TCByteBuffer[]) buffers.toArray(bufs);
 
-    final int num = bufs.length;
+    final int num = buffers.size();
     int index = 0;
 
     // fixup "small" buffers consolidating them into buffers as close to maxBlockSize as possible
     while (index < num) {
       final int startIndex = index;
-      int size = bufs[startIndex].limit();
+      int size = ((TCByteBuffer) buffers.get(startIndex)).limit();
 
       if (size < maxBlockSize) {
         while (index < (num - 1)) {
-          int nextSize = bufs[index + 1].limit();
+          int nextSize = ((TCByteBuffer) buffers.get(index + 1)).limit();
           if ((size + nextSize) <= maxBlockSize) {
             size += nextSize;
             index++;
@@ -234,26 +237,23 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
       }
 
       if (index > startIndex) {
-        TCByteBuffer consolidated = TCByteBufferFactory.getInstance(direct, size);
-        localBuffers.put(consolidated, consolidated);
+        TCByteBuffer consolidated = newBuffer(size);
+
         final int end = index;
         for (int i = startIndex; i <= end; i++) {
-          consolidated.put(bufs[i]);
-          if (localBuffers.remove(bufs[i]) != null) {
-            bufs[i].recycle();
-          }
+          consolidated.put((TCByteBuffer) buffers.get(i));
         }
         Assert.assertEquals(size, consolidated.position());
         consolidated.flip();
         finalBufs.add(consolidated);
       } else {
-        finalBufs.add(bufs[index]);
+        finalBufs.add(buffers.get(index));
       }
 
       index++;
     }
 
-    buffers = Collections.unmodifiableList(finalBufs);
+    buffers = finalBufs;
   }
 
   public final void writeBoolean(boolean value) {
@@ -443,7 +443,7 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
 
   public void recycle() {
     if (localBuffers.size() > 0) {
-      for (Iterator i = localBuffers.keySet().iterator(); i.hasNext();) {
+      for (Iterator i = localBuffers.iterator(); i.hasNext();) {
         TCByteBuffer buffer = (TCByteBuffer) i.next();
         buffer.recycle();
       }
