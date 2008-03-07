@@ -53,8 +53,9 @@ import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryIm
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.HydrateHandler;
+import com.tc.net.protocol.tcm.MessageMonitor;
+import com.tc.net.protocol.tcm.MessageMonitorImpl;
 import com.tc.net.protocol.tcm.NetworkListener;
-import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionPolicy;
@@ -198,7 +199,7 @@ import javax.management.remote.JMXConnectorServer;
 
 /**
  * Startup and shutdown point. Builds and starts the server
- * 
+ *
  * @author steve
  */
 public class DistributedObjectServer extends SEDA implements TCDumper {
@@ -435,9 +436,10 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
 
     int numCommWorkers = getCommWorkerCount(l2Properties);
 
-    communicationsManager = new CommunicationsManagerImpl(new NullMessageMonitor(), networkStackHarnessFactory,
-                                                          connectionPolicy, numCommWorkers,
-                                                          new HealthCheckerConfigImpl(l2Properties
+    MessageMonitor mm = MessageMonitorImpl.createMonitor(TCPropertiesImpl.getProperties(), logger);
+
+    communicationsManager = new CommunicationsManagerImpl(mm, networkStackHarnessFactory, connectionPolicy,
+                                                          numCommWorkers, new HealthCheckerConfigImpl(l2Properties
                                                               .getPropertiesFor("healthCheck.l1"), "DSO Server"));
 
     final DSOApplicationEvents appEvents;

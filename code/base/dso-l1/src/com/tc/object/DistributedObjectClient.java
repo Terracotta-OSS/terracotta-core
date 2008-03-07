@@ -37,7 +37,8 @@ import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryIm
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.HydrateHandler;
-import com.tc.net.protocol.tcm.NullMessageMonitor;
+import com.tc.net.protocol.tcm.MessageMonitor;
+import com.tc.net.protocol.tcm.MessageMonitorImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
@@ -150,8 +151,6 @@ public class DistributedObjectClient extends SEDA {
   private L1Management                             l1Management;
   private TCProperties                             l1Properties;
   private DmiManager                               dmiManager;
- 
- 
 
   public DistributedObjectClient(DSOClientConfigHelper config, TCThreadGroup threadGroup, ClassProvider classProvider,
                                  PreparedComponentsFromL2Connection connectionComponents, Manager manager,
@@ -198,8 +197,9 @@ public class DistributedObjectClient extends SEDA {
     }
     // //////////////////////////////////
 
-    communicationsManager = new CommunicationsManagerImpl(new NullMessageMonitor(), networkStackHarnessFactory,
-                                                          new NullConnectionPolicy(),
+    MessageMonitor mm = MessageMonitorImpl.createMonitor(TCPropertiesImpl.getProperties(), logger);
+
+    communicationsManager = new CommunicationsManagerImpl(mm, networkStackHarnessFactory, new NullConnectionPolicy(),
                                                           new HealthCheckerConfigImpl(l1Properties
                                                               .getPropertiesFor("healthCheck.l2"), "DSO Client"));
 
@@ -281,7 +281,8 @@ public class DistributedObjectClient extends SEDA {
     txManager = new ClientTransactionManagerImpl(channel.getChannelIDProvider(), objectManager,
                                                  new ThreadLockManagerImpl(lockManager), txFactory, rtxManager,
                                                  runtimeLogger, l1Management.findClientTxMonitorMBean());
-    threadGroup.addCallbackOnExitHandler(new CallbackDumpAdapter(txManager)); 
+
+    threadGroup.addCallbackOnExitHandler(new CallbackDumpAdapter(txManager));
     Stage lockResponse = stageManager.createStage(ClientConfigurationContext.LOCK_RESPONSE_STAGE,
                                                   new LockResponseHandler(sessionManager), 1, maxSize);
     Stage receiveRootID = stageManager.createStage(ClientConfigurationContext.RECEIVE_ROOT_ID_STAGE,
@@ -313,7 +314,9 @@ public class DistributedObjectClient extends SEDA {
                                                 new ClientCoordinationHandler(cluster), 1, maxSize);
     Stage lockStatisticsStage = stageManager.createStage(ClientConfigurationContext.LOCK_STATISTICS_RESPONSE_STAGE,
                                                          new LockStatisticsResponseHandler(), 1, 1);
-    final Stage lockStatisticsEnableDisableStage = stageManager.createStage(ClientConfigurationContext.LOCK_STATISTICS_ENABLE_DISABLE_STAGE, new LockStatisticsEnableDisableHandler(), 1, 1);
+    final Stage lockStatisticsEnableDisableStage = stageManager
+        .createStage(ClientConfigurationContext.LOCK_STATISTICS_ENABLE_DISABLE_STAGE,
+                     new LockStatisticsEnableDisableHandler(), 1, 1);
     lockStatManager.start(channel, lockStatisticsStage.getSink());
 
     final Stage jmxRemoteTunnelStage = stageManager.createStage(ClientConfigurationContext.JMXREMOTE_TUNNEL_STAGE, teh,
