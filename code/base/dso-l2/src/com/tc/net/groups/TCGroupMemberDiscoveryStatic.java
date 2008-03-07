@@ -50,7 +50,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     for (Node node : nodes) {
       DiscoveryStateMachine stateMachine = new DiscoveryStateMachine(node);
       DiscoveryStateMachine old = nodeStateMap.put(getNodeName(node), stateMachine);
-      Assert.assertNull(old);
+      Assert.assertNull("Duplicate nodes specified in config, please check " + getNodeName(node), old);
       stateMachine.start();
     }
   }
@@ -165,7 +165,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
 
   public void stop(long timeout) {
     stopAttempt.set(true);
-    
+
     // wait for all connections completed to avoid
     // IllegalStateException in TCConnectionManagerJDK14.checkShutdown()
     waitTillNoConnecting(timeout);
