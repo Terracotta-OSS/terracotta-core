@@ -157,8 +157,6 @@ import com.tc.websphere.WebsphereLoaderNaming;
 import com.tcclient.util.HashtableEntrySetWrapper;
 import com.tcclient.util.MapEntrySetWrapper;
 
-import gnu.trove.TLinkable;
-
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -176,6 +174,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import gnu.trove.TLinkable;
 
 /**
  * Tool for creating the DSO boot jar
@@ -208,6 +208,9 @@ public class BootJarTool {
   private BootJar                     bootJar;
   private BootJarHandler              bootJarHandler;
   private boolean                     quiet;
+
+  public static final String          SYSTEM_CLASSLOADER_NAME_PROPERTY = "com.tc.loader.system.name";
+  public static final String          EXT_CLASSLOADER_NAME_PROPERTY = "com.tc.loader.ext.name";
 
   public BootJarTool(DSOClientConfigHelper configuration, File outputFile, ClassLoader systemProvider, boolean quiet) {
     this.config = configuration;
@@ -1650,14 +1653,14 @@ public class BootJarTool {
     ClassReader cr = new ClassReader(orig);
     ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
     ClassVisitor cv = new StandardClassLoaderAdapter(cw, Namespace.getStandardSystemLoaderName(),
-                                                     "com.tc.loader.system.name");
+      SYSTEM_CLASSLOADER_NAME_PROPERTY);
     cr.accept(cv, ClassReader.SKIP_FRAMES);
     bootJar.loadClassIntoJar("sun.misc.Launcher$AppClassLoader", cw.toByteArray(), false);
 
     orig = getSystemBytes("sun.misc.Launcher$ExtClassLoader");
     cr = new ClassReader(orig);
     cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    cv = new StandardClassLoaderAdapter(cw, Namespace.getStandardExtensionsLoaderName(), "com.tc.loader.ext.name");
+    cv = new StandardClassLoaderAdapter(cw, Namespace.getStandardExtensionsLoaderName(), EXT_CLASSLOADER_NAME_PROPERTY);
     cr.accept(cv, ClassReader.SKIP_FRAMES);
     bootJar.loadClassIntoJar("sun.misc.Launcher$ExtClassLoader", cw.toByteArray(), false);
   }

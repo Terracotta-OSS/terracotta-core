@@ -46,7 +46,7 @@ public class DSOServer extends AbstractStoppable {
   protected void doStart() throws Exception {
     File configFile = writeConfig();
     serverProc = new ExtraProcessServerControl("localhost", serverPort, adminPort, configFile.getAbsolutePath(), false);
-    serverProc.writeOutputTo(new File(workingDir, "dso-server.log"));
+    serverProc.writeOutputTo(new FileOutputStream(new File(workingDir, "dso-server.log")));
     serverProc.getJvmArgs().addAll(jvmArgs);
     serverProc.start();
   }

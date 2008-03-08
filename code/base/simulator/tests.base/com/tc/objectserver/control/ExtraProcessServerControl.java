@@ -17,7 +17,7 @@ import com.tc.util.runtime.Vm;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -38,8 +38,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
   protected final List        jvmArgs;
   private final File          runningDirectory;
   private final String        serverName;
-  private File                out;
-  private FileOutputStream    fileOut;
+  private OutputStream        outStream;
   private StreamCopier        outCopier;
   private StreamCopier        errCopier;
   private final boolean       useIdentifier;
@@ -214,9 +213,9 @@ public class ExtraProcessServerControl extends ServerControlBase {
     }
   }
 
-  public void writeOutputTo(File outputFile) {
+  public void writeOutputTo(OutputStream outputStream) {
     if (mergeOutput) { throw new IllegalStateException(); }
-    this.out = outputFile;
+    this.outStream = outputStream;
   }
 
   public void start() throws Exception {
@@ -229,10 +228,9 @@ public class ExtraProcessServerControl extends ServerControlBase {
     if (mergeOutput) {
       mergeSTDOUT();
       mergeSTDERR();
-    } else if (out != null) {
-      fileOut = new FileOutputStream(out);
-      outCopier = new StreamCopier(process.STDOUT(), fileOut);
-      errCopier = new StreamCopier(process.STDERR(), fileOut);
+    } else if (outStream != null) {
+      outCopier = new StreamCopier(process.STDOUT(), outStream);
+      errCopier = new StreamCopier(process.STDERR(), outStream);
       outCopier.start();
       errCopier.start();
     }
@@ -339,9 +337,9 @@ public class ExtraProcessServerControl extends ServerControlBase {
       }
     }
 
-    if (fileOut != null) {
+    if (outStream != null) {
       try {
-        fileOut.close();
+        outStream.close();
       } catch (Exception e) {
         e.printStackTrace();
       }

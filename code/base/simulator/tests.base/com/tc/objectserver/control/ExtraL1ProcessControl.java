@@ -27,6 +27,16 @@ public class ExtraL1ProcessControl extends ExtraProcessServerControl {
     setJVMArgs();
   }
 
+  public ExtraL1ProcessControl(String l2Host, int dsoPort, Class mainClass, String configFileLoc, String[] mainArgs,
+                               File directory, List extraJvmArgs, boolean mergeOutput) {
+    super(new DebugParams(), l2Host, dsoPort, 0, configFileLoc, mergeOutput, extraJvmArgs);
+    this.mainClass = mainClass;
+    this.mainArgs = mainArgs;
+    this.directory = directory;
+
+    setJVMArgs();
+  }
+
   public File getJavaHome() {
     return javaHome;
   }
