@@ -776,6 +776,7 @@ modules:
         - dso-l2
         - dso-l2-common
         - dso-memory-datastore
+        - dso-statistics
         - legacy-test-tree
         - linked-child-process
         - management
