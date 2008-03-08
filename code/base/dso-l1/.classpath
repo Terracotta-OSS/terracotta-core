@@ -11,8 +11,8 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-common-jdk15"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1-api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-statistics"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/management"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty-api"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/dso-statistics"/>
 </classpath>
