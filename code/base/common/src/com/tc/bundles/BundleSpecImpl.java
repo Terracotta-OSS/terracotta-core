@@ -90,6 +90,10 @@ final class BundleSpecImpl extends BundleSpec {
     return getVersionSpec().length() > 0; 
   }
   
+  public boolean isVersionSpecifiedAbsolute() {
+    return getVersionSpec().matches("^(\\d+)(?:\\.(\\d+)(?:\\.(\\d+)(\\.(.*))?)?)?$");
+  }
+  
   private String getVersionSpec() {
     final String verspec = (String) attributes.get(PROP_KEY_BUNDLE_VERSION);
     return (verspec == null) ? "" : verspec;

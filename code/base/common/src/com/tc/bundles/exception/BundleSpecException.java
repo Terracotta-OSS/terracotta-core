@@ -21,9 +21,24 @@ public class BundleSpecException extends BundleException {
     return new BundleSpecException.UnspecifiedVersion(msg);
   }
 
+  public static BundleSpecException absoluteVersionRequired(final BundleSpec spec) {
+    String msg = "Unsupported bundle spec, the version number supplied must be absolute in order to locate "
+                 + "the bundle named '" + spec.getName() + "'";
+    if (spec.getGroupId().length() > 0) msg += " (group-id: " + spec.getGroupId() + ")";
+    return new BundleSpecException.UnsupportedSpec(msg);
+  }
+
   static class UnspecifiedVersion extends BundleSpecException {
 
     public UnspecifiedVersion(String msg) {
+      super(msg);
+    }
+
+  }
+
+  static class UnsupportedSpec extends BundleSpecException {
+
+    public UnsupportedSpec(String msg) {
       super(msg);
     }
 

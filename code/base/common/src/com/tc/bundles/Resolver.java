@@ -69,8 +69,8 @@ public class Resolver {
       }
     }
 
-    if (repoLocations.isEmpty())  
-      throw new RuntimeException("No module repositories have been specified via the com.tc.l1.modules.repositories system property");
+    if (repoLocations.isEmpty()) throw new RuntimeException(
+                                                            "No module repositories have been specified via the com.tc.l1.modules.repositories system property");
 
     this.repositories = (URL[]) repoLocations.toArray(new URL[0]);
   }
@@ -104,11 +104,11 @@ public class Resolver {
     final String name = module.getName();
     final String version = module.getVersion();
     final String groupId = module.getGroupId();
-    
+
     final URL location = resolveLocation(name, version, groupId);
     if (location == null) {
-      final String msg = fatal(Message.ERROR_BUNDLE_UNRESOLVED, new Object[] { name, version,
-          groupId, repositoriesToString() });
+      final String msg = formatMessage(Message.ERROR_BUNDLE_UNRESOLVED, new Object[] { name, version, groupId,
+          repositoriesToString() });
       fatal(msg);
       throw new MissingBundleException(msg);
     }
@@ -122,8 +122,8 @@ public class Resolver {
     resolveDefaultModules();
     resolveAdditionalModules();
 
-      for (int i = 0; (modules != null) && (i < modules.length); i++) 
-        resolve(modules[i]);
+    for (int i = 0; (modules != null) && (i < modules.length); i++)
+      resolve(modules[i]);
 
     return getResolvedUrls();
   }
@@ -343,7 +343,7 @@ public class Resolver {
   private void resolveDependencies(final URL location) throws BundleException {
     final Manifest manifest = getManifest(location);
     if (manifest == null) {
-      final String msg = fatal(Message.ERROR_BUNDLE_UNREADABLE, new Object[] { FileUtils.toFile(location).getName(),
+      final String msg = formatMessage(Message.ERROR_BUNDLE_UNREADABLE, new Object[] { FileUtils.toFile(location).getName(),
           canonicalPath(FileUtils.toFile(location).getParentFile()) });
       fatal(msg);
       throw new InvalidBundleManifestException(msg);
@@ -358,27 +358,34 @@ public class Resolver {
     addToRegistry(location, manifest);
   }
 
-  private void validateBundleSpec(final BundleSpec spec) throws BundleException {
-    if (!spec.isVersionSpecified()) {
-      BundleSpecException bse = BundleSpecException.unspecifiedVersion(spec);
-      fatal(bse.getMessage());
-      throw bse;
-    }
+  static void validateBundleSpec(final BundleSpec spec) throws BundleException {
+    if (!spec.isVersionSpecified()) throw BundleSpecException.unspecifiedVersion(spec);
+    if (!spec.isVersionSpecifiedAbsolute()) throw BundleSpecException.absoluteVersionRequired(spec);
   }
-  
+
   private void ensureBundle(final BundleSpec spec) throws BundleException {
-    validateBundleSpec(spec);
-    URL required = findInRegistry(spec);
-    if (required == null) {
-      required = resolveBundle(spec);
+    String msg = null;
+    try {
+      validateBundleSpec(spec);
+      URL required = findInRegistry(spec);
       if (required == null) {
-        final String msg = fatal(Message.ERROR_BUNDLE_DEPENDENCY_UNRESOLVED, new Object[] { spec.getName(),
-            spec.getVersion(), spec.getGroupId(), repositoriesToString() });
-        fatal(msg);
-        throw new MissingBundleException(msg);
+        required = resolveBundle(spec);
+        if (required == null) throw new MissingBundleException(
+                                                               formatMessage(
+                                                                             Message.ERROR_BUNDLE_DEPENDENCY_UNRESOLVED,
+                                                                             new Object[] { spec.getName(),
+                                                                                 spec.getVersion(), spec.getGroupId(),
+                                                                                 repositoriesToString() })
+
+        );
+        addToRegistry(required, getManifest(required));
+        resolveDependencies(required);
       }
-      addToRegistry(required, getManifest(required));
-      resolveDependencies(required);
+    } catch (BundleException bex) {
+      msg = bex.getMessage();
+      throw bex;
+    } finally {
+      fatal(msg);
     }
   }
 
@@ -427,9 +434,9 @@ public class Resolver {
     final String msg = formatMessage(message, arguments);
     return fatal(msg);
   }
-  
+
   private String fatal(final String msg) {
-    consoleLogger.fatal(msg);
+    if (msg != null) consoleLogger.fatal(msg);
     return msg;
   }
 

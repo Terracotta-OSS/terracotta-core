@@ -4,9 +4,55 @@
  */
 package com.tc.bundles;
 
+import org.osgi.framework.BundleException;
+
 import junit.framework.TestCase;
 
 public class BundleSpecTest extends TestCase {
+
+  public void testValidateBundleSpec() {
+    BundleSpec[] reqs; 
+
+    reqs = make("foo.bar.baz.widget");
+    validate(reqs[0], false);
+    
+    reqs = make("foo.bar.baz.widget, foo.bar.baz.gadget");
+    validate(reqs[0], false);
+    validate(reqs[1], false);
+    
+    reqs = make("foo.bar.baz.widget;bundle-version:=1.0.0, foo.bar.baz.gadget");
+    validate(reqs[0], true);
+    validate(reqs[1], false);
+
+    reqs = make("foo.bar.baz.widget;bundle-version:=1.0.0, foo.bar.baz.gadget;bundle-version:=1.0.0");
+    validate(reqs[0], true);
+    validate(reqs[1], true);
+
+    reqs = make("foo.bar.baz.widget;bundle-version:=\"[1.0.0, 2.0.0]\"");
+    validate(reqs[0], false);
+    
+    reqs = make("foo.bar.baz.widget;bundle-version:=\"[1.0.0,]\""); 
+    validate(reqs[0], false);
+
+    reqs = make("foo.bar.baz.widget;bundle-version:=\"(1.0.0,)\""); 
+    validate(reqs[0], false);
+
+    reqs = make("foo.bar.baz.widget;resolution:=optional"); 
+    validate(reqs[0], false);
+    
+    reqs = make("org.terracotta.modules.clustered-cglib-2.1.3;bundle-version:=2.6.0.SNAPSHOT");
+    validate(reqs[0], true);
+  }
+  
+  private void validate(BundleSpec spec, boolean expected) {
+    boolean flag = true;
+    try { 
+      Resolver.validateBundleSpec(spec); 
+    } catch (BundleException ex) {
+      flag = false;
+    }
+    assertEquals(flag, expected);
+  }
 
   public void testGetRequirementsString() {
     BundleSpec[] reqs; 
@@ -49,15 +95,17 @@ public class BundleSpecTest extends TestCase {
   }
 
   private BundleSpec[] check(int size, String source) {
+    BundleSpec[] specs = make(source);
+    assertEquals(size, specs.length);
+    return specs;
+  }
+
+  private BundleSpec[] make(String source) {
     String[] requirements = BundleSpec.getRequirements(source);
-    assertEquals(size, requirements.length);
-    
     BundleSpec[] specs = new BundleSpec[requirements.length];
     for (int i = 0; i < requirements.length; i++) {
       specs[i] = BundleSpec.newInstance(requirements[i]);
     }
-    
     return specs;
   }
-
 }
