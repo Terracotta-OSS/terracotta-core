@@ -55,17 +55,10 @@ public abstract class ServerCrashingTestBase extends TransparentTestBase {
     configFile = getTempFile("config-file.xml");
     writeConfigFile();
 
-    TestTVSConfigurationSetupManagerFactory factory = new TestTVSConfigurationSetupManagerFactory(
-                                                                                                  TestTVSConfigurationSetupManagerFactory.MODE_DISTRIBUTED_CONFIG,
-                                                                                                  null,
-                                                                                                  new FatalIllegalConfigurationChangeHandler());
-
     ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(port);
     ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(adminPort);
-    factory.addServerToL1Config(null, port, adminPort);
-    L1TVSConfigurationSetupManager manager = factory.createL1TVSConfigurationSetupManager();
-    setUpControlledServer(factory, new StandardDSOClientConfigHelperImpl(manager), port, adminPort, configFile
-        .getAbsolutePath(), jvmArgs);
+    configFactory().addServerToL1Config(null, port, adminPort);
+    setUpControlledServer(configFactory(), configHelper(), port, adminPort, configFile.getAbsolutePath(), jvmArgs);
 
     getTransparentAppConfig().setClientCount(nodeCount);
     initializeTestRunner();

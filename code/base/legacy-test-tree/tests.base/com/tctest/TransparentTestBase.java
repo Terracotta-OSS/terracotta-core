@@ -8,7 +8,6 @@ import org.apache.commons.io.CopyUtils;
 import org.apache.commons.lang.ClassUtils;
 
 import com.tc.config.schema.SettableConfigItem;
-import com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.management.beans.L2DumperMBean;
@@ -64,9 +63,8 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   public static final int                         DEFAULT_ADAPTED_MUTATOR_COUNT   = 0;
   public static final int                         DEFAULT_ADAPTED_VALIDATOR_COUNT = 0;
 
-  private TestTVSConfigurationSetupManagerFactory configFactory;
-  private DSOClientConfigHelper                   configHelper;
   protected DistributedTestRunner                 runner;
+
   private DistributedTestRunnerConfig             runnerConfig                    = new DistributedTestRunnerConfig(
                                                                                                                     getTimeoutValueInSeconds());
   private TransparentAppConfig                    transparentAppConfig;
@@ -105,15 +103,22 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     }
   }
 
-  protected void setJvmArgsL1Reconnect(ArrayList jvmArgs) {
+  protected void setJvmArgsL1Reconnect(final ArrayList jvmArgs) {
     System.setProperty("com.tc.l1.reconnect.enabled", "true");
     TCPropertiesImpl.setProperty("l1.reconnect.enabled", "true");
 
     jvmArgs.add("-Dcom.tc.l1.reconnect.enabled=true");
   }
 
+  protected void setJvmArgsCvtBufferIsolation(final ArrayList jvmArgs) {
+    System.setProperty("com.tc.cvt.buffer.randomsuffix.enabled", "true");
+    TCPropertiesImpl.setProperty("cvt.buffer.randomsuffix.enabled", "true");
+
+    jvmArgs.add("-Dcom.tc.cvt.buffer.randomsuffix.enabled=true");
+  }
+
   protected void setUp() throws Exception {
-    setUp(configFactory(), configHelper());
+    setUpTransparent(configFactory(), configHelper());
 
     // config should be set up before tc-config for external L2s are written out
     setupConfig(configFactory());
@@ -125,7 +130,8 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
     ArrayList jvmArgs = new ArrayList();
     addTestTcPropertiesFile(jvmArgs);
-
+    setJvmArgsCvtBufferIsolation(jvmArgs);
+    
     // for some test cases to enable l1reconnect
     if (enableL1Reconnect()) {
       setJvmArgsL1Reconnect(jvmArgs);
@@ -210,7 +216,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
         .equals(TestConfigObject.TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE), getTempDirectory(), portChooser,
                                                      ActivePassiveServerConfigCreator.DEV_MODE, apSetupManager,
                                                      javaHome, configFactory(), jvmArgs);
-    apServerManager.addServersToL1Config(configFactory);
+    apServerManager.addServersToL1Config(configFactory());
   }
 
   protected void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
@@ -295,7 +301,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       serverControls[i] = new ExtraProcessServerControl("localhost", dsoPorts[i], jmxPorts[i], configFiles[i]
           .getAbsolutePath(), true, serverNames[i], null, javaHome, true);
     }
-    setUp(factory, helper, true);
+    setUpTransparent(factory, helper, true);
   }
 
   protected final void setUpControlledServer(TestTVSConfigurationSetupManagerFactory factory,
@@ -315,23 +321,21 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     assertNotNull(jvmArgs);
     serverControl = new ExtraProcessServerControl("localhost", serverPort, adminPort, configFile, true, javaHome,
                                                   jvmArgs);
-    setUp(factory, helper);
+    setUpTransparent(factory, helper);
 
     ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(serverPort);
     ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(adminPort);
     configFactory().addServerToL1Config(null, serverPort, adminPort);
   }
 
-  private final void setUp(TestTVSConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper)
+  private final void setUpTransparent(TestTVSConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper)
       throws Exception {
-    setUp(factory, helper, false);
+    setUpTransparent(factory, helper, false);
   }
 
-  private final void setUp(TestTVSConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper,
+  private final void setUpTransparent(TestTVSConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper,
                            boolean serverControlsSet) throws Exception {
-    super.setUp();
-    this.configFactory = factory;
-    this.configHelper = helper;
+    super.setUp(factory, helper);
     if (serverControlsSet) {
       transparentAppConfig = new TransparentAppConfig(getApplicationClass().getName(), new TestGlobalIdGenerator(),
                                                       DEFAULT_CLIENT_COUNT, DEFAULT_INTENSITY, serverControls, proxies);
@@ -363,14 +367,6 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
   private boolean isActivePassive() {
     return TestConfigObject.TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE.equals(mode());
-  }
-
-  public DSOClientConfigHelper getConfigHelper() {
-    return this.configHelper;
-  }
-
-  public TVSConfigurationSetupManagerFactory getConfigFactory() {
-    return configFactory;
   }
 
   public DistributedTestRunnerConfig getRunnerConfig() {
@@ -410,7 +406,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   }
 
   public void initializeTestRunner(boolean isMutateValidateTest) throws Exception {
-    this.runner = new DistributedTestRunner(runnerConfig, configFactory, configHelper, getApplicationClass(),
+    this.runner = new DistributedTestRunner(runnerConfig, configFactory(), configHelper(), getApplicationClass(),
                                             getOptionalAttributes(), getApplicationConfigBuilder()
                                                 .newApplicationConfig(), getStartServer(), isMutateValidateTest,
                                             (isActivePassive() && canRunActivePassive()), apServerManager,

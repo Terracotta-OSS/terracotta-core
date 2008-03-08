@@ -53,15 +53,9 @@ public class JMXHeartBeatTest extends TransparentTestBase {
     adminPort = pc.chooseRandomPort();
     configFile = getTempFile("config-file.xml");
     writeConfigFile();
-    TestTVSConfigurationSetupManagerFactory factory = new TestTVSConfigurationSetupManagerFactory(
-                                                                                                  TestTVSConfigurationSetupManagerFactory.MODE_DISTRIBUTED_CONFIG,
-                                                                                                  null,
-                                                                                                  new FatalIllegalConfigurationChangeHandler());
 
-    factory.addServerToL1Config(null, port, adminPort);
-    L1TVSConfigurationSetupManager manager = factory.createL1TVSConfigurationSetupManager();
-    setUpControlledServer(factory, new StandardDSOClientConfigHelperImpl(manager), port, adminPort, configFile
-        .getAbsolutePath());
+    configFactory().addServerToL1Config(null, port, adminPort);
+    setUpControlledServer(configFactory(), configHelper(), port, adminPort, configFile.getAbsolutePath());
     doSetUp(this);
   }
 

@@ -38,14 +38,20 @@ public class BaseDSOTestCase extends TCTestCase {
     if (this.failTestException != null) throw this.failTestException;
   }
 
-  private TestTVSConfigurationSetupManagerFactory factory;
-  private L1TVSConfigurationSetupManager          l1Manager;
+  private TestTVSConfigurationSetupManagerFactory configFactory;
+  private L1TVSConfigurationSetupManager          l1ConfigManager;
   private DSOClientConfigHelper                   configHelper;
+
+  protected final void setUp(TestTVSConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper) throws Exception {
+    super.setUp();
+    this.configFactory = factory;
+    this.configHelper = helper;
+  }
 
   protected final synchronized TestTVSConfigurationSetupManagerFactory configFactory()
       throws ConfigurationSetupException {
-    if (this.factory == null) this.factory = createDistributedConfigFactory();
-    return this.factory;
+    if (this.configFactory == null) this.configFactory = createDistributedConfigFactory();
+    return this.configFactory;
   }
 
   protected final TestTVSConfigurationSetupManagerFactory createDistributedConfigFactory()
@@ -95,8 +101,8 @@ public class BaseDSOTestCase extends TCTestCase {
   }
 
   protected final synchronized L1TVSConfigurationSetupManager l1Manager() throws ConfigurationSetupException {
-    if (this.l1Manager == null) this.l1Manager = createL1ConfigManager();
-    return this.l1Manager;
+    if (this.l1ConfigManager == null) this.l1ConfigManager = createL1ConfigManager();
+    return this.l1ConfigManager;
   }
 
   protected final L1TVSConfigurationSetupManager createL1ConfigManager() throws ConfigurationSetupException {
@@ -126,8 +132,8 @@ public class BaseDSOTestCase extends TCTestCase {
   }
 
   protected void tearDown() throws Exception {
-    this.factory = null;
+    this.configFactory = null;
     this.configHelper = null;
-    this.l1Manager = null;
+    this.l1ConfigManager = null;
   }
 }

@@ -5,11 +5,13 @@ package com.tc.statistics;
 
 import com.tc.config.schema.NewStatisticsConfig;
 import com.tc.exception.TCRuntimeException;
-import com.tc.statistics.beans.impl.StatisticsEmitterMBeanImpl;
+import com.tc.logging.CustomerLogging;
+import com.tc.logging.TCLogger;
 import com.tc.statistics.beans.StatisticsEmitterMBean;
 import com.tc.statistics.beans.StatisticsMBeanNames;
-import com.tc.statistics.beans.impl.StatisticsManagerMBeanImpl;
 import com.tc.statistics.beans.StatisticsManagerMBean;
+import com.tc.statistics.beans.impl.StatisticsEmitterMBeanImpl;
+import com.tc.statistics.beans.impl.StatisticsManagerMBeanImpl;
 import com.tc.statistics.buffer.StatisticsBuffer;
 import com.tc.statistics.buffer.exceptions.TCStatisticsBufferException;
 import com.tc.statistics.buffer.h2.H2StatisticsBufferImpl;
@@ -17,8 +19,6 @@ import com.tc.statistics.config.StatisticsConfig;
 import com.tc.statistics.config.impl.StatisticsConfigImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.statistics.retrieval.impl.StatisticsRetrievalRegistryImpl;
-import com.tc.logging.TCLogger;
-import com.tc.logging.CustomerLogging;
 
 import java.io.File;
 
