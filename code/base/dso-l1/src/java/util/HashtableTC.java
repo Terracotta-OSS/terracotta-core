@@ -114,7 +114,10 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
    */
   public synchronized Object get(Object key) {
     if (__tc_isManaged()) {
-      Map.Entry e = getEntry(key);
+      Map.Entry e = null;
+      synchronized (__tc_managed().getResolveLock()) {
+        e = __tc_getEntry(key);
+      }
       if (e == null) return null;
       Object actualValue = lookUpAndStoreIfNecessary(e);
       return actualValue;
@@ -140,12 +143,6 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
           && resolvedValue != preLookupEntry.getValue()) {
         preLookupEntry.setValue(resolvedValue);
       }
-    }
-  }
-
-  private Map.Entry getEntry(Object key) {
-    synchronized (__tc_managed().getResolveLock()) {
-      return __tc_getEntry(key);
     }
   }
 
@@ -584,6 +581,12 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
   }
 
   private abstract class CollectionWrapper extends AbstractCollection implements Serializable {
+    // This default constructor is added so that the compile will not generate a HashtableTC$1 dummy class. No idea why
+    // the compiler did that.
+    public CollectionWrapper() {
+      super();
+    }
+    
     public Object[] toArray() {
       synchronized (HashtableTC.this) {
         if (__tc_isManaged()) {
