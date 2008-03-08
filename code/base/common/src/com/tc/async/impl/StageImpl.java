@@ -149,7 +149,7 @@ public class StageImpl implements Stage {
           if (shutdownRequested()) return;
           throw new TCRuntimeException(ie);
         } finally {
-          // Agressively null out the reference before going around the loop again. If you don't do this, the reference
+          // Aggressively null out the reference before going around the loop again. If you don't do this, the reference
           // to the context will exist until another context comes in. This can potentially keep many objects in memory
           // longer than necessary
           ctxt = null;
