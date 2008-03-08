@@ -32,7 +32,8 @@ modules:
         jdk: J2SE-1.4
       dependencies:
         - common-api
-        - linked-child-process
+        - dso-statistics
+        - linked-child-process        
   - aspectwerkz:
       options:
         jdk: J2SE-1.4
@@ -748,6 +749,7 @@ modules:
         - dso-l1-session
         - dso-l2
         - dso-l2-common
+        - dso-statistics
         - legacy-test-tree
         - linked-child-process
         - management
@@ -799,6 +801,7 @@ modules:
         - dso-l2
         - dso-l2-common
         - dso-memory-datastore
+        - dso-statistics
         - legacy-test-tree
         - linked-child-process
         - management
