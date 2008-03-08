@@ -110,11 +110,14 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     jvmArgs.add("-Dcom.tc.l1.reconnect.enabled=true");
   }
 
-  protected void setJvmArgsCvtBufferIsolation(final ArrayList jvmArgs) {
+  protected void setJvmArgsCvtIsolation(final ArrayList jvmArgs) {
     System.setProperty("com.tc.cvt.buffer.randomsuffix.enabled", "true");
     TCPropertiesImpl.setProperty("cvt.buffer.randomsuffix.enabled", "true");
+    System.setProperty("com.tc.cvt.store.randomsuffix.enabled", "true");
+    TCPropertiesImpl.setProperty("cvt.store.randomsuffix.enabled", "true");
 
     jvmArgs.add("-Dcom.tc.cvt.buffer.randomsuffix.enabled=true");
+    jvmArgs.add("-Dcom.tc.cvt.store.randomsuffix.enabled=true");
   }
 
   protected void setUp() throws Exception {
@@ -130,7 +133,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
     ArrayList jvmArgs = new ArrayList();
     addTestTcPropertiesFile(jvmArgs);
-    setJvmArgsCvtBufferIsolation(jvmArgs);
+    setJvmArgsCvtIsolation(jvmArgs);
     
     // for some test cases to enable l1reconnect
     if (enableL1Reconnect()) {

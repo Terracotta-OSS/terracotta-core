@@ -7,6 +7,7 @@ import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArraySet;
 
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.database.StatisticsDatabase;
 import com.tc.statistics.database.exceptions.TCStatisticsDatabaseException;
@@ -15,11 +16,12 @@ import com.tc.statistics.jdbc.CaptureChecksum;
 import com.tc.statistics.jdbc.JdbcHelper;
 import com.tc.statistics.jdbc.PreparedStatementHandler;
 import com.tc.statistics.jdbc.ResultSetHandler;
+import com.tc.statistics.store.StatisticDataUser;
 import com.tc.statistics.store.StatisticsRetrievalCriteria;
 import com.tc.statistics.store.StatisticsStore;
 import com.tc.statistics.store.StatisticsStoreImportListener;
 import com.tc.statistics.store.StatisticsStoreListener;
-import com.tc.statistics.store.StatisticDataUser;
+import com.tc.statistics.store.exceptions.TCStatisticsStoreCacheCreationErrorException;
 import com.tc.statistics.store.exceptions.TCStatisticsStoreClearAllStatisticsErrorException;
 import com.tc.statistics.store.exceptions.TCStatisticsStoreClearStatisticsErrorException;
 import com.tc.statistics.store.exceptions.TCStatisticsStoreCloseErrorException;
@@ -30,7 +32,6 @@ import com.tc.statistics.store.exceptions.TCStatisticsStoreRetrievalErrorExcepti
 import com.tc.statistics.store.exceptions.TCStatisticsStoreSessionIdsRetrievalErrorException;
 import com.tc.statistics.store.exceptions.TCStatisticsStoreSetupErrorException;
 import com.tc.statistics.store.exceptions.TCStatisticsStoreStatisticStorageErrorException;
-import com.tc.statistics.store.exceptions.TCStatisticsStoreCacheCreationErrorException;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.FileLockGuard;
 
@@ -49,6 +50,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 public class H2StatisticsStoreImpl implements StatisticsStore {
@@ -73,8 +75,18 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
 
   private volatile boolean open = false;
 
+  private static final Random rand = new Random();
+
   public H2StatisticsStoreImpl(final File dbDir) {
-    this.database = new H2StatisticsDatabase(dbDir, H2_URL_SUFFIX);
+    final String suffix;
+    if (TCPropertiesImpl.getProperties().getBoolean("cvt.store.randomsuffix.enabled", false)) {
+      synchronized (rand) {
+        suffix = H2_URL_SUFFIX + "-" + rand.nextInt() + "." + System.currentTimeMillis();
+      }
+    } else {
+      suffix = H2_URL_SUFFIX;
+    }
+    this.database = new H2StatisticsDatabase(dbDir, suffix);
     this.lockFile = new File(dbDir.getParentFile(), dbDir.getName()+".lck");
   }
 
