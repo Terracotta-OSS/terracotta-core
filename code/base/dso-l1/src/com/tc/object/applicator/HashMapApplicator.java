@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.applicator;
 
@@ -88,7 +89,8 @@ public class HashMapApplicator extends BaseApplicator {
     }
   }
 
-  protected void apply(ClientObjectManager objectManager, Object po, int method, Object[] params) throws ClassNotFoundException {
+  protected void apply(ClientObjectManager objectManager, Object po, int method, Object[] params)
+      throws ClassNotFoundException {
     Map m = (Map) po;
     switch (method) {
       case SerializationUtil.PUT:
@@ -99,7 +101,7 @@ public class HashMapApplicator extends BaseApplicator {
         Object value = getObjectForValue(objectManager, v);
 
         if (m instanceof TCMap) {
-          ((TCMap)m).__tc_applicator_put(pkey, value);
+          ((TCMap) m).__tc_applicator_put(pkey, value);
         } else {
           m.put(pkey, value);
         }
@@ -108,14 +110,18 @@ public class HashMapApplicator extends BaseApplicator {
       case SerializationUtil.REMOVE:
         Object rkey = params[0] instanceof ObjectID ? objectManager.lookupObject((ObjectID) params[0]) : params[0];
         if (m instanceof TCMap) {
-          ((TCMap)m).__tc_applicator_remove(rkey);
+          ((TCMap) m).__tc_applicator_remove(rkey);
         } else {
           m.remove(rkey);
         }
 
         break;
       case SerializationUtil.CLEAR:
-        m.clear();
+        if (m instanceof TCMap) {
+          ((TCMap) m).__tc_applicator_clear();
+        } else {
+          m.clear();
+        }
         break;
       default:
         throw new AssertionError("invalid action:" + method);

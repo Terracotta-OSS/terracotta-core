@@ -12,6 +12,8 @@ public interface TCMap {
 
   public void __tc_applicator_remove(Object key);
   
+  public void __tc_applicator_clear();
+  
   public void __tc_remove_logical(Object key);
   
   public Collection __tc_getAllLocalEntriesSnapshot();

@@ -4,6 +4,7 @@
  */
 package java.util;
 
+import com.tc.exception.TCObjectNotFoundException;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
@@ -88,34 +89,61 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
    */
   public Object get(Object key) {
     if (__tc_isManaged()) {
-      synchronized (__tc_managed().getResolveLock()) {
-        Map.Entry e = getEntry(key);
-        return lookUpAndStoreIfNecessary(e);
-      }
+      Map.Entry e = __tc_getEntryUnderResolvedLock(key);
+      return lookUpAndStoreIfNecessary(e);
     } else {
       return super.get(key);
     }
   }
-
+  
   private Object lookUpAndStoreIfNecessary(Map.Entry e) {
     if (e == null) return null;
-    Object value = e.getValue();
-    if (value instanceof ObjectID) {
-      Object newVal = ManagerUtil.lookupObject((ObjectID) value);
-      e.setValue(newVal);
-      return newVal;
+    Object value = null;
+    synchronized(__tc_managed().getResolveLock()) {
+      value = e.getValue();
     }
-    return value;
+    Object resolvedValue = lookUpIfNecessary(value);
+    __tc_storeValueIfValid(e, resolvedValue);
+    return resolvedValue;
+  }
+
+  // This method name needs to be prefix with __tc_ in order to prevent it from being
+  // autolocked.
+  private void __tc_storeValueIfValid(Map.Entry preLookupEntry, Object resolvedValue) {
+    synchronized (__tc_managed().getResolveLock()) {
+      Map.Entry postLookupEntry = getEntry(preLookupEntry.getKey());
+      if (postLookupEntry != null && preLookupEntry.getValue() == postLookupEntry.getValue()
+          && resolvedValue != preLookupEntry.getValue()) {
+        preLookupEntry.setValue(resolvedValue);
+      }
+    }
+  }
+
+  private Map.Entry __tc_getEntryUnderResolvedLock(Object key) {
+    synchronized (__tc_managed().getResolveLock()) {
+      return getEntry(key);
+    }
   }
 
   private static Object lookUpIfNecessary(Object o) {
-    if (o instanceof ObjectID) { return ManagerUtil.lookupObject((ObjectID) o); }
+    if (o instanceof ObjectID) {
+      try {
+        return ManagerUtil.lookupObject((ObjectID) o);
+      } catch (TCObjectNotFoundException onfe) {
+        throw new ConcurrentModificationException(onfe.getMessage());
+      }
+    }
     return o;
   }
 
   private Object lookUpFaultBreadthIfNecessary(Object o) {
-    if (o instanceof ObjectID) { return ManagerUtil.lookupObjectWithParentContext((ObjectID) o, __tc_managed()
-        .getObjectID()); }
+    if (o instanceof ObjectID) {
+      try {
+        return ManagerUtil.lookupObjectWithParentContext((ObjectID) o, __tc_managed().getObjectID());
+      } catch (TCObjectNotFoundException onfe) {
+        throw new ConcurrentModificationException(onfe.getMessage());
+      }
+    }
     return o;
   }
 
@@ -167,6 +195,16 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
   public void __tc_applicator_remove(Object key) {
     super.remove(key);
   }
+  
+  /**
+   * This method is only to be invoked from the applicator thread. This method does not need to check if the map is
+   * managed as it will always be managed when called by the applicator thread. In addition, this method does not need
+   * to be synchronized under getResolveLock() as the applicator thread is already under the scope of such
+   * synchronization.
+   */
+  public void __tc_applicator_clear() {
+    super.clear();
+  }
 
   /**
    * This method is to be invoked when one needs a remove to get broadcast, but do not want to fault in the value of a
@@ -203,7 +241,7 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
     }
   }
 
-  public synchronized Collection __tc_getAllEntriesSnapshotInternal() {
+  public Collection __tc_getAllEntriesSnapshotInternal() {
     Set entrySet = super.entrySet();
     return new ArrayList(entrySet);
   }
@@ -403,13 +441,7 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
     // XXX:: This method has the side effect of looking up the object and setting the value in the Managed case.
     public Object getValue() {
       if (__tc_isManaged()) {
-        synchronized (__tc_managed().getResolveLock()) {
-          Object value = lookUpIfNecessary(entry.getValue());
-          if (entry.getValue() != value) {
-            entry.setValue(value);
-          }
-          return value;
-        }
+        return lookUpAndStoreIfNecessary(entry);
       } else {
         return entry.getValue();
       }
@@ -419,9 +451,14 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
     public Object getValueFaultBreadth() {
       Assert.assertFalse(entry instanceof EntryWrapper);
       if (__tc_isManaged()) {
+        Object preLookupValue = null;
         synchronized (__tc_managed().getResolveLock()) {
-          Object value = lookUpFaultBreadthIfNecessary(entry.getValue());
-          if (entry.getValue() != value) {
+          preLookupValue = entry.getValue();
+        }
+        Object value = lookUpFaultBreadthIfNecessary(preLookupValue);
+        synchronized (__tc_managed().getResolveLock()) {
+          Object postLookupValue = entry.getValue();
+          if (postLookupValue != value && postLookupValue == preLookupValue) {
             entry.setValue(value);
           }
           return value;
@@ -430,7 +467,7 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
         return entry.getValue();
       }
     }
-
+    
     /*
      * Even though we do a lookup of oldVal after we change the value in the transaction, DGC will not be able to kick
      * the oldVal out since the transaction is not committed.

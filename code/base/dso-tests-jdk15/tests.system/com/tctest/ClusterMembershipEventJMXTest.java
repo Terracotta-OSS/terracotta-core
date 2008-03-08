@@ -8,13 +8,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.tools.ant.filters.StringInputStream;
 
 import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
-import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
-import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.test.InstrumentedClassConfigBuilderImpl;
 import com.tc.config.schema.test.L2ConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
-import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tctest.runner.AbstractTransparentApp;

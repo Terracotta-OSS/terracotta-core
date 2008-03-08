@@ -454,7 +454,7 @@ public class ManagerImpl implements Manager {
 
   private boolean isLiteralAutolock(Object o) {
     if (o instanceof Manageable) { return false; }
-    return (!(o instanceof Class)) && literals.isLiteralInstance(o);
+    return (!(o instanceof Class)) && (!(o instanceof ObjectID)) && literals.isLiteralInstance(o);
   }
 
   public boolean isDsoMonitorEntered(Object o) {

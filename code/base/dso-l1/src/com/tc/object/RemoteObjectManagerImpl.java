@@ -4,6 +4,7 @@
  */
 package com.tc.object;
 
+import com.tc.exception.TCObjectNotFoundException;
 import com.tc.logging.TCLogger;
 import com.tc.net.groups.ClientID;
 import com.tc.object.dna.api.DNA;
@@ -42,9 +43,9 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
   private static final State                       RUNNING                   = new State("RUNNING");
 
   private final LinkedHashMap                      rootRequests              = new LinkedHashMap();
-  private final Map                                dnaRequests               = new THashMap();
-  private final Map                                outstandingObjectRequests = new THashMap();
-  private final Map                                outstandingRootRequests   = new THashMap();
+  private final Map                                dnaRequests               = new HashMap();
+  private final Map                                outstandingObjectRequests = new HashMap();
+  private final Map                                outstandingRootRequests   = new HashMap();
   private final Set                                missingObjectIDs          = new HashSet();
   private long                                     objectRequestIDCounter    = 0;
   private final ObjectRequestMonitor               requestMonitor;
@@ -170,7 +171,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
     while (!dnaRequests.containsKey(id) || dnaRequests.get(id) == null || missingObjectIDs.contains(id)) {
       waitUntilRunning();
       if (missingObjectIDs.contains(id)) {
-        throw new AssertionError("Requested Object is missing : " + id + " Missing Oids = " + missingObjectIDs);
+        throw new TCObjectNotFoundException(id.toString(), missingObjectIDs);
       } else if (!dnaRequests.containsKey(id)) {
         inMemory = false;
         sendRequest(ctxt);

@@ -29,6 +29,9 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
 
   public final static String TC_ORIG_REMOVE_METHOD_NAME             = ByteCodeUtil.TC_METHOD_PREFIX + "origRemove";
   public final static String TC_ORIG_REMOVE_METHOD_DESC             = "(Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;";
+  
+  public final static String TC_ORIG_CLEAR_METHOD_NAME             = ByteCodeUtil.TC_METHOD_PREFIX + "origClear";
+  public final static String TC_ORIG_CLEAR_METHOD_DESC             = "()V";
 
   public final static String TC_NULLOLDVALUE_REMOVE_METHOD_NAME     = ByteCodeUtil.TC_METHOD_PREFIX + "nulloldvalueRemove";
   public final static String TC_NULLOLDVALUE_REMOVE_METHOD_DESC     = "(Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;";
@@ -100,6 +103,7 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
       if ("clear".equals(name) && "()V".equals(desc)) {
         visitor = new MulticastMethodVisitor(new MethodVisitor[] {
           new ClearMethodAdapter(mv),
+          super.visitMethod(ACC_SYNTHETIC, TC_ORIG_CLEAR_METHOD_NAME, TC_ORIG_CLEAR_METHOD_DESC, null, null),
           // Again, this method does not require locking as it is called by __tc_rehash() which grabs the lock already.
           new RemoveLockUnlockMethodAdapter(super.visitMethod(ACC_SYNTHETIC, TC_CLEAR_METHOD_NAME, TC_CLEAR_METHOD_DESC, null, null))});
       } else if ("replace".equals(name) && "(Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;".equals(desc)) {

@@ -1286,6 +1286,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     String patterns = "get(Ljava/lang/Object;)Ljava/lang/Object;|" + //
                       "hashCode()I|" + //
+                      "clone()Ljava/lang/Object;|" + //
                       "contains(Ljava/lang/Object;)Z|" + //
                       "containsKey(Ljava/lang/Object;)Z|" + //
                       "elements()Ljava/util/Enumeration;|" + //
@@ -1295,6 +1296,41 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
                       "size()I|" + //
                       "toString()Ljava/lang/String;";
 
+    rewriteHashtableAutoLockSpecIfNecessaryInternal(classInfo, className, patterns);
+
+    className = "java.util.HashtableTC";
+    String realClassName = "java.util.Hashtable";
+    classInfo = AsmClassInfo.getClassInfo(className, getClass().getClassLoader());
+    patterns = "lookUpAndStoreIfNecessary(Ljava/util/Map$Entry;)Ljava/lang/Object;|" + //
+               "storeValueIfValid(Ljava/util/Map$Entry;Ljava/lang/Object;)V|" + //
+               "getEntry(Ljava/lang/Object;)Ljava/util/Map$Entry;|";
+    rewriteHashtableAutoLockSpecIfNecessaryInternal(classInfo, realClassName, patterns);
+
+    className = "java.util.HashtableTC$EntriesIterator";
+    realClassName = "java.util.Hashtable$EntriesIterator";
+    classInfo = AsmClassInfo.getClassInfo(className, getClass().getClassLoader());
+    patterns = "hasNext()Z|" + //
+               "nextEntry()Ljava/util/Map$Entry;";
+    rewriteHashtableAutoLockSpecIfNecessaryInternal(classInfo, realClassName, patterns);
+
+    className = "java.util.HashtableTC$EntrySetWrapper";
+    realClassName = "java.util.Hashtable$EntrySetWrapper";
+    classInfo = AsmClassInfo.getClassInfo(className, getClass().getClassLoader());
+    patterns = "contains(Ljava/lang/Object;)Z";
+    rewriteHashtableAutoLockSpecIfNecessaryInternal(classInfo, realClassName, patterns);
+
+    className = "java.util.HashtableTC$EntryWrapper";
+    realClassName = "java.util.Hashtable$EntryWrapper";
+    classInfo = AsmClassInfo.getClassInfo(className, getClass().getClassLoader());
+    patterns = "equals(Ljava/lang/Object;)Z|" + //
+               "getKey()Ljava/lang/Object;|" + //
+               "getValue()Ljava/lang/Object;|" + //
+               "getValueFaultBreadth()Ljava/lang/Object;|" + //
+               "hashCode()I|";
+    rewriteHashtableAutoLockSpecIfNecessaryInternal(classInfo, realClassName, patterns);
+  }
+
+  private void rewriteHashtableAutoLockSpecIfNecessaryInternal(ClassInfo classInfo, String className, String patterns) {
     MemberInfo[] methods = classInfo.getMethods();
     for (int j = 0; j < methods.length; j++) {
       MemberInfo methodInfo = methods[j];
@@ -1369,7 +1405,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   public void addWriteAutolock(String methodPattern) {
     addAutolock(methodPattern, ConfigLockLevel.WRITE);
   }
-  
+
   public void addWriteAutolock(String methodPattern, String lockContextInfo) {
     addAutolock(methodPattern, ConfigLockLevel.WRITE, lockContextInfo);
   }
@@ -1387,7 +1423,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     lockDefinition.commit();
     addLock(methodPattern, lockDefinition);
   }
-  
+
   public void addAutolock(String methodPattern, ConfigLockLevel type, String configurationText) {
     LockDefinition lockDefinition = new LockDefinitionImpl(LockDefinition.TC_AUTOLOCK_NAME, type, configurationText);
     lockDefinition.commit();

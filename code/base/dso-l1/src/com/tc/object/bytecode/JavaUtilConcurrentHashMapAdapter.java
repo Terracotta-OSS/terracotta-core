@@ -37,6 +37,8 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
   private final static String TC_APPLICATOR_PUT_METHOD_DESC       = "(Ljava/lang/Object;Ljava/lang/Object;)V";
   private final static String TC_APPLICATOR_REMOVE_METHOD_NAME    = "__tc_applicator_remove";
   private final static String TC_APPLICATOR_REMOVE_METHOD_DESC    = "(Ljava/lang/Object;)V";
+  private final static String TC_APPLICATOR_CLEAR_METHOD_NAME     = "__tc_applicator_clear";
+  private final static String TC_APPLICATOR_CLEAR_METHOD_DESC     = "()V";
   private final static String TC_REMOVE_LOGICAL_METHOD_NAME       = "__tc_remove_logical";
   private final static String TC_REMOVE_LOGICAL_METHOD_DESC       = "(Ljava/lang/Object;)V";
   private final static String HASH_METHOD_NAME                    = "hash";
@@ -80,6 +82,10 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
       mv = new MulticastMethodVisitor(new MethodVisitor[] {
         mv,
         new ApplicatorPutMethodAdapter(super.visitMethod(ACC_SYNTHETIC|ACC_PUBLIC, TC_APPLICATOR_PUT_METHOD_NAME, TC_APPLICATOR_PUT_METHOD_DESC, null, null))});
+    } else if ("clear".equals(name) && "()V".equals(desc)) {
+      mv = new MulticastMethodVisitor(new MethodVisitor[] {
+        mv,
+        new ApplicatorClearMethodAdapter(super.visitMethod(ACC_SYNTHETIC|ACC_PUBLIC, TC_APPLICATOR_CLEAR_METHOD_NAME, TC_APPLICATOR_CLEAR_METHOD_DESC, null, null))});
     } else if ("containsKey".equals(name) && "(Ljava/lang/Object;)Z".equals(desc)) {
       mv = new ContainsKeyMethodAdapter(mv);
     } else if ("remove".equals(name) && "(Ljava/lang/Object;)Ljava/lang/Object;".equals(desc)) {
@@ -607,6 +613,23 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
         mv.visitVarInsn(ALOAD, 1);
         mv.visitMethodInsn(INVOKESPECIAL, "com/tcclient/util/ConcurrentHashMapEntrySetWrapper", "<init>",
                            "(Ljava/util/Map;Ljava/util/Set;)V");
+      }
+    }
+  }
+  
+  private static class ApplicatorClearMethodAdapter extends MethodAdapter implements Opcodes {
+    public ApplicatorClearMethodAdapter(MethodVisitor mv) {
+      super(mv);
+    }
+    
+    public void visitMethodInsn(int opcode, String owner, String name, String desc) {
+      if (INVOKEVIRTUAL == opcode
+          && "java/util/concurrent/ConcurrentHashMap$Segment".equals(owner)
+          && "clear".equals(name)
+          && JavaUtilConcurrentHashMapSegmentAdapter.TC_ORIG_CLEAR_METHOD_DESC.equals(desc)) {
+        super.visitMethodInsn(opcode, owner, JavaUtilConcurrentHashMapSegmentAdapter.TC_ORIG_CLEAR_METHOD_NAME, desc);
+      } else {
+        super.visitMethodInsn(opcode, owner, name, desc);
       }
     }
   }

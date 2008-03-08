@@ -7,6 +7,7 @@ package com.tc.object;
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 import com.tc.exception.ImplementMe;
+import com.tc.exception.TCObjectNotFoundException;
 import com.tc.logging.NullTCLogger;
 import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -83,9 +84,9 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
         System.err.println("Doing a bogus lookup");
         try {
           manager.retrieve(new ObjectID(Long.MAX_VALUE));
-          System.err.println("Didnt throw assertion : Not calling barrier()");
-        } catch (AssertionError e) {
-          System.err.println("Got assertion as expected : " + e);
+          System.err.println("Didnt throw TCObjectNotFoundException : Not calling barrier()");
+        } catch (TCObjectNotFoundException e) {
+          System.err.println("Got TCObjectNotFoundException as expected : " + e);
           try {
             barrier.barrier();
           } catch (Exception e1) {

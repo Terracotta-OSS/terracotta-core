@@ -4,6 +4,7 @@
  */
 package java.util;
 
+import com.tc.exception.TCObjectNotFoundException;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Clearable;
@@ -12,6 +13,9 @@ import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.TCMap;
 import com.tc.object.bytecode.hook.impl.Util;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.Collections.SynchronizedCollection;
 import java.util.Collections.SynchronizedSet;
 import java.util.Map.Entry;
@@ -19,8 +23,24 @@ import java.util.Map.Entry;
 /*
  * This class will be merged with java.lang.Hashtable in the bootjar. This hashtable can store ObjectIDs instead of
  * Objects to save memory and transparently fault Objects as needed. It can also clear references. For General rules
- *
+ * 
  * @see HashMapTC class
+ * 
+ *      The original implementation of HashtableTC methods does not contain synchronized (__tc_managed().getResolveLock()).
+ *      This is because methods are already synchronized and thus could act as the common memory barrier between the application
+ *      and the applicator thread. After we remove local jvm lock for read level autolock, when Hashtable is read autolocked,
+ *      there is no longer a common barrier between application and the applicator thread. To establish a common barrier between
+ *      the two, we need to add synchronized (__tc_managed().getResolveLock()).
+ *      
+ *      The locking order must be locking on Hashtable followed by __tc_managed().getResolveLock(); otherwise, it is possible that
+ *      an application thread is holding a resolveLock, while waiting for a dso lock, thus, preventing the applicator
+ *      thread from applying the transaction and ack. On the other hand, since the applicator thread is already synchronize
+ *      on __tc_managed().getResolveLock(), its locking order is different from that in an application thread; hence, deadlock
+ *      may result. To solve this problem, methods __tc_applicator_put(), __tc_applicator_remove(), and __tc_applicator_clear()
+ *      are introduced. These applicator specific methods do not need to be synchronized on __tc_managed().getResolveLock() as
+ *      they are only being called by the applicator and the applicator is already synchronized on __tc_managed().getResolveLock().
+ *      These methods do not need to be synchronized on the Hashtable either as the common memory barrier between tbe applicator
+ *      and the application is on the __tc_managed().getResolveLock().
  */
 public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearable {
 
@@ -29,19 +49,25 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
 
   public synchronized void clear() {
     if (__tc_isManaged()) {
-      ManagerUtil.checkWriteAccess(this);
-      ManagerUtil.logicalInvoke(this, "clear()V", new Object[0]);
+      synchronized (__tc_managed().getResolveLock()) {
+        ManagerUtil.checkWriteAccess(this);
+        ManagerUtil.logicalInvoke(this, "clear()V", new Object[0]);
+        super.clear();
+      }
+    } else {
+      super.clear();
     }
-    super.clear();
   }
 
   public synchronized Object clone() {
     if (__tc_isManaged()) {
-      Hashtable clone = new Hashtable(this);
+      synchronized (__tc_managed().getResolveLock()) {
+        Hashtable clone = new Hashtable(this);
 
-      // This call to fixTCObjectReference isn't strictly required, but if someone every changes
-      // this method to actually use any built-in clone mechanism, it will be needed -- better safe than sorry here
-      return Util.fixTCObjectReferenceOfClonedObject(this, clone);
+        // This call to fixTCObjectReference isn't strictly required, but if someone every changes
+        // this method to actually use any built-in clone mechanism, it will be needed -- better safe than sorry here
+        return Util.fixTCObjectReferenceOfClonedObject(this, clone);
+      }
     }
 
     return super.clone();
@@ -49,19 +75,37 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
 
   // Values that contains ObjectIDs are already wrapped, so this should be fine
   public synchronized boolean contains(Object value) {
-    return super.contains(value);
+    if (__tc_isManaged()) {
+      synchronized (__tc_managed().getResolveLock()) {
+        return super.contains(value);
+      }
+    } else {
+      return super.contains(value);
+    }
   }
 
   // XXX:: Keys can't be ObjectIDs as of Now.
   public synchronized boolean containsKey(Object key) {
-    return super.containsKey(key);
+    if (__tc_isManaged()) {
+      synchronized (__tc_managed().getResolveLock()) {
+        return super.containsKey(key);
+      }
+    } else {
+      return super.containsKey(key);
+    }
   }
 
   public boolean containsValue(Object value) {
+    // super.containsValue() simply calls contains, which is already synchronize on Hashtable and getResolveLock().
     return super.containsValue(value);
   }
 
   public synchronized boolean equals(Object o) {
+    if (__tc_isManaged()) {
+      synchronized (__tc_managed().getResolveLock()) {
+        return super.equals(o);
+      }
+    }
     return super.equals(o);
   }
 
@@ -70,50 +114,85 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
    */
   public synchronized Object get(Object key) {
     if (__tc_isManaged()) {
-      Map.Entry e = __tc_getEntry(key);
+      Map.Entry e = getEntry(key);
       if (e == null) return null;
-      Object value = e.getValue();
-      Object actualValue = unwrapValueIfNecessary(value);
-      if (actualValue != value) {
-        e.setValue(actualValue);
-      }
+      Object actualValue = lookUpAndStoreIfNecessary(e);
       return actualValue;
     } else {
       return super.get(key);
     }
   }
 
+  private Object lookUpAndStoreIfNecessary(Map.Entry e) {
+    Object value = null;
+    synchronized (__tc_managed().getResolveLock()) {
+      value = e.getValue();
+    }
+    Object actualValue = unwrapValueIfNecessary(value);
+    storeValueIfValid(e, actualValue);
+    return actualValue;
+  }
+
+  private void storeValueIfValid(Map.Entry preLookupEntry, Object resolvedValue) {
+    synchronized (__tc_managed().getResolveLock()) {
+      Map.Entry postLookupEntry = __tc_getEntry(preLookupEntry.getKey());
+      if (postLookupEntry != null && preLookupEntry.getValue() == postLookupEntry.getValue()
+          && resolvedValue != preLookupEntry.getValue()) {
+        preLookupEntry.setValue(resolvedValue);
+      }
+    }
+  }
+
+  private Map.Entry getEntry(Object key) {
+    synchronized (__tc_managed().getResolveLock()) {
+      return __tc_getEntry(key);
+    }
+  }
+
   public synchronized int hashCode() {
+    if (__tc_isManaged()) {
+      synchronized (__tc_managed().getResolveLock()) {
+        return super.hashCode();
+      }
+    }
     return super.hashCode();
   }
 
   public synchronized boolean isEmpty() {
-    return super.isEmpty();
+    if (__tc_isManaged()) {
+      synchronized (__tc_managed().getResolveLock()) {
+        return super.isEmpty();
+      }
+    } else {
+      return super.isEmpty();
+    }
   }
 
   /*
    * This method needs to call logicalInvoke before modifying the local state to avoid inconsistency when throwing
-   * NonPortableExceptions TODO:: provide special method for the applicator
+   * NonPortableExceptions.
    */
   public synchronized Object put(Object key, Object value) {
     if (__tc_isManaged()) {
-      if (key == null || value == null) { throw new NullPointerException(); }
-      ManagerUtil.checkWriteAccess(this);
-      Entry e = __tc_getEntry(key);
-      if (e == null) {
-        // New mapping
-        ManagerUtil.logicalInvoke(this, "put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", new Object[] {
-            key, value });
-        // Sucks to do a second lookup !!
-        return unwrapValueIfNecessary(super.put(key, wrapValueIfNecessary(value)));
-      } else {
-        Object old = unwrapValueIfNecessary(e.getValue());
-        if (old != value) {
+      synchronized (__tc_managed().getResolveLock()) {
+        if (key == null || value == null) { throw new NullPointerException(); }
+        ManagerUtil.checkWriteAccess(this);
+        Entry e = __tc_getEntry(key);
+        if (e == null) {
+          // New mapping
           ManagerUtil.logicalInvoke(this, "put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", new Object[] {
-              e.getKey(), value });
-          e.setValue(wrapValueIfNecessary(value));
+              key, value });
+          // Sucks to do a second lookup !!
+          return unwrapValueIfNecessary(super.put(key, wrapValueIfNecessary(value)));
+        } else {
+          Object old = unwrapValueIfNecessary(e.getValue());
+          if (old != value) {
+            ManagerUtil.logicalInvoke(this, "put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+                                      new Object[] { e.getKey(), value });
+            e.setValue(wrapValueIfNecessary(value));
+          }
+          return old;
         }
-        return old;
       }
     } else {
       return super.put(key, value);
@@ -124,9 +203,10 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
    * This method is only to be invoked from the applicator thread. This method does not need to check if the map is
    * managed as it will always be managed when called by the applicator thread. In addition, this method does not need
    * to be synchronized under getResolveLock() as the applicator thread is already under the scope of such
-   * synchronization.
+   * synchronization. This method does not need to be synchronized on this either as both the application and the
+   * applicator will be synchronized on the getResolveLock().
    */
-  public synchronized void __tc_applicator_put(Object key, Object value) {
+  public void __tc_applicator_put(Object key, Object value) {
     if (key == null || value == null) { throw new NullPointerException(); }
     super.put(key, wrapValueIfNecessary(value));
   }
@@ -162,16 +242,19 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
 
   public synchronized Object remove(Object key) {
     if (__tc_isManaged()) {
-      ManagerUtil.checkWriteAccess(this);
+      synchronized (__tc_managed().getResolveLock()) {
+        ManagerUtil.checkWriteAccess(this);
 
-      Entry entry = __tc_removeEntryForKey(key);
-      if (entry == null) { return null; }
+        Entry entry = __tc_removeEntryForKey(key);
+        if (entry == null) { return null; }
 
-      Object rv = unwrapValueIfNecessary(entry.getValue());
+        Object rv = unwrapValueIfNecessary(entry.getValue());
 
-      ManagerUtil.logicalInvoke(this, "remove(Ljava/lang/Object;)Ljava/lang/Object;", new Object[] { entry.getKey() });
+        ManagerUtil
+            .logicalInvoke(this, "remove(Ljava/lang/Object;)Ljava/lang/Object;", new Object[] { entry.getKey() });
 
-      return rv;
+        return rv;
+      }
     } else {
       return super.remove(key);
     }
@@ -183,30 +266,66 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
    * to be synchronized under getResolveLock() as the applicator thread is already under the scope of such
    * synchronization.
    */
-  public synchronized void __tc_applicator_remove(Object key) {
+  public void __tc_applicator_remove(Object key) {
     super.remove(key);
   }
 
+  /**
+   * This method is only to be invoked from the applicator thread. This method does not need to check if the map is
+   * managed as it will always be managed when called by the applicator thread. In addition, this method does not need
+   * to be synchronized under getResolveLock() as the applicator thread is already under the scope of such
+   * synchronization.
+   */
+  public void __tc_applicator_clear() {
+    super.clear();
+  }
+
+  /**
+   * This method is to be invoked when one needs a remove to get broadcast, but do not want to fault in the value of a
+   * map entry.
+   */
   public synchronized void __tc_remove_logical(Object key) {
     if (__tc_isManaged()) {
-      ManagerUtil.checkWriteAccess(this);
+      synchronized (__tc_managed().getResolveLock()) {
+        ManagerUtil.checkWriteAccess(this);
 
-      Entry entry = __tc_removeEntryForKey(key);
-      if (entry == null) { return; }
+        Entry entry = __tc_removeEntryForKey(key);
+        if (entry == null) { return; }
 
-      ManagerUtil.logicalInvoke(this, "remove(Ljava/lang/Object;)Ljava/lang/Object;", new Object[] { entry.getKey() });
-
+        ManagerUtil
+            .logicalInvoke(this, "remove(Ljava/lang/Object;)Ljava/lang/Object;", new Object[] { entry.getKey() });
+      }
     } else {
       super.remove(key);
     }
   }
 
   public synchronized Collection __tc_getAllEntriesSnapshot() {
+    if (__tc_isManaged()) {
+      synchronized (__tc_managed().getResolveLock()) {
+        return __tc_getAllEntriesSnapshotInternal();
+      }
+    } else {
+      return __tc_getAllEntriesSnapshotInternal();
+    }
+  }
+
+  private Collection __tc_getAllEntriesSnapshotInternal() {
     Set entrySet = super.entrySet();
     return new ArrayList(entrySet);
   }
 
   public synchronized Collection __tc_getAllLocalEntriesSnapshot() {
+    if (__tc_isManaged()) {
+      synchronized (__tc_managed().getResolveLock()) {
+        return __tc_getAllLocalEntriesSnapshotInternal();
+      }
+    } else {
+      return __tc_getAllLocalEntriesSnapshotInternal();
+    }
+  }
+
+  private Collection __tc_getAllLocalEntriesSnapshotInternal() {
     Set entrySet = super.entrySet();
     int entrySetSize = entrySet.size();
     if (entrySetSize == 0) { return Collections.EMPTY_LIST; }
@@ -228,7 +347,13 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
   }
 
   public synchronized int size() {
-    return super.size();
+    if (__tc_isManaged()) {
+      synchronized (__tc_managed().getResolveLock()) {
+        return super.size();
+      }
+    } else {
+      return super.size();
+    }
   }
 
   public synchronized String toString() {
@@ -236,16 +361,16 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
   }
 
   public synchronized Enumeration keys() {
-    return new EnumerationWrapper(super.keys());
+    return new EnumerationWrapper(keySet().iterator());
   }
 
   public Set keySet() {
     Collections.SynchronizedSet ss = (SynchronizedSet) super.keySet();
-    return Collections.synchronizedSet(new KeySetWrapper((Set) ss.c), ss.mutex);
+    return new KeySetWrapper((Set) ss.c);
   }
 
   public synchronized Enumeration elements() {
-    return new EnumerationWrapper(super.elements());
+    return new EnumerationWrapper(values().iterator());
   }
 
   public Set entrySet() {
@@ -254,32 +379,34 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
 
   private Set nonOverridableEntrySet() {
     Collections.SynchronizedSet ss = (SynchronizedSet) super.entrySet();
-    return Collections.synchronizedSet(new EntrySetWrapper((Set) ss.c), ss.mutex);
+    return new EntrySetWrapper((Set) ss.c);
   }
 
   public Collection values() {
     Collections.SynchronizedCollection sc = (SynchronizedCollection) super.values();
-    return Collections.synchronizedCollection(new ValuesCollectionWrapper(sc.c), sc.mutex);
+    return new ValuesCollectionWrapper(sc.c);
   }
 
   /**
    * Clearable interface - called by CacheManager thru TCObjectLogical
    */
-  public synchronized int __tc_clearReferences(int toClear) {
+  public int __tc_clearReferences(int toClear) {
     if (!__tc_isManaged()) { throw new AssertionError("clearReferences() called on Unmanaged Map"); }
-    int cleared = 0;
-    for (Iterator i = super.entrySet().iterator(); i.hasNext() && toClear > cleared;) {
-      Map.Entry e = (Map.Entry) i.next();
-      if (e.getValue() instanceof Manageable) {
-        Manageable m = (Manageable) e.getValue();
-        TCObject tcObject = m.__tc_managed();
-        if (tcObject != null && !tcObject.recentlyAccessed()) {
-          e.setValue(wrapValueIfNecessary(tcObject.getObjectID()));
-          cleared++;
+    synchronized (__tc_managed().getResolveLock()) {
+      int cleared = 0;
+      for (Iterator i = super.entrySet().iterator(); i.hasNext() && toClear > cleared;) {
+        Map.Entry e = (Map.Entry) i.next();
+        if (e.getValue() instanceof Manageable) {
+          Manageable m = (Manageable) e.getValue();
+          TCObject tcObject = m.__tc_managed();
+          if (tcObject != null && !tcObject.recentlyAccessed()) {
+            e.setValue(wrapValueIfNecessary(tcObject.getObjectID()));
+            cleared++;
+          }
         }
       }
+      return cleared;
     }
-    return cleared;
   }
 
   public boolean isEvictionEnabled() {
@@ -329,14 +456,22 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
 
     Object getValue() {
       if (value instanceof ObjectID) {
-        value = ManagerUtil.lookupObject((ObjectID) value);
+        try {
+          value = ManagerUtil.lookupObject((ObjectID) value);
+        } catch (TCObjectNotFoundException onfe) {
+          throw new ConcurrentModificationException(onfe.getMessage());
+        }
       }
       return value;
     }
 
     public Object getValueFaultBreadth(ObjectID parentContext) {
       if (value instanceof ObjectID) {
-        value = ManagerUtil.lookupObjectWithParentContext((ObjectID) value, parentContext);
+        try {
+          value = ManagerUtil.lookupObjectWithParentContext((ObjectID) value, parentContext);
+        } catch (TCObjectNotFoundException onfe) {
+          throw new ConcurrentModificationException(onfe.getMessage());
+        }
       }
       return value;
     }
@@ -350,6 +485,12 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
     }
   }
 
+  /**
+   * Methods of this class do not need to be synchronized on Hashtable instance when it is not shared since methods of
+   * Hashtable.Entry is not synchronized. When it is shared, we need to synchronize on getResolveLock for read operation
+   * to maintain a common barrier with the applicator thread. For mutate operation setValue, we need to synchronize on
+   * the Hashtable also to create a transaction.
+   */
   private class EntryWrapper implements Map.Entry {
 
     private final Entry entry;
@@ -360,7 +501,7 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
 
     public boolean equals(Object o) {
       if (__tc_isManaged()) {
-        synchronized (HashtableTC.this) {
+        synchronized (__tc_managed().getResolveLock()) {
           return entry.equals(o);
         }
       } else {
@@ -370,7 +511,7 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
 
     public Object getKey() {
       if (__tc_isManaged()) {
-        synchronized (HashtableTC.this) {
+        synchronized (__tc_managed().getResolveLock()) {
           return entry.getKey();
         }
       } else {
@@ -381,9 +522,15 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
     public Object getValue() {
       if (__tc_isManaged()) {
         synchronized (HashtableTC.this) {
-          return unwrapValueIfNecessary(entry.getValue());
+          return lookUpAndStoreIfNecessary(entry);
         }
       } else {
+        return entry.getValue();
+      }
+    }
+
+    private Object getEntryValue() {
+      synchronized (__tc_managed().getResolveLock()) {
         return entry.getValue();
       }
     }
@@ -391,7 +538,15 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
     public Object getValueFaultBreadth() {
       if (__tc_isManaged()) {
         synchronized (HashtableTC.this) {
-          return unwrapValueIfNecessaryFaultBreadth(entry.getValue(), __tc_managed().getObjectID());
+          Object preLookupValue = getEntryValue();
+          Object value = unwrapValueIfNecessaryFaultBreadth(preLookupValue, __tc_managed().getObjectID());
+          synchronized (__tc_managed().getResolveLock()) {
+            Object postLookupValue = entry.getValue();
+            if (postLookupValue != value && postLookupValue == preLookupValue) {
+              entry.setValue(value);
+            }
+            return value;
+          }
         }
       } else {
         return entry.getValue();
@@ -400,7 +555,7 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
 
     public int hashCode() {
       if (__tc_isManaged()) {
-        synchronized (HashtableTC.this) {
+        synchronized (__tc_managed().getResolveLock()) {
           return entry.hashCode();
         }
       } else {
@@ -411,13 +566,16 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
     public Object setValue(Object value) {
       if (__tc_isManaged()) {
         synchronized (HashtableTC.this) {
-          // This check is done to solve the chicken and egg problem. Should I modify the local copy or the remote copy
-          // ? (both has error checks that we want to take place before any modification is propagated
-          if (value == null) throw new NullPointerException();
-          ManagerUtil.checkWriteAccess(HashtableTC.this);
-          ManagerUtil.logicalInvoke(HashtableTC.this, "put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-                                    new Object[] { getKey(), value });
-          return unwrapValueIfNecessary(entry.setValue(value));
+          synchronized (__tc_managed().getResolveLock()) {
+            // This check is done to solve the chicken and egg problem. Should I modify the local copy or the remote
+            // copy
+            // ? (both has error checks that we want to take place before any modification is propagated
+            if (value == null) throw new NullPointerException();
+            ManagerUtil.checkWriteAccess(HashtableTC.this);
+            ManagerUtil.logicalInvoke(HashtableTC.this, "put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+                                      new Object[] { getKey(), value });
+            return unwrapValueIfNecessary(entry.setValue(value));
+          }
         }
       } else {
         return entry.setValue(value);
@@ -425,7 +583,85 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
     }
   }
 
-  private class EntrySetWrapper extends AbstractSet {
+  private abstract class CollectionWrapper extends AbstractCollection implements Serializable {
+    public Object[] toArray() {
+      synchronized (HashtableTC.this) {
+        if (__tc_isManaged()) {
+          synchronized (__tc_managed().getResolveLock()) {
+            return super.toArray();
+          }
+        } else {
+          return super.toArray();
+        }
+      }
+    }
+
+    public Object[] toArray(Object[] a) {
+      synchronized (HashtableTC.this) {
+        if (__tc_isManaged()) {
+          synchronized (__tc_managed().getResolveLock()) {
+            return super.toArray(a);
+          }
+        } else {
+          return super.toArray(a);
+        }
+      }
+    }
+
+    public boolean containsAll(Collection col) {
+      synchronized (HashtableTC.this) {
+        if (__tc_isManaged()) {
+          synchronized (__tc_managed().getResolveLock()) {
+            return super.containsAll(col);
+          }
+        } else {
+          return super.containsAll(col);
+        }
+      }
+    }
+
+    public boolean removeAll(Collection col) {
+      synchronized (HashtableTC.this) {
+        if (__tc_isManaged()) {
+          synchronized (__tc_managed().getResolveLock()) {
+            return super.removeAll(col);
+          }
+        } else {
+          return super.removeAll(col);
+        }
+      }
+    }
+
+    public boolean retainAll(Collection col) {
+      synchronized (HashtableTC.this) {
+        if (__tc_isManaged()) {
+          synchronized (__tc_managed().getResolveLock()) {
+            return super.retainAll(col);
+          }
+        } else {
+          return super.retainAll(col);
+        }
+      }
+    }
+
+    public String toString() {
+      synchronized (HashtableTC.this) {
+        if (__tc_isManaged()) {
+          synchronized (__tc_managed().getResolveLock()) {
+            return super.toString();
+          }
+        } else {
+          return super.toString();
+        }
+      }
+    }
+
+    private synchronized void writeObject(ObjectOutputStream s) throws IOException {
+      s.defaultWriteObject();
+    }
+  }
+
+  private class EntrySetWrapper extends CollectionWrapper implements Set {
 
     private final Set entrySet;
 
@@ -434,7 +670,15 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
     }
 
     public boolean add(Object arg0) {
-      return entrySet.add(arg0);
+      synchronized(HashtableTC.this) {
+      if (__tc_isManaged()) {
+        synchronized (__tc_managed().getResolveLock()) {
+          return entrySet.add(arg0);
+        }
+      } else {
+        return entrySet.add(arg0);
+      }
+      }
     }
 
     public void clear() {
@@ -443,7 +687,15 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
     }
 
     public boolean contains(Object o) {
-      return entrySet.contains(o);
+      synchronized(HashtableTC.this) {
+      if (__tc_isManaged()) {
+        synchronized (__tc_managed().getResolveLock()) {
+          return entrySet.contains(o);
+        }
+      } else {
+        return entrySet.contains(o);
+      }
+      }
     }
 
     public Iterator iterator() {
@@ -451,9 +703,9 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
     }
 
     public boolean remove(Object o) {
-
+      synchronized(HashtableTC.this) {
       if (__tc_isManaged()) {
-        synchronized (HashtableTC.this) {
+        synchronized (__tc_managed().getResolveLock()) {
           ManagerUtil.checkWriteAccess(HashtableTC.this);
 
           if (!(o instanceof Map.Entry)) { return false; }
@@ -470,15 +722,15 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
       } else {
         return entrySet.remove(o);
       }
+      }
     }
 
     public int size() {
-      return entrySet.size();
+      return HashtableTC.this.size();
     }
   }
 
-  private class KeySetWrapper extends AbstractSet {
-
+  private class KeySetWrapper extends CollectionWrapper implements Set {
     private final Set keys;
 
     public KeySetWrapper(Set keys) {
@@ -486,10 +738,12 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
     }
 
     public void clear() {
+      // Calls Hashtable.this.clear().
       keys.clear();
     }
 
     public boolean contains(Object o) {
+      // Calls Hashtable.this.containsKey().
       return keys.contains(o);
     }
 
@@ -503,12 +757,12 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
     }
 
     public int size() {
-      return keys.size();
+      return HashtableTC.this.size();
     }
 
   }
 
-  private class ValuesCollectionWrapper extends AbstractCollection {
+  private class ValuesCollectionWrapper extends CollectionWrapper {
 
     private final Collection values;
 
@@ -516,12 +770,12 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
       this.values = values;
     }
 
-    // XXX:: Calls Hashtable.clear();
+    // XXX:: Calls Hashtable.this.clear();
     public void clear() {
       values.clear();
     }
 
-    // XXX:: Calls Hashtable.containsValue();
+    // XXX:: Calls Hashtable.this.containsValue();
     public boolean contains(Object o) {
       return values.contains(o);
     }
@@ -531,12 +785,12 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
     }
 
     public int size() {
-      return values.size();
+      return HashtableTC.this.size();
     }
-
   }
 
-  // Hashtable Iterator doesnt synchronize access to the table !!
+  // Hashtable Iterator does not synchronize access to the table. We synchronize on the getResolveLock() to have a
+  // common barrier with the applicator.
   private class EntriesIterator implements Iterator {
 
     private final Iterator entries;
@@ -548,7 +802,7 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
 
     public boolean hasNext() {
       if (__tc_isManaged()) {
-        synchronized (HashtableTC.this) {
+        synchronized (__tc_managed().getResolveLock()) {
           return entries.hasNext();
         }
       } else {
@@ -568,7 +822,7 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
 
     protected Map.Entry nextEntry() {
       if (__tc_isManaged()) {
-        synchronized (HashtableTC.this) {
+        synchronized (__tc_managed().getResolveLock()) {
           return (Map.Entry) entries.next();
         }
       } else {
@@ -578,11 +832,14 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
 
     public void remove() {
       if (__tc_isManaged()) {
+        // We need to synchronize on Hashtable here to create a transaction
         synchronized (HashtableTC.this) {
-          ManagerUtil.checkWriteAccess(HashtableTC.this);
-          entries.remove();
-          ManagerUtil.logicalInvoke(HashtableTC.this, "remove(Ljava/lang/Object;)Ljava/lang/Object;",
-                                    new Object[] { currentEntry.getKey() });
+          synchronized (__tc_managed().getResolveLock()) {
+            ManagerUtil.checkWriteAccess(HashtableTC.this);
+            entries.remove();
+            ManagerUtil.logicalInvoke(HashtableTC.this, "remove(Ljava/lang/Object;)Ljava/lang/Object;",
+                                      new Object[] { currentEntry.getKey() });
+          }
         }
       } else {
         entries.remove();
@@ -620,31 +877,18 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
 
   private class EnumerationWrapper implements Enumeration {
 
-    private final Enumeration enumeration;
+    private final Iterator enumeration;
 
-    public EnumerationWrapper(Enumeration enumeration) {
+    public EnumerationWrapper(Iterator enumeration) {
       this.enumeration = enumeration;
     }
 
     public boolean hasMoreElements() {
-      if (__tc_isManaged()) {
-        synchronized (HashtableTC.this) {
-          return enumeration.hasMoreElements();
-        }
-      } else {
-        return enumeration.hasMoreElements();
-      }
+      return enumeration.hasNext();
     }
 
     public Object nextElement() {
-      if (__tc_isManaged()) {
-        synchronized (HashtableTC.this) {
-          // XXX:: This is done for both keys and values, for keys it has no effect
-          return unwrapValueIfNecessary(enumeration.nextElement());
-        }
-      } else {
-        return enumeration.nextElement();
-      }
+      return enumeration.next();
     }
   }
 }

@@ -4,6 +4,7 @@
  */
 package java.util;
 
+import com.tc.exception.TCObjectNotFoundException;
 import com.tc.object.ObjectID;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.ManagerUtil;
@@ -40,13 +41,14 @@ public abstract class LinkedHashMapTC extends LinkedHashMap implements Manageabl
 
   public Object get(Object key) {
     if (__tc_isManaged()) {
+      Entry entry = null;
       synchronized (__tc_managed().getResolveLock()) {
         if (accessOrder) {
           ManagerUtil.checkWriteAccess(this);
         }
 
         // XXX: doing two lookups here!!
-        Entry entry = super.getEntry(key);
+        entry = super.getEntry(key);
         if (entry == null) { return null; }
 
         Object actualKey = entry.getKey();
@@ -57,23 +59,42 @@ public abstract class LinkedHashMapTC extends LinkedHashMap implements Manageabl
         if (accessOrder) {
           ManagerUtil.logicalInvoke(this, "get(Ljava/lang/Object;)Ljava/lang/Object;", new Object[] { actualKey });
         }
-        return lookUpAndStoreIfNecessary(key, val);
       }
+      return lookUpAndStoreIfNecessary(entry);
     } else {
       return super.get(key);
     }
   }
+  
+  private Object lookUpAndStoreIfNecessary(Map.Entry e) {
+    if (e == null) return null;
+    Object value = e.getValue();
+    Object resolvedValue = lookUpIfNecessary(value);
+    __tc_storeValueIfValid(e, resolvedValue);
+    return resolvedValue;
+  }
 
-  private Object lookUpAndStoreIfNecessary(Object key, Object value) {
-    if (value instanceof ObjectID) {
-      Object newVal = ManagerUtil.lookupObject((ObjectID) value);
-      Map.Entry e = getEntry(key);
-      // e should not be null here
-      e.setValue(newVal);
-      return newVal;
-    } else {
-      return value;
+  // This method name needs to be prefix with __tc_ in order to prevent it from being
+  // autolocked.
+  private void __tc_storeValueIfValid(Map.Entry preLookupEntry, Object resolvedValue) {
+    synchronized (__tc_managed().getResolveLock()) {
+      Map.Entry postLookupEntry = getEntry(preLookupEntry.getKey());
+      if (postLookupEntry != null && preLookupEntry.getValue() == postLookupEntry.getValue()
+          && resolvedValue != preLookupEntry.getValue()) {
+        preLookupEntry.setValue(resolvedValue);
+      }
     }
+  }
+  
+  private static Object lookUpIfNecessary(Object o) {
+    if (o instanceof ObjectID) {
+      try {
+        return ManagerUtil.lookupObject((ObjectID) o);
+      } catch (TCObjectNotFoundException onfe) {
+        throw new ConcurrentModificationException(onfe.getMessage());
+      }
+    }
+    return o;
   }
 
 }
