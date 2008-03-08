@@ -3,6 +3,8 @@
  */
 package com.tc.net.protocol.transport;
 
+import com.tc.net.protocol.NetworkLayer;
+
 public class TestSynMessage extends TestTransportHandshakeMessage implements SynMessage {
 
   public boolean isSyn() {
@@ -19,6 +21,6 @@ public class TestSynMessage extends TestTransportHandshakeMessage implements Syn
 
   public short getStackLayerFlags() {
     //its a test
-    return -1;
+    return NetworkLayer.TYPE_TEST_MESSAGE;
   }
 }

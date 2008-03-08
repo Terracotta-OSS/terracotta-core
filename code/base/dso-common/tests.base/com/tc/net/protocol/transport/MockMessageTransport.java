@@ -108,7 +108,7 @@ public class MockMessageTransport implements MessageTransport {
   }
 
   public short getCommunicationStackFlags(NetworkLayer parentLayer) {
-    throw new ImplementMe();
+    return NetworkLayer.TYPE_TEST_MESSAGE;
   }
 
   public String getCommunicationStackNames(NetworkLayer parentLayer) {

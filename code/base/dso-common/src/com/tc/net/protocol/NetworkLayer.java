@@ -21,18 +21,18 @@ public interface NetworkLayer {
    * about all the layers present depending on the config ADD ALL THE LAYERS TYPE HERE
    */
 
-  public static final short  TYPE_TRANSPORT_LAYER = 1;                                  // 0000000000000001
-  public static final short  TYPE_OOO_LAYER       = 2;                                  // 0000000000000010
-  public static final short  TYPE_CHANNEL_LAYER   = 4;                                  // 0000000000000100
-
+  public static final short  TYPE_TRANSPORT_LAYER              = 1;                     // 0000000000000001
+  public static final short  TYPE_OOO_LAYER                    = 2;                     // 0000000000000010
+  public static final short  TYPE_CHANNEL_LAYER                = 4;                     // 0000000000000100
+  public static final short  TYPE_TEST_MESSAGE                 = -1;                    //This is for test messages
   /**
    * These are the name of the layers that are there in the communication stack IF ANY LAYER TYPE IS ADDED ABOVE THEN
    * ADD ITS CORRESPONDING NAME BELOW
    */
-  public static final String NAME_TRANSPORT_LAYER = "Transport Layer";
-  public static final String NAME_OOO_LAYER       = "Once and Only Once Protocol Layer";
-  public static final String NAME_CHANNEL_LAYER   = "Channel Layer";
-  
+  public static final String NAME_TRANSPORT_LAYER              = "Transport Layer";
+  public static final String NAME_OOO_LAYER                    = "Once and Only Once Protocol Layer";
+  public static final String NAME_CHANNEL_LAYER                = "Channel Layer";
+
   /**
    * These are just errors corresponding to the exact mismatch of OOO layer in server and client stacks
    */
@@ -43,7 +43,7 @@ public interface NetworkLayer {
    * this function gets the stackLayerFlag
    */
   public short getStackLayerFlag();
-  
+
   /**
    * This function gets the name of the particular stack layer
    */
@@ -52,7 +52,7 @@ public interface NetworkLayer {
   public void setSendLayer(NetworkLayer layer);
 
   public void setReceiveLayer(NetworkLayer layer);
-  
+
   public NetworkLayer getReceiveLayer();
 
   public void send(TCNetworkMessage message);

@@ -4,6 +4,7 @@
 package com.tc.net.protocol.transport;
 
 import com.tc.exception.ImplementMe;
+import com.tc.net.protocol.NetworkLayer;
 
 public class TestSynAckMessage extends TestTransportHandshakeMessage implements SynAckMessage {
 
@@ -36,7 +37,7 @@ public class TestSynAckMessage extends TestTransportHandshakeMessage implements 
   }
 
   public short getStackLayerFlags() {
-    return -1;
+    return NetworkLayer.TYPE_TEST_MESSAGE;
   }
 
 }
