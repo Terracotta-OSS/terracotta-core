@@ -87,7 +87,7 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
       suffix = H2_URL_SUFFIX;
     }
     this.database = new H2StatisticsDatabase(dbDir, suffix);
-    this.lockFile = new File(dbDir.getParentFile(), dbDir.getName()+".lck");
+    this.lockFile = new File(dbDir, suffix+"-tc.lck");
   }
 
   public void open() throws TCStatisticsStoreException {

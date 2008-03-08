@@ -97,7 +97,7 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
     }
     this.database = new H2StatisticsDatabase(dbDir, suffix);
     this.config = config;
-    this.lockFile = new File(dbDir.getParentFile(), dbDir.getName()+".lck");
+    this.lockFile = new File(dbDir, suffix+"-tc.lck");
     try {
       this.defaultAgentIp = InetAddress.getLocalHost().getHostAddress();
     } catch (UnknownHostException e) {
