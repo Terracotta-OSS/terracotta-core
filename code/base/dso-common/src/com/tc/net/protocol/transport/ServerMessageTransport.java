@@ -58,7 +58,8 @@ public class ServerMessageTransport extends MessageTransportBase {
 
   private void verifyAndHandleAck(WireProtocolMessage message) {
     if (!verifyAck(message)) {
-      handleHandshakeError(new TransportHandshakeErrorContext("Expected an ACK message but received: " + message));
+      handleHandshakeError(new TransportHandshakeErrorContext("Expected an ACK message but received: " + message, 
+                                                              TransportHandshakeError.ERROR_HANDSHAKE));
     } else {
       handleAck((TransportHandshakeMessage) message);
     }

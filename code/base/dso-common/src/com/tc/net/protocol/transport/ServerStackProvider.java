@@ -10,6 +10,7 @@ import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.IllegalReconnectException;
+import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackHarness;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
@@ -214,7 +215,8 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
 
     private void verifyAndHandleSyn(WireProtocolMessage message) {
       if (!verifySyn(message)) {
-        handleHandshakeError(new TransportHandshakeErrorContext("Expected a SYN message but received: " + message));
+        handleHandshakeError(new TransportHandshakeErrorContext("Expected a SYN message but received: " + message,
+                                                                TransportHandshakeError.ERROR_HANDSHAKE));
       } else {
         try {
           handleSyn((SynMessage) message);
@@ -238,8 +240,10 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
       ConnectionID connectionId = syn.getConnectionId();
 
       if (connectionId == null) {
-        sendSynAck(connectionId, new TransportHandshakeErrorContext("Invalid connection id: " + connectionId), syn
-            .getSource());
+        sendSynAck(connectionId,
+                   new TransportHandshakeErrorContext("Invalid connection id: " + connectionId,
+                                                      TransportHandshakeError.ERROR_INVALID_CONNECTION_ID), syn
+                       .getSource());
         this.isHandshakeError = true;
         return;
       }
@@ -248,6 +252,30 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
         this.transport = attachNewConnection(connectionId, syn.getSource());
       } catch (IllegalReconnectException e) {
         logger.warn("Client attempting an illegal reconnect for id " + connectionId + ", " + syn.getSource());
+        return;
+      }
+
+      // now check that the client side stack and server side stack are both in sync
+
+      // get the client side stack layer
+      short clientStackLayerFlags = syn.getStackLayerFlags();
+      // get the server side stack layer
+      short serverStackLayerFlags = this.transport.getCommunicationStackFlags(this.transport);
+
+      // compare the two and send an error if there is a mismatch
+      // send the layers present at the server side in the error message
+      if (clientStackLayerFlags != serverStackLayerFlags) {
+        String layersPresentInServer = "Layers Present in Server side communication stack: ";
+        // get the names of stack layers present
+        layersPresentInServer += this.transport.getCommunicationStackNames(this.transport);
+        // send the SynAck with the error
+        sendSynAck(connectionId, new TransportHandshakeErrorContext(layersPresentInServer,
+                                                                    TransportHandshakeError.ERROR_STACK_MISMATCH), syn
+            .getSource());
+        
+        if ((serverStackLayerFlags & NetworkLayer.TYPE_OOO_LAYER) != 0) logger.error(NetworkLayer.ERROR_OOO_IN_SERVER_NOT_IN_CLIENT);
+        else logger.error(NetworkLayer.ERROR_OOO_IN_CLIENT_NOT_IN_SERVER);
+        this.isHandshakeError = true;
         return;
       }
       connectionId = this.transport.getConnectionId();

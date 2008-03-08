@@ -16,4 +16,9 @@ public class TestSynMessage extends TestTransportHandshakeMessage implements Syn
   public boolean isAck() {
     return false;
   }
+
+  public short getStackLayerFlags() {
+    //its a test
+    return -1;
+  }
 }

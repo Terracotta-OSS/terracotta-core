@@ -11,6 +11,10 @@ public class TestSynAckMessage extends TestTransportHandshakeMessage implements 
     throw new ImplementMe();
   }
 
+  public short getErrorType() {
+    throw new ImplementMe();
+  }
+  
   public boolean hasErrorContext() {
     throw new ImplementMe();
   }
@@ -29,6 +33,10 @@ public class TestSynAckMessage extends TestTransportHandshakeMessage implements 
 
   public void recycle() {
     return;
+  }
+
+  public short getStackLayerFlags() {
+    return -1;
   }
 
 }

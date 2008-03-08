@@ -127,6 +127,11 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
     throw new UnsupportedOperationException();
   }
 
+  public NetworkLayer getReceiveLayer(){
+    //this is the topmost layer, it has no parent
+    return null;
+  }
+  
   public void send(final TCNetworkMessage message) {
     if (logger.isDebugEnabled()) {
       final Runnable logMsg = new Runnable() {
@@ -207,6 +212,24 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
     }
   }
 
+  /**
+   * this function gets the stack Lyaer Flag
+   * added to build the communctaion stack information
+   */
+  public short getStackLayerFlag(){
+    //this is the channel layer
+    return TYPE_CHANNEL_LAYER;
+  }
+  
+  /**
+   * this function gets the stack Layer Name
+   * added to build the communctaion stack information
+   */
+  public String getStackLayerName(){
+    //this is the channel layer
+    return NAME_CHANNEL_LAYER;
+  }
+  
   class ChannelStatus {
     private ChannelState state;
 

@@ -33,6 +33,7 @@ import com.tc.net.protocol.transport.MessageTransportListener;
 import com.tc.net.protocol.transport.ConnectionHealthCheckerEchoImpl;
 import com.tc.net.protocol.transport.ServerMessageTransport;
 import com.tc.net.protocol.transport.ServerStackProvider;
+import com.tc.net.protocol.transport.TransportHandshakeError;
 import com.tc.net.protocol.transport.TransportHandshakeErrorContext;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandler;
 import com.tc.net.protocol.transport.TransportHandshakeMessage;
@@ -156,20 +157,14 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   public ClientMessageChannel createClientChannel(final SessionProvider sessionProvider, final int maxReconnectTries,
                                                   String hostname, int port, final int timeout,
                                                   ConnectionAddressProvider addressProvider) {
-    // XXX: maxReconnectTries MUST be non-zero if we have a
-    // once and only once protocol stack.
-
     final ConnectionAddressProvider provider = addressProvider;
-
-    ClientMessageChannelImpl rv = new ClientMessageChannelImpl(new TCMessageFactoryImpl(sessionProvider, monitor),
-                                                               new TCMessageRouterImpl(), sessionProvider);
-
     MessageTransportFactory transportFactory = new MessageTransportFactory() {
       public MessageTransport createNewTransport() {
         TransportHandshakeErrorHandler handshakeErrorHandler = new TransportHandshakeErrorHandler() {
 
           public void handleHandshakeError(TransportHandshakeErrorContext e) {
-            System.err.println(e);
+            if (e.getErrorType() == TransportHandshakeError.ERROR_STACK_MISMATCH) System.err.println(e.getMessage());
+            else System.err.println(e);
             new TCRuntimeException("I'm crashing the client!").printStackTrace();
             try {
               Thread.sleep(30 * 1000);
@@ -217,6 +212,18 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
         throw new AssertionError();
       }
     };
+
+    return createClientChannel(sessionProvider, maxReconnectTries, hostname, port, timeout, addressProvider, transportFactory);
+  }
+
+  public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, final int maxReconnectTries,
+                                                  String hostname, int port, final int timeout,
+                                                  ConnectionAddressProvider addressProvider,
+                                                  MessageTransportFactory transportFactory) {
+    // XXX: maxReconnectTries MUST be non-zero if we have a
+    // once and only once protocol stack.
+    ClientMessageChannelImpl rv = new ClientMessageChannelImpl(new TCMessageFactoryImpl(sessionProvider, monitor),
+                                                               new TCMessageRouterImpl(), sessionProvider);
 
     NetworkStackHarness stackHarness = this.stackHarnessFactory.createClientHarness(transportFactory, rv,
                                                                                     new MessageTransportListener[0]);

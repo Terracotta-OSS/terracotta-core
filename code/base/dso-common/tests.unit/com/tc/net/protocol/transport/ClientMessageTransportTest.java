@@ -7,20 +7,24 @@ package com.tc.net.protocol.transport;
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 
-import com.tc.exception.ImplementMe;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.MockConnectionManager;
 import com.tc.net.core.MockTCConnection;
+import com.tc.net.core.TCConnection;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
+import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
+import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
+import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.NetworkListener;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.object.session.NullSessionManager;
 import com.tc.test.TCTestCase;
+import com.tc.util.TCTimeoutException;
 
 import java.util.Collections;
 import java.util.List;
@@ -34,8 +38,10 @@ public class ClientMessageTransportTest extends TCTestCase {
   private MockConnectionManager            connectionManager;
   private MockTCConnection                 connection;
   private TransportHandshakeMessageFactory transportMessageFactory;
-  private TransportHandshakeErrorHandler   handshakeErrorHandler;
-  private int                              maxRetries = 10;
+  private TestTransportHandshakeErrorHandler   handshakeErrorHandler;
+  private final int                        maxRetries         = 10;
+  private MessageTransportFactory          transportFactory;
+  private final int                        timeout            = 3000;
 
   public void setUp() {
     DefaultConnectionIdFactory connectionIDProvider = new DefaultConnectionIdFactory();
@@ -44,19 +50,8 @@ public class ClientMessageTransportTest extends TCTestCase {
     this.connection = new MockTCConnection();
     this.connectionManager.setConnection(connection);
     this.transportMessageFactory = new TransportMessageFactoryImpl();
-    handshakeErrorHandler = new TransportHandshakeErrorHandler() {
+    handshakeErrorHandler = new TestTransportHandshakeErrorHandler();
 
-      public void handleHandshakeError(TransportHandshakeErrorContext e) {
-        throw new ImplementMe();
-
-      }
-
-      public void handleHandshakeError(TransportHandshakeErrorContext e, TransportHandshakeMessage m) {
-        throw new ImplementMe();
-
-      }
-
-    };
     final ConnectionInfo connectionInfo = new ConnectionInfo("", 0);
     ClientConnectionEstablisher cce = new ClientConnectionEstablisher(
                                                                       connectionManager,
@@ -106,7 +101,7 @@ public class ClientMessageTransportTest extends TCTestCase {
     assertEquals(2, sentMessages.size());
     assertEquals(this.connectionId, transport.getConnectionId());
     Thread.sleep(1000);
-    assertTrue(tester.waitForAckToBeReceived(3000));
+    assertTrue(tester.waitForAckToBeReceived(timeout));
   }
 
   /**
@@ -114,7 +109,7 @@ public class ClientMessageTransportTest extends TCTestCase {
    */
   public void testConnectAndHandshakeActuallyConnected() throws Exception {
     CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
-                                                                   new PlainNetworkStackHarnessFactory(),
+                                                                   new TransportNetworkStackHarnessFactory(),
                                                                    new NullConnectionPolicy(), 0);
     NetworkListener listener = commsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory());
@@ -133,5 +128,133 @@ public class ClientMessageTransportTest extends TCTestCase {
     assertTrue(transport.isConnected());
     listener.stop(5000);
 
+  }
+
+  /**
+   * This test is for testing the communication stack layer mismatch between the server and L1s while handshaking
+   */
+  public void testStackLayerMismatch() throws Exception {
+    // Case 1: Server has the OOO layer and client doesn't
+
+    CommunicationsManager serverCommsMgr = new CommunicationsManagerImpl(
+                                                                         new NullMessageMonitor(),
+                                                                         new OOONetworkStackHarnessFactory(
+                                                                                                           new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
+                                                                                                           null),
+                                                                         new NullConnectionPolicy(), 0);
+
+    CommunicationsManager clientCommsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
+                                                                         new PlainNetworkStackHarnessFactory(),
+                                                                         new NullConnectionPolicy(), 0);
+
+    try {
+      createStacksAndTest(serverCommsMgr, clientCommsMgr);
+    } finally {
+      try {
+        clientCommsMgr.shutdown();
+      } finally {
+        serverCommsMgr.shutdown();
+      }
+    }
+
+    // Case 2: Client has the OOO layer and server doesn't
+    serverCommsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),
+                                                   new NullConnectionPolicy(), 0);
+
+    clientCommsMgr = new CommunicationsManagerImpl(
+                                                   new NullMessageMonitor(),
+                                                   new OOONetworkStackHarnessFactory(
+                                                                                     new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
+                                                                                     null), new NullConnectionPolicy(),
+                                                   0);
+
+    try {
+      createStacksAndTest(serverCommsMgr, clientCommsMgr);
+    } finally {
+      try {
+        clientCommsMgr.shutdown();
+      } finally {
+        serverCommsMgr.shutdown();
+      }
+    }
+
+  }
+
+  private void createStacksAndTest(final CommunicationsManager serverCommsMgr,
+                                   final CommunicationsManager clientCommsMgr) throws Exception {
+    NetworkListener listener = serverCommsMgr.createListener(new NullSessionManager(),
+                                                             new TCSocketAddress(TCSocketAddress.LOOPBACK_IP, 0), true,
+                                                             new DefaultConnectionIdFactory());
+    listener.start(Collections.EMPTY_SET);
+    final int port = listener.getBindPort();
+
+    // set up the transport factory
+    transportFactory = new MessageTransportFactory() {
+      public MessageTransport createNewTransport() {
+        ClientConnectionEstablisher clientConnectionEstablisher = new ClientConnectionEstablisher(
+                                                                                                  serverCommsMgr
+                                                                                                      .getConnectionManager(),
+                                                                                                  new ConnectionAddressProvider(
+                                                                                                                                new ConnectionInfo[] { new ConnectionInfo(
+                                                                                                                                                                          "localhost",
+                                                                                                                                                                          port) }),
+                                                                                                  maxRetries, timeout);
+        ClientMessageTransport cmt = new ClientMessageTransport(clientConnectionEstablisher, handshakeErrorHandler,
+                                                                transportMessageFactory,
+                                                                new WireProtocolAdaptorFactoryImpl());
+        return cmt;
+      }
+
+      public MessageTransport createNewTransport(ConnectionID connectionID, TransportHandshakeErrorHandler handler,
+                                                 TransportHandshakeMessageFactory handshakeMessageFactory,
+                                                 List transportListeners) {
+        throw new AssertionError();
+      }
+
+      public MessageTransport createNewTransport(ConnectionID connectionID, TCConnection tcConnection,
+                                                 TransportHandshakeErrorHandler handler,
+                                                 TransportHandshakeMessageFactory handshakeMessageFactory,
+                                                 List transportListeners) {
+        throw new AssertionError();
+      }
+    };
+
+    ClientMessageChannel channel;
+    channel = clientCommsMgr
+        .createClientChannel(
+                             new NullSessionManager(),
+                             0,
+                             TCSocketAddress.LOOPBACK_IP,
+                             port,
+                             timeout,
+                             new ConnectionAddressProvider(
+                                                           new ConnectionInfo[] { new ConnectionInfo("localhost", port) }),
+                             transportFactory);
+    try {
+      channel.open();
+    } catch (TCTimeoutException e) {
+      // this is an expected timeout exception as the client will get an handshake error and it is not killing itself
+      // do nothing
+    }
+    assertTrue(handshakeErrorHandler.getStackLayerMismatch());
+    listener.stop(5000);
+  }
+  
+  private static class TestTransportHandshakeErrorHandler implements TransportHandshakeErrorHandler {
+    
+    private boolean                          stackLayerMismatch = false;
+
+
+    public void handleHandshakeError(TransportHandshakeErrorContext e) {
+      if (e.getErrorType() == TransportHandshakeError.ERROR_STACK_MISMATCH) stackLayerMismatch = true;
+    }
+
+    public void handleHandshakeError(TransportHandshakeErrorContext e, TransportHandshakeMessage m) {
+      if (e.getErrorType() == TransportHandshakeError.ERROR_STACK_MISMATCH) stackLayerMismatch = true;
+    }
+    
+    public boolean getStackLayerMismatch(){
+      return stackLayerMismatch;
+    }
   }
 }

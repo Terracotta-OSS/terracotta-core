@@ -29,6 +29,8 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
   private final boolean      hasErrorContext;
   private final int          maxConnections;
   private final boolean      isMaxConnectionsExceeded;
+  private final short        stackLayerFlags;
+  private final short        errorType;
 
   TransportMessageImpl(TCConnection source, TCNetworkHeader header, TCByteBuffer[] payload)
       throws TCProtocolException {
@@ -50,11 +52,14 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
 
       this.isMaxConnectionsExceeded = in.readBoolean();
       this.maxConnections = in.readInt();
+      this.stackLayerFlags = in.readShort();
       this.hasErrorContext = in.readBoolean();
 
       if (this.hasErrorContext) {
+        this.errorType = in.readShort();
         this.errorContext = in.readString();
       } else {
+        this.errorType = TransportHandshakeError.ERROR_NONE;
         this.errorContext = null;
       }
 
@@ -101,10 +106,15 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
     return this.errorContext;
   }
 
+  public short getErrorType(){
+    Assert.eval(hasErrorContext());
+    return this.errorType;
+  }
+  
   public boolean isPing() {
     return type == PING;
   }
-  
+
   public boolean isPingReply() {
     return type == PING_REPLY;
   }
@@ -132,6 +142,10 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
 
   public int getMaxConnections() {
     return this.maxConnections;
+  }
+
+  public short getStackLayerFlags() {
+    return this.stackLayerFlags;
   }
 
 }

@@ -16,7 +16,7 @@ public class MockTransportMessageFactory implements TransportHandshakeMessageFac
   public final NoExceptionLinkedQueue createAckCalls    = new NoExceptionLinkedQueue();
   public final NoExceptionLinkedQueue createSynAckCalls = new NoExceptionLinkedQueue();
 
-  public TransportHandshakeMessage createSyn(ConnectionID connectionId, TCConnection source) {
+  public TransportHandshakeMessage createSyn(ConnectionID connectionId, TCConnection source, short stackLayerFlags) {
     createSynCalls.put(new Object[] { connectionId, source });
     return this.syn;
   }

@@ -93,4 +93,25 @@ public class MockMessageTransport implements MessageTransport {
     throw new ImplementMe();
 
   }
+
+  public short getStackLayerFlag() {
+    throw new ImplementMe();
+    
+  }
+
+  public String getStackLayerName() {
+    throw new ImplementMe();
+  }
+
+  public NetworkLayer getReceiveLayer() {
+    throw new ImplementMe();
+  }
+
+  public short getCommunicationStackFlags(NetworkLayer parentLayer) {
+    throw new ImplementMe();
+  }
+
+  public String getCommunicationStackNames(NetworkLayer parentLayer) {
+    throw new ImplementMe();
+  }
 }

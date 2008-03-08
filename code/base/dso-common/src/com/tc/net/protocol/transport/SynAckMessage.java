@@ -8,6 +8,8 @@ public interface SynAckMessage extends TransportHandshakeMessage {
 
   public String getErrorContext();
 
+  public short getErrorType();
+  
   public boolean hasErrorContext();
 
   public boolean isMaxConnectionsExceeded();

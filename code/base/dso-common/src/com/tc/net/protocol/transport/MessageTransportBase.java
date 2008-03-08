@@ -79,6 +79,10 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     this.receiveLayer = layer;
   }
 
+  public final NetworkLayer getReceiveLayer(){
+    return receiveLayer;
+  }
+  
   public final void setSendLayer(NetworkLayer layer) {
     throw new UnsupportedOperationException("Transport layer has no send layer.");
   }
@@ -352,5 +356,23 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     logger.info("Attaching new connection: " + conn);
     setConnection(conn);
     this.status.reset();
+  }
+
+  /**
+   * this function gets the stackLayerFlag added to 
+   * build the communication stack information
+   */
+  public short getStackLayerFlag() {
+    // this is the transport layer
+    return TYPE_TRANSPORT_LAYER;
+  }
+
+  /**
+   * This function gets the stack layer name of the present layer
+   * added to build the communication stack information
+   */
+  public String getStackLayerName() {
+    // this is the transport layer
+    return NAME_TRANSPORT_LAYER;
   }
 }

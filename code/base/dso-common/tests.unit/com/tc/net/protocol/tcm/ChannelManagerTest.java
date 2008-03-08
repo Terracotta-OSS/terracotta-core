@@ -5,6 +5,7 @@
 package com.tc.net.protocol.tcm;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.exception.ImplementMe;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
@@ -183,6 +184,20 @@ public class ChannelManagerTest extends TestCase {
 
     public void close() {
       return;
+    }
+
+    public short getStackLayerFlag() {
+      //its a test
+      //do nothing
+      throw new ImplementMe();
+    }
+
+    public String getStackLayerName() {
+      throw new ImplementMe();
+    }
+
+    public NetworkLayer getReceiveLayer() {
+      throw new ImplementMe();
     }
   }
 

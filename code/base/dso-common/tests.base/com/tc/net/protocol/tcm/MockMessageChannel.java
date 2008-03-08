@@ -175,4 +175,16 @@ public class MockMessageChannel implements MessageChannelInternal {
     throw new ImplementMe();
   }
 
+  public short getStackLayerFlag(){
+    throw new ImplementMe();
+  }
+
+  public String getStackLayerName() {
+    throw new ImplementMe();
+  }
+
+  public NetworkLayer getReceiveLayer() {
+    throw new ImplementMe();
+  }
+
 }

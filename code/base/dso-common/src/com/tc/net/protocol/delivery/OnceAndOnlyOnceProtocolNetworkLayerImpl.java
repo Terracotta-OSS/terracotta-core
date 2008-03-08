@@ -88,6 +88,10 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     this.receiveLayer = (MessageChannelInternal) layer;
   }
 
+  public NetworkLayer getReceiveLayer(){
+    return this.receiveLayer;
+  }
+  
   public void send(TCNetworkMessage message) {
     delivery.send(message);
   }
@@ -98,8 +102,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     if (msg.isSend() || msg.isAck()) {
       Assert.inv(!handshakeMode.get());
       Assert.inv(channelConnected.get());
-      if (sessionId != msg.getSessionId())
-        return; // drop bad message
+      if (sessionId != msg.getSessionId()) return; // drop bad message
       delivery.receive(msg);
     } else if (msg.isHandshake()) {
       Assert.inv(!isClient);
@@ -113,8 +116,8 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
         handshakeMode.set(false);
         if (!channelConnected.get()) {
           channelConnected.set(true);
-    receiveLayer.notifyTransportConnected(this);
-  }
+          receiveLayer.notifyTransportConnected(this);
+        }
         reconnectMode.set(false);
       } else if (msg.getSessionId() == getSessionId()) {
         debugLog("A same-session client is trying to connect - reply OK");
@@ -126,8 +129,8 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
         delivery.receive(createHandshakeReplyOkMessage(msg.getAckSequence()));
         if (!channelConnected.get()) {
           channelConnected.set(true);
-    receiveLayer.notifyTransportConnected(this);
-  }
+          receiveLayer.notifyTransportConnected(this);
+        }
         reconnectMode.set(false);
       } else {
         debugLog("A DIFF-session client is trying to connect - reply FAIL");
@@ -139,10 +142,10 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
         resetStack();
         delivery.resume();
         delivery.receive(reply);
-  if (!channelConnected.get()) {
+        if (!channelConnected.get()) {
           channelConnected.set(true);
           receiveLayer.notifyTransportConnected(this);
-  }
+        }
         reconnectMode.set(false);
       }
     } else if (msg.isHandshakeReplyOk()) {
@@ -158,7 +161,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
       delivery.receive(msg);
       if (!channelConnected.get()) {
         channelConnected.set(true);
-  receiveLayer.notifyTransportConnected(this);
+        receiveLayer.notifyTransportConnected(this);
       }
       reconnectMode.set(false);
     } else if (msg.isHandshakeReplyFail()) {
@@ -178,7 +181,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
       delivery.receive(msg);
       if (!channelConnected.get()) {
         channelConnected.set(true);
-  receiveLayer.notifyTransportConnected(this);
+        receiveLayer.notifyTransportConnected(this);
       }
     } else if (msg.isGoodbye()) {
       debugLog("Got GoodBye message - shutting down");
@@ -403,6 +406,19 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     return ((short) r.nextInt(Short.MAX_VALUE));
   }
 
+  /**
+   * this function gets the stackLayerFlag, added to build the communication stack information
+   */
+  public short getStackLayerFlag() {
+    // this is the OOO layer
+    return TYPE_OOO_LAYER;
+  }
 
-
+  /**
+   * This function gets the stack layer name of the present layer, added to build the communication stack information
+   */
+  public String getStackLayerName() {
+    // this is the OOO layer
+    return NAME_OOO_LAYER;
+  }
 }

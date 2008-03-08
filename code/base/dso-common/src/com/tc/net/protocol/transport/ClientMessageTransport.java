@@ -6,13 +6,13 @@ package com.tc.net.protocol.transport;
 
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
-import com.tc.exception.ImplementMe;
 import com.tc.exception.TCInternalError;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogging;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.event.TCConnectionEvent;
+import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.TCProtocolAdaptor;
@@ -47,7 +47,8 @@ public class ClientMessageTransport extends MessageTransportBase {
                                 TransportHandshakeMessageFactory messageFactory,
                                 WireProtocolAdaptorFactory wireProtocolAdaptorFactory) {
 
-    super(MessageTransportState.STATE_START, handshakeErrorHandler, messageFactory, false,  TCLogging.getLogger(ClientMessageTransport.class));
+    super(MessageTransportState.STATE_START, handshakeErrorHandler, messageFactory, false, TCLogging
+        .getLogger(ClientMessageTransport.class));
     this.wireProtocolAdaptorFactory = wireProtocolAdaptorFactory;
     this.connectionEstablisher = clientConnectionEstablisher;
   }
@@ -86,9 +87,9 @@ public class ClientMessageTransport extends MessageTransportBase {
         Assert.eval(!this.connectionId.isNull());
         isOpen.set(true);
         sendAck();
-        NetworkStackID nid =  new NetworkStackID(this.connectionId.getChannelID());
+        NetworkStackID nid = new NetworkStackID(this.connectionId.getChannelID());
         wasOpened = true;
-        return(nid);
+        return (nid);
       } catch (TCTimeoutException e) {
         status.reset();
         throw e;
@@ -134,10 +135,35 @@ public class ClientMessageTransport extends MessageTransportBase {
     if (!verifySynAck(message)) {
       handleHandshakeError(new TransportHandshakeErrorContext(
                                                               "Received a message that was not a SYN_ACK while waiting for SYN_ACK: "
-                                                                  + message));
+                                                                  + message, TransportHandshakeError.ERROR_HANDSHAKE));
     } else {
       SynAckMessage synAck = (SynAckMessage) message;
-      if (synAck.hasErrorContext()) { throw new ImplementMe(synAck.getErrorContext()); }
+      if (synAck.hasErrorContext()) {
+        // if stack is mismatched then get the client side communication stack
+        // and append in the error message
+        if (synAck.getErrorType() == TransportHandshakeError.ERROR_STACK_MISMATCH) {
+          String errorMessage = "\n\nLayers Present in Client side communication stack: ";
+          // get the names of stack layers present
+          errorMessage += getCommunicationStackNames(this);
+
+          errorMessage = "\nTHERE IS A MISMATCH IN THE COMMUNICATION STACKS\n" + synAck.getErrorContext()
+                         + errorMessage;
+
+          if ((getCommunicationStackFlags(this) & NetworkLayer.TYPE_OOO_LAYER) != 0 ) {
+            logger.error(NetworkLayer.ERROR_OOO_IN_CLIENT_NOT_IN_SERVER);
+            errorMessage = "\n\n" + NetworkLayer.ERROR_OOO_IN_CLIENT_NOT_IN_SERVER + errorMessage;
+          } else {
+            logger.error(NetworkLayer.ERROR_OOO_IN_SERVER_NOT_IN_CLIENT);
+            errorMessage = "\n\n" + NetworkLayer.ERROR_OOO_IN_SERVER_NOT_IN_CLIENT + errorMessage;
+          }
+          handleHandshakeError(new TransportHandshakeErrorContext(errorMessage + "\n\nPLEASE RECONFIGURE THE STACKS",
+                                                                  TransportHandshakeError.ERROR_STACK_MISMATCH));
+          return;
+        } else {
+          handleHandshakeError(new TransportHandshakeErrorContext(synAck.getErrorContext() + message,
+                                                                  TransportHandshakeError.ERROR_GENERIC));
+        }
+      }
 
       if (connectionId != null && !ConnectionID.NULL_ID.equals(connectionId)) {
         // This is a reconnect
@@ -189,7 +215,10 @@ public class ClientMessageTransport extends MessageTransportBase {
     synchronized (status) {
       if (status.isEstablished() || status.isSynSent()) { throw new AssertionError(" ERROR !!! " + status); }
       waitForSynAckResult = new TCFuture(status);
-      TransportHandshakeMessage syn = this.messageFactory.createSyn(this.connectionId, getConnection());
+      // get the stack layer list and pass it in
+      short stackLayerFlags = getCommunicationStackFlags(this);
+      TransportHandshakeMessage syn = this.messageFactory
+          .createSyn(this.connectionId, getConnection(), stackLayerFlags);
       // send syn message
       this.sendToConnection(syn);
       this.status.synSent();
@@ -208,10 +237,10 @@ public class ClientMessageTransport extends MessageTransportBase {
   }
 
   void reconnect(TCConnection connection) throws Exception {
-    
+
     // don't do reconnect if open is still going on
-    if(!wasOpened) return;
-    
+    if (!wasOpened) return;
+
     Assert.eval(!isConnected());
     wireNewConnection(connection);
     try {

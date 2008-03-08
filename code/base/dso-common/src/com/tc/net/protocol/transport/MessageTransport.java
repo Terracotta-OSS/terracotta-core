@@ -36,5 +36,9 @@ public interface MessageTransport extends NetworkLayer {
   public TCSocketAddress getLocalAddress();
 
   public void setAllowConnectionReplace(boolean allow);
+  
+  public short getCommunicationStackFlags(NetworkLayer parentLayer);
+  
+  public String getCommunicationStackNames(NetworkLayer parentLayer);
 
 }

@@ -9,6 +9,7 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
+import com.tc.net.protocol.transport.MessageTransportFactory;
 import com.tc.net.protocol.transport.WireProtocolMessageSink;
 import com.tc.object.session.SessionProvider;
 
@@ -36,9 +37,14 @@ public interface CommunicationsManager {
    * @param timeout The maximum time (in milliseconds) to wait for the underlying connection to be established before
    *        giving up.
    */
-  public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
-                                                  String hostname, int port, int timeout,
+  public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, final int maxReconnectTries,
+                                                  String hostname, int port, final int timeout,
                                                   ConnectionAddressProvider addressProvider);
+  
+  public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, final int maxReconnectTries,
+                                                  String hostname, int port, final int timeout,
+                                                  ConnectionAddressProvider addressProvider,
+                                                  MessageTransportFactory transportFactory);
 
   public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress addr,
                                         boolean transportDisconnectRemovesChannel,

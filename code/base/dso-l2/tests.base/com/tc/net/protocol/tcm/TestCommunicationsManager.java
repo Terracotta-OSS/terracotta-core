@@ -10,6 +10,7 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
+import com.tc.net.protocol.transport.MessageTransportFactory;
 import com.tc.net.protocol.transport.WireProtocolMessageSink;
 import com.tc.object.session.SessionProvider;
 
@@ -32,6 +33,13 @@ public class TestCommunicationsManager implements CommunicationsManager {
   public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
                                                   String hostname, int port, int timeout,
                                                   ConnectionAddressProvider addressProvider) {
+    throw new ImplementMe();
+  }
+  
+  public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
+                                                  String hostname, int port, int timeout,
+                                                  ConnectionAddressProvider addressProvider,
+                                                  MessageTransportFactory transportFactory) {
     throw new ImplementMe();
   }
 

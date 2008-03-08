@@ -9,6 +9,7 @@ import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
 import com.tc.logging.ConnectionIDProvider;
 import com.tc.logging.ConnectionIdLogger;
 import com.tc.logging.TCLogger;
+import com.tc.net.protocol.NetworkLayer;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -100,5 +101,23 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
           throw new AssertionError("Unknown transport event: " + type);
       }
     }
+  }
+  
+  public short getCommunicationStackFlags(NetworkLayer parentLayer){
+    short stackLayerFlags = 0;
+    while (parentLayer != null) {
+      stackLayerFlags |= parentLayer.getStackLayerFlag();
+      parentLayer = parentLayer.getReceiveLayer();
+    }
+    return stackLayerFlags;
+  }
+  
+  public String getCommunicationStackNames(NetworkLayer parentLayer){
+    String currentLayer = "";
+    while (parentLayer != null) {
+      currentLayer += "\n" + parentLayer.getStackLayerName();
+      parentLayer = parentLayer.getReceiveLayer();
+    }
+    return currentLayer;
   }
 }
