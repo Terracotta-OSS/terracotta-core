@@ -22,7 +22,7 @@ public class InstrumentationLoggerImpl implements InstrumentationLogger {
   private boolean        rootInsertion;
   private boolean        distMethodCallInsertion;
 
-  public InstrumentationLoggerImpl(DSOInstrumentationLoggingOptions opts) {
+  public InstrumentationLoggerImpl(final DSOInstrumentationLoggingOptions opts) {
     this.logger = CustomerLogging.getDSOInstrumentationLogger();
 
     if (opts != null) {
@@ -34,7 +34,7 @@ public class InstrumentationLoggerImpl implements InstrumentationLogger {
     }
   }
 
-  public void setClassInclusion(boolean classInclusion) {
+  public void setClassInclusion(final boolean classInclusion) {
     this.classInclusion = classInclusion;
   }
 
@@ -42,7 +42,7 @@ public class InstrumentationLoggerImpl implements InstrumentationLogger {
     return this.classInclusion;
   }
 
-  public void setLockInsertion(boolean lockInsertion) {
+  public void setLockInsertion(final boolean lockInsertion) {
     this.lockInsertion = lockInsertion;
   }
 
@@ -50,7 +50,7 @@ public class InstrumentationLoggerImpl implements InstrumentationLogger {
     return this.lockInsertion;
   }
 
-  public void setTransientRootWarning(boolean transientRootWarning) {
+  public void setTransientRootWarning(final boolean transientRootWarning) {
     this.transientRootWarning = transientRootWarning;
   }
 
@@ -58,7 +58,7 @@ public class InstrumentationLoggerImpl implements InstrumentationLogger {
     return this.transientRootWarning;
   }
 
-  public void setRootInsertion(boolean rootInsertion) {
+  public void setRootInsertion(final boolean rootInsertion) {
     this.rootInsertion = rootInsertion;
   }
 
@@ -66,7 +66,7 @@ public class InstrumentationLoggerImpl implements InstrumentationLogger {
     return this.rootInsertion;
   }
 
-  public void setDistMethodCallInsertion(boolean distMethodCallInsertion) {
+  public void setDistMethodCallInsertion(final boolean distMethodCallInsertion) {
     this.distMethodCallInsertion = distMethodCallInsertion;
   }
 
@@ -74,11 +74,11 @@ public class InstrumentationLoggerImpl implements InstrumentationLogger {
     return this.distMethodCallInsertion;
   }
 
-  public void classIncluded(String className) {
+  public void classIncluded(final String className) {
     logger.info(className + " included for instrumentation");
   }
 
-  public void subclassOfLogicallyManagedClasses(String className, Collection logicalSuperClasses) {
+  public void subclassOfLogicallyManagedClasses(final String className, final Collection logicalSuperClasses) {
     StringBuffer buffer = new StringBuffer();
     buffer.append(className).append(" is a subclass of a logically managed superclass : (");
 
@@ -94,12 +94,12 @@ public class InstrumentationLoggerImpl implements InstrumentationLogger {
 
   }
 
-  public void autolockInserted(String className, String methodName, String methodDesc, LockDefinition lockDefinition) {
+  public void autolockInserted(final String className, final String methodName, final String methodDesc, final LockDefinition lockDefinition) {
     String level = lockDefinition.getLockLevel().toString();
     logger.info("Inserting autolocks in method " + className + "." + methodName + methodDesc + ", level: " + level);
   }
 
-  public void lockInserted(String className, String methodName, String methodDesc, LockDefinition[] locks) {
+  public void lockInserted(final String className, final String methodName, final String methodDesc, final LockDefinition[] locks) {
     StringBuffer sb = new StringBuffer();
 
     String s = locks.length > 1 ? "locks" : "lock";
@@ -113,11 +113,11 @@ public class InstrumentationLoggerImpl implements InstrumentationLogger {
     logger.info(sb.toString());
   }
 
-  public void transientRootWarning(String className, String fieldName) {
+  public void transientRootWarning(final String className, final String fieldName) {
     logger.warn("The java transient property is being ignored for root:" + className + "." + fieldName);
   }
 
-  public void rootInserted(String className, String fieldName, String desc, boolean isStatic) {
+  public void rootInserted(final String className, final String fieldName, final String desc, final boolean isStatic) {
     logger.info("DSO root inserted for field " + className + "." + fieldName + ", type " + (isStatic ? "static " : "")
                 + desc);
   }

@@ -129,6 +129,7 @@ import com.tc.object.loaders.StandardClassLoaderAdapter;
 import com.tc.object.loaders.StandardClassProvider;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.InstrumentationLoggerImpl;
+import com.tc.object.logging.NullInstrumentationLogger;
 import com.tc.object.util.OverrideCheck;
 import com.tc.object.util.ToggleableStrongReference;
 import com.tc.plugins.ModulesLoader;
@@ -442,6 +443,8 @@ public class BootJarTool {
       loadTerracottaClass(Manageable.class.getName());
       loadTerracottaClass(Clearable.class.getName());
       loadTerracottaClass(Manager.class.getName());
+      loadTerracottaClass(InstrumentationLogger.class.getName());
+      loadTerracottaClass(NullInstrumentationLogger.class.getName());
       loadTerracottaClass(NullManager.class.getName());
       loadTerracottaClass(ManagerUtil.class.getName());
       loadTerracottaClass(ManagerUtil.class.getName() + "$GlobalManagerHolder");
