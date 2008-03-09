@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.impl;
 
@@ -64,14 +65,17 @@ public class GCLogger {
     if (verboseGC()) logGC("GC: Not running gc since its disabled...");
   }
 
-  public void log_GCComplete(long startMillis, long pauseStartMillis, List rescueTimes, long endMillis, long iteration) {
+  public void log_GCComplete(long startMillis, long pauseStartMillis, long deleteStartMillis, List rescueTimes,
+                             long endMillis, long iteration) {
     if (verboseGC()) {
-      long pausedMillis = endMillis - pauseStartMillis;
+      long pausedMillis = deleteStartMillis - pauseStartMillis;
+      long deleteGarbageMillis = endMillis - deleteStartMillis;
       long totalMillis = endMillis - startMillis;
       for (int i = 0; i < rescueTimes.size(); i++) {
         logGC("GC: rescue " + (i + 1) + " time   : " + rescueTimes.get(i) + " ms.");
       }
       logGC("GC: paused gc time  : " + pausedMillis + " ms.");
+      logGC("GC: delete garbage time  : " + deleteGarbageMillis + " ms.");
       logGC("GC: total gc time   : " + totalMillis + " ms.");
       logGC("GC: STOP " + iteration);
     }

@@ -172,13 +172,14 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
 
     this.referenceCollector = NULL_CHANGE_COLLECTOR;
 
+    long deleteStartMillis = System.currentTimeMillis();
     // Delete Garbage
     objectManager.notifyGCComplete(toDelete);
 
     gcStats.setActualGarbageCount(toDelete.size());
     long endMillis = System.currentTimeMillis();
     gcStats.setElapsedTime(endMillis - startMillis);
-    gcLogger.log_GCComplete(startMillis, pauseStartMillis, rescueTimes, endMillis, gcIteration);
+    gcLogger.log_GCComplete(startMillis, pauseStartMillis, deleteStartMillis, rescueTimes, endMillis, gcIteration);
 
     gcLogger.push(gcStats);
     fireGCCompleteEvent(gcStats, toDelete);
