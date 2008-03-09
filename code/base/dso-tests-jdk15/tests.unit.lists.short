@@ -1,3 +1,1 @@
-# this test is failing intermittently
-# we don't want it in check_short for now
-#ObjectManagerTest
+ObjectManagerTest
