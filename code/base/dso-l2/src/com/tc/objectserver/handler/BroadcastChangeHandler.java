@@ -88,7 +88,7 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
           this.managedObjectRequestSink.add(new ManagedObjectRequestContext(clientID, ObjectRequestID.NULL_ID,
                                                                             lookupObjectIDs, -1,
                                                                             this.respondObjectRequestSink,
-                                                                            "BroadcastChangeHandler"));
+                                                                            "BroadcastChangeHandler", true));
         }
         final DmiDescriptor[] dmi = (includeDmi) ? prunedDmis : DmiDescriptor.EMPTY_ARRAY;
         BroadcastTransactionMessage responseMessage = (BroadcastTransactionMessage) client

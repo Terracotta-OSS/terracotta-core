@@ -106,10 +106,18 @@ public class RespondToObjectRequestHandler extends AbstractEventHandler {
       }
       Set missingOids = morc.getMissingObjectIDs();
       if (!missingOids.isEmpty()) {
-        ObjectsNotFoundMessage notFound = (ObjectsNotFoundMessage) channel
-            .createMessage(TCMessageType.OBJECTS_NOT_FOUND_RESPONSE_MESSAGE);
-        notFound.initialize(missingOids, batchID);
-        notFound.send();
+        if (morc.isServerInitiated()) {
+          // This is a possible case where changes are flying in and server is initiating some lookups and the lookups
+          // go pending and in the meantime the changes made those looked up objects garbage and DGC removes those
+          // objects. Now we dont want to send those missing objects to clients. Its not really an issue as the clients
+          // should never lookup those objects, but still why send them ?
+          logger.warn("Server Initiated lookup : " + morc + ". Ignoring Missing Objects : " + missingOids);
+        } else {
+          ObjectsNotFoundMessage notFound = (ObjectsNotFoundMessage) channel
+              .createMessage(TCMessageType.OBJECTS_NOT_FOUND_RESPONSE_MESSAGE);
+          notFound.initialize(missingOids, batchID);
+          notFound.send();
+        }
       }
 
     } catch (NoSuchChannelException e) {
@@ -134,7 +142,7 @@ public class RespondToObjectRequestHandler extends AbstractEventHandler {
     if (oids.size() <= MAX_OBJECTS_TO_LOOKUP) {
       this.managedObjectRequestSink.add(new ManagedObjectRequestContext(morc.getRequestedNodeID(), morc.getRequestID(),
                                                                         oids, -1, morc.getSink(),
-                                                                        "RespondToObjectRequestHandler"));
+                                                                        "RespondToObjectRequestHandler", true));
     } else {
       // split into multiple request
       Set split = new HashSet(MAX_OBJECTS_TO_LOOKUP);
@@ -142,7 +150,7 @@ public class RespondToObjectRequestHandler extends AbstractEventHandler {
         split.add(i.next());
         if (split.size() >= MAX_OBJECTS_TO_LOOKUP) {
           this.managedObjectRequestSink.add(new ManagedObjectRequestContext(morc.getRequestedNodeID(), morc
-              .getRequestID(), split, -1, morc.getSink(), "RespondToObjectRequestHandler"));
+              .getRequestID(), split, -1, morc.getSink(), "RespondToObjectRequestHandler", true));
           if (i.hasNext()) split = new THashSet(maxRequestDepth);
         }
       }

@@ -34,12 +34,14 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
   private final Sink            sink;
   private final Set             missingObjects = new HashSet();
   private final String          requestingThreadName;
+  private final boolean         isServerInitiated;
 
   public ManagedObjectRequestContext(ClientID clientID, ObjectRequestID requestID, Set ids, int maxRequestDepth,
-                                     Sink sink, String requestingThreadName) {
+                                     Sink sink, String requestingThreadName, boolean isServerInitiated) {
     this.maxRequestDepth = maxRequestDepth;
     this.sink = sink;
     this.requestingThreadName = requestingThreadName;
+    this.isServerInitiated = isServerInitiated;
     this.timestamp = System.currentTimeMillis();
     this.clientID = clientID;
     this.requestID = requestID;
@@ -91,9 +93,10 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
 
   public String toString() {
     return "ManagedObjectRequestContext@" + System.identityHashCode(this) + " [ " + clientID + " , " + requestID
-           + " , " + requestedObjectIDs + ", requestingThread = " + requestingThreadName + " ]";
+           + " , " + requestedObjectIDs + ", requestingThread = " + requestingThreadName
+           + ", isServerInitiatedRequest = " + isServerInitiated + " ]";
   }
-  
+
   public String getRequestingThreadName() {
     return requestingThreadName;
   }
@@ -122,6 +125,10 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
 
   public boolean updateStats() {
     return true;
+  }
+
+  public boolean isServerInitiated() {
+    return isServerInitiated;
   }
 
 }

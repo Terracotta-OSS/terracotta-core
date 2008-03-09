@@ -26,7 +26,7 @@ import java.util.Set;
 /**
  * Converts the request into a call to the objectManager with the proper next steps initialized I'm not convinced that
  * this stage is necessary. May be able to merge it with another stage.
- *
+ * 
  * @author steve
  */
 public class ManagedObjectRequestHandler extends AbstractEventHandler {
@@ -95,7 +95,7 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
       ManagedObjectRequestContext reqContext = new ManagedObjectRequestContext(clientID, rmom.getRequestID(),
                                                                                requestedIDs, maxRequestDepth,
                                                                                this.respondObjectRequestSink, rmom
-                                                                                   .getRequestingThreadName());
+                                                                                   .getRequestingThreadName(), false);
       objectRequestManager.requestObjects(reqContext, maxRequestDepth);
     }
   }
