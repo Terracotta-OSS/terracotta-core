@@ -11,6 +11,7 @@ public class ClientsTable extends XObjectTable {
   public ClientsTable() {
     super();
     setModel(m_model = new ClientTableModel());
+    getColumnModel().getColumn(1).setCellRenderer(new XObjectTable.PortNumberRenderer());
   }
 
   public ClientsTable(DSOClient[] clients) {

@@ -18,6 +18,8 @@ public class AdminClientBundle extends ListResourceBundle {
 
       { "new.server.action.label", "New server" },
 
+      { "new.cluster.action.label", "New cluster" },
+      
       { "quit.action.label", "Quit" },
 
       { "connect.title", "Connect to JMX Server" },
@@ -108,12 +110,16 @@ public class AdminClientBundle extends ListResourceBundle {
 
       { "dso.transaction.rate", "Transaction Rate" },
 
+      { "dso.pending.transaction.count", "Pending Transaction Count" },
+      
       { "dso.root.retrieving", "Retrieving new DSO root..." },
 
       { "dso.root.new", "Added new DSO root: " },
 
       { "clients", "Clients" },
 
+      { "servers", "Servers" },
+      
       { "dso.client.retrieving", "Retrieving new DSO client..." },
 
       { "dso.client.new", "Added new DSO client: " },
@@ -144,6 +150,8 @@ public class AdminClientBundle extends ListResourceBundle {
 
       { "dso.transaction.rate.range.label", "Transactions per second" },
 
+      { "dso.pending.transaction.count.range.label", "Pending Transactions" },
+      
       { "dso.cache.activity", "Cache activity" },
 
       { "dso.cache.miss.rate", "Cache Miss Rate" },

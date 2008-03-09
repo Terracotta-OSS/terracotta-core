@@ -3,7 +3,6 @@
  */
 package com.tc.admin;
 
-import com.tc.admin.common.XTextPane;
 import com.tc.management.beans.L2MBeanNames;
 
 import java.io.PrintWriter;
@@ -19,7 +18,7 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
-public class ServerLog extends XTextPane {
+public class ServerLog extends LogPane {
   private ConnectionContext   m_cc;
   private ObjectName          m_logger;
   private LogListener         m_logListener;

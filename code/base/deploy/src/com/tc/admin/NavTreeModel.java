@@ -27,7 +27,7 @@ public class NavTreeModel extends XTreeModel {
     String[]           children    = prefsHelper.childrenNames(serverPrefs);
     int                count       = children.length;
     Preferences        serverPref;
-    ServerNode         serverNode;
+    ClusterNode        serverNode;
     String             host;
     int                port;
     boolean            autoConnect;
@@ -38,18 +38,16 @@ public class NavTreeModel extends XTreeModel {
         host        = serverPref.get(HOST, ConnectionContext.DEFAULT_HOST);
         port        = serverPref.getInt(PORT, ConnectionContext.DEFAULT_PORT);
         autoConnect = serverPref.getBoolean(AUTO_CONNECT, ConnectionContext.DEFAULT_AUTO_CONNECT);
-        serverNode  = new ServerNode(host, port, autoConnect);
+        serverNode  = new ClusterNode(host, port, autoConnect);
 
         insertNodeInto(serverNode, (XTreeNode)getRoot(), i);
       }
     }
     else {
-      serverNode = new ServerNode();
+      serverNode = new ClusterNode();
       serverNode.setPreferences(serverPrefs.node("server-0"));
-
       acc.client.storePrefs();
-
-      insertNodeInto(new ServerNode(), (XTreeNode)getRoot(), 0);
+      insertNodeInto(serverNode, (XTreeNode)getRoot(), 0);
     }
   }
 }

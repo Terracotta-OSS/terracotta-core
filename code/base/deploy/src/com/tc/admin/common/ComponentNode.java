@@ -33,7 +33,14 @@ public class ComponentNode extends XTreeNode {
   }
 
   public void setComponent(Component comp) {
+    if(m_component instanceof XContainer) {
+      ((XContainer)m_component).tearDown();
+    }
     m_component = comp;
+    if(comp != null) {
+      comp.revalidate();
+      comp.repaint();
+    }
   }
     
   public Component getComponent() {
@@ -44,10 +51,6 @@ public class ComponentNode extends XTreeNode {
     super.tearDown();
 
     setLabel(null);
-    
-    if(m_component instanceof XContainer) {
-      ((XContainer)m_component).tearDown();
-    }
     setComponent(null);
   }
 }

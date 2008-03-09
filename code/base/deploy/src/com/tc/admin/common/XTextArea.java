@@ -12,10 +12,13 @@ public class XTextArea extends TextArea {
   
   public XTextArea() {
     super();
-    m_helper = new TextComponentHelper(this);
-    setPopupMenu(createPopup());
+    m_helper = createHelper();
   }
-  
+
+  protected TextComponentHelper createHelper() {
+    return new TextComponentHelper(this);
+  }
+
   private JPopupMenu createPopup() {
     return m_helper.createPopup();
   }
@@ -26,5 +29,12 @@ public class XTextArea extends TextArea {
 
   public JPopupMenu getPopupMenu() {
     return m_helper.getPopupMenu();
+  }
+  
+  public void addNotify() {
+    super.addNotify();
+    if(getPopupMenu() == null) {
+      setPopupMenu(createPopup());
+    }
   }
 }

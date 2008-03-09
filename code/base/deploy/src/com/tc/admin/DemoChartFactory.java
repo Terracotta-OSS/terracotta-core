@@ -3,8 +3,6 @@
  */
 package com.tc.admin;
 
-import java.awt.Color;
-import java.text.SimpleDateFormat;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.DateAxis;
@@ -15,6 +13,9 @@ import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.ui.RectangleInsets;
+
+import java.awt.Color;
+import java.text.SimpleDateFormat;
 
 public class DemoChartFactory {
   public static JFreeChart getChart(TimeSeries ts) {

@@ -13,6 +13,7 @@ import com.tc.objectserver.mgmt.ManagedObjectFacade;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Map;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
@@ -62,5 +63,11 @@ public class DSOHelper extends BaseHelper {
     String attr = "GarbageCollectorStats";
 
     return (GCStats[]) cc.getAttribute(bean, attr);
+  }
+  
+  public Map getAllPendingRequests(ConnectionContext cc) throws Exception {
+    ObjectName bean = getDSOMBean(cc);
+    String attr = "AllPendingRequests";
+    return (Map) cc.getAttribute(bean, attr);
   }
 }

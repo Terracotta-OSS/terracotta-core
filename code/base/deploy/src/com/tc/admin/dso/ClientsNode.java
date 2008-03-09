@@ -5,6 +5,7 @@ package com.tc.admin.dso;
 
 import com.tc.admin.AdminClient;
 import com.tc.admin.AdminClientContext;
+import com.tc.admin.ClusterNode;
 import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.common.XTreeModel;
@@ -20,14 +21,20 @@ import javax.management.ObjectName;
 import javax.swing.SwingUtilities;
 
 public class ClientsNode extends ComponentNode implements NotificationListener {
+  private ClusterNode m_clusterNode;
   private ConnectionContext m_cc;
-  private DSOClient[]       m_clients;
+  private DSOClient[] m_clients;
 
-  public ClientsNode(ConnectionContext cc) throws Exception {
+  public ClientsNode(ClusterNode clusterNode) throws Exception {
     super();
+    m_clusterNode = clusterNode;
+    init();
+  }
 
-    m_cc = cc;
-
+  private void init() throws Exception {
+    removeAllChildren();
+    
+    m_cc = m_clusterNode.getConnectionContext();
     ObjectName dso = DSOHelper.getHelper().getDSOMBean(m_cc);
     m_clients = ClientsHelper.getHelper().getClients(m_cc);
 
@@ -35,13 +42,30 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
       add(new ClientTreeNode(m_cc, m_clients[i]));
     }
 
-    ClientsPanel panel = new ClientsPanel(m_clients);
-
+    ClientsPanel panel = new ClientsPanel(m_cc, this, m_clients);
     panel.setNode(this);
     updateLabel();
     setComponent(panel);
 
     m_cc.addNotificationListener(dso, this);
+  }
+  
+  public void newConnectionContext() {
+    try {
+      init();
+    } catch(Exception e) {/**/}
+  }
+  
+  void selectClientNode(String remoteAddr) {
+    int childCount = getChildCount();
+    for (int i = 0; i < childCount; i++) {
+      ClientTreeNode ctn = (ClientTreeNode) getChildAt(i);
+      String ctnRemoteAddr = ctn.getClient().getRemoteAddress();
+      if (ctnRemoteAddr.equals(remoteAddr)) {
+        AdminClient.getContext().controller.select(ctn);
+        return;
+      }
+    }
   }
 
   public DSOClient[] getClients() {
@@ -55,7 +79,7 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
     }
     return false;
   }
-  
+
   public void handleNotification(final Notification notice, final Object handback) {
     String type = notice.getType();
 
@@ -73,7 +97,7 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
     setLabel(AdminClient.getContext().getMessage("clients") + " (" + getChildCount() + ")");
     nodeChanged();
   }
-  
+
   private void internalHandleNotification(Notification notice, Object handback) {
     String type = notice.getType();
 
@@ -82,8 +106,8 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
       acc.setStatus(acc.getMessage("dso.client.retrieving"));
 
       ObjectName clientObjectName = (ObjectName) notice.getSource();
-      if(haveClient(clientObjectName)) return;
-      
+      if (haveClient(clientObjectName)) return;
+
       DSOClient client = new DSOClient(m_cc, clientObjectName);
       ArrayList<DSOClient> list = new ArrayList<DSOClient>(Arrays.asList(m_clients));
 
@@ -139,7 +163,6 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
       }
     } catch (Exception e) {/**/
     }
-    m_cc = null;
     m_clients = null;
 
     super.tearDown();

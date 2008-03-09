@@ -36,34 +36,33 @@ import javax.management.ReflectionException;
 import javax.swing.JOptionPane;
 
 public class GCStatsPanel extends XContainer implements NotificationListener {
-  private ConnectionContext            m_cc;
+  private GCStatsNode                  m_gcStatsNode;
   private XObjectTable                 m_table;
   private PopupMenu                    m_popupMenu;
   private ObjectManagementMonitorMBean m_objectManagementMonitor;
 
-  public GCStatsPanel(ConnectionContext cc) throws IOException, MalformedObjectNameException, InstanceNotFoundException, MBeanException, ReflectionException, AttributeNotFoundException {
+  public GCStatsPanel(GCStatsNode gcStatsNode) throws IOException, MalformedObjectNameException,
+      InstanceNotFoundException, MBeanException, ReflectionException, AttributeNotFoundException {
     super();
-
-    m_cc = cc;
 
     AdminClientContext acc = AdminClient.getContext();
     load((ContainerResource) acc.topRes.getComponent("GCStatsPanel"));
 
+    m_gcStatsNode = gcStatsNode;
     m_table = (XObjectTable) findComponent("GCStatsTable");
 
     GCStatsTableModel model = new GCStatsTableModel();
     m_table.setModel(model);
 
     DSOHelper helper = DSOHelper.getHelper();
-    GCStats[] gcStats = null;
-
-    gcStats = helper.getGCStats(cc);
+    ConnectionContext cc = gcStatsNode.getConnectionContext();
+    GCStats[] gcStats = helper.getGCStats(cc);
     cc.addNotificationListener(helper.getDSOMBean(cc), this);
 
     model.setGCStats(gcStats);
 
     m_objectManagementMonitor = (ObjectManagementMonitorMBean) MBeanServerInvocationHandler
-        .newProxyInstance(m_cc.mbsc, L2MBeanNames.OBJECT_MANAGEMENT, ObjectManagementMonitorMBean.class, false);
+        .newProxyInstance(cc.mbsc, L2MBeanNames.OBJECT_MANAGEMENT, ObjectManagementMonitorMBean.class, false);
 
     RunGCAction runDGCAction = new RunGCAction();
     Button runDGCButton = (Button) findComponent("RunGCButton");
@@ -87,6 +86,18 @@ public class GCStatsPanel extends XContainer implements NotificationListener {
         }
       }
     });
+  }
+
+  void newConnectionContext() {
+    try {
+      DSOHelper helper = DSOHelper.getHelper();
+      ConnectionContext cc = m_gcStatsNode.getConnectionContext();
+      cc.addNotificationListener(helper.getDSOMBean(cc), this);
+
+      m_objectManagementMonitor = (ObjectManagementMonitorMBean) MBeanServerInvocationHandler
+          .newProxyInstance(cc.mbsc, L2MBeanNames.OBJECT_MANAGEMENT, ObjectManagementMonitorMBean.class, false);
+    } catch (Exception e) {/**/
+    }
   }
 
   class RunGCAction extends XAbstractAction {
@@ -123,16 +134,16 @@ public class GCStatsPanel extends XContainer implements NotificationListener {
 
   public void tearDown() {
     try {
-      if (m_cc != null && m_cc.isConnected()) {
+      ConnectionContext cc = m_gcStatsNode.getConnectionContext();
+      if (cc != null && cc.isConnected()) {
         DSOHelper helper = DSOHelper.getHelper();
-        m_cc.removeNotificationListener(helper.getDSOMBean(m_cc), this);
+        cc.removeNotificationListener(helper.getDSOMBean(cc), this);
       }
     } catch (Exception e) {/**/
     }
 
     super.tearDown();
 
-    m_cc = null;
     m_table = null;
   }
 }

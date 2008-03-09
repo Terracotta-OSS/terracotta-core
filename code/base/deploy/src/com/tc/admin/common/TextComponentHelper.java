@@ -48,10 +48,14 @@ public class TextComponentHelper extends XPopupListener
   public JPopupMenu createPopup() {
     JPopupMenu popup = new JPopupMenu("TextComponent Actions");
     
-    addCutAction(popup);
+    if(m_component.isEditable()) {
+      addCutAction(popup);
+    }
     addCopyAction(popup);
-    addPasteAction(popup);
-    addClearAction(popup);
+    if(m_component.isEditable()) {
+      addPasteAction(popup);
+      addClearAction(popup);
+    }
     
     return popup;
   }

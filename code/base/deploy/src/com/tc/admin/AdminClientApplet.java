@@ -3,11 +3,13 @@
  */
 package com.tc.admin;
 
-import java.awt.BorderLayout;
+import org.dijon.Container;
 
 import com.tc.admin.common.XApplet;
 import com.tc.admin.common.XMenuBar;
 import com.tc.admin.common.XTreeNode;
+
+import java.awt.BorderLayout;
 
 public class AdminClientApplet extends XApplet
   implements AdminClientController
@@ -56,6 +58,10 @@ public class AdminClientApplet extends XApplet
   public boolean testServerMatch(ServerNode node) {
     return m_mainPanel.testServerMatch(node);
   }
+
+  public boolean testServerMatch(ClusterNode node) {
+    return m_mainPanel.testServerMatch(node);
+  }
   
  public void updateServerPrefs() {
     m_mainPanel.updateServerPrefs();
@@ -69,8 +75,8 @@ public class AdminClientApplet extends XApplet
     m_mainPanel.log(s);
   }
 
-  public void log(Exception e) {
-    m_mainPanel.log(e);
+  public void log(Throwable t) {
+    m_mainPanel.log(t);
   }
 
   public void setStatus(String msg) {
@@ -87,6 +93,10 @@ public class AdminClientApplet extends XApplet
 
   public void removeServerLog(ConnectionContext cc) {
     m_mainPanel.removeServerLog(cc);
+  }
+  
+  public Container getActivityArea() {
+    return m_mainPanel.getActivityArea();
   }
   
   public void block() {/**/}

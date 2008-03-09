@@ -29,7 +29,7 @@ import java.util.Iterator;
 import javax.swing.KeyStroke;
 
 public class ClassesPanel extends XContainer {
-  private ConnectionContext     m_cc;
+  private ClassesNode           m_classesNode;
   private ClassesTable          m_table;
   private XTree                 m_tree;
   private ClassesTreeMap        m_treeMap;
@@ -48,14 +48,13 @@ public class ClassesPanel extends XContainer {
     m_xmlOpts.setSavePrettyPrintIndent(2);
   }
 
-  public ClassesPanel(ConnectionContext cc) {
+  public ClassesPanel(ClassesNode classesNode) {
     super();
-
     AdminClientContext cntx = AdminClient.getContext();
 
     load((ContainerResource) cntx.topRes.getComponent("ClassesPanel"));
 
-    m_cc = cc;
+    m_classesNode = classesNode;
 
     DSOClassInfo[] classInfo = getClassInfos();
 
@@ -78,7 +77,8 @@ public class ClassesPanel extends XContainer {
   }
 
   private DSOClassInfo[] getClassInfos() {
-    DSOClassInfo[] classInfo = ClassesHelper.getHelper().getClassInfo(m_cc);
+    ConnectionContext cc = m_classesNode.getConnectionContext();
+    DSOClassInfo[] classInfo = ClassesHelper.getHelper().getClassInfo(cc);
     ArrayList<DSOClassInfo> list = new ArrayList<DSOClassInfo>();
 
     for (DSOClassInfo info : classInfo) {

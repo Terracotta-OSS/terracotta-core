@@ -26,6 +26,10 @@ public class L2Info implements java.io.Serializable {
     this.jmxPort = jmxPort;
   }
 
+  public L2Info(L2Info other) {
+    this(other.name(), other.host(), other.jmxPort());
+  }
+  
   public String name() {
     return this.name;
   }

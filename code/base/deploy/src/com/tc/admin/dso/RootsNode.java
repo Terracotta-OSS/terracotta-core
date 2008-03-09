@@ -1,10 +1,12 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin.dso;
 
 import com.tc.admin.AdminClient;
 import com.tc.admin.AdminClientContext;
+import com.tc.admin.ClusterNode;
 import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.common.XAbstractAction;
@@ -26,6 +28,7 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
 public class RootsNode extends ComponentNode implements NotificationListener {
+  private ClusterNode         m_clusterNode;
   private ConnectionContext   m_cc;
   private DSORoot[]           m_roots;
   private JPopupMenu          m_popupMenu;
@@ -33,28 +36,40 @@ public class RootsNode extends ComponentNode implements NotificationListener {
 
   private static final String REFRESH_ACTION = "RefreshAction";
 
-  public RootsNode(ConnectionContext cc) throws Exception {
+  public RootsNode(ClusterNode clusterNode) throws Exception {
     super();
 
-    m_cc = cc;
+    m_clusterNode = clusterNode;
+    init();
+  }
+
+  private void init() throws Exception {
+    m_cc = m_clusterNode.getConnectionContext();
     m_roots = getRoots();
 
     initMenu();
 
     AdminClientContext acc = AdminClient.getContext();
     String label = acc.getMessage("dso.roots");
-    RootsPanel panel = new RootsPanel(cc, m_roots);
+    RootsPanel panel = new RootsPanel(m_cc, m_roots);
 
     panel.setNode(this);
     setLabel(label);
     setComponent(panel);
 
     for (int i = 0; i < m_roots.length; i++) {
-      insert(new RootNode(cc, m_roots[i]), i);
+      insert(new RootNode(m_cc, m_roots[i]), i);
     }
 
     ObjectName dso = DSOHelper.getHelper().getDSOMBean(m_cc);
     m_cc.addNotificationListener(dso, this);
+  }
+
+  public void newConnectionContext() {
+    try {
+      init();
+    } catch (Exception e) {/**/
+    }
   }
 
   public DSORoot[] getRoots() throws Exception {
@@ -135,12 +150,10 @@ public class RootsNode extends ComponentNode implements NotificationListener {
     m_refreshAction.actionPerformed(null);
   }
 
-  private boolean haveRoot(ObjectName objectName) { 
-    if(m_roots == null) return false;
-    for(DSORoot root : m_roots) {
-      if(root.getObjectName().equals(objectName)) {
-        return true;
-      }
+  private boolean haveRoot(ObjectName objectName) {
+    if (m_roots == null) return false;
+    for (DSORoot root : m_roots) {
+      if (root.getObjectName().equals(objectName)) { return true; }
     }
     return false;
   }
@@ -150,8 +163,8 @@ public class RootsNode extends ComponentNode implements NotificationListener {
 
     if (DSOMBean.ROOT_ADDED.equals(type)) {
       final ObjectName rootObjectName = (ObjectName) notice.getSource();
-      if(haveRoot(rootObjectName)) return;
-      
+      if (haveRoot(rootObjectName)) return;
+
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           AdminClientContext acc = AdminClient.getContext();
@@ -166,12 +179,12 @@ public class RootsNode extends ComponentNode implements NotificationListener {
 
           RootNode rn = new RootNode(m_cc, root);
           XTreeModel model = getModel();
-          if(model != null) {
+          if (model != null) {
             model.insertNodeInto(rn, RootsNode.this, getChildCount());
           } else {
             RootsNode.this.add(rn);
           }
-          
+
           ((RootsPanel) getComponent()).add(root);
 
           acc.setStatus(acc.getMessage("dso.root.new") + root);

@@ -32,6 +32,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.HashSet;
@@ -85,9 +86,10 @@ public class LocksPanel extends XContainer implements NotificationListener {
 
   private static Collection<LockSpec> EMPTY_LOCK_SPEC_COLLECTION = new HashSet<LockSpec>();
 
-  public LocksPanel(ConnectionContext cc, LocksNode locksNode) {
+  public LocksPanel(LocksNode locksNode) {
     super();
 
+    fConnectionContext = locksNode.getConnectionContext();
     fLocksNode = locksNode;
     fLocksNode.setRenderer(new XTreeCellRenderer() {
       public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded,
@@ -105,7 +107,7 @@ public class LocksPanel extends XContainer implements NotificationListener {
     load((ContainerResource) cntx.topRes.getComponent("LocksPanel"));
 
     fLockStats = (LockStatisticsMonitorMBean) MBeanServerInvocationHandler
-        .newProxyInstance(cc.mbsc, L2MBeanNames.LOCK_STATISTICS, LockStatisticsMonitorMBean.class, false);
+        .newProxyInstance(fConnectionContext.mbsc, L2MBeanNames.LOCK_STATISTICS, LockStatisticsMonitorMBean.class, false);
 
     // We do this to force an early error if the server we're connecting to is old and doesn't
     // have the LockStatisticsMonitorMBean. DSONode catches the error and doesn't display the LocksNode.
@@ -208,14 +210,29 @@ public class LocksPanel extends XContainer implements NotificationListener {
 
     setLocksPanelEnabled(fLockStats.isLockStatisticsEnabled());
 
-    fConnectionContext = cc;
     try {
-      cc.addNotificationListener(L2MBeanNames.LOCK_STATISTICS, this);
+      fConnectionContext.addNotificationListener(L2MBeanNames.LOCK_STATISTICS, this);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
+  void newConnectionContext() {
+    fConnectionContext = fLocksNode.getConnectionContext();
+    fLockStats = (LockStatisticsMonitorMBean) MBeanServerInvocationHandler
+        .newProxyInstance(fConnectionContext.mbsc, L2MBeanNames.LOCK_STATISTICS, LockStatisticsMonitorMBean.class,
+                          false);
+    fLastTraceDepth = fLockStats.getTraceDepth();
+    ((SpinnerNumberModel) fTraceDepthSpinner.getModel()).setValue(Integer.valueOf(fLastTraceDepth));
+    setLocksPanelEnabled(fLockStats.isLockStatisticsEnabled());
+
+    try {
+      fConnectionContext.addNotificationListener(L2MBeanNames.LOCK_STATISTICS, this);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+  
   private boolean testSelectMatch(JTable table, String text, int row) {
     String lockLabel = table.getModel().getValueAt(row, 0).toString();
     if (lockLabel.contains(text)) {
@@ -305,7 +322,7 @@ public class LocksPanel extends XContainer implements NotificationListener {
     fRefreshButton.setText("Wait...");
     fRefreshButton.setEnabled(false);
     SwingWorker worker = new SwingWorker() {
-      public Object construct() {
+      public Object construct() throws Exception {
         Collection<LockSpec> lockSpecs = fLockStats.getLockSpecs();
         fTreeTableModel = new LockTreeTableModel(lockSpecs);
         fServerLockTableModel = new ServerLockTableModel(lockSpecs);
@@ -313,6 +330,13 @@ public class LocksPanel extends XContainer implements NotificationListener {
       }
 
       public void finished() {
+        InvocationTargetException ite = getException();
+        if(ite != null) {
+          Throwable cause = ite.getCause();
+          AdminClient.getContext().log(cause != null ? cause : ite);
+          return;
+        }
+        
         fTreeTable.setTreeTableModel(fTreeTableModel);
         fTreeTable.sort();
         

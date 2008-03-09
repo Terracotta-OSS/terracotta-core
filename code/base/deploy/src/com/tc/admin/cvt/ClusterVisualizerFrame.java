@@ -14,25 +14,32 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.annotations.XYImageAnnotation;
 import org.jfree.chart.annotations.XYTextAnnotation;
-import org.jfree.chart.axis.AxisLocation;
+import org.jfree.chart.axis.Axis;
 import org.jfree.chart.axis.AxisSpace;
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.NumberTickUnit;
+import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.entity.ChartEntity;
 import org.jfree.chart.entity.EntityCollection;
 import org.jfree.chart.entity.XYAnnotationEntity;
 import org.jfree.chart.labels.StandardXYToolTipGenerator;
 import org.jfree.chart.labels.XYToolTipGenerator;
+import org.jfree.chart.plot.Plot;
 import org.jfree.chart.plot.PlotRenderingInfo;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.data.Range;
 import org.jfree.data.RangeType;
 import org.jfree.data.time.Second;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.time.TimeSeriesDataItem;
 import org.jfree.data.xy.XYDataset;
+import org.jfree.text.TextUtilities;
 import org.jfree.ui.RectangleAnchor;
+import org.jfree.ui.RectangleEdge;
+import org.jfree.ui.RectangleInsets;
 import org.jfree.ui.TextAnchor;
 
 import com.tc.statistics.StatisticData;
@@ -58,12 +65,13 @@ import com.tc.statistics.store.exceptions.TCStatisticsStoreException;
 import com.tc.statistics.store.exceptions.TCStatisticsStoreSetupErrorException;
 import com.tc.statistics.store.h2.H2StatisticsStoreImpl;
 
-import java.awt.BasicStroke;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
@@ -72,7 +80,6 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Insets;
-import java.awt.Paint;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.Toolkit;
@@ -80,6 +87,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -89,6 +98,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -129,28 +139,26 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 public class ClusterVisualizerFrame extends JFrame {
-  private ImportAction                             fImportAction;
-  private RetrieveAction                           fRetrieveAction;
-  private SessionInfo[]                            fSessions;
-  private JComboBox                                fSessionSelector;
-  private JPanel                                   fToolBar;
-  private JSlider                                  fHeightSlider;
-  private SessionInfo                              fSessionInfo;
-  private JPanel                                   fBottomPanel;
-  private JPanel                                   fControlPanel;
-  private JPanel                                   fGraphPanel;
-  private MyStatisticsStore                        fStore;
-  private Map<NodeControl, Map<String, JCheckBox>> fNodeGroups;
-  private Map<StatControl, Map<Node, NodeControl>> fStatGroups;
-  private Map<String, AbstractStatHandler>         fStatHandlerMap;
-  private JLabel                                   fStatusLine;
-  private JProgressBar                             fProgressBar;
-  private File                                     fLastDir;
-  private Map<DisplaySource, DataDisplay>          fDisplayCache;
+  private ImportAction                     fImportAction;
+  private RetrieveAction                   fRetrieveAction;
+  private SessionInfo[]                    fSessions;
+  private JComboBox                        fSessionSelector;
+  private JPanel                           fToolBar;
+  private JSlider                          fHeightSlider;
+  private SessionInfo                      fSessionInfo;
+  private JPanel                           fBottomPanel;
+  private JPanel                           fControlPanel;
+  private JPanel                           fGraphPanel;
+  private AxisSpace                        fRangeAxisSpace;
+  private MyStatisticsStore                fStore;
+  private List<NodeControl>                fNodeControlList;
+  private Map<String, AbstractStatHandler> fStatHandlerMap;
+  private JLabel                           fStatusLine;
+  private JProgressBar                     fProgressBar;
+  private File                             fLastDir;
 
-  private Dimension                                fDefaultGraphSize = new Dimension(
-                                                                                     ChartPanel.DEFAULT_MINIMUM_DRAW_WIDTH,
-                                                                                     ChartPanel.DEFAULT_MINIMUM_DRAW_HEIGHT);
+  private Dimension                        fDefaultGraphSize = new Dimension(ChartPanel.DEFAULT_MINIMUM_DRAW_WIDTH,
+                                                                             ChartPanel.DEFAULT_MINIMUM_DRAW_HEIGHT);
 
   public ClusterVisualizerFrame(String[] args) {
     super("Terracotta Cluster Visualizer");
@@ -190,8 +198,7 @@ public class ClusterVisualizerFrame extends JFrame {
     fSessionSelector.setVisible(false);
     fHeightSlider.setVisible(false);
 
-    fNodeGroups = new HashMap<NodeControl, Map<String, JCheckBox>>();
-    fStatGroups = new HashMap<StatControl, Map<Node, NodeControl>>();
+    fNodeControlList = new ArrayList<NodeControl>();
     fStatHandlerMap = new HashMap<String, AbstractStatHandler>();
     putStatHandler(new MemoryUsageHandler());
     putStatHandler(new L2toL1FaultHandler());
@@ -202,7 +209,7 @@ public class ClusterVisualizerFrame extends JFrame {
     putStatHandler(new CPUUsageHandler());
     putStatHandler(new StageQueueDepthsHandler());
 
-    fDisplayCache = new HashMap<DisplaySource, DataDisplay>();
+    fRangeAxisSpace = new AxisSpace();
 
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
   }
@@ -240,7 +247,6 @@ public class ClusterVisualizerFrame extends JFrame {
 
   private class GenerateGraphsAction extends AbstractAction implements Runnable {
     List<NodeGroupHandler> fNodeGroupHandlers;
-    List<StatGroupHandler> fStatGroupHandlers;
 
     GenerateGraphsAction() {
       super("Generate graphs");
@@ -248,49 +254,14 @@ public class ClusterVisualizerFrame extends JFrame {
 
     List<NodeGroupHandler> getNodeGroupHandlers() {
       ArrayList<NodeGroupHandler> list = new ArrayList<NodeGroupHandler>();
-      Iterator<NodeControl> nodeIter = fNodeGroups.keySet().iterator();
-      while (nodeIter.hasNext()) {
-        NodeControl nodeControl = nodeIter.next();
-        Node node = nodeControl.getNode();
-        ArrayList<String> statList = new ArrayList<String>();
+      Iterator<NodeControl> nodeControlIter = fNodeControlList.iterator();
+      while (nodeControlIter.hasNext()) {
+        NodeControl nodeControl = nodeControlIter.next();
         if (nodeControl.isSelected()) {
-          Map<String, JCheckBox> controlMap = fNodeGroups.get(nodeControl);
-          Iterator<String> statIter = controlMap.keySet().iterator();
-          while (statIter.hasNext()) {
-            String stat = statIter.next();
-            JCheckBox control = controlMap.get(stat);
-            if (control.isSelected()) {
-              statList.add(stat);
-            }
+          List<String> statList = nodeControl.getSelectedStats();
+          if (statList.size() > 0) {
+            list.add(new NodeGroupHandler(nodeControl.getNode(), statList));
           }
-        }
-        if (statList.size() > 0) {
-          list.add(new NodeGroupHandler(node, statList));
-        }
-      }
-      return list;
-    }
-
-    List<StatGroupHandler> getStatGroupHandlers() {
-      ArrayList<StatGroupHandler> list = new ArrayList<StatGroupHandler>();
-      Iterator<StatControl> statIter = fStatGroups.keySet().iterator();
-      while (statIter.hasNext()) {
-        JCheckBox statControl = statIter.next();
-        String stat = statControl.getName();
-        ArrayList<Node> nodeList = new ArrayList<Node>();
-        if (statControl.isSelected()) {
-          Map<Node, NodeControl> controlMap = fStatGroups.get(statControl);
-          Iterator<Node> nodeIter = controlMap.keySet().iterator();
-          while (nodeIter.hasNext()) {
-            Node node = nodeIter.next();
-            JCheckBox control = controlMap.get(node);
-            if (control.isSelected()) {
-              nodeList.add(node);
-            }
-          }
-        }
-        if (nodeList.size() > 0) {
-          list.add(new StatGroupHandler(stat, nodeList));
         }
       }
       return list;
@@ -303,33 +274,27 @@ public class ClusterVisualizerFrame extends JFrame {
       setToolBarEnabled(false);
 
       fNodeGroupHandlers = getNodeGroupHandlers();
-      fStatGroupHandlers = getStatGroupHandlers();
 
       Thread graphBuilderThread = new Thread(this);
       graphBuilderThread.start();
     }
 
     public void run() {
+      fRangeAxisSpace.setLeft(0);
+      fRangeAxisSpace.setRight(10);
+
       Iterator<NodeGroupHandler> nodeGroupHandlerIter = fNodeGroupHandlers.iterator();
       while (nodeGroupHandlerIter.hasNext()) {
         NodeGroupHandler ngh = nodeGroupHandlerIter.next();
         List<DataDisplay> displayList = ngh.generateDisplay();
         if (displayList.size() > 0) {
-          buildNodeGraphLater(ngh.fNode.toString(), displayList, ngh.fThreadDumps);
-        }
-      }
-
-      Iterator<StatGroupHandler> statGroupHandlerIter = fStatGroupHandlers.iterator();
-      while (statGroupHandlerIter.hasNext()) {
-        StatGroupHandler sgh = statGroupHandlerIter.next();
-        List<DataDisplay> displayList = sgh.generateDisplay();
-        if (displayList.size() > 0) {
-          buildStatGraphLater(sgh.fStat, displayList);
+          buildNodeGraphsLater(displayList, ngh.fThreadDumps);
         }
       }
 
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
+          setAllRangeAxes();
           fProgressBar.setVisible(false);
           fStatusLine.setText("");
           fHeightSlider.setVisible(true);
@@ -338,21 +303,22 @@ public class ClusterVisualizerFrame extends JFrame {
       });
     }
 
-    private void buildNodeGraphLater(final String name, final List<DataDisplay> displayList,
-                                     final List<StatisticData> threadDumps) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          buildNodeGraph(name, displayList, threadDumps);
-          fGraphPanel.revalidate();
-          fGraphPanel.repaint();
-        }
-      });
+    private void setAllRangeAxes() {
+      for (Component comp : fGraphPanel.getComponents()) {
+        if (!(comp instanceof ChartPanel)) continue;
+        ChartPanel chartPanel = (ChartPanel) comp;
+        JFreeChart chart = chartPanel.getChart();
+        Plot plot = (chart.getPlot());
+        if (!(plot instanceof XYPlot)) continue;
+        XYPlot xyPlot = (XYPlot) plot;
+        xyPlot.setFixedRangeAxisSpace(fRangeAxisSpace);
+      }
     }
 
-    private void buildStatGraphLater(final String name, final List<DataDisplay> displayList) {
+    private void buildNodeGraphsLater(final List<DataDisplay> displayList, final List<StatisticData> threadDumps) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          buildStatGraph(name, displayList);
+          buildNodeGraphs(displayList, threadDumps);
           fGraphPanel.revalidate();
           fGraphPanel.repaint();
         }
@@ -513,8 +479,6 @@ public class ClusterVisualizerFrame extends JFrame {
     dir.mkdir();
     fStore = new MyStatisticsStore(dir);
     fStore.open();
-
-    fDisplayCache.clear();
   }
 
   void newStore() throws Exception {
@@ -598,7 +562,7 @@ public class ClusterVisualizerFrame extends JFrame {
           iter.remove();
         }
       }
-      stats.add(SRAMemoryUsage.ACTION_NAME);
+      stats.add("memory usage");
     }
 
     if (stats.contains(SRACpuConstants.DATA_NAME_COMBINED)) {
@@ -634,16 +598,6 @@ public class ClusterVisualizerFrame extends JFrame {
         fSessionInfo.fNodeStatsMap.put(node, nodeStats);
       }
 
-      List<String> stats = fSessionInfo.fStatList;
-      Iterator<String> statIter = stats.iterator();
-      fSessionInfo.fStatNodesMap.clear();
-      while (statIter.hasNext()) {
-        String stat = statIter.next();
-        setStatusLineLater("Determining which nodes have '" + stat + "'");
-        List<Node> statNodes = getAvailableNodesForStat(stat);
-        fSessionInfo.fStatNodesMap.put(stat, statNodes);
-      }
-
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           fStatusLine.setText("");
@@ -664,15 +618,6 @@ public class ClusterVisualizerFrame extends JFrame {
     }
   }
 
-  private List<Node> getAvailableNodesForStat(String stat) {
-    try {
-      return fStore.getAvailableNodesForStat(fSessionInfo.fId, stat);
-    } catch (Exception e) {
-      e.printStackTrace();
-      return new ArrayList<Node>();
-    }
-  }
-
   private void setupControlPanel() {
     if (fControlPanel == null) {
       fControlPanel = new JPanel(new BorderLayout());
@@ -683,9 +628,7 @@ public class ClusterVisualizerFrame extends JFrame {
       fControlPanel.removeAll();
     }
     List<Node> nodes = fSessionInfo.fNodeList;
-    List<String> stats = fSessionInfo.fStatList;
     Iterator<Node> nodeIter = nodes.iterator();
-    Iterator<String> statIter = stats.iterator();
     JPanel buttonPanel = new JPanel(new GridBagLayout());
     buttonPanel.add(new JButton(new GenerateGraphsAction()));
     GridBagConstraints gbc = new GridBagConstraints();
@@ -695,7 +638,6 @@ public class ClusterVisualizerFrame extends JFrame {
     gbc.ipady = gbc.ipadx = 10;
     gbc.anchor = GridBagConstraints.NORTHWEST;
     gridPanel.add(buttonPanel);
-    fNodeGroups.clear();
     while (nodeIter.hasNext()) {
       Node node = nodeIter.next();
       List<String> nodeStats = fSessionInfo.fNodeStatsMap.get(node);
@@ -703,92 +645,42 @@ public class ClusterVisualizerFrame extends JFrame {
         gridPanel.add(createNodeGroup(node, nodeStats), gbc);
       }
     }
-    fStatGroups.clear();
-    boolean haveMemoryUsage = false;
-    boolean haveCPUUsage = false;
-    while (statIter.hasNext()) {
-      String stat = statIter.next();
-      List<Node> statNodes = fSessionInfo.fStatNodesMap.get(stat);
-      if (statNodes != null && statNodes.size() > 0) {
-        if (!haveMemoryUsage && stat.startsWith("memory ")) {
-          stat = SRAMemoryUsage.ACTION_NAME;
-          haveMemoryUsage = true;
-          gridPanel.add(createStatGroup(stat, statNodes), gbc);
-        } else if (!haveCPUUsage && stat.startsWith("cpu ")) {
-          stat = "cpu usage";
-          haveCPUUsage = true;
-          gridPanel.add(createStatGroup(stat, statNodes), gbc);
-        } else if (!fStore.isNonGratis(stat)) {
-          gridPanel.add(createStatGroup(stat, statNodes), gbc);
-        }
-      }
-    }
     fControlPanel.revalidate();
     fControlPanel.repaint();
   }
 
   private Container createNodeGroup(Node node, List<String> stats) {
-    Map<String, JCheckBox> controlMap = new HashMap<String, JCheckBox>();
     JPanel panel = new JPanel(new GridLayout(stats.size() + 1, 1));
     Insets insets = new Insets(0, 20, 0, 0);
-    NodeControl leadControl = new NodeLeadControl(node);
-    panel.add(leadControl);
+    NodeControl nodeControl = new NodeControl(node);
+    panel.add(nodeControl);
     Iterator<String> iter = stats.iterator();
     while (iter.hasNext()) {
-      String follower = iter.next();
-      JCheckBox control = new JCheckBox(follower, true);
-      control.setName(follower);
-      control.setMargin(insets);
-      panel.add(control);
-      controlMap.put(follower, control);
+      String stat = iter.next();
+      StatControl statControl = new StatControl(stat);
+      statControl.setMargin(insets);
+      nodeControl.addStat(statControl);
+      panel.add(statControl);
     }
-    fNodeGroups.put(leadControl, controlMap);
+    fNodeControlList.add(nodeControl);
     return panel;
   }
 
-  private Container createStatGroup(String stat, List<Node> nodes) {
-    Map<Node, NodeControl> controlMap = new HashMap<Node, NodeControl>();
-    JPanel panel = new JPanel(new GridLayout(nodes.size() + 1, 1));
-    Insets insets = new Insets(0, 20, 0, 0);
-    StatControl leadControl = new StatLeadControl(stat);
-    leadControl.setName(stat);
-    panel.add(leadControl);
-    Iterator<Node> iter = nodes.iterator();
-    while (iter.hasNext()) {
-      Node node = iter.next();
-      NodeControl control = new NodeControl(node);
-      control.setMargin(insets);
-      panel.add(control);
-      controlMap.put(node, control);
+  private void buildNodeGraphs(List<DataDisplay> displayList, List<StatisticData> threadDumps) {
+    Iterator<DataDisplay> displayIter = displayList.iterator();
+    while (displayIter.hasNext()) {
+      buildNodeGraph(displayIter.next(), threadDumps);
     }
-    fStatGroups.put(leadControl, controlMap);
-    return panel;
   }
 
-  private JFreeChart buildNodeGraph(String title, List<DataDisplay> displayList, List<StatisticData> threadDumps) {
-    boolean topOrLeft = true;
+  private JFreeChart buildNodeGraph(DataDisplay display, List<StatisticData> threadDumps) {
     DateAxis timeAxis = new DateAxis("");
     timeAxis.setLowerMargin(0.02);
     timeAxis.setUpperMargin(0.02);
-    XYPlot plot = new XYPlot(null, timeAxis, null, null);
+    XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, false);
     XYToolTipGenerator toolTipGenerator = StandardXYToolTipGenerator.getTimeSeriesInstance();
-    for (int i = 0; i < displayList.size(); i++) {
-      DataDisplay dd = displayList.get(i);
-      plot.setDataset(i, dd.fXYDataset);
-      plot.setRangeAxis(i, dd.fAxis);
-      XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, false);
-      renderer.setBaseToolTipGenerator(toolTipGenerator);
-      plot.setRenderer(i, renderer);
-      Paint paint = renderer.lookupSeriesPaint(i);
-      renderer.setSeriesPaint(0, paint);
-      plot.setRangeAxisLocation(i, topOrLeft ? AxisLocation.TOP_OR_LEFT : AxisLocation.BOTTOM_OR_RIGHT);
-      topOrLeft = !topOrLeft;
-      plot.mapDatasetToRangeAxis(i, i);
-      dd.fAxis.setTickLabelPaint(Color.black);
-      dd.fAxis.setAxisLinePaint(paint);
-      dd.fAxis.setAxisLineStroke(new BasicStroke(2.0f));
-      dd.fAxis.setTickMarkPaint(paint);
-    }
+    renderer.setBaseToolTipGenerator(toolTipGenerator);
+    XYPlot plot = new XYPlot(display.fXYDataset, timeAxis, display.fAxis, renderer);
 
     Iterator<StatisticData> threadDumpIter = threadDumps.iterator();
     while (threadDumpIter.hasNext()) {
@@ -799,9 +691,9 @@ public class ClusterVisualizerFrame extends JFrame {
       plot.addAnnotation(annotation);
     }
 
-    JFreeChart chart = new JFreeChart("", JFreeChart.DEFAULT_TITLE_FONT, plot, true);
+    JFreeChart chart = new JFreeChart("", JFreeChart.DEFAULT_TITLE_FONT, plot, display.fShowLegend);
     final ChartPanel chartPanel = new ChartPanel(chart, false);
-    chartPanel.setBorder(new TitledBorder(title));
+    chartPanel.setBorder(new TitledBorder(display.getTitle()));
     fGraphPanel.add(chartPanel);
     chartPanel.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
@@ -816,48 +708,67 @@ public class ClusterVisualizerFrame extends JFrame {
       }
     });
     chartPanel.setPreferredSize(fDefaultGraphSize);
-    AxisSpace rangeAxisSpace = new AxisSpace();
-    rangeAxisSpace.setLeft(150);
-    rangeAxisSpace.setRight(150);
-    plot.setFixedRangeAxisSpace(rangeAxisSpace);
+    reserveRangeAxisSpace((Graphics2D) chartPanel.getGraphics(), plot);
+
     return chart;
   }
 
-  private JFreeChart buildStatGraph(String title, List<DataDisplay> displayList) {
-    DateAxis timeAxis = new DateAxis("");
-    timeAxis.setLowerMargin(0.02);
-    timeAxis.setUpperMargin(0.02);
-    XYPlot plot = new XYPlot(null, timeAxis, null, null);
-    XYToolTipGenerator toolTipGenerator = StandardXYToolTipGenerator.getTimeSeriesInstance();
-    for (int i = 0; i < displayList.size(); i++) {
-      DataDisplay dd = displayList.get(i);
-      plot.setDataset(i, dd.fXYDataset);
-      if (i == 0) {
-        plot.setRangeAxis(i, dd.fAxis);
-        dd.fAxis.setLabel("");
-        dd.fAxis.setTickLabelPaint(Color.black);
-        dd.fAxis.setAxisLinePaint(Color.black);
-        dd.fAxis.setAxisLineStroke(new BasicStroke());
-        dd.fAxis.setTickMarkPaint(Color.black);
+  private void reserveRangeAxisSpace(Graphics2D graphics, XYPlot plot) {
+    ValueAxis axis = plot.getRangeAxis();
+    double currLeft = fRangeAxisSpace.getLeft();
+    double tickWidth = getRangeAxisTickWidth(graphics, plot);
+    Rectangle2D labelArea = getLabelEnclosure(axis, graphics, RectangleEdge.LEFT);
+    double totalWidth = tickWidth + labelArea.getWidth();
+    if (totalWidth > currLeft) {
+      fRangeAxisSpace.setLeft(totalWidth);
+    }
+  }
+
+  private Rectangle2D getLabelEnclosure(Axis axis, Graphics2D g2, RectangleEdge edge) {
+    Rectangle2D result = new Rectangle2D.Double();
+    String axisLabel = axis.getLabel();
+    if (axisLabel != null && !axisLabel.equals("")) {
+      FontMetrics fm = g2.getFontMetrics(axis.getLabelFont());
+      Rectangle2D bounds = TextUtilities.getTextBounds(axisLabel, g2, fm);
+      RectangleInsets insets = axis.getLabelInsets();
+      bounds = insets.createOutsetRectangle(bounds);
+      double angle = axis.getLabelAngle();
+      if (edge == RectangleEdge.LEFT || edge == RectangleEdge.RIGHT) {
+        angle = angle - Math.PI / 2.0;
       }
-      XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, false);
-      renderer.setBaseToolTipGenerator(toolTipGenerator);
-      plot.setRenderer(i, renderer);
-      Paint paint = renderer.lookupSeriesPaint(i);
-      renderer.setSeriesPaint(0, paint);
+      double x = bounds.getCenterX();
+      double y = bounds.getCenterY();
+      AffineTransform transformer = AffineTransform.getRotateInstance(angle, x, y);
+      Shape labelBounds = transformer.createTransformedShape(bounds);
+      result = labelBounds.getBounds2D();
     }
 
-    JFreeChart chart = new JFreeChart("", JFreeChart.DEFAULT_TITLE_FONT, plot, true);
-    final ChartPanel chartPanel = new ChartPanel(chart, false);
-    chartPanel.setBorder(new TitledBorder(title));
-    fGraphPanel.add(chartPanel);
+    return result;
+  }
 
-    chartPanel.setPreferredSize(fDefaultGraphSize);
-    AxisSpace rangeAxisSpace = new AxisSpace();
-    rangeAxisSpace.setLeft(150);
-    rangeAxisSpace.setRight(150);
-    plot.setFixedRangeAxisSpace(rangeAxisSpace);
-    return chart;
+  private double getRangeAxisTickWidth(Graphics graphics, XYPlot plot) {
+    NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
+    RectangleInsets tickLabelInsets = numberAxis.getTickLabelInsets();
+    NumberTickUnit unit = numberAxis.getTickUnit();
+
+    // look at lower and upper bounds...
+    FontMetrics fm = graphics.getFontMetrics(numberAxis.getTickLabelFont());
+    Range range = numberAxis.getRange();
+    double lower = range.getLowerBound();
+    double upper = range.getUpperBound();
+    String lowerStr = "";
+    String upperStr = "";
+    NumberFormat formatter = numberAxis.getNumberFormatOverride();
+    if (formatter != null) {
+      lowerStr = formatter.format(lower);
+      upperStr = formatter.format(upper);
+    } else {
+      lowerStr = unit.valueToString(lower);
+      upperStr = unit.valueToString(upper);
+    }
+    double w1 = fm.stringWidth(lowerStr);
+    double w2 = fm.stringWidth(upperStr);
+    return Math.max(w1, w2) + tickLabelInsets.getLeft() + tickLabelInsets.getRight();
   }
 
   private void showThreadDump(String text) {
@@ -870,33 +781,6 @@ public class ClusterVisualizerFrame extends JFrame {
     dialog.pack();
     dialog.setLocationRelativeTo(null);
     dialog.setVisible(true);
-  }
-
-  class DisplaySource {
-    Node   fNode;
-    String fStat;
-
-    DisplaySource(Node node, String stat) {
-      fNode = node;
-      fStat = stat;
-    }
-
-    public int hashCode() {
-      HashCodeBuilder hcb = new HashCodeBuilder();
-      return hcb.append(fNode).append(fStat).toHashCode();
-    }
-
-    public boolean equals(Object other) {
-      if (other == null) return false;
-      if (!(other instanceof DisplaySource)) return false;
-      if (other == this) return true;
-      DisplaySource otherDisplaySource = (DisplaySource) other;
-      return fNode.equals(otherDisplaySource.fNode) && fStat.equals(otherDisplaySource.fStat);
-    }
-
-    public String toString() {
-      return fNode + ":" + fStat;
-    }
   }
 
   class NodeGroupHandler {
@@ -931,63 +815,14 @@ public class ClusterVisualizerFrame extends JFrame {
       Iterator<String> statIter = fStats.iterator();
       while (statIter.hasNext()) {
         String stat = statIter.next();
-        DisplaySource displaySource = new DisplaySource(fNode, stat);
-        DataDisplay cachedDisplay = fDisplayCache.get(displaySource);
-        if (false && cachedDisplay != null) {
-          DataDisplay display = cachedDisplay.createCopy(stat);
-          if (display != null) {
-            displayList.add(display);
-            continue;
-          }
-        }
         AbstractStatHandler handler = getStatHandler(stat);
         if (handler != null) {
           handler.setNode(fNode);
           handler.setLegend(stat);
-          setStatusLineLater("Generating display for '" + displaySource + "'");
+          setStatusLineLater("Generating display for '" + fNode + ":" + stat + "'");
           DataDisplay display = handler.generateDisplay();
           if (display.fXYDataset.getSeriesCount() > 0) {
             displayList.add(display);
-            fDisplayCache.put(displaySource, display);
-          }
-        }
-      }
-      return displayList;
-    }
-  }
-
-  class StatGroupHandler {
-    String     fStat;
-    List<Node> fNodes;
-
-    StatGroupHandler(String stat, List<Node> nodes) {
-      fStat = stat;
-      fNodes = nodes;
-    }
-
-    List<DataDisplay> generateDisplay() {
-      ArrayList<DataDisplay> displayList = new ArrayList<DataDisplay>();
-      AbstractStatHandler handler = getStatHandler(fStat);
-      if (handler != null) {
-        Iterator<Node> nodeIter = fNodes.iterator();
-        while (nodeIter.hasNext()) {
-          Node node = nodeIter.next();
-          DisplaySource displaySource = new DisplaySource(node, fStat);
-          DataDisplay cachedDisplay = fDisplayCache.get(displaySource);
-          if (false && cachedDisplay != null) {
-            DataDisplay display = cachedDisplay.createCopy(node.toString());
-            if (display != null) {
-              displayList.add(display);
-              continue;
-            }
-          }
-          handler.setNode(node);
-          handler.setLegend(node.toString());
-          setStatusLineLater("Generating display for '" + displaySource + "'");
-          DataDisplay display = handler.generateDisplay();
-          if (display.fXYDataset.getSeriesCount() > 0) {
-            displayList.add(display);
-            fDisplayCache.put(displaySource, display);
           }
         }
       }
@@ -1058,13 +893,14 @@ public class ClusterVisualizerFrame extends JFrame {
     }
 
     NumberAxis generateAxis() {
-      NumberAxis axis = new NumberAxis("Memory Usage");
+      NumberAxis axis = new NumberAxis();
       axis.setRange(0.0, 1.0);
       return axis;
     }
 
     DataDisplay generateDisplay() {
-      DataDisplay display = new DataDisplay(generateTimeSeriesCollection(), generateAxis());
+      TimeSeriesCollection tsc = generateTimeSeriesCollection();
+      DataDisplay display = new DataDisplay(fNode + " (Memory Usage)", tsc, generateAxis(), false);
       return display;
     }
 
@@ -1090,7 +926,7 @@ public class ClusterVisualizerFrame extends JFrame {
           if (moment != null && value != null) {
             String element = sd.getElement();
             TimeSeries series = seriesMap.get(element);
-            if(series == null) {
+            if (series == null) {
               seriesMap.put(element, series = new TimeSeries(element, Second.class));
               result.addSeries(series);
             }
@@ -1101,39 +937,40 @@ public class ClusterVisualizerFrame extends JFrame {
       });
 
       int seriesCount = result.getSeriesCount();
-      for(int i = seriesCount-1; i >= 0 ; i--) {
+      for (int i = seriesCount - 1; i >= 0; i--) {
         TimeSeries series = result.getSeries(i);
         int itemCount = series.getItemCount();
         boolean foundData = false;
-        for(int j = 0; j < itemCount; j++) {
+        for (int j = 0; j < itemCount; j++) {
           TimeSeriesDataItem item = series.getDataItem(j);
-          if(item.getValue().doubleValue() > 0.0) {
+          if (item.getValue().doubleValue() > 0.0) {
             foundData = true;
             break;
           }
         }
-        if(!foundData) {
+        if (!foundData) {
           result.removeSeries(i);
         }
       }
-      
+
       return result;
     }
- 
+
     NumberAxis generateAxis() {
-      NumberAxis axis = new NumberAxis("SEDA Queue Depths");
+      NumberAxis axis = new NumberAxis();
       axis.setRangeType(RangeType.POSITIVE);
       axis.setNumberFormatOverride(new DecimalFormat("0.0"));
       return axis;
     }
 
     DataDisplay generateDisplay() {
-      DataDisplay display = new DataDisplay(generateTimeSeriesCollection(), generateAxis());
+      TimeSeriesCollection tsc = generateTimeSeriesCollection();
+      DataDisplay display = new DataDisplay(fNode + " (SEDA Queue Depths)", tsc, generateAxis(), true);
       return display;
     }
 
   }
-  
+
   class CPUUsageHandler extends AbstractStatHandler {
     String getName() {
       return "cpu usage";
@@ -1153,10 +990,10 @@ public class ClusterVisualizerFrame extends JFrame {
           Date moment = sd.getMoment();
           if (moment != null && value != null) {
             String element = sd.getElement();
-            String key = fNode.fIpAddr+":"+element;
+            String key = fNode.fIpAddr + ":" + element;
             TimeSeries series = seriesMap.get(key);
-            if(series == null) {
-              seriesMap.put(key, series = new TimeSeries(fNode.fIpAddr+"("+element+")", Second.class));
+            if (series == null) {
+              seriesMap.put(key, series = new TimeSeries(element, Second.class));
               result.addSeries(series);
             }
             series.addOrUpdate(new Second(moment), value.doubleValue());
@@ -1169,13 +1006,14 @@ public class ClusterVisualizerFrame extends JFrame {
     }
 
     NumberAxis generateAxis() {
-      NumberAxis axis = new NumberAxis("CPU Usage");
+      NumberAxis axis = new NumberAxis();
       axis.setRange(0.0, 1.0);
       return axis;
     }
 
     DataDisplay generateDisplay() {
-      DataDisplay display = new DataDisplay(generateTimeSeriesCollection(), generateAxis());
+      TimeSeriesCollection tsc = generateTimeSeriesCollection();
+      DataDisplay display = new DataDisplay(fNode + " (CPU)", tsc, generateAxis(), tsc.getSeriesCount() > 1);
       return display;
     }
 
@@ -1208,14 +1046,15 @@ public class ClusterVisualizerFrame extends JFrame {
     }
 
     NumberAxis generateAxis() {
-      NumberAxis axis = new NumberAxis("L2-L1 Fault");
+      NumberAxis axis = new NumberAxis();
       axis.setRangeType(RangeType.POSITIVE);
       axis.setNumberFormatOverride(new DecimalFormat("0.0"));
       return axis;
     }
 
     DataDisplay generateDisplay() {
-      DataDisplay display = new DataDisplay(generateTimeSeriesCollection(), generateAxis());
+      TimeSeriesCollection tsc = generateTimeSeriesCollection();
+      DataDisplay display = new DataDisplay(fNode + " (L2-L1 Faults)", tsc, generateAxis(), false);
       return display;
     }
   }
@@ -1247,14 +1086,15 @@ public class ClusterVisualizerFrame extends JFrame {
     }
 
     NumberAxis generateAxis() {
-      NumberAxis axis = new NumberAxis("L2 Broadcasts");
+      NumberAxis axis = new NumberAxis();
       axis.setRangeType(RangeType.POSITIVE);
       axis.setNumberFormatOverride(new DecimalFormat("0.0"));
       return axis;
     }
 
     DataDisplay generateDisplay() {
-      DataDisplay display = new DataDisplay(generateTimeSeriesCollection(), generateAxis());
+      TimeSeriesCollection tsc = generateTimeSeriesCollection();
+      DataDisplay display = new DataDisplay(fNode + " (Broadcasts/sec.)", tsc, generateAxis(), false);
       return display;
     }
   }
@@ -1286,14 +1126,15 @@ public class ClusterVisualizerFrame extends JFrame {
     }
 
     NumberAxis generateAxis() {
-      NumberAxis axis = new NumberAxis("L2 Broadcasts/txn");
+      NumberAxis axis = new NumberAxis();
       axis.setRangeType(RangeType.POSITIVE);
       axis.setNumberFormatOverride(new DecimalFormat("0.0"));
       return axis;
     }
 
     DataDisplay generateDisplay() {
-      DataDisplay display = new DataDisplay(generateTimeSeriesCollection(), generateAxis());
+      TimeSeriesCollection tsc = generateTimeSeriesCollection();
+      DataDisplay display = new DataDisplay(fNode + " (Broadcasts/txn.)", tsc, generateAxis(), false);
       return display;
     }
   }
@@ -1325,14 +1166,15 @@ public class ClusterVisualizerFrame extends JFrame {
     }
 
     NumberAxis generateAxis() {
-      NumberAxis axis = new NumberAxis("L2 Changes/Broadcast");
+      NumberAxis axis = new NumberAxis();
       axis.setRangeType(RangeType.POSITIVE);
       axis.setNumberFormatOverride(new DecimalFormat("0.0"));
       return axis;
     }
 
     DataDisplay generateDisplay() {
-      DataDisplay display = new DataDisplay(generateTimeSeriesCollection(), generateAxis());
+      TimeSeriesCollection tsc = generateTimeSeriesCollection();
+      DataDisplay display = new DataDisplay(fNode + " (Changes/Broadcast)", tsc, generateAxis(), false);
       return display;
     }
   }
@@ -1364,13 +1206,14 @@ public class ClusterVisualizerFrame extends JFrame {
     }
 
     NumberAxis generateAxis() {
-      NumberAxis axis = new NumberAxis("Tx Rate");
+      NumberAxis axis = new NumberAxis();
       axis.setRangeType(RangeType.POSITIVE);
       return axis;
     }
 
     DataDisplay generateDisplay() {
-      DataDisplay display = new DataDisplay(generateTimeSeriesCollection(), generateAxis());
+      TimeSeriesCollection tsc = generateTimeSeriesCollection();
+      DataDisplay display = new DataDisplay(fNode + " (Transaction Rate)", tsc, generateAxis(), false);
       return display;
     }
   }
@@ -1416,38 +1259,44 @@ public class ClusterVisualizerFrame extends JFrame {
     }
   }
 
-  class NodeControl extends JCheckBox {
-    Node fNode;
+  class NodeControl extends JCheckBox implements ActionListener {
+    Node              fNode;
+    List<StatControl> fStatControlList = new ArrayList<StatControl>();
 
     NodeControl(Node node) {
       super(node.toString());
       fNode = node;
       setSelected(true);
+      addActionListener(this);
+    }
+
+    public void actionPerformed(ActionEvent ae) {
+      boolean selected = isSelected();
+      Iterator<StatControl> statControlIter = fStatControlList.iterator();
+      while (statControlIter.hasNext()) {
+        StatControl control = statControlIter.next();
+        control.setSelected(selected);
+      }
+    }
+
+    List<String> getSelectedStats() {
+      List<String> statList = new ArrayList<String>();
+      Iterator<StatControl> statControlIter = fStatControlList.iterator();
+      while (statControlIter.hasNext()) {
+        StatControl control = statControlIter.next();
+        if (control.isSelected()) {
+          statList.add(control.fStat);
+        }
+      }
+      return statList;
     }
 
     Node getNode() {
       return fNode;
     }
-  }
 
-  class NodeLeadControl extends NodeControl implements ActionListener {
-    NodeLeadControl(Node node) {
-      super(node);
-      addActionListener(this);
-    }
-
-    public void actionPerformed(ActionEvent ae) {
-      if (fNodeGroups != null) {
-        boolean selected = isSelected();
-        Map<String, JCheckBox> statControlMap = fNodeGroups.get(this);
-        if (statControlMap != null) {
-          Iterator<String> statIter = statControlMap.keySet().iterator();
-          while (statIter.hasNext()) {
-            JCheckBox statControl = statControlMap.get(statIter.next());
-            statControl.setEnabled(selected);
-          }
-        }
-      }
+    void addStat(StatControl statControl) {
+      fStatControlList.add(statControl);
     }
   }
 
@@ -1458,31 +1307,11 @@ public class ClusterVisualizerFrame extends JFrame {
       super(stat);
       fStat = stat;
       setSelected(true);
+      setName(stat);
     }
 
     String getStat() {
       return fStat;
-    }
-  }
-
-  class StatLeadControl extends StatControl implements ActionListener {
-    StatLeadControl(String stat) {
-      super(stat);
-      addActionListener(this);
-    }
-
-    public void actionPerformed(ActionEvent ae) {
-      if (fStatGroups != null) {
-        boolean selected = isSelected();
-        Map<Node, NodeControl> nodeControlMap = fStatGroups.get(this);
-        if (nodeControlMap != null) {
-          Iterator<Node> nodeIter = nodeControlMap.keySet().iterator();
-          while (nodeIter.hasNext()) {
-            NodeControl nodeControl = nodeControlMap.get(nodeIter.next());
-            nodeControl.setEnabled(selected);
-          }
-        }
-      }
     }
   }
 
@@ -1554,12 +1383,16 @@ class Node {
 }
 
 class DataDisplay {
+  String     fTitle;
   XYDataset  fXYDataset;
   NumberAxis fAxis;
+  boolean    fShowLegend;
 
-  DataDisplay(XYDataset xyDataset, NumberAxis axis) {
+  DataDisplay(String title, XYDataset xyDataset, NumberAxis axis, boolean showLegend) {
+    fTitle = title;
     fXYDataset = xyDataset;
     fAxis = axis;
+    fShowLegend = showLegend;
   }
 
   public DataDisplay createCopy(String name) {
@@ -1567,11 +1400,15 @@ class DataDisplay {
       TimeSeries ts = ((TimeSeriesCollection) fXYDataset).getSeries(0);
       ts.setKey(name);
       TimeSeriesCollection tsc = new TimeSeriesCollection(ts);
-      DataDisplay dd = new DataDisplay(tsc, (NumberAxis) fAxis.clone());
+      DataDisplay dd = new DataDisplay(fTitle, tsc, (NumberAxis) fAxis.clone(), fShowLegend);
       return dd;
     } catch (CloneNotSupportedException e) {
       return null;
     }
+  }
+
+  public String getTitle() {
+    return fTitle;
   }
 
   public String toString() {
@@ -1668,8 +1505,9 @@ class MyStatisticsStore extends H2StatisticsStoreImpl {
   static {
     STATS_NON_GRATIS.addAll(Arrays.asList(new String[] { SRAStartupTimestamp.ACTION_NAME,
       SRAShutdownTimestamp.ACTION_NAME, SRASystemProperties.ACTION_NAME, SRAThreadDump.ACTION_NAME,
-      SRACpuConstants.DATA_NAME_IDLE, SRACpuConstants.DATA_NAME_NICE, SRACpuConstants.DATA_NAME_WAIT, SRACpuConstants.DATA_NAME_SYS, SRACpuConstants.DATA_NAME_USER,
-      SRAMemoryUsage.DATA_NAME_FREE, SRAMemoryUsage.DATA_NAME_MAX }));
+      SRACpuConstants.DATA_NAME_IDLE, SRACpuConstants.DATA_NAME_NICE, SRACpuConstants.DATA_NAME_WAIT,
+      SRACpuConstants.DATA_NAME_SYS, SRACpuConstants.DATA_NAME_USER, SRAMemoryUsage.DATA_NAME_FREE,
+      SRAMemoryUsage.DATA_NAME_MAX }));
   }
 
   public MyStatisticsStore(File dir) {

@@ -12,8 +12,11 @@ public class XTextField extends TextField {
   
   public XTextField() {
     super();
-    m_helper = new TextComponentHelper(this);
-    setPopupMenu(createPopup());
+    m_helper = createHelper();
+  }
+  
+  protected TextComponentHelper createHelper() {
+    return new TextComponentHelper(this);
   }
   
   protected JPopupMenu createPopup() {
@@ -26,5 +29,12 @@ public class XTextField extends TextField {
 
   public JPopupMenu getPopupMenu() {
     return m_helper.getPopupMenu();
+  }
+
+  public void addNotify() {
+    super.addNotify();
+    if(getPopupMenu() == null) {
+      setPopupMenu(createPopup());
+    }
   }
 }

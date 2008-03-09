@@ -91,7 +91,7 @@ public class DemoChartFactory {
     return createXYLineChart(header, xLabel, yLabel, dataset, true);
   }
 
-  private static JFreeChart createXYLineChart(
+  public static JFreeChart createXYLineChart(
     String    header,
     String    xLabel,
     String    yLabel,

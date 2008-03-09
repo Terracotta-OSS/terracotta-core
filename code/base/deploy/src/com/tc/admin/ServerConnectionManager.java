@@ -4,6 +4,8 @@
  */
 package com.tc.admin;
 
+import org.apache.commons.lang.StringUtils;
+
 import com.tc.config.schema.L2Info;
 import com.tc.management.JMXConnectorProxy;
 
@@ -60,7 +62,8 @@ public class ServerConnectionManager implements NotificationListener {
         level = Level.ALL;
       }
     }
-    Logger.getLogger("javax.management.remote").setLevel(level);
+    //Logger.getLogger("javax.management.remote").setLevel(level);
+    Logger.getLogger("javax.management.remote").setLevel(Level.FINEST);
   }
 
   public ServerConnectionManager(String host, int port, boolean autoConnect, ConnectionListener listener) {
@@ -75,6 +78,14 @@ public class ServerConnectionManager implements NotificationListener {
     setL2Info(l2Info);
   }
 
+  public void setConnectionListener(ConnectionListener listener) {
+    m_connectListener = listener;
+  }
+  
+  public ConnectionListener getConnectionListener() {
+    return m_connectListener;
+  }
+  
   public L2Info getL2Info() {
     return m_l2Info;
   }
@@ -162,10 +173,7 @@ public class ServerConnectionManager implements NotificationListener {
         if (m_connected == false) {
           cancelActiveServices();
           m_active = m_started = m_passiveUninitialized = m_passiveStandby = false;
-          if (isAutoConnect()) {
-            startConnect();
-          }
-        } else { // connected
+        } else {
           cacheCredentials(ServerConnectionManager.this, getCredentials());
           m_started = true;
           if ((m_active = internalIsActive()) == false) {
@@ -174,13 +182,18 @@ public class ServerConnectionManager implements NotificationListener {
             }
             addActivationListener();
           }
-          initConnectionMonitor();
         }
       }
 
       // Notify listener that the connection state changed.
       if (m_connectListener != null) {
         m_connectListener.handleConnection();
+      }
+      
+      if(m_connected) {
+        initConnectionMonitor();
+      } else if (isAutoConnect()) {
+        startConnect();
       }
     }
   }
@@ -210,23 +223,13 @@ public class ServerConnectionManager implements NotificationListener {
     return m_connectEnv;
   }
 
-  class ConnectorCloser implements Runnable {
-    private JMXConnector m_connector;
-
-    ConnectorCloser(JMXConnector connector) {
-      m_connector = connector;
-    }
-
-    public void run() {
+  private void initConnector() {
+    if (m_jmxConnector != null) {
       try {
-        m_connector.close();
+        m_jmxConnector.close();
       } catch (Exception e) {/**/
       }
     }
-  }
-
-  private void initConnector() {
-    if (m_jmxConnector != null) new Thread(new ConnectorCloser(m_jmxConnector)).start();
     m_jmxConnector = new JMXConnectorProxy(getHostname(), getJMXPortNumber(), getConnectionEnvironment());
   }
 
@@ -375,6 +378,10 @@ public class ServerConnectionManager implements NotificationListener {
     return m_connectException;
   }
 
+  public boolean testIsActive() {
+    return internalIsActive();
+  }
+  
   public boolean isActive() {
     return m_active;
   }
@@ -435,7 +442,7 @@ public class ServerConnectionManager implements NotificationListener {
 
   private class ConnectionMonitorAction extends TimerTask {
     public void run() {
-      if (m_connectCntx.isConnected()) {
+      if (m_connectCntx != null && m_connectCntx.isConnected()) {
         try {
           m_connectCntx.testConnection();
         } catch (Exception e) {
@@ -543,6 +550,8 @@ public class ServerConnectionManager implements NotificationListener {
   }
 
   public void tearDown() {
+    Thread.dumpStack();
+    
     cancelActiveServices();
 
     m_l2Info = null;
@@ -552,6 +561,18 @@ public class ServerConnectionManager implements NotificationListener {
     m_connectThread = null;
   }
 
+  public boolean equals(Object o) {
+    if(!(o instanceof ServerConnectionManager)) return false;
+    
+    ServerConnectionManager other = (ServerConnectionManager)o;
+    String otherHostname = other.getHostname();
+    int otherJMXPort = other.getJMXPortNumber();
+    String hostname = getHostname();
+    int jmxPort = getJMXPortNumber();
+    
+    return otherJMXPort == jmxPort && StringUtils.equals(otherHostname, hostname);
+  }
+  
   // --------------------------------------------------------------------------------
 
   public static interface AutoConnectListener extends EventListener {

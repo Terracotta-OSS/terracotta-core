@@ -5,26 +5,28 @@
 package com.tc.admin.dso;
 
 import com.tc.admin.AdminClient;
+import com.tc.admin.ClusterNode;
 import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.ComponentNode;
 
-import java.io.IOException;
-
-import javax.management.AttributeNotFoundException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanException;
-import javax.management.MalformedObjectNameException;
-import javax.management.ReflectionException;
-
 public class GCStatsNode extends ComponentNode {
-  public GCStatsNode(ConnectionContext cc) throws IOException, MBeanException, MalformedObjectNameException,
-      AttributeNotFoundException, ReflectionException, InstanceNotFoundException {
+  private ClusterNode m_clusterNode;
+  
+  public GCStatsNode(ClusterNode clusterNode) throws Exception {
     super();
-
+    m_clusterNode = clusterNode;
     setLabel(AdminClient.getContext().getMessage("dso.gcstats"));
-    setComponent(new GCStatsPanel(cc));
+    setComponent(new GCStatsPanel(this));
   }
 
+  ConnectionContext getConnectionContext() {
+    return m_clusterNode.getConnectionContext();
+  }
+  
+  public void newConnectionContext() {
+    ((GCStatsPanel)getComponent()).newConnectionContext();
+  }
+  
   public void tearDown() {
     ((GCStatsPanel) getComponent()).tearDown();
     super.tearDown();

@@ -3,6 +3,8 @@
  */
 package com.tc.admin;
 
+import org.dijon.Container;
+
 import com.tc.admin.common.XFrame;
 import com.tc.admin.common.XMenuBar;
 import com.tc.admin.common.XTreeNode;
@@ -69,6 +71,10 @@ public class AdminClientFrame extends XFrame
     return m_mainPanel.testServerMatch(node);
   }
   
+  public boolean testServerMatch(ClusterNode node) {
+    return m_mainPanel.testServerMatch(node);
+  }
+  
   private Preferences getPreferences() {
     AdminClientContext acc = AdminClient.getContext();
     return acc.prefs.node("AdminClientFrame");
@@ -94,8 +100,8 @@ public class AdminClientFrame extends XFrame
     m_mainPanel.log(s);
   }
 
-  public void log(Exception e) {
-    m_mainPanel.log(e);
+  public void log(Throwable t) {
+    m_mainPanel.log(t);
   }
 
   public void setStatus(String msg) {
@@ -106,6 +112,10 @@ public class AdminClientFrame extends XFrame
     m_mainPanel.clearStatus();
   }
 
+  public Container getActivityArea() {
+    return m_mainPanel.getActivityArea();
+  }
+  
   public Rectangle getDefaultBounds() {
     Toolkit               tk     = Toolkit.getDefaultToolkit();
     Dimension             size   = tk.getScreenSize();

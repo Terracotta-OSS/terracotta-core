@@ -4,6 +4,7 @@
 package com.tc.admin.dso;
 
 import com.tc.admin.AdminClient;
+import com.tc.admin.ClusterNode;
 import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.common.XAbstractAction;
@@ -17,20 +18,26 @@ import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 
 public class ClassesNode extends ComponentNode {
+  private ClusterNode   m_clusterNode;
   private JPopupMenu    m_popupMenu;
   private RefreshAction m_refreshAction;
 
   private static final String REFRESH_ACTION = "RefreshAction";
 
-  public ClassesNode(ConnectionContext cc) {
+  public ClassesNode(ClusterNode clusterNode) {
     super();
 
+    m_clusterNode = clusterNode;
     setLabel(AdminClient.getContext().getMessage("dso.classes"));
-    setComponent(new ClassesPanel(cc));
+    setComponent(new ClassesPanel(this));
 
     initMenu();
   }
 
+  ConnectionContext getConnectionContext() {
+    return m_clusterNode.getConnectionContext();
+  }
+  
   private void initMenu() {
     m_refreshAction = new RefreshAction();
 

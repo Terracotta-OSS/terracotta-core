@@ -251,7 +251,7 @@ public class PropertyTableModel extends AbstractTableModel {
       if((("get"+name).equals(methodName) ||
           ("is"+name).equals(methodName)) &&
           paramTypes.length == 0 && 
-          (returnType.isPrimitive() ||
+          (isPrimitiveOrWrapper(returnType) ||
            returnType.equals(String.class) ||
            returnType.equals(java.util.Date.class) ||
            hasEditor(returnType)))
@@ -272,6 +272,10 @@ public class PropertyTableModel extends AbstractTableModel {
     }
   }
 
+  private boolean isPrimitiveOrWrapper(Class c) {
+    return c.isPrimitive() || m_primitiveMap.containsValue(c);
+  }
+  
   public int getRowCount() {
     return m_instance != null ? m_fieldNames.length : 0;
   }

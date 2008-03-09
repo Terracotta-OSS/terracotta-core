@@ -34,7 +34,6 @@ import com.tc.admin.common.XMenuBar;
 import com.tc.admin.common.XMenuItem;
 import com.tc.admin.common.XRootNode;
 import com.tc.admin.common.XTabbedPane;
-import com.tc.admin.common.XTextArea;
 import com.tc.admin.common.XTextField;
 import com.tc.admin.common.XTreeModel;
 import com.tc.admin.common.XTreeNode;
@@ -93,6 +92,7 @@ import javax.swing.text.Element;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.html.HTML;
 import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.undo.UndoManager;
 import javax.swing.undo.UndoableEdit;
@@ -106,14 +106,15 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
   private Integer                     m_leftDivLoc;
   private DividerListener             m_dividerListener;
   private XTabbedPane                 m_bottomPane;
-  private XTextArea                   m_logArea;
+  private LogPane                     m_logArea;
   private ArrayList                   m_logListeners;
   private Icon                        m_infoIcon;
   private XTextField                  m_statusLine;
+  private Container                   m_activityArea;
   protected UndoAction                m_undoCmd;
   protected RedoAction                m_redoCmd;
   protected UndoManager               m_undoManager;
-  protected NewServerAction           m_newServerAction;
+  protected NewClusterAction          m_newClusterAction;
   protected HelpAction                m_helpAction;
   protected VersionCheckControlAction m_versionCheckAction;
   protected JCheckBoxMenuItem         m_versionCheckToggle;
@@ -141,9 +142,10 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     m_tree = (NavTree) findComponent("Tree");
     m_nodeView = (XContainer) findComponent("NodeView");
     m_bottomPane = (XTabbedPane) findComponent("BottomPane");
-    m_logArea = (XTextArea) m_bottomPane.findComponent("LogArea");
+    m_logArea = (LogPane) m_bottomPane.findComponent("LogArea");
     m_statusLine = (XTextField) findComponent("StatusLine");
-
+    m_activityArea = (Container) findComponent("ActivityArea");
+    
     m_nodeView.setLayout(new BorderLayout());
 
     m_tree.addMouseListener(new MouseAdapter() {
@@ -235,11 +237,11 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     initNavTreeMenu();
   }
 
-  protected NewServerAction getNewServerAction() {
-    if (m_newServerAction == null) {
-      m_newServerAction = new NewServerAction();
+  protected NewClusterAction getNewClusterAction() {
+    if (m_newClusterAction == null) {
+      m_newClusterAction = new NewClusterAction();
     }
-    return m_newServerAction;
+    return m_newClusterAction;
   }
 
   protected HelpAction getHelpAction() {
@@ -259,7 +261,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
   protected void initNavTreeMenu() {
     JPopupMenu popup = new JPopupMenu("ProjectTree Actions");
 
-    popup.add(getNewServerAction());
+    popup.add(getNewClusterAction());
     popup.add(new Separator());
     popup.add(getHelpAction());
     if (shouldAddAboutItem()) {
@@ -284,7 +286,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
   public void initMenubar(XMenuBar menuBar) {
     XMenu menu = new XMenu(getBundleString("file.menu.label"));
 
-    menu.add(m_newServerAction = new NewServerAction());
+    menu.add(m_newClusterAction = new NewClusterAction());
     menu.add(new JSeparator());
     menu.add(new QuitAction());
 
@@ -343,13 +345,13 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
   }
 
   public void remove(XTreeNode node) {
+    XTreeNode origNode = node;
     XTreeModel model = (XTreeModel) m_tree.getModel();
     XTreeNode parent = (XTreeNode) node.getParent();
     int index = parent.getIndex(node);
     TreePath nodePath = new TreePath(node.getPath());
     TreePath selPath = m_tree.getSelectionPath();
 
-    node.tearDown();
     model.removeNodeFromParent(node);
 
     if (nodePath.isDescendant(selPath)) {
@@ -363,6 +365,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
 
       m_tree.setSelectionPath(new TreePath(node.getPath()));
     }
+    origNode.tearDown();
   }
 
   public void nodeStructureChanged(XTreeNode node) {
@@ -432,14 +435,15 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     Preferences prefs = acc.prefs.node("AdminClient");
     Preferences serverPrefs = prefs.node(ServersHelper.SERVERS);
     Preferences serverPref;
-    ServerNode serverNode;
 
     helper.clearChildren(serverPrefs);
 
     for (int i = 0; i < count; i++) {
-      serverNode = (ServerNode) root.getChildAt(i);
-      serverPref = serverPrefs.node("server-" + i);
-      serverNode.setPreferences(serverPref);
+      TreeNode node = root.getChildAt(i);
+      if (node instanceof ClusterNode) {
+        serverPref = serverPrefs.node("server-" + i);
+        ((ClusterNode) node).setPreferences(serverPref);
+      }
     }
 
     storePreferences();
@@ -448,13 +452,15 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
   public void disconnectAll() {
     XRootNode root = m_tree.getRootNode();
     int count = root.getChildCount();
-    ServerNode serverNode;
 
     for (int i = 0; i < count; i++) {
-      serverNode = (ServerNode) root.getChildAt(i);
+      TreeNode node = root.getChildAt(i);
 
-      if (serverNode.isConnected()) {
-        serverNode.disconnectOnExit();
+      if (node instanceof ClusterNode) {
+        ClusterNode clusterNode = (ClusterNode) node;
+        if (clusterNode.isConnected()) {
+          clusterNode.disconnectOnExit();
+        }
       }
     }
 
@@ -462,7 +468,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     storePreferences();
   }
 
-  class DividerListener implements PropertyChangeListener {
+  private class DividerListener implements PropertyChangeListener {
     public void propertyChange(PropertyChangeEvent pce) {
       JSplitPane splitter = (JSplitPane) pce.getSource();
       String propName = pce.getPropertyName();
@@ -509,11 +515,11 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     m_logArea.setCaretPosition(m_logArea.getDocument().getLength() - 1);
   }
 
-  public void log(Exception e) {
+  public void log(Throwable t) {
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
 
-    e.printStackTrace(pw);
+    t.printStackTrace(pw);
     pw.close();
 
     log(sw.toString());
@@ -527,6 +533,10 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     setStatus("");
   }
 
+  public Container getActivityArea() {
+    return m_activityArea;
+  }
+  
   public void addNotify() {
     super.addNotify();
 
@@ -544,19 +554,19 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     super.removeNotify();
   }
 
-  class NewServerAction extends XAbstractAction {
-    NewServerAction() {
-      super(getBundleString("new.server.action.label"));
+   class NewClusterAction extends XAbstractAction {
+    NewClusterAction() {
+      super(getBundleString("new.cluster.action.label"));
     }
 
     public void actionPerformed(ActionEvent ae) {
       XTreeModel model = (XTreeModel) m_tree.getModel();
       XTreeNode root = (XTreeNode) model.getRoot();
       int index = root.getChildCount();
-      ServerNode serverNode = new ServerNode();
+      ClusterNode clusterNode = new ClusterNode();
 
-      model.insertNodeInto(serverNode, root, index);
-      TreePath path = new TreePath(serverNode.getPath());
+      model.insertNodeInto(clusterNode, root, index);
+      TreePath path = new TreePath(clusterNode.getPath());
       m_tree.makeVisible(path);
       m_tree.setSelectionPath(path);
 
@@ -566,11 +576,38 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       Preferences servers = prefs.node(ServersHelper.SERVERS);
       int count = helper.childrenNames(servers).length;
 
-      serverNode.setPreferences(servers.node("server-" + count));
+      clusterNode.setPreferences(servers.node("server-" + count));
       storePreferences();
     }
   }
 
+   /**
+    * Returns true if quit should proceed.
+    */
+   private boolean testWarnCurrentRecordingSessions() {
+     XTreeModel model = (XTreeModel) m_tree.getModel();
+     XTreeNode root = (XTreeNode) model.getRoot();
+     int count = root.getChildCount();
+     boolean currentlyRecording = false;
+     
+     for(int i = 0; i < count; i++) {
+       ClusterNode clusterNode = (ClusterNode) root.getChildAt(i);
+       if(clusterNode.haveActiveRecordingSession()) {
+         currentlyRecording = true;
+         break;
+       }
+     }
+     
+     if(currentlyRecording) {
+       String msg = "There are active statistic recording sessions.  Quit anyway?";
+       Frame frame = (Frame) getAncestorOfClass(Frame.class);
+       int answer = JOptionPane.showConfirmDialog(this, msg, frame.getTitle(), JOptionPane.OK_CANCEL_OPTION);
+       return answer == JOptionPane.OK_OPTION;
+     }
+
+     return true;
+   }
+   
   class QuitAction extends XAbstractAction {
     QuitAction() {
       super(getBundleString("quit.action.label"));
@@ -579,7 +616,9 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     }
 
     public void actionPerformed(ActionEvent ae) {
-      System.exit(0);
+      if(testWarnCurrentRecordingSessions()) {
+        System.exit(0);
+      }
     }
   }
 
@@ -596,6 +635,31 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
    */
   private static boolean versionsMatch(String v1, String v2) {
     return v1.equals(v2);
+  }
+
+  public boolean testServerMatch(ClusterNode clusterNode) {
+    if (com.tc.util.ProductInfo.getInstance().isDevMode() || m_versionCheckAction == null
+        || !m_versionCheckAction.isVersionCheckEnabled()) { return true; }
+
+    ProductInfo consoleInfo = new ProductInfo();
+    String consoleVersion = consoleInfo.getVersion();
+    ProductInfo serverInfo = clusterNode.getProductInfo();
+    String serverVersion = serverInfo.getVersion();
+    int spaceIndex = serverVersion.lastIndexOf(" ");
+
+    // The version string that comes from the server is of the form "Terracotta 2.4", while
+    // the default ProductInfo.getVersion is just the raw version number string: "2.4"
+
+    if (spaceIndex != -1) {
+      serverVersion = serverVersion.substring(spaceIndex + 1);
+    }
+
+    if (!versionsMatch(consoleVersion, serverVersion)) {
+      int answer = showVersionMismatchDialog(clusterNode, consoleVersion, serverVersion);
+      return (answer == JOptionPane.YES_OPTION);
+    }
+
+    return true;
   }
 
   public boolean testServerMatch(ServerNode serverNode) {
@@ -622,10 +686,45 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     return true;
   }
 
+  public int showVersionMismatchDialog(ClusterNode clusterNode, String consoleVersion, String serverVersion)
+      throws HeadlessException {
+    Frame frame = getFrame();
+    String msg = formatBundleString("version.check.message",
+                                    new Object[] { clusterNode, serverVersion, consoleVersion });
+    Label label = new Label(msg);
+    Container panel = new Container();
+    panel.setLayout(new BorderLayout());
+    panel.add(label);
+    CheckBox versionCheckToggle = new CheckBox(getBundleString("version.check.disable.label"));
+    versionCheckToggle.setHorizontalAlignment(SwingConstants.RIGHT);
+    panel.add(versionCheckToggle, BorderLayout.SOUTH);
+    String title = frame.getTitle();
+    JOptionPane pane = new JOptionPane(panel, JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION, null, null, null);
+
+    pane.setInitialValue(null);
+    pane.setComponentOrientation(frame.getComponentOrientation());
+
+    JDialog dialog = pane.createDialog(frame, title);
+    clusterNode.setVersionMismatchDialog(dialog);
+
+    pane.selectInitialValue();
+    dialog.show();
+    dialog.dispose();
+    clusterNode.setVersionMismatchDialog(null);
+
+    Object selectedValue = pane.getValue();
+
+    if (selectedValue == null) return JOptionPane.CLOSED_OPTION;
+    m_versionCheckAction.setVersionCheckEnabled(!versionCheckToggle.isSelected());
+    if (selectedValue instanceof Integer) { return ((Integer) selectedValue).intValue(); }
+
+    return JOptionPane.CLOSED_OPTION;
+  }
+
   public int showVersionMismatchDialog(ServerNode serverNode, String consoleVersion, String serverVersion)
       throws HeadlessException {
     Frame frame = getFrame();
-    String msg = formatBundleString("version.check.message", new Object[] {serverNode, serverVersion, consoleVersion});
+    String msg = formatBundleString("version.check.message", new Object[] { serverNode, serverVersion, consoleVersion });
     Label label = new Label(msg);
     Container panel = new Container();
     panel.setLayout(new BorderLayout());
@@ -651,9 +750,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
 
     if (selectedValue == null) return JOptionPane.CLOSED_OPTION;
     m_versionCheckAction.setVersionCheckEnabled(!versionCheckToggle.isSelected());
-    if (selectedValue instanceof Integer) {
-      return ((Integer) selectedValue).intValue();
-    }
+    if (selectedValue instanceof Integer) { return ((Integer) selectedValue).intValue(); }
 
     return JOptionPane.CLOSED_OPTION;
   }
@@ -683,7 +780,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
 
     return new URL(sb.toString());
   }
-  
+
   class UpdateCheckerAction extends XAbstractAction {
     Dialog      m_updateCheckerDialog;
     ProductInfo m_productInfo;
@@ -971,7 +1068,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       Preferences versionCheckPrefs = getPreferences().node("version-check");
       return versionCheckPrefs.getBoolean("enabled", true);
     }
-    
+
     void setVersionCheckEnabled(boolean checkEnabled) {
       Preferences versionCheckPrefs = getPreferences().node("version-check");
       versionCheckPrefs.putBoolean("enabled", checkEnabled);

@@ -74,8 +74,8 @@ public class AdminClientContext {
   /*
    * Log an exception to the AdminClientController
    */
-  public void log(Exception e) {
-    controller.log(e);
+  public void log(Throwable t) {
+    controller.log(t);
   }
 
   /**
