@@ -85,6 +85,7 @@ import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.stats.counter.sampled.SampledCounterImpl;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.Counter;
 import com.tc.util.SequenceID;
 import com.tc.util.concurrent.LifeCycleState;
 import com.tc.util.concurrent.StoppableThread;
@@ -295,8 +296,10 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     // CASE 1: no preFetched objects
     Set ids = makeObjectIDSet(0, 10);
     TestResultsContext results = new TestResultsContext(ids, Collections.EMPTY_SET, true);
+    testFaultSinkContext.expectedSinkCountDownFrom(10);
     objectManager.lookupObjectsAndSubObjectsFor(null, results, -1);
     results.waitTillComplete();
+    testFaultSinkContext.waitTillCompleteCountDown();
     objectManager.releaseAll(NULL_TRANSACTION, results.objects.values());
 
     // before no objects were pre-fetched, we should except 0 hits and 10 misses
@@ -306,12 +309,22 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     // CASE 2: preFetched objects
     ids = makeObjectIDSet(10, 20);
     // ThreadUtil.reallySleep(5000);
-    testFaultSinkContext.preProcess(10);
+    testFaultSinkContext.expectedSinkCountUpTo(10);
+    testFaultSinkContext.expectedSinkCountDownFrom(10);
     objectManager.preFetchObjectsAndCreate(ids, Collections.EMPTY_SET);
-    testFaultSinkContext.waitTillComplete();
+    testFaultSinkContext.waitTillCompleteCountDown();
+    
+    // because objects where prefetched we should have 10 hits, but also 10 moreT
+    // misses because the prefetching gets factored in as a miss to bring the total
+    // to 20
+    assertEquals(0, stats.getTotalCacheHits());
+    assertEquals(20, stats.getTotalCacheMisses());
+
+    
     results = new TestResultsContext(ids, Collections.EMPTY_SET, false);
     objectManager.lookupObjectsAndSubObjectsFor(null, results, -1);
     results.waitTillComplete();
+    testFaultSinkContext.waitTillCompleteCountUp();
     objectManager.releaseAll(NULL_TRANSACTION, results.objects.values());
 
     // because objects where prefetched we should have 10 hits, but also 10 more
@@ -2376,28 +2389,31 @@ public class ObjectManagerTest extends BaseDSOTestCase {
   }
 
   private static class TestSinkContext implements SinkContext {
-    private int sinkCount = -1;
-
-    public synchronized void preProcess(int aSinkCount) {
-      this.sinkCount = aSinkCount;
+    private Counter sinkCountDownCounter = new Counter(0);
+    private Counter sinkCountUpCounter = new Counter(0);
+    int maximumCountUpValue = 0;
+      
+ 
+    public void expectedSinkCountDownFrom(int aSinkCount) {
+      this.sinkCountDownCounter.increment(aSinkCount);
     }
+    
+    public synchronized void expectedSinkCountUpTo(int aSinkCount) {
+      this.sinkCountUpCounter = new Counter(0);
+      this.maximumCountUpValue = aSinkCount;
+    } 
 
-    public synchronized void waitTillComplete() {
-      while (sinkCount > 0) {
-        try {
-          this.wait();
-        } catch (InterruptedException e) {
-          throw new AssertionError(e);
-        }
-      }
+    public void waitTillCompleteCountDown() {
+      sinkCountDownCounter.waitUntil(0);
+    }
+    
+    public void waitTillCompleteCountUp() {
+      sinkCountUpCounter.waitUntil(maximumCountUpValue);
     }
 
     public synchronized void postProcess() {
-      sinkCount--;
-      if (sinkCount == 0) {
-        this.notifyAll();
-      }
-
+      sinkCountDownCounter.decrement();
+      sinkCountUpCounter.increment();
     }
 
   }
