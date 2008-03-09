@@ -18,11 +18,11 @@ public class TempDirectoryHelper extends BaseDirectoryHelper {
 
   private final boolean cleanDir;
 
-  public TempDirectoryHelper(Class theClass, boolean cleanDir) throws IOException {
+  public TempDirectoryHelper(Class theClass, boolean cleanDir) {
     this(theClass, TestConfigObject.getInstance().tempDirectoryRoot(), cleanDir);
   }
 
-  public TempDirectoryHelper(Class theClass) throws IOException {
+  public TempDirectoryHelper(Class theClass) {
     this(theClass, TestConfigObject.getInstance().tempDirectoryRoot(), true);
   }
 

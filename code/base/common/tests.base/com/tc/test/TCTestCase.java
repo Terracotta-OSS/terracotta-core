@@ -191,7 +191,7 @@ public class TCTestCase extends TestCase {
     }
   }
 
-  private void scheduleTimeoutTask() throws IOException {
+  private void scheduleTimeoutTask() {
     // enforce some sanity
     final int MINIMUM = 30;
     long junitTimeout = this.getTimeoutValueInSeconds();
@@ -235,11 +235,7 @@ public class TCTestCase extends TestCase {
 
   protected final synchronized TempDirectoryHelper getTempDirectoryHelper() {
     if (tempDirectoryHelper == null) {
-      try {
-        tempDirectoryHelper = new TempDirectoryHelper(getClass(), cleanTempDir());
-      } catch (IOException ioe) {
-        throw new TCRuntimeException("Can't get configuration for temp directory", ioe);
-      }
+      tempDirectoryHelper = new TempDirectoryHelper(getClass(), cleanTempDir());
     }
 
     return tempDirectoryHelper;
