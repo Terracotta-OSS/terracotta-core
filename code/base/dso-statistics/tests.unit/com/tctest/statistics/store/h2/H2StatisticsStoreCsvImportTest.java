@@ -13,18 +13,25 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.Reader;
 import java.util.Date;
+import java.util.Random;
 
 public class H2StatisticsStoreCsvImportTest extends TCTestCase {
   private StatisticsStore store;
+
+  private Random random = new Random();
 
   public H2StatisticsStoreCsvImportTest() {
     disableAllUntil(new Date(Long.MAX_VALUE));
   }
   
   public void setUp() throws Exception {
-    File tmp_dir = new TempDirectoryHelper(getClass(), true).getDirectory();
-    store = new H2StatisticsStoreImpl(tmp_dir);
-    store.open();
+    synchronized (random) {
+      File tmp_dir_parent = new TempDirectoryHelper(getClass(), false).getDirectory();
+      File tmp_dir = new File(tmp_dir_parent, "statisticsbuffer-" + random.nextInt() + "-" + System.currentTimeMillis());
+      tmp_dir.mkdirs();
+      store = new H2StatisticsStoreImpl(tmp_dir);
+      store.open();
+    }
   }
 
   public void tearDown() throws Exception {

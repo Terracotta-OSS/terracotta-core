@@ -21,10 +21,12 @@ import com.tc.test.TempDirectoryHelper;
 import com.tc.util.TCAssertionError;
 
 import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Date;
+import java.util.Random;
 
 import junit.framework.TestCase;
 
@@ -32,10 +34,22 @@ public class H2StatisticsBufferTest extends TestCase {
   private StatisticsBuffer buffer;
   private File tmpDir;
 
+  private Random random = new Random();
+
   public void setUp() throws Exception {
-    tmpDir = new TempDirectoryHelper(getClass(), true).getDirectory();
+    tmpDir = createTmpDir();
     buffer = new H2StatisticsBufferImpl(new StatisticsConfigImpl(), tmpDir);
     buffer.open();
+  }
+
+  private File createTmpDir() throws IOException {
+    File tmp_dir_parent = new TempDirectoryHelper(getClass(), false).getDirectory();
+    File tmp_dir;
+    synchronized (random) {
+      tmp_dir = new File(tmp_dir_parent, "statisticsbuffer-" + random.nextInt() + "-" + System.currentTimeMillis());
+    }
+    tmp_dir.mkdirs();
+    return tmp_dir;
   }
 
   public void tearDown() throws Exception {
@@ -50,7 +64,7 @@ public class H2StatisticsBufferTest extends TestCase {
       // dir can't be null
     }
 
-    File tmp_dir = new TempDirectoryHelper(getClass(), true).getDirectory();
+    File tmp_dir = createTmpDir();
     tmp_dir.delete();
     try {
       new H2StatisticsBufferImpl(new StatisticsConfigImpl(), tmp_dir);
@@ -59,7 +73,7 @@ public class H2StatisticsBufferTest extends TestCase {
       // dir doesn't exist
     }
 
-    tmp_dir = new TempDirectoryHelper(getClass(), true).getDirectory();
+    tmp_dir = createTmpDir();
     tmp_dir.delete();
     tmp_dir.createNewFile();
     try {
@@ -71,7 +85,7 @@ public class H2StatisticsBufferTest extends TestCase {
       tmp_dir.delete();
     }
 
-    tmp_dir = new TempDirectoryHelper(getClass(), true).getDirectory();
+    tmp_dir = createTmpDir();
     tmp_dir.setReadOnly();
     try {
       new H2StatisticsBufferImpl(new StatisticsConfigImpl(), tmp_dir);
@@ -134,7 +148,7 @@ public class H2StatisticsBufferTest extends TestCase {
   public void testCloseUnopenedBuffer() throws Exception {
     buffer.close();
 
-    File tmp_dir = new TempDirectoryHelper(getClass(), true).getDirectory();
+    File tmp_dir = createTmpDir();
     StatisticsBuffer newBuffer = new H2StatisticsBufferImpl(new StatisticsConfigImpl(), tmp_dir);
     newBuffer.close(); // should not throw an exception
   }
