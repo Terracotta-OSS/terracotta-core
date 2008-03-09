@@ -15,6 +15,7 @@ import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.test.TCTestCase;
+import com.tc.properties.TCPropertiesImpl;
 import com.terracottatech.config.AdditionalBootJarClasses;
 
 import java.io.IOException;
@@ -24,6 +25,13 @@ import java.io.IOException;
  */
 public class BaseDSOTestCase extends TCTestCase {
 
+  static {
+    // ensure that the databases that are created for the CVT are unique for
+    // each test run and for all the nodes that are started within a test
+    TCPropertiesImpl.setProperty("cvt.buffer.randomsuffix.enabled", "true");
+    TCPropertiesImpl.setProperty("cvt.store.randomsuffix.enabled", "true");
+  }
+  
   private Exception failTestException;
 
   private class TestFailingIllegalConfigChangeHandler implements IllegalConfigurationChangeHandler {
