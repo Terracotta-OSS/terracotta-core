@@ -17,6 +17,8 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.properties.TCPropertiesImpl;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 public class ManagedObjectFaultHandler extends AbstractEventHandler {
 
   private static final TCLogger logger           = TCLogging.getLogger(ManagedObjectFaultHandler.class);
@@ -25,6 +27,7 @@ public class ManagedObjectFaultHandler extends AbstractEventHandler {
 
   private ObjectManager         objectManager;
   private ManagedObjectStore    objectStore;
+  private AtomicLong            faultCount       = new AtomicLong();
 
   public void handleEvent(EventContext context) {
     if (LOG_OBJECT_FAULT) incrementAndLog();
@@ -34,12 +37,10 @@ public class ManagedObjectFaultHandler extends AbstractEventHandler {
     objectManager.addFaultedObject(oid, mo, mfc.isRemoveOnRelease());
   }
 
-  int count = 0;
-
-  private synchronized void incrementAndLog() {
-    count++;
-    if (count % 100 == 0) {
-      logger.info("Fault count = " + count);
+  private void incrementAndLog() {
+    long count = faultCount.incrementAndGet();
+    if (count % 1000 == 0) {
+      logger.info("Number of Objects faulted from disk = " + count);
     }
   }
 
