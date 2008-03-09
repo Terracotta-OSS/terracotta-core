@@ -510,7 +510,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   public void release(PersistenceTransaction persistenceTransaction, ManagedObject object) {
     if (config.paranoid()) flushAndCommit(persistenceTransaction, object);
-    else persistenceTransaction.commit();
     synchronized (this) {
       basicRelease(object);
       postRelease();

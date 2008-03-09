@@ -69,6 +69,7 @@ import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.api.Persistor;
 import com.tc.objectserver.persistence.impl.InMemoryPersistor;
+import com.tc.objectserver.persistence.impl.NullPersistenceTransactionProvider;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransaction;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransactionProvider;
 import com.tc.objectserver.persistence.sleepycat.CustomSerializationAdapterFactory;
@@ -313,14 +314,13 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     testFaultSinkContext.expectedSinkCountDownFrom(10);
     objectManager.preFetchObjectsAndCreate(ids, Collections.EMPTY_SET);
     testFaultSinkContext.waitTillCompleteCountDown();
-    
+
     // because objects where prefetched we should have 10 hits, but also 10 moreT
     // misses because the prefetching gets factored in as a miss to bring the total
     // to 20
     assertEquals(0, stats.getTotalCacheHits());
     assertEquals(20, stats.getTotalCacheMisses());
 
-    
     results = new TestResultsContext(ids, Collections.EMPTY_SET, false);
     objectManager.lookupObjectsAndSubObjectsFor(null, results, -1);
     results.waitTillComplete();
@@ -699,31 +699,31 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     SerializationAdapterFactory saf = newSleepycatSerializationAdapterFactory(dbEnv);
     Persistor persistor = newPersistor(dbEnv, saf);
 
-    testLookupInPersistentContext(persistor, paranoid);
+    testLookupInPersistentContext(persistor, paranoid, new NullPersistenceTransactionProvider());
 
     // custom serializer, not paranoid
     dbEnv = newDBEnvironment(paranoid);
     saf = newCustomSerializationAdapterFactory();
     persistor = newPersistor(dbEnv, saf);
-    testLookupInPersistentContext(persistor, paranoid);
+    testLookupInPersistentContext(persistor, paranoid, new NullPersistenceTransactionProvider());
 
     // sleepycat serializer, paranoid
     paranoid = true;
     dbEnv = newDBEnvironment(paranoid);
     saf = newSleepycatSerializationAdapterFactory(dbEnv);
     persistor = newPersistor(dbEnv, saf);
-    testLookupInPersistentContext(persistor, paranoid);
+    testLookupInPersistentContext(persistor, paranoid, persistor.getPersistenceTransactionProvider());
 
     // custom serializer, paranoid
     dbEnv = newDBEnvironment(paranoid);
     saf = newCustomSerializationAdapterFactory();
     persistor = newPersistor(dbEnv, saf);
-    testLookupInPersistentContext(persistor, paranoid);
+    testLookupInPersistentContext(persistor, paranoid, persistor.getPersistenceTransactionProvider());
   }
 
-  private void testLookupInPersistentContext(Persistor persistor, boolean paranoid) throws Exception {
+  private void testLookupInPersistentContext(Persistor persistor, boolean paranoid, PersistenceTransactionProvider ptp)
+      throws Exception {
     ManagedObjectPersistor mop = persistor.getManagedObjectPersistor();
-    PersistenceTransactionProvider ptp = persistor.getPersistenceTransactionProvider();
     PersistentManagedObjectStore store = new PersistentManagedObjectStore(mop);
     TestSink faultSink = new TestSink();
     TestSink flushSink = new TestSink();
@@ -2390,23 +2390,22 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
   private static class TestSinkContext implements SinkContext {
     private Counter sinkCountDownCounter = new Counter(0);
-    private Counter sinkCountUpCounter = new Counter(0);
-    int maximumCountUpValue = 0;
-      
- 
+    private Counter sinkCountUpCounter   = new Counter(0);
+    int             maximumCountUpValue  = 0;
+
     public void expectedSinkCountDownFrom(int aSinkCount) {
       this.sinkCountDownCounter.increment(aSinkCount);
     }
-    
+
     public synchronized void expectedSinkCountUpTo(int aSinkCount) {
       this.sinkCountUpCounter = new Counter(0);
       this.maximumCountUpValue = aSinkCount;
-    } 
+    }
 
     public void waitTillCompleteCountDown() {
       sinkCountDownCounter.waitUntil(0);
     }
-    
+
     public void waitTillCompleteCountUp() {
       sinkCountUpCounter.waitUntil(maximumCountUpValue);
     }
