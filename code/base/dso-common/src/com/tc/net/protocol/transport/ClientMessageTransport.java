@@ -29,7 +29,7 @@ import java.util.List;
  */
 public class ClientMessageTransport extends MessageTransportBase {
   // it was 2 minutes timeout, reduce to 10 sec
-  private static final long                 SYN_ACK_TIMEOUT = 10000;
+  public static final long                  SYN_ACK_TIMEOUT = 10000;
   private final ClientConnectionEstablisher connectionEstablisher;
   private boolean                           wasOpened       = false;
   private TCFuture                          waitForSynAckResult;
@@ -91,6 +91,8 @@ public class ClientMessageTransport extends MessageTransportBase {
         wasOpened = true;
         return (nid);
       } catch (TCTimeoutException e) {
+        // DEV-1320
+        clearConnection();
         status.reset();
         throw e;
       } catch (IOException e) {
@@ -124,6 +126,13 @@ public class ClientMessageTransport extends MessageTransportBase {
     synchronized (status) {
       if (status.isSynSent()) {
         handleSynAck(message);
+        message.recycle();
+        return;
+      }
+
+      if (!status.isEstablished()) {
+        logger.info(message.toString());
+        logger.warn("Ignoring the message received for an Un-Established Connection");
         message.recycle();
         return;
       }
