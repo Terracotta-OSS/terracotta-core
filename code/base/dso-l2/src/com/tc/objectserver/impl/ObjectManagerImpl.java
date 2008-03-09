@@ -285,9 +285,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         context.missingObject(id);
         return null;
       }
-      if (context.isNewRequest()) stats.cacheMiss();
+      if (context.updateStats()) stats.cacheMiss();
     } else {
-      if (context.isNewRequest()) stats.cacheHit();
+      if (context.updateStats()) stats.cacheHit();
       if (!context.removeOnRelease()) {
         if (rv.isRemoveOnRelease()) {
           // This Object is faulted in by GC or Management interface with removeOnRelease = true, but before they got a
@@ -350,6 +350,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         // This object is not in the cache, initiate faulting for the object
         if (++preFetchedCount % 1000 == 0) logger.info("Prefetched " + preFetchedCount + " objects");
         initiateFaultingFor(id, false);
+      } else {
+        stats.cacheHit();
       }
     }
   }
@@ -959,6 +961,11 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       return "ObjectManagerLookupContext : [ processed count = " + processedCount + ", responseContext = "
              + responseContext + "] ";
     }
+
+    public boolean updateStats() {
+      // We only want to update the stats the first time we process this request.
+      return responseContext.updateStats() && isNewRequest();
+    }
   }
 
   private static class WaitForLookupContext implements ObjectManagerResultsContext {
@@ -1017,6 +1024,10 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
     public String toString() {
       return "WaitForLookupContext [ " + lookupID + ", missingOK = " + missingOk + "]";
+    }
+
+    public boolean updateStats() {
+      return true;
     }
 
   }

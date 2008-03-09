@@ -118,4 +118,8 @@ public class ManagedObjectSyncContext implements ObjectManagerResultsContext {
            + more + "]";
   }
 
+  public boolean updateStats() {
+    return true;
+  }
+
 }

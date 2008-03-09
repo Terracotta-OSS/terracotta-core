@@ -294,7 +294,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     // CASE 1: no preFetched objects
     Set ids = makeObjectIDSet(0, 10);
-    TestResultsContext results = new TestResultsContext(ids, Collections.EMPTY_SET);
+    TestResultsContext results = new TestResultsContext(ids, Collections.EMPTY_SET, true);
     objectManager.lookupObjectsAndSubObjectsFor(null, results, -1);
     results.waitTillComplete();
     objectManager.releaseAll(NULL_TRANSACTION, results.objects.values());
@@ -306,10 +306,10 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     // CASE 2: preFetched objects
     ids = makeObjectIDSet(10, 20);
     // ThreadUtil.reallySleep(5000);
-    results = new TestResultsContext(ids, Collections.EMPTY_SET);
     testFaultSinkContext.preProcess(10);
     objectManager.preFetchObjectsAndCreate(ids, Collections.EMPTY_SET);
     testFaultSinkContext.waitTillComplete();
+    results = new TestResultsContext(ids, Collections.EMPTY_SET, false);
     objectManager.lookupObjectsAndSubObjectsFor(null, results, -1);
     results.waitTillComplete();
     objectManager.releaseAll(NULL_TRANSACTION, results.objects.values());
@@ -317,7 +317,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     // because objects where prefetched we should have 10 hits, but also 10 more
     // misses because the prefetching gets factored in as a miss to bring the total
     // to 20
-    assertEquals(10, stats.getTotalCacheHits());
+    assertEquals(0, stats.getTotalCacheHits());
     assertEquals(20, stats.getTotalCacheMisses());
 
   }
@@ -1887,14 +1887,20 @@ public class ObjectManagerTest extends BaseDSOTestCase {
   }
 
   private static class TestResultsContext implements ObjectManagerResultsContext {
-    public Map        objects  = new HashMap();
-    boolean           complete = false;
-    private final Set ids;
-    private final Set newIDS;
+    public Map            objects  = new HashMap();
+    boolean               complete = false;
+    private final Set     ids;
+    private final Set     newIDS;
+    private final boolean updateStats;
 
-    public TestResultsContext(Set ids, Set newIDS) {
+    public TestResultsContext(Set ids, Set newIDS, boolean updateStats) {
       this.ids = ids;
       this.newIDS = newIDS;
+      this.updateStats = updateStats;
+    }
+
+    public TestResultsContext(Set ids, Set newIDS) {
+      this(ids, newIDS, true);
     }
 
     public synchronized void waitTillComplete() {
@@ -1923,6 +1929,10 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     public void missingObject(ObjectID oid) {
       throw new AssertionError("Missing Object : " + oid);
+    }
+
+    public boolean updateStats() {
+      return updateStats;
     }
 
   }

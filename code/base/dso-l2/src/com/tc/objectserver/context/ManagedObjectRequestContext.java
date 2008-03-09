@@ -120,4 +120,8 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
     return missingObjects;
   }
 
+  public boolean updateStats() {
+    return true;
+  }
+
 }

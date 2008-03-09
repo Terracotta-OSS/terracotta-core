@@ -481,6 +481,11 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       throw new AssertionError("Lookup for non-exisistent Object : " + oid + " lookup context is : " + this);
     }
 
+    public boolean updateStats() {
+      // These lookups are already preFetched. So don't update stats.
+      return false;
+    }
+
   }
 
   private static final class PendingList {

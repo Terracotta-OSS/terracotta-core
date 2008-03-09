@@ -22,4 +22,6 @@ public interface ObjectManagerResultsContext extends EventContext {
   public void setResults(ObjectManagerLookupResults results);
 
   public void missingObject(ObjectID oid);
+  
+  public boolean updateStats();
 }

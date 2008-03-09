@@ -41,4 +41,8 @@ public class TestObjectManagerResultsContext implements ObjectManagerResultsCont
     throw new AssertionError("Missing Object : " + oid);
   }
 
+  public boolean updateStats() {
+    return true;
+  }
+
 }
