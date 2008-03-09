@@ -95,13 +95,6 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     }
   }
   
-  /*
-   * Have getTempDirectory to return a new temp directory, not to cleanup existing one.
-   */
-  protected boolean cleanTempDir() {
-    return false;
-  }
-
   public void setUp() throws Exception {
     TestTVSConfigurationSetupManagerFactory factory = createDistributedConfigFactory();
 
