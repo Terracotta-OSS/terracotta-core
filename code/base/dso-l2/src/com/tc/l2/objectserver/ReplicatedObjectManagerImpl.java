@@ -37,11 +37,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, GroupMessageListener,
     L2ObjectStateListener {
 
-  private static final TCLogger              logger = TCLogging.getLogger(ReplicatedObjectManagerImpl.class);
+  private static final TCLogger              logger        = TCLogging.getLogger(ReplicatedObjectManagerImpl.class);
 
   private final ObjectManager                objectManager;
   private final GroupManager                 groupManager;
@@ -52,6 +53,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   private final Sink                         objectsSyncRequestSink;
   private final SequenceGenerator            sequenceGenerator;
   private final GCMonitor                    gcMonitor;
+  private final AtomicLong                   gcIdGenerator = new AtomicLong();
 
   public ReplicatedObjectManagerImpl(GroupManager groupManager, StateManager stateManager,
                                      L2ObjectStateManager l2ObjectStateManager,
@@ -252,9 +254,10 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       add2L2StateManager(toAdd);
     }
 
-    private void notifyGCResultToPassives(Set deleted) {
+    private void notifyGCResultToPassives(final Set deleted) {
       if (deleted.isEmpty()) return;
       final GCResultMessage msg = GCResultMessageFactory.createGCResultMessage(deleted);
+      final long id = gcIdGenerator.incrementAndGet();
       transactionManager.callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionLister() {
         public void onCompletion() {
           try {
@@ -262,6 +265,11 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
           } catch (GroupException e) {
             logger.error("Error sending gc results : ", e);
           }
+        }
+
+        public String toString() {
+          return "com.tc.l2.objectserver.ReplicatedObjectManagerImpl.GCMonitor ( " + id + " ) : GC result size = "
+                 + deleted.size();
         }
       });
     }
