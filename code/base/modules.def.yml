@@ -128,6 +128,7 @@ modules:
         - common
         - common-api
         - dso-common
+        - dso-common-jdk15
         - dso-l1-api
         - management
   - dso-l1:
