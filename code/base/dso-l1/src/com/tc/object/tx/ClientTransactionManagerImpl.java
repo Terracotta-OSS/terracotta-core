@@ -19,6 +19,7 @@ import com.tc.object.appevent.ReadOnlyObjectEvent;
 import com.tc.object.appevent.ReadOnlyObjectEventContext;
 import com.tc.object.appevent.UnlockedSharedObjectEvent;
 import com.tc.object.appevent.UnlockedSharedObjectEventContext;
+import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAException;
@@ -35,6 +36,7 @@ import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
+import com.tc.util.DebugUtil;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -434,6 +436,10 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
           currentTransaction.updateMBean(txMonitor);
         }
         remoteTxManager.commit(currentTransaction);
+      } else {
+        if (DebugUtil.DEBUG) {
+          System.err.println(ManagerUtil.getClientID() + " txID " + currentTransaction.getTransactionID() + " changes: " + currentTransaction.hasChangesOrNotifies() + " create: " + hasPendingCreateObjects);
+        }
       }
       return true;
     } finally {

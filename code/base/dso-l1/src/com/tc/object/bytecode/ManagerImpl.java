@@ -42,6 +42,7 @@ import com.tc.object.tx.optimistic.OptimisticTransactionManagerImpl;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
+import com.tc.util.DebugUtil;
 import com.tc.util.Util;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.runtime.Vm;
@@ -512,6 +513,9 @@ public class ManagerImpl implements Manager {
         if (tco.autoLockingDisabled()) { return; }
 
         // don't call this.commit() here, the error handling would happen twice in that case
+        if (DebugUtil.DEBUG) {
+          System.err.println(ManagerUtil.getClientID() + " MEx - " + obj.getClass().getName() + " OID: " + tco.getObjectID());
+        }
         this.txManager.commit(generateAutolockName(tco));
       } else if (isLiteralAutolock(obj)) {
         this.txManager.commit(generateLiteralLockName(obj));
