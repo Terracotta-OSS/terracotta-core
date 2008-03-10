@@ -91,7 +91,7 @@ final class BundleSpecImpl extends BundleSpec {
   }
   
   public boolean isVersionSpecifiedAbsolute() {
-    return getVersionSpec().matches("^(\\d+)(?:\\.(\\d+)(?:\\.(\\d+)(\\.(.*))?)?)?$");
+    return getVersionSpec().matches(IConstants.OSGI_VERSION_PATTERN.pattern());
   }
   
   private String getVersionSpec() {

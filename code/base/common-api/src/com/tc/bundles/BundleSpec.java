@@ -43,6 +43,22 @@ public abstract class BundleSpec {
     return (arg0 != null) && (arg1 != null) && arg0.equalsIgnoreCase(arg1);
   }
 
+  public static final String getSymbolicName(final Manifest manifest) {
+    return manifest.getMainAttributes().getValue("Bundle-SymbolicName");
+  }
+  
+  public static final String getName(final Manifest manifest) {
+    return manifest.getMainAttributes().getValue("Bundle-Name");
+  }
+
+  public static final String getVersion(final Manifest manifest) {
+    return manifest.getMainAttributes().getValue("Bundle-Version");
+  }
+  
+  public static final String getDescription(final Manifest manifest) {
+    return manifest.getMainAttributes().getValue("Bundle-Description");
+  }
+  
   public static final String[] getRequirements(final Manifest manifest) {
     return getRequirements(manifest.getMainAttributes().getValue(REQUIRE_BUNDLE));
   }
