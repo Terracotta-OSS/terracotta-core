@@ -883,6 +883,8 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
 
     config.addNewClients().setLogs("terracotta/client-logs");
 
+    servers.addNewUpdateCheck().setEnabled(true);
+    
     return doc;
   }
 
