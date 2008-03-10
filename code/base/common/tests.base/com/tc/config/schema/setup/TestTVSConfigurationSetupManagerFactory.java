@@ -224,7 +224,7 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
     return this.beanSet;
   }
 
-  private static final String BOGUS_FILENAME = "nonexistent-directory-SHOULD-NEVER-EXIST/../";
+  private static final String BOGUS_FILENAME = "nonexistent-directory-SHOULD-NEVER-EXIST/";
 
   private void applyDefaultTestConfig() {
     // // Use a license that lets us do anything.
