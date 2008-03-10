@@ -8,6 +8,7 @@ import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
 import com.tc.object.tools.BootJarTool;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
+import com.tc.test.AppServerInfo;
 import com.tc.test.server.appserver.deployment.AbstractOneServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
@@ -31,7 +32,9 @@ public class RenameStandardLoaderTest extends AbstractOneServerDeploymentTest {
   private static final String CONTEXT = "simple";
 
   public RenameStandardLoaderTest() {
-    // this.disableAllUntil("2008-12-10");
+    if (appServerInfo().getId() == AppServerInfo.WEBSPHERE) {
+      disableAllUntil("2008-03-81");
+    }
   }
 
   public static Test suite() {
@@ -50,7 +53,7 @@ public class RenameStandardLoaderTest extends AbstractOneServerDeploymentTest {
 
     WebConversation conversation4 = new WebConversation();
     WebResponse response4 = request(server0, "cmd=" + StandardLoaderServlet.PUT_STANDARD_LOADER_OBJECT_INSTANCE,
-      conversation4);
+                                    conversation4);
     assertEquals("OK", response4.getText().trim());
 
     int exitCode = spawnExtraL1(classLoaderName);
@@ -71,17 +74,17 @@ public class RenameStandardLoaderTest extends AbstractOneServerDeploymentTest {
 
     vmArgs.add("-D" + BootJarTool.SYSTEM_CLASSLOADER_NAME_PROPERTY + "=" + loaderName);
     ExtraL1ProcessControl client = new ExtraL1ProcessControl(getServerManager().getServerTcConfig().getDsoHost(),
-      getServerManager().getServerTcConfig().getDsoPort(),
-      StandardLoaderApp.class, server0.getTcConfigFile()
-      .getAbsolutePath(), new String[] { }, server0
-      .getWorkingDirectory(), vmArgs, false);
+                                                             getServerManager().getServerTcConfig().getDsoPort(),
+                                                             StandardLoaderApp.class, server0.getTcConfigFile()
+                                                                 .getAbsolutePath(), new String[] {}, server0
+                                                                 .getWorkingDirectory(), vmArgs, false);
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     client.writeOutputTo(outputStream);
     client.start();
 
     final int exitCode = client.waitFor();
 
-    //print(outputStream);
+    // print(outputStream);
     BufferedReader br = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(outputStream.toByteArray())));
     assertEquals("OK", getLastLine(br).trim());
 
@@ -97,7 +100,8 @@ public class RenameStandardLoaderTest extends AbstractOneServerDeploymentTest {
   private String getLastLine(BufferedReader br) throws IOException {
     String line = br.readLine();
     String lastLine = line;
-    while ((line = br.readLine()) != null) lastLine = line;
+    while ((line = br.readLine()) != null)
+      lastLine = line;
     return lastLine;
   }
 
