@@ -103,9 +103,9 @@
           <item bottom="-1,bottom:s" height="n" left="1,right:n" right="-1,right:n" top="-1,top:s" width="n" />
           <item bottom="-1,bottom:s" height="n" left="2,right:n" right="0,left:n" top="-1,top:s" width="n" />
           <item bottom="-1,bottom:s" height="n" left="3,right:sn" right="1,left:n" top="-1,top:s" width="n" />
-          <item bottom="-1,bottom:s" height="n" left="4,right:n" right="2,left:sn" top="-1,top:s" width="80" />
-          <item bottom="3,bottom:s" height="n" left="5,right:26" right="3,left:n" top="3,top:s" width="n" />
-          <item bottom="-1,bottom:s" height="n" left="6,right:n" right="4,left:26" top="-1,top:s" width="80" />
+          <item bottom="-1,bottom:s" height="n" left="4,right:n" right="2,left:sn" top="-1,top:s" width="n" />
+          <item bottom="3,bottom:s" height="n" left="5,right:20" right="3,left:n" top="3,top:s" width="n" />
+          <item bottom="-1,bottom:s" height="n" left="6,right:n" right="4,left:20" top="-1,top:s" width="n" />
           <item bottom="5,bottom:s" height="n" left="-1,left:n" right="5,left:n" top="5,top:s" width="n" />
         </connections>
       </container>
@@ -119,7 +119,7 @@
     <children>
       <tabbedpane name="TabbedPane">
         <tab title="Main">
-          <container tag="ServerPanel">
+          <container tag="MainPanel">
             <children>
               <container>
                 <children>
@@ -198,12 +198,12 @@
           </container>
         </tab>
         <tab title="Statistics recorder">
-          <container>
+          <container name="StatisticsRecorderPage">
             <children>
               <container>
                 <children>
-                  <togglebutton text="Start gathering" name="StartGatheringStatsButton" />
-                  <togglebutton text="Stop gathering" name="StopGatheringStatsButton" selected="true"/>
+                  <togglebutton text="Stop recording" name="StopGatheringStatsButton" selected="true"/>
+                  <togglebutton text="Start recording" name="StartGatheringStatsButton" />
                 </children>
                 <connections>
                   <item bottom="-1,bottom:ns" height="n" left="-1,left:n" right="1,left:n" top="-1,top:ns" width="n" />
@@ -226,13 +226,13 @@
                          </children>
                         <connections>
                           <item bottom="1,bottom:s" height="n" left="-1,left:0" right="1,left:n" top="1,top:s" width="n" />
-                          <item bottom="-1,bottom:ns" height="n" left="0,left:n" right="-1,right:ns" top="-1,top:ns" width="n" />
+                          <item bottom="-1,bottom:ns" height="n" left="0,right:n" right="-1,right:ns" top="-1,top:ns" width="n" />
                         </connections>
                       </container>
                       <container>
                         <children>
-                          <button text="Import..." name="ImportStatsConfigButton"/>
-                          <button text="Export..." name="ExportStatsConfigButton"/>                          
+                          <button text="Import configuration..." name="ImportStatsConfigButton"/>
+                          <button text="Export configuration..." name="ExportStatsConfigButton"/>                          
                         </children>
                         <connections>
                           <item bottom="1,top:n" height="n" left="-1,left:n" right="-1,right:n" top="-1,top:n" width="ns" />
@@ -258,7 +258,7 @@
                   </scrollpane>
                   <container>
                     <children>
-                      <button text="Export statistics" name="ExportStatsButton" enabled="false"/>
+                      <button text="Export all sessions" name="ExportStatsButton" enabled="false"/>
                       <button text="Clear session" name="ClearStatsSessionButton" enabled="false"/>
                       <button text="Clear all sessions" name="ClearAllStatsSessionsButton" enabled="false"/>
                     </children>

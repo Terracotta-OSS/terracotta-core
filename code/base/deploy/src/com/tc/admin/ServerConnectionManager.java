@@ -550,8 +550,6 @@ public class ServerConnectionManager implements NotificationListener {
   }
 
   public void tearDown() {
-    Thread.dumpStack();
-    
     cancelActiveServices();
 
     m_l2Info = null;

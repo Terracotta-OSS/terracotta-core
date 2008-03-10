@@ -137,6 +137,7 @@ import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileFilter;
 
 public class ClusterVisualizerFrame extends JFrame {
   private ImportAction                     fImportAction;
@@ -326,6 +327,18 @@ public class ClusterVisualizerFrame extends JFrame {
     }
   }
 
+
+  class ImportFileFilter extends FileFilter {
+    public boolean accept(File file) {
+      String name = file.getName();
+      return file.isDirectory() || name.endsWith(".zip") || name.endsWith(".csv"); 
+    }
+    
+    public String getDescription() {
+      return "ZIP, CSV";
+    }
+  }
+
   class ImportAction extends AbstractAction {
     ImportAction() {
       super("Import...");
@@ -334,11 +347,13 @@ public class ClusterVisualizerFrame extends JFrame {
     public void actionPerformed(ActionEvent ae) {
       JFileChooser chooser = new JFileChooser();
       chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-      chooser.setDialogTitle("Import statistics session");
+      chooser.setDialogTitle("Import statistics");
       chooser.setMultiSelectionEnabled(false);
       if (fLastDir != null) {
         chooser.setCurrentDirectory(fLastDir);
       }
+      chooser.setFileFilter(new ImportFileFilter());
+      chooser.setSelectedFile(new File(chooser.getCurrentDirectory(), "tc-stats.zip"));
       if (chooser.showOpenDialog(ClusterVisualizerFrame.this) != JFileChooser.APPROVE_OPTION) return;
       setToolBarEnabled(false);
       File file = chooser.getSelectedFile();
