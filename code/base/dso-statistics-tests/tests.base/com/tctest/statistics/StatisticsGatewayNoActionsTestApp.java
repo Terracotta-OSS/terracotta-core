@@ -14,7 +14,7 @@ import com.tctest.runner.AbstractTransparentApp;
 
 public class StatisticsGatewayNoActionsTestApp extends AbstractTransparentApp {
 
-  public static final int NODE_COUNT = 2;
+  public static final int NODE_COUNT = 1;
 
   private CyclicBarrier barrier = new CyclicBarrier(NODE_COUNT);
 

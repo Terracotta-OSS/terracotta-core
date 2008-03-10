@@ -14,7 +14,7 @@ import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 public class StatisticsGathererTestApp extends AbstractTransparentApp {
 
-  public static final int NODE_COUNT = 2;
+  public static final int NODE_COUNT = 1;
 
   private CyclicBarrier barrier = new CyclicBarrier(NODE_COUNT);
 
