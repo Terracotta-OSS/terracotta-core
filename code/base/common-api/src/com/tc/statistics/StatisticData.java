@@ -22,7 +22,9 @@ import java.util.Date;
  * to be filled in. When an instance of {@code StatisticData} is stored in the
  * {@code StatisticsBuffer} of the CVT agent, these properties are set when
  * they are {@code null}. This should be the desired behavior is almost all of
- * the cases.
+ * the cases. Also, the {@code moment} property will be filled in by the
+ * {@code StatisticsRetriever} to ensure that all the data in one retrieval
+ * action can be correlated.
  *
  * Only four types of data can be stored within a {@code StatisticData} 
  * instance and they are mutually exclusive. The reason why it doesn't allow
@@ -65,54 +67,46 @@ public class StatisticData implements Serializable {
   public StatisticData() {
   }
   
-  public StatisticData(String name, Date moment, Long value) {
+  public StatisticData(final String name, final Long value) {
     setName(name);
-    setMoment(moment);
     setData(value);
   }
 
-  public StatisticData(String name, Date moment, String value) {
+  public StatisticData(final String name, final String value) {
     setName(name);
-    setMoment(moment);
     setData(value);
   }
 
-  public StatisticData(String name, Date moment, Date value) {
+  public StatisticData(final String name, final Date value) {
     setName(name);
-    setMoment(moment);
     setData(value);
   }
 
-  public StatisticData(String name, Date moment, BigDecimal value) {
+  public StatisticData(final String name, final BigDecimal value) {
     setName(name);
-    setMoment(moment);
     setData(value);
   }
 
-  public StatisticData(String name, Date moment, String element, Long value) {
+  public StatisticData(final String name, final String element, final Long value) {
     setName(name);
-    setMoment(moment);
     setElement(element);
     setData(value);
   }
 
-  public StatisticData(String name, Date moment, String element, String value) {
+  public StatisticData(final String name, final String element, final String value) {
     setName(name);
-    setMoment(moment);
     setElement(element);
     setData(value);
   }
 
-  public StatisticData(String name, Date moment, String element, Date value) {
+  public StatisticData(final String name, final String element, final Date value) {
     setName(name);
-    setMoment(moment);
     setElement(element);
     setData(value);
   }
 
-  public StatisticData(String name, Date moment, String element, BigDecimal value) {
+  public StatisticData(final String name, final String element, final BigDecimal value) {
     setName(name);
-    setMoment(moment);
     setElement(element);
     setData(value);
   }

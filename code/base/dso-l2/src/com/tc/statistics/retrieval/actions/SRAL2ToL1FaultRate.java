@@ -11,8 +11,6 @@ import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.TimeStampedCounterValue;
 import com.tc.util.Assert;
 
-import java.util.Date;
-
 public class SRAL2ToL1FaultRate implements StatisticRetrievalAction {
 
   public final static String ACTION_NAME = "l2 l1 fault";
@@ -35,12 +33,6 @@ public class SRAL2ToL1FaultRate implements StatisticRetrievalAction {
 
   public StatisticData[] retrieveStatisticData() {
     TimeStampedCounterValue value = counter.getMostRecentSample();
-    // todo: this might have to be changed into new Date(value.getTimestamp()),
-    // which is when the actual sampling occurred, we use the 'now' timestamp at
-    // the moment to make sure that the statistic data retrieval arrives in order.
-    // Otherwise, this data entry could be timed before the startup data event of
-    // the capture session.
-    Date moment = new Date();
-    return new StatisticData[] {new StatisticData(ACTION_NAME, moment, value.getCounterValue())};
+    return new StatisticData[] {new StatisticData(ACTION_NAME, value.getCounterValue())};
   }
 }

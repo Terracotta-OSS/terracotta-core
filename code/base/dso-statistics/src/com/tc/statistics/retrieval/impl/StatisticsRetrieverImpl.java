@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Date;
 
 public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsBufferListener {
   private final Timer timer = new TCTimerImpl("Statistics Retriever Timer", true);
@@ -130,10 +131,12 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
   }
 
   private void retrieveAction(final StatisticRetrievalAction action) {
+    final Date moment = new Date();
     StatisticData[] data = action.retrieveStatisticData();
     if (data != null) {
       for (int i = 0; i < data.length; i++) {
         data[i].setSessionId(sessionId);
+        data[i].setMoment(moment);
         bufferData(data[i]);
       }
     }

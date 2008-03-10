@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.Date;
 
 import javax.management.NotCompliantMBeanException;
 
@@ -110,10 +111,12 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
       return null;
     }
 
+    final Date moment = new Date();
     StatisticData[] data = action.retrieveStatisticData();
     if (data != null) {
       for (int i = 0; i < data.length; i++) {
         data[i].setSessionId(sessionId);
+        data[i].setMoment(moment);
         try {
           buffer.storeStatistic(data[i]);
         } catch (TCStatisticsBufferException e) {

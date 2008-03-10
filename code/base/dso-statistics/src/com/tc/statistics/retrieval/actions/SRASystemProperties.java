@@ -10,7 +10,6 @@ import com.tc.statistics.StatisticType;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Date;
 import java.util.Properties;
 
 public class SRASystemProperties implements StatisticRetrievalAction {
@@ -30,7 +29,7 @@ public class SRASystemProperties implements StatisticRetrievalAction {
     Properties properties = System.getProperties();
     try {
       properties.store(out, null);
-      return new StatisticData[] { new StatisticData(ACTION_NAME, new Date(), out.toString("ISO-8859-1")) };
+      return new StatisticData[] { new StatisticData(ACTION_NAME, out.toString("ISO-8859-1")) };
     } catch (IOException e) {
       throw new TCRuntimeException("Unexpected error while storing the system properties.", e);
     }

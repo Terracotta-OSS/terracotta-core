@@ -10,8 +10,6 @@ import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
 
-import java.util.Date;
-
 public class SRAMemoryUsage implements StatisticRetrievalAction {
   
   public final static String ACTION_NAME = "memory";
@@ -35,12 +33,11 @@ public class SRAMemoryUsage implements StatisticRetrievalAction {
   }
 
   public StatisticData[] retrieveStatisticData() {
-    Date moment = new Date();
     MemoryUsage usage = manager.getMemoryUsage();
     return new StatisticData[] {
-      new StatisticData(DATA_NAME_FREE, moment, new Long(usage.getFreeMemory())),
-      new StatisticData(DATA_NAME_USED, moment, new Long(usage.getUsedMemory())),
-      new StatisticData(DATA_NAME_MAX, moment, new Long(usage.getMaxMemory()))
+      new StatisticData(DATA_NAME_FREE, new Long(usage.getFreeMemory())),
+      new StatisticData(DATA_NAME_USED, new Long(usage.getUsedMemory())),
+      new StatisticData(DATA_NAME_MAX, new Long(usage.getMaxMemory()))
     };
   }
 }

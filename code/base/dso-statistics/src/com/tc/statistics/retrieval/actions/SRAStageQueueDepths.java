@@ -13,7 +13,6 @@ import com.tc.stats.Stats;
 import com.tc.util.Assert;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.Iterator;
 
 public class SRAStageQueueDepths implements DynamicSRA {
@@ -40,12 +39,11 @@ public class SRAStageQueueDepths implements DynamicSRA {
     if (!isStatisticsCollectionEnabled()) {
       return EMPTY_STATISTIC_DATA;
     }
-    Date moment = new Date();
     Stats[] stats = stageManager.getStats();
     StatisticData[] data = new StatisticData[stats.length];
     for (int i = 0; i < stats.length; i++) {
       StageQueueStats stageStat = (StageQueueStats)stats[i];
-      data[i] = new StatisticData(ACTION_NAME, moment, stageStat.getName(), new Long(stageStat.getDepth()));
+      data[i] = new StatisticData(ACTION_NAME, stageStat.getName(), new Long(stageStat.getDepth()));
     }
     return data;
   }

@@ -22,8 +22,7 @@ public class SRASystemPropertiesTest extends TestCase {
     assertEquals(SRASystemProperties.ACTION_NAME, data.getName());
     assertNull(data.getAgentIp());
     assertNull(data.getAgentDifferentiator());
-    assertTrue(before.compareTo((Date)data.getMoment()) <= 0);
-    assertTrue(after.compareTo((Date)data.getMoment()) >= 0);
+    assertNull(data.getMoment());
 
     assertNull(data.getElement());
     Properties props = new Properties();

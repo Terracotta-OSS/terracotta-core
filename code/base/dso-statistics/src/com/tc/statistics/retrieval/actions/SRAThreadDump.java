@@ -9,8 +9,6 @@ import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
 import com.tc.util.runtime.ThreadDumpUtil;
 
-import java.util.Date;
-
 public class SRAThreadDump implements StatisticRetrievalAction {
 
   public static final String ACTION_NAME = "thread dump";
@@ -24,7 +22,6 @@ public class SRAThreadDump implements StatisticRetrievalAction {
   }
 
   public StatisticData[] retrieveStatisticData() {
-    Date moment = new Date();
-    return new StatisticData[] { new StatisticData(ACTION_NAME, moment, ThreadDumpUtil.getThreadDump()) };
+    return new StatisticData[] { new StatisticData(ACTION_NAME, ThreadDumpUtil.getThreadDump()) };
   }
 }

@@ -24,6 +24,6 @@ public class SRAShutdownTimestampTest extends TestCase {
     assertTrue(after.compareTo((Date)data.getData()) >= 0);
 
     assertNull(data.getElement());
-    assertEquals(data.getMoment(), data.getData());
+    assertNull(data.getMoment());
   }
 }
