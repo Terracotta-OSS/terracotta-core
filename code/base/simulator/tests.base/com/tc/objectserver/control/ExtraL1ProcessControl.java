@@ -4,11 +4,14 @@
  */
 package com.tc.objectserver.control;
 
+import org.apache.commons.io.IOUtils;
+
 import com.tc.process.LinkedJavaProcess;
 import com.tc.test.TestConfigObject;
 import com.tc.util.Assert;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.List;
 
 public class ExtraL1ProcessControl extends ExtraProcessServerControl {
@@ -51,12 +54,26 @@ public class ExtraL1ProcessControl extends ExtraProcessServerControl {
     try {
       String bootclasspath = "-Xbootclasspath/p:" + TestConfigObject.getInstance().normalBootJar();
       System.err.println("Bootclasspath:" + bootclasspath);
-      this.jvmArgs.add("-Dtc.classpath=" + System.getProperty("java.class.path"));
+      this.jvmArgs.add("-Dtc.classpath=" + createTcClassPath());
       this.jvmArgs.add(bootclasspath);
       this.jvmArgs.add("-Dtc.config=" + super.configFileLoc);
     } catch (Exception e) {
       throw Assert.failure("Can't set JVM args", e);
     }
+  }
+
+  private String createTcClassPath() {
+    File tcClassPathFile = new File(directory, "tc.classpath." + this.hashCode() + ".txt");
+    FileOutputStream fos = null;
+    try {
+      fos = new FileOutputStream(tcClassPathFile);
+      IOUtils.write(System.getProperty("java.class.path"), fos);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    } finally {
+      IOUtils.closeQuietly(fos);
+    }
+    return tcClassPathFile.toURI().toString();
   }
 
   protected String getMainClassName() {
