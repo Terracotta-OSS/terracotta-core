@@ -11,10 +11,23 @@ import java.util.Set;
 
 import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArraySet;
 
+/**
+ * This class indicates how a {@link StatisticRetrievalAction} should be
+ * automatically captured during a capturing session.
+ */
 public class StatisticType {
   private final static Set TYPES = new CopyOnWriteArraySet();
 
+  /**
+   * Statistic will be automatically captured at the beginning of a capturing
+   * session.
+   */
   public final static StatisticType STARTUP = new StatisticType("STARTUP");
+
+  /**
+   * Statistics will be automatically captured during the capturing session,
+   * based on the frequency that has been setup on the configuration.
+   */
   public final static StatisticType SNAPSHOT = new StatisticType("SNAPSHOT");
 
   private final String identifier;

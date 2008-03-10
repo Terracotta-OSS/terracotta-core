@@ -12,6 +12,40 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+/**
+ * This class structures the data that is retrieved through a
+ * {@link StatisticRetrievalAction}.
+ *
+ * New instances are usually filled in through the specialized constructors.
+ *
+ * The {@code agentIp} and {@code agentDifferentiator} properties don't have
+ * to be filled in. When an instance of {@code StatisticData} is stored in the
+ * {@code StatisticsBuffer} of the CVT agent, these properties are set when
+ * they are {@code null}. This should be the desired behavior is almost all of
+ * the cases.
+ *
+ * Only four types of data can be stored within a {@code StatisticData} 
+ * instance and they are mutually exclusive. The reason why it doesn't allow
+ * any {@code Object} to be used as data is to allow for the CVT back-end to
+ * store the data while preserving its type. This makes is easier to query
+ * on the data values after collection.
+ *
+ * The {@code name} of a {@code StatisticData} instance should identify the
+ * type of data that it contains, for instance "{@code cpu combined}". The
+ * {@code element} property can be {@code null}, but when it's used it should
+ * identify different elements of the same data. For instance when CPU data is
+ * collected for multiple CPUs, the names are the same, but the elements will
+ * be "{@code cpu 1}", "{@code cpu 2}", ... so that it's possible to identify
+ * the individual data points.
+ *
+ * Finally, when {@link StatisticRetrievalAction}s return an array of
+ * {@code StatisticData} instances, the {@code moment} property of each
+ * individual data instance should be the same so that the entire array
+ * can be situated at the same location on a timeline. Usually this is done
+ * by creating a {@link Date} instance before instantiating the
+ * {@code StatisticData} instances and passing that {@code Date} instance to
+ * the constructor of each data element.
+ */
 public class StatisticData implements Serializable {
   public final static StatisticData[] EMPTY_ARRAY = new StatisticData[0];
 

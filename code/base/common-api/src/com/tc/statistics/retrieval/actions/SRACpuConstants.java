@@ -3,6 +3,11 @@
  */
 package com.tc.statistics.retrieval.actions;
 
+/**
+ * Constants that are used by the {@code SRACpu} class, which is present in an
+ * external project. These constants allow the admin console to refer to the
+ * SRA without having to hard code the identifiers.
+ */
 public interface SRACpuConstants {
   public final static String ACTION_NAME = "cpu";
 
