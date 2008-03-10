@@ -70,8 +70,8 @@ public final class L1Management extends TerracottaManagement {
 
   private final StatisticsAgentSubSystem statisticsAgentSubSystem;
 
-  public L1Management(final TunnelingEventHandler tunnelingHandler, final StatisticsAgentSubSystem statisticsAgentSubSystem, RuntimeLogger runtimeLogger,
-                      InstrumentationLogger instrumentationLogger, String rawConfigText) {
+  public L1Management(final TunnelingEventHandler tunnelingHandler, final StatisticsAgentSubSystem statisticsAgentSubSystem, final RuntimeLogger runtimeLogger,
+                      final InstrumentationLogger instrumentationLogger, final String rawConfigText) {
     super();
     started = new SetOnceFlag();
     this.tunnelingHandler = tunnelingHandler;
@@ -93,7 +93,7 @@ public final class L1Management extends TerracottaManagement {
     mBeanServerLock = new Object();
   }
 
-  public synchronized void start() {
+  public synchronized void start(final boolean createDedicatedMBeanServer) {
     started.set();
 
     Thread registrationThread = new Thread(new Runnable() {
@@ -108,12 +108,15 @@ public final class L1Management extends TerracottaManagement {
             if (logger.isDebugEnabled()) {
               logger.debug("Attempt #" + (attemptCounter + 1) + " to find the MBeanServer and register the L1 MBeans");
             }
-            attemptToRegister();
+            attemptToRegister(createDedicatedMBeanServer);
             registered = true;
             if (logger.isDebugEnabled()) {
               logger.debug("L1 MBeans registered with the MBeanServer successfully after " + (attemptCounter + 1)
                            + " attempts");
             }
+          } catch (InstanceAlreadyExistsException e) {
+            logger.error("Exception while registering the L1 MBeans, they already seem to exist in the MBeanServer.", e);
+            return;
           } catch (Exception e) {
             // Ignore and try again after 1 second, give the VM a chance to get started
             if (logger.isDebugEnabled()) {
@@ -183,27 +186,34 @@ public final class L1Management extends TerracottaManagement {
     return runtimeLoggingBean;
   }
 
-  private void attemptToRegister() throws InstanceAlreadyExistsException, MBeanRegistrationException,
+  private void attemptToRegister(final boolean createDedicatedMBeanServer) throws InstanceAlreadyExistsException, MBeanRegistrationException,
       NotCompliantMBeanException, SecurityException, IllegalArgumentException, NoSuchMethodException,
       ClassNotFoundException, IllegalAccessException, InvocationTargetException {
     synchronized (mBeanServerLock) {
       if (mBeanServer == null) {
-        if (Vm.isJDK14()) {
-          List mBeanServers = MBeanServerFactory.findMBeanServer(null);
-          if (mBeanServers != null && !mBeanServers.isEmpty()) {
-            mBeanServer = (MBeanServer) mBeanServers.get(0);
-          } else {
-            if (logger.isDebugEnabled()) {
-              logger.debug("attemptToRegister(): Inside a 1.4 runtime, try to create an MBeanServer");
-            }
-            mBeanServer = MBeanServerFactory.createMBeanServer();
-          }
-        } else {
-          // CDV-260: Make sure to use java.lang.management.ManagementFactory.getPlatformMBeanServer() on JDK 1.5+
+        if (createDedicatedMBeanServer) {
           if (logger.isDebugEnabled()) {
-            logger.debug("attemptToRegister(): Inside a 1.5+ runtime, trying to get the platform default MBeanServer");
+            logger.debug("attemptToRegister(): Creating an MBeanServer since explicitly requested");
           }
-          mBeanServer = getPlatformDefaultMBeanServer();
+          mBeanServer = MBeanServerFactory.createMBeanServer();
+        } else {
+          if (Vm.isJDK14()) {
+            List mBeanServers = MBeanServerFactory.findMBeanServer(null);
+            if (mBeanServers != null && !mBeanServers.isEmpty()) {
+              mBeanServer = (MBeanServer) mBeanServers.get(0);
+            } else {
+              if (logger.isDebugEnabled()) {
+                logger.debug("attemptToRegister(): Inside a 1.4 runtime, try to create an MBeanServer");
+              }
+              mBeanServer = MBeanServerFactory.createMBeanServer();
+            }
+          } else {
+            // CDV-260: Make sure to use java.lang.management.ManagementFactory.getPlatformMBeanServer() on JDK 1.5+
+            if (logger.isDebugEnabled()) {
+              logger.debug("attemptToRegister(): Inside a 1.5+ runtime, trying to get the platform default MBeanServer");
+            }
+            mBeanServer = getPlatformDefaultMBeanServer();
+          }
         }
         addJMXConnectors();
       }

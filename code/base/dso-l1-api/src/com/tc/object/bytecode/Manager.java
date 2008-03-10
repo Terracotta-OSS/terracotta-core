@@ -53,6 +53,11 @@ public interface Manager {
   public void init();
 
   /**
+   * Initialize the Manager for running tests
+   */
+  public void initForTests();
+
+  /**
    * Stop the manager
    */
   public void stop();

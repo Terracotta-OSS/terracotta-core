@@ -119,11 +119,19 @@ public class ManagerImpl implements Manager {
   }
 
   public void init() {
+    init(false);
+  }
+
+  public void initForTests() {
+    init(true);
+  }
+
+  private void init(final boolean forTests) {
     resolveClasses(); // call this before starting any threads (SEDA, DistributedMethod call stuff, etc)
 
     if (startClient) {
       if (clientStarted.attemptSet()) {
-        startClient();
+        startClient(forTests);
       }
     }
   }
@@ -158,13 +166,16 @@ public class ManagerImpl implements Manager {
     logicalInvoke(new HashMap(), SerializationUtil.CLEAR_SIGNATURE, new Object[] {});
   }
 
-  private void startClient() {
+  private void startClient(final boolean forTests) {
     final TCThreadGroup group = new TCThreadGroup(new ThrowableHandler(TCLogging
         .getLogger(DistributedObjectClient.class)));
 
     StartupAction action = new StartupHelper.StartupAction() {
       public void execute() throws Throwable {
         dso = new DistributedObjectClient(config, group, classProvider, connectionComponents, ManagerImpl.this, cluster);
+        if (forTests) {
+          dso.setCreateDedicatedMBeanServer(true);
+        }
         dso.start();
         objectManager = dso.getObjectManager();
         txManager = dso.getTransactionManager();

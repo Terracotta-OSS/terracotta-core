@@ -24,8 +24,8 @@ public abstract class FileLockGuard {
   private final static TCLogger logger = CustomerLogging.getDSOGenericLogger();
 
   public static void guard(File lockFile, Guarded guarded) throws IOException, InnerException {
-    if (logger.isInfoEnabled()) {
-      logger.info("Guarding through lock file '" + lockFile.getAbsolutePath() + "', guarded instance : "+guarded+".");
+    if (logger.isDebugEnabled()) {
+      logger.debug("Guarding through lock file '" + lockFile.getAbsolutePath() + "', guarded instance : "+guarded+".");
     }
     // synchronize on the interned string of the lock file for in-vm guarding
     synchronized (lockFile.getAbsolutePath().intern()) {

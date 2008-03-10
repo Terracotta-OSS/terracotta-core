@@ -157,6 +157,7 @@ public class DistributedObjectClient extends SEDA {
   private TCProperties                             l1Properties;
   private DmiManager                               dmiManager;
   private StatisticsAgentSubSystem                 statisticsAgentSubSystem;
+  private boolean                                  createDedicatedMBeanServer = false;
 
   public DistributedObjectClient(DSOClientConfigHelper config, TCThreadGroup threadGroup, ClassProvider classProvider,
                                  PreparedComponentsFromL2Connection connectionComponents, Manager manager,
@@ -170,6 +171,10 @@ public class DistributedObjectClient extends SEDA {
     this.manager = manager;
     this.cluster = cluster;
     this.threadGroup = threadGroup;
+  }
+
+  public void setCreateDedicatedMBeanServer(boolean createDedicatedMBeanServer) {
+    this.createDedicatedMBeanServer = createDedicatedMBeanServer;
   }
 
   public void setPauseListener(PauseListener pauseListener) {
@@ -295,9 +300,8 @@ public class DistributedObjectClient extends SEDA {
     
     // Set up the JMX management stuff
     final TunnelingEventHandler teh = new TunnelingEventHandler(channel.channel());
-    l1Management = new L1Management(teh, statisticsAgentSubSystem, runtimeLogger, manager.getInstrumentationLogger(), config
-        .rawConfigText());
-    l1Management.start();
+    l1Management = new L1Management(teh, statisticsAgentSubSystem, runtimeLogger, manager.getInstrumentationLogger(), config.rawConfigText());
+    l1Management.start(createDedicatedMBeanServer);
 
     txManager = new ClientTransactionManagerImpl(channel.getChannelIDProvider(), objectManager,
                                                  new ThreadLockManagerImpl(lockManager), txFactory, rtxManager,

@@ -45,6 +45,10 @@ public final class NullManager implements Manager {
     //
   }
 
+  public final void initForTests() {
+    //
+  }
+
   public final void stop() {
     //
   }

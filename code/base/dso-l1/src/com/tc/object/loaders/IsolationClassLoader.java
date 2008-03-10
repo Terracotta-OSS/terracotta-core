@@ -59,7 +59,7 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
   }
 
   public void init() {
-    manager.init();
+    manager.initForTests();
     ClassProcessorHelper.setContext(this, DSOContextImpl.createContext(config, classProvider, manager));
   }
 
