@@ -32,7 +32,7 @@ public class StatisticsManagerAllActionsTest extends TransparentTestBase {
     StatisticsEmitterMBean stat_emitter = (StatisticsEmitterMBean)MBeanServerInvocationHandler
         .newProxyInstance(mbsc, StatisticsMBeanNames.STATISTICS_EMITTER, StatisticsEmitterMBean.class, false);
 
-    List data = new ArrayList();
+    List<StatisticData> data = new ArrayList<StatisticData>();
     CollectingNotificationListener listener = new CollectingNotificationListener(1);
     mbsc.addNotificationListener(StatisticsMBeanNames.STATISTICS_EMITTER, listener, null, data);
     stat_emitter.enable();
@@ -42,8 +42,8 @@ public class StatisticsManagerAllActionsTest extends TransparentTestBase {
 
     // register all the supported statistics
     String[] statistics = stat_manager.getSupportedStatistics();
-    for (int i = 0; i < statistics.length; i++) {
-      stat_manager.enableStatistic(sessionid, statistics[i]);
+    for (String statistic : statistics) {
+      stat_manager.enableStatistic(sessionid, statistic);
     }
 
     // start capturing
@@ -66,11 +66,11 @@ public class StatisticsManagerAllActionsTest extends TransparentTestBase {
 
     // check the data
     assertTrue(data.size() > 2);
-    assertEquals(SRAStartupTimestamp.ACTION_NAME, ((StatisticData)data.get(0)).getName());
-    assertEquals(SRAShutdownTimestamp.ACTION_NAME, ((StatisticData)data.get(data.size() - 1)).getName());
-    Set received_data_names = new HashSet();
+    assertEquals(SRAStartupTimestamp.ACTION_NAME, data.get(0).getName());
+    assertEquals(SRAShutdownTimestamp.ACTION_NAME, data.get(data.size() - 1).getName());
+    Set<String> received_data_names = new HashSet<String>();
     for (int i = 1; i < data.size() - 1; i++) {
-      StatisticData stat_data = (StatisticData)data.get(i);
+      StatisticData stat_data = data.get(i);
       received_data_names.add(stat_data.getName());
     }
     // check that there's at least one data element name per registered statistic

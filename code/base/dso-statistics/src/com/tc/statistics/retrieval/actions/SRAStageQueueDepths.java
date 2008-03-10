@@ -22,11 +22,10 @@ public class SRAStageQueueDepths implements DynamicSRA {
 
   private final StageManager stageManager;
 
-  private volatile boolean collectionEnabled = false;
-
   public SRAStageQueueDepths(final StageManager stageManager) {
     Assert.assertNotNull(stageManager);
     this.stageManager = stageManager;
+    disableStatisticCollection();
   }
 
   public String getName() {
@@ -38,7 +37,7 @@ public class SRAStageQueueDepths implements DynamicSRA {
   }
 
   public StatisticData[] retrieveStatisticData() {
-    if (!collectionEnabled) {
+    if (!isStatisticsCollectionEnabled()) {
       return EMPTY_STATISTIC_DATA;
     }
     Date moment = new Date();
@@ -51,29 +50,34 @@ public class SRAStageQueueDepths implements DynamicSRA {
     return data;
   }
 
+  private boolean isStatisticsCollectionEnabled() {
+    synchronized (stageManager) {
+      Collection stages = stageManager.getStages();
+      for (Iterator it = stages.iterator(); it.hasNext();) {
+        if (!((Stage)it.next()).getSink().isStatsCollectionEnabled()) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
   public void enableStatisticCollection() {
-    if (collectionEnabled) return;
     synchronized (stageManager) {
       Collection stages = stageManager.getStages();
       for (Iterator it = stages.iterator(); it.hasNext();) {
         ((Stage)it.next()).getSink().enableStatsCollection(true);
       }
     }
-    collectionEnabled = true;
   }
 
   public void disableStatisticCollection() {
-    if (!collectionEnabled) return;
     synchronized (stageManager) {
       Collection stages = stageManager.getStages();
       for (Iterator it = stages.iterator(); it.hasNext();) {
         ((Stage)it.next()).getSink().enableStatsCollection(false);
       }
     }
-    collectionEnabled = false;
-  }
-
-  public boolean isStatisticCollectionEnabled() {
-    return collectionEnabled;
   }
 }

@@ -496,4 +496,8 @@ public class DistributedObjectClient extends SEDA {
   public DmiManager getDmiManager() {
     return dmiManager;
   }
+
+  public StatisticsAgentSubSystem getStatisticsAgentSubSystem() {
+    return statisticsAgentSubSystem;
+  }
 }

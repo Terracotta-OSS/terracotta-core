@@ -30,7 +30,7 @@ public class StatisticsGatewayCaptureStatisticTest extends TransparentTestBase {
     StatisticsGatewayMBean stat_gateway = (StatisticsGatewayMBean)MBeanServerInvocationHandler
         .newProxyInstance(mbsc, StatisticsMBeanNames.STATISTICS_GATEWAY, StatisticsGatewayMBean.class, false);
 
-    List data = new ArrayList();
+    List<StatisticData> data = new ArrayList<StatisticData>();
     CollectingNotificationListener listener = new CollectingNotificationListener(StatisticsGatewayNoActionsTestApp.NODE_COUNT + 1);
     mbsc.addNotificationListener(StatisticsMBeanNames.STATISTICS_GATEWAY, listener, null, data);
     stat_gateway.enable();
@@ -73,10 +73,10 @@ public class StatisticsGatewayCaptureStatisticTest extends TransparentTestBase {
     // check the data
     assertEquals(total_node_count * 4, data.size());
     for (int i = 0; i < total_node_count; i++) {
-      assertEquals(SRAStartupTimestamp.ACTION_NAME, ((StatisticData)data.get((total_node_count * 0) + i)).getName());
-      assertEquals(SRASystemProperties.ACTION_NAME, ((StatisticData)data.get((total_node_count * 1) + i)).getName());
-      assertEquals(SRASystemProperties.ACTION_NAME, ((StatisticData)data.get((total_node_count * 2) + i)).getName());
-      assertEquals(SRAShutdownTimestamp.ACTION_NAME, ((StatisticData)data.get((total_node_count * 3) + i)).getName());
+      assertEquals(SRAStartupTimestamp.ACTION_NAME, data.get((total_node_count * 0) + i).getName());
+      assertEquals(SRASystemProperties.ACTION_NAME, data.get((total_node_count * 1) + i).getName());
+      assertEquals(SRASystemProperties.ACTION_NAME, data.get((total_node_count * 2) + i).getName());
+      assertEquals(SRAShutdownTimestamp.ACTION_NAME, data.get((total_node_count * 3) + i).getName());
     }
   }
 

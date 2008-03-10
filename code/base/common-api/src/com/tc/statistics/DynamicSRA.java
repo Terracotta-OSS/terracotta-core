@@ -14,6 +14,4 @@ public interface DynamicSRA extends StatisticRetrievalAction {
   void enableStatisticCollection();
 
   void disableStatisticCollection();
-
-  boolean isStatisticCollectionEnabled();
 }

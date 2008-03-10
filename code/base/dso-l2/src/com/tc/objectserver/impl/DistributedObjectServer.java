@@ -1022,6 +1022,14 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     return l2Management.getJMXConnServer();
   }
 
+  public StatisticsAgentSubSystem getStatisticsAgentSubSystem() {
+    return statisticsAgentSubSystem;
+  }
+
+  public StatisticsGatewayMBeanImpl getStatisticsGateway() {
+    return statisticsGateway;
+  }
+
   private void startJMXServer(InetAddress bind, int jmxPort) throws Exception {
     if (jmxPort == 0) {
       jmxPort = new PortChooser().chooseRandomPort();

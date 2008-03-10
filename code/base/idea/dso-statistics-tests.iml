@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module relativePaths="true" type="JAVA_MODULE" version="4">
-  <component name="NewModuleRootManager" inherit-compiler-output="true">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_5" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$/../dso-statistics-tests">
       <sourceFolder url="file://$MODULE_DIR$/../dso-statistics-tests/tests.base" isTestSource="false" />
@@ -8,7 +8,7 @@
       <sourceFolder url="file://$MODULE_DIR$/../dso-statistics-tests/tests.system.resources" isTestSource="false" />
     </content>
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="jdk" jdkName="J2SE-1.4" jdkType="JavaSDK" />
+    <orderEntry type="jdk" jdkName="J2SE-1.5" jdkType="JavaSDK" />
     <orderEntry type="module" module-name="aspectwerkz" />
     <orderEntry type="module" module-name="common" />
     <orderEntry type="module" module-name="common-api" />

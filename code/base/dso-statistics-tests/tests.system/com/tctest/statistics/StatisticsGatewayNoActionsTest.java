@@ -27,7 +27,7 @@ public class StatisticsGatewayNoActionsTest extends TransparentTestBase {
     StatisticsGatewayMBean stat_gateway = (StatisticsGatewayMBean)MBeanServerInvocationHandler
         .newProxyInstance(mbsc, StatisticsMBeanNames.STATISTICS_GATEWAY, StatisticsGatewayMBean.class, false);
 
-    List data = new ArrayList();
+    List<StatisticData> data = new ArrayList<StatisticData>();
     CollectingNotificationListener listener = new CollectingNotificationListener(StatisticsGatewayNoActionsTestApp.NODE_COUNT + 1);
     mbsc.addNotificationListener(StatisticsMBeanNames.STATISTICS_GATEWAY, listener, null, data);
     stat_gateway.enable();
@@ -37,8 +37,8 @@ public class StatisticsGatewayNoActionsTest extends TransparentTestBase {
 
     // register all the supported statistics
     String[] statistics = stat_gateway.getSupportedStatistics();
-    for (int i = 0; i < statistics.length; i++) {
-      stat_gateway.enableStatistic(sessionid, statistics[i]);
+    for (String statistic : statistics) {
+      stat_gateway.enableStatistic(sessionid, statistic);
     }
 
     // remove all statistics
@@ -64,8 +64,8 @@ public class StatisticsGatewayNoActionsTest extends TransparentTestBase {
 
     // check the data
     assertEquals((StatisticsGatewayNoActionsTestApp.NODE_COUNT + 1) * 2, data.size());
-    assertEquals(SRAStartupTimestamp.ACTION_NAME, ((StatisticData)data.get(0)).getName());
-    assertEquals(SRAShutdownTimestamp.ACTION_NAME, ((StatisticData)data.get(data.size() - 1)).getName());
+    assertEquals(SRAStartupTimestamp.ACTION_NAME, data.get(0).getName());
+    assertEquals(SRAShutdownTimestamp.ACTION_NAME, data.get(data.size() - 1).getName());
   }
 
   protected Class getApplicationClass() {

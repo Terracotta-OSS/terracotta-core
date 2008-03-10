@@ -38,7 +38,7 @@ public class StatisticsGathererConfigSampleRateTest extends TransparentTestBase 
     Thread.sleep(5000);
     gatherer.closeSession();
 
-    final List data_list1 = new ArrayList();
+    final List<StatisticData> data_list1 = new ArrayList<StatisticData>();
     store.retrieveStatistics(new StatisticsRetrievalCriteria(), new StatisticDataUser() {
       public boolean useStatisticData(StatisticData data) {
         data_list1.add(data);
@@ -46,8 +46,7 @@ public class StatisticsGathererConfigSampleRateTest extends TransparentTestBase 
       }
     });
 
-    gatherer.setGlobalParam(StatisticsConfig.KEY_GLOBAL_SCHEDULE_PERIOD, new Long(StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY
-      .longValue() / 2));
+    gatherer.setGlobalParam(StatisticsConfig.KEY_GLOBAL_SCHEDULE_PERIOD, StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY / 2);
 
     sessionid = UUID.getUUID().toString();
     gatherer.createSession(sessionid);
@@ -58,7 +57,7 @@ public class StatisticsGathererConfigSampleRateTest extends TransparentTestBase 
     Thread.sleep(5000);
     gatherer.closeSession();
 
-    final List data_list2 = new ArrayList();
+    final List<StatisticData> data_list2 = new ArrayList<StatisticData>();
     store.retrieveStatistics(new StatisticsRetrievalCriteria(), new StatisticDataUser() {
       public boolean useStatisticData(StatisticData data) {
         data_list2.add(data);

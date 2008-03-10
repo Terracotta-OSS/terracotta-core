@@ -115,6 +115,7 @@ public final class L1Management extends TerracottaManagement {
                            + " attempts");
             }
           } catch (Exception e) {
+            e.printStackTrace();
             // Ignore and try again after 1 second, give the VM a chance to get started
             if (logger.isDebugEnabled()) {
               logger.debug("Caught exception while trying to register L1 MBeans", e);
@@ -186,6 +187,7 @@ public final class L1Management extends TerracottaManagement {
   private void attemptToRegister() throws InstanceAlreadyExistsException, MBeanRegistrationException,
       NotCompliantMBeanException, SecurityException, IllegalArgumentException, NoSuchMethodException,
       ClassNotFoundException, IllegalAccessException, InvocationTargetException {
+    System.out.println(">>>>>> aaaaaa");
     synchronized (mBeanServerLock) {
       if (mBeanServer == null) {
         if (Vm.isJDK14()) {
@@ -208,13 +210,19 @@ public final class L1Management extends TerracottaManagement {
         addJMXConnectors();
       }
     }
+    System.out.println(">>>>>> bbbbbb");
     mBeanServer.registerMBean(clientTxBean, MBeanNames.CLIENT_TX_INTERNAL);
+    System.out.println(">>>>>> cccccc");
     mBeanServer.registerMBean(internalSessionBean, MBeanNames.SESSION_INTERNAL);
+    System.out.println(">>>>>> dddddd");
     mBeanServer.registerMBean(publicSessionBean, L1MBeanNames.SESSION_PRODUCT_PUBLIC);
-    mBeanServer.registerMBean(clusterBean, L1MBeanNames.CLUSTER_BEAN_PUBLIC);    
+    System.out.println(">>>>>> eeeeee");
+    mBeanServer.registerMBean(clusterBean, L1MBeanNames.CLUSTER_BEAN_PUBLIC);
+    System.out.println(">>>>>> ffffff");
     if (statisticsAgentSubSystem.isActive()) {
       statisticsAgentSubSystem.registerMBeans(mBeanServer);
     }
+    System.out.println(">>>>>> gggggg");
     mBeanServer.registerMBean(l1InfoBean, L1MBeanNames.L1INFO_PUBLIC);
     mBeanServer.registerMBean(instrumentationLoggingBean, L1MBeanNames.INSTRUMENTATION_LOGGING_PUBLIC);
     mBeanServer.registerMBean(runtimeOutputOptionsBean, L1MBeanNames.RUNTIME_OUTPUT_OPTIONS_PUBLIC);

@@ -30,7 +30,7 @@ public class StatisticsManagerNoActionsTest extends TransparentTestBase {
     StatisticsEmitterMBean stat_emitter = (StatisticsEmitterMBean)MBeanServerInvocationHandler
         .newProxyInstance(mbsc, StatisticsMBeanNames.STATISTICS_EMITTER, StatisticsEmitterMBean.class, false);
 
-    List data = new ArrayList();
+    List<StatisticData> data = new ArrayList<StatisticData>();
     CollectingNotificationListener listener = new CollectingNotificationListener(1);
     mbsc.addNotificationListener(StatisticsMBeanNames.STATISTICS_EMITTER, listener, null, data);
     stat_emitter.enable();
@@ -40,8 +40,8 @@ public class StatisticsManagerNoActionsTest extends TransparentTestBase {
 
     // register all the supported statistics
     String[] statistics = stat_manager.getSupportedStatistics();
-    for (int i = 0; i < statistics.length; i++) {
-      stat_manager.enableStatistic(sessionid, statistics[i]);
+    for (String statistic : statistics) {
+      stat_manager.enableStatistic(sessionid, statistic);
     }
 
     // remove all statistics
@@ -67,8 +67,8 @@ public class StatisticsManagerNoActionsTest extends TransparentTestBase {
 
     // check the data
     assertEquals(2, data.size());
-    assertEquals(SRAStartupTimestamp.ACTION_NAME, ((StatisticData)data.get(0)).getName());
-    assertEquals(SRAShutdownTimestamp.ACTION_NAME, ((StatisticData)data.get(1)).getName());
+    assertEquals(SRAStartupTimestamp.ACTION_NAME, data.get(0).getName());
+    assertEquals(SRAShutdownTimestamp.ACTION_NAME, data.get(1).getName());
   }
 
   protected Class getApplicationClass() {

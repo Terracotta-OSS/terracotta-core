@@ -117,7 +117,7 @@ public class StatisticsGathererTest extends TransparentTestBase implements Stati
 
     Thread.sleep(5000);
 
-    final List data_list = new ArrayList();
+    final List<StatisticData> data_list = new ArrayList<StatisticData>();
     store.retrieveStatistics(new StatisticsRetrievalCriteria(), new StatisticDataUser() {
       public boolean useStatisticData(StatisticData data) {
         data_list.add(data);
@@ -136,11 +136,11 @@ public class StatisticsGathererTest extends TransparentTestBase implements Stati
 
     // check the data
     assertTrue(data_list.size() > 2);
-    assertEquals(SRAStartupTimestamp.ACTION_NAME, ((StatisticData)data_list.get(0)).getName());
-    assertEquals(SRAShutdownTimestamp.ACTION_NAME, ((StatisticData)data_list.get(data_list.size() - 1)).getName());
-    Set received_data_names = new HashSet();
+    assertEquals(SRAStartupTimestamp.ACTION_NAME, data_list.get(0).getName());
+    assertEquals(SRAShutdownTimestamp.ACTION_NAME, data_list.get(data_list.size() - 1).getName());
+    Set<String> received_data_names = new HashSet<String>();
     for (int i = 1; i < data_list.size() - 1; i++) {
-      StatisticData stat_data = (StatisticData)data_list.get(i);
+      StatisticData stat_data = data_list.get(i);
       received_data_names.add(stat_data.getName());
     }
 

@@ -131,8 +131,16 @@ public class StatisticsAgentSubSystem {
   }
 
   public void unregisterMBeans(MBeanServer server) throws InstanceNotFoundException, MBeanRegistrationException {
-    server.unregisterMBean(StatisticsMBeanNames.STATISTICS_EMITTER);
-    server.unregisterMBean(StatisticsMBeanNames.STATISTICS_MANAGER);
+    try {
+      server.unregisterMBean(StatisticsMBeanNames.STATISTICS_EMITTER);
+    } catch (InstanceNotFoundException e) {
+      logger.warn("Unexpected error while unregistering mbean '" + StatisticsMBeanNames.STATISTICS_EMITTER + "'", e);
+    }
+    try {
+      server.unregisterMBean(StatisticsMBeanNames.STATISTICS_MANAGER);
+    } catch (Exception e) {
+      logger.warn("Unexpected error while unregistering mbean '" + StatisticsMBeanNames.STATISTICS_MANAGER + "'", e);
+    }
   }
 
   public void disableJMX() throws Exception {
