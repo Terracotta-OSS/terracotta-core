@@ -303,7 +303,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     testFaultSinkContext.waitTillCompleteCountDown();
     objectManager.releaseAll(NULL_TRANSACTION, results.objects.values());
 
-    // before no objects were pre-fetched, we should except 0 hits and 10 misses
+    // before no objects were pre-fetched, we should expect 0 hits and 10 misses
     assertEquals(0, stats.getTotalCacheHits());
     assertEquals(10, stats.getTotalCacheMisses());
 
