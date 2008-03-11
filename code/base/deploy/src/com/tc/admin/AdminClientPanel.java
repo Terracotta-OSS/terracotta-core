@@ -62,7 +62,6 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.prefs.Preferences;
@@ -98,36 +97,39 @@ import javax.swing.undo.UndoManager;
 import javax.swing.undo.UndoableEdit;
 
 public class AdminClientPanel extends XContainer implements AdminClientController, UndoMonger {
-  private NavTree                     m_tree;
-  private XContainer                  m_nodeView;
-  private JSplitPane                  m_mainSplitter;
-  private Integer                     m_mainDivLoc;
-  private JSplitPane                  m_leftSplitter;
-  private Integer                     m_leftDivLoc;
-  private DividerListener             m_dividerListener;
-  private XTabbedPane                 m_bottomPane;
-  private LogPane                     m_logArea;
-  private ArrayList                   m_logListeners;
-  private Icon                        m_infoIcon;
-  private XTextField                  m_statusLine;
-  private Container                   m_activityArea;
-  protected UndoAction                m_undoCmd;
-  protected RedoAction                m_redoCmd;
-  protected UndoManager               m_undoManager;
-  protected NewClusterAction          m_newClusterAction;
-  protected HelpAction                m_helpAction;
-  protected VersionCheckControlAction m_versionCheckAction;
-  protected JCheckBoxMenuItem         m_versionCheckToggle;
-  protected AboutAction               m_aboutAction;
+  private NavTree                      m_tree;
+  private XContainer                   m_nodeView;
+  private JSplitPane                   m_mainSplitter;
+  private Integer                      m_mainDivLoc;
+  private JSplitPane                   m_leftSplitter;
+  private Integer                      m_leftDivLoc;
+  private DividerListener              m_dividerListener;
+  private XTabbedPane                  m_bottomPane;
+  private LogPane                      m_logArea;
+  private ArrayList                    m_logListeners;
+  private Icon                         m_infoIcon;
+  private XTextField                   m_statusLine;
+  private Container                    m_activityArea;
+  protected UndoAction                 m_undoCmd;
+  protected RedoAction                 m_redoCmd;
+  protected UndoManager                m_undoManager;
+  protected NewClusterAction           m_newClusterAction;
+  protected HelpAction                 m_helpAction;
+  protected UpdateCheckerControlAction m_updateCheckerControlAction;
+  protected JCheckBoxMenuItem          m_updateCheckerToggle;
+  protected UpdateCheckerAction        m_updateCheckerAction;
+  protected VersionCheckControlAction  m_versionCheckAction;
+  protected JCheckBoxMenuItem          m_versionCheckToggle;
+  protected AboutAction                m_aboutAction;
 
-  public static final String          UNDO            = "Undo";
-  public static final String          REDO            = "Redo";
+  public static final String           UNDO            = "Undo";
+  public static final String           REDO            = "Redo";
 
-  protected MouseAdapter              m_statusCleaner = new MouseAdapter() {
-                                                        public void mouseClicked(MouseEvent e) {
-                                                          setStatus(null);
-                                                        }
-                                                      };
+  protected MouseAdapter               m_statusCleaner = new MouseAdapter() {
+                                                         public void mouseClicked(MouseEvent e) {
+                                                           setStatus(null);
+                                                         }
+                                                       };
 
   public AdminClientPanel() {
     super();
@@ -145,7 +147,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     m_logArea = (LogPane) m_bottomPane.findComponent("LogArea");
     m_statusLine = (XTextField) findComponent("StatusLine");
     m_activityArea = (Container) findComponent("ActivityArea");
-    
+
     m_nodeView.setLayout(new BorderLayout());
 
     m_tree.addMouseListener(new MouseAdapter() {
@@ -301,7 +303,14 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     menu.add(new ContactTerracottaAction("Contact Terracotta Technical Support",
                                          "http://www.terracottatech.com/support_services.shtml"));
     menu.addSeparator();
-    menu.add(new UpdateCheckerAction());
+
+    m_updateCheckerControlAction = new UpdateCheckerControlAction();
+    m_updateCheckerToggle = new JCheckBoxMenuItem(m_updateCheckerControlAction);
+    m_updateCheckerToggle.setSelected(m_updateCheckerControlAction.isUpdateCheckEnabled());
+    m_updateCheckerToggle.addActionListener(new UpdateCheckerControlHandler());
+    menu.add(m_updateCheckerToggle);
+    m_updateCheckerAction = new UpdateCheckerAction();
+
     m_versionCheckAction = new VersionCheckControlAction();
     m_versionCheckToggle = new JCheckBoxMenuItem(m_versionCheckAction);
     m_versionCheckToggle.setSelected(m_versionCheckAction.isVersionCheckEnabled());
@@ -536,7 +545,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
   public Container getActivityArea() {
     return m_activityArea;
   }
-  
+
   public void addNotify() {
     super.addNotify();
 
@@ -554,7 +563,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     super.removeNotify();
   }
 
-   class NewClusterAction extends XAbstractAction {
+  class NewClusterAction extends XAbstractAction {
     NewClusterAction() {
       super(getBundleString("new.cluster.action.label"));
     }
@@ -581,33 +590,33 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     }
   }
 
-   /**
-    * Returns true if quit should proceed.
-    */
-   private boolean testWarnCurrentRecordingSessions() {
-     XTreeModel model = (XTreeModel) m_tree.getModel();
-     XTreeNode root = (XTreeNode) model.getRoot();
-     int count = root.getChildCount();
-     boolean currentlyRecording = false;
-     
-     for(int i = 0; i < count; i++) {
-       ClusterNode clusterNode = (ClusterNode) root.getChildAt(i);
-       if(clusterNode.haveActiveRecordingSession()) {
-         currentlyRecording = true;
-         break;
-       }
-     }
-     
-     if(currentlyRecording) {
-       String msg = "There are active statistic recording sessions.  Quit anyway?";
-       Frame frame = (Frame) getAncestorOfClass(Frame.class);
-       int answer = JOptionPane.showConfirmDialog(this, msg, frame.getTitle(), JOptionPane.OK_CANCEL_OPTION);
-       return answer == JOptionPane.OK_OPTION;
-     }
+  /**
+   * Returns true if quit should proceed.
+   */
+  private boolean testWarnCurrentRecordingSessions() {
+    XTreeModel model = (XTreeModel) m_tree.getModel();
+    XTreeNode root = (XTreeNode) model.getRoot();
+    int count = root.getChildCount();
+    boolean currentlyRecording = false;
 
-     return true;
-   }
-   
+    for (int i = 0; i < count; i++) {
+      ClusterNode clusterNode = (ClusterNode) root.getChildAt(i);
+      if (clusterNode.haveActiveRecordingSession()) {
+        currentlyRecording = true;
+        break;
+      }
+    }
+
+    if (currentlyRecording) {
+      String msg = "There are active statistic recording sessions.  Quit anyway?";
+      Frame frame = (Frame) getAncestorOfClass(Frame.class);
+      int answer = JOptionPane.showConfirmDialog(this, msg, frame.getTitle(), JOptionPane.OK_CANCEL_OPTION);
+      return answer == JOptionPane.OK_OPTION;
+    }
+
+    return true;
+  }
+
   class QuitAction extends XAbstractAction {
     QuitAction() {
       super(getBundleString("quit.action.label"));
@@ -616,7 +625,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     }
 
     public void actionPerformed(ActionEvent ae) {
-      if(testWarnCurrentRecordingSessions()) {
+      if (testWarnCurrentRecordingSessions()) {
         System.exit(0);
       }
     }
@@ -755,6 +764,35 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     return JOptionPane.CLOSED_OPTION;
   }
 
+  class UpdateCheckerControlHandler implements ActionListener {
+    public void actionPerformed(ActionEvent e) {
+      m_updateCheckerControlAction.setUpdateCheckEnabled(m_updateCheckerToggle.isSelected());
+    }
+  }
+
+  class UpdateCheckerControlAction extends XAbstractAction {
+    UpdateCheckerControlAction() {
+      super(getBundleString("update-checker.control.label"));
+    }
+
+    boolean isUpdateCheckEnabled() {
+      return getUpdateCheckerPrefs().getBoolean("checking-enabled", true);
+    }
+
+    void setUpdateCheckEnabled(boolean checkEnabled) {
+      getUpdateCheckerPrefs().putBoolean("checking-enabled", checkEnabled);
+      m_updateCheckerToggle.setSelected(checkEnabled);
+      m_updateCheckerAction.setEnabled(checkEnabled);
+      storePreferences();
+    }
+
+    public void actionPerformed(ActionEvent ae) {
+      JCheckBoxMenuItem cbItem = (JCheckBoxMenuItem) ae.getSource();
+      getUpdateCheckerPrefs().putBoolean("checking-enabled", cbItem.isSelected());
+      storePreferences();
+    }
+  }
+
   public static URL constructCheckURL(ProductInfo productInfo, int id) throws MalformedURLException {
     String defaultPropsUrl = "http://www.terracotta.org/kit/reflector?kitID=default&pageID=update.properties";
     String propsUrl = System.getProperty("terracotta.update-checker.url", defaultPropsUrl);
@@ -781,14 +819,17 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     return new URL(sb.toString());
   }
 
+  Preferences getUpdateCheckerPrefs() {
+    return getPreferences().node("update-checker");
+  }
+
   class UpdateCheckerAction extends XAbstractAction {
-    Dialog      m_updateCheckerDialog;
-    ProductInfo m_productInfo;
+    ProductInfo          m_productInfo;
+    private final String NEXT_CHECK_TIME_PREF_KEY = "next-check-time";
+    private final String LAST_CHECK_TIME_PREF_KEY = "last-check-time";
 
     UpdateCheckerAction() {
       super(getBundleString("update-checker.action.label"));
-      Preferences updateCheckerPrefs = getUpdateCheckerPrefs();
-      boolean shouldCheck = updateCheckerPrefs.getBoolean("checking-enabled", true);
 
       Logger.getLogger("org.apache.commons.httpclient.HttpClient").setLevel(Level.OFF);
       Logger.getLogger("org.apache.commons.httpclient.params.DefaultHttpParams").setLevel(Level.OFF);
@@ -802,98 +843,47 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       Logger.getLogger("httpclient.wire.header").setLevel(Level.OFF);
       Logger.getLogger("httpclient.wire.content").setLevel(Level.OFF);
 
-      if (shouldCheck) {
-        long nextCheckTime = updateCheckerPrefs.getLong("next-check-time", 0L);
+      if (!isEnabled()) return;
 
-        if (nextCheckTime == 0L) {
-          updateCheckerPrefs.putLong("next-check-time", nextCheckTime());
-          storePreferences();
-        } else if (nextCheckTime < System.currentTimeMillis()) {
-          AdminClientPanel.this.addHierarchyListener(new HierarchyListener() {
-            public void hierarchyChanged(HierarchyEvent e) {
-              if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0
-                  && AdminClientPanel.this.isDisplayable()) {
-                AdminClientPanel.this.removeHierarchyListener(this);
-                SwingUtilities.invokeLater(new Runnable() {
-                  public void run() {
-                    Timer t = new Timer(100, UpdateCheckerAction.this);
-                    t.setRepeats(false);
-                    t.start();
-                  }
-                });
-              }
+      Preferences updateCheckerPrefs = getUpdateCheckerPrefs();
+      long nextCheckTime = updateCheckerPrefs.getLong(NEXT_CHECK_TIME_PREF_KEY, 0L);
+
+      if (nextCheckTime == 0L) {
+        updateCheckerPrefs.putLong(NEXT_CHECK_TIME_PREF_KEY, nextCheckTime());
+        storePreferences();
+      } else if (nextCheckTime < System.currentTimeMillis()) {
+        AdminClientPanel.this.addHierarchyListener(new HierarchyListener() {
+          public void hierarchyChanged(HierarchyEvent e) {
+            if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0
+                && AdminClientPanel.this.isDisplayable()) {
+              AdminClientPanel.this.removeHierarchyListener(this);
+              SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                  Timer t = new Timer(100, UpdateCheckerAction.this);
+                  t.setRepeats(false);
+                  t.start();
+                }
+              });
             }
-          });
-        }
+          }
+        });
       }
     }
 
-    Preferences getUpdateCheckerPrefs() {
-      return getPreferences().node("update-checker");
+    public void setEnabled(boolean enabled) {
+      super.setEnabled(enabled);
+
+      Preferences updateCheckerPrefs = getUpdateCheckerPrefs();
+      if (enabled) {
+        updateCheckerPrefs.putLong(NEXT_CHECK_TIME_PREF_KEY, nextCheckTime());
+      } else {
+        updateCheckerPrefs.remove(NEXT_CHECK_TIME_PREF_KEY);
+      }
+      storePreferences();
     }
 
     public void actionPerformed(ActionEvent e) {
-      final Preferences updateCheckerPrefs = getUpdateCheckerPrefs();
-      final boolean promptForCheck = updateCheckerPrefs.getBoolean("prompt-for-check-enabled", true);
-      final Object src = e.getSource();
-
-      if (promptForCheck || !(src instanceof Timer)) {
-        if (m_updateCheckerDialog == null) {
-          AdminClientContext acc = AdminClient.getContext();
-          java.awt.Frame frame = getFrame();
-
-          m_updateCheckerDialog = frame != null ? new Dialog(frame) : new Dialog();
-          m_updateCheckerDialog.load((DialogResource) acc.topRes.child("UpdateCheckerDialog"));
-
-          Button button = (Button) m_updateCheckerDialog.findComponent("EnableCheckingButton");
-          button.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent ae) {
-              updateCheckerPrefs.putBoolean("checking-enabled", true);
-              storePreferences();
-              UpdateCheckerAction.this.startUpdateCheck(true);
-              m_updateCheckerDialog.setVisible(false);
-            }
-          });
-          m_updateCheckerDialog.getRootPane().setDefaultButton(button);
-
-          CheckBox promptForCheckToggle = (CheckBox) m_updateCheckerDialog.findComponent("PromptForCheckToggle");
-          promptForCheckToggle.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent ae) {
-              CheckBox cb = (CheckBox) ae.getSource();
-              updateCheckerPrefs.putBoolean("prompt-for-check-enabled", cb.isSelected());
-              storePreferences();
-            }
-          });
-          promptForCheckToggle.setSelected(updateCheckerPrefs.getBoolean("prompt-for-check-enabled", true));
-
-          button = (Button) m_updateCheckerDialog.findComponent("DisableCheckingButton");
-          button.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent ae) {
-              updateCheckerPrefs.putBoolean("checking-enabled", false);
-              storePreferences();
-              m_updateCheckerDialog.setVisible(false);
-            }
-          });
-
-          button = (Button) m_updateCheckerDialog.findComponent("CloseButton");
-          button.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent ae) {
-              m_updateCheckerDialog.setVisible(false);
-            }
-          });
-          Label lastCheckLabel = (Label) m_updateCheckerDialog.findComponent("LastCheckTimeLabel");
-          long lastCheckTime = updateCheckerPrefs.getLong("last-check-time", 0L);
-          if (lastCheckTime != 0L) {
-            lastCheckLabel.setText(formatBundleString("update-checker.last.checked.msg", new Date(lastCheckTime)));
-          }
-        }
-
-        m_updateCheckerDialog.pack();
-        m_updateCheckerDialog.center(AdminClientPanel.this);
-        m_updateCheckerDialog.setVisible(true);
-      } else {
-        UpdateCheckerAction.this.startUpdateCheck(false);
-      }
+      UpdateCheckerAction.this.startUpdateCheck();
     }
 
     ProductInfo getProductInfo() {
@@ -944,12 +934,11 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       }
     }
 
-    void startUpdateCheck(final boolean wasPrompted) {
+    void startUpdateCheck() {
       Thread t = new Thread() {
         public void run() {
           InputStream is = null;
           Object result = null;
-          String versionNotice = null;
 
           try {
             StringBuffer sb = new StringBuffer();
@@ -968,7 +957,6 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
               if (propVal != null && (propVal = propVal.trim()) != null && propVal.length() > 0) {
                 showMessage(propVal);
               }
-              versionNotice = propVal;
 
               propVal = props.getProperty(version + ".updates");
               if (propVal != null && (propVal = propVal.trim()) != null && propVal.length() > 0) {
@@ -1012,23 +1000,20 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
                 }
               });
               result = textPane;
-            } else if (wasPrompted && versionNotice == null) {
-              result = getBundleString("update-checker.current.msg");
             }
           } catch (Exception e) {
-            if (wasPrompted) {
-              result = getBundleString("update-checker.connect.failed.msg");
-            }
+            // whatever the problem, don't bother user
+            result = null;
           } finally {
             IOUtils.closeQuietly(is);
           }
-          UpdateCheckerAction.this.finishUpdateCheck(wasPrompted, result);
+          UpdateCheckerAction.this.finishUpdateCheck(result);
         }
       };
       t.start();
     }
 
-    void finishUpdateCheck(final boolean wasPrompted, final Object msg) {
+    void finishUpdateCheck(final Object msg) {
       if (msg != null) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
@@ -1039,8 +1024,8 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       }
 
       final Preferences updateCheckerPrefs = getUpdateCheckerPrefs();
-      updateCheckerPrefs.putLong("next-check-time", nextCheckTime());
-      updateCheckerPrefs.putLong("last-check-time", System.currentTimeMillis());
+      updateCheckerPrefs.putLong(NEXT_CHECK_TIME_PREF_KEY, nextCheckTime());
+      updateCheckerPrefs.putLong(LAST_CHECK_TIME_PREF_KEY, System.currentTimeMillis());
       storePreferences();
     }
 

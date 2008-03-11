@@ -180,6 +180,8 @@ public class AdminClientBundle extends ListResourceBundle {
 
       { "about.action.label", "About Terracotta Console" },
 
+      { "update-checker.control.label", "Check for updates" },
+      
       { "update-checker.action.label", "Update Checker..." },
 
       { "update-checker.connect.failed.msg", "Unable to connect to update site." },
