@@ -57,13 +57,13 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 public class H2StatisticsStoreImpl implements StatisticsStore {
-  public final static int DATABASE_STRUCTURE_VERSION = 5;
+  public final static int DATABASE_STRUCTURE_VERSION = 6;
   
   public final static String H2_URL_SUFFIX = "statistics-store";
 
   private final static TCLogger logger = CustomerLogging.getDSOGenericLogger();
 
-  private final static long DATABASE_STRUCTURE_CHECKSUM = 3035608895L;
+  private final static long DATABASE_STRUCTURE_CHECKSUM = 2820643252L;
 
   private final static String SQL_NEXT_STATISTICLOGID = "SELECT nextval('seq_statisticlog')";
   private final static String SQL_GET_AVAILABLE_SESSIONIDS = "SELECT sessionid FROM statisticlog GROUP BY sessionid ORDER BY sessionid ASC";
@@ -187,7 +187,7 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
                 "statname VARCHAR(255) NOT NULL," +
                 "statelement VARCHAR(255) NULL, " +
                 "datanumber BIGINT NULL, " +
-                "datatext TEXT NULL, " +
+                "datatext LONGVARCHAR NULL, " +
                 "datatimestamp TIMESTAMP NULL, " +
                 "datadecimal DECIMAL(8, 4) NULL)");
 

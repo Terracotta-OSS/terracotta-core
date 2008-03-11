@@ -52,9 +52,9 @@ import java.util.Random;
 import java.util.Set;
 
 public class H2StatisticsBufferImpl implements StatisticsBuffer {
-  public final static int DATABASE_STRUCTURE_VERSION = 3;
+  public final static int DATABASE_STRUCTURE_VERSION = 4;
   
-  private final static long DATABASE_STRUCTURE_CHECKSUM = 1001158033L;
+  private final static long DATABASE_STRUCTURE_CHECKSUM = 293260301L;
 
   public final static String H2_URL_SUFFIX = "statistics-buffer";
 
@@ -231,7 +231,7 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
                 "statname VARCHAR(255) NOT NULL," +
                 "statelement VARCHAR(255) NULL, " +
                 "datanumber BIGINT NULL, " +
-                "datatext TEXT NULL, " +
+                "datatext LONGVARCHAR NULL, " +
                 "datatimestamp TIMESTAMP NULL, " +
                 "datadecimal DECIMAL(8, 4) NULL, " +
                 "consumptionid BIGINT NULL)");
