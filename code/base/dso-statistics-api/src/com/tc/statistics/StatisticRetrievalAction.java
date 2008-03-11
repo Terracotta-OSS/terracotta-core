@@ -3,9 +3,6 @@
  */
 package com.tc.statistics;
 
-import com.tc.statistics.StatisticData;
-import com.tc.statistics.StatisticType;
-
 /**
  * This interface has to be implemented to retrieve data from system, for
  * storage into the CVT. {@code StatisticRetrievalAction} is abbreviated as SRA

@@ -3,14 +3,14 @@
  */
 package com.tctest.statistics;
 
+import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
+
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractTransparentApp;
-
-import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 public class StatisticsGathererTestApp extends AbstractTransparentApp {
 

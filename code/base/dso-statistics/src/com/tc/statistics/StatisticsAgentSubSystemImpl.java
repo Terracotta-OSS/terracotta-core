@@ -12,7 +12,7 @@ import com.tc.statistics.beans.StatisticsMBeanNames;
 import com.tc.statistics.beans.impl.StatisticsEmitterMBeanImpl;
 import com.tc.statistics.beans.impl.StatisticsManagerMBeanImpl;
 import com.tc.statistics.buffer.StatisticsBuffer;
-import com.tc.statistics.buffer.exceptions.TCStatisticsBufferException;
+import com.tc.statistics.buffer.exceptions.StatisticsBufferException;
 import com.tc.statistics.buffer.h2.H2StatisticsBufferImpl;
 import com.tc.statistics.config.StatisticsConfig;
 import com.tc.statistics.config.impl.StatisticsConfigImpl;
@@ -73,7 +73,7 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
     try {
       statisticsBuffer = new H2StatisticsBufferImpl(statistics_config, stat_path);
       statisticsBuffer.open();
-    } catch (TCStatisticsBufferException e) {
+    } catch (StatisticsBufferException e) {
       // TODO: needs to be properly written and put in a properties file
       String msg =
         "\n**************************************************************************************\n"

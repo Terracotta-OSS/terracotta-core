@@ -4,6 +4,8 @@
  */
 package com.tc.admin;
 
+import EDU.oswego.cs.dl.util.concurrent.misc.SwingWorker;
+
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -20,8 +22,6 @@ import org.dijon.TabbedPane;
 import org.dijon.TextArea;
 import org.dijon.ToggleButton;
 
-import EDU.oswego.cs.dl.util.concurrent.misc.SwingWorker;
-
 import com.tc.admin.common.StatusView;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XTree;
@@ -31,15 +31,10 @@ import com.tc.admin.common.XTreeNode;
 import com.tc.statistics.beans.StatisticsLocalGathererMBean;
 import com.tc.statistics.beans.StatisticsMBeanNames;
 import com.tc.statistics.config.StatisticsConfig;
-import com.tc.statistics.gatherer.exceptions.TCStatisticsGathererAlreadyConnectedException;
+import com.tc.statistics.gatherer.exceptions.StatisticsGathererAlreadyConnectedException;
 import com.tc.statistics.retrieval.actions.SRAThreadDump;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Frame;
-import java.awt.GridLayout;
-import java.awt.Point;
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -57,18 +52,7 @@ import java.util.Properties;
 
 import javax.management.Notification;
 import javax.management.NotificationListener;
-import javax.swing.DefaultListModel;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
-import javax.swing.JProgressBar;
-import javax.swing.JTextField;
-import javax.swing.JTree;
-import javax.swing.ListSelectionModel;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -310,7 +294,7 @@ public class ClusterPanel extends XContainer {
         m_statisticsGathererMBean.connect();
       } catch (Exception e) {
         Throwable cause = e.getCause();
-        if (cause instanceof TCStatisticsGathererAlreadyConnectedException) {
+        if (cause instanceof StatisticsGathererAlreadyConnectedException) {
           gathererConnected();
         } else {
           e.printStackTrace();

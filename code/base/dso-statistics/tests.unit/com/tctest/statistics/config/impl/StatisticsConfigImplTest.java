@@ -3,10 +3,10 @@
  */
 package com.tctest.statistics.config.impl;
 
+import com.tc.statistics.beans.impl.StatisticsEmitterMBeanImpl;
 import com.tc.statistics.config.StatisticsConfig;
 import com.tc.statistics.config.impl.StatisticsConfigImpl;
 import com.tc.statistics.retrieval.StatisticsRetriever;
-import com.tc.statistics.beans.impl.StatisticsEmitterMBeanImpl;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;

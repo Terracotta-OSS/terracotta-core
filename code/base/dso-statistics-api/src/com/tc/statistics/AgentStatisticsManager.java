@@ -3,7 +3,7 @@
  */
 package com.tc.statistics;
 
-import com.tc.statistics.exceptions.TCAgentStatisticsManagerException;
+import com.tc.statistics.exceptions.AgentStatisticsManagerException;
 
 import java.util.Collection;
 
@@ -34,9 +34,9 @@ public interface AgentStatisticsManager {
    *
    * @param sessionId the session ID that this data has to be added for
    * @param data the data that will be added
-   * @throws TCAgentStatisticsManagerException in case the session ID couldn't
+   * @throws com.tc.statistics.exceptions.AgentStatisticsManagerException in case the session ID couldn't
    * be found amongst the active session; or
    * if the data instance doesn't contain mandatory properties
    */
-  public void injectStatisticData(String sessionId, StatisticData data) throws TCAgentStatisticsManagerException;
+  public void injectStatisticData(String sessionId, StatisticData data) throws AgentStatisticsManagerException;
 }

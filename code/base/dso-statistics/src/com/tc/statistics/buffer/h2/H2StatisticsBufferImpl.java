@@ -10,22 +10,22 @@ import com.tc.statistics.StatisticData;
 import com.tc.statistics.buffer.StatisticsBuffer;
 import com.tc.statistics.buffer.StatisticsBufferListener;
 import com.tc.statistics.buffer.StatisticsConsumer;
-import com.tc.statistics.buffer.exceptions.TCStatisticsBufferCaptureSessionCreationErrorException;
-import com.tc.statistics.buffer.exceptions.TCStatisticsBufferDatabaseCloseErrorException;
-import com.tc.statistics.buffer.exceptions.TCStatisticsBufferDatabaseOpenErrorException;
-import com.tc.statistics.buffer.exceptions.TCStatisticsBufferException;
-import com.tc.statistics.buffer.exceptions.TCStatisticsBufferInstallationErrorException;
-import com.tc.statistics.buffer.exceptions.TCStatisticsBufferSetupErrorException;
-import com.tc.statistics.buffer.exceptions.TCStatisticsBufferStartCapturingErrorException;
-import com.tc.statistics.buffer.exceptions.TCStatisticsBufferStartCapturingSessionNotFoundException;
-import com.tc.statistics.buffer.exceptions.TCStatisticsBufferStatisticConsumptionErrorException;
-import com.tc.statistics.buffer.exceptions.TCStatisticsBufferStatisticStorageErrorException;
-import com.tc.statistics.buffer.exceptions.TCStatisticsBufferStopCapturingErrorException;
-import com.tc.statistics.buffer.exceptions.TCStatisticsBufferStopCapturingSessionNotFoundException;
-import com.tc.statistics.buffer.exceptions.TCStatisticsBufferUnknownCaptureSessionException;
+import com.tc.statistics.buffer.exceptions.StatisticsBufferCaptureSessionCreationErrorException;
+import com.tc.statistics.buffer.exceptions.StatisticsBufferDatabaseCloseErrorException;
+import com.tc.statistics.buffer.exceptions.StatisticsBufferDatabaseOpenErrorException;
+import com.tc.statistics.buffer.exceptions.StatisticsBufferException;
+import com.tc.statistics.buffer.exceptions.StatisticsBufferInstallationErrorException;
+import com.tc.statistics.buffer.exceptions.StatisticsBufferSetupErrorException;
+import com.tc.statistics.buffer.exceptions.StatisticsBufferStartCapturingErrorException;
+import com.tc.statistics.buffer.exceptions.StatisticsBufferStartCapturingSessionNotFoundException;
+import com.tc.statistics.buffer.exceptions.StatisticsBufferStatisticConsumptionErrorException;
+import com.tc.statistics.buffer.exceptions.StatisticsBufferStatisticStorageErrorException;
+import com.tc.statistics.buffer.exceptions.StatisticsBufferStopCapturingErrorException;
+import com.tc.statistics.buffer.exceptions.StatisticsBufferStopCapturingSessionNotFoundException;
+import com.tc.statistics.buffer.exceptions.StatisticsBufferUnknownCaptureSessionException;
 import com.tc.statistics.config.StatisticsConfig;
 import com.tc.statistics.database.StatisticsDatabase;
-import com.tc.statistics.database.exceptions.TCStatisticsDatabaseException;
+import com.tc.statistics.database.exceptions.StatisticsDatabaseException;
 import com.tc.statistics.database.impl.H2StatisticsDatabase;
 import com.tc.statistics.jdbc.CaptureChecksum;
 import com.tc.statistics.jdbc.JdbcHelper;
@@ -85,7 +85,7 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
 
   private static final Random rand = new Random();
 
-  public H2StatisticsBufferImpl(final StatisticsConfig config, final File dbDir) throws TCStatisticsBufferException {
+  public H2StatisticsBufferImpl(final StatisticsConfig config, final File dbDir) throws StatisticsBufferException {
     Assert.assertNotNull("config", config);
     final String suffix;
     if (TCPropertiesImpl.getProperties().getBoolean("cvt.buffer.randomsuffix.enabled", false)) {
@@ -101,7 +101,7 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
     try {
       this.defaultAgentIp = InetAddress.getLocalHost().getHostAddress();
     } catch (UnknownHostException e) {
-     throw new TCStatisticsBufferException("Unexpected error while getting localhost address.", e);
+     throw new StatisticsBufferException("Unexpected error while getting localhost address.", e);
     }
   }
 
@@ -121,58 +121,58 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
     return defaultAgentDifferentiator;
   }
 
-  public synchronized void open() throws TCStatisticsBufferException {
+  public synchronized void open() throws StatisticsBufferException {
     try {
       FileLockGuard.guard(lockFile, new FileLockGuard.Guarded() {
         public void execute() throws FileLockGuard.InnerException {
           try {
             try {
               database.open();
-            } catch (TCStatisticsDatabaseException e) {
-              throw new TCStatisticsBufferDatabaseOpenErrorException(e);
+            } catch (StatisticsDatabaseException e) {
+              throw new StatisticsBufferDatabaseOpenErrorException(e);
             }
 
             install();
             setupPreparedStatements();
             makeAllDataConsumable();
-          } catch (TCStatisticsBufferException e) {
+          } catch (StatisticsBufferException e) {
             throw new FileLockGuard.InnerException(e);
           }
         }
       });
     } catch (FileLockGuard.InnerException e) {
-      throw (TCStatisticsBufferException)e.getInnerException();
+      throw (StatisticsBufferException)e.getInnerException();
     } catch (IOException e) {
-      throw new TCStatisticsBufferException("Unexpected error while obtaining or releasing lock file.", e);
+      throw new StatisticsBufferException("Unexpected error while obtaining or releasing lock file.", e);
     }
 
     open = true;
   }
 
-  public synchronized void close() throws TCStatisticsBufferException {
+  public synchronized void close() throws StatisticsBufferException {
     try {
       database.close();
-    } catch (TCStatisticsDatabaseException e) {
-      throw new TCStatisticsBufferDatabaseCloseErrorException(e);
+    } catch (StatisticsDatabaseException e) {
+      throw new StatisticsBufferDatabaseCloseErrorException(e);
     }
     
     open = false;
   }
 
-  public synchronized void reinitialize() throws TCStatisticsBufferException {
+  public synchronized void reinitialize() throws StatisticsBufferException {
     boolean was_open = open;
     close();
     try {
       database.reinitialize();
-    } catch (TCStatisticsDatabaseException e) {
-      throw new TCStatisticsBufferException("Unexpected error while reinitializing the statistics buffer.", e);
+    } catch (StatisticsDatabaseException e) {
+      throw new StatisticsBufferException("Unexpected error while reinitializing the statistics buffer.", e);
     }
     if (was_open) {
       open();
     }
   }
 
-  protected void install() throws TCStatisticsBufferException {
+  protected void install() throws StatisticsBufferException {
     try {
       database.ensureExistingConnection();
 
@@ -245,30 +245,30 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
         }
       });
     } catch (Exception e) {
-        throw new TCStatisticsBufferInstallationErrorException(e);
+        throw new StatisticsBufferInstallationErrorException(e);
     }
   }
 
-  private void setupPreparedStatements() throws TCStatisticsBufferException {
+  private void setupPreparedStatements() throws StatisticsBufferException {
     try {
       database.createPreparedStatement(SQL_NEXT_LOCALSESSIONID);
       database.createPreparedStatement(SQL_NEXT_STATISTICLOGID);
       database.createPreparedStatement(SQL_NEXT_CONSUMPTIONID);
       database.createPreparedStatement(SQL_MAKE_ALL_CONSUMABLE);
-    } catch (TCStatisticsDatabaseException e) {
-      throw new TCStatisticsBufferSetupErrorException("Unexpected error while preparing the statements for the H2 statistics buffer.", e);
+    } catch (StatisticsDatabaseException e) {
+      throw new StatisticsBufferSetupErrorException("Unexpected error while preparing the statements for the H2 statistics buffer.", e);
     }
   }
 
-  private void makeAllDataConsumable() throws TCStatisticsBufferException {
+  private void makeAllDataConsumable() throws StatisticsBufferException {
     try {
       database.getPreparedStatement(SQL_MAKE_ALL_CONSUMABLE).executeUpdate();
     } catch (SQLException e) {
-      throw new TCStatisticsBufferSetupErrorException("Unexpected error while making all the existing data consumable in the H2 statistics buffer.", e);
+      throw new StatisticsBufferSetupErrorException("Unexpected error while making all the existing data consumable in the H2 statistics buffer.", e);
     }
   }
 
-  public StatisticsRetriever createCaptureSession(final String sessionId) throws TCStatisticsBufferException {
+  public StatisticsRetriever createCaptureSession(final String sessionId) throws StatisticsBufferException {
     Assert.assertNotNull("sessionId", sessionId);
 
     final long local_sessionid;
@@ -285,17 +285,17 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
         }
       });
     } catch (Exception e) {
-      throw new TCStatisticsBufferCaptureSessionCreationErrorException(sessionId, e);
+      throw new StatisticsBufferCaptureSessionCreationErrorException(sessionId, e);
     }
 
     if (row_count != 1) {
-      throw new TCStatisticsBufferCaptureSessionCreationErrorException(sessionId, local_sessionid);
+      throw new StatisticsBufferCaptureSessionCreationErrorException(sessionId, local_sessionid);
     }
 
     return new StatisticsRetrieverImpl(config.createChild(), this, sessionId);
   }
 
-  public void startCapturing(final String sessionId) throws TCStatisticsBufferException {
+  public void startCapturing(final String sessionId) throws StatisticsBufferException {
     final int row_count;
     try {
       database.ensureExistingConnection();
@@ -307,17 +307,17 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
         }
       });
     } catch (Exception e) {
-      throw new TCStatisticsBufferStartCapturingErrorException(sessionId, e);
+      throw new StatisticsBufferStartCapturingErrorException(sessionId, e);
     }
 
     if (row_count != 1) {
-      throw new TCStatisticsBufferStartCapturingSessionNotFoundException(sessionId);
+      throw new StatisticsBufferStartCapturingSessionNotFoundException(sessionId);
     }
 
     fireCapturingStarted(sessionId);
   }
 
-  public void stopCapturing(final String sessionId) throws TCStatisticsBufferException {
+  public void stopCapturing(final String sessionId) throws StatisticsBufferException {
     final boolean[] found = new boolean[] {false};
     final int row_count;
     try {
@@ -353,11 +353,11 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
         database.getConnection().setAutoCommit(true);
       }
     } catch (Exception e) {
-      throw new TCStatisticsBufferStopCapturingErrorException(sessionId, e);
+      throw new StatisticsBufferStopCapturingErrorException(sessionId, e);
     }
 
     if (!found[0]) {
-      throw new TCStatisticsBufferStopCapturingSessionNotFoundException(sessionId);
+      throw new StatisticsBufferStopCapturingSessionNotFoundException(sessionId);
     }
 
     if (row_count > 0) {
@@ -365,7 +365,7 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
     }
   }
 
-  private long retrieveLocalSessionId(final String sessionId) throws SQLException, TCStatisticsBufferUnknownCaptureSessionException {
+  private long retrieveLocalSessionId(final String sessionId) throws SQLException, StatisticsBufferUnknownCaptureSessionException {
     final long local_sessionid[] = new long[] {-1};
     JdbcHelper.executeQuery(database.getConnection(), SQL_RETRIEVE_LOCAL_SESSIONID, new PreparedStatementHandler() {
       public void setParameters(PreparedStatement statement) throws SQLException {
@@ -381,13 +381,13 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
 
     // ensure that the local session ID was found
     if (-1 == local_sessionid[0]) {
-      throw new TCStatisticsBufferUnknownCaptureSessionException(sessionId, null);
+      throw new StatisticsBufferUnknownCaptureSessionException(sessionId, null);
     }
 
     return local_sessionid[0];
   }
 
-  public void storeStatistic(final StatisticData data) throws TCStatisticsBufferException {
+  public void storeStatistic(final StatisticData data) throws StatisticsBufferException {
     Assert.assertNotNull("data", data);
     Assert.assertNotNull("sessionId property of data", data.getSessionId());
     Assert.assertNotNull("moment property of data", data.getMoment());
@@ -461,16 +461,16 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
         }
       });
     } catch (Exception e) {
-      throw new TCStatisticsBufferStatisticStorageErrorException(data, e);
+      throw new StatisticsBufferStatisticStorageErrorException(data, e);
     }
 
     // ensure that a row was inserted
     if (row_count != 1) {
-      throw new TCStatisticsBufferStatisticStorageErrorException(id, data);
+      throw new StatisticsBufferStatisticStorageErrorException(id, data);
     }
   }
 
-  public void consumeStatistics(final String sessionId, final StatisticsConsumer consumer) throws TCStatisticsBufferException {
+  public void consumeStatistics(final String sessionId, final StatisticsConsumer consumer) throws StatisticsBufferException {
     Assert.assertNotNull("sessionId", sessionId);
     Assert.assertNotNull("consumer", consumer);
 
@@ -531,7 +531,7 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
-      throw new TCStatisticsBufferStatisticConsumptionErrorException(sessionId, e);
+      throw new StatisticsBufferStatisticConsumptionErrorException(sessionId, e);
     }
   }
 

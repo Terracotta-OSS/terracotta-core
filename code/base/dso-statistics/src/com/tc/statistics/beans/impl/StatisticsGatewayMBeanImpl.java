@@ -12,7 +12,7 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticsGateway;
 import com.tc.statistics.agent.StatisticsAgentConnection;
-import com.tc.statistics.agent.exceptions.TCStatisticsAgentConnectionException;
+import com.tc.statistics.agent.exceptions.StatisticsAgentConnectionException;
 import com.tc.statistics.beans.StatisticsGatewayMBean;
 import com.tc.statistics.beans.TopologyChangeHandler;
 import com.tc.util.concurrent.CopyOnWriteArrayMap;
@@ -65,7 +65,7 @@ public class StatisticsGatewayMBeanImpl extends AbstractTerracottaMBean implemen
     StatisticsAgentConnection agent = new StatisticsAgentConnection();
     try {
       agent.connect(mbeanServerConnection, this);
-    } catch (TCStatisticsAgentConnectionException e) {
+    } catch (StatisticsAgentConnectionException e) {
       logger.warn("Unable to add statistics agent to the gateway.", e);
       return;
     }
@@ -87,7 +87,7 @@ public class StatisticsGatewayMBeanImpl extends AbstractTerracottaMBean implemen
     for (Iterator it = old_agents.values().iterator(); it.hasNext(); ) {
       try {
         ((StatisticsAgentConnection)it.next()).disconnect();
-      } catch (TCStatisticsAgentConnectionException e) {
+      } catch (StatisticsAgentConnectionException e) {
         logger.warn("Unable to disconnect statistics agent from the gateway.", e);
       }
     }

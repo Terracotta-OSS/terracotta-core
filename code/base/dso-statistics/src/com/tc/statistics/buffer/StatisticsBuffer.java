@@ -4,25 +4,25 @@
 package com.tc.statistics.buffer;
 
 import com.tc.statistics.StatisticData;
-import com.tc.statistics.buffer.exceptions.TCStatisticsBufferException;
+import com.tc.statistics.buffer.exceptions.StatisticsBufferException;
 import com.tc.statistics.retrieval.StatisticsRetriever;
 
 public interface StatisticsBuffer {
-  public void open() throws TCStatisticsBufferException;
+  public void open() throws StatisticsBufferException;
 
-  public void close() throws TCStatisticsBufferException;
+  public void close() throws StatisticsBufferException;
 
-  public void reinitialize() throws TCStatisticsBufferException;
+  public void reinitialize() throws StatisticsBufferException;
 
-  public StatisticsRetriever createCaptureSession(String sessionId) throws TCStatisticsBufferException;
+  public StatisticsRetriever createCaptureSession(String sessionId) throws StatisticsBufferException;
 
-  public void startCapturing(String sessionId) throws TCStatisticsBufferException;
+  public void startCapturing(String sessionId) throws StatisticsBufferException;
 
-  public void stopCapturing(String sessionId) throws TCStatisticsBufferException;
+  public void stopCapturing(String sessionId) throws StatisticsBufferException;
 
-  public void storeStatistic(StatisticData data) throws TCStatisticsBufferException;
+  public void storeStatistic(StatisticData data) throws StatisticsBufferException;
 
-  public void consumeStatistics(String sessionId, StatisticsConsumer consumer) throws TCStatisticsBufferException;
+  public void consumeStatistics(String sessionId, StatisticsConsumer consumer) throws StatisticsBufferException;
 
   public void setDefaultAgentIp(String defaultAgentIp);
 

@@ -14,11 +14,11 @@ import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.beans.StatisticsManagerMBean;
 import com.tc.statistics.beans.exceptions.UnknownStatisticsSessionIdException;
 import com.tc.statistics.buffer.StatisticsBuffer;
-import com.tc.statistics.buffer.exceptions.TCStatisticsBufferException;
-import com.tc.statistics.buffer.exceptions.TCStatisticsBufferStartCapturingSessionNotFoundException;
-import com.tc.statistics.buffer.exceptions.TCStatisticsBufferStopCapturingSessionNotFoundException;
+import com.tc.statistics.buffer.exceptions.StatisticsBufferException;
+import com.tc.statistics.buffer.exceptions.StatisticsBufferStartCapturingSessionNotFoundException;
+import com.tc.statistics.buffer.exceptions.StatisticsBufferStopCapturingSessionNotFoundException;
 import com.tc.statistics.config.StatisticsConfig;
-import com.tc.statistics.exceptions.TCAgentStatisticsManagerException;
+import com.tc.statistics.exceptions.AgentStatisticsManagerException;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.statistics.retrieval.StatisticsRetriever;
 import com.tc.util.Assert;
@@ -67,7 +67,7 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
 
     try {
       buffer.reinitialize();
-    } catch (TCStatisticsBufferException e) {
+    } catch (StatisticsBufferException e) {
       throw new RuntimeException("Unexpected error while reinitializing the buffer.");
     }
 
@@ -85,7 +85,7 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
     try {
       StatisticsRetriever retriever = buffer.createCaptureSession(sessionId);
       retrieverMap.put(sessionId, retriever);
-    } catch (TCStatisticsBufferException e) {
+    } catch (StatisticsBufferException e) {
       throw new RuntimeException("Unexpected error while creating a new capture session.", e);
     }
   }
@@ -124,7 +124,7 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
         data[i].setMoment(moment);
         try {
           buffer.storeStatistic(data[i]);
-        } catch (TCStatisticsBufferException e) {
+        } catch (StatisticsBufferException e) {
           throw new RuntimeException("Error while storing the statistic data '" + name + "' for cluster-wide ID '" + sessionId + "'.", e);
         }
       }
@@ -141,9 +141,9 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
   public synchronized void startCapturing(final String sessionId) {
     try {
       buffer.startCapturing(sessionId);
-    } catch (TCStatisticsBufferStartCapturingSessionNotFoundException e) {
+    } catch (StatisticsBufferStartCapturingSessionNotFoundException e) {
       throw new UnknownStatisticsSessionIdException(getNodeName(), e.getSessionId(), e);
-    } catch (TCStatisticsBufferException e) {
+    } catch (StatisticsBufferException e) {
       throw new RuntimeException("Error while starting the capture session with cluster-wide ID '" + sessionId + "'.", e);
     }
   }
@@ -153,9 +153,9 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
       retrieverMap.remove(sessionId);
       buffer.stopCapturing(sessionId);
       cleanUpStatisticsCollection();
-    } catch (TCStatisticsBufferStopCapturingSessionNotFoundException e) {
+    } catch (StatisticsBufferStopCapturingSessionNotFoundException e) {
       throw new UnknownStatisticsSessionIdException(getNodeName(), e.getSessionId(), e);
-    } catch (TCStatisticsBufferException e) {
+    } catch (StatisticsBufferException e) {
       throw new RuntimeException("Error while stopping the capture session with cluster-wide ID '" + sessionId + "'.", e);
     }
   }
@@ -197,15 +197,15 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
     return Collections.unmodifiableList(sessions);
   }
 
-  public void injectStatisticData(final String sessionId, final StatisticData data) throws TCAgentStatisticsManagerException {
+  public void injectStatisticData(final String sessionId, final StatisticData data) throws AgentStatisticsManagerException {
     if (!retrieverMap.containsKey(sessionId)) {
-      throw new TCAgentStatisticsManagerException("Unknown capturing session ID '" + sessionId + "' while injecting data '" + data + "'.", null);
+      throw new AgentStatisticsManagerException("Unknown capturing session ID '" + sessionId + "' while injecting data '" + data + "'.", null);
     }
     try {
       data.setSessionId(sessionId);
       buffer.storeStatistic(data);
-    } catch (TCStatisticsBufferException e) {
-      throw new TCAgentStatisticsManagerException("Unexpected error while injecting data '" + data + "' for session ID '" + sessionId + "'.", e);
+    } catch (StatisticsBufferException e) {
+      throw new AgentStatisticsManagerException("Unexpected error while injecting data '" + data + "' for session ID '" + sessionId + "'.", e);
     }
   }
 

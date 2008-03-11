@@ -43,7 +43,7 @@ import org.jfree.ui.RectangleInsets;
 import org.jfree.ui.TextAnchor;
 
 import com.tc.statistics.StatisticData;
-import com.tc.statistics.database.exceptions.TCStatisticsDatabaseException;
+import com.tc.statistics.database.exceptions.StatisticsDatabaseException;
 import com.tc.statistics.jdbc.JdbcHelper;
 import com.tc.statistics.jdbc.ResultSetHandler;
 import com.tc.statistics.retrieval.actions.SRACpuConstants;
@@ -61,28 +61,11 @@ import com.tc.statistics.retrieval.actions.SRAThreadDump;
 import com.tc.statistics.store.StatisticDataUser;
 import com.tc.statistics.store.StatisticsRetrievalCriteria;
 import com.tc.statistics.store.StatisticsStoreImportListener;
-import com.tc.statistics.store.exceptions.TCStatisticsStoreException;
-import com.tc.statistics.store.exceptions.TCStatisticsStoreSetupErrorException;
+import com.tc.statistics.store.exceptions.StatisticsStoreException;
+import com.tc.statistics.store.exceptions.StatisticsStoreSetupErrorException;
 import com.tc.statistics.store.h2.H2StatisticsStoreImpl;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.Image;
-import java.awt.Insets;
-import java.awt.Rectangle;
-import java.awt.Shape;
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -110,28 +93,7 @@ import java.util.prefs.Preferences;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import javax.swing.AbstractAction;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JDialog;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
-import javax.swing.JScrollPane;
-import javax.swing.JSlider;
-import javax.swing.JTextArea;
-import javax.swing.ListSelectionModel;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
@@ -1533,19 +1495,19 @@ class MyStatisticsStore extends H2StatisticsStoreImpl {
     return STATS_NON_GRATIS.contains(stat);
   }
 
-  public synchronized void open() throws TCStatisticsStoreException {
+  public synchronized void open() throws StatisticsStoreException {
     super.open();
     try {
       database.createPreparedStatement(SQL_GET_NODES);
       database.createPreparedStatement(SQL_GET_STATS);
       database.createPreparedStatement(SQL_GET_STATS_FOR_NODE);
       database.createPreparedStatement(SQL_GET_NODES_FOR_STAT);
-    } catch (TCStatisticsDatabaseException e) {
-      throw new TCStatisticsStoreSetupErrorException(e);
+    } catch (StatisticsDatabaseException e) {
+      throw new StatisticsStoreSetupErrorException(e);
     }
   }
 
-  public List<SessionInfo> getAllSessions() throws TCStatisticsStoreException {
+  public List<SessionInfo> getAllSessions() throws StatisticsStoreException {
     String[] ids = getAvailableSessionIds();
     List<SessionInfo> result = new ArrayList<SessionInfo>();
     for (String id : ids) {
@@ -1576,7 +1538,7 @@ class MyStatisticsStore extends H2StatisticsStoreImpl {
     return result;
   }
 
-  public List<Node> getAvailableNodes(String sessionId) throws TCStatisticsStoreException {
+  public List<Node> getAvailableNodes(String sessionId) throws StatisticsStoreException {
     final List<Node> results = new ArrayList<Node>();
     try {
       database.ensureExistingConnection();
@@ -1593,13 +1555,13 @@ class MyStatisticsStore extends H2StatisticsStoreImpl {
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
-      throw new TCStatisticsStoreException("getAvailableNodes", e);
+      throw new StatisticsStoreException("getAvailableNodes", e);
     }
 
     return results;
   }
 
-  public List<String> getAvailableStats(String sessionId) throws TCStatisticsStoreException {
+  public List<String> getAvailableStats(String sessionId) throws StatisticsStoreException {
     final List<String> results = new ArrayList<String>();
     try {
       database.ensureExistingConnection();
@@ -1615,7 +1577,7 @@ class MyStatisticsStore extends H2StatisticsStoreImpl {
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
-      throw new TCStatisticsStoreException("getAvailableStats", e);
+      throw new StatisticsStoreException("getAvailableStats", e);
     }
 
     results.removeAll(STATS_NON_GRATIS);
@@ -1623,7 +1585,7 @@ class MyStatisticsStore extends H2StatisticsStoreImpl {
     return results;
   }
 
-  public List<String> getAvailableStatsForNode(String sessionId, Node node) throws TCStatisticsStoreException {
+  public List<String> getAvailableStatsForNode(String sessionId, Node node) throws StatisticsStoreException {
     final List<String> results = new ArrayList<String>();
     try {
       database.ensureExistingConnection();
@@ -1641,7 +1603,7 @@ class MyStatisticsStore extends H2StatisticsStoreImpl {
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
-      throw new TCStatisticsStoreException("getAvailableStatsForNode", e);
+      throw new StatisticsStoreException("getAvailableStatsForNode", e);
     }
 
     results.removeAll(STATS_NON_GRATIS);
@@ -1649,7 +1611,7 @@ class MyStatisticsStore extends H2StatisticsStoreImpl {
     return results;
   }
 
-  public List<Node> getAvailableNodesForStat(String sessionId, String stat) throws TCStatisticsStoreException {
+  public List<Node> getAvailableNodesForStat(String sessionId, String stat) throws StatisticsStoreException {
     final List<Node> results = new ArrayList<Node>();
     try {
       database.ensureExistingConnection();
@@ -1667,7 +1629,7 @@ class MyStatisticsStore extends H2StatisticsStoreImpl {
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
-      throw new TCStatisticsStoreException("getAvailableNodesForStat", e);
+      throw new StatisticsStoreException("getAvailableNodesForStat", e);
     }
 
     return results;

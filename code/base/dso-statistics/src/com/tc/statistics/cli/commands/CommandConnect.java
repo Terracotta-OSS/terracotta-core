@@ -4,7 +4,7 @@
 package com.tc.statistics.cli.commands;
 
 import com.tc.statistics.cli.GathererConnection;
-import com.tc.statistics.gatherer.exceptions.TCStatisticsGathererAlreadyConnectedException;
+import com.tc.statistics.gatherer.exceptions.StatisticsGathererAlreadyConnectedException;
 
 import javax.management.RuntimeMBeanException;
 
@@ -24,7 +24,7 @@ public class CommandConnect extends AbstractCliCommand {
           cause1 instanceof RuntimeException) {
         Throwable cause2 = cause1.getCause();
         if (cause2 != null &&
-            cause2 instanceof TCStatisticsGathererAlreadyConnectedException) {
+            cause2 instanceof StatisticsGathererAlreadyConnectedException) {
           System.out.println("> Already connected.");
           return;
         }

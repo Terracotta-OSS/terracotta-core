@@ -6,7 +6,7 @@ package com.tc.statistics.gatherer.impl;
 import com.tc.exception.TCRuntimeException;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.store.StatisticsStore;
-import com.tc.statistics.store.exceptions.TCStatisticsStoreException;
+import com.tc.statistics.store.exceptions.StatisticsStoreException;
 
 import java.util.Iterator;
 import java.util.List;
@@ -22,7 +22,7 @@ class StoreDataListener implements NotificationListener {
         StatisticData stat_data = (StatisticData)it.next();
         ((StatisticsStore)o).storeStatistic(stat_data);
       }
-    } catch (TCStatisticsStoreException e) {
+    } catch (StatisticsStoreException e) {
       throw new TCRuntimeException(e);
     }
   }

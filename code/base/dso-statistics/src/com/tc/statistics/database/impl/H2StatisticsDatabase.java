@@ -5,8 +5,8 @@ package com.tc.statistics.database.impl;
 
 import org.h2.tools.DeleteDbFiles;
 
-import com.tc.statistics.database.exceptions.TCStatisticsDatabaseException;
-import com.tc.statistics.database.exceptions.TCStatisticsDatabaseOpenErrorException;
+import com.tc.statistics.database.exceptions.StatisticsDatabaseException;
+import com.tc.statistics.database.exceptions.StatisticsDatabaseOpenErrorException;
 import com.tc.util.Assert;
 
 import java.io.File;
@@ -33,28 +33,28 @@ public class H2StatisticsDatabase extends AbstractStatisticsDatabase {
     this.urlSuffix = urlSuffix;
   }
 
-  public synchronized void reinitialize() throws TCStatisticsDatabaseException {
+  public synchronized void reinitialize() throws StatisticsDatabaseException {
     close();
     try {
       DeleteDbFiles.execute(dbDir.getAbsolutePath(), urlSuffix, false);
     } catch (SQLException e) {
-      throw new TCStatisticsDatabaseException("Unexpected error while reinitializing the H2 database at '"+dbDir.getAbsolutePath()+"' and '" + urlSuffix + "'.", e);
+      throw new StatisticsDatabaseException("Unexpected error while reinitializing the H2 database at '"+dbDir.getAbsolutePath()+"' and '" + urlSuffix + "'.", e);
     }
     open();
   }
 
-  public synchronized void open() throws TCStatisticsDatabaseException {
+  public synchronized void open() throws StatisticsDatabaseException {
     super.open(H2_JDBC_DRIVER);
   }
 
-  protected void openConnection() throws TCStatisticsDatabaseException {
+  protected void openConnection() throws StatisticsDatabaseException {
     String url = H2_URL_PREFIX + new File(dbDir, urlSuffix).getAbsolutePath();
     try {
       connection = DriverManager.getConnection(url+";LOG=0", H2_USER, H2_PASSWORD);
       connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
       connection.setAutoCommit(true);
     } catch (SQLException e) {
-      throw new TCStatisticsDatabaseOpenErrorException(url, H2_USER, H2_PASSWORD, e);
+      throw new StatisticsDatabaseOpenErrorException(url, H2_USER, H2_PASSWORD, e);
     }
   }
 }

@@ -327,6 +327,17 @@ public class StatisticData implements Serializable {
     }
   }
 
+  /**
+   * Converts this data instance to a single line of CSV text, terminated by a
+   * new line character.
+   *
+   * All fields are separated by commas and are delimited by double quotes.
+   *
+   * Double quotes, back slashes, and new lines are escaped by a back slash.
+   * Carriage returns are stripped away.
+   *
+   * @return the CSV text of this data instance
+   */
   public String toCsv() {
     StringBuffer result = new StringBuffer();
     addCsvField(result, sessionId, true);
@@ -365,6 +376,26 @@ public class StatisticData implements Serializable {
     return result.toString();
   }
 
+  /**
+   * Creates a new data instance from a single line of CSV data.
+   *
+   * This parser assumes that there are exactly as many CSV fields as there are
+   * properties in {@code StatisticData}. The expected order is: sessionId,
+   * agentIp, agentDifferentiator, moment, name, element, numeric data,
+   * text data, date data, and decimal data. None of the field are allowed to
+   * contain new lines, and all of the fields should be delimiter by double
+   * quotes. Refer to {@link #toCsv} for the rules about escaped characters.
+   *
+   * @param dataFormatVersion the version identifier that corresponds to the
+   * provided CSV text line
+   * @param line the line of text that contains the fields for a single
+   * {@code StatisticData} instance
+   * @return the {@code StatisticData} instance that corresponds to the
+   * provided CSV line
+   * @throws ParseException when the provided format version is not
+   * supported; or
+   * when the provided CSV text couldn't be parsed successfully
+   */
   public static StatisticData newInstanceFromCsvLine(final String dataFormatVersion, final String line) throws ParseException {
     Assert.assertNotNull("dataFormatVersion", dataFormatVersion);
 

@@ -4,9 +4,9 @@
 package com.tctest.statistics.store.h2;
 
 import com.tc.statistics.StatisticData;
-import com.tc.statistics.database.exceptions.TCStatisticsDatabaseNotReadyException;
-import com.tc.statistics.database.exceptions.TCStatisticsDatabaseStructureFuturedatedError;
-import com.tc.statistics.database.exceptions.TCStatisticsDatabaseStructureOutdatedError;
+import com.tc.statistics.database.exceptions.StatisticsDatabaseNotReadyException;
+import com.tc.statistics.database.exceptions.StatisticsDatabaseStructureFuturedatedError;
+import com.tc.statistics.database.exceptions.StatisticsDatabaseStructureOutdatedError;
 import com.tc.statistics.database.impl.H2StatisticsDatabase;
 import com.tc.statistics.jdbc.JdbcHelper;
 import com.tc.statistics.store.StatisticDataUser;
@@ -14,15 +14,15 @@ import com.tc.statistics.store.StatisticsRetrievalCriteria;
 import com.tc.statistics.store.StatisticsStore;
 import com.tc.statistics.store.StatisticsStoreImportListener;
 import com.tc.statistics.store.StatisticsStoreListener;
-import com.tc.statistics.store.exceptions.TCStatisticsStoreException;
+import com.tc.statistics.store.exceptions.StatisticsStoreException;
 import com.tc.statistics.store.h2.H2StatisticsStoreImpl;
 import com.tc.test.TempDirectoryHelper;
 import com.tc.util.TCAssertionError;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -110,7 +110,7 @@ public class H2StatisticsStoreTest extends TestCase {
       try {
         store.open();
         fail("expected exception");
-      } catch (TCStatisticsDatabaseStructureOutdatedError e) {
+      } catch (StatisticsDatabaseStructureOutdatedError e) {
         assertEquals(H2StatisticsStoreImpl.DATABASE_STRUCTURE_VERSION - 1, e.getActualVersion());
         assertEquals(H2StatisticsStoreImpl.DATABASE_STRUCTURE_VERSION, e.getExpectedVersion());
         assertNotNull(e.getCreationDate());
@@ -130,7 +130,7 @@ public class H2StatisticsStoreTest extends TestCase {
       try {
         store.open();
         fail("expected exception");
-      } catch (TCStatisticsDatabaseStructureFuturedatedError e) {
+      } catch (StatisticsDatabaseStructureFuturedatedError e) {
         assertEquals(H2StatisticsStoreImpl.DATABASE_STRUCTURE_VERSION + 1, e.getActualVersion());
         assertEquals(H2StatisticsStoreImpl.DATABASE_STRUCTURE_VERSION, e.getExpectedVersion());
         assertNotNull(e.getCreationDate());
@@ -235,9 +235,9 @@ public class H2StatisticsStoreTest extends TestCase {
         .name("name")
         .data("test"));
       fail("expected exception");
-    } catch (TCStatisticsStoreException e) {
+    } catch (StatisticsStoreException e) {
       // expected
-      assertTrue(e.getCause() instanceof TCStatisticsDatabaseNotReadyException);
+      assertTrue(e.getCause() instanceof StatisticsDatabaseNotReadyException);
     }
   }
 
@@ -695,11 +695,11 @@ public class H2StatisticsStoreTest extends TestCase {
     assertEquals(count_before[0], count_after[0]);
   }
 
-  private void populateBufferWithStatistics(final String sessionid1, final String sessionid2) throws TCStatisticsStoreException, UnknownHostException {
+  private void populateBufferWithStatistics(final String sessionid1, final String sessionid2) throws StatisticsStoreException, UnknownHostException {
     populateBufferWithStatistics(sessionid1, sessionid2, 100, 50, 70);
   }
 
-  private void populateBufferWithStatistics(final String sessionid1, final String sessionid2, final int sess1stat1count, final int sess1stat2count, final int sess2stat1count) throws TCStatisticsStoreException, UnknownHostException {
+  private void populateBufferWithStatistics(final String sessionid1, final String sessionid2, final int sess1stat1count, final int sess1stat2count, final int sess2stat1count) throws StatisticsStoreException, UnknownHostException {
     String ip = InetAddress.getLocalHost().getHostAddress();
     for (int i = 1; i <= sess1stat1count; i++) {
       store.storeStatistic(new StatisticData()

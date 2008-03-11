@@ -14,7 +14,7 @@ import com.tc.runtime.TCMemoryManagerImpl;
 import com.tc.statistics.AgentStatisticsManager;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticsAgentSubSystem;
-import com.tc.statistics.exceptions.TCAgentStatisticsManagerException;
+import com.tc.statistics.exceptions.AgentStatisticsManagerException;
 import com.tc.util.Assert;
 import com.tc.util.State;
 
@@ -203,7 +203,7 @@ public class CacheManager implements MemoryEventsListener {
             statisticsAgentSubSystem.getStatisticsManager().injectStatisticData(session, data.moment(moment));
           }
         }
-      } catch (TCAgentStatisticsManagerException e) {
+      } catch (AgentStatisticsManagerException e) {
         logger.error("Unexpected error while trying to store Cache Objects Evict Request statistics statistics.", e);
       }
     }

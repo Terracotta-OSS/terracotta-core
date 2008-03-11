@@ -5,15 +5,15 @@ package com.tc.statistics.database.impl;
 
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.database.StatisticsDatabase;
-import com.tc.statistics.database.exceptions.TCStatisticsDatabaseCloseErrorException;
-import com.tc.statistics.database.exceptions.TCStatisticsDatabaseException;
-import com.tc.statistics.database.exceptions.TCStatisticsDatabaseNotFoundException;
-import com.tc.statistics.database.exceptions.TCStatisticsDatabaseNotReadyException;
-import com.tc.statistics.database.exceptions.TCStatisticsDatabaseStatementPreparationErrorException;
-import com.tc.statistics.database.exceptions.TCStatisticsDatabaseStoreVersionErrorException;
-import com.tc.statistics.database.exceptions.TCStatisticsDatabaseStructureFuturedatedError;
-import com.tc.statistics.database.exceptions.TCStatisticsDatabaseStructureOutdatedError;
-import com.tc.statistics.database.exceptions.TCStatisticsDatabaseVersionCheckErrorException;
+import com.tc.statistics.database.exceptions.StatisticsDatabaseCloseErrorException;
+import com.tc.statistics.database.exceptions.StatisticsDatabaseException;
+import com.tc.statistics.database.exceptions.StatisticsDatabaseNotFoundException;
+import com.tc.statistics.database.exceptions.StatisticsDatabaseNotReadyException;
+import com.tc.statistics.database.exceptions.StatisticsDatabaseStatementPreparationErrorException;
+import com.tc.statistics.database.exceptions.StatisticsDatabaseStoreVersionErrorException;
+import com.tc.statistics.database.exceptions.StatisticsDatabaseStructureFuturedatedError;
+import com.tc.statistics.database.exceptions.StatisticsDatabaseStructureOutdatedError;
+import com.tc.statistics.database.exceptions.StatisticsDatabaseVersionCheckErrorException;
 import com.tc.statistics.jdbc.ChecksumCalculator;
 import com.tc.statistics.jdbc.JdbcHelper;
 import com.tc.statistics.jdbc.PreparedStatementHandler;
@@ -37,23 +37,23 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
   
   protected volatile Connection connection;
 
-  protected synchronized void open(final String driver) throws TCStatisticsDatabaseException {
+  protected synchronized void open(final String driver) throws StatisticsDatabaseException {
     if (connection != null) return;
 
     try {
       Class.forName(driver);
     } catch (ClassNotFoundException e) {
-      throw new TCStatisticsDatabaseNotFoundException(driver, e);
+      throw new StatisticsDatabaseNotFoundException(driver, e);
     }
 
     openConnection();
   }
 
-  protected abstract void openConnection() throws TCStatisticsDatabaseException;
+  protected abstract void openConnection() throws StatisticsDatabaseException;
   
-  public void ensureExistingConnection() throws TCStatisticsDatabaseException {
+  public void ensureExistingConnection() throws StatisticsDatabaseException {
     if (null == connection) {
-      throw new TCStatisticsDatabaseNotReadyException();
+      throw new StatisticsDatabaseNotReadyException();
     }
   }
 
@@ -61,7 +61,7 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
     return connection;
   }
 
-  public PreparedStatement createPreparedStatement(final String sql) throws TCStatisticsDatabaseException {
+  public PreparedStatement createPreparedStatement(final String sql) throws StatisticsDatabaseException {
     ensureExistingConnection();
 
     try {
@@ -72,7 +72,7 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
       }
       return stmt;
     } catch (SQLException e) {
-      throw new TCStatisticsDatabaseStatementPreparationErrorException(sql, e);
+      throw new StatisticsDatabaseStatementPreparationErrorException(sql, e);
     }
   }
 
@@ -89,7 +89,7 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
 
   // TODO: Currently version checks just fail hard when they don't match, in the future this should
   // be made more intelligent to automatically migrate from older versions to newer ones.
-  public void checkVersion(final int currentVersion, long currentChecksum) throws TCStatisticsDatabaseException {
+  public void checkVersion(final int currentVersion, long currentChecksum) throws StatisticsDatabaseException {
     ChecksumCalculator csc = JdbcHelper.getActiveChecksumCalculator();
     Assert.assertNotNull("Expected the checksum of SQL statements to be calculated at this time.", csc);
 
@@ -112,32 +112,32 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
             }
           });
         } catch (SQLException e) {
-          throw new TCStatisticsDatabaseVersionCheckErrorException("Unexpected error while checking the version.", e);
+          throw new StatisticsDatabaseVersionCheckErrorException("Unexpected error while checking the version.", e);
         }
 
         if (null == version[0]) {
           storeCurrentVersion(currentVersion);
         } else {
           if (version[0].intValue() < currentVersion) {
-            throw new TCStatisticsDatabaseStructureOutdatedError(version[0].intValue(), currentVersion, created[0]);
+            throw new StatisticsDatabaseStructureOutdatedError(version[0].intValue(), currentVersion, created[0]);
           } else if (version[0].intValue() > currentVersion) {
-            throw new TCStatisticsDatabaseStructureFuturedatedError(version[0].intValue(), currentVersion, created[0]);
+            throw new StatisticsDatabaseStructureFuturedatedError(version[0].intValue(), currentVersion, created[0]);
           }
         }
 
         getConnection().commit();
-      } catch (TCStatisticsDatabaseException e) {
+      } catch (StatisticsDatabaseException e) {
         getConnection().rollback();
         throw e;
       } finally {
         getConnection().setAutoCommit(true);
       }
     } catch (SQLException e) {
-      throw new TCStatisticsDatabaseVersionCheckErrorException("Unexpected error while checking the version.", e);
+      throw new StatisticsDatabaseVersionCheckErrorException("Unexpected error while checking the version.", e);
     }
   }
 
-  private void storeCurrentVersion(final int currentVersion) throws TCStatisticsDatabaseException {
+  private void storeCurrentVersion(final int currentVersion) throws StatisticsDatabaseException {
     try {
       JdbcHelper.executeUpdate(getConnection(), "INSERT INTO dbstructureversion (version, created) VALUES (?, CURRENT_TIMESTAMP)", new PreparedStatementHandler() {
         public void setParameters(PreparedStatement statement) throws SQLException {
@@ -145,7 +145,7 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
         }
       });
     } catch (SQLException e) {
-      throw new TCStatisticsDatabaseStoreVersionErrorException(currentVersion, e);
+      throw new StatisticsDatabaseStoreVersionErrorException(currentVersion, e);
     }
   }
 
@@ -180,7 +180,7 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
     return data;
   }
 
-  public synchronized void close() throws TCStatisticsDatabaseException {
+  public synchronized void close() throws StatisticsDatabaseException {
     if (null == connection) return;
 
     SQLException exception = null;
@@ -215,7 +215,7 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
     }
 
     if (exception != null) {
-      throw new TCStatisticsDatabaseCloseErrorException(exception);
+      throw new StatisticsDatabaseCloseErrorException(exception);
     }
   }
 }

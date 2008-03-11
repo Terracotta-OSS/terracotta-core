@@ -11,7 +11,7 @@ import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
 import com.tc.statistics.buffer.StatisticsBuffer;
 import com.tc.statistics.buffer.StatisticsBufferListener;
-import com.tc.statistics.buffer.exceptions.TCStatisticsBufferException;
+import com.tc.statistics.buffer.exceptions.StatisticsBufferException;
 import com.tc.statistics.config.StatisticsConfig;
 import com.tc.statistics.retrieval.StatisticsRetriever;
 import com.tc.statistics.retrieval.actions.SRAShutdownTimestamp;
@@ -20,13 +20,13 @@ import com.tc.util.Assert;
 import com.tc.util.TCTimerImpl;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.Date;
 
 public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsBufferListener {
   private final Timer timer = new TCTimerImpl("Statistics Retriever Timer", true);
@@ -145,7 +145,7 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
   private void bufferData(final StatisticData data) {
     try {
       buffer.storeStatistic(data);
-    } catch (TCStatisticsBufferException e) {
+    } catch (StatisticsBufferException e) {
       throw new TCRuntimeException(e);
     }
   }

@@ -3,13 +3,13 @@
  */
 package com.tc.statistics;
 
+import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArraySet;
+
 import com.tc.util.Assert;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
-
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * This class indicates how a {@link StatisticRetrievalAction} should be

@@ -3,39 +3,39 @@
  */
 package com.tc.statistics.gatherer;
 
-import com.tc.statistics.gatherer.exceptions.TCStatisticsGathererException;
 import com.tc.statistics.StatisticData;
+import com.tc.statistics.gatherer.exceptions.StatisticsGathererException;
 
 public interface StatisticsGatherer {
-  public void connect(String managerHostName, int managerPort) throws TCStatisticsGathererException;
+  public void connect(String managerHostName, int managerPort) throws StatisticsGathererException;
 
-  public void disconnect() throws TCStatisticsGathererException;
+  public void disconnect() throws StatisticsGathererException;
 
-  public void reinitialize() throws TCStatisticsGathererException;
+  public void reinitialize() throws StatisticsGathererException;
 
-  public void createSession(String sessionId) throws TCStatisticsGathererException;
+  public void createSession(String sessionId) throws StatisticsGathererException;
 
-  public void closeSession() throws TCStatisticsGathererException;
+  public void closeSession() throws StatisticsGathererException;
 
   public String getActiveSessionId();
 
-  public String[] getSupportedStatistics() throws TCStatisticsGathererException;
+  public String[] getSupportedStatistics() throws StatisticsGathererException;
 
-  public void enableStatistics(String[] names) throws TCStatisticsGathererException;
+  public void enableStatistics(String[] names) throws StatisticsGathererException;
 
-  public StatisticData[] captureStatistic(String name) throws TCStatisticsGathererException;
+  public StatisticData[] captureStatistic(String name) throws StatisticsGathererException;
 
-  public void startCapturing() throws TCStatisticsGathererException;
+  public void startCapturing() throws StatisticsGathererException;
 
-  public void stopCapturing() throws TCStatisticsGathererException;
+  public void stopCapturing() throws StatisticsGathererException;
 
-  public void setGlobalParam(String key, Object value) throws TCStatisticsGathererException;
+  public void setGlobalParam(String key, Object value) throws StatisticsGathererException;
 
-  public Object getGlobalParam(String key) throws TCStatisticsGathererException;
+  public Object getGlobalParam(String key) throws StatisticsGathererException;
 
-  public void setSessionParam(String key, Object value) throws TCStatisticsGathererException;
+  public void setSessionParam(String key, Object value) throws StatisticsGathererException;
 
-  public Object getSessionParam(String key) throws TCStatisticsGathererException;
+  public Object getSessionParam(String key) throws StatisticsGathererException;
 
   public void addListener(StatisticsGathererListener listener);
 

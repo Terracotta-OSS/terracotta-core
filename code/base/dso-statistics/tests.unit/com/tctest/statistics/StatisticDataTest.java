@@ -7,9 +7,9 @@ import com.tc.statistics.StatisticData;
 
 import java.math.BigDecimal;
 import java.net.InetAddress;
+import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
-import java.text.ParseException;
 
 import junit.framework.TestCase;
 

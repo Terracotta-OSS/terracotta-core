@@ -9,7 +9,7 @@ import com.tc.logging.TCLogger;
 import com.tc.statistics.gatherer.StatisticsGatherer;
 import com.tc.statistics.gatherer.impl.StatisticsGathererImpl;
 import com.tc.statistics.store.StatisticsStore;
-import com.tc.statistics.store.exceptions.TCStatisticsStoreException;
+import com.tc.statistics.store.exceptions.StatisticsStoreException;
 import com.tc.statistics.store.h2.H2StatisticsStoreImpl;
 
 import java.io.File;
@@ -46,7 +46,7 @@ public class StatisticsGathererSubSystem {
     try {
       statisticsStore = new H2StatisticsStoreImpl(stat_path);
       statisticsStore.open();
-    } catch (TCStatisticsStoreException e) {
+    } catch (StatisticsStoreException e) {
       // TODO: needs to be properly written and put in a properties file
       String msg =
         "\n**************************************************************************************\n"
