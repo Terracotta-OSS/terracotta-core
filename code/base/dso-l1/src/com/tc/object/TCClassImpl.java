@@ -240,10 +240,8 @@ public class TCClassImpl implements TCClass {
       }
     }
 
-    if (rv == null) {
-      rv = ReflectionUtil.newConstructor(peer, logicalSuperClass);
-      rv.setAccessible(true);
-    }
+    rv = ReflectionUtil.newConstructor(peer, logicalSuperClass);
+    rv.setAccessible(true);
     return rv;
   }
 
@@ -395,11 +393,11 @@ public class TCClassImpl implements TCClass {
       return field;
     }
   }
-  
+
   public boolean isPortableField(long fieldOffset) {
     String fieldName = getFieldNameByOffset(fieldOffset);
     TCField tcField = getField(fieldName);
-    
+
     return tcField.isPortable();
   }
 
