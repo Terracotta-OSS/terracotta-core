@@ -26,7 +26,7 @@ public interface L2TVSConfigurationSetupManager {
   NewHaConfig haConfig();
 
   UpdateCheckConfig updateCheckConfig();
-  
+
   String[] applicationNames();
 
   NewDSOApplicationConfig dsoApplicationConfigFor(String applicationName);
@@ -34,6 +34,8 @@ public interface L2TVSConfigurationSetupManager {
   String describeSources();
 
   InputStream rawConfigFile();
+
+  InputStream effectiveConfigFile();
 
   String[] allCurrentlyKnownServers();
 

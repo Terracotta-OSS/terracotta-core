@@ -13,7 +13,6 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Map;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -24,16 +23,16 @@ public class ConfigServlet extends HttpServlet {
 
   private volatile L2TVSConfigurationSetupManager configSetupManager;
 
-  public void init() throws ServletException {
+  public void init() {
     configSetupManager = (L2TVSConfigurationSetupManager) getServletContext().getAttribute(CONFIG_ATTRIBUTE);
   }
 
-  protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+  protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     Map params = request.getParameterMap();
 
     if (params.size() == 0) {
       OutputStream out = response.getOutputStream();
-      IOUtils.copy(this.configSetupManager.rawConfigFile(), out);
+      IOUtils.copy(this.configSetupManager.effectiveConfigFile(), out);
     } else {
       String query = request.getParameter("query");
 

@@ -5,6 +5,7 @@
 package com.tc.config.schema.setup;
 
 import org.apache.xmlbeans.XmlObject;
+import org.apache.xmlbeans.XmlOptions;
 
 import com.tc.capabilities.AbstractCapabilitiesFactory;
 import com.tc.capabilities.Capabilities;
@@ -27,13 +28,19 @@ import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.object.config.schema.NewL2DSOConfigObject;
 import com.tc.object.config.schema.PersistenceMode;
 import com.tc.util.Assert;
+import com.terracottatech.config.Application;
+import com.terracottatech.config.Client;
 import com.terracottatech.config.Ha;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
+import com.terracottatech.config.System;
+import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.UpdateCheck;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 import java.util.HashMap;
@@ -55,7 +62,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
   private final Map                  l2ConfigData;
   private final NewHaConfig          haConfig;
   private final UpdateCheckConfig    updateCheckConfig;
-  
+
   private final String               thisL2Identifier;
   private L2ConfigData               myConfigData;
 
@@ -76,7 +83,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     this.l2ConfigData = new HashMap();
     this.haConfig = getHaConfig();
     this.updateCheckConfig = getUpdateCheckConfig();
-    
+
     this.thisL2Identifier = thisL2Identifier;
     this.myConfigData = null;
 
@@ -88,26 +95,27 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
   private NewHaConfig getHaConfig() {
     ChildBeanRepository beanRepository = new ChildBeanRepository(serversBeanRepository(), Ha.class,
-        new ChildBeanFetcher() {
-          public XmlObject getChild(XmlObject parent) {
-            return ((Servers) parent).getHa();
-          }
-        });
+                                                                 new ChildBeanFetcher() {
+                                                                   public XmlObject getChild(XmlObject parent) {
+                                                                     return ((Servers) parent).getHa();
+                                                                   }
+                                                                 });
 
     return new NewHaConfigObject(createContext(beanRepository, configurationCreator.directoryConfigurationLoadedFrom()));
   }
 
   private UpdateCheckConfig getUpdateCheckConfig() {
     ChildBeanRepository beanRepository = new ChildBeanRepository(serversBeanRepository(), UpdateCheck.class,
-        new ChildBeanFetcher() {
-          public XmlObject getChild(XmlObject parent) {
-            return ((Servers) parent).getUpdateCheck();
-          }
-        });
+                                                                 new ChildBeanFetcher() {
+                                                                   public XmlObject getChild(XmlObject parent) {
+                                                                     return ((Servers) parent).getUpdateCheck();
+                                                                   }
+                                                                 });
 
-    return new UpdateCheckConfigObject(createContext(beanRepository, configurationCreator.directoryConfigurationLoadedFrom()));
+    return new UpdateCheckConfigObject(createContext(beanRepository, configurationCreator
+        .directoryConfigurationLoadedFrom()));
   }
-  
+
   private class L2ConfigData {
     private final String              name;
     private final ChildBeanRepository beanRepository;
@@ -152,7 +160,8 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
         if (l2Array.length > 1) {
           // formatting
           throw new ConfigurationSetupException("You have not specified a name for your L2, and there are "
-              + l2Array.length + " L2s defined in the configuration file. " + "You must indicate which L2 this is.");
+                                                + l2Array.length + " L2s defined in the configuration file. "
+                                                + "You must indicate which L2 this is.");
         } else {
           return l2Array[0];
         }
@@ -206,14 +215,19 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
       if ((!out.explicitlySpecifiedInConfigFile()) && name != null) {
         // formatting
-        throw new ConfigurationSetupException("Multiple <server> elements are defined in the configuration file. "
-            + "As such, each server that you start needs to know which configuration " + "it should use.\n\n"
-            + "However, this server couldn't figure out which one it is -- it thinks it's " + "called '" + name
-            + "' (which, by default, is the host name of this machine), but you've only "
-            + "created <server> elements in the config file called " + list
-            + ".\n\nPlease re-start the server with a '-n <name>' argument on the command line to tell this "
-            + "server which one it is, or change the 'name' attributes of the <server> "
-            + "elements in the config file as appropriate.");
+        throw new ConfigurationSetupException(
+                                              "Multiple <server> elements are defined in the configuration file. "
+                                                  + "As such, each server that you start needs to know which configuration "
+                                                  + "it should use.\n\n"
+                                                  + "However, this server couldn't figure out which one it is -- it thinks it's "
+                                                  + "called '"
+                                                  + name
+                                                  + "' (which, by default, is the host name of this machine), but you've only "
+                                                  + "created <server> elements in the config file called "
+                                                  + list
+                                                  + ".\n\nPlease re-start the server with a '-n <name>' argument on the command line to tell this "
+                                                  + "server which one it is, or change the 'name' attributes of the <server> "
+                                                  + "elements in the config file as appropriate.");
       }
 
       this.l2ConfigData.put(name, out);
@@ -253,7 +267,8 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
         Capabilities capabilities = AbstractCapabilitiesFactory.getCapabilitiesManager();
 
         if (!capabilities.hasHA() && capabilities.canClusterPOJOs()) { throw new ConfigurationSetupException(
-            "Attempting to run multiple servers without license " + "authorization of DSO High Availability."); }
+                                                                                                             "Attempting to run multiple servers without license "
+                                                                                                                 + "authorization of DSO High Availability."); }
 
         // We have clustered DSO; they must all be in permanent-store mode
         for (int i = 0; i < servers.length; ++i) {
@@ -270,13 +285,19 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
       if (badServers.size() > 0) {
         // formatting
-        throw new ConfigurationSetupException("Your Terracotta system has a clustered DSO configuration -- i.e., "
-            + "DSO is enabled, and more than one server is defined in the configuration file -- but "
-            + "at least one server is in the '" + PersistenceMode.TEMPORARY_SWAP_ONLY
-            + "' persistence mode. (Servers in this mode: " + badServers + ".) In a "
-            + "clustered DSO configuration, all servers must be in the '" + PersistenceMode.PERMANENT_STORE
-            + "' mode. Please adjust the " + "persistence/mode element (inside the 'server' element) in your "
-            + "configuration file; see the Terracotta documentation for more details.");
+        throw new ConfigurationSetupException(
+                                              "Your Terracotta system has a clustered DSO configuration -- i.e., "
+                                                  + "DSO is enabled, and more than one server is defined in the configuration file -- but "
+                                                  + "at least one server is in the '"
+                                                  + PersistenceMode.TEMPORARY_SWAP_ONLY
+                                                  + "' persistence mode. (Servers in this mode: "
+                                                  + badServers
+                                                  + ".) In a "
+                                                  + "clustered DSO configuration, all servers must be in the '"
+                                                  + PersistenceMode.PERMANENT_STORE
+                                                  + "' mode. Please adjust the "
+                                                  + "persistence/mode element (inside the 'server' element) in your "
+                                                  + "configuration file; see the Terracotta documentation for more details.");
       }
     }
   }
@@ -289,8 +310,10 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
           .roots().getObject();
       if (result != null && Array.getLength(result) > 0) {
         // formatting
-        throw new ConfigurationSetupException("Your Terracotta license, " + capabilities.describe()
-            + ", does not allow you to define DSO roots in your configuration file. Please remove them and try again.");
+        throw new ConfigurationSetupException(
+                                              "Your Terracotta license, "
+                                                  + capabilities.describe()
+                                                  + ", does not allow you to define DSO roots in your configuration file. Please remove them and try again.");
       }
     }
 
@@ -323,7 +346,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
   public UpdateCheckConfig updateCheckConfig() {
     return updateCheckConfig;
   }
-  
+
   public String[] allCurrentlyKnownServers() {
     Servers serversBean = (Servers) serversBeanRepository().bean();
     Server[] l2s = serversBean == null ? null : serversBean.getServerArray();
@@ -338,6 +361,44 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
   public InputStream rawConfigFile() {
     String text = configurationCreator.rawConfigText();
+    try {
+      return new ByteArrayInputStream(text.getBytes("UTF-8"));
+    } catch (UnsupportedEncodingException uee) {
+      throw Assert.failure("This shouldn't be possible", uee);
+    }
+  }
+
+  public InputStream effectiveConfigFile() {
+    // This MUST piece together the configuration from our currently-active bean repositories. If we just read the
+    // actual config file we got on startup, we'd be sending out, well, the config we got on startup -- which might be
+    // quite different from our current config, if an L1 came in and overrode our config. This effective config will
+    // also contain the effects of parameter substitution for server elements
+
+    TcConfigDocument doc = TcConfigDocument.Factory.newInstance();
+    TcConfigDocument.TcConfig config = doc.addNewTcConfig();
+
+    System system = (System) this.systemBeanRepository().bean();
+    Client client = (Client) this.clientBeanRepository().bean();
+    Servers servers = (Servers) this.serversBeanRepository().bean();
+    Application application = (Application) this.applicationsRepository()
+        .repositoryFor(TVSConfigurationSetupManagerFactory.DEFAULT_APPLICATION_NAME).bean();
+
+    if (system != null) config.setSystem(system);
+    if (client != null) config.setClients(client);
+    if (servers != null) config.setServers(servers);
+    if (application != null) config.setApplication(application);
+
+    StringWriter sw = new StringWriter();
+    XmlOptions options = new XmlOptions().setSavePrettyPrint().setSavePrettyPrintIndent(4);
+
+    try {
+      doc.save(sw, options);
+    } catch (IOException ioe) {
+      throw Assert.failure("Unexpected failure writing to in-memory streams", ioe);
+    }
+
+    String text = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n\n" + sw.toString();
+
     try {
       return new ByteArrayInputStream(text.getBytes("UTF-8"));
     } catch (UnsupportedEncodingException uee) {
