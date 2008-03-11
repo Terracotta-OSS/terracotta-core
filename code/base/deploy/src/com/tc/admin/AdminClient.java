@@ -55,6 +55,7 @@ public class AdminClient extends ApplicationManager {
     m_cntx.prefs = loadPrefs();
     m_cntx.topRes = loadTopRes();
     m_cntx.bundleHelper = new ResourceBundleHelper(getClass());
+    m_cntx.nodeFactory = AbstractNodeFactory.getFactory();
 
     if(!Boolean.getBoolean("com.tc.ui.java-icon")) {
       setIconImage(new Image(getBytes("/com/tc/admin/icons/logo_small.gif")));

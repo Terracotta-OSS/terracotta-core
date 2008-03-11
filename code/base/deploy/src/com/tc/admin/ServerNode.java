@@ -57,22 +57,19 @@ import javax.swing.SwingUtilities;
  * notification handler (handleNotification) informs when the server goes from started->active state.
  */
 
-public class ServerNode extends ComponentNode
-  implements ConnectionListener,
-             NotificationListener
-{
-  private AdminClientContext      m_acc;
-  private ServerConnectionManager m_connectManager;
-  private String                  m_host;
-  private int                     m_jmxPort;
-  private Integer                 m_dsoPort;
-  private Exception               m_connectException;
-  private TCServerInfoMBean       m_serverInfoBean;
-  private ProductInfo             m_productInfo;
-  private ServerPanel             m_serverPanel;
-  private ConnectDialog           m_connectDialog;
-  private JDialog                 m_versionMismatchDialog;
-  private JPopupMenu              m_popupMenu;
+public class ServerNode extends ComponentNode implements ConnectionListener, NotificationListener {
+  protected AdminClientContext      m_acc;
+  protected ServerConnectionManager m_connectManager;
+  protected String                  m_host;
+  protected int                     m_jmxPort;
+  protected Integer                 m_dsoPort;
+  protected Exception               m_connectException;
+  protected TCServerInfoMBean       m_serverInfoBean;
+  protected ProductInfo             m_productInfo;
+  protected ServerPanel             m_serverPanel;
+  protected ConnectDialog           m_connectDialog;
+  protected JDialog                 m_versionMismatchDialog;
+  protected JPopupMenu              m_popupMenu;
 
   ServerNode() {
     this(ConnectionContext.DEFAULT_HOST, ConnectionContext.DEFAULT_PORT, ConnectionContext.DEFAULT_AUTO_CONNECT);
@@ -84,20 +81,24 @@ public class ServerNode extends ComponentNode
     m_acc = AdminClient.getContext();
     m_host = host;
     m_jmxPort = jmxPort;
-    
+
     setRenderer(new ServerNodeTreeCellRenderer());
     initMenu(autoConnect);
-    setComponent(m_serverPanel = new ServerPanel(this));
+    setComponent(m_serverPanel = createServerPanel());
     AutoConnectionListener acl = new AutoConnectionListener();
     m_connectManager = new ServerConnectionManager(host, jmxPort, autoConnect, acl);
-    if(autoConnect) {
+    if (autoConnect) {
       String[] creds = ServerConnectionManager.getCachedCredentials(m_connectManager);
-      if(creds != null) {
+      if (creds != null) {
         m_connectManager.setCredentials(creds[0], creds[1]);
       }
     }
   }
 
+  protected ServerPanel createServerPanel() {
+    return new ServerPanel(this);
+  }
+  
   /**
    * We need to use invokeLater here because this is being called from a background thread and all Swing stuff has to be
    * done in the primary event loop.
@@ -165,7 +166,7 @@ public class ServerNode extends ComponentNode
   ServerConnectionManager getServerConnectionManager() {
     return m_connectManager;
   }
-  
+
   ConnectionContext getConnectionContext() {
     return m_connectManager.getConnectionContext();
   }
@@ -187,36 +188,36 @@ public class ServerNode extends ComponentNode
   }
 
   public Integer getDSOListenPort() {
-    if(m_dsoPort != null) return m_dsoPort;
+    if (m_dsoPort != null) return m_dsoPort;
     try {
       TCServerInfoMBean serverInfo = getServerInfoBean();
       m_dsoPort = serverInfo != null ? serverInfo.getDSOListenPort() : -1;
-    } catch(Exception e) {
+    } catch (Exception e) {
       // connection was probably dropped.  Wait for disconnect message.
       AdminClient.getContext().log(e);
     }
     return m_dsoPort;
   }
-  
+
   private void testGetDSOListenPort() {
-    if(m_dsoPort == null) getDSOListenPort();
+    if (m_dsoPort == null) getDSOListenPort();
   }
-  
+
   String getStatsExportServletURI(String sessionId) throws Exception {
     Integer dsoPort = getDSOListenPort();
-    Object[] args = new Object[] { getHost(), dsoPort.toString(), sessionId};
+    Object[] args = new Object[] { getHost(), dsoPort.toString(), sessionId };
     return MessageFormat.format("http://{0}:{1}/stats-export?session={2}", args);
   }
-  
-  private void initMenu(boolean autoConnect) {
+
+  protected void initMenu(boolean autoConnect) {
     m_popupMenu = new JPopupMenu("Server Actions");
 
   }
-  
+
   void setVersionMismatchDialog(JDialog dialog) {
     m_versionMismatchDialog = dialog;
   }
-  
+
   private void setConnected(boolean connected) {
     if (m_acc == null) { return; }
     if (connected) {
@@ -224,7 +225,7 @@ public class ServerNode extends ComponentNode
       if (!m_serverPanel.isProductInfoShowing() && !m_acc.controller.testServerMatch(this)) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            if(m_connectManager.isConnected()) {
+            if (m_connectManager.isConnected()) {
               disconnect();
             }
           }
@@ -233,12 +234,12 @@ public class ServerNode extends ComponentNode
       }
       m_acc.controller.block();
       m_connectException = null;
-      if(m_connectManager.isConnected()) { 
+      if (m_connectManager.isConnected()) {
         if (m_connectManager.isActive()) {
           handleActivation();
-        } else if(m_connectManager.isPassiveStandby()) {
-          handlePassiveStandby();        
-        } else if(m_connectManager.isPassiveUninitialized()) {
+        } else if (m_connectManager.isPassiveStandby()) {
+          handlePassiveStandby();
+        } else if (m_connectManager.isPassiveUninitialized()) {
           handlePassiveUninitialized();
         } else if (m_connectManager.isStarted()) {
           handleStarting();
@@ -248,7 +249,7 @@ public class ServerNode extends ComponentNode
       }
       m_acc.controller.unblock();
     } else {
-      if(m_versionMismatchDialog != null) {
+      if (m_versionMismatchDialog != null) {
         m_versionMismatchDialog.setVisible(false);
       }
       handleDisconnect();
@@ -311,7 +312,7 @@ public class ServerNode extends ComponentNode
     Frame frame = (Frame) m_serverPanel.getAncestorOfClass(java.awt.Frame.class);
 
     String[] creds = ServerConnectionManager.getCachedCredentials(getServerConnectionManager());
-    if(creds != null) {
+    if (creds != null) {
       m_connectManager.setCredentials(creds[0], creds[1]);
     }
 
@@ -418,10 +419,10 @@ public class ServerNode extends ComponentNode
   void shutdown() {
     AdminClientPanel topPanel = (AdminClientPanel) m_serverPanel.getAncestorOfClass(AdminClientPanel.class);
     Frame frame = (Frame) topPanel.getAncestorOfClass(java.awt.Frame.class);
-    String msg = "Are you sure you want to shutdown '"+this+"'?";
-    
+    String msg = "Are you sure you want to shutdown '" + this + "'?";
+
     int result = JOptionPane.showConfirmDialog(frame, msg, frame.getTitle(), JOptionPane.OK_CANCEL_OPTION);
-    if(result == JOptionPane.OK_OPTION) {
+    if (result == JOptionPane.OK_OPTION) {
       doShutdown();
     }
   }
@@ -429,7 +430,7 @@ public class ServerNode extends ComponentNode
   void doShutdown() {
     try {
       TCServerInfoMBean serverInfo = getServerInfoBean();
-      if(serverInfo != null) {
+      if (serverInfo != null) {
         serverInfo.shutdown();
       }
     } catch (ConnectionClosedException ignore) {
@@ -438,7 +439,7 @@ public class ServerNode extends ComponentNode
       m_acc.log(e);
     }
   }
-  
+
   public Icon getIcon() {
     return ServersHelper.getHelper().getServerIcon();
   }
@@ -478,57 +479,56 @@ public class ServerNode extends ComponentNode
     try {
       ConnectionContext cc = getConnectionContext();
       ObjectName objectName = DSOHelper.getHelper().getDSOMBean(cc);
-      if(objectName == null) return null;
+      if (objectName == null) return null;
       return (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(cc.mbsc, objectName, DSOMBean.class, true);
     } catch (Exception ioe) {
       return null;
     }
   }
-  
+
   SynchronizedBoolean m_tryAddingChildren = new SynchronizedBoolean(false);
-  
-  void tryAddChildren() throws Exception{
-    if(m_tryAddingChildren.get()) {
-      return;
-    }
-    
+
+  void tryAddChildren() throws Exception {
+    if (m_tryAddingChildren.get()) { return; }
+
     try {
       m_tryAddingChildren.set(true);
       if (getChildCount() == 0) {
         ConnectionContext cntx = getConnectionContext();
-  
+
         if (DSOHelper.getHelper().getDSOMBean(cntx) != null) {
           addChildren(cntx);
           m_acc.controller.nodeStructureChanged(this);
           m_acc.controller.expand(this);
         } else {
           ObjectName mbsd = cntx.queryName("JMImplementation:type=MBeanServerDelegate");
-          if(mbsd != null) {
+          if (mbsd != null) {
             try {
               cntx.removeNotificationListener(mbsd, this);
-            } catch(Exception e) {/**/}
+            } catch (Exception e) {/**/
+            }
             cntx.addNotificationListener(mbsd, this);
           }
         }
       }
       m_acc.controller.nodeChanged(ServerNode.this);
-    } catch(Exception e) {
+    } catch (Exception e) {
       m_acc.log(e);
     } finally {
       m_tryAddingChildren.set(false);
     }
   }
-  
+
   private void addChildren(ConnectionContext cc) throws Exception {
     // There are no longer any children.  Leaving in case someone changes their mind.
   }
-  
+
   void handlePassiveUninitialized() {
     testGetDSOListenPort();
     try {
       tryAddChildren();
       m_serverPanel.passiveUninitialized();
-    } catch(Exception e) {
+    } catch (Exception e) {
       // just wait for disconnect message to come in
     }
   }
@@ -554,14 +554,14 @@ public class ServerNode extends ComponentNode
   }
 
   TCServerInfoMBean getServerInfoBean() throws Exception {
-    if(m_serverInfoBean != null) return m_serverInfoBean;
+    if (m_serverInfoBean != null) return m_serverInfoBean;
     m_serverInfoBean = ServerHelper.getHelper().getServerInfoBean(getConnectionContext());
     return m_serverInfoBean;
   }
 
   public ProductInfo getProductInfo() {
-    if(m_productInfo != null) return m_productInfo;
-    
+    if (m_productInfo != null) return m_productInfo;
+
     try {
       TCServerInfoMBean serverInfo = getServerInfoBean();
 
@@ -582,7 +582,7 @@ public class ServerNode extends ComponentNode
   public String getProductVersion() {
     return getProductInfo().getVersion();
   }
-  
+
   public String getProductBuildID() {
     return getProductInfo().getBuildID();
   }
@@ -590,7 +590,7 @@ public class ServerNode extends ComponentNode
   public String getProductLicense() {
     return getProductInfo().getLicense();
   }
-  
+
   String getEnvironment() {
     try {
       TCServerInfoMBean serverInfo = getServerInfoBean();
@@ -600,7 +600,7 @@ public class ServerNode extends ComponentNode
       return e.getMessage();
     }
   }
-  
+
   String getConfig() {
     try {
       TCServerInfoMBean serverInfo = getServerInfoBean();
@@ -610,7 +610,7 @@ public class ServerNode extends ComponentNode
       return e.getMessage();
     }
   }
-  
+
   long getStartTime() {
     try {
       TCServerInfoMBean serverInfo = getServerInfoBean();
@@ -632,13 +632,13 @@ public class ServerNode extends ComponentNode
   }
 
   public void handleNotification(Notification notification, Object handback) {
-    if(notification instanceof MBeanServerNotification) {
-      MBeanServerNotification mbsn = (MBeanServerNotification)notification;
-      String                  type = notification.getType();
-      ObjectName              name = mbsn.getMBeanName();
-      
-      if(type.equals(MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
-        if(name.getCanonicalName().equals(L2MBeanNames.DSO.getCanonicalName())) {
+    if (notification instanceof MBeanServerNotification) {
+      MBeanServerNotification mbsn = (MBeanServerNotification) notification;
+      String type = notification.getType();
+      ObjectName name = mbsn.getMBeanName();
+
+      if (type.equals(MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
+        if (name.getCanonicalName().equals(L2MBeanNames.DSO.getCanonicalName())) {
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
               try {
@@ -646,7 +646,7 @@ public class ServerNode extends ComponentNode
                 m_acc.controller.nodeStructureChanged(ServerNode.this);
                 m_acc.controller.expand(ServerNode.this);
                 m_acc.controller.nodeChanged(ServerNode.this);
-              } catch(Exception e) {
+              } catch (Exception e) {
                 // just wait for disconnect message to come in
               }
             }
@@ -661,7 +661,7 @@ public class ServerNode extends ComponentNode
     return (StatisticsManagerMBean) MBeanServerInvocationHandler
         .newProxyInstance(cc.mbsc, StatisticsMBeanNames.STATISTICS_MANAGER, StatisticsManagerMBean.class, false);
   }
-  
+
   StatisticsEmitterMBean registerStatisticsEmitterListener(NotificationListener listener) {
     ConnectionContext cc = getConnectionContext();
     StatisticsEmitterMBean stat_emitter = (StatisticsEmitterMBean) MBeanServerInvocationHandler
@@ -669,12 +669,12 @@ public class ServerNode extends ComponentNode
     ArrayList dataList = new ArrayList();
     try {
       cc.mbsc.addNotificationListener(StatisticsMBeanNames.STATISTICS_EMITTER, listener, null, dataList);
-    } catch(Exception e) {
+    } catch (Exception e) {
       throw new RuntimeException("Registering stats emitter listener", e);
     }
     return stat_emitter;
   }
-  
+
   L2Info[] getClusterMembers() {
     L2Info[] result = null;
 
@@ -692,7 +692,7 @@ public class ServerNode extends ComponentNode
     m_serverInfoBean = null;
     m_productInfo = null;
   }
-  
+
   void handleDisconnect() {
     resetBeanProxies();
 
@@ -709,9 +709,9 @@ public class ServerNode extends ComponentNode
   Color getServerStatusColor() {
     return getServerStatusColor(getServerConnectionManager());
   }
-  
+
   static Color getServerStatusColor(ServerConnectionManager scm) {
-    if(scm != null) {
+    if (scm != null) {
       if (scm.isActive()) {
         return Color.GREEN;
       } else if (scm.isPassiveStandby()) {
@@ -720,9 +720,7 @@ public class ServerNode extends ComponentNode
         return Color.ORANGE;
       } else if (scm.isStarted()) {
         return Color.YELLOW;
-      } else if (scm.getConnectionException() != null) {
-        return Color.RED;
-      }
+      } else if (scm.getConnectionException() != null) { return Color.RED; }
     }
     return Color.LIGHT_GRAY;
   }

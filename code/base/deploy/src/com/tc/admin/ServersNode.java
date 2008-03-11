@@ -17,9 +17,10 @@ public class ServersNode extends ComponentNode {
   }
 
   private void init() {
+    AdminClientContext acc = AdminClient.getContext();
     L2Info[] l2s = m_clusterNode.getClusterMembers();
     for (L2Info l2Info : l2s) {
-      add(new ServerNode(l2Info.host(), l2Info.jmxPort(), true));
+      add(acc.nodeFactory.createServerNode(l2Info.host(), l2Info.jmxPort(), true));
     }
     setComponent(new ServersPanel(this));
     setLabel(AdminClient.getContext().getMessage("servers") + " (" + getChildCount() + ")");

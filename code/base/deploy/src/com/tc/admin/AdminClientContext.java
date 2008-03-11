@@ -17,6 +17,7 @@ public class AdminClientContext {
   public UIDefaults            uiDefaults;
   public ResourceBundleHelper  bundleHelper;
   public DictionaryResource    topRes;
+  public AbstractNodeFactory   nodeFactory;
   public Preferences           prefs;
 
   /**

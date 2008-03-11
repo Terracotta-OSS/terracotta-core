@@ -11,9 +11,13 @@ public class ClientTreeNode extends ComponentNode {
 
   public ClientTreeNode(ConnectionContext cc, DSOClient client) {
     super(client.getRemoteAddress());
-    setComponent(new ClientPanel(m_client = client));
+    setComponent(createClientPanel(m_client = client));
   }
 
+  protected ClientPanel createClientPanel(DSOClient client) {
+    return new ClientPanel(client);
+  }
+  
   public DSOClient getClient() {
     return m_client;
   }

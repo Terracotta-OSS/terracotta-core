@@ -12,10 +12,14 @@ import java.awt.BorderLayout;
 import javax.swing.JScrollPane;
 
 public class ClientsPanel extends XContainer {
-  private ClientsTable m_table;
+  protected ConnectionContext m_cc;
+  protected ClientsNode       m_clientsNode;
+  protected ClientsTable      m_table;
 
   public ClientsPanel(ConnectionContext cc, ClientsNode clientsNode, DSOClient[] clients) {
     super(new BorderLayout());
+    m_cc = cc;
+    m_clientsNode = clientsNode;
     add(new JScrollPane(m_table = new ClientsTable(clients)));
   }
 
@@ -33,6 +37,9 @@ public class ClientsPanel extends XContainer {
 
   public void tearDown() {
     super.tearDown();
+
+    m_cc = null;
     m_table = null;
+    m_clientsNode = null;
   }
 }

@@ -569,17 +569,17 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     }
 
     public void actionPerformed(ActionEvent ae) {
+      AdminClientContext acc = AdminClient.getContext();
       XTreeModel model = (XTreeModel) m_tree.getModel();
       XTreeNode root = (XTreeNode) model.getRoot();
       int index = root.getChildCount();
-      ClusterNode clusterNode = new ClusterNode();
+      ClusterNode clusterNode = acc.nodeFactory.createClusterNode();
 
       model.insertNodeInto(clusterNode, root, index);
       TreePath path = new TreePath(clusterNode.getPath());
       m_tree.makeVisible(path);
       m_tree.setSelectionPath(path);
 
-      AdminClientContext acc = AdminClient.getContext();
       PrefsHelper helper = PrefsHelper.getHelper();
       Preferences prefs = acc.prefs.node("AdminClient");
       Preferences servers = prefs.node(ServersHelper.SERVERS);

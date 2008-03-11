@@ -44,7 +44,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 
 public class ClientPanel extends XContainer implements NotificationListener {
-  private DSOClient                 m_client;
+  protected DSOClient               m_client;
   private L1InfoMBean               m_l1InfoBean;
 
   private TabbedPane                m_tabbedPane;
@@ -99,7 +99,7 @@ public class ClientPanel extends XContainer implements NotificationListener {
     m_propertyTable.setDefaultRenderer(Long.class, renderer);
     m_propertyTable.setDefaultRenderer(Integer.class, renderer);
     m_propertyTable.getAncestorOfClass(ScrollPane.class).setBackground(m_propertyTable.getBackground());
-    
+
     m_environmentTextArea = (TextArea) findComponent("EnvironmentTextArea");
     m_configTextArea = (TextArea) findComponent("ConfigTextArea");
 
@@ -166,14 +166,14 @@ public class ClientPanel extends XContainer implements NotificationListener {
 
     m_runtimeStatsPanel = (ClientRuntimeStatsPanel) findComponent("RuntimeStatsPanel");
     m_runtimeStatsPanel.setClientPanel(this);
-    
+
     setClient(client);
   }
 
   public void setClient(DSOClient client) {
     m_client = client;
 
-    String[] fields = {"Host", "Port", "ChannelID"};
+    String[] fields = { "Host", "Port", "ChannelID" };
     m_propertyTable.setModel(new PropertyTableModel(client, fields, fields));
 
     try {
@@ -412,7 +412,7 @@ public class ClientPanel extends XContainer implements NotificationListener {
   L1InfoMBean getL1InfoBean() {
     return m_l1InfoBean;
   }
-  
+
   public void tearDown() {
     m_runtimeStatsPanel.tearDown();
 

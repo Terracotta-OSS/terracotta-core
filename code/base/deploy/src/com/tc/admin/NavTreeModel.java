@@ -38,13 +38,13 @@ public class NavTreeModel extends XTreeModel {
         host        = serverPref.get(HOST, ConnectionContext.DEFAULT_HOST);
         port        = serverPref.getInt(PORT, ConnectionContext.DEFAULT_PORT);
         autoConnect = serverPref.getBoolean(AUTO_CONNECT, ConnectionContext.DEFAULT_AUTO_CONNECT);
-        serverNode  = new ClusterNode(host, port, autoConnect);
+        serverNode  = acc.nodeFactory.createClusterNode(host, port, autoConnect);
 
         insertNodeInto(serverNode, (XTreeNode)getRoot(), i);
       }
     }
     else {
-      serverNode = new ClusterNode();
+      serverNode = acc.nodeFactory.createClusterNode();
       serverNode.setPreferences(serverPrefs.node("server-0"));
       acc.client.storePrefs();
       insertNodeInto(serverNode, (XTreeNode)getRoot(), 0);
