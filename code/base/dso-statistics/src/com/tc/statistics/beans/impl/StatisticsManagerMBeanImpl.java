@@ -19,6 +19,7 @@ import com.tc.statistics.buffer.exceptions.StatisticsBufferStartCapturingSession
 import com.tc.statistics.buffer.exceptions.StatisticsBufferStopCapturingSessionNotFoundException;
 import com.tc.statistics.config.StatisticsConfig;
 import com.tc.statistics.exceptions.AgentStatisticsManagerException;
+import com.tc.statistics.exceptions.StatisticDataInjectionErrorException;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.statistics.retrieval.StatisticsRetriever;
 import com.tc.util.Assert;
@@ -199,13 +200,14 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
 
   public void injectStatisticData(final String sessionId, final StatisticData data) throws AgentStatisticsManagerException {
     if (!retrieverMap.containsKey(sessionId)) {
-      throw new AgentStatisticsManagerException("Unknown capturing session ID '" + sessionId + "' while injecting data '" + data + "'.", null);
+      throw new StatisticDataInjectionErrorException(sessionId, data, new UnknownStatisticsSessionIdException(getNodeName(), sessionId, null));
     }
+    
     try {
       data.setSessionId(sessionId);
       buffer.storeStatistic(data);
     } catch (StatisticsBufferException e) {
-      throw new AgentStatisticsManagerException("Unexpected error while injecting data '" + data + "' for session ID '" + sessionId + "'.", e);
+      throw new StatisticDataInjectionErrorException(sessionId, data, e);
     }
   }
 
