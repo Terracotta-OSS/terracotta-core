@@ -164,6 +164,7 @@ import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
 import com.tc.objectserver.tx.TransactionalStagesCoordinatorImpl;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
@@ -328,7 +329,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
                                                                           + addressChecker.getAllLocalAddresses()); }
 
     // setup the statistics subsystem
-    statisticsAgentSubSystem = new StatisticsAgentSubSystem();
+    statisticsAgentSubSystem = new StatisticsAgentSubSystemImpl();
     statisticsAgentSubSystem.setup(configSetupManager.commonl2Config());
     if (TCSocketAddress.WILDCARD_IP.equals(bindAddress) || TCSocketAddress.LOOPBACK_IP.equals(bindAddress)) {
       statisticsAgentSubSystem.setDefaultAgentIp(InetAddress.getLocalHost().getHostAddress());
@@ -530,7 +531,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
 
     TCProperties cacheManagerProperties = l2Properties.getPropertiesFor("cachemanager");
     if (cacheManagerProperties.getBoolean("enabled")) {
-      cacheManager = new CacheManager(objectManager, new CacheConfigImpl(cacheManagerProperties), getThreadGroup());
+      cacheManager = new CacheManager(objectManager, new CacheConfigImpl(cacheManagerProperties), getThreadGroup(), statisticsAgentSubSystem);
       if (logger.isDebugEnabled()) {
         logger.debug("CacheManager Enabled : " + cacheManager);
       }

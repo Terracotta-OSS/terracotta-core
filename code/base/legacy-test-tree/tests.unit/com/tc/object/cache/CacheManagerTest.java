@@ -31,7 +31,7 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
 
   public void test() throws Exception {
     CacheManager cm = new CacheManager(this, new TestCacheConfig(), new TCThreadGroup(new ThrowableHandler(TCLogging
-        .getLogger(CacheManagerTest.class))));
+        .getLogger(CacheManagerTest.class))), null);
     log("Cache Manager Created : " + cm);
     hogMemory();
     assertTrue(callCount.get() > 0);

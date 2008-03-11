@@ -110,6 +110,7 @@ import com.tc.object.tx.TransactionBatchWriterFactory;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.statistics.StatisticsAgentSubSystem;
+import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.statistics.retrieval.actions.SRAMemoryUsage;
 import com.tc.statistics.retrieval.actions.SRAStageQueueDepths;
@@ -277,6 +278,12 @@ public class DistributedObjectClient extends SEDA {
     ToggleableReferenceManager toggleRefMgr = new ToggleableReferenceManager();
     toggleRefMgr.start();
 
+    // setup statistics subsystem
+    statisticsAgentSubSystem = new StatisticsAgentSubSystemImpl();
+    if (statisticsAgentSubSystem.setup(config.getNewCommonL1Config())) {
+      populateStatisticsRetrievalRegistry(statisticsAgentSubSystem.getStatisticsRetrievalRegistry(), stageManager);
+    }
+
     objectManager = new ClientObjectManagerImpl(remoteObjectManager, config, idProvider, new ClockEvictionPolicy(-1),
                                                 runtimeLogger, channel.getChannelIDProvider(), classProvider,
                                                 classFactory, objectFactory, config.getPortability(), channel,
@@ -284,7 +291,7 @@ public class DistributedObjectClient extends SEDA {
     threadGroup.addCallbackOnExitHandler(new CallbackDumpAdapter(objectManager));
     TCProperties cacheManagerProperties = l1Properties.getPropertiesFor("cachemanager");
     if (cacheManagerProperties.getBoolean("enabled")) {
-      this.cacheManager = new CacheManager(objectManager, new CacheConfigImpl(cacheManagerProperties), getThreadGroup());
+      this.cacheManager = new CacheManager(objectManager, new CacheConfigImpl(cacheManagerProperties), getThreadGroup(), statisticsAgentSubSystem);
       if (logger.isDebugEnabled()) {
         logger.debug("CacheManager Enabled : " + cacheManager);
       }
@@ -292,12 +299,6 @@ public class DistributedObjectClient extends SEDA {
       logger.warn("CacheManager is Disabled");
     }
 
-    // setup statistics subsystem
-    statisticsAgentSubSystem = new StatisticsAgentSubSystem();
-    if (statisticsAgentSubSystem.setup(config.getNewCommonL1Config())) {
-      populateStatisticsRetrievalRegistry(statisticsAgentSubSystem.getStatisticsRetrievalRegistry(), stageManager);
-    }
-    
     // Set up the JMX management stuff
     final TunnelingEventHandler teh = new TunnelingEventHandler(channel.channel());
     l1Management = new L1Management(teh, statisticsAgentSubSystem, runtimeLogger, manager.getInstrumentationLogger(), config.rawConfigText());

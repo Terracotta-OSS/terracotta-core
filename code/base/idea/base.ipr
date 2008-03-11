@@ -423,6 +423,7 @@
       <module fileurl="file://$PROJECT_DIR$/dso-spring-crash-tests.iml" filepath="$PROJECT_DIR$/dso-spring-crash-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/dso-spring-tests.iml" filepath="$PROJECT_DIR$/dso-spring-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/dso-statistics.iml" filepath="$PROJECT_DIR$/dso-statistics.iml" />
+      <module fileurl="file://$PROJECT_DIR$/dso-statistics-api.iml" filepath="$PROJECT_DIR$/dso-statistics-api.iml" />
       <module fileurl="file://$PROJECT_DIR$/dso-statistics-tests.iml" filepath="$PROJECT_DIR$/dso-statistics-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/dso-system-tests.iml" filepath="$PROJECT_DIR$/dso-system-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/dso-tests-jdk15.iml" filepath="$PROJECT_DIR$/dso-tests-jdk15.iml" />
@@ -507,5 +508,8 @@
   <component name="com.intellij.profile.ui.ErrorOptionsConfigurable">
     <option name="myLastEditedConfigurable" />
   </component>
+  <UsedPathMacros>
+    <macro name="M2_REPO" />
+  </UsedPathMacros>
 </project>
 

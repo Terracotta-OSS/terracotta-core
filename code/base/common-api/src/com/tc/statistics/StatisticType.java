@@ -30,6 +30,14 @@ public class StatisticType {
    */
   public final static StatisticType SNAPSHOT = new StatisticType("SNAPSHOT");
 
+
+  /**
+   * Statistics of this type will not captured automatically rather they will
+   * be captured as per need. Statistics will be triggered by the system to
+   * retrieve and store the data.
+   */
+  public static final StatisticType TRIGGERED = new StatisticType("TRIGGERED");
+
   private final String identifier;
 
   private StatisticType(String identifier) {

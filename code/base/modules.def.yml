@@ -98,6 +98,12 @@ modules:
         - dso-l1-api
         - modules-common
         - thirdparty-api
+  - dso-statistics-api:
+      options:
+        jdk: J2SE-1.4
+      dependencies:
+        - common
+        - common-api
   - dso-common:
       options:
         jdk: J2SE-1.4
@@ -106,6 +112,7 @@ modules:
         - common-api
         - dso-l1-api
         - thirdparty-api
+        - dso-statistics-api
   - dso-common-jdk15:
       options:
         jdk: J2SE-1.5
@@ -125,6 +132,7 @@ modules:
       options:
         jdk: J2SE-1.4
       dependencies:
+        - dso-statistics-api 
         - common
         - common-api
         - dso-common
@@ -141,6 +149,7 @@ modules:
         - dso-common
         - dso-common-jdk15
         - dso-l1-api
+        - dso-statistics-api
         - dso-statistics
         - management
         - thirdparty
@@ -244,6 +253,7 @@ modules:
         - dso-l1-api
         - dso-l2-common
         - dso-memory-datastore
+        - dso-statistics-api
         - dso-statistics
         - management
         - thirdparty
@@ -261,6 +271,7 @@ modules:
         - dso-l1-api
         - dso-l2
         - dso-l2-common
+        - dso-statistics-api
         - dso-statistics
         - linked-child-process
         - management
@@ -278,6 +289,7 @@ modules:
         - dso-l1-api
         - dso-l2
         - dso-l2-common
+        - dso-statistics-api
         - dso-statistics
   - ui-configurator:
       options:
@@ -293,6 +305,7 @@ modules:
         - dso-l1-api
         - dso-l2
         - dso-l2-common
+        - dso-statistics-api
         - dso-statistics
   - examples:
       options:
@@ -318,6 +331,7 @@ modules:
         - dso-l1-api
         - dso-l2
         - dso-l2-common
+        - dso-statistics-api
         - dso-statistics
         - thirdparty
         - thirdparty-api
@@ -344,6 +358,7 @@ modules:
         - dso-l1-weblogic
         - dso-l2
         - dso-l2-common
+        - dso-statistics-api
         - dso-statistics
         - linked-child-process
         - management
@@ -364,6 +379,7 @@ modules:
         - dso-l1-api
         - dso-l2
         - dso-l2-common
+        - dso-statistics-api
         - dso-statistics
         - legacy-test-tree
         - linked-child-process
@@ -386,6 +402,7 @@ modules:
         - dso-l1-jdk15
         - dso-l2
         - dso-l2-common
+        - dso-statistics-api
         - dso-statistics
         - legacy-test-tree
         - linked-child-process
@@ -411,6 +428,7 @@ modules:
         - dso-l2
         - dso-l2-common
         - dso-memory-datastore
+        - dso-statistics-api
         - dso-statistics
         - legacy-test-tree
         - linked-child-process
@@ -433,6 +451,7 @@ modules:
         - dso-l1-jdk15
         - dso-l2
         - dso-l2-common
+        - dso-statistics-api
         - dso-statistics
         - legacy-test-tree
         - linked-child-process
@@ -455,6 +474,7 @@ modules:
         - dso-l1-jdk15
         - dso-l2
         - dso-l2-common
+        - dso-statistics-api
         - dso-statistics
         - legacy-test-tree
         - linked-child-process
@@ -481,6 +501,7 @@ modules:
         - dso-l2
         - dso-l2-common
         - dso-memory-datastore
+        - dso-statistics-api
         - dso-statistics
         - dso-system-tests
         - dso-tests-jdk15
@@ -507,6 +528,7 @@ modules:
         - dso-l2
         - dso-l2-common
         - dso-spring
+        - dso-statistics-api
         - dso-statistics
         - dso-system-tests
         - legacy-test-tree
@@ -529,6 +551,7 @@ modules:
         - dso-l2
         - dso-l2-common
         - dso-memory-datastore
+        - dso-statistics-api
         - dso-statistics
         - legacy-test-tree
         - linked-child-process
@@ -553,6 +576,7 @@ modules:
         - dso-l1-jdk15
         - dso-l2
         - dso-l2-common
+        - dso-statistics-api
         - dso-statistics
         - legacy-test-tree
         - linked-child-process
@@ -577,6 +601,7 @@ modules:
         - dso-l1-jdk15
         - dso-l2
         - dso-l2-common
+        - dso-statistics-api
         - dso-statistics
         - legacy-test-tree
         - linked-child-process
@@ -600,6 +625,7 @@ modules:
         - dso-l2
         - dso-l2-common
         - dso-memory-datastore
+        - dso-statistics-api
         - dso-statistics
         - legacy-test-tree
         - linked-child-process
@@ -626,6 +652,7 @@ modules:
         - dso-l2
         - dso-l2-common
         - dso-memory-datastore
+        - dso-statistics-api
         - dso-statistics
         - legacy-test-tree
         - linked-child-process
@@ -669,6 +696,7 @@ modules:
         - dso-l1-jdk15
         - dso-l2
         - dso-l2-common
+        - dso-statistics-api
         - dso-statistics
         - dso-system-tests
         - legacy-test-tree
@@ -695,6 +723,7 @@ modules:
         - dso-l1-jdk15
         - dso-l2
         - dso-l2-common
+        - dso-statistics-api
         - dso-statistics
         - dso-system-tests
         - legacy-test-tree
@@ -749,6 +778,7 @@ modules:
         - dso-l1-session
         - dso-l2
         - dso-l2-common
+        - dso-statistics-api
         - dso-statistics
         - legacy-test-tree
         - linked-child-process
@@ -776,6 +806,7 @@ modules:
         - dso-l2
         - dso-l2-common
         - dso-memory-datastore
+        - dso-statistics-api
         - dso-statistics
         - legacy-test-tree
         - linked-child-process
@@ -802,6 +833,7 @@ modules:
         - dso-l2
         - dso-l2-common
         - dso-memory-datastore
+        - dso-statistics-api
         - dso-statistics
         - legacy-test-tree
         - linked-child-process
@@ -829,6 +861,7 @@ modules:
         - dso-l1-weblogic
         - dso-l2
         - dso-l2-common
+        - dso-statistics-api
         - dso-statistics
         - legacy-test-tree
         - legacy-test-tree
@@ -856,6 +889,7 @@ modules:
         - dso-l1-jdk15
         - dso-l2
         - dso-l2-common
+        - dso-statistics-api
         - dso-statistics
         - legacy-test-tree
         - linked-child-process
@@ -882,6 +916,7 @@ modules:
         - dso-l2
         - dso-l2-common
         - dso-spring
+        - dso-statistics-api
         - dso-statistics
         - legacy-test-tree
         - linked-child-process
@@ -909,6 +944,7 @@ modules:
         - dso-l2-common
         - dso-spring
         - dso-spring-tests
+        - dso-statistics-api
         - dso-statistics
         - legacy-test-tree
         - linked-child-process

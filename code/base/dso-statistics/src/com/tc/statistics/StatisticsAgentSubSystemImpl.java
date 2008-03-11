@@ -28,7 +28,7 @@ import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 
-public class StatisticsAgentSubSystem {
+public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
   private final static TCLogger logger        = CustomerLogging.getDSOGenericLogger();
   private final static TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
 

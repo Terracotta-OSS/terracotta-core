@@ -10,6 +10,7 @@ import com.tc.management.AbstractTerracottaMBean;
 import com.tc.statistics.DynamicSRA;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
+import com.tc.statistics.AgentStatisticsManager;
 import com.tc.statistics.beans.StatisticsManagerMBean;
 import com.tc.statistics.beans.exceptions.UnknownStatisticsSessionIdException;
 import com.tc.statistics.buffer.StatisticsBuffer;
@@ -21,15 +22,18 @@ import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.statistics.retrieval.StatisticsRetriever;
 import com.tc.util.Assert;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.Date;
+import java.util.List;
 
 import javax.management.NotCompliantMBeanException;
 
-public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implements StatisticsManagerMBean {
+public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implements StatisticsManagerMBean, AgentStatisticsManager {
   private final StatisticsConfig config;
   private final StatisticsRetrievalRegistry registry;
   private final StatisticsBuffer buffer;
@@ -171,6 +175,25 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
   public synchronized Object getSessionParam(final String sessionId, final String key) {
     StatisticsRetriever retriever = obtainRetriever(sessionId);
     return retriever.getConfig().getParam(key);
+  }
+
+  public List getActiveSessionsForAction(String actionName) {
+    return getActiveSessionsForAction(registry.getActionInstance(actionName));
+  }
+
+  public List getActiveSessionsForAction(StatisticRetrievalAction action) {
+    if (action == null) return Collections.EMPTY_LIST;
+    List sessions = new ArrayList();
+    synchronized (this) {
+      for (Iterator activeSessionsIterator = retrieverMap.keySet().iterator(); activeSessionsIterator.hasNext();) {
+        String sessionId = (String)activeSessionsIterator.next();
+        StatisticsRetriever retriever = (StatisticsRetriever)retrieverMap.get(sessionId);
+        if (retriever.containsAction(action)) {
+          sessions.add(sessionId);
+        }
+      }
+    }
+    return Collections.unmodifiableList(sessions);
   }
 
   StatisticsRetriever obtainRetriever(final String sessionId) {

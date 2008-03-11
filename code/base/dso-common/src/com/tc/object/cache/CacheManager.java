@@ -13,6 +13,7 @@ import com.tc.runtime.MemoryUsage;
 import com.tc.runtime.TCMemoryManagerImpl;
 import com.tc.util.Assert;
 import com.tc.util.State;
+import com.tc.statistics.StatisticsAgentSubSystem;
 
 import java.util.List;
 
@@ -30,8 +31,9 @@ public class CacheManager implements MemoryEventsListener {
 
   private int                       calculatedCacheSize = 0;
   private CacheStatistics           lastStat            = null;
+  private final StatisticsAgentSubSystem  statisticsAgentSubSystem;
 
-  public CacheManager(Evictable evictable, CacheConfig config, TCThreadGroup threadGroup) {
+  public CacheManager(Evictable evictable, CacheConfig config, TCThreadGroup threadGroup, StatisticsAgentSubSystem statisticsAgentSubSystem) {
     this.evictable = evictable;
     this.config = config;
     this.memoryManager = new TCMemoryManagerImpl(config.getUsedThreshold(), config.getUsedCriticalThreshold(), config
@@ -43,6 +45,7 @@ public class CacheManager implements MemoryEventsListener {
                 + config.getObjectCountCriticalThreshold()
                 + ". It is not recommended that this value is set. Setting a wrong vlaue could totally destroy performance.");
     }
+    this.statisticsAgentSubSystem = statisticsAgentSubSystem;
   }
 
   public void memoryUsed(MemoryEventType type, MemoryUsage usage) {
@@ -98,6 +101,7 @@ public class CacheManager implements MemoryEventsListener {
         logger.info("Asking to evict " + toEvict + " current size = " + currentCount + " calculated cache size = "
                     + calculatedCacheSize + " heap used = " + usage.getUsedPercentage() + " %  gc count = "
                     + usage.getCollectionCount());
+
       }
       return this.toEvict;
     }

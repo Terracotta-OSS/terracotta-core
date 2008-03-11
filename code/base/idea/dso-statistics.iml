@@ -8,6 +8,7 @@
     </content>
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="jdk" jdkName="J2SE-1.4" jdkType="JavaSDK" />
+    <orderEntry type="module" module-name="dso-statistics-api" />
     <orderEntry type="module" module-name="common" />
     <orderEntry type="module" module-name="common-api" />
     <orderEntry type="module" module-name="dso-common" />
