@@ -94,7 +94,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
       server.start();
     }
   }
-  
+
   public void setUp() throws Exception {
     TestTVSConfigurationSetupManagerFactory factory = createDistributedConfigFactory();
 
@@ -432,6 +432,10 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
       return realConfig.updateCheckConfig();
     }
 
+    public InputStream effectiveConfigFile() {
+      return realConfig.effectiveConfigFile();
+    }
+
     private static class L2ConfigOverride implements NewL2DSOConfig {
 
       private final NewL2DSOConfig config;
@@ -523,6 +527,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
       }
 
     }
+
 
   }
 
