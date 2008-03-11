@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -31,8 +32,8 @@ public class TreeMapTestApp extends AbstractTransparentApp {
   private final CyclicBarrier barrier;
 
   private final SubMapKey     subMapKeyRoot = new SubMapKey(0);
-  
-  private final int loopcount = 200;
+
+  private final int           loopcount     = 200;
 
   public TreeMapTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -41,8 +42,8 @@ public class TreeMapTestApp extends AbstractTransparentApp {
 
   public void run() {
     try {
-      for(int i = 0; i < loopcount; ++i) {
-        System.out.println("*** TreeMap LoopCount:"+i);
+      for (int i = 0; i < loopcount; ++i) {
+        System.out.println("*** TreeMap LoopCount:" + i);
         clear();
         run0();
         run1();
@@ -280,9 +281,9 @@ public class TreeMapTestApp extends AbstractTransparentApp {
     barrier.barrier();
 
   }
-  
-  private int getMapSize(TreeMap m) {
-    synchronized(m) {
+
+  private int getMapSize(Map m) {
+    synchronized (m) {
       return (m.size());
     }
   }
@@ -327,32 +328,34 @@ public class TreeMapTestApp extends AbstractTransparentApp {
     barrier.barrier();
   }
 
-  private static void validate(Map map, int count, Comparator comparator) {
+  private void validate(Map map, int count, Comparator comparator) {
     int expect = count;
-    Assert.assertEquals(expect, map.size());
+    Assert.assertEquals(expect, getMapSize(map));
 
     TreeMap compare = comparator == null ? new TreeMap() : new TreeMap(comparator);
     compare.putAll(map);
 
-    Iterator sharedIter = map.entrySet().iterator();
-    Iterator localIter = compare.entrySet().iterator();
+    synchronized (map) {
+      Iterator sharedIter = map.entrySet().iterator();
+      Iterator localIter = compare.entrySet().iterator();
 
-    while (true) {
-      Entry sharedEntry = (Entry) sharedIter.next();
-      Entry localEntry = (Entry) localIter.next();
+      while (true) {
+        Entry sharedEntry = (Entry) sharedIter.next();
+        Entry localEntry = (Entry) localIter.next();
 
-      Object sharedKey = sharedEntry.getKey();
-      Object localKey = localEntry.getKey();
-      Assert.assertEquals(localKey, sharedKey);
+        Object sharedKey = sharedEntry.getKey();
+        Object localKey = localEntry.getKey();
+        Assert.assertEquals(localKey, sharedKey);
 
-      Object sharedValue = sharedEntry.getValue();
-      Object localValue = localEntry.getValue();
-      Assert.assertEquals(localValue, sharedValue);
+        Object sharedValue = sharedEntry.getValue();
+        Object localValue = localEntry.getValue();
+        Assert.assertEquals(localValue, sharedValue);
 
-      if (sharedIter.hasNext()) {
-        Assert.assertTrue(localIter.hasNext());
-      } else {
-        break;
+        if (sharedIter.hasNext()) {
+          Assert.assertTrue(localIter.hasNext());
+        } else {
+          break;
+        }
       }
     }
 
@@ -364,13 +367,13 @@ public class TreeMapTestApp extends AbstractTransparentApp {
 
     String testClass = TreeMapTestApp.class.getName();
     spec = config.getOrCreateSpec(testClass);
-    
+
     config.addIncludePattern(testClass + "$*");
 
     String methodExpression = "* " + testClass + "*.getMapSize(..)";
     config.addReadAutolock(methodExpression);
-//    methodExpression = "* " + testClass + "*.*(..)";
-//    config.addWriteAutolock(methodExpression);
+    // methodExpression = "* " + testClass + "*.*(..)";
+    // config.addWriteAutolock(methodExpression);
     methodExpression = "* " + testClass + ".run*(..)";
     config.addWriteAutolock(methodExpression);
     methodExpression = "* " + testClass + ".clear(..)";
@@ -382,7 +385,7 @@ public class TreeMapTestApp extends AbstractTransparentApp {
     spec.addRoot("map2", "map2");
     spec.addRoot("barrier", "barrier");
     spec.addRoot("subMapKeyRoot", "subMapKeyRoot");
-    
+
     config.addIncludePattern(WrappedStringComparator.class.getName());
     config.addIncludePattern(WrappedString.class.getName());
   }
