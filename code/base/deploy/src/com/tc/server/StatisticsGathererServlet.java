@@ -9,16 +9,12 @@ import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.net.TCSocketAddress;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticsGathererSubSystem;
-import com.tc.statistics.store.StatisticDataUser;
 import com.tc.statistics.store.StatisticsRetrievalCriteria;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -178,51 +174,6 @@ public class StatisticsGathererServlet extends RestfulServlet {
     response.setStatus(HttpServletResponse.SC_OK);
 
     OutputStream os = response.getOutputStream();
-    final OutputStream out;
-
-    try {
-      final ZipOutputStream zipstream;
-      if (textformat) {
-        zipstream = null;
-        out = os;
-      } else {
-        zipstream = new ZipOutputStream(os);
-        zipstream.setLevel(9);
-        zipstream.setMethod(ZipOutputStream.DEFLATED);
-        out = zipstream;
-      }
-
-      try {
-        if (zipstream != null) {
-          final ZipEntry zipentry = new ZipEntry(filename_base + ".csv");
-          zipentry.setComment(StatisticData.CURRENT_CSV_VERSION);
-          zipstream.putNextEntry(zipentry);
-        }
-
-        try {
-          out.write(StatisticData.CURRENT_CSV_HEADER.getBytes("UTF-8"));
-          system.getStatisticsStore().retrieveStatistics(criteria, new StatisticDataUser() {
-            public boolean useStatisticData(final StatisticData data) {
-              try {
-                out.write(data.toCsv().getBytes("UTF-8"));
-              } catch (IOException e) {
-                throw new RuntimeException(e);
-              }
-              return true;
-            }
-          });
-        } finally {
-          if (zipstream != null) {
-            zipstream.closeEntry();
-          }
-        }
-      } finally {
-        if (zipstream != null) {
-          zipstream.close();
-        }
-      }
-    } finally {
-      os.close();
-    }
+    system.getStatisticsStore().retrieveStatisticsAsCsvStream(os, filename_base, criteria, textformat);
   }
 }

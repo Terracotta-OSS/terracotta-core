@@ -33,6 +33,7 @@ public class CliCommands {
       addCommand(this, new CommandCaptureStatistic());
       addCommand(this, new CommandStartCapturing());
       addCommand(this, new CommandStopCapturing());
+      addCommand(this, new CommandRetrieveStatistics());
       addCommand(this, new CommandSetGlobalParam());
       addCommand(this, new CommandGetGlobalParam());
       addCommand(this, new CommandSetSessionParam());

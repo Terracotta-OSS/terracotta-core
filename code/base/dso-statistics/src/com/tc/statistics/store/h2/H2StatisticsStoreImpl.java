@@ -38,6 +38,7 @@ import com.tc.util.concurrent.FileLockGuard;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
@@ -52,6 +53,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public class H2StatisticsStoreImpl implements StatisticsStore {
   public final static int DATABASE_STRUCTURE_VERSION = 5;
@@ -567,6 +570,60 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
+      throw new StatisticsStoreRetrievalErrorException(criteria, e);
+    }
+  }
+
+  public void retrieveStatisticsAsCsvStream(final OutputStream os, final String filenameBase, final StatisticsRetrievalCriteria criteria, final boolean textformat) throws StatisticsStoreException {
+    final OutputStream out;
+
+    try {
+      try {
+        final ZipOutputStream zipstream;
+        if (textformat) {
+          zipstream = null;
+          out = os;
+        } else {
+          zipstream = new ZipOutputStream(os);
+          zipstream.setLevel(9);
+          zipstream.setMethod(ZipOutputStream.DEFLATED);
+          out = zipstream;
+        }
+
+        try {
+          if (zipstream != null) {
+            final ZipEntry zipentry = new ZipEntry(filenameBase + ".csv");
+            zipentry.setComment(StatisticData.CURRENT_CSV_VERSION);
+            zipstream.putNextEntry(zipentry);
+          }
+
+          try {
+            out.write(StatisticData.CURRENT_CSV_HEADER.getBytes("UTF-8"));
+            retrieveStatistics(criteria, new StatisticDataUser() {
+              public boolean useStatisticData(final StatisticData data) {
+                try {
+                  out.write(data.toCsv().getBytes("UTF-8"));
+                } catch (IOException e) {
+                  // should never happen
+                  throw new RuntimeException(e);
+                }
+                return true;
+              }
+            });
+          } finally {
+            if (zipstream != null) {
+              zipstream.closeEntry();
+            }
+          }
+        } finally {
+          if (zipstream != null) {
+            zipstream.close();
+          }
+        }
+      } finally {
+        os.close();
+      }
+    } catch (IOException e) {
       throw new StatisticsStoreRetrievalErrorException(criteria, e);
     }
   }

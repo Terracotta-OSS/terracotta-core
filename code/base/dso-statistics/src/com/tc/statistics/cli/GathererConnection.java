@@ -4,6 +4,8 @@
 package com.tc.statistics.cli;
 
 import com.tc.management.JMXConnectorProxy;
+import com.tc.management.beans.L2MBeanNames;
+import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.statistics.beans.StatisticsLocalGathererMBean;
 import com.tc.statistics.beans.StatisticsMBeanNames;
 
@@ -19,9 +21,8 @@ public class GathererConnection {
 
   private String host = DEFAULT_HOST;
   private int port = DEFAULT_PORT;
-  private JMXConnector jmxc;
-  private MBeanServerConnection mbsc;
   private StatisticsLocalGathererMBean gatherer;
+  private TCServerInfoMBean info;
 
   public GathererConnection() {
   }
@@ -30,22 +31,32 @@ public class GathererConnection {
     return gatherer;
   }
 
-  public void setHost(String host) {
+  public String getHost() {
+    return host;
+  }
+
+  public void setHost(final String host) {
     this.host = host;
   }
 
-  public void setPort(int port) {
+  public void setPort(final int port) {
     this.port = port;
   }
 
+  public int getDSOListenPort() {
+    return info.getDSOListenPort();
+  }
+
   public void connect() throws IOException {
-    jmxc = new JMXConnectorProxy(host, port);
+    JMXConnector jmxc = new JMXConnectorProxy(host, port);
 
     // create the server connection
-    mbsc = jmxc.getMBeanServerConnection();
+    MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
 
     // setup the mbeans
     gatherer = (StatisticsLocalGathererMBean)MBeanServerInvocationHandler
-        .newProxyInstance(mbsc, StatisticsMBeanNames.STATISTICS_GATHERER, StatisticsLocalGathererMBean.class, true);
+      .newProxyInstance(mbsc, StatisticsMBeanNames.STATISTICS_GATHERER, StatisticsLocalGathererMBean.class, true);
+    info = (TCServerInfoMBean)MBeanServerInvocationHandler
+      .newProxyInstance(mbsc, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);
   }
 }

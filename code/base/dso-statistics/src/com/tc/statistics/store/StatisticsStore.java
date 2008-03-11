@@ -6,6 +6,7 @@ package com.tc.statistics.store;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.store.exceptions.StatisticsStoreException;
 
+import java.io.OutputStream;
 import java.io.Reader;
 
 public interface StatisticsStore {
@@ -28,6 +29,8 @@ public interface StatisticsStore {
   public void clearAllStatistics() throws StatisticsStoreException;
 
   public void importCsvStatistics(Reader reader, StatisticsStoreImportListener listener) throws StatisticsStoreException;
+
+  public void retrieveStatisticsAsCsvStream(OutputStream os, String filenameBase, StatisticsRetrievalCriteria criteria, boolean textformat) throws StatisticsStoreException;
 
   public void addListener(StatisticsStoreListener listener);
 

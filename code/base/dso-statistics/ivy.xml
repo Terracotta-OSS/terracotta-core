@@ -2,6 +2,9 @@
 <ivy-module version="1.0">
   <info organisation="ibiblio" module="dso-statistics"/>
   <dependencies>
+	<dependency name="commons-codec" rev="1.3"/>
+	<dependency name="commons-httpclient" rev="3.0.1"/>
     <dependency name="h2" rev="1.0.67" org="terracotta"/>
+	<dependency name="log4j" rev="1.2.9"/>
   </dependencies>
 </ivy-module>

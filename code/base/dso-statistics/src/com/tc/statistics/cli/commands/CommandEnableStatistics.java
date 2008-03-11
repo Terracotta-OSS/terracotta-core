@@ -9,7 +9,7 @@ import com.tc.statistics.cli.GathererConnection;
 import com.tc.util.Assert;
 
 public class CommandEnableStatistics extends AbstractCliCommand {
-  public final static String[] ARGUMENT_NAMES = new String[] {"comma separated list of names"};
+  public final static String[] ARGUMENT_NAMES = new String[] {"comma-separated list of names"};
 
   public String[] getArgumentNames() {
     return ARGUMENT_NAMES;
@@ -17,7 +17,11 @@ public class CommandEnableStatistics extends AbstractCliCommand {
 
   public void execute(final GathererConnection connection, final String[] arguments) {
     Assert.assertEquals(ARGUMENT_NAMES.length, arguments.length);
-    connection.getGatherer().enableStatistics(StringUtils.split(arguments[0], ','));
+    String[] statistics = StringUtils.split(arguments[0], ',');
+    for (int i = 0; i < statistics.length; i++) {
+      statistics[i] = StringUtils.trim(statistics[i]);
+    }
+    connection.getGatherer().enableStatistics(statistics);
     System.out.println("> Statistics '" + arguments[0] + "' enabled.");
   }
 }

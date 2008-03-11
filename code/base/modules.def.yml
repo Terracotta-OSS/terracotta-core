@@ -129,6 +129,19 @@ modules:
         - dso-common
         - dso-l1-api
         - dso-statistics-api
+  - dso-l2-common:
+      options:
+        jdk: J2SE-1.4
+      dependencies:
+        - common
+        - common-api
+        - dso-common
+        - dso-common-jdk15
+        - dso-l1-api
+        - dso-memory-datastore
+        - management
+        - thirdparty
+        - thirdparty-api
   - dso-statistics:
       options:
         jdk: J2SE-1.4
@@ -138,6 +151,7 @@ modules:
         - dso-common
         - dso-common-jdk15
         - dso-l1-api
+        - dso-l2-common
         - dso-statistics-api 
         - management
   - dso-l1:
@@ -229,19 +243,6 @@ modules:
         - common-api
         - dso-common
         - dso-l1-api
-        - thirdparty-api
-  - dso-l2-common:
-      options:
-        jdk: J2SE-1.4
-      dependencies:
-        - common
-        - common-api
-        - dso-common
-        - dso-common-jdk15
-        - dso-l1-api
-        - dso-memory-datastore
-        - management
-        - thirdparty
         - thirdparty-api
   - dso-l2:
       options:
