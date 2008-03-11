@@ -94,6 +94,7 @@ bundled_components:
         - dso-l2-common
         - dso-spring:
             exclude-runtime-libraries: true
+        - dso-statistics-api
         - dso-statistics
         - linked-child-process
         - management
