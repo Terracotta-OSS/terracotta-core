@@ -590,11 +590,10 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   private final class TxnsInSystemCompletionListenerCallback implements ServerTransactionListener {
 
     private final TxnsInSystemCompletionLister callback;
-    private final HashSet                      txnsInSystem;
-
+    private final Set                          txnsInSystem;
     public int                                 count = 0;
 
-    public TxnsInSystemCompletionListenerCallback(TxnsInSystemCompletionLister callback, HashSet txnsInSystem) {
+    public TxnsInSystemCompletionListenerCallback(TxnsInSystemCompletionLister callback, Set txnsInSystem) {
       this.callback = callback;
       this.txnsInSystem = txnsInSystem;
     }
@@ -615,7 +614,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
       // NOP
     }
 
-    public void transactionCompleted(ServerTransactionID stxID) {
+    public synchronized void transactionCompleted(ServerTransactionID stxID) {
       if (txnsInSystem.remove(stxID)) {
         if (txnsInSystem.isEmpty()) {
           ServerTransactionManagerImpl.this.removeTransactionListener(this);
