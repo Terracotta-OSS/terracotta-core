@@ -18,6 +18,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l2-common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-memory-datastore"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-statistics"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-statistics-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-system-tests"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-tests-jdk15"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/legacy-test-tree"/>
