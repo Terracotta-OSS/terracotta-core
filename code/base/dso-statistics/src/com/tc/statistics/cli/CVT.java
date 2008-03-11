@@ -80,7 +80,7 @@ public class CVT {
     String linesep = System.getProperty("line.separator");
     PrintWriter writer = new PrintWriter(System.out);
     HelpFormatter formatter = new HelpFormatter();
-    formatter.printHelp(writer, HelpFormatter.DEFAULT_WIDTH, "java " + CVT.class.getName() + " [OPTION]... [COMMAND [ARGUMENTS]]...", linesep + "Options:", options, HelpFormatter.DEFAULT_LEFT_PAD, HelpFormatter.DEFAULT_DESC_PAD, null);
+    formatter.printHelp(writer, HelpFormatter.DEFAULT_WIDTH, "java " + CVT.class.getName() + " [OPTION]... [COMMAND [ARGUMENTS]]...", "Options:", options, HelpFormatter.DEFAULT_LEFT_PAD, HelpFormatter.DEFAULT_DESC_PAD, null);
 
     writer.println();
     writer.println("Commands:");
