@@ -115,6 +115,8 @@ import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.statistics.retrieval.actions.SRAMemoryUsage;
 import com.tc.statistics.retrieval.actions.SRAStageQueueDepths;
 import com.tc.statistics.retrieval.actions.SRASystemProperties;
+import com.tc.statistics.retrieval.actions.SRACacheObjectsEvictRequest;
+import com.tc.statistics.retrieval.actions.SRACacheObjectsEvicted;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
@@ -188,6 +190,8 @@ public class DistributedObjectClient extends SEDA {
     registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRACpu");
     registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRAThreadDump");
     registry.registerActionInstance(new SRAStageQueueDepths(stageManager));
+    registry.registerActionInstance(new SRACacheObjectsEvictRequest());
+    registry.registerActionInstance(new SRACacheObjectsEvicted());
   }
 
   public void start() {

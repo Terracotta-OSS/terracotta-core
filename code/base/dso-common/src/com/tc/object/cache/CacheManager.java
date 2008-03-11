@@ -11,13 +11,22 @@ import com.tc.runtime.MemoryEventType;
 import com.tc.runtime.MemoryEventsListener;
 import com.tc.runtime.MemoryUsage;
 import com.tc.runtime.TCMemoryManagerImpl;
+import com.tc.statistics.AgentStatisticsManager;
+import com.tc.statistics.StatisticData;
+import com.tc.statistics.StatisticsAgentSubSystem;
+import com.tc.statistics.buffer.exceptions.TCStatisticsBufferException;
 import com.tc.util.Assert;
 import com.tc.util.State;
-import com.tc.statistics.StatisticsAgentSubSystem;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 public class CacheManager implements MemoryEventsListener {
+
+  public static final String CACHE_OBJECTS_EVICT_REQUEST = "cache objects evict request";
+  public static final String CACHE_OBJECTS_EVICTED = "cache objects evicted";
 
   private static final TCLogger     logger              = TCLogging.getLogger(CacheManager.class);
 
@@ -98,12 +107,46 @@ public class CacheManager implements MemoryEventsListener {
         state = PROCESSING;
       }
       if (config.isLoggingEnabled()) {
+        final int usedPercentage = usage.getUsedPercentage();
+        final long collectionCount = usage.getCollectionCount();
         logger.info("Asking to evict " + toEvict + " current size = " + currentCount + " calculated cache size = "
-                    + calculatedCacheSize + " heap used = " + usage.getUsedPercentage() + " %  gc count = "
-                    + usage.getCollectionCount());
-
+                    + calculatedCacheSize + " heap used = " + usedPercentage + " %  gc count = "
+                    + collectionCount);
+        if (statisticsAgentSubSystem != null && statisticsAgentSubSystem.isActive()) {
+          storeCacheEvictRequestStats(currentCount, toEvict, calculatedCacheSize, usedPercentage, collectionCount);
+        }
       }
       return this.toEvict;
+    }
+
+    private synchronized void storeCacheEvictRequestStats(int currentCount, int toEvict, int calculatedCacheSize, int usedPercentage, long collectionCount) {
+      Date moment = new Date();
+      AgentStatisticsManager agentStatisticsManager = (AgentStatisticsManager)statisticsAgentSubSystem.getStatisticsManagerMBean();
+      List sessions = agentStatisticsManager.getActiveSessionsForAction(CACHE_OBJECTS_EVICT_REQUEST);
+      if (sessions != null && sessions.size() > 0) {
+        StatisticData[] datas = getCacheObjectsEvictRequestData(currentCount, toEvict, calculatedCacheSize, usedPercentage, collectionCount);
+        storeStatisticsDatas(moment, sessions, datas);
+      }
+    }
+
+    private synchronized StatisticData[] getCacheObjectsEvictRequestData(int currentCount, int toEvict, int calculatedCacheSize, int usedPercentage, long collectionCount) {
+      List datas = new ArrayList();
+      StatisticData statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "asking to evict count", new Long(toEvict));
+      datas.add(statisticData);
+
+      statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "current size", new Long(currentCount));
+      datas.add(statisticData);
+
+      statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "calculated cache size", new Long(calculatedCacheSize));
+      datas.add(statisticData);
+
+      statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "percentage heap used", new Long(usedPercentage));
+      datas.add(statisticData);
+
+      statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "gc count", new Long(collectionCount));
+      datas.add(statisticData);
+
+      return (StatisticData[])datas.toArray(new StatisticData[0]);
     }
 
     //
@@ -130,9 +173,57 @@ public class CacheManager implements MemoryEventsListener {
       state = COMPLETE;
       // TODO:: add reference queue
       if (config.isLoggingEnabled()) {
+        final int newObjectsCount = getNewObjectsCount();
+        final long timeTaken = System.currentTimeMillis() - startTime;
         logger.info("Evicted " + evictedCount + " current Size = " + currentCount + " new objects created = "
-                    + getNewObjectsCount() + " time taken = " + (System.currentTimeMillis() - startTime) + " ms");
+                    + newObjectsCount + " time taken = " + timeTaken + " ms");
+        if (statisticsAgentSubSystem != null && statisticsAgentSubSystem.isActive()) {
+          storeCacheObjectsEvictedStats(evictedCount, currentCount, newObjectsCount, timeTaken);
+        }
       }
+    }
+
+    private synchronized void storeCacheObjectsEvictedStats(int evictedCount, int currentCount, int newObjectsCount, long timeTaken) {
+      Date moment = new Date();
+      AgentStatisticsManager agentStatisticsManager = (AgentStatisticsManager)statisticsAgentSubSystem.getStatisticsManagerMBean();
+      List sessions = agentStatisticsManager.getActiveSessionsForAction(CACHE_OBJECTS_EVICTED);
+      if (sessions != null && sessions.size() > 0) {
+        StatisticData[] datas = getCacheObjectsEvictedData(evictedCount, currentCount, newObjectsCount, timeTaken);
+        storeStatisticsDatas(moment, sessions, datas);
+      }
+    }
+
+    private synchronized void storeStatisticsDatas(Date moment, List sessions, StatisticData[] datas) {
+      try {
+        for (Iterator sessionsIterator = sessions.iterator(); sessionsIterator.hasNext();) {
+          String session = (String)sessionsIterator.next();
+          for (int i = 0; i < datas.length; i++) {
+            StatisticData data = datas[i];
+            data.sessionId(session).moment(moment);
+            statisticsAgentSubSystem.getStatisticsBuffer().storeStatistic(data);
+          }
+        }
+      } catch (TCStatisticsBufferException e) {
+        logger.warn("Unexpected error while trying to store Cache Objects Evict Request statistics statistics.");
+        //should we bring down system with a RuntimeException here ??
+      }
+    }
+
+    private synchronized StatisticData[] getCacheObjectsEvictedData(int evictedCount, int currentCount, int newObjectsCount, long timeTaken) {
+      List datas = new ArrayList();
+      StatisticData statisticData = new StatisticData(CACHE_OBJECTS_EVICTED, "evicted count", new Long(evictedCount));
+      datas.add(statisticData);
+
+      statisticData = new StatisticData(CACHE_OBJECTS_EVICTED, "current count", new Long(currentCount));
+      datas.add(statisticData);
+
+      statisticData = new StatisticData(CACHE_OBJECTS_EVICTED, "new objects count", new Long(newObjectsCount));
+      datas.add(statisticData);
+
+      statisticData = new StatisticData(CACHE_OBJECTS_EVICTED, "time taken", new Long(timeTaken));
+      datas.add(statisticData);
+
+      return (StatisticData[])datas.toArray(new StatisticData[0]);
     }
 
     private int getNewObjectsCount() {
