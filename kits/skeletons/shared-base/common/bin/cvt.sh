@@ -34,5 +34,5 @@ exec "${JAVA_HOME}/bin/java" \
   -Dtc.install-root="${TC_INSTALL_DIR}" \
   ${JAVA_OPTS} \
   -cp "${TC_INSTALL_DIR}/lib/tc.jar" \
-  com.tc.util.ProductInfo "$@"
+  com.tc.statistics.cli.CVT "$@"
 

@@ -28,18 +28,18 @@ public class StatisticsConfigImplTest extends TestCase {
 
   public void testDefaultValues() throws Exception {
     StatisticsConfig config = new StatisticsConfigImpl();
-    assertEquals(StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY.longValue(), config.getParamLong(StatisticsConfig.KEY_GLOBAL_SCHEDULE_PERIOD));
-    assertEquals(StatisticsEmitterMBeanImpl.DEFAULT_FREQUENCY.longValue(), config.getParamLong(StatisticsConfig.KEY_EMITTER_SCHEDULE_PERIOD));
+    assertEquals(StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY.longValue(), config.getParamLong(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
+    assertEquals(StatisticsEmitterMBeanImpl.DEFAULT_FREQUENCY.longValue(), config.getParamLong(StatisticsConfig.KEY_EMITTER_SCHEDULE_INTERVAL));
 
-    config.setParam(StatisticsConfig.KEY_GLOBAL_SCHEDULE_PERIOD, new Long(Long.MAX_VALUE));
-    assertEquals(Long.MAX_VALUE, config.getParamLong(StatisticsConfig.KEY_GLOBAL_SCHEDULE_PERIOD));
-    config.removeParam(StatisticsConfig.KEY_GLOBAL_SCHEDULE_PERIOD);
-    assertEquals(StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY.longValue(), config.getParamLong(StatisticsConfig.KEY_GLOBAL_SCHEDULE_PERIOD));
+    config.setParam(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL, new Long(Long.MAX_VALUE));
+    assertEquals(Long.MAX_VALUE, config.getParamLong(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
+    config.removeParam(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL);
+    assertEquals(StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY.longValue(), config.getParamLong(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
 
-    config.setParam(StatisticsConfig.KEY_EMITTER_SCHEDULE_PERIOD, new Long(Long.MAX_VALUE));
-    assertEquals(Long.MAX_VALUE, config.getParamLong(StatisticsConfig.KEY_EMITTER_SCHEDULE_PERIOD));
-    config.removeParam(StatisticsConfig.KEY_EMITTER_SCHEDULE_PERIOD);
-    assertEquals(StatisticsEmitterMBeanImpl.DEFAULT_FREQUENCY.longValue(), config.getParamLong(StatisticsConfig.KEY_EMITTER_SCHEDULE_PERIOD));
+    config.setParam(StatisticsConfig.KEY_EMITTER_SCHEDULE_INTERVAL, new Long(Long.MAX_VALUE));
+    assertEquals(Long.MAX_VALUE, config.getParamLong(StatisticsConfig.KEY_EMITTER_SCHEDULE_INTERVAL));
+    config.removeParam(StatisticsConfig.KEY_EMITTER_SCHEDULE_INTERVAL);
+    assertEquals(StatisticsEmitterMBeanImpl.DEFAULT_FREQUENCY.longValue(), config.getParamLong(StatisticsConfig.KEY_EMITTER_SCHEDULE_INTERVAL));
   }
 
   public void testMappingsForAllDefaultValueKeys() throws Exception {
@@ -123,12 +123,12 @@ public class StatisticsConfigImplTest extends TestCase {
     assertEquals("val1", config2b.getParam("param1"));
 
     // default params
-    assertEquals(StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY.longValue(), config3a.getParamLong(StatisticsConfig.KEY_GLOBAL_SCHEDULE_PERIOD));
-    config2a.setParam(StatisticsConfig.KEY_GLOBAL_SCHEDULE_PERIOD, new Long(Long.MAX_VALUE));
-    assertEquals(Long.MAX_VALUE, config3a.getParamLong(StatisticsConfig.KEY_GLOBAL_SCHEDULE_PERIOD));
-    config2a.removeParam(StatisticsConfig.KEY_GLOBAL_SCHEDULE_PERIOD);
-    assertEquals(StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY.longValue(), config3a.getParamLong(StatisticsConfig.KEY_GLOBAL_SCHEDULE_PERIOD));
-    config2b.setParam(StatisticsConfig.KEY_GLOBAL_SCHEDULE_PERIOD, new Long(Long.MAX_VALUE));
-    assertEquals(StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY.longValue(), config3a.getParamLong(StatisticsConfig.KEY_GLOBAL_SCHEDULE_PERIOD));
+    assertEquals(StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY.longValue(), config3a.getParamLong(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
+    config2a.setParam(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL, new Long(Long.MAX_VALUE));
+    assertEquals(Long.MAX_VALUE, config3a.getParamLong(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
+    config2a.removeParam(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL);
+    assertEquals(StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY.longValue(), config3a.getParamLong(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
+    config2b.setParam(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL, new Long(Long.MAX_VALUE));
+    assertEquals(StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY.longValue(), config3a.getParamLong(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
   }
 }

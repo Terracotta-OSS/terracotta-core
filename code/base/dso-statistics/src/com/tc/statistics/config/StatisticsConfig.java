@@ -4,9 +4,9 @@
 package com.tc.statistics.config;
 
 public interface StatisticsConfig {
-  public final static String KEY_EMITTER_SCHEDULE_PERIOD = "emitter.schedule.period";
+  public final static String KEY_EMITTER_SCHEDULE_INTERVAL = "emitter.schedule.interval";
   public final static String KEY_EMITTER_BATCH_SIZE = "emitter.batch.size";
-  public final static String KEY_GLOBAL_SCHEDULE_PERIOD = "global.schedule.period";
+  public final static String KEY_RETRIEVER_SCHEDULE_INTERVAL = "retriever.schedule.interval";
 
   public StatisticsConfig getParent();
 

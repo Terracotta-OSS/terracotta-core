@@ -15,5 +15,5 @@ for %%i in ("%JAVA_HOME%") do set JAVA_HOME=%%~fsi
 
 set CLASSPATH=%TC_INSTALL_DIR%\lib\tc.jar
 set JAVA_OPTS=-Dtc.install-root=%TC_INSTALL_DIR% %JAVA_OPTS%
-%JAVA_HOME%\bin\java %JAVA_OPTS% -cp %CLASSPATH% com.tc.util.ProductInfo %*
+%JAVA_HOME%\bin\java %JAVA_OPTS% -cp %CLASSPATH% com.tc.statistics.cli.CVT %*
 endlocal

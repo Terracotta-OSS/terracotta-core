@@ -89,7 +89,7 @@ public class StatisticsEmitterMBeanImpl extends AbstractTerracottaMBean implemen
 
     timer = new TCTimerImpl("Statistics Emitter Timer", true);
     task = new SendStatsTask();
-    timer.scheduleAtFixedRate(task, 0, config.getParamLong(StatisticsConfig.KEY_EMITTER_SCHEDULE_PERIOD));
+    timer.scheduleAtFixedRate(task, 0, config.getParamLong(StatisticsConfig.KEY_EMITTER_SCHEDULE_INTERVAL));
   }
 
   private synchronized void disableTimer() {

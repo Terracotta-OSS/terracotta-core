@@ -169,7 +169,7 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
     timer.scheduleAtFixedRate(infoTask, 0, TCPropertiesImpl.getProperties().getInt("cvt.retriever.notification.interval", DEFAULT_NOTIFICATION_INTERVAL) * 1000);
 
     statsTask = new RetrieveStatsTask();
-    timer.scheduleAtFixedRate(statsTask, 0, config.getParamLong(StatisticsConfig.KEY_GLOBAL_SCHEDULE_PERIOD));
+    timer.scheduleAtFixedRate(statsTask, 0, config.getParamLong(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
   }
 
   private synchronized void disableTimerTasks() {

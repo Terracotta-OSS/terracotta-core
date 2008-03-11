@@ -150,6 +150,11 @@ public class StatisticsGathererServlet extends RestfulServlet {
     printOk(response);
   }
 
+  public void methodClearAllStatistics(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
+    system.getStatisticsStore().clearAllStatistics();
+    printOk(response);
+  }
+
   public void methodRetrieveStatistics(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
     final StatisticsRetrievalCriteria criteria = new StatisticsRetrievalCriteria()
       .sessionId(request.getParameter("sessionId"))

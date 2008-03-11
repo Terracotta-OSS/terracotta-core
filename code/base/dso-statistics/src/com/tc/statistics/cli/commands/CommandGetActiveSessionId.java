@@ -5,20 +5,17 @@ package com.tc.statistics.cli.commands;
 
 import com.tc.statistics.cli.GathererConnection;
 
-public class CommandGetSupportedStatistics extends AbstractCliCommand {
+public class CommandGetActiveSessionId extends AbstractCliCommand {
   public String[] getArgumentNames() {
     return NO_ARGUMENTS;
   }
 
   public void execute(final GathererConnection connection, final String[] arguments) {
-    String[] stats = connection.getGatherer().getSupportedStatistics();
-    if (null == stats ||
-        0 == stats.length) {
-      System.out.println("> Couldn't find any supported statistics");
+    String sessionid = connection.getGatherer().getActiveSessionId();
+    if (null == sessionid) {
+      System.out.println("> Couldn't find an active session");
     } else {
-      for (int i = 0; i < stats.length; i++) {
-        System.out.println(stats[i]);
-      }
+      System.out.println(sessionid);
     }
   }
 }

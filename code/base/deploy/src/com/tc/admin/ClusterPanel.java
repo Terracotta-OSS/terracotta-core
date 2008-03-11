@@ -463,7 +463,7 @@ public class ClusterPanel extends XContainer {
         java.util.List<String> statList = getSelectedStats();
         m_statisticsGathererMBean.enableStatistics(statList.toArray(new String[0]));
         long samplePeriodMillis = getSamplePeriodMillis();
-        m_statisticsGathererMBean.setSessionParam(StatisticsConfig.KEY_GLOBAL_SCHEDULE_PERIOD,
+        m_statisticsGathererMBean.setSessionParam(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL,
                                                   new Long(samplePeriodMillis));
         m_statisticsGathererMBean.startCapturing();
       } catch (Exception e) {

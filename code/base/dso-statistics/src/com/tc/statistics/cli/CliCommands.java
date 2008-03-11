@@ -4,18 +4,16 @@
 package com.tc.statistics.cli;
 
 import com.tc.exception.TCRuntimeException;
-import com.tc.statistics.cli.commands.CommandConnect;
-import com.tc.statistics.cli.commands.CommandDisconnect;
-import com.tc.statistics.cli.commands.CommandGetSupportedStatistics;
+import com.tc.statistics.cli.commands.*;
 import com.tc.util.Assert;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 public class CliCommands {
   private GathererConnection connection = new GathererConnection();
@@ -23,10 +21,25 @@ public class CliCommands {
   private final Map registeredCommands;
 
   public CliCommands() {
-    registeredCommands = Collections.unmodifiableMap(new TreeMap() {{
+    registeredCommands = Collections.unmodifiableMap(new LinkedHashMap() {{
       addCommand(this, new CommandConnect());
       addCommand(this, new CommandDisconnect());
+      addCommand(this, new CommandCreateSession());
+      addCommand(this, new CommandCloseSession());
+      addCommand(this, new CommandGetActiveSessionId());
+      addCommand(this, new CommandGetAvailableSessionIds());
       addCommand(this, new CommandGetSupportedStatistics());
+      addCommand(this, new CommandEnableStatistics());
+      addCommand(this, new CommandCaptureStatistic());
+      addCommand(this, new CommandStartCapturing());
+      addCommand(this, new CommandStopCapturing());
+      addCommand(this, new CommandSetGlobalParam());
+      addCommand(this, new CommandGetGlobalParam());
+      addCommand(this, new CommandSetSessionParam());
+      addCommand(this, new CommandGetSessionParam());
+      addCommand(this, new CommandClearStatistics());
+      addCommand(this, new CommandClearAllStatistics());
+      addCommand(this, new CommandReinitialize());
     }});
   }
   
@@ -51,17 +64,43 @@ public class CliCommands {
     } else {
       connection.connect();
 
+      // create the commands that have to be executed together with their arguments
+      final Map commands_to_execute = new LinkedHashMap();
+
       for (final Iterator it = commands.iterator(); it.hasNext(); ) {
         String command_name = (String)it.next();
         CliCommand command = (CliCommand)registeredCommands.get(command_name);
         if (null == command) {
           printUnknownCommand(command_name);
         } else {
-          try {
-            command.execute(connection, null);
-          } catch (Exception e) {
-            throw new TCRuntimeException(e);
+          String[] argument_names = command.getArgumentNames();
+          if (null == argument_names) {
+            argument_names = CliCommand.NO_ARGUMENTS;
           }
+          final String[] arguments = new String[argument_names.length];
+          for (int i = 0; i < arguments.length; i++) {
+            if (!it.hasNext()) {
+              System.out.println("The command '" + command_name + "' requires the argument '" + argument_names[i] + "'.");
+              return false;
+            } else {
+              arguments[i] = (String)it.next();
+            }
+          }
+
+          commands_to_execute.put(command, arguments);
+        }
+      }
+
+      // iterate over the commands and execute them
+      for (Iterator it = commands_to_execute.entrySet().iterator(); it.hasNext(); ) {
+        final Map.Entry command_entry = (Map.Entry)it.next();
+
+        final CliCommand command = (CliCommand)command_entry.getKey();
+        final String[] arguments = (String[])command_entry.getValue();
+        try {
+          command.execute(connection, arguments);
+        } catch (Exception e) {
+          throw new TCRuntimeException(e);
         }
       }
 

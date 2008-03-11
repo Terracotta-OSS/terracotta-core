@@ -46,7 +46,7 @@ public class StatisticsGathererConfigSampleRateTest extends TransparentTestBase 
       }
     });
 
-    gatherer.setGlobalParam(StatisticsConfig.KEY_GLOBAL_SCHEDULE_PERIOD, StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY / 2);
+    gatherer.setGlobalParam(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL, StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY / 2);
 
     sessionid = UUID.getUUID().toString();
     gatherer.createSession(sessionid);
