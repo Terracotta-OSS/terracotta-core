@@ -29,7 +29,7 @@ import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
 import com.tc.management.remote.protocol.terracotta.TunnelingMessageConnectionServer;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.RuntimeLogger;
-import com.tc.statistics.StatisticsAgentSubSystem;
+import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.runtime.Vm;
 
@@ -68,9 +68,9 @@ public final class L1Management extends TerracottaManagement {
   private final RuntimeOutputOptions   runtimeOutputOptionsBean;
   private final RuntimeLogging         runtimeLoggingBean;
 
-  private final StatisticsAgentSubSystem statisticsAgentSubSystem;
+  private final StatisticsAgentSubSystemImpl statisticsAgentSubSystem;
 
-  public L1Management(final TunnelingEventHandler tunnelingHandler, final StatisticsAgentSubSystem statisticsAgentSubSystem, final RuntimeLogger runtimeLogger,
+  public L1Management(final TunnelingEventHandler tunnelingHandler, final StatisticsAgentSubSystemImpl statisticsAgentSubSystem, final RuntimeLogger runtimeLogger,
                       final InstrumentationLogger instrumentationLogger, final String rawConfigText) {
     super();
     started = new SetOnceFlag();

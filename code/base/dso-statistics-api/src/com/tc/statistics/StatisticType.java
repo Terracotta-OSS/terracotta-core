@@ -30,11 +30,9 @@ public class StatisticType {
    */
   public final static StatisticType SNAPSHOT = new StatisticType("SNAPSHOT");
 
-
   /**
-   * Statistics of this type will not captured automatically rather they will
-   * be captured as per need. Statistics will be triggered by the system to
-   * retrieve and store the data.
+   * Statistics of this type will not captured automatically. They can however
+   * be captured on an as-needed basis through API calls.
    */
   public static final StatisticType TRIGGERED = new StatisticType("TRIGGERED");
 

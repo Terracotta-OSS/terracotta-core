@@ -9,7 +9,6 @@ import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.statistics.beans.StatisticsEmitterMBean;
 import com.tc.statistics.beans.StatisticsMBeanNames;
-import com.tc.statistics.beans.StatisticsManagerMBean;
 import com.tc.statistics.beans.impl.StatisticsEmitterMBeanImpl;
 import com.tc.statistics.beans.impl.StatisticsManagerMBeanImpl;
 import com.tc.statistics.buffer.StatisticsBuffer;
@@ -34,7 +33,7 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
 
   private volatile StatisticsBuffer            statisticsBuffer;
   private volatile StatisticsEmitterMBean      statisticsEmitterMBean;
-  private volatile StatisticsManagerMBean      statisticsManagerMBean;
+  private volatile StatisticsManagerMBeanImpl  statisticsManagerMBean;
   private volatile StatisticsRetrievalRegistry statisticsRetrievalRegistry;
 
   private volatile boolean active = false;
@@ -155,19 +154,11 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
     }
   }
 
-  public StatisticsBuffer getStatisticsBuffer() {
-    return statisticsBuffer;
-  }
-
-  public StatisticsEmitterMBean getStatisticsEmitterMBean() {
-    return statisticsEmitterMBean;
-  }
-
-  public StatisticsManagerMBean getStatisticsManagerMBean() {
-    return statisticsManagerMBean;
-  }
-
   public StatisticsRetrievalRegistry getStatisticsRetrievalRegistry() {
     return statisticsRetrievalRegistry;
+  }
+
+  public AgentStatisticsManager getStatisticsManager() {
+    return statisticsManagerMBean;
   }
 }

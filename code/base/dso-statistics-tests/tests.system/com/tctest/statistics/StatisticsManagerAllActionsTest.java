@@ -8,8 +8,11 @@ import com.tc.statistics.StatisticData;
 import com.tc.statistics.beans.StatisticsEmitterMBean;
 import com.tc.statistics.beans.StatisticsMBeanNames;
 import com.tc.statistics.beans.StatisticsManagerMBean;
+import com.tc.statistics.retrieval.actions.SRACacheObjectsEvictRequest;
+import com.tc.statistics.retrieval.actions.SRACacheObjectsEvicted;
 import com.tc.statistics.retrieval.actions.SRAShutdownTimestamp;
 import com.tc.statistics.retrieval.actions.SRAStartupTimestamp;
+import com.tc.statistics.retrieval.actions.SRAThreadDump;
 import com.tc.util.UUID;
 import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
@@ -41,9 +44,15 @@ public class StatisticsManagerAllActionsTest extends TransparentTestBase {
     stat_manager.createSession(sessionid);
 
     // register all the supported statistics
+    int non_triggered_actions = 0;
     String[] statistics = stat_manager.getSupportedStatistics();
     for (String statistic : statistics) {
       stat_manager.enableStatistic(sessionid, statistic);
+      if (!SRAThreadDump.ACTION_NAME.equals(statistic) &&
+          !SRACacheObjectsEvicted.ACTION_NAME.equals(statistic) &&
+          !SRACacheObjectsEvictRequest.ACTION_NAME.equals(statistic)) {
+        non_triggered_actions++;
+      }
     }
 
     // start capturing
@@ -71,10 +80,13 @@ public class StatisticsManagerAllActionsTest extends TransparentTestBase {
     Set<String> received_data_names = new HashSet<String>();
     for (int i = 1; i < data.size() - 1; i++) {
       StatisticData stat_data = data.get(i);
-      received_data_names.add(stat_data.getName());
+      if (!SRAStartupTimestamp.ACTION_NAME.equals(stat_data.getName()) &&
+          !SRAShutdownTimestamp.ACTION_NAME.equals(stat_data.getName())) {
+        received_data_names.add(stat_data.getName());
+      }
     }
-    // check that there's at least one data element name per registered statistic
-    assertTrue(received_data_names.size() > statistics.length);
+    // check that there's at least one data element name per registered non-triggered statistic
+    assertTrue(received_data_names.size() > non_triggered_actions);
   }
 
   protected Class getApplicationClass() {

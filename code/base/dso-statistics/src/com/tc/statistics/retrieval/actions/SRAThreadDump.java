@@ -18,7 +18,7 @@ public class SRAThreadDump implements StatisticRetrievalAction {
   }
 
   public StatisticType getType() {
-    return StatisticType.SNAPSHOT;
+    return StatisticType.TRIGGERED;
   }
 
   public StatisticData[] retrieveStatisticData() {

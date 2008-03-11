@@ -16,7 +16,7 @@ import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.object.ObjectManagementMonitor;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.statistics.StatisticsAgentSubSystem;
+import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.statistics.beans.StatisticsMBeanNames;
 import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
 
@@ -58,14 +58,14 @@ public class L2Management extends TerracottaManagement {
   private final TCDumper                       tcDumper;
   private final ObjectManagementMonitor        objectManagementBean;
   private final LockStatisticsMonitorMBean     lockStatistics;
-  private final StatisticsAgentSubSystem       statisticsAgentSubSystem;
+  private final StatisticsAgentSubSystemImpl   statisticsAgentSubSystem;
   private final StatisticsGatewayMBeanImpl     statisticsGateway;
   private static final Map                     rmiRegistryMap = new HashMap();
   private final int                            jmxPort;
   private final InetAddress                    bindAddress;
 
   public L2Management(TCServerInfoMBean tcServerInfo, LockStatisticsMonitorMBean lockStatistics,
-                      StatisticsAgentSubSystem statisticsAgentSubSystem, StatisticsGatewayMBeanImpl statisticsGateway, L2TVSConfigurationSetupManager configurationSetupManager, TCDumper tcDumper,
+                      StatisticsAgentSubSystemImpl statisticsAgentSubSystem, StatisticsGatewayMBeanImpl statisticsGateway, L2TVSConfigurationSetupManager configurationSetupManager, TCDumper tcDumper,
                       InetAddress bindAddr, int port) throws MBeanRegistrationException, NotCompliantMBeanException, InstanceAlreadyExistsException {
     this.tcServerInfo = tcServerInfo;
     this.lockStatistics = lockStatistics;

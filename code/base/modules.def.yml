@@ -128,16 +128,17 @@ modules:
         - common-api
         - dso-common
         - dso-l1-api
+        - dso-statistics-api
   - dso-statistics:
       options:
         jdk: J2SE-1.4
       dependencies:
-        - dso-statistics-api 
         - common
         - common-api
         - dso-common
         - dso-common-jdk15
         - dso-l1-api
+        - dso-statistics-api 
         - management
   - dso-l1:
       options:
@@ -149,8 +150,8 @@ modules:
         - dso-common
         - dso-common-jdk15
         - dso-l1-api
-        - dso-statistics-api
         - dso-statistics
+        - dso-statistics-api
         - management
         - thirdparty
         - thirdparty-api

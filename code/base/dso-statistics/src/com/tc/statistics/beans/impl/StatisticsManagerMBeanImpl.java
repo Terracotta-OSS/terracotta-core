@@ -7,10 +7,10 @@ package com.tc.statistics.beans.impl;
 import EDU.oswego.cs.dl.util.concurrent.ConcurrentHashMap;
 
 import com.tc.management.AbstractTerracottaMBean;
+import com.tc.statistics.AgentStatisticsManager;
 import com.tc.statistics.DynamicSRA;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
-import com.tc.statistics.AgentStatisticsManager;
 import com.tc.statistics.beans.StatisticsManagerMBean;
 import com.tc.statistics.beans.exceptions.UnknownStatisticsSessionIdException;
 import com.tc.statistics.buffer.StatisticsBuffer;
@@ -18,6 +18,7 @@ import com.tc.statistics.buffer.exceptions.TCStatisticsBufferException;
 import com.tc.statistics.buffer.exceptions.TCStatisticsBufferStartCapturingSessionNotFoundException;
 import com.tc.statistics.buffer.exceptions.TCStatisticsBufferStopCapturingSessionNotFoundException;
 import com.tc.statistics.config.StatisticsConfig;
+import com.tc.statistics.exceptions.TCAgentStatisticsManagerException;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.statistics.retrieval.StatisticsRetriever;
 import com.tc.util.Assert;
@@ -27,9 +28,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.List;
 
 import javax.management.NotCompliantMBeanException;
 
@@ -177,16 +178,16 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
     return retriever.getConfig().getParam(key);
   }
 
-  public List getActiveSessionsForAction(String actionName) {
+  public Collection getActiveSessionIDsForAction(final String actionName) {
     return getActiveSessionsForAction(registry.getActionInstance(actionName));
   }
 
-  public List getActiveSessionsForAction(StatisticRetrievalAction action) {
-    if (action == null) return Collections.EMPTY_LIST;
-    List sessions = new ArrayList();
+  private Collection getActiveSessionsForAction(final StatisticRetrievalAction action) {
+    if (null == action) return Collections.EMPTY_LIST;
+    final List sessions = new ArrayList();
     synchronized (this) {
-      for (Iterator activeSessionsIterator = retrieverMap.keySet().iterator(); activeSessionsIterator.hasNext();) {
-        String sessionId = (String)activeSessionsIterator.next();
+      for (Iterator it = retrieverMap.keySet().iterator(); it.hasNext();) {
+        String sessionId = (String)it.next();
         StatisticsRetriever retriever = (StatisticsRetriever)retrieverMap.get(sessionId);
         if (retriever.containsAction(action)) {
           sessions.add(sessionId);
@@ -194,6 +195,18 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
       }
     }
     return Collections.unmodifiableList(sessions);
+  }
+
+  public void injectStatisticData(final String sessionId, final StatisticData data) throws TCAgentStatisticsManagerException {
+    if (!retrieverMap.containsKey(sessionId)) {
+      throw new TCAgentStatisticsManagerException("Unknown capturing session ID '" + sessionId + "' while injecting data '" + data + "'.", null);
+    }
+    try {
+      data.setSessionId(sessionId);
+      buffer.storeStatistic(data);
+    } catch (TCStatisticsBufferException e) {
+      throw new TCAgentStatisticsManagerException("Unexpected error while injecting data '" + data + "' for session ID '" + sessionId + "'.", e);
+    }
   }
 
   StatisticsRetriever obtainRetriever(final String sessionId) {

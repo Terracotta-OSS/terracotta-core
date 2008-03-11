@@ -14,11 +14,12 @@ import com.tc.runtime.TCMemoryManagerImpl;
 import com.tc.statistics.AgentStatisticsManager;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticsAgentSubSystem;
-import com.tc.statistics.buffer.exceptions.TCStatisticsBufferException;
+import com.tc.statistics.exceptions.TCAgentStatisticsManagerException;
 import com.tc.util.Assert;
 import com.tc.util.State;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -121,8 +122,8 @@ public class CacheManager implements MemoryEventsListener {
 
     private synchronized void storeCacheEvictRequestStats(int currentCount, int toEvict, int calculatedCacheSize, int usedPercentage, long collectionCount) {
       Date moment = new Date();
-      AgentStatisticsManager agentStatisticsManager = (AgentStatisticsManager)statisticsAgentSubSystem.getStatisticsManagerMBean();
-      List sessions = agentStatisticsManager.getActiveSessionsForAction(CACHE_OBJECTS_EVICT_REQUEST);
+      AgentStatisticsManager agentStatisticsManager = (AgentStatisticsManager)statisticsAgentSubSystem.getStatisticsManager();
+      Collection sessions = agentStatisticsManager.getActiveSessionIDsForAction(CACHE_OBJECTS_EVICT_REQUEST);
       if (sessions != null && sessions.size() > 0) {
         StatisticData[] datas = getCacheObjectsEvictRequestData(currentCount, toEvict, calculatedCacheSize, usedPercentage, collectionCount);
         storeStatisticsDatas(moment, sessions, datas);
@@ -185,27 +186,25 @@ public class CacheManager implements MemoryEventsListener {
 
     private synchronized void storeCacheObjectsEvictedStats(int evictedCount, int currentCount, int newObjectsCount, long timeTaken) {
       Date moment = new Date();
-      AgentStatisticsManager agentStatisticsManager = (AgentStatisticsManager)statisticsAgentSubSystem.getStatisticsManagerMBean();
-      List sessions = agentStatisticsManager.getActiveSessionsForAction(CACHE_OBJECTS_EVICTED);
+      AgentStatisticsManager agentStatisticsManager = statisticsAgentSubSystem.getStatisticsManager();
+      Collection sessions = agentStatisticsManager.getActiveSessionIDsForAction(CACHE_OBJECTS_EVICTED);
       if (sessions != null && sessions.size() > 0) {
         StatisticData[] datas = getCacheObjectsEvictedData(evictedCount, currentCount, newObjectsCount, timeTaken);
         storeStatisticsDatas(moment, sessions, datas);
       }
     }
 
-    private synchronized void storeStatisticsDatas(Date moment, List sessions, StatisticData[] datas) {
+    private synchronized void storeStatisticsDatas(Date moment, Collection sessions, StatisticData[] datas) {
       try {
         for (Iterator sessionsIterator = sessions.iterator(); sessionsIterator.hasNext();) {
           String session = (String)sessionsIterator.next();
           for (int i = 0; i < datas.length; i++) {
             StatisticData data = datas[i];
-            data.sessionId(session).moment(moment);
-            statisticsAgentSubSystem.getStatisticsBuffer().storeStatistic(data);
+            statisticsAgentSubSystem.getStatisticsManager().injectStatisticData(session, data.moment(moment));
           }
         }
-      } catch (TCStatisticsBufferException e) {
-        logger.warn("Unexpected error while trying to store Cache Objects Evict Request statistics statistics.");
-        //should we bring down system with a RuntimeException here ??
+      } catch (TCAgentStatisticsManagerException e) {
+        logger.error("Unexpected error while trying to store Cache Objects Evict Request statistics statistics.", e);
       }
     }
 

@@ -159,7 +159,7 @@ public class DistributedObjectClient extends SEDA {
   private L1Management                             l1Management;
   private TCProperties                             l1Properties;
   private DmiManager                               dmiManager;
-  private StatisticsAgentSubSystem                 statisticsAgentSubSystem;
+  private StatisticsAgentSubSystemImpl             statisticsAgentSubSystem;
   private boolean                                  createDedicatedMBeanServer = false;
 
   public DistributedObjectClient(DSOClientConfigHelper config, TCThreadGroup threadGroup, ClassProvider classProvider,

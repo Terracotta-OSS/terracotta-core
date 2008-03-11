@@ -255,7 +255,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
 
   private LockStatisticsMonitorMBean           lockStatisticsMBean;
 
-  private StatisticsAgentSubSystem             statisticsAgentSubSystem;
+  private StatisticsAgentSubSystemImpl         statisticsAgentSubSystem;
   private StatisticsGatewayMBeanImpl           statisticsGateway;
 
   private final TCThreadGroup                  threadGroup;
