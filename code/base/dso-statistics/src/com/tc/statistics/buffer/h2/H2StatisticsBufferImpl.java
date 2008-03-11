@@ -125,42 +125,48 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
     return defaultAgentIp + " (" + defaultAgentDifferentiator + ")";
   }
 
-  public synchronized void open() throws StatisticsBufferException {
-    try {
-      FileLockGuard.guard(lockFile, new FileLockGuard.Guarded() {
-        public void execute() throws FileLockGuard.InnerException {
-          try {
+  public void open() throws StatisticsBufferException {
+    synchronized (this) {
+      try {
+        FileLockGuard.guard(lockFile, new FileLockGuard.Guarded() {
+          public void execute() throws FileLockGuard.InnerException {
             try {
-              database.open();
-            } catch (StatisticsDatabaseException e) {
-              throw new StatisticsBufferDatabaseOpenErrorException(e);
+              try {
+                database.open();
+              } catch (StatisticsDatabaseException e) {
+                throw new StatisticsBufferDatabaseOpenErrorException(e);
+              }
+
+              install();
+              setupPreparedStatements();
+              makeAllDataConsumable();
+            } catch (StatisticsBufferException e) {
+              throw new FileLockGuard.InnerException(e);
             }
-
-            install();
-            setupPreparedStatements();
-            makeAllDataConsumable();
-          } catch (StatisticsBufferException e) {
-            throw new FileLockGuard.InnerException(e);
           }
-        }
-      });
-    } catch (FileLockGuard.InnerException e) {
-      throw (StatisticsBufferException)e.getInnerException();
-    } catch (IOException e) {
-      throw new StatisticsBufferException("Unexpected error while obtaining or releasing lock file.", e);
-    }
+        });
+      } catch (FileLockGuard.InnerException e) {
+        throw (StatisticsBufferException)e.getInnerException();
+      } catch (IOException e) {
+        throw new StatisticsBufferException("Unexpected error while obtaining or releasing lock file.", e);
+      }
 
-    open = true;
+      open = true;
+    }
+    fireOpened();
   }
 
-  public synchronized void close() throws StatisticsBufferException {
-    try {
-      database.close();
-    } catch (StatisticsDatabaseException e) {
-      throw new StatisticsBufferDatabaseCloseErrorException(e);
+  public void close() throws StatisticsBufferException {
+    synchronized (this) {
+      try {
+        database.close();
+      } catch (StatisticsDatabaseException e) {
+        throw new StatisticsBufferDatabaseCloseErrorException(e);
+      }
+
+      open = false;
     }
-    
-    open = false;
+    fireClosed();
   }
 
   public synchronized void reinitialize() throws StatisticsBufferException {
@@ -567,6 +573,22 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
     if (listeners.size() > 0) {
       for (Iterator it = listeners.iterator(); it.hasNext(); ) {
         ((StatisticsBufferListener)it.next()).capturingStopped(sessionId);
+      }
+    }
+  }
+
+  private void fireOpened() {
+    if (listeners.size() > 0) {
+      for (Iterator it = listeners.iterator(); it.hasNext(); ) {
+        ((StatisticsBufferListener)it.next()).opened();
+      }
+    }
+  }
+
+  private void fireClosed() {
+    if (listeners.size() > 0) {
+      for (Iterator it = listeners.iterator(); it.hasNext(); ) {
+        ((StatisticsBufferListener)it.next()).closed();
       }
     }
   }

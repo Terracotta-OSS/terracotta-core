@@ -603,6 +603,22 @@ public class H2StatisticsBufferTest extends TestCase {
 
     assertTrue(listener1.isStarted());
     assertTrue(listener1.isStopped());
+
+    assertFalse(listener1.isClosed());
+    assertFalse(listener2.isClosed());
+
+    buffer.close();
+
+    assertTrue(listener1.isClosed());
+    assertTrue(listener2.isClosed());
+
+    assertFalse(listener1.isOpened());
+    assertFalse(listener2.isOpened());
+
+    buffer.open();
+
+    assertTrue(listener1.isOpened());
+    assertTrue(listener2.isOpened());
   }
 
   public void testStartCapturingException() throws Exception {
@@ -748,6 +764,8 @@ public class H2StatisticsBufferTest extends TestCase {
     private String sessionId;
     private boolean started = false;
     private boolean stopped = false;
+    private boolean opened = false;
+    private boolean closed = false;
 
     public TestStatisticsBufferListener(String sessionId) {
       this.sessionId = sessionId;
@@ -759,6 +777,14 @@ public class H2StatisticsBufferTest extends TestCase {
 
     public boolean isStopped() {
       return stopped;
+    }
+
+    public boolean isOpened() {
+      return opened;
+    }
+
+    public boolean isClosed() {
+      return closed;
     }
 
     public void capturingStarted(String sessionId) {
@@ -773,6 +799,14 @@ public class H2StatisticsBufferTest extends TestCase {
       assertEquals(false, stopped);
       assertEquals(this.sessionId, sessionId);
       stopped = true;
+    }
+
+    public void opened() {
+      opened = true;
+    }
+
+    public void closed() {
+      closed = true;
     }
   }
 }

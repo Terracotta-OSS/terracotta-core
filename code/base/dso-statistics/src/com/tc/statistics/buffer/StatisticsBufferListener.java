@@ -6,4 +6,6 @@ package com.tc.statistics.buffer;
 public interface StatisticsBufferListener {
   public void capturingStarted(String sessionId);
   public void capturingStopped(String sessionId);
+  public void opened();
+  public void closed();
 }

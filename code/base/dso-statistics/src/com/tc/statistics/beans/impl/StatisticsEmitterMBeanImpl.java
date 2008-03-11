@@ -112,6 +112,12 @@ public class StatisticsEmitterMBeanImpl extends AbstractTerracottaMBean implemen
   public void capturingStopped(final String sessionId) {
   }
 
+  public void opened() {
+  }
+
+  public void closed() {
+  }
+
   private class SendStatsTask extends TimerTask {
     public void run() {
       boolean has_listeners = hasListeners();

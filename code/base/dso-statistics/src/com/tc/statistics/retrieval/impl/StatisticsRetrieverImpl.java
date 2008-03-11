@@ -107,7 +107,7 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
   }
 
   public void shutdown() {
-    this.buffer.removeListener(this);
+    buffer.removeListener(this);
 
     disableTimerTasks();
   }
@@ -192,11 +192,18 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
     shutdown();
   }
 
+  public void opened() {
+  }
+
+  public void closed() {
+    shutdown();
+  }
+
   private class RetrieveStatsTask extends TimerTask {
     private boolean performTaskShutdown = false;
 
     public void shutdown() {
-      this.performTaskShutdown = true;
+      performTaskShutdown = true;
     }
 
     public void run() {
@@ -219,12 +226,12 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
     private volatile boolean shutdown = false;
 
     private LogRetrievalInProcessTask() {
-      this.start = System.currentTimeMillis();
+      start = System.currentTimeMillis();
       logger.info("Statistics retrieval is STARTING for session ID '" + sessionId + "' on node '" + buffer.getDefaultNodeName() + "'.");
     }
 
     public void shutdown() {
-      this.shutdown = true;
+      shutdown = true;
       logger.info("Statistics retrieval has STOPPED for session ID '" + sessionId + "' on node '" + buffer.getDefaultNodeName() + "' after running for " + ((System.currentTimeMillis() - start) / 1000) + " seconds.");
       this.cancel();
     }
