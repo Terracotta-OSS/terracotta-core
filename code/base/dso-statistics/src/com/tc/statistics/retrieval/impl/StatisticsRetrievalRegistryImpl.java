@@ -8,6 +8,7 @@ import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
+import com.tc.util.Assert;
 import com.tc.util.concurrent.CopyOnWriteArrayMap;
 
 import java.util.Collection;
@@ -42,6 +43,8 @@ public class StatisticsRetrievalRegistryImpl implements StatisticsRetrievalRegis
     if (null == action) {
       return;
     }
+    Assert.assertNotNull("Name of SRA " + action, action.getName());
+    Assert.assertFalse("The SRA " + action + " is registering a non-unique name '" + action.getName() + "'.", instanceMap.containsKey(action.getName()));
     instanceMap.put(action.getName(), action);
   }
 
