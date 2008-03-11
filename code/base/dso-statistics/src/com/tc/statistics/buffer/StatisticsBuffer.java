@@ -32,6 +32,8 @@ public interface StatisticsBuffer {
 
   public String getDefaultAgentDifferentiator();
 
+  public String getDefaultNodeName();
+
   public void addListener(StatisticsBufferListener listener);
 
   public void removeListener(StatisticsBufferListener listener);

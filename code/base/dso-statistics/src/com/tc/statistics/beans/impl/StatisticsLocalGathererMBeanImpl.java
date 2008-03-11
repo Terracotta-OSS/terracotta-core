@@ -6,8 +6,6 @@ package com.tc.statistics.beans.impl;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
 
 import com.tc.config.schema.NewCommonL2Config;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.net.TCSocketAddress;
 import com.tc.statistics.StatisticData;
@@ -25,8 +23,6 @@ import javax.management.Notification;
 
 public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean implements StatisticsLocalGathererMBean, StatisticsGathererListener, StatisticsStoreListener {
   public final static MBeanNotificationInfo[] NOTIFICATION_INFO;
-
-  private final static TCLogger logger = TCLogging.getLogger(StatisticsEmitterMBeanImpl.class);
 
   static {
     final String[] notifTypes = new String[] {

@@ -135,15 +135,11 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
     return data;
   }
 
-  private String getNodeName() {
-    return buffer.getDefaultAgentIp() + " (" + buffer.getDefaultAgentDifferentiator() + ")";
-  }
-
   public synchronized void startCapturing(final String sessionId) {
     try {
       buffer.startCapturing(sessionId);
     } catch (StatisticsBufferStartCapturingSessionNotFoundException e) {
-      throw new UnknownStatisticsSessionIdException(getNodeName(), e.getSessionId(), e);
+      throw new UnknownStatisticsSessionIdException(buffer.getDefaultNodeName(), e.getSessionId(), e);
     } catch (StatisticsBufferException e) {
       throw new RuntimeException("Error while starting the capture session with cluster-wide ID '" + sessionId + "'.", e);
     }
@@ -155,7 +151,7 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
       buffer.stopCapturing(sessionId);
       cleanUpStatisticsCollection();
     } catch (StatisticsBufferStopCapturingSessionNotFoundException e) {
-      throw new UnknownStatisticsSessionIdException(getNodeName(), e.getSessionId(), e);
+      throw new UnknownStatisticsSessionIdException(buffer.getDefaultNodeName(), e.getSessionId(), e);
     } catch (StatisticsBufferException e) {
       throw new RuntimeException("Error while stopping the capture session with cluster-wide ID '" + sessionId + "'.", e);
     }
@@ -200,7 +196,7 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
 
   public void injectStatisticData(final String sessionId, final StatisticData data) throws AgentStatisticsManagerException {
     if (!retrieverMap.containsKey(sessionId)) {
-      throw new StatisticDataInjectionErrorException(sessionId, data, new UnknownStatisticsSessionIdException(getNodeName(), sessionId, null));
+      throw new StatisticDataInjectionErrorException(sessionId, data, new UnknownStatisticsSessionIdException(buffer.getDefaultNodeName(), sessionId, null));
     }
     
     try {
@@ -214,7 +210,7 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
   StatisticsRetriever obtainRetriever(final String sessionId) {
     StatisticsRetriever retriever = (StatisticsRetriever)retrieverMap.get(sessionId);
     if (null == retriever) {
-      throw new UnknownStatisticsSessionIdException(getNodeName(), sessionId, null);
+      throw new UnknownStatisticsSessionIdException(buffer.getDefaultNodeName(), sessionId, null);
     }
     return retriever;
   }

@@ -121,6 +121,10 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
     return defaultAgentDifferentiator;
   }
 
+  public String getDefaultNodeName() {
+    return defaultAgentIp + " (" + defaultAgentDifferentiator + ")";
+  }
+
   public synchronized void open() throws StatisticsBufferException {
     try {
       FileLockGuard.guard(lockFile, new FileLockGuard.Guarded() {

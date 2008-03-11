@@ -6,6 +6,9 @@ package com.tc.statistics.retrieval.impl;
 import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
 
 import com.tc.exception.TCRuntimeException;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
@@ -29,6 +32,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsBufferListener {
+  public final static int DEFAULT_NOTIFICATION_INTERVAL = 5;
+
+  private final static TCLogger logger = TCLogging.getLogger(StatisticsRetrieverImpl.class);
+
   private final Timer timer = new TCTimerImpl("Statistics Retriever Timer", true);
 
   private final StatisticsConfig config;
@@ -40,7 +47,8 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
   // modified (not replaced)
   private volatile Map actionsMap;
 
-  private RetrieveStatsTask task = null;
+  private LogRetrievalInProcessTask infoTask = null;
+  private RetrieveStatsTask statsTask = null;
 
   public StatisticsRetrieverImpl(final StatisticsConfig config, final StatisticsBuffer buffer, final String sessionId) {
     Assert.assertNotNull("config", config);
@@ -87,6 +95,7 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
     List action_list = (List)actionsMap.get(action.getType());
     if (null == action_list) {
       Assert.fail("the actionsMap doesn't contain an entry for the statistic type '" + action.getType() + "'");
+      return;
     }
     action_list.add(action);
   }
@@ -94,13 +103,13 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
   public void startup() {
     retrieveStartupMarker();
     retrieveStartupStatistics();
-    enableTimerTask();
+    enableTimerTasks();
   }
 
   public void shutdown() {
     this.buffer.removeListener(this);
 
-    disableTimerTask();
+    disableTimerTasks();
   }
 
   public boolean containsAction(StatisticRetrievalAction action) {
@@ -150,19 +159,28 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
     }
   }
 
-  private synchronized void enableTimerTask() {
-    if (task != null) {
-      disableTimerTask();
+  private synchronized void enableTimerTasks() {
+    if (statsTask != null ||
+        infoTask != null) {
+      disableTimerTasks();
     }
 
-    task = new RetrieveStatsTask();
-    timer.scheduleAtFixedRate(task, 0, config.getParamLong(StatisticsConfig.KEY_GLOBAL_SCHEDULE_PERIOD));
+    infoTask = new LogRetrievalInProcessTask();
+    timer.scheduleAtFixedRate(infoTask, 0, TCPropertiesImpl.getProperties().getInt("cvt.retriever.notification.interval", DEFAULT_NOTIFICATION_INTERVAL) * 1000);
+
+    statsTask = new RetrieveStatsTask();
+    timer.scheduleAtFixedRate(statsTask, 0, config.getParamLong(StatisticsConfig.KEY_GLOBAL_SCHEDULE_PERIOD));
   }
 
-  private synchronized void disableTimerTask() {
-    if (task != null) {
-      task.shutdown();
-      task = null;
+  private synchronized void disableTimerTasks() {
+    if (statsTask != null) {
+      statsTask.shutdown();
+      statsTask = null;
+    }
+
+    if (infoTask != null) {
+      infoTask.shutdown();
+      infoTask = null;
     }
   }
 
@@ -191,6 +209,29 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
       if (performTaskShutdown) {
         cancel();
         retrieveShutdownMarker();
+      }
+    }
+  }
+
+  private class LogRetrievalInProcessTask extends TimerTask {
+    private final long start;
+
+    private volatile boolean shutdown = false;
+
+    private LogRetrievalInProcessTask() {
+      this.start = System.currentTimeMillis();
+      logger.info("Statistics retrieval is STARTING for session ID '" + sessionId + "' on node '" + buffer.getDefaultNodeName() + "'.");
+    }
+
+    public void shutdown() {
+      this.shutdown = true;
+      logger.info("Statistics retrieval has STOPPED for session ID '" + sessionId + "' on node '" + buffer.getDefaultNodeName() + "' after running for " + ((System.currentTimeMillis() - start) / 1000) + " seconds.");
+      this.cancel();
+    }
+
+    public void run() {
+      if (!shutdown) {
+        logger.info("Statistics retrieval in PROCESS for session ID '" + sessionId + "' on node '" + buffer.getDefaultNodeName() + "' for " + ((System.currentTimeMillis() - start) / 1000) + " seconds.");
       }
     }
   }
