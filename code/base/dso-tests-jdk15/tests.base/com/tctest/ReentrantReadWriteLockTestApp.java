@@ -35,7 +35,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   public final static String           CRASH_TEST               = "CRASH_TEST";
-  private final static int             NUM_OF_PUTS              = 500;
+  private final static int             NUM_OF_PUTS              = 400;
+  private final static int             IBM_NUM_OF_PUTS          = 300;
+  private final int                    putsCount;
 
   private final CyclicBarrier          barrier, barrier2, barrier3, barrier4, barrier5;
   private final DataRoot               dataRoot                 = new DataRoot();
@@ -60,6 +62,11 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     barrier3 = new CyclicBarrier(getParticipantCount());
     barrier4 = new CyclicBarrier(2);
     barrier5 = new CyclicBarrier(3);
+    if (Vm.isIBM()) {
+      putsCount = IBM_NUM_OF_PUTS;
+    } else {
+      putsCount = NUM_OF_PUTS;
+    }
 
     random = new Random(new Random(System.currentTimeMillis() + getApplicationId().hashCode()).nextLong());
     numOfGetters = getParticipantCount() - numOfPutters;
@@ -862,7 +869,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   private void doPutter(long id, WriteLock lock, Condition condition, List Q, int getters) throws Exception {
     Thread.currentThread().setName("PUTTER-" + id);
 
-    for (int i = 0; i < NUM_OF_PUTS; i++) {
+    for (int i = 0; i < putsCount; i++) {
       lock.lock();
       try {
         System.err.println("PUTTER-" + id + " Putting " + i);
