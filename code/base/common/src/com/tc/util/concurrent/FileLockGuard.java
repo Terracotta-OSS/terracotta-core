@@ -36,7 +36,11 @@ public abstract class FileLockGuard {
       try {
         guarded.execute();
       } finally {
-        lock.release();
+        try {
+          lock.release();
+        } finally {
+          raf.close();
+        }
       }
     }
   }

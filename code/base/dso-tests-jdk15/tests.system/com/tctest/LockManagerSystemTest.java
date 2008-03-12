@@ -121,10 +121,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
   protected void tearDown() {
     if (client != null) {
       try {
-        // client created by NullManager, the stop() is an empty call.
-        // Locate CommunicationManager to do real shutdown.
-        // client.stop();
-        client.getCommunicationsManager().shutdown();
+        client.stop();
       } catch (Exception e) {
         e.printStackTrace();
       }

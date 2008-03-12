@@ -967,12 +967,6 @@ public class DistributedObjectServer implements TCDumper {
     }
 
     try {
-      stopJMXServer();
-    } catch (Throwable t) {
-      logger.error("Error shutting down jmx server", t);
-    }
-
-    try {
       statisticsAgentSubSystem.cleanup();
     } catch (Throwable e) {
       logger.warn(e);
@@ -982,6 +976,12 @@ public class DistributedObjectServer implements TCDumper {
       statisticsGateway.cleanup();
     } catch (Throwable e) {
       logger.warn(e);
+    }
+
+    try {
+      stopJMXServer();
+    } catch (Throwable t) {
+      logger.error("Error shutting down jmx server", t);
     }
 
     basicStop();
