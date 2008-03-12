@@ -23,6 +23,7 @@
        information. -->
   <clients>
     <logs>%(user.home)/terracotta/client-logs/spring/webflow/%D</logs>
+    <statistics>%(user.home)/terracotta/client-statistics/spring/webflow/%D</statistics>
   </clients>
 
   <application>

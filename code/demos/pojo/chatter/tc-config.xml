@@ -27,6 +27,7 @@
        information.-->
   <clients>
     <logs>%(user.home)/terracotta/client-logs/pojo/chatter/%D</logs>
+    <statistics>%(user.home)/terracotta/client-statistics/pojo/chatter/%D</statistics>
   </clients>
   <application>
     <dso>

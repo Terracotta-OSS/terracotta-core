@@ -23,6 +23,7 @@
        information. -->
   <clients>
     <logs>%(user.home)/terracotta/client-logs/pojo/sharedqueue/%D</logs>
+    <statistics>%(user.home)/terracotta/client-statistics/pojo/sharedqueue/%D</statistics>
   </clients>
 
   <application>

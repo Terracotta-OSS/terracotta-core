@@ -29,6 +29,7 @@
        information.-->
   <clients>
     <logs>%(user.home)/terracotta/client-logs/pojo/sharededitor/%D</logs>
+    <statistics>%(user.home)/terracotta/client-statistics/pojo/sharededitor/%D</statistics>
   </clients>
 
   <application>
