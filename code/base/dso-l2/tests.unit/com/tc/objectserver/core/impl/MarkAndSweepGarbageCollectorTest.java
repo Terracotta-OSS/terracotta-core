@@ -71,7 +71,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
     super.setUp();
     this.managed = new HashMap();
 
-    this.collector = new MarkAndSweepGarbageCollector(this, new TestClientStateManager(), false);
+    this.collector = new MarkAndSweepGarbageCollector(this, new TestClientStateManager(), false, null);
     this.lookedUp = new HashSet();
     this.released = new HashSet();
     this.root1 = createObject(8);

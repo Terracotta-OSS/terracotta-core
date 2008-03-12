@@ -19,6 +19,10 @@ import com.tc.objectserver.impl.GCLogger;
 import com.tc.objectserver.impl.GCStatsImpl;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
+import com.tc.statistics.AgentStatisticsManager;
+import com.tc.statistics.StatisticData;
+import com.tc.statistics.StatisticsAgentSubSystem;
+import com.tc.statistics.exceptions.AgentStatisticsManagerException;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet2;
@@ -30,6 +34,7 @@ import com.tc.util.concurrent.StoppableThread;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -79,11 +84,14 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
   private final ClientStateManager     stateManager;
   private LifeCycleState               gcState               = new NullLifeCycleState();
   private volatile boolean             started               = false;
+  private final StatisticsAgentSubSystem statisticsAgentSubSystem;
+  public static final String           DISTRIBUTED_GC_STATISTICS = "distributed gc";
 
-  public MarkAndSweepGarbageCollector(ObjectManager objectManager, ClientStateManager stateManager, boolean verboseGC) {
+  public MarkAndSweepGarbageCollector(ObjectManager objectManager, ClientStateManager stateManager, boolean verboseGC, StatisticsAgentSubSystem agentSubSystem) {
     this.gcLogger = new GCLogger(logger, verboseGC);
     this.objectManager = objectManager;
     this.stateManager = stateManager;
+    this.statisticsAgentSubSystem = agentSubSystem;
   }
 
   private Set rescue(final Set gcResults, final List rescueTimes) {
@@ -183,7 +191,47 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
 
     gcLogger.push(gcStats);
     fireGCCompleteEvent(gcStats, toDelete);
+
+    if (statisticsAgentSubSystem != null && statisticsAgentSubSystem.isActive()) {
+      storeGCStats(gcStats);
+    }
+
     gcIteration++;
+  }
+
+  private void storeGCStats(GCStats gcStats) {
+    Date moment = new Date();
+    AgentStatisticsManager agentStatisticsManager = statisticsAgentSubSystem.getStatisticsManager();
+    Collection sessions = agentStatisticsManager.getActiveSessionIDsForAction(DISTRIBUTED_GC_STATISTICS);
+    if (sessions != null && sessions.size() > 0) {
+      StatisticData[] datas = getGCStatisticsData(gcStats);
+      storeStatisticsDatas(moment, sessions, datas);
+    }
+  }
+
+  private StatisticData[] getGCStatisticsData(GCStats gcStats) {
+    List<StatisticData> datas = new ArrayList<StatisticData>();
+    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "iteration", (long)gcStats.getIteration()));
+    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "start time", gcStats.getStartTime()));
+    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "elapsed time", gcStats.getElapsedTime()));
+    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "begin object count", gcStats.getBeginObjectCount()));
+    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "candidate garbage count", gcStats.getCandidateGarbageCount()));
+    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "actual garbage count", gcStats.getActualGarbageCount()));
+    return datas.toArray(new StatisticData[datas.size()]);
+  }
+
+  private synchronized void storeStatisticsDatas(Date moment, Collection sessions, StatisticData[] datas) {
+    try {
+      for (Iterator sessionsIterator = sessions.iterator(); sessionsIterator.hasNext();) {
+        String session = (String)sessionsIterator.next();
+        for (int i = 0; i < datas.length; i++) {
+          StatisticData data = datas[i];
+          statisticsAgentSubSystem.getStatisticsManager().injectStatisticData(session, data.moment(moment));
+        }
+      }
+    } catch (AgentStatisticsManagerException e) {
+      logger.error("Unexpected error while trying to store Cache Objects Evict Request statistics statistics.", e);
+    }
   }
 
   public void changed(ObjectID changedObject, ObjectID oldReference, ObjectID newReference) {

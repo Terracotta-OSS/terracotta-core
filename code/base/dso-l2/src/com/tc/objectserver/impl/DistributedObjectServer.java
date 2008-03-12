@@ -181,6 +181,7 @@ import com.tc.statistics.retrieval.actions.SRAL2TransactionCount;
 import com.tc.statistics.retrieval.actions.SRAMemoryUsage;
 import com.tc.statistics.retrieval.actions.SRAStageQueueDepths;
 import com.tc.statistics.retrieval.actions.SRASystemProperties;
+import com.tc.statistics.retrieval.actions.SRADistributedGC;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
@@ -527,7 +528,7 @@ public class DistributedObjectServer implements TCDumper {
                                           swapCache, persistenceTransactionProvider, faultManagedObjectStage.getSink(),
                                           flushManagedObjectStage.getSink());
     objectManager.setStatsListener(objMgrStats);
-    objectManager.setGarbageCollector(new MarkAndSweepGarbageCollector(objectManager, clientStateManager, verboseGC));
+    objectManager.setGarbageCollector(new MarkAndSweepGarbageCollector(objectManager, clientStateManager, verboseGC, statisticsAgentSubSystem));
     managedObjectChangeListenerProvider.setListener(objectManager);
 
     l2Management.findObjectManagementMonitorMBean()
@@ -815,6 +816,7 @@ public class DistributedObjectServer implements TCDumper {
       registry.registerActionInstance(new SRAStageQueueDepths(stageManager));
       registry.registerActionInstance(new SRACacheObjectsEvictRequest());
       registry.registerActionInstance(new SRACacheObjectsEvicted());
+      registry.registerActionInstance(new SRADistributedGC());
     }
   }
 

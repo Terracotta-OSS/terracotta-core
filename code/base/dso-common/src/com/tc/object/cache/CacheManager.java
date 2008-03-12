@@ -107,22 +107,22 @@ public class CacheManager implements MemoryEventsListener {
       if (toEvict > 0) {
         state = PROCESSING;
       }
+      final int usedPercentage = usage.getUsedPercentage();
+      final long collectionCount = usage.getCollectionCount();
       if (config.isLoggingEnabled()) {
-        final int usedPercentage = usage.getUsedPercentage();
-        final long collectionCount = usage.getCollectionCount();
         logger.info("Asking to evict " + toEvict + " current size = " + currentCount + " calculated cache size = "
                     + calculatedCacheSize + " heap used = " + usedPercentage + " %  gc count = "
                     + collectionCount);
-        if (statisticsAgentSubSystem != null && statisticsAgentSubSystem.isActive()) {
-          storeCacheEvictRequestStats(currentCount, toEvict, calculatedCacheSize, usedPercentage, collectionCount);
-        }
+      }
+      if (statisticsAgentSubSystem != null && statisticsAgentSubSystem.isActive()) {
+        storeCacheEvictRequestStats(currentCount, toEvict, calculatedCacheSize, usedPercentage, collectionCount);
       }
       return this.toEvict;
     }
 
     private synchronized void storeCacheEvictRequestStats(int currentCount, int toEvict, int calculatedCacheSize, int usedPercentage, long collectionCount) {
       Date moment = new Date();
-      AgentStatisticsManager agentStatisticsManager = (AgentStatisticsManager)statisticsAgentSubSystem.getStatisticsManager();
+      AgentStatisticsManager agentStatisticsManager = statisticsAgentSubSystem.getStatisticsManager();
       Collection sessions = agentStatisticsManager.getActiveSessionIDsForAction(CACHE_OBJECTS_EVICT_REQUEST);
       if (sessions != null && sessions.size() > 0) {
         StatisticData[] datas = getCacheObjectsEvictRequestData(currentCount, toEvict, calculatedCacheSize, usedPercentage, collectionCount);
@@ -173,14 +173,14 @@ public class CacheManager implements MemoryEventsListener {
       this.countAfter = currentCount;
       state = COMPLETE;
       // TODO:: add reference queue
+      final int newObjectsCount = getNewObjectsCount();
+      final long timeTaken = System.currentTimeMillis() - startTime;
       if (config.isLoggingEnabled()) {
-        final int newObjectsCount = getNewObjectsCount();
-        final long timeTaken = System.currentTimeMillis() - startTime;
         logger.info("Evicted " + evictedCount + " current Size = " + currentCount + " new objects created = "
                     + newObjectsCount + " time taken = " + timeTaken + " ms");
-        if (statisticsAgentSubSystem != null && statisticsAgentSubSystem.isActive()) {
-          storeCacheObjectsEvictedStats(evictedCount, currentCount, newObjectsCount, timeTaken);
-        }
+      }
+      if (statisticsAgentSubSystem != null && statisticsAgentSubSystem.isActive()) {
+        storeCacheObjectsEvictedStats(evictedCount, currentCount, newObjectsCount, timeTaken);
       }
     }
 

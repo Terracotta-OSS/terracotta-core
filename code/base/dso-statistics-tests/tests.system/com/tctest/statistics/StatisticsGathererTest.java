@@ -145,7 +145,7 @@ public class StatisticsGathererTest extends TransparentTestBase implements Stati
     }
 
     // check that there's at least one data element name per registered statistic
-    assertTrue(received_data_names.size() > statistics.length);
+    assertTrue(received_data_names.size() >= statistics.length);
   }
 
   protected Class getApplicationClass() {

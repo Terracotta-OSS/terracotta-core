@@ -1133,7 +1133,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     // objMgr.gc() happens
     this.config.myGCThreadSleepTime = -1;
 
-    GarbageCollector gc = new MarkAndSweepGarbageCollector(objectManager, clientStateManager, true);
+    GarbageCollector gc = new MarkAndSweepGarbageCollector(objectManager, clientStateManager, true, null);
     objectManager.setGarbageCollector(gc);
     objectManager.start();
 
