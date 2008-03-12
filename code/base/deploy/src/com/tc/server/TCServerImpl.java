@@ -72,8 +72,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   private final L2TVSConfigurationSetupManager configurationSetupManager;
   private final ConnectionPolicy               connectionPolicy;
-  
- 
+
   private final StatisticsGathererSubSystem    statisticsGathererSubSystem;
 
   /**
@@ -96,7 +95,6 @@ public class TCServerImpl extends SEDA implements TCServer {
     statisticsGathererSubSystem = new StatisticsGathererSubSystem();
     statisticsGathererSubSystem.setup(manager.commonl2Config());
   }
-  
 
   public L2Info[] infoForAllL2s() {
     String[] allKnownL2s = this.configurationSetupManager.allCurrentlyKnownServers();
@@ -189,11 +187,11 @@ public class TCServerImpl extends SEDA implements TCServer {
     try {
       InputStream is = configurationSetupManager.rawConfigFile();
       return IOUtils.toString(is);
-    } catch(IOException ioe) {
+    } catch (IOException ioe) {
       return ioe.getLocalizedMessage();
     }
   }
-  
+
   public int getDSOListenPort() {
     if (dsoServer != null) { return dsoServer.getListenPort(); }
     throw new IllegalStateException("DSO Server not running");
@@ -294,7 +292,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
       Stage stage = getStageManager().createStage("dso-http-bridge", new HttpConnectionHandler(terracottaConnector), 1,
                                                   100);
-      getStageManager().startAll(new NullContext(getStageManager()));
+      stage.start(new NullContext(getStageManager()));
 
       // the following code starts the jmx server as well
       startDSOServer(stage.getSink());
@@ -328,7 +326,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   private void startDSOServer(Sink httpSink) throws Exception {
     Assert.assertTrue(state.isStartState());
     dsoServer = new DistributedObjectServer(configurationSetupManager, getThreadGroup(), connectionPolicy, httpSink,
-                                            new TCServerInfo(this, state), state);
+                                            new TCServerInfo(this, state), state, this);
     dsoServer.start();
     registerDSOServer();
   }
@@ -396,7 +394,9 @@ public class TCServerImpl extends SEDA implements TCServer {
     DSOMBean dso = new DSO(mgmtContext, mBeanServer);
     mBeanServer.registerMBean(dso, L2MBeanNames.DSO);
     mBeanServer.registerMBean(mgmtContext.getDSOAppEventsMBean(), L2MBeanNames.DSO_APP_EVENTS);
-    StatisticsLocalGathererMBeanImpl local_gatherer = new StatisticsLocalGathererMBeanImpl(statisticsGathererSubSystem, configurationSetupManager.commonl2Config());
+    StatisticsLocalGathererMBeanImpl local_gatherer = new StatisticsLocalGathererMBeanImpl(statisticsGathererSubSystem,
+                                                                                           configurationSetupManager
+                                                                                               .commonl2Config());
     mBeanServer.registerMBean(local_gatherer, StatisticsMBeanNames.STATISTICS_GATHERER);
   }
 
