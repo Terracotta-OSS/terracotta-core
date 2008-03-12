@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.change;
 
@@ -11,10 +12,12 @@ import com.tc.object.SerializationUtil;
 import com.tc.object.bytecode.MockClassProvider;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.DNAEncodingImpl;
 import com.tc.object.dna.impl.DNAImpl;
+import com.tc.object.dna.impl.DNAWriterImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.loaders.ClassProvider;
 
@@ -37,7 +40,12 @@ public class TCChangeBufferTest extends TestCase {
     buffer.logicalInvoke(SerializationUtil.PUT, new Object[] { new ObjectID(1), new ObjectID(2) });
 
     TCByteBufferOutputStream output = new TCByteBufferOutputStream();
-    buffer.writeTo(output, serializer, encoding);
+
+    DNAWriter writer = new DNAWriterImpl(output, mockTCObject.getObjectID(), mockTCObject.getTCClass().getName(),
+                                         serializer, encoding, mockTCObject.getTCClass().getDefiningLoaderDescription());
+
+    buffer.writeTo(writer);
+    writer.finalizeHeader();
     output.close();
 
     DNAImpl dna = new DNAImpl(serializer, true);
@@ -73,7 +81,11 @@ public class TCChangeBufferTest extends TestCase {
     }
 
     TCByteBufferOutputStream output = new TCByteBufferOutputStream();
-    buffer.writeTo(output, serializer, encoding);
+    DNAWriter writer = new DNAWriterImpl(output, mockTCObject.getObjectID(), mockTCObject.getTCClass().getName(),
+                                         serializer, encoding, mockTCObject.getTCClass().getDefiningLoaderDescription());
+
+    buffer.writeTo(writer);
+    writer.finalizeHeader();
     output.close();
 
     DNAImpl dna = new DNAImpl(serializer, true);
@@ -108,7 +120,12 @@ public class TCChangeBufferTest extends TestCase {
     }
 
     TCByteBufferOutputStream output = new TCByteBufferOutputStream();
-    buffer.writeTo(output, serializer, encoding);
+
+    DNAWriter writer = new DNAWriterImpl(output, mockTCObject.getObjectID(), mockTCObject.getTCClass().getName(),
+                                         serializer, encoding, mockTCObject.getTCClass().getDefiningLoaderDescription());
+
+    buffer.writeTo(writer);
+    writer.finalizeHeader();
     output.close();
 
     DNAImpl dna = new DNAImpl(serializer, true);

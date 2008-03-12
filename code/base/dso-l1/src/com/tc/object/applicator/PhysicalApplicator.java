@@ -120,6 +120,16 @@ public class PhysicalApplicator extends BaseApplicator {
         if (pojo instanceof TransparentAccess) {
           // only need to do this once. The generated method takes care of walking up the class hierarchy
           getAllFields(pojo, fieldValues);
+
+          // The writing of the parentID must happen before any physical actions
+          if (clazz.isNonStaticInner()) {
+            Object parentObject = fieldValues.get(clazz.getParentFieldName());
+            Assert.assertNotNull("parentObject", parentObject);
+            Object parentObjectID = getDehydratableObject(parentObject, objectManager);
+            if (parentObjectID != null) {
+              writer.setParentObjectID((ObjectID) parentObjectID);
+            }
+          }
         } else {
           throw new AssertionError("wrong type: " + pojo.getClass());
         }
@@ -151,15 +161,6 @@ public class PhysicalApplicator extends BaseApplicator {
         writer.addPhysicalAction(fieldName, value, fields[i].canBeReference());
       }
       tcc = tcc.getSuperclass();
-    }
-
-    if (clazz.isNonStaticInner() && fieldValues != null) {
-      Object parentObject = fieldValues.get(clazz.getParentFieldName());
-      Assert.assertNotNull("parentObject", parentObject);
-      Object parentObjectID = getDehydratableObject(parentObject, objectManager);
-      if (parentObjectID != null) {
-        writer.setParentObjectID((ObjectID) parentObjectID);
-      }
     }
 
   }

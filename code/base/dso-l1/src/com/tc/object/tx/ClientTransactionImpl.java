@@ -16,11 +16,11 @@ import com.tc.util.Assert;
 
 import gnu.trove.TIntArrayList;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -31,8 +31,8 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   private final RuntimeLogger runtimeLogger;
   private final Map           objectChanges = new HashMap();
   private final Map           newRoots      = new HashMap();
-  private final List          notifies      = new LinkedList();
-  private final List          dmis          = new LinkedList();
+  private final List          notifies      = new ArrayList();
+  private final List          dmis          = new ArrayList();
 
   // used to keep things referenced until the transaction is completely ACKED
   private final Map           referenced    = new IdentityHashMap();
@@ -56,6 +56,10 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
 
   public Map getNewRoots() {
     return newRoots;
+  }
+
+  public List getNotifies() {
+    return this.notifies;
   }
 
   public Map getChangeBuffers() {
@@ -108,10 +112,12 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   private TCChangeBuffer getOrCreateChangeBuffer(TCObject object) {
     addReferenced(object.getPeerObject());
 
-    TCChangeBuffer cb = (TCChangeBuffer) objectChanges.get(object);
+    ObjectID oid = object.getObjectID();
+
+    TCChangeBuffer cb = (TCChangeBuffer) objectChanges.get(oid);
     if (cb == null) {
       cb = new TCChangeBufferImpl(object);
-      objectChanges.put(object, cb);
+      objectChanges.put(oid, cb);
     }
 
     return cb;
@@ -130,11 +136,6 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
     if (!notify.isNull()) notifies.add(notify);
   }
 
-  public List addNotifiesTo(List l) {
-    l.addAll(notifies);
-    return l;
-  }
-
   public String toString() {
     return "ClientTransactionImpl [ " + getTransactionID() + " ]";
   }
@@ -150,8 +151,8 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
     final Map creationCountByClass = new HashMap();
     if (!objectChanges.isEmpty()) {
       int currentIndex = 0;
-      for (Iterator iter = objectChanges.keySet().iterator(); iter.hasNext(); currentIndex++) {
-        final TCChangeBuffer buffer = (TCChangeBuffer) objectChanges.get(iter.next());
+      for (Iterator iter = objectChanges.values().iterator(); iter.hasNext(); currentIndex++) {
+        final TCChangeBuffer buffer = (TCChangeBuffer) iter.next();
         final TCObject tco = buffer.getTCObject();
         if (tco.isNew()) {
           final Class instanceClass = tco.getTCClass().getPeerClass();

@@ -21,7 +21,7 @@ import java.util.List;
  * <br>
  * NOTE: This class never throws java.io.IOException (unlike the generic OutputStream) class
  */
-public class TCByteBufferOutputStream extends OutputStream implements TCByteBufferOutput {
+public final class TCByteBufferOutputStream extends OutputStream implements TCByteBufferOutput {
 
   private static final int       DEFAULT_MAX_BLOCK_SIZE     = 4096;
   private static final int       DEFAULT_INITIAL_BLOCK_SIZE = 32;
@@ -71,7 +71,7 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
   /**
    * Create a "mark" in this stream. A mark can be used to fixup data in an earlier portion of the stream even after you
    * have written past it. One place this is useful is when you need to backtrack and fill in a length field after
-   * writing some arbitrary data to the stream
+   * writing some arbitrary data to the stream. A mark can also be used to read earlier portions of the stream
    */
   public Mark mark() {
     checkClosed();
@@ -256,7 +256,7 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
     buffers = finalBufs;
   }
 
-  public final void writeBoolean(boolean value) {
+  public void writeBoolean(boolean value) {
     try {
       dos.writeBoolean(value);
     } catch (IOException e) {
@@ -264,7 +264,7 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
     }
   }
 
-  public final void writeByte(int value) {
+  public void writeByte(int value) {
     try {
       dos.writeByte(value);
     } catch (IOException e) {
@@ -272,7 +272,7 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
     }
   }
 
-  public final void writeChar(int value) {
+  public void writeChar(int value) {
     try {
       dos.writeChar(value);
     } catch (IOException e) {
@@ -280,7 +280,7 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
     }
   }
 
-  public final void writeDouble(double value) {
+  public void writeDouble(double value) {
     try {
       dos.writeDouble(value);
     } catch (IOException e) {
@@ -288,7 +288,7 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
     }
   }
 
-  public final void writeFloat(float value) {
+  public void writeFloat(float value) {
     try {
       dos.writeFloat(value);
     } catch (IOException e) {
@@ -296,7 +296,7 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
     }
   }
 
-  public final void writeInt(int value) {
+  public void writeInt(int value) {
     try {
       dos.writeInt(value);
     } catch (IOException e) {
@@ -304,7 +304,7 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
     }
   }
 
-  public final void writeLong(long value) {
+  public void writeLong(long value) {
     try {
       dos.writeLong(value);
     } catch (IOException e) {
@@ -312,7 +312,7 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
     }
   }
 
-  public final void writeShort(int value) {
+  public void writeShort(int value) {
     try {
       dos.writeShort(value);
     } catch (IOException e) {
@@ -320,11 +320,11 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
     }
   }
 
-  public final void writeString(String string) {
+  public void writeString(String string) {
     writeString(string, false);
   }
 
-  public final void writeString(String string, boolean forceRaw) {
+  public void writeString(String string, boolean forceRaw) {
     // Is null? (true/false)
     if (string == null) {
       writeBoolean(true);
@@ -423,9 +423,10 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
     }
 
     private TCByteBuffer getBuffer(int index) {
-      if (index <= buffers.size() - 1) {
+      int buffersSize = buffers.size();
+      if (index < buffersSize) {
         return (TCByteBuffer) buffers.get(index);
-      } else if (index == buffers.size()) {
+      } else if (index == buffersSize) {
         return current;
       } else {
         throw Assert.failure("index=" + index + ", buffers.size()=" + buffers.size());
@@ -438,6 +439,30 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
      */
     public void write(int b) {
       write(new byte[] { (byte) b });
+    }
+
+    /**
+     * Copy (by invoking write() on the destination stream) the given length of bytes starting at this mark
+     *
+     * @throws IOException
+     */
+    public void copyTo(TCByteBufferOutput dest, int length) {
+      if (length < 0) { throw new IllegalArgumentException(); }
+      if (this.absolutePosition + length > getBytesWritten()) {
+        //
+        throw new IllegalArgumentException("not enough data for copy of " + length + " bytes starting at position "
+                                           + this.absolutePosition + " of stream of size " + getBytesWritten());
+      }
+
+      int index = this.bufferIndex;
+      int pos = this.bufferPosition;
+      while (length > 0) {
+        byte[] array = getBuffer(index++).array();
+        int num = Math.min(array.length - pos, length);
+        dest.write(array, pos, num);
+        length -= num;
+        pos = 0;
+      }
     }
   }
 

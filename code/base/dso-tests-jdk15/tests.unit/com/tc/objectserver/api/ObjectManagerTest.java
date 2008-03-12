@@ -131,7 +131,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
   /**
    * Constructor for ObjectManagerTest.
-   * 
+   *
    * @param arg0
    */
   public ObjectManagerTest(String arg0) {
@@ -1299,7 +1299,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
                                                         new ClientID(new ChannelID(2)),
                                                         new ArrayList(changes.values()), new ObjectStringSerializer(),
                                                         Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                        DmiDescriptor.EMPTY_ARRAY);
+                                                        DmiDescriptor.EMPTY_ARRAY, 1);
     List txns = new ArrayList();
     txns.add(stxn1);
 
@@ -1348,7 +1348,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
                                                         new ClientID(new ChannelID(2)),
                                                         new ArrayList(changes.values()), new ObjectStringSerializer(),
                                                         Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                        DmiDescriptor.EMPTY_ARRAY);
+                                                        DmiDescriptor.EMPTY_ARRAY, 1);
 
     txns.clear();
     txns.add(stxn2);
@@ -1381,7 +1381,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
                                                         new ClientID(new ChannelID(2)),
                                                         new ArrayList(changes.values()), new ObjectStringSerializer(),
                                                         Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                        DmiDescriptor.EMPTY_ARRAY);
+                                                        DmiDescriptor.EMPTY_ARRAY, 1);
 
     txns.clear();
     txns.add(stxn3);

@@ -224,7 +224,7 @@ public class ReplicatedTransactionManagerTest extends TestCase {
       }
       ServerTransaction tx = new ServerTransactionImpl(gtxm, batchID, txID, sequenceID, lockIDs, clientID, dnas,
                                                        serializer, newRoots, txnType, notifies,
-                                                       DmiDescriptor.EMPTY_ARRAY);
+                                                       DmiDescriptor.EMPTY_ARRAY, 1);
       map.put(tx.getServerTransactionID(), tx);
     }
     return map;

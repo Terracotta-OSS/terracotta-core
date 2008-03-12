@@ -20,6 +20,7 @@ import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionID;
+import com.tc.util.SequenceGenerator;
 import com.tc.util.SequenceID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.concurrent.ThreadUtil;
@@ -96,7 +97,10 @@ public class RemoteTransactionManagerTest extends TestCase {
     // XXX: Figure out how to do this without a timeout.
     int timeout = 5 * 1000;
     System.err.println("About too wait for " + timeout + " ms.");
-    assertNull(flushCalls.poll(timeout));
+
+    Object o = flushCalls.poll(timeout);
+
+    assertNull(o);
 
     manager.receivedAcknowledgement(SessionID.NULL_ID, tx1.getTransactionID());
     assertEquals(lockID1, flushCalls.take());
@@ -438,7 +442,7 @@ public class RemoteTransactionManagerTest extends TestCase {
       return transactions.isEmpty();
     }
 
-    public int numberOfTxns() {
+    public int numberOfTxnsBeforeFolding() {
       return transactions.size();
     }
 
@@ -446,13 +450,14 @@ public class RemoteTransactionManagerTest extends TestCase {
       return false;
     }
 
-    public synchronized void addTransaction(ClientTransaction txn) {
+    public synchronized boolean addTransaction(ClientTransaction txn, SequenceGenerator sequenceGenerator) {
       try {
         addTxQueue.put(txn);
         transactions.add(txn);
       } catch (InterruptedException e) {
         throw new TCRuntimeException(e);
       }
+      return false;
     }
 
     public void removeTransaction(TransactionID txID) {

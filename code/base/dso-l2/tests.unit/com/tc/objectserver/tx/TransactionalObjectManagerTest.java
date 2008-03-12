@@ -64,7 +64,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
                                                         new SequenceID(1), new LockID[0], new ClientID(new ChannelID(2)),
                                                         new ArrayList(changes.values()), new ObjectStringSerializer(),
                                                         Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                        DmiDescriptor.EMPTY_ARRAY);
+                                                        DmiDescriptor.EMPTY_ARRAY, 1);
     List txns = new ArrayList();
     txns.add(stxn1);
 
@@ -95,7 +95,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
                                                         new SequenceID(1), new LockID[0], new ClientID(new ChannelID(2)),
                                                         new ArrayList(changes.values()), new ObjectStringSerializer(),
                                                         Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                        DmiDescriptor.EMPTY_ARRAY);
+                                                        DmiDescriptor.EMPTY_ARRAY, 1);
 
     txns.clear();
     txns.add(stxn2);
@@ -209,7 +209,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
                                                         new SequenceID(1), new LockID[0], new ClientID(new ChannelID(2)),
                                                         new ArrayList(changes.values()), new ObjectStringSerializer(),
                                                         Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                        DmiDescriptor.EMPTY_ARRAY);
+                                                        DmiDescriptor.EMPTY_ARRAY, 1);
     List txns = new ArrayList();
     txns.add(stxn1);
 
@@ -240,7 +240,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
                                                         new SequenceID(1), new LockID[0], new ClientID(new ChannelID(2)),
                                                         new ArrayList(changes.values()), new ObjectStringSerializer(),
                                                         Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                        DmiDescriptor.EMPTY_ARRAY);
+                                                        DmiDescriptor.EMPTY_ARRAY, 1);
 
     txns.clear();
     txns.add(stxn2);
@@ -318,7 +318,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
                                                         new SequenceID(2), new LockID[0], new ClientID(new ChannelID(2)),
                                                         new ArrayList(changes.values()), new ObjectStringSerializer(),
                                                         Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                        DmiDescriptor.EMPTY_ARRAY);
+                                                        DmiDescriptor.EMPTY_ARRAY, 1);
 
     txns.clear();
     txns.add(stxn3);
@@ -348,7 +348,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
                                                         new SequenceID(3), new LockID[0], new ClientID(new ChannelID(2)),
                                                         new ArrayList(changes.values()), new ObjectStringSerializer(),
                                                         Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                        DmiDescriptor.EMPTY_ARRAY);
+                                                        DmiDescriptor.EMPTY_ARRAY, 1);
 
     txns.clear();
     txns.add(stxn4);

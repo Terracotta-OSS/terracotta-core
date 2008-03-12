@@ -63,6 +63,8 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     TransactionID txnID = new TransactionID(in.readLong());
     TxnType txnType = TxnType.typeFor(in.readByte());
 
+    final int numApplictionTxn = in.readInt();
+
     SequenceID sequenceID = new SequenceID(in.readLong());
 
     final int numLocks = in.readInt();
@@ -108,7 +110,7 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
 
     numTxns--;
     return txnFactory.createServerTransaction(gtxm, getBatchID(), txnID, sequenceID, locks, source, dnas, serializer,
-                                              newRoots, txnType, notifies, dmis);
+                                              newRoots, txnType, notifies, dmis, numApplictionTxn);
   }
 
   public TxnBatchID getBatchID() {

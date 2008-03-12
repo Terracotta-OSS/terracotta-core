@@ -205,25 +205,25 @@ public class TransactionSequencerTest extends TCTestCase {
                                                        new SequenceID(sqID++), createLocks(lock, lock++), clientID,
                                                        createDNAs(1, 1), new ObjectStringSerializer(),
                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                       DmiDescriptor.EMPTY_ARRAY);
+                                                       DmiDescriptor.EMPTY_ARRAY, 1);
 
     ServerTransaction txn2 = new ServerTransactionImpl(gidGenerator, new TxnBatchID(batchID), new TransactionID(2),
                                                        new SequenceID(sqID++), createLocks(lock, lock++), clientID,
                                                        createDNAs(2, 2), new ObjectStringSerializer(),
                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                       DmiDescriptor.EMPTY_ARRAY);
+                                                       DmiDescriptor.EMPTY_ARRAY, 1);
 
     ServerTransaction txn3 = new ServerTransactionImpl(gidGenerator, new TxnBatchID(batchID), new TransactionID(3),
                                                        new SequenceID(sqID++), createLocks(lock, lock++), clientID,
                                                        createDNAs(2, 3), new ObjectStringSerializer(),
                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                       DmiDescriptor.EMPTY_ARRAY);
+                                                       DmiDescriptor.EMPTY_ARRAY, 1);
 
     ServerTransaction txn4 = new ServerTransactionImpl(gidGenerator, new TxnBatchID(batchID), new TransactionID(4),
                                                        new SequenceID(sqID++), createLocks(lock, lock++), clientID,
                                                        createDNAs(1, 2), new ObjectStringSerializer(),
                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                       DmiDescriptor.EMPTY_ARRAY);
+                                                       DmiDescriptor.EMPTY_ARRAY, 1);
 
     txns.add(txn1);
     txns.add(txn2);
@@ -259,25 +259,25 @@ public class TransactionSequencerTest extends TCTestCase {
                                                        new SequenceID(sqID++), createLocks(1, 1), clientID,
                                                        createDNAs(oid, oid++), new ObjectStringSerializer(),
                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                       DmiDescriptor.EMPTY_ARRAY);
+                                                       DmiDescriptor.EMPTY_ARRAY, 1);
 
     ServerTransaction txn2 = new ServerTransactionImpl(gidGenerator, new TxnBatchID(batchID), new TransactionID(2),
                                                        new SequenceID(sqID++), createLocks(2, 2), clientID,
                                                        createDNAs(oid, oid++), new ObjectStringSerializer(),
                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                       DmiDescriptor.EMPTY_ARRAY);
+                                                       DmiDescriptor.EMPTY_ARRAY, 1);
 
     ServerTransaction txn3 = new ServerTransactionImpl(gidGenerator, new TxnBatchID(batchID), new TransactionID(3),
                                                        new SequenceID(sqID++), createLocks(2, 3), clientID,
                                                        createDNAs(oid, oid++), new ObjectStringSerializer(),
                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                       DmiDescriptor.EMPTY_ARRAY);
+                                                       DmiDescriptor.EMPTY_ARRAY, 1);
 
     ServerTransaction txn4 = new ServerTransactionImpl(gidGenerator, new TxnBatchID(batchID), new TransactionID(4),
                                                        new SequenceID(sqID++), createLocks(1, 2), clientID,
                                                        createDNAs(oid, oid++), new ObjectStringSerializer(),
                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                       DmiDescriptor.EMPTY_ARRAY);
+                                                       DmiDescriptor.EMPTY_ARRAY, 1);
 
     txns.add(txn1);
     txns.add(txn2);
@@ -405,7 +405,7 @@ public class TransactionSequencerTest extends TCTestCase {
     return new ServerTransactionImpl(gidGenerator, new TxnBatchID(batchID), new TransactionID(txnID++),
                                      new SequenceID(sqID++), createLocks(lockID, lockID), clientID, new ArrayList(dnas
                                          .values()), new ObjectStringSerializer(), Collections.EMPTY_MAP,
-                                     TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY);
+                                     TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1);
   }
 
   private List getAllTxnsPossible() {
@@ -426,7 +426,7 @@ public class TransactionSequencerTest extends TCTestCase {
       txns.add(new ServerTransactionImpl(gidGenerator, new TxnBatchID(batchID), new TransactionID(txnID++),
                                          new SequenceID(sqID++), createLocks(start, e), clientID, createDNAs(start, e),
                                          new ObjectStringSerializer(), Collections.EMPTY_MAP, TxnType.NORMAL,
-                                         new LinkedList(), DmiDescriptor.EMPTY_ARRAY));
+                                         new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1));
       start = e + 1;
     }
     return txns;
@@ -442,7 +442,7 @@ public class TransactionSequencerTest extends TCTestCase {
                                          new SequenceID(sqID++), createLocks(start, e + j), clientID, createDNAs(start,
                                                                                                                  e),
                                          new ObjectStringSerializer(), Collections.EMPTY_MAP, TxnType.NORMAL,
-                                         new LinkedList(), DmiDescriptor.EMPTY_ARRAY));
+                                         new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1));
       start = e + 1;
     }
     return txns;
@@ -457,7 +457,7 @@ public class TransactionSequencerTest extends TCTestCase {
       txns.add(new ServerTransactionImpl(gidGenerator, new TxnBatchID(batchID), new TransactionID(txnID++),
                                          new SequenceID(sqID++), createLocks(start, e), clientID,
                                          createDNAs(start, e + j), new ObjectStringSerializer(), Collections.EMPTY_MAP,
-                                         TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY));
+                                         TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1));
       start = e + 1;
     }
     return txns;
@@ -472,7 +472,7 @@ public class TransactionSequencerTest extends TCTestCase {
       txns.add(new ServerTransactionImpl(gidGenerator, new TxnBatchID(batchID), new TransactionID(txnID++),
                                          new SequenceID(sqID++), createLocks(start, e + j), clientID,
                                          createDNAs(start, e + j), new ObjectStringSerializer(), Collections.EMPTY_MAP,
-                                         TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY));
+                                         TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1));
       start = e + 1;
     }
     return txns;

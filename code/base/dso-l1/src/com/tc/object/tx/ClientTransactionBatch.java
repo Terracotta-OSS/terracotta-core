@@ -3,6 +3,7 @@
  */
 package com.tc.object.tx;
 
+import com.tc.util.SequenceGenerator;
 import com.tc.util.SequenceID;
 
 import java.util.Collection;
@@ -21,8 +22,9 @@ public interface ClientTransactionBatch extends TransactionBatch {
 
   /**
    * Add the given transaction to this batch.
+   * @return true if the transaction was folded
    */
-  public void addTransaction(ClientTransaction txn);
+  public boolean addTransaction(ClientTransaction txn, SequenceGenerator sequenceGenerator);
 
   public void removeTransaction(TransactionID txID);
 
@@ -31,7 +33,7 @@ public interface ClientTransactionBatch extends TransactionBatch {
    */
   public void send();
 
-  public int numberOfTxns();
+  public int numberOfTxnsBeforeFolding();
 
   public int byteSize();
 

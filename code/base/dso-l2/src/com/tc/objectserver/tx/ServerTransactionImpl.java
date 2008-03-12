@@ -27,7 +27,7 @@ import java.util.Set;
 
 /**
  * Represents an atomic change to the states of objects on the server
- * 
+ *
  * @author steve
  */
 public class ServerTransactionImpl implements ServerTransaction {
@@ -46,17 +46,19 @@ public class ServerTransactionImpl implements ServerTransaction {
   private final Set                    newObjectIDs;
   private final TxnBatchID             batchID;
   private final GlobalTransactionID    globalTxnID;
+  private final int numApplicationTxn;
 
   public ServerTransactionImpl(GlobalTransactionIDGenerator gtxm, TxnBatchID batchID, TransactionID txID,
                                SequenceID sequenceID, LockID[] lockIDs, NodeID source, List dnas,
                                ObjectStringSerializer serializer, Map newRoots, TxnType transactionType,
-                               Collection notifies, DmiDescriptor[] dmis) {
+                               Collection notifies, DmiDescriptor[] dmis, int numApplicationTxn) {
     this.batchID = batchID;
     this.txID = txID;
     this.seqID = sequenceID;
     this.lockIDs = lockIDs;
     this.newRoots = newRoots;
     this.sourceID = source;
+    this.numApplicationTxn = numApplicationTxn;
     this.serverTxID = new ServerTransactionID(source, txID);
     // NOTE::XXX:: GlobalTransactionID is assigned in the process transaction stage. The transaction could be
     // re-ordered before apply. This is not a problem because for an transaction to be re-ordered, it should not
@@ -81,6 +83,10 @@ public class ServerTransactionImpl implements ServerTransaction {
     Assert.assertTrue(added);
     this.objectIDs = ids;
     this.newObjectIDs = newIDs;
+  }
+
+  public int getNumApplicationTxn() {
+    return numApplicationTxn;
   }
 
   public ObjectStringSerializer getSerializer() {
