@@ -92,7 +92,7 @@ public class ServerManager {
   }
 
   void timeout() {
-    logger.info("Test has timed out. Force shutdown and archive...");
+    System.err.println("Test has timed out. Force shutdown and archive...");
     AppServerUtil.forceShutdownAndArchive(sandbox, new File(tempDir, "sandbox"));
   }
 
