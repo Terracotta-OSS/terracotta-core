@@ -195,7 +195,7 @@ public class TCTestCase extends TestCase {
     // enforce some sanity
     final int MINIMUM = 30;
     long junitTimeout = this.getTimeoutValueInSeconds();
-    System.err.println("Timeout task is scheduled to run in " + junitTimeout + " seconds");
+
     if (junitTimeout < MINIMUM) { throw new IllegalArgumentException("Junit timeout cannot be less than " + MINIMUM
         + " seconds"); }
 
@@ -209,6 +209,8 @@ public class TCTestCase extends TestCase {
     }
 
     long delay = junitTimeout - timeoutThreshold;
+
+    System.err.println("Timeout task is scheduled to run in " + (delay / 1000) + " seconds");
 
     timeoutTimer.schedule(new TimerTask() {
       public void run() {
