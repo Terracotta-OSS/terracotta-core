@@ -56,6 +56,7 @@ public class CacheManager implements MemoryEventsListener {
                 + ". It is not recommended that this value is set. Setting a wrong vlaue could totally destroy performance.");
     }
     this.statisticsAgentSubSystem = statisticsAgentSubSystem;
+    Assert.assertNotNull(statisticsAgentSubSystem);
   }
 
   public void memoryUsed(MemoryEventType type, MemoryUsage usage) {
@@ -114,7 +115,7 @@ public class CacheManager implements MemoryEventsListener {
                     + calculatedCacheSize + " heap used = " + usedPercentage + " %  gc count = "
                     + collectionCount);
       }
-      if (statisticsAgentSubSystem != null && statisticsAgentSubSystem.isActive()) {
+      if (statisticsAgentSubSystem.isActive()) {
         storeCacheEvictRequestStats(currentCount, toEvict, calculatedCacheSize, usedPercentage, collectionCount);
       }
       return this.toEvict;
@@ -179,7 +180,7 @@ public class CacheManager implements MemoryEventsListener {
         logger.info("Evicted " + evictedCount + " current Size = " + currentCount + " new objects created = "
                     + newObjectsCount + " time taken = " + timeTaken + " ms");
       }
-      if (statisticsAgentSubSystem != null && statisticsAgentSubSystem.isActive()) {
+      if (statisticsAgentSubSystem.isActive()) {
         storeCacheObjectsEvictedStats(evictedCount, currentCount, newObjectsCount, timeTaken);
       }
     }

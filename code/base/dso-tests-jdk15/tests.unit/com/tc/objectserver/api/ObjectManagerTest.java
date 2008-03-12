@@ -91,6 +91,7 @@ import com.tc.util.SequenceID;
 import com.tc.util.concurrent.LifeCycleState;
 import com.tc.util.concurrent.StoppableThread;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tc.statistics.NullStatisticsAgentSubSystem;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -1133,7 +1134,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     // objMgr.gc() happens
     this.config.myGCThreadSleepTime = -1;
 
-    GarbageCollector gc = new MarkAndSweepGarbageCollector(objectManager, clientStateManager, true, null);
+    GarbageCollector gc = new MarkAndSweepGarbageCollector(objectManager, clientStateManager, true, new NullStatisticsAgentSubSystem());
     objectManager.setGarbageCollector(gc);
     objectManager.start();
 

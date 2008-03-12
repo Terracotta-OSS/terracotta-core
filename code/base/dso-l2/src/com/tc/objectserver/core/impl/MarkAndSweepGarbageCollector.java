@@ -27,6 +27,7 @@ import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet2;
 import com.tc.util.State;
+import com.tc.util.Assert;
 import com.tc.util.concurrent.LifeCycleState;
 import com.tc.util.concurrent.NullLifeCycleState;
 import com.tc.util.concurrent.StoppableThread;
@@ -92,6 +93,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     this.objectManager = objectManager;
     this.stateManager = stateManager;
     this.statisticsAgentSubSystem = agentSubSystem;
+    Assert.assertNotNull(statisticsAgentSubSystem);
   }
 
   private Set rescue(final Set gcResults, final List rescueTimes) {
@@ -192,7 +194,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     gcLogger.push(gcStats);
     fireGCCompleteEvent(gcStats, toDelete);
 
-    if (statisticsAgentSubSystem != null && statisticsAgentSubSystem.isActive()) {
+    if (statisticsAgentSubSystem.isActive()) {
       storeGCStats(gcStats);
     }
 

@@ -25,6 +25,7 @@
     <orderEntry type="module" module-name="simulator" />
     <orderEntry type="module" module-name="thirdparty" />
     <orderEntry type="module" module-name="thirdparty-api" />
+    <orderEntry type="module" module-name="dso-statistics-api" />
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
