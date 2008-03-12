@@ -58,8 +58,10 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
 
     // keep at the end of the constructor to make sure that all the initialization
     // is done before registering this instance as a listener
-    this.subsystem.getStatisticsGatherer().addListener(this);
-    this.subsystem.getStatisticsStore().addListener(this);
+    if (this.subsystem.isActive()) {
+      this.subsystem.getStatisticsGatherer().addListener(this);
+      this.subsystem.getStatisticsStore().addListener(this);
+    }
   }
 
   public MBeanNotificationInfo[] getNotificationInfo() {
@@ -70,6 +72,10 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public void connect() {
+    if (!subsystem.isActive()) {
+      return;
+    }
+    
     try {
       subsystem.getStatisticsGatherer().connect(TCSocketAddress.LOOPBACK_IP, config.jmxPort().getInt());
     } catch (StatisticsGathererException e) {
@@ -78,6 +84,10 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public void disconnect() {
+    if (!subsystem.isActive()) {
+      return;
+    }
+
     try {
       subsystem.getStatisticsGatherer().disconnect();
     } catch (StatisticsGathererException e) {
@@ -86,6 +96,10 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public void reinitialize() {
+    if (!subsystem.isActive()) {
+      return;
+    }
+
     try {
       subsystem.reinitialize();
     } catch (Exception e) {
@@ -94,6 +108,10 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public void createSession(final String sessionId) {
+    if (!subsystem.isActive()) {
+      return;
+    }
+
     try {
       subsystem.getStatisticsGatherer().createSession(sessionId);
     } catch (StatisticsGathererException e) {
@@ -102,10 +120,18 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public String getActiveSessionId() {
+    if (!subsystem.isActive()) {
+      return null;
+    }
+
     return subsystem.getStatisticsGatherer().getActiveSessionId();
   }
 
   public String[] getAvailableSessionIds() {
+    if (!subsystem.isActive()) {
+      return new String[0];
+    }
+
     try {
       return subsystem.getStatisticsStore().getAvailableSessionIds();
     } catch (StatisticsStoreException e) {
@@ -114,6 +140,10 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public void closeSession() {
+    if (!subsystem.isActive()) {
+      return;
+    }
+
     try {
       subsystem.getStatisticsGatherer().closeSession();
     } catch (StatisticsGathererException e) {
@@ -122,6 +152,10 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public String[] getSupportedStatistics() {
+    if (!subsystem.isActive()) {
+      return new String[0];
+    }
+
     try {
       return subsystem.getStatisticsGatherer().getSupportedStatistics();
     } catch (StatisticsGathererException e) {
@@ -130,6 +164,10 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public void enableStatistics(String[] names) {
+    if (!subsystem.isActive()) {
+      return;
+    }
+
     try {
       subsystem.getStatisticsGatherer().enableStatistics(names);
     } catch (StatisticsGathererException e) {
@@ -138,6 +176,10 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public StatisticData[] captureStatistic(final String name) {
+    if (!subsystem.isActive()) {
+      return new StatisticData[0];
+    }
+
     try {
       return subsystem.getStatisticsGatherer().captureStatistic(name);
     } catch (StatisticsGathererException e) {
@@ -146,6 +188,10 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public void startCapturing() {
+    if (!subsystem.isActive()) {
+      return;
+    }
+
     try {
       subsystem.getStatisticsGatherer().startCapturing();
     } catch (StatisticsGathererException e) {
@@ -154,6 +200,10 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public void stopCapturing() {
+    if (!subsystem.isActive()) {
+      return;
+    }
+
     try {
       subsystem.getStatisticsGatherer().stopCapturing();
     } catch (StatisticsGathererException e) {
@@ -162,6 +212,10 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public void setGlobalParam(final String key, final Object value) {
+    if (!subsystem.isActive()) {
+      return;
+    }
+
     try {
       subsystem.getStatisticsGatherer().setGlobalParam(key, value);
     } catch (StatisticsGathererException e) {
@@ -170,6 +224,10 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public Object getGlobalParam(final String key) {
+    if (!subsystem.isActive()) {
+      return null;
+    }
+
     try {
       return subsystem.getStatisticsGatherer().getGlobalParam(key);
     } catch (StatisticsGathererException e) {
@@ -178,6 +236,10 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public void setSessionParam(final String key, final Object value) {
+    if (!subsystem.isActive()) {
+      return;
+    }
+
     try {
       subsystem.getStatisticsGatherer().setSessionParam(key, value);
     } catch (StatisticsGathererException e) {
@@ -186,6 +248,10 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public Object getSessionParam(final String key) {
+    if (!subsystem.isActive()) {
+      return null;
+    }
+
     try {
       return subsystem.getStatisticsGatherer().getSessionParam(key);
     } catch (StatisticsGathererException e) {
@@ -194,6 +260,10 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public void clearStatistics(final String sessionId) {
+    if (!subsystem.isActive()) {
+      return;
+    }
+    
     try {
       subsystem.getStatisticsStore().clearStatistics(sessionId);
     } catch (StatisticsStoreException e) {
@@ -202,6 +272,10 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public void clearAllStatistics() {
+    if (!subsystem.isActive()) {
+      return;
+    }
+
     try {
       subsystem.getStatisticsStore().clearAllStatistics();
     } catch (StatisticsStoreException e) {
