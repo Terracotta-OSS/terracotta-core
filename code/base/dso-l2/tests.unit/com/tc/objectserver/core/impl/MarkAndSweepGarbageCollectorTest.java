@@ -18,9 +18,9 @@ import com.tc.objectserver.l1.api.TestClientStateManager;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.impl.NullPersistenceTransactionProvider;
+import com.tc.statistics.mock.NullStatisticsAgentSubSystem;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.ObjectIDSet2;
-import com.tc.statistics.NullStatisticsAgentSubSystem;
 
 import java.io.Writer;
 import java.util.Arrays;

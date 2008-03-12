@@ -185,11 +185,15 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
   }
 
   public void capturingStarted(final String sessionId) {
-    startup();
+    if (sessionId.equals(this.sessionId)) {
+      startup();
+    }
   }
 
   public void capturingStopped(final String sessionId) {
-    shutdown();
+    if (sessionId.equals(this.sessionId)) {
+      shutdown();
+    }
   }
 
   public void opened() {

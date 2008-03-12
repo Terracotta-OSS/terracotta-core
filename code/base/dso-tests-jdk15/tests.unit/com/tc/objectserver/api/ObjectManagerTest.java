@@ -82,6 +82,7 @@ import com.tc.objectserver.tx.ServerTransactionImpl;
 import com.tc.objectserver.tx.TestTransactionalStageCoordinator;
 import com.tc.objectserver.tx.TransactionSequencer;
 import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
+import com.tc.statistics.mock.NullStatisticsAgentSubSystem;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.stats.counter.sampled.SampledCounterImpl;
@@ -91,7 +92,6 @@ import com.tc.util.SequenceID;
 import com.tc.util.concurrent.LifeCycleState;
 import com.tc.util.concurrent.StoppableThread;
 import com.tc.util.concurrent.ThreadUtil;
-import com.tc.statistics.NullStatisticsAgentSubSystem;
 
 import java.io.File;
 import java.util.ArrayList;

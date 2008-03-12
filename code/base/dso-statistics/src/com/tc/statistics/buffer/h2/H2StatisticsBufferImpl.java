@@ -5,6 +5,8 @@ package com.tc.statistics.buffer.h2;
 
 import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArraySet;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.buffer.StatisticsBuffer;
@@ -57,6 +59,8 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
   private final static long DATABASE_STRUCTURE_CHECKSUM = 293260301L;
 
   public final static String H2_URL_SUFFIX = "statistics-buffer";
+
+  private final static TCLogger logger = TCLogging.getLogger(H2StatisticsBufferImpl.class);
 
   private final static String SQL_NEXT_LOCALSESSIONID = "SELECT nextval('seq_localsession')";
   private final static String SQL_NEXT_STATISTICLOGID = "SELECT nextval('seq_statisticlog')";
@@ -123,6 +127,15 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
 
   public String getDefaultNodeName() {
     return defaultAgentIp + " (" + defaultAgentDifferentiator + ")";
+  }
+
+  private void checkDefaultAgentInfo() {
+    if (null == defaultAgentIp) {
+      logger.warn("Running without a default agent IP in the statistics buffer, this is probably due to not calling setDefaultAgentIp after creating a new buffer instance.");
+    }
+    if (null == defaultAgentDifferentiator) {
+      logger.warn("Running without a default agent differentiator in the statistics buffer, this is probably due to not calling getDefaultAgentDifferentiator after creating a new buffer instance.");
+    }
   }
 
   public void open() throws StatisticsBufferException {
@@ -279,6 +292,7 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
   }
 
   public StatisticsRetriever createCaptureSession(final String sessionId) throws StatisticsBufferException {
+    checkDefaultAgentInfo();
     Assert.assertNotNull("sessionId", sessionId);
 
     final long local_sessionid;
