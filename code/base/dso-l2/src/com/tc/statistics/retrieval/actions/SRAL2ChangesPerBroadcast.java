@@ -13,6 +13,11 @@ import com.tc.util.Assert;
 
 import java.math.BigDecimal;
 
+/**
+ * This statistics gives the average number of changes that are present per broadcast.
+ * Number of changes and number of broadcast are sampled every second presently and this
+ * gives the average number of changes per broadcast.
+ */
 public class SRAL2ChangesPerBroadcast implements StatisticRetrievalAction {
 
   public static final String ACTION_NAME = "l2 changes per broadcast";

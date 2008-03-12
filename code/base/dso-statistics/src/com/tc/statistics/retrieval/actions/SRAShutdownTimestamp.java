@@ -9,6 +9,9 @@ import com.tc.statistics.StatisticType;
 
 import java.util.Date;
 
+/**
+ * Statistics representing the shutdown of a statistics capturing session.
+ */
 public class SRAShutdownTimestamp implements StatisticRetrievalAction {
 
   public final static String ACTION_NAME = "shutdown timestamp";

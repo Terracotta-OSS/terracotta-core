@@ -178,7 +178,7 @@ public class AgentStatisticsManagerTest extends TCTestCase {
 //      System.out.println(sd.toString());
 //    }
     int numDatas = sessions.length * (2 + supportedStats.length); //1 startup action, 1 shutdown action and supportedStats.length injected actions for each session
-    Assert.assertEquals(numDatas, data.size()); //-- why does this fail ??
+    Assert.assertEquals(numDatas, data.size());
 
     Map<String, Set<String>> receivedData = new HashMap<String, Set<String>>();
     for (int i = 0; i < data.size(); i++) {

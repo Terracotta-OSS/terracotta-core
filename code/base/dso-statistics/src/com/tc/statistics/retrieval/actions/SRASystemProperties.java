@@ -12,6 +12,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Properties;
 
+/**
+ * Statistics giving all the system properties.
+ */
 public class SRASystemProperties implements StatisticRetrievalAction {
 
   public final static String ACTION_NAME = "system properties";

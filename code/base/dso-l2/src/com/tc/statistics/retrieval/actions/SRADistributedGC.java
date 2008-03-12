@@ -8,6 +8,22 @@ import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
 
+/**
+ * This statistics represents statistics for the Distributed garbage collector.
+ * This statistic contains {@link StatisticData} with the following elements:
+ * <ul>
+ * <li>iteration</li>
+ * <li>start time</li>
+ * <li>elapsed time</li>
+ * <li>begin object count</li>
+ * <li>candidate garbage count</li>
+ * <li>actual garbage count</li>
+ * </ul>
+ * This statistic action should not be used to retrieve the Distributed garbage collector statistic.
+ * The actual collection of the distributed garbage collector statistics is done in individual
+ * garbage collectors like {@link com.tc.objectserver.core.impl.MarkAndSweepGarbageCollector} and the
+ * statistics are injected into the statistics sub-system.
+ */
 public class SRADistributedGC implements StatisticRetrievalAction {
 
   public static final String ACTION_NAME = MarkAndSweepGarbageCollector.DISTRIBUTED_GC_STATISTICS;

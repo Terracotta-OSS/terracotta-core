@@ -11,6 +11,10 @@ import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.TimeStampedCounterValue;
 import com.tc.util.Assert;
 
+/**
+ * This statistics gives the number of broadcasts happening in the L2. The number of
+ * broadcasts that is happening is sampled every second presently
+ */
 public class SRAL2BroadcastCount implements StatisticRetrievalAction {
 
   public static final String ACTION_NAME = "l2 broadcast count";

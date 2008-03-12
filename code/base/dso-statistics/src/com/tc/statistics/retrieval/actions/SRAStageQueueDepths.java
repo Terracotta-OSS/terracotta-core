@@ -15,6 +15,15 @@ import com.tc.util.Assert;
 import java.util.Collection;
 import java.util.Iterator;
 
+/**
+ * This statistics gives the depths of all the {@link Stage} sinks in a {@link StageManager}.
+ * It will contain a {@link StatisticData} for each of the {@link Stage} present in the
+ * {@link StageManager}
+ *
+ * This statistic is a {@link DynamicSRA} meaning that the system will turn on the collection of
+ * this statistic only when at least one session has enabled this statistic. When there are no more
+ * sessions using this statistic, collection of this statistic will be turned off. 
+ */
 public class SRAStageQueueDepths implements DynamicSRA {
 
   public static final String ACTION_NAME = "stage queue depth";

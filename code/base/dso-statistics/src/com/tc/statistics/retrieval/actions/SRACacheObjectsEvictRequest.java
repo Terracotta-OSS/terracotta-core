@@ -8,6 +8,20 @@ import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
 
+/**
+ * This statistics action represents the statistics regarding the request of evicting objects from the
+ * {@link CacheManager}. The statistics contains {@link StatisticData} with the following elements
+ * <ul>
+ * <li>asking to evict count</li>
+ * <li>current size</li>
+ * <li>calculated cache size</li>
+ * <li>percentage heap used</li>
+ * <li>gc count</li>
+ * </ul>
+ * This statistic action should not be used to retrieve the cache manager objects evict request stats.
+ * The actual collection of this statistic is done in the {@link CacheManager} and injected into
+ * the statistics sub-system.
+ */
 public class SRACacheObjectsEvictRequest implements StatisticRetrievalAction {
 
   public static final String ACTION_NAME = CacheManager.CACHE_OBJECTS_EVICT_REQUEST;

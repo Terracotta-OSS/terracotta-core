@@ -11,6 +11,10 @@ import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.TimeStampedCounterValue;
 import com.tc.util.Assert;
 
+/**
+ * This statistics gives the transaction count happening per second in the L2. The number of transactions
+ * happening is sampled every second and the {@link com.tc.statistics.retrieval.StatisticsRetriever} samples this data at the global frequency.
+ */
 public class SRAL2TransactionCount implements StatisticRetrievalAction {
 
   public final static String ACTION_NAME = "l2 transaction count";

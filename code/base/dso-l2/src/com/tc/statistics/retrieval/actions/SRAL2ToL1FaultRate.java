@@ -11,6 +11,10 @@ import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.TimeStampedCounterValue;
 import com.tc.util.Assert;
 
+/**
+ * This statistics gives the fault rate of objects from L1 to L2 happening per second. The number of faults that is
+ * happening is sampled every second and the {@link com.tc.statistics.retrieval.StatisticsRetriever} samples this data at the global frequency. 
+ */
 public class SRAL2ToL1FaultRate implements StatisticRetrievalAction {
 
   public final static String ACTION_NAME = "l2 l1 fault";

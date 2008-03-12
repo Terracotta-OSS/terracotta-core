@@ -10,6 +10,11 @@ import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
 
+/**
+ * This statistics gives memory usage statistics.
+ * Contains {link StatisticData} with elements for the amount of free memory, used memory
+ * and max memory
+ */
 public class SRAMemoryUsage implements StatisticRetrievalAction {
   
   public final static String ACTION_NAME = "memory";
