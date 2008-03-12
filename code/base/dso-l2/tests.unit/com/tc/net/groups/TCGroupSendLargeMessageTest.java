@@ -5,6 +5,10 @@
 
 package com.tc.net.groups;
 
+import com.tc.async.api.ConfigurationContext;
+import com.tc.async.api.StageManager;
+import com.tc.async.impl.ConfigurationContextImpl;
+import com.tc.async.impl.StageManagerImpl;
 import com.tc.l2.msg.GCResultMessage;
 import com.tc.l2.msg.GCResultMessageFactory;
 import com.tc.lang.TCThreadGroup;
@@ -34,14 +38,18 @@ public class TCGroupSendLargeMessageTest extends TCTestCase {
     final Node[] allNodes = new Node[] { new Node(LOCALHOST, p1, TCSocketAddress.WILDCARD_IP),
         new Node(LOCALHOST, p2, TCSocketAddress.WILDCARD_IP) };
 
-    TCGroupManagerImpl gm1 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p1,
-                                                    new TCThreadGroup(new ThrowableHandler(null)));
+    StageManager stageManager1 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(null)));
+    TCGroupManagerImpl gm1 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p1, stageManager1);
+    ConfigurationContext context1 = new ConfigurationContextImpl(stageManager1);
+    stageManager1.startAll(context1);
     gm1.setDiscover(new TCGroupMemberDiscoveryStatic(gm1));
     MyListener l1 = new MyListener();
     gm1.registerForMessages(GCResultMessage.class, l1);
 
-    TCGroupManagerImpl gm2 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p2,
-                                                    new TCThreadGroup(new ThrowableHandler(null)));
+    StageManager stageManager2 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(null)));
+    TCGroupManagerImpl gm2 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p2, stageManager2);
+    ConfigurationContext context2 = new ConfigurationContextImpl(stageManager2);
+    stageManager2.startAll(context2);
     gm2.setDiscover(new TCGroupMemberDiscoveryStatic(gm2));
     MyListener l2 = new MyListener();
     gm2.registerForMessages(GCResultMessage.class, l2);

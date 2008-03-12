@@ -4,9 +4,13 @@
  */
 package com.tc.net.groups;
 
+import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
+import com.tc.async.api.StageManager;
+import com.tc.async.impl.ConfigurationContextImpl;
 import com.tc.async.impl.MockSink;
+import com.tc.async.impl.StageManagerImpl;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
@@ -379,8 +383,11 @@ public class TCGroupStateManagerTest extends TCTestCase {
   private StateManager createStateManageNode(int localIndex, Node[] nodes, ChangeSink[] sinks,
                                              TCGroupManagerImpl[] groupMgr, L2StateMessageStage[] messageStage)
       throws Exception {
+    StageManager stageManager = new StageManagerImpl(threadGroup);
     TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), nodes[localIndex].getHost(),
-                                                   nodes[localIndex].getPort(), threadGroup);
+                                                   nodes[localIndex].getPort(), stageManager);
+    ConfigurationContext context = new ConfigurationContextImpl(stageManager);
+    stageManager.startAll(context);
     gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));
 
     groupMgr[localIndex] = gm;

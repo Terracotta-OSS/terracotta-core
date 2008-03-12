@@ -127,7 +127,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     // choose a group comm layer
     final String commLayer = TCPropertiesImpl.getProperties().getProperty(NHA_COMM_LAYER_PROPERTY);
     if (commLayer.equals(TC_GROUP_COMM)) {
-      this.groupManager = new TCGroupManagerImpl(configSetupManager, threadGroup);
+      this.groupManager = new TCGroupManagerImpl(configSetupManager, stageManager);
     } else if (commLayer.equals(TRIBES_COMM)) {
       this.groupManager = new TribesGroupManager();
     } else {

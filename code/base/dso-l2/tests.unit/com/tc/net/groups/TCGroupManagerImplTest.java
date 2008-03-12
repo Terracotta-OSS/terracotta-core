@@ -4,6 +4,10 @@
  */
 package com.tc.net.groups;
 
+import com.tc.async.api.ConfigurationContext;
+import com.tc.async.api.StageManager;
+import com.tc.async.impl.ConfigurationContextImpl;
+import com.tc.async.impl.StageManagerImpl;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.l2.msg.GCResultMessage;
 import com.tc.l2.msg.L2StateMessage;
@@ -70,9 +74,11 @@ public class TCGroupManagerImplTest extends TestCase {
       nodes[i] = new Node(LOCALHOST, groupPorts[i], TCSocketAddress.WILDCARD_IP);
     }
     for (int i = 0; i < n; ++i) {
-      groups[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, groupPorts[i],
-                                         new TCThreadGroup(new ThrowableHandler(TCLogging
-                                             .getLogger(TCGroupManagerImplTest.class))));
+      StageManager stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(TCLogging
+          .getLogger(TCGroupManagerImplTest.class))));
+      groups[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, groupPorts[i], stageManager);
+      ConfigurationContext context = new ConfigurationContextImpl(stageManager);
+      stageManager.startAll(context);
       groups[i].setDiscover(new TCGroupMemberDiscoveryStatic(groups[i]));
       groups[i].registerForGroupEvents(new TestGroupEventListener(groups[i]));
       System.out.println("Starting " + groups[i]);
@@ -120,12 +126,12 @@ public class TCGroupManagerImplTest extends TestCase {
 
     tearGroups();
   }
-  
+
   public void testOpenZappedNode() throws Exception {
     setupGroups(2);
 
     groups[0].addZappedNode(groups[1].getLocalNodeID());
-    
+
     groups[0].join(nodes[0], nodes);
     groups[1].join(nodes[1], nodes);
     Thread.sleep(2000);
@@ -135,7 +141,6 @@ public class TCGroupManagerImplTest extends TestCase {
 
     tearGroups();
   }
-
 
   /*
    * Both open channel to each other, only one direction to keep
@@ -743,7 +748,7 @@ public class TCGroupManagerImplTest extends TestCase {
       System.out.println("XXX " + manager.getLocalNodeID() + " Node left: " + nodeID);
     }
   }
-  
+
   private static class NullChannelEventListener implements ChannelEventListener {
 
     public void notifyChannelEvent(ChannelEvent event) {

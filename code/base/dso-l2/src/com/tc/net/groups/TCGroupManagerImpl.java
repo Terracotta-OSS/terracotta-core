@@ -4,15 +4,11 @@
  */
 package com.tc.net.groups;
 
-import com.tc.async.api.ConfigurationContext;
-import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
-import com.tc.async.impl.ConfigurationContextImpl;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.exception.TCRuntimeException;
-import com.tc.lang.TCThreadGroup;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.MaxConnectionsExceededException;
@@ -70,7 +66,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelManagerEventListener {
+public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventListener {
   private static final TCLogger                                     logger                      = TCLogging
                                                                                                     .getLogger(TCGroupManagerImpl.class);
   public static final String                                        HANDSHAKE_STATE_MACHINE_TAG = "TcGroupCommHandshake";
@@ -92,6 +88,7 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
   private final Timer                                               handshakeTimer              = new Timer(true);
   private final Set<NodeID>                                         zappedSet                   = Collections
                                                                                                     .synchronizedSet(new HashSet<NodeID>());
+  private final StageManager                                        stageManager;
 
   private CommunicationsManager                                     communicationsManager;
   private NetworkListener                                           groupListener;
@@ -107,14 +104,14 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
   /*
    * Setup a communication manager which can establish channel from either sides.
    */
-  public TCGroupManagerImpl(L2TVSConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup) {
-    this(configSetupManager, new NullConnectionPolicy(), threadGroup);
+  public TCGroupManagerImpl(L2TVSConfigurationSetupManager configSetupManager, StageManager stageManager) {
+    this(configSetupManager, new NullConnectionPolicy(), stageManager);
   }
 
   public TCGroupManagerImpl(L2TVSConfigurationSetupManager configSetupManager, ConnectionPolicy connectionPolicy,
-                            TCThreadGroup threadGroup) {
-    super(threadGroup);
+                            StageManager stageManager) {
     this.connectionPolicy = connectionPolicy;
+    this.stageManager = stageManager;
 
     configSetupManager.commonl2Config().changesInItemIgnored(configSetupManager.commonl2Config().dataPath());
     NewL2DSOConfig l2DSOConfig = configSetupManager.dsoL2Config();
@@ -136,9 +133,9 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
   /*
    * for testing purpose only. Tester needs to do setDiscover().
    */
-  TCGroupManagerImpl(ConnectionPolicy connectionPolicy, String hostname, int groupPort, TCThreadGroup threadGroup) {
-    super(threadGroup);
+  TCGroupManagerImpl(ConnectionPolicy connectionPolicy, String hostname, int groupPort, StageManager stageManager) {
     this.connectionPolicy = connectionPolicy;
+    this.stageManager = stageManager;
     thisNodeID = init(makeGroupNodeName(hostname, groupPort), new TCSocketAddress(TCSocketAddress.WILDCARD_ADDR,
                                                                                   groupPort));
   }
@@ -153,8 +150,7 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
     logger.info("Creating group node: " + aNodeID);
 
     int maxStageSize = 5000;
-    StageManager stageManager = getStageManager();
-    hydrateStage = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_SINK, new HydrateHandler(), 1,
+    hydrateStage = stageManager.createStage(ServerConfigurationContext.GROUP_HYDRATE_MESSAGE_SINK, new HydrateHandler(), 1,
                                             maxStageSize);
     receiveGroupMessageStage = stageManager.createStage(ServerConfigurationContext.RECEIVE_GROUP_MESSAGE_STAGE,
                                                         new ReceiveGroupMessageHandler(this), 1, maxStageSize);
@@ -181,10 +177,6 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
     groupListener.addClassMapping(TCMessageType.GROUP_HANDSHAKE_MESSAGE, TCGroupHandshakeMessage.class);
     groupListener.routeMessageType(TCMessageType.GROUP_HANDSHAKE_MESSAGE, handshakeMessageStage.getSink(), hydrateStage
         .getSink());
-
-    ConfigurationContext context = new ConfigurationContextImpl(stageManager);
-
-    stageManager.startAll(context);
 
     registerForMessages(GroupZapNodeMessage.class, new ZapNodeRequestRouter());
 
@@ -224,7 +216,7 @@ public class TCGroupManagerImpl extends SEDA implements GroupManager, ChannelMan
 
   public void stop(long timeout) throws TCTimeoutException {
     isStopped.set(true);
-    getStageManager().stopAll();
+    stageManager.stopAll();
     discover.stop(timeout);
     groupListener.stop(timeout);
     communicationsManager.shutdown();
