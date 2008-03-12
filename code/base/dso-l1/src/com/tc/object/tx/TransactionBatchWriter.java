@@ -25,6 +25,7 @@ import com.tc.util.Assert;
 import com.tc.util.Conversion;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.SequenceID;
+import com.tc.util.concurrent.SetOnceFlag;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -232,6 +233,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     private final ObjectStringSerializer   serializer;
     private final DNAEncoding              encoding;
     private final Mark                     startMark;
+    private final SetOnceFlag              committed            = new SetOnceFlag();
 
     // Maintaining hard references so that it doesn't get GC'ed on us
     private final IdentityHashMap          references           = new IdentityHashMap();
@@ -257,12 +259,15 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     public void writeTo(TCByteBufferOutputStream dest) {
       // XXX: make a writeInt() and writeLong() methods on Mark. Maybe ones that take offsets too
 
-      txnCountMark.write(Conversion.int2Bytes(txnCount));
-      changesCountMark.write(Conversion.int2Bytes(changeCount));
+      // This check is needed since this buffer might need to be resent upon server crash
+      if (committed.attemptSet()) {
+        txnCountMark.write(Conversion.int2Bytes(txnCount));
+        changesCountMark.write(Conversion.int2Bytes(changeCount));
 
-      for (Iterator i = writers.values().iterator(); i.hasNext();) {
-        DNAWriter writer = (DNAWriter) i.next();
-        writer.finalizeHeader();
+        for (Iterator i = writers.values().iterator(); i.hasNext();) {
+          DNAWriter writer = (DNAWriter) i.next();
+          writer.finalizeHeader();
+        }
       }
 
       if (!needsCopy) {
