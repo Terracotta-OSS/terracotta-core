@@ -27,7 +27,7 @@ public class ThreadDumpUtilJdk15 {
       long[] threadIds = threadMXBean.getAllThreadIds();
 
       for (int i = 0; i < threadIds.length; i++) {
-        ThreadInfo threadInfo = threadMXBean.getThreadInfo(threadIds[i]);
+        ThreadInfo threadInfo = threadMXBean.getThreadInfo(threadIds[i], Integer.MAX_VALUE);
         if (threadInfo != null) {
           String s = threadInfo.toString();
 
