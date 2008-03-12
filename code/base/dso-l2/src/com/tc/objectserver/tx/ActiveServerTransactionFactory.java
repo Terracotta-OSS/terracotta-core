@@ -22,9 +22,9 @@ public final class ActiveServerTransactionFactory implements ServerTransactionFa
   public ServerTransaction createServerTransaction(GlobalTransactionIDGenerator gtxm, TxnBatchID batchID,
                                                    TransactionID txnID, SequenceID sequenceID, LockID[] locks,
                                                    NodeID source, List dnas, ObjectStringSerializer serializer,
-                                                   Map newRoots, TxnType txnType, List notifies, DmiDescriptor[] dmis, int numApplicationTxn) {
+                                                   Map newRoots, TxnType txnType, List notifies, DmiDescriptor[] dmis) {
     return new ServerTransactionImpl(gtxm, batchID, txnID, sequenceID, locks, source, dnas, serializer, newRoots,
-                                     txnType, notifies, dmis, numApplicationTxn);
+                                     txnType, notifies, dmis);
   }
 
 }

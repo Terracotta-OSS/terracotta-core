@@ -4,6 +4,7 @@
  */
 package com.tc.object.change;
 
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.TCClass;
@@ -13,10 +14,12 @@ import com.tc.object.change.event.LiteralChangeEvent;
 import com.tc.object.change.event.LogicalChangeEvent;
 import com.tc.object.change.event.PhysicalChangeEvent;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
+import com.tc.object.dna.impl.DNAWriterImpl;
+import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
@@ -71,8 +74,15 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
     }
   }
 
-  public void writeTo(DNAWriter writer) {
+  public void writeTo(TCByteBufferOutputStream output, ObjectStringSerializer serializer, DNAEncoding encoding) {
+    // NOTE: This method releases the change events to conserve memory
+
     if (dnaCreated.attemptSet()) {
+      TCClass tcClass = tcObject.getTCClass();
+      String className = tcClass.getExtendingClassName();
+      String loaderDesc = tcClass.getDefiningLoaderDescription();
+      DNAWriter writer = new DNAWriterImpl(output, tcObject.getObjectID(), className, serializer, encoding, loaderDesc);
+
       final boolean isDelta;
 
       if (tcObject.dehydrateIfNew(writer)) {
@@ -93,8 +103,7 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
         }
       }
 
-      writer.setDelta(isDelta);
-      writer.markSectionEnd();
+      writer.finalizeDNA(isDelta);
       return;
     }
 

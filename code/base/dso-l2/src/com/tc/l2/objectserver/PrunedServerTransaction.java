@@ -99,8 +99,4 @@ public class PrunedServerTransaction implements ServerTransaction {
     return orgTxn.needsBroadcast();
   }
 
-  public int getNumApplicationTxn() {
-    return orgTxn.getNumApplicationTxn();
-  }
-
 }

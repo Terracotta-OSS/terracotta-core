@@ -33,10 +33,10 @@ public class ThrowableHandler {
   private final TCLogger            logger;
   private final ExceptionHelperImpl helper;
   private CopyOnWriteArrayList      callbackOnExitHandlers = new CopyOnWriteArrayList();
-
+ 
   /**
    * Construct a new ThrowableHandler with a logger
-   *
+   * 
    * @param logger Logger
    */
   public ThrowableHandler(TCLogger logger) {
@@ -50,11 +50,11 @@ public class ThrowableHandler {
   public void addCallbackOnExitHandler(CallbackOnExitHandler callbackOnExitHandler) {
     callbackOnExitHandlers.add(callbackOnExitHandler);
   }
-
+ 
 
   /**
    * Handle throwable occurring on thread
-   *
+   * 
    * @param thread Thread receiving Throwable
    * @param t Throwable
    */
@@ -79,11 +79,11 @@ public class ThrowableHandler {
       handleDefaultException(thread, proximateCause);
     }
   }
-
+  
   protected void registerDefaultCallbackHandlers() {
     callbackOnExitHandlers.add( new ThreadDumpHandler());
   }
-
+  
   protected void exit(int status) {
     System.exit(status);
   }
@@ -95,7 +95,7 @@ public class ThrowableHandler {
     throwable.printStackTrace(System.err);
     System.err.flush();
     logger.error("Thread:" + thread + " got an uncaught exception.  About to sleep then exit.", throwable);
-
+    
     for (Iterator iter = callbackOnExitHandlers.iterator(); iter.hasNext();) {
       CallbackOnExitHandler callbackOnExitHandler = (CallbackOnExitHandler) iter.next();
       callbackOnExitHandler.callbackOnExit();
@@ -108,7 +108,7 @@ public class ThrowableHandler {
     }
     exit(1);
   }
-
+ 
   private void handleStartupException(Exception e) {
     handleStartupException(e, "");
   }

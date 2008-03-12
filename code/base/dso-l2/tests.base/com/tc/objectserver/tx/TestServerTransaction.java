@@ -109,8 +109,4 @@ public final class TestServerTransaction implements ServerTransaction {
     return true;
   }
 
-  public int getNumApplicationTxn() {
-    return 1;
-  }
-
 }

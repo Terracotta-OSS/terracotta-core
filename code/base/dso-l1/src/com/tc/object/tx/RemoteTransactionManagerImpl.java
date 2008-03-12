@@ -37,7 +37,7 @@ import java.util.Map.Entry;
 
 /**
  * Sends off committed transactions
- *
+ * 
  * @author steve
  */
 public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
@@ -216,21 +216,23 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   }
 
   public void commit(ClientTransaction txn) {
+
     if (!txn.hasChangesOrNotifies()) throw new AssertionError("Attempt to commit an empty transaction.");
 
-    TransactionID txID = txn.getTransactionID();
+    commitInternal(txn);
+  }
 
+  private void commitInternal(ClientTransaction txn) {
+    TransactionID txID = txn.getTransactionID();
     if (DebugUtil.DEBUG) {
       System.err.println(ManagerUtil.getClientID() + " commiting " + txID.toString());
     }
-
-    long start = System.currentTimeMillis();
-
-    boolean folded = sequencer.addTransaction(txn);
-    if (!txn.isConcurrent() && !folded) {
+    if (!txn.isConcurrent()) {
       lockAccounting.add(txID, txn.getAllLockIDs());
     }
 
+    long start = System.currentTimeMillis();
+    sequencer.addTransaction(txn);
     long diff = System.currentTimeMillis() - start;
     if (diff > 1000) {
       logger.info("WARNING ! Took more than 1000ms to add to sequencer  : " + diff + " ms");
@@ -254,7 +256,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     ClientTransactionBatch batch;
     while ((ignoreMax || canSendBatch()) && (batch = sequencer.getNextBatch()) != null) {
       if (message != null) {
-        logger.debug(message + " : Sending batch containing " + batch.numberOfTxnsBeforeFolding() + " txns");
+        logger.debug(message + " : Sending batch containing " + batch.numberOfTxns() + " Txns.");
       }
       sendBatch(batch, true);
     }
@@ -342,7 +344,6 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
         }
         Collection txnIds = batchToSend.addTransactionIDsTo(new HashSet());
         batchAccounting.addBatch(batchToSend.getTransactionBatchID(), txnIds);
-
       }
       batchToSend.send();
       outStandingBatches++;

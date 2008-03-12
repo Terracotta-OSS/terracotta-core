@@ -6,8 +6,6 @@ package com.tctest;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
-import com.tc.exception.ImplementMe;
-import com.tc.io.TCByteBufferOutput;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manageable;
@@ -146,6 +144,10 @@ public class FileSharingTestApp extends AbstractTransparentApp {
       addPhysicalAction(fieldName, value, true);
     }
 
+    public void finalizeDNA(boolean isDeltaDNA) {
+      //
+    }
+
     public void addArrayElementAction(int index, Object value) {
       //
     }
@@ -182,36 +184,6 @@ public class FileSharingTestApp extends AbstractTransparentApp {
     public void addSubArrayAction(int start, Object array, int length) {
       //
     }
-
-    public int getActionCount() {
-      throw new ImplementMe();
-    }
-
-    public void copyTo(TCByteBufferOutput dest) {
-      //
-    }
-
-    public DNAWriter createAppender() {
-      throw new ImplementMe();
-    }
-
-    public void finalizeHeader() {
-      throw new ImplementMe();
-
-    }
-
-    public boolean isContiguous() {
-      throw new ImplementMe();
-    }
-
-    public void markSectionEnd() {
-      throw new ImplementMe();
-    }
-
-    public void setDelta(boolean isDelta) {
-      throw new ImplementMe();
-    }
-
   }
 
 }

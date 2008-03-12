@@ -1,6 +1,5 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
 package com.tc.object.tx;
 
@@ -17,8 +16,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Hangs on to a grouping of changes to be sent as a batch to the server. Changes are accumulated by the
- * ClientTransactionManager.
+ * Hangs on to a grouping of changes to be sent as a batch to the server.  
+ * Changes are accumulated by the ClientTransactionManager.
  *
  * @author steve
  */
@@ -26,56 +25,48 @@ public interface ClientTransaction {
 
   /**
    * Set the transaction context (type and related locks)
-   *
    * @param transactionContext Context
    */
   public void setTransactionContext(TransactionContext transactionContext);
 
   /**
    * Get all change buffers associated with this transaction
-   *
-   * @return Map of ObjectID to TCChangeBuffer
+   * @return Map of TCObject to TCChangeBuffer
    */
   public Map getChangeBuffers();
 
   /**
    * Get new roots in this transaction
-   *
    * @return Map of Root name to ObjectID
    */
   public Map getNewRoots();
 
   /**
    * Get initial lock identifier
-   *
    * @return Identifier
    */
   public LockID getLockID();
 
   /**
    * Get all locks associated with this transaction
-   *
    * @return All locks
    */
   public List getAllLockIDs();
 
   /**
    * Get transaction identifier
-   *
    * @return Identifier
    */
   public TransactionID getTransactionID();
 
   /**
    * Record new object creation
-   *
    * @param source TCObject for new object
    */
   public void createObject(TCObject source);
 
   /**
    * Record new root
-   *
    * @param name Root name
    * @param rootID ObjectID for root value
    */
@@ -83,7 +74,6 @@ public interface ClientTransaction {
 
   /**
    * Record field changed
-   *
    * @param source TCObject for value
    * @param classname Class name
    * @param fieldname Field name
@@ -94,7 +84,6 @@ public interface ClientTransaction {
 
   /**
    * Record literal value changed
-   *
    * @param source TCObject for instance
    * @param newValue New value for instance
    * @param oldValue Old value for instance
@@ -103,7 +92,6 @@ public interface ClientTransaction {
 
   /**
    * Record array change
-   *
    * @param source TCObject for instance
    * @param startPos Index into array
    * @param array Partial array or value
@@ -113,7 +101,6 @@ public interface ClientTransaction {
 
   /**
    * Record logical invocation
-   *
    * @param source Source of invoke
    * @param method Method identifier
    * @param parameters Parameter values
@@ -123,35 +110,37 @@ public interface ClientTransaction {
 
   /**
    * Check whether transactoin has changes or notifications
-   *
    * @return True if has changes or notifies
    */
   public boolean hasChangesOrNotifies();
 
   /**
    * Check whether this is a null transaction
-   *
    * @return True if null
    */
   public boolean isNull();
 
   /**
    * Get transaction type
-   *
    * @return Type
    */
   public TxnType getTransactionType();
 
   /**
+   * Record Notify's
+   * @param notifies Of Notify's
+   * @return All Notify's
+   */
+  public List addNotifiesTo(List notifies);
+
+  /**
    * Add a new Notify
-   *
    * @param notify Notify
    */
   public void addNotify(Notify notify);
 
   /**
    * Indicate place in sequence of transactions
-   *
    * @param sequenceID Identifier
    */
   public void setSequenceID(SequenceID sequenceID);
@@ -183,37 +172,26 @@ public interface ClientTransaction {
 
   /**
    * Update MBean with state
-   *
    * @param txMBean MBean to update
    */
   public void updateMBean(ClientTxMonitorMBean txMBean);
 
   /**
    * Get all references of objects included in the transaction
-   *
    * @return Collection of referenced objects
    */
   public Collection getReferencesOfObjectsInTxn();
-
+  
   /**
    * Add a new DMI descriptor
-   *
    * @param dd Descriptor
    */
   public void addDmiDescritor(DmiDescriptor dd);
-
+  
   /**
    * Get all DmiDescriptors
-   *
    * @return List of DmiDescriptors in transaction
    */
   public List getDmiDescriptors();
-
-  /**
-   * Get all Notify calls
-   *
-   * @return List of notify/notifyAll() calls in this transaction
-   */
-  public List getNotifies();
 
 }

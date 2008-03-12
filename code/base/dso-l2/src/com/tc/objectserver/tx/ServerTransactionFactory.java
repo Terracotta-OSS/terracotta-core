@@ -22,7 +22,6 @@ public interface ServerTransactionFactory {
   public ServerTransaction createServerTransaction(GlobalTransactionIDGenerator gtxm, TxnBatchID batchID,
                                                    TransactionID txnID, SequenceID sequenceID, LockID[] locks,
                                                    NodeID source, List dnas, ObjectStringSerializer serializer,
-                                                   Map newRoots, TxnType txnType, List notifies, DmiDescriptor[] dmis,
-                                                   int numApplictionTxn);
+                                                   Map newRoots, TxnType txnType, List notifies, DmiDescriptor[] dmis);
 
 }

@@ -1,12 +1,13 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
 package com.tc.object.change;
 
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.TCObject;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 
 /**
@@ -26,7 +27,7 @@ public interface TCChangeBuffer {
 
   public void logicalInvoke(int method, Object[] parameters);
 
-  public void writeTo(DNAWriter writer);
+  public void writeTo(TCByteBufferOutputStream output, ObjectStringSerializer serializer, DNAEncoding encoding);
 
   public TCObject getTCObject();
 

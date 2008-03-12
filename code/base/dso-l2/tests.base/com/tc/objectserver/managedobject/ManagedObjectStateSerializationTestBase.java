@@ -6,7 +6,6 @@ package com.tc.objectserver.managedobject;
 
 import com.sleepycat.je.CursorConfig;
 import com.tc.exception.ImplementMe;
-import com.tc.io.TCByteBufferOutput;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
@@ -143,6 +142,10 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
       addPhysicalAction(field, value, value instanceof ObjectID);
     }
 
+    public void finalizeDNA(boolean isDeltaDNA) {
+      //
+    }
+
     public void addArrayElementAction(int index, Object value) {
       //
     }
@@ -252,35 +255,11 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
 
     public void addClassLoaderAction(String classLoaderFieldName, ClassLoader value) {
       //
+
     }
 
     public void addSubArrayAction(int start, Object array, int length) {
       //
-    }
-
-    public void copyTo(TCByteBufferOutput dest) {
-      throw new ImplementMe();
-
-    }
-
-    public DNAWriter createAppender() {
-      throw new ImplementMe();
-    }
-
-    public void finalizeHeader() {
-      throw new ImplementMe();
-    }
-
-    public boolean isContiguous() {
-      throw new ImplementMe();
-    }
-
-    public void markSectionEnd() {
-      throw new ImplementMe();
-    }
-
-    public void setDelta(boolean isDelta) {
-      throw new ImplementMe();
     }
   }
 

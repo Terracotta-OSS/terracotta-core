@@ -5,7 +5,6 @@
 package com.tc.objectserver.managedobject;
 
 import com.tc.exception.ImplementMe;
-import com.tc.io.TCByteBufferOutput;
 import com.tc.io.serializer.TCObjectInputStream;
 import com.tc.io.serializer.TCObjectOutputStream;
 import com.tc.object.ObjectID;
@@ -129,10 +128,6 @@ public abstract class AbstractTestManagedObjectState extends TestCase {
       //
     }
 
-    public void finalizeDNA(boolean isDeltaDNA, int actionCount, int totalLength) {
-      //
-    }
-
     public void addArrayElementAction(int index, Object value) {
       //
     }
@@ -248,32 +243,6 @@ public abstract class AbstractTestManagedObjectState extends TestCase {
     public void addSubArrayAction(int start, Object array, int length) {
       //
     }
-
-    public void copyTo(TCByteBufferOutput dest) {
-      throw new ImplementMe();
-
-    }
-
-    public DNAWriter createAppender() {
-      throw new UnsupportedOperationException();
-    }
-
-    public void finalizeHeader() {
-      //
-    }
-
-    public boolean isContiguous() {
-      return true;
-    }
-
-    public void markSectionEnd() {
-      //
-    }
-
-    public void setDelta(boolean isDelta) {
-      //
-    }
-
   }
 
   public class TestDNACursor implements DNACursor {

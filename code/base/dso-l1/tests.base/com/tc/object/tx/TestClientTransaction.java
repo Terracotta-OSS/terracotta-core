@@ -26,12 +26,11 @@ public class TestClientTransaction implements ClientTransaction {
   public TransactionID txID;
   public LockID        lockID;
   public TxnType       txnType;
-  public boolean       hasChangesOrNotifies = true;
+  private boolean      hasChangesOrNotifies = true;
   public Collection    allLockIDs           = new HashSet();
-  private SequenceID   sequenceID;
+  public SequenceID    sequenceID;
   public Map           newRoots             = new HashMap();
   public Map           changeBuffers        = new HashMap();
-  private List         notifies             = new ArrayList();
 
   public TestClientTransaction() {
     super();
@@ -86,11 +85,15 @@ public class TestClientTransaction implements ClientTransaction {
   }
 
   public void addNotify(Notify notify) {
-    this.notifies.add(notify);
+    throw new ImplementMe();
+  }
+
+  public List addNotifiesTo(List notifies) {
+    return notifies;
   }
 
   public void setSequenceID(SequenceID sequenceID) {
-    this.sequenceID = sequenceID;
+    return;
   }
 
   public SequenceID getSequenceID() {
@@ -114,7 +117,7 @@ public class TestClientTransaction implements ClientTransaction {
   }
 
   public int getNotifiesCount() {
-    return notifies.size();
+    throw new ImplementMe();
   }
 
   public void arrayChanged(TCObject source, int startPos, Object array, int length) {
@@ -145,7 +148,4 @@ public class TestClientTransaction implements ClientTransaction {
     throw new ImplementMe();
   }
 
-  public List getNotifies() {
-    return notifies;
-  }
 }

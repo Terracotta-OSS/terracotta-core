@@ -39,8 +39,7 @@ public class VersionizedDNAWrapperTest extends TestCase {
     dnaWriter.addPhysicalAction(action3.getFieldName(), action3.getObject());
     dnaWriter.setParentObjectID(pid);
     dnaWriter.setArrayLength(arrayLen);
-    dnaWriter.markSectionEnd();
-    dnaWriter.finalizeHeader();
+    dnaWriter.finalizeDNA(true);
 
     TCByteBufferInputStream in = new TCByteBufferInputStream(out.toArray());
     DNAImpl dna = createDNAImpl(serializer, true);

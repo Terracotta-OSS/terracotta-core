@@ -63,18 +63,18 @@ public class TransactionSequencer {
     return batchFactory.nextBatch();
   }
 
-  private boolean addTransactionToBatch(ClientTransaction txn, ClientTransactionBatch batch) {
-    return batch.addTransaction(txn, sequence);
+  private void addTransactionToBatch(ClientTransaction txn, ClientTransactionBatch batch) {
+    batch.addTransaction(txn);
   }
 
-  public synchronized boolean addTransaction(ClientTransaction txn) {
+  public synchronized void addTransaction(ClientTransaction txn) {
     if (shutdown) {
       logger.error("Sequencer shutdown. Not committing " + txn);
-      return false;
+      return;
     }
 
     try {
-      return addTxnInternal(txn);
+      addTxnInternal(txn);
     } catch (Throwable t) {
       // logging of exceptions is done at a higher level
       shutdown = true;
@@ -91,10 +91,12 @@ public class TransactionSequencer {
   /**
    * XXX::Note : There is automatic throttling built in by adding to a BoundedLinkedQueue from within a synch block
    */
-  private boolean addTxnInternal(ClientTransaction txn) {
+  private void addTxnInternal(ClientTransaction txn) {
+    SequenceID sequenceID = new SequenceID(sequence.getNextSequence());
+    txn.setSequenceID(sequenceID);
     txnsPerBatch++;
 
-    boolean rv = addTransactionToBatch(txn, currentBatch);
+    addTransactionToBatch(txn, currentBatch);
     if (currentBatch.byteSize() > MAX_BYTE_SIZE_FOR_BATCH) {
       put(currentBatch);
       reconcilePendingSize();
@@ -103,7 +105,6 @@ public class TransactionSequencer {
       txnsPerBatch = 0;
     }
     throttle();
-    return rv;
   }
 
   private void throttle() {

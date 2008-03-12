@@ -7,7 +7,6 @@ package com.tc.object.tx;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.lockmanager.api.LockID;
-import com.tc.util.Assert;
 import com.tc.util.SequenceID;
 
 import java.util.List;
@@ -17,8 +16,8 @@ import java.util.List;
  */
 abstract class AbstractClientTransaction implements ClientTransaction {
 
-  private final TransactionID txID;
   private SequenceID          seqID = SequenceID.NULL_ID;
+  private final TransactionID txID;
   private TransactionContext  transactionContext;
   private boolean             alreadyCommittedFlag;
 
@@ -34,7 +33,6 @@ abstract class AbstractClientTransaction implements ClientTransaction {
   }
 
   public synchronized SequenceID getSequenceID() {
-    Assert.assertFalse(this.seqID.isNull());
     return this.seqID;
   }
 

@@ -21,7 +21,7 @@ import java.util.Set;
 
 /**
  * Represents an atomic change to the states of objects on the server
- *
+ * 
  * @author steve
  */
 
@@ -38,7 +38,7 @@ public interface ServerTransaction extends GlobalTransaction {
   public TransactionID getTransactionID();
 
   public ServerTransactionID getServerTransactionID();
-
+  
   public List getChanges();
 
   public Map getNewRoots();
@@ -46,19 +46,13 @@ public interface ServerTransaction extends GlobalTransaction {
   public TxnType getTransactionType();
 
   public Set getObjectIDs();
-
+  
   public Set getNewObjectIDs();
 
   public Collection getNotifies();
 
   public DmiDescriptor[] getDmiDescriptors();
-
+  
   public boolean needsBroadcast();
-
-  /**
-   * Number of actual client/application transactions that this server transaction contains. Txn folding on the client
-   * might make the relationship not 1:1
-   */
-  public int getNumApplicationTxn();
 
 }

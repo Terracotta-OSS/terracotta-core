@@ -41,9 +41,7 @@ public class DNAImplTest extends TestCase {
     dnaWriter.addPhysicalAction(action3.getFieldName(), action3.getObject());
     dnaWriter.setParentObjectID(pid);
     dnaWriter.setArrayLength(arrayLen);
-    dnaWriter.setDelta(getIsDelta());
-    dnaWriter.markSectionEnd();
-    dnaWriter.finalizeHeader();
+    dnaWriter.finalizeDNA(getIsDelta());
 
     TCByteBufferInputStream in = new TCByteBufferInputStream(out.toArray());
     dna = createDNAImpl(serializer, true);
