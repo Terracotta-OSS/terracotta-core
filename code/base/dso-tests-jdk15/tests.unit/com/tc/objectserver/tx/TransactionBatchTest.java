@@ -192,6 +192,7 @@ public class TransactionBatchTest extends TestCase {
   }
 
   public void testSimpleFold() throws IOException {
+    writer = newWriter(true, 0, 0);
     ObjectStringSerializer serializer = new ObjectStringSerializer();
     TestCommitTransactionMessageFactory mf = new TestCommitTransactionMessageFactory();
     ClientID clientID = new ClientID(new ChannelID(69));
