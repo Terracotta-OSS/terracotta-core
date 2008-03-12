@@ -39,15 +39,23 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
     m_clients = ClientsHelper.getHelper().getClients(m_cc);
 
     for (int i = 0; i < m_clients.length; i++) {
-      add(new ClientTreeNode(m_cc, m_clients[i]));
+      add(createClientNode(m_cc, m_clients[i]));
     }
 
-    ClientsPanel panel = new ClientsPanel(m_cc, this, m_clients);
+    ClientsPanel panel = createClientsPanel(m_cc, this, m_clients);
     panel.setNode(this);
     updateLabel();
     setComponent(panel);
 
     m_cc.addNotificationListener(dso, this);
+  }
+  
+  protected ClientNode createClientNode(ConnectionContext cc, DSOClient client) {
+    return new ClientNode(cc, client);
+  }
+  
+  protected ClientsPanel createClientsPanel(ConnectionContext cc, ClientsNode clientsNode, DSOClient[] clients) {
+    return new ClientsPanel(cc, this, clients);
   }
   
   public void newConnectionContext() {
@@ -59,7 +67,7 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
   void selectClientNode(String remoteAddr) {
     int childCount = getChildCount();
     for (int i = 0; i < childCount; i++) {
-      ClientTreeNode ctn = (ClientTreeNode) getChildAt(i);
+      ClientNode ctn = (ClientNode) getChildAt(i);
       String ctnRemoteAddr = ctn.getClient().getRemoteAddress();
       if (ctnRemoteAddr.equals(remoteAddr)) {
         AdminClient.getContext().controller.select(ctn);
@@ -114,7 +122,7 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
       list.add(client);
       m_clients = list.toArray(new DSOClient[0]);
 
-      ClientTreeNode ctn = new ClientTreeNode(m_cc, client);
+      ClientNode ctn = new ClientNode(m_cc, client);
       XTreeModel model = getModel();
       if (model != null) {
         model.insertNodeInto(ctn, this, getChildCount());

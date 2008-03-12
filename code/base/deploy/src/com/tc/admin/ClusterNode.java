@@ -13,7 +13,7 @@ import com.tc.admin.common.StatusView;
 import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.common.XTreeNode;
 import com.tc.admin.dso.ClassesNode;
-import com.tc.admin.dso.ClientTreeNode;
+import com.tc.admin.dso.ClientNode;
 import com.tc.admin.dso.ClientsNode;
 import com.tc.admin.dso.DSOClient;
 import com.tc.admin.dso.DSOHelper;
@@ -1096,7 +1096,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
 
     int clientCount = m_clientsNode.getChildCount();
     for (int i = 0; i < clientCount; i++) {
-      ClientTreeNode clientNode = (ClientTreeNode) m_clientsNode.getChildAt(i);
+      ClientNode clientNode = (ClientNode) m_clientsNode.getChildAt(i);
       DSOClient client = clientNode.getClient();
       try {
         L1InfoMBean l1Info = client.getL1InfoMBean();

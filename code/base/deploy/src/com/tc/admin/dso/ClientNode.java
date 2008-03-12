@@ -6,10 +6,10 @@ package com.tc.admin.dso;
 import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.ComponentNode;
 
-public class ClientTreeNode extends ComponentNode {
+public class ClientNode extends ComponentNode {
   private DSOClient m_client;
 
-  public ClientTreeNode(ConnectionContext cc, DSOClient client) {
+  public ClientNode(ConnectionContext cc, DSOClient client) {
     super(client.getRemoteAddress());
     setComponent(createClientPanel(m_client = client));
   }

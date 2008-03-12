@@ -24,7 +24,7 @@ public class ClientTreeModel extends XTreeModel {
     XTreeNode rootNode = (XTreeNode)getRoot();
 
     for(int i = 0; i < clients.length; i++) {
-      insertNodeInto(new ClientTreeNode(cc, clients[i]), rootNode, i);
+      insertNodeInto(new ClientNode(cc, clients[i]), rootNode, i);
     }
   }
 }

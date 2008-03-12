@@ -18,7 +18,16 @@
             <children>
               <container>
                 <children>
-                  <item child-name="StatusIndicator" child-type="com.tc.admin.common.StatusView" />
+                  <container>
+                    <children>
+                      <item child-name="StatusIndicator" child-type="com.tc.admin.common.StatusView" />
+                      <container name="ControlArea" />
+                      </children>
+                     <connections>
+                       <item bottom="-1,bottom:s" height="n" left="-1,left:0" right="0,left:n" top="-1,top:s" width="n" />
+                       <item bottom="-1,bottom:s" height="n" left="0,right:n" right="-1,right:0" top="-1,top:s" width="ns" />
+                     </connections>
+                  </container>
                   <scrollpane>
                     <table class="com.tc.admin.common.PropertyTable" name="ServerInfoTable"/>
                   </scrollpane>
@@ -26,13 +35,13 @@
                 </children>
                 <connections>
                   <item bottom="1,top:n" height="n" left="-1,left:n" right="-1,right:n" top="-1,top:n" width="n" />
-                  <item bottom="2,top:ns" height="s" left="-1,left:n" right="-1,right:n" top="0,bottom:n" width="s" />
+                  <item bottom="2,top:ns" height="ns" left="-1,left:n" right="-1,right:n" top="0,bottom:n" width="s" />
                   <item bottom="-1,bottom:n" height="n" left="-1,left:sn" right="-1,right:sn" top="1,bottom:ns" width="n" />
                 </connections>
               </container>
             </children>
             <connections>
-              <item bottom="-1,bottom:n" height="sn" left="-1,left:n" right="-1,right:n" top="-1,top:n" width="sn" />
+              <item bottom="-1,bottom:n" height="ns" left="-1,left:n" right="-1,right:n" top="-1,top:n" width="sn" />
             </connections>
           </container>
         </tab>
@@ -577,12 +586,14 @@
         <tab title="Main">
           <container>
             <children>
+              <container name="ControlArea"/>
               <scrollpane>
                 <table class="com.tc.admin.common.PropertyTable" name="ClientInfoTable"/>
               </scrollpane>
             </children>
             <connections>
-              <item bottom="-1,bottom:ns" height="s" left="-1,left:n" right="-1,right:n" top="-1,top:n" width="s" />
+              <item bottom="1,top:n" height="n" left="-1,left:n" right="-1,right:ns" top="-1,top:n" width="n" />
+              <item bottom="-1,bottom:ns" height="s" left="-1,left:n" right="-1,right:n" top="0,bottom:n" width="s" />
             </connections>
           </container>
         </tab>
