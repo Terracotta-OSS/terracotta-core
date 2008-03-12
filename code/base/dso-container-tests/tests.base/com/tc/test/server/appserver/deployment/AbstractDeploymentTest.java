@@ -25,13 +25,10 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
 
   protected Log            logger              = LogFactory.getLog(getClass());
 
-  private ServerManager    serverManager;
-  private WatchDog         watchDog;
+  private ServerManager    serverManager;  
 
   Map                      disabledVariants    = new HashMap();
   List                     disabledJavaVersion = new ArrayList();
-
-  private static final int TIMEOUT_DEFAULT     = 30 * 60;
 
   public AbstractDeploymentTest() {
     // need more work to run tests with Jetty
@@ -69,16 +66,8 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   }
 
   public void runBare() throws Throwable {
-
     if (shouldDisable()) { return; }
-
-    watchDog = new WatchDog(getTimeout());
-    try {
-      watchDog.startWatching();
-      super.runBare();
-    } finally {
-      watchDog.stopWatching();
-    }
+    super.runBare();
   }
 
   protected ServerManager getServerManager() {
@@ -90,15 +79,6 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
       }
     }
     return serverManager;
-  }
-
-  protected int getTimeout() {
-    String timeout = TestConfigObject.getInstance().springTestsTimeout();
-    if (timeout == null) {
-      return TIMEOUT_DEFAULT;
-    } else {
-      return Integer.parseInt(timeout);
-    }
   }
 
   protected void tearDown() throws Exception {

@@ -91,7 +91,6 @@ public class TestConfigObject {
 
   private static final String     TRANSPARENT_TESTS_MODE           = STATIC_PROPERTIES_PREFIX
                                                                      + "transparent-tests.mode";
-  private static final String     SPRING_TESTS_TIMEOUT             = STATIC_PROPERTIES_PREFIX + "spring.tests.timeout";
 
   private static final String     SYSTEM_PROPERTIES_RESOURCE_NAME  = "/test-system-properties.properties";
 
@@ -321,13 +320,9 @@ public class TestConfigObject {
   public AppServerInfo appServerInfo() {
     return appServerInfo;
   }
-  
+
   public int appServerId() {
     return appServerInfo.getId();
-  }
-
-  public String springTestsTimeout() {
-    return this.properties.getProperty(SPRING_TESTS_TIMEOUT);
   }
 
   public String executableSearchPath() {
