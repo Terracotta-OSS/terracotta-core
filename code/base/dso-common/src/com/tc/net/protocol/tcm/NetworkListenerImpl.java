@@ -98,12 +98,12 @@ class NetworkListenerImpl implements NetworkListener {
   }
 
   public synchronized InetAddress getBindAddress() {
-    if (!started) { throw new IllegalArgumentException("Listener not running"); }
+    if (!started) { throw new IllegalStateException("Listener not running"); }
     return lsnr.getBindAddress();
   }
 
   public synchronized int getBindPort() {
-    if (!started) { throw new IllegalArgumentException("Listener not running"); }
+    if (!started) { throw new IllegalStateException("Listener not running"); }
     return lsnr.getBindPort();
   }
 

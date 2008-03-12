@@ -907,8 +907,14 @@ public class DistributedObjectServer implements TCDumper {
   public int getListenPort() {
     NewL2DSOConfig l2DSOConfig = configSetupManager.dsoL2Config();
     int configValue = l2DSOConfig.listenPort().getInt();
-    int listenerValue = this.l1Listener != null ? this.l1Listener.getBindPort() : 0;
-    return configValue == 0 ? listenerValue : configValue;
+    if (configValue != 0) { return configValue; }
+    if (this.l1Listener != null) {
+      try {
+        return this.l1Listener.getBindPort();
+      } catch (IllegalStateException ise) {/**/
+      }
+    }
+    return -1;
   }
 
   public InetAddress getListenAddr() {
