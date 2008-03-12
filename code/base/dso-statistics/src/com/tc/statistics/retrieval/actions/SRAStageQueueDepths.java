@@ -24,7 +24,6 @@ public class SRAStageQueueDepths implements DynamicSRA {
   public SRAStageQueueDepths(final StageManager stageManager) {
     Assert.assertNotNull(stageManager);
     this.stageManager = stageManager;
-    disableStatisticCollection();
   }
 
   public String getName() {
