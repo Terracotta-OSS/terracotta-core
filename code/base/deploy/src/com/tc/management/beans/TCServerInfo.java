@@ -68,7 +68,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     manager = TCRuntime.getJVMMemoryManager();
 
     try {
-      Class sraCpuType = Class.forName("com.tc.statistics.retrieval.actions.SRACpuCombined");
+      Class sraCpuType = Class.forName("com.tc.statistics.retrieval.actions.SRACpu");
       if (sraCpuType != null) {
         cpuSRA = (StatisticRetrievalAction) sraCpuType.newInstance();
       }

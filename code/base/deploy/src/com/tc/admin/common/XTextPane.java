@@ -23,7 +23,7 @@ public class XTextPane extends TextPane {
     return new TextComponentHelper(this);
   }
 
-  private JPopupMenu createPopup() {
+  protected JPopupMenu createPopup() {
     return m_helper.createPopup();
   }
 

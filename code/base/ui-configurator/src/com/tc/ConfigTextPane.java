@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc;
 
@@ -42,57 +43,64 @@ import javax.swing.undo.UndoManager;
 import javax.swing.undo.UndoableEdit;
 
 public class ConfigTextPane extends XTextPane {
-  private static final int SHORTCUT_KEY_MASK =
-    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+  private static final int       SHORTCUT_KEY_MASK = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
 
-  private SaveAction m_saveAction;
-  private UndoAction m_undoAction;
-  private RedoAction m_redoAction;
-  
-  private static final String SAVE_CMD = "Save";
-  private static final String UNDO_CMD = "Undo";
-  private static final String REDO_CMD = "Redo";
-  
-  private static final KeyStroke SAVE_STROKE =
-    KeyStroke.getKeyStroke(KeyEvent.VK_S, SHORTCUT_KEY_MASK, false);
-  private static final KeyStroke UNDO_STROKE =
-    KeyStroke.getKeyStroke(KeyEvent.VK_Z, SHORTCUT_KEY_MASK, false);
-  private static final KeyStroke REDO_STROKE =
-    KeyStroke.getKeyStroke(KeyEvent.VK_Z, SHORTCUT_KEY_MASK|InputEvent.SHIFT_MASK, false);
-  
-  private ConfigTextListener m_configTextListener;
-  private SimpleAttributeSet m_errorAttrSet;
-  private Timer              m_parseTimer;
-  private MyUndoManager      m_undoManager;
-  
+  private SaveAction             m_saveAction;
+  private UndoAction             m_undoAction;
+  private RedoAction             m_redoAction;
+
+  private static final String    SAVE_CMD          = "Save";
+  private static final String    UNDO_CMD          = "Undo";
+  private static final String    REDO_CMD          = "Redo";
+
+  private static final KeyStroke SAVE_STROKE       = KeyStroke.getKeyStroke(KeyEvent.VK_S, SHORTCUT_KEY_MASK, false);
+  private static final KeyStroke UNDO_STROKE       = KeyStroke.getKeyStroke(KeyEvent.VK_Z, SHORTCUT_KEY_MASK, false);
+  private static final KeyStroke REDO_STROKE       = KeyStroke.getKeyStroke(KeyEvent.VK_Z, SHORTCUT_KEY_MASK
+                                                                                           | InputEvent.SHIFT_MASK,
+                                                                            false);
+
+  private ConfigTextListener     m_configTextListener;
+  private SimpleAttributeSet     m_errorAttrSet;
+  private Timer                  m_parseTimer;
+  private MyUndoManager          m_undoManager;
+
   public ConfigTextPane() {
     super();
 
     m_errorAttrSet = new SimpleAttributeSet();
     StyleConstants.setForeground(m_errorAttrSet, Color.red);
-    
+
     m_undoManager = new MyUndoManager();
 
-    JPopupMenu popup = getPopupMenu();
-    popup.add(new JSeparator());
-    popup.add(m_undoAction = new UndoAction());
-    popup.add(m_redoAction = new RedoAction());
-    popup.add(new JSeparator());
-    popup.add(m_saveAction = new SaveAction());
-    popup.add(new SaveAsAction());
-    
+    m_undoAction = new UndoAction();
+    m_redoAction = new RedoAction();
+    m_saveAction = new SaveAction();
+
     getActionMap().put(SAVE_CMD, m_saveAction);
     getActionMap().put(UNDO_CMD, m_undoAction);
     getActionMap().put(REDO_CMD, m_redoAction);
-    
+
     getInputMap().put(SAVE_STROKE, SAVE_CMD);
     getInputMap().put(UNDO_STROKE, UNDO_CMD);
     getInputMap().put(REDO_STROKE, REDO_CMD);
-    
+
     m_parseTimer = new Timer(2000, new ParseTimerAction());
     m_parseTimer.setRepeats(false);
-    
+
     m_configTextListener = new ConfigTextListener();
+  }
+
+  protected JPopupMenu createPopup() {
+    JPopupMenu popupMenu = super.createPopup();
+
+    popupMenu.add(new JSeparator());
+    popupMenu.add(m_undoAction);
+    popupMenu.add(m_redoAction);
+    popupMenu.add(new JSeparator());
+    popupMenu.add(m_saveAction);
+    popupMenu.add(new SaveAsAction());
+
+    return popupMenu;
   }
 
   private void removeListeners() {
@@ -105,16 +113,16 @@ public class ConfigTextPane extends XTextPane {
     getDocument().addDocumentListener(m_configTextListener);
     addUndoableEditListener();
   }
-  
+
   public void load(String filename) {
     FileInputStream fis = null;
-    
+
     removeListeners();
     try {
       fis = new FileInputStream(new File(filename));
       setContent(IOUtils.toString(fis));
       hasErrors();
-    } catch(Exception e) {
+    } catch (Exception e) {
       e.printStackTrace();
     } finally {
       IOUtils.closeQuietly(fis);
@@ -127,28 +135,29 @@ public class ConfigTextPane extends XTextPane {
     try {
       setContent(text);
       hasErrors();
-    } catch(Exception e) {
+    } catch (Exception e) {
       e.printStackTrace();
     }
     addListeners();
   }
 
   class ConfigTextListener implements DocumentListener {
-    public void insertUpdate(DocumentEvent e)  {
+    public void insertUpdate(DocumentEvent e) {
       m_saveAction.setEnabled(true);
       m_parseTimer.stop();
       m_parseTimer.start();
     }
 
-    public void removeUpdate(DocumentEvent e)  {
+    public void removeUpdate(DocumentEvent e) {
       m_saveAction.setEnabled(true);
       m_parseTimer.stop();
       m_parseTimer.start();
     }
 
-    public void changedUpdate(DocumentEvent e) {/**/}
+    public void changedUpdate(DocumentEvent e) {/**/
+    }
   }
-  
+
   class ParseTimerAction implements ActionListener {
     public void actionPerformed(ActionEvent ae) {
       checkForErrors();
@@ -162,7 +171,7 @@ public class ConfigTextPane extends XTextPane {
     addListeners();
     setEditable(true);
   }
-  
+
   class SaveAction extends XAbstractAction {
     SaveAction() {
       super("Save");
@@ -176,7 +185,7 @@ public class ConfigTextPane extends XTextPane {
       save();
     }
   }
-  
+
   class SaveAsAction extends XAbstractAction {
     SaveAsAction() {
       super("Save As...");
@@ -191,25 +200,25 @@ public class ConfigTextPane extends XTextPane {
 
   public boolean hasErrors() {
     boolean hasErrors = false;
-    
+
     clearAllStyles();
-    
+
     try {
       TextLineInfo lineInfo = getLineInfo();
 
       try {
         ConfigHelper configHelper = getMainFrame().getConfigHelper();
-        List         errors       = configHelper.validate(getText());
+        List errors = configHelper.validate(getText());
 
         hasErrors = errors.size() > 0;
         handleErrors(errors, lineInfo);
-      } catch(XmlException e) {
+      } catch (XmlException e) {
         hasErrors = true;
-        
+
         Collection c = e.getErrors();
-        ArrayList  errorList = new ArrayList();
-        
-        if(c != null) {
+        ArrayList errorList = new ArrayList();
+
+        if (c != null) {
           errorList.addAll(c);
           handleErrors(new ArrayList(c), lineInfo);
         } else {
@@ -217,104 +226,104 @@ public class ConfigTextPane extends XTextPane {
           getMainFrame().setConfigErrors(errorList);
         }
       }
-    } catch(Exception e) {e.printStackTrace();}
-    
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
     return hasErrors;
   }
-  
+
   private void clearAllStyles() {
-    StyledDocument doc = (StyledDocument)getDocument();
+    StyledDocument doc = (StyledDocument) getDocument();
     doc.setCharacterAttributes(0, doc.getLength(), SimpleAttributeSet.EMPTY, true);
   }
-  
-  private void handleErrors(List errorList, TextLineInfo lineInfo) {
-    StyledDocument doc    = (StyledDocument)getDocument();
-    Iterator       errors = errorList.iterator();
-    XmlError       error;
-    
-    while(errors.hasNext()) {
-      error = (XmlError)errors.next();
 
-      int line  = error.getLine();
-      int col   = error.getColumn();
-      int start = lineInfo.offset(line-1) + col-1;
-      int len   = getElementLength(start);
+  private void handleErrors(List errorList, TextLineInfo lineInfo) {
+    StyledDocument doc = (StyledDocument) getDocument();
+    Iterator errors = errorList.iterator();
+    XmlError error;
+
+    while (errors.hasNext()) {
+      error = (XmlError) errors.next();
+
+      int line = error.getLine();
+      int col = error.getColumn();
+      int start = lineInfo.offset(line - 1) + col - 1;
+      int len = getElementLength(start);
 
       doc.setCharacterAttributes(start, len, m_errorAttrSet, true);
     }
-    
+
     getMainFrame().setConfigErrors(errorList);
   }
-  
+
   private int getElementLength(int start) {
-    StyledDocument doc = (StyledDocument)getDocument();
+    StyledDocument doc = (StyledDocument) getDocument();
 
     try {
-      String text     = doc.getText(start, doc.getLength()-start);
-      int    nameEnd  = text.indexOf('>');
-      String name     = text.substring(1, nameEnd);
-      String endTok   = "</"+name+">";
-      int    endIndex = text.indexOf(endTok);
-      
-      if(endIndex != -1) {
+      String text = doc.getText(start, doc.getLength() - start);
+      int nameEnd = text.indexOf('>');
+      String name = text.substring(1, nameEnd);
+      String endTok = "</" + name + ">";
+      int endIndex = text.indexOf(endTok);
+
+      if (endIndex != -1) {
         return endIndex + endTok.length();
+      } else {
+        return nameEnd + 1;
       }
-      else {
-        return nameEnd+1;
-      }
-    } catch(Exception e ) {
+    } catch (Exception e) {
       return 1;
     }
   }
-  
+
   private void addUndoableEditListener() {
-    ((DefaultStyledDocument)getDocument()).addUndoableEditListener(m_undoManager);
+    ((DefaultStyledDocument) getDocument()).addUndoableEditListener(m_undoManager);
   }
-  
+
   private void removeUndoableEditListener() {
-    ((DefaultStyledDocument)getDocument()).removeUndoableEditListener(m_undoManager);
+    ((DefaultStyledDocument) getDocument()).removeUndoableEditListener(m_undoManager);
   }
-  
+
   private TextLineInfo getLineInfo() {
     try {
       return new TextLineInfo(new StringReader(getText()));
-    } catch(Exception e) {
+    } catch (Exception e) {
       return new TextLineInfo();
     }
   }
-  
+
   void selectError(XmlError error) {
     TextLineInfo lineInfo = getLineInfo();
-    int          line     = error.getLine();
-    int          col      = error.getColumn();
-    int          start    = lineInfo.offset(line-1) + col-1;
-    int          len      = getElementLength(start);
-    
+    int line = error.getLine();
+    int col = error.getColumn();
+    int start = lineInfo.offset(line - 1) + col - 1;
+    int len = getElementLength(start);
+
     setCaretPosition(start);
-    moveCaretPosition(start+len);
-    
+    moveCaretPosition(start + len);
+
     requestFocusInWindow();
   }
-  
+
   private SessionIntegratorFrame getMainFrame() {
-    return (SessionIntegratorFrame)getAncestorOfClass(SessionIntegratorFrame.class);
+    return (SessionIntegratorFrame) getAncestorOfClass(SessionIntegratorFrame.class);
   }
-  
+
   private void save() {
     SessionIntegratorFrame frame = getMainFrame();
-    
+
     removeListeners();
-    if(hasErrors()) {
-      String msg    = "There are configuration errors.  Save anyway?";
-      String title  = frame.getTitle();
-      int    type   = JOptionPane.YES_NO_OPTION;
-      int    answer = JOptionPane.showConfirmDialog(frame, msg, title, type);
-      
-      if(answer == JOptionPane.YES_OPTION) {
+    if (hasErrors()) {
+      String msg = "There are configuration errors.  Save anyway?";
+      String title = frame.getTitle();
+      int type = JOptionPane.YES_NO_OPTION;
+      int answer = JOptionPane.showConfirmDialog(frame, msg, title, type);
+
+      if (answer == JOptionPane.YES_OPTION) {
         frame.saveXML(getContent());
       }
-    }
-    else {
+    } else {
       frame.saveXML(getContent());
     }
     addListeners();
@@ -323,43 +332,42 @@ public class ConfigTextPane extends XTextPane {
     m_undoAction.setEnabled(false);
     m_redoAction.setEnabled(false);
   }
-  
+
   private void saveAs() {
     SessionIntegratorFrame frame = getMainFrame();
-    
+
     removeListeners();
-    if(hasErrors()) {
-      String msg    = "There are configuration errors.  Save anyway?";
-      String title  = frame.getTitle();
-      int    type   = JOptionPane.YES_NO_OPTION;
-      int    answer = JOptionPane.showConfirmDialog(frame, msg, title, type);
-      
-      if(answer == JOptionPane.YES_OPTION) {
+    if (hasErrors()) {
+      String msg = "There are configuration errors.  Save anyway?";
+      String title = frame.getTitle();
+      int type = JOptionPane.YES_NO_OPTION;
+      int answer = JOptionPane.showConfirmDialog(frame, msg, title, type);
+
+      if (answer == JOptionPane.YES_OPTION) {
         frame.exportConfiguration();
       }
-    }
-    else {
+    } else {
       frame.exportConfiguration();
     }
     addListeners();
   }
-  
+
   class MyUndoManager extends UndoManager {
     public UndoableEdit nextUndoable() {
-      return editToBeUndone();  
+      return editToBeUndone();
     }
 
     public UndoableEdit nextRedoable() {
-      return editToBeRedone();  
+      return editToBeRedone();
     }
-    
+
     public void undoableEditHappened(UndoableEditEvent e) {
       super.undoableEditHappened(e);
       m_undoAction.setEnabled(canUndo());
       m_redoAction.setEnabled(canRedo());
     }
   }
-  
+
   class UndoAction extends XAbstractAction {
     UndoAction() {
       super("Undo");
@@ -368,11 +376,11 @@ public class ConfigTextPane extends XTextPane {
       setSmallIcon(new ImageIcon(getClass().getResource(uri)));
       setEnabled(false);
     }
-    
+
     public void actionPerformed(ActionEvent ae) {
       UndoableEdit next = m_undoManager.nextUndoable();
 
-      if(next != null) {
+      if (next != null) {
         m_undoManager.undo();
 
         setEnabled(m_undoManager.canUndo());
@@ -393,18 +401,35 @@ public class ConfigTextPane extends XTextPane {
     public void actionPerformed(ActionEvent ae) {
       UndoableEdit next = m_undoManager.nextRedoable();
 
-      if(next != null) {
+      if (next != null) {
         m_undoManager.redo();
         setEnabled(m_undoManager.canRedo());
         m_undoAction.setEnabled(m_undoManager.canUndo());
       }
     }
   }
-  
-  Action getSaveAction() { return m_saveAction; }
-  Action getUndoAction() { return m_undoAction; }
-  Action getRedoAction() { return m_redoAction; }
-  Action getCutAction()  { return m_helper.getCutAction(); }
-  Action getCopyAction() { return m_helper.getCopyAction(); }
-  Action getPasteAction() { return m_helper.getPasteAction(); }
+
+  Action getSaveAction() {
+    return m_saveAction;
+  }
+
+  Action getUndoAction() {
+    return m_undoAction;
+  }
+
+  Action getRedoAction() {
+    return m_redoAction;
+  }
+
+  Action getCutAction() {
+    return m_helper.getCutAction();
+  }
+
+  Action getCopyAction() {
+    return m_helper.getCopyAction();
+  }
+
+  Action getPasteAction() {
+    return m_helper.getPasteAction();
+  }
 }

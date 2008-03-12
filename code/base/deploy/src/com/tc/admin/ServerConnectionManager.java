@@ -62,8 +62,7 @@ public class ServerConnectionManager implements NotificationListener {
         level = Level.ALL;
       }
     }
-    //Logger.getLogger("javax.management.remote").setLevel(level);
-    Logger.getLogger("javax.management.remote").setLevel(Level.FINEST);
+    Logger.getLogger("javax.management.remote").setLevel(level);
   }
 
   public ServerConnectionManager(String host, int port, boolean autoConnect, ConnectionListener listener) {
