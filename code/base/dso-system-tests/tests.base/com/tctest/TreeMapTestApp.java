@@ -333,9 +333,9 @@ public class TreeMapTestApp extends AbstractTransparentApp {
     Assert.assertEquals(expect, getMapSize(map));
 
     TreeMap compare = comparator == null ? new TreeMap() : new TreeMap(comparator);
-    compare.putAll(map);
-
     synchronized (map) {
+      compare.putAll(map);
+
       Iterator sharedIter = map.entrySet().iterator();
       Iterator localIter = compare.entrySet().iterator();
 
