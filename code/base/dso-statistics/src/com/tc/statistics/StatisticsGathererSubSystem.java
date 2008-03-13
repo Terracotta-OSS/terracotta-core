@@ -6,6 +6,7 @@ package com.tc.statistics;
 import com.tc.config.schema.NewStatisticsConfig;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
+import com.tc.statistics.database.exceptions.StatisticsDatabaseStructureMismatchError;
 import com.tc.statistics.gatherer.StatisticsGatherer;
 import com.tc.statistics.gatherer.impl.StatisticsGathererImpl;
 import com.tc.statistics.store.StatisticsStore;
@@ -46,6 +47,21 @@ public class StatisticsGathererSubSystem {
     try {
       statisticsStore = new H2StatisticsStoreImpl(stat_path);
       statisticsStore.open();
+    } catch (StatisticsDatabaseStructureMismatchError e) {
+      // TODO: needs to be properly written and put in a properties file
+      String msg =
+        "\n**************************************************************************************\n"
+        + "The statistics store couldn't be opened at \n"
+        + "'" + stat_path.getAbsolutePath() + "'.\n"
+        + "The CVT system will not be active for this node because the statistics store database\n"
+        + "structure version doesn't correspond to the one expected by the system.\n"
+        + "\n"
+        + "A simple solution is to delete the directory in which the statistics are stored so\n"
+        + "that a new version of the database can be installed.\n"
+        + "**************************************************************************************\n";
+      consoleLogger.error(msg);
+      logger.error(msg, e);
+      return false;
     } catch (StatisticsStoreException e) {
       // TODO: needs to be properly written and put in a properties file
       String msg =

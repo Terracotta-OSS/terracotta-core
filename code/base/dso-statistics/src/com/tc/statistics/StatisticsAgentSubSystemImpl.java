@@ -16,6 +16,7 @@ import com.tc.statistics.buffer.exceptions.StatisticsBufferException;
 import com.tc.statistics.buffer.h2.H2StatisticsBufferImpl;
 import com.tc.statistics.config.StatisticsConfig;
 import com.tc.statistics.config.impl.StatisticsConfigImpl;
+import com.tc.statistics.database.exceptions.StatisticsDatabaseStructureMismatchError;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.statistics.retrieval.impl.StatisticsRetrievalRegistryImpl;
 
@@ -73,6 +74,21 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
     try {
       statisticsBuffer = new H2StatisticsBufferImpl(statistics_config, stat_path);
       statisticsBuffer.open();
+    } catch (StatisticsDatabaseStructureMismatchError e) {
+      // TODO: needs to be properly written and put in a properties file
+      String msg =
+        "\n**************************************************************************************\n"
+        + "The statistics buffer couldn't be opened at \n"
+        + "'" + stat_path.getAbsolutePath() + "'.\n"
+        + "The CVT system will not be active for this node because the statistics buffer database\n"
+        + "structure version doesn't correspond to the one expected by the system.\n"
+        + "\n"
+        + "A simple solution is to delete the directory in which the statistics are stored so\n"
+        + "that a new version of the database can be installed.\n"
+        + "**************************************************************************************\n";
+      consoleLogger.error(msg);
+      logger.error(msg, e);
+      return false;
     } catch (StatisticsBufferException e) {
       // TODO: needs to be properly written and put in a properties file
       String msg =
