@@ -122,7 +122,7 @@ public class TCTestCase extends TestCase {
   }
 
   protected void doDumpServerDetails() {
-  // NOP - Overridden by subclasses
+    // NOP - Overridden by subclasses
   }
 
   // override this method if you want to do something before your test times out
@@ -133,7 +133,7 @@ public class TCTestCase extends TestCase {
   public void runBare() throws Throwable {
     if (isAllDisabled()) {
       System.out.println("NOTE: ALL tests in " + this.getClass().getName() + " are disabled until "
-          + this.allDisabledUntil);
+                         + this.allDisabledUntil);
       System.out.flush();
       return;
     }
@@ -141,7 +141,7 @@ public class TCTestCase extends TestCase {
     final String testMethod = getName();
     if (isTestDisabled(testMethod)) {
       System.out.println("NOTE: Test method " + testMethod + "() is disabled until "
-          + this.disabledUntil.get(testMethod));
+                         + this.disabledUntil.get(testMethod));
       System.out.flush();
       return;
     }
@@ -197,20 +197,20 @@ public class TCTestCase extends TestCase {
     long junitTimeout = this.getTimeoutValueInSeconds();
 
     if (junitTimeout < MINIMUM) { throw new IllegalArgumentException("Junit timeout cannot be less than " + MINIMUM
-        + " seconds"); }
+                                                                     + " seconds"); }
 
     final int MIN_THRESH = 15000;
     junitTimeout *= 1000;
     if ((junitTimeout - timeoutThreshold) < MIN_THRESH) {
       System.err.println("ERROR: Cannot apply timeout threshold of " + timeoutThreshold + ", using " + MIN_THRESH
-          + " instead");
+                         + " instead");
       System.err.flush();
       timeoutThreshold = MIN_THRESH;
     }
 
     long delay = junitTimeout - timeoutThreshold;
 
-    System.err.println("Timeout task is scheduled to run in " + (delay / 1000) + " seconds");
+    System.err.println("Timeout task is scheduled to run in " + (delay / (1000 * 60)) + " minutes");
 
     timeoutTimer.schedule(new TimerTask() {
       public void run() {
@@ -408,7 +408,7 @@ public class TCTestCase extends TestCase {
     if ((expected == null) != (actual == null)) {
       message = (message == null ? "" : message + ": ");
       fail(message + "Expected was " + (expected == null ? "<null>" : "'" + expected + "'") + ", but actual was "
-          + (actual == null ? "<null>" : "'" + actual + "'"));
+           + (actual == null ? "<null>" : "'" + actual + "'"));
     }
 
     if (expected != null) {
@@ -539,7 +539,7 @@ public class TCTestCase extends TestCase {
   protected synchronized void assertTimeDirection() {
     long currentMillis = System.currentTimeMillis();
     assertTrue("System Clock Moved Backwards! [current=" + currentMillis + ", previous=" + previousSystemMillis + "]",
-        currentMillis >= previousSystemMillis);
+               currentMillis >= previousSystemMillis);
     previousSystemMillis = currentMillis;
   }
 
