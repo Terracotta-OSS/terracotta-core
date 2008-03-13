@@ -97,8 +97,6 @@ public class ModulesLoader {
           getModulesCustomApplicatorSpecs(osgiRuntime, configHelper);
         }
       } catch (Exception e) {
-        //System.err.println("Unable to initialize modules runtime; " + e.getMessage());
-        //e.printStackTrace();
         logger.error(e); // at least log this exception, it's very frustrating if it is completely swallowed
         System.exit(-9);
       } finally {
@@ -132,9 +130,7 @@ public class ModulesLoader {
         Assert.assertTrue(payload instanceof Bundle);
         Bundle bundle = (Bundle) payload;
         if (bundle != null) {
-          if (!forBootJar) {
-            registerClassLoader(classProvider, bundle);
-          }
+          if (!forBootJar) registerClassLoader(classProvider, bundle);
           loadConfiguration(configHelper, bundle);
         }
       }
@@ -253,7 +249,7 @@ public class ModulesLoader {
         path = "terracotta.xml";
       }
     }
-
+    
     final String[] paths = path.split(",");
     for (int i = 0; i < paths.length; i++) {
       paths[i] = paths[i].trim();

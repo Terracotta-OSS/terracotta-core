@@ -13,3 +13,4 @@ Bundle-Version: 2.6.0.SNAPSHOT
 Require-Bundle: org.terracotta.modules.modules-common;bundle-version:=2.6.0.SNAPSHOT,
  org.terracotta.modules.clustered-cglib-2.1.3;bundle-version:=2.6.0.SNAPSHOT
 Import-Package: org.terracotta.modules.configuration
+Terracotta-RequireVersion: 2.6.0.SNAPSHOT

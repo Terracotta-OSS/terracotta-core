@@ -11,3 +11,4 @@ Bundle-Version: 2.6.0.SNAPSHOT
 Bundle-Activator: org.terracotta.modules.wicket_1_3_0.WicketTerracottaConfigurator
 Import-Package: org.terracotta.modules.configuration
 Require-Bundle: org.terracotta.modules.modules-common;bundle-version:=2.6.0.SNAPSHOT
+Terracotta-RequireVersion: 2.6.0.SNAPSHOT

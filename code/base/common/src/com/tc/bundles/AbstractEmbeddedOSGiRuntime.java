@@ -53,18 +53,19 @@ abstract class AbstractEmbeddedOSGiRuntime implements EmbeddedOSGiRuntime {
     }
   }
 
-  private static final TCLogger       logger = CustomerLogging.getDSORuntimeLogger();
+  private static final TCLogger       logger        = CustomerLogging.getDSORuntimeLogger();
+
   private static final ResourceBundle resourceBundle;
 
   static {
     try {
       resourceBundle = ResourceBundle.getBundle(EmbeddedOSGiRuntime.class.getName(), Locale.getDefault(),
-          EmbeddedOSGiRuntime.class.getClassLoader());
+                                                EmbeddedOSGiRuntime.class.getClassLoader());
     } catch (MissingResourceException mre) {
       throw new RuntimeException("No resource bundle exists for " + EmbeddedOSGiRuntime.class.getName());
     } catch (Throwable t) {
       throw new RuntimeException("Unexpected error loading resource bundle for " + EmbeddedOSGiRuntime.class.getName(),
-          t);
+                                 t);
     }
   }
 
@@ -73,7 +74,16 @@ abstract class AbstractEmbeddedOSGiRuntime implements EmbeddedOSGiRuntime {
   }
 
   protected final void warn(final Message message, final Object[] arguments) {
-    logger.warn(formatMessage(message, arguments));
+    warn(formatMessage(message, arguments));
+  }
+
+  protected void warn(final String message) {
+    logger.warn(message);
+  }
+
+  protected final void fatal(final String message) throws BundleException {
+    logger.fatal(message);
+    throw new BundleException(message);
   }
 
   protected final void exception(final Message message, final Object[] arguments, final Throwable t)

@@ -11,3 +11,4 @@ Bundle-Vendor: Terracotta, Inc.
 Bundle-Version: 2.6.0.SNAPSHOT
 Bundle-Activator: org.terracotta.modules.lucene_2_0_0.LuceneTerracottaConfigurator
 Require-Bundle: org.terracotta.modules.modules-common;bundle-version:=2.6.0.SNAPSHOT
+Terracotta-RequireVersion: 2.6.0.SNAPSHOT

@@ -12,3 +12,4 @@ Bundle-Vendor: Terracotta, Inc.
 Bundle-Version: 2.6.0.SNAPSHOT
 Import-Package: org.terracotta.modules.configuration
 Require-Bundle: org.terracotta.modules.modules-common;bundle-version:=2.6.0.SNAPSHOT
+Terracotta-RequireVersion: 2.6.0.SNAPSHOT

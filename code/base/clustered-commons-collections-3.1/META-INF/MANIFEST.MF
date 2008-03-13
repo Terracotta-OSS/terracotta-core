@@ -10,4 +10,4 @@ Bundle-SymbolicName: org.terracotta.modules.clustered-commons-collections-3.1
 Bundle-Vendor: Terracotta, Inc.
 Bundle-Version: 2.6.0.SNAPSHOT
 Require-Bundle: org.terracotta.modules.modules-common;bundle-version:=2.6.0.SNAPSHOT
-
+Terracotta-RequireVersion: 2.6.0.SNAPSHOT

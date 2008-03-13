@@ -112,7 +112,7 @@ public class Resolver {
       fatal(msg);
       throw new MissingBundleException(msg);
     }
-
+ 
     logger.info("Resolved module " + groupId + ":" + name + ":" + version + " from " + location);
     resolveDependencies(location);
     return location;

@@ -13,3 +13,4 @@ Import-Package: org.terracotta.modules.configuration
 Require-Bundle: org.terracotta.modules.modules-common;bundle-version:=2.6.0.SNAPSHOT
 Export-Package: net.sf.ehcache.store,
  org.terracotta.modules.ehcache.commons_1_0
+Terracotta-RequireVersion: 2.6.0.SNAPSHOT
