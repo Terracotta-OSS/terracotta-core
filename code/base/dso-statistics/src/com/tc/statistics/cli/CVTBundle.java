@@ -11,9 +11,11 @@ public class CVTBundle  extends ListResourceBundle {
   }
 
   static final Object[][] contents = {
+    {"error.argument.missing", "Missing argument ''{0}''.\n"},
     {"error.option.missing", "Missing option ''{0}''.\n"},
     {"option.help", "shows this text."},
     {"option.host", "host name or address of the gatherer (defaults to localhost)."},
-    {"option.port", "JMX port of the gatherer (defaults to 9520)."}
+    {"option.port", "JMX port of the gatherer (defaults to 9520)."},
+    {"option.file", "file name of the script with commands to play."}
   };
 }

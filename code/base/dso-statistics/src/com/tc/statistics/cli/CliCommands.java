@@ -3,8 +3,26 @@
  */
 package com.tc.statistics.cli;
 
-import com.tc.exception.TCRuntimeException;
-import com.tc.statistics.cli.commands.*;
+import com.tc.statistics.cli.commands.CommandCaptureStatistic;
+import com.tc.statistics.cli.commands.CommandClearAllStatistics;
+import com.tc.statistics.cli.commands.CommandClearStatistics;
+import com.tc.statistics.cli.commands.CommandCloseSession;
+import com.tc.statistics.cli.commands.CommandConnect;
+import com.tc.statistics.cli.commands.CommandCreateSession;
+import com.tc.statistics.cli.commands.CommandDisconnect;
+import com.tc.statistics.cli.commands.CommandEnableStatistics;
+import com.tc.statistics.cli.commands.CommandGetActiveSessionId;
+import com.tc.statistics.cli.commands.CommandGetAvailableSessionIds;
+import com.tc.statistics.cli.commands.CommandGetGlobalParam;
+import com.tc.statistics.cli.commands.CommandGetSessionParam;
+import com.tc.statistics.cli.commands.CommandGetSupportedStatistics;
+import com.tc.statistics.cli.commands.CommandReinitialize;
+import com.tc.statistics.cli.commands.CommandRetrieveStatistics;
+import com.tc.statistics.cli.commands.CommandSetGlobalParam;
+import com.tc.statistics.cli.commands.CommandSetSessionParam;
+import com.tc.statistics.cli.commands.CommandStartCapturing;
+import com.tc.statistics.cli.commands.CommandStopCapturing;
+import com.tc.statistics.gatherer.exceptions.StatisticsGathererException;
 import com.tc.util.Assert;
 
 import java.io.IOException;
@@ -14,6 +32,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.management.RuntimeMBeanException;
 
 public class CliCommands {
   private GathererConnection connection = new GathererConnection();
@@ -99,9 +119,24 @@ public class CliCommands {
         final CliCommand command = (CliCommand)command_entry.getKey();
         final String[] arguments = (String[])command_entry.getValue();
         try {
+
+          // execute a single command
           command.execute(connection, arguments);
-        } catch (Exception e) {
-          throw new TCRuntimeException(e);
+          
+        } catch (RuntimeMBeanException e) {
+          // handle meaningful backend exceptions that are bubbling up through JMX
+          Throwable cause1 = e.getCause();
+          if (cause1 != null &&
+              cause1 instanceof RuntimeException) {
+            Throwable cause2 = cause1.getCause();
+            if (cause2 != null) {
+             if (cause2 instanceof StatisticsGathererException) {
+               System.out.println("> "+command.getCommandName() + " : " + cause2.getMessage());
+               return false;
+             }
+            }
+          }
+          throw e;
         }
       }
 
