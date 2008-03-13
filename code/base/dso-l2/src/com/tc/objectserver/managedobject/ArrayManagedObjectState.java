@@ -161,8 +161,8 @@ public class ArrayManagedObjectState extends LogicalManagedObjectState implement
   }
 
   public void dehydrate(ObjectID objectID, DNAWriter writer) {
-    writer.addEntireArray(arrayData);
     writer.setArrayLength(size);
+    writer.addEntireArray(arrayData);
   }
 
   public ManagedObjectFacade createFacade(ObjectID objectID, String className, int limit) {
@@ -215,7 +215,7 @@ public class ArrayManagedObjectState extends LogicalManagedObjectState implement
       return literalType == amo.literalType && equals(arrayData, amo.arrayData, literalType);
     } else {
       // DNAEncordingImpl decodes all non primitive array into Object[]
-      return (literalType == LiteralValues.OBJECT || amo.literalType == LiteralValues.OBJECT) 
+      return (literalType == LiteralValues.OBJECT || amo.literalType == LiteralValues.OBJECT)
         && equals(arrayData, amo.arrayData, LiteralValues.OBJECT);
     }
   }

@@ -44,9 +44,12 @@ public class TransactionSequencer {
   private int                           txnsPerBatch   = 0;
   private boolean                       shutdown       = false;
 
-  public TransactionSequencer(TransactionBatchFactory batchFactory) {
+  private final LockAccounting          lockAccounting;
+
+  public TransactionSequencer(TransactionBatchFactory batchFactory, LockAccounting lockAccounting) {
     this.batchFactory = batchFactory;
-    currentBatch = createNewBatch();
+    this.lockAccounting = lockAccounting;
+    this.currentBatch = createNewBatch();
     this.slowDownStartsAt = (int) (MAX_PENDING_BATCHES * 0.66);
     this.sleepTimeIncrements = MAX_SLEEP_TIME_BEFORE_HALT / (MAX_PENDING_BATCHES - slowDownStartsAt);
     if (LOGGING_ENABLED) log_settings();
@@ -63,14 +66,13 @@ public class TransactionSequencer {
     return batchFactory.nextBatch();
   }
 
-  private void addTransactionToBatch(ClientTransaction txn, ClientTransactionBatch batch) {
-    batch.addTransaction(txn);
+  private boolean addTransactionToBatch(ClientTransaction txn, ClientTransactionBatch batch) {
+    return batch.addTransaction(txn, sequence);
   }
 
   public synchronized void addTransaction(ClientTransaction txn) {
     if (shutdown) {
       logger.error("Sequencer shutdown. Not committing " + txn);
-      return;
     }
 
     try {
@@ -92,11 +94,15 @@ public class TransactionSequencer {
    * XXX::Note : There is automatic throttling built in by adding to a BoundedLinkedQueue from within a synch block
    */
   private void addTxnInternal(ClientTransaction txn) {
-    SequenceID sequenceID = new SequenceID(sequence.getNextSequence());
-    txn.setSequenceID(sequenceID);
     txnsPerBatch++;
 
-    addTransactionToBatch(txn, currentBatch);
+    boolean folded = addTransactionToBatch(txn, currentBatch);
+
+    if (!txn.isConcurrent() && !folded) {
+      // It is important to add the lock accounting before exposing the current batch to be sent (ie. put() below)
+      lockAccounting.add(txn.getTransactionID(), txn.getAllLockIDs());
+    }
+
     if (currentBatch.byteSize() > MAX_BYTE_SIZE_FOR_BATCH) {
       put(currentBatch);
       reconcilePendingSize();

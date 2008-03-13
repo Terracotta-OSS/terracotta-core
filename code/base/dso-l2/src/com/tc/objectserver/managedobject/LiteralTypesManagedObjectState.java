@@ -44,19 +44,12 @@ public class LiteralTypesManagedObjectState extends AbstractManagedObjectState i
   }
 
   public void apply(ObjectID objectID, DNACursor cursor, BackReferences includeIDs) throws IOException {
-    final int actionCount = cursor.getActionCount();
-    if (actionCount != 1) {
-      // At one point in time, this assertion was getting tripped by concurrent txns in the same client to commit the
-      // same newly shared literal instance
-      throw new AssertionError("Invalid action count: " + actionCount + "\nThis object is " + toString() + "\nDNA is "
-                               + cursor.toString() + "\nApply object ID: " + objectID);
+    while (cursor.next()) {
+      LiteralAction a = (LiteralAction) cursor.getAction();
+      // PhysicalAction a = cursor.getPhysicalAction();
+      // Assert.assertTrue(a.isLiteralType());
+      reference = a.getObject();
     }
-
-    cursor.next();
-    LiteralAction a = (LiteralAction) cursor.getAction();
-    // PhysicalAction a = cursor.getPhysicalAction();
-    // Assert.assertTrue(a.isLiteralType());
-    reference = a.getObject();
   }
 
   public void dehydrate(ObjectID objectID, DNAWriter writer) {
@@ -125,9 +118,7 @@ public class LiteralTypesManagedObjectState extends AbstractManagedObjectState i
       return "java.lang.ClassLoader";
     } else if (reference instanceof UTF8ByteDataHolder) {
       return "java.lang.String";
-    } else if (reference instanceof EnumInstance) {
-      return "java.lang.Enum";
-    }
+    } else if (reference instanceof EnumInstance) { return "java.lang.Enum"; }
 
     return reference.getClass().getName();
   }

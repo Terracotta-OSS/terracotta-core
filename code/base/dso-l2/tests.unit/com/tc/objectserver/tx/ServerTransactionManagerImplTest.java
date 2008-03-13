@@ -155,7 +155,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
       LockID[] lockIDs = new LockID[0];
       ServerTransaction tx = new ServerTransactionImpl(gtxm, new TxnBatchID(1), tid1, sequenceID, lockIDs, cid1, dnas,
                                                        serializer, newRoots, txnType, new LinkedList(),
-                                                       DmiDescriptor.EMPTY_ARRAY);
+                                                       DmiDescriptor.EMPTY_ARRAY, 1);
       txns.add(tx);
       tids.add(tx.getServerTransactionID());
     }
@@ -205,7 +205,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
       LockID[] lockIDs = new LockID[0];
       ServerTransaction tx = new ServerTransactionImpl(gtxm, new TxnBatchID(2), tid1, sequenceID, lockIDs, cid1, dnas,
                                                        serializer, newRoots, txnType, new LinkedList(),
-                                                       DmiDescriptor.EMPTY_ARRAY);
+                                                       DmiDescriptor.EMPTY_ARRAY, 1);
       txns.add(tx);
       tids.add(tx.getServerTransactionID());
     }
@@ -254,7 +254,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     SequenceID sequenceID = new SequenceID(1);
     ServerTransaction tx1 = new ServerTransactionImpl(gtxm, new TxnBatchID(1), tid1, sequenceID, lockIDs, cid1, dnas,
                                                       serializer, newRoots, txnType, new LinkedList(),
-                                                      DmiDescriptor.EMPTY_ARRAY);
+                                                      DmiDescriptor.EMPTY_ARRAY, 1);
 
     Set txns = new HashSet();
     txns.add(tx1);
@@ -272,7 +272,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     txnIDs.clear();
     ServerTransaction tx2 = new ServerTransactionImpl(gtxm, new TxnBatchID(2), tid2, sequenceID, lockIDs, cid2, dnas,
                                                       serializer, newRoots, txnType, new LinkedList(),
-                                                      DmiDescriptor.EMPTY_ARRAY);
+                                                      DmiDescriptor.EMPTY_ARRAY, 1);
     txns.add(tx2);
     txnIDs.add(new ServerTransactionID(cid2, tid2));
     transactionManager.incomingTransactions(cid2, txnIDs, txns, false);
@@ -284,7 +284,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     txnIDs.clear();
     ServerTransaction tx3 = new ServerTransactionImpl(gtxm, new TxnBatchID(2), tid3, sequenceID, lockIDs, cid3, dnas,
                                                       serializer, newRoots, txnType, new LinkedList(),
-                                                      DmiDescriptor.EMPTY_ARRAY);
+                                                      DmiDescriptor.EMPTY_ARRAY, 1);
     txns.add(tx3);
     txnIDs.add(new ServerTransactionID(cid3, tid3));
     transactionManager.incomingTransactions(cid3, txnIDs, txns, false);
@@ -341,7 +341,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     SequenceID sequenceID = new SequenceID(1);
     ServerTransaction tx1 = new ServerTransactionImpl(gtxm, new TxnBatchID(1), tid1, sequenceID, lockIDs, cid1, dnas,
                                                       serializer, newRoots, txnType, new LinkedList(),
-                                                      DmiDescriptor.EMPTY_ARRAY);
+                                                      DmiDescriptor.EMPTY_ARRAY, 1);
 
     // Test with one waiter
     Set txns = new HashSet();
@@ -366,7 +366,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     sequenceID = new SequenceID(2);
     ServerTransaction tx2 = new ServerTransactionImpl(gtxm, new TxnBatchID(2), tid2, sequenceID, lockIDs, cid1, dnas,
                                                       serializer, newRoots, txnType, new LinkedList(),
-                                                      DmiDescriptor.EMPTY_ARRAY);
+                                                      DmiDescriptor.EMPTY_ARRAY, 1);
     txns.add(tx2);
     txnIDs.add(new ServerTransactionID(cid1, tid2));
     transactionManager.incomingTransactions(cid1, txnIDs, txns, false);
@@ -392,7 +392,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     sequenceID = new SequenceID(3);
     ServerTransaction tx3 = new ServerTransactionImpl(gtxm, new TxnBatchID(3), tid3, sequenceID, lockIDs, cid1, dnas,
                                                       serializer, newRoots, txnType, new LinkedList(),
-                                                      DmiDescriptor.EMPTY_ARRAY);
+                                                      DmiDescriptor.EMPTY_ARRAY, 1);
     txns.add(tx3);
     txnIDs.add(new ServerTransactionID(cid1, tid3));
     transactionManager.incomingTransactions(cid1, txnIDs, txns, false);
@@ -418,7 +418,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     sequenceID = new SequenceID(4);
     ServerTransaction tx4 = new ServerTransactionImpl(gtxm, new TxnBatchID(4), tid4, sequenceID, lockIDs, cid1, dnas,
                                                       serializer, newRoots, txnType, new LinkedList(),
-                                                      DmiDescriptor.EMPTY_ARRAY);
+                                                      DmiDescriptor.EMPTY_ARRAY, 1);
     txns.add(tx4);
     txnIDs.add(new ServerTransactionID(cid1, tid4));
     transactionManager.incomingTransactions(cid1, txnIDs, txns, false);
@@ -464,11 +464,11 @@ public class ServerTransactionManagerImplTest extends TestCase {
     sequenceID = new SequenceID(5);
     ServerTransaction tx5 = new ServerTransactionImpl(gtxm, new TxnBatchID(5), tid5, sequenceID, lockIDs, cid1, dnas,
                                                       serializer, newRoots, txnType, new LinkedList(),
-                                                      DmiDescriptor.EMPTY_ARRAY);
+                                                      DmiDescriptor.EMPTY_ARRAY, 1);
     sequenceID = new SequenceID(6);
     ServerTransaction tx6 = new ServerTransactionImpl(gtxm, new TxnBatchID(5), tid6, sequenceID, lockIDs, cid1, dnas,
                                                       serializer, newRoots, txnType, new LinkedList(),
-                                                      DmiDescriptor.EMPTY_ARRAY);
+                                                      DmiDescriptor.EMPTY_ARRAY, 1);
     txns.add(tx5);
     txns.add(tx6);
     txnIDs.add(new ServerTransactionID(cid1, tid5));

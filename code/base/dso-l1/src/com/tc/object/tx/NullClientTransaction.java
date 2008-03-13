@@ -61,10 +61,6 @@ public class NullClientTransaction extends AbstractClientTransaction {
     return;
   }
 
-  public List addNotifiesTo(List notifies) {
-    return notifies;
-  }
-
   public boolean isConcurrent() {
     return false;
   }
@@ -98,6 +94,10 @@ public class NullClientTransaction extends AbstractClientTransaction {
   }
 
   public List getDmiDescriptors() {
+    return Collections.EMPTY_LIST;
+  }
+
+  public List getNotifies() {
     return Collections.EMPTY_LIST;
   }
 

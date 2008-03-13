@@ -24,8 +24,9 @@ public class PassiveServerTransactionImpl extends ServerTransactionImpl implemen
   public PassiveServerTransactionImpl(GlobalTransactionIDGenerator gtxm, TxnBatchID batchID, TransactionID txID,
                                       SequenceID sequenceID, LockID[] lockIDs, NodeID source, List dnas,
                                       ObjectStringSerializer serializer, Map newRoots, TxnType transactionType,
-                                      Collection notifies, DmiDescriptor[] dmis) {
-    super(gtxm, batchID, txID, sequenceID, lockIDs, source, dnas, serializer, newRoots, transactionType, notifies, dmis);
+                                      Collection notifies, DmiDescriptor[] dmis, int numApplicationTxn) {
+    super(gtxm, batchID, txID, sequenceID, lockIDs, source, dnas, serializer, newRoots, transactionType, notifies,
+          dmis, numApplicationTxn);
   }
 
   public SequenceID getClientSequenceID() {

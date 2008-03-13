@@ -112,4 +112,8 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
     return false;
   }
 
+  public int getNumApplicationTxn() {
+    return 1;
+  }
+
 }

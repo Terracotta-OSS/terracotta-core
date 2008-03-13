@@ -321,7 +321,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     if (active) {
       channelStats.notifyTransaction(sourceID);
     }
-    transactionRateCounter.increment();
+    transactionRateCounter.increment(txn.getNumApplicationTxn());
 
     fireTransactionAppliedEvent(stxnID);
   }
@@ -342,7 +342,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
    * imposes a problem. The clients could read an object that has changes but it not committed to the disk yet and If
    * the server crashes then transactions are resent and may be re-applied in the clients when it should not have
    * re-applied. To avoid this we now commit inline before releasing the objects.
-   * 
+   *
    * @see ObjectManagerImpl.releaseAll() for more details.
    */
   public void commit(PersistenceTransactionProvider ptxp, Collection objects, Map newRoots,

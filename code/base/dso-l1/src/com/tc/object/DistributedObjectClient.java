@@ -195,7 +195,8 @@ public class DistributedObjectClient extends SEDA {
   }
 
   public void start() {
-    l1Properties = TCPropertiesImpl.getProperties().getPropertiesFor("l1");
+    TCProperties tcProperties = TCPropertiesImpl.getProperties();
+    l1Properties = tcProperties.getPropertiesFor("l1");
     int maxSize = 50000;
     int faultCount = config.getFaultCount();
 
@@ -221,7 +222,7 @@ public class DistributedObjectClient extends SEDA {
     }
     // //////////////////////////////////
 
-    MessageMonitor mm = MessageMonitorImpl.createMonitor(TCPropertiesImpl.getProperties(), logger);
+    MessageMonitor mm = MessageMonitorImpl.createMonitor(tcProperties, logger);
 
     communicationsManager = new CommunicationsManagerImpl(mm, networkStackHarnessFactory, new NullConnectionPolicy(),
                                                           new HealthCheckerConfigImpl(l1Properties
@@ -251,7 +252,7 @@ public class DistributedObjectClient extends SEDA {
     ClientTransactionFactory txFactory = new ClientTransactionFactoryImpl(runtimeLogger);
 
     TransactionBatchFactory txBatchFactory = new TransactionBatchWriterFactory(channel
-        .getCommitTransactionMessageFactory(), new DNAEncodingImpl(classProvider));
+        .getCommitTransactionMessageFactory(), new DNAEncodingImpl(classProvider), tcProperties);
 
     rtxManager = new RemoteTransactionManagerImpl(new ChannelIDLogger(channel.getChannelIDProvider(), TCLogging
         .getLogger(RemoteTransactionManagerImpl.class)), txBatchFactory, new TransactionBatchAccounting(),

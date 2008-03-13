@@ -94,7 +94,7 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
                                                                     new SequenceID(1), new LockID[0], batch.clientID,
                                                                     dnaList, new ObjectStringSerializer(), newRootsMap,
                                                                     TxnType.NORMAL, new LinkedList(),
-                                                                    DmiDescriptor.EMPTY_ARRAY);
+                                                                    DmiDescriptor.EMPTY_ARRAY, 1);
     Collection completedTransactionIDs = new HashSet();
     for (int i = 0; i < 10; i++) {
       completedTransactionIDs.add(new GlobalTransactionID(i));
@@ -134,7 +134,7 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
     serverTransaction = new ServerTransactionImpl(gtxm, batch.batchID, new TransactionID(2), new SequenceID(2),
                                                   new LockID[0], batch.clientID, dnaList, new ObjectStringSerializer(),
                                                   newRootsMap, TxnType.NORMAL, new LinkedList(),
-                                                  DmiDescriptor.EMPTY_ARRAY);
+                                                  DmiDescriptor.EMPTY_ARRAY, 1);
     completedTransactionIDs = new HashSet();
     for (int i = 11; i < 20; i++) {
       completedTransactionIDs.add(new GlobalTransactionID(i));

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.applicator;
 
@@ -34,16 +35,15 @@ public class LiteralTypesApplicator extends BaseApplicator {
   public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
       ClassNotFoundException {
     DNACursor cursor = dna.getCursor();
-    Assert.eval(cursor.getActionCount() <= 1);
 
-    if (cursor.next(encoding)) {
+    while (cursor.next(encoding)) {
       LiteralAction a = (LiteralAction) cursor.getAction();
       Object value = a.getObject();
 
       tcObject.setLiteralValue(value);
     }
   }
-  
+
   public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
     if (!objectManager.isPortableInstance(pojo)) { return; }
     writer.addLiteralValue(pojo);

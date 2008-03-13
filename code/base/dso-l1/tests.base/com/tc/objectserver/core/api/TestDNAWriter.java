@@ -1,8 +1,11 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.core.api;
 
+import com.tc.exception.ImplementMe;
+import com.tc.io.TCByteBufferOutput;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
@@ -20,10 +23,6 @@ public class TestDNAWriter implements DNAWriter {
   }
 
   public void addPhysicalAction(String field, Object value) {
-    //
-  }
-
-  public void finalizeDNA(boolean isDeltaDNA) {
     //
   }
 
@@ -58,6 +57,34 @@ public class TestDNAWriter implements DNAWriter {
 
   public void addSubArrayAction(int start, Object array, int length) {
     //
+  }
+
+  public int getActionCount() {
+    throw new ImplementMe();
+  }
+
+  public void copyTo(TCByteBufferOutput dest) {
+    throw new ImplementMe();
+  }
+
+  public DNAWriter createAppender() {
+    throw new ImplementMe();
+  }
+
+  public void finalizeHeader() {
+    throw new ImplementMe();
+  }
+
+  public boolean isContiguous() {
+    throw new ImplementMe();
+  }
+
+  public void markSectionEnd() {
+    throw new ImplementMe();
+  }
+
+  public void setDelta(boolean isDelta) {
+    throw new ImplementMe();
   }
 
 }
