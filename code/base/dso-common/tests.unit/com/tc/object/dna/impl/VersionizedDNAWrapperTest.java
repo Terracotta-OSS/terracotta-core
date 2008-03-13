@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.dna.impl;
 
@@ -26,7 +27,7 @@ public class VersionizedDNAWrapperTest extends TestCase {
     final ObjectID id = new ObjectID(1);
     final ObjectID pid = new ObjectID(2);
     final String type = getClass().getName();
-    final int arrayLen = 42;
+
     ObjectStringSerializer serializer = new ObjectStringSerializer();
     ClassProvider classProvider = new MockClassProvider();
     DNAEncoding encoding = new DNAEncodingImpl(classProvider);
@@ -34,11 +35,10 @@ public class VersionizedDNAWrapperTest extends TestCase {
     PhysicalAction action1 = new PhysicalAction("class.field1", new Integer(1), false);
     LogicalAction action2 = new LogicalAction(12, new Object[] { "key", "value" });
     PhysicalAction action3 = new PhysicalAction("class.field2", new ObjectID(3), true);
+    dnaWriter.setParentObjectID(pid);
     dnaWriter.addPhysicalAction(action1.getFieldName(), action1.getObject());
     dnaWriter.addLogicalAction(action2.getMethod(), action2.getParameters());
     dnaWriter.addPhysicalAction(action3.getFieldName(), action3.getObject());
-    dnaWriter.setParentObjectID(pid);
-    dnaWriter.setArrayLength(arrayLen);
     dnaWriter.markSectionEnd();
     dnaWriter.finalizeHeader();
 
@@ -52,7 +52,7 @@ public class VersionizedDNAWrapperTest extends TestCase {
     try {
       vdna.getCursor().reset();
       assertTrue(false);
-    } catch(UnsupportedOperationException use) {
+    } catch (UnsupportedOperationException use) {
       // this is expected
     }
 

@@ -8,8 +8,10 @@ import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCByteBufferOutputStream.Mark;
 import com.tc.object.ObjectID;
+import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAWriter;
+import com.tc.util.Assert;
 import com.tc.util.Conversion;
 
 import java.util.ArrayList;
@@ -18,26 +20,28 @@ import java.util.List;
 
 public class DNAWriterImpl implements DNAWriter {
 
-  private static final long              NULL_ID              = ObjectID.NULL_ID.toLong();
   private static final int               UNINITIALIZED_LENGTH = -1;
 
   private final TCByteBufferOutputStream output;
   private final Mark                     headerMark;
-  private final Mark                     parentIdMark;
-  private final Mark                     arrayLengthMark;
   private final ObjectStringSerializer   serializer;
   private final DNAEncoding              encoding;
   private final List                     appenders            = new ArrayList(5);
 
+  private byte                           flags                = 0;
   private int                            firstLength          = UNINITIALIZED_LENGTH;
   private int                            totalLength          = UNINITIALIZED_LENGTH;
   private int                            lastStreamPos        = UNINITIALIZED_LENGTH;
   private int                            actionCount          = 0;
   private boolean                        contiguous           = true;
-  private boolean                        isDelta              = false;
 
   public DNAWriterImpl(TCByteBufferOutputStream output, ObjectID id, String className,
                        ObjectStringSerializer serializer, DNAEncoding encoding, String loaderDesc) {
+    this(output, id, className, serializer, encoding, loaderDesc, DNA.NULL_VERSION);
+  }
+
+  protected DNAWriterImpl(TCByteBufferOutputStream output, ObjectID id, String className,
+                          ObjectStringSerializer serializer, DNAEncoding encoding, String loaderDesc, long version) {
     this.output = output;
     this.encoding = encoding;
     this.serializer = serializer;
@@ -45,14 +49,15 @@ public class DNAWriterImpl implements DNAWriter {
     this.headerMark = output.mark();
     output.writeInt(UNINITIALIZED_LENGTH); // reserve 4 bytes for total length of this DNA
     output.writeInt(UNINITIALIZED_LENGTH); // reserve 4 bytes for # of actions
-    output.writeBoolean(true);
+    output.writeByte(flags);
     output.writeLong(id.toLong());
-    this.parentIdMark = output.mark();
-    output.writeLong(NULL_ID); // reserve 8 bytes for the parent object ID
     serializer.writeString(output, className);
     serializer.writeString(output, loaderDesc);
-    this.arrayLengthMark = output.mark();
-    output.writeInt(UNINITIALIZED_LENGTH); // reserve 4 bytes for array length
+
+    if (version != DNA.NULL_VERSION) {
+      flags = Conversion.setFlag(flags, DNA.HAS_VERSION, true);
+      output.writeLong(version);
+    }
   }
 
   public DNAWriter createAppender() {
@@ -167,16 +172,26 @@ public class DNAWriterImpl implements DNAWriter {
     byte[] lengths = new byte[9];
     Conversion.writeInt(totalLength, lengths, 0);
     Conversion.writeInt(actionCount, lengths, 4);
-    lengths[8] = isDelta ? (byte) 1 : (byte) 0;
+    lengths[8] = flags;
     this.headerMark.write(lengths);
   }
 
   public void setParentObjectID(ObjectID id) {
-    this.parentIdMark.write(Conversion.long2Bytes(id.toLong()));
+    checkVariableHeaderEmpty();
+    flags = Conversion.setFlag(flags, DNA.HAS_PARENT_ID, true);
+    output.writeLong(id.toLong());
   }
 
   public void setArrayLength(int length) {
-    this.arrayLengthMark.write(Conversion.int2Bytes(length));
+    checkVariableHeaderEmpty();
+    flags = Conversion.setFlag(flags, DNA.HAS_ARRAY_LENGTH, true);
+    output.writeInt(length);
+  }
+
+  private void checkVariableHeaderEmpty() {
+    Assert.assertEquals(0, actionCount);
+    Assert.assertFalse(Conversion.getFlag(flags, DNA.HAS_PARENT_ID));
+    Assert.assertFalse(Conversion.getFlag(flags, DNA.HAS_ARRAY_LENGTH));
   }
 
   public int getActionCount() {
@@ -192,7 +207,7 @@ public class DNAWriterImpl implements DNAWriter {
   }
 
   public void setDelta(boolean value) {
-    this.isDelta = value;
+    flags = Conversion.setFlag(flags, DNA.IS_DELTA, value);
   }
 
   private static class Appender implements DNAWriter {

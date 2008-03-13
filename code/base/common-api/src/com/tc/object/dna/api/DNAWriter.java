@@ -15,10 +15,6 @@ import com.tc.object.ObjectID;
  */
 public interface DNAWriter {
 
-  public static final byte HAS_ARRAY_LENGTH = 1 << 0;
-  public static final byte HAS_PARENT_ID    = 1 << 1;
-  public static final byte IS_DELTA         = 1 << 2;
-
   /**
    * Add logical action to the writer
    *

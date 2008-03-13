@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.dna.impl;
 
@@ -7,9 +8,10 @@ import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.ObjectID;
 import com.tc.object.bytecode.MockClassProvider;
+import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.loaders.ClassProvider;
@@ -22,13 +24,22 @@ public class DNAImplTest extends TestCase {
 
   protected DNAImpl dna;
 
-  public void testSerializeDeserialize() throws Exception {
+  public void testParentID() throws Exception {
+    serializeDeserialize(true);
+  }
+
+  public void testArrayLength() throws Exception {
+    serializeDeserialize(false);
+  }
+
+  protected void serializeDeserialize(boolean parentID) throws Exception {
     TCByteBufferOutputStream out = new TCByteBufferOutputStream();
 
     final ObjectID id = new ObjectID(1);
     final ObjectID pid = new ObjectID(2);
     final String type = getClass().getName();
     final int arrayLen = 42;
+
     ObjectStringSerializer serializer = new ObjectStringSerializer();
     ClassProvider classProvider = new MockClassProvider();
     DNAEncoding encoding = new DNAEncodingImpl(classProvider);
@@ -36,11 +47,15 @@ public class DNAImplTest extends TestCase {
     PhysicalAction action1 = new PhysicalAction("class.field1", new Integer(1), false);
     LogicalAction action2 = new LogicalAction(12, new Object[] { "key", "value" });
     PhysicalAction action3 = new PhysicalAction("class.field2", new ObjectID(3), true);
+
+    if (parentID) {
+      dnaWriter.setParentObjectID(pid);
+    } else {
+      dnaWriter.setArrayLength(arrayLen);
+    }
     dnaWriter.addPhysicalAction(action1.getFieldName(), action1.getObject());
     dnaWriter.addLogicalAction(action2.getMethod(), action2.getParameters());
     dnaWriter.addPhysicalAction(action3.getFieldName(), action3.getObject());
-    dnaWriter.setParentObjectID(pid);
-    dnaWriter.setArrayLength(arrayLen);
     dnaWriter.setDelta(getIsDelta());
     dnaWriter.markSectionEnd();
     dnaWriter.finalizeHeader();
@@ -69,9 +84,16 @@ public class DNAImplTest extends TestCase {
     }
 
     assertEquals(id, dna.getObjectID());
-    assertEquals(pid, dna.getParentObjectID());
+    if (parentID) {
+      assertEquals(pid, dna.getParentObjectID());
+      assertEquals(DNA.NULL_ARRAY_SIZE, dna.getArraySize());
+      assertFalse(dna.hasLength());
+    } else {
+      assertEquals(ObjectID.NULL_ID, dna.getParentObjectID());
+      assertTrue(dna.hasLength());
+      assertEquals(arrayLen, dna.getArraySize());
+    }
     assertEquals(type, dna.getTypeName());
-    assertEquals(arrayLen, dna.getArraySize());
     assertOverridable();
   }
 

@@ -17,6 +17,7 @@ import com.tc.object.dna.api.LiteralAction;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.util.Assert;
+import com.tc.util.Conversion;
 
 import java.io.IOException;
 
@@ -26,7 +27,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
   private final ObjectStringSerializer serializer;
   private final boolean                createOutput;
 
-  protected TCByteBufferInput    input;
+  protected TCByteBufferInput          input;
   protected TCByteBuffer[]             dataOut;
 
   private int                          actionCount          = 0;
@@ -39,6 +40,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
   private String                       typeName;
   private int                          arrayLength;
   private String                       loaderDesc;
+  private long                         version;
 
   // XXX: cleanup type of this field
   private Object                       currentAction;
@@ -198,7 +200,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
   }
 
   public long getVersion() {
-    return NULL_VERSION;
+    return version;
   }
 
   /*
@@ -233,13 +235,31 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
 
     if (actionCount < 0) throw new IOException("Invalid action count:" + actionCount);
 
-    this.isDelta = input.readBoolean();
+    final byte flags = input.readByte();
 
     this.id = new ObjectID(input.readLong());
-    this.parentID = new ObjectID(input.readLong());
     this.typeName = serializer.readString(input);
     this.loaderDesc = serializer.readString(input);
-    this.arrayLength = input.readInt();
+
+    if (Conversion.getFlag(flags, DNA.HAS_VERSION)) {
+      this.version = input.readLong();
+    } else {
+      this.version = DNA.NULL_VERSION;
+    }
+
+    this.isDelta = Conversion.getFlag(flags, DNA.IS_DELTA);
+
+    if (Conversion.getFlag(flags, DNA.HAS_PARENT_ID)) {
+      this.parentID = new ObjectID(input.readLong());
+    } else {
+      this.parentID = ObjectID.NULL_ID;
+    }
+
+    if (Conversion.getFlag(flags, DNA.HAS_ARRAY_LENGTH)) {
+      this.arrayLength = input.readInt();
+    } else {
+      this.arrayLength = DNA.NULL_ARRAY_SIZE;
+    }
 
     return this;
   }
