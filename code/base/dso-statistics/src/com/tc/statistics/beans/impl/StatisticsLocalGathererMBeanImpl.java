@@ -317,6 +317,10 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
     createAndSendNotification(STATISTICS_LOCALGATHERER_SESSION_CLOSED_TYPE, sessionId);
   }
 
+  public void statisticsEnabled(String[] names) {
+    createAndSendNotification(STATISTICS_LOCALGATHERER_STATISTICS_ENABLED_TYPE, names);
+  }
+
   public void sessionCleared(String sessionId) {
     createAndSendNotification(STATISTICS_LOCALGATHERER_SESSION_CLEARED_TYPE, sessionId);
   }

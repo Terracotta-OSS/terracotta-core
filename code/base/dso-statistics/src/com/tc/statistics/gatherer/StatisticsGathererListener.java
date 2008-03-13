@@ -17,4 +17,6 @@ public interface StatisticsGathererListener {
   public void sessionCreated(String sessionId);
 
   public void sessionClosed(String sessionId);
+
+  public void statisticsEnabled(String[] names);
 }

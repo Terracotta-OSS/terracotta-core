@@ -230,6 +230,8 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
 
     topologyChangeHandler.setEnabledStatistics(names);
     statGateway.setTopologyChangeHandler(topologyChangeHandler);
+
+    fireStatisticsEnabled(names);
   }
 
   public void startCapturing() throws StatisticsGathererException {
@@ -360,6 +362,14 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
     if (listeners.size() > 0) {
       for (Iterator it = listeners.iterator(); it.hasNext(); ) {
         ((StatisticsGathererListener)it.next()).sessionClosed(sessionId);
+      }
+    }
+  }
+
+  private void fireStatisticsEnabled(final String[] names) {
+    if (listeners.size() > 0) {
+      for (Iterator it = listeners.iterator(); it.hasNext(); ) {
+        ((StatisticsGathererListener)it.next()).statisticsEnabled(names);
       }
     }
   }

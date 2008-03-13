@@ -19,6 +19,7 @@ public interface StatisticsLocalGathererMBean extends TerracottaMBean {
   public final static String STATISTICS_LOCALGATHERER_ALLSESSIONS_CLEARED_TYPE = "tc.statistics.localgatherer.allsessions.cleared";
   public final static String STATISTICS_LOCALGATHERER_STORE_OPENED_TYPE = "tc.statistics.localgatherer.store.opened";
   public final static String STATISTICS_LOCALGATHERER_STORE_CLOSED_TYPE = "tc.statistics.localgatherer.store.closed";
+  public final static String STATISTICS_LOCALGATHERER_STATISTICS_ENABLED_TYPE = "tc.statistics.localgatherer.statistics.enabled";
 
   public void connect();
 

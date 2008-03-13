@@ -31,6 +31,7 @@ public class StatisticsGathererTest extends TransparentTestBase implements Stati
   private volatile String listenerCapturingStopped = null;
   private volatile String listenerSessionCreated = null;
   private volatile String listenerSessionClosed = null;
+  private volatile String[] listenerStatisticsEnabled = null;
 
   public void connected(String managerHostName, int managerPort) {
     listenerConnected = managerHostName+":"+managerPort;
@@ -58,6 +59,10 @@ public class StatisticsGathererTest extends TransparentTestBase implements Stati
 
   public void sessionClosed(String sessionId) {
     listenerSessionClosed = sessionId;
+  }
+
+  public void statisticsEnabled(String[] names) {
+    listenerStatisticsEnabled = names;
   }
 
   protected void duringRunningCluster() throws Exception {
@@ -104,7 +109,13 @@ public class StatisticsGathererTest extends TransparentTestBase implements Stati
 
     assertEquals(sessionid2, gatherer.getActiveSessionId());
 
+    assertNull(listenerStatisticsEnabled);
     gatherer.enableStatistics(statistics);
+    assertNotNull(listenerStatisticsEnabled);
+    assertEquals(statistics.length, listenerStatisticsEnabled.length);
+    for (int i = 0; i < statistics.length; i++) {
+      assertEquals(statistics[i], listenerStatisticsEnabled[i]);
+    }
 
     assertNull(listenerCapturingStarted);
     gatherer.startCapturing();
