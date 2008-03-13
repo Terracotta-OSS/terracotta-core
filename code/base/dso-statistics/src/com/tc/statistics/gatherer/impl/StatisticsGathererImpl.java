@@ -172,6 +172,7 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
 
   public void reinitialize() throws StatisticsGathererException {
     synchronized (this) {
+      if (null == statGateway) throw new StatisticsGathererConnectionRequiredException();
       closeSession();
       statGateway.reinitialize();
       sessionId = null;
