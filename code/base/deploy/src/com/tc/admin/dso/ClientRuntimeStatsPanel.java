@@ -12,6 +12,7 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.time.Second;
 import org.jfree.data.time.TimeSeries;
 
+import com.tc.management.RuntimeStatisticConstants;
 import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.statistics.StatisticData;
 import com.tc.stats.statistics.CountStatistic;
@@ -19,7 +20,10 @@ import com.tc.stats.statistics.Statistic;
 
 import java.awt.GridLayout;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import javax.swing.border.TitledBorder;
@@ -28,7 +32,8 @@ public class ClientRuntimeStatsPanel extends RuntimeStatsPanel {
   private ClientPanel             m_clientPanel;
 
   private ChartPanel              m_memoryPanel;
-  private TimeSeries[]            m_memoryTimeSeries;
+  private TimeSeries              m_memoryMaxTimeSeries;
+  private TimeSeries              m_memoryUsedTimeSeries;
   private JFreeChart              m_memoryChart;
 
   private ChartPanel              m_cpuPanel;
@@ -110,10 +115,9 @@ public class ClientRuntimeStatsPanel extends RuntimeStatsPanel {
   }
 
   private void setupMemoryPanel(Container parent) {
-    m_memoryTimeSeries = new TimeSeries[2];
-    m_memoryTimeSeries[0] = createTimeSeries("memory max");
-    m_memoryTimeSeries[1] = createTimeSeries("memory used");
-    m_memoryChart = createChart(m_memoryTimeSeries);
+    m_memoryMaxTimeSeries = createTimeSeries("memory max");
+    m_memoryUsedTimeSeries = createTimeSeries("memory used");
+    m_memoryChart = createChart(new TimeSeries[]{m_memoryMaxTimeSeries, m_memoryUsedTimeSeries});
     XYPlot plot = (XYPlot) m_memoryChart.getPlot();
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
     numberAxis.setAutoRangeIncludesZero(true);
@@ -122,7 +126,7 @@ public class ClientRuntimeStatsPanel extends RuntimeStatsPanel {
     m_memoryPanel = new ChartPanel(m_memoryChart, false);
     parent.add(m_memoryPanel);
     m_memoryPanel.setPreferredSize(fDefaultGraphSize);
-    m_memoryPanel.setBorder(new TitledBorder("Memory"));
+    m_memoryPanel.setBorder(new TitledBorder("Heap Usage"));
   }
 
   private void setupCpuSeries(int processorCount) {
@@ -143,20 +147,21 @@ public class ClientRuntimeStatsPanel extends RuntimeStatsPanel {
     m_cpuPanel = new ChartPanel(null, false);
     parent.add(m_cpuPanel);
     m_cpuPanel.setPreferredSize(fDefaultGraphSize);
-    m_cpuPanel.setBorder(new TitledBorder("CPU"));
+    m_cpuPanel.setBorder(new TitledBorder("CPU Usage"));
   }
 
   protected void retrieveStatistics() {
     try {
       L1InfoMBean l1InfoBean = m_clientPanel.getL1InfoBean();
       if (l1InfoBean != null) {
+        Second now = new Second();
         Map statMap = l1InfoBean.getStatistics();
 
-        m_memoryTimeSeries[0].addOrUpdate(new Second(), ((Number) statMap.get("memory max")).longValue() / 1024000d);
-        m_memoryTimeSeries[1].addOrUpdate(new Second(), ((Number) statMap.get("memory used")).longValue() / 1024000d);
+        m_memoryMaxTimeSeries.addOrUpdate(now, ((Number) statMap.get(RuntimeStatisticConstants.MEMORY_MAX)).longValue() / 1024000d);
+        m_memoryUsedTimeSeries.addOrUpdate(now, ((Number) statMap.get(RuntimeStatisticConstants.MEMORY_USED)).longValue() / 1024000d);
 
         if (m_cpuPanel != null) {
-          StatisticData[] cpuUsageData = (StatisticData[]) statMap.get("cpu usage");
+          StatisticData[] cpuUsageData = (StatisticData[]) statMap.get(RuntimeStatisticConstants.CPU_USAGE);
           if (cpuUsageData != null) {
             if (m_cpuTimeSeries == null) {
               setupCpuSeries(cpuUsageData.length);
@@ -166,7 +171,7 @@ public class ClientRuntimeStatsPanel extends RuntimeStatsPanel {
               String cpuName = cpuData.getElement();
               TimeSeries timeSeries = m_cpuTimeSeriesMap.get(cpuName);
               if (timeSeries != null) {
-                timeSeries.addOrUpdate(new Second(), ((Number) cpuData.getData()).doubleValue());
+                timeSeries.addOrUpdate(now, ((Number) cpuData.getData()).doubleValue());
               }
             }
           } else {
@@ -190,5 +195,78 @@ public class ClientRuntimeStatsPanel extends RuntimeStatsPanel {
       }
     } catch (Exception e) {/**/
     }
+  }
+  
+  private void clearAllTimeSeries() {
+    ArrayList<TimeSeries> list = new ArrayList<TimeSeries>();
+    if(m_cpuTimeSeries != null) {
+      list.addAll(Arrays.asList(m_cpuTimeSeries));
+      m_cpuTimeSeries = null;
+
+      m_cpuTimeSeriesMap.clear();
+      m_cpuTimeSeriesMap = null;      
+    }
+    
+    if(m_memoryMaxTimeSeries != null) {
+      list.add(m_memoryMaxTimeSeries);
+      m_memoryMaxTimeSeries = null;      
+    }
+    
+    if(m_memoryUsedTimeSeries != null) {
+      list.add(m_memoryUsedTimeSeries);
+      m_memoryUsedTimeSeries = null;
+    }
+    
+    if(m_flushRateSeries != null) {
+      list.add(m_flushRateSeries);
+      m_flushRateSeries = null;
+    }
+    
+    if(m_faultRateSeries != null) {
+      list.add(m_faultRateSeries);
+      m_faultRateSeries = null;
+    }
+    
+    if(m_txnRateSeries != null) {
+      list.add(m_txnRateSeries);
+      m_txnRateSeries = null;
+    }
+    
+    if(m_pendingTxnsSeries != null) {
+      list.add(m_pendingTxnsSeries);
+      m_pendingTxnsSeries = null;
+    }
+    
+    Iterator<TimeSeries> iter = list.iterator();
+    while(iter.hasNext()) {
+      iter.next().clear();
+    }
+  }
+  
+  public void tearDown() {
+    super.tearDown();
+    
+    clearAllTimeSeries();
+    
+    m_clientPanel = null;
+
+    m_memoryPanel = null;
+    m_memoryChart = null;
+
+    m_cpuPanel = null;
+    m_cpuChart = null;
+
+    m_flushRatePanel = null;
+    m_flushRateChart = null;
+
+    m_faultRatePanel = null;
+    m_faultRateChart = null;
+
+    m_txnRatePanel = null;
+    m_txnRateChart = null;
+
+    m_pendingTxnsPanel = null;
+    m_pendingTxnsChart = null;
+    
   }
 }

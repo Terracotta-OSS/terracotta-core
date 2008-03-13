@@ -35,7 +35,7 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
     this.manager = TCRuntime.getJVMMemoryManager();
     this.rawConfigText = rawConfigText;
     try {
-      Class sraCpuType = Class.forName("com.tc.statistics.retrieval.actions.SRACpu");
+      Class sraCpuType = Class.forName("com.tc.statistics.retrieval.actions.SRACpuCombined");
       if (sraCpuType != null) {
         this.cpuSRA = (StatisticRetrievalAction) sraCpuType.newInstance();
       }
@@ -95,13 +95,13 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
     HashMap map = new HashMap();
     MemoryUsage usage = manager.getMemoryUsage();
 
-    map.put("memory used", new Long(usage.getUsedMemory()));
-    map.put("memory max", new Long(usage.getMaxMemory()));
+    map.put(MEMORY_USED, new Long(usage.getUsedMemory()));
+    map.put(MEMORY_MAX, new Long(usage.getMaxMemory()));
 
     if (cpuSRA != null) {
       StatisticData[] statsData = cpuSRA.retrieveStatisticData();
       if (statsData != null) {
-        map.put("cpu usage", statsData);
+        map.put(CPU_USAGE, statsData);
       }
     }
 

@@ -68,7 +68,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     manager = TCRuntime.getJVMMemoryManager();
 
     try {
-      Class sraCpuType = Class.forName("com.tc.statistics.retrieval.actions.SRACpu");
+      Class sraCpuType = Class.forName("com.tc.statistics.retrieval.actions.SRACpuCombined");
       if (sraCpuType != null) {
         cpuSRA = (StatisticRetrievalAction) sraCpuType.newInstance();
       }
@@ -192,9 +192,6 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   public String takeThreadDump(long requestMillis) {
     String text = ThreadDumpUtil.getThreadDump();
     logger.info(text);
-
-    // TODO: if current stats session, store thread dump text at moment requestMillis.
-
     return text;
   }
 

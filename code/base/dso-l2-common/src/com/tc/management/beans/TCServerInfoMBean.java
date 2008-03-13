@@ -5,11 +5,12 @@
 package com.tc.management.beans;
 
 import com.tc.config.schema.L2Info;
+import com.tc.management.RuntimeStatisticConstants;
 import com.tc.management.TerracottaMBean;
 
 import java.util.Map;
 
-public interface TCServerInfoMBean extends TerracottaMBean {
+public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticConstants {
 
   boolean isStarted();
 

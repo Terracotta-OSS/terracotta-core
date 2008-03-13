@@ -324,4 +324,20 @@ public class RuntimeStatsPanel extends XContainer {
     }
   }
 
+  public void tearDown() {
+    if(m_statsGathererTimer != null && m_statsGathererTimer.isRunning()) {
+      m_statsGathererTimer.stop();
+    }
+    
+    super.tearDown();
+
+    m_statsGathererTimer = null;
+    m_chartsPanel = null;
+    m_startMonitoringButton = null;
+    m_stopMonitoringButton = null;
+    m_clearSamplesButton = null;
+    m_samplePeriodSpinner = null;
+    m_sampleHistorySpinner = null;
+    
+  }
 }
