@@ -265,7 +265,7 @@ public class StatisticData implements Serializable {
            + "]";
   }
 
-  private static String escapeForCsv(final String value) {
+  public static String escapeForCsv(final String value) {
     char[] chars = value.toCharArray();
     StringBuffer buffer = null;
     int last = 0;

@@ -40,6 +40,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Reader;
+import java.io.Writer;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -522,7 +523,7 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
           sql.append(it.next());
         }
       }
-      sql.append(" ORDER BY sessionid ASC, moment ASC, id ASC");
+      sql.append(" ORDER BY sessionid ASC, moment ASC, statname ASC, statelement ASC, id ASC");
 
       JdbcHelper.executeQuery(database.getConnection(), sql.toString(), new PreparedStatementHandler() {
         public void setParameters(PreparedStatement statement) throws SQLException {
@@ -570,6 +571,53 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
     } catch (Exception e) {
       throw new StatisticsStoreRetrievalErrorException(criteria, e);
     }
+  }
+
+  public void aggregateStatisticsData(final Writer writer, final String sessionId, final String agentDifferentiator, final String[] names, final String[] elements) throws StatisticsStoreException {
+    Assert.assertNotNull("sessionId", sessionId);
+    Assert.assertNotNull("agentDifferentiator", agentDifferentiator);
+    Assert.assertNotNull("names", names);
+    Assert.assertTrue("names array can't be empty", names.length > 0);
+
+    final StatisticsRetrievalCriteria criteria = new StatisticsRetrievalCriteria()
+      .sessionId(sessionId)
+      .agentDifferentiator(agentDifferentiator)
+      .setNames(names)
+      .setElements(elements);
+    retrieveStatistics(criteria, new StatisticDataUser() {
+      private Date lastMoment = null;
+
+      public boolean useStatisticData(final StatisticData data) {
+        try {
+          // end the previous line and prefix the new line with the time
+          if (null == lastMoment ||
+              !lastMoment.equals(data.getMoment())) {
+            if (lastMoment != null) {
+              writer.write("\n");
+            }
+            writer.write(String.valueOf(data.getMoment().getTime()));
+            lastMoment = data.getMoment();
+          }
+
+          final Object data_value = data.getData();
+          if (data_value != null) {
+            writer.write(",");
+            if (data_value instanceof String) {
+              writer.write(StatisticData.escapeForCsv(data_value.toString()));
+            } else if (data_value instanceof Date) {
+              writer.write(String.valueOf(((Date)data_value).getTime()));
+            } else {
+              writer.write(String.valueOf(data_value));
+            }
+          }
+        } catch (IOException e) {
+          logger.warn("Unexpected error while writing aggregated statistic data.", e);
+          return false;
+        }
+
+        return true;
+      }
+    });
   }
 
   public void retrieveStatisticsAsCsvStream(final OutputStream os, final String filenameBase, final StatisticsRetrievalCriteria criteria, final boolean textformat) throws StatisticsStoreException {

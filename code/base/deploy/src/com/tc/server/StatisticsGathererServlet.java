@@ -12,6 +12,7 @@ import com.tc.statistics.StatisticsGathererSubSystem;
 import com.tc.statistics.store.StatisticsRetrievalCriteria;
 
 import java.io.OutputStream;
+import java.io.Writer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -182,5 +183,14 @@ public class StatisticsGathererServlet extends RestfulServlet {
 
     OutputStream os = response.getOutputStream();
     system.getStatisticsStore().retrieveStatisticsAsCsvStream(os, filename_base, criteria, textformat);
+  }
+
+  public void methodAggregateStatisticsData(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
+    response.setContentType("text/plain");
+    response.setStatus(HttpServletResponse.SC_OK);
+
+    Writer writer = response.getWriter();
+    system.getStatisticsStore().aggregateStatisticsData(writer, request.getParameter("sessionId"), request.getParameter("agentDifferentiator"), request.getParameterValues("names"), request.getParameterValues("elements"));
+    writer.close();
   }
 }
