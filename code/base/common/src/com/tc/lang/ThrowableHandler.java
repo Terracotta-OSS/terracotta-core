@@ -59,7 +59,6 @@ public class ThrowableHandler {
    * @param t Throwable
    */
   public void handleThrowable(final Thread thread, final Throwable t) {
-    t.printStackTrace();
     final Throwable proximateCause = helper.getProximateCause(t);
     final Throwable ultimateCause = helper.getUltimateCause(t);
     if (proximateCause instanceof ConfigurationSetupException) {
