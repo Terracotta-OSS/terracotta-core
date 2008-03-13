@@ -195,10 +195,7 @@ class FilePath
 
     # Create this path as a directory (unless it already is one), including any leading directories.
     def ensure_directory
-        unless FileTest.directory?(to_s)
-            strip_trailing_components(1).ensure_directory
-            Dir.mkdir(to_s)
-        end
+        FileUtils.mkdir_p(to_s)
         self
     end
 
