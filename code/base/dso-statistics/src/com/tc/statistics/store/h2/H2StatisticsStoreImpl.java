@@ -67,9 +67,10 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
 
   private final static String SQL_NEXT_STATISTICLOGID = "SELECT nextval('seq_statisticlog')";
   private final static String SQL_GET_AVAILABLE_SESSIONIDS = "SELECT sessionid FROM statisticlog GROUP BY sessionid ORDER BY sessionid ASC";
+  private final static String SQL_GET_AVAILABLE_AGENT_DIFFERENTIATORS = "SELECT agentdifferentiator FROM statisticlog WHERE sessionid = ? GROUP BY agentdifferentiator ORDER BY agentdifferentiator ASC";
   private final static String SQL_INSERT_STATISTICSDATA = "INSERT INTO statisticlog (id, sessionid, agentip, agentdifferentiator, moment, statname, statelement, datanumber, datatext, datatimestamp, datadecimal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-  private static final String SQL_CLEAR_SESSION_STATISTICS = "DELETE FROM statisticlog WHERE sessionid = ?";
-  private static final String SQL_CLEAR_ALL_STATISTICS = "DELETE FROM statisticlog";
+  private final static String SQL_CLEAR_SESSION_STATISTICS = "DELETE FROM statisticlog WHERE sessionid = ?";
+  private final static String SQL_CLEAR_ALL_STATISTICS = "DELETE FROM statisticlog";
 
   protected final StatisticsDatabase database;
 
@@ -283,6 +284,7 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
     Assert.assertNotNull("data", data);
     Assert.assertNotNull("sessionId property of data", data.getSessionId());
     Assert.assertNotNull("agentIp property of data", data.getAgentIp());
+    Assert.assertNotNull("agentDifferentiator property of data", data.getAgentDifferentiator());
     Assert.assertNotNull("moment property of data", data.getMoment());
     Assert.assertNotNull("name property of data", data.getName());
 
@@ -315,11 +317,7 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
     statement.setLong(1, id);
     statement.setString(2, data.getSessionId());
     statement.setString(3, data.getAgentIp());
-    if (null == data.getAgentDifferentiator()) {
-      statement.setNull(4, Types.VARCHAR);
-    } else {
-      statement.setString(4, data.getAgentDifferentiator());
-    }
+    statement.setString(4, data.getAgentDifferentiator());
     statement.setTimestamp(5, new Timestamp(data.getMoment().getTime()));
     statement.setString(6, data.getName());
     if (null == data.getElement()) {
@@ -644,6 +642,31 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
       throw e;
     } catch (Exception e) {
       throw new StatisticsStoreSessionIdsRetrievalErrorException(e);
+    }
+
+    return (String[])results.toArray(new String[results.size()]);
+  }
+
+  public String[] getAvailableAgentDifferentiators(final String sessionId) throws StatisticsStoreException {
+    final List results = new ArrayList();
+    try {
+      database.ensureExistingConnection();
+
+      JdbcHelper.executeQuery(database.getConnection(), SQL_GET_AVAILABLE_AGENT_DIFFERENTIATORS, new PreparedStatementHandler() {
+        public void setParameters(PreparedStatement statement) throws SQLException {
+          statement.setString(1, sessionId);
+        }
+      }, new ResultSetHandler() {
+        public void useResultSet(ResultSet resultSet) throws SQLException {
+          while (resultSet.next()) {
+            results.add(resultSet.getString("agentdifferentiator"));
+          }
+        }
+      });
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new StatisticsStoreException("getAvailableNodes", e);
     }
 
     return (String[])results.toArray(new String[results.size()]);

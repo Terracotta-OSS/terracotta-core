@@ -40,6 +40,7 @@ public class H2StatisticsBufferTest extends TestCase {
     tmpDir = createTmpDir();
     buffer = new H2StatisticsBufferImpl(new StatisticsConfigImpl(), tmpDir);
     buffer.open();
+    buffer.setDefaultAgentDifferentiator("L2");
   }
 
   private File createTmpDir() throws IOException {
@@ -192,6 +193,7 @@ public class H2StatisticsBufferTest extends TestCase {
     try {
       buffer.storeStatistic(new StatisticData()
         .agentIp(InetAddress.getLocalHost().getHostAddress())
+        .agentDifferentiator("L1/0")
         .moment(new Date())
         .name("name"));
       fail("expected exception");
@@ -204,17 +206,39 @@ public class H2StatisticsBufferTest extends TestCase {
     buffer.createCaptureSession("someid");
     buffer.storeStatistic(new StatisticData()
       .sessionId("someid")
+      .agentDifferentiator("L1/0")
       .moment(new Date())
       .name("name"));
     buffer.setDefaultAgentIp(null);
     try {
       buffer.storeStatistic(new StatisticData()
         .sessionId("someid")
+        .agentDifferentiator("L1/0")
         .moment(new Date())
         .name("name"));
       fail("expected exception");
     } catch (NullPointerException e) {
       // agentIp can't be null
+    }
+  }
+
+  public void testStoreStatisticsDataNullAgentDifferentiator() throws Exception {
+    buffer.createCaptureSession("someid");
+    buffer.storeStatistic(new StatisticData()
+      .sessionId("someid")
+      .agentIp(InetAddress.getLocalHost().getHostAddress())
+      .moment(new Date())
+      .name("name"));
+    buffer.setDefaultAgentDifferentiator(null);
+    try {
+      buffer.storeStatistic(new StatisticData()
+        .sessionId("someid")
+        .agentIp(InetAddress.getLocalHost().getHostAddress())
+        .moment(new Date())
+        .name("name"));
+      fail("expected exception");
+    } catch (NullPointerException e) {
+      // agentDifferentiator can't be null
     }
   }
 
@@ -224,11 +248,12 @@ public class H2StatisticsBufferTest extends TestCase {
       buffer.storeStatistic(new StatisticData()
         .sessionId("someid")
         .agentIp(InetAddress.getLocalHost().getHostAddress())
+        .agentDifferentiator("L1/0")
         .name("name")
         .data("test"));
       fail("expected exception");
     } catch (NullPointerException e) {
-      // agentIp can't be null
+      // moment can't be null
     }
   }
 
@@ -238,11 +263,12 @@ public class H2StatisticsBufferTest extends TestCase {
       buffer.storeStatistic(new StatisticData()
         .sessionId("someid")
         .agentIp(InetAddress.getLocalHost().getHostAddress())
+        .agentDifferentiator("L1/0")
         .moment(new Date())
         .data("test"));
       fail("expected exception");
     } catch (NullPointerException e) {
-      // agentIp can't be null
+      // name can't be null
     }
   }
 
@@ -251,6 +277,7 @@ public class H2StatisticsBufferTest extends TestCase {
     buffer.storeStatistic(new StatisticData()
       .sessionId("someid")
       .agentIp(InetAddress.getLocalHost().getHostAddress())
+      .agentDifferentiator("L1/0")
       .moment(new Date())
       .name("name"));
   }
@@ -263,6 +290,7 @@ public class H2StatisticsBufferTest extends TestCase {
       buffer.storeStatistic(new StatisticData()
         .sessionId("someid")
         .agentIp(InetAddress.getLocalHost().getHostAddress())
+        .agentDifferentiator("L1/0")
         .moment(new Date())
         .name("name")
         .data("test"));
@@ -279,6 +307,7 @@ public class H2StatisticsBufferTest extends TestCase {
     buffer.storeStatistic(new StatisticData()
       .sessionId("someid1")
       .agentIp(InetAddress.getLocalHost().getHostAddress())
+      .agentDifferentiator("L1/0")
       .agentDifferentiator("yummy")
       .moment(new Date())
       .name("the stat")

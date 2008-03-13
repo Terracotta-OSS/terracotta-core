@@ -425,6 +425,7 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
     }
     
     Assert.assertNotNull("agentIp property of data", data.getAgentIp());
+    Assert.assertNotNull("agentDifferentiator property of data", data.getAgentDifferentiator());
 
     final long id;
     final int row_count;
@@ -444,11 +445,7 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
           statement.setLong(1, id);
           statement.setLong(2, local_sessionid);
           statement.setString(3, data.getAgentIp());
-          if (null == data.getAgentDifferentiator()) {
-            statement.setNull(4, Types.VARCHAR);
-          } else {
-            statement.setString(4, data.getAgentDifferentiator());
-          }
+          statement.setString(4, data.getAgentDifferentiator());
           statement.setTimestamp(5, new Timestamp(data.getMoment().getTime()));
           statement.setString(6, data.getName());
           if (null == data.getElement()) {

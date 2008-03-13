@@ -24,6 +24,8 @@ public interface StatisticsStore {
 
   public String[] getAvailableSessionIds() throws StatisticsStoreException;
 
+  public String[] getAvailableAgentDifferentiators(String sessionId) throws StatisticsStoreException;
+
   public void clearStatistics(String sessionId) throws StatisticsStoreException;
 
   public void clearAllStatistics() throws StatisticsStoreException;

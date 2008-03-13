@@ -70,6 +70,13 @@ public class StatisticsGathererServlet extends RestfulServlet {
     print(response, sessionids);
   }
 
+  public void methodGetAvailableAgentDifferentiators(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
+    String sessionid = request.getParameter("sessionId");
+    if (null == sessionid) throw new IllegalArgumentException("sessionId");
+    String[] result = system.getStatisticsStore().getAvailableAgentDifferentiators(sessionid);
+    print(response, result);
+  }
+
   public void methodGetSupportedStatistics(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
     String[] statistics = system.getStatisticsGatherer().getSupportedStatistics();
     print(response, statistics);

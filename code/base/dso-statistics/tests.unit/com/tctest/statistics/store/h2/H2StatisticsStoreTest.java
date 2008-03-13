@@ -173,6 +173,7 @@ public class H2StatisticsStoreTest extends TestCase {
     try {
       store.storeStatistic(new StatisticData()
         .agentIp(InetAddress.getLocalHost().getHostAddress())
+        .agentDifferentiator("L1/0")
         .moment(new Date())
         .name("name"));
       fail("expected exception");
@@ -185,6 +186,7 @@ public class H2StatisticsStoreTest extends TestCase {
     try {
       store.storeStatistic(new StatisticData()
         .sessionId("374938")
+        .agentDifferentiator("L1/0")
         .moment(new Date())
         .name("name"));
       fail("expected exception");
@@ -193,11 +195,25 @@ public class H2StatisticsStoreTest extends TestCase {
     }
   }
 
+  public void testStoreStatisticsDataNullAgentDifferentiator() throws Exception {
+    try {
+      store.storeStatistic(new StatisticData()
+        .sessionId("374938")
+        .agentIp(InetAddress.getLocalHost().getHostAddress())
+        .moment(new Date())
+        .name("name"));
+      fail("expected exception");
+    } catch (NullPointerException e) {
+      // agentDifferentiator can't be null
+    }
+  }
+
   public void testStoreStatisticsDataNullMoment() throws Exception {
     try {
       store.storeStatistic(new StatisticData()
         .sessionId("374938")
         .agentIp(InetAddress.getLocalHost().getHostAddress())
+        .agentDifferentiator("L1/0")
         .name("name"));
       fail("expected exception");
     } catch (NullPointerException e) {
@@ -210,6 +226,7 @@ public class H2StatisticsStoreTest extends TestCase {
       store.storeStatistic(new StatisticData()
         .sessionId("374938")
         .agentIp(InetAddress.getLocalHost().getHostAddress())
+        .agentDifferentiator("L1/0")
         .moment(new Date()));
       fail("expected exception");
     } catch (NullPointerException e) {
@@ -221,6 +238,7 @@ public class H2StatisticsStoreTest extends TestCase {
     store.storeStatistic(new StatisticData()
       .sessionId("342")
       .agentIp(InetAddress.getLocalHost().getHostAddress())
+      .agentDifferentiator("L1/0")
       .moment(new Date())
       .name("name"));
   }
@@ -231,6 +249,7 @@ public class H2StatisticsStoreTest extends TestCase {
       store.storeStatistic(new StatisticData()
         .sessionId("342")
         .agentIp(InetAddress.getLocalHost().getHostAddress())
+        .agentDifferentiator("L1/0")
         .moment(new Date())
         .name("name")
         .data("test"));
@@ -245,6 +264,7 @@ public class H2StatisticsStoreTest extends TestCase {
     store.storeStatistic(new StatisticData()
       .sessionId("376487")
       .agentIp(InetAddress.getLocalHost().getHostAddress())
+      .agentDifferentiator("L1/0")
       .moment(new Date())
       .name("the stat")
       .data("stuff"));
@@ -266,6 +286,7 @@ public class H2StatisticsStoreTest extends TestCase {
     store.storeStatistic(new StatisticData()
       .sessionId("376487")
       .agentIp(InetAddress.getLocalHost().getHostAddress())
+      .agentDifferentiator("L1/0")
       .moment(new Date())
       .name("the stat")
       .data("stuff"));
@@ -281,6 +302,7 @@ public class H2StatisticsStoreTest extends TestCase {
     store.storeStatistic(new StatisticData()
       .sessionId("376487")
       .agentIp(InetAddress.getLocalHost().getHostAddress())
+      .agentDifferentiator("L1/0")
       .moment(new Date())
       .name("the stat")
       .data("stuff2"));
@@ -296,6 +318,7 @@ public class H2StatisticsStoreTest extends TestCase {
     store.storeStatistic(new StatisticData()
       .sessionId("2232")
       .agentIp(InetAddress.getLocalHost().getHostAddress())
+      .agentDifferentiator("L1/0")
       .moment(new Date())
       .name("the stat 2")
       .data("stuff3"));
@@ -533,30 +556,35 @@ public class H2StatisticsStoreTest extends TestCase {
     store.storeStatistic(new StatisticData()
       .sessionId("376487")
       .agentIp(InetAddress.getLocalHost().getHostAddress())
+      .agentDifferentiator("L1/0")
       .moment(new Date())
       .name("the stat")
       .data("stuff"));
     store.storeStatistic(new StatisticData()
       .sessionId("12")
       .agentIp(InetAddress.getLocalHost().getHostAddress())
+      .agentDifferentiator("L1/0")
       .moment(new Date())
       .name("the stat 2")
       .data("stuff3"));
     store.storeStatistic(new StatisticData()
       .sessionId("376487")
       .agentIp(InetAddress.getLocalHost().getHostAddress())
+      .agentDifferentiator("L1/0")
       .moment(new Date())
       .name("the stat")
       .data("stuff2"));
     store.storeStatistic(new StatisticData()
       .sessionId("2232")
       .agentIp(InetAddress.getLocalHost().getHostAddress())
+      .agentDifferentiator("L1/0")
       .moment(new Date())
       .name("the stat 2")
       .data("stuff3"));
     store.storeStatistic(new StatisticData()
       .sessionId("12")
       .agentIp(InetAddress.getLocalHost().getHostAddress())
+      .agentDifferentiator("L1/0")
       .moment(new Date())
       .name("the stat 2")
       .data("stuff3"));
@@ -566,6 +594,57 @@ public class H2StatisticsStoreTest extends TestCase {
     assertEquals("12", sessionids[0]);
     assertEquals("2232", sessionids[1]);
     assertEquals("376487", sessionids[2]);
+  }
+
+  public void testGetAvailableAgentDifferentiators() throws Exception {
+    store.storeStatistic(new StatisticData()
+      .sessionId("376487")
+      .agentIp(InetAddress.getLocalHost().getHostAddress())
+      .agentDifferentiator("L1/0")
+      .moment(new Date())
+      .name("the stat")
+      .data("stuff"));
+    store.storeStatistic(new StatisticData()
+      .sessionId("12")
+      .agentIp(InetAddress.getLocalHost().getHostAddress())
+      .agentDifferentiator("L1/2")
+      .moment(new Date())
+      .name("the stat 2")
+      .data("stuff3"));
+    store.storeStatistic(new StatisticData()
+      .sessionId("376487")
+      .agentIp(InetAddress.getLocalHost().getHostAddress())
+      .agentDifferentiator("L1/0")
+      .moment(new Date())
+      .name("the stat")
+      .data("stuff2"));
+    store.storeStatistic(new StatisticData()
+      .sessionId("2232")
+      .agentIp(InetAddress.getLocalHost().getHostAddress())
+      .agentDifferentiator("L1/1")
+      .moment(new Date())
+      .name("the stat 2")
+      .data("stuff3"));
+    store.storeStatistic(new StatisticData()
+      .sessionId("12")
+      .agentIp(InetAddress.getLocalHost().getHostAddress())
+      .agentDifferentiator("L1/1")
+      .moment(new Date())
+      .name("the stat 2")
+      .data("stuff3"));
+
+    String[] agentdifferentiators1 = store.getAvailableAgentDifferentiators("376487");
+    assertEquals(1, agentdifferentiators1.length);
+    assertEquals("L1/0", agentdifferentiators1[0]);
+
+    String[] agentdifferentiators2 = store.getAvailableAgentDifferentiators("2232");
+    assertEquals(1, agentdifferentiators2.length);
+    assertEquals("L1/1", agentdifferentiators2[0]);
+
+    String[] agentdifferentiators3 = store.getAvailableAgentDifferentiators("12");
+    assertEquals(2, agentdifferentiators3.length);
+    assertEquals("L1/1", agentdifferentiators3[0]);
+    assertEquals("L1/2", agentdifferentiators3[1]);
   }
 
   public void testClearStatistics() throws Exception {
