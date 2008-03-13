@@ -10,8 +10,10 @@ import com.tc.statistics.StatisticType;
 import com.tc.util.runtime.ThreadDumpUtil;
 
 /**
- * Statistics that gives the thread dump of the system. This statistic will only run
- * in JRE-1.5 or later. It will not give thread dumps for JRE-1.4 and less.
+ * Statistic that gives the thread dump of the system.
+ *
+ * This statistic will only run in JRE-1.5 or later. It will not give thread
+ * dumps for JRE-1.4 and less.
  */
 public class SRAThreadDump implements StatisticRetrievalAction {
 

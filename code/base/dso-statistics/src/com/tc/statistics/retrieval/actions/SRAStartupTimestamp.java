@@ -10,7 +10,7 @@ import com.tc.statistics.StatisticType;
 import java.util.Date;
 
 /**
- * Statistics representing the start-up of a statistics capturing session.
+ * Statistic representing the start-up of a statistics capturing session.
  */
 public class SRAStartupTimestamp implements StatisticRetrievalAction {
 

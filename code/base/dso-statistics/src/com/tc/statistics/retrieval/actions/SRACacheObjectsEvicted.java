@@ -10,7 +10,9 @@ import com.tc.statistics.StatisticType;
 
 /**
  * This statistics action represents the statistics regarding the objects evicted from the
- * {@link CacheManager}. The statistics contains {@link StatisticData} with the following elements
+ * {@link CacheManager}.
+ *
+ * The statistics contains {@link StatisticData} with the following elements
  * <ul>
  * <li>evicted count</li>
  * <li>current count</li>
@@ -26,7 +28,7 @@ public class SRACacheObjectsEvicted implements StatisticRetrievalAction {
   public static final String ACTION_NAME = CacheManager.CACHE_OBJECTS_EVICTED;
 
   public StatisticData[] retrieveStatisticData() {
-    throw new UnsupportedOperationException(ACTION_NAME + " Statistics cannot be retrieved using the action instance." +
+    throw new UnsupportedOperationException("'" + ACTION_NAME + "' statistics cannot be retrieved using the action instance." +
                                             " It will be collected automatically when triggered by the system.");
   }
 

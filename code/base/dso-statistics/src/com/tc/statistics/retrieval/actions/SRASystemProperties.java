@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.util.Properties;
 
 /**
- * Statistics giving all the system properties.
+ * Statistic giving all the system properties.
  */
 public class SRASystemProperties implements StatisticRetrievalAction {
 
