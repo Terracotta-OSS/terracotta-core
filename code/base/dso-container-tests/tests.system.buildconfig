@@ -1,3 +1,3 @@
 build-dso-boot-jar=true
-timeout=900
+timeout=1200
 requires-container=true
