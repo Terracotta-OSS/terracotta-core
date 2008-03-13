@@ -55,18 +55,16 @@ public class TransactionBatchTest extends TestCase {
 
   public void setUp() throws Exception {
     messageFactory = new TestCommitTransactionMessageFactory();
-    writer = newWriter();
+    writer = newWriter(new ObjectStringSerializer());
     gidGenerator = new DefaultGlobalTransactionIDGenerator();
   }
 
-  private TransactionBatchWriter newWriter() {
-    ObjectStringSerializer serializer = new ObjectStringSerializer();
+  private TransactionBatchWriter newWriter(ObjectStringSerializer serializer) {
     return new TransactionBatchWriter(new TxnBatchID(1), serializer, encoding, messageFactory, TCPropertiesImpl
         .getProperties());
   }
 
-  private TransactionBatchWriter newWriter(boolean foldEnabled, int lockLimit, int objectLimit) {
-    ObjectStringSerializer serializer = new ObjectStringSerializer();
+  private TransactionBatchWriter newWriter(ObjectStringSerializer serializer, boolean foldEnabled, int lockLimit, int objectLimit) {
     return new TransactionBatchWriter(new TxnBatchID(1), serializer, encoding, messageFactory,
                                       new BatchWriterProperties(foldEnabled, lockLimit, objectLimit));
   }
@@ -192,11 +190,11 @@ public class TransactionBatchTest extends TestCase {
   }
 
   public void testSimpleFold() throws IOException {
-    writer = newWriter(true, 0, 0);
     ObjectStringSerializer serializer = new ObjectStringSerializer();
-    TestCommitTransactionMessageFactory mf = new TestCommitTransactionMessageFactory();
+
+    writer = newWriter(serializer, true, 0, 0);
+
     ClientID clientID = new ClientID(new ChannelID(69));
-    TxnBatchID batchID = new TxnBatchID(42);
 
     LockID lid1 = new LockID("1");
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL);
@@ -215,8 +213,6 @@ public class TransactionBatchTest extends TestCase {
     txn3.setTransactionContext(tc);
     txn3.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
     txn3.fieldChanged(new MockTCObject(new ObjectID(2), this), "class", "class.field", ObjectID.NULL_ID, -1);
-
-    writer = new TransactionBatchWriter(batchID, serializer, encoding, mf, TCPropertiesImpl.getProperties());
 
     SequenceGenerator sequenceGenerator = new SequenceGenerator();
     final long startSeq = sequenceGenerator.getCurrentSequence();
@@ -247,7 +243,7 @@ public class TransactionBatchTest extends TestCase {
     TransactionBatchReaderImpl reader = new TransactionBatchReaderImpl(gidGenerator, writer.getData(), clientID,
                                                                        serializer, new ActiveServerTransactionFactory());
     assertEquals(2, reader.getNumTxns());
-    assertEquals(batchID, reader.getBatchID());
+    assertEquals(new TxnBatchID(1), reader.getBatchID());
 
     int count = 0;
     ServerTransaction txn;
@@ -285,7 +281,8 @@ public class TransactionBatchTest extends TestCase {
   }
 
   public void testFoldObjectLimit() {
-    writer = newWriter(true, 0, 2);
+    ObjectStringSerializer serializer = new ObjectStringSerializer();
+    writer = newWriter(serializer, true, 0, 2);
 
     LockID lid1 = new LockID("1");
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL);
@@ -317,7 +314,8 @@ public class TransactionBatchTest extends TestCase {
   }
 
   public void testFoldLockLimit() {
-    writer = newWriter(true, 2, 0);
+    ObjectStringSerializer serializer = new ObjectStringSerializer();
+    writer = newWriter(serializer, true, 2, 0);
 
     LockID lid1 = new LockID("1");
     LockID lid2 = new LockID("2");
@@ -349,7 +347,8 @@ public class TransactionBatchTest extends TestCase {
   }
 
   public void testFoldDisabled() {
-    writer = newWriter(false, 0, 0);
+    ObjectStringSerializer serializer = new ObjectStringSerializer();
+    writer = newWriter(serializer, false, 0, 0);
 
     LockID lid1 = new LockID("1");
 
@@ -378,7 +377,8 @@ public class TransactionBatchTest extends TestCase {
   }
 
   public void testDisallowedFolds() {
-    writer = newWriter(true, 0, 0);
+    ObjectStringSerializer serializer = new ObjectStringSerializer();
+    writer = newWriter(serializer, true, 0, 0);
 
     LockID lid1 = new LockID("1");
 
