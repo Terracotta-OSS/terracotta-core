@@ -368,12 +368,14 @@ public class DistributedObjectServer implements TCDumper {
     l2DSOConfig.changesInItemIgnored(l2DSOConfig.persistenceMode());
     PersistenceMode persistenceMode = (PersistenceMode) l2DSOConfig.persistenceMode().getObject();
 
+    l2Properties = TCPropertiesImpl.getProperties().getPropertiesFor("l2");
+    
     final boolean swapEnabled = true; // 2006-01-31 andrew -- no longer possible to use in-memory only; DSO folks say
     // it's broken
     final boolean persistent = persistenceMode.equals(PersistenceMode.PERMANENT_STORE);
 
     TCFile location = new TCFileImpl(this.configSetupManager.commonl2Config().dataPath().getFile());
-    startupLock = new StartupLock(location);
+    startupLock = new StartupLock(location, l2Properties.getBoolean("startuplock.retries.enabled"));
 
     if (!startupLock.canProceed(new TCRandomFileAccessImpl(), persistent)) {
       consoleLogger.error("Another L2 process is using the directory " + location + " as data directory.");
@@ -389,7 +391,6 @@ public class DistributedObjectServer implements TCDumper {
     StageManager stageManager = seda.getStageManager();
     SessionManager sessionManager = new NullSessionManager();
     SessionProvider sessionProvider = (SessionProvider) sessionManager;
-    l2Properties = TCPropertiesImpl.getProperties().getPropertiesFor("l2");
 
     EvictionPolicy swapCache;
     final ClientStatePersistor clientStateStore;

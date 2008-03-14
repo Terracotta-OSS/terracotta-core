@@ -532,11 +532,11 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   /**
-   * We used to not call txn.commit() here. But that implies that the objects are released for other lookups before it is
-   * committed to disk. This is good for performance reason but imposes a problem. The clients could read an object that
-   * has changes but it not committed to the disk yet and If the server crashes then transactions are resent and may be
-   * re-applied in the clients when it should not have re-applied. To avoid this we now commit in-line before releasing
-   * the objects. (A wise man in the company once said that the performance of broken code is zero)
+   * We used to not call txn.commit() here. But that implies that the objects are released for other lookups before it
+   * is committed to disk. This is good for performance reason but imposes a problem. The clients could read an object
+   * that has changes but it not committed to the disk yet and If the server crashes then transactions are resent and
+   * may be re-applied in the clients when it should not have re-applied. To avoid this we now commit in-line before
+   * releasing the objects. (A wise man in the company once said that the performance of broken code is zero)
    * <p>
    * TODO:: Implement a mechanism where Objects are marked pending to commit and give it out for other transactions but
    * not for client lookups.
@@ -1098,6 +1098,10 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
     public int size() {
       return pending.size();
+    }
+
+    public String toString() {
+      return "PendingList { pending lookups = " + pending.size() + ", blocked oids = " + blocked.keySet() + " } ";
     }
   }
 

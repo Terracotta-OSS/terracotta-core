@@ -25,10 +25,16 @@ public class StartupLock {
   private final TCFile          location;
   private TCFileLock            lock;
   private TCFileChannel         channel;
-  private boolean               blocking;
+  private volatile boolean      blocking;
+  private final boolean         retries;
 
   public StartupLock(TCFile location) {
+    this(location, false);
+  }
+
+  public StartupLock(TCFile location, boolean retries) {
     this.location = location;
+    this.retries = retries;
   }
 
   public synchronized void release() {
@@ -70,39 +76,53 @@ public class StartupLock {
       throw new TCAssertionError(fnfe);
     }
 
+    while (true) {
+      try {
+        requestLock(tcFile, block);
+        break;
+      } catch (TCDataFileLockingException tdfle) {
+        if (!retries) {
+          throw tdfle;
+        } else {
+          logger.error(tdfle.getMessage() + ". Retrying");
+        }
+      }
+    }
+
+    return lock != null;
+  }
+
+  private void requestLock(TCFile tcFile, boolean block) {
     try {
       if (block) {
         blocking = true;
         lock = channel.lock();
-        blocking = false;
       } else {
         lock = channel.tryLock();
       }
     } catch (OverlappingFileLockException e) {
       // File is already locked in this thread or virtual machine
+      throw new AssertionError(e);
     } catch (IOException ioe) {
       throw new TCDataFileLockingException("Unable to acquire file lock on '" + tcFile.getFile().getAbsolutePath()
-          + "'.  Aborting Terracotta server startup.");
+                                           + "'.  Aborting Terracotta server startup.");
     } finally {
       blocking = false;
     }
 
-    Assert.eval(tcFile.exists());
-
-    return lock != null;
   }
 
   public boolean isBlocking() {
     return this.blocking;
   }
-  
+
   private void ensureFileExists(TCFile file) throws FileNotCreatedException {
     if (!file.exists()) {
       try {
         file.createNewFile();
       } catch (IOException e) {
         throw new FileNotCreatedException("Could not create file for startup lock: " + file
-            + ". Please ensure that this file can be created.");
+                                          + ". Please ensure that this file can be created.");
       }
       Assert.eval(file.exists());
     }
@@ -114,7 +134,7 @@ public class StartupLock {
         location.forceMkdir();
       } catch (IOException e) {
         throw new LocationNotCreatedException("Could not create location for startup lock: " + location
-            + ". Please ensure that this directory can be created.");
+                                              + ". Please ensure that this directory can be created.");
       }
     }
   }
