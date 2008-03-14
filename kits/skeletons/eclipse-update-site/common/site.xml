@@ -10,42 +10,6 @@
    <feature url="features/org.terracotta.dso_VERSION.jar" id="org.terracotta.dso" version="VERSION">
       <category name="dso"/>
    </feature>
-
-   <feature url="features/org.terracotta.dso_2.5.2.r7031_v20080218.jar" id="org.terracotta.dso" version="2.5.2.r7031_v20080218">
-      <category name="dso"/>
-   </feature>
-
-   <feature url="features/org.terracotta.dso_2.5.1.r6850_v20080128.jar" id="org.terracotta.dso" version="2.5.1.r6850_v20080128">
-      <category name="dso"/>
-   </feature>
-   
-   <feature url="features/org.terracotta.dso_2.5.0.r6472_v20071210.jar" id="org.terracotta.dso" version="2.5.0.r6472_v20071210">
-      <category name="dso"/>
-   </feature>
-   
-   <feature url="features/org.terracotta.dso_2.4.8.r6226_v20071112.jar" id="org.terracotta.dso" version="2.4.8.r6226_v20071112">
-      <category name="dso"/>
-   </feature>
-   
-   <feature url="features/org.terracotta.dso_2.4.5.r5958_v20071017.jar" id="org.terracotta.dso" version="2.4.5.r5958_v20071017">
-      <category name="dso"/>
-   </feature>
-   
-   <feature url="features/org.terracotta.dso_2.4.4.r5783_v20071003.jar" id="org.terracotta.dso" version="2.4.4.r5783_v20071003">
-      <category name="dso"/>
-   </feature>
-
-   <feature url="features/org.terracotta.dso_2.4.3.r5455_v20070906.jar" id="org.terracotta.dso" version="2.4.3.r5455_v20070906">
-      <category name="dso"/>
-   </feature>
-   
-   <feature url="features/org.terracotta.dso_2.4.0.r4502_v20070719.jar" id="org.terracotta.dso" version="2.4.0.r4502_v20070719">
-      <category name="dso"/>
-   </feature>
-
-   <feature url="features/org.terracotta.dso_2.3.0.r2902_v20070504.jar" id="org.terracotta.dso" version="2.3.0.r2902_v20070504">
-      <category name="dso"/>
-   </feature>
    
    <category-def name="dso" label="Terracotta DSO">
       <description>
