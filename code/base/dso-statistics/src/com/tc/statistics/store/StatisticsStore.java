@@ -35,7 +35,7 @@ public interface StatisticsStore {
 
   public void retrieveStatisticsAsCsvStream(OutputStream os, String filenameBase, StatisticsRetrievalCriteria criteria, boolean textformat) throws StatisticsStoreException;
 
-  public void aggregateStatisticsData(Writer writer, String sessionId, String agentDifferentiator, String[] names, String[] elements) throws StatisticsStoreException;
+  public void aggregateStatisticsData(Writer writer, String sessionId, String agentDifferentiator, String[] names, String[] elements, Long interval) throws StatisticsStoreException;
 
   public void addListener(StatisticsStoreListener listener);
 

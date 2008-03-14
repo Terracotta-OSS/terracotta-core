@@ -712,14 +712,14 @@ public class H2StatisticsStoreTest extends TestCase {
     populateBufferWithStatistics("somesession1", "somesession2", 10, 8, 4, 6);
 
     StringWriter writer1 = new StringWriter();
-    store.aggregateStatisticsData(writer1, "somesession1", "D1", new String[] {"stat1","stat2"}, null);
+    store.aggregateStatisticsData(writer1, "somesession1", "D1", new String[] {"stat1","stat2"}, null, null);
     String result1 = writer1.getBuffer().toString();
     String[] result1b = StringUtils.split(result1, '\n');
     assertEquals(result1b.length, 1);
     assertEquals(",1,2,3,4,5,6,7,8,9,10", result1.substring(result1.indexOf(',')));
 
     StringWriter writer2 = new StringWriter();
-    store.aggregateStatisticsData(writer2, "somesession2", "D2", new String[] {"stat1","stat2"}, null);
+    store.aggregateStatisticsData(writer2, "somesession2", "D2", new String[] {"stat1","stat2"}, null, null);
     String result2 = writer2.getBuffer().toString();
     String[] result2b = StringUtils.split(result2, '\n');
     assertEquals(result2b.length, 2);
@@ -727,6 +727,18 @@ public class H2StatisticsStoreTest extends TestCase {
     int index_comma = result2b[1].indexOf(',');
     long moment = Long.parseLong(result2b[1].substring(0, index_comma));
     assertEquals(moment+","+(moment+1)+","+(moment+2)+","+(moment+3)+","+(moment+4)+","+(moment+5)+","+(moment+6), result2b[1]);
+
+    StringWriter writer3 = new StringWriter();
+    store.aggregateStatisticsData(writer3, "somesession1", "D1", new String[] {"stat1","stat2"}, null, new Long(3000));
+    String result3 = writer3.getBuffer().toString();
+    assertTrue(result3.length() > 0);
+
+    Thread.sleep(3500);
+
+    StringWriter writer4 = new StringWriter();
+    store.aggregateStatisticsData(writer4, "somesession1", "D1", new String[] {"stat1","stat2"}, null, new Long(3000));
+    String result4 = writer4.getBuffer().toString();
+    assertTrue(0 == result4.length());
   }
 
   public void testCsvImport() throws Exception {

@@ -573,7 +573,7 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
     }
   }
 
-  public void aggregateStatisticsData(final Writer writer, final String sessionId, final String agentDifferentiator, final String[] names, final String[] elements) throws StatisticsStoreException {
+  public void aggregateStatisticsData(final Writer writer, final String sessionId, final String agentDifferentiator, final String[] names, final String[] elements, final Long interval) throws StatisticsStoreException {
     Assert.assertNotNull("sessionId", sessionId);
     Assert.assertNotNull("agentDifferentiator", agentDifferentiator);
     Assert.assertNotNull("names", names);
@@ -584,6 +584,10 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
       .agentDifferentiator(agentDifferentiator)
       .setNames(names)
       .setElements(elements);
+    if (interval != null) {
+      long now = System.currentTimeMillis();
+      criteria.start(new Date(now - interval.longValue()));
+    }
     retrieveStatistics(criteria, new StatisticDataUser() {
       private Date lastMoment = null;
 

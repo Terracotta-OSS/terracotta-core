@@ -189,8 +189,14 @@ public class StatisticsGathererServlet extends RestfulServlet {
     response.setContentType("text/plain");
     response.setStatus(HttpServletResponse.SC_OK);
 
+    Long interval = null;
+    String interval_string = request.getParameter("interval");
+    if (interval_string != null) {
+      interval = new Long(interval_string);
+    }
+
     Writer writer = response.getWriter();
-    system.getStatisticsStore().aggregateStatisticsData(writer, request.getParameter("sessionId"), request.getParameter("agentDifferentiator"), request.getParameterValues("names"), request.getParameterValues("elements"));
+    system.getStatisticsStore().aggregateStatisticsData(writer, request.getParameter("sessionId"), request.getParameter("agentDifferentiator"), request.getParameterValues("names"), request.getParameterValues("elements"), interval);
     writer.close();
   }
 }
