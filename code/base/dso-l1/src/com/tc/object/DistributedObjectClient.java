@@ -188,10 +188,12 @@ public class DistributedObjectClient extends SEDA {
     registry.registerActionInstance(new SRAMemoryUsage());
     registry.registerActionInstance(new SRASystemProperties());
     registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRACpu");
+      registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRANetworkActivity");
     registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRAThreadDump");
     registry.registerActionInstance(new SRAStageQueueDepths(stageManager));
     registry.registerActionInstance(new SRACacheObjectsEvictRequest());
     registry.registerActionInstance(new SRACacheObjectsEvicted());
+    registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRAVmGarbageCollector");
   }
 
   public void start() {

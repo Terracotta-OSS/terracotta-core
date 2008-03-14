@@ -182,6 +182,7 @@ import com.tc.statistics.retrieval.actions.SRAMemoryUsage;
 import com.tc.statistics.retrieval.actions.SRAStageQueueDepths;
 import com.tc.statistics.retrieval.actions.SRASystemProperties;
 import com.tc.statistics.retrieval.actions.SRADistributedGC;
+import com.tc.statistics.retrieval.actions.SRAVmGarbageCollector;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
@@ -808,6 +809,7 @@ public class DistributedObjectServer implements TCDumper {
       registry.registerActionInstance(new SRAMemoryUsage());
       registry.registerActionInstance(new SRASystemProperties());
       registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRACpu");
+      registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRANetworkActivity");
       registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRAThreadDump");
       registry.registerActionInstance(new SRAL2TransactionCount(serverStats));
       registry.registerActionInstance(new SRAL2BroadcastCount(serverStats));
@@ -817,6 +819,7 @@ public class DistributedObjectServer implements TCDumper {
       registry.registerActionInstance(new SRACacheObjectsEvictRequest());
       registry.registerActionInstance(new SRACacheObjectsEvicted());
       registry.registerActionInstance(new SRADistributedGC());
+      registry.registerActionInstance(new SRAVmGarbageCollector());
     }
   }
 

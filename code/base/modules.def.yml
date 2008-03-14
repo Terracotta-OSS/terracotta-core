@@ -120,6 +120,7 @@ modules:
         - common
         - common-api
         - dso-common
+        - dso-statistics-api
   - management:
       options:
         jdk: J2SE-1.4
