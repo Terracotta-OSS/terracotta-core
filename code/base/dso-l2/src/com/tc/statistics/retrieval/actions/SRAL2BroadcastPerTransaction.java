@@ -14,9 +14,10 @@ import com.tc.util.Assert;
 import java.math.BigDecimal;
 
 /**
- * This statistics gives the number of broadcasts happening per transaction. Both the number
- * of broadcasts and the number of transactions are sampled and this gives the average number of
- * broadcasts that is happening per transaction
+ * This statistics gives the number of broadcasts happening per transaction.
+ * <p/>
+ * Both the number of broadcasts and the number of transactions are sampled and
+ * this gives the average number of broadcasts that is happening per transaction
  */
 public class SRAL2BroadcastPerTransaction implements StatisticRetrievalAction {
 

@@ -12,8 +12,10 @@ import com.tc.stats.counter.sampled.TimeStampedCounterValue;
 import com.tc.util.Assert;
 
 /**
- * This statistics gives the transaction count happening per second in the L2. The number of transactions
- * happening is sampled every second and the {@link com.tc.statistics.retrieval.StatisticsRetriever} samples this data at the global frequency.
+ * This statistics gives the transaction count happening per second in the L2.
+ * <p/>
+ * The number of transactions happening is sampled every second and the
+ * {@link com.tc.statistics.retrieval.StatisticsRetriever} samples this data at the global frequency.
  */
 public class SRAL2TransactionCount implements StatisticRetrievalAction {
 
@@ -36,6 +38,6 @@ public class SRAL2TransactionCount implements StatisticRetrievalAction {
 
   public StatisticData[] retrieveStatisticData() {
     TimeStampedCounterValue value = txnCounter.getMostRecentSample();
-    return new StatisticData[] {new StatisticData(ACTION_NAME, value.getCounterValue())};
+    return new StatisticData[] { new StatisticData(ACTION_NAME, value.getCounterValue()) };
   }
 }

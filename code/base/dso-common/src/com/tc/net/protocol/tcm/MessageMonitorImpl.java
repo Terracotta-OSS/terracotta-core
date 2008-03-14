@@ -74,6 +74,10 @@ public class MessageMonitorImpl implements MessageMonitor {
     }
   }
 
+  public Map getCounters() {
+    return counters;
+  }
+
   public String toString() {
     String nl = System.getProperty("line.separator");
     StringBuffer rv = new StringBuffer(nl);
@@ -88,7 +92,7 @@ public class MessageMonitorImpl implements MessageMonitor {
     return rv.toString();
   }
 
-  private static class MessageCounter {
+  public static class MessageCounter {
     private final SynchronizedLong incomingCount = new SynchronizedLong(0);
     private final SynchronizedLong incomingData  = new SynchronizedLong(0);
 
@@ -117,6 +121,26 @@ public class MessageMonitorImpl implements MessageMonitor {
              + formatter.leftPad(30, incomingData) + " bytes " + "| OUT: " + formatter.leftPad(15, outgoingCount)
              + ", " + formatter.leftPad(30, outgoingData) + " bytes";
 
+    }
+
+    public SynchronizedLong getIncomingCount() {
+      return incomingCount;
+    }
+
+    public SynchronizedLong getIncomingData() {
+      return incomingData;
+    }
+
+    public SynchronizedLong getOutgoingCount() {
+      return outgoingCount;
+    }
+
+    public SynchronizedLong getOutgoingData() {
+      return outgoingData;
+    }
+
+    public String getName() {
+      return name;
     }
   }
 

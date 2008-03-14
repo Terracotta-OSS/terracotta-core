@@ -11,7 +11,7 @@ import com.tc.statistics.StatisticType;
 /**
  * This statistics action represents the statistics regarding the objects evicted from the
  * {@link CacheManager}.
- *
+ * <p/>
  * The statistics contains {@link StatisticData} with the following elements
  * <ul>
  * <li>evicted count</li>
@@ -19,6 +19,13 @@ import com.tc.statistics.StatisticType;
  * <li>new objects count</li>
  * <li>time taken</li>
  * </ul>
+ * <p/>
+ * In case of L2, this gives the number of objects flushed to the disk by the cache manager while
+ * in case of L1 it gives the number of objects flushed from L1 to L2. It should be noted that
+ * in case of L1 the objects evicted from the cache manager does not necessarily mean that those
+ * objects will be garbage collected from the node as other local objects might be still having reference
+ * to it.
+ * <p/>
  * This statistic action should not be used to retrieve the cache manager objects evicted stats.
  * The actual collection of this statistic is done in the {@link CacheManager} and injected into
  * the statistics sub-system.

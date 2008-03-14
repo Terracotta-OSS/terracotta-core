@@ -12,8 +12,9 @@ import com.tc.stats.counter.sampled.TimeStampedCounterValue;
 import com.tc.util.Assert;
 
 /**
- * This statistics gives the number of broadcasts happening in the L2. The number of
- * broadcasts that is happening is sampled every second presently
+ * This statistics gives the number of broadcasts happening in the L2.
+ * <p/>
+ * The number of broadcasts that is happening is sampled every second presently
  */
 public class SRAL2BroadcastCount implements StatisticRetrievalAction {
 
@@ -36,6 +37,6 @@ public class SRAL2BroadcastCount implements StatisticRetrievalAction {
 
   public StatisticData[] retrieveStatisticData() {
     TimeStampedCounterValue value = broadcastCounter.getMostRecentSample();
-    return new StatisticData[] {new StatisticData(ACTION_NAME, value.getCounterValue())};
+    return new StatisticData[] { new StatisticData(ACTION_NAME, value.getCounterValue()) };
   }
 }

@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 
 /**
  * This statistics gives the average number of changes that are present per broadcast.
+ * <p/>
  * Number of changes and number of broadcast are sampled every second presently and this
  * gives the average number of changes per broadcast.
  */
@@ -45,7 +46,7 @@ public class SRAL2ChangesPerBroadcast implements StatisticRetrievalAction {
     long numBroadcast = broadcasts.getCounterValue();
     long numChanges = changes.getCounterValue();
     BigDecimal value = numBroadcast != 0 ? new BigDecimal((double)numChanges / numBroadcast) : new BigDecimal(0);
-    return new StatisticData[] { new StatisticData(ACTION_NAME, value) }; 
+    return new StatisticData[] { new StatisticData(ACTION_NAME, value) };
   }
 }
 

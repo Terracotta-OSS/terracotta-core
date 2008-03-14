@@ -10,6 +10,7 @@ import com.tc.statistics.StatisticType;
 
 /**
  * This statistics represents statistics for the Distributed garbage collector.
+ * <p/>
  * This statistic contains {@link StatisticData} with the following elements:
  * <ul>
  * <li>iteration</li>
@@ -19,6 +20,7 @@ import com.tc.statistics.StatisticType;
  * <li>candidate garbage count</li>
  * <li>actual garbage count</li>
  * </ul>
+ * <p/>
  * This statistic action should not be used to retrieve the Distributed garbage collector statistic.
  * The actual collection of the distributed garbage collector statistics is done in individual
  * garbage collectors like {@link com.tc.objectserver.core.impl.MarkAndSweepGarbageCollector} and the

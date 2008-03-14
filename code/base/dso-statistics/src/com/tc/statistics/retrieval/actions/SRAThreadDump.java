@@ -11,7 +11,7 @@ import com.tc.util.runtime.ThreadDumpUtil;
 
 /**
  * Statistic that gives the thread dump of the system.
- *
+ * <p/>
  * This statistic will only run in JRE-1.5 or later. It will not give thread
  * dumps for JRE-1.4 and less.
  */

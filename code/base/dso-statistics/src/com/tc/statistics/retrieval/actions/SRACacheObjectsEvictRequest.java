@@ -11,7 +11,7 @@ import com.tc.statistics.StatisticType;
 /**
  * This statistics action represents the statistics regarding the request of evicting objects from the
  * {@link CacheManager}.
- *
+ * <p/>
  * The statistics contains {@link StatisticData} with the following elements
  * <ul>
  * <li>asking to evict count</li>
@@ -20,6 +20,7 @@ import com.tc.statistics.StatisticType;
  * <li>percentage heap used</li>
  * <li>gc count</li>
  * </ul>
+ * <p/>
  * This statistic action should not be used to retrieve the cache manager objects evict request stats.
  * The actual collection of this statistic is done in the {@link CacheManager} and injected into
  * the statistics sub-system.

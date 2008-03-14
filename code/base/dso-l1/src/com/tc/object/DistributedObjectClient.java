@@ -117,6 +117,7 @@ import com.tc.statistics.retrieval.actions.SRAStageQueueDepths;
 import com.tc.statistics.retrieval.actions.SRASystemProperties;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvictRequest;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvicted;
+import com.tc.statistics.retrieval.actions.SRAMessages;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
@@ -184,16 +185,17 @@ public class DistributedObjectClient extends SEDA {
     this.pauseListener = pauseListener;
   }
 
-  private void populateStatisticsRetrievalRegistry(StatisticsRetrievalRegistry registry, StageManager stageManager) {
+  private void populateStatisticsRetrievalRegistry(StatisticsRetrievalRegistry registry, StageManager stageManager, MessageMonitor messageMonitor) {
     registry.registerActionInstance(new SRAMemoryUsage());
     registry.registerActionInstance(new SRASystemProperties());
     registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRACpu");
-      registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRANetworkActivity");
+    registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRANetworkActivity");
     registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRAThreadDump");
     registry.registerActionInstance(new SRAStageQueueDepths(stageManager));
     registry.registerActionInstance(new SRACacheObjectsEvictRequest());
     registry.registerActionInstance(new SRACacheObjectsEvicted());
     registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRAVmGarbageCollector");
+    registry.registerActionInstance(new SRAMessages(messageMonitor));
   }
 
   public void start() {
@@ -288,7 +290,7 @@ public class DistributedObjectClient extends SEDA {
     // setup statistics subsystem
     statisticsAgentSubSystem = new StatisticsAgentSubSystemImpl();
     if (statisticsAgentSubSystem.setup(config.getNewCommonL1Config())) {
-      populateStatisticsRetrievalRegistry(statisticsAgentSubSystem.getStatisticsRetrievalRegistry(), stageManager);
+      populateStatisticsRetrievalRegistry(statisticsAgentSubSystem.getStatisticsRetrievalRegistry(), stageManager, mm);
     }
 
     objectManager = new ClientObjectManagerImpl(remoteObjectManager, config, idProvider, new ClockEvictionPolicy(-1),

@@ -180,6 +180,9 @@ import com.tc.statistics.retrieval.actions.SRAMemoryUsage;
 import com.tc.statistics.retrieval.actions.SRAStageQueueDepths;
 import com.tc.statistics.retrieval.actions.SRASystemProperties;
 import com.tc.statistics.retrieval.actions.SRAVmGarbageCollector;
+import com.tc.statistics.retrieval.actions.SRAMessages;
+import com.tc.statistics.retrieval.actions.SRAL2FaultsFromDisk;
+import com.tc.statistics.retrieval.actions.SRAL1ToL2FlushRate;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
@@ -780,7 +783,7 @@ public class DistributedObjectServer implements TCDumper {
     stageManager.startAll(context);
 
     // populate the statistics retrieval registry
-    populateStatisticsRetrievalRegistry(serverStats, seda.getStageManager());
+    populateStatisticsRetrievalRegistry(serverStats, seda.getStageManager(), mm, managedObjectFaultHandler);
 
     // XXX: yucky casts
     managementContext = new ServerManagementContext(transactionManager, (ObjectManagerMBean) objectManager,
@@ -802,7 +805,8 @@ public class DistributedObjectServer implements TCDumper {
     }
   }
 
-  private void populateStatisticsRetrievalRegistry(DSOGlobalServerStats serverStats, StageManager stageManager) {
+  private void populateStatisticsRetrievalRegistry(DSOGlobalServerStats serverStats, StageManager stageManager, MessageMonitor messageMonitor,
+                                                   ManagedObjectFaultHandler managedObjectFaultHandler) {
     if (statisticsAgentSubSystem.isActive()) {
       StatisticsRetrievalRegistry registry = statisticsAgentSubSystem.getStatisticsRetrievalRegistry();
       registry.registerActionInstance(new SRAL2ToL1FaultRate(serverStats));
@@ -820,6 +824,9 @@ public class DistributedObjectServer implements TCDumper {
       registry.registerActionInstance(new SRACacheObjectsEvicted());
       registry.registerActionInstance(new SRADistributedGC());
       registry.registerActionInstance(new SRAVmGarbageCollector());
+      registry.registerActionInstance(new SRAMessages(messageMonitor));
+      registry.registerActionInstance(new SRAL2FaultsFromDisk(managedObjectFaultHandler));
+      registry.registerActionInstance(new SRAL1ToL2FlushRate(serverStats));
     }
   }
 

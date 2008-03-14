@@ -51,4 +51,7 @@ public class ManagedObjectFaultHandler extends AbstractEventHandler {
     objectStore = oscc.getObjectStore();
   }
 
+  public AtomicLong getFaultCount() {
+    return faultCount;
+  }
 }
