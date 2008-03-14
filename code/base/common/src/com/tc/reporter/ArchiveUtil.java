@@ -151,7 +151,7 @@ public final class ArchiveUtil {
     return new File(tcConfig.getParent() + File.separator + file);
   }
 
-  private File getClientLogsLocation(TcConfig configBeans) throws IOException, XmlException {
+  private File getClientLogsLocation(TcConfig configBeans) {
     Client clients = configBeans.getClients();
     if (clients == null) quit("The Terracotta config specified doesn't contain the <clients> element.\nYou may have provided a server config by mistake.");
     String logs = clients.getLogs();
@@ -169,13 +169,13 @@ public final class ArchiveUtil {
     return (value.equals(STDOUT) || value.equals(STDERR));
   }
 
-  private Server[] getServersElement(TcConfig configBeans) throws IOException, XmlException {
+  private Server[] getServersElement(TcConfig configBeans) {
     Servers servers = configBeans.getServers();
     if (servers == null) quit("The Terracotta config specified doesn't contain the <servers> element");
     return servers.getServerArray();
   }
 
-  private File[] getServerLogsLocation(TcConfig configBeans) throws IOException, XmlException {
+  private File[] getServerLogsLocation(TcConfig configBeans) {
     Server[] servers = getServersElement(configBeans);
     String[] logs = new String[servers.length];
     File[] logFiles = new File[servers.length];
@@ -192,7 +192,7 @@ public final class ArchiveUtil {
     return logFiles;
   }
 
-  private File[] getServerDataLocation(TcConfig configBeans) throws IOException, XmlException {
+  private File[] getServerDataLocation(TcConfig configBeans) {
     if (!isFull) return null;
     Server[] servers = getServersElement(configBeans);
     String[] serverData = new String[servers.length];
