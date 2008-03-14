@@ -14,8 +14,8 @@ import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
-import com.tc.test.TCTestCase;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.test.TCTestCase;
 import com.terracottatech.config.AdditionalBootJarClasses;
 
 import java.io.IOException;
@@ -86,6 +86,12 @@ public class BaseDSOTestCase extends TCTestCase {
     ((SettableConfigItem) out.dsoApplicationConfig().additionalBootJarClasses()).setValue(classes);
     // ((SettableConfigItem) out.dsoApplicationConfig().roots()).setValue(roots);
 
+    setupConfigLogDataStatisticsPaths(out);
+
+    out.activateConfigurationChange();
+  }
+
+  protected void setupConfigLogDataStatisticsPaths(TestTVSConfigurationSetupManagerFactory out) throws ConfigurationSetupException {
     try {
       ((SettableConfigItem) out.l2CommonConfig().dataPath()).setValue(getTempFile("l2-data").toString());
       ((SettableConfigItem) out.l2CommonConfig().logsPath()).setValue(getTempFile("l2-logs").toString());
@@ -95,8 +101,6 @@ public class BaseDSOTestCase extends TCTestCase {
     } catch (IOException ioe) {
       throw new ConfigurationSetupException("Can't set up log, data and statistics paths", ioe);
     }
-
-    out.activateConfigurationChange();
   }
 
   protected final TestTVSConfigurationSetupManagerFactory createCentralizedConfigFactory()

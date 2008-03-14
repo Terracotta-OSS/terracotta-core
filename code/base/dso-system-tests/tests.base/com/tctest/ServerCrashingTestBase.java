@@ -53,6 +53,8 @@ public abstract class ServerCrashingTestBase extends TransparentTestBase {
 
     ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(port);
     ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(adminPort);
+    setupConfigLogDataStatisticsPaths(configFactory());
+
     configFactory().addServerToL1Config(null, port, adminPort);
     setUpControlledServer(configFactory(), configHelper(), port, adminPort, configFile.getAbsolutePath(), jvmArgs);
 
