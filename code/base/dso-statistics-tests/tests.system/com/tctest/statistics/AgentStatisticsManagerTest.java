@@ -54,9 +54,8 @@ public class AgentStatisticsManagerTest extends TCTestCase {
             try {
               return AgentStatisticsManagerTest.this.getTempDirectory();
             } catch (IOException e) {
+              throw new RuntimeException(e);
             }
-            Assert.fail("Can't get temp directory");
-            return null;
           }
 
           public Object getObject() {
@@ -211,6 +210,7 @@ public class AgentStatisticsManagerTest extends TCTestCase {
   protected void tearDown() throws Exception {
     agentManager = null;
     statisticsManager = null;
+    agentSubSystem.cleanup();
     agentSubSystem.unregisterMBeans(beanServer);
     beanServer = null;
     agentSubSystem = null;

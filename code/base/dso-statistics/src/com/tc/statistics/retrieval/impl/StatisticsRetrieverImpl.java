@@ -124,23 +124,23 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
   }
 
   private void retrieveStartupMarker() {
-    retrieveAction(new SRAStartupTimestamp());
+    retrieveAction(new Date(), new SRAStartupTimestamp());
   }
 
-  private void retrieveShutdownMarker() {
-    retrieveAction(new SRAShutdownTimestamp());
+  private void retrieveShutdownMarker(final Date moment) {
+    retrieveAction(moment, new SRAShutdownTimestamp());
   }
 
   private void retrieveStartupStatistics() {
     List action_list = (List)actionsMap.get(StatisticType.STARTUP);
     Assert.assertNotNull("list of startup actions", action_list);
+    final Date moment = new Date();
     for (Iterator actions_it = action_list.iterator(); actions_it.hasNext();) {
-      retrieveAction((StatisticRetrievalAction)actions_it.next());
+      retrieveAction(moment, (StatisticRetrievalAction)actions_it.next());
     }
   }
 
-  private void retrieveAction(final StatisticRetrievalAction action) {
-    final Date moment = new Date();
+  private void retrieveAction(final Date moment, final StatisticRetrievalAction action) {
     StatisticData[] data = action.retrieveStatisticData();
     if (data != null) {
       for (int i = 0; i < data.length; i++) {
@@ -213,13 +213,14 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
     public void run() {
       List action_list = (List)actionsMap.get(StatisticType.SNAPSHOT);
       Assert.assertNotNull("list of snapshot actions", action_list);
+      final Date moment = new Date();
       for (Iterator actions_it = action_list.iterator(); actions_it.hasNext();) {
-        retrieveAction((StatisticRetrievalAction)actions_it.next());
+        retrieveAction(moment, (StatisticRetrievalAction)actions_it.next());
       }
 
       if (performTaskShutdown) {
         cancel();
-        retrieveShutdownMarker();
+        retrieveShutdownMarker(new Date(moment.getTime()+1));
       }
     }
   }
