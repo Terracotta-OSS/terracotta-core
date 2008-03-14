@@ -75,6 +75,19 @@ public interface TransparencyClassSpec {
   public boolean isPreInstrumented();
 
   /**
+   * Mark this class spec as foreign.
+   * @return this
+   */
+  public TransparencyClassSpec markForeign();
+  
+  /**
+   * Check whether this class is not included in the bootjar 
+   * by default. When a class is declared in the <additional-boot-jar-classes/>
+   * section of the tc-config, then it is marked as foreign.
+   */
+  public boolean isForeign();
+  
+  /**
    * Get lock definitions for member
    * @param memberInfo Member
    * @return Locks

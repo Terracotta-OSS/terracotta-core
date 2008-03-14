@@ -50,6 +50,7 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   private boolean                     isLogical;
   private final IncludeOnLoad         onLoad                     = new IncludeOnLoad();
   private boolean                     preInstrumented;
+  private boolean                     foreign;
 
   private boolean                     useNonDefaultConstructor   = false;
   private boolean                     honorJDKSubVersionSpecific = false;
@@ -112,7 +113,16 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     preInstrumented = true;
     return this;
   }
-
+ 
+  public TransparencyClassSpec markForeign() {
+    foreign = true;
+    return this;
+  }
+  
+  public boolean isForeign() {
+    return foreign;
+  }
+  
   public boolean isPreInstrumented() {
     return preInstrumented;
   }

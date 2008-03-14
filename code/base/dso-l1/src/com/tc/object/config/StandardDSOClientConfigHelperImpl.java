@@ -107,6 +107,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   private static final TCLogger                  logger                             = CustomerLogging
                                                                                         .getDSOGenericLogger();
+  private static final TCLogger                  consoleLogger                      = CustomerLogging
+                                                                                        .getConsoleLogger();
 
   private static final InstrumentationDescriptor DEAFULT_INSTRUMENTATION_DESCRIPTOR = new NullInstrumentationDescriptor();
 
@@ -275,7 +277,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   public String rawConfigText() {
     return configSetupManager.rawConfigText();
   }
-  
+
   public void allowCGLIBInstrumentation() {
     this.allowCGLIBInstrumentation = true;
   }
@@ -819,7 +821,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
         addCustomAdapter("weblogic.servlet.internal.TerracottaServletResponseImpl",
                          new DelegateMethodAdapter("weblogic.servlet.internal.ServletResponseImpl", "nativeResponse"));
       } else {
-        logger.warn("weblogic instrumentation NOT being added since this appears to be an unsupported version");
+        final String msg = "weblogic instrumentation NOT being added since this appears to be an unsupported version";
+        logger.warn(msg);
+        consoleLogger.warn(msg);
       }
     }
   }
@@ -1765,17 +1769,29 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     int missingCount = 0;
     int preInstrumentedCount = 0;
     BootJar bootJar = BootJar.getDefaultBootJarForReading();
-    Set bjClasses = bootJar.getAllPreInstrumentedClasses();
-    int bootJarPopulation = bjClasses.size();
+    Set preinstClasses = bootJar.getAllPreInstrumentedClasses();
+    int bootJarPopulation = preinstClasses.size();
 
     TransparencyClassSpec[] allSpecs = getAllSpecs(true);
     for (int i = 0; i < allSpecs.length; i++) {
       TransparencyClassSpec classSpec = allSpecs[i];
       Assert.assertNotNull(classSpec);
 
+      if (!classSpec.isForeign()) {
+        String cname = classSpec.getClassName().replace('/', '.');
+        if (userDefinedBootSpecs.get(cname) != null) {
+          final String msg = "The class "
+                             + classSpec.getClassName()
+                             + " already belongs in the bootjar by default, you don't need to declare it in the <additional-boot-jar-classes/> section of your tc-config file.";
+          logger.warn(msg);
+          consoleLogger.warn(msg);
+          continue;
+        }
+      }
+
       if (classSpec.isPreInstrumented()) {
         preInstrumentedCount++;
-        if (!(bjClasses.contains(classSpec.getClassName()) || classSpec.isHonorJDKSubVersionSpecific())) {
+        if (!(preinstClasses.contains(classSpec.getClassName()) || classSpec.isHonorJDKSubVersionSpecific())) {
           String message = "* " + classSpec.getClassName() + "... missing";
           missingCount++;
           logger.info(message);

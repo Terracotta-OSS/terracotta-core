@@ -1279,6 +1279,7 @@ public class BootJarTool {
   private final void loadBootJarClasses(Map specs, boolean foreignClass) {
     for (Iterator iter = specs.values().iterator(); iter.hasNext();) {
       TransparencyClassSpec spec = (TransparencyClassSpec) iter.next();
+      if (foreignClass) spec.markForeign();
       byte[] classBytes = doDSOTransform(spec.getClassName(), getSystemBytes(spec.getClassName()));
       announce("Adapting: " + spec.getClassName());
       bootJar.loadClassIntoJar(spec.getClassName(), classBytes, spec.isPreInstrumented(), foreignClass);
