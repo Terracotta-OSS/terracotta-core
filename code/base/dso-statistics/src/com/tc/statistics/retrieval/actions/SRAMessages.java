@@ -35,7 +35,7 @@ public class SRAMessages implements StatisticRetrievalAction {
   public static final String ACTION_NAME = "message monitor";
   private static final String ENABLED_PROP = "tcm.monitor.enabled";
 
-  private static TCLogger logger = TCLogging.getLogger(SRAMessages.class);
+  private static final TCLogger logger = TCLogging.getLogger(SRAMessages.class);
 
   private final MessageMonitorImpl monitor;
 
