@@ -118,7 +118,11 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
         visitor = mv;
       }
       
-      return new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, visitor, false);
+      if ("rehash".equals(name) && "()V".equals(desc)) {
+        return visitor;
+      } else {
+        return new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, visitor, false);
+      }
     }
   }
   
