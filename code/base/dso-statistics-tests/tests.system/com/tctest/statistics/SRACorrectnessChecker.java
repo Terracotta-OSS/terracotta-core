@@ -145,6 +145,7 @@ public class SRACorrectnessChecker extends BaseDSOTestCase {
       NullManager.getInstance(),
       new Cluster());
     client.setPauseListener(pauseListener);
+    client.setCreateDedicatedMBeanServer(true);
     client.start();
     return client;
   }

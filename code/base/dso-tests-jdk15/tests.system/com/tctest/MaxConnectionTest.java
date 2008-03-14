@@ -40,9 +40,11 @@ public class MaxConnectionTest extends BaseDSOTestCase {
     DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelperImpl(manager);
 
     PreparedComponentsFromL2Connection components = new PreparedComponentsFromL2Connection(manager);
-    return new DistributedObjectClient(configHelper, new TCThreadGroup(new ThrowableHandler(TCLogging
+    DistributedObjectClient client = new DistributedObjectClient(configHelper, new TCThreadGroup(new ThrowableHandler(TCLogging
         .getLogger(DistributedObjectClient.class))), new MockClassProvider(), components, NullManager.getInstance(),
                                        new Cluster());
+    client.setCreateDedicatedMBeanServer(true);
+    return client;
   }
 
   public void testsMaxConnectionLimitAndClientDisconnectAccounting() throws Exception {

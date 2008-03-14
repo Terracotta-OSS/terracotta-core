@@ -23,9 +23,9 @@ import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.lang.StartupHelper;
+import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
-import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.logging.TCLogging;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.BaseDSOTestCase;
@@ -113,6 +113,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     client = new DistributedObjectClient(configHelper, new TCThreadGroup(new ThrowableHandler(TCLogging
         .getLogger(DistributedObjectClient.class))), new MockClassProvider(), components, NullManager.getInstance(),
                                          new Cluster());
+    client.setCreateDedicatedMBeanServer(true);
     client.start();
 
     lockManager = (ClientLockManagerImpl) client.getLockManager();

@@ -4,9 +4,6 @@
  */
 package com.tc.objectserver.impl;
 
-import bsh.EvalError;
-import bsh.Interpreter;
-
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
@@ -173,6 +170,7 @@ import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvictRequest;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvicted;
+import com.tc.statistics.retrieval.actions.SRADistributedGC;
 import com.tc.statistics.retrieval.actions.SRAL2BroadcastCount;
 import com.tc.statistics.retrieval.actions.SRAL2BroadcastPerTransaction;
 import com.tc.statistics.retrieval.actions.SRAL2ChangesPerBroadcast;
@@ -181,7 +179,6 @@ import com.tc.statistics.retrieval.actions.SRAL2TransactionCount;
 import com.tc.statistics.retrieval.actions.SRAMemoryUsage;
 import com.tc.statistics.retrieval.actions.SRAStageQueueDepths;
 import com.tc.statistics.retrieval.actions.SRASystemProperties;
-import com.tc.statistics.retrieval.actions.SRADistributedGC;
 import com.tc.statistics.retrieval.actions.SRAVmGarbageCollector;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
@@ -212,6 +209,9 @@ import java.util.Set;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 import javax.management.remote.JMXConnectorServer;
+
+import bsh.EvalError;
+import bsh.Interpreter;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -926,6 +926,18 @@ public class DistributedObjectServer implements TCDumper {
 
   public synchronized void stop() {
     try {
+      statisticsAgentSubSystem.cleanup();
+    } catch (Throwable e) {
+      logger.warn(e);
+    }
+
+    try {
+      statisticsGateway.cleanup();
+    } catch (Throwable e) {
+      logger.warn(e);
+    }
+
+    try {
       if (lockManager != null) lockManager.stop();
     } catch (InterruptedException e) {
       logger.error(e);
@@ -973,18 +985,6 @@ public class DistributedObjectServer implements TCDumper {
       } catch (Exception e) {
         logger.error(e);
       }
-    }
-
-    try {
-      statisticsAgentSubSystem.cleanup();
-    } catch (Throwable e) {
-      logger.warn(e);
-    }
-
-    try {
-      statisticsGateway.cleanup();
-    } catch (Throwable e) {
-      logger.warn(e);
     }
 
     try {

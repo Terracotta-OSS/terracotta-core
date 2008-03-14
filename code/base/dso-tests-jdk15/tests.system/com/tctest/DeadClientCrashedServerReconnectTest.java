@@ -80,6 +80,7 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
                                                                      .getLogger(DistributedObjectClient.class))),
                                                                  new MockClassProvider(), components, NullManager
                                                                      .getInstance(), new Cluster());
+    client.setCreateDedicatedMBeanServer(true);
     client.setPauseListener(pauseListener);
     client.start();
 

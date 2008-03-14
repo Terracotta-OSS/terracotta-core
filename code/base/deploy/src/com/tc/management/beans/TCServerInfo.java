@@ -77,7 +77,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
        * it's ok not output any errors or warnings here since when the
        * CVT is initialized, it will notify about the incapacity of leading
        * Sigar-based SRAs.
-       * */
+       **/
     } catch (Exception e) {
       /**/
     }
