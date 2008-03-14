@@ -42,7 +42,7 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
   private final Map retrieverMap = new ConcurrentHashMap();
 
   public StatisticsManagerMBeanImpl(final StatisticsConfig config, final StatisticsRetrievalRegistry registry, final StatisticsBuffer buffer) throws NotCompliantMBeanException {
-    super(StatisticsManagerMBean.class, false, true);
+    super(StatisticsManagerMBean.class, false);
 
     Assert.assertNotNull("config", config);
     Assert.assertNotNull("registry", registry);

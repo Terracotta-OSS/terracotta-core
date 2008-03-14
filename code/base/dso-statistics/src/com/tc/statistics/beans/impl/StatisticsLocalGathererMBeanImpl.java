@@ -49,7 +49,7 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   private final NewCommonL2Config config;
 
   public StatisticsLocalGathererMBeanImpl(final StatisticsGathererSubSystem subsystem, final NewCommonL2Config config) throws NotCompliantMBeanException {
-    super(StatisticsLocalGathererMBean.class, true, true);
+    super(StatisticsLocalGathererMBean.class, true);
     Assert.assertNotNull("subsystem", subsystem);
     Assert.assertNotNull("config", config);
     sequenceNumber = new SynchronizedLong(0L);
