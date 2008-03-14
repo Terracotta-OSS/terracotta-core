@@ -4,6 +4,8 @@
  */
 package com.tc.object.tx;
 
+import org.apache.commons.collections.CollectionUtils;
+
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCByteBufferOutputStream.Mark;
@@ -29,9 +31,11 @@ import com.tc.util.concurrent.SetOnceFlag;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,11 +46,10 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
   public static final String                    FOLDING_OBJECT_LIMIT_PROP = "l1.transactionmanager.folding.object.limit";
   public static final String                    FOLDING_LOCK_LIMIT_PROP   = "l1.transactionmanager.folding.lock.limit";
 
-  private static final FoldingKey               DISABLED_FOLDING_KEY      = new DisabledFoldingKey();
-
   private final CommitTransactionMessageFactory commitTransactionMessageFactory;
   private final TxnBatchID                      batchID;
   private final LinkedHashMap                   transactionData           = new LinkedHashMap();
+  private final LinkedList                      foldingKeys               = new LinkedList();
   private final ObjectStringSerializer          serializer;
   private final DNAEncoding                     encoding;
   private final List                            batchDataOutputStreams    = new ArrayList();
@@ -113,12 +116,31 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
   }
 
   private TransactionBuffer getOrCreateBuffer(ClientTransaction txn, SequenceGenerator sequenceGenerator) {
-    if (shouldScanForFold(txn)) {
-      for (Iterator i = transactionData.values().iterator(); i.hasNext();) {
-        TransactionBuffer txnBuffer = (TransactionBuffer) i.next();
-        if (txnBuffer.canAcceptFold(txn)) {
-          numFolded++;
-          return txnBuffer;
+    final boolean foldCandidate = isFoldCandidate(txn);
+
+    if (foldCandidate) {
+      boolean stop = false;
+      for (Iterator i = foldingKeys.iterator(); !stop && i.hasNext();) {
+        FoldingKey key = (FoldingKey) i.next();
+
+        final byte action = key.analyze(txn);
+        switch (action) {
+          case FoldingKey.ACCEPT: {
+            numFolded++;
+            return key.getBuffer();
+          }
+          case FoldingKey.DENY: {
+            stop = true;
+            break;
+          }
+          case FoldingKey.CLOSE: {
+            i.remove();
+            stop = true;
+            break;
+          }
+          default: {
+            throw new AssertionError("unknown action: " + action);
+          }
         }
       }
     }
@@ -126,16 +148,19 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     SequenceID sid = new SequenceID(sequenceGenerator.getNextSequence());
     txn.setSequenceID(sid);
 
-    FoldingKey key = foldingEnabled ? new FoldingKeyImpl(txn.getTransactionType(), txn.getAllLockIDs(), txn
-        .getChangeBuffers().keySet()) : DISABLED_FOLDING_KEY;
-    TransactionBuffer txnBuffer = new TransactionBuffer(txn.getSequenceID(), newOutputStream(), key, serializer,
-                                                        encoding);
+    TransactionBuffer txnBuffer = new TransactionBuffer(sid, newOutputStream(), serializer, encoding);
+
+    if (foldCandidate) {
+      foldingKeys.add(new FoldingKeyImpl(txnBuffer, txn.getTransactionType(), txn.getAllLockIDs(), new HashSet(txn
+          .getChangeBuffers().keySet())));
+    }
+
     transactionData.put(txn.getTransactionID(), txnBuffer);
 
     return txnBuffer;
   }
 
-  private boolean shouldScanForFold(ClientTransaction txn) {
+  private boolean isFoldCandidate(ClientTransaction txn) {
     if (!foldingEnabled) { return false; }
     if (foldingLockLimit > 0 && (txn.getAllLockIDs().size() > foldingLockLimit)) { return false; }
     if (foldingObjectLimit > 0 && (txn.getChangeBuffers().size() > foldingObjectLimit)) { return false; }
@@ -227,7 +252,6 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
 
     private static final int               UNINITIALIZED_LENGTH = -1;
 
-    private final FoldingKey               foldingKey;
     private final SequenceID               sequenceID;
     private final TCByteBufferOutputStream output;
     private final ObjectStringSerializer   serializer;
@@ -246,11 +270,10 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     private Mark                           changesCountMark;
     private Mark                           txnCountMark;
 
-    TransactionBuffer(SequenceID sequenceID, TCByteBufferOutputStream output, FoldingKey foldingKey,
-                      ObjectStringSerializer serializer, DNAEncoding encoding) {
+    TransactionBuffer(SequenceID sequenceID, TCByteBufferOutputStream output, ObjectStringSerializer serializer,
+                      DNAEncoding encoding) {
       this.sequenceID = sequenceID;
       this.output = output;
-      this.foldingKey = foldingKey;
       this.serializer = serializer;
       this.encoding = encoding;
       this.startMark = output.mark();
@@ -287,10 +310,6 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
       }
 
       Assert.assertEquals(expect, dest.getBytesWritten() - begin);
-    }
-
-    boolean canAcceptFold(ClientTransaction txn) {
-      return foldingKey.canFold(txn);
     }
 
     String dump() {
@@ -414,36 +433,56 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
   }
 
   private static interface FoldingKey {
-    boolean canFold(ClientTransaction txn);
-  }
+    static final byte ACCEPT = 1;
+    static final byte CLOSE  = 2;
+    static final byte DENY   = 3;
 
-  private static class DisabledFoldingKey implements FoldingKey {
-    public boolean canFold(ClientTransaction txn) {
-      return false;
-    }
+    byte analyze(ClientTransaction txn);
+
+    TransactionBuffer getBuffer();
   }
 
   private static class FoldingKeyImpl implements FoldingKey {
-    private final List    lockIDs;
-    private final Set     objectIDs;
-    private final TxnType txnType;
+    private final List              lockIDs;
+    private final Set               objectIDs;
+    private final TxnType           txnType;
+    private final TransactionBuffer buffer;
 
-    FoldingKeyImpl(TxnType txnType, List lockIDs, Set objectIDs) {
+    FoldingKeyImpl(TransactionBuffer buffer, TxnType txnType, List lockIDs, Set objectIDs) {
+      this.buffer = buffer;
       this.txnType = txnType;
       this.lockIDs = lockIDs;
       this.objectIDs = objectIDs;
     }
 
-    public boolean canFold(ClientTransaction txn) {
+    public TransactionBuffer getBuffer() {
+      return this.buffer;
+    }
+
+    public byte analyze(ClientTransaction txn) {
       List txnLocks = txn.getAllLockIDs();
-      if (lockIDs.size() != txnLocks.size()) { return false; }
-
-      if (!txn.getTransactionType().equals(txnType)) { return false; }
-
       Set txnObjectIDs = txn.getChangeBuffers().keySet();
 
-      return lockIDs.equals(txnLocks) && txnObjectIDs.containsAll(objectIDs);
+      if (lockIDs.size() != txnLocks.size()) { return chooseCloseOrDeny(txnObjectIDs); }
+
+      if (!txn.getTransactionType().equals(txnType)) { return chooseCloseOrDeny(txnObjectIDs); }
+
+      if (lockIDs.equals(txnLocks) && txnObjectIDs.containsAll(objectIDs)) {
+        if (txnObjectIDs.size() != objectIDs.size()) {
+          // need to take on the new ObjectIDs present in the txn we are folding into here
+          objectIDs.addAll(txnObjectIDs);
+        }
+        return ACCEPT;
+      }
+
+      return chooseCloseOrDeny(txnObjectIDs);
     }
+
+    private byte chooseCloseOrDeny(Set txnObjectIDs) {
+      if (CollectionUtils.containsAny(objectIDs, txnObjectIDs)) { return CLOSE; }
+      return DENY;
+    }
+
   }
 
 }

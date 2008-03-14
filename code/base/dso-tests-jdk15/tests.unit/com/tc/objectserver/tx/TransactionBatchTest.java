@@ -64,7 +64,8 @@ public class TransactionBatchTest extends TestCase {
         .getProperties());
   }
 
-  private TransactionBatchWriter newWriter(ObjectStringSerializer serializer, boolean foldEnabled, int lockLimit, int objectLimit) {
+  private TransactionBatchWriter newWriter(ObjectStringSerializer serializer, boolean foldEnabled, int lockLimit,
+                                           int objectLimit) {
     return new TransactionBatchWriter(new TxnBatchID(1), serializer, encoding, messageFactory,
                                       new BatchWriterProperties(foldEnabled, lockLimit, objectLimit));
   }
@@ -420,6 +421,48 @@ public class TransactionBatchTest extends TestCase {
     folded = writer.addTransaction(txnWithNotify, sequenceGenerator);
     assertFalse(folded);
     assertEquals(4 + startSeq, sequenceGenerator.getCurrentSequence());
+  }
+
+  public void testOrdering() {
+    ObjectStringSerializer serializer = new ObjectStringSerializer();
+    writer = newWriter(serializer, true, 0, 0);
+
+    LockID lid1 = new LockID("1");
+    LockID lid2 = new LockID("2");
+
+    TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL);
+    ClientTransaction txn1 = new ClientTransactionImpl(new TransactionID(101), new NullRuntimeLogger());
+    txn1.setTransactionContext(tc);
+    txn1.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
+
+    tc = new TransactionContextImpl(lid2, TxnType.NORMAL);
+    ClientTransaction txn2 = new ClientTransactionImpl(new TransactionID(102), new NullRuntimeLogger());
+    txn2.setTransactionContext(tc);
+    txn2.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
+
+    tc = new TransactionContextImpl(lid1, TxnType.NORMAL);
+    ClientTransaction txn3 = new ClientTransactionImpl(new TransactionID(102), new NullRuntimeLogger());
+    txn3.setTransactionContext(tc);
+    txn3.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
+
+    SequenceGenerator sequenceGenerator = new SequenceGenerator();
+    final long startSeq = sequenceGenerator.getCurrentSequence();
+
+    boolean folded;
+
+    // There is a common object between txn1 and txn2 (but differing locks). This should close txn1
+    // and disallow folds into it
+    folded = writer.addTransaction(txn1, sequenceGenerator);
+    assertFalse(folded);
+    assertEquals(1 + startSeq, sequenceGenerator.getCurrentSequence());
+
+    folded = writer.addTransaction(txn2, sequenceGenerator);
+    assertFalse(folded);
+    assertEquals(2 + startSeq, sequenceGenerator.getCurrentSequence());
+
+    folded = writer.addTransaction(txn3, sequenceGenerator);
+    assertFalse(folded);
+    assertEquals(3 + startSeq, sequenceGenerator.getCurrentSequence());
   }
 
   static class BatchWriterProperties implements TCProperties {
