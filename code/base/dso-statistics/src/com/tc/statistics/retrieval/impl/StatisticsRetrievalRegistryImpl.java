@@ -53,6 +53,8 @@ public class StatisticsRetrievalRegistryImpl implements StatisticsRetrievalRegis
       Class sra_cpu_class = Class.forName(sraClassName);
       StatisticRetrievalAction sra_cpu_action = (StatisticRetrievalAction)sra_cpu_class.newInstance();
       registerActionInstance(sra_cpu_action);
+    } catch (NoClassDefFoundError e) {
+      logger.warn("Statistic retrieval action " + sraClassName + " wasn't activated since its definition couldn't be found.");
     } catch (ClassNotFoundException e) {
       logger.warn("Statistic retrieval action " + sraClassName + " wasn't activated since it couldn't be found in the classpath.");
     } catch (UnsupportedClassVersionError e) {
