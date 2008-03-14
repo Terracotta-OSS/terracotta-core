@@ -7,6 +7,7 @@ package com.tc.server;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.mortbay.jetty.Server;
+import org.mortbay.jetty.servlet.DefaultServlet;
 import org.mortbay.jetty.servlet.ServletHandler;
 import org.mortbay.jetty.servlet.ServletHolder;
 import org.mortbay.jetty.webapp.WebAppContext;
@@ -17,6 +18,7 @@ import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.capabilities.AbstractCapabilitiesFactory;
+import com.tc.config.Directories;
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.NewCommonL2Config;
 import com.tc.config.schema.NewSystemConfig;
@@ -25,9 +27,9 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.l2.state.StateManager;
 import com.tc.lang.StartupHelper;
+import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
-import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -38,6 +40,7 @@ import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.impl.DistributedObjectServer;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.statistics.StatisticsGathererSubSystem;
 import com.tc.statistics.beans.StatisticsMBeanNames;
 import com.tc.statistics.beans.impl.StatisticsLocalGathererMBeanImpl;
@@ -56,6 +59,10 @@ import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 
 public class TCServerImpl extends SEDA implements TCServer {
+
+  private static final String HTTP_DEFAULTSERVLET_ENABLED = "http.defaultservlet.enabled";
+  private static final String HTTP_DEFAULTSERVLET_ATTRIBUTE_DIRALLOWED = "http.defaultservlet.attribute.dirallowed";
+  private static final String HTTP_DEFAULTSERVLET_ATTRIBUTE_ALIASES = "http.defaultservlet.attribute.aliases";
 
   private static final TCLogger                logger        = TCLogging.getLogger(TCServer.class);
   private static final TCLogger                consoleLogger = CustomerLogging.getConsoleLogger();
@@ -355,13 +362,39 @@ public class TCServerImpl extends SEDA implements TCServer {
     ServletHandler servletHandler = new ServletHandler();
 
     /**
-     * We don't serve up any files, just hook in a few servlets. It's required the ResourceBase be non-null.
+     * We usually don't serve up any files, just hook in a few servlets. The ResourceBase can't be null though.
      */
-    context.setResourceBase(userDir.getAbsolutePath());
+    File tcInstallDir = Directories.getInstallationRoot();
+    boolean tcInstallDirValid = false;
+    File resourceBaseDir = userDir;
+    if (tcInstallDir.exists() &&
+        tcInstallDir.isDirectory() &&
+        tcInstallDir.canRead()) {
+      tcInstallDirValid = true;
+      resourceBaseDir = tcInstallDir;
+    }
+    context.setResourceBase(resourceBaseDir.getAbsolutePath());
 
     createAndAddServlet(servletHandler, VersionServlet.class.getName(), "/version");
     createAndAddServlet(servletHandler, ConfigServlet.class.getName(), "/config");
     createAndAddServlet(servletHandler, StatisticsGathererServlet.class.getName(), "/statistics-gatherer/*");
+
+    if (TCPropertiesImpl.getProperties().getBoolean(HTTP_DEFAULTSERVLET_ENABLED, false)) {
+      if (!tcInstallDirValid) {
+        String msg = "Default HTTP servlet with file serving NOT enabled because the '" + Directories.TC_INSTALL_ROOT_PROPERTY_NAME + "' system property is invalid.";
+        consoleLogger.warn(msg);
+        logger.warn(msg);
+      } else {
+        boolean aliases = TCPropertiesImpl.getProperties().getBoolean(HTTP_DEFAULTSERVLET_ATTRIBUTE_ALIASES, false);
+        boolean dirallowed = TCPropertiesImpl.getProperties().getBoolean(HTTP_DEFAULTSERVLET_ATTRIBUTE_DIRALLOWED, false);
+        context.setAttribute("aliases", aliases);
+        context.setAttribute("dirAllowed", dirallowed);
+        createAndAddServlet(servletHandler, DefaultServlet.class.getName(), "/");
+        String msg = "Default HTTP servlet with file serving enabled for '" + resourceBaseDir.getCanonicalPath() + "' (aliases = '" + aliases + "', dirallowed = '" + dirallowed + "')";
+        consoleLogger.info(msg);
+        logger.info(msg);
+      }
+    }
 
     context.setServletHandler(servletHandler);
     httpServer.addHandler(context);
