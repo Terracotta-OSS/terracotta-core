@@ -16,19 +16,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+/**
+ * This class is supposed to reduce the processing when pending and blocked transactions reaches high thresholds, since
+ * it accounts txns from each clients separately.
+ * <p>
+ * Today we assign GIDs when the server sees the transactions and these GIDs are broadcasts to passive too (in networked
+ * A/P config). Now if we reorder txns across clients, since we maintain client level sequencer, we may end up applying
+ * a txn with higher GID before a txn with lower GID which is a no-no because of client lookups and stuff.
+ * <p>
+ * We have to fix it so that GIDs are assigned just before applies and are somehow broadcasted to passive too and
+ * passive has to apply the transactions in that order. Right now this class is purely experimental.
+ */
 public class MetaServerTransactionSequencerImpl implements ServerTransactionSequencer {
 
   private CopyOnWriteArrayMap txnSequencers = new CopyOnWriteArrayMap(new CopyOnWriteArrayMap.TypedArrayFactory() {
-                                                 public Object[] createTypedArray(int size) {
-                                                   return new ServerTransactionSequencer[size];
-                                                 }
-                                               });
+                                              public Object[] createTypedArray(int size) {
+                                                return new ServerTransactionSequencer[size];
+                                              }
+                                            });
 
   private int                 index;
-  
-  public MetaServerTransactionSequencerImpl() {
-    System.err.println("USING  META SERVER");
-  }
 
   public void addTransactionLookupContexts(Collection<TransactionLookupContext> txnLookupContexts) {
     LinkedHashMap<NodeID, List<TransactionLookupContext>> segregated = segregateIncommingTransaction(txnLookupContexts);
@@ -90,8 +97,7 @@ public class MetaServerTransactionSequencerImpl implements ServerTransactionSequ
   }
 
   public String toString() {
-    return "MetaServerTransactionSequencerImpl { txnSequencers : " + txnSequencers.size() + " index = " + index
-           + " } ";
+    return "MetaServerTransactionSequencerImpl { txnSequencers : " + txnSequencers.size() + " index = " + index + " } ";
   }
 
   // Used in tests
