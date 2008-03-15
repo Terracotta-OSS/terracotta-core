@@ -80,7 +80,7 @@ import com.tc.objectserver.persistence.sleepycat.SleepycatSerializationAdapterFa
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionImpl;
 import com.tc.objectserver.tx.TestTransactionalStageCoordinator;
-import com.tc.objectserver.tx.TransactionSequencer;
+import com.tc.objectserver.tx.ServerTransactionSequencerImpl;
 import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
 import com.tc.statistics.mock.NullStatisticsAgentSubSystem;
 import com.tc.stats.counter.sampled.SampledCounter;
@@ -182,7 +182,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
   }
 
   private void initTransactionObjectManager() {
-    TransactionSequencer sequencer = new TransactionSequencer();
+    ServerTransactionSequencerImpl sequencer = new ServerTransactionSequencerImpl();
     coordinator = new TestTransactionalStageCoordinator();
     gtxMgr = new TestGlobalTransactionManager();
     txObjectManager = new TransactionalObjectManagerImpl(objectManager, sequencer, gtxMgr, coordinator);

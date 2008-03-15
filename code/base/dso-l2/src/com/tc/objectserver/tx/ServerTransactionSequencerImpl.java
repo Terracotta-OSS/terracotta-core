@@ -16,9 +16,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-public class TransactionSequencer {
+public class ServerTransactionSequencerImpl implements ServerTransactionSequencer {
 
-  private static final TCLogger    logger      = TCLogging.getLogger(TransactionSequencer.class);
+  private static final TCLogger    logger      = TCLogging.getLogger(ServerTransactionSequencerImpl.class);
 
   private final Set                pendingTxns = new HashSet();
 

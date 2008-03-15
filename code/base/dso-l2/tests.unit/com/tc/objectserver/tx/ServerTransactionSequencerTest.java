@@ -36,15 +36,15 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-public class TransactionSequencerTest extends TCTestCase {
+public class ServerTransactionSequencerTest extends TCTestCase {
 
-  private int                          sqID;
-  private int                          txnID;
-  private int                          batchID;
-  private ClientID                     clientID;
-  private TransactionSequencer         sequencer;
-  private int                          start;
-  private GlobalTransactionIDGenerator gidGenerator;
+  private int                            sqID;
+  private int                            txnID;
+  private int                            batchID;
+  private ClientID                       clientID;
+  private ServerTransactionSequencerImpl sequencer;
+  private int                            start;
+  private GlobalTransactionIDGenerator   gidGenerator;
 
   public void setUp() throws Exception {
     txnID = 100;
@@ -52,7 +52,7 @@ public class TransactionSequencerTest extends TCTestCase {
     batchID = 100;
     start = 1;
     clientID = new ClientID(new ChannelID(0));
-    sequencer = new TransactionSequencer();
+    sequencer = new ServerTransactionSequencerImpl();
     gidGenerator = new TestGlobalTransactionIDGenerator();
   }
 
@@ -308,7 +308,7 @@ public class TransactionSequencerTest extends TCTestCase {
     for (int i = 0; i < 100; i++) {
       System.err.println("Running testRandom : " + i);
       doRandom();
-      sequencer = new TransactionSequencer();
+      sequencer = new ServerTransactionSequencerImpl();
     }
   }
 

@@ -19,6 +19,7 @@ import com.tc.util.SequenceID;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,6 +27,7 @@ import java.util.Set;
 public final class TestServerTransaction implements ServerTransaction {
 
   public List                       changes = new ArrayList();
+  public Set                        oids    = new HashSet();
   private ServerTransactionID       sid;
   private TxnBatchID                bid;
   private final GlobalTransactionID gtid;
@@ -45,7 +47,7 @@ public final class TestServerTransaction implements ServerTransaction {
   }
 
   public LockID[] getLockIDs() {
-    throw new ImplementMe();
+    return new LockID[] { new LockID("saro") };
   }
 
   public NodeID getSourceID() {
@@ -73,7 +75,7 @@ public final class TestServerTransaction implements ServerTransaction {
   }
 
   public Set getObjectIDs() {
-    throw new ImplementMe();
+    return oids;
   }
 
   public Collection getNotifies() {

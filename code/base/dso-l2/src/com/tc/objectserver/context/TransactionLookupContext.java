@@ -5,6 +5,7 @@
 package com.tc.objectserver.context;
 
 import com.tc.async.api.EventContext;
+import com.tc.net.groups.NodeID;
 import com.tc.objectserver.tx.ServerTransaction;
 
 public class TransactionLookupContext implements EventContext {
@@ -27,6 +28,10 @@ public class TransactionLookupContext implements EventContext {
 
   public boolean initiateApply() {
     return initiateApply;
+  }
+
+  public NodeID getSourceID() {
+    return txn.getSourceID();
   }
 
 }

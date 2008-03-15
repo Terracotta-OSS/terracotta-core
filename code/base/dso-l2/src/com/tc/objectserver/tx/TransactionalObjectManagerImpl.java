@@ -51,7 +51,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
                                                                            .getInt(
                                                                                    "l2.objectmanager.maxObjectsToCommit");
   private final ObjectManager                  objectManager;
-  private final TransactionSequencer           sequencer;
+  private final ServerTransactionSequencer     sequencer;
   private final ServerGlobalTransactionManager gtxm;
 
   /*
@@ -68,7 +68,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
 
   private final TransactionalStageCoordinator  txnStageCoordinator;
 
-  public TransactionalObjectManagerImpl(ObjectManager objectManager, TransactionSequencer sequencer,
+  public TransactionalObjectManagerImpl(ObjectManager objectManager, ServerTransactionSequencer sequencer,
                                         ServerGlobalTransactionManager gtxm,
                                         TransactionalStageCoordinator txnStageCoordinator) {
     this.objectManager = objectManager;
@@ -85,7 +85,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   }
 
   private Collection createAndPreFetchObjectsFor(Collection txns) {
-    List lookupContexts  = new ArrayList(txns.size());
+    List lookupContexts = new ArrayList(txns.size());
     Set oids = new HashSet(txns.size() * 10);
     Set newOids = new HashSet(txns.size() * 10);
     for (Iterator i = txns.iterator(); i.hasNext();) {
@@ -399,7 +399,6 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     }
   }
 
- 
   public String dump() {
     StringWriter writer = new StringWriter();
     PrintWriter pw = new PrintWriter(writer);
@@ -407,8 +406,6 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     writer.flush();
     return writer.toString();
   }
-  
-  
 
   public void dump(Writer writer) {
     PrintWriter pw = new PrintWriter(writer);
