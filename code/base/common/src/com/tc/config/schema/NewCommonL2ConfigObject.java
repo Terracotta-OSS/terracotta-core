@@ -10,6 +10,7 @@ import com.tc.config.schema.dynamic.IntConfigItem;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.config.schema.dynamic.StringConfigItem;
 import com.terracottatech.config.Authentication;
+import com.terracottatech.config.HttpAuthentication;
 import com.terracottatech.config.Server;
 
 import java.io.File;
@@ -29,6 +30,8 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
   private final boolean          authentication;
   private final String           passwordFile;
   private final String           accessFile;
+  private final boolean          httpAuthentication;
+  private final String           userRealmFile;
 
   public NewCommonL2ConfigObject(ConfigContext context) {
     super(context);
@@ -41,6 +44,7 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
     this.jmxPort = context.intItem("jmx-port");
     this.host = context.stringItem("@host");
 
+    // JMX authentication
     String pwd = null;
     String access = null;
     Server server = (Server) context.bean();
@@ -62,6 +66,23 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
     }
     this.passwordFile = pwd;
     this.accessFile = access;
+
+    // HTTP authentication
+    String userRealm = null;
+    if (server != null) {
+      this.httpAuthentication = server.isSetHttpAuthentication();
+    } else {
+      this.httpAuthentication = false;
+    }
+
+    if (httpAuthentication) {
+      userRealm = server.getHttpAuthentication().getUserRealmFile();
+      if (null == userRealm) {
+        userRealm = HttpAuthentication.type.getElementProperty(QName.valueOf("user-realm-file")).getDefaultText();
+      }
+      userRealm = new File(ParameterSubstituter.substitute(userRealm)).getAbsolutePath();
+    }
+    this.userRealmFile = userRealm;
   }
 
   public FileConfigItem dataPath() {
@@ -94,5 +115,13 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
 
   public String authenticationPasswordFile() {
     return passwordFile;
+  }
+
+  public boolean httpAuthentication() {
+    return httpAuthentication;
+  }
+
+  public String httpAuthenticationUserRealmFile() {
+    return userRealmFile;
   }
 }

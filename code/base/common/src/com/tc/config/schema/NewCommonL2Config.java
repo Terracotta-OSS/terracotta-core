@@ -26,4 +26,8 @@ public interface NewCommonL2Config extends NewConfig, NewStatisticsConfig {
   String authenticationPasswordFile();
 
   String authenticationAccessFile();
+
+  boolean httpAuthentication();
+
+  String httpAuthenticationUserRealmFile();
 }

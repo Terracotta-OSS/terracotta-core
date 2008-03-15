@@ -430,6 +430,12 @@
     </xs:all>
   </xs:complexType>
 
+  <xs:complexType name="http-authentication">
+    <xs:all>
+      <xs:element name="user-realm-file" type="path" minOccurs="1" maxOccurs="1" />
+    </xs:all>
+  </xs:complexType>
+
   <xs:complexType name="ha">
     <xs:all>
       <xs:element name="mode" type="ha-mode" minOccurs="0" default="disk-based-active-passive" />
@@ -479,6 +485,21 @@
             <br/><br/>
             NOTE: This will not work unless you're correctly running the Terracotta server with Java version >= 1.5
               </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      
+      <xs:element name="http-authentication" type="http-authentication" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation xmlns="http://www.w3.org/1999/xhtml"> Turn on authentication for the embedded Terracotta HTTP Server. This requires a properties file that contains the users and passwords that have access to the HTTP server.
+          <br/>
+          The format of the properties file is:
+		  <p>  username: password [,rolename ...]</p>
+		  The supported roles and protected sections are:
+		  <ul>
+		  	<li><code>statistics</code> (for the statistics gatherer at <code>/statistics-gatherer</code>)</li>
+		  </ul>
+		  Passwords may be clear text, obfuscated or checksummed. The class <code>com.mortbay.Util.Password</code> should be used to generate obfuscated passwords or password checksums.
+          </xs:documentation>
         </xs:annotation>
       </xs:element>
 

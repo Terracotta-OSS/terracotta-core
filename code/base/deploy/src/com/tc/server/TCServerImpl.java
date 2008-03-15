@@ -7,6 +7,10 @@ package com.tc.server;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.mortbay.jetty.Server;
+import org.mortbay.jetty.security.Constraint;
+import org.mortbay.jetty.security.ConstraintMapping;
+import org.mortbay.jetty.security.HashUserRealm;
+import org.mortbay.jetty.security.SecurityHandler;
 import org.mortbay.jetty.servlet.DefaultServlet;
 import org.mortbay.jetty.servlet.ServletHandler;
 import org.mortbay.jetty.servlet.ServletHolder;
@@ -21,7 +25,6 @@ import com.tc.capabilities.AbstractCapabilitiesFactory;
 import com.tc.config.Directories;
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.NewCommonL2Config;
-import com.tc.config.schema.NewSystemConfig;
 import com.tc.config.schema.messaging.http.ConfigServlet;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
@@ -63,6 +66,12 @@ public class TCServerImpl extends SEDA implements TCServer {
   private static final String                  HTTP_DEFAULTSERVLET_ENABLED              = "http.defaultservlet.enabled";
   private static final String                  HTTP_DEFAULTSERVLET_ATTRIBUTE_DIRALLOWED = "http.defaultservlet.attribute.dirallowed";
   private static final String                  HTTP_DEFAULTSERVLET_ATTRIBUTE_ALIASES    = "http.defaultservlet.attribute.aliases";
+
+  private static final String                  VERSION_SERVLET_PATH = "/version";
+  private static final String                  CONFIG_SERVLET_PATH = "/config";
+  private static final String                  STATISTICS_GATHERER_SERVLET_PATH = "/statistics-gatherer/*";
+
+  private static final String                  HTTP_AUTHENTICATION_ROLE_STATISTICS = "statistics";
 
   private static final TCLogger                logger                                   = TCLogging
                                                                                             .getLogger(TCServer.class);
@@ -295,9 +304,9 @@ public class TCServerImpl extends SEDA implements TCServer {
 
       startTime = System.currentTimeMillis();
 
-      NewSystemConfig systemConfig = TCServerImpl.this.configurationSetupManager.systemConfig();
+      NewCommonL2Config commonL2Config = TCServerImpl.this.configurationSetupManager.commonl2Config();
       terracottaConnector = new TerracottaConnector();
-      startHTTPServer(systemConfig, terracottaConnector);
+      startHTTPServer(commonL2Config, terracottaConnector);
 
       Stage stage = getStageManager().createStage("dso-http-bridge", new HttpConnectionHandler(terracottaConnector), 1,
                                                   100);
@@ -340,11 +349,29 @@ public class TCServerImpl extends SEDA implements TCServer {
     registerDSOServer();
   }
 
-  private void startHTTPServer(NewSystemConfig systemConfig, TerracottaConnector tcConnector) throws Exception {
+  private void startHTTPServer(NewCommonL2Config commonL2Config, TerracottaConnector tcConnector) throws Exception {
     httpServer = new Server();
     httpServer.addConnector(tcConnector);
 
     WebAppContext context = new WebAppContext("", "/");
+
+    if (commonL2Config.httpAuthentication()) {
+      Constraint constraint = new Constraint();
+      constraint.setName(Constraint.__BASIC_AUTH);
+      constraint.setRoles(new String[] { HTTP_AUTHENTICATION_ROLE_STATISTICS });
+      constraint.setAuthenticate(true);
+
+      ConstraintMapping cm = new ConstraintMapping();
+      cm.setConstraint(constraint);
+      cm.setPathSpec(STATISTICS_GATHERER_SERVLET_PATH);
+
+      SecurityHandler sh = new SecurityHandler();
+      sh.setUserRealm(new HashUserRealm("Terracotta Statistics Gatherer", commonL2Config.httpAuthenticationUserRealmFile()));
+      sh.setConstraintMappings(new ConstraintMapping[]{cm});
+
+      context.addHandler(sh);
+      logger.info("HTTP Authentication enabled for path '" + STATISTICS_GATHERER_SERVLET_PATH + "', using user realm file '" + commonL2Config.httpAuthenticationUserRealmFile() + "'");
+    }
 
     // setting to null means to not apply the default web.xml -- this is to not
     // include the jsp servlet which will trigger creation of temp directories
@@ -375,9 +402,9 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
     context.setResourceBase(resourceBaseDir.getAbsolutePath());
 
-    createAndAddServlet(servletHandler, VersionServlet.class.getName(), "/version");
-    createAndAddServlet(servletHandler, ConfigServlet.class.getName(), "/config");
-    createAndAddServlet(servletHandler, StatisticsGathererServlet.class.getName(), "/statistics-gatherer/*");
+    createAndAddServlet(servletHandler, VersionServlet.class.getName(), VERSION_SERVLET_PATH);
+    createAndAddServlet(servletHandler, ConfigServlet.class.getName(), CONFIG_SERVLET_PATH);
+    createAndAddServlet(servletHandler, StatisticsGathererServlet.class.getName(), STATISTICS_GATHERER_SERVLET_PATH);
 
     if (TCPropertiesImpl.getProperties().getBoolean(HTTP_DEFAULTSERVLET_ENABLED, false)) {
       if (!tcInstallDirValid) {
