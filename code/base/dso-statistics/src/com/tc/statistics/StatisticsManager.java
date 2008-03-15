@@ -18,6 +18,8 @@ public interface StatisticsManager  {
 
   public boolean enableStatistic(String sessionId, String name);
 
+  public String getStatisticType(String name);
+
   public StatisticData[] captureStatistic(String sessionId, String name);
 
   public void startCapturing(String sessionId);

@@ -3,20 +3,19 @@
  */
 package com.tc.statistics;
 
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArraySet;
-
 import com.tc.util.Assert;
+import com.tc.util.concurrent.CopyOnWriteArrayMap;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
+import java.util.Map;
 
 /**
  * This class indicates how a {@link StatisticRetrievalAction} should be
  * automatically captured during a capturing session.
  */
 public class StatisticType {
-  private final static Set TYPES = new CopyOnWriteArraySet();
+  private final static Map TYPES = new CopyOnWriteArrayMap();
 
   /**
    * Statistic will be automatically captured at the beginning of a capturing
@@ -41,11 +40,15 @@ public class StatisticType {
   private StatisticType(String identifier) {
     Assert.assertNotNull("identifier", identifier);
     this.identifier = identifier;
-    TYPES.add(this);
+    TYPES.put(identifier, this);
+  }
+
+  public static StatisticType getType(String identifier) {
+    return (StatisticType)TYPES.get(identifier);
   }
 
   public static Collection getAllTypes() {
-    return Collections.unmodifiableCollection(TYPES);
+    return Collections.unmodifiableCollection(TYPES.values());
   }
 
   public String toString() {

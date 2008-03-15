@@ -102,6 +102,15 @@ public class StatisticsAgentConnection implements StatisticsManager {
     }
   }
 
+  public String getStatisticType(String name) {
+    try {
+      return statManager.getStatisticType(name);
+    } catch (RuntimeMBeanException e) {
+      handleMissingSessionIdException(e, "Unable to retrieve the type of statistic '" + name + "'");
+      return null;
+    }
+  }
+
   public StatisticData[] captureStatistic(final String sessionId, final String name) {
     try {
       return statManager.captureStatistic(sessionId, name);

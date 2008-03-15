@@ -108,6 +108,15 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
     return true;
   }
 
+  public synchronized String getStatisticType(String name) {
+    StatisticRetrievalAction action = registry.getActionInstance(name);
+    if (null == action) {
+      return null;
+    }
+
+    return action.getType().toString();
+  }
+
   public StatisticData[] captureStatistic(final String sessionId, final String name) {
     // obtain the retriever to make sure that the provided session ID is active
     StatisticsRetriever retriever = obtainRetriever(sessionId);
