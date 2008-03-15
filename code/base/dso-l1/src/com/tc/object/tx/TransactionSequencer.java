@@ -13,6 +13,7 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.SequenceID;
 import com.tc.util.Util;
+import com.tc.stats.counter.sampled.SampledCounter;
 
 public class TransactionSequencer {
 
@@ -45,14 +46,18 @@ public class TransactionSequencer {
   private boolean                       shutdown       = false;
 
   private final LockAccounting          lockAccounting;
+  private final SampledCounter                numTransactionsCounter;
+  private final SampledCounter                numBatchesCounter;
 
-  public TransactionSequencer(TransactionBatchFactory batchFactory, LockAccounting lockAccounting) {
+  public TransactionSequencer(TransactionBatchFactory batchFactory, LockAccounting lockAccounting, SampledCounter numTransactionCounter, SampledCounter numBatchesCounter) {
     this.batchFactory = batchFactory;
     this.lockAccounting = lockAccounting;
     this.currentBatch = createNewBatch();
     this.slowDownStartsAt = (int) (MAX_PENDING_BATCHES * 0.66);
     this.sleepTimeIncrements = MAX_SLEEP_TIME_BEFORE_HALT / (MAX_PENDING_BATCHES - slowDownStartsAt);
     if (LOGGING_ENABLED) log_settings();
+    this.numBatchesCounter = numBatchesCounter;
+    this.numTransactionsCounter = numTransactionCounter;
   }
 
   private void log_settings() {
@@ -95,6 +100,7 @@ public class TransactionSequencer {
    */
   private void addTxnInternal(ClientTransaction txn) {
     txnsPerBatch++;
+    numTransactionsCounter.increment();
 
     boolean folded = addTransactionToBatch(txn, currentBatch);
 
@@ -109,6 +115,8 @@ public class TransactionSequencer {
       if (LOGGING_ENABLED) log_stats();
       currentBatch = createNewBatch();
       txnsPerBatch = 0;
+      //do not set the value of numTransactionsCounter to zero here, as it will be sampled every second (the frequency of the SampledCounter)
+      numBatchesCounter.increment();
     }
     throttle();
   }

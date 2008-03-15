@@ -118,6 +118,8 @@ import com.tc.statistics.retrieval.actions.SRASystemProperties;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvictRequest;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvicted;
 import com.tc.statistics.retrieval.actions.SRAMessages;
+import com.tc.statistics.retrieval.actions.SRAL1OutstandingBatches;
+import com.tc.statistics.retrieval.actions.SRAL1TransactionsPerBatch;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
@@ -126,6 +128,10 @@ import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.sequence.BatchSequence;
 import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SimpleSequence;
+import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.stats.counter.sampled.SampledCounterConfig;
+import com.tc.stats.counter.CounterManagerImpl;
+import com.tc.stats.counter.CounterManager;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -162,6 +168,7 @@ public class DistributedObjectClient extends SEDA {
   private DmiManager                               dmiManager;
   private StatisticsAgentSubSystemImpl             statisticsAgentSubSystem;
   private boolean                                  createDedicatedMBeanServer = false;
+  private CounterManager sampledCounterManager;
 
   public DistributedObjectClient(DSOClientConfigHelper config, TCThreadGroup threadGroup, ClassProvider classProvider,
                                  PreparedComponentsFromL2Connection connectionComponents, Manager manager,
@@ -185,7 +192,9 @@ public class DistributedObjectClient extends SEDA {
     this.pauseListener = pauseListener;
   }
 
-  private void populateStatisticsRetrievalRegistry(StatisticsRetrievalRegistry registry, StageManager stageManager, MessageMonitor messageMonitor) {
+  private void populateStatisticsRetrievalRegistry(StatisticsRetrievalRegistry registry, StageManager stageManager,
+                                                   MessageMonitor messageMonitor, SampledCounter outstandingBatchesCounter,
+                                                   SampledCounter numTransactionCounter, SampledCounter numBatchesCounter) {
     registry.registerActionInstance(new SRAMemoryUsage());
     registry.registerActionInstance(new SRASystemProperties());
     registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRACpu");
@@ -196,6 +205,9 @@ public class DistributedObjectClient extends SEDA {
     registry.registerActionInstance(new SRACacheObjectsEvicted());
     registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRAVmGarbageCollector");
     registry.registerActionInstance(new SRAMessages(messageMonitor));
+    registry.registerActionInstance(new SRAL1OutstandingBatches(outstandingBatchesCounter));
+    registry.registerActionInstance(new SRAL1TransactionsPerBatch(numTransactionCounter, numBatchesCounter));
+    
   }
 
   public void start() {
@@ -225,6 +237,8 @@ public class DistributedObjectClient extends SEDA {
       networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
     }
     // //////////////////////////////////
+
+    sampledCounterManager = new CounterManagerImpl();
 
     MessageMonitor mm = MessageMonitorImpl.createMonitor(tcProperties, logger);
 
@@ -258,9 +272,17 @@ public class DistributedObjectClient extends SEDA {
     TransactionBatchFactory txBatchFactory = new TransactionBatchWriterFactory(channel
         .getCommitTransactionMessageFactory(), new DNAEncodingImpl(classProvider), tcProperties);
 
+    SampledCounter outstandingBatchesCounter = (SampledCounter)sampledCounterManager
+      .createCounter(new SampledCounterConfig(1, 900, true, 0L));
+    SampledCounter numTransactionCounter = (SampledCounter)sampledCounterManager
+      .createCounter(new SampledCounterConfig(1, 900, true, 0L));
+    SampledCounter numBatchesCounter = (SampledCounter)sampledCounterManager
+      .createCounter(new SampledCounterConfig(1, 900, true, 0L));
+
     rtxManager = new RemoteTransactionManagerImpl(new ChannelIDLogger(channel.getChannelIDProvider(), TCLogging
-        .getLogger(RemoteTransactionManagerImpl.class)), txBatchFactory, new TransactionBatchAccounting(),
-                                                  new LockAccounting(), sessionManager, channel);
+      .getLogger(RemoteTransactionManagerImpl.class)), txBatchFactory, new TransactionBatchAccounting(),
+      new LockAccounting(), sessionManager, channel, outstandingBatchesCounter,
+      numTransactionCounter, numBatchesCounter);
 
     ClientGlobalTransactionManager gtxManager = new ClientGlobalTransactionManagerImpl(rtxManager);
 
@@ -290,7 +312,7 @@ public class DistributedObjectClient extends SEDA {
     // setup statistics subsystem
     statisticsAgentSubSystem = new StatisticsAgentSubSystemImpl();
     if (statisticsAgentSubSystem.setup(config.getNewCommonL1Config())) {
-      populateStatisticsRetrievalRegistry(statisticsAgentSubSystem.getStatisticsRetrievalRegistry(), stageManager, mm);
+      populateStatisticsRetrievalRegistry(statisticsAgentSubSystem.getStatisticsRetrievalRegistry(), stageManager, mm, outstandingBatchesCounter, numTransactionCounter, numBatchesCounter);
     }
 
     objectManager = new ClientObjectManagerImpl(remoteObjectManager, config, idProvider, new ClockEvictionPolicy(-1),

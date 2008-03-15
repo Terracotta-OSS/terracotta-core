@@ -20,6 +20,7 @@ import com.tc.util.State;
 import com.tc.util.TCAssertionError;
 import com.tc.util.TCTimerImpl;
 import com.tc.util.Util;
+import com.tc.stats.counter.sampled.SampledCounter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -66,6 +67,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   private final HashMap                    lockFlushCallbacks          = new HashMap();
 
   private int                              outStandingBatches          = 0;
+  private final SampledCounter             outstandingBatchesCounter;
   private final TCLogger                   logger;
   private final TransactionBatchAccounting batchAccounting;
   private final LockAccounting             lockAccounting;
@@ -80,16 +82,18 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
   public RemoteTransactionManagerImpl(TCLogger logger, final TransactionBatchFactory batchFactory,
                                       TransactionBatchAccounting batchAccounting, LockAccounting lockAccounting,
-                                      SessionManager sessionManager, DSOClientMessageChannel channel) {
+                                      SessionManager sessionManager, DSOClientMessageChannel channel, SampledCounter outstandingBatchesCounter,
+                                      SampledCounter numTransactionCounter, SampledCounter numBatchesCounter) {
     this.logger = logger;
     this.batchAccounting = batchAccounting;
     this.lockAccounting = lockAccounting;
     this.sessionManager = sessionManager;
     this.channel = channel;
     this.status = RUNNING;
-    this.sequencer = new TransactionSequencer(batchFactory, lockAccounting);
+    this.sequencer = new TransactionSequencer(batchFactory, lockAccounting, numTransactionCounter, numBatchesCounter);
     this.timer.schedule(new RemoteTransactionManagerTimerTask(), COMPLETED_ACK_FLUSH_TIMEOUT,
                         COMPLETED_ACK_FLUSH_TIMEOUT);
+    this.outstandingBatchesCounter = outstandingBatchesCounter;
   }
 
   public void pause() {
@@ -269,6 +273,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
       }
       logger.debug("resendOutstanding()...");
       outStandingBatches = 0;
+      outstandingBatchesCounter.setValue(0);
       List toSend = batchAccounting.addIncompleteBatchIDsTo(new ArrayList());
       if (toSend.size() == 0) {
         sendBatches(false, " resendOutstanding()");
@@ -343,6 +348,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
       }
       batchToSend.send();
       outStandingBatches++;
+      outstandingBatchesCounter.increment();
     }
   }
 
@@ -357,6 +363,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
       waitUntilRunning();
       outStandingBatches--;
+      outstandingBatchesCounter.decrement();
       sendBatches(false);
       lock.notifyAll();
     }
