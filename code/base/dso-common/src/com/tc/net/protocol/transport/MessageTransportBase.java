@@ -318,11 +318,14 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   }
 
   protected void clearConnection() {
-    getConnection().close(10000);
-    this.connectionId = ConnectionID.NULL_ID;
-    this.connection.removeListener(this);
-    clearAddressCache();
-    this.connection = null;
+    TCConnection conn;
+    if ((conn = getConnection()) != null) {
+      conn.close(10000);
+      this.connectionId = ConnectionID.NULL_ID;
+      conn.removeListener(this);
+      clearAddressCache();
+      this.connection = null;
+    }
   }
 
   private void clearAddressCache() {

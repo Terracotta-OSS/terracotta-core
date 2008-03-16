@@ -39,7 +39,7 @@ import java.util.HashSet;
 public class LazyHandshakeTest extends TCTestCase {
 
   // proxy timeouts : one-way
-  private static final long     PROXY_SYNACK_DELAY = ClientMessageTransport.SYN_ACK_TIMEOUT;
+  private static final long     PROXY_SYNACK_DELAY = ClientMessageTransport.TRANSPORT_HANDSHAKE_SYNACK_TIMEOUT;
   private static final int      CLIENT_COUNT       = 3;
 
   private CommunicationsManager serverComms;
