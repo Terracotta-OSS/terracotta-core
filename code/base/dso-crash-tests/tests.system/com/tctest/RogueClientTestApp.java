@@ -312,7 +312,8 @@ public class RogueClientTestApp extends AbstractTransparentApp {
         // check after some time and return when producer has produced everything
         final int MAX_COUNTER = 0x7fffff;
         for (int i = 0; i < MAX_COUNTER; i++) {
-          // do nothing
+          // do nothing, sleep for some time so that even slow machines can spawn the L1 easily
+          ThreadUtil.reallySleep(5);
         }
         if (L1Client.getCurrentNodeID() >= MAX_COUNT) return;
       }
