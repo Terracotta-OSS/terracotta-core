@@ -167,7 +167,6 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
 
     synchronized (status) {
       if (!status.isEstablished()) {
-        if (!message.isSealed()) message.seal();
         logger.warn("Ignoring message sent to non-established transport: " + message);
         return;
       }

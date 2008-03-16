@@ -214,7 +214,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     Assert.assertNotNull(sendLayer);
     // send goobye message with session-id on it
     OOOProtocolMessage opm = messageFactory.createNewGoodbyeMessage(getSessionId());
-    sendLayer.send(opm);
+    sendMessage(opm);
     sendLayer.close();
   }
 

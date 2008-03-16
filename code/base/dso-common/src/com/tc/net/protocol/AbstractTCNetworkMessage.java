@@ -19,8 +19,8 @@ import com.tc.util.concurrent.SetOnceFlag;
 public class AbstractTCNetworkMessage implements TCNetworkMessage {
   protected static final TCLogger logger = TCLogging.getLogger(TCNetworkMessage.class);
 
-  protected AbstractTCNetworkMessage(TCNetworkHeader header) {
-    this(header, null, null, false);
+  protected AbstractTCNetworkMessage(TCNetworkHeader header, boolean seal) {
+    this(header, null, null, seal);
   }
 
   protected AbstractTCNetworkMessage(TCNetworkHeader header, TCNetworkMessage msgPayload) {

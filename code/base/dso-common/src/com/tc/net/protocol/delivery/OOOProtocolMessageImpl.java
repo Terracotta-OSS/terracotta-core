@@ -14,7 +14,7 @@ class OOOProtocolMessageImpl extends AbstractTCNetworkMessage implements OOOProt
    * Create a header-only message (no payload). Useful for ack and ack request messages.
    */
   OOOProtocolMessageImpl(OOOProtocolMessageHeader header) {
-    super(header);
+    super(header, true);
   }
 
   /**

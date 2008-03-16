@@ -35,7 +35,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
    * Creates a new TCMessage to write data into (ie. to send to the network)
    */
   protected TCMessageImpl(MessageMonitor monitor, TCByteBufferOutputStream output, MessageChannel channel, TCMessageType type) {
-    super(new TCMessageHeaderImpl(type));
+    super(new TCMessageHeaderImpl(type), false);
     this.monitor = monitor;
     this.type = type;
     this.channel = channel;
