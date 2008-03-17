@@ -29,7 +29,7 @@
 	target: configure              
 	================================= -->
 	<target name="configure" description="--> configure ivy module repositories">
-		<ivy:configure file="${ivy.conf.dir}/ivyconf.xml"/>
+		<ivy:configure file="${ivy.conf.dir}/ivysettings.xml"/>
 	</target>
 	
 </project>

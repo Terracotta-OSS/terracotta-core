@@ -1,5 +1,5 @@
-<ivyconf>
-  <conf defaultResolver="ibiblio-chain"/>
+<ivysettings>
+  <settings defaultResolver="ibiblio-chain"/>
   <resolvers>
     <filesystem name="tc-dev">
       <artifact pattern="dependencies/lib/[artifact]-[revision].[ext]"/>
@@ -13,13 +13,13 @@
     <chain name="ibiblio-chain" returnFirst="true">
       <ibiblio name="ibiblio" />
       <url name="tc-mirror">
-      	<artifact pattern="http://download.terracotta.org/buildjars/mirror/[artifact]-[revision].[ext]"/>
+        <artifact pattern="http://download.terracotta.org/buildjars/mirror/[artifact]-[revision].[ext]"/>
       </url>
     </chain>
   </resolvers>
   <modules>
-        <module organisation="testing" name=".*" resolver="tc-dev"/>
-	<module organisation="terracotta" name=".*" resolver="tc-repo"/>
-	<module organisation="tc-eclipse" name=".*" resolver="tc-repo-eclipse"/>
+    <module organisation="testing" name=".*" resolver="tc-dev"/>
+    <module organisation="terracotta" name=".*" resolver="tc-repo"/>
+    <module organisation="tc-eclipse" name=".*" resolver="tc-repo-eclipse"/>
   </modules>
-</ivyconf>
+</ivysettings>

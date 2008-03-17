@@ -23,7 +23,7 @@
 	target: configure              
 	================================= -->
 	<target name="configure" depends="install-ivy" description="--> configure ivy module repositories">
-		<ivy:configure file="${ivy.conf.dir}/ivyconf.xml"/>
+		<ivy:configure file="${ivy.conf.dir}/ivysettings.xml"/>
 	</target>
 	
 	<!-- ================================= 
