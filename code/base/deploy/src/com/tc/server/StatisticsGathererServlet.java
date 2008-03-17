@@ -10,6 +10,7 @@ import com.tc.net.TCSocketAddress;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticsGathererSubSystem;
 import com.tc.statistics.store.StatisticsRetrievalCriteria;
+import com.tc.statistics.store.TextualDataFormat;
 
 import java.io.OutputStream;
 import java.io.Writer;
@@ -182,7 +183,7 @@ public class StatisticsGathererServlet extends RestfulServlet {
     response.setStatus(HttpServletResponse.SC_OK);
 
     OutputStream os = response.getOutputStream();
-    system.getStatisticsStore().retrieveStatisticsAsCsvStream(os, filename_base, criteria, textformat);
+    system.getStatisticsStore().retrieveStatisticsAsCsvStream(os, filename_base, criteria, !textformat);
   }
 
   public void methodAggregateStatisticsData(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
@@ -196,7 +197,7 @@ public class StatisticsGathererServlet extends RestfulServlet {
     }
 
     Writer writer = response.getWriter();
-    system.getStatisticsStore().aggregateStatisticsData(writer, request.getParameter("sessionId"), request.getParameter("agentDifferentiator"), request.getParameterValues("names"), request.getParameterValues("elements"), interval);
+    system.getStatisticsStore().aggregateStatisticsData(writer, TextualDataFormat.getFormat(request.getParameter("format")), request.getParameter("sessionId"), request.getParameter("agentDifferentiator"), request.getParameterValues("names"), request.getParameterValues("elements"), interval);
     writer.close();
   }
 }

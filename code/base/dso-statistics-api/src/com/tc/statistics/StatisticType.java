@@ -33,18 +33,21 @@ public class StatisticType {
    * Statistics of this type will not captured automatically. They can however
    * be captured on an as-needed basis through API calls.
    */
-  public static final StatisticType TRIGGERED = new StatisticType("TRIGGERED");
+  public final static StatisticType TRIGGERED = new StatisticType("TRIGGERED");
 
   private final String identifier;
 
-  private StatisticType(String identifier) {
+  private StatisticType(final String identifier) {
     Assert.assertNotNull("identifier", identifier);
     this.identifier = identifier;
     TYPES.put(identifier, this);
   }
 
-  public static StatisticType getType(String identifier) {
-    return (StatisticType)TYPES.get(identifier);
+  public static StatisticType getType(final String identifier) {
+    if (null == identifier) {
+      return null;
+    }
+    return (StatisticType)TYPES.get(identifier.toUpperCase());
   }
 
   public static Collection getAllTypes() {
@@ -59,7 +62,7 @@ public class StatisticType {
     return identifier.hashCode();
   }
 
-  public boolean equals(Object object) {
+  public boolean equals(final Object object) {
     if (null == object) {
       return false;
     }

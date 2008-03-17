@@ -4,6 +4,7 @@
 package com.tctest.statistics.store.h2;
 
 import org.apache.commons.lang.StringUtils;
+import org.xml.sax.InputSource;
 
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.database.exceptions.StatisticsDatabaseNotReadyException;
@@ -16,6 +17,7 @@ import com.tc.statistics.store.StatisticsRetrievalCriteria;
 import com.tc.statistics.store.StatisticsStore;
 import com.tc.statistics.store.StatisticsStoreImportListener;
 import com.tc.statistics.store.StatisticsStoreListener;
+import com.tc.statistics.store.TextualDataFormat;
 import com.tc.statistics.store.exceptions.StatisticsStoreException;
 import com.tc.statistics.store.h2.H2StatisticsStoreImpl;
 import com.tc.test.TempDirectoryHelper;
@@ -34,6 +36,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import junit.framework.TestCase;
 
@@ -708,18 +713,18 @@ public class H2StatisticsStoreTest extends TestCase {
     consumer2.ensureCorrectCounts(0, 0);
   }
 
-  public void testAggregateStatisticsData() throws Exception {
+  public void testAggregateStatisticsDataCsv() throws Exception {
     populateBufferWithStatistics("somesession1", "somesession2", 10, 8, 4, 6);
 
     StringWriter writer1 = new StringWriter();
-    store.aggregateStatisticsData(writer1, "somesession1", "D1", new String[] {"stat1","stat2"}, null, null);
+    store.aggregateStatisticsData(writer1, TextualDataFormat.CSV, "somesession1", "D1", new String[] {"stat1","stat2"}, null, null);
     String result1 = writer1.getBuffer().toString();
     String[] result1b = StringUtils.split(result1, '\n');
     assertEquals(result1b.length, 1);
     assertEquals(",1,2,3,4,5,6,7,8,9,10", result1.substring(result1.indexOf(',')));
 
     StringWriter writer2 = new StringWriter();
-    store.aggregateStatisticsData(writer2, "somesession2", "D2", new String[] {"stat1","stat2"}, null, null);
+    store.aggregateStatisticsData(writer2, TextualDataFormat.CSV, "somesession2", "D2", new String[] {"stat1","stat2"}, null, null);
     String result2 = writer2.getBuffer().toString();
     String[] result2b = StringUtils.split(result2, '\n');
     assertEquals(result2b.length, 2);
@@ -729,16 +734,66 @@ public class H2StatisticsStoreTest extends TestCase {
     assertEquals(moment+","+(moment+1)+","+(moment+2)+","+(moment+3)+","+(moment+4)+","+(moment+5)+","+(moment+6), result2b[1]);
 
     StringWriter writer3 = new StringWriter();
-    store.aggregateStatisticsData(writer3, "somesession1", "D1", new String[] {"stat1","stat2"}, null, new Long(3000));
+    store.aggregateStatisticsData(writer3, TextualDataFormat.CSV, "somesession1", "D1", new String[] {"stat1","stat2"}, null, new Long(3000));
     String result3 = writer3.getBuffer().toString();
     assertTrue(result3.length() > 0);
 
     Thread.sleep(3500);
 
     StringWriter writer4 = new StringWriter();
-    store.aggregateStatisticsData(writer4, "somesession1", "D1", new String[] {"stat1","stat2"}, null, new Long(3000));
+    store.aggregateStatisticsData(writer4, TextualDataFormat.CSV, "somesession1", "D1", new String[] {"stat1","stat2"}, null, new Long(3000));
     String result4 = writer4.getBuffer().toString();
     assertTrue(0 == result4.length());
+  }
+
+  public void testAggregateStatisticsDataXml() throws Exception {
+    populateBufferWithStatistics("somesession1", "somesession2", 10, 8, 4, 6);
+
+    DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+    DocumentBuilder db = dbf.newDocumentBuilder();
+
+    StringWriter writer1 = new StringWriter();
+    store.aggregateStatisticsData(writer1, TextualDataFormat.XML, "somesession1", "D1", new String[] {"stat1","stat2"}, null, null);
+    String result1 = writer1.getBuffer().toString();
+    String[] result1b = StringUtils.split(result1, '\n');
+    assertEquals(result1b.length, 4);
+    assertEquals("</m><v1>1</v1><v2>2</v2><v3>3</v3><v4>4</v4><v5>5</v5><v6>6</v6><v7>7</v7><v8>8</v8><v9>9</v9><v10>10</v10></d>", result1b[2].substring(result1b[2].indexOf("</m>")));
+
+    db.parse(new InputSource(new StringReader(result1)));
+
+    StringWriter writer2 = new StringWriter();
+    store.aggregateStatisticsData(writer2, TextualDataFormat.XML, "somesession2", "D2", new String[] {"stat1","stat2"}, null, null);
+    String result2 = writer2.getBuffer().toString();
+    String[] result2b = StringUtils.split(result2, '\n');
+    assertEquals(result2b.length, 5);
+    assertEquals("</m><v1>1.0000</v1><v2>2.0000</v2><v3>3.0000</v3><v4>4.0000</v4></d>", result2b[2].substring(result2b[2].indexOf("</m>")));
+    int index_start = result2b[3].indexOf("<m>");
+    int index_end = result2b[3].indexOf("</m>");
+    long moment = Long.parseLong(result2b[3].substring(index_start+3, index_end));
+    assertEquals("<d><m>"+moment+"</m><v1>"+(moment+1)+"</v1><v2>"+(moment+2)+"</v2><v3>"+(moment+3)+"</v3><v4>"+(moment+4)+"</v4><v5>"+(moment+5)+"</v5><v6>"+(moment+6)+"</v6></d>", result2b[3]);
+
+    db.parse(new InputSource(new StringReader(result2)));
+
+    StringWriter writer3 = new StringWriter();
+    store.aggregateStatisticsData(writer3, TextualDataFormat.XML, "somesession1", "D1", new String[] {"stat1","stat2"}, null, new Long(3000));
+    String result3 = writer3.getBuffer().toString();
+    String[] result3b = StringUtils.split(result3, '\n');
+    assertTrue(result3b.length > 3);
+
+    db.parse(new InputSource(new StringReader(result3)));
+
+    Thread.sleep(3500);
+
+    StringWriter writer4 = new StringWriter();
+    store.aggregateStatisticsData(writer4, TextualDataFormat.XML, "somesession1", "D1", new String[] {"stat1","stat2"}, null, new Long(3000));
+    String result4 = writer4.getBuffer().toString();
+    String[] result4b = StringUtils.split(result4, '\n');
+    assertTrue(3 == result4b.length);
+    assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\"?>", result4b[0]);
+    assertEquals("<data>", result4b[1]);
+    assertEquals("</data>", result4b[2]);
+
+    db.parse(new InputSource(new StringReader(result4)));
   }
 
   public void testCsvImport() throws Exception {
@@ -757,7 +812,7 @@ public class H2StatisticsStoreTest extends TestCase {
     });
     
     ByteArrayOutputStream os = new ByteArrayOutputStream();
-    store.retrieveStatisticsAsCsvStream(os, "", new StatisticsRetrievalCriteria(), true);
+    store.retrieveStatisticsAsCsvStream(os, "", new StatisticsRetrievalCriteria(), false);
     String csv_buffer = os.toString("UTF-8");
 
     store.reinitialize();

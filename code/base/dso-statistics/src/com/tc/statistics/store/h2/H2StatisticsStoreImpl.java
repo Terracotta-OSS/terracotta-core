@@ -5,6 +5,8 @@ package com.tc.statistics.store.h2;
 
 import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArraySet;
 
+import org.apache.commons.lang.StringEscapeUtils;
+
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.properties.TCPropertiesImpl;
@@ -21,6 +23,7 @@ import com.tc.statistics.store.StatisticsRetrievalCriteria;
 import com.tc.statistics.store.StatisticsStore;
 import com.tc.statistics.store.StatisticsStoreImportListener;
 import com.tc.statistics.store.StatisticsStoreListener;
+import com.tc.statistics.store.TextualDataFormat;
 import com.tc.statistics.store.exceptions.StatisticsStoreCacheCreationErrorException;
 import com.tc.statistics.store.exceptions.StatisticsStoreClearAllStatisticsErrorException;
 import com.tc.statistics.store.exceptions.StatisticsStoreClearStatisticsErrorException;
@@ -573,64 +576,113 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
     }
   }
 
-  public void aggregateStatisticsData(final Writer writer, final String sessionId, final String agentDifferentiator, final String[] names, final String[] elements, final Long interval) throws StatisticsStoreException {
+  public void aggregateStatisticsData(final Writer writer, final TextualDataFormat format, final String sessionId, final String agentDifferentiator, final String[] names, final String[] elements, final Long interval) throws StatisticsStoreException {
+    Assert.assertNotNull("format", format);
     Assert.assertNotNull("sessionId", sessionId);
     Assert.assertNotNull("agentDifferentiator", agentDifferentiator);
     Assert.assertNotNull("names", names);
     Assert.assertTrue("names array can't be empty", names.length > 0);
 
-    final StatisticsRetrievalCriteria criteria = new StatisticsRetrievalCriteria()
-      .sessionId(sessionId)
-      .agentDifferentiator(agentDifferentiator)
-      .setNames(names)
-      .setElements(elements);
-    if (interval != null) {
-      long now = System.currentTimeMillis();
-      criteria.start(new Date(now - interval.longValue()));
-    }
-    retrieveStatistics(criteria, new StatisticDataUser() {
-      private Date lastMoment = null;
-
-      public boolean useStatisticData(final StatisticData data) {
-        try {
-          // end the previous line and prefix the new line with the time
-          if (null == lastMoment ||
-              !lastMoment.equals(data.getMoment())) {
-            if (lastMoment != null) {
-              writer.write("\n");
-            }
-            writer.write(String.valueOf(data.getMoment().getTime()));
-            lastMoment = data.getMoment();
-          }
-
-          final Object data_value = data.getData();
-          if (data_value != null) {
-            writer.write(",");
-            if (data_value instanceof String) {
-              writer.write(StatisticData.escapeForCsv(data_value.toString()));
-            } else if (data_value instanceof Date) {
-              writer.write(String.valueOf(((Date)data_value).getTime()));
-            } else {
-              writer.write(String.valueOf(data_value));
-            }
-          }
-        } catch (IOException e) {
-          logger.warn("Unexpected error while writing aggregated statistic data.", e);
-          return false;
-        }
-
-        return true;
+    final boolean xml_format = TextualDataFormat.XML.equals(format);
+    try {
+      if (xml_format) {
+        writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<data>\n");
       }
-    });
+
+      final boolean[] has_data = new boolean[] {false};
+
+      final StatisticsRetrievalCriteria criteria = new StatisticsRetrievalCriteria()
+        .sessionId(sessionId)
+        .agentDifferentiator(agentDifferentiator)
+        .setNames(names)
+        .setElements(elements);
+      if (interval != null) {
+        long now = System.currentTimeMillis();
+        criteria.start(new Date(now - interval.longValue()));
+      }
+      retrieveStatistics(criteria, new StatisticDataUser() {
+        private Date lastMoment = null;
+        private int valueCounter = 0;
+
+        public boolean useStatisticData(final StatisticData data) {
+          try {
+            if (null == lastMoment ||
+                !lastMoment.equals(data.getMoment())) {
+              valueCounter = 0;
+
+              if (null == lastMoment) {
+                has_data[0] = true;
+                if (xml_format) {
+                  writer.write("<d>");
+                }
+              } else {
+                if (xml_format) {
+                  writer.write("</d>\n<d>");
+                } else {
+                  writer.write("\n");
+                }
+              }
+              if (xml_format) {
+                writer.write("<m>");
+                writer.write(String.valueOf(data.getMoment().getTime()));
+                writer.write("</m>");
+              } else {
+                writer.write(String.valueOf(data.getMoment().getTime()));
+              }
+              lastMoment = data.getMoment();
+            }
+
+            final Object data_value = data.getData();
+            if (data_value != null) {
+              valueCounter++;
+
+              if (xml_format) {
+                writer.write("<v" + valueCounter + ">");
+                if (data_value instanceof String) {
+                  writer.write(StringEscapeUtils.escapeXml(data_value.toString()));
+                } else if (data_value instanceof Date) {
+                  writer.write(String.valueOf(((Date)data_value).getTime()));
+                } else {
+                  writer.write(String.valueOf(data_value));
+                }
+                writer.write("</v" + valueCounter + ">");
+              } else {
+                writer.write(",");
+                if (data_value instanceof String) {
+                  writer.write(StatisticData.escapeForCsv(data_value.toString()));
+                } else if (data_value instanceof Date) {
+                  writer.write(String.valueOf(((Date)data_value).getTime()));
+                } else {
+                  writer.write(String.valueOf(data_value));
+                }
+               }
+            }
+          } catch (IOException e) {
+            logger.warn("Unexpected error while writing aggregated statistic data.", e);
+            return false;
+          }
+
+          return true;
+        }
+      });
+      if (xml_format) {
+        if (has_data[0]) {
+          writer.write("</d>");
+        }
+        writer.write("\n</data>");
+      }
+    } catch (IOException e) {
+      logger.warn("Unexpected error while writing aggregated statistic data.", e);
+    }
   }
 
-  public void retrieveStatisticsAsCsvStream(final OutputStream os, final String filenameBase, final StatisticsRetrievalCriteria criteria, final boolean textformat) throws StatisticsStoreException {
+  public void retrieveStatisticsAsCsvStream(final OutputStream os, final String filenameBase, final StatisticsRetrievalCriteria criteria, final boolean zipContents) throws StatisticsStoreException {
     final OutputStream out;
 
     try {
       try {
         final ZipOutputStream zipstream;
-        if (textformat) {
+        if (!zipContents) {
           zipstream = null;
           out = os;
         } else {
