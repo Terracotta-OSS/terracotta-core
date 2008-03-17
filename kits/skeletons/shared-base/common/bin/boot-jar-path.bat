@@ -30,7 +30,7 @@ FOR %%i IN (%JAVA_HOME%) DO SET JAVA_HOME=%%~fsi
 set JAVACMD=%JAVA_HOME%\bin\java
 set TC_JAR=%TC_INSTALL_DIR%\lib\tc.jar
 
-if not defined DSO_BOOT_JAR goto tc_set_dso_boot_jar__1_1
+if defined DSO_BOOT_JAR goto tc_set_dso_boot_jar__1_1
 goto tc_set_dso_boot_jar__1_0
 
  :tc_set_dso_boot_jar__1_0
