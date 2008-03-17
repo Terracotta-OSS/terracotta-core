@@ -1,4 +1,4 @@
-<project name="clustered-apache-struts-1.1" xmlns:ivy="antlib:fr.jayasoft.ivy.ant">
+<project name="clustered-apache-struts-1.1" xmlns:ivy="antlib:org.apache.ivy.ant">
   
   <!-- ================================= 
   target: resolve              

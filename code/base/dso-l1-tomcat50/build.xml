@@ -1,4 +1,4 @@
-<project name="dso-l1-tomcat50" xmlns:ivy="antlib:fr.jayasoft.ivy.ant">
+<project name="dso-l1-tomcat50" xmlns:ivy="antlib:org.apache.ivy.ant">
   
   <!-- =================================
        target: resolve

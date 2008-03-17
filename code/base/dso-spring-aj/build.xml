@@ -1,4 +1,4 @@
-<project name="dso-spring-aj" xmlns:ivy="antlib:fr.jayasoft.ivy.ant">
+<project name="dso-spring-aj" xmlns:ivy="antlib:org.apache.ivy.ant">
   
   <!-- ================================= 
   target: resolve              

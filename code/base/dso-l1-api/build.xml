@@ -1,4 +1,4 @@
-<project name="dso-l1-api" xmlns:ivy="antlib:fr.jayasoft.ivy.ant">
+<project name="dso-l1-api" xmlns:ivy="antlib:org.apache.ivy.ant">
   
   <!-- ================================= 
   target: resolve              

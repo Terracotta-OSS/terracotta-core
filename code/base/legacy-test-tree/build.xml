@@ -1,4 +1,4 @@
-<project name="legacy-test-tree" xmlns:ivy="antlib:fr.jayasoft.ivy.ant">
+<project name="legacy-test-tree" xmlns:ivy="antlib:org.apache.ivy.ant">
   
   <!-- ================================= 
   target: resolve              

@@ -1,4 +1,4 @@
-<project name="resolve-dependencies" default="run" xmlns:ivy="antlib:fr.jayasoft.ivy.ant">
+<project name="resolve-dependencies" default="run" xmlns:ivy="antlib:org.apache.ivy.ant">
 
 	<property name="ivy.codebase.dir" value="${basedir}/../.."/>	
 	<property name="ivy.conf.dir" value="${basedir}/../config"/>
@@ -7,8 +7,8 @@
 	<path id="ivy.lib.path">
 		<fileset dir="${basedir}/../ivy" includes="*.jar"/>
 	</path>
-	<taskdef resource="fr/jayasoft/ivy/ant/antlib.xml" uri="antlib:fr.jayasoft.ivy.ant" classpathref="ivy.lib.path"/>
-
+    <taskdef resource="org/apache/ivy/ant/antlib.xml"
+             uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
 	<!-- ================================= 
 	target: run              
 	================================= -->

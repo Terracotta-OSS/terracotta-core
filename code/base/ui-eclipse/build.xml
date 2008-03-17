@@ -1,4 +1,4 @@
-<project name="ui-eclipse" xmlns:ivy="antlib:fr.jayasoft.ivy.ant">
+<project name="ui-eclipse" xmlns:ivy="antlib:org.apache.ivy.ant">
   
   <!-- ================================= 
   target: resolve              
