@@ -6,7 +6,7 @@
 
 ::
 rem
-rem All content copyright (c) 2003-2007 Terracotta, Inc.,
+rem All content copyright (c) 2003-2008 Terracotta, Inc.,
 rem except as may otherwise be noted in a separate copyright notice.
 rem All rights reserved.
 rem
@@ -22,12 +22,15 @@ rem
 ::                  specific location under %TC_INSTALL_DIR%\lib\dso-boot.
 ::
 
-if not exist "%JAVA_HOME%" set JAVA_HOME=%TC_INSTALL_DIR%\jre
-set JAVACMD=%JAVA_HOME%\bin\java
+if not defined JAVA_HOME set JAVA_HOME="%TC_INSTALL_DIR%\jre"
+if defined JAVA_HOME set JAVA_HOME="%JAVA_HOME:%"=%"
+if not exist %JAVA_HOME%" set JAVA_HOME=%TC_INSTALL_DIR%\jre
+FOR %%i IN (%JAVA_HOME%) DO SET JAVA_HOME=%%~fsi
 
+set JAVACMD=%JAVA_HOME%\bin\java
 set TC_JAR=%TC_INSTALL_DIR%\lib\tc.jar
 
-if not "x%DSO_BOOT_JAR%"=="x" goto tc_set_dso_boot_jar__1_1
+if not defined DSO_BOOT_JAR goto tc_set_dso_boot_jar__1_1
 goto tc_set_dso_boot_jar__1_0
 
  :tc_set_dso_boot_jar__1_0

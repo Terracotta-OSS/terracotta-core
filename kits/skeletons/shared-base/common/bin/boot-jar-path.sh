@@ -1,7 +1,9 @@
 #!/bin/sh
 
 #
-#@COPYRIGHT@
+# All content copyright (c) 2003-2008 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved.
 #
 # Helper script that sets DSO_BOOT_JAR location, creating if necessary.
 # Used by the dso-env script.

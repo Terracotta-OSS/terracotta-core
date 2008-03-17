@@ -1,7 +1,7 @@
 @echo off
 
 rem
-rem  All content copyright (c) 2003-2006 Terracotta, Inc.,
+rem  All content copyright (c) 2003-2008 Terracotta, Inc.,
 rem  except as may otherwise be noted in a separate copyright notice.
 rem  All rights reserved.
 rem
@@ -25,8 +25,8 @@ goto tc_dso_env_1
   if %ERRORLEVEL% neq 0 exit %ERRORLEVEL%
 
   set TC_JAVA_OPTS=-Xbootclasspath/p:%DSO_BOOT_JAR% -Dtc.install-root=%TC_INSTALL_DIR%
-  if not "%TC_CONFIG_PATH%" == "" set TC_JAVA_OPTS=%TC_JAVA_OPTS% -Dtc.config=%TC_CONFIG_PATH%
-  if not "%TC_SERVER%" == "" set TC_JAVA_OPTS=%TC_JAVA_OPTS% -Dtc.server="%TC_SERVER%"
+  if not defined TC_CONFIG_PATH set TC_JAVA_OPTS=%TC_JAVA_OPTS% -Dtc.config=%TC_CONFIG_PATH%
+  if not defined TC_SERVER set TC_JAVA_OPTS=%TC_JAVA_OPTS% -Dtc.server="%TC_SERVER%"
   if not "%__DSO_ENV_QUIET%" == "true" goto tc_dso_env_2
   goto tc_dso_env_3
 
