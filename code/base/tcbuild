@@ -12,6 +12,8 @@ fi
 JRUBY_HOME="`dirname $0`/../../buildsystems/jruby-1.0-20070622a"
 export JRUBY_HOME
 
+"${ANT_HOME}/bin/ant" -buildfile "`dirname $0`/buildconfig/build.xml" install-ivy
+
 if test ! -d "${JRUBY_HOME}"; then
 	echo "--------------------------------------------------------------------------------"
 	echo "LOADING JRUBY USING IVY"
