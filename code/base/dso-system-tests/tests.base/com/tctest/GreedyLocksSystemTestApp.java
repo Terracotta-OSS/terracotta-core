@@ -6,7 +6,6 @@ package com.tctest;
 import EDU.oswego.cs.dl.util.concurrent.BrokenBarrierException;
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
-import com.tc.object.bytecode.Manageable;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
