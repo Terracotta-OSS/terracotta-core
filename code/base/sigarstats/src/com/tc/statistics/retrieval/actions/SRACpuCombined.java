@@ -14,7 +14,6 @@ import com.tc.statistics.StatisticType;
 
 import java.math.BigDecimal;
 import java.text.NumberFormat;
-import java.util.Date;
 import java.util.Locale;
 
 public class SRACpuCombined implements StatisticRetrievalAction, SRACpuConstants  {
