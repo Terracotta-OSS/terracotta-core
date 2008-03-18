@@ -1,7 +1,7 @@
 @echo off
 
 rem
-rem  All content copyright (c) 2003-2006 Terracotta, Inc.,
+rem  All content copyright (c) 2003-2008 Terracotta, Inc.,
 rem  except as may otherwise be noted in a separate copyright notice.
 rem  All rights reserved.
 rem
@@ -11,7 +11,6 @@ rem - start.bat -debug 908{1,2} [nodso]
 rem -------------------------------------
 
 setlocal
-
 cd %~d0%~p0
 echo %~d0%~p0
 set WAS_SANDBOX=%CD%
@@ -19,8 +18,8 @@ for %%i in ("%WAS_SANDBOX%") do set WAS_SANDBOX=%%~fsi
 
 set TC_INSTALL_DIR=%WAS_SANDBOX%\..\..\..\..
 
-echo WAS_SANDBOX : %WAS_SANDBOX%
-echo TC_INSTALL_DIR : %TC_INSTALL_DIR%
+echo "WAS_SANDBOX: %WAS_SANDBOX%"
+echo "TC_INSTALL_DIR: %TC_INSTALL_DIR%"
 
 if ""%1"" == ""-debug"" (
   set DEBUG=true

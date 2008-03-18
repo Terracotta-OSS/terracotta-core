@@ -1,7 +1,7 @@
 @echo off
 
 rem
-rem  All content copyright (c) 2003-2006 Terracotta, Inc.,
+rem  All content copyright (c) 2003-2008 Terracotta, Inc.,
 rem  except as may otherwise be noted in a separate copyright notice.
 rem  All rights reserved.
 rem
@@ -11,24 +11,27 @@ rem - start.bat 908{1,2} [nodso]
 rem -------------------------------------
 
 setlocal
-
 cd %~d0%~p0..
 set SANDBOX=%CD%
 for %%i in ("%SANDBOX%") do set SANDBOX=%%~fsi
-
 set TC_INSTALL_DIR=%SANDBOX%\..\..\..
 
-if "%JAVA_HOME%" == "" (
-  set JAVA_HOME=%BEA_HOME%\jdk150_10
+if not defined BEA_HOME (
+	echo BEA_HOME must be set to a Weblogic Server 9.2 installation.
+	exit 1
+	endlocal  
 )
+set BEA_HOME="%BEA_HOME:"=%"
+for %%i in (%BEA_HOME%) do set BEA_HOME=%%~fsi
 
-IF NOT EXIST "%JAVA_HOME%" (
+if not defined JAVA_HOME set JAVA_HOME=%BEA_HOME%\jdk150_10
+set JAVA_HOME="%JAVA_HOME:"=%"
+if not exist %JAVA_HOME% (
   echo JAVA_HOME '%JAVA_HOME%' does not exist.
   exit 1
   endlocal  
 )
-
-for %%i in ("%JAVA_HOME%") do set JAVA_HOME=%%~fsi
+FOR %%i IN (%JAVA_HOME%) DO SET JAVA_HOME=%%~fsi
 
 %JAVA_HOME%\bin\java -classpath %TC_INSTALL_DIR%\lib\tc.jar com.tc.CheckJavaVersion "1.5"
 if %ERRORLEVEL% NEQ 0 (

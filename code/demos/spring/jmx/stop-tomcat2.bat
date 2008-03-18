@@ -14,7 +14,7 @@ for %%i in ("%TC_INSTALL_DIR%") do set TC_INSTALL_DIR=%%~fsi
 set CATALINA_HOME=%TC_INSTALL_DIR%\vendors\tomcat5.5
 
 if not defined JAVA_HOME set JAVA_HOME="%TC_INSTALL_DIR%\jre"
-if defined JAVA_HOME set JAVA_HOME="%JAVA_HOME:"=%"
+set JAVA_HOME="%JAVA_HOME:"=%"
 if not exist %JAVA_HOME% set JAVA_HOME=%TC_INSTALL_DIR%\jre
 FOR %%i IN (%JAVA_HOME%) DO SET JAVA_HOME=%%~fsi
 
