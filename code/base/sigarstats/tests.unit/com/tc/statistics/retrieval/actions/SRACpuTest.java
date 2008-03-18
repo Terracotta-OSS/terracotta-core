@@ -3,6 +3,8 @@
  */
 package com.tc.statistics.retrieval.actions;
 
+import junit.framework.TestCase;
+
 import org.hyperic.sigar.Sigar;
 
 import com.tc.statistics.StatisticData;
@@ -10,9 +12,6 @@ import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.retrieval.SigarUtil;
 
 import java.math.BigDecimal;
-import java.util.Date;
-
-import junit.framework.TestCase;
 
 public class SRACpuTest extends TestCase {
   static {
@@ -33,11 +32,9 @@ public class SRACpuTest extends TestCase {
 
     StatisticRetrievalAction action = new SRACpu();
 
-    Date before1 = new Date();
     StatisticData[] data1 = action.retrieveStatisticData();
-    Date after1 = new Date();
 
-    BigDecimal[][] values1 = assertCpuData(cpuCount, data1, before1, after1);
+    BigDecimal[][] values1 = assertCpuData(cpuCount, data1);
 
     // creating more threads than CPUs, this should have at least one of these threads running on each CPU
     int threadCount = cpuCount*2;
@@ -49,11 +46,9 @@ public class SRACpuTest extends TestCase {
 
     Thread.sleep(2000);
 
-    Date before2 = new Date();
     StatisticData[] data2 = action.retrieveStatisticData();
-    Date after2 = new Date();
 
-    BigDecimal[][] values2 = assertCpuData(cpuCount, data2, before2, after2);
+    BigDecimal[][] values2 = assertCpuData(cpuCount, data2);
 
     // stop the threads and wait for them to finish
     for (int i = 0; i < threadCount; i++) {
@@ -90,14 +85,14 @@ public class SRACpuTest extends TestCase {
     }
   }
 
-  private BigDecimal[][] assertCpuData(int cpuCount, StatisticData[] data, Date before, Date after) throws Exception {
+  private BigDecimal[][] assertCpuData(int cpuCount, StatisticData[] data) throws Exception {
     BigDecimal[][] values = new BigDecimal[cpuCount][6];
     assertEquals(cpuCount * 6, data.length);
     for (int i = 0; i < data.length; i++) {
       assertTrue(data[i].getName().startsWith(SRACpu.ACTION_NAME));
       assertNull(data[i].getAgentIp()); // will be filled in with default
-      assertTrue(before.compareTo(data[i].getMoment()) <= 0);
-      assertTrue(after.compareTo(data[i].getMoment()) >= 0);
+      assertNull(data[i].getAgentDifferentiator()); // will be filled in with default
+      assertNull(data[i].getMoment()); // will be filled in with default
 
       int part = i % 6;
       int cpu = i / 6;
