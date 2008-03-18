@@ -191,11 +191,14 @@ public class JTreeTable extends XTable {
           if (getColumnClass(counter) == TreeTableModel.class) {
             MouseEvent me = (MouseEvent) e;
             int newX = me.getX() - getCellRect(0, counter, true).x;
-            final MouseEvent newME = new MouseEvent(tree, me.getID(), me.getWhen(), me.getModifiers(), newX, me.getY(), me
-                .getClickCount(), me.isPopupTrigger());
+            final MouseEvent newME = new MouseEvent(tree, me.getID(), me.getWhen(), me.getModifiers(), newX, me.getY(),
+                                                    me.getClickCount(), me.isPopupTrigger());
+            final MouseEvent releaseME = new MouseEvent(tree, MouseEvent.MOUSE_RELEASED, me.getWhen(), me
+                .getModifiers(), newX, me.getY(), me.getClickCount(), me.isPopupTrigger());
             SwingUtilities.invokeLater(new Runnable() {
               public void run() {
                 tree.dispatchEvent(newME);
+                tree.dispatchEvent(releaseME);
               }
             });
             break;
