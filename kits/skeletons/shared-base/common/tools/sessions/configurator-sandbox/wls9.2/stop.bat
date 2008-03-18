@@ -29,12 +29,12 @@ set SERVER_NAME=myserver
 
 if not defined JAVA_HOME set JAVA_HOME=%BEA_HOME%\jdk150_10
 set JAVA_HOME="%JAVA_HOME:"=%"
+for %%i in (%JAVA_HOME%) do set JAVA_HOME=%%~fsi
 if not exist %JAVA_HOME% (
   echo JAVA_HOME %JAVA_HOME% does not exist.
   exit 1
   endlocal  
 )
-FOR %%i IN (%JAVA_HOME%) DO SET JAVA_HOME=%%~fsi
 
 call "%WL_HOME%\common\bin\commEnv.cmd"
 set CLASSPATH=%WEBLOGIC_CLASSPATH%;%POINTBASE_CLASSPATH%;%JAVA_HOME%\jre\lib\rt.jar;%WL_HOME%\server\lib\webservices.jar;%CLASSPATH%

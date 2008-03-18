@@ -26,12 +26,12 @@ for %%i in (%BEA_HOME%) do set BEA_HOME=%%~fsi
 
 if not defined JAVA_HOME set JAVA_HOME=%BEA_HOME%\jdk150_10
 set JAVA_HOME="%JAVA_HOME:"=%"
+for %%i in (%JAVA_HOME%) do set JAVA_HOME=%%~fsi
 if not exist %JAVA_HOME% (
   echo JAVA_HOME %JAVA_HOME% does not exist.
   exit 1
   endlocal  
 )
-FOR %%i IN (%JAVA_HOME%) DO SET JAVA_HOME=%%~fsi
 
 %JAVA_HOME%\bin\java -classpath %TC_INSTALL_DIR%\lib\tc.jar com.tc.CheckJavaVersion "1.5"
 if %ERRORLEVEL% NEQ 0 (
