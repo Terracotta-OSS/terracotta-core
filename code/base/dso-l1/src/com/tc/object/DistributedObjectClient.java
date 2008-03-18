@@ -112,14 +112,20 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
-import com.tc.statistics.retrieval.actions.SRAMemoryUsage;
-import com.tc.statistics.retrieval.actions.SRAStageQueueDepths;
-import com.tc.statistics.retrieval.actions.SRASystemProperties;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvictRequest;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvicted;
-import com.tc.statistics.retrieval.actions.SRAMessages;
 import com.tc.statistics.retrieval.actions.SRAL1OutstandingBatches;
+import com.tc.statistics.retrieval.actions.SRAL1PendingTransactionsSize;
+import com.tc.statistics.retrieval.actions.SRAL1TransactionSize;
 import com.tc.statistics.retrieval.actions.SRAL1TransactionsPerBatch;
+import com.tc.statistics.retrieval.actions.SRAMemoryUsage;
+import com.tc.statistics.retrieval.actions.SRAMessages;
+import com.tc.statistics.retrieval.actions.SRAStageQueueDepths;
+import com.tc.statistics.retrieval.actions.SRASystemProperties;
+import com.tc.stats.counter.CounterManager;
+import com.tc.stats.counter.CounterManagerImpl;
+import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
@@ -128,10 +134,6 @@ import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.sequence.BatchSequence;
 import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SimpleSequence;
-import com.tc.stats.counter.sampled.SampledCounter;
-import com.tc.stats.counter.sampled.SampledCounterConfig;
-import com.tc.stats.counter.CounterManagerImpl;
-import com.tc.stats.counter.CounterManager;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -192,13 +194,15 @@ public class DistributedObjectClient extends SEDA {
     this.pauseListener = pauseListener;
   }
 
-  private void populateStatisticsRetrievalRegistry(StatisticsRetrievalRegistry registry, StageManager stageManager,
-                                                   MessageMonitor messageMonitor, SampledCounter outstandingBatchesCounter,
-                                                   SampledCounter numTransactionCounter, SampledCounter numBatchesCounter) {
+  private void populateStatisticsRetrievalRegistry(final StatisticsRetrievalRegistry registry, final StageManager stageManager,
+                                                   final MessageMonitor messageMonitor, final SampledCounter outstandingBatchesCounter,
+                                                   final SampledCounter numTransactionCounter, final SampledCounter numBatchesCounter,
+                                                   final SampledCounter batchSizeCounter, final SampledCounter pendingTransactionsSize) {
     registry.registerActionInstance(new SRAMemoryUsage());
     registry.registerActionInstance(new SRASystemProperties());
     registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRACpu");
     registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRANetworkActivity");
+    registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRADiskActivity");
     registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRAThreadDump");
     registry.registerActionInstance(new SRAStageQueueDepths(stageManager));
     registry.registerActionInstance(new SRACacheObjectsEvictRequest());
@@ -207,7 +211,8 @@ public class DistributedObjectClient extends SEDA {
     registry.registerActionInstance(new SRAMessages(messageMonitor));
     registry.registerActionInstance(new SRAL1OutstandingBatches(outstandingBatchesCounter));
     registry.registerActionInstance(new SRAL1TransactionsPerBatch(numTransactionCounter, numBatchesCounter));
-    
+    registry.registerActionInstance(new SRAL1TransactionSize(batchSizeCounter, numTransactionCounter));
+    registry.registerActionInstance(new SRAL1PendingTransactionsSize(pendingTransactionsSize));
   }
 
   public void start() {
@@ -278,11 +283,15 @@ public class DistributedObjectClient extends SEDA {
       .createCounter(new SampledCounterConfig(1, 900, true, 0L));
     SampledCounter numBatchesCounter = (SampledCounter)sampledCounterManager
       .createCounter(new SampledCounterConfig(1, 900, true, 0L));
+    SampledCounter batchSizeCounter = (SampledCounter)sampledCounterManager
+      .createCounter(new SampledCounterConfig(1, 900, true, 0L));
+    SampledCounter pendingTransactionsSize= (SampledCounter)sampledCounterManager
+      .createCounter(new SampledCounterConfig(1, 900, true, 0L));
 
     rtxManager = new RemoteTransactionManagerImpl(new ChannelIDLogger(channel.getChannelIDProvider(), TCLogging
       .getLogger(RemoteTransactionManagerImpl.class)), txBatchFactory, new TransactionBatchAccounting(),
       new LockAccounting(), sessionManager, channel, outstandingBatchesCounter,
-      numTransactionCounter, numBatchesCounter);
+      numTransactionCounter, numBatchesCounter, batchSizeCounter, pendingTransactionsSize);
 
     ClientGlobalTransactionManager gtxManager = new ClientGlobalTransactionManagerImpl(rtxManager);
 
@@ -312,7 +321,8 @@ public class DistributedObjectClient extends SEDA {
     // setup statistics subsystem
     statisticsAgentSubSystem = new StatisticsAgentSubSystemImpl();
     if (statisticsAgentSubSystem.setup(config.getNewCommonL1Config())) {
-      populateStatisticsRetrievalRegistry(statisticsAgentSubSystem.getStatisticsRetrievalRegistry(), stageManager, mm, outstandingBatchesCounter, numTransactionCounter, numBatchesCounter);
+      populateStatisticsRetrievalRegistry(statisticsAgentSubSystem.getStatisticsRetrievalRegistry(), stageManager, mm, outstandingBatchesCounter,
+        numTransactionCounter, numBatchesCounter, batchSizeCounter, pendingTransactionsSize);
     }
 
     objectManager = new ClientObjectManagerImpl(remoteObjectManager, config, idProvider, new ClockEvictionPolicy(-1),

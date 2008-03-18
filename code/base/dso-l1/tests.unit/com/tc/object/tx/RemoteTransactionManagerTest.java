@@ -64,9 +64,15 @@ public class RemoteTransactionManagerTest extends TestCase {
     SampledCounter numBatchesCounter = (SampledCounter)sampledCounterManager
       .createCounter(new SampledCounterConfig(1, 900, true, 0L));
     SampledCounter outstandingBatchCounter = (SampledCounter)sampledCounterManager
-      .createCounter(new SampledCounterConfig(1, 900, true, 0L));;
+      .createCounter(new SampledCounterConfig(1, 900, true, 0L));
+    SampledCounter batchSizeCounter = (SampledCounter)sampledCounterManager
+      .createCounter(new SampledCounterConfig(1, 900, true, 0L));
+    SampledCounter pendingTransactionsSize = (SampledCounter)sampledCounterManager
+      .createCounter(new SampledCounterConfig(1, 900, true, 0L));
+
     manager = new RemoteTransactionManagerImpl(logger, batchFactory, batchAccounting, lockAccounting,
-                                               new NullSessionManager(), new MockChannel(), outstandingBatchCounter, numTransactionCounter, numBatchesCounter);
+      new NullSessionManager(), new MockChannel(), outstandingBatchCounter, numTransactionCounter, numBatchesCounter,
+      batchSizeCounter, pendingTransactionsSize);
     number = new SynchronizedInt(0);
     error = new SynchronizedRef(null);
     threads = new HashMap();

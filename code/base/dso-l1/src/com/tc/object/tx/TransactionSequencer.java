@@ -10,10 +10,10 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.SequenceID;
 import com.tc.util.Util;
-import com.tc.stats.counter.sampled.SampledCounter;
 
 public class TransactionSequencer {
 
@@ -48,8 +48,11 @@ public class TransactionSequencer {
   private final LockAccounting          lockAccounting;
   private final SampledCounter                numTransactionsCounter;
   private final SampledCounter                numBatchesCounter;
+  private final SampledCounter                batchSizeCounter;
+  private final SampledCounter                pendingTransactionsSize;
 
-  public TransactionSequencer(TransactionBatchFactory batchFactory, LockAccounting lockAccounting, SampledCounter numTransactionCounter, SampledCounter numBatchesCounter) {
+  public TransactionSequencer(TransactionBatchFactory batchFactory, LockAccounting lockAccounting, SampledCounter numTransactionCounter,
+                              SampledCounter numBatchesCounter, SampledCounter batchSizeCounter, SampledCounter pendingTransactionsSize) {
     this.batchFactory = batchFactory;
     this.lockAccounting = lockAccounting;
     this.currentBatch = createNewBatch();
@@ -58,6 +61,8 @@ public class TransactionSequencer {
     if (LOGGING_ENABLED) log_settings();
     this.numBatchesCounter = numBatchesCounter;
     this.numTransactionsCounter = numTransactionCounter;
+    this.batchSizeCounter = batchSizeCounter;
+    this.pendingTransactionsSize = pendingTransactionsSize;
   }
 
   private void log_settings() {
@@ -104,6 +109,8 @@ public class TransactionSequencer {
 
     boolean folded = addTransactionToBatch(txn, currentBatch);
 
+    batchSizeCounter.setValue(currentBatch.byteSize());
+
     if (!txn.isConcurrent() && !folded) {
       // It is important to add the lock accounting before exposing the current batch to be sent (ie. put() below)
       lockAccounting.add(txn.getTransactionID(), txn.getAllLockIDs());
@@ -135,6 +142,7 @@ public class TransactionSequencer {
 
   private void reconcilePendingSize() {
     pending_size = pendingBatches.size();
+    pendingTransactionsSize.setValue(pending_size);
   }
 
   private void put(ClientTransactionBatch batch) {

@@ -4,9 +4,6 @@
  */
 package com.tc.objectserver.impl;
 
-import bsh.EvalError;
-import bsh.Interpreter;
-
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
@@ -215,6 +212,9 @@ import java.util.Set;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 import javax.management.remote.JMXConnectorServer;
+
+import bsh.EvalError;
+import bsh.Interpreter;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -817,6 +817,7 @@ public class DistributedObjectServer implements TCDumper {
       registry.registerActionInstance(new SRASystemProperties());
       registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRACpu");
       registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRANetworkActivity");
+      registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRADiskActivity");
       registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRAThreadDump");
       registry.registerActionInstance(new SRAL2TransactionCount(serverStats));
       registry.registerActionInstance(new SRAL2BroadcastCount(serverStats));
