@@ -29,6 +29,7 @@ import com.tc.object.tx.TransactionContextImpl;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
+import com.tc.object.tx.TransactionBatchWriter.FoldingConfig;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
@@ -60,14 +61,14 @@ public class TransactionBatchTest extends TestCase {
   }
 
   private TransactionBatchWriter newWriter(ObjectStringSerializer serializer) {
-    return new TransactionBatchWriter(new TxnBatchID(1), serializer, encoding, messageFactory, TCPropertiesImpl
-        .getProperties());
+    return new TransactionBatchWriter(new TxnBatchID(1), serializer, encoding, messageFactory, FoldingConfig
+        .createFromProperties(TCPropertiesImpl.getProperties()));
   }
 
   private TransactionBatchWriter newWriter(ObjectStringSerializer serializer, boolean foldEnabled, int lockLimit,
                                            int objectLimit) {
     return new TransactionBatchWriter(new TxnBatchID(1), serializer, encoding, messageFactory,
-                                      new BatchWriterProperties(foldEnabled, lockLimit, objectLimit));
+                                      new FoldingConfig(foldEnabled, objectLimit, lockLimit));
   }
 
   public void testGetMinTransaction() throws Exception {
@@ -143,7 +144,8 @@ public class TransactionBatchTest extends TestCase {
     ClientTransaction txn2 = new ClientTransactionImpl(new TransactionID(2), new NullRuntimeLogger());
     txn2.setTransactionContext(tc);
 
-    writer = new TransactionBatchWriter(batchID, serializer, encoding, mf, TCPropertiesImpl.getProperties());
+    writer = new TransactionBatchWriter(batchID, serializer, encoding, mf, FoldingConfig
+        .createFromProperties(TCPropertiesImpl.getProperties()));
 
     SequenceGenerator sequenceGenerator = new SequenceGenerator();
 

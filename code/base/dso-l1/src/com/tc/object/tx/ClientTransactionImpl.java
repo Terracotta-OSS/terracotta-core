@@ -18,6 +18,7 @@ import gnu.trove.TIntArrayList;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
@@ -30,9 +31,10 @@ import java.util.Map;
 public class ClientTransactionImpl extends AbstractClientTransaction {
   private final RuntimeLogger runtimeLogger;
   private final Map           objectChanges = new HashMap();
-  private final Map           newRoots      = new HashMap();
-  private final List          notifies      = new ArrayList();
-  private final List          dmis          = new ArrayList();
+
+  private Map                 newRoots;
+  private List                notifies;
+  private List                dmis;
 
   // used to keep things referenced until the transaction is completely ACKED
   private final Map           referenced    = new IdentityHashMap();
@@ -47,19 +49,19 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   }
 
   public boolean hasChangesOrNotifies() {
-    return !(objectChanges.isEmpty() && newRoots.isEmpty() && notifies.isEmpty());
+    return !(objectChanges.isEmpty() && getNewRoots().isEmpty() && getNotifies().isEmpty());
   }
 
   public boolean hasChanges() {
-    return !(objectChanges.isEmpty() && newRoots.isEmpty());
+    return !(objectChanges.isEmpty() && getNewRoots().isEmpty());
   }
 
   public Map getNewRoots() {
-    return newRoots;
+    return newRoots == null ? Collections.EMPTY_MAP : newRoots;
   }
 
   public List getNotifies() {
-    return this.notifies;
+    return notifies == null ? Collections.EMPTY_LIST : notifies;
   }
 
   public Map getChangeBuffers() {
@@ -106,6 +108,9 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   }
 
   protected void basicCreateRoot(String name, ObjectID root) {
+    if (newRoots == null) {
+      newRoots = new HashMap();
+    }
     newRoots.put(name, root);
   }
 
@@ -133,7 +138,13 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   }
 
   public void addNotify(Notify notify) {
-    if (!notify.isNull()) notifies.add(notify);
+    if (!notify.isNull()) {
+      if (notifies == null) {
+        notifies = new ArrayList();
+      }
+
+      notifies.add(notify);
+    }
   }
 
   public String toString() {
@@ -141,7 +152,7 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   }
 
   public int getNotifiesCount() {
-    return notifies.size();
+    return getNotifies().size();
   }
 
   public void updateMBean(ClientTxMonitorMBean txMBean) {
@@ -174,11 +185,15 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   }
 
   public void addDmiDescritor(DmiDescriptor dd) {
+    if (dmis == null) {
+      dmis = new ArrayList();
+    }
     dmis.add(dd);
   }
 
   public List getDmiDescriptors() {
-    return dmis;
+    return dmis == null ? Collections.EMPTY_LIST : dmis;
   }
+
 
 }

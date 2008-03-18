@@ -32,6 +32,7 @@ import com.tc.util.concurrent.SetOnceFlag;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
@@ -66,15 +67,16 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
   private int                                   numTxns                   = 0;
 
   public TransactionBatchWriter(TxnBatchID batchID, ObjectStringSerializer serializer, DNAEncoding encoding,
-                                CommitTransactionMessageFactory commitTransactionMessageFactory, TCProperties tcProps) {
+                                CommitTransactionMessageFactory commitTransactionMessageFactory,
+                                FoldingConfig foldingConfig) {
     this.batchID = batchID;
     this.encoding = encoding;
     this.commitTransactionMessageFactory = commitTransactionMessageFactory;
     this.serializer = serializer;
 
-    this.foldingEnabled = tcProps.getBoolean(FOLDING_ENABLED_PROP, true);
-    this.foldingLockLimit = tcProps.getInt(FOLDING_LOCK_LIMIT_PROP, 0);
-    this.foldingObjectLimit = tcProps.getInt(FOLDING_OBJECT_LIMIT_PROP, 0);
+    this.foldingEnabled = foldingConfig.isFoldingEnabled();
+    this.foldingLockLimit = foldingConfig.getLockLimit();
+    this.foldingObjectLimit = foldingConfig.getObjectLimit();
   }
 
   public synchronized String toString() {
@@ -116,22 +118,38 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     if (outstandingWriteCount == 0) removed.recycle();
   }
 
+  private Set getDeltaOIDs(ClientTransaction txn) {
+    Set rv = null;
+    for (Iterator i = txn.getChangeBuffers().values().iterator(); i.hasNext();) {
+      TCChangeBuffer changeBuffer = (TCChangeBuffer) i.next();
+      TCObject tco = changeBuffer.getTCObject();
+      if (!tco.isNew()) {
+        if (rv == null) {
+          rv = new HashSet();
+        }
+        rv.add(tco.getObjectID());
+      }
+    }
+    return rv == null ? Collections.EMPTY_SET : rv;
+  }
+
   private TransactionBuffer getOrCreateBuffer(ClientTransaction txn, SequenceGenerator sequenceGenerator) {
     final boolean foldCandidate = isFoldCandidate(txn);
 
     if (foldCandidate) {
+      final Set deltaOIDs = getDeltaOIDs(txn); // only need to do this once, not for each fold key
+
       boolean stop = false;
       for (Iterator i = foldingKeys.iterator(); !stop && i.hasNext();) {
         FoldingKey key = (FoldingKey) i.next();
 
-        final byte action = key.analyze(txn);
+        final byte action = key.analyze(txn, deltaOIDs);
         switch (action) {
           case FoldingKey.ACCEPT: {
             numFolded++;
             return key.getBuffer();
           }
           case FoldingKey.DENY: {
-            stop = true;
             break;
           }
           case FoldingKey.CLOSE: {
@@ -161,10 +179,15 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     return txnBuffer;
   }
 
+  private static boolean exceedsLimit(int limit, int value) {
+    if (limit > 0) { return value > limit; }
+    return false;
+  }
+
   private boolean isFoldCandidate(ClientTransaction txn) {
     if (!foldingEnabled) { return false; }
-    if (foldingLockLimit > 0 && (txn.getAllLockIDs().size() > foldingLockLimit)) { return false; }
-    if (foldingObjectLimit > 0 && (txn.getChangeBuffers().size() > foldingObjectLimit)) { return false; }
+    if (exceedsLimit(foldingLockLimit, txn.getAllLockIDs().size())) { return false; }
+    if (exceedsLimit(foldingObjectLimit, txn.getChangeBuffers().size())) { return false; }
     return txn.getNewRoots().isEmpty() && txn.getDmiDescriptors().isEmpty() && (txn.getNotifies().isEmpty());
   }
 
@@ -375,7 +398,6 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
 
         writer.markSectionEnd();
 
-
         if (!writer.isContiguous()) {
           needsCopy = true;
         }
@@ -447,12 +469,12 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     }
   }
 
-  private static interface FoldingKey {
+  private interface FoldingKey {
     static final byte ACCEPT = 1;
     static final byte CLOSE  = 2;
     static final byte DENY   = 3;
 
-    byte analyze(ClientTransaction txn);
+    byte analyze(ClientTransaction txn, Set deltaOIDs);
 
     TransactionBuffer getBuffer();
   }
@@ -462,6 +484,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     private final Set               objectIDs;
     private final TxnType           txnType;
     private final TransactionBuffer buffer;
+
 
     FoldingKeyImpl(TransactionBuffer buffer, TxnType txnType, List lockIDs, Set objectIDs) {
       this.buffer = buffer;
@@ -474,23 +497,20 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
       return this.buffer;
     }
 
-    public byte analyze(ClientTransaction txn) {
+    public byte analyze(ClientTransaction txn, Set deltaOIDs) {
       List txnLocks = txn.getAllLockIDs();
-      Set txnObjectIDs = txn.getChangeBuffers().keySet();
 
-      if (lockIDs.size() != txnLocks.size()) { return chooseCloseOrDeny(txnObjectIDs); }
+      if (lockIDs.size() != txnLocks.size()) { return chooseCloseOrDeny(deltaOIDs); }
 
-      if (!txn.getTransactionType().equals(txnType)) { return chooseCloseOrDeny(txnObjectIDs); }
+      if (!txn.getTransactionType().equals(txnType)) { return chooseCloseOrDeny(deltaOIDs); }
 
-      if (lockIDs.equals(txnLocks) && txnObjectIDs.containsAll(objectIDs)) {
-        if (txnObjectIDs.size() != objectIDs.size()) {
-          // need to take on the new ObjectIDs present in the txn we are folding into here
-          objectIDs.addAll(txnObjectIDs);
-        }
+      if (lockIDs.equals(txnLocks) && CollectionUtils.containsAny(objectIDs, deltaOIDs)) {
+        // need to take on the new ObjectIDs present in the buffer we are folding into here
+        objectIDs.addAll(txn.getChangeBuffers().keySet());
         return ACCEPT;
       }
 
-      return chooseCloseOrDeny(txnObjectIDs);
+      return chooseCloseOrDeny(deltaOIDs);
     }
 
     private byte chooseCloseOrDeny(Set txnObjectIDs) {
@@ -498,6 +518,35 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
       return DENY;
     }
 
+  }
+
+  public static class FoldingConfig {
+    private final int     lockLimit;
+    private final int     objectLimit;
+    private final boolean foldingEnabled;
+
+    public FoldingConfig(boolean foldingEnabled, int objectLimit, int lockLimit) {
+      this.foldingEnabled = foldingEnabled;
+      this.objectLimit = objectLimit;
+      this.lockLimit = lockLimit;
+    }
+
+    public int getLockLimit() {
+      return lockLimit;
+    }
+
+    public int getObjectLimit() {
+      return objectLimit;
+    }
+
+    public boolean isFoldingEnabled() {
+      return foldingEnabled;
+    }
+
+    public static FoldingConfig createFromProperties(TCProperties props) {
+      return new FoldingConfig(props.getBoolean(FOLDING_ENABLED_PROP), props.getInt(FOLDING_OBJECT_LIMIT_PROP), props
+          .getInt(FOLDING_LOCK_LIMIT_PROP));
+    }
   }
 
 }
