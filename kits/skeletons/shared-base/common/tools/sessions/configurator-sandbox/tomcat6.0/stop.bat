@@ -28,7 +28,7 @@ if not defined CATALINA_HOME (
 ) else (
   set CATALINA_HOME="%CATALINA_HOME:"=%"
   if not exist %CATALINA_HOME% (
-    echo CATALINA_HOME of '%CATALINA_HOME%' does not exist.
+    echo CATALINA_HOME %CATALINA_HOME% does not exist.
     exit 1
   )
 )

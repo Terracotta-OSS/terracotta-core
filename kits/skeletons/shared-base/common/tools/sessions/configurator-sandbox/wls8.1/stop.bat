@@ -31,7 +31,7 @@ set SERVER_NAME=myserver
 if not defined JAVA_HOME set JAVA_HOME=%BEA_HOME%\jdk142_11
 set JAVA_HOME="%JAVA_HOME:"=%"
 if not exist %JAVA_HOME% (
-  echo JAVA_HOME '%JAVA_HOME%' does not exist.
+  echo JAVA_HOME %JAVA_HOME% does not exist.
   exit 1
   endlocal  
 )

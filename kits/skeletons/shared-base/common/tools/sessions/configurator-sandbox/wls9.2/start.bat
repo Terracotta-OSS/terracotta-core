@@ -27,7 +27,7 @@ for %%i in (%BEA_HOME%) do set BEA_HOME=%%~fsi
 if not defined JAVA_HOME set JAVA_HOME=%BEA_HOME%\jdk150_10
 set JAVA_HOME="%JAVA_HOME:"=%"
 if not exist %JAVA_HOME% (
-  echo JAVA_HOME '%JAVA_HOME%' does not exist.
+  echo JAVA_HOME %JAVA_HOME% does not exist.
   exit 1
   endlocal  
 )
