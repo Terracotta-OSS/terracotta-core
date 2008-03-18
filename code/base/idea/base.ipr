@@ -43,10 +43,13 @@
         <option name="SPACE_WITHIN_ARRAY_INITIALIZER_BRACES" value="true" />
         <option name="SPACE_AFTER_TYPE_CAST" value="false" />
         <option name="SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE" value="true" />
+        <option name="GENERATE_FINAL_LOCALS" value="true" />
+        <option name="GENERATE_FINAL_PARAMETERS" value="true" />
         <option name="CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND" value="99" />
         <option name="NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND" value="99" />
         <option name="IMPORT_LAYOUT_TABLE">
           <value>
+            <package name="" withSubpackages="true" />
             <package name="EDU" withSubpackages="true" />
             <emptyLine />
             <package name="org" withSubpackages="true" />
@@ -57,9 +60,9 @@
             <emptyLine />
             <package name="javax" withSubpackages="true" />
             <emptyLine />
-            <package name="" withSubpackages="true" />
           </value>
         </option>
+        <option name="OPTIMIZE_IMPORTS_ON_THE_FLY" value="true" />
         <option name="ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY" value="true" />
         <option name="METHOD_CALL_CHAIN_WRAP" value="5" />
         <option name="KEEP_SIMPLE_BLOCKS_IN_ONE_LINE" value="true" />
@@ -215,7 +218,12 @@
         </inspection_tool>
       </profile>
     </profiles>
-    <list size="0" />
+    <list size="4">
+      <item index="0" class="java.lang.String" itemvalue="SERVER PROBLEM" />
+      <item index="1" class="java.lang.String" itemvalue="INFO" />
+      <item index="2" class="java.lang.String" itemvalue="WARNING" />
+      <item index="3" class="java.lang.String" itemvalue="ERROR" />
+    </list>
   </component>
   <component name="JavacSettings">
     <option name="DEBUGGING_INFO" value="true" />
