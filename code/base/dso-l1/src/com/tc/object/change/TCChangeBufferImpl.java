@@ -73,28 +73,19 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
 
   public void writeTo(DNAWriter writer) {
     if (dnaCreated.attemptSet()) {
-      final boolean isDelta;
-
-      if (tcObject.dehydrateIfNew(writer)) {
-        isDelta = false;
-      } else {
-        isDelta = true;
-        if (arrayEvents != null) {
-          writeEventsToDNA(arrayEvents.values(), writer);
-        }
-        if (physicalEvents != null) {
-          writeEventsToDNA(physicalEvents.values(), writer);
-        }
-        if (logicalEvents != null) {
-          writeEventsToDNA(logicalEvents, writer);
-        }
-        if (literalValueChangedEvents != null) {
-          writeEventsToDNA(literalValueChangedEvents, writer);
-        }
+      if (arrayEvents != null) {
+        writeEventsToDNA(arrayEvents.values(), writer);
+      }
+      if (physicalEvents != null) {
+        writeEventsToDNA(physicalEvents.values(), writer);
+      }
+      if (logicalEvents != null) {
+        writeEventsToDNA(logicalEvents, writer);
+      }
+      if (literalValueChangedEvents != null) {
+        writeEventsToDNA(literalValueChangedEvents, writer);
       }
 
-      writer.setDelta(isDelta);
-      writer.markSectionEnd();
       return;
     }
 

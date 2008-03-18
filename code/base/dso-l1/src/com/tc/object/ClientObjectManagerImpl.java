@@ -77,7 +77,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class ClientObjectManagerImpl implements ClientObjectManager, PortableObjectProvider, Evictable, DumpHandler, PrettyPrintable {
+public class ClientObjectManagerImpl implements ClientObjectManager, PortableObjectProvider, Evictable, DumpHandler,
+    PrettyPrintable {
 
   private static final State                   PAUSED                  = new State("PAUSED");
   private static final State                   STARTING                = new State("STARTING");
@@ -499,7 +500,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     boolean isInterrupted = false;
 
     synchronized (this) {
-      while (obj == null) {
+      while (true) {
         obj = basicLookupByID(id);
         if (obj != null) return obj;
         obj = getCreationInProgress(id);
@@ -526,7 +527,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
         // obj = factory.getNewInstance(id, classProvider.getClassFor(dna.getTypeName(), dna
         // .getDefiningLoaderDescription()));
         obj = factory.getNewInstance(id, classProvider.getClassFor(Namespace.parseClassNameIfNecessary(dna
-            .getTypeName()), dna.getDefiningLoaderDescription()));
+            .getTypeName()), dna.getDefiningLoaderDescription()), false);
         setCreationInProgress(id, obj);
         Assert.assertFalse(dna.isDelta());
         obj.hydrate(dna, false);
@@ -983,8 +984,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     TCObject obj = null;
 
     if ((obj = basicLookup(pojo)) == null) {
-      obj = factory.getNewInstance(nextObjectID(), pojo, pojo.getClass());
-      obj.setIsNew();
+      obj = factory.getNewInstance(nextObjectID(), pojo, pojo.getClass(), true);
       txManager.createObject(obj);
       basicAddLocal(obj);
       executePostCreateMethod(pojo);
@@ -1005,8 +1005,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     TCObject obj = null;
 
     if ((obj = basicLookup(pojo)) == null) {
-      obj = factory.getNewInstance(nextObjectID(), pojo, pojo.getClass());
-      obj.setIsNew();
+      obj = factory.getNewInstance(nextObjectID(), pojo, pojo.getClass(), true);
       pendingCreateTCObjects.add(obj);
       basicAddLocal(obj);
     }

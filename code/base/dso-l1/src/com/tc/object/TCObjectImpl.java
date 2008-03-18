@@ -34,31 +34,32 @@ import java.lang.ref.WeakReference;
  * <p>
  */
 public abstract class TCObjectImpl implements TCObject {
-  private static final TCLogger logger                           = TCLogging.getLogger(TCObjectImpl.class);
+  private static final TCLogger logger                      = TCLogging.getLogger(TCObjectImpl.class);
 
-  private static final int      ACCESSED_OFFSET                  = 1;
-  private static final int      IS_NEW_OFFSET                    = 2;
-  private static final int      AUTOLOCKS_DISABLED_OFFSET        = 4;
-  private static final int      EVICTION_IN_PROGRESS_OFFSET      = 8;
-  private static final int      NEW_DEHYDRATE_IN_PROGRESS_OFFSET = 16;
+  private static final int      ACCESSED_OFFSET             = 1 << 0;
+  private static final int      IS_NEW_OFFSET               = 1 << 1;
+  private static final int      AUTOLOCKS_DISABLED_OFFSET   = 1 << 2;
+  private static final int      EVICTION_IN_PROGRESS_OFFSET = 1 << 3;
 
   // XXX::This initial negative version number is important since GID is assigned in the server from 0.
-  private long                  version                          = -1;
+  private long                  version                     = -1;
 
   private final ObjectID        objectID;
   protected final TCClass       tcClazz;
   private WeakReference         peerObject;
   private TLinkable             next;
   private TLinkable             previous;
-  private byte                  flags                            = 0;
-  private static final TCLogger consoleLogger                    = CustomerLogging.getConsoleLogger();
+  private byte                  flags                       = 0;
+  private static final TCLogger consoleLogger               = CustomerLogging.getConsoleLogger();
 
-  protected TCObjectImpl(ReferenceQueue queue, ObjectID id, Object peer, TCClass clazz) {
+  protected TCObjectImpl(ReferenceQueue queue, ObjectID id, Object peer, TCClass clazz, boolean isNew) {
     this.objectID = id;
     this.tcClazz = clazz;
     if (peer != null) {
       setPeerObject(new WeakObjectReference(id, peer, queue));
     }
+
+    setFlag(IS_NEW_OFFSET, isNew);
   }
 
   public boolean isShared() {
@@ -92,6 +93,10 @@ public abstract class TCObjectImpl implements TCObject {
 
   public TCClass getTCClass() {
     return tcClazz;
+  }
+
+  public void dehydrate(DNAWriter writer) {
+    tcClazz.dehydrate(this, writer, getPeerObject());
   }
 
   /**
@@ -165,7 +170,7 @@ public abstract class TCObjectImpl implements TCObject {
     }
   }
 
-  protected synchronized void setFlag(int offset, boolean value) {
+  private synchronized void setFlag(int offset, boolean value) {
     flags = Conversion.setFlag(flags, offset, value);
   }
 
@@ -265,34 +270,6 @@ public abstract class TCObjectImpl implements TCObject {
 
   public void setLiteralValue(Object newValue) {
     throw new UnsupportedOperationException();
-  }
-
-  /**
-   * Writes the data in the object to the DNA writer supplied.
-   */
-  public boolean dehydrateIfNew(DNAWriter writer) throws DNAException {
-    final boolean dehydrate;
-
-    // We use 2 flags here, we can't hold the lock on "this"
-    // while dehydrating (CDV-479). Introducing another lock would work, but would
-    // require adding a field to TCObjectImpl (which is a no-no memory wise)
-    synchronized (this) {
-      dehydrate = isNew() && !getFlag(NEW_DEHYDRATE_IN_PROGRESS_OFFSET);
-
-      if (dehydrate) {
-        setFlag(NEW_DEHYDRATE_IN_PROGRESS_OFFSET, true);
-      }
-    }
-
-    // Flipping the "new" flag must occur AFTER dehydrate -- otherwise the client
-    // memory manager might start nulling field values! (see canEvict() dependency on isNew() condition)
-    if (dehydrate) {
-      tcClazz.dehydrate(this, writer, getPeerObject());
-      setFlag(IS_NEW_OFFSET, false);
-      setFlag(NEW_DEHYDRATE_IN_PROGRESS_OFFSET, false);
-    }
-
-    return dehydrate;
   }
 
   public synchronized void setVersion(long version) {
@@ -414,13 +391,16 @@ public abstract class TCObjectImpl implements TCObject {
     throw new UnsupportedOperationException();
   }
 
-  public synchronized void setIsNew() {
-    if (getFlag(IS_NEW_OFFSET)) { throw new IllegalStateException("new flag already set"); }
-    setFlag(IS_NEW_OFFSET, true);
-  }
-
   public boolean isNew() {
     return getFlag(IS_NEW_OFFSET);
+  }
+
+  public void setNotNew() {
+    // Flipping the "new" flag must occur AFTER dehydrate -- otherwise the client
+    // memory manager might start nulling field values! (see canEvict() dependency on isNew() condition)
+
+    Assert.eval(isNew());
+    flags = Conversion.setFlag(flags, IS_NEW_OFFSET, false);
   }
 
   // These autlocking disable methods are checked in ManagerImpl. The one known use case
@@ -454,9 +434,7 @@ public abstract class TCObjectImpl implements TCObject {
 
   public ToggleableStrongReference getOrCreateToggleRef() {
     Object peer = getPeerObject();
-    if (peer == null) {
-      throw new AssertionError("cannot create a toggle reference if peer object is gone");
-    }
+    if (peer == null) { throw new AssertionError("cannot create a toggle reference if peer object is gone"); }
 
     return getObjectManager().getOrCreateToggleRef(objectID, peer);
   }

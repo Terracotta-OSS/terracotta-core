@@ -278,10 +278,6 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
     public void markSectionEnd() {
       throw new ImplementMe();
     }
-
-    public void setDelta(boolean isDelta) {
-      throw new ImplementMe();
-    }
   }
 
   public static class TestDNACursor implements DNACursor {

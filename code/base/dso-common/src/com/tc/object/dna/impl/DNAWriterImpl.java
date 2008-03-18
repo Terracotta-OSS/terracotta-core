@@ -36,12 +36,13 @@ public class DNAWriterImpl implements DNAWriter {
   private boolean                        contiguous           = true;
 
   public DNAWriterImpl(TCByteBufferOutputStream output, ObjectID id, String className,
-                       ObjectStringSerializer serializer, DNAEncoding encoding, String loaderDesc) {
-    this(output, id, className, serializer, encoding, loaderDesc, DNA.NULL_VERSION);
+                       ObjectStringSerializer serializer, DNAEncoding encoding, String loaderDesc, boolean isDelta) {
+    this(output, id, className, serializer, encoding, loaderDesc, DNA.NULL_VERSION, isDelta);
   }
 
   protected DNAWriterImpl(TCByteBufferOutputStream output, ObjectID id, String className,
-                          ObjectStringSerializer serializer, DNAEncoding encoding, String loaderDesc, long version) {
+                          ObjectStringSerializer serializer, DNAEncoding encoding, String loaderDesc, long version,
+                          boolean isDelta) {
     this.output = output;
     this.encoding = encoding;
     this.serializer = serializer;
@@ -51,8 +52,13 @@ public class DNAWriterImpl implements DNAWriter {
     output.writeInt(UNINITIALIZED_LENGTH); // reserve 4 bytes for # of actions
     output.writeByte(flags);
     output.writeLong(id.toLong());
-    serializer.writeString(output, className);
-    serializer.writeString(output, loaderDesc);
+
+    if (!isDelta) {
+      serializer.writeString(output, className);
+      serializer.writeString(output, loaderDesc);
+    }
+
+    flags = Conversion.setFlag(flags, DNA.IS_DELTA, isDelta);
 
     if (version != DNA.NULL_VERSION) {
       flags = Conversion.setFlag(flags, DNA.HAS_VERSION, true);
@@ -206,10 +212,6 @@ public class DNAWriterImpl implements DNAWriter {
     }
   }
 
-  public void setDelta(boolean value) {
-    flags = Conversion.setFlag(flags, DNA.IS_DELTA, value);
-  }
-
   private static class Appender implements DNAWriter {
     private final DNAWriterImpl            parent;
     private final TCByteBufferOutputStream output;
@@ -293,10 +295,6 @@ public class DNAWriterImpl implements DNAWriter {
 
     public void finalizeHeader() {
       throw new UnsupportedOperationException();
-    }
-
-    public void setDelta(boolean isDelta) {
-      // ignored -- the parent's setting is the one that matters
     }
   }
 

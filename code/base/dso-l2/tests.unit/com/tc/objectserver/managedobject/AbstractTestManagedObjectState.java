@@ -269,11 +269,6 @@ public abstract class AbstractTestManagedObjectState extends TestCase {
     public void markSectionEnd() {
       //
     }
-
-    public void setDelta(boolean isDelta) {
-      //
-    }
-
   }
 
   public class TestDNACursor implements DNACursor {

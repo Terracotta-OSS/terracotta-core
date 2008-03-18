@@ -147,11 +147,11 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   public void apply(DNA dna, TransactionID txnID, BackReferences includeIDs, ObjectInstanceMonitor instanceMonitor,
                     boolean ignoreIfOlderDNA) {
     boolean isInitialized = isInitialized();
-    String typeName = dna.getTypeName();
+
     long dna_version = dna.getVersion();
     if (dna_version <= this.version) {
       if (ignoreIfOlderDNA) {
-        logger.info("Ignoring apply of an old DNA for " + typeName + " id = " + id + " current version = "
+        logger.info("Ignoring apply of an old DNA for " + getClassname() + " id = " + id + " current version = "
                     + this.version + " dna_version = " + dna_version);
         return;
       } else {
@@ -168,13 +168,13 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
                                + " DNA = " + dna + " TransactionID = " + txnID);
     }
     if (isInitialized) {
-      instanceMonitor.instanceCreated(typeName);
+      instanceMonitor.instanceCreated(dna.getTypeName());
     }
     this.version = dna_version;
     DNACursor cursor = dna.getCursor();
 
     if (state == null) {
-      state = getStateFactory().createState(id, dna.getParentObjectID(), typeName, dna.getDefiningLoaderDescription(),
+      state = getStateFactory().createState(id, dna.getParentObjectID(), dna.getTypeName(), dna.getDefiningLoaderDescription(),
                                             cursor);
     }
     try {
@@ -182,7 +182,7 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
         state.apply(id, cursor, includeIDs);
       } catch (ClassNotCompatableException cnce) {
         // reinitialize state object and try again
-        reinitializeState(dna.getParentObjectID(), typeName, dna.getDefiningLoaderDescription(), cursor, state);
+        reinitializeState(dna.getParentObjectID(), getClassname(), getLoaderDescription(), cursor, state);
         state.apply(id, cursor, includeIDs);
       }
     } catch (IOException e) {
@@ -230,9 +230,8 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
    */
   public void toDNA(TCByteBufferOutputStream out, ObjectStringSerializer serializer) {
     DNAWriter writer = new ObjectDNAWriterImpl(out, id, getClassname(), serializer, DNA_STORAGE_ENCODING,
-                                               getLoaderDescription(), version);
+                                               getLoaderDescription(), version, false);
     state.dehydrate(id, writer);
-    writer.setDelta(false);
     writer.markSectionEnd();
     writer.finalizeHeader();
   }

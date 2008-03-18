@@ -161,14 +161,6 @@ public class TCObjectClone implements TCObject {
     throw new ImplementMe();
   }
 
-  public boolean dehydrateIfNew(DNAWriter writer) throws DNAException {
-    throw new ImplementMe();
-  }
-
-  public void setIsNew() {
-    throw new ImplementMe();
-  }
-
   public boolean isNew() {
     return false;
   }
@@ -237,6 +229,14 @@ public class TCObjectClone implements TCObject {
   }
 
   public ToggleableStrongReference getOrCreateToggleRef() {
+    throw new ImplementMe();
+  }
+
+  public void setNotNew() {
+    throw new ImplementMe();
+  }
+
+  public void dehydrate(DNAWriter writer) {
     throw new ImplementMe();
   }
 

@@ -94,8 +94,8 @@ public class FileSharingTestApp extends AbstractTransparentApp {
       Manageable managed = (Manageable) fileRoot;
       TCObject tcObject = managed.__tc_managed();
       MockDNAWriter dnaWriter = new MockDNAWriter();
-      tcObject.setIsNew();
-      tcObject.dehydrateIfNew(dnaWriter);
+
+      tcObject.dehydrate(dnaWriter);
 
       List dna = dnaWriter.getDNA();
 
@@ -205,10 +205,6 @@ public class FileSharingTestApp extends AbstractTransparentApp {
     }
 
     public void markSectionEnd() {
-      throw new ImplementMe();
-    }
-
-    public void setDelta(boolean isDelta) {
       throw new ImplementMe();
     }
 

@@ -37,7 +37,7 @@ import java.util.Map;
  * Peer of a Class under management.
  * <p>
  * This is used to cache the fields of each class by type.
- * 
+ *
  * @author orion
  */
 public class TCClassImpl implements TCClass {
@@ -321,11 +321,11 @@ public class TCClassImpl implements TCClass {
     return objectManager;
   }
 
-  public TCObject createTCObject(ObjectID id, Object pojo) {
+  public TCObject createTCObject(ObjectID id, Object pojo, boolean isNew) {
     if (isLogical) {
-      return new TCObjectLogical(objectManager.getReferenceQueue(), id, pojo, this);
+      return new TCObjectLogical(objectManager.getReferenceQueue(), id, pojo, this, isNew);
     } else {
-      return new TCObjectPhysical(objectManager.getReferenceQueue(), id, pojo, this);
+      return new TCObjectPhysical(objectManager.getReferenceQueue(), id, pojo, this, isNew);
     }
   }
 

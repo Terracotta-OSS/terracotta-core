@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
@@ -29,49 +30,56 @@ public interface TCClass {
 
   /**
    * Get the class this TCClass is a peer for
+   *
    * @return Peer class, never null
    */
   public Class getPeerClass();
 
   /**
    * Determine whether this class has a BeanShell script to execute on class load
+   *
    * @return True if has script
    */
   public boolean hasOnLoadExecuteScript();
 
   /**
    * Determine whether this class has a method to execute on class loade
+   *
    * @return True if has load method
    */
   public boolean hasOnLoadMethod();
 
   /**
    * Get name of method to execute on load
+   *
    * @return Method name
    */
   public String getOnLoadMethod();
 
   /**
    * Get script to execute on load
+   *
    * @return Execute script
    */
   public String getOnLoadExecuteScript();
 
   /**
    * If the class is an inner class, get the field referring to the parent "this object.
+   *
    * @return The field referring to the parent this
    */
   public Field getParentField();
 
   /**
-   * If the class is an inner class, get the name of the field referring to the parent "this"
-   * object.  
+   * If the class is an inner class, get the name of the field referring to the parent "this" object.
+   *
    * @return The field name referring to the parent this
    */
   public String getParentFieldName();
 
   /**
    * Get all portable fields in the class
+   *
    * @return Fields, never null
    */
   public TCField[] getPortableFields();
@@ -80,6 +88,7 @@ public interface TCClass {
    * Connects the original object to the copy object and creates new copies of referened objects but leaves them
    * unconnected (mostly this is about doing a deep connected clone without recurrsion so that we don't get stack
    * overflows
+   *
    * @param source Source object
    * @param dest Copy object
    * @param visited Note already visited objects
@@ -90,6 +99,7 @@ public interface TCClass {
 
   /**
    * Traverse a graph of objects to find the portable ones
+   *
    * @param pojo The object to walk
    * @param addTo The traversed references collected so far
    * @return The addTo collection
@@ -98,6 +108,7 @@ public interface TCClass {
 
   /**
    * Get constructor for the class
+   *
    * @return The constructor
    * @throws NoSuchMethodException If there is no constructor
    * @throws SecurityException If the constructor cannot be accessed in the current security model
@@ -146,6 +157,7 @@ public interface TCClass {
 
   /**
    * Construct a new instance from a DNA strand using a non-default constructor
+   *
    * @param dna The DNA with the data to use
    * @return The new instance
    * @throws IOException Reading DNA
@@ -155,6 +167,7 @@ public interface TCClass {
 
   /**
    * Get TCField for this class
+   *
    * @param name Field name
    * @return TCField
    */
@@ -167,6 +180,7 @@ public interface TCClass {
 
   /**
    * Reconstitute object from DNA
+   *
    * @param tcObject The object manager
    * @param dna The DNA to read
    * @param pojo The new instance of the pojo to reconstitute (will be modified)
@@ -177,6 +191,7 @@ public interface TCClass {
 
   /**
    * Write an object to DNA
+   *
    * @param tcObject The object manager
    * @param writer The writer to write to
    * @param pojo The instance to write
@@ -190,13 +205,16 @@ public interface TCClass {
 
   /**
    * Create a new TCObject
+   *
    * @param id The object identifier
    * @param peer The object
+   * @param isNew true whether this TCObject is for a newly shared pojo peer
    */
-  public TCObject createTCObject(ObjectID id, Object peer);
+  public TCObject createTCObject(ObjectID id, Object peer, boolean isNew);
 
   /**
    * Get a field name by offset into an index of fields
+   *
    * @param fieldOffset The index
    * @return The fully-qualified field name at that index
    */
@@ -209,14 +227,16 @@ public interface TCClass {
 
   /**
    * Returns special generated name for classes extending logical classes
+   *
    * @return Special generated logical extending class name or just the normal class name if not extending logical
    */
   public String getExtendingClassName();
-  
+
   /**
    * Returns true if the field represented by the offset is a portable field, i.e., not static and not dso transient
+   *
    * @param fieldOffset The index
-   * @return true if the field is portable and false otherwise 
+   * @return true if the field is portable and false otherwise
    */
   public boolean isPortableField(long fieldOffset);
 }

@@ -30,7 +30,6 @@ public class TCChangeBufferTest extends TestCase {
     ClassProvider classProvider = new MockClassProvider();
     DNAEncoding encoding = new DNAEncodingImpl(classProvider);
     MockTCObject mockTCObject = new MockTCObject(new ObjectID(1), this, false, true);
-    mockTCObject.setDehydrateReturnValue(false);
     TCChangeBuffer buffer = new TCChangeBufferImpl(mockTCObject);
 
     // physical updates should be ignored
@@ -42,9 +41,10 @@ public class TCChangeBufferTest extends TestCase {
     TCByteBufferOutputStream output = new TCByteBufferOutputStream();
 
     DNAWriter writer = new DNAWriterImpl(output, mockTCObject.getObjectID(), mockTCObject.getTCClass().getName(),
-                                         serializer, encoding, mockTCObject.getTCClass().getDefiningLoaderDescription());
+                                         serializer, encoding, mockTCObject.getTCClass().getDefiningLoaderDescription(), false);
 
     buffer.writeTo(writer);
+    writer.markSectionEnd();
     writer.finalizeHeader();
     output.close();
 
@@ -73,7 +73,6 @@ public class TCChangeBufferTest extends TestCase {
     ClassProvider classProvider = new MockClassProvider();
     DNAEncoding encoding = new DNAEncodingImpl(classProvider);
     MockTCObject mockTCObject = new MockTCObject(new ObjectID(1), this);
-    mockTCObject.setDehydrateReturnValue(false);
     TCChangeBuffer buffer = new TCChangeBufferImpl(mockTCObject);
 
     for (int i = 0; i < 100; i++) {
@@ -82,9 +81,10 @@ public class TCChangeBufferTest extends TestCase {
 
     TCByteBufferOutputStream output = new TCByteBufferOutputStream();
     DNAWriter writer = new DNAWriterImpl(output, mockTCObject.getObjectID(), mockTCObject.getTCClass().getName(),
-                                         serializer, encoding, mockTCObject.getTCClass().getDefiningLoaderDescription());
+                                         serializer, encoding, mockTCObject.getTCClass().getDefiningLoaderDescription(), false);
 
     buffer.writeTo(writer);
+    writer.markSectionEnd();
     writer.finalizeHeader();
     output.close();
 
@@ -112,7 +112,6 @@ public class TCChangeBufferTest extends TestCase {
     ClassProvider classProvider = new MockClassProvider();
     DNAEncoding encoding = new DNAEncodingImpl(classProvider);
     MockTCObject mockTCObject = new MockTCObject(new ObjectID(1), this, true, false);
-    mockTCObject.setDehydrateReturnValue(false);
     TCChangeBuffer buffer = new TCChangeBufferImpl(mockTCObject);
 
     for (int i = 0; i < 100; i++) {
@@ -122,9 +121,10 @@ public class TCChangeBufferTest extends TestCase {
     TCByteBufferOutputStream output = new TCByteBufferOutputStream();
 
     DNAWriter writer = new DNAWriterImpl(output, mockTCObject.getObjectID(), mockTCObject.getTCClass().getName(),
-                                         serializer, encoding, mockTCObject.getTCClass().getDefiningLoaderDescription());
+                                         serializer, encoding, mockTCObject.getTCClass().getDefiningLoaderDescription(), false);
 
     buffer.writeTo(writer);
+    writer.markSectionEnd();
     writer.finalizeHeader();
     output.close();
 

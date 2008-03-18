@@ -90,7 +90,7 @@ public class VersionizedDNAWrapperTest extends TestCase {
 
   protected DNAWriter createDNAWriter(TCByteBufferOutputStream out, ObjectID id, String type,
                                       ObjectStringSerializer serializer, DNAEncoding encoding, String string) {
-    return new DNAWriterImpl(out, id, type, serializer, encoding, "loader description");
+    return new DNAWriterImpl(out, id, type, serializer, encoding, "loader description", false);
   }
 
   private void compareAction(LogicalAction expect, LogicalAction actual) {

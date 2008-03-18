@@ -12,8 +12,8 @@ import com.tc.object.util.ToggleableStrongReference;
 import gnu.trove.TLinkable;
 
 /**
- * Terracotta class attached to each shared instance Object.  The TCObject may be a simple
- * object value or may have TCFields representing internal field values.
+ * Terracotta class attached to each shared instance Object. The TCObject may be a simple object value or may have
+ * TCFields representing internal field values.
  */
 public interface TCObject extends Cacheable {
   /** Indicates null object identifier */
@@ -24,30 +24,35 @@ public interface TCObject extends Cacheable {
 
   /**
    * For Cacheable interface, set next linked item
+   *
    * @param link Next link
    */
   public void setNext(TLinkable link);
 
   /**
    * For Cacheable interface, set previous linked item
+   *
    * @param link Previous link
    */
   public void setPrevious(TLinkable link);
 
   /**
    * For Cacheable interface, get next linked item
+   *
    * @return Next link
    */
   public TLinkable getNext();
 
   /**
    * For Cacheable interface, get previous linked item
+   *
    * @return Next link
    */
   public TLinkable getPrevious();
 
   /**
    * Get the object identifier
+   *
    * @return Object identifier
    */
   public ObjectID getObjectID();
@@ -69,6 +74,7 @@ public interface TCObject extends Cacheable {
 
   /**
    * Clear memory references up to toClear limit
+   *
    * @param toClear - the number of references to clear atmost
    * @return - the number of references actually cleared
    */
@@ -76,12 +82,14 @@ public interface TCObject extends Cacheable {
 
   /**
    * Get an object to lock on to modify this object.
+   *
    * @return The lock object
    */
   public Object getResolveLock();
 
   /**
    * Indicate that an object field has changed
+   *
    * @param classname The class name
    * @param fieldname The field name
    * @param newValue The new value
@@ -91,6 +99,7 @@ public interface TCObject extends Cacheable {
 
   /**
    * Indicate that a boolean field has changed
+   *
    * @param classname The class name
    * @param fieldname The field name
    * @param newValue The new value
@@ -100,6 +109,7 @@ public interface TCObject extends Cacheable {
 
   /**
    * Indicate that a byte field has changed
+   *
    * @param classname The class name
    * @param fieldname The field name
    * @param newValue The new value
@@ -109,6 +119,7 @@ public interface TCObject extends Cacheable {
 
   /**
    * Indicate that a char field has changed
+   *
    * @param classname The class name
    * @param fieldname The field name
    * @param newValue The new value
@@ -118,6 +129,7 @@ public interface TCObject extends Cacheable {
 
   /**
    * Indicate that a double field has changed
+   *
    * @param classname The class name
    * @param fieldname The field name
    * @param newValue The new value
@@ -127,6 +139,7 @@ public interface TCObject extends Cacheable {
 
   /**
    * Indicate that a float field has changed
+   *
    * @param classname The class name
    * @param fieldname The field name
    * @param newValue The new value
@@ -136,6 +149,7 @@ public interface TCObject extends Cacheable {
 
   /**
    * Indicate that an int field has changed
+   *
    * @param classname The class name
    * @param fieldname The field name
    * @param newValue The new value
@@ -145,6 +159,7 @@ public interface TCObject extends Cacheable {
 
   /**
    * Indicate that a long field has changed
+   *
    * @param classname The class name
    * @param fieldname The field name
    * @param newValue The new value
@@ -154,6 +169,7 @@ public interface TCObject extends Cacheable {
 
   /**
    * Indicate that a short field has changed
+   *
    * @param classname The class name
    * @param fieldname The field name
    * @param newValue The new value
@@ -163,6 +179,7 @@ public interface TCObject extends Cacheable {
 
   /**
    * Indicate that an object array changed
+   *
    * @param startPos The starting position of the change
    * @param array The changed array
    * @param length The length of the changed array
@@ -171,6 +188,7 @@ public interface TCObject extends Cacheable {
 
   /**
    * Indicate that primitive array changed
+   *
    * @param startPos The starting position of the change
    * @param array The changed array
    * @param length The length of the changed array
@@ -179,6 +197,7 @@ public interface TCObject extends Cacheable {
 
   /**
    * Indicate that a literal value changed
+   *
    * @param oldValue The old value
    * @param newValue The new value
    */
@@ -186,6 +205,7 @@ public interface TCObject extends Cacheable {
 
   /**
    * Set new literal value
+   *
    * @param newValue The new value
    */
   public void setLiteralValue(Object newValue);
@@ -200,6 +220,7 @@ public interface TCObject extends Cacheable {
 
   /**
    * Check whether the specified index is valid
+   *
    * @param index The array index to check
    * @return An exception if invalid
    */
@@ -207,12 +228,14 @@ public interface TCObject extends Cacheable {
 
   /**
    * Fault in field object if necessary
+   *
    * @param fieldName Fully-qualified fieldn name
    */
   public void resolveReference(String fieldName);
 
   /**
    * Fault in an array reference
+   *
    * @param index Index when the peer object is an array
    */
   public void resolveArrayReference(int index);
@@ -224,6 +247,7 @@ public interface TCObject extends Cacheable {
 
   /**
    * Set a reference for a field in this object
+   *
    * @param fieldName Field in this object
    * @param id New reference for this field
    * @returns Old mapping if present
@@ -232,6 +256,7 @@ public interface TCObject extends Cacheable {
 
   /**
    * Set an array index reference
+   *
    * @param index The index in this array
    * @param id The new reference for that index
    */
@@ -239,12 +264,14 @@ public interface TCObject extends Cacheable {
 
   /**
    * Clear the reference for the given field
+   *
    * @param fieldName
    */
   public void clearReference(String fieldName);
 
   /**
    * Set new value for a field of this object
+   *
    * @param fieldName The field name
    * @param obj The object to set for this field
    */
@@ -252,20 +279,17 @@ public interface TCObject extends Cacheable {
 
   /**
    * Get version of this object instance
+   *
    * @return Version
    */
   public long getVersion();
 
   /**
    * Set a new version for this object
+   *
    * @param version New version
    */
   public void setVersion(long version);
-
-  /**
-   * Set whether this object is new
-   */
-  public void setIsNew();
 
   /**
    * @return True if new
@@ -274,6 +298,7 @@ public interface TCObject extends Cacheable {
 
   /**
    * Set a field value change by offset
+   *
    * @param classname Class name
    * @param fieldOffset The offset into this object's fields
    * @param newValue New object value
@@ -283,6 +308,7 @@ public interface TCObject extends Cacheable {
 
   /**
    * Get field name from field offset
+   *
    * @param fieldOffset The offset for the field
    * @return Field name
    */
@@ -290,6 +316,7 @@ public interface TCObject extends Cacheable {
 
   /**
    * Invoke logical method
+   *
    * @param method Method indicator, as defined in {@link com.tc.object.SerializationUtil}
    * @param methodSignature The signature description
    * @param params The parameter values
@@ -307,23 +334,27 @@ public interface TCObject extends Cacheable {
   public boolean autoLockingDisabled();
 
   /**
-   * Writes all of the object data to the given DNAWriter, iff object is new
-   * @param writer The writer
-   * @return True if written
-   */
-  public boolean dehydrateIfNew(DNAWriter writer);
-
-  /**
    * Returns true if the field represented by the offset is a portable field, i.e., not static and not dso transient
+   *
    * @param fieldOffset The index
    * @return true if the field is portable and false otherwise
    */
   public boolean isFieldPortableByOffset(long fieldOffset);
 
   /**
-   * Get or create the toggleable strong reference for this shared object. The returned object can be used to
-   * ensure the peer object is strongly reachable and thus cannot be flushed by the memory manager
+   * Get or create the toggleable strong reference for this shared object. The returned object can be used to ensure the
+   * peer object is strongly reachable and thus cannot be flushed by the memory manager
    */
   public ToggleableStrongReference getOrCreateToggleRef();
+
+  /**
+   * Unset the "is new" flag. This should only be done by one thread ever (namely the thread that first ever commits this object)
+   */
+  public void setNotNew();
+
+  /**
+   * Dehydate the entire state of the peer object to the given writer
+   */
+  public void dehydrate(DNAWriter writer);
 
 }

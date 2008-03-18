@@ -12,6 +12,7 @@ import com.tc.io.TCByteBufferOutputStream.Mark;
 import com.tc.lang.Recyclable;
 import com.tc.object.ObjectID;
 import com.tc.object.TCClass;
+import com.tc.object.TCObject;
 import com.tc.object.change.TCChangeBuffer;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNAEncoding;
@@ -265,7 +266,6 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
 
     private boolean                        needsCopy            = false;
     private int                            headerLength         = UNINITIALIZED_LENGTH;
-    private int                            changeCount          = 0;
     private int                            txnCount             = 0;
     private Mark                           changesCountMark;
     private Mark                           txnCountMark;
@@ -285,7 +285,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
       // This check is needed since this buffer might need to be resent upon server crash
       if (committed.attemptSet()) {
         txnCountMark.write(Conversion.int2Bytes(txnCount));
-        changesCountMark.write(Conversion.int2Bytes(changeCount));
+        changesCountMark.write(Conversion.int2Bytes(writers.size()));
 
         for (Iterator i = writers.values().iterator(); i.hasNext();) {
           DNAWriter writer = (DNAWriter) i.next();
@@ -348,18 +348,33 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
         ObjectID oid = (ObjectID) entry.getKey();
         TCChangeBuffer buffer = (TCChangeBuffer) entry.getValue();
 
+        TCObject tco = buffer.getTCObject();
+
+        final boolean isNew = tco.isNew();
+
         DNAWriter writer = (DNAWriter) writers.get(oid);
         if (writer == null) {
-          TCClass tcc = buffer.getTCObject().getTCClass();
+          TCClass tcc = tco.getTCClass();
           writer = new DNAWriterImpl(output, oid, tcc.getExtendingClassName(), serializer, encoding, tcc
-              .getDefiningLoaderDescription());
+              .getDefiningLoaderDescription(), !isNew);
+
           writers.put(oid, writer);
-          changeCount++;
         } else {
           writer = writer.createAppender();
         }
 
-        buffer.writeTo(writer);
+        // this isNew() check and flipping of the new flag are safe here only because transaction writing is completely
+        // serialized within the the batch writer. This ensure there is no race for more than one thread to commit the
+        // same "new" object
+        if (isNew) {
+          tco.dehydrate(writer);
+          tco.setNotNew();
+        } else {
+          buffer.writeTo(writer);
+        }
+
+        writer.markSectionEnd();
+
 
         if (!writer.isContiguous()) {
           needsCopy = true;

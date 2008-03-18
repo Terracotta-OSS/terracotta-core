@@ -216,10 +216,6 @@ public class ArrayManagerTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public boolean dehydrateIfNew(DNAWriter writer) throws DNAException {
-      throw new ImplementMe();
-    }
-
     public void disableAutoLocking() {
       throw new ImplementMe();
     }
@@ -308,10 +304,6 @@ public class ArrayManagerTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public void setIsNew() {
-      throw new ImplementMe();
-    }
-
     public void setNext(TLinkable link) {
       throw new ImplementMe();
     }
@@ -388,6 +380,13 @@ public class ArrayManagerTest extends TestCase {
       throw new ImplementMe();
     }
 
+    public void setNotNew() {
+      throw new ImplementMe();
+    }
+
+    public void dehydrate(DNAWriter writer) {
+      throw new ImplementMe();
+    }
   }
 
 }

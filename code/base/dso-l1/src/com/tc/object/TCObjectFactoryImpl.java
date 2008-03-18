@@ -31,9 +31,9 @@ public class TCObjectFactoryImpl implements TCObjectFactory {
     this.objectManager = objectManager;
   }
 
-  public TCObject getNewInstance(ObjectID id, Object peer, Class clazz) {
+  public TCObject getNewInstance(ObjectID id, Object peer, Class clazz, boolean isNew) {
     TCClass tcc = clazzFactory.getOrCreate(clazz, objectManager);
-    TCObject rv = tcc.createTCObject(id, peer);
+    TCObject rv = tcc.createTCObject(id, peer, isNew);
 
     if (peer instanceof Manageable) {
       ((Manageable) peer).__tc_managed(rv);
@@ -42,8 +42,8 @@ public class TCObjectFactoryImpl implements TCObjectFactory {
     return rv;
   }
 
-  public TCObject getNewInstance(ObjectID id, Class clazz) {
-    return getNewInstance(id, null, clazz);
+  public TCObject getNewInstance(ObjectID id, Class clazz, boolean isNew) {
+    return getNewInstance(id, null, clazz, isNew);
   }
 
   public Object getNewPeerObject(TCClass type, DNA dna) throws IOException, ClassNotFoundException {

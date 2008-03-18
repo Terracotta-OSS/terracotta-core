@@ -107,7 +107,7 @@ public class TestClassFactory implements TCClassFactory {
       return null;
     }
 
-    public TCObject createTCObject(ObjectID id, Object peer) {
+    public TCObject createTCObject(ObjectID id, Object peer, boolean isNew) {
       return null;
     }
 

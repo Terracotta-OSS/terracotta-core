@@ -23,7 +23,6 @@ import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAException;
-import com.tc.object.loaders.Namespace;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.ThreadLockManager;
@@ -460,19 +459,14 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
   }
 
   private void basicApply(Collection objectChanges, Map newRoots, boolean force) throws DNAException {
-
     List l = new LinkedList();
 
     for (Iterator i = objectChanges.iterator(); i.hasNext();) {
       DNA dna = (DNA) i.next();
       TCObject tcobj = null;
       Assert.assertTrue(dna.isDelta());
+
       try {
-        // This is a major hack to prevent distributed method calls
-        // sent to apps that don't have the right classes from dying
-        // This should be fixed in a better way some day :-)
-        objectManager.getClassFor(Namespace.parseClassNameIfNecessary(dna.getTypeName()), dna
-            .getDefiningLoaderDescription());
         tcobj = objectManager.lookup(dna.getObjectID());
       } catch (ClassNotFoundException cnfe) {
         logger.warn("Could not apply change because class not local: " + dna.getTypeName());

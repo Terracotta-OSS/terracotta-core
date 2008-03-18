@@ -27,8 +27,6 @@ public class MockTCObject implements TCObject {
   private TCClass      tcClazz;
   private boolean      accessed    = false;
 
-  private boolean dehydrateReturnValue = true;
-
   public MockTCObject(final ObjectID id, final Object obj) {
     this(id, obj, false, false);
   }
@@ -37,10 +35,6 @@ public class MockTCObject implements TCObject {
     this.peer = obj;
     this.id = id;
     this.tcClazz = new MockTCClass(isIndexed, isLogical);
-  }
-
-  public void setDehydrateReturnValue(boolean dehydrateReturnValue) {
-    this.dehydrateReturnValue = dehydrateReturnValue;
   }
 
   public List getHistory() {
@@ -110,20 +104,8 @@ public class MockTCObject implements TCObject {
     return;
   }
 
-  public boolean dehydrateIfNew(DNAWriter writer) throws DNAException {
-    return dehydrateReturnValue;
-  }
-
   public void objectFieldChanged(String classname, String fieldname, Object newValue, int index) {
     return;
-  }
-
-  public boolean isPhysical() {
-    return true;
-  }
-
-  public boolean isLogical() {
-    return false;
   }
 
   public static class MethodCall {
@@ -194,10 +176,6 @@ public class MockTCObject implements TCObject {
     return null;
   }
 
-  public ClassLoader getClassLoader() {
-    return null;
-  }
-
   public void markAccessed() {
     this.accessed = true;
   }
@@ -219,10 +197,6 @@ public class MockTCObject implements TCObject {
   }
 
   public void resolveAllReferences() {
-    //
-  }
-
-  public void setIsNew() {
     //
   }
 
@@ -283,6 +257,14 @@ public class MockTCObject implements TCObject {
   }
 
   public ToggleableStrongReference getOrCreateToggleRef() {
+    throw new ImplementMe();
+  }
+
+  public void setNotNew() {
+    throw new ImplementMe();
+  }
+
+  public void dehydrate(DNAWriter writer) {
     throw new ImplementMe();
   }
 }

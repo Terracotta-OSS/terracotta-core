@@ -84,7 +84,7 @@ public class MockTCClass implements TCClass {
     throw new ImplementMe();
   }
 
-  public TCObject createTCObject(ObjectID id, Object peer) {
+  public TCObject createTCObject(ObjectID id, Object peer, boolean isNew) {
     throw new ImplementMe();
   }
 

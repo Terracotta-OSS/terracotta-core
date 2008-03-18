@@ -15,11 +15,11 @@ public class TestObjectFactory implements TCObjectFactory {
     return;
   }
 
-  public TCObject getNewInstance(ObjectID id, Object peer, Class clazz) {
+  public TCObject getNewInstance(ObjectID id, Object peer, Class clazz, boolean isNew) {
     return tcObject;
   }
 
-  public TCObject getNewInstance(ObjectID id, Class clazz) {
+  public TCObject getNewInstance(ObjectID id, Class clazz, boolean isNew) {
     return tcObject;
   }
 

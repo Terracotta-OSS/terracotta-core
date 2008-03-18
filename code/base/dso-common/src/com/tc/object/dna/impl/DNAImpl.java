@@ -53,6 +53,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
   }
 
   public String getTypeName() {
+    Assert.assertNotNull(this.typeName);
     return typeName;
   }
 
@@ -238,16 +239,19 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
     final byte flags = input.readByte();
 
     this.id = new ObjectID(input.readLong());
-    this.typeName = serializer.readString(input);
-    this.loaderDesc = serializer.readString(input);
+
+    this.isDelta = Conversion.getFlag(flags, DNA.IS_DELTA);
+
+    if (!isDelta) {
+      this.typeName = serializer.readString(input);
+      this.loaderDesc = serializer.readString(input);
+    }
 
     if (Conversion.getFlag(flags, DNA.HAS_VERSION)) {
       this.version = input.readLong();
     } else {
       this.version = DNA.NULL_VERSION;
     }
-
-    this.isDelta = Conversion.getFlag(flags, DNA.IS_DELTA);
 
     if (Conversion.getFlag(flags, DNA.HAS_PARENT_ID)) {
       this.parentID = new ObjectID(input.readLong());
@@ -265,6 +269,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
   }
 
   public String getDefiningLoaderDescription() {
+    Assert.assertNotNull(this.loaderDesc);
     return this.loaderDesc;
   }
 

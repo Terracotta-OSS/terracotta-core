@@ -83,8 +83,4 @@ public class TestDNAWriter implements DNAWriter {
     throw new ImplementMe();
   }
 
-  public void setDelta(boolean isDelta) {
-    throw new ImplementMe();
-  }
-
 }

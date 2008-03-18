@@ -128,11 +128,4 @@ public interface DNAWriter {
    */
   void copyTo(TCByteBufferOutput dest);
 
-  /**
-   * Mark this DNA as delta or not
-   *
-   * @param isDelta True/False
-   */
-  void setDelta(boolean isDelta);
-
 }

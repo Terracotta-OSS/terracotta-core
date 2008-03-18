@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
@@ -30,9 +31,9 @@ public class TCObjectImplTest extends BaseDSOTestCase {
     TestObject to2 = new TestObject("TestObject2", null);
     ObjectID id1 = new ObjectID(1);
     ObjectID id2 = new ObjectID(2);
-    objectManager.add(id2, new TCObjectPhysical(objectManager.getReferenceQueue(), id2, to2, clazz));
+    objectManager.add(id2, new TCObjectPhysical(objectManager.getReferenceQueue(), id2, to2, clazz, false));
 
-    TCObjectImpl tcObj = new TCObjectPhysical(objectManager.getReferenceQueue(), id1, to1, clazz);
+    TCObjectImpl tcObj = new TCObjectPhysical(objectManager.getReferenceQueue(), id1, to1, clazz, false);
     tcObj.resolveReference(TestObject.class.getName() + ".test1");
     tcObj.resolveReference(TestObject.class.getName() + ".test2");
     assertTrue(to1.test1 == null);// nothing should happen from that
@@ -47,7 +48,7 @@ public class TCObjectImplTest extends BaseDSOTestCase {
     assertTrue(to1.test1 == null);// nothing should happen from that
     assertTrue(to1.test2 == to2);
 
-    tcObj.dehydrateIfNew(new TestDNAWriter());
+    tcObj.getTCClass().dehydrate(tcObj, new TestDNAWriter(), tcObj.getPeerObject());
     tcObj.clearReferences(100);
     assertTrue(to1.test2 == null);
     tcObj.resolveReference(TestObject.class.getName() + ".test2");
@@ -98,8 +99,8 @@ public class TCObjectImplTest extends BaseDSOTestCase {
   }
 
   public class TestTCClass implements TCClass {
-    private TCFieldFactory fieldFactory;
-    private Map            fields = new HashMap();
+    private TCFieldFactory                fieldFactory;
+    private Map                           fields = new HashMap();
     private final TestClientObjectManager objectManager;
 
     public Field getParentField() {
@@ -198,7 +199,7 @@ public class TCObjectImplTest extends BaseDSOTestCase {
       return false;
     }
 
-    public TCObject createTCObject(ObjectID id, Object peer) {
+    public TCObject createTCObject(ObjectID id, Object peer, boolean isNew) {
       throw new ImplementMe();
     }
 

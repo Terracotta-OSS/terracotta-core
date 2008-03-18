@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.bytecode;
 
@@ -140,10 +141,6 @@ public class NullTCObject implements TCObject {
     // do nothing
   }
 
-  public boolean dehydrateIfNew(DNAWriter to) {
-    return true;
-  }
-
   public void markAccessed() {
     //
   }
@@ -165,10 +162,6 @@ public class NullTCObject implements TCObject {
     // do nothing
   }
 
-  public void setIsNew() {
-    throw new AssertionError();
-  }
-
   public boolean isNew() {
     throw new AssertionError();
   }
@@ -176,6 +169,7 @@ public class NullTCObject implements TCObject {
   public boolean isShared() {
     return true;
   }
+
   public void objectFieldChangedByOffset(String classname, long fieldOffset, Object newValue, int index) {
     // do nothing
   }
@@ -236,4 +230,11 @@ public class NullTCObject implements TCObject {
     throw new AssertionError();
   }
 
+  public void setNotNew() {
+    throw new AssertionError();
+  }
+
+  public void dehydrate(DNAWriter writer) {
+    throw new AssertionError();
+  }
 }
