@@ -287,7 +287,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     public void awardLock(SessionID sessionID, LockID id, ThreadID threadID, int type) {
       return;
     }
-
+    
     public LockID lockIDFor(String id) {
       return null;
     }
@@ -338,6 +338,10 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     }
 
     public void recall(LockID lockID, ThreadID id, int level) {
+      return;
+    }
+    
+    public void recall(LockID lockID, ThreadID threadID, int level, int leaseTimeInMs) {
       return;
     }
 

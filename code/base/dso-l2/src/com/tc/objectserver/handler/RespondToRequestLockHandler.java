@@ -41,7 +41,7 @@ public class RespondToRequestLockHandler extends AbstractEventHandler {
         responseMessage.initializeLockNotAwarded(lrc.getLockID(), lrc.getThreadID(), lrc.getLockLevel());
       } else if (lrc.isLockRecall()) {
         responseMessage = (LockResponseMessage) channel.createMessage(TCMessageType.LOCK_RECALL_MESSAGE);
-        responseMessage.initializeLockRecall(lrc.getLockID(), lrc.getThreadID(), lrc.getLockLevel());
+        responseMessage.initializeLockRecall(lrc.getLockID(), lrc.getThreadID(), lrc.getLockLevel(), lrc.getAwardLeaseTime());
       } else if (lrc.isLockWaitTimeout()) {
         responseMessage = (LockResponseMessage) channel.createMessage(TCMessageType.LOCK_RESPONSE_MESSAGE);
         responseMessage.initializeLockWaitTimeout(lrc.getLockID(), lrc.getThreadID(), lrc.getLockLevel());

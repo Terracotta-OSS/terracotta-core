@@ -6,6 +6,7 @@ package com.tctest;
 import EDU.oswego.cs.dl.util.concurrent.BrokenBarrierException;
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
+import com.tc.object.bytecode.Manageable;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -20,7 +21,7 @@ import java.util.List;
 public class GreedyLocksSystemTestApp extends AbstractTransparentApp {
 
   public static final int NODE_COUNT      = 3;
-  public static final int EXECUTION_COUNT = 5;
+  public static final int EXECUTION_COUNT = 2;
   public static final int ITERATION_COUNT = 1;
 
   private List          locks   = new ArrayList();
@@ -75,7 +76,6 @@ public class GreedyLocksSystemTestApp extends AbstractTransparentApp {
 
     for (int i = id - 1; i < locks.size(); i++) {
       LockObject lock = (LockObject) locks.get(i);
-      println(" Working on " + lock);
       int read = 0, write = 0;
 
       // READ loop
@@ -159,6 +159,7 @@ public class GreedyLocksSystemTestApp extends AbstractTransparentApp {
       waitCount++;
       try {
         long start = System.currentTimeMillis();
+
         wait(500);
         if ((System.currentTimeMillis() - start) >= 500) {
           timeoutCount++;

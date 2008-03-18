@@ -58,7 +58,7 @@ public class Request {
   void execute(LockID id) {
     lockResponseSink.add(Lock.createLockAwardResponseContext(id, threadContext.getId(), lockLevel));
   }
-
+  
   ServerThreadContext getThreadContext() {
     return this.threadContext;
   }

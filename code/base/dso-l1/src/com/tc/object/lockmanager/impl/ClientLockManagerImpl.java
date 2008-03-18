@@ -305,6 +305,20 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
       cleanUp(myLock);
     }
   }
+  
+  public synchronized void recall(LockID lockID, ThreadID threadID, int interestedLevel, int leaseTimeInMs) {
+    Assert.assertEquals(ThreadID.VM_ID, threadID);
+    if (isPaused()) {
+      logger.warn("Ignoring recall request from dead server : " + lockID + ", " + threadID + " interestedLevel : "
+                  + LockLevel.toString(interestedLevel));
+      return;
+    }
+    final ClientLock myLock = (ClientLock) locksByID.get(lockID);
+    if (myLock != null) {
+      myLock.recall(interestedLevel, this, leaseTimeInMs);
+      cleanUp(myLock);
+    }
+  }
 
   public void transactionsForLockFlushed(LockID lockID) {
     final ClientLock myLock;
@@ -379,7 +393,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
                                                  + " :: " + LockLevel.toString(level)); }
     lock.awardLock(threadID, level);
   }
-
+  
   /*
    * XXX:: @read comment for awardLock();
    */

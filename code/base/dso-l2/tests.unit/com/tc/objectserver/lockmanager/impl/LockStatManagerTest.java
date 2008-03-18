@@ -196,7 +196,6 @@ public class LockStatManagerTest extends TestCase {
     lockManager.unlock(l1, cid1, ThreadID.VM_ID); // it will grant request to c2 greedily
     assertEquals(1, lockStatManager.getNumberOfPendingRequests(l1));
     assertEquals(1, lockStatManager.getNumberOfLockReleased(l1));
-    assertEquals(1, lockStatManager.getNumberOfLockReleased(l1));
 
     lockManager.requestLock(l1, cid1, s1, LockLevel.WRITE, String.class.getName(), sink); // c1 request again and issue
     // a recall
@@ -214,17 +213,18 @@ public class LockStatManagerTest extends TestCase {
     assertEquals(2, lockStatManager.getNumberOfPendingRequests(l1));
     assertEquals(3, lockStatManager.getNumberOfLockHopRequests(l1));
 
-    lockManager.unlock(l1, cid1, ThreadID.VM_ID); // grant to c3 non-greedily
+    lockManager.unlock(l1, cid1, ThreadID.VM_ID); // grant to c3 greedily with a lease recall
     assertEquals(2, lockStatManager.getNumberOfPendingRequests(l1));
     assertEquals(3, lockStatManager.getNumberOfLockReleased(l1));
+    assertEquals(4, lockStatManager.getNumberOfLockHopRequests(l1));
 
-    lockManager.unlock(l1, cid3, s1); // grant to c4 greedily
+    lockManager.unlock(l1, cid3, ThreadID.VM_ID); // grant to c4 greedily
     assertEquals(2, lockStatManager.getNumberOfPendingRequests(l1));
     assertEquals(4, lockStatManager.getNumberOfLockReleased(l1));
     lockManager.requestLock(l1, cid3, s1, LockLevel.WRITE, String.class.getName(), sink); // issues a recall again
     assertEquals(7, lockStatManager.getNumberOfLockRequested(l1));
     assertEquals(2, lockStatManager.getNumberOfPendingRequests(l1));
-    assertEquals(4, lockStatManager.getNumberOfLockHopRequests(l1));
+    assertEquals(5, lockStatManager.getNumberOfLockHopRequests(l1));
 
     lockManager.unlock(l1, cid4, ThreadID.VM_ID); // grant to c3 greedily
     assertEquals(2, lockStatManager.getNumberOfPendingRequests(l1));

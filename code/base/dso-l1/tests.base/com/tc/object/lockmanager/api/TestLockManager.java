@@ -39,7 +39,7 @@ public class TestLockManager implements ClientLockManager {
   public void awardLock(SessionID sessionID, LockID id, ThreadID threadID, int type) {
     return;
   }
-
+  
   public void lock(LockID id, ThreadID threadID, int lockType, String lockObjectType, String contextInfo) {
     locks.add(new Object[] { id, threadID, new Integer(lockType) });
   }
@@ -87,6 +87,10 @@ public class TestLockManager implements ClientLockManager {
   }
 
   public void recall(LockID lockID, ThreadID id, int level) {
+    return;
+  }
+  
+  public void recall(LockID lockID, ThreadID threadID, int level, int leaseTimeInMs) {
     return;
   }
 

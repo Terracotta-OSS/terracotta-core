@@ -46,7 +46,7 @@ public interface ClientLockManager extends DumpHandler, PrettyPrintable {
    * awards the lock to the threadID
    */
   public void awardLock(SessionID sessionID, LockID id, ThreadID threadID, int type);
-
+  
   public void cannotAwardLock(SessionID sessionID, LockID id, ThreadID threadID, int type);
 
   public LockID lockIDFor(String id);
@@ -70,6 +70,8 @@ public interface ClientLockManager extends DumpHandler, PrettyPrintable {
    * Recalls a greedy Lock that was awarded earlier
    */
   public void recall(LockID lockID, ThreadID threadID, int level);
+  
+  public void recall(LockID lockID, ThreadID threadID, int level, int leaseTimeInMs);
   
   /**
    * Adds all lock waits to the given collection and returns that collection.
