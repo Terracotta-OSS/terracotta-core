@@ -11,10 +11,10 @@ import org.mortbay.jetty.security.Constraint;
 import org.mortbay.jetty.security.ConstraintMapping;
 import org.mortbay.jetty.security.HashUserRealm;
 import org.mortbay.jetty.security.SecurityHandler;
+import org.mortbay.jetty.servlet.Context;
 import org.mortbay.jetty.servlet.DefaultServlet;
 import org.mortbay.jetty.servlet.ServletHandler;
 import org.mortbay.jetty.servlet.ServletHolder;
-import org.mortbay.jetty.webapp.WebAppContext;
 
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.SEDA;
@@ -352,7 +352,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     httpServer = new Server();
     httpServer.addConnector(tcConnector);
 
-    WebAppContext context = new WebAppContext("", "/");
+    Context context = new Context(null, "/", Context.NO_SESSIONS|Context.SECURITY);
 
     if (commonL2Config.httpAuthentication()) {
       Constraint constraint = new Constraint();
@@ -372,30 +372,22 @@ public class TCServerImpl extends SEDA implements TCServer {
       logger.info("HTTP Authentication enabled for path '" + STATISTICS_GATHERER_SERVLET_PATH + "', using user realm file '" + commonL2Config.httpAuthenticationUserRealmFile() + "'");
     }
 
-    // setting to null means to not apply the default web.xml -- this is to not
-    // include the jsp servlet which will trigger creation of temp directories
-    context.setDefaultsDescriptor(null);
-
     context.setAttribute(ConfigServlet.CONFIG_ATTRIBUTE, this.configurationSetupManager);
     context.setAttribute(StatisticsGathererServlet.GATHERER_ATTRIBUTE, this.statisticsGathererSubSystem);
 
-    File userDir = new File(System.getProperty("user.dir"));
-    if (userDir.canWrite()) {
-      try {
-        context.setTempDirectory(userDir);
-      } catch (Exception e) {
-        logger.warn("cannot setup jetty temp dir -- will allow jetty to pick temp dir [" + e.getMessage() + "]");
-      }
-    }
     ServletHandler servletHandler = new ServletHandler();
 
     /**
      * We usually don't serve up any files, just hook in a few servlets. The ResourceBase can't be null though.
      */
     File tcInstallDir = Directories.getInstallationRoot();
+    File userDir = new File(System.getProperty("user.dir"));
     boolean tcInstallDirValid = false;
     File resourceBaseDir = userDir;
-    if (tcInstallDir != null && tcInstallDir.exists() && tcInstallDir.isDirectory() && tcInstallDir.canRead()) {
+    if (tcInstallDir != null &&
+        tcInstallDir.exists() &&
+        tcInstallDir.isDirectory() &&
+        tcInstallDir.canRead()) {
       tcInstallDirValid = true;
       resourceBaseDir = tcInstallDir;
     }
