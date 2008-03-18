@@ -18,10 +18,6 @@ set WAS_SANDBOX="%WAS_SANDBOX:"=%"
 for %%i in (%WAS_SANDBOX%) do set WAS_SANDBOX=%%~fsi
 
 set TC_INSTALL_DIR=%WAS_SANDBOX%\..\..\..\..
-
-echo "WAS_SANDBOX: %WAS_SANDBOX%"
-echo "TC_INSTALL_DIR: %TC_INSTALL_DIR%"
-
 if ""%1"" == ""-debug"" set DEBUG=true
 
 set PORT=%1
