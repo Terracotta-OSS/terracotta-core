@@ -7,5 +7,4 @@ HashMapTCTest
 ModulesLoaderTest
 ObjectDNAImplTest
 RemoteTransactionManagerTest
-StringCompressionUtilTest
 VersionizedDNAWrapperTest
