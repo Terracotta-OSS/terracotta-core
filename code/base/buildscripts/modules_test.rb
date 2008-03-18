@@ -449,7 +449,6 @@ class SubtreeTestRun
         # stuff) and write them.
         @cwd = @testrun_results.temp_dir(@subtree)
         @classpath = @subtree.classpath(@build_results, :full, :runtime)
-        @sysproperties['tc.classpath'] = @build_module.subtree('src').classpath(@build_results, :full, :runtime)
 
         # This is *quite* important. If something goes really wrong with a test, to the point where it
         # crashes, doesn't even get started, hangs hard-core, or otherwise can't write out its result
