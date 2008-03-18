@@ -29,13 +29,13 @@ if not defined WAS_HOME (
 )
 set WAS_HOME="%WAS_HOME:"=%"
 for %%i in (%WAS_HOME%) do set WAS_HOME=%%~fsi
-if not exist %WAS_HOME%\java (
-  echo Unable to find IBM JRE at %WAS_HOME%\java
+
+set JAVA_HOME=%WAS_HOME%\java
+if not exist %JAVA_HOME% (
+  echo Unable to find IBM JRE at %JAVA_HOME%
   set ERROR_LEVEL=1
   goto end
 )
-
-set JAVA_HOME=%WAS_HOME%\java
 
 set TC_CONFIG_PATH=%WAS_SANDBOX%\tc-config.xml
 call %TC_INSTALL_DIR%\bin\dso-env.bat -q "%TC_CONFIG%"
