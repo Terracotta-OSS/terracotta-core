@@ -45,8 +45,6 @@ import java.util.TimerTask;
 
 public class Lock {
   private static final TCLogger            logger              = TCLogging.getLogger(Lock.class);
-//  private final static boolean             debug               = TCPropertiesImpl.getProperties()
-//                                                                   .getBoolean("l2.lock.debug", false);
   private final static int                 LOCK_LEASE_TIME     = TCPropertiesImpl.getProperties()
                                                                    .getInt("l2.lock.leaseTimeInMillis", 50);
   public final static Lock                 NULL_LOCK           = new Lock(LockID.NULL_ID, 0,
@@ -265,15 +263,12 @@ public class Lock {
     if ((getHoldersCount() == 0) || ((!hasPending()) && ((requestedLockLevel == LockLevel.READ) && this.isRead()))) {
       // (0, 1) uncontended or additional read lock
       if (isPolicyGreedy() && ((requestedLockLevel == LockLevel.READ) || (getWaiterCount() == 0))) {
-        //debug(lockID + " award greedily " + txn.getId().getNodeID() + " " + txn.getId().getClientThreadID());
         awardGreedyAndRespond(txn, requestedLockLevel, lockResponseSink);
       } else {
-        //debug(lockID + " award non greedily " + txn.getId().getClientThreadID());
         awardAndRespond(txn, txn.getId().getClientThreadID(), requestedLockLevel, lockResponseSink);
       }
     } else {
       // (2) queue request
-      //debug(lockID + " " + txn.getId().getClientThreadID() + " should recall " + greedyHolders);
       if (isPolicyGreedy() && hasGreedyHolders()) {
         recall(requestedLockLevel);
       }
@@ -396,9 +391,6 @@ public class Lock {
     Holder holder = awardAndRespond(clientTx, txn.getId().getClientThreadID(), greedyLevel, lockResponseSink);
     holder.setSink(lockResponseSink);
     greedyHolders.put(ch, holder);
-    //debug(lockID + " grant to " + holder.getNodeID() + " greedily level: " + holder.getLockLevel() + " "
-    //      + greedyHolders);
-    //dumpStack();
     clearWaitingOn(txn);
   }
 
@@ -422,16 +414,10 @@ public class Lock {
   }
 
   private void recall(int recallLevel) {
-    //debug("Recalling " + lockID + " level " + recallLevel + " recalled: " + recalled + " greedy holders: "
-    //      + greedyHolders);
-    //dumpStack();
     if (recalled) { return; }
     recordLockHoppedStat();
     for (Iterator i = greedyHolders.values().iterator(); i.hasNext();) {
       Holder holder = (Holder) i.next();
-      // debug("Recalling " + lockID + " level " + recallLevel + " from holder: " +
-      // holder.getThreadContext().getId().getNodeID());
-      //debug(lockID + "  recall() - issued for - " + holder + " recalllevel: " + recallLevel);
       holder.getSink().add(
                            createLockRecallWithLeaseResponseContext(holder.getLockID(), holder.getThreadContext()
                                .getId(), recallLevel));
@@ -898,7 +884,6 @@ public class Lock {
 
   synchronized boolean recallCommit(ServerThreadContext threadContext) {
     // debug("recallCommit() - BEGIN -", threadContext);
-    //debug(lockID + " recallCommit: " + threadContext.getId().getNodeID() + " " + recalled);
     Assert.assertTrue(isGreedyRequest(threadContext));
     boolean issueRecall = !recalled;
     removeCurrentHold(threadContext);
@@ -932,8 +917,6 @@ public class Lock {
       if (request.getLockLevel() == LockLevel.READ) {
         pendingReadLockRequests.add(request);
         i.remove();
-      } else if (request.getLockLevel() == LockLevel.WRITE) {
-        //debug(lockID + " has write request: " + request);
       } else if (!hasPendingWrites && request.getLockLevel() == LockLevel.WRITE) {
         hasPendingWrites = true;
       }
@@ -1108,15 +1091,4 @@ public class Lock {
   // logger.warn(lockID + String.valueOf(o));
   // }
 
-//  private void debug(String str) {
-//    if (debug) {
-//      System.err.println(new Date(System.currentTimeMillis()).toString() + " " + str);
-//    }
-//  }
-//
-//  private void dumpStack() {
-//    if (debug) {
-//      Thread.dumpStack();
-//    }
-//  }
 }
