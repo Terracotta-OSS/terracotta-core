@@ -60,6 +60,8 @@
             <emptyLine />
             <package name="javax" withSubpackages="true" />
             <emptyLine />
+            <package name="bsh" withSubpackages="true" />
+            <emptyLine />
           </value>
         </option>
         <option name="OPTIMIZE_IMPORTS_ON_THE_FLY" value="true" />
@@ -450,6 +452,7 @@
       <module fileurl="file://$PROJECT_DIR$/simulator.iml" filepath="$PROJECT_DIR$/simulator.iml" />
       <module fileurl="file://$PROJECT_DIR$/spring-config.iml" filepath="$PROJECT_DIR$/spring-config.iml" />
       <module fileurl="file://$PROJECT_DIR$/standard-config.iml" filepath="$PROJECT_DIR$/standard-config.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../../../tc-sigar/idea/tc-sigar.iml" filepath="$PROJECT_DIR$/../../../../tc-sigar/idea/tc-sigar.iml" />
       <module fileurl="file://$PROJECT_DIR$/tcbuild.iml" filepath="$PROJECT_DIR$/tcbuild.iml" />
       <module fileurl="file://$PROJECT_DIR$/thirdparty.iml" filepath="$PROJECT_DIR$/thirdparty.iml" />
       <module fileurl="file://$PROJECT_DIR$/thirdparty-api.iml" filepath="$PROJECT_DIR$/thirdparty-api.iml" />
