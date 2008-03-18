@@ -84,9 +84,9 @@ public class ClientMessageTransport extends MessageTransportBase {
           throw new MaxConnectionsExceededException("Maximum number of client connections exceeded: "
                                                     + result.maxConnections());
         }
+        sendAck();
         Assert.eval(!this.connectionId.isNull());
         isOpen.set(true);
-        sendAck();
         NetworkStackID nid = new NetworkStackID(this.connectionId.getChannelID());
         wasOpened = true;
         return (nid);
@@ -159,7 +159,7 @@ public class ClientMessageTransport extends MessageTransportBase {
           errorMessage = "\nTHERE IS A MISMATCH IN THE COMMUNICATION STACKS\n" + synAck.getErrorContext()
                          + errorMessage;
 
-          if ((getCommunicationStackFlags(this) & NetworkLayer.TYPE_OOO_LAYER) != 0 ) {
+          if ((getCommunicationStackFlags(this) & NetworkLayer.TYPE_OOO_LAYER) != 0) {
             logger.error(NetworkLayer.ERROR_OOO_IN_CLIENT_NOT_IN_SERVER);
             errorMessage = "\n\n" + NetworkLayer.ERROR_OOO_IN_CLIENT_NOT_IN_SERVER + errorMessage;
           } else {
@@ -235,9 +235,10 @@ public class ClientMessageTransport extends MessageTransportBase {
     }
   }
 
-  private void sendAck() {
+  private void sendAck() throws IOException {
     synchronized (status) {
-      Assert.eval(status.isSynSent());
+      // DEV-1364 : Connection close might have happened
+      if (!status.isSynSent()) throw new IOException();
       TransportHandshakeMessage ack = this.messageFactory.createAck(this.connectionId, getConnection());
       // send ack message
       this.sendToConnection(ack);

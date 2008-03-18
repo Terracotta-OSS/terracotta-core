@@ -474,8 +474,8 @@ public class DistributedObjectClient extends SEDA {
                            + serverPort);
         ThreadUtil.reallySleep(5000);
       } catch (IOException ioe) {
-        ioe.printStackTrace();
-        throw new RuntimeException(ioe);
+        consoleLogger.warn("IOException connecting to server: " + serverHost + ":" + serverPort + ". " + ioe.getMessage());
+        ThreadUtil.reallySleep(5000);
       }
       i++;
     }

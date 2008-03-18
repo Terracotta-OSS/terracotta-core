@@ -75,8 +75,7 @@ public class MemoryDataStoreClient implements MemoryDataMap {
       } catch (MaxConnectionsExceededException e) {
         ThreadUtil.reallySleep(5000);
       } catch (IOException ioe) {
-        ioe.printStackTrace();
-        throw new RuntimeException(ioe);
+        ThreadUtil.reallySleep(5000);
       }
     }
   }
