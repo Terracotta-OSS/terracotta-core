@@ -66,6 +66,7 @@ public class ClientRuntimeStatsPanel extends RuntimeStatsPanel {
   public ClientRuntimeStatsPanel(ClientRuntimeStatsNode clientStatsNode) {
     super();
     m_clientStatsNode = clientStatsNode;
+    setup(m_chartsPanel);
   }
 
   protected void setup(Container chartsPanel) {

@@ -5,16 +5,19 @@
 <!-- - - - - - - - - - - - - - -->
 <html>
 <head>
-<title>Instructions for Hyperic support in Terracotta Admininstrator Console</title>
+<title>Hyperic support in the Terracotta Admininstrator Console</title>
 <style>
-   body { color:#666666; font-family: sans-serif; margin: 20px 30px }
+   body { color:#666666; font-family: sans-serif }
    a { color:#8B4513; font-weight: bold; text-decoration: underline }
    a:hover { color:red; text-decoration: none }
-   div.main { margin: 10px 0px 0px 30px }
-   div.description { margin: 0px 0px 0px 30px }
    </style>
 </head>
 <body>
-<p>Information about <a href="http://www.terracotta.org/confluence/display/devdocs/CVT+Developer+documentation">installing Hyperic support</a>
+<p>For cluster-wide CPU monitoring, you first need to download third-party software
+<a href="https://sourceforge.net/project/showfiles.php?group_id=172552&package_id=197466&release_id=573224">from Hyperic</a>,
+which is licensed under the <a href="http://www.gnu.org/licenses/gpl.txt">GNU GPL v3</a>.
+<br>
+<p>After downloading the software, copy the contents of the sigar-bin/lib directory to TERRACOTTA_HOME/lib and then restart your
+cluster.
 </body>
 </html>

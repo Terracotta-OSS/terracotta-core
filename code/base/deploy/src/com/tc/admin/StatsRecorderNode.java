@@ -7,13 +7,13 @@ import com.tc.admin.common.ComponentNode;
 import com.tc.statistics.beans.StatisticsLocalGathererMBean;
 
 public class StatsRecorderNode extends ComponentNode {
-  private ClusterNode m_clusterNode;
+  private ClusterNode        m_clusterNode;
   private StatsRecorderPanel m_statsRecorderPanel;
- 
+
   public StatsRecorderNode(ClusterNode clusterNode) {
     super();
     m_clusterNode = clusterNode;
-    setLabel("Statistics recorder");
+    setLabel(AdminClient.getContext().getMessage("stats.recorder.node.label"));
     setIcon(ServerHelper.getHelper().getStatsRecorderIcon());
     setComponent(m_statsRecorderPanel = new StatsRecorderPanel(this));
   }
@@ -21,11 +21,11 @@ public class StatsRecorderNode extends ComponentNode {
   boolean isRecording() {
     return m_statsRecorderPanel.isRecording();
   }
-  
+
   void testTriggerThreadDumpSRA() {
     m_statsRecorderPanel.testTriggerThreadDumpSRA();
   }
-  
+
   ConnectionContext getConnectionContext() {
     return m_clusterNode.getConnectionContext();
   }
@@ -33,12 +33,13 @@ public class StatsRecorderNode extends ComponentNode {
   StatisticsLocalGathererMBean getStatisticsGathererMBean() {
     return m_clusterNode.getStatisticsGathererMBean();
   }
-  
+
   String getStatsExportServletURI() throws Exception {
     return m_clusterNode.getStatsExportServletURI();
   }
-  
+
   void notifyChanged() {
     nodeChanged();
+    m_clusterNode.notifyChanged();
   }
 }

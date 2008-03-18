@@ -285,6 +285,7 @@ modules:
         - dso-statistics
         - linked-child-process
         - management
+        - sigarstats
         - thirdparty
         - thirdparty-api
   - simulator:

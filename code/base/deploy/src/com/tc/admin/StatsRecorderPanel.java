@@ -140,17 +140,13 @@ public class StatsRecorderPanel extends XContainer {
   class StatsGathererConnectWorker extends BasicWorker<Void> {
     StatsGathererConnectWorker() {
       super(new Callable() {
-        public Void call() {
+        public Void call() throws Exception {
           ConnectionContext cc = m_statsRecorderNode.getConnectionContext();
           m_statisticsGathererMBean = m_statsRecorderNode.getStatisticsGathererMBean();
-          try {
-            if (m_statsGathererListener == null) {
-              m_statsGathererListener = new StatisticsGathererListener();
-            }
-            cc.addNotificationListener(StatisticsMBeanNames.STATISTICS_GATHERER, m_statsGathererListener);
-          } catch (Exception e) {
-            e.printStackTrace();
+          if (m_statsGathererListener == null) {
+            m_statsGathererListener = new StatisticsGathererListener();
           }
+          cc.addNotificationListener(StatisticsMBeanNames.STATISTICS_GATHERER, m_statsGathererListener);
           m_statisticsGathererMBean.connect();
           return null;
         }

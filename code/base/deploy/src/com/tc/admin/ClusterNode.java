@@ -1044,6 +1044,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
   }
 
   private void reallyHandleDisconnect() {
+    m_clusterMembers = null;
     m_acc.controller.select(this);
     m_clusterPanel.disconnected();
     for (int i = getChildCount() - 1; i >= 0; i--) {

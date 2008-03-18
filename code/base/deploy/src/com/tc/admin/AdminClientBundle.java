@@ -12,6 +12,8 @@ public class AdminClientBundle extends ListResourceBundle {
   }
 
   static final Object[][] contents = {
+      { "stats.recorder.node.label", "Statistics recorder" },
+
       { "sessions", "Sessions" },
 
       { "title", "Terracotta Administrator Console" },
@@ -19,7 +21,7 @@ public class AdminClientBundle extends ListResourceBundle {
       { "new.server.action.label", "New server" },
 
       { "new.cluster.action.label", "New cluster" },
-      
+
       { "quit.action.label", "Quit" },
 
       { "connect.title", "Connect to JMX Server" },
@@ -55,7 +57,7 @@ public class AdminClientBundle extends ListResourceBundle {
       { "server.initializing.status", "Initializing {0} on {1}" },
 
       { "server.initializing.label", "Initializing on {0}" },
-      
+
       { "server.standingby.status", "{0} standing by on {1}" },
 
       { "server.standingby.label", "Standing by on {0}" },
@@ -111,7 +113,7 @@ public class AdminClientBundle extends ListResourceBundle {
       { "dso.transaction.rate", "Transaction Rate" },
 
       { "dso.pending.transaction.count", "Pending Transaction Count" },
-      
+
       { "dso.root.retrieving", "Retrieving new DSO root..." },
 
       { "dso.root.new", "Added new DSO root: " },
@@ -119,7 +121,7 @@ public class AdminClientBundle extends ListResourceBundle {
       { "clients", "Clients" },
 
       { "servers", "Servers" },
-      
+
       { "dso.client.retrieving", "Retrieving new DSO client..." },
 
       { "dso.client.new", "Added new DSO client: " },
@@ -151,7 +153,7 @@ public class AdminClientBundle extends ListResourceBundle {
       { "dso.transaction.rate.range.label", "Transactions per second" },
 
       { "dso.pending.transaction.count.range.label", "Pending Transactions" },
-      
+
       { "dso.cache.activity", "Cache activity" },
 
       { "dso.cache.miss.rate", "Cache Miss Rate" },
@@ -181,7 +183,7 @@ public class AdminClientBundle extends ListResourceBundle {
       { "about.action.label", "About Terracotta Console" },
 
       { "update-checker.control.label", "Check for updates" },
-      
+
       { "update-checker.action.label", "Update Checker..." },
 
       { "update-checker.connect.failed.msg", "Unable to connect to update site." },

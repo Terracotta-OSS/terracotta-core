@@ -470,7 +470,7 @@ public class ServerNode extends ComponentNode implements ConnectionListener, Not
         if (DSOHelper.getHelper().getDSOMBean(cntx) != null) {
           addChildren(cntx);
           m_acc.controller.nodeStructureChanged(this);
-//          m_acc.controller.expand(this);
+          m_acc.controller.expand(this);
         } else {
           ObjectName mbsd = cntx.queryName("JMImplementation:type=MBeanServerDelegate");
           if (mbsd != null) {

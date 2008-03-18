@@ -66,6 +66,7 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
   public ServerRuntimeStatsPanel(ServerRuntimeStatsNode serverStatsNode) {
     super();
     m_serverStatsNode = serverStatsNode;
+    setup(m_chartsPanel);
   }
 
   protected void setup(Container chartsPanel) {
@@ -84,7 +85,7 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
     m_flushRatePanel = new ChartPanel(m_flushRateChart, false);
     parent.add(m_flushRatePanel);
     m_flushRatePanel.setPreferredSize(fDefaultGraphSize);
-    m_flushRatePanel.setBorder(new TitledBorder("Object Disk Flush Rate"));
+    m_flushRatePanel.setBorder(new TitledBorder("Object Flush Rate"));
   }
 
   private void setupFaultRatePanel(Container parent) {
@@ -93,7 +94,7 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
     m_faultRatePanel = new ChartPanel(m_faultRateChart, false);
     parent.add(m_faultRatePanel);
     m_faultRatePanel.setPreferredSize(fDefaultGraphSize);
-    m_faultRatePanel.setBorder(new TitledBorder("Object Disk Fault Rate"));
+    m_faultRatePanel.setBorder(new TitledBorder("Object Fault Rate"));
   }
 
   private void setupTxnRatePanel(Container parent) {
@@ -148,7 +149,8 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
       super(new Callable<String[]>() {
         public String[] call() throws Exception {
           TCServerInfoMBean tcServerInfoBean = m_serverStatsNode.getServerInfoBean();
-          return tcServerInfoBean.getCpuStatNames();
+          String[] cpuNames = tcServerInfoBean.getCpuStatNames();
+          return cpuNames;
         }
       });
     }
@@ -156,6 +158,7 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
     protected void finished() {
       Exception e = getException();
       if (e != null) {
+        AdminClient.getContext().log(e);
         setupInstructions();
       } else {
         String[] cpuNames = getResult();

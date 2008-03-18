@@ -112,8 +112,6 @@ public class RuntimeStatsPanel extends XContainer {
                                                            new Integer(1), null,
                                                            new Integer(SAMPLE_SAMPLE_HISTORY_STEP_SIZE)));
     m_sampleHistorySpinner.addChangeListener(new SampleHistoryChangeHandler());
-
-    setup(m_chartsPanel);
   }
 
   private int getDefaultPollPeriodSeconds() {

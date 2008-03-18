@@ -67,10 +67,10 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
       } else {
         m_clients = getResult();
         for (int i = 0; i < m_clients.length; i++) {
-          add(createClientNode(m_cc, m_clients[i]));
+          addClientNode(createClientNode(m_cc, m_clients[i]));
         }
         updateLabel();
-        m_acc.controller.nodeChanged(ClientsNode.this);
+        m_acc.controller.expand(ClientsNode.this);
       }
     }
   }
@@ -100,12 +100,25 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
       ClientNode ctn = (ClientNode) getChildAt(i);
       String ctnRemoteAddr = ctn.getClient().getRemoteAddress();
       if (ctnRemoteAddr.equals(remoteAddr)) {
-        AdminClient.getContext().controller.select(ctn);
+        m_acc.controller.select(ctn);
         return;
       }
     }
   }
 
+  private void addClientNode(ClientNode clientNode) {
+    XTreeModel model = getModel();
+    if (model != null) {
+      model.insertNodeInto(clientNode, this, getChildCount());
+      m_acc.controller.expand(clientNode);
+    } else {
+      add(clientNode);
+    }
+    if(m_clientsPanel != null) {
+      m_clientsPanel.add(clientNode.getClient());
+    }
+  }
+  
   public DSOClient[] getClients() {
     return m_clients;
   }
@@ -140,8 +153,7 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
     String type = notice.getType();
 
     if (DSOMBean.CLIENT_ATTACHED.equals(type)) {
-      AdminClientContext acc = AdminClient.getContext();
-      acc.setStatus(acc.getMessage("dso.client.retrieving"));
+      m_acc.setStatus(m_acc.getMessage("dso.client.retrieving"));
 
       ObjectName clientObjectName = (ObjectName) notice.getSource();
       if (haveClient(clientObjectName)) return;
@@ -151,22 +163,11 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
 
       list.add(client);
       m_clients = list.toArray(new DSOClient[0]);
+      addClientNode(createClientNode(m_cc, client));
 
-      ClientNode ctn = new ClientNode(m_cc, client);
-      XTreeModel model = getModel();
-      if (model != null) {
-        model.insertNodeInto(ctn, this, getChildCount());
-      } else {
-        add(ctn);
-      }
-
-      ((ClientsPanel) getComponent()).add(client);
-
-      acc.setStatus(acc.getMessage("dso.client.new") + client);
+      m_acc.setStatus(m_acc.getMessage("dso.client.new") + client);
     } else if (DSOMBean.CLIENT_DETACHED.equals(type)) {
-      AdminClientContext acc = AdminClient.getContext();
-
-      acc.setStatus(acc.getMessage("dso.client.detaching"));
+      m_acc.setStatus(m_acc.getMessage("dso.client.detaching"));
 
       int nodeIndex = -1;
       ObjectName clientObjectName = (ObjectName) notice.getSource();
@@ -185,11 +186,13 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
       }
 
       if (nodeIndex != -1) {
-        acc.controller.remove((XTreeNode) getChildAt(nodeIndex));
-        ((ClientsPanel) getComponent()).remove(client);
+        m_acc.controller.remove((XTreeNode) getChildAt(nodeIndex));
+        if(m_clientsPanel != null) {
+          m_clientsPanel.remove(client);
+        }
       }
 
-      acc.setStatus(acc.getMessage("dso.client.detached") + client);
+      m_acc.setStatus(m_acc.getMessage("dso.client.detached") + client);
     }
   }
 
@@ -202,6 +205,11 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
     } catch (Exception e) {/**/
     }
 
+    if(m_clientsPanel != null) {
+      m_clientsPanel.tearDown();
+      m_clientsPanel = null;
+    }
+    
     m_acc = null;
     m_clusterNode = null;
     m_cc = null;

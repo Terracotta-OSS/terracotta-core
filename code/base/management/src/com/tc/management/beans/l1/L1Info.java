@@ -40,7 +40,13 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
       if (sraCpuType != null) {
         this.cpuSRA = (StatisticRetrievalAction) sraCpuType.newInstance();
       }
-    } catch (Throwable t) {
+    } catch (LinkageError e) {
+      /**
+       * it's ok not output any errors or warnings here since when the
+       * CVT is initialized, it will notify about the incapacity of leading
+       * Sigar-based SRAs.
+       **/
+    } catch (Exception e) {
       /**/
     }
   }
