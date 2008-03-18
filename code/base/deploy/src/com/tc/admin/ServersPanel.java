@@ -35,4 +35,16 @@ public class ServersPanel extends XContainer {
       m_clusterMemberTableModel.addClusterMember(serverNode.getServerConnectionManager());
     }
   }
+  
+  void serverStateChanged(ServerNode serverNode) {
+    m_clusterMemberTable.repaint();
+  }
+  
+  public void tearDown() {
+    super.tearDown();
+    
+    m_serversNode = null;
+    m_clusterMemberTable = null;
+    m_clusterMemberTableModel = null;
+  }
 }

@@ -4,13 +4,17 @@
  */
 package com.tc.admin.dso;
 
+import org.dijon.Component;
+
 import com.tc.admin.AdminClient;
 import com.tc.admin.AdminClientContext;
 import com.tc.admin.ClusterNode;
 import com.tc.admin.ConnectionContext;
+import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.common.XTreeModel;
+import com.tc.admin.common.XTreeNode;
 import com.tc.stats.DSOMBean;
 
 import java.awt.event.ActionEvent;
@@ -18,6 +22,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.Callable;
 
 import javax.management.Notification;
 import javax.management.NotificationListener;
@@ -28,48 +33,72 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
 public class RootsNode extends ComponentNode implements NotificationListener {
-  private ClusterNode         m_clusterNode;
-  private ConnectionContext   m_cc;
-  private DSORoot[]           m_roots;
-  private JPopupMenu          m_popupMenu;
-  private RefreshAction       m_refreshAction;
+  protected AdminClientContext m_acc;
+  protected ClusterNode        m_clusterNode;
+  protected ConnectionContext  m_cc;
+  protected DSORoot[]          m_roots;
+  protected RootsPanel         m_rootsPanel;
+  protected JPopupMenu         m_popupMenu;
+  protected RefreshAction      m_refreshAction;
 
-  private static final String REFRESH_ACTION = "RefreshAction";
+  private static final String  REFRESH_ACTION = "RefreshAction";
 
   public RootsNode(ClusterNode clusterNode) throws Exception {
     super();
-
+    m_acc = AdminClient.getContext();
     m_clusterNode = clusterNode;
     init();
   }
 
-  private void init() throws Exception {
-    m_cc = m_clusterNode.getConnectionContext();
-    m_roots = getRoots();
+  private void init() {
+    for (int i = getChildCount() - 1; i >= 0; i--) {
+      m_acc.controller.remove((XTreeNode) getChildAt(i));
+    }
+    m_acc.executorService.execute(new InitWorker());
+  }
 
-    initMenu();
-
-    AdminClientContext acc = AdminClient.getContext();
-    String label = acc.getMessage("dso.roots");
-    RootsPanel panel = new RootsPanel(m_cc, m_roots);
-
-    panel.setNode(this);
-    setLabel(label);
-    setComponent(panel);
-
-    for (int i = 0; i < m_roots.length; i++) {
-      insert(new RootNode(m_cc, m_roots[i]), i);
+  private class InitWorker extends BasicWorker<DSORoot[]> {
+    private InitWorker() {
+      super(new Callable<DSORoot[]>() {
+        public DSORoot[] call() throws Exception {
+          m_cc = m_clusterNode.getConnectionContext();
+          ObjectName dso = DSOHelper.getHelper().getDSOMBean(m_cc);
+          m_cc.addNotificationListener(dso, RootsNode.this);
+          return getRoots();
+        }
+      });
     }
 
-    ObjectName dso = DSOHelper.getHelper().getDSOMBean(m_cc);
-    m_cc.addNotificationListener(dso, this);
+    protected void finished() {
+      Exception e = getException();
+      if (e != null) {
+        m_acc.log(e);
+      } else {
+        m_roots = getResult();
+        initMenu();
+        setLabel(m_acc.getMessage("dso.roots"));
+        for (int i = 0; i < m_roots.length; i++) {
+          insert(new RootNode(m_cc, m_roots[i]), i);
+        }
+        m_acc.controller.nodeChanged(RootsNode.this);
+      }
+    }
+  }
+
+  protected RootsPanel createRootsPanel() {
+    return new RootsPanel(m_cc, m_roots);
+  }
+
+  public Component getComponent() {
+    if (m_rootsPanel == null) {
+      m_rootsPanel = createRootsPanel();
+      m_rootsPanel.setNode(this);
+    }
+    return m_rootsPanel;
   }
 
   public void newConnectionContext() {
-    try {
-      init();
-    } catch (Exception e) {/**/
-    }
+    init();
   }
 
   public DSORoot[] getRoots() throws Exception {
@@ -101,23 +130,45 @@ public class RootsNode extends ComponentNode implements NotificationListener {
     return RootsHelper.getHelper().getRootsIcon();
   }
 
-  public void refresh() throws Exception {
-    AdminClientContext acc = AdminClient.getContext();
-    boolean expanded = acc.controller.isExpanded(this);
+  private class RefreshWorker extends BasicWorker<Void> {
+    private boolean isExpanded;
 
-    tearDownChildren();
-
-    m_roots = getRoots();
-    for (int i = 0; i < m_roots.length; i++) {
-      m_roots[i].refresh();
-      insert(new RootNode(m_cc, m_roots[i]), i);
+    private RefreshWorker(final boolean isExpanded) {
+      super(new Callable<Void>() {
+        public Void call() throws Exception {
+          tearDownChildren();
+          m_roots = getRoots();
+          for (int i = 0; i < m_roots.length; i++) {
+            m_roots[i].refresh();
+            insert(new RootNode(m_cc, m_roots[i]), i);
+          }
+          return null;
+        }
+      });
+      this.isExpanded = isExpanded;
     }
-    ((RootsPanel) getComponent()).setRoots(m_roots);
 
-    getModel().nodeStructureChanged(this);
-    if (expanded) {
-      acc.controller.expand(this);
+    protected void finished() {
+      Exception e = getException();
+      if (e != null) {
+        m_acc.log(e);
+      } else {
+        ((RootsPanel) getComponent()).setRoots(m_roots);
+        getModel().nodeStructureChanged(RootsNode.this);
+        if (isExpanded) {
+          m_acc.controller.expand(RootsNode.this);
+        }
+        m_acc.controller.unblock();
+        m_acc.controller.clearStatus();
+      }
     }
+  }
+
+  public void refresh() {
+    boolean expanded = m_acc.controller.isExpanded(this);
+    m_acc.controller.setStatus(m_acc.getMessage("dso.roots.refreshing"));
+    m_acc.controller.block();
+    m_acc.executorService.execute(new RefreshWorker(expanded));
   }
 
   private class RefreshAction extends XAbstractAction {
@@ -130,19 +181,7 @@ public class RootsNode extends ComponentNode implements NotificationListener {
     }
 
     public void actionPerformed(ActionEvent ae) {
-      AdminClientContext acc = AdminClient.getContext();
-
-      acc.controller.setStatus(acc.getMessage("dso.roots.refreshing"));
-      acc.controller.block();
-
-      try {
-        refresh();
-      } catch (Exception e) {
-        AdminClient.getContext().log(e);
-      }
-
-      acc.controller.unblock();
-      acc.controller.clearStatus();
+      refresh();
     }
   }
 
@@ -202,6 +241,11 @@ public class RootsNode extends ComponentNode implements NotificationListener {
     } catch (Exception e) {/**/
     }
 
+    if(m_rootsPanel != null) {
+      m_rootsPanel.tearDown();
+      m_rootsPanel = null;
+    }
+    
     m_cc = null;
     m_roots = null;
     m_popupMenu = null;

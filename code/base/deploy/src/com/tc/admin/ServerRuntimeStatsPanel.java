@@ -11,6 +11,7 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.time.Second;
 import org.jfree.data.time.TimeSeries;
 
+import com.tc.admin.common.BasicWorker;
 import com.tc.admin.dso.RuntimeStatsPanel;
 import com.tc.management.RuntimeStatisticConstants;
 import com.tc.management.beans.TCServerInfoMBean;
@@ -26,11 +27,13 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.border.TitledBorder;
 
 public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
-  private ServerPanel             m_serverPanel;
+  private ServerRuntimeStatsNode  m_serverStatsNode;
 
   private ChartPanel              m_memoryPanel;
   private TimeSeries              m_memoryMaxTimeSeries;
@@ -60,12 +63,9 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
 
   private static final String[]   STATS = { "ObjectFlushRate", "ObjectFaultRate", "TransactionRate", "CacheMissRate" };
 
-  public ServerRuntimeStatsPanel() {
+  public ServerRuntimeStatsPanel(ServerRuntimeStatsNode serverStatsNode) {
     super();
-  }
-
-  void setServerPanel(ServerPanel serverPanel) {
-    m_serverPanel = serverPanel;
+    m_serverStatsNode = serverStatsNode;
   }
 
   protected void setup(Container chartsPanel) {
@@ -117,7 +117,7 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
   private void setupMemoryPanel(Container parent) {
     m_memoryMaxTimeSeries = createTimeSeries("memory max");
     m_memoryUsedTimeSeries = createTimeSeries("memory used");
-    m_memoryChart = createChart(new TimeSeries[] {m_memoryMaxTimeSeries, m_memoryUsedTimeSeries});
+    m_memoryChart = createChart(new TimeSeries[] { m_memoryMaxTimeSeries, m_memoryUsedTimeSeries });
     XYPlot plot = (XYPlot) m_memoryChart.getPlot();
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
     numberAxis.setAutoRangeIncludesZero(true);
@@ -143,112 +143,194 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
     m_cpuPanel.setChart(m_cpuChart);
   }
 
+  private class CpuPanelWorker extends BasicWorker<String[]> {
+    private CpuPanelWorker() {
+      super(new Callable<String[]>() {
+        public String[] call() throws Exception {
+          TCServerInfoMBean tcServerInfoBean = m_serverStatsNode.getServerInfoBean();
+          return tcServerInfoBean.getCpuStatNames();
+        }
+      });
+    }
+
+    protected void finished() {
+      Exception e = getException();
+      if (e != null) {
+        setupInstructions();
+      } else {
+        String[] cpuNames = getResult();
+        int cpuCount = cpuNames.length;
+        if (cpuCount > 0) {
+          setupCpuSeries(cpuCount);
+        } else {
+          setupInstructions();
+        }
+      }
+    }
+
+    private void setupInstructions() {
+      setupHypericInstructions(m_cpuPanel);
+    }
+  }
+
   private void setupCpuPanel(Container parent) {
     m_cpuPanel = new ChartPanel(null, false);
     parent.add(m_cpuPanel);
     m_cpuPanel.setPreferredSize(fDefaultGraphSize);
     m_cpuPanel.setBorder(new TitledBorder("CPU Usage"));
+    m_acc.executorService.execute(new CpuPanelWorker());
   }
 
-  protected void retrieveStatistics() {
-    try {
-      TCServerInfoMBean tcServerInfoBean = m_serverPanel.getServerInfoBean();
-      if (tcServerInfoBean != null) {
-        Second now = new Second();
-        Map statMap = tcServerInfoBean.getStatistics();
+  class TCServerInfoStatGetter extends BasicWorker<Map> {
+    TCServerInfoStatGetter() {
+      super(new Callable<Map>() {
+        public Map call() throws Exception {
+          TCServerInfoMBean tcServerInfoBean = m_serverStatsNode.getServerInfoBean();
+          return tcServerInfoBean != null ? tcServerInfoBean.getStatistics() : null;
+        }
+      }, getRuntimeStatsPollPeriodSeconds(), TimeUnit.SECONDS);
+    }
 
-        m_memoryMaxTimeSeries.addOrUpdate(now, ((Number) statMap.get(RuntimeStatisticConstants.MEMORY_MAX)).longValue() / 1024000d);
-        m_memoryUsedTimeSeries.addOrUpdate(now, ((Number) statMap.get(RuntimeStatisticConstants.MEMORY_USED)).longValue() / 1024000d);
-
-        if (m_cpuPanel != null) {
-          StatisticData[] cpuUsageData = (StatisticData[]) statMap.get(RuntimeStatisticConstants.CPU_USAGE);
-          if (cpuUsageData != null) {
-            if (m_cpuTimeSeries == null) {
-              setupCpuSeries(cpuUsageData.length);
-            }
-            for (int i = 0; i < cpuUsageData.length; i++) {
-              StatisticData cpuData = cpuUsageData[i];
-              String cpuName = cpuData.getElement();
-              TimeSeries timeSeries = m_cpuTimeSeriesMap.get(cpuName);
-              if (timeSeries != null) {
-                timeSeries.addOrUpdate(now, ((Number) cpuData.getData()).doubleValue());
-              }
-            }
-          } else {
-            // Sigar must not be available; hide cpu panel
-            m_chartsPanel.remove(m_cpuPanel);
-            m_chartsPanel.revalidate();
-            m_chartsPanel.repaint();
-            m_cpuPanel = null;
-            m_cpuChart = null;
-          }
+    protected void finished() {
+      Exception e = getException();
+      if (e == null) {
+        Map statMap = getResult();
+        if (statMap != null) {
+          handleTCInfoStats(statMap);
         }
       }
 
-      DSOMBean dsoBean = m_serverPanel.getDSOBean();
-      if (dsoBean != null) {
-        Statistic[] stats = dsoBean.getStatistics(STATS);
-        updateSeries(m_flushRateSeries, (CountStatistic) stats[0]);
-        updateSeries(m_faultRateSeries, (CountStatistic) stats[1]);
-        updateSeries(m_txnRateSeries, (CountStatistic) stats[2]);
-        updateSeries(m_cacheMissRateSeries, (CountStatistic) stats[3]);
+      if (m_acc != null) {
+        m_acc.executorService.submit(new DSOServerStatGetter());
       }
-    } catch (Exception e) {/**/
     }
   }
-  
+
+  private synchronized void handleTCInfoStats(Map statMap) {
+    if (m_acc == null) return;
+
+    Second now = new Second();
+
+    m_memoryMaxTimeSeries
+        .addOrUpdate(now, ((Number) statMap.get(RuntimeStatisticConstants.MEMORY_MAX)).longValue() / 1024000d);
+    m_memoryUsedTimeSeries
+        .addOrUpdate(now, ((Number) statMap.get(RuntimeStatisticConstants.MEMORY_USED)).longValue() / 1024000d);
+
+    if (m_cpuTimeSeries != null) {
+      StatisticData[] cpuUsageData = (StatisticData[]) statMap.get(RuntimeStatisticConstants.CPU_USAGE);
+      if (cpuUsageData != null) {
+        for (int i = 0; i < cpuUsageData.length; i++) {
+          StatisticData cpuData = cpuUsageData[i];
+          String cpuName = cpuData.getElement();
+          TimeSeries timeSeries = m_cpuTimeSeriesMap.get(cpuName);
+          if (timeSeries != null) {
+            Object data = cpuData.getData();
+            if (data != null) {
+              timeSeries.addOrUpdate(now, ((Number) data).doubleValue());
+            }
+          }
+        }
+      }
+    }
+  }
+
+  class DSOServerStatGetter extends BasicWorker<Statistic[]> {
+    DSOServerStatGetter() {
+      super(new Callable<Statistic[]>() {
+        public Statistic[] call() throws Exception {
+          DSOMBean dsoBean = m_serverStatsNode.getDSOBean();
+          return dsoBean != null ? dsoBean.getStatistics(STATS) : null;
+        }
+      }, getRuntimeStatsPollPeriodSeconds(), TimeUnit.SECONDS);
+    }
+
+    protected void finished() {
+      Exception e = getException();
+      if (e == null) {
+        Statistic[] stats = getResult();
+        if (stats != null) {
+          handleDSOServerStats(stats);
+        }
+      }
+      if (m_statsGathererTimer != null) {
+        m_statsGathererTimer.start();
+      }
+    }
+  }
+
+  private synchronized void handleDSOServerStats(Statistic[] stats) {
+    if (m_acc == null) return;
+
+    updateSeries(m_flushRateSeries, (CountStatistic) stats[0]);
+    updateSeries(m_faultRateSeries, (CountStatistic) stats[1]);
+    updateSeries(m_txnRateSeries, (CountStatistic) stats[2]);
+    updateSeries(m_cacheMissRateSeries, (CountStatistic) stats[3]);
+  }
+
+  protected synchronized void retrieveStatistics() {
+    if (m_acc != null) {
+      m_acc.executorService.submit(new TCServerInfoStatGetter());
+    }
+  }
+
+  public void addNotify() {
+    super.addNotify();
+    startMonitoringRuntimeStats();
+  }
+
   private void clearAllTimeSeries() {
     ArrayList<TimeSeries> list = new ArrayList<TimeSeries>();
-    if(m_cpuTimeSeries != null) {
+    if (m_cpuTimeSeries != null) {
       list.addAll(Arrays.asList(m_cpuTimeSeries));
       m_cpuTimeSeries = null;
 
       m_cpuTimeSeriesMap.clear();
-      m_cpuTimeSeriesMap = null;      
+      m_cpuTimeSeriesMap = null;
     }
-    
-    if(m_memoryMaxTimeSeries != null) {
+
+    if (m_memoryMaxTimeSeries != null) {
       list.add(m_memoryMaxTimeSeries);
-      m_memoryMaxTimeSeries = null;      
+      m_memoryMaxTimeSeries = null;
     }
-    
-    if(m_memoryUsedTimeSeries != null) {
+
+    if (m_memoryUsedTimeSeries != null) {
       list.add(m_memoryUsedTimeSeries);
       m_memoryUsedTimeSeries = null;
     }
-    
-    if(m_flushRateSeries != null) {
+
+    if (m_flushRateSeries != null) {
       list.add(m_flushRateSeries);
       m_flushRateSeries = null;
     }
-    
-    if(m_faultRateSeries != null) {
+
+    if (m_faultRateSeries != null) {
       list.add(m_faultRateSeries);
       m_faultRateSeries = null;
     }
-    
-    if(m_txnRateSeries != null) {
+
+    if (m_txnRateSeries != null) {
       list.add(m_txnRateSeries);
       m_txnRateSeries = null;
     }
-    
-    if(m_cacheMissRateSeries != null) {
+
+    if (m_cacheMissRateSeries != null) {
       list.add(m_cacheMissRateSeries);
       m_cacheMissRateSeries = null;
     }
-    
+
     Iterator<TimeSeries> iter = list.iterator();
-    while(iter.hasNext()) {
+    while (iter.hasNext()) {
       iter.next().clear();
     }
   }
-  
-  public void tearDown() {
+
+  public synchronized void tearDown() {
+    m_serverStatsNode = null;
+    stopMonitoringRuntimeStats();
+
     super.tearDown();
 
     clearAllTimeSeries();
-    
-    m_serverPanel = null;
 
     m_memoryPanel = null;
     m_memoryChart = null;
@@ -267,6 +349,6 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
 
     m_cacheMissRatePanel = null;
     m_cacheMissRateChart = null;
-    
+
   }
 }

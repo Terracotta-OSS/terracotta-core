@@ -3,6 +3,8 @@
  */
 package com.tc.admin;
 
+import com.tc.config.schema.L2Info;
+
 public class StandardNodeFactory extends AbstractNodeFactory {
   public ClusterNode createClusterNode() {
     return new ClusterNode();
@@ -14,13 +16,8 @@ public class StandardNodeFactory extends AbstractNodeFactory {
   }
 
   @Override
-  public ServerNode createServerNode() {
-    return new ServerNode();
-  }
-
-  @Override
-  public ServerNode createServerNode(String host, int jmxPort, boolean autoConnect) {
-    return new ServerNode(host, jmxPort, autoConnect);
+  public ServerNode createServerNode(ServersNode serversNode, L2Info l2Info) {
+    return new ServerNode(serversNode, l2Info);
   }
   
 }

@@ -6,6 +6,7 @@ package com.tc.admin.dso;
 
 import com.tc.admin.AdminClient;
 import com.tc.admin.ConnectionContext;
+import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.management.beans.L1MBeanNames;
 import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.management.beans.logging.InstrumentationLoggingMBean;
@@ -27,6 +28,7 @@ public class DSOClient {
   private ConnectionContext       cc;
   private ObjectName              bean;
   private DSOClientMBean          delegate;
+  private L1InfoMBean             l1InfoBean;
   private long                    channelID;
   private String                  remoteAddress;
   private String                  host;
@@ -36,8 +38,8 @@ public class DSOClient {
   public DSOClient(ConnectionContext cc, ObjectName bean) {
     this.cc = cc;
     this.bean = bean;
-    this.delegate = (DSOClientMBean) MBeanServerInvocationHandler.newProxyInstance(cc.mbsc, bean, DSOClientMBean.class,
-                                                                                   true);
+    this.delegate = (DSOClientMBean) MBeanServerInvocationProxy.newProxyInstance(cc.mbsc, bean, DSOClientMBean.class,
+                                                                                 true);
     channelID = delegate.getChannelID().toLong();
     remoteAddress = delegate.getRemoteAddress();
     changeHelper = new PropertyChangeSupport(this);
@@ -134,15 +136,15 @@ public class DSOClient {
   }
 
   public L1InfoMBean getL1InfoMBean(NotificationListener listener) throws Exception {
+    if (l1InfoBean != null) return l1InfoBean;
+
     ObjectName o = getL1InfoObjectName();
     if (cc.mbsc.isRegistered(o)) {
-      L1InfoMBean l1InfoBean = (L1InfoMBean) MBeanServerInvocationHandler.newProxyInstance(cc.mbsc, o,
-                                                                                           L1InfoMBean.class, true);
-      return l1InfoBean;
+      l1InfoBean = (L1InfoMBean) MBeanServerInvocationHandler.newProxyInstance(cc.mbsc, o, L1InfoMBean.class, true);
     } else if (listener != null) {
       addRegistrationListener(listener);
     }
-    return null;
+    return l1InfoBean;
   }
 
   public ObjectName getInstrumentationLoggingObjectName() {

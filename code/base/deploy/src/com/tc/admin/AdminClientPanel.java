@@ -39,6 +39,7 @@ import com.tc.admin.common.XTreeModel;
 import com.tc.admin.common.XTreeNode;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
@@ -430,6 +431,15 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
 
       if (m_dividerListener == null) {
         m_dividerListener = new DividerListener();
+      }
+      Dimension emptySize = new Dimension();
+      java.awt.Component left = m_leftSplitter.getLeftComponent();
+      if(left != null) {
+        left.setMinimumSize(emptySize);
+      }
+      java.awt.Component right = m_leftSplitter.getLeftComponent();
+      if(right != null) {
+        right.setMinimumSize(emptySize);
       }
     }
 

@@ -55,40 +55,6 @@
             <textarea class="com.tc.admin.common.XTextArea" name="ConfigTextArea" editable="false" line-wrap="false" />
           </scrollpane>
         </tab>
-        <tab title="Thread Dumps">
-          <container>
-            <children>
-              <container>
-                <children>
-                  <button text="Take thread dump" name="TakeThreadDumpButton" />
-                </children>
-                <connections>
-                  <item bottom="-1,bottom:ns" height="n" left="-1,left:n" right="-1,right:ns" top="-1,top:ns" width="n" />
-                </connections>
-              </container>
-              <splitpane name="ServerThreadDumpsSplitter" divider-location="-1" focus-index="0" orientation="horizontal"
-                resize-weight="0.25">
-                <left>
-                  <scrollpane>
-                    <list name="ThreadDumpList" />
-                  </scrollpane>
-                </left>
-                <right>
-                  <scrollpane name="ThreadDumpTextScroller">
-                    <textarea class="com.tc.admin.common.XTextArea" name="ThreadDumpTextArea" editable="false" line-wrap="false" />
-                  </scrollpane>
-                </right>
-              </splitpane>
-            </children>
-            <connections>
-              <item bottom="1,top:0" height="n" left="-1,left:n" right="-1,right:n" top="-1,top:0" width="ns" />
-              <item bottom="-1,bottom:n" height="s" left="-1,left:n" right="-1,right:n" top="0,bottom:n" width="s" />
-            </connections>
-          </container>
-        </tab>
-        <tab title="Runtime statistics">
-          <item child-name="RuntimeStatsPanel" child-type="com.tc.admin.ServerRuntimeStatsPanel"/>
-        </tab>
       </tabbedpane>
     </children>
     <connections>
@@ -126,174 +92,45 @@
   </container>
   <container tag="ClusterPanel">
     <children>
-      <tabbedpane name="TabbedPane">
-        <tab title="Main">
-          <container tag="MainPanel">
-            <children>
-              <container>
-                <children>
-                  <label image-uri="/com/tc/admin/icons/logo.gif" name="ImageLabel" />
-                  <container name="ServerControlsPanel">
-                    <border>
-                      <etched-border type="lowered" />
-                    </border>
-                    <children>
-                      <container>
-                        <children>
-                          <button image-uri="/com/tc/admin/icons/newex_wiz.gif" name="ConnectButton" text="Connect" tip="Connect to server" />
-                          <textfield name="PortField" text="4756" />
-                          <label text="JMX Port:" />
-                          <textfield name="HostField" text="localhost" />
-                          <label text="Server Host:" />
-                        </children>
-                        <connections>
-                          <item bottom="-1,bottom:n" height="n" left="1,right:n" right="-1,right:n" top="-1,top:sn" width="n" />
-                          <item bottom="-1,bottom:sn" height="n" left="2,right:n" right="0,left:n" top="-1,top:sn" width="sn" />
-                          <item bottom="-1,bottom:sn" height="n" left="3,right:n" right="1,left:n" top="-1,top:sn" width="n" />
-                          <item bottom="-1,bottom:sn" height="n" left="4,right:n" right="2,left:n" top="-1,top:sn" width="sn" />
-                          <item bottom="-1,bottom:sn" height="n" left="-1,left:n" right="3,left:n" top="-1,top:sn" width="n" />
-                        </connections>
-                      </container>
-                    </children>
-                    <connections>
-                      <item bottom="-1,bottom:ns" height="ns" left="-1,left:n" right="-1,right:n" top="-1,top:sn" width="ns" />
-                    </connections>
-                  </container>
-                  <item child-name="StatusIndicator" child-type="com.tc.admin.common.StatusView" />
-                  <item child-name="ProductInfoPanel" child-type="com.tc.admin.ProductInfoPanel" />
-                </children>
-                <connections>
-                  <item bottom="1,top:n" height="n" left="-1,left:sn" right="-1,right:sn" top="-1,top:sn" width="n" />
-                  <item bottom="2,top:n" height="n" left="-1,left:sn" right="-1,right:sn" top="0,bottom:n" width="sn" />
-                  <item bottom="3,top:sn" height="n" left="1,left:0" right="1,right:ns" top="1,bottom:n" width="n" />
-                  <item bottom="-1,bottom:n" height="sn" left="-1,left:sn" right="-1,right:sn" top="2,bottom:sn" width="sn" />
-                </connections>
-              </container>
-            </children>
-            <connections>
-              <item bottom="-1,bottom:n" height="sn" left="-1,left:n" right="-1,right:n" top="-1,top:n" width="sn" />
-            </connections>
-          </container>
-        </tab>
-        <tab title="Thread dumps">
+      <container>
+        <children>
+          <label image-uri="/com/tc/admin/icons/logo.gif" name="ImageLabel" />
           <container>
+            <border>
+              <etched-border type="lowered" />
+            </border>
             <children>
               <container>
                 <children>
-                  <button text="Take thread dump" name="TakeThreadDumpButton" />
+                  <button image-uri="/com/tc/admin/icons/newex_wiz.gif" name="ConnectButton" text="Connect" tip="Connect to server" />
+                  <textfield name="PortField" text="4756" />
+                  <label text="JMX Port:" />
+                  <textfield name="HostField" text="localhost" />
+                  <label text="Server Host:" />
                 </children>
                 <connections>
-                  <item bottom="-1,bottom:ns" height="n" left="-1,left:n" right="-1,right:ns" top="-1,top:ns" width="n" />
+                  <item bottom="-1,bottom:n" height="n" left="1,right:n" right="-1,right:n" top="-1,top:sn" width="n" />
+                  <item bottom="-1,bottom:sn" height="n" left="2,right:n" right="0,left:n" top="-1,top:sn" width="sn" />
+                  <item bottom="-1,bottom:sn" height="n" left="3,right:n" right="1,left:n" top="-1,top:sn" width="n" />
+                  <item bottom="-1,bottom:sn" height="n" left="4,right:n" right="2,left:n" top="-1,top:sn" width="sn" />
+                  <item bottom="-1,bottom:sn" height="n" left="-1,left:n" right="3,left:n" top="-1,top:sn" width="n" />
                 </connections>
               </container>
-              <splitpane name="ServerThreadDumpsSplitter" divider-location="-1" focus-index="0" orientation="horizontal"
-                resize-weight="0.25">
-                <left>
-                  <scrollpane>
-                    <tree name="ThreadDumpTree" class="com.tc.admin.common.XTree"/>
-                  </scrollpane>
-                </left>
-                <right>
-                  <scrollpane name="ThreadDumpTextScroller">
-                    <textarea class="com.tc.admin.common.XTextArea" name="ThreadDumpTextArea" editable="false" line-wrap="false" />
-                  </scrollpane>
-                </right>
-              </splitpane>
             </children>
             <connections>
-              <item bottom="1,top:0" height="n" left="-1,left:n" right="-1,right:n" top="-1,top:0" width="ns" />
-              <item bottom="-1,bottom:n" height="s" left="-1,left:n" right="-1,right:n" top="0,bottom:n" width="s" />
+              <item bottom="-1,bottom:ns" height="ns" left="-1,left:n" right="-1,right:n" top="-1,top:sn" width="ns" />
             </connections>
           </container>
-        </tab>
-        <tab title="Statistics recorder">
-          <container name="StatisticsRecorderPage">
-            <children>
-              <container>
-                <children>
-                  <togglebutton text="Stop recording" name="StopGatheringStatsButton" selected="true"/>
-                  <togglebutton text="Start recording" name="StartGatheringStatsButton" />
-                </children>
-                <connections>
-                  <item bottom="-1,bottom:ns" height="n" left="-1,left:n" right="1,left:n" top="-1,top:ns" width="n" />
-                  <item bottom="-1,bottom:ns" height="n" left="0,right:n" right="-1,right:ns" top="-1,top:ns" width="n" />
-                </connections>
-              </container>
-              <tabbedpane name="StatsTabbedPane">
-                <tab title="Configuration">
-                  <container>
-                    <children>
-                      <container name="StatsConfigPanel">
-                        <border>
-                          <titled-border title="Available statistics"/>
-                        </border>
-                      </container>
-                      <container>
-                         <children>
-                           <label text="Sample period (secs.)"/>
-                           <spinner name="SamplePeriodSpinner"/>
-                         </children>
-                        <connections>
-                          <item bottom="1,bottom:s" height="n" left="-1,left:0" right="1,left:n" top="1,top:s" width="n" />
-                          <item bottom="-1,bottom:ns" height="n" left="0,right:n" right="-1,right:ns" top="-1,top:ns" width="n" />
-                        </connections>
-                      </container>
-                      <container>
-                        <children>
-                          <button text="Import configuration..." name="ImportStatsConfigButton"/>
-                          <button text="Export configuration..." name="ExportStatsConfigButton"/>                          
-                        </children>
-                        <connections>
-                          <item bottom="1,top:n" height="n" left="-1,left:n" right="-1,right:n" top="-1,top:n" width="ns" />
-                          <item bottom="-1,bottom:n" height="n" left="-1,left:n" right="-1,right:n" top="0,top:n" width="n" />
-                        </connections>
-                      </container>
-                    </children>
-                    <connections>
-                      <item bottom="1,top:n" height="n" left="-1,left:n" right="2,left:0" top="-1,top:n" width="n" />
-                      <item bottom="-1,bottom:ns" height="n" left="0,left:0" right="0,right:ns" top="0,bottom:n" width="n" />
-                      <item bottom="-1,bottom:ns" height="n" left="0,right:0" right="-1,right:ns" top="0,top:0" width="n" />
-                    </connections>
-                  </container>
-                </tab>
-              </tabbedpane>
-              <container>
-                <border>
-                  <titled-border title="Statistics capture sessions"/>
-                </border>
-                <children>
-                  <scrollpane>
-                    <list name="StatsSessionsList"/>
-                  </scrollpane>
-                  <container>
-                    <children>
-                      <button text="Export all sessions" name="ExportStatsButton" enabled="false"/>
-                      <button text="Clear session" name="ClearStatsSessionButton" enabled="false"/>
-                      <button text="Clear all sessions" name="ClearAllStatsSessionsButton" enabled="false"/>
-                    </children>
-                    <connections>
-                      <item bottom="1,top:n" height="n" left="-1,left:n" right="-1,right:n" top="-1,top:n" width="ns" />
-                      <item bottom="2,top:n" height="n" left="-1,left:n" right="-1,right:n" top="0,bottom:n" width="ns" />
-                      <item bottom="-1,bottom:ns" height="n" left="-1,left:n" right="-1,right:n" top="1,bottom:n" width="ns" />                      
-                    </connections>
-                  </container>
-                </children>
-                <connections>
-                  <item bottom="-1,bottom:n" height="ns" left="-1,left:n" right="1,left:n" top="-1,top:n" width="s" />
-                  <item bottom="-1,bottom:n" height="ns" left="0,right:n" right="-1,right:n" top="-1,top:n" width="n" />
-                </connections>
-              </container>
-              <item name="ExportProgressBarHolder"/>
-            </children>
-            <connections>
-              <item bottom="1,top:0" height="n" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s" />
-              <item bottom="2,top:n" height="s" left="-1,left:0" right="-1,right:0" top="0,bottom:0" width="s" />
-              <item bottom="3,top:n" height="n" left="-1,left:0" right="-1,right:0" top="1,bottom:0" width="s" />
-              <item bottom="-1,bottom:n" height="n" left="-1,left:n" right="-1,right:n" top="2,bottom:0" width="s" />              
-            </connections>
-          </container>
-        </tab>
-      </tabbedpane>
+          <item child-name="StatusIndicator" child-type="com.tc.admin.common.StatusView" />
+          <item child-name="ProductInfoPanel" child-type="com.tc.admin.ProductInfoPanel" />
+        </children>
+        <connections>
+          <item bottom="1,top:n" height="n" left="-1,left:sn" right="-1,right:sn" top="-1,top:sn" width="n" />
+          <item bottom="2,top:n" height="n" left="-1,left:sn" right="-1,right:sn" top="0,bottom:n" width="sn" />
+          <item bottom="3,top:sn" height="n" left="1,left:0" right="1,right:ns" top="1,bottom:n" width="n" />
+          <item bottom="-1,bottom:n" height="sn" left="-1,left:sn" right="-1,right:sn" top="2,bottom:sn" width="sn" />
+        </connections>
+      </container>
     </children>
     <connections>
       <item bottom="-1,bottom:0" height="s" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s" />
@@ -466,7 +303,7 @@
         </tabbedpane>
         <container>
           <children>
-            <label text="Enable Lock Stats:"/>
+            <label text="Enable lock profiling:"/>
             <togglebutton text="Off" name="DisableButton"/>
             <togglebutton text="On" name="EnableButton"/>
             <label text="Trace depth:"/>
@@ -603,37 +440,6 @@
         <tab title="Config">
           <scrollpane><textarea class="com.tc.admin.common.XTextArea" name="ConfigTextArea" editable="false" line-wrap="false"/></scrollpane>
         </tab>
-        <tab title="Thread Dumps">
-          <container>
-            <children>
-              <container>
-                <children>
-                  <button text="Take thread dump" name="TakeThreadDumpButton" />
-                </children>
-                <connections>
-                  <item bottom="-1,bottom:ns" height="n" left="-1,left:n" right="-1,right:ns" top="-1,top:ns" width="n" />
-                </connections>
-              </container>
-              <splitpane name="ClientThreadDumpsSplitter" divider-location="-1" focus-index="0" orientation="horizontal"
-                resize-weight="0.25">
-                <left>
-                  <scrollpane>
-                    <list name="ThreadDumpList" />
-                  </scrollpane>
-                </left>
-                <right>
-                  <scrollpane name="ThreadDumpTextScroller">
-                    <textarea class="com.tc.admin.common.XTextArea" name="ThreadDumpTextArea" editable="false" line-wrap="false" />
-                  </scrollpane>
-                </right>
-              </splitpane>
-            </children>
-            <connections>
-              <item bottom="1,top:0" height="n" left="-1,left:n" right="-1,right:n" top="-1,top:0" width="ns" />
-              <item bottom="-1,bottom:n" height="s" left="-1,left:n" right="-1,right:n" top="0,bottom:n" width="s" />
-            </connections>
-          </container>
-        </tab>
         <tab title="Logging">
           <container>
             <children>
@@ -699,9 +505,6 @@
               <item bottom="-1,bottom:ns" height="n" left="1,right:n" right="-1,right:n" top="1,top:0" width="ns" />
             </connections>
           </container>
-        </tab>
-        <tab title="Runtime statistics">
-           <item child-name="RuntimeStatsPanel" child-type="com.tc.admin.dso.ClientRuntimeStatsPanel"/>
         </tab>
       </tabbedpane>
     </children>
@@ -809,4 +612,147 @@
 			<item bottom="-1,bottom:sn" height="n" left="1,right:s" right="-1,right:10" top="0,bottom:sn" width="n"/>
 		</connections>
 	</container>
+    <container tag="ClusterThreadDumpsPanel">
+      <children>
+        <container>
+          <children>
+            <button text="Take thread dump" name="TakeThreadDumpButton" />
+          </children>
+          <connections>
+            <item bottom="-1,bottom:ns" height="n" left="-1,left:n" right="-1,right:ns" top="-1,top:ns" width="n" />
+          </connections>
+        </container>
+        <splitpane name="ThreadDumpsSplitter" divider-location="-1" focus-index="0" orientation="horizontal"
+          resize-weight="0.25">
+          <left>
+            <scrollpane>
+              <tree name="ThreadDumpTree" class="com.tc.admin.common.XTree"/>
+            </scrollpane>
+          </left>
+          <right>
+            <scrollpane name="ThreadDumpTextScroller">
+              <textarea class="com.tc.admin.common.XTextArea" name="ThreadDumpTextArea" editable="false" line-wrap="false" />
+            </scrollpane>
+          </right>
+        </splitpane>
+      </children>
+      <connections>
+        <item bottom="1,top:0" height="n" left="-1,left:n" right="-1,right:n" top="-1,top:0" width="ns" />
+        <item bottom="-1,bottom:n" height="s" left="-1,left:n" right="-1,right:n" top="0,bottom:n" width="s" />
+      </connections>
+    </container>
+    <container tag="NodeThreadDumpsPanel">
+      <children>
+        <container>
+          <children>
+            <button text="Take thread dump" name="TakeThreadDumpButton" />
+          </children>
+          <connections>
+            <item bottom="-1,bottom:ns" height="n" left="-1,left:n" right="-1,right:ns" top="-1,top:ns" width="n" />
+          </connections>
+        </container>
+        <splitpane name="ThreadDumpsSplitter" divider-location="-1" focus-index="0" orientation="horizontal"
+          resize-weight="0.25">
+          <left>
+            <scrollpane>
+              <list name="ThreadDumpList" />
+            </scrollpane>
+          </left>
+          <right>
+            <scrollpane name="ThreadDumpTextScroller">
+              <textarea class="com.tc.admin.common.XTextArea" name="ThreadDumpTextArea" editable="false" line-wrap="false" />
+            </scrollpane>
+          </right>
+        </splitpane>
+      </children>
+      <connections>
+        <item bottom="1,top:0" height="n" left="-1,left:n" right="-1,right:n" top="-1,top:0" width="ns" />
+        <item bottom="-1,bottom:n" height="s" left="-1,left:n" right="-1,right:n" top="0,bottom:n" width="s" />
+      </connections>
+    </container>
+    <container tag="StatsRecorderPanel">
+      <children>
+        <container>
+          <children>
+            <togglebutton text="Stop recording" name="StopGatheringStatsButton" selected="true"/>
+            <togglebutton text="Start recording" name="StartGatheringStatsButton" />
+          </children>
+          <connections>
+            <item bottom="-1,bottom:ns" height="n" left="-1,left:n" right="1,left:n" top="-1,top:ns" width="n" />
+            <item bottom="-1,bottom:ns" height="n" left="0,right:n" right="-1,right:ns" top="-1,top:ns" width="n" />
+          </connections>
+        </container>
+        <tabbedpane name="StatsTabbedPane">
+          <tab title="Configuration">
+            <container>
+              <children>
+                <container name="StatsConfigPanel" class="com.tc.admin.common.XContainer">
+                  <border>
+                    <titled-border title="Available statistics"/>
+                  </border>
+                </container>
+                <container>
+                   <children>
+                     <label text="Sample period (secs.)"/>
+                     <spinner name="SamplePeriodSpinner"/>
+                   </children>
+                  <connections>
+                    <item bottom="1,bottom:s" height="n" left="-1,left:0" right="1,left:n" top="1,top:s" width="n" />
+                    <item bottom="-1,bottom:ns" height="n" left="0,right:n" right="-1,right:ns" top="-1,top:ns" width="n" />
+                  </connections>
+                </container>
+                <container>
+                  <children>
+                    <button text="Import configuration..." name="ImportStatsConfigButton"/>
+                    <button text="Export configuration..." name="ExportStatsConfigButton"/>                          
+                  </children>
+                  <connections>
+                    <item bottom="1,top:n" height="n" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="ns" />
+                    <item bottom="-1,bottom:0" height="n" left="-1,left:0" right="-1,right:0" top="0,top:n" width="ns" />
+                  </connections>
+                </container>
+              </children>
+              <connections>
+                <item bottom="1,top:n" height="n" left="-1,left:n" right="-1,right:ns" top="-1,top:n" width="n" />
+                <item bottom="-1,bottom:ns" height="n" left="0,left:0" right="2,left:ns" top="0,bottom:n" width="n" />
+                <item bottom="-1,bottom:ns" height="n" left="1,right:ns" right="0,right:0" top="0,bottom:n" width="n" />
+              </connections>
+            </container>
+          </tab>
+        </tabbedpane>
+        <container>
+          <border>
+            <titled-border title="Statistics capture sessions"/>
+          </border>
+          <children>
+            <scrollpane>
+              <list name="StatsSessionsList"/>
+            </scrollpane>
+            <container>
+              <children>
+                <button text="Export all sessions" name="ExportStatsButton" enabled="false"/>
+                <button text="Clear session" name="ClearStatsSessionButton" enabled="false"/>
+                <button text="Clear all sessions" name="ClearAllStatsSessionsButton" enabled="false"/>
+              </children>
+              <connections>
+                <item bottom="1,top:n" height="n" left="-1,left:n" right="-1,right:n" top="-1,top:n" width="ns" />
+                <item bottom="2,top:n" height="n" left="-1,left:n" right="-1,right:n" top="0,bottom:n" width="ns" />
+                <item bottom="-1,bottom:ns" height="n" left="-1,left:n" right="-1,right:n" top="1,bottom:n" width="ns" />                      
+              </connections>
+            </container>
+          </children>
+          <connections>
+            <item bottom="-1,bottom:n" height="ns" left="-1,left:n" right="1,left:n" top="-1,top:n" width="s" />
+            <item bottom="-1,bottom:n" height="ns" left="0,right:n" right="-1,right:n" top="-1,top:n" width="n" />
+          </connections>
+        </container>
+        <item name="ExportProgressBarHolder"/>
+      </children>
+      <connections>
+        <item bottom="1,top:0" height="n" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s" />
+        <item bottom="2,top:n" height="s" left="-1,left:0" right="-1,right:0" top="0,bottom:0" width="s" />
+        <item bottom="3,top:n" height="n" left="-1,left:0" right="-1,right:0" top="1,bottom:0" width="s" />
+        <item bottom="-1,bottom:n" height="n" left="-1,left:n" right="-1,right:n" top="2,bottom:0" width="s" />              
+      </connections>
+    </container>
 </dict>

@@ -4,18 +4,13 @@
  */
 package com.tc.admin.dso;
 
-import org.dijon.Button;
 import org.dijon.CheckBox;
 import org.dijon.ContainerResource;
-import org.dijon.List;
-import org.dijon.ScrollPane;
-import org.dijon.SplitPane;
-import org.dijon.TabbedPane;
 import org.dijon.TextArea;
 
 import com.tc.admin.AdminClient;
 import com.tc.admin.AdminClientContext;
-import com.tc.admin.ThreadDumpEntry;
+import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.PropertyTable;
 import com.tc.admin.common.PropertyTableModel;
 import com.tc.admin.common.XContainer;
@@ -24,44 +19,27 @@ import com.tc.management.beans.logging.InstrumentationLoggingMBean;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
 import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
 
-import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
 import java.util.HashMap;
-import java.util.prefs.Preferences;
+import java.util.concurrent.Callable;
 
 import javax.management.MBeanServerNotification;
 import javax.management.Notification;
 import javax.management.NotificationListener;
-import javax.swing.DefaultListModel;
-import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 
 public class ClientPanel extends XContainer implements NotificationListener {
+  private AdminClientContext        m_acc;
   protected DSOClient               m_client;
   private L1InfoMBean               m_l1InfoBean;
 
-  private TabbedPane                m_tabbedPane;
   private PropertyTable             m_propertyTable;
 
   private TextArea                  m_environmentTextArea;
   private TextArea                  m_configTextArea;
-
-  private Button                    m_threadDumpButton;
-  private SplitPane                 m_threadDumpsSplitter;
-  private Integer                   m_dividerLoc;
-  private DividerListener           m_dividerListener;
-  private List                      m_threadDumpList;
-  private DefaultListModel          m_threadDumpListModel;
-  private TextArea                  m_threadDumpTextArea;
-  private ScrollPane                m_threadDumpTextScroller;
-  private ThreadDumpEntry           m_lastSelectedEntry;
 
   private CheckBox                  m_classCheckBox;
   private CheckBox                  m_locksCheckBox;
@@ -83,67 +61,20 @@ public class ClientPanel extends XContainer implements NotificationListener {
   private ActionListener            m_loggingChangeHandler;
   private HashMap<String, CheckBox> m_loggingControlMap;
 
-  private ClientRuntimeStatsPanel   m_runtimeStatsPanel;
-
   public ClientPanel(DSOClient client) {
     super();
 
-    AdminClientContext acc = AdminClient.getContext();
+    m_acc = AdminClient.getContext();
 
-    load((ContainerResource) acc.topRes.getComponent("ClientPanel"));
-
-    m_tabbedPane = (TabbedPane) findComponent("TabbedPane");
+    load((ContainerResource) m_acc.topRes.getComponent("ClientPanel"));
 
     m_propertyTable = (PropertyTable) findComponent("ClientInfoTable");
     DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
     m_propertyTable.setDefaultRenderer(Long.class, renderer);
     m_propertyTable.setDefaultRenderer(Integer.class, renderer);
-    m_propertyTable.getAncestorOfClass(ScrollPane.class).setBackground(m_propertyTable.getBackground());
 
     m_environmentTextArea = (TextArea) findComponent("EnvironmentTextArea");
     m_configTextArea = (TextArea) findComponent("ConfigTextArea");
-
-    m_threadDumpButton = (Button) findComponent("TakeThreadDumpButton");
-    m_threadDumpButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        long requestMillis = System.currentTimeMillis();
-        try {
-          ThreadDumpEntry tde = new ThreadDumpEntry(m_l1InfoBean.takeThreadDump(requestMillis));
-          m_threadDumpListModel.addElement(tde);
-          m_threadDumpList.setSelectedIndex(m_threadDumpListModel.getSize() - 1);
-        } catch (Exception e) {
-          AdminClient.getContext().log(e);
-        }
-      }
-    });
-
-    m_threadDumpsSplitter = (SplitPane) findComponent("ClientThreadDumpsSplitter");
-    m_dividerLoc = new Integer(getThreadDumpSplitPref());
-    m_dividerListener = new DividerListener();
-
-    m_threadDumpList = (List) findComponent("ThreadDumpList");
-    m_threadDumpList.setModel(m_threadDumpListModel = new DefaultListModel());
-    m_threadDumpList.addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent lse) {
-        if (lse.getValueIsAdjusting()) return;
-        if (m_lastSelectedEntry != null) {
-          m_lastSelectedEntry.setViewPosition(m_threadDumpTextScroller.getViewport().getViewPosition());
-        }
-        ThreadDumpEntry tde = (ThreadDumpEntry) m_threadDumpList.getSelectedValue();
-        m_threadDumpTextArea.setText(tde.getThreadDumpText());
-        final Point viewPosition = tde.getViewPosition();
-        if (viewPosition != null) {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              m_threadDumpTextScroller.getViewport().setViewPosition(viewPosition);
-            }
-          });
-        }
-        m_lastSelectedEntry = tde;
-      }
-    });
-    m_threadDumpTextArea = (TextArea) findComponent("ThreadDumpTextArea");
-    m_threadDumpTextScroller = (ScrollPane) findComponent("ThreadDumpTextScroller");
 
     m_classCheckBox = (CheckBox) findComponent("Class1");
     m_locksCheckBox = (CheckBox) findComponent("Locks");
@@ -164,9 +95,6 @@ public class ClientPanel extends XContainer implements NotificationListener {
 
     m_loggingControlMap = new HashMap<String, CheckBox>();
 
-    m_runtimeStatsPanel = (ClientRuntimeStatsPanel) findComponent("RuntimeStatsPanel");
-    m_runtimeStatsPanel.setClientPanel(this);
-
     setClient(client);
   }
 
@@ -184,7 +112,7 @@ public class ClientPanel extends XContainer implements NotificationListener {
         m_configTextArea.setText(m_l1InfoBean.getConfig());
       }
     } catch (Exception e) {
-      AdminClient.getContext().log(e);
+      m_acc.log(e);
     }
 
     m_loggingChangeHandler = new LoggingChangeHandler();
@@ -196,7 +124,7 @@ public class ClientPanel extends XContainer implements NotificationListener {
         instrumentationLoggingBean.addNotificationListener(this, null, null);
       }
     } catch (Exception e) {
-      AdminClient.getContext().log(e);
+      m_acc.log(e);
     }
 
     try {
@@ -206,7 +134,7 @@ public class ClientPanel extends XContainer implements NotificationListener {
         runtimeLoggingBean.addNotificationListener(this, null, null);
       }
     } catch (Exception e) {
-      AdminClient.getContext().log(e);
+      m_acc.log(e);
     }
 
     try {
@@ -216,7 +144,7 @@ public class ClientPanel extends XContainer implements NotificationListener {
         runtimeOutputOptionsBean.addNotificationListener(this, null, null);
       }
     } catch (Exception e) {
-      AdminClient.getContext().log(e);
+      m_acc.log(e);
     }
   }
 
@@ -261,80 +189,39 @@ public class ClientPanel extends XContainer implements NotificationListener {
       Boolean value = (Boolean) setter.invoke(bean, new Object[0]);
       checkBox.setSelected(value.booleanValue());
     } catch (Exception e) {
-      AdminClient.getContext().log(e);
+      m_acc.log(e);
     }
   }
 
-  private void setLoggingBean(CheckBox checkBox) {
-    try {
-      Object bean = checkBox.getClientProperty(checkBox.getName());
-      Class beanClass = bean.getClass();
-      Method setter = beanClass.getMethod("set" + checkBox.getName(), new Class[] { Boolean.TYPE });
-      setter.invoke(bean, new Object[] { Boolean.valueOf(checkBox.isSelected()) });
-    } catch (Exception e) {
-      AdminClient.getContext().log(e);
+  private class LoggingChangeWorker extends BasicWorker<Void> {
+    private LoggingChangeWorker(final Object loggingBean, final String attrName, final boolean enabled) {
+      super(new Callable<Void>() {
+        public Void call() throws Exception {
+          Class beanClass = loggingBean.getClass();
+          Method setter = beanClass.getMethod("set" + attrName, new Class[] { Boolean.TYPE });
+          setter.invoke(loggingBean, new Object[] { Boolean.valueOf(enabled) });
+          return null;
+        }
+      });
+    }
+
+    protected void finished() {
+      Exception e = getException();
+      if (e != null) {
+        m_acc.log(e);
+      }
     }
   }
 
   class LoggingChangeHandler implements ActionListener {
     public void actionPerformed(ActionEvent ae) {
-      setLoggingBean((CheckBox) ae.getSource());
-    }
-  }
+      CheckBox checkBox = (CheckBox) ae.getSource();
+      Object loggingBean = checkBox.getClientProperty(checkBox.getName());
+      String attrName = checkBox.getName();
+      boolean enabled = checkBox.isSelected();
+      LoggingChangeWorker worker = new LoggingChangeWorker(loggingBean, attrName, enabled);
 
-  public void addNotify() {
-    super.addNotify();
-    m_threadDumpsSplitter.addPropertyChangeListener(m_dividerListener);
-  }
-
-  public void removeNotify() {
-    m_threadDumpsSplitter.removePropertyChangeListener(m_dividerListener);
-    super.removeNotify();
-  }
-
-  public void doLayout() {
-    super.doLayout();
-
-    if (m_dividerLoc != null) {
-      m_threadDumpsSplitter.setDividerLocation(m_dividerLoc.intValue());
-    } else {
-      m_threadDumpsSplitter.setDividerLocation(0.7);
-    }
-  }
-
-  private int getThreadDumpSplitPref() {
-    Preferences prefs = getPreferences();
-    Preferences splitPrefs = prefs.node(m_threadDumpsSplitter.getName());
-    return splitPrefs.getInt("Split", -1);
-  }
-
-  protected Preferences getPreferences() {
-    AdminClientContext acc = AdminClient.getContext();
-    return acc.prefs.node("ClientPanel");
-  }
-
-  protected void storePreferences() {
-    AdminClientContext acc = AdminClient.getContext();
-    acc.client.storePrefs();
-  }
-
-  private class DividerListener implements PropertyChangeListener {
-    public void propertyChange(PropertyChangeEvent pce) {
-      JSplitPane splitter = (JSplitPane) pce.getSource();
-      String propName = pce.getPropertyName();
-
-      if (splitter.isShowing() == false || JSplitPane.DIVIDER_LOCATION_PROPERTY.equals(propName) == false) { return; }
-
-      int divLoc = splitter.getDividerLocation();
-      Integer divLocObj = new Integer(divLoc);
-      Preferences prefs = getPreferences();
-      String name = splitter.getName();
-      Preferences node = prefs.node(name);
-
-      node.putInt("Split", divLoc);
-      storePreferences();
-
-      m_dividerLoc = divLocObj;
+      m_acc.executorService.execute(worker);
     }
   }
 
@@ -414,27 +301,15 @@ public class ClientPanel extends XContainer implements NotificationListener {
   }
 
   public void tearDown() {
-    m_runtimeStatsPanel.tearDown();
-
     super.tearDown();
 
+    m_acc = null;
     m_client = null;
 
-    m_tabbedPane = null;
     m_propertyTable = null;
 
     m_environmentTextArea = null;
     m_configTextArea = null;
-
-    m_threadDumpButton = null;
-    m_threadDumpsSplitter = null;
-    m_dividerLoc = null;
-    m_dividerListener = null;
-    m_threadDumpList = null;
-    m_threadDumpListModel = null;
-    m_threadDumpTextArea = null;
-    m_threadDumpTextScroller = null;
-    m_lastSelectedEntry = null;
 
     m_classCheckBox = null;
     m_locksCheckBox = null;
@@ -454,7 +329,5 @@ public class ClientPanel extends XContainer implements NotificationListener {
     m_loggingChangeHandler = null;
     m_loggingControlMap.clear();
     m_loggingControlMap = null;
-
-    m_runtimeStatsPanel = null;
   }
 }

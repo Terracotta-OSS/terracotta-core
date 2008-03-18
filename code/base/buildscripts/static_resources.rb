@@ -105,6 +105,29 @@ class StaticResources
         FilePath.new(module_set['common'].subtree('src').resource_root, "com", "tc", "config", "schema-config")
     end
 
+    def compiled_stats_config_schema_jar(module_set)
+        out = nil
+
+        module_set['dso-statistics'].subtree('src').subtree_only_library_roots(:runtime).each do |root|
+            test = FilePath.new(root, "tcstats-xmlbeans-generated.jar")
+            out = test if FileTest.file?(test.to_s)
+        end
+
+        assert { not out.nil? }
+
+        out
+    end
+
+    # Where do the .xsd files for configuration live?
+    def stats_config_schema_source_directory(module_set)
+        FilePath.new(module_set['dso-statistics'].subtree('src').resource_root, "com", "tc", "config", "schema")
+    end
+
+    # Where do the .xsdconfig files for configuration live?
+    def stats_config_schema_config_directory(module_set)
+        FilePath.new(module_set['dso-statistics'].subtree('src').resource_root, "com", "tc", "config", "schema-config")
+    end
+
     def demos_directory
         FilePath.new(@root_directory, '..', 'demos')
     end

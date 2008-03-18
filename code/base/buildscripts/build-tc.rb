@@ -428,6 +428,23 @@ END
     }
   end
 
+  def generate_stats_config_classes
+    schema_dir = @static_resources.stats_config_schema_source_directory(@module_set)
+    schema_config_dir = @static_resources.stats_config_schema_config_directory(@module_set)
+    dest_jar = @static_resources.compiled_stats_config_schema_jar(@module_set)
+    generated_source_dir = @build_results.stats_config_schema_generation_directory
+
+    generated_source_dir.delete
+
+    ant.xmlbean(:destfile => dest_jar.to_s,
+                :executable => @jvm_set['J2SE-1.4'].javac.to_s,
+    :debug => true, :classpath => @module_set['dso-statistics'].subtree('src').classpath(@build_results, :full, :runtime).to_s,
+    :srcgendir => generated_source_dir.to_s) {
+      ant.fileset(:dir => schema_dir.to_s, :includes => '*.xsd')
+      ant.fileset(:dir => schema_config_dir.to_s, :includes => '*.xsdconfig')
+    }
+  end
+
   # A target for the monkeys to run when you just want to test that they're
   # working correctly. We run this test because it's one of the few that's
   # relevant to the monkey system itself.

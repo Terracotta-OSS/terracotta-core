@@ -142,6 +142,10 @@ class BuildResults
         FilePath.new(@build_dir, "generated", "config-schema")
     end
 
+    def stats_config_schema_generation_directory
+        FilePath.new(@build_dir, "generated", "stats-config-schema")
+    end
+
     ModuleInfo = Struct.new("ModuleInfo", :artifact_id, :version, :jarfile, :manifest)
 
     # Returns a ModuleInfo object describing the given module, or nil if the module is not a

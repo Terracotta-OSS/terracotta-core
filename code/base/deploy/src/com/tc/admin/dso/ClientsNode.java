@@ -1,12 +1,16 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin.dso;
+
+import org.dijon.Component;
 
 import com.tc.admin.AdminClient;
 import com.tc.admin.AdminClientContext;
 import com.tc.admin.ClusterNode;
 import com.tc.admin.ConnectionContext;
+import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.common.XTreeModel;
 import com.tc.admin.common.XTreeNode;
@@ -14,6 +18,7 @@ import com.tc.stats.DSOMBean;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.Callable;
 
 import javax.management.Notification;
 import javax.management.NotificationListener;
@@ -21,49 +26,74 @@ import javax.management.ObjectName;
 import javax.swing.SwingUtilities;
 
 public class ClientsNode extends ComponentNode implements NotificationListener {
-  private ClusterNode m_clusterNode;
-  private ConnectionContext m_cc;
-  private DSOClient[] m_clients;
+  protected AdminClientContext m_acc;
+  protected ClusterNode        m_clusterNode;
+  protected ConnectionContext  m_cc;
+  protected DSOClient[]        m_clients;
+  protected ClientsPanel       m_clientsPanel;
 
-  public ClientsNode(ClusterNode clusterNode) throws Exception {
+  public ClientsNode(ClusterNode clusterNode) {
     super();
+    m_acc = AdminClient.getContext();
     m_clusterNode = clusterNode;
     init();
   }
 
-  private void init() throws Exception {
-    removeAllChildren();
-    
-    m_cc = m_clusterNode.getConnectionContext();
-    ObjectName dso = DSOHelper.getHelper().getDSOMBean(m_cc);
-    m_clients = ClientsHelper.getHelper().getClients(m_cc);
+  private void init() {
+    setLabel(m_acc.getMessage("clients"));
+    m_clients = null;
+    for (int i = getChildCount() - 1; i >= 0; i--) {
+      m_acc.controller.remove((XTreeNode) getChildAt(i));
+    }
+    m_acc.executorService.execute(new InitWorker());
+  }
 
-    for (int i = 0; i < m_clients.length; i++) {
-      add(createClientNode(m_cc, m_clients[i]));
+  private class InitWorker extends BasicWorker<DSOClient[]> {
+    private InitWorker() {
+      super(new Callable<DSOClient[]>() {
+        public DSOClient[] call() throws Exception {
+          m_cc = m_clusterNode.getConnectionContext();
+          ObjectName dso = DSOHelper.getHelper().getDSOMBean(m_cc);
+          m_cc.addNotificationListener(dso, ClientsNode.this);
+          return ClientsHelper.getHelper().getClients(m_cc);
+        }
+      });
     }
 
-    ClientsPanel panel = createClientsPanel(m_cc, this, m_clients);
-    panel.setNode(this);
-    updateLabel();
-    setComponent(panel);
-
-    m_cc.addNotificationListener(dso, this);
+    protected void finished() {
+      Exception e = getException();
+      if (e != null) {
+        m_acc.log(e);
+      } else {
+        m_clients = getResult();
+        for (int i = 0; i < m_clients.length; i++) {
+          add(createClientNode(m_cc, m_clients[i]));
+        }
+        updateLabel();
+        m_acc.controller.nodeChanged(ClientsNode.this);
+      }
+    }
   }
-  
+
   protected ClientNode createClientNode(ConnectionContext cc, DSOClient client) {
     return new ClientNode(cc, client);
   }
-  
+
   protected ClientsPanel createClientsPanel(ConnectionContext cc, ClientsNode clientsNode, DSOClient[] clients) {
     return new ClientsPanel(cc, this, clients);
   }
-  
-  public void newConnectionContext() {
-    try {
-      init();
-    } catch(Exception e) {/**/}
+
+  public Component getComponent() {
+    if (m_clientsPanel == null) {
+      m_clientsPanel = createClientsPanel(m_cc, ClientsNode.this, m_clients);
+    }
+    return m_clientsPanel;
   }
-  
+
+  public void newConnectionContext() {
+    init();
+  }
+
   void selectClientNode(String remoteAddr) {
     int childCount = getChildCount();
     for (int i = 0; i < childCount; i++) {
@@ -102,7 +132,7 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
   }
 
   private void updateLabel() {
-    setLabel(AdminClient.getContext().getMessage("clients") + " (" + getChildCount() + ")");
+    setLabel(m_acc.getMessage("clients") + " (" + getChildCount() + ")");
     nodeChanged();
   }
 
@@ -171,6 +201,10 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
       }
     } catch (Exception e) {/**/
     }
+
+    m_acc = null;
+    m_clusterNode = null;
+    m_cc = null;
     m_clients = null;
 
     super.tearDown();

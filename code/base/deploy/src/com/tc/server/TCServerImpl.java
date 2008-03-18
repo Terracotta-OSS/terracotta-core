@@ -179,7 +179,6 @@ public class TCServerImpl extends SEDA implements TCServer {
   public synchronized void shutdown() {
     if (canShutdown()) {
       state.setState(StateManager.STOP_STATE);
-      stopServer();
       consoleLogger.info("Server exiting...");
       System.exit(0);
     } else {

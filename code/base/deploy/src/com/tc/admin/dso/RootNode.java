@@ -194,8 +194,13 @@ public class RootNode extends ComponentNode {
   public void tearDown() {
     super.tearDown();
 
+    m_cc = null;
+    m_root = null;
+    m_rootsPanel = null;
     m_popupMenu = null;
     m_moreAction = null;
     m_lessAction = null;
+    m_popupMenu = null;
+    m_refreshAction = null;
   }
 }

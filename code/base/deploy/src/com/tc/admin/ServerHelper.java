@@ -4,10 +4,10 @@
  */
 package com.tc.admin;
 
+import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 
-import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
 
 public class ServerHelper extends BaseHelper {
@@ -23,8 +23,8 @@ public class ServerHelper extends BaseHelper {
 
   public TCServerInfoMBean getServerInfoBean(ConnectionContext cc) throws Exception {
     ObjectName objectName = cc.queryName(L2MBeanNames.TC_SERVER_INFO.getCanonicalName());
-    return (TCServerInfoMBean) MBeanServerInvocationHandler.newProxyInstance(cc.mbsc, objectName,
-                                                                             TCServerInfoMBean.class, false);
+    return (TCServerInfoMBean) MBeanServerInvocationProxy.newProxyInstance(cc.mbsc, objectName,
+                                                                           TCServerInfoMBean.class, false);
   }
 
   public boolean canShutdown(ConnectionContext cc) throws Exception {

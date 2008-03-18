@@ -12,6 +12,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.UnrecognizedOptionException;
 
 import com.tc.admin.TCStop;
+import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.management.JMXConnectorProxy;
@@ -24,7 +25,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 import javax.management.MBeanServerConnection;
-import javax.management.MBeanServerInvocationHandler;
 import javax.management.remote.JMXConnector;
 
 /**
@@ -113,7 +113,7 @@ public class GCRunner {
     try {
       new GCRunner(host, port, userName).runGC();
     } catch (IOException ioe) {
-      System.err.println("Unable to connect to host '" + host + "', port " + port 
+      System.err.println("Unable to connect to host '" + host + "', port " + port
                          + ". Are you sure there is a Terracotta server running there?");
     } catch (SecurityException se) {
       System.err.println(se.getMessage());
@@ -140,12 +140,12 @@ public class GCRunner {
     ObjectManagementMonitorMBean mbean = null;
     final JMXConnector jmxConnector = getJMXConnector();
     final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
-    mbean = (ObjectManagementMonitorMBean) MBeanServerInvocationHandler
+    mbean = (ObjectManagementMonitorMBean) MBeanServerInvocationProxy
         .newProxyInstance(mbs, L2MBeanNames.OBJECT_MANAGEMENT, ObjectManagementMonitorMBean.class, false);
     try {
       mbean.runGC();
     } catch (RuntimeException e) {
-      //DEV-1168
+      // DEV-1168
       consoleLogger.error((e.getCause() == null ? e.getMessage() : e.getCause().getMessage()));
     }
   }
@@ -153,7 +153,7 @@ public class GCRunner {
   private static String getPassword() {
     try {
       Method m = System.class.getMethod("console", new Class[] {});
-      Object console = m.invoke(null, (Object[])null);
+      Object console = m.invoke(null, (Object[]) null);
       if (console != null) {
         m = console.getClass().getMethod("readPassword", new Class[] { String.class, Object[].class });
         if (m != null) {

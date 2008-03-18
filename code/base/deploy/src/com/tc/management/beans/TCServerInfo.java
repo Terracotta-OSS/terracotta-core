@@ -24,6 +24,7 @@ import com.tc.util.runtime.ThreadDumpUtil;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Timer;
@@ -178,6 +179,19 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     return server.getDSOListenPort();
   }
 
+  public String[] getCpuStatNames() {
+    if (cpuSRA == null) { return new String[0]; }
+
+    List list = new ArrayList();
+    StatisticData[] statsData = cpuSRA.retrieveStatisticData();
+    if (statsData != null) {
+      for (int i = 0; i < statsData.length; i++) {
+        list.add(statsData[i].getElement());
+      }
+    }
+    return (String[]) list.toArray(new String[0]);
+  }
+  
   public Map getStatistics() {
     HashMap<String, Object> map = new HashMap<String, Object>();
     MemoryUsage usage = manager.getMemoryUsage();

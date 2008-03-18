@@ -6,10 +6,13 @@ package com.tc.admin.dso;
 
 import com.tc.admin.BaseHelper;
 import com.tc.admin.ConnectionContext;
+import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.GCStats;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
+import com.tc.stats.DSOMBean;
+import com.tc.stats.counter.Counter;
 
 import java.io.IOException;
 import java.net.URL;
@@ -27,6 +30,7 @@ import javax.swing.ImageIcon;
 public class DSOHelper extends BaseHelper {
   private static DSOHelper m_helper = new DSOHelper();
   private Icon             m_dsoIcon;
+  private Icon             m_gcIcon;
 
   public static DSOHelper getHelper() {
     return m_helper;
@@ -42,6 +46,23 @@ public class DSOHelper extends BaseHelper {
     }
 
     return m_dsoIcon;
+  }
+
+  public Icon getGCIcon() {
+    if (m_gcIcon == null) {
+      URL url = getClass().getResource(ICONS_PATH + "trash.gif");
+
+      if (url != null) {
+        m_gcIcon = new ImageIcon(url);
+      }
+    }
+
+    return m_gcIcon;
+  }
+
+  public DSOMBean getDSOBean(ConnectionContext cc) throws Exception {
+    ObjectName objectName = getDSOMBean(cc);
+    return (DSOMBean) MBeanServerInvocationProxy.newProxyInstance(cc.mbsc, objectName, DSOMBean.class, false);
   }
 
   public ObjectName getDSOMBean(ConnectionContext cc) throws IOException, MalformedObjectNameException {
@@ -64,10 +85,9 @@ public class DSOHelper extends BaseHelper {
 
     return (GCStats[]) cc.getAttribute(bean, attr);
   }
-  
-  public Map getAllPendingRequests(ConnectionContext cc) throws Exception {
-    ObjectName bean = getDSOMBean(cc);
-    String attr = "AllPendingRequests";
-    return (Map) cc.getAttribute(bean, attr);
+
+  public Map<String, Counter> getAllPendingRequests(ConnectionContext cc) throws Exception {
+    DSOMBean bean = getDSOBean(cc);
+    return bean.getAllPendingRequests();
   }
 }

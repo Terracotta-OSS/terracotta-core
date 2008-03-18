@@ -17,9 +17,7 @@ public class LocksNode extends ComponentNode {
 
   public LocksNode(ClusterNode clusterNode) {
     super();
-
     m_clusterNode = clusterNode;
-
     setLabel(m_baseLabel = AdminClient.getContext().getMessage("dso.locks"));
     setComponent(new LocksPanel(this));
   }

@@ -68,7 +68,7 @@ public class AdminClientBundle extends ListResourceBundle {
 
       { "dso.roots", "Roots" },
 
-      { "dso.locks", "Lock stats" },
+      { "dso.locks", "Lock profiler" },
 
       {
       "dso.locks.column.headings",

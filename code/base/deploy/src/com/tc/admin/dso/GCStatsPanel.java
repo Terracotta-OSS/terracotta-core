@@ -11,6 +11,8 @@ import org.dijon.PopupMenu;
 import com.tc.admin.AdminClient;
 import com.tc.admin.AdminClientContext;
 import com.tc.admin.ConnectionContext;
+import com.tc.admin.common.BasicWorker;
+import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XObjectTable;
@@ -23,80 +25,89 @@ import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.IOException;
+import java.util.concurrent.Callable;
 
-import javax.management.AttributeNotFoundException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanException;
-import javax.management.MBeanServerInvocationHandler;
-import javax.management.MalformedObjectNameException;
 import javax.management.Notification;
 import javax.management.NotificationListener;
-import javax.management.ReflectionException;
 import javax.swing.JOptionPane;
 
 public class GCStatsPanel extends XContainer implements NotificationListener {
+  private AdminClientContext           m_acc;
   private GCStatsNode                  m_gcStatsNode;
   private XObjectTable                 m_table;
   private PopupMenu                    m_popupMenu;
+  private RunGCAction                  m_gcAction;
   private ObjectManagementMonitorMBean m_objectManagementMonitor;
 
-  public GCStatsPanel(GCStatsNode gcStatsNode) throws IOException, MalformedObjectNameException,
-      InstanceNotFoundException, MBeanException, ReflectionException, AttributeNotFoundException {
+  public GCStatsPanel(GCStatsNode gcStatsNode) {
     super();
 
-    AdminClientContext acc = AdminClient.getContext();
-    load((ContainerResource) acc.topRes.getComponent("GCStatsPanel"));
+    m_acc = AdminClient.getContext();
+    load((ContainerResource) m_acc.topRes.getComponent("GCStatsPanel"));
 
     m_gcStatsNode = gcStatsNode;
     m_table = (XObjectTable) findComponent("GCStatsTable");
+    m_table.setModel(new GCStatsTableModel());
 
-    GCStatsTableModel model = new GCStatsTableModel();
-    m_table.setModel(model);
-
-    DSOHelper helper = DSOHelper.getHelper();
-    ConnectionContext cc = gcStatsNode.getConnectionContext();
-    GCStats[] gcStats = helper.getGCStats(cc);
-    cc.addNotificationListener(helper.getDSOMBean(cc), this);
-
-    model.setGCStats(gcStats);
-
-    m_objectManagementMonitor = (ObjectManagementMonitorMBean) MBeanServerInvocationHandler
-        .newProxyInstance(cc.mbsc, L2MBeanNames.OBJECT_MANAGEMENT, ObjectManagementMonitorMBean.class, false);
-
-    RunGCAction runDGCAction = new RunGCAction();
+    m_gcAction = new RunGCAction();
     Button runDGCButton = (Button) findComponent("RunGCButton");
-    runDGCButton.setAction(runDGCAction);
+    runDGCButton.setAction(m_gcAction);
 
     m_popupMenu = new PopupMenu("GC");
-    m_popupMenu.add(runDGCAction);
+    m_popupMenu.add(m_gcAction);
     m_table.add(m_popupMenu);
-    m_table.addMouseListener(new MouseAdapter() {
-      public void mousePressed(MouseEvent e) {
-        testPopup(e);
-      }
+    m_table.addMouseListener(new TableMouseHandler());
 
-      public void mouseReleased(MouseEvent e) {
-        testPopup(e);
-      }
+    m_acc.executorService.execute(new InitWorker(true));
+  }
 
-      public void testPopup(MouseEvent e) {
-        if (e.isPopupTrigger()) {
-          m_popupMenu.show(m_table, e.getX(), e.getY());
+  private class InitWorker extends BasicWorker<GCStats[]> {
+    private boolean getStats;
+
+    private InitWorker(final boolean getStats) {
+      super(new Callable<GCStats[]>() {
+        public GCStats[] call() throws Exception {
+          DSOHelper helper = DSOHelper.getHelper();
+          ConnectionContext cc = m_gcStatsNode.getConnectionContext();
+          cc.addNotificationListener(helper.getDSOMBean(cc), GCStatsPanel.this);
+          m_objectManagementMonitor = (ObjectManagementMonitorMBean) MBeanServerInvocationProxy
+              .newProxyInstance(cc.mbsc, L2MBeanNames.OBJECT_MANAGEMENT, ObjectManagementMonitorMBean.class, false);
+          return getStats ? DSOHelper.getHelper().getGCStats(cc) : null;
         }
+      });
+      this.getStats = getStats;
+    }
+
+    protected void finished() {
+      Exception e = getException();
+      if (e != null) {
+        m_acc.log(e);
+      } else if (getStats) {
+        GCStatsTableModel model = (GCStatsTableModel) m_table.getModel();
+        model.setGCStats(getResult());
       }
-    });
+      m_gcAction.setEnabled(true);
+    }
   }
 
   void newConnectionContext() {
-    try {
-      DSOHelper helper = DSOHelper.getHelper();
-      ConnectionContext cc = m_gcStatsNode.getConnectionContext();
-      cc.addNotificationListener(helper.getDSOMBean(cc), this);
+    m_gcAction.setEnabled(false);
+    m_acc.executorService.execute(new InitWorker(false));
+  }
 
-      m_objectManagementMonitor = (ObjectManagementMonitorMBean) MBeanServerInvocationHandler
-          .newProxyInstance(cc.mbsc, L2MBeanNames.OBJECT_MANAGEMENT, ObjectManagementMonitorMBean.class, false);
-    } catch (Exception e) {/**/
+  class TableMouseHandler extends MouseAdapter {
+    public void mousePressed(MouseEvent e) {
+      testPopup(e);
+    }
+
+    public void mouseReleased(MouseEvent e) {
+      testPopup(e);
+    }
+
+    public void testPopup(MouseEvent e) {
+      if (e.isPopupTrigger()) {
+        m_popupMenu.show(m_table, e.getX(), e.getY());
+      }
     }
   }
 
@@ -119,17 +130,31 @@ public class GCStatsPanel extends XContainer implements NotificationListener {
     }
   }
 
-  private void runGC() {
-    try {
-      m_objectManagementMonitor.runGC();
-    } catch (RuntimeException re) {
-      Frame frame = (Frame) getAncestorOfClass(Frame.class);
-      Throwable cause = re.getCause();
-      String msg = cause != null ? cause.getMessage() : re.getMessage();
-      String title = frame.getTitle();
-
-      JOptionPane.showMessageDialog(frame, msg, title, JOptionPane.INFORMATION_MESSAGE);
+  private class RunGCWorker extends BasicWorker<Void> {
+    private RunGCWorker() {
+      super(new Callable<Void>() {
+        public Void call() {
+          m_objectManagementMonitor.runGC();
+          return null;
+        }
+      });
     }
+    
+    protected void finished() {
+      Exception e = getException();
+      if(e != null) {
+        Frame frame = (Frame) getAncestorOfClass(Frame.class);
+        Throwable cause = e.getCause();
+        String msg = cause != null ? cause.getMessage() : e.getMessage();
+        String title = frame.getTitle();
+
+        JOptionPane.showMessageDialog(frame, msg, title, JOptionPane.INFORMATION_MESSAGE);
+      }
+    }
+  }
+  
+  private void runGC() {
+    m_acc.executorService.execute(new RunGCWorker());
   }
 
   public void tearDown() {
@@ -144,6 +169,11 @@ public class GCStatsPanel extends XContainer implements NotificationListener {
 
     super.tearDown();
 
+    m_acc = null;
+    m_gcStatsNode = null;
     m_table = null;
+    m_popupMenu = null;
+    m_gcAction = null;
+    m_objectManagementMonitor = null;
   }
 }

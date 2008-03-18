@@ -3,6 +3,7 @@
  */
 package com.tc.admin;
 
+import com.tc.config.schema.L2Info;
 import com.tc.util.factory.AbstractFactory;
 
 public abstract class AbstractNodeFactory extends AbstractFactory {
@@ -14,8 +15,7 @@ public abstract class AbstractNodeFactory extends AbstractFactory {
   }
 
   public abstract ClusterNode createClusterNode();
-  public abstract ClusterNode createClusterNode(final String host, final int jmxPort, final boolean autoConnect);
+  public abstract ClusterNode createClusterNode(String host, int jmxPort, boolean autoConnect);
 
-  public abstract ServerNode createServerNode();
-  public abstract ServerNode createServerNode(final String host, final int jmxPort, final boolean autoConnect);
+  public abstract ServerNode createServerNode(ServersNode serversNode, L2Info l2Info);
 }

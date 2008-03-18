@@ -75,4 +75,10 @@ public class RootsPanel extends XContainer {
     m_tree.revalidate();
     m_tree.repaint();
   }
+  
+  public void tearDown() {
+    super.tearDown();
+    m_cc = null;
+    m_tree = null;
+  }
 }

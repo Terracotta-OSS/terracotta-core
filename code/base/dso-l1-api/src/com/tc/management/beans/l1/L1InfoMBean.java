@@ -18,5 +18,7 @@ public interface L1InfoMBean extends TerracottaMBean, NotificationEmitter, Runti
 
   String getConfig();
 
+  String[] getCpuStatNames();
+  
   Map getStatistics();
 }

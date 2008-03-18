@@ -7,6 +7,7 @@ import org.dijon.DictionaryResource;
 
 import com.tc.util.ResourceBundleHelper;
 
+import java.util.concurrent.ExecutorService;
 import java.util.prefs.Preferences;
 
 import javax.swing.UIDefaults;
@@ -19,6 +20,7 @@ public class AdminClientContext {
   public DictionaryResource    topRes;
   public AbstractNodeFactory   nodeFactory;
   public Preferences           prefs;
+  public ExecutorService       executorService;
 
   /**
    * Load a message string from Resources.java.

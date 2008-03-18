@@ -44,7 +44,7 @@ public class ServerConnectionManager implements NotificationListener {
   private ConnectionMonitorAction            m_connectMonitorAction;
   private Timer                              m_connectMonitorTimer;
   private AutoConnectListener                m_autoConnectListener;
-
+  
   private static final Map<String, String[]> m_credentialsMap       = new HashMap<String, String[]>();
 
   private static final int                   CONNECT_MONITOR_PERIOD = 1000;
@@ -89,8 +89,18 @@ public class ServerConnectionManager implements NotificationListener {
     return m_l2Info;
   }
 
+  private void resetConnectedState() {
+    m_active = m_started = m_passiveUninitialized = m_passiveStandby = false;
+  }
+  
+  private void resetAllState() {
+    m_connected = false;
+    resetConnectedState();
+  }
+  
   public void setL2Info(L2Info l2Info) {
     cancelActiveServices();
+    resetAllState();
 
     m_l2Info = l2Info;
     m_connectCntx = new ConnectionContext(l2Info);
@@ -168,10 +178,10 @@ public class ServerConnectionManager implements NotificationListener {
   protected void setConnected(boolean connected) {
     if (m_connected != connected) {
       synchronized (this) {
-        m_connected = connected;
-        if (m_connected == false) {
+        _setConnected(connected);
+        if (isConnected() == false) {
           cancelActiveServices();
-          m_active = m_started = m_passiveUninitialized = m_passiveStandby = false;
+          resetConnectedState();
         } else {
           cacheCredentials(ServerConnectionManager.this, getCredentials());
           m_started = true;
@@ -189,7 +199,7 @@ public class ServerConnectionManager implements NotificationListener {
         m_connectListener.handleConnection();
       }
       
-      if(m_connected) {
+      if(connected) {
         initConnectionMonitor();
       } else if (isAutoConnect()) {
         startConnect();
@@ -202,8 +212,8 @@ public class ServerConnectionManager implements NotificationListener {
    */
   void disconnectOnExit() {
     cancelActiveServices();
-    if (m_connected) {
-      m_connected = false;
+    if (isConnected()) {
+      _setConnected(false);
       if (m_connectListener != null) {
         m_connectListener.handleConnection();
       }
@@ -369,6 +379,10 @@ public class ServerConnectionManager implements NotificationListener {
     return m_l2Info.jmxPort();
   }
 
+  private void _setConnected(boolean connected) {
+    m_connected = connected;
+  }
+  
   public boolean isConnected() {
     return m_connected;
   }
@@ -527,6 +541,7 @@ public class ServerConnectionManager implements NotificationListener {
       else if (m_passiveUninitialized) sb.append("passive-uninitialized");
       else if (m_passiveStandby) sb.append("passive-standby");
       else if (m_started) sb.append("started");
+      else sb.append("none");
     }
     return sb.toString();
   }

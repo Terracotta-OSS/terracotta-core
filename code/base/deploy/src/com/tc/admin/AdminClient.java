@@ -20,6 +20,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
@@ -58,6 +59,7 @@ public class AdminClient extends ApplicationManager {
     m_cntx.topRes = loadTopRes();
     m_cntx.bundleHelper = new ResourceBundleHelper(getClass());
     m_cntx.nodeFactory = AbstractNodeFactory.getFactory();
+    m_cntx.executorService = Executors.newCachedThreadPool();
 
     if(!Boolean.getBoolean("com.tc.ui.java-icon")) {
       setIconImage(new Image(getBytes("/com/tc/admin/icons/logo_small.gif")));

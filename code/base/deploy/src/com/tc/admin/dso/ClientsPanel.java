@@ -19,7 +19,7 @@ public class ClientsPanel extends XContainer {
   public ClientsPanel(ConnectionContext cc, ClientsNode clientsNode, DSOClient[] clients) {
     super(new BorderLayout());
     m_cc = cc;
-    m_clientsNode = clientsNode;
+    setNode(m_clientsNode = clientsNode);
     add(new JScrollPane(m_table = new ClientsTable(clients)));
   }
 

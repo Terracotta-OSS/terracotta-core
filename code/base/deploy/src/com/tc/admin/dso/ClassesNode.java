@@ -1,7 +1,10 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin.dso;
+
+import org.dijon.Component;
 
 import com.tc.admin.AdminClient;
 import com.tc.admin.ClusterNode;
@@ -18,26 +21,35 @@ import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 
 public class ClassesNode extends ComponentNode {
-  private ClusterNode   m_clusterNode;
-  private JPopupMenu    m_popupMenu;
-  private RefreshAction m_refreshAction;
+  protected ClusterNode       m_clusterNode;
+  protected ClassesPanel      m_classesPanel;
+  protected JPopupMenu        m_popupMenu;
+  protected RefreshAction     m_refreshAction;
 
   private static final String REFRESH_ACTION = "RefreshAction";
 
   public ClassesNode(ClusterNode clusterNode) {
     super();
-
     m_clusterNode = clusterNode;
     setLabel(AdminClient.getContext().getMessage("dso.classes"));
-    setComponent(new ClassesPanel(this));
-
     initMenu();
+  }
+
+  protected ClassesPanel createClassesPanel() {
+    return new ClassesPanel(this);
+  }
+
+  public Component getComponent() {
+    if (m_classesPanel == null) {
+      m_classesPanel = createClassesPanel();
+    }
+    return m_classesPanel;
   }
 
   ConnectionContext getConnectionContext() {
     return m_clusterNode.getConnectionContext();
   }
-  
+
   private void initMenu() {
     m_refreshAction = new RefreshAction();
 
@@ -56,7 +68,9 @@ public class ClassesNode extends ComponentNode {
   }
 
   public void refresh() {
-    ((ClassesPanel)getComponent()).refresh();
+    if (m_classesPanel != null) {
+      m_classesPanel.refresh();
+    }
   }
 
   private class RefreshAction extends XAbstractAction {
@@ -75,5 +89,18 @@ public class ClassesNode extends ComponentNode {
 
   public void nodeClicked(MouseEvent me) {
     m_refreshAction.actionPerformed(null);
+  }
+
+  public void tearDown() {
+    if (m_classesPanel != null) {
+      m_classesPanel.tearDown();
+    }
+
+    super.tearDown();
+
+    m_clusterNode = null;
+    m_classesPanel = null;
+    m_popupMenu = null;
+    m_refreshAction = null;
   }
 }

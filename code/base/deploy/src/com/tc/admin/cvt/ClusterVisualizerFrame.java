@@ -149,8 +149,10 @@ public class ClusterVisualizerFrame extends JFrame {
     fBottomPanel.setBorder(LineBorder.createBlackLineBorder());
     fGraphPanel = new JPanel();
     fGraphPanel.setLayout(new GridLayout(0, 1));
-    fBottomPanel.add(new JScrollPane(fGraphPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
+    JScrollPane scrollPane = new JScrollPane(fGraphPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                             ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    fBottomPanel.add(scrollPane, BorderLayout.CENTER);
+    scrollPane.getVerticalScrollBar().putClientProperty("JScrollBar.fastWheelScrolling", Boolean.TRUE);
     JPanel statusPanel = new JPanel(new BorderLayout());
     statusPanel.setBorder(new EmptyBorder(3, 3, 3, 3));
     statusPanel.add(fStatusLine = new JLabel());

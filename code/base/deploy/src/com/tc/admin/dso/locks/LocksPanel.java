@@ -11,11 +11,11 @@ import org.dijon.Spinner;
 import org.dijon.TextArea;
 import org.dijon.ToggleButton;
 
-import EDU.oswego.cs.dl.util.concurrent.misc.SwingWorker;
-
 import com.tc.admin.AdminClient;
 import com.tc.admin.AdminClientContext;
 import com.tc.admin.ConnectionContext;
+import com.tc.admin.common.BasicWorker;
+import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XObjectTable;
 import com.tc.admin.common.XTreeCellRenderer;
@@ -32,10 +32,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.concurrent.Callable;
 
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.Notification;
@@ -58,6 +58,7 @@ import javax.swing.table.TableModel;
 import javax.swing.tree.TreePath;
 
 public class LocksPanel extends XContainer implements NotificationListener {
+  private AdminClientContext          fAdminClientContext;
   private ConnectionContext           fConnectionContext;
   private LocksNode                   fLocksNode;
   private LockStatisticsMonitorMBean  fLockStats;
@@ -89,6 +90,7 @@ public class LocksPanel extends XContainer implements NotificationListener {
   public LocksPanel(LocksNode locksNode) {
     super();
 
+    fAdminClientContext = AdminClient.getContext();
     fConnectionContext = locksNode.getConnectionContext();
     fLocksNode = locksNode;
     fLocksNode.setRenderer(new XTreeCellRenderer() {
@@ -102,12 +104,12 @@ public class LocksPanel extends XContainer implements NotificationListener {
         return comp;
       }
     });
-    AdminClientContext cntx = AdminClient.getContext();
 
-    load((ContainerResource) cntx.topRes.getComponent("LocksPanel"));
+    load((ContainerResource) fAdminClientContext.topRes.getComponent("LocksPanel"));
 
-    fLockStats = (LockStatisticsMonitorMBean) MBeanServerInvocationHandler
-        .newProxyInstance(fConnectionContext.mbsc, L2MBeanNames.LOCK_STATISTICS, LockStatisticsMonitorMBean.class, false);
+    fLockStats = (LockStatisticsMonitorMBean) MBeanServerInvocationProxy
+        .newProxyInstance(fConnectionContext.mbsc, L2MBeanNames.LOCK_STATISTICS, LockStatisticsMonitorMBean.class,
+                          false);
 
     // We do this to force an early error if the server we're connecting to is old and doesn't
     // have the LockStatisticsMonitorMBean. DSONode catches the error and doesn't display the LocksNode.
@@ -150,7 +152,7 @@ public class LocksPanel extends XContainer implements NotificationListener {
     fTreeTableModel = new LockTreeTableModel(EMPTY_LOCK_SPEC_COLLECTION);
     fTreeTable = (LockTreeTable) findComponent("LockTreeTable");
     fTreeTable.setTreeTableModel(fTreeTableModel);
-    fTreeTable.setPreferences(cntx.prefs.node("LockTreeTable"));
+    fTreeTable.setPreferences(fAdminClientContext.prefs.node("LockTreeTable"));
     fTreeTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
     fTreeTable.addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
@@ -208,31 +210,64 @@ public class LocksPanel extends XContainer implements NotificationListener {
     fConfigLabel = (Label) findComponent("ConfigLabel");
     fConfigText = (TextArea) findComponent("ConfigText");
 
-    setLocksPanelEnabled(fLockStats.isLockStatisticsEnabled());
-
     try {
       fConnectionContext.addNotificationListener(L2MBeanNames.LOCK_STATISTICS, this);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+    
+    fAdminClientContext.executorService.execute(new LocksPanelEnabledWorker());
   }
 
-  void newConnectionContext() {
-    fConnectionContext = fLocksNode.getConnectionContext();
-    fLockStats = (LockStatisticsMonitorMBean) MBeanServerInvocationHandler
-        .newProxyInstance(fConnectionContext.mbsc, L2MBeanNames.LOCK_STATISTICS, LockStatisticsMonitorMBean.class,
-                          false);
-    fLastTraceDepth = fLockStats.getTraceDepth();
-    ((SpinnerNumberModel) fTraceDepthSpinner.getModel()).setValue(Integer.valueOf(fLastTraceDepth));
-    setLocksPanelEnabled(fLockStats.isLockStatisticsEnabled());
-
-    try {
-      fConnectionContext.addNotificationListener(L2MBeanNames.LOCK_STATISTICS, this);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+  private class LocksPanelEnabledWorker extends BasicWorker<Boolean> {
+    private LocksPanelEnabledWorker() {
+      super(new Callable<Boolean>() {
+        public Boolean call() throws Exception {
+          return fLockStats.isLockStatisticsEnabled();
+        }
+      });
+    }
+    
+    public void finished() {
+      Exception e = getException();
+      if(e != null) {
+        fAdminClientContext.log(e);
+      } else {
+        setLocksPanelEnabled(getResult());
+      }
     }
   }
   
+  private class NewConnectionContextWorker extends BasicWorker<Boolean> {
+    private NewConnectionContextWorker() {
+      super(new Callable<Boolean>() {
+        public Boolean call() throws Exception {
+          fConnectionContext = fLocksNode.getConnectionContext();
+          fLockStats = (LockStatisticsMonitorMBean) MBeanServerInvocationHandler
+              .newProxyInstance(fConnectionContext.mbsc, L2MBeanNames.LOCK_STATISTICS, LockStatisticsMonitorMBean.class,
+                                false);
+          fLastTraceDepth = fLockStats.getTraceDepth();
+          fConnectionContext.addNotificationListener(L2MBeanNames.LOCK_STATISTICS, LocksPanel.this);
+          return fLockStats.isLockStatisticsEnabled();
+        }
+      });
+    }
+    
+    protected void finished() {
+      Exception e = getException();
+      if(e != null) {
+        fAdminClientContext.log(e);
+      } else {
+        ((SpinnerNumberModel) fTraceDepthSpinner.getModel()).setValue(Integer.valueOf(fLastTraceDepth));
+        setLocksPanelEnabled(getResult());
+      }
+    }
+  }
+  
+  void newConnectionContext() {
+    fAdminClientContext.executorService.execute(new NewConnectionContextWorker());
+  }
+
   private boolean testSelectMatch(JTable table, String text, int row) {
     String lockLabel = table.getModel().getValueAt(row, 0).toString();
     if (lockLabel.contains(text)) {
@@ -302,13 +337,29 @@ public class LocksPanel extends XContainer implements NotificationListener {
     }
   }
 
+  private class LockStatsStateWorker extends BasicWorker<Void> {
+    private LockStatsStateWorker(final boolean lockStatsEnabled) {
+      super(new Callable<Void>() {
+        public Void call() {
+          fLockStats.setLockStatisticsEnabled(lockStatsEnabled);
+          return null;
+        }
+      });
+    }
+      
+    protected void finished() {
+      // Wait for JMX notification to update display
+    }
+  }
+  
   private void toggleLocksPanelEnabled() {
-    setLocksPanelEnabled(fLocksPanelEnabled ? false : true);
+    boolean lockStatsEnabled = fLocksPanelEnabled ? false : true;
+    fAdminClientContext.executorService.execute(new LockStatsStateWorker(lockStatsEnabled));
   }
 
   private void setLocksPanelEnabled(boolean enabled) {
     fRefreshButton.setEnabled(enabled);
-    fLockStats.setLockStatisticsEnabled(enabled);
+//    fLockStats.setLockStatisticsEnabled(enabled);
 
     fLocksPanelEnabled = enabled;
     fEnableButton.setSelected(enabled);
@@ -321,35 +372,40 @@ public class LocksPanel extends XContainer implements NotificationListener {
     final String label = fRefreshButton.getText();
     fRefreshButton.setText("Wait...");
     fRefreshButton.setEnabled(false);
-    SwingWorker worker = new SwingWorker() {
-      public Object construct() throws Exception {
-        Collection<LockSpec> lockSpecs = fLockStats.getLockSpecs();
-        fTreeTableModel = new LockTreeTableModel(lockSpecs);
-        fServerLockTableModel = new ServerLockTableModel(lockSpecs);
-        return null;
-      }
-
-      public void finished() {
-        InvocationTargetException ite = getException();
-        if(ite != null) {
-          Throwable cause = ite.getCause();
-          AdminClient.getContext().log(cause != null ? cause : ite);
-          return;
-        }
-        
-        fTreeTable.setTreeTableModel(fTreeTableModel);
-        fTreeTable.sort();
-        
-        fServerLocksTable.setModel(fServerLockTableModel);
-        fServerLocksTable.sort();
-        
-        fRefreshButton.setText(label);
-        fRefreshButton.setEnabled(true);
-      }
-    };
-    worker.start();
+    fAdminClientContext.executorService.execute(new LockSpecsGetter(label));
   }
 
+  class LockSpecsGetter extends BasicWorker<Collection<LockSpec>> {
+    private String fRefreshButtonLabel;
+   
+    LockSpecsGetter(String refreshButtonLabel) {
+      super(new Callable<Collection<LockSpec>>() {
+        public Collection<LockSpec> call() throws Exception {
+          return fLockStats.getLockSpecs();
+        }
+      });
+      fRefreshButtonLabel = refreshButtonLabel;
+    }
+
+    protected void finished() {
+      Exception e = getException();
+      if (e != null) {
+        AdminClient.getContext().log(e);
+      } else {
+        Collection<LockSpec> lockSpecs = getResult();
+        
+        fTreeTable.setTreeTableModel(fTreeTableModel = new LockTreeTableModel(lockSpecs));
+        fTreeTable.sort();
+
+        fServerLocksTable.setModel(fServerLockTableModel = new ServerLockTableModel(lockSpecs));
+        fServerLocksTable.sort();
+
+        fRefreshButton.setText(fRefreshButtonLabel);
+        fRefreshButton.setEnabled(true);
+      }
+    }
+  }
+  
   private int getSpinnerValue(JSpinner spinner) {
     try {
       spinner.commitEdit();
@@ -366,6 +422,21 @@ public class LocksPanel extends XContainer implements NotificationListener {
     return ((SpinnerNumberModel) spinner.getModel()).getNumber().intValue();
   }
 
+  private class TraceDepthWorker extends BasicWorker<Void> {
+    private TraceDepthWorker(final int traceDepth) {
+      super(new Callable<Void>() {
+        public Void call() {
+          fLockStats.setLockStatisticsConfig(fLastTraceDepth = traceDepth, 1);
+          return null;
+        }
+      });
+    }
+
+    protected void finished() {
+      // Wait for JMX notification to update display
+    }
+  }
+
   private void testSetTraceDepth() {
     int newTraceDepth = getTraceDepth();
     if (newTraceDepth != fLastTraceDepth) {
@@ -374,7 +445,7 @@ public class LocksPanel extends XContainer implements NotificationListener {
   }
 
   private void setTraceDepth(int traceDepth) {
-    fLockStats.setLockStatisticsConfig(fLastTraceDepth = traceDepth, 1);
+    fAdminClientContext.executorService.execute(new TraceDepthWorker(traceDepth));
   }
 
   private int getTraceDepth() {
@@ -407,10 +478,36 @@ public class LocksPanel extends XContainer implements NotificationListener {
 
   public void tearDown() {
     super.tearDown();
+    
     try {
       fConnectionContext.addNotificationListener(L2MBeanNames.LOCK_STATISTICS, this);
     } catch (Exception e) {
       // ignore
     }
+
+    fAdminClientContext = null;
+    fConnectionContext = null;
+    fLocksNode = null;
+    fLockStats = null;
+    fEnableButton = null;
+    fDisableButton = null;
+    fTraceDepthSpinner = null;
+    fTraceDepthSpinnerChangeListener = null;
+    fTraceDepthChangeTimer = null;
+    fRefreshButton = null;
+    fLocksTabbedPane = null;
+    fTreeTable = null;
+    fTreeTableModel = null;
+    fClientLocksFindField = null;
+    fClientLocksFindNextButton = null;
+    fClientLocksFindPreviousButton = null;
+    fServerLocksTable = null;
+    fServerLockTableModel = null;
+    fServerLocksFindField = null;
+    fServerLocksFindNextButton = null;
+    fServerLocksFindPreviousButton = null;
+    fTraceText = null;
+    fConfigLabel = null;
+    fConfigText = null;
   }
 }

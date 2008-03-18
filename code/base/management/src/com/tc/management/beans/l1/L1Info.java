@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -39,7 +40,7 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
       if (sraCpuType != null) {
         this.cpuSRA = (StatisticRetrievalAction) sraCpuType.newInstance();
       }
-    } catch (Exception e) {
+    } catch (Throwable t) {
       /**/
     }
   }
@@ -91,6 +92,19 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
     return text;
   }
 
+  public String[] getCpuStatNames() {
+    if (cpuSRA == null) { return new String[0]; }
+
+    List list = new ArrayList();
+    StatisticData[] statsData = cpuSRA.retrieveStatisticData();
+    if (statsData != null) {
+      for (int i = 0; i < statsData.length; i++) {
+        list.add(statsData[i].getElement());
+      }
+    }
+    return (String[]) list.toArray(new String[0]);
+  }
+  
   public Map getStatistics() {
     HashMap map = new HashMap();
     MemoryUsage usage = manager.getMemoryUsage();

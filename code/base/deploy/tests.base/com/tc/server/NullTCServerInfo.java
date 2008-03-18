@@ -94,6 +94,10 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
     //
   }
 
+  public String[] getCpuStatNames() {
+    return null;
+  }
+  
   public Map getStatistics() {
     return null;
   }
