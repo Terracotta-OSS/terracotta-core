@@ -13,9 +13,9 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.impl.DNAEncodingImpl;
 import com.tc.object.dna.impl.ObjectDNAWriterImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.impl.StorageDNAEncodingImpl;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.core.api.ManagedObject;
@@ -46,7 +46,7 @@ import java.util.Set;
  */
 public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference, Serializable, PrettyPrintable {
   private static final TCLogger    logger                   = TCLogging.getLogger(ManagedObjectImpl.class);
-  private static final DNAEncoding DNA_STORAGE_ENCODING     = new DNAEncodingImpl(DNAEncoding.STORAGE);
+  private static final DNAEncoding DNA_STORAGE_ENCODING     = new StorageDNAEncodingImpl();
 
   private final static byte        IS_NEW_OFFSET            = 1;
   private final static byte        IS_DIRTY_OFFSET          = 2;

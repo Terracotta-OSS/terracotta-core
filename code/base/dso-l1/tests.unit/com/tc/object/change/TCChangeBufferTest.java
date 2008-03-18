@@ -6,6 +6,7 @@ package com.tc.object.change;
 
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
+import com.tc.object.ApplicatorDNAEncodingImpl;
 import com.tc.object.MockTCObject;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
@@ -15,7 +16,6 @@ import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.object.dna.impl.DNAEncodingImpl;
 import com.tc.object.dna.impl.DNAImpl;
 import com.tc.object.dna.impl.DNAWriterImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -28,7 +28,7 @@ public class TCChangeBufferTest extends TestCase {
   public void testLogicalClassIgnoresPhysicalChanges() throws Exception {
     ObjectStringSerializer serializer = new ObjectStringSerializer();
     ClassProvider classProvider = new MockClassProvider();
-    DNAEncoding encoding = new DNAEncodingImpl(classProvider);
+    DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
     MockTCObject mockTCObject = new MockTCObject(new ObjectID(1), this, false, true);
     TCChangeBuffer buffer = new TCChangeBufferImpl(mockTCObject);
 
@@ -71,7 +71,7 @@ public class TCChangeBufferTest extends TestCase {
   public void testLastPhysicalChangeWins() throws Exception {
     ObjectStringSerializer serializer = new ObjectStringSerializer();
     ClassProvider classProvider = new MockClassProvider();
-    DNAEncoding encoding = new DNAEncodingImpl(classProvider);
+    DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
     MockTCObject mockTCObject = new MockTCObject(new ObjectID(1), this);
     TCChangeBuffer buffer = new TCChangeBufferImpl(mockTCObject);
 
@@ -110,7 +110,7 @@ public class TCChangeBufferTest extends TestCase {
   public void testLastArrayChangeWins() throws Exception {
     ObjectStringSerializer serializer = new ObjectStringSerializer();
     ClassProvider classProvider = new MockClassProvider();
-    DNAEncoding encoding = new DNAEncodingImpl(classProvider);
+    DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
     MockTCObject mockTCObject = new MockTCObject(new ObjectID(1), this, true, false);
     TCChangeBuffer buffer = new TCChangeBufferImpl(mockTCObject);
 

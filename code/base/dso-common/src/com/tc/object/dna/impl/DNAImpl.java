@@ -22,7 +22,7 @@ import com.tc.util.Conversion;
 import java.io.IOException;
 
 public class DNAImpl implements DNA, DNACursor, TCSerializable {
-  private static final DNAEncoding     DNA_STORAGE_ENCODING = new DNAEncodingImpl(DNAEncoding.STORAGE);
+  private static final DNAEncoding     DNA_STORAGE_ENCODING = new StorageDNAEncodingImpl();
 
   private final ObjectStringSerializer serializer;
   private final boolean                createOutput;
@@ -93,25 +93,25 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
     byte recordType = input.readByte();
 
     switch (recordType) {
-      case DNAEncodingImpl.PHYSICAL_ACTION_TYPE:
+      case BaseDNAEncodingImpl.PHYSICAL_ACTION_TYPE:
         parsePhysical(encoding, false);
         return;
-      case DNAEncodingImpl.PHYSICAL_ACTION_TYPE_REF_OBJECT:
+      case BaseDNAEncodingImpl.PHYSICAL_ACTION_TYPE_REF_OBJECT:
         parsePhysical(encoding, true);
         return;
-      case DNAEncodingImpl.LOGICAL_ACTION_TYPE:
+      case BaseDNAEncodingImpl.LOGICAL_ACTION_TYPE:
         parseLogical(encoding);
         return;
-      case DNAEncodingImpl.ARRAY_ELEMENT_ACTION_TYPE:
+      case BaseDNAEncodingImpl.ARRAY_ELEMENT_ACTION_TYPE:
         parseArrayElement(encoding);
         return;
-      case DNAEncodingImpl.ENTIRE_ARRAY_ACTION_TYPE:
+      case BaseDNAEncodingImpl.ENTIRE_ARRAY_ACTION_TYPE:
         parseEntireArray(encoding);
         return;
-      case DNAEncodingImpl.LITERAL_VALUE_ACTION_TYPE:
+      case BaseDNAEncodingImpl.LITERAL_VALUE_ACTION_TYPE:
         parseLiteralValue(encoding);
         return;
-      case DNAEncodingImpl.SUB_ARRAY_ACTION_TYPE:
+      case BaseDNAEncodingImpl.SUB_ARRAY_ACTION_TYPE:
         parseSubArray(encoding);
         return;
       default:

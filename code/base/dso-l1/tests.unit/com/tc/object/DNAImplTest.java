@@ -1,12 +1,10 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
-package com.tc.object.dna.impl;
+package com.tc.object;
 
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.object.ObjectID;
 import com.tc.object.bytecode.MockClassProvider;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
@@ -14,6 +12,9 @@ import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
+import com.tc.object.dna.impl.DNAImpl;
+import com.tc.object.dna.impl.DNAWriterImpl;
+import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.util.Assert;
 
@@ -32,11 +33,10 @@ public class DNAImplTest extends TestCase {
   public void testArrayLength() throws Exception {
     serializeDeserialize(false, false);
   }
-
+  
   public void testDelta() throws Exception {
     serializeDeserialize(false, true);
   }
-
 
   protected void serializeDeserialize(boolean parentID, boolean isDelta) throws Exception {
     TCByteBufferOutputStream out = new TCByteBufferOutputStream();
@@ -48,7 +48,7 @@ public class DNAImplTest extends TestCase {
 
     ObjectStringSerializer serializer = new ObjectStringSerializer();
     ClassProvider classProvider = new MockClassProvider();
-    DNAEncoding encoding = new DNAEncodingImpl(classProvider);
+    DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
     DNAWriter dnaWriter = createDNAWriter(out, id, type, serializer, encoding, isDelta);
     PhysicalAction action1 = new PhysicalAction("class.field1", new Integer(1), false);
     LogicalAction action2 = new LogicalAction(12, new Object[] { "key", "value" });
@@ -98,16 +98,14 @@ public class DNAImplTest extends TestCase {
       assertTrue(dna.hasLength());
       assertEquals(arrayLen, dna.getArraySize());
     }
-
+    
     Assert.assertEquals(isDelta, dna.isDelta());
-
-    if (! isDelta) {
+    
+    if(! isDelta) {
       assertEquals(type, dna.getTypeName());
       assertEquals("loader description", dna.getDefiningLoaderDescription());
     }
   }
-
-
 
   protected DNAImpl createDNAImpl(ObjectStringSerializer serializer, boolean b) {
     return new DNAImpl(serializer, b);
@@ -130,3 +128,4 @@ public class DNAImplTest extends TestCase {
   }
 
 }
+

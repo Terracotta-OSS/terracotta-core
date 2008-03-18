@@ -18,7 +18,6 @@ import com.tc.object.applicator.ProxyApplicator;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.dna.api.DNAEncoding;
-import com.tc.object.dna.impl.DNAEncodingImpl;
 import com.tc.object.field.TCFieldFactory;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.util.ClassUtils;
@@ -42,11 +41,11 @@ public class TCClassFactoryImpl implements TCClassFactory {
   private final ClassProvider         classProvider;
   private final DNAEncoding           encoding;
 
-  public TCClassFactoryImpl(TCFieldFactory fieldFactory, DSOClientConfigHelper config, ClassProvider classProvider) {
+  public TCClassFactoryImpl(TCFieldFactory fieldFactory, DSOClientConfigHelper config, ClassProvider classProvider, DNAEncoding dnaEncoding) {
     this.fieldFactory = fieldFactory;
     this.config = config;
     this.classProvider = classProvider;
-    this.encoding = new DNAEncodingImpl(classProvider);
+    this.encoding = dnaEncoding;
   }
 
   public TCClass getOrCreate(Class clazz, ClientObjectManager objectManager) {
@@ -82,7 +81,7 @@ public class TCClassFactoryImpl implements TCClassFactory {
         } catch (SecurityException e) {
           throw new TCRuntimeException(e);
         } catch (NoSuchMethodException e) {
-          c = null;
+          // c is already null
         }
         if (c != null) { return clazz; }
       }

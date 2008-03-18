@@ -7,7 +7,9 @@ package com.tc.object;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.object.bytecode.MockClassProvider;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.field.TCFieldFactory;
+import com.tc.object.loaders.ClassProvider;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -71,7 +73,10 @@ public class TraverserTest extends BaseDSOTestCase {
 
     public TestPortableObjectProvider() throws ConfigurationSetupException {
       DSOClientConfigHelper config = configHelper();
-      cf = new TCClassFactoryImpl(new TCFieldFactory(config), config, new MockClassProvider());
+      ClassProvider classProvider = new MockClassProvider();
+      DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
+      cf = new TCClassFactoryImpl(new TCFieldFactory(config), config, classProvider, encoding);
+
     }
 
     public TraversedReferences getPortableObjects(Class clazz, Object start, TraversedReferences addTo) {

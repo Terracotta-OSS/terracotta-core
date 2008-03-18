@@ -49,6 +49,7 @@ public class LiteralValues {
   public final static int    ENUM                         = 20;
   public final static int    ENUM_HOLDER                  = 21;
   public final static int    CURRENCY                     = 22;
+  public final static int    STRING_BYTES_COMPRESSED      = 23;
 
   private final Map          values;
 
@@ -72,6 +73,7 @@ public class LiteralValues {
     addMapping(tmp, String.class.getName(), STRING);
 
     addMapping(tmp, "com.tc.object.dna.impl.UTF8ByteDataHolder", STRING_BYTES);
+    addMapping(tmp, "com.tc.object.dna.impl.UTF8ByteCompressedDataHolder", STRING_BYTES_COMPRESSED);
 
     addMapping(tmp, Short.class.getName(), SHORT);
     addMapping(tmp, short.class.getName(), SHORT);

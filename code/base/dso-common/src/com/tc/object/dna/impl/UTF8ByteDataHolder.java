@@ -4,6 +4,8 @@
  */
 package com.tc.object.dna.impl;
 
+import com.tc.util.StringTCUtil;
+
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
@@ -17,26 +19,37 @@ import java.util.Arrays;
  */
 public class UTF8ByteDataHolder implements Serializable {
 
-  private final byte[] bytes;
-  private final int    uncompressedLength;
+  private final byte[]  bytes;
+  private final boolean interned;
 
   // Used for tests
   public UTF8ByteDataHolder(String str) {
-    this.uncompressedLength = -1;
     try {
       this.bytes = str.getBytes("UTF-8");
     } catch (UnsupportedEncodingException e) {
       throw new AssertionError(e);
     }
+
+    if (StringTCUtil.isInterned(str)) {
+      this.interned = true;
+    } else {
+      this.interned = false;
+    }
   }
 
+  /**
+   * Just byte data
+   */
   public UTF8ByteDataHolder(byte[] b) {
-    this(b, -1);
+    this(b, false);
   }
 
-  public UTF8ByteDataHolder(byte[] b, int uncompressedLenght) {
+  /**
+   * For a possibly interned, non-compressed string
+   */
+  public UTF8ByteDataHolder(byte[] b, boolean interned) {
     this.bytes = b;
-    this.uncompressedLength = uncompressedLenght;
+    this.interned = interned;
   }
 
   public byte[] getBytes() {
@@ -44,11 +57,11 @@ public class UTF8ByteDataHolder implements Serializable {
   }
 
   public String asString() {
-    return (isCompressed() ? inflate() : getString());
+    return getString();
   }
 
-  private String inflate() {
-    return DNAEncodingImpl.inflateCompressedString(bytes, uncompressedLength);
+  public boolean isInterned() {
+    return this.interned;
   }
 
   private String getString() {
@@ -64,7 +77,11 @@ public class UTF8ByteDataHolder implements Serializable {
   }
 
   public int hashCode() {
-    int hash = isCompressed() ? 21 : 37;
+    return computeHashCode(37);
+  } 
+  
+  protected int computeHashCode(int seed) {
+    int hash = seed;
     for (int i = 0, n = bytes.length; i < n; i++) {
       hash = 31 * hash + bytes[i++];
     }
@@ -74,17 +91,9 @@ public class UTF8ByteDataHolder implements Serializable {
   public boolean equals(Object obj) {
     if (obj instanceof UTF8ByteDataHolder) {
       UTF8ByteDataHolder other = (UTF8ByteDataHolder) obj;
-      return ((uncompressedLength == other.uncompressedLength) && (Arrays.equals(this.bytes, other.bytes)) && this
-          .getClass().equals(other.getClass()));
+      return (Arrays.equals(this.bytes, other.bytes)) && this.getClass().equals(other.getClass());
     }
     return false;
   }
 
-  public boolean isCompressed() {
-    return uncompressedLength != -1;
-  }
-
-  public int getUnCompressedStringLength() {
-    return uncompressedLength;
-  }
 }

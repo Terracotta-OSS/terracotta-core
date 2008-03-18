@@ -37,6 +37,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.geronimo.GeronimoLoaderNaming;
 import com.tc.hibernate.HibernateProxyInstance;
 import com.tc.ibatis.IBatisAccessPlanInstance;
+import com.tc.io.TCByteArrayOutputStream;
 import com.tc.jboss.JBossLoaderNaming;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.NullTCLogger;
@@ -68,6 +69,7 @@ import com.tc.object.bytecode.JavaLangReflectArrayAdapter;
 import com.tc.object.bytecode.JavaLangReflectFieldAdapter;
 import com.tc.object.bytecode.JavaLangReflectProxyClassAdapter;
 import com.tc.object.bytecode.JavaLangStringAdapter;
+import com.tc.object.bytecode.JavaLangStringTC;
 import com.tc.object.bytecode.JavaLangThrowableDebugClassAdapter;
 import com.tc.object.bytecode.JavaNetURLAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentCyclicBarrierDebugClassAdapter;
@@ -114,6 +116,8 @@ import com.tc.object.bytecode.hook.impl.JavaLangArrayHelpers;
 import com.tc.object.bytecode.hook.impl.SessionsHelper;
 import com.tc.object.bytecode.hook.impl.Util;
 import com.tc.object.cache.Cacheable;
+import com.tc.object.compression.CompressedData;
+import com.tc.object.compression.StringCompressionUtil;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.DSOSpringConfigHelper;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
@@ -491,6 +495,10 @@ public class BootJarTool {
       loadTerracottaClass(TCProperties.class.getName());
       loadTerracottaClass(ClusterEventListener.class.getName());
       loadTerracottaClass(OverrideCheck.class.getName());
+      loadTerracottaClass(JavaLangStringTC.class.getName());
+      loadTerracottaClass(StringCompressionUtil.class.getName());
+      loadTerracottaClass(CompressedData.class.getName());
+      loadTerracottaClass(TCByteArrayOutputStream.class.getName());
 
       // These classes need to be specified as literal in order to prevent
       // the static block of IdentityWeakHashMap from executing during generating
@@ -1126,7 +1134,7 @@ public class BootJarTool {
 
     loadTerracottaClass("com.tc.object.applicator.TCURL");
     loadTerracottaClass("com.tc.object.bytecode.TCMapEntry");
-
+    
     // DEV-116; Some of these probably should'nt be in the boot jar
     loadTerracottaClass("com.tc.exception.ImplementMe");
     loadTerracottaClass("com.tc.exception.TCClassNotFoundException");
@@ -1625,7 +1633,7 @@ public class BootJarTool {
     ClassReader cr = new ClassReader(orig);
     ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
 
-    ClassVisitor cv = new JavaLangStringAdapter(cw, Vm.VERSION, shouldIncludeStringBufferAndFriends(), Vm.isAzul());
+    ClassVisitor cv = new JavaLangStringAdapter(cw, Vm.VERSION, shouldIncludeStringBufferAndFriends(), Vm.isAzul(), Vm.isIBM());
     cr.accept(cv, ClassReader.SKIP_FRAMES);
 
     bootJar.loadClassIntoJar("java.lang.String", cw.toByteArray(), false);

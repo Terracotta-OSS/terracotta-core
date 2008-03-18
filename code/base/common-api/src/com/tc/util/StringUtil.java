@@ -13,7 +13,7 @@ public class StringUtil {
 
   /** A space character */
   public static final char   SPACE        = ' ';
-  
+
   /** A space string */
   public static final String SPACE_STRING = " ";
 
@@ -24,7 +24,8 @@ public class StringUtil {
   public static final String NULL_STRING  = "<null>";
 
   /**
-   * Normal toString(), but convert null to the {@link #NULL_STRING}.  
+   * Normal toString(), but convert null to the {@link #NULL_STRING}.
+   * 
    * @return Always a string, never null
    */
   public static final String safeToString(Object object) {
@@ -32,8 +33,8 @@ public class StringUtil {
   }
 
   /**
-   * Indent lines using a single tab by inserting them into source 
-   * after line breaks and returning a new String.
+   * Indent lines using a single tab by inserting them into source after line breaks and returning a new String.
+   * 
    * @param source Source string, may NOT be null
    * @return New string, updated with indents
    * @throws NullPointerException If source is null
@@ -43,8 +44,8 @@ public class StringUtil {
   }
 
   /**
-   * Indent lines using tabs by inserting them into source 
-   * after line breaks and returning a new String.
+   * Indent lines using tabs by inserting them into source after line breaks and returning a new String.
+   * 
    * @param source Source string, may NOT be null
    * @param indentLevel Number of tabs to insert, must be >= 0
    * @return Original buffer, updated
@@ -57,6 +58,7 @@ public class StringUtil {
 
   /**
    * Indent lines using tabs by inserting them into source and returning source.
+   * 
    * @param source Source buffer, may be null
    * @param indentLevel Number of tabs to insert, must be >= 0
    * @return Original buffer, updated
@@ -67,8 +69,8 @@ public class StringUtil {
   }
 
   /**
-   * Indent lines in the StringBuffer (line breaks found at \n) with indentChar repeated 
-   * indentLevel times.
+   * Indent lines in the StringBuffer (line breaks found at \n) with indentChar repeated indentLevel times.
+   * 
    * @param source Source buffer, may be null
    * @param indentLevel Number of chars to indent, must be >= 0
    * @param indentChar Indent character (usually ' ' or '\t')
@@ -110,6 +112,7 @@ public class StringUtil {
 
   /**
    * Find index of "search" in "source", starting at "start" index.
+   * 
    * @param source Source buffer, must be non-null
    * @param search Search string, must be non-null
    * @param start Start index, should be 0<=start<source.length(), will return -1 if out of range
@@ -149,9 +152,10 @@ public class StringUtil {
     }
     return rv.toString();
   }
-  
+
   /**
-   * Helper method to convert object array [a, b, c] to comma-separated string "a, b, c".  
+   * Helper method to convert object array [a, b, c] to comma-separated string "a, b, c".
+   * 
    * @param objs Array of objects, can be null
    * @return String, never null
    */
@@ -160,8 +164,8 @@ public class StringUtil {
   }
 
   /**
-   * Format value to string using radix, then prepend with 0's out to paddedWidth.
-   * If the formatted value is > paddedWidth, then the value is returned.
+   * Format value to string using radix, then prepend with 0's out to paddedWidth. If the formatted value is >
+   * paddedWidth, then the value is returned.
    * 
    * @param value Long value, must be >= 0
    * @param radix The radix to use when representing the value
@@ -221,21 +225,18 @@ public class StringUtil {
     }
     return result.toString();
   }
-  
+
   /**
-   * Reduces the size that a string occupies to the minimal possible by 
-   * ensuring that the back-end char array contains exactly the characters that
-   * are needed, and no more.
-   * 
-   * Note that this method doesn't modify the original string as they are
-   * immutable, a new string is returned instead.
+   * Reduces the size that a string occupies to the minimal possible by ensuring that the back-end char array contains
+   * exactly the characters that are needed, and no more. Note that this method doesn't modify the original string as
+   * they are immutable, a new string is returned instead.
    * 
    * @param source the string that needs to be reduced
    * @return the reduced string, null if source is null
    */
   public static final String reduce(String source) {
     if (null == source) return null;
-    
+
     char[] chars = new char[source.length()];
     source.getChars(0, source.length(), chars, 0);
     return new String(chars);
@@ -243,6 +244,7 @@ public class StringUtil {
 
   /**
    * For a string s, if non-null return s, else return nullToken.
+   * 
    * @param s The starting string
    * @param nullToken The null token
    * @return s or nullToken depending on s
@@ -253,11 +255,11 @@ public class StringUtil {
 
   /**
    * Get a non-null version of the String.
+   * 
    * @param s The string
    * @return Either s or the empty string if s was null
    */
   public static final String getNonNull(String s) {
     return getNonNull(s, EMPTY);
   }
-
 }

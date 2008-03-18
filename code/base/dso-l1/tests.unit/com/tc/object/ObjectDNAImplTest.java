@@ -1,13 +1,15 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
-package com.tc.object.dna.impl;
+package com.tc.object;
 
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.object.ObjectID;
-import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.dna.impl.DNAImpl;
+import com.tc.object.dna.impl.ObjectDNAImpl;
+import com.tc.object.dna.impl.ObjectDNAWriterImpl;
+import com.tc.object.dna.impl.ObjectStringSerializer;
 
 public class ObjectDNAImplTest extends DNAImplTest {
 
@@ -22,7 +24,7 @@ public class ObjectDNAImplTest extends DNAImplTest {
     super.serializeDeserialize(false, false);
     assertEquals(version, dna.getVersion());
   }
-
+  
   protected DNAImpl createDNAImpl(ObjectStringSerializer serializer, boolean b) {
     return new ObjectDNAImpl(serializer, b);
   }

@@ -34,22 +34,22 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
   private boolean                    isConstructor;
 
   private final TransparencyCodeSpec codeSpec;
-  private final Label                labelZero = new Label();
+  private final Label                labelZero          = new Label();
 
-  private boolean                    visitInit = false;
+  private boolean                    visitInit          = false;
   private boolean                    logicalInitVisited = false;
 
-//  public TransparencyCodeAdapter(InstrumentationSpec spec, boolean isAutolock, int autoLockType, MethodVisitor mv,
-//                                 MemberInfo memberInfo, String originalName) {
+  // public TransparencyCodeAdapter(InstrumentationSpec spec, boolean isAutolock, int autoLockType, MethodVisitor mv,
+  // MemberInfo memberInfo, String originalName) {
   public TransparencyCodeAdapter(InstrumentationSpec spec, LockDefinition autoLockDefinition, MethodVisitor mv,
                                  MemberInfo memberInfo, String originalName) {
     super(mv, memberInfo.getModifiers(), originalName, memberInfo.getSignature());
     this.spec = spec;
     this.isAutolock = autoLockDefinition != null;
-    this.autoLockType = isAutolock? autoLockDefinition.getLockLevelAsInt():-1;
-    this.autoLockContextInfo = isAutolock? autoLockDefinition.getLockContextInfo():null;
-//    this.isAutolock = isAutolock;
-//    this.autoLockType = autoLockType;
+    this.autoLockType = isAutolock ? autoLockDefinition.getLockLevelAsInt() : -1;
+    this.autoLockContextInfo = isAutolock ? autoLockDefinition.getLockContextInfo() : null;
+    // this.isAutolock = isAutolock;
+    // this.autoLockType = autoLockType;
     this.memberInfo = memberInfo;
 
     this.mgrHelper = spec.getManagerHelper();
@@ -80,7 +80,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
       super.visitVarInsn(types[i].getOpcode(ILOAD), localVariablesForMethodCall[i]);
     }
   }
-  
+
   public void visitMethodInsn(int opcode, String owner, String name, String desc) {
     if (spec.hasDelegatedToLogicalClass() && isConstructor) {
       logicalInitVisitMethodInsn(opcode, owner, name, desc);
@@ -88,7 +88,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
       basicVisitMethodInsn(opcode, owner, name, desc);
     }
   }
-  
+
   private void logicalInitVisitMethodInsn(int opcode, String owner, String name, String desc) {
     String superClassNameSlashes = spec.getSuperClassNameSlashes();
     if (!logicalInitVisited && INVOKESPECIAL == opcode && owner.equals(superClassNameSlashes) && "<init>".equals(name)) {
@@ -117,6 +117,9 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
       rewriteArraycopy();
     } else if (classname.equals("java/lang/Object")) {
       handleJavaLangObjectMethodCall(opcode, classname, theMethodName, desc);
+    } else if (classname.equals("java/lang/String") && "intern".equals(theMethodName)) {
+      super.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", ByteCodeUtil.TC_METHOD_PREFIX + "intern",
+                            "()Ljava/lang/String;");
     } else {
       super.visitMethodInsn(opcode, classname, theMethodName, desc);
     }
@@ -159,14 +162,12 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
    * The assumption here is that the compiler wouldn't call invokevirtual on a classname other than java.lang.Object
    * when there is no implementation of clone() defined in that classes' hierarchy. If it does, it a bug in the compiler
    * ;-) This adaption is needed for both PORTABLE and ADAPTABLE classes as we can have instance where Logical subclass
-   * of ADAPTABLE class calls clone() to make a copy of itself.
-   *
-   * The resolveLock needs to be held for the duration of the clone() call if the reference is to a shared object
-   *
+   * of ADAPTABLE class calls clone() to make a copy of itself. The resolveLock needs to be held for the duration of the
+   * clone() call if the reference is to a shared object
+   * 
    * <pre>
    * Object refToBeCloned;
    * Object rv;
-   *
    * TCObject tco = (refToBeCloned instanceof Manageable) ? ((Manageable) refToBeCloned).__tc_managed() : null;
    * if (tco != null) {
    *   synchronized (tco.getResolveLock()) {
@@ -177,7 +178,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
    *   rv = refToBeCloned.clone();
    * }
    * </pre>
-   *
+   * 
    * @see AbstractMap and HashMap
    */
   private boolean handleJavaLangObjectCloneCall(int opcode, String classname, String theMethodName, String desc) {
@@ -322,18 +323,19 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
       }
     }
   }
-  
+
   private void callMonitorEnterWithContextInfo() {
     super.visitLdcInsn(new Integer(autoLockType));
     super.visitLdcInsn(autoLockContextInfo);
     mgrHelper.callManagerMethod("monitorEnterWithContextInfo", this);
   }
-  
+
   private void visitInsnForReadLock(int opCode) {
-    switch(opCode) {
+    switch (opCode) {
       case MONITORENTER:
         super.visitInsn(DUP);
-        super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "isDsoMonitored", "(Ljava/lang/Object;)Z");
+        super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "isDsoMonitored",
+                              "(Ljava/lang/Object;)Z");
         Label l1 = new Label();
         super.visitJumpInsn(IFEQ, l1);
         callMonitorEnterWithContextInfo();
@@ -345,7 +347,8 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
         return;
       case MONITOREXIT:
         super.visitInsn(DUP);
-        super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "isDsoMonitorEntered", "(Ljava/lang/Object;)Z");
+        super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "isDsoMonitorEntered",
+                              "(Ljava/lang/Object;)Z");
         Label l3 = new Label();
         super.visitJumpInsn(IFEQ, l3);
         mgrHelper.callManagerMethod("monitorExit", this);

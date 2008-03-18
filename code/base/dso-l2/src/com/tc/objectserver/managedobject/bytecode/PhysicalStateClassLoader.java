@@ -67,6 +67,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
     addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.STACK_TRACE_ELEMENT, "writeObject", "(Ljava/lang/Object;)V");
     addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.STRING, "writeObject", "(Ljava/lang/Object;)V");
     addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.STRING_BYTES, "writeObject", "(Ljava/lang/Object;)V");
+    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.STRING_BYTES_COMPRESSED, "writeObject", "(Ljava/lang/Object;)V");
     addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.BIG_INTEGER, "writeObject", "(Ljava/lang/Object;)V");
     addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.BIG_DECIMAL, "writeObject", "(Ljava/lang/Object;)V");
 
@@ -94,6 +95,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
     addMapping(OBJECT_INPUT_METHODS, LiteralValues.STACK_TRACE_ELEMENT, "readObject", "()Ljava/lang/Object;");
     addMapping(OBJECT_INPUT_METHODS, LiteralValues.STRING, "readObject", "()Ljava/lang/Object;");
     addMapping(OBJECT_INPUT_METHODS, LiteralValues.STRING_BYTES, "readObject", "()Ljava/lang/Object;");
+    addMapping(OBJECT_INPUT_METHODS, LiteralValues.STRING_BYTES_COMPRESSED, "readObject", "()Ljava/lang/Object;");
     addMapping(OBJECT_INPUT_METHODS, LiteralValues.BIG_INTEGER, "readObject", "()Ljava/lang/Object;");
     addMapping(OBJECT_INPUT_METHODS, LiteralValues.BIG_DECIMAL, "readObject", "()Ljava/lang/Object;");
 

@@ -5,18 +5,19 @@
 package com.tc.object.dna.impl;
 
 import com.tc.exception.TCRuntimeException;
-import com.tc.io.TCByteArrayOutputStream;
 import com.tc.io.TCDataInput;
 import com.tc.io.TCDataOutput;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
+import com.tc.object.compression.CompressedData;
+import com.tc.object.compression.StringCompressionUtil;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.loaders.ClassProvider;
-import com.tc.object.loaders.NamedClassLoader;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
+import com.tc.util.StringTCUtil;
 
 import gnu.trove.TObjectIntHashMap;
 
@@ -31,13 +32,12 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Currency;
-import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 
 /**
  * Utility for encoding/decoding DNA
  */
-public class DNAEncodingImpl implements DNAEncoding {
+public abstract class BaseDNAEncodingImpl implements DNAEncoding {
 
   // XXX: These warning thresholds should be done in a non-static way so they can be made configurable
   // and architecture sensitive.
@@ -61,47 +61,42 @@ public class DNAEncodingImpl implements DNAEncoding {
   static final byte                  SUB_ARRAY_ACTION_TYPE                = 7;
 
   private static final LiteralValues literalValues                        = new LiteralValues();
-  private static final TCLogger      logger                               = TCLogging.getLogger(DNAEncodingImpl.class);
+  private static final TCLogger      logger                               = TCLogging
+                                                                              .getLogger(BaseDNAEncodingImpl.class);
 
-  private static final byte          TYPE_ID_REFERENCE                    = 1;
-  private static final byte          TYPE_ID_BOOLEAN                      = 2;
-  private static final byte          TYPE_ID_BYTE                         = 3;
-  private static final byte          TYPE_ID_CHAR                         = 4;
-  private static final byte          TYPE_ID_DOUBLE                       = 5;
-  private static final byte          TYPE_ID_FLOAT                        = 6;
-  private static final byte          TYPE_ID_INT                          = 7;
-  private static final byte          TYPE_ID_LONG                         = 10;
-  private static final byte          TYPE_ID_SHORT                        = 11;
-  private static final byte          TYPE_ID_STRING                       = 12;
-  private static final byte          TYPE_ID_STRING_BYTES                 = 13;
-  private static final byte          TYPE_ID_ARRAY                        = 14;
-  private static final byte          TYPE_ID_JAVA_LANG_CLASS              = 15;
-  private static final byte          TYPE_ID_JAVA_LANG_CLASS_HOLDER       = 16;
-  private static final byte          TYPE_ID_BIG_INTEGER                  = 17;
-  private static final byte          TYPE_ID_STACK_TRACE_ELEMENT          = 18;
-  private static final byte          TYPE_ID_BIG_DECIMAL                  = 19;
-  private static final byte          TYPE_ID_JAVA_LANG_CLASSLOADER        = 20;
-  private static final byte          TYPE_ID_JAVA_LANG_CLASSLOADER_HOLDER = 21;
-  private static final byte          TYPE_ID_ENUM                         = 22;
-  private static final byte          TYPE_ID_ENUM_HOLDER                  = 23;
-  private static final byte          TYPE_ID_CURRENCY                     = 24;
-  private static final byte          TYPE_ID_STRING_COMPRESSED            = 25;
-//  private static final byte          TYPE_ID_URL                          = 26;
+  protected static final byte        TYPE_ID_REFERENCE                    = 1;
+  protected static final byte        TYPE_ID_BOOLEAN                      = 2;
+  protected static final byte        TYPE_ID_BYTE                         = 3;
+  protected static final byte        TYPE_ID_CHAR                         = 4;
+  protected static final byte        TYPE_ID_DOUBLE                       = 5;
+  protected static final byte        TYPE_ID_FLOAT                        = 6;
+  protected static final byte        TYPE_ID_INT                          = 7;
+  protected static final byte        TYPE_ID_LONG                         = 10;
+  protected static final byte        TYPE_ID_SHORT                        = 11;
+  protected static final byte        TYPE_ID_STRING                       = 12;
+  protected static final byte        TYPE_ID_STRING_BYTES                 = 13;
+  protected static final byte        TYPE_ID_ARRAY                        = 14;
+  protected static final byte        TYPE_ID_JAVA_LANG_CLASS              = 15;
+  protected static final byte        TYPE_ID_JAVA_LANG_CLASS_HOLDER       = 16;
+  protected static final byte        TYPE_ID_BIG_INTEGER                  = 17;
+  protected static final byte        TYPE_ID_STACK_TRACE_ELEMENT          = 18;
+  protected static final byte        TYPE_ID_BIG_DECIMAL                  = 19;
+  protected static final byte        TYPE_ID_JAVA_LANG_CLASSLOADER        = 20;
+  protected static final byte        TYPE_ID_JAVA_LANG_CLASSLOADER_HOLDER = 21;
+  protected static final byte        TYPE_ID_ENUM                         = 22;
+  protected static final byte        TYPE_ID_ENUM_HOLDER                  = 23;
+  protected static final byte        TYPE_ID_CURRENCY                     = 24;
+  protected static final byte        TYPE_ID_STRING_COMPRESSED            = 25;
+  // protected static final byte TYPE_ID_URL = 26;
 
   private static final byte          ARRAY_TYPE_PRIMITIVE                 = 1;
   private static final byte          ARRAY_TYPE_NON_PRIMITIVE             = 2;
-
-  private final ClassProvider        classProvider;
-  private final byte                 policy;
-
-  private static final ClassProvider FAILURE_PROVIDER                     = new FailureClassProvider();
-  private static final ClassProvider LOCAL_PROVIDER                       = new LocalClassProvider();
 
   private static final boolean       STRING_COMPRESSION_ENABLED           = TCPropertiesImpl
                                                                               .getProperties()
                                                                               .getBoolean(
                                                                                           "l1.transactionmanager.strings.compress.enabled");
-  private static final boolean       STRING_COMPRESSION_LOGGING_ENABLED   = TCPropertiesImpl
+  protected static final boolean     STRING_COMPRESSION_LOGGING_ENABLED   = TCPropertiesImpl
                                                                               .getProperties()
                                                                               .getBoolean(
                                                                                           "l1.transactionmanager.strings.compress.logging.enabled");
@@ -110,28 +105,10 @@ public class DNAEncodingImpl implements DNAEncoding {
                                                                               .getInt(
                                                                                       "l1.transactionmanager.strings.compress.minSize");
 
-  /**
-   * Used in the Applicators. The policy is set to APPLICATOR.
-   */
-  public DNAEncodingImpl(ClassProvider classProvider) {
+  protected final ClassProvider      classProvider;
+
+  public BaseDNAEncodingImpl(ClassProvider classProvider) {
     this.classProvider = classProvider;
-    this.policy = APPLICATOR;
-  }
-
-  public DNAEncodingImpl(byte policy) {
-    this.policy = policy;
-    // you only want this version on the server where you won't be expanding java.lang.Class instances
-    if (policy == STORAGE) {
-      this.classProvider = FAILURE_PROVIDER;
-    } else if (policy == SERIALIZER) {
-      this.classProvider = LOCAL_PROVIDER;
-    } else {
-      throw new AssertionError("Policy not valid : " + policy + " : For APPLICATORS use the other contructor !");
-    }
-  }
-
-  public byte getPolicy() {
-    return this.policy;
   }
 
   public void encodeClassLoader(ClassLoader value, TCDataOutput output) {
@@ -241,26 +218,50 @@ public class DNAEncodingImpl implements DNAEncoding {
         output.writeShort(((Short) value).shortValue());
         break;
       case LiteralValues.STRING:
-        String s = (String)value;
+        String s = (String) value;
+        boolean stringInterned = false;
+
+        if (StringTCUtil.isInterned(s)) {
+          stringInterned = true;
+        }
+
         if (STRING_COMPRESSION_ENABLED && s.length() >= STRING_COMPRESSION_MIN_SIZE) {
           output.writeByte(TYPE_ID_STRING_COMPRESSED);
+          output.writeBoolean(stringInterned);
           writeCompressedString(s, output);
         } else {
           output.writeByte(TYPE_ID_STRING);
+          output.writeBoolean(stringInterned);
           writeString(s, output);
         }
         break;
       case LiteralValues.STRING_BYTES:
         UTF8ByteDataHolder utfBytes = (UTF8ByteDataHolder) value;
-        if (utfBytes.isCompressed()) {
-          output.writeByte(TYPE_ID_STRING_COMPRESSED);
-          output.writeInt(utfBytes.getUnCompressedStringLength());
-          writeByteArray(utfBytes.getBytes(), output);
-        } else {
-          output.writeByte(TYPE_ID_STRING_BYTES);
-          writeByteArray(utfBytes.getBytes(), output);
+        boolean stringbytesInterned = false;
+        if (utfBytes.isInterned()) {
+          stringbytesInterned = true;
         }
+
+        output.writeByte(TYPE_ID_STRING_BYTES);
+        output.writeBoolean(stringbytesInterned);
+        writeByteArray(utfBytes.getBytes(), output);
         break;
+      case LiteralValues.STRING_BYTES_COMPRESSED:
+        UTF8ByteCompressedDataHolder utfCompressedBytes = (UTF8ByteCompressedDataHolder) value;
+        boolean interned = false;
+
+        if (utfCompressedBytes.isInterned()) {
+          interned = true;
+        }
+
+        output.writeByte(TYPE_ID_STRING_COMPRESSED);
+        output.writeBoolean(interned);
+        output.writeInt(utfCompressedBytes.getUncompressedStringLength());
+        writeByteArray(utfCompressedBytes.getBytes(), output);
+        output.writeInt(utfCompressedBytes.getStringLength());
+        output.writeInt(utfCompressedBytes.getStringHash());
+        break;
+
       case LiteralValues.OBJECT_ID:
         output.writeByte(TYPE_ID_REFERENCE);
         output.writeLong(((ObjectID) value).toLong());
@@ -281,17 +282,17 @@ public class DNAEncodingImpl implements DNAEncoding {
       case LiteralValues.ARRAY:
         encodeArray(value, output);
         break;
-//      case LiteralValues.URL:
-//        {
-//          URL url = (URL)value;
-//          output.writeByte(TYPE_ID_URL);
-//          output.writeString(url.getProtocol());
-//          output.writeString(url.getHost());
-//          output.writeInt(url.getPort());
-//          output.writeString(url.getFile());
-//          output.writeString(url.getRef());
-//        }
-//        break;
+      // case LiteralValues.URL:
+      // {
+      // URL url = (URL)value;
+      // output.writeByte(TYPE_ID_URL);
+      // output.writeString(url.getProtocol());
+      // output.writeString(url.getHost());
+      // output.writeInt(url.getPort());
+      // output.writeString(url.getFile());
+      // output.writeString(url.getRef());
+      // }
+      // break;
       default:
         throw Assert.failure("Illegal type (" + type + "):" + value);
     }
@@ -330,26 +331,26 @@ public class DNAEncodingImpl implements DNAEncoding {
   }
 
   private void writeCompressedString(String string, TCDataOutput output) {
-    try {
-      TCByteArrayOutputStream byteArrayOS = new TCByteArrayOutputStream(4096);
-      // Stride is 512 bytes by default, should I increase ?
-      DeflaterOutputStream dos = new DeflaterOutputStream(byteArrayOS);
-      byte[] uncompressed = string.getBytes("UTF-8");
-      dos.write(uncompressed);
-      dos.close();
-      byte[] compressed = byteArrayOS.getInternalArray();
-      // XXX:: We are writting the original string's length so that we save a couple of copies when decompressing
-      output.writeInt(uncompressed.length);
-      writeByteArray(compressed, 0, byteArrayOS.size(), output);
-      if (STRING_COMPRESSION_LOGGING_ENABLED) {
-        logger.info("Compressed String of size : " + string.length() + " bytes : " + uncompressed.length
-                    + " to  bytes : " + compressed.length);
-      }
-    } catch (Exception e) {
-      throw new AssertionError(e);
+    byte[] uncompressed = StringCompressionUtil.stringToUncompressedBin(string);
+    CompressedData compressedInfo = StringCompressionUtil.compressBin(uncompressed);
+    byte[] compressed = compressedInfo.getCompressedData();
+    int compressedSize = compressedInfo.getCompressedSize();
+    
+    // XXX:: We are writing the original string's uncompressed byte[] length so that we save a couple of copies when
+    // decompressing
+    output.writeInt(uncompressed.length);
+    writeByteArray(compressed, 0, compressedSize, output);
+
+    // write string metadata so we can avoid decompression on later L1s
+    output.writeInt(string.length());
+    output.writeInt(string.hashCode());
+
+    if (STRING_COMPRESSION_LOGGING_ENABLED) {
+      logger.info("Compressed String of size : " + string.length() + " bytes : " + uncompressed.length
+                  + " to  bytes : " + compressed.length);
     }
   }
-
+  
   private void writeByteArray(byte[] bytes, int offset, int length, TCDataOutput output) {
     output.writeInt(length);
     output.write(bytes, offset, length);
@@ -367,7 +368,7 @@ public class DNAEncodingImpl implements DNAEncoding {
   // output.writeChar(chars[i]);
   // }
   // }
-  private byte[] readByteArray(TCDataInput input) throws IOException {
+  protected byte[] readByteArray(TCDataInput input) throws IOException {
     int length = input.readInt();
     if (length >= BYTE_WARN) {
       logger.warn("Attempting to allocate a large byte array of size: " + length);
@@ -430,18 +431,18 @@ public class DNAEncodingImpl implements DNAEncoding {
         // char[] chars = readCharArray(input); // Unfortunately this is 1.5 specific
         byte[] b2 = readByteArray(input);
         return new BigDecimal(new String(b2));
-//      case TYPE_ID_URL:
-//        {
-//          String protocol = input.readString();
-//          String host = input.readString();
-//          int port = input.readInt();
-//          String file = input.readString();
-//          String ref = input.readString();
-//          if (ref != null) {
-//            file = file+"#"+ref;
-//          }
-//          return new URL(protocol, host, port, file);
-//        }
+        // case TYPE_ID_URL:
+        // {
+        // String protocol = input.readString();
+        // String host = input.readString();
+        // int port = input.readInt();
+        // String file = input.readString();
+        // String ref = input.readString();
+        // if (ref != null) {
+        // file = file+"#"+ref;
+        // }
+        // return new URL(protocol, host, port, file);
+        // }
       default:
         throw Assert.failure("Illegal type (" + type + ")");
     }
@@ -842,7 +843,7 @@ public class DNAEncodingImpl implements DNAEncoding {
     UTF8ByteDataHolder def = new UTF8ByteDataHolder(readByteArray(input));
     byte[] data = readByteArray(input);
 
-    if ((policy == SERIALIZER && type == TYPE_ID_ENUM) || policy == APPLICATOR) {
+    if (useStringEnumRead(type)) {
       Class enumType = new ClassInstance(name, def).asClass(classProvider);
 
       String enumName = new String(data, "UTF-8");
@@ -854,21 +855,25 @@ public class DNAEncodingImpl implements DNAEncoding {
     }
   }
 
+  protected abstract boolean useStringEnumRead(byte type);
+
   private Object readClassLoader(TCDataInput input, byte type) throws IOException {
     UTF8ByteDataHolder def = new UTF8ByteDataHolder(readByteArray(input));
 
-    if ((policy == SERIALIZER && type == TYPE_ID_JAVA_LANG_CLASSLOADER) || policy == APPLICATOR) {
+    if (useClassProvider(type, TYPE_ID_JAVA_LANG_CLASSLOADER)) {
       return new ClassLoaderInstance(def).asClassLoader(classProvider);
     } else {
       return new ClassLoaderInstance(def);
     }
   }
 
+  protected abstract boolean useClassProvider(byte type, byte typeToCheck);
+
   private Object readClass(TCDataInput input, byte type) throws IOException, ClassNotFoundException {
     UTF8ByteDataHolder name = new UTF8ByteDataHolder(readByteArray(input));
     UTF8ByteDataHolder def = new UTF8ByteDataHolder(readByteArray(input));
 
-    if ((policy == SERIALIZER && type == TYPE_ID_JAVA_LANG_CLASS) || policy == APPLICATOR) {
+    if (useClassProvider(type, TYPE_ID_JAVA_LANG_CLASS)) {
       return new ClassInstance(name, def).asClass(classProvider);
     } else {
       return new ClassInstance(name, def);
@@ -876,23 +881,31 @@ public class DNAEncodingImpl implements DNAEncoding {
   }
 
   private Object readString(TCDataInput input, byte type) throws IOException {
+    boolean isInterned = input.readBoolean();
     byte[] data = readByteArray(input);
-    if ((policy == SERIALIZER && type == TYPE_ID_STRING) || policy == APPLICATOR) {
-      return new String(data, "UTF-8");
+    if (useUTF8String(type)) {
+      if (isInterned) {
+        String temp = new String(data, "UTF-8");
+        return temp.intern();
+      } else {
+        return new String(data, "UTF-8");
+      }
     } else {
-      return new UTF8ByteDataHolder(data);
+      return new UTF8ByteDataHolder(data, isInterned);
     }
   }
 
-  private Object readCompressedString(TCDataInput input) throws IOException {
-    int stringLength = input.readInt();
+  protected abstract boolean useUTF8String(byte type);
+
+  protected Object readCompressedString(TCDataInput input) throws IOException {
+    boolean isInterned = input.readBoolean();
+    int stringUncompressedByteLength = input.readInt();
     byte[] data = readByteArray(input);
-    if (policy == APPLICATOR) {
-      return inflateCompressedString(data, stringLength);
-    } else {
-      UTF8ByteDataHolder utfBytes = new UTF8ByteDataHolder(data, stringLength);
-      return utfBytes;
-    }
+
+    int stringLength = input.readInt();
+    int stringHash = input.readInt();
+
+    return new UTF8ByteCompressedDataHolder(data, isInterned, stringUncompressedByteLength, stringLength, stringHash);
   }
 
   public static String inflateCompressedString(byte[] data, int length) {
@@ -911,62 +924,6 @@ public class DNAEncodingImpl implements DNAEncoding {
       return new String(uncompressed, "UTF-8");
     } catch (IOException e) {
       throw new AssertionError(e);
-    }
-  }
-
-  private static class FailureClassProvider implements ClassProvider {
-
-    public Class getClassFor(String className, String loaderDesc) {
-      throw new AssertionError();
-    }
-
-    public String getLoaderDescriptionFor(Class clazz) {
-      throw new AssertionError();
-    }
-
-    public ClassLoader getClassLoader(String loaderDesc) {
-      throw new AssertionError();
-    }
-
-    public String getLoaderDescriptionFor(ClassLoader loader) {
-      throw new AssertionError();
-    }
-
-    public void registerNamedLoader(NamedClassLoader loader) {
-      throw new AssertionError();
-    }
-  }
-
-  private static class LocalClassProvider implements ClassProvider {
-
-    private static final String LOADER_ID = LocalClassProvider.class.getName() + "::CLASSPROVIDER";
-
-    // This method assumes the Class is visible in this VM and can be loaded by the same class loader as this
-    // object. Only used in SERIALIZER policy
-    public Class getClassFor(String className, String loaderDesc) {
-      Assert.assertEquals(LOADER_ID, loaderDesc);
-      try {
-        return Class.forName(className);
-      } catch (ClassNotFoundException e) {
-        throw new AssertionError(e);
-      }
-    }
-
-    public String getLoaderDescriptionFor(Class clazz) {
-      return LOADER_ID;
-    }
-
-    public ClassLoader getClassLoader(String loaderDesc) {
-      Assert.assertEquals(LOADER_ID, loaderDesc);
-      return ClassLoader.getSystemClassLoader();
-    }
-
-    public String getLoaderDescriptionFor(ClassLoader loader) {
-      return LOADER_ID;
-    }
-
-    public void registerNamedLoader(NamedClassLoader loader) {
-      // do nothing
     }
   }
 

@@ -6,7 +6,9 @@ package com.tc.object;
 
 import com.tc.object.bytecode.MockClassProvider;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.field.TCFieldFactory;
+import com.tc.object.loaders.ClassProvider;
 
 public class TCClassTest extends BaseDSOTestCase {
   public void tests() throws Exception {
@@ -15,7 +17,9 @@ public class TCClassTest extends BaseDSOTestCase {
     DSOClientConfigHelper config = configHelper();
     TCFieldFactory fieldFactory = new TCFieldFactory(config);
     ClientObjectManager objectManager = new TestClientObjectManager();
-    TCClassFactory classFactory = new TCClassFactoryImpl(fieldFactory, config, new MockClassProvider());
+    ClassProvider classProvider = new MockClassProvider();
+    DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
+    TCClassFactory classFactory = new TCClassFactoryImpl(fieldFactory, config, classProvider, encoding);
     TCClass tcc1 = new TCClassImpl(fieldFactory, classFactory, objectManager, TCClassTest.class, null, "", null, false,
                                    false, null, null, false);
     assertFalse(tcc1.isIndexed());

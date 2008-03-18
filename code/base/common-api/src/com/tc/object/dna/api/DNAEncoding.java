@@ -39,12 +39,6 @@ public interface DNAEncoding {
   public static final byte APPLICATOR = 0x02;
 
   /**
-   * Get the policy in use for this encoding, as defined by constants in this class.
-   * @return The policy
-   */
-  public abstract byte getPolicy();
-
-  /**
    * Encode a classloader object onto an output stream
    * @param value The classloader
    * @param output The output
