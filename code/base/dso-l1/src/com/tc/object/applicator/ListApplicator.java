@@ -14,8 +14,8 @@ import com.tc.object.TraversedReferences;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.object.tx.optimistic.TCObjectClone;
@@ -93,7 +93,7 @@ public class ListApplicator extends BaseApplicator {
       case SerializationUtil.SET:
         int sindex = ((Integer) params[0]).intValue();
         if (sindex >= size) {
-          logger.error("Cannot set element at index + " + sindex + " becuase object is only of size " + size);
+          logger.error("Cannot set element at index " + sindex + " becuase object is only of size " + size);
           return;
         }
         list.set(sindex, params[1]);
@@ -104,7 +104,7 @@ public class ListApplicator extends BaseApplicator {
       case SerializationUtil.REMOVE_AT:
         int raindex = ((Integer) params[0]).intValue();
         if (raindex >= size) {
-          logger.error("Cannot remove element at index + " + raindex + " becuase object is only of size " + size);
+          logger.error("Cannot remove element at index " + raindex + " becuase object is only of size " + size);
           return;
         }
         list.remove(raindex);
@@ -112,12 +112,12 @@ public class ListApplicator extends BaseApplicator {
       case SerializationUtil.REMOVE_RANGE:
         int fromIndex = ((Integer) params[0]).intValue();
         if (fromIndex >= size) {
-          logger.error("Cannot remove element at index + " + fromIndex + " becuase object is only of size " + size);
+          logger.error("Cannot remove element at index " + fromIndex + " becuase object is only of size " + size);
           return;
         }
         int toIndex = ((Integer) params[1]).intValue();
         if (toIndex > size) {
-          logger.error("Cannot remove element at index + " + (toIndex - 1) + " becuase object is only of size " + size);
+          logger.error("Cannot remove element at index " + (toIndex - 1) + " becuase object is only of size " + size);
           return;
         }
         int removeIndex = fromIndex;
