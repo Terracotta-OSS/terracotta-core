@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <ivy-module version="2.0">
-  <info organisation="ibiblio" module="dso-statistics"/>
+  <info organisation="ibiblio" module="sigarstats"/>
   <dependencies>
     <dependency name="sigar" rev="1.5.0.1" org="terracotta">
       <artifact name="sigar" type="jar"/>
