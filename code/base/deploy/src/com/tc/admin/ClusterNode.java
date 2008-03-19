@@ -691,7 +691,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
             if (l2Info.equals(m_connectManager.getL2Info())) {
               continue;
             }
-            ThreadUtil.reallySleep(250);
+            ThreadUtil.reallySleep(1000);
             if (stop) {
               if (scm != null) scm.tearDown();
               return;
@@ -711,7 +711,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
                 }
               }
             } catch (Exception e) {
-              e.printStackTrace();
+              /**/
             }
           }
         }
