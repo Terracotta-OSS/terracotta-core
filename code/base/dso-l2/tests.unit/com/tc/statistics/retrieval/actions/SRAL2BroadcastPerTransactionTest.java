@@ -3,9 +3,12 @@
  */
 package com.tc.statistics.retrieval.actions;
 
+import junit.framework.TestCase;
+
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
 import com.tc.objectserver.core.api.DSOGlobalServerStatsImpl;
 import com.tc.statistics.StatisticData;
+import com.tc.statistics.StatisticType;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
@@ -14,8 +17,6 @@ import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.math.BigDecimal;
-
-import junit.framework.TestCase;
 
 public class SRAL2BroadcastPerTransactionTest extends TestCase {
 
@@ -43,6 +44,7 @@ public class SRAL2BroadcastPerTransactionTest extends TestCase {
 
   public void testRetrieval() {
     SRAL2BroadcastPerTransaction sral2BroadcastPerTransaction = new SRAL2BroadcastPerTransaction(dsoGlobalServerStats);
+    Assert.assertEquals(StatisticType.SNAPSHOT, sral2BroadcastPerTransaction.getType());
 
     StatisticData[] statisticDatas;
 

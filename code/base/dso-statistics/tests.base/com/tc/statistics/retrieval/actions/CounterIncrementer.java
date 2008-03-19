@@ -10,7 +10,7 @@ import com.tc.util.concurrent.ThreadUtil;
 import java.util.Random;
 
 public class CounterIncrementer implements Runnable {
-  private static final Random random = new Random(System.nanoTime());
+  private static final Random random = new Random(System.currentTimeMillis());
   private final SampledCounter counter;
   private int intervalMillis;
   private boolean incrementCounter = true;

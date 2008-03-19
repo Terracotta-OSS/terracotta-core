@@ -16,33 +16,32 @@ import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 
-public class SRAL2toL1FaultRateTest extends TestCase {
-
+public class SRAL1ToL2FlushRateTest extends TestCase {
   private DSOGlobalServerStats dsoGlobalServerStats;
   private CounterIncrementer counterIncrementer;
 
   protected void setUp() throws Exception {
     final CounterManager counterManager = new CounterManagerImpl();
     final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 10, true, 0L);
-    final SampledCounter objectFaultCounter = (SampledCounter)counterManager.createCounter(sampledCounterConfig);
+    final SampledCounter l1Tol2FlushCounter = (SampledCounter)counterManager.createCounter(sampledCounterConfig);
 
     dsoGlobalServerStats = new
-      DSOGlobalServerStatsImpl(null, objectFaultCounter, null, null, null, null);
+      DSOGlobalServerStatsImpl(l1Tol2FlushCounter, null, null, null, null, null);
 
-    counterIncrementer = new CounterIncrementer(objectFaultCounter, 200);
+    counterIncrementer = new CounterIncrementer(l1Tol2FlushCounter, 200);
     new Thread(counterIncrementer, "Counter Incrementer").start();
   }
 
 
   public void testRetrieval() {
-    SRAL2ToL1FaultRate sral2ToL1FaultRate = new SRAL2ToL1FaultRate(dsoGlobalServerStats);
-    Assert.assertEquals(StatisticType.SNAPSHOT, sral2ToL1FaultRate.getType());
+    SRAL1ToL2FlushRate flushRate = new SRAL1ToL2FlushRate(dsoGlobalServerStats);
+    Assert.assertEquals(StatisticType.SNAPSHOT, flushRate.getType());
 
     StatisticData[] statisticDatas;
 
-    statisticDatas = sral2ToL1FaultRate.retrieveStatisticData();
+    statisticDatas = flushRate.retrieveStatisticData();
     Assert.assertEquals(1, statisticDatas.length);
-    Assert.assertEquals(SRAL2ToL1FaultRate.ACTION_NAME, statisticDatas[0].getName());
+    Assert.assertEquals(SRAL1ToL2FlushRate.ACTION_NAME, statisticDatas[0].getName());
     Assert.assertNull(statisticDatas[0].getAgentIp());
     Assert.assertNull(statisticDatas[0].getAgentDifferentiator());
     long count1 = (Long)statisticDatas[0].getData();
@@ -50,9 +49,9 @@ public class SRAL2toL1FaultRateTest extends TestCase {
 
     ThreadUtil.reallySleep(1000);
 
-    statisticDatas = sral2ToL1FaultRate.retrieveStatisticData();
+    statisticDatas = flushRate.retrieveStatisticData();
     Assert.assertEquals(1, statisticDatas.length);
-    Assert.assertEquals(SRAL2ToL1FaultRate.ACTION_NAME, statisticDatas[0].getName());
+    Assert.assertEquals(SRAL1ToL2FlushRate.ACTION_NAME, statisticDatas[0].getName());
     Assert.assertNull(statisticDatas[0].getAgentIp());
     Assert.assertNull(statisticDatas[0].getAgentDifferentiator());
     long count2 = (Long)statisticDatas[0].getData();
@@ -60,9 +59,9 @@ public class SRAL2toL1FaultRateTest extends TestCase {
 
     ThreadUtil.reallySleep(1000);
 
-    statisticDatas = sral2ToL1FaultRate.retrieveStatisticData();
+    statisticDatas = flushRate.retrieveStatisticData();
     Assert.assertEquals(1, statisticDatas.length);
-    Assert.assertEquals(SRAL2ToL1FaultRate.ACTION_NAME, statisticDatas[0].getName());
+    Assert.assertEquals(SRAL1ToL2FlushRate.ACTION_NAME, statisticDatas[0].getName());
     Assert.assertNull(statisticDatas[0].getAgentIp());
     Assert.assertNull(statisticDatas[0].getAgentDifferentiator());
     long count3 = (Long)statisticDatas[0].getData();

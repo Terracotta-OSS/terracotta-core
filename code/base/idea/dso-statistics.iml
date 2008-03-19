@@ -4,6 +4,7 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$/../dso-statistics">
       <sourceFolder url="file://$MODULE_DIR$/../dso-statistics/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../dso-statistics/tests.base" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../dso-statistics/tests.unit" isTestSource="false" />
     </content>
     <orderEntry type="sourceFolder" forTests="false" />

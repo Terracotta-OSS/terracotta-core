@@ -9,8 +9,6 @@ import com.tc.statistics.StatisticType;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.Assert;
 
-import java.math.BigDecimal;
-
 /**
  * This statistic gives the average size of a transaction that is happening in an L1.
  * <p/>
@@ -36,8 +34,8 @@ public class SRAL1TransactionSize implements StatisticRetrievalAction {
     final long numTrans = numTransactionsCounter.getMostRecentSample().getCounterValue();
     final long batchSize = batchSizeCounter.getMostRecentSample().getCounterValue();
 
-    return new StatisticData[] { new StatisticData(ACTION_NAME, numTrans == 0 ? new BigDecimal(0) :
-      new BigDecimal((double)batchSize / numTrans)) };
+    return new StatisticData[] { new StatisticData(ACTION_NAME, numTrans == 0 ? new Long(0) :
+      new Long(batchSize / numTrans)) };
   }
 
   public String getName() {

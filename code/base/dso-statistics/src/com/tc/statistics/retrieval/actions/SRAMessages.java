@@ -39,12 +39,38 @@ public class SRAMessages implements StatisticRetrievalAction {
 
   private final MessageMonitorImpl monitor;
 
+  /**
+   * Element name for incoming count
+   */
+  public static final String ELEMENT_INCOMING_COUNT = "incoming count";
+
+  /**
+   * Element name for incoming data
+   */
+  public static final String ELEMENT_INCOMING_DATA = "incoming data";
+
+  /**
+   * Element name for outgoing count
+   */
+  public static final String ELEMENT_OUTGOING_COUNT = "outgoing count";
+
+  /**
+   * Element name for outgoing data
+   */
+  public static final String ELEMENT_OUTGOING_DATA = "outgoing data";
+
+  /**
+   * Delimiter String that is between the mesage type and the data in an element
+   */
+  public static final String ELEMENT_NAME_DELIMITER = ":";
+
   public SRAMessages(final MessageMonitor monitor) {
     if (monitor instanceof MessageMonitorImpl) {
       this.monitor = (MessageMonitorImpl)monitor;
     } else {
       this.monitor = null;
-      logger.info("\"" + ACTION_NAME + "\" statistic is not enabled. Please enable the property \"" + ENABLED_PROP + "\" to collect this statistics.");
+      logger.info("\"" + ACTION_NAME + "\" statistic is not enabled. Please enable the property \"" + ENABLED_PROP +
+                  "\" to collect this statistics.");
     }
   }
 
@@ -54,10 +80,14 @@ public class SRAMessages implements StatisticRetrievalAction {
     synchronized (monitor) {
       for (Iterator it = monitor.getCounters().values().iterator(); it.hasNext();) {
         MessageMonitorImpl.MessageCounter counter = (MessageMonitorImpl.MessageCounter)it.next();
-        data.add(new StatisticData(ACTION_NAME, counter.getName() + ":incoming count", new Long(counter.getIncomingCount().get())));
-        data.add(new StatisticData(ACTION_NAME, counter.getName() + ":incoming data", new Long(counter.getIncomingData().get())));
-        data.add(new StatisticData(ACTION_NAME, counter.getName() + ":outgoing count", new Long(counter.getOutgoingCount().get())));
-        data.add(new StatisticData(ACTION_NAME, counter.getName() + ":outgoing data", new Long(counter.getOutgoingData().get())));
+        data.add(new StatisticData(ACTION_NAME, counter.getName() + ELEMENT_NAME_DELIMITER + ELEMENT_INCOMING_COUNT, new Long(counter
+          .getIncomingCount().get())));
+        data.add(new StatisticData(ACTION_NAME, counter.getName() + ELEMENT_NAME_DELIMITER + ELEMENT_INCOMING_DATA, new Long(counter
+          .getIncomingData().get())));
+        data.add(new StatisticData(ACTION_NAME, counter.getName() + ELEMENT_NAME_DELIMITER + ELEMENT_OUTGOING_COUNT, new Long(counter
+          .getOutgoingCount().get())));
+        data.add(new StatisticData(ACTION_NAME, counter.getName() + ELEMENT_NAME_DELIMITER + ELEMENT_OUTGOING_DATA, new Long(counter
+          .getOutgoingData().get())));
       }
     }
     return (StatisticData[])data.toArray(new StatisticData[data.size()]);

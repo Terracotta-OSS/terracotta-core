@@ -3,17 +3,18 @@
  */
 package com.tc.statistics.retrieval.actions;
 
+import junit.framework.TestCase;
+
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
 import com.tc.objectserver.core.api.DSOGlobalServerStatsImpl;
 import com.tc.statistics.StatisticData;
+import com.tc.statistics.StatisticType;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
-
-import junit.framework.TestCase;
 
 public class SRAL2BroadcastCountTest extends TestCase {
   private DSOGlobalServerStats dsoGlobalServerStats;
@@ -34,6 +35,7 @@ public class SRAL2BroadcastCountTest extends TestCase {
 
   public void testRetrieval() {
     SRAL2BroadcastCount sral2BroadcastCount = new SRAL2BroadcastCount(dsoGlobalServerStats);
+    Assert.assertEquals(StatisticType.SNAPSHOT, sral2BroadcastCount.getType());
 
     StatisticData[] statisticDatas;
 

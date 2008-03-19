@@ -27,14 +27,15 @@ import java.util.concurrent.atomic.AtomicLong;
 public class SRAL2FaultsFromDisk implements StatisticRetrievalAction {
 
   public final static String ACTION_NAME = "l2 faults from disk";
-  private static final String ENABLED_PROP = "l2.objectmanager.fault.logging.enabled";
+  private static final String ENABLED_PROP = ManagedObjectFaultHandler.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED;
   private static final String ELEMENT_NAME_FAULT_COUNT = "fault count";
+  private static final boolean LOG_ANABLED = TCPropertiesImpl.getProperties().getBoolean(ENABLED_PROP, false);
 
   private static final TCLogger logger = TCLogging.getLogger(SRAL2FaultsFromDisk.class);
   private final AtomicLong faultCount;
 
   public SRAL2FaultsFromDisk(final ManagedObjectFaultHandler faultHandler) {
-    if (TCPropertiesImpl.getProperties().getBoolean(ENABLED_PROP, false)) {
+    if (!LOG_ANABLED) {
       this.faultCount = null;
       logger.info("\"" + ACTION_NAME + "\" statistic is not enabled. Please enable the property \"" + ENABLED_PROP + "\"" +
                   " to collect this statistic.");

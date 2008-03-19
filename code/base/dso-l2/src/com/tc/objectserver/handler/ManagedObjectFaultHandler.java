@@ -22,8 +22,8 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ManagedObjectFaultHandler extends AbstractEventHandler {
 
   private static final TCLogger logger           = TCLogging.getLogger(ManagedObjectFaultHandler.class);
-  private static final boolean  LOG_OBJECT_FAULT = TCPropertiesImpl.getProperties()
-                                                     .getBoolean("l2.objectmanager.fault.logging.enabled");
+  public static final String    L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED = "l2.objectmanager.fault.logging.enabled";
+  private static final boolean  LOG_OBJECT_FAULT = TCPropertiesImpl.getProperties().getBoolean(L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED);
 
   private ObjectManager         objectManager;
   private ManagedObjectStore    objectStore;
