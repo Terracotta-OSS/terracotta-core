@@ -47,12 +47,12 @@
         </tab>
         <tab title="Environment">
           <scrollpane>
-            <textarea class="com.tc.admin.common.XTextArea" name="EnvironmentTextArea" editable="false" line-wrap="false" />
+            <textarea class="com.tc.admin.common.XTextArea" name="EnvironmentTextArea" editable="false" line-wrap="false" font="Monospaced-plain-12"/>
           </scrollpane>
         </tab>
         <tab title="Config">
           <scrollpane>
-            <textarea class="com.tc.admin.common.XTextArea" name="ConfigTextArea" editable="false" line-wrap="false" />
+            <textarea class="com.tc.admin.common.XTextArea" name="ConfigTextArea" editable="false" line-wrap="false" font="Monospaced-plain-12"/>
           </scrollpane>
         </tab>
       </tabbedpane>
@@ -257,7 +257,7 @@
                       <children>
                         <label name="ConfigLabel"/>
                         <scrollpane>
-                          <textarea name="ConfigText" line-wrap="false" editable="false" class="com.tc.admin.common.XTextArea"/>
+                          <textarea name="ConfigText" line-wrap="false" editable="false" class="com.tc.admin.common.XTextArea" font="Monospaced-plain-12"/>
                         </scrollpane>
                       </children>
 		              <connections>
@@ -435,10 +435,10 @@
           </container>
         </tab>
         <tab title="Environment">
-          <scrollpane><textarea class="com.tc.admin.common.XTextArea" name="EnvironmentTextArea" editable="false" line-wrap="false"/></scrollpane>
+          <scrollpane><textarea class="com.tc.admin.common.XTextArea" name="EnvironmentTextArea" editable="false" line-wrap="false" font="Monospaced-plain-12"/></scrollpane>
         </tab>
         <tab title="Config">
-          <scrollpane><textarea class="com.tc.admin.common.XTextArea" name="ConfigTextArea" editable="false" line-wrap="false"/></scrollpane>
+          <scrollpane><textarea class="com.tc.admin.common.XTextArea" name="ConfigTextArea" editable="false" line-wrap="false" font="Monospaced-plain-12"/></scrollpane>
         </tab>
         <tab title="Logging">
           <container>
@@ -543,7 +543,7 @@
 				<tab title="Config">
 				   <scrollpane>
 				      <textarea class="com.tc.admin.common.XTextArea"
-				         name="ClassesConfigTextArea" editable="false" line-wrap="false"/>
+				         name="ClassesConfigTextArea" editable="false" line-wrap="false" font="Monospaced-plain-12"/>
 				   </scrollpane>
 				</tab>
 			</tabbedpane>
@@ -631,7 +631,7 @@
           </left>
           <right>
             <scrollpane name="ThreadDumpTextScroller">
-              <textarea class="com.tc.admin.common.XTextArea" name="ThreadDumpTextArea" editable="false" line-wrap="false" />
+              <textarea class="com.tc.admin.common.XTextArea" name="ThreadDumpTextArea" editable="false" line-wrap="false" font="Monospaced-plain-12"/>
             </scrollpane>
           </right>
         </splitpane>
@@ -660,7 +660,7 @@
           </left>
           <right>
             <scrollpane name="ThreadDumpTextScroller">
-              <textarea class="com.tc.admin.common.XTextArea" name="ThreadDumpTextArea" editable="false" line-wrap="false" />
+              <textarea class="com.tc.admin.common.XTextArea" name="ThreadDumpTextArea" editable="false" line-wrap="false" font="Monospaced-plain-12"/>
             </scrollpane>
           </right>
         </splitpane>
