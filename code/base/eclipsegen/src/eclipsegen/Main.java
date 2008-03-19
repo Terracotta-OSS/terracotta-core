@@ -278,10 +278,24 @@ public class Main {
   }
 
   private Collection<String> getIvyDeps(File ivyFile) throws Exception {
+    String moduleName = ivyFile.getParentFile().getName();
+
+    String expectedIvyModuleAttr = moduleName + ivyFile.getName().replaceFirst("ivy", "").replace(".xml", "");
+
     ArrayList<String> rv = new ArrayList<String>();
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     DocumentBuilder builder = factory.newDocumentBuilder();
     Document ivyDoc = builder.parse(ivyFile);
+
+    NodeList infos = ivyDoc.getElementsByTagName("info");
+    if (infos.getLength() != 1) { throw new RuntimeException("invalid number of info elements: " + infos.getLength()); }
+    Node info = infos.item(0);
+    String actualModuleAttr = info.getAttributes().getNamedItem("module").getNodeValue();
+    if (!expectedIvyModuleAttr.equals(actualModuleAttr)) {
+      //
+      throw new RuntimeException("wrong \"module\" name (" + actualModuleAttr + ") in " + ivyFile.getParentFile().getName() + "/"
+                                 + ivyFile.getName() + ", expected " + expectedIvyModuleAttr);
+    }
 
     NodeList depsList = ivyDoc.getElementsByTagName("dependencies");
     if (depsList.getLength() == 0) { return Collections.emptyList(); }
