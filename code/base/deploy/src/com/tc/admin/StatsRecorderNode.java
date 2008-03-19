@@ -3,12 +3,15 @@
  */
 package com.tc.admin;
 
+import org.apache.commons.httpclient.auth.AuthScope;
+
 import com.tc.admin.common.ComponentNode;
 import com.tc.statistics.beans.StatisticsLocalGathererMBean;
 
 public class StatsRecorderNode extends ComponentNode {
   private ClusterNode        m_clusterNode;
   private StatsRecorderPanel m_statsRecorderPanel;
+  private AuthScope           m_authScope;
 
   public StatsRecorderNode(ClusterNode clusterNode) {
     super();
@@ -19,7 +22,7 @@ public class StatsRecorderNode extends ComponentNode {
   }
 
   boolean isRecording() {
-    return m_statsRecorderPanel.isRecording();
+    return m_statsRecorderPanel != null && m_statsRecorderPanel.isRecording();
   }
 
   void testTriggerThreadDumpSRA() {
@@ -38,8 +41,20 @@ public class StatsRecorderNode extends ComponentNode {
     return m_clusterNode.getStatsExportServletURI();
   }
 
+  AuthScope getAuthScope() throws Exception {
+    if(m_authScope != null) return m_authScope;
+    return m_authScope = m_clusterNode.getAuthScope();
+  }
+  
   void notifyChanged() {
     nodeChanged();
     m_clusterNode.notifyChanged();
+  }
+  
+  public void tearDown() {
+    super.tearDown();
+    m_clusterNode = null;
+    m_statsRecorderPanel = null;
+    m_authScope = null;
   }
 }

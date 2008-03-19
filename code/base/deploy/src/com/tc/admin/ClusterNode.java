@@ -4,6 +4,7 @@
  */
 package com.tc.admin;
 
+import org.apache.commons.httpclient.auth.AuthScope;
 import org.dijon.AbstractTreeCellRenderer;
 
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
@@ -13,7 +14,6 @@ import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.admin.common.StatusView;
 import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.common.XTreeCellRenderer;
-import com.tc.admin.common.XTreeNode;
 import com.tc.admin.dso.ClassesNode;
 import com.tc.admin.dso.ClientNode;
 import com.tc.admin.dso.ClientsNode;
@@ -269,6 +269,10 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
     return MessageFormat.format("http://{0}:{1}/statistics-gatherer/retrieveStatistics", args);
   }
 
+  AuthScope getAuthScope() throws Exception {
+    return new AuthScope(getHost(), getDSOListenPort());
+  }
+  
   private void initMenu(boolean autoConnect) {
     m_popupMenu = new JPopupMenu("Server Actions");
 
@@ -1046,10 +1050,10 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
   private void reallyHandleDisconnect() {
     m_clusterMembers = null;
     m_acc.controller.select(this);
+    tearDownChildren();
+    removeAllChildren();
+    m_acc.controller.nodeStructureChanged(this);
     m_clusterPanel.disconnected();
-    for (int i = getChildCount() - 1; i >= 0; i--) {
-      m_acc.controller.remove((XTreeNode) getChildAt(i));
-    }
     m_userDisconnecting = false;
   }
 

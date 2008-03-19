@@ -6,6 +6,7 @@ package com.tc.admin;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.io.IOUtils;
 import org.apache.xmlbeans.XmlOptions;
@@ -29,7 +30,10 @@ import com.terracottatech.config.TcStatsConfigDocument;
 import com.terracottatech.config.TcStatsConfigDocument.TcStatsConfig;
 
 import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -51,8 +55,12 @@ import javax.management.NotificationListener;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JProgressBar;
+import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
@@ -136,7 +144,7 @@ public class StatsRecorderPanel extends XContainer {
       m_statisticsGathererMBean.captureStatistic(SRAThreadDump.ACTION_NAME);
     }
   }
-  
+
   class StatsGathererConnectWorker extends BasicWorker<Void> {
     StatsGathererConnectWorker() {
       super(new Callable() {
@@ -227,7 +235,9 @@ public class StatsRecorderPanel extends XContainer {
         for (int i = 0; i < allSessions.length; i++) {
           m_statsSessionsListModel.addElement(new StatsSessionListItem(allSessions[i]));
         }
-        m_clearAllStatsSessionsButton.setEnabled(m_statsSessionsListModel.getSize() > 0);
+        boolean haveAnySessions = allSessions.length > 0;
+        m_clearAllStatsSessionsButton.setEnabled(haveAnySessions);
+        m_exportStatsButton.setEnabled(haveAnySessions);
         m_currentStatsSessionId = connectedState.getActiveStatsSessionId();
         boolean recording = isRecording();
         if (recording) {
@@ -449,7 +459,7 @@ public class StatsRecorderPanel extends XContainer {
   public boolean isRecording() {
     return m_currentStatsSessionId != null;
   }
-  
+
   private String getSelectedSessionId() {
     StatsSessionListItem item = (StatsSessionListItem) m_statsSessionsList.getSelectedValue();
     return item != null ? item.getSessionId() : null;
@@ -512,7 +522,7 @@ public class StatsRecorderPanel extends XContainer {
         os = new FileOutputStream(file);
         IOUtils.copy(is, os);
       } catch (IOException ioe) {
-        AdminClient.getContext().log(ioe);
+        m_acc.log(ioe);
       } finally {
         IOUtils.closeQuietly(is);
         IOUtils.closeQuietly(os);
@@ -531,14 +541,21 @@ public class StatsRecorderPanel extends XContainer {
   }
 
   class ExportStatsHandler implements ActionListener {
-    public void actionPerformed(ActionEvent ae) {
+    private UsernamePasswordCredentials m_credentials;
+
+    private JFileChooser createFileChooser() {
       JFileChooser chooser = new JFileChooser();
       if (m_lastExportDir != null) chooser.setCurrentDirectory(m_lastExportDir);
-      if (m_statsSessionsListModel.getSize() == 0) return;
       chooser.setDialogTitle("Export statistics");
       chooser.setMultiSelectionEnabled(false);
       chooser.setFileFilter(new ZipFileFilter());
       chooser.setSelectedFile(new File(chooser.getCurrentDirectory(), "tc-stats.zip"));
+      return chooser;
+    }
+
+    public void actionPerformed(ActionEvent ae) {
+      if (m_statsSessionsListModel.getSize() == 0) return;
+      JFileChooser chooser = createFileChooser();
       if (chooser.showSaveDialog(StatsRecorderPanel.this) != JFileChooser.APPROVE_OPTION) return;
       File file = chooser.getSelectedFile();
       m_lastExportDir = file.getParentFile();
@@ -547,24 +564,85 @@ public class StatsRecorderPanel extends XContainer {
         String uri = m_statsRecorderNode.getStatsExportServletURI();
         URL url = new URL(uri);
         HttpClient httpClient = new HttpClient();
-
         get = new GetMethod(url.toString());
         get.setFollowRedirects(true);
+        if (m_credentials != null) {
+          httpClient.getState().setCredentials(m_statsRecorderNode.getAuthScope(), m_credentials);
+          get.setDoAuthentication(true);
+        }
         int status = httpClient.executeMethod(get);
+        while (status == HttpStatus.SC_UNAUTHORIZED) {
+          UsernamePasswordCredentials creds = getCredentials();
+          if (creds == null) return;
+          if (creds.getUserName().length() == 0 || creds.getPassword().length() == 0) {
+            m_credentials = null;
+            continue;
+          }
+          httpClient = new HttpClient();
+          httpClient.getState().setCredentials(m_statsRecorderNode.getAuthScope(), creds);
+          get.setDoAuthentication(true);
+          status = httpClient.executeMethod(get);
+        }
         if (status != HttpStatus.SC_OK) {
-          AdminClient.getContext().log(
-                                       "The http client has encountered a status code other than ok for the url: "
-                                           + url + " status: " + HttpStatus.getStatusText(status));
+          m_acc.log("The http client has encountered a status code other than ok for the url: " + url + " status: "
+                    + HttpStatus.getStatusText(status));
           return;
         }
         m_progressBar.setVisible(true);
         new Thread(new StreamCopierRunnable(get, file)).start();
       } catch (Exception e) {
-        AdminClient.getContext().log(e);
+        m_acc.log(e);
         if (get != null) {
           get.releaseConnection();
         }
       }
+    }
+
+    private class LoginPanel extends JPanel {
+      private JTextField     m_userNameField;
+      private JPasswordField m_passwordField;
+
+      private LoginPanel() {
+        super();
+        setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = gbc.gridy = 0;
+        gbc.insets = new Insets(2, 2, 2, 2);
+        add(new JLabel("Username:"), gbc);
+        gbc.gridx++;
+        m_userNameField = new JTextField(20);
+        add(m_userNameField, gbc);
+        gbc.gridx--;
+        gbc.gridy++;
+        add(new JLabel("Password:"), gbc);
+        gbc.gridx++;
+        m_passwordField = new JPasswordField(20);
+        add(m_passwordField, gbc);
+
+        m_userNameField.requestFocusInWindow();
+      }
+
+      String getUserName() {
+        return m_userNameField.getText();
+      }
+
+      String getPassword() {
+        return new String(m_passwordField.getPassword());
+      }
+    }
+
+    private UsernamePasswordCredentials getCredentials() {
+      if (m_credentials != null) return m_credentials;
+      Frame frame = (Frame) getAncestorOfClass(Frame.class);
+      LoginPanel loginPanel = new LoginPanel();
+      int answer = JOptionPane.showConfirmDialog(frame, loginPanel, frame.getTitle(), JOptionPane.OK_CANCEL_OPTION);
+      if (answer == JOptionPane.OK_OPTION) {
+        m_credentials = new UsernamePasswordCredentials(loginPanel.getUserName(), loginPanel.getPassword());
+      } else {
+        m_credentials = null;
+      }
+      return m_credentials;
     }
   }
 
@@ -594,14 +672,14 @@ public class StatsRecorderPanel extends XContainer {
           SwingUtilities.invokeAndWait(new Runnable() {
             public void run() {
               m_progressBar.setVisible(false);
-              AdminClient.getContext().setStatus("Wrote '" + fOutFile.getAbsolutePath() + "'");
+              m_acc.setStatus("Wrote '" + fOutFile.getAbsolutePath() + "'");
             }
           });
           IOUtils.closeQuietly(in);
           IOUtils.closeQuietly(out);
         }
       } catch (Exception e) {
-        AdminClient.getContext().log(e);
+        m_acc.log(e);
       } finally {
         IOUtils.closeQuietly(out);
         fGetMethod.releaseConnection();
@@ -615,7 +693,8 @@ public class StatsRecorderPanel extends XContainer {
       if (item != null) {
         String msg = "Really clear statistics from session '" + item + "?'";
         Frame frame = (Frame) StatsRecorderPanel.this.getAncestorOfClass(Frame.class);
-        int result = JOptionPane.showConfirmDialog(StatsRecorderPanel.this, msg, frame.getTitle(), JOptionPane.OK_CANCEL_OPTION);
+        int result = JOptionPane.showConfirmDialog(StatsRecorderPanel.this, msg, frame.getTitle(),
+                                                   JOptionPane.OK_CANCEL_OPTION);
         if (result == JOptionPane.OK_OPTION) {
           m_progressBar.setVisible(true);
           SwingWorker worker = new SwingWorker() {
@@ -629,7 +708,7 @@ public class StatsRecorderPanel extends XContainer {
               InvocationTargetException ite = getException();
               if (ite != null) {
                 Throwable cause = ite.getCause();
-                AdminClient.getContext().log(cause != null ? cause : ite);
+                m_acc.log(cause != null ? cause : ite);
                 return;
               }
             }
@@ -644,7 +723,8 @@ public class StatsRecorderPanel extends XContainer {
     public void actionPerformed(ActionEvent ae) {
       String msg = "Really clear all recorded statistics?";
       Frame frame = (Frame) StatsRecorderPanel.this.getAncestorOfClass(Frame.class);
-      int result = JOptionPane.showConfirmDialog(StatsRecorderPanel.this, msg, frame.getTitle(), JOptionPane.OK_CANCEL_OPTION);
+      int result = JOptionPane.showConfirmDialog(StatsRecorderPanel.this, msg, frame.getTitle(),
+                                                 JOptionPane.OK_CANCEL_OPTION);
       if (result == JOptionPane.OK_OPTION) {
         m_progressBar.setVisible(true);
         SwingWorker worker = new SwingWorker() {
@@ -658,7 +738,7 @@ public class StatsRecorderPanel extends XContainer {
             InvocationTargetException ite = getException();
             if (ite != null) {
               Throwable cause = ite.getCause();
-              AdminClient.getContext().log(cause != null ? cause : ite);
+              m_acc.log(cause != null ? cause : ite);
               return;
             }
           }
@@ -667,6 +747,7 @@ public class StatsRecorderPanel extends XContainer {
       }
     }
   }
+
   public void tearDown() {
     super.tearDown();
 
