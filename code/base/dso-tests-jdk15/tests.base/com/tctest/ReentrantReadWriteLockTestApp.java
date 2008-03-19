@@ -853,6 +853,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   }
 
   private void basicConditionVariableTesting(int index, WriteLock lock, Condition condition) throws Exception {
+    DebugUtil.DEBUG = true;
     printTimeStamp(index, "basicConditionVariableTesting");
 
     final long id = new Long(getApplicationId()).longValue();
@@ -864,6 +865,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     }
 
     barrier.await();
+    DebugUtil.DEBUG = false;
   }
 
   private void doPutter(long id, WriteLock lock, Condition condition, List Q, int getters) throws Exception {
