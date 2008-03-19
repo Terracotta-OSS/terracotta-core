@@ -16,7 +16,7 @@ import java.lang.reflect.Field;
 import java.util.Map;
 
 public class TestClassFactory implements TCClassFactory {
-
+  
   public TCClass getOrCreate(Class clazz, ClientObjectManager objectManager) {
     return new MockTCClass();
   }
@@ -26,13 +26,35 @@ public class TestClassFactory implements TCClassFactory {
   }
 
   public static class MockTCClass implements TCClass {
+    
+    private ClientObjectManager clientObjectManager;
+    
+    private boolean hasOnLoadExecuteScript = false;
+    
+    private boolean hasOnLoadMethod = false;
+    
+    private TCField[] portableFields = null;
+    
+    private boolean portable = false;
 
+    public MockTCClass() {
+      
+    }
+    
+    public MockTCClass(ClientObjectManager clientObjectManager, boolean hasOnLoadExecuteScript, boolean hasOnLoadMethod, boolean portable, TCField [] portableFields  ) {
+      this.clientObjectManager = clientObjectManager;
+      this.hasOnLoadExecuteScript = hasOnLoadExecuteScript;
+      this.hasOnLoadMethod = hasOnLoadMethod;
+      this.portable = portable;
+      this.portableFields = portableFields;
+    }
+    
     public boolean hasOnLoadExecuteScript() {
-      return false;
+      return hasOnLoadExecuteScript;
     }
 
     public boolean hasOnLoadMethod() {
-      return false;
+      return hasOnLoadMethod;
     }
 
     public String getOnLoadMethod() {
@@ -40,7 +62,7 @@ public class TestClassFactory implements TCClassFactory {
     }
 
     public String getOnLoadExecuteScript() {
-      return null;
+      return "";
     }
 
     public Field getParentField() {
@@ -52,7 +74,7 @@ public class TestClassFactory implements TCClassFactory {
     }
 
     public TCField[] getPortableFields() {
-      return null;
+      return portableFields;
     }
 
     public TraversedReferences getPortableObjects(Object pojo, TraversedReferences addTo) {
@@ -84,10 +106,15 @@ public class TestClassFactory implements TCClassFactory {
     }
 
     public boolean isPortable() {
-      return false;
+      return portable;
     }
 
     public TCField getField(String name) {
+      for(int i = 0; i < portableFields.length; i++ ) {
+        TCField field = portableFields[i];
+        if(name.equals(field.getName()))
+          return field;
+      }
       return null;
     }
 
@@ -120,7 +147,7 @@ public class TestClassFactory implements TCClassFactory {
     }
 
     public Class getPeerClass() {
-      throw new ImplementMe();
+      return Object.class;
     }
 
     public Map connectedCopy(Object source, Object dest, Map visited, OptimisticTransactionManager txManager) {
@@ -132,7 +159,7 @@ public class TestClassFactory implements TCClassFactory {
     }
 
     public ClientObjectManager getObjectManager() {
-      throw new ImplementMe();
+      return clientObjectManager;
     }
 
     public boolean isProxyClass() {
@@ -151,5 +178,40 @@ public class TestClassFactory implements TCClassFactory {
       throw new ImplementMe();
     }
 
+  }
+  
+  public static class MockTCField implements TCField {
+    
+    private String name;
+    
+    public MockTCField(String name) {
+      this.name = name;
+    }
+    
+
+    public boolean canBeReference() {
+      return true;
+    }
+
+    public TCClass getDeclaringTCClass() {
+      throw new ImplementMe();
+     }
+
+    public String getName() {
+      return name;
+    }
+
+    public boolean isArray() {
+      throw new ImplementMe();
+    }
+
+    public boolean isFinal() {
+      throw new ImplementMe();
+    }
+
+    public boolean isPortable() {
+      return true;
+    }
+    
   }
 }

@@ -28,7 +28,7 @@ public class MutualReferenceCollectionTest extends TransparentTestBase {
 
   public MutualReferenceCollectionTest() {
     // DEV-1153
-    disableAllUntil("2008-06-01");
+    //disableAllUntil("2008-06-01");
   }
   
   public void doSetUp(TransparentTestIface t) throws Exception {
