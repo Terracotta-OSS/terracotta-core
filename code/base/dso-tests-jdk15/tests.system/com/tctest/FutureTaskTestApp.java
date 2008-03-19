@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -131,7 +132,7 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
     if (index == 0) {
       for (int i = 0; i < NUM_OF_ITEMS; i++) {
         FutureTask task = (FutureTask) resultQueue.take();
-        
+
         Assert.assertEquals(root, task.get());
       }
     }
@@ -200,6 +201,8 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
   }
 
   private void basicSet(int index, MyFutureTask task) throws Exception {
+    DebugUtil.DEBUG = true;
+    debugLog(ManagerUtil.getClientID() + " running basicSet -- index: " + index);
     if (index == 0) {
       root.setTask(task);
     }
@@ -219,6 +222,7 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
     Assert.assertTrue(root.getTask().isDone());
 
     barrier.await();
+    DebugUtil.DEBUG = false;
   }
 
   private void basicRunAndResetException(int index, MyFutureTask task) throws Exception {
@@ -289,7 +293,7 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
     Assert.assertTrue(root.getTask().isDone());
 
     barrier.await();
-    
+
   }
 
   private void basicCancelTask(int index, FutureTask longTask) throws Exception {
@@ -319,7 +323,7 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
     }
 
     barrier.await();
-    
+
   }
 
   private void basicCancelTaskWithCompletion(int index, FutureTask longTask) throws Exception {
@@ -376,9 +380,7 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
 
   private void basicRunTask(int index, FutureTask task) throws Exception {
     DebugUtil.DEBUG = true;
-    if (DebugUtil.DEBUG) {
-      System.err.println("Client " + ManagerUtil.getClientID() + " running basicRunTask");
-    }
+    debugLog("Client " + ManagerUtil.getClientID() + " running basicRunTask");
     if (index == 0) {
       root.setTask(task);
     }
@@ -389,16 +391,20 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
 
       root.getTask().run();
     }
-    
-    if (DebugUtil.DEBUG) {
-      System.err.println("Client " + ManagerUtil.getClientID() + " trying task.get()");
-    }
+
+    debugLog("Client " + ManagerUtil.getClientID() + " trying task.get()");
     Assert.assertEquals(root, root.getTask().get());
 
     Assert.assertTrue(root.getTask().isDone());
-    
+
     barrier.await();
     DebugUtil.DEBUG = false;
+  }
+
+  private void debugLog(String msg) {
+    if (DebugUtil.DEBUG) {
+      System.err.println(msg);
+    }
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
@@ -454,9 +460,7 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
   private class MyLongCallable implements Callable {
     public Object call() throws Exception {
       while (true) {
-        if (Thread.interrupted()) {
-          throw new InterruptedException();
-        }
+        if (Thread.interrupted()) { throw new InterruptedException(); }
         Thread.sleep(10000);
       }
     }
@@ -500,9 +504,7 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
     public void run() {
       try {
         while (true) {
-          if (Thread.interrupted()) {
-            throw new InterruptedException();
-          }
+          if (Thread.interrupted()) { throw new InterruptedException(); }
           Thread.sleep(10000);
         }
       } catch (Exception e) {
