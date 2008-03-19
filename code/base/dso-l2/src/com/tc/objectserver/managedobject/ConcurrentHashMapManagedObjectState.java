@@ -104,65 +104,25 @@ public class ConcurrentHashMapManagedObjectState extends PartialMapManagedObject
     }
   }
 
-  private void writeField(ObjectOutput out, String fieldName, Object fieldValue) throws IOException {
-    out.writeUTF(fieldName);
-    if (fieldValue == null) {
-      out.writeBoolean(false);
-    } else {
-      out.writeBoolean(true);
-      if (fieldValue instanceof ObjectID) {
-        out.writeLong(((ObjectID) fieldValue).toLong());
-      } else {
-        out.writeObject(fieldValue);
-      }
-    }
-  }
-
   protected void basicWriteTo(ObjectOutput out) throws IOException {
-    writeField(out, SEGMENT_MASK_FIELD_NAME, segmentMask);
-    writeField(out, SEGMENT_SHIFT_FIELD_NAME, segmentShift);
-    if (segments == null) {
-      out.writeBoolean(false);
-    } else {
-      out.writeBoolean(true);
-      out.writeInt(segments.length);
-      for (int i = 0; i < segments.length; i++) {
-        writeField(out, SEGMENT_FIELD_NAME + i, segments[i]);
-      }
-    }
-  }
-
-  private static void readField(ObjectInput in, ConcurrentHashMapManagedObjectState mo, int index)
-      throws ClassNotFoundException, IOException {
-    String fieldName = in.readUTF();
-    boolean fieldExist = in.readBoolean();
-    if (fieldExist) {
-      if (fieldName.equals(SEGMENT_MASK_FIELD_NAME)) {
-        mo.segmentMask = in.readObject();
-      } else if (fieldName.equals(SEGMENT_SHIFT_FIELD_NAME)) {
-        mo.segmentShift = in.readObject();
-      } else if (fieldName.equals((SEGMENT_FIELD_NAME + index))) {
-        mo.segments[index] = new ObjectID(in.readLong());
-      } else {
-        throw new AssertionError("Field not recognized in ConcurrentHashMapManagedObjectState.readFrom().");
-      }
+    out.writeObject(segmentMask);
+    out.writeObject(segmentShift);
+    out.writeInt(segments.length);
+    for (int i = 0; i < segments.length; i++) {
+      out.writeLong(segments[i].toLong());
     }
   }
 
   static MapManagedObjectState readFrom(ObjectInput in) throws IOException, ClassNotFoundException {
     ConcurrentHashMapManagedObjectState mo = new ConcurrentHashMapManagedObjectState(in);
-    readField(in, mo, -1);
-    readField(in, mo, -1);
+    mo.segmentMask = in.readObject();
+    mo.segmentShift = in.readObject();
 
-    boolean segmentExist = in.readBoolean();
-    if (segmentExist) {
-      int segmentLength = in.readInt();
-      mo.segments = new ObjectID[segmentLength];
-      for (int i = 0; i < segmentLength; i++) {
-        readField(in, mo, i);
-      }
+    int segmentLength = in.readInt();
+    mo.segments = new ObjectID[segmentLength];
+    for (int i = 0; i < segmentLength; i++) {
+      mo.segments[i] = new ObjectID(in.readLong());
     }
-
     return mo;
   }
 
