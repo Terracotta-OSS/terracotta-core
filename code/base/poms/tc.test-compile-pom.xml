@@ -138,8 +138,8 @@
     <dependency>
       <!-- dso-container-tests -->
       <groupId>org.terracotta</groupId>
-      <artifactId>tc_cargo-core-uberjar</artifactId>
-      <version>0.8</version>
+      <artifactId>tc-cargo-core-uberjar</artifactId>
+      <version>0.9-20080103</version>
       <scope>test</scope>
     </dependency>
     <dependency>
