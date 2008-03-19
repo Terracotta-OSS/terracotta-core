@@ -853,7 +853,6 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   }
 
   private void basicConditionVariableTesting(int index, WriteLock lock, Condition condition) throws Exception {
-    DebugUtil.DEBUG = true;
     printTimeStamp(index, "basicConditionVariableTesting");
 
     final long id = new Long(getApplicationId()).longValue();
@@ -865,7 +864,6 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     }
 
     barrier.await();
-    DebugUtil.DEBUG = false;
   }
 
   private void doPutter(long id, WriteLock lock, Condition condition, List Q, int getters) throws Exception {
@@ -909,23 +907,24 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       lock.lock();
       try {
         while (Q.size() == 0) {
+          logDebug("GETTER- " + id + " " + ManagerUtil.getClientID() + " Q size: " + Q.size());
           int choice = i % 4;
           switch (choice) {
             case 0:
-              logDebug("GETTER- " + id + " await");
+              logDebug("GETTER- " + id + " " + ManagerUtil.getClientID() + " await");
               condition.await();
               break;
             case 1:
-              logDebug("GETTER- " + id + " awaitUninterruptibly");
+              logDebug("GETTER- " + id + ManagerUtil.getClientID() + " awaitUninterruptibly");
               condition.awaitUninterruptibly();
               break;
             case 2:
-              logDebug("GETTER- " + id + " await millis");
+              logDebug("GETTER- " + id + ManagerUtil.getClientID() + " await millis");
               long millis = random.nextInt(10000);
               condition.await(millis, TimeUnit.MILLISECONDS);
               break;
             case 3:
-              logDebug("GETTER- " + id + " await nanos");
+              logDebug("GETTER- " + id + ManagerUtil.getClientID() + " await nanos");
               long nanos = random.nextInt(10000);
               condition.awaitNanos(nanos);
               break;
@@ -933,8 +932,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
           i++;
         }
         WorkItem wi = (WorkItem) Q.remove(0);
+        System.err.println("GETTER- " + id + ManagerUtil.getClientID() + " removes " + wi);
         if (wi.isStop()) { return; }
-        System.err.println("GETTER- " + id + " removes " + wi);
 
       } finally {
         lock.unlock();
