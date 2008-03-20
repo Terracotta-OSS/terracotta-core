@@ -52,6 +52,7 @@ import com.tc.stats.DSOMBean;
 import com.tc.util.Assert;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
@@ -380,7 +381,14 @@ public class TCServerImpl extends SEDA implements TCServer {
     /**
      * We usually don't serve up any files, just hook in a few servlets. The ResourceBase can't be null though.
      */
-    File tcInstallDir = Directories.getInstallationRoot();
+    File tcInstallDir;
+    try {
+      tcInstallDir = Directories.getInstallationRoot();
+    } catch (FileNotFoundException e) {
+      // if an error occurs during the retrieval of the installation root, just set it to null
+      // so that the fallback mechanism can be used
+      tcInstallDir = null;
+    }
     File userDir = new File(System.getProperty("user.dir"));
     boolean tcInstallDirValid = false;
     File resourceBaseDir = userDir;
