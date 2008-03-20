@@ -62,6 +62,8 @@
             <emptyLine />
             <package name="bsh" withSubpackages="true" />
             <emptyLine />
+            <package name="junit" withSubpackages="true" />
+            <emptyLine />
           </value>
         </option>
         <option name="OPTIMIZE_IMPORTS_ON_THE_FLY" value="true" />

@@ -66,16 +66,18 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
   private final static String SQL_NEXT_STATISTICLOGID = "SELECT nextval('seq_statisticlog')";
   private final static String SQL_NEXT_CONSUMPTIONID = "SELECT nextval('seq_consumption')";
   private final static String SQL_MAKE_ALL_CONSUMABLE = "UPDATE statisticlog SET consumptionid = NULL";
-  private static final String SQL_RETRIEVE_LOCAL_SESSIONID = "SELECT localsessionid FROM capturesession WHERE clustersessionid = ?";
-  private static final String SQL_RETRIEVE_CAPTURESESSION = "SELECT * FROM capturesession WHERE clustersessionid = ?";
-  private static final String SQL_STOP_CAPTURESESSION = "UPDATE capturesession SET stop = ? WHERE clustersessionid = ? AND start IS NOT NULL AND stop IS NULL";
-  private static final String SQL_CREATE_CAPTURESESSION = "INSERT INTO capturesession (localsessionid, clustersessionid) VALUES (?, ?)";
-  private static final String SQL_START_CAPTURESESSION = "UPDATE capturesession SET start = ? WHERE clustersessionid = ? AND start IS NULL";
+  private final static String SQL_RETRIEVE_LOCAL_SESSIONID = "SELECT localsessionid FROM capturesession WHERE clustersessionid = ?";
+  private final static String SQL_RETRIEVE_CAPTURESESSION = "SELECT * FROM capturesession WHERE clustersessionid = ?";
+  private final static String SQL_STOP_CAPTURESESSION = "UPDATE capturesession SET stop = ? WHERE clustersessionid = ? AND start IS NOT NULL AND stop IS NULL";
+  private final static String SQL_CREATE_CAPTURESESSION = "INSERT INTO capturesession (localsessionid, clustersessionid) VALUES (?, ?)";
+  private final static String SQL_START_CAPTURESESSION = "UPDATE capturesession SET start = ? WHERE clustersessionid = ? AND start IS NULL";
   private final static String SQL_INSERT_STATISTICSDATA = "INSERT INTO statisticlog (id, localsessionid, agentip, agentdifferentiator, moment, statname, statelement, datanumber, datatext, datatimestamp, datadecimal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-  private static final String SQL_MARK_FOR_CONSUMPTION_LIMIT = "MERGE INTO statisticlog(id, consumptionid) KEY(id) SELECT id, ? FROM statisticlog WHERE consumptionid IS NULL AND localsessionid = ? ORDER BY moment LIMIT ?";
-  private static final String SQL_MARK_FOR_CONSUMPTION = "UPDATE statisticlog SET consumptionid = ? WHERE consumptionid IS NULL AND localsessionid = ?";
-  private static final String SQL_CONSUME_STATISTICDATA = "SELECT * FROM statisticlog WHERE consumptionid = ? ORDER BY moment ASC, id ASC";
-  private static final String SQL_RESET_CONSUMPTIONID = "UPDATE statisticlog SET consumptionid = NULL WHERE consumptionid = ?";
+  private final static String SQL_MARK_FOR_CONSUMPTION_LIMIT = "MERGE INTO statisticlog(id, consumptionid) KEY(id) SELECT id, ? FROM statisticlog WHERE consumptionid IS NULL AND localsessionid = ? ORDER BY moment LIMIT ?";
+  private final static String SQL_MARK_FOR_CONSUMPTION = "UPDATE statisticlog SET consumptionid = ? WHERE consumptionid IS NULL AND localsessionid = ?";
+  private final static String SQL_CONSUME_STATISTICDATA = "SELECT * FROM statisticlog WHERE consumptionid = ? ORDER BY moment ASC, id ASC";
+  private final static String SQL_RESET_CONSUMPTIONID = "UPDATE statisticlog SET consumptionid = NULL WHERE consumptionid = ?";
+
+  private final static Random rand = new Random();
 
   private final StatisticsConfig config;
   private final File lockFile;
@@ -86,8 +88,6 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
   private volatile String defaultAgentDifferentiator = null;
 
   private final Set listeners = new CopyOnWriteArraySet();
-
-  private static final Random rand = new Random();
 
   public H2StatisticsBufferImpl(final StatisticsConfig config, final File dbDir) throws StatisticsBufferException {
     Assert.assertNotNull("config", config);
@@ -171,6 +171,8 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
 
   public void close() throws StatisticsBufferException {
     synchronized (this) {
+      fireClosing();
+
       try {
         database.close();
       } catch (StatisticsDatabaseException e) {
@@ -592,6 +594,14 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
     if (listeners.size() > 0) {
       for (Iterator it = listeners.iterator(); it.hasNext(); ) {
         ((StatisticsBufferListener)it.next()).opened();
+      }
+    }
+  }
+
+  private void fireClosing() {
+    if (listeners.size() > 0) {
+      for (Iterator it = listeners.iterator(); it.hasNext(); ) {
+        ((StatisticsBufferListener)it.next()).closing();
       }
     }
   }

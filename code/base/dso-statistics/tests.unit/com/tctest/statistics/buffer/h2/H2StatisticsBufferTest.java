@@ -633,11 +633,15 @@ public class H2StatisticsBufferTest extends TestCase {
     assertTrue(listener1.isStarted());
     assertTrue(listener1.isStopped());
 
+    assertFalse(listener1.isClosing());
+    assertFalse(listener2.isClosing());
     assertFalse(listener1.isClosed());
     assertFalse(listener2.isClosed());
 
     buffer.close();
 
+    assertTrue(listener1.isClosing());
+    assertTrue(listener2.isClosing());
     assertTrue(listener1.isClosed());
     assertTrue(listener2.isClosed());
 
@@ -794,6 +798,7 @@ public class H2StatisticsBufferTest extends TestCase {
     private boolean started = false;
     private boolean stopped = false;
     private boolean opened = false;
+    private boolean closing = false;
     private boolean closed = false;
 
     public TestStatisticsBufferListener(String sessionId) {
@@ -810,6 +815,10 @@ public class H2StatisticsBufferTest extends TestCase {
 
     public boolean isOpened() {
       return opened;
+    }
+
+    public boolean isClosing() {
+      return closing;
     }
 
     public boolean isClosed() {
@@ -832,6 +841,10 @@ public class H2StatisticsBufferTest extends TestCase {
 
     public void opened() {
       opened = true;
+    }
+
+    public void closing() {
+      closing = true;
     }
 
     public void closed() {

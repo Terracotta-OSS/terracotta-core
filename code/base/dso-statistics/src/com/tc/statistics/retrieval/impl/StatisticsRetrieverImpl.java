@@ -128,8 +128,8 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
   }
 
   private void retrieveShutdownMarker(final Date moment) {
-    retrieveAction(moment, new SRAShutdownTimestamp());
-  }
+      retrieveAction(moment, new SRAShutdownTimestamp());
+    }
 
   private void retrieveStartupStatistics() {
     List action_list = (List)actionsMap.get(StatisticType.STARTUP);
@@ -175,6 +175,23 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
   private synchronized void disableTimerTasks() {
     if (statsTask != null) {
       statsTask.shutdown();
+
+      boolean interrupted = false;
+      try {
+        while (!statsTask.isShutdown()) {
+          try {
+            this.wait(config.getParamLong(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL) * 2); // wait for twice the retriever schedule interval
+          } catch (InterruptedException e) {
+            interrupted = true;
+          }
+        }
+      } finally {
+        if (interrupted) {
+          // Restore the interrupted status of the thread for methods higher up the call stack
+          Thread.currentThread().interrupt();
+        }
+      }
+
       statsTask = null;
     }
 
@@ -199,15 +216,23 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
   public void opened() {
   }
 
-  public void closed() {
+  public void closing() {
     shutdown();
   }
 
+  public void closed() {
+  }
+
   private class RetrieveStatsTask extends TimerTask {
-    private boolean performTaskShutdown = false;
+    private volatile boolean performTaskShutdown = false;
+    private volatile boolean isShutdown = false;
 
     public void shutdown() {
       performTaskShutdown = true;
+    }
+
+    public boolean isShutdown() {
+      return isShutdown;
     }
 
     public void run() {
@@ -219,8 +244,13 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
       }
 
       if (performTaskShutdown) {
-        cancel();
-        retrieveShutdownMarker(new Date(moment.getTime()+1));
+        synchronized (StatisticsRetrieverImpl.this) {
+          cancel();
+          retrieveShutdownMarker(new Date(moment.getTime()+1));
+          isShutdown = true;
+        
+          StatisticsRetrieverImpl.this.notifyAll();
+        }
       }
     }
   }

@@ -115,6 +115,9 @@ public class StatisticsEmitterMBeanImpl extends AbstractTerracottaMBean implemen
   public void opened() {
   }
 
+  public void closing() {
+  }
+
   public void closed() {
   }
 
