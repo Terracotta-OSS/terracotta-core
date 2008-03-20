@@ -13,13 +13,14 @@ import javax.swing.Icon;
 
 public class LocksNode extends ComponentNode {
   private ClusterNode       m_clusterNode;
+  private LocksPanel m_locksPanel;
   private String            m_baseLabel;
 
   public LocksNode(ClusterNode clusterNode) {
     super();
     m_clusterNode = clusterNode;
     setLabel(m_baseLabel = AdminClient.getContext().getMessage("dso.locks"));
-    setComponent(new LocksPanel(this));
+    setComponent(m_locksPanel = new LocksPanel(this));
   }
 
   ConnectionContext getConnectionContext() {
@@ -27,7 +28,9 @@ public class LocksNode extends ComponentNode {
   }
 
   public void newConnectionContext() {
-    ((LocksPanel)getComponent()).newConnectionContext();
+    if(m_locksPanel != null) {
+      m_locksPanel.newConnectionContext();
+    }
   }
   
   public Icon getIcon() {
@@ -46,5 +49,6 @@ public class LocksNode extends ComponentNode {
     super.tearDown();
     m_clusterNode = null;
     m_baseLabel = null;
+    m_locksPanel = null;
   }
 }

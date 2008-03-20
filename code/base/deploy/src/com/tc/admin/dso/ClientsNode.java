@@ -42,9 +42,9 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
   private void init() {
     setLabel(m_acc.getMessage("clients"));
     m_clients = new DSOClient[0];
-    tearDownChildren();
-    removeAllChildren();
-    m_acc.controller.nodeStructureChanged(this);
+    for (int i = getChildCount() - 1; i >= 0; i--) {
+      m_acc.controller.remove((XTreeNode) getChildAt(i));
+    }
     if (m_clientsPanel != null) {
       m_clientsPanel.setClients(m_clients);
     }
