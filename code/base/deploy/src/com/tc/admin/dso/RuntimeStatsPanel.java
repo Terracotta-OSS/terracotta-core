@@ -301,8 +301,9 @@ public class RuntimeStatsPanel extends XContainer {
 
     if (m_statsGathererTimer != null) {
       int pollMillis = seconds * 1000;
-      m_statsGathererTimer.setDelay(pollMillis);
-
+      m_statsGathererTimer.setInitialDelay(pollMillis);
+      m_statsGathererTimer.restart();
+      
       Iterator<JFreeChart> chartIter = m_allCharts.iterator();
       int sampleHistoryMinutes = getRuntimeStatsSampleHistoryMinutes();
       int sampleHistoryMillis = sampleHistoryMinutes * 60 * 1000;
