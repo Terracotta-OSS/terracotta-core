@@ -12,6 +12,7 @@ import com.tc.admin.AdminClient;
 import com.tc.admin.AdminClientContext;
 import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.BasicWorker;
+import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.common.XContainer;
@@ -139,20 +140,20 @@ public class GCStatsPanel extends XContainer implements NotificationListener {
         }
       });
     }
-    
+
     protected void finished() {
       Exception e = getException();
-      if(e != null) {
+      if (e != null) {
         Frame frame = (Frame) getAncestorOfClass(Frame.class);
-        Throwable cause = e.getCause();
-        String msg = cause != null ? cause.getMessage() : e.getMessage();
+        Throwable cause = ExceptionHelper.getRootCause(e);
+        String msg = cause.getMessage();
         String title = frame.getTitle();
 
         JOptionPane.showMessageDialog(frame, msg, title, JOptionPane.INFORMATION_MESSAGE);
       }
     }
   }
-  
+
   private void runGC() {
     m_acc.executorService.execute(new RunGCWorker());
   }

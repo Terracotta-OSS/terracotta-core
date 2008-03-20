@@ -402,7 +402,7 @@
 		</children>
 		<connections>
 			<item bottom="-1,bottom:s" height="10" left="-1,left:n" right="1,left:n" top="-1,top:s" width="10"/>
-			<item bottom="-1,bottom:s" height="n" left="0,right:n" right="-1,right:s" top="-1,top:s" width="sn"/>
+			<item bottom="-1,bottom:s" height="n" left="0,right:n" right="-1,right:s" top="-1,top:s" width="n"/>
 		</connections>
 	</container>
 	<container tag="ClientStatsPanel">

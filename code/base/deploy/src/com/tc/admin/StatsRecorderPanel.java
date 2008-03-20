@@ -20,6 +20,7 @@ import org.dijon.ToggleButton;
 import EDU.oswego.cs.dl.util.concurrent.misc.SwingWorker;
 
 import com.tc.admin.common.BasicWorker;
+import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.common.XContainer;
 import com.tc.statistics.beans.StatisticsLocalGathererMBean;
 import com.tc.statistics.beans.StatisticsMBeanNames;
@@ -83,6 +84,7 @@ public class StatsRecorderPanel extends XContainer {
   private Button                       m_exportStatsConfigButton;
   private StatisticsLocalGathererMBean m_statisticsGathererMBean;
   private String                       m_currentStatsSessionId;
+  private boolean                      m_isRecording;
   private Button                       m_exportStatsButton;
   private JProgressBar                 m_progressBar;
   private File                         m_lastExportDir;
@@ -106,7 +108,6 @@ public class StatsRecorderPanel extends XContainer {
     m_stopGatheringStatsButton = (ToggleButton) findComponent("StopGatheringStatsButton");
     m_stopGatheringStatsButton.addActionListener(new StopGatheringStatsAction());
 
-    m_currentStatsSessionId = null;
     m_statsSessionsList = (List) findComponent("StatsSessionsList");
     m_statsSessionsList.addListSelectionListener(new StatsSessionsListSelectionListener());
     m_statsSessionsList.setModel(m_statsSessionsListModel = new DefaultListModel());
@@ -162,11 +163,7 @@ public class StatsRecorderPanel extends XContainer {
     }
 
     private boolean isAlreadyConnectionException(Throwable t) {
-      while (t != null) {
-        if (t instanceof StatisticsGathererAlreadyConnectedException) { return true; }
-        t = t.getCause();
-      }
-      return false;
+      return  ExceptionHelper.getCauseOfType(t, StatisticsGathererAlreadyConnectedException.class) != null;
     }
 
     protected void finished() {
@@ -175,7 +172,16 @@ public class StatsRecorderPanel extends XContainer {
         if (isAlreadyConnectionException(e)) {
           gathererConnected();
         } else {
-          m_acc.log(e);
+          SecurityException se = (SecurityException) ExceptionHelper.getCauseOfType(e, SecurityException.class);
+          if(se != null) {
+            Frame frame = (Frame)getAncestorOfClass(Frame.class);
+            String msg = se.getLocalizedMessage()+".. connecting to\nstatistics gatherer bean.";
+            String title = frame != null ? frame.getTitle() : "Statistics recorder";
+            JOptionPane.showMessageDialog(frame, msg, title, JOptionPane.ERROR_MESSAGE);
+            m_statsRecorderNode.makeUnavailable();
+          } else {
+            m_acc.log(e);
+          }
         }
       }
     }
@@ -239,18 +245,23 @@ public class StatsRecorderPanel extends XContainer {
         m_clearAllStatsSessionsButton.setEnabled(haveAnySessions);
         m_exportStatsButton.setEnabled(haveAnySessions);
         m_currentStatsSessionId = connectedState.getActiveStatsSessionId();
-        boolean recording = isRecording();
-        if (recording) {
-          m_statsGathererListener.showRecordingInProgress();
-        }
-        m_startGatheringStatsButton.setSelected(recording);
+        m_statsGathererListener.init(m_currentStatsSessionId != null);
         setupStatsConfigPanel(supportedStats);
       }
     }
   }
 
   class StatisticsGathererListener implements NotificationListener {
+    private void init(boolean isRecording) {
+      if (isRecording) {
+        showRecordingInProgress();
+      } else {
+        hideRecordingInProgress();
+      }
+    }
+    
     private void showRecordingInProgress() {
+      m_isRecording = true;
       m_startGatheringStatsButton.setSelected(true);
       m_stopGatheringStatsButton.setSelected(false);
       m_statsRecorderNode.notifyChanged();
@@ -258,6 +269,7 @@ public class StatsRecorderPanel extends XContainer {
 
     private void hideRecordingInProgress() {
       m_currentStatsSessionId = null;
+      m_isRecording = false;
       m_startGatheringStatsButton.setSelected(false);
       m_stopGatheringStatsButton.setSelected(true);
       m_statsRecorderNode.notifyChanged();
@@ -457,7 +469,7 @@ public class StatsRecorderPanel extends XContainer {
   }
 
   public boolean isRecording() {
-    return m_currentStatsSessionId != null;
+    return m_isRecording;
   }
 
   private String getSelectedSessionId() {

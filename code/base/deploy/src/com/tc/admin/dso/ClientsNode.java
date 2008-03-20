@@ -41,9 +41,12 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
 
   private void init() {
     setLabel(m_acc.getMessage("clients"));
-    m_clients = null;
-    for (int i = getChildCount() - 1; i >= 0; i--) {
-      m_acc.controller.remove((XTreeNode) getChildAt(i));
+    m_clients = new DSOClient[0];
+    tearDownChildren();
+    removeAllChildren();
+    m_acc.controller.nodeStructureChanged(this);
+    if (m_clientsPanel != null) {
+      m_clientsPanel.setClients(m_clients);
     }
     m_acc.executorService.execute(new InitWorker());
   }
@@ -114,11 +117,11 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
     } else {
       add(clientNode);
     }
-    if(m_clientsPanel != null) {
+    if (m_clientsPanel != null) {
       m_clientsPanel.add(clientNode.getClient());
     }
   }
-  
+
   public DSOClient[] getClients() {
     return m_clients;
   }
@@ -187,7 +190,7 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
 
       if (nodeIndex != -1) {
         m_acc.controller.remove((XTreeNode) getChildAt(nodeIndex));
-        if(m_clientsPanel != null) {
+        if (m_clientsPanel != null) {
           m_clientsPanel.remove(client);
         }
       }
@@ -205,11 +208,11 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
     } catch (Exception e) {/**/
     }
 
-    if(m_clientsPanel != null) {
+    if (m_clientsPanel != null) {
       m_clientsPanel.tearDown();
       m_clientsPanel = null;
     }
-    
+
     m_acc = null;
     m_clusterNode = null;
     m_cc = null;

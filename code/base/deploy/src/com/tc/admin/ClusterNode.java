@@ -128,7 +128,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded,
                                                   boolean leaf, int row, boolean focused) {
       Component comp = super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, focused);
-      if (m_statsRecorderNode != null && m_statsRecorderNode.isRecording()) {
+      if (haveActiveRecordingSession()) {
         m_label.setForeground(sel ? Color.white : Color.red);
         m_label.setText(getBaseLabel() + " (recording stats)");
       }
@@ -153,14 +153,18 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
 
     try {
       m_connectManager.setConnected(m_connectManager.testIsConnected());
-      m_clusterPanel.reinitialize();
-      if (m_rootsNode != null) {
-        m_rootsNode.newConnectionContext();
-        m_locksNode.newConnectionContext();
-        m_gcStatsNode.newConnectionContext();
-        m_clientsNode.newConnectionContext();
-      }
-    } catch (Exception e) {/**/
+    } catch(Exception e) {
+      m_acc.controller.nodeChanged(ClusterNode.this);
+      m_connectManager.setAutoConnect(autoConnect);
+      return;
+    }
+    
+    m_clusterPanel.reinitialize();
+    if (m_rootsNode != null) {
+      m_rootsNode.newConnectionContext();
+      m_locksNode.newConnectionContext();
+      m_gcStatsNode.newConnectionContext();
+      m_clientsNode.newConnectionContext();
     }
 
     m_acc.controller.nodeChanged(ClusterNode.this);
@@ -804,6 +808,14 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
     return new StatsRecorderNode(this);
   }
   
+  void makeStatsRecorderUnavailable() {
+    if(m_statsRecorderNode != null) {
+      m_acc.controller.remove(m_statsRecorderNode);
+      m_statsRecorderNode.tearDown();
+      m_statsRecorderNode = null;
+    }
+  }
+  
   protected GCStatsNode createGCStatsNode() throws Exception {
     return new GCStatsNode(this);
   }
@@ -961,7 +973,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
   }
 
   boolean haveActiveRecordingSession() {
-    return m_statsRecorderNode.isRecording();
+    return m_statsRecorderNode != null && m_statsRecorderNode.isRecording();
   }
 
   L2Info[] getClusterMembers() {
@@ -1139,7 +1151,9 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
       }
     }
 
-    m_statsRecorderNode.testTriggerThreadDumpSRA();
+    if(m_statsRecorderNode != null) {
+      m_statsRecorderNode.testTriggerThreadDumpSRA();
+    }
 
     return tde;
   }

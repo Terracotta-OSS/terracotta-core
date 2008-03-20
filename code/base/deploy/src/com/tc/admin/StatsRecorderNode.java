@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin;
 
@@ -11,7 +12,7 @@ import com.tc.statistics.beans.StatisticsLocalGathererMBean;
 public class StatsRecorderNode extends ComponentNode {
   private ClusterNode        m_clusterNode;
   private StatsRecorderPanel m_statsRecorderPanel;
-  private AuthScope           m_authScope;
+  private AuthScope          m_authScope;
 
   public StatsRecorderNode(ClusterNode clusterNode) {
     super();
@@ -19,6 +20,10 @@ public class StatsRecorderNode extends ComponentNode {
     setLabel(AdminClient.getContext().getMessage("stats.recorder.node.label"));
     setIcon(ServerHelper.getHelper().getStatsRecorderIcon());
     setComponent(m_statsRecorderPanel = new StatsRecorderPanel(this));
+  }
+
+  void makeUnavailable() {
+    m_clusterNode.makeStatsRecorderUnavailable();
   }
 
   boolean isRecording() {
@@ -42,15 +47,15 @@ public class StatsRecorderNode extends ComponentNode {
   }
 
   AuthScope getAuthScope() throws Exception {
-    if(m_authScope != null) return m_authScope;
+    if (m_authScope != null) return m_authScope;
     return m_authScope = m_clusterNode.getAuthScope();
   }
-  
+
   void notifyChanged() {
     nodeChanged();
     m_clusterNode.notifyChanged();
   }
-  
+
   public void tearDown() {
     super.tearDown();
     m_clusterNode = null;
