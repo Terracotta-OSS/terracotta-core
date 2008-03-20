@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.dna.impl;
 
@@ -10,7 +11,6 @@ import com.tc.io.TCSerializable;
 import com.tc.util.Assert;
 
 import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TLongObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 
@@ -20,7 +20,6 @@ public class ObjectStringSerializer implements TCSerializable {
 
   private final TObjectIntHashMap  stringToID = new TObjectIntHashMap();
   private final TIntObjectHashMap  idToString = new TIntObjectHashMap();
-  private final TLongObjectHashMap fields     = new TLongObjectHashMap();
 
   private static class SerializeProcedure implements TObjectIntProcedure {
     private final TCDataOutput out;
@@ -60,12 +59,7 @@ public class ObjectStringSerializer implements TCSerializable {
   }
 
   public synchronized void writeFieldName(TCByteBufferOutput out, String fieldName) {
-    int lastDot = fieldName.lastIndexOf('.');
-    String cn = fieldName.substring(0, lastDot);
-    String fn = fieldName.substring(lastDot + 1, fieldName.length());
-
-    writeString(out, cn);
-    writeString(out, fn);
+    writeString(out, fieldName);
   }
 
   public synchronized String readString(TCByteBufferInput in) throws IOException {
@@ -78,26 +72,11 @@ public class ObjectStringSerializer implements TCSerializable {
   }
 
   public synchronized String readFieldName(TCByteBufferInput in) throws IOException {
-    final int classId;
-    classId = in.readInt();
+    int stringID = in.readInt();
 
-    final int fieldId;
-    fieldId = in.readInt();
-
-    long key = ((long) classId << 32) + fieldId;
-    String rv = (String) fields.get(key);
-    if (rv == null) {
-      String cn = stringForID(classId);
-      Assert.eval(cn != null);
-      String fn = stringForID(fieldId);
-      Assert.eval(fn != null);
-      StringBuffer buf = new StringBuffer(cn.length() + fn.length() + 1); // +1 for '.'
-      buf.append(cn).append('.').append(fn);
-      rv = buf.toString().intern();
-      fields.put(key, rv);
-    }
-
-    return rv;
+    String fieldName = stringForID(stringID);
+    Assert.eval(fieldName != null);
+    return fieldName;
   }
 
   private void addStringAndID(String name, int id) {

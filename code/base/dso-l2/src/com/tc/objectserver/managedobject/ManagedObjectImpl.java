@@ -70,7 +70,7 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   private transient TLinkable      previous;
   private transient TLinkable      next;
 
-  private int                      accessed;
+  private transient int            accessed;
 
   public ManagedObjectImpl(ObjectID id) {
     Assert.assertNotNull(id);
@@ -174,8 +174,8 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     DNACursor cursor = dna.getCursor();
 
     if (state == null) {
-      state = getStateFactory().createState(id, dna.getParentObjectID(), dna.getTypeName(), dna.getDefiningLoaderDescription(),
-                                            cursor);
+      state = getStateFactory().createState(id, dna.getParentObjectID(), dna.getTypeName(),
+                                            dna.getDefiningLoaderDescription(), cursor);
     }
     try {
       try {

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.applicator;
 
@@ -14,7 +15,6 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.LiteralAction;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
@@ -37,11 +37,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * Apply a logical action to an object
  */
 public class ConcurrentHashMapApplicator extends PartialHashMapApplicator {
-  private static final String CONCURRENT_HASH_MAP_FIELD_NAME_PREFIX = ConcurrentHashMap.class.getName() + ".";
-  private static final String SEGMENT_MASK_FIELD_NAME               = "segmentMask";
-  private static final String SEGMENT_SHIFT_FIELD_NAME              = "segmentShift";
-  private static final String SEGMENT_FIELD_NAME                    = "segments";
-  private static final String TC_PUT_METHOD_NAME                    = ByteCodeUtil.TC_METHOD_PREFIX + "put";
+  private static final String SEGMENT_MASK_FIELD_NAME  = "segmentMask";
+  private static final String SEGMENT_SHIFT_FIELD_NAME = "segmentShift";
+  private static final String SEGMENT_FIELD_NAME       = "segments";
+  private static final String TC_PUT_METHOD_NAME       = ByteCodeUtil.TC_METHOD_PREFIX + "put";
 
   private static final Field  SEGMENT_MASK_FIELD;
   private static final Field  SEGMENT_SHIFT_FIELD;
@@ -81,8 +80,8 @@ public class ConcurrentHashMapApplicator extends PartialHashMapApplicator {
     try {
       filterPortableObject(SEGMENT_MASK_FIELD.get(pojo), addTo);
       filterPortableObject(SEGMENT_SHIFT_FIELD.get(pojo), addTo);
-      Object[] segments = (Object[])SEGMENT_FIELD.get(pojo);
-      for (int i=0; i<segments.length; i++) {
+      Object[] segments = (Object[]) SEGMENT_FIELD.get(pojo);
+      for (int i = 0; i < segments.length; i++) {
         filterPortableObject(segments[i], addTo);
       }
     } catch (IllegalAccessException e) {
@@ -98,65 +97,60 @@ public class ConcurrentHashMapApplicator extends PartialHashMapApplicator {
 
   public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
       ClassNotFoundException {
-    int segmentLength = -1;
-    Object segment = null;
     Object[] segments = null;
-    int segmentIndex = 0;
     DNACursor cursor = dna.getCursor();
 
     while (cursor.next(encoding)) {
       Object action = cursor.getAction();
       if (action instanceof LogicalAction) {
-        if (segmentLength != -1) {
-          setSegmentField(segments, po, segmentLength, segmentIndex);
-          segmentLength = -1;
-        }
-
         LogicalAction logicalAction = cursor.getLogicalAction();
         int method = logicalAction.getMethod();
         Object[] params = logicalAction.getParameters();
         apply(objectManager, po, method, params);
-      } else if (action instanceof LiteralAction) {
-        LiteralAction literalAction = (LiteralAction) action;
-        segmentLength = ((Integer) literalAction.getObject()).intValue();
       } else if (action instanceof PhysicalAction) {
-        Assert.assertFalse(dna.isDelta()); // Physical fields are shared only when the DNA is not
-        // a delta.
+        // Physical fields are shared only when the DNA is not a delta.
+        Assert.assertFalse(dna.isDelta());
 
         PhysicalAction physicalAction = cursor.getPhysicalAction();
-
-        Assert.eval(physicalAction.isTruePhysical());
-        String fieldName = physicalAction.getFieldName();
-        Object value = physicalAction.getObject();
-        try {
-          if (fieldName.equals(CONCURRENT_HASH_MAP_FIELD_NAME_PREFIX + SEGMENT_MASK_FIELD_NAME)) {
-            FieldUtils.tcSet(po, value, SEGMENT_MASK_FIELD);
-          } else if (fieldName.equals(CONCURRENT_HASH_MAP_FIELD_NAME_PREFIX + SEGMENT_SHIFT_FIELD_NAME)) {
-            FieldUtils.tcSet(po, value, SEGMENT_SHIFT_FIELD);
-          } else if (fieldName.equals(CONCURRENT_HASH_MAP_FIELD_NAME_PREFIX + SEGMENT_FIELD_NAME + segmentIndex)) {
-            segment = objectManager.lookupObject((ObjectID) value);
-            if (segments == null) {
-              segments = (Object[]) Array.newInstance(segment.getClass(), segmentLength);
+        if (physicalAction.isEntireArray()) {
+          segments = (Object[]) physicalAction.getObject();
+          segments = resolveReferences(objectManager, segments);
+          setSegmentField(segments, po);
+        } else {
+          Assert.assertTrue(physicalAction.isTruePhysical());
+          String fieldName = physicalAction.getFieldName();
+          Object value = physicalAction.getObject();
+          try {
+            if (fieldName.equals(SEGMENT_MASK_FIELD_NAME)) {
+              FieldUtils.tcSet(po, value, SEGMENT_MASK_FIELD);
+            } else if (fieldName.equals(SEGMENT_SHIFT_FIELD_NAME)) {
+              FieldUtils.tcSet(po, value, SEGMENT_SHIFT_FIELD);
+            } else {
+              throw new AssertionError("Unknown Physical Action : " + physicalAction + " for " + dna.getObjectID());
             }
-            segments[segmentIndex] = segment;
-            segmentIndex++;
+          } catch (IllegalAccessException e) {
+            throw new TCRuntimeException(e);
           }
-        } catch (IllegalAccessException e) {
-          throw new TCRuntimeException(e);
         }
       }
     }
-    setSegmentField(segments, po, segmentLength, segmentIndex);
   }
-  
-  private void setSegmentField(Object[] segments, Object po, int segmentLength, int segmentIndex) {
-    if (segmentLength != -1) {
-      Assert.assertEquals(segmentLength, segmentIndex);
-      try {
-        FieldUtils.tcSet(po, segments, SEGMENT_FIELD);
-      } catch (IllegalAccessException e) {
-        throw new TCRuntimeException(e);
-      }
+
+  private Object[] resolveReferences(ClientObjectManager objectManager, Object[] sids) throws ClassNotFoundException {
+    Object segment = objectManager.lookupObject((ObjectID) sids[0]);
+    Object[] segments = (Object[]) Array.newInstance(segment.getClass(), sids.length);
+    segments[0] = segment;
+    for (int i = 1; i < sids.length; i++) {
+      segments[i] = objectManager.lookupObject((ObjectID) sids[i]);
+    }
+    return segments;
+  }
+
+  private void setSegmentField(Object[] segments, Object po) {
+    try {
+      FieldUtils.tcSet(po, segments, SEGMENT_FIELD);
+    } catch (IllegalAccessException e) {
+      throw new TCRuntimeException(e);
     }
   }
 
@@ -169,19 +163,19 @@ public class ConcurrentHashMapApplicator extends PartialHashMapApplicator {
     try {
       Object segmentMask = SEGMENT_MASK_FIELD.get(pojo);
       segmentMask = getDehydratableObject(segmentMask, objectManager);
-      writer.addPhysicalAction(CONCURRENT_HASH_MAP_FIELD_NAME_PREFIX + SEGMENT_MASK_FIELD_NAME, segmentMask);
+      writer.addPhysicalAction(SEGMENT_MASK_FIELD_NAME, segmentMask);
 
       Object segmentShift = SEGMENT_SHIFT_FIELD.get(pojo);
       segmentShift = getDehydratableObject(segmentShift, objectManager);
-      writer.addPhysicalAction(CONCURRENT_HASH_MAP_FIELD_NAME_PREFIX + SEGMENT_SHIFT_FIELD_NAME, segmentShift);
+      writer.addPhysicalAction(SEGMENT_SHIFT_FIELD_NAME, segmentShift);
 
+      // XXX::FIXME It is weird that we dont just make this array physically shared, historical reasons
       Object[] segments = (Object[]) SEGMENT_FIELD.get(pojo);
-      writer.addLiteralValue(new Integer(segments.length));
+      Object[] segmentIDs = new Object[segments.length];
       for (int i = 0; i < segments.length; i++) {
-        Object segment = segments[i];
-        segment = getDehydratableObject(segment, objectManager);
-        writer.addPhysicalAction(CONCURRENT_HASH_MAP_FIELD_NAME_PREFIX + SEGMENT_FIELD_NAME + i, segment);
+        segmentIDs[i] = getDehydratableObject(segments[i], objectManager);
       }
+      writer.addEntireArray(segmentIDs);
     } catch (IllegalAccessException e) {
       throw new TCRuntimeException(e);
     }
