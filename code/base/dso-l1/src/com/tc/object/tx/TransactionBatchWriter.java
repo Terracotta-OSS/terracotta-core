@@ -134,31 +134,40 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
   }
 
   private TransactionBuffer getOrCreateBuffer(ClientTransaction txn, SequenceGenerator sequenceGenerator) {
-    final boolean foldCandidate = isFoldCandidate(txn);
+    if (foldingEnabled) {
+      final boolean exceedsLimits = exceedsLimits(txn);
 
-    if (foldCandidate) {
-      final Set deltaOIDs = getDeltaOIDs(txn); // only need to do this once, not for each fold key
+      // txns that exceed the lock/object limits, or those with roots, DMI, and/or notify/notifyAll() cannot be folded
+      // and must close any earlier dependent txns
+      final boolean scanForClose = (txn.getNewRoots().size() > 0) || (txn.getDmiDescriptors().size() > 0)
+                                   || (txn.getNotifies().size() > 0) || exceedsLimits;
 
-      boolean stop = false;
-      for (Iterator i = foldingKeys.iterator(); !stop && i.hasNext();) {
-        FoldingKey key = (FoldingKey) i.next();
+      if (scanForClose) {
+        scanForClose(txn);
+      } else if (!exceedsLimits) {
+        final Set deltaOIDs = getDeltaOIDs(txn); // only need to do this once, not for each fold key
 
-        final byte action = key.analyze(txn, deltaOIDs);
-        switch (action) {
-          case FoldingKey.ACCEPT: {
-            numFolded++;
-            return key.getBuffer();
-          }
-          case FoldingKey.DENY: {
-            break;
-          }
-          case FoldingKey.CLOSE: {
-            i.remove();
-            stop = true;
-            break;
-          }
-          default: {
-            throw new AssertionError("unknown action: " + action);
+        boolean stop = false;
+        for (Iterator i = foldingKeys.iterator(); !stop && i.hasNext();) {
+          FoldingKey key = (FoldingKey) i.next();
+
+          final byte action = key.analyzeForFold(txn, deltaOIDs);
+          switch (action) {
+            case FoldingKey.ACCEPT: {
+              numFolded++;
+              return key.getBuffer();
+            }
+            case FoldingKey.DENY: {
+              break;
+            }
+            case FoldingKey.CLOSE: {
+              i.remove();
+              stop = true;
+              break;
+            }
+            default: {
+              throw new AssertionError("unknown action: " + action);
+            }
           }
         }
       }
@@ -169,7 +178,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
 
     TransactionBuffer txnBuffer = new TransactionBuffer(sid, newOutputStream(), serializer, encoding);
 
-    if (foldCandidate) {
+    if (foldingEnabled) {
       foldingKeys.add(new FoldingKeyImpl(txnBuffer, txn.getTransactionType(), txn.getAllLockIDs(), new HashSet(txn
           .getChangeBuffers().keySet())));
     }
@@ -179,16 +188,26 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     return txnBuffer;
   }
 
+  private boolean exceedsLimits(ClientTransaction txn) {
+    return exceedsLimit(foldingLockLimit, txn.getAllLockIDs().size())
+           || exceedsLimit(foldingObjectLimit, txn.getChangeBuffers().size());
+  }
+
+  private void scanForClose(ClientTransaction txn) {
+    List locks = txn.getAllLockIDs();
+    Set oids = txn.getChangeBuffers().keySet();
+
+    for (Iterator i = foldingKeys.iterator(); i.hasNext();) {
+      FoldingKey key = (FoldingKey) i.next();
+      if (key.hasCommonality(locks, oids)) {
+        i.remove();
+      }
+    }
+  }
+
   private static boolean exceedsLimit(int limit, int value) {
     if (limit > 0) { return value > limit; }
     return false;
-  }
-
-  private boolean isFoldCandidate(ClientTransaction txn) {
-    if (!foldingEnabled) { return false; }
-    if (exceedsLimit(foldingLockLimit, txn.getAllLockIDs().size())) { return false; }
-    if (exceedsLimit(foldingObjectLimit, txn.getChangeBuffers().size())) { return false; }
-    return txn.getNewRoots().isEmpty() && txn.getDmiDescriptors().isEmpty() && (txn.getNotifies().isEmpty());
   }
 
   public synchronized boolean addTransaction(ClientTransaction txn, SequenceGenerator sequenceGenerator) {
@@ -474,7 +493,9 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     static final byte CLOSE  = 2;
     static final byte DENY   = 3;
 
-    byte analyze(ClientTransaction txn, Set deltaOIDs);
+    byte analyzeForFold(ClientTransaction txn, Set deltaOIDs);
+
+    boolean hasCommonality(List allLockIDs, Set keySet);
 
     TransactionBuffer getBuffer();
   }
@@ -485,7 +506,6 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     private final TxnType           txnType;
     private final TransactionBuffer buffer;
 
-
     FoldingKeyImpl(TransactionBuffer buffer, TxnType txnType, List lockIDs, Set objectIDs) {
       this.buffer = buffer;
       this.txnType = txnType;
@@ -493,11 +513,15 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
       this.objectIDs = objectIDs;
     }
 
+    public boolean hasCommonality(List locks, Set oids) {
+      return CollectionUtils.containsAny(lockIDs, locks) || CollectionUtils.containsAny(objectIDs, oids);
+    }
+
     public TransactionBuffer getBuffer() {
       return this.buffer;
     }
 
-    public byte analyze(ClientTransaction txn, Set deltaOIDs) {
+    public byte analyzeForFold(ClientTransaction txn, Set deltaOIDs) {
       List txnLocks = txn.getAllLockIDs();
 
       if (lockIDs.size() != txnLocks.size()) { return chooseCloseOrDeny(deltaOIDs); }
