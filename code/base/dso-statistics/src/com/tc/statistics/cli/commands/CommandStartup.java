@@ -8,7 +8,7 @@ import com.tc.statistics.gatherer.exceptions.StatisticsGathererAlreadyConnectedE
 
 import javax.management.RuntimeMBeanException;
 
-public class CommandConnect extends AbstractCliCommand {
+public class CommandStartup extends AbstractCliCommand {
 
   public String[] getArgumentNames() {
     return NO_ARGUMENTS;
@@ -16,8 +16,8 @@ public class CommandConnect extends AbstractCliCommand {
 
   public void execute(final GathererConnection connection, final String[] arguments) {
     try {
-      connection.getGatherer().connect();
-      System.out.println("> Connected.");
+      connection.getGatherer().startup();
+      System.out.println("> Started up.");
     } catch (RuntimeMBeanException e) {
       Throwable cause1 = e.getCause();
       if (cause1 != null &&
@@ -25,7 +25,7 @@ public class CommandConnect extends AbstractCliCommand {
         Throwable cause2 = cause1.getCause();
         if (cause2 != null &&
             cause2 instanceof StatisticsGathererAlreadyConnectedException) {
-          System.out.println("> Already connected.");
+          System.out.println("> Already started up.");
           return;
         }
       }

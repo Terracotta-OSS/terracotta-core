@@ -8,8 +8,8 @@ import com.tc.management.TerracottaMBean;
 import com.tc.statistics.StatisticData;
 
 public interface StatisticsLocalGathererMBean extends TerracottaMBean {
-  public final static String STATISTICS_LOCALGATHERER_CONNECTED_TYPE = "tc.statistics.localgatherer.connected";
-  public final static String STATISTICS_LOCALGATHERER_DISCONNECTED_TYPE = "tc.statistics.localgatherer.disconnected";
+  public final static String STATISTICS_LOCALGATHERER_STARTEDUP_TYPE = "tc.statistics.localgatherer.startedup";
+  public final static String STATISTICS_LOCALGATHERER_SHUTDOWN_TYPE = "tc.statistics.localgatherer.shutdown";
   public final static String STATISTICS_LOCALGATHERER_REINITIALIZED_TYPE = "tc.statistics.localgatherer.reinitialized";
   public final static String STATISTICS_LOCALGATHERER_CAPTURING_STARTED_TYPE = "tc.statistics.localgatherer.capturing.started";
   public final static String STATISTICS_LOCALGATHERER_CAPTURING_STOPPED_TYPE = "tc.statistics.localgatherer.capturing.stopped";
@@ -21,9 +21,9 @@ public interface StatisticsLocalGathererMBean extends TerracottaMBean {
   public final static String STATISTICS_LOCALGATHERER_STORE_CLOSED_TYPE = "tc.statistics.localgatherer.store.closed";
   public final static String STATISTICS_LOCALGATHERER_STATISTICS_ENABLED_TYPE = "tc.statistics.localgatherer.statistics.enabled";
 
-  public void connect();
+  public void startup();
 
-  public void disconnect();
+  public void shutdown();
 
   public void reinitialize();
 

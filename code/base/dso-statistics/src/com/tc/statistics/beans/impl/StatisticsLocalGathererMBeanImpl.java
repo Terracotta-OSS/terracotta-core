@@ -26,8 +26,8 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
 
   static {
     final String[] notifTypes = new String[] {
-      STATISTICS_LOCALGATHERER_CONNECTED_TYPE,
-      STATISTICS_LOCALGATHERER_DISCONNECTED_TYPE,
+      STATISTICS_LOCALGATHERER_STARTEDUP_TYPE,
+      STATISTICS_LOCALGATHERER_SHUTDOWN_TYPE,
       STATISTICS_LOCALGATHERER_REINITIALIZED_TYPE,
       STATISTICS_LOCALGATHERER_CAPTURING_STARTED_TYPE,
       STATISTICS_LOCALGATHERER_CAPTURING_STOPPED_TYPE,
@@ -71,7 +71,7 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   public void reset() {
   }
 
-  public void connect() {
+  public void startup() {
     if (!subsystem.isActive()) {
       return;
     }
@@ -83,7 +83,7 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
     }
   }
 
-  public void disconnect() {
+  public void shutdown() {
     if (!subsystem.isActive()) {
       return;
     }
@@ -290,11 +290,11 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public void connected(String managerHostName, int managerPort) {
-    createAndSendNotification(STATISTICS_LOCALGATHERER_CONNECTED_TYPE, managerHostName + ":" + managerPort);
+    createAndSendNotification(STATISTICS_LOCALGATHERER_STARTEDUP_TYPE, managerHostName + ":" + managerPort);
   }
 
   public void disconnected() {
-    createAndSendNotification(STATISTICS_LOCALGATHERER_DISCONNECTED_TYPE, null);
+    createAndSendNotification(STATISTICS_LOCALGATHERER_SHUTDOWN_TYPE, null);
   }
 
   public void reinitialized() {

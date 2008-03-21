@@ -5,13 +5,13 @@ package com.tc.statistics.cli.commands;
 
 import com.tc.statistics.cli.GathererConnection;
 
-public class CommandDisconnect extends AbstractCliCommand {
+public class CommandShutdown extends AbstractCliCommand {
   public String[] getArgumentNames() {
     return NO_ARGUMENTS;
   }
 
   public void execute(final GathererConnection connection, final String[] arguments) {
-    connection.getGatherer().disconnect();
-    System.out.println("> Disconnected.");
+    connection.getGatherer().shutdown();
+    System.out.println("> Shutdown finished.");
   }
 }

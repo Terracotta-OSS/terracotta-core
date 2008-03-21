@@ -35,12 +35,12 @@ public class StatisticsGathererServlet extends RestfulServlet {
     system = (StatisticsGathererSubSystem)getServletContext().getAttribute(GATHERER_ATTRIBUTE);
   }
 
-  public void methodConnect(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
+  public void methodStartup(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
     system.getStatisticsGatherer().connect(TCSocketAddress.LOOPBACK_IP, configSetupManager.commonl2Config().jmxPort().getInt());
     printOk(response);
   }
 
-  public void methodDisconnect(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
+  public void methodShutdown(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
     system.getStatisticsGatherer().disconnect();
     printOk(response);
   }

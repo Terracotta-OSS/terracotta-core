@@ -156,7 +156,7 @@ public class StatsRecorderPanel extends XContainer {
             m_statsGathererListener = new StatisticsGathererListener();
           }
           cc.addNotificationListener(StatisticsMBeanNames.STATISTICS_GATHERER, m_statsGathererListener);
-          m_statisticsGathererMBean.connect();
+          m_statisticsGathererMBean.startup();
           return null;
         }
       });
@@ -279,7 +279,7 @@ public class StatsRecorderPanel extends XContainer {
       String type = notification.getType();
       Object userData = notification.getUserData();
 
-      if (type.equals(StatisticsLocalGathererMBean.STATISTICS_LOCALGATHERER_CONNECTED_TYPE)) {
+      if (type.equals(StatisticsLocalGathererMBean.STATISTICS_LOCALGATHERER_STARTEDUP_TYPE)) {
         gathererConnected();
         return;
       }
