@@ -144,12 +144,15 @@ public class RogueClientTestApp extends AbstractTransparentApp {
     }
 
     public void execute() {
-      System.out.println("Client number " + this.clientId + " has been spawned, waiting for others to get spawned");
       try {
+        System.out.println("Client number " + this.clientId + " is entering into the barrier");
         barrier.await();
       } catch (Exception e) {
         throw new AssertionError(e);
       }
+
+      System.out.println("Client number " + this.clientId + " has been spawned, waiting for others to get spawned");
+
       if (this.type == TYPE_CONSUMER) {
         consume();
       } else if (this.type == TYPE_PRODUCER) {
@@ -179,6 +182,7 @@ public class RogueClientTestApp extends AbstractTransparentApp {
             continue;
           }
           int id = myNode.getId();
+          if (id % 20 == 0) System.out.println("Clinet " + this.clientId + " consumed node number " + id);
           if (id > MAX_COUNT) break;
         } catch (Exception e) {
           throw new AssertionError(e);
@@ -193,6 +197,7 @@ public class RogueClientTestApp extends AbstractTransparentApp {
         MyNode myNode = new MyNode(id);
         try {
           lbqueue.put(myNode);
+          if (id % 20 == 0) System.out.println("Clinet " + this.clientId + " produced node number " + id);
         } catch (InterruptedException e) {
           throw new TCRuntimeException(e);
         }
@@ -232,6 +237,9 @@ public class RogueClientTestApp extends AbstractTransparentApp {
       } catch (Exception e) {
         throw new AssertionError(e);
       }
+
+      System.out.println("All Clients got spawned.");
+
       ManagerUtil.addClusterEventListener(this);
       jmxc = new JMXConnectorProxy("localhost", Integer.valueOf(appConfig.getAttribute(JMX_PORT)));
       try {
