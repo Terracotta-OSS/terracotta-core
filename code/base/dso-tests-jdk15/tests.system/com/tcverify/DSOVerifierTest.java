@@ -20,7 +20,10 @@ import com.tc.config.schema.test.RootConfigBuilderImpl;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.process.LinkedJavaProcess;
 import com.tc.process.StreamCopier;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.TCServerImpl;
+import com.tc.statistics.buffer.StatisticsBuffer;
+import com.tc.statistics.store.StatisticsStore;
 import com.tc.test.TCTestCase;
 import com.tc.test.TestConfigObject;
 import com.tc.util.PortChooser;
@@ -156,6 +159,8 @@ public class DSOVerifierTest extends TCTestCase {
     args.add(bootclasspath);
     args.add("-D" + TVSConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME + "=localhost:"
              + server.getDSOListenPort());
+    args.add("-D" + TCPropertiesImpl.tcSysProp(StatisticsBuffer.BUFFER_RANDOMSUFFIX_ENABLED_PROPERTY_NAME) + "=true");
+    args.add("-D" + TCPropertiesImpl.tcSysProp(StatisticsStore.STORE_RANDOMSUFFIX_ENABLED_PROPERTY_NAME) + "=true");
 
     args.addAll(getExtraJvmArgs());
 

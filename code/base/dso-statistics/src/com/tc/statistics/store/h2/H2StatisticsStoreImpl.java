@@ -3,9 +3,9 @@
  */
 package com.tc.statistics.store.h2;
 
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArraySet;
-
 import org.apache.commons.lang.StringEscapeUtils;
+
+import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArraySet;
 
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
@@ -87,7 +87,7 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
 
   public H2StatisticsStoreImpl(final File dbDir) {
     final String suffix;
-    if (TCPropertiesImpl.getProperties().getBoolean("cvt.store.randomsuffix.enabled", false)) {
+    if (TCPropertiesImpl.getProperties().getBoolean(STORE_RANDOMSUFFIX_ENABLED_PROPERTY_NAME, false)) {
       synchronized (rand) {
         suffix = H2_URL_SUFFIX + "-" + rand.nextInt() + "." + System.currentTimeMillis();
       }

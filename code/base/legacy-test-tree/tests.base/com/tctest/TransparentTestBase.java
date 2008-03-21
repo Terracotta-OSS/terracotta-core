@@ -20,6 +20,8 @@ import com.tc.objectserver.control.ServerControl;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.simulator.app.ApplicationConfigBuilder;
 import com.tc.simulator.app.ErrorContext;
+import com.tc.statistics.buffer.StatisticsBuffer;
+import com.tc.statistics.store.StatisticsStore;
 import com.tc.test.ProcessInfo;
 import com.tc.test.TestConfigObject;
 import com.tc.test.activepassive.ActivePassiveServerConfigCreator;
@@ -111,13 +113,15 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   }
 
   protected void setJvmArgsCvtIsolation(final ArrayList jvmArgs) {
-    System.setProperty("com.tc.cvt.buffer.randomsuffix.enabled", "true");
-    TCPropertiesImpl.setProperty("cvt.buffer.randomsuffix.enabled", "true");
-    System.setProperty("com.tc.cvt.store.randomsuffix.enabled", "true");
-    TCPropertiesImpl.setProperty("cvt.store.randomsuffix.enabled", "true");
+    final String buffer_randomsuffix_sysprop = TCPropertiesImpl.tcSysProp(StatisticsBuffer.BUFFER_RANDOMSUFFIX_ENABLED_PROPERTY_NAME);
+    final String store_randomsuffix_sysprop = TCPropertiesImpl.tcSysProp(StatisticsStore.STORE_RANDOMSUFFIX_ENABLED_PROPERTY_NAME);
+    System.setProperty(buffer_randomsuffix_sysprop, "true");
+    TCPropertiesImpl.setProperty(StatisticsBuffer.BUFFER_RANDOMSUFFIX_ENABLED_PROPERTY_NAME, "true");
+    System.setProperty(store_randomsuffix_sysprop, "true");
+    TCPropertiesImpl.setProperty(StatisticsStore.STORE_RANDOMSUFFIX_ENABLED_PROPERTY_NAME, "true");
 
-    jvmArgs.add("-Dcom.tc.cvt.buffer.randomsuffix.enabled=true");
-    jvmArgs.add("-Dcom.tc.cvt.store.randomsuffix.enabled=true");
+    jvmArgs.add("-D" + buffer_randomsuffix_sysprop + "=true");
+    jvmArgs.add("-D" + store_randomsuffix_sysprop + "=true");
   }
 
   protected void setUp() throws Exception {

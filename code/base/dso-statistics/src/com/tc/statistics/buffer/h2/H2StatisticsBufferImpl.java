@@ -92,7 +92,7 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
   public H2StatisticsBufferImpl(final StatisticsConfig config, final File dbDir) throws StatisticsBufferException {
     Assert.assertNotNull("config", config);
     final String suffix;
-    if (TCPropertiesImpl.getProperties().getBoolean("cvt.buffer.randomsuffix.enabled", false)) {
+    if (TCPropertiesImpl.getProperties().getBoolean(BUFFER_RANDOMSUFFIX_ENABLED_PROPERTY_NAME, false)) {
       synchronized (rand) {
         suffix = H2_URL_SUFFIX + "-" + rand.nextInt() + "." + System.currentTimeMillis();
       }

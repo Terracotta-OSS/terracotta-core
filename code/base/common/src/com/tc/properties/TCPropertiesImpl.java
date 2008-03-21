@@ -17,8 +17,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Map.Entry;
+import java.util.Properties;
 
 /**
  * This class is an easy way to read properties that will help tune DSO. It first loads properties from the
@@ -66,6 +66,10 @@ public class TCPropertiesImpl implements TCProperties {
     processSystemProperties();
 
     trimWhiteSpace();
+  }
+
+  public static String tcSysProp(final String prop) {
+    return SYSTEM_PROP_PREFIX+prop;
   }
 
   private void trimWhiteSpace() {
