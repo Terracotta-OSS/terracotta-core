@@ -23,9 +23,9 @@ import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.lang.StartupHelper;
-import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
+import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.logging.TCLogging;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.BaseDSOTestCase;
@@ -42,8 +42,6 @@ import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.lockmanager.impl.ClientLockManagerImpl;
 import com.tc.objectserver.impl.DistributedObjectServer;
-import com.tc.objectserver.lockmanager.api.DeadlockChain;
-import com.tc.objectserver.lockmanager.api.DeadlockResults;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.NullTCServerInfo;
@@ -51,8 +49,6 @@ import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 public class LockManagerSystemTest extends BaseDSOTestCase {
 
@@ -137,71 +133,6 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     }
   }
 
-  public void disableTestUpgradeDeadlock() throws Exception {
-    final LockID l1 = new LockID("1");
-
-    final ThreadID tid1 = new ThreadID(1);
-    final ThreadID tid2 = new ThreadID(2);
-
-    lockManager.lock(l1, tid1, LockLevel.READ, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
-    lockManager.lock(l1, tid2, LockLevel.READ, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
-
-    Thread t1 = new Thread() {
-      public void run() {
-        LockManagerSystemTest.this.lockManager.lock(l1, tid1, LockLevel.WRITE, String.class.getName(),
-                                                    LockContextInfo.NULL_LOCK_CONTEXT_INFO);
-      }
-    };
-
-    Thread t2 = new Thread() {
-      public void run() {
-        LockManagerSystemTest.this.lockManager.lock(l1, tid2, LockLevel.WRITE, String.class.getName(),
-                                                    LockContextInfo.NULL_LOCK_CONTEXT_INFO);
-      }
-    };
-
-    t1.start();
-    t2.start();
-
-    t1.join(2000);
-    t2.join(2000);
-
-    assertTrue(t1.isAlive());
-    assertTrue(t2.isAlive());
-
-    // make sure we "see" the deadlock on the server side
-    final List deadlocks = new ArrayList();
-    DeadlockResults results = new DeadlockResults() {
-      public void foundDeadlock(DeadlockChain chain) {
-        deadlocks.add(chain);
-      }
-    };
-
-    server.getContext().getLockManager().scanForDeadlocks(results);
-
-    assertEquals(1, deadlocks.size());
-    DeadlockChain chain = (DeadlockChain) deadlocks.remove(0);
-
-    ThreadID id1 = chain.getWaiter().getClientThreadID();
-    LockID lid1 = chain.getWaitingOn();
-    chain = chain.getNextLink();
-    ThreadID id2 = chain.getWaiter().getClientThreadID();
-    LockID lid2 = chain.getWaitingOn();
-
-    assertEquals(id1, chain.getNextLink().getWaiter().getClientThreadID());
-
-    assertEquals(lid1, l1);
-    assertEquals(lid2, l1);
-    assertEquals(lid1, lid2);
-
-    if (id1.equals(tid1)) {
-      assertEquals(id2, tid2);
-    } else {
-      assertEquals(id1, tid2);
-    }
-
-  }
-
   private static void sleep(long amount) {
     amount *= (slow ? 300 : 50);
     ThreadUtil.reallySleep(amount);
@@ -249,6 +180,8 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
       }
     };
     secondReader.start();
+    
+    sleep(5);
 
     Thread secondWriter = new Thread() {
       public void run() {
@@ -261,10 +194,10 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     secondWriter.start();
 
     sleep(5);
-    lockManager.unlock(l1, tid1);
-    sleep(5);
     secondReader.join(5000);
     assertFalse(secondReader.isAlive());
+
+    lockManager.unlock(l1, tid1);
     assertTrue(secondWriter.isAlive());
 
     lockManager.unlock(l1, tid2);
