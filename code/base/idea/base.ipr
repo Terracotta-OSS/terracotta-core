@@ -454,7 +454,6 @@
       <module fileurl="file://$PROJECT_DIR$/management.iml" filepath="$PROJECT_DIR$/management.iml" />
       <module fileurl="file://$PROJECT_DIR$/modules-common.iml" filepath="$PROJECT_DIR$/modules-common.iml" />
       <module fileurl="file://$PROJECT_DIR$/reflector-test.iml" filepath="$PROJECT_DIR$/reflector-test.iml" />
-      <module fileurl="file://$PROJECT_DIR$/sigarstats.iml" filepath="$PROJECT_DIR$/sigarstats.iml" />
       <module fileurl="file://$PROJECT_DIR$/simulator.iml" filepath="$PROJECT_DIR$/simulator.iml" />
       <module fileurl="file://$PROJECT_DIR$/spring-config.iml" filepath="$PROJECT_DIR$/spring-config.iml" />
       <module fileurl="file://$PROJECT_DIR$/standard-config.iml" filepath="$PROJECT_DIR$/standard-config.iml" />
