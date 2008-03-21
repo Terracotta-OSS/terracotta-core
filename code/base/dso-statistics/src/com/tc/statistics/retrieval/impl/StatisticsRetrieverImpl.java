@@ -176,11 +176,14 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
     if (statsTask != null) {
       statsTask.shutdown();
 
+      final long before_shutdown_wait = System.currentTimeMillis();
+      final long shutdown_wait_expiration = config.getParamLong(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL) * 3;
       boolean interrupted = false;
       try {
-        while (!statsTask.isShutdown()) {
+        while (!statsTask.isShutdown() ||
+               (System.currentTimeMillis() - before_shutdown_wait) > shutdown_wait_expiration) { // only wait for a limited amount of time
           try {
-            this.wait(config.getParamLong(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL) * 2); // wait for twice the retriever schedule interval
+            this.wait(shutdown_wait_expiration); // wait for twice the retriever schedule interval
           } catch (InterruptedException e) {
             interrupted = true;
           }
