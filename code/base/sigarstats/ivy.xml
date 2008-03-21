@@ -2,7 +2,7 @@
 <ivy-module version="2.0">
   <info organisation="ibiblio" module="sigarstats"/>
   <dependencies>
-    <dependency name="sigar" rev="1.5.0.1" org="terracotta">
+    <dependency name="sigar" rev="1.5.0.1" org="terracotta-internal">
       <artifact name="sigar" type="jar"/>
       <artifact name="libsigar-x86-linux" type="so"/>
       <artifact name="libsigar-sparc-solaris" type="so"/>

@@ -7,6 +7,9 @@
     <url name="tc-repo">
       <artifact pattern="http://download.terracotta.org/buildjars/lib/[artifact]-[revision].[ext]"/>
     </url>
+    <url name="tc-repo-internal">
+      <artifact pattern="http://kong/ivy/[artifact]-[revision].[ext]"/>
+    </url>
     <url name="tc-repo-eclipse">
       <artifact pattern="http://download.terracotta.org/buildjars/eclipse-api/[artifact]-[revision].[ext]"/>
     </url>
@@ -20,6 +23,7 @@
   <modules>
     <module organisation="testing" name=".*" resolver="tc-dev"/>
     <module organisation="terracotta" name=".*" resolver="tc-repo"/>
+    <module organisation="terracotta-internal" name=".*" resolver="tc-repo-internal"/>
     <module organisation="tc-eclipse" name=".*" resolver="tc-repo-eclipse"/>
   </modules>
 </ivysettings>
