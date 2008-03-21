@@ -327,6 +327,8 @@ public class TestConfigObject {
 
   public String executableSearchPath() {
     String nativeLibDirPath = this.properties.getProperty(EXECUTABLE_SEARCH_PATH);
+    if (nativeLibDirPath == null) return null;
+    
     if (nativeLibDirPath.endsWith(NATIVE_LIB_LINUX_32) || nativeLibDirPath.endsWith(NATIVE_LIB_LINUX_64)) {
       int lastSeparator = nativeLibDirPath.lastIndexOf(File.separator);
       String vmType = System.getProperty("sun.arch.data.model");

@@ -13,11 +13,11 @@ import java.io.InputStreamReader;
 
 public class ProcessInfo {
   public static String ps_grep_java() {
+    String[] args = new String[] { "sh", "-c", "ps auxwww | grep java | grep -v grep" };
+    String execPath = TestConfigObject.getInstance().executableSearchPath();
+    if (execPath == null) return "";
     try {
-      String[] args = new String[] { "sh", "-c", "ps auxwww | grep java | grep -v grep" };
-
-      if (Os.isWindows()) {
-        String execPath = TestConfigObject.getInstance().executableSearchPath();
+      if (Os.isWindows()) {        
         args = new String[] { execPath + "\\pv.exe", "-l", "java.exe" };
       } else if (Os.isSolaris()) {
         args = new String[] { "sh", "-c", "/usr/ucb/ps auxwww | grep java | grep -v grep" };
