@@ -12,28 +12,26 @@ import com.tc.objectserver.core.api.ManagedObjectState;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ConcurrentHashmapManagedObjectStateTest extends AbstractTestManagedObjectState {
-  
-  public void testSerialization() throws Exception {
-    
-    // MNK-472
-    if (true) return;
 
-    String className = "java.util.concurrent.ConcurrentHashMap";
-    String SEGMENT_MASK_FIELD_NAME = className + ".segmentMask";
-    String SEGMENT_SHIFT_FIELD_NAME = className + ".segmentShift";
-    String SEGMENT_FIELD_NAME = className + ".segments";
+  public void testSerialization() throws Exception {
+
+    String className = ConcurrentHashMap.class.getName();
+    String SEGMENT_MASK_FIELD_NAME = "segmentMask";
+    String SEGMENT_SHIFT_FIELD_NAME = "segmentShift";
 
     TestDNACursor cursor = new TestDNACursor();
 
     cursor.addPhysicalAction(SEGMENT_MASK_FIELD_NAME, new Integer(10), false);
     cursor.addPhysicalAction(SEGMENT_SHIFT_FIELD_NAME, new Integer(20), false);
     int segment_size = 512;
-    cursor.addLiteralAction(new Integer(segment_size));
+    Object[] segments = new Object[segment_size];
     for (int i = 0; i < segment_size; i++) {
-      cursor.addPhysicalAction(SEGMENT_FIELD_NAME + i, new ObjectID(2000 + i), true);
+      segments[i] = new ObjectID(2000 + i);
     }
+    cursor.addArrayAction(segments);
 
     ManagedObjectState state = createManagedObjectState(className, cursor);
     state.apply(new ObjectID(1), cursor, new BackReferences());
@@ -47,13 +45,13 @@ public class ConcurrentHashmapManagedObjectStateTest extends AbstractTestManaged
 
     byte seralized[] = baout.toByteArray();
     System.err.println("Serialized size = " + seralized.length);
-    
+
     ByteArrayInputStream bi = new ByteArrayInputStream(seralized);
     TCObjectInputStream in = new TCObjectInputStream(bi);
-    
+
     ConcurrentHashMapManagedObjectState state2 = (ConcurrentHashMapManagedObjectState) serializer.deserializeFrom(in);
     state2.setMap(new HashMap());
-    
+
     assertEquals(state, state2);
   }
 
