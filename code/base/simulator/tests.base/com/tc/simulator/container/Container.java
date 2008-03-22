@@ -202,7 +202,7 @@ public final class Container implements Runnable {
   private void startInstances(ContainerExecutionInstance containerExecution) throws ApplicationInstantiationException {
     println("Starting application execution...");
     for (int i = 0; i < config.getApplicationInstanceCount(); i++) {
-      println("exeution " + (i + 1) + " of " + config.getApplicationInstanceCount());
+      println("execution " + (i + 1) + " of " + config.getApplicationInstanceCount());
       ApplicationExecutionInstance executionInstance = newExecutionInstance(containerExecution);
       containerExecution.addExecution(executionInstance);
       executionInstance.start();
