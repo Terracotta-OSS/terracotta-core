@@ -71,9 +71,8 @@ public class ApplicatorDNAEncodingImpl extends BaseDNAEncodingImpl {
 
     if (isInterned) {
       if (STRING_COMPRESSION_LOGGING_ENABLED) {
-        logger.info("Decompressing and interning string.");
+        logger.info("Interning string.");
       }
-      StringTCUtil.decompress(s);
       return StringTCUtil.intern(s);
     } else {
       return s;

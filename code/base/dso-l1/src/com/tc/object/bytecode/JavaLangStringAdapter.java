@@ -119,6 +119,8 @@ public class JavaLangStringAdapter extends ClassAdapter implements Opcodes {
                                          null, null);
     mv.visitCode();
     mv.visitVarInsn(ALOAD, 0);
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "__tc_decompress", "()V");
+    mv.visitVarInsn(ALOAD, 0);
     mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "intern", "()Ljava/lang/String;");
     mv.visitVarInsn(ASTORE, 1);
     mv.visitVarInsn(ALOAD, 1);
@@ -129,7 +131,7 @@ public class JavaLangStringAdapter extends ClassAdapter implements Opcodes {
     mv.visitMaxs(2, 2);
     mv.visitEnd();
 
-    // public Boolean __tc_isInterned() - implementation of JavaLangStringIntern Interface
+    // public boolean __tc_isInterned() - implementation of JavaLangStringTC Interface
     mv = super.visitMethod(ACC_PUBLIC, ByteCodeUtil.TC_METHOD_PREFIX + "isInterned", "()Z", null, null);
     mv.visitCode();
     mv.visitVarInsn(ALOAD, 0);
