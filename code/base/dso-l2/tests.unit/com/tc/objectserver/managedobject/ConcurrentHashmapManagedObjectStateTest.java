@@ -19,13 +19,11 @@ public class ConcurrentHashmapManagedObjectStateTest extends AbstractTestManaged
   public void testSerialization() throws Exception {
 
     String className = ConcurrentHashMap.class.getName();
-    String SEGMENT_MASK_FIELD_NAME = "segmentMask";
-    String SEGMENT_SHIFT_FIELD_NAME = "segmentShift";
 
     TestDNACursor cursor = new TestDNACursor();
 
-    cursor.addPhysicalAction(SEGMENT_MASK_FIELD_NAME, new Integer(10), false);
-    cursor.addPhysicalAction(SEGMENT_SHIFT_FIELD_NAME, new Integer(20), false);
+    cursor.addPhysicalAction(ConcurrentHashMapManagedObjectState.SEGMENT_MASK_FIELD_NAME, new Integer(10), false);
+    cursor.addPhysicalAction(ConcurrentHashMapManagedObjectState.SEGMENT_SHIFT_FIELD_NAME, new Integer(20), false);
     int segment_size = 512;
     Object[] segments = new Object[segment_size];
     for (int i = 0; i < segment_size; i++) {

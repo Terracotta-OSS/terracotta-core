@@ -17,13 +17,11 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ManagedObjectStateSerializationTest extends ManagedObjectStateSerializationTestBase {
 
   public void testCheckIfMissingAnyManagedObjectType() throws Exception {
-    // MNK-472
-    if (true) return;
-    
     Field[] fields = ManagedObjectState.class.getDeclaredFields();
 
     for (int i = 0; i < fields.length; i++) {
@@ -243,21 +241,13 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
   }
 
   public void testConcurrentHashMap() throws Exception {
-    // MNK-472
-    if (true) return;
-    
-    String className = "java.util.concurrent.ConcurrentHashMap";
-    String SEGMENT_MASK_FIELD_NAME = className + ".segmentMask";
-    String SEGMENT_SHIFT_FIELD_NAME = className + ".segmentShift";
-    String SEGMENT_FIELD_NAME = className + ".segments";
-
+    String className = ConcurrentHashMap.class.getName();
     TestDNACursor cursor = new TestDNACursor();
 
-    cursor.addPhysicalAction(SEGMENT_MASK_FIELD_NAME, new Integer(10), false);
-    cursor.addPhysicalAction(SEGMENT_SHIFT_FIELD_NAME, new Integer(20), false);
-    cursor.addLiteralAction(new Integer(2));
-    cursor.addPhysicalAction(SEGMENT_FIELD_NAME + 0, new ObjectID(2001), true);
-    cursor.addPhysicalAction(SEGMENT_FIELD_NAME + 1, new ObjectID(2002), true);
+    cursor.addPhysicalAction(ConcurrentHashMapManagedObjectState.SEGMENT_MASK_FIELD_NAME, new Integer(10), false);
+    cursor.addPhysicalAction(ConcurrentHashMapManagedObjectState.SEGMENT_SHIFT_FIELD_NAME, new Integer(20), false);
+    ObjectID[] segments = new ObjectID[] { new ObjectID(2001), new ObjectID(2002) };
+    cursor.addArrayAction(segments);
 
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2002), new ObjectID(2003) });
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2004), new ObjectID(2005) });

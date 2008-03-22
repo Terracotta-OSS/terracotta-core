@@ -22,12 +22,12 @@ import java.util.Set;
  * state for maps
  */
 public class ConcurrentHashMapManagedObjectState extends PartialMapManagedObjectState {
-  private static final String SEGMENT_MASK_FIELD_NAME  = "segmentMask";
-  private static final String SEGMENT_SHIFT_FIELD_NAME = "segmentShift";
+  public static final String SEGMENT_MASK_FIELD_NAME  = "segmentMask";
+  public static final String SEGMENT_SHIFT_FIELD_NAME = "segmentShift";
 
-  private Object              segmentMask;
-  private Object              segmentShift;
-  private ObjectID[]          segments                 = null;
+  private Object             segmentMask;
+  private Object             segmentShift;
+  private ObjectID[]         segments                 = null;
 
   private ConcurrentHashMapManagedObjectState(ObjectInput in) throws IOException {
     super(in);
