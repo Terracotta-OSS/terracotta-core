@@ -12,10 +12,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.session.SessionID;
-import com.tc.object.tx.ClientTransactionManagerImpl.ThreadTransactionLoggingStack;
 import com.tc.text.PrettyPrinter;
-import com.tc.util.Assert;
-import com.tc.util.Counter;
 
 import java.io.Writer;
 import java.util.ArrayList;
@@ -29,21 +26,10 @@ import java.util.Set;
  */
 public class MockTransactionManager implements ClientTransactionManager {
 
-  private static final TCLogger logger     = TCLogging.getLogger(MockTransactionManager.class);
+  private static final TCLogger logger = TCLogging.getLogger(MockTransactionManager.class);
 
   private int                   commitCount;
-  private List                  begins     = new ArrayList();
-  // We need to remove initialValue() here because read auto locking now calls Manager.isDsoMonitored() which will
-  // checks if isTransactionLogging is disabled. If it runs in the context of class loading, it will try to load
-  // the class ThreadTransactionContext and thus throws a LinkageError.
-  private final ThreadLocal     txnLogging = new ThreadLocal();
-  
-  //TODO: This is a test member remove otherwise.
-  private final Counter                       loggingCounter          = new Counter(0);
-  
-  public Counter getLoggingCounter() {
-    return loggingCounter;
-  }
+  private List                  begins = new ArrayList();
 
   public void clearBegins() {
     begins.clear();
@@ -143,10 +129,10 @@ public class MockTransactionManager implements ClientTransactionManager {
     throw new ImplementMe();
   }
 
-  // public void lock(String lockName, int lockLevel) {
-  // throw new ImplementMe();
-  // }
-  //
+//  public void lock(String lockName, int lockLevel) {
+//    throw new ImplementMe();
+//  }
+//
   public void unlock(String lockName) {
     throw new ImplementMe();
   }
@@ -164,29 +150,15 @@ public class MockTransactionManager implements ClientTransactionManager {
   }
 
   public void disableTransactionLogging() {
-    ThreadTransactionLoggingStack txnStack = (ThreadTransactionLoggingStack) txnLogging.get();
-    if (txnStack == null) {
-      txnStack = new ThreadTransactionLoggingStack();
-      txnLogging.set(txnStack);
-    }
-    txnStack.increment();
-    loggingCounter.decrement();
+    return;
   }
 
   public void enableTransactionLogging() {
-    ThreadTransactionLoggingStack txnStack = (ThreadTransactionLoggingStack) txnLogging.get();
-    Assert.assertNotNull(txnStack);
-    final int size = txnStack.decrement();
-
-    if (size < 0) {
-      throw new AssertionError("size=" + size);
-    }
-    loggingCounter.increment();
+    return;
   }
 
   public boolean isTransactionLoggingDisabled() {
-    Object txnStack = txnLogging.get();
-    return (txnStack != null) && (((ThreadTransactionLoggingStack) txnStack).get() > 0);
+    return true;
   }
 
   public boolean isHeldByCurrentThread(String lockName, int lockLevel) {
@@ -223,12 +195,12 @@ public class MockTransactionManager implements ClientTransactionManager {
 
   public void dump(Writer writer) {
     throw new ImplementMe();
-
+    
   }
 
   public void dumpToLogger() {
     throw new ImplementMe();
-
+    
   }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {

@@ -48,7 +48,7 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
   }
 
   public void removed(ObjectID id) {
-  // do nothing
+    throw new ImplementMe();
   }
 
   public void requestOutstanding() {
