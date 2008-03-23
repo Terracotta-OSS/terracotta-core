@@ -18,6 +18,32 @@ import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The goal of this test is to check concurrent decompression of big strings.  "Big" (default=512) strings
+ * get decompressed in an L1 before being sent to the L2.  These compressed values are then sent to any other
+ * receiving L1s that fault in the String value.
+ * 
+ * On the receiving L1, we pack the compressed byte[] into a char[] and create a new String with it.  This string
+ * has a valid length and hash code (retrieving only those values should not cause decompression).  But the string
+ * is instrumented such that any call to the internal char[] goes through a new method that will unpack and decompress 
+ * the char[] value before returning it.  
+ * 
+ * The act of decompression has a benign data race (similar to the one in computing the hashcode).  Since no
+ * synchronization or volatile is used, more than one thread might decompress the string at the same time without 
+ * knowing about the other thread's activity.  
+ * 
+ * This test tries to test decompression and also push that race a bit.  It starts multiple nodes with 
+ * multiple threads.  Each thread grabs a portion of a shared list and populates it with a value based on the index
+ * (so the expected value can be recomputed).
+ * 
+ * Then all threads walk through each index and:
+ *   1) hit a barrier to synchronize
+ *   2) access the string such that decompression will occur
+ *   3) verify the string value against a newly constructed equivalent version
+ *   
+ * At any given index, 1 node will have created the values and so will not have a compressed value.  The interesting
+ * part here is really in the threads, so you could bump up the THREAD_COUNT if you wanted.
+ */
 public class BigStringHammerTest extends TransparentTestBase implements TestConfigurator {
   private static final int NODE_COUNT    = 2;
   private static final int THREADS_COUNT = 10;
