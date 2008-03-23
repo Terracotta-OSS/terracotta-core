@@ -20,20 +20,19 @@ set TC_INSTALL_DIR=%SANDBOX%\..\..\..
 if not defined JAVA_HOME set JAVA_HOME="%TC_INSTALL_DIR%\jre"
 set JAVA_HOME="%JAVA_HOME:"=%"
 if not exist %JAVA_HOME% set JAVA_HOME=%TC_INSTALL_DIR%\jre
-FOR %%i IN (%JAVA_HOME%) DO SET JAVA_HOME=%%~fsi
+for %%i IN (%JAVA_HOME%) do set JAVA_HOME=%%~fsi
 
 if not defined CATALINA_HOME (
   echo CATALINA_HOME must be set to a Tomcat5.0 installation.
   exit 1
 ) else (
   set CATALINA_HOME="%CATALINA_HOME:"=%"
+  for %%i in (%CATALINA_HOME%) do set CATALINA_HOME=%%~fsi
   if not exist %CATALINA_HOME% (
     echo CATALINA_HOME %CATALINA_HOME% does not exist.
     exit 1
   )
 )
-for %%i in (%CATALINA_HOME%) do set CATALINA_HOME=%%~fsi
-
 set CATALINA_BASE=%SANDBOX%\tomcat6.0\%1
 
 rem --------------------------------------------------------------------
