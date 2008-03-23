@@ -31,7 +31,7 @@ public class Os {
     else if (osname.startsWith("sunos")) {
       return "solaris";
     }
-    else if (osname.startsWith("mac")) {
+    else if (osname.startsWith("mac") || osname.startsWith("darwin")) {
       return "mac";
     }
     else return "generic";
@@ -51,14 +51,14 @@ public class Os {
     // XXX: this obviously needs some more work to be "true" in general (see bottom of file)
     if ((os.indexOf("sunos") >= 0) || (os.indexOf("linux") >= 0)) { return true; }
 
-    if ((os.indexOf("mac") >= 0) && (System.getProperty("os.version", "").startsWith("10."))) { return true; }
+    if (isMac() && (System.getProperty("os.version", "").startsWith("10."))) { return true; }
 
     return false;
   }
 
   public static boolean isMac() {
     final String os = getOsName().toLowerCase();
-    return os.startsWith("mac");
+    return os.startsWith("mac") || os.startsWith("darwin");
   }
 
   public static boolean isSolaris() {
