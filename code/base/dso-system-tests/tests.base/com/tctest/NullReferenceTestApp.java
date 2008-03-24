@@ -1,15 +1,19 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
+
+import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tctest.runner.AbstractTransparentApp;
+import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,19 +25,20 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
-public class NullReferenceTestApp extends AbstractTransparentApp {
+public class NullReferenceTestApp extends AbstractErrorCatchingTransparentApp {
 
-  private final List nodes = new ArrayList();
-  private Holder     holder;
+  private final CyclicBarrier barrier;
+  private final Holder        holder = new Holder();
 
   public NullReferenceTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
+    barrier = new CyclicBarrier(getParticipantCount());
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClass = NullReferenceTestApp.class.getName();
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
-    spec.addRoot("nodes", "nodesLock");
+    spec.addRoot("barrier", "barrierLock");
     spec.addRoot("holder", "holderLock");
 
     String methodExpression;
@@ -46,62 +51,23 @@ public class NullReferenceTestApp extends AbstractTransparentApp {
 
     methodExpression = "* " + testClass + "$Holder.*(..)";
     config.addWriteAutolock(methodExpression);
-    
+
     config.addIncludePattern(Holder.class.getName());
+
+    new CyclicBarrierSpec().visit(visitor, config);
+
   }
 
-  public void run() {
-    init();
-    check();
-    finish();
-  }
+  protected void runTest() throws Throwable {
+    barrier.barrier();
 
-  private void finish() {
-    holder.mod();
-  }
-
-  private void check() {
     holder.check();
 
-    synchronized (nodes) {
-      nodes.remove(0);
-      nodes.notifyAll();
+    barrier.barrier();
 
-      while (nodes.size() > 0) {
-        try {
-          nodes.wait();
-        } catch (InterruptedException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }
-  }
+    holder.mod();
 
-  private void init() {
-    synchronized (nodes) {
-      Holder h = new Holder();
-      this.holder = h;
-
-      // Make sure we're actually using the distributed version of the "holder" object.
-      // This nonsense wouldn't be necessary if GETFIELD on roots was instrumented
-      if (nodes.size() == 0) {
-        Assert.assertTrue(this.holder == h);
-      } else {
-        Assert.assertTrue(this.holder != h);
-      }
-
-      nodes.add(new Object());
-      nodes.notifyAll();
-
-      while (nodes.size() != getParticipantCount()) {
-        try {
-          nodes.wait();
-        } catch (InterruptedException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }
-
+    barrier.barrier();
   }
 
   private static class Holder {
@@ -123,7 +89,7 @@ public class NullReferenceTestApp extends AbstractTransparentApp {
       mod();
     }
 
-    public void check() {
+    void check() {
       Assert.assertNull(reference);
       Assert.assertNull(array[0]);
       Assert.assertNotNull(array[1]);
