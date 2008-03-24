@@ -18,8 +18,9 @@ import com.tc.util.runtime.VmVersion;
 
 public class JavaLangStringAdapter extends ClassAdapter implements Opcodes {
 
-  private static final String GET_VALUE_METHOD  = ByteCodeUtil.fieldGetterMethod("value");
-  private static final String INTERN_FIELD_NAME = ByteCodeUtil.TC_FIELD_PREFIX + "interned";
+  private static final String GET_VALUE_METHOD      = ByteCodeUtil.fieldGetterMethod("value");
+  private static final String INTERN_FIELD_NAME     = ByteCodeUtil.TC_FIELD_PREFIX + "interned";
+  private static final String COMPRESSED_FIELD_NAME = ByteCodeUtil.TC_FIELD_PREFIX + "compressed";
 
   private final VmVersion     vmVersion;
   private final boolean       portableStringBuffer;
@@ -68,7 +69,7 @@ public class JavaLangStringAdapter extends ClassAdapter implements Opcodes {
 
   public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
     if ("value".equals(name)) {
-      // Remove final modifier on char[] value. We will need to modify
+      // Remove final modifier and add volatile on char[] value. We will need to modify
       // this field when decompressing a string value.
       return super.visitField(ACC_PRIVATE + ACC_VOLATILE, "value", "[C", null, null);
     } else {
@@ -77,6 +78,7 @@ public class JavaLangStringAdapter extends ClassAdapter implements Opcodes {
   }
 
   public void visitEnd() {
+    addCompressionField();
     addCompressedConstructor();
 
     addGetValueMethod();
@@ -87,8 +89,18 @@ public class JavaLangStringAdapter extends ClassAdapter implements Opcodes {
   }
 
   private void addStringTCMethods() {
+
+    // public boolean __tc_isCompressed()
+    MethodVisitor mv = super.visitMethod(ACC_PUBLIC, ByteCodeUtil.TC_METHOD_PREFIX + "isCompressed", "()Z", null, null);
+    mv.visitCode();
+    mv.visitVarInsn(ALOAD, 0);
+    mv.visitFieldInsn(GETFIELD, "java/lang/String", COMPRESSED_FIELD_NAME, "Z");
+    mv.visitInsn(IRETURN);
+    mv.visitMaxs(1, 1);
+    mv.visitEnd();
+
     // public void __tc_decompress
-    MethodVisitor mv = super.visitMethod(ACC_PUBLIC, ByteCodeUtil.TC_METHOD_PREFIX + "decompress", "()V", null, null);
+    mv = super.visitMethod(ACC_PUBLIC, ByteCodeUtil.TC_METHOD_PREFIX + "decompress", "()V", null, null);
     mv.visitCode();
     mv.visitVarInsn(ALOAD, 0);
     mv.visitMethodInsn(INVOKESPECIAL, "java/lang/String", GET_VALUE_METHOD, "()[C");
@@ -129,15 +141,11 @@ public class JavaLangStringAdapter extends ClassAdapter implements Opcodes {
     mv.visitEnd();
   }
 
-  /**
-   * public String(boolean isCompressed, char[] compressed, int length, int hashCode) {
-   *   this.value = compressed;
-   *   this.count = length;
-   *   this.hash = hashCode;
-   *   this.offset = 0;
-   *   this.$__tc_interned = false;
-   * }
-   */
+  private void addCompressionField() {
+    // private volatile boolean $__tc_compressed = false;
+    super.visitField(ACC_PRIVATE + ACC_VOLATILE + ACC_TRANSIENT, COMPRESSED_FIELD_NAME, "Z", null, null);
+  }
+
   private void addCompressedConstructor() {
     MethodVisitor mv = super.visitMethod(ACC_PUBLIC, "<init>", "(Z[CII)V", null, null);
     mv.visitCode();
@@ -148,20 +156,22 @@ public class JavaLangStringAdapter extends ClassAdapter implements Opcodes {
     Label l1 = new Label();
     mv.visitLabel(l1);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitVarInsn(ALOAD, 2);
-    mv.visitFieldInsn(PUTFIELD, "java/lang/String", "value", "[C");
+    mv.visitInsn(ICONST_0);
+    if (isIBM) { // IBM named theirs "hashCode" while Sun, etc use "hash"
+      mv.visitFieldInsn(PUTFIELD, "java/lang/String", "hashCode", "I");
+    } else {
+      mv.visitFieldInsn(PUTFIELD, "java/lang/String", "hash", "I");
+    }
     Label l2 = new Label();
     mv.visitLabel(l2);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitVarInsn(ILOAD, 3);
-    mv.visitFieldInsn(PUTFIELD, "java/lang/String", "count", "I");
+    mv.visitVarInsn(ALOAD, 2);
+    mv.visitFieldInsn(PUTFIELD, "java/lang/String", "value", "[C");
     Label l3 = new Label();
     mv.visitLabel(l3);
     mv.visitVarInsn(ALOAD, 0);
     mv.visitVarInsn(ILOAD, 4);
-
-    // IBM named theirs "hashCode" while Sun, etc use "hash"
-    if (isIBM) {
+    if (isIBM) { // IBM named theirs "hashCode" while Sun,etc use "hash"
       mv.visitFieldInsn(PUTFIELD, "java/lang/String", "hashCode", "I");
     } else {
       mv.visitFieldInsn(PUTFIELD, "java/lang/String", "hash", "I");
@@ -169,40 +179,58 @@ public class JavaLangStringAdapter extends ClassAdapter implements Opcodes {
     Label l4 = new Label();
     mv.visitLabel(l4);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitInsn(ICONST_0);
-    mv.visitFieldInsn(PUTFIELD, "java/lang/String", "offset", "I");
+    mv.visitVarInsn(ILOAD, 3);
+    mv.visitFieldInsn(PUTFIELD, "java/lang/String", "count", "I");
     Label l5 = new Label();
     mv.visitLabel(l5);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitInsn(ICONST_0);
-    mv.visitFieldInsn(PUTFIELD, "java/lang/String", "$__tc_interned", "Z");
+    mv.visitVarInsn(ILOAD, 1);
+    mv.visitFieldInsn(PUTFIELD, "java/lang/String", COMPRESSED_FIELD_NAME, "Z");
     Label l6 = new Label();
     mv.visitLabel(l6);
-    mv.visitInsn(RETURN);
+    mv.visitVarInsn(ALOAD, 0);
+    mv.visitInsn(ICONST_0);
+    mv.visitFieldInsn(PUTFIELD, "java/lang/String", INTERN_FIELD_NAME, "Z");
     Label l7 = new Label();
     mv.visitLabel(l7);
-    mv.visitLocalVariable("this", "Ljava/lang/String;", null, l0, l7, 0);
-    mv.visitLocalVariable("isCompressed", "Z", null, l0, l7, 1);
-    mv.visitLocalVariable("compressed", "[C", null, l0, l7, 2);
-    mv.visitLocalVariable("length", "I", null, l0, l7, 3);
-    mv.visitLocalVariable("hashCode", "I", null, l0, l7, 4);
+    if (!isAzul) {
+      mv.visitVarInsn(ALOAD, 0);
+      mv.visitInsn(ICONST_0);
+      mv.visitFieldInsn(PUTFIELD, "java/lang/String", "offset", "I");
+    }
+    Label l8 = new Label();
+    mv.visitLabel(l8);
+    mv.visitInsn(RETURN);
+    Label l9 = new Label();
+    mv.visitLabel(l9);
+    mv.visitLocalVariable("this", "Ljava/lang/String;", null, l0, l9, 0);
+    mv.visitLocalVariable("compressed", "Z", null, l0, l9, 1);
+    mv.visitLocalVariable("compressedData", "[C", null, l0, l9, 2);
+    mv.visitLocalVariable("uncompressedLength", "I", null, l0, l9, 3);
+    if (isIBM) {
+      mv.visitLocalVariable("hashCode", "I", null, l0, l9, 4);
+    } else {
+      mv.visitLocalVariable("hash", "I", null, l0, l9, 4);
+    }
     mv.visitMaxs(2, 5);
     mv.visitEnd();
   }
 
   /**
    * private char[] __tc_getvalue() { 
-   *   char[] currentValue = this.value; 
-   *   byte[] uncompressed = StringCompressionUtil.unpackAndDecompress(currentValue); 
-   *   if (uncompressed != null) { 
-   *     try { 
-   *       value = StringCoding.decode("UTF-8", uncompressed, 0, uncompressed.length); 
-   *     } catch (UnsupportedEncodingException e) { 
-   *       //  NOTE: Java 1.4 AssertionError does not have a constructor taking a (Throwable) 
-   *       throw new AssertionError(e.getMessage()); 
-   *     } 
-   *   } 
-   *   return value; 
+   *    if ($__tc_compressed){ 
+   *      byte[] uncompressed = StringCompressionUtil.unpackAndDecompress(value); 
+   *      if (uncompressed != null) { 
+   *        try { 
+   *            value =  StringCoding.decode("UTF-8", uncompressed, 0, uncompressed.length); 
+   *        } catch (UnsupportedEncodingException e) {
+   *            //NOTE: Java 1.4 AssertionError does not have a constructor taking a (Throwable)
+   *            throw new AssertionError(e.getMessage()); 
+   *        } 
+   *      $__tc_compressed=false; 
+   *      } 
+   *    } 
+   *    return value; 
    * }
    */
   private void addGetValueMethod() {
@@ -214,53 +242,64 @@ public class JavaLangStringAdapter extends ClassAdapter implements Opcodes {
     mv.visitTryCatchBlock(l0, l1, l2, "java/io/UnsupportedEncodingException");
     Label l3 = new Label();
     mv.visitLabel(l3);
+    mv.visitLineNumber(14, l3);
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "java/lang/String", "value", "[C");
-    mv.visitVarInsn(ASTORE, 1);
+    mv.visitFieldInsn(GETFIELD, "java/lang/String", COMPRESSED_FIELD_NAME, "Z");
     Label l4 = new Label();
-    mv.visitLabel(l4);
-    mv.visitVarInsn(ALOAD, 1);
-    mv
-        .visitMethodInsn(INVOKESTATIC, "com/tc/object/compression/StringCompressionUtil", "unpackAndDecompress",
-                         "([C)[B");
-    mv.visitVarInsn(ASTORE, 2);
+    mv.visitJumpInsn(IFEQ, l4);
     Label l5 = new Label();
     mv.visitLabel(l5);
-    mv.visitVarInsn(ALOAD, 2);
+    mv.visitLineNumber(15, l5);
+    mv.visitVarInsn(ALOAD, 0);
+    mv.visitFieldInsn(GETFIELD, "java/lang/String", "value", "[C");
+    mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/compression/StringCompressionUtil", "unpackAndDecompress", "([C)[B");
+    mv.visitVarInsn(ASTORE, 1);
     Label l6 = new Label();
-    mv.visitJumpInsn(IFNULL, l6);
+    mv.visitLabel(l6);
+    mv.visitLineNumber(16, l6);
+    mv.visitVarInsn(ALOAD, 1);
+    mv.visitJumpInsn(IFNULL, l4);
     mv.visitLabel(l0);
+    mv.visitLineNumber(18, l0);
     mv.visitVarInsn(ALOAD, 0);
     mv.visitLdcInsn("UTF-8");
-    mv.visitVarInsn(ALOAD, 2);
+    mv.visitVarInsn(ALOAD, 1);
     mv.visitInsn(ICONST_0);
-    mv.visitVarInsn(ALOAD, 2);
+    mv.visitVarInsn(ALOAD, 1);
     mv.visitInsn(ARRAYLENGTH);
     mv.visitMethodInsn(INVOKESTATIC, "java/lang/StringCoding", "decode", "(Ljava/lang/String;[BII)[C");
     mv.visitFieldInsn(PUTFIELD, "java/lang/String", "value", "[C");
     mv.visitLabel(l1);
-    mv.visitJumpInsn(GOTO, l6);
-    mv.visitLabel(l2);
-    mv.visitVarInsn(ASTORE, 3);
     Label l7 = new Label();
-    mv.visitLabel(l7);
+    mv.visitJumpInsn(GOTO, l7);
+    mv.visitLabel(l2);
+    mv.visitLineNumber(19, l2);
+    mv.visitVarInsn(ASTORE, 2);
+    Label l8 = new Label();
+    mv.visitLabel(l8);
+    mv.visitLineNumber(20, l8);
     mv.visitTypeInsn(NEW, "java/lang/AssertionError");
     mv.visitInsn(DUP);
-    mv.visitVarInsn(ALOAD, 3);
+    mv.visitVarInsn(ALOAD, 2);
     mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/UnsupportedEncodingException", "getMessage", "()Ljava/lang/String;");
     mv.visitMethodInsn(INVOKESPECIAL, "java/lang/AssertionError", "<init>", "(Ljava/lang/Object;)V");
     mv.visitInsn(ATHROW);
-    mv.visitLabel(l6);
+    mv.visitLabel(l7);
+    mv.visitLineNumber(22, l7);
+    mv.visitVarInsn(ALOAD, 0);
+    mv.visitInsn(ICONST_0);
+    mv.visitFieldInsn(PUTFIELD, "java/lang/String", COMPRESSED_FIELD_NAME, "Z");
+    mv.visitLabel(l4);
+    mv.visitLineNumber(25, l4);
     mv.visitVarInsn(ALOAD, 0);
     mv.visitFieldInsn(GETFIELD, "java/lang/String", "value", "[C");
     mv.visitInsn(ARETURN);
-    Label l8 = new Label();
-    mv.visitLabel(l8);
-    mv.visitLocalVariable("this", "Ljava/lang/String;", null, l3, l8, 0);
-    mv.visitLocalVariable("currentValue", "[C", null, l4, l8, 1);
-    mv.visitLocalVariable("uncompressed", "[B", null, l5, l8, 2);
-    mv.visitLocalVariable("e", "Ljava/io/UnsupportedEncodingException;", null, l7, l6, 3);
-    mv.visitMaxs(5, 4);
+    Label l9 = new Label();
+    mv.visitLabel(l9);
+    mv.visitLocalVariable("this", "Ljava/lang/String;", null, l3, l9, 0);
+    mv.visitLocalVariable("uncompressed", "[B", null, l6, l4, 1);
+    mv.visitLocalVariable("e", "Ljava/io/UnsupportedEncodingException;", null, l8, l7, 2);
+    mv.visitMaxs(5, 3);
     mv.visitEnd();
   }
 
