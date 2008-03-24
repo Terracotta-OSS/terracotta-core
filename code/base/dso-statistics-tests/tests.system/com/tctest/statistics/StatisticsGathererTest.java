@@ -131,7 +131,6 @@ public class StatisticsGathererTest extends TransparentTestBase implements Stati
     final List<StatisticData> data_list = new ArrayList<StatisticData>();
     store.retrieveStatistics(new StatisticsRetrievalCriteria(), new StatisticDataUser() {
       public boolean useStatisticData(StatisticData data) {
-        System.out.println("data : "+data);
         data_list.add(data);
         return true;
       }

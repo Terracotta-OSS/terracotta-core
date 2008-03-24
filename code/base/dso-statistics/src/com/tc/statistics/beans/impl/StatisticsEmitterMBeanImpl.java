@@ -53,7 +53,7 @@ public class StatisticsEmitterMBeanImpl extends AbstractTerracottaMBean implemen
   private final Set activeSessionIds;
 
   private Timer timer = null;
-  private TimerTask task = null;
+  private SendStatsTask task = null;
 
   public StatisticsEmitterMBeanImpl(final StatisticsConfig config, final StatisticsBuffer buffer) throws NotCompliantMBeanException {
     super(StatisticsEmitterMBean.class, true, false);
@@ -82,7 +82,7 @@ public class StatisticsEmitterMBeanImpl extends AbstractTerracottaMBean implemen
   }
 
   private synchronized void enableTimer() {
-    if (timer != null &&
+    if (timer != null ||
         task != null) {
       disableTimer();
     }
@@ -93,11 +93,12 @@ public class StatisticsEmitterMBeanImpl extends AbstractTerracottaMBean implemen
   }
 
   private synchronized void disableTimer() {
-    if (timer != null &&
-        task != null) {
-      task.cancel();
-      timer.cancel();
+    if (task != null) {
+      task.shutdown();
       task = null;
+    }
+    if (timer != null) {
+      timer.cancel();
       timer = null;
     }
   }
@@ -116,16 +117,28 @@ public class StatisticsEmitterMBeanImpl extends AbstractTerracottaMBean implemen
   }
 
   public void closing() {
+    disableTimer();
   }
 
   public void closed() {
   }
 
   private class SendStatsTask extends TimerTask {
+    private volatile boolean shutdown = false;
+
+    public void shutdown() {
+      shutdown = true;
+    }
+
     public void run() {
+      if (shutdown) {
+        cancel();
+        return;
+      }
+
       boolean has_listeners = hasListeners();
-      if (has_listeners
-          && !activeSessionIds.isEmpty()) {
+      if (has_listeners &&
+          !activeSessionIds.isEmpty()) {
         for (Iterator it = activeSessionIds.iterator(); it.hasNext(); ) {
           try {
             // todo: needs to support deferring sending until the capturing session shutdown
