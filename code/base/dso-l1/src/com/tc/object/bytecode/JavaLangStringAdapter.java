@@ -70,7 +70,7 @@ public class JavaLangStringAdapter extends ClassAdapter implements Opcodes {
     if ("value".equals(name)) {
       // Remove final modifier on char[] value. We will need to modify
       // this field when decompressing a string value.
-      return super.visitField(ACC_PRIVATE, "value", "[C", null, null);
+      return super.visitField(ACC_PRIVATE + ACC_VOLATILE, "value", "[C", null, null);
     } else {
       return super.visitField(access, name, desc, signature, value);
     }
