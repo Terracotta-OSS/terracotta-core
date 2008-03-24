@@ -122,7 +122,7 @@ public class ServerInfo {
   }
   
   private String quote(final String value) {
-     return value.indexOf(" ") ? "\"" + value + "\"" : value;
+     return (value.indexOf(" ") != -1) ? "\"" + value + "\"" : value;
   }
   
   public void storeEnvironment(Preferences prefs) {
