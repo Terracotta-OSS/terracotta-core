@@ -947,7 +947,6 @@ public class SessionIntegratorFrame extends Frame {
         key = (String) iter.next();
         val = (String) env.get(key);
 
-        if (val.indexOf(" ") != -1) val = "\"" + val + "\"";
         list.add(key + "=" + val);
       }
 
