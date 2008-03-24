@@ -34,7 +34,7 @@ import java.util.jar.Manifest;
 public class BootJar {
   private static final TCLogger logger               = TCLogging.getLogger(BootJar.class);
 
-  private static final String   DSO_BOOT_JAR_PATTERN = ".+dso-boot.*\\.jar$";
+  private static final String   DSO_BOOT_JAR_PATTERN = "(?i).+dso-boot.*\\.jar$";
   static final String           JAR_NAME_PREFIX      = "dso-boot-";
 
   private static final String   VERSION_1_1          = "1.1";
