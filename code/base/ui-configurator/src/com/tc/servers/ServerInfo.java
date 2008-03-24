@@ -102,7 +102,7 @@ public class ServerInfo {
     
     for(int i = 0; i < propCount; i++) {
       property = (ServerProperty)m_env.get(i);
-      props.put(property.getName(), property.getValue());
+      props.put(property.getName(), quote(property.getValue()));
     }
     
     return props;
@@ -115,10 +115,14 @@ public class ServerInfo {
     
     while(iter.hasNext()) {
       prop = (ServerProperty)iter.next();
-      list.add(prop.getName()+"="+prop.getValue());
+      list.add(prop.getName()+"="+quote(prop.getValue()));
     }
     
     return (String[])list.toArray(new String[list.size()]);
+  }
+  
+  private String quote(final String value) {
+     return value.matches("\s") ? "\"" + value + "\"" : value;
   }
   
   public void storeEnvironment(Preferences prefs) {
