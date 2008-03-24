@@ -25,7 +25,7 @@ public class InternCompressedStringTest extends TransparentTestBase {
   private static final int NODE_COUNT    = 2;
   
   protected Class getApplicationClass() {
-    return App.class;
+    return InternCompressedStringTestApp.class;
   }
 
   protected void setUp() throws Exception {
@@ -34,19 +34,19 @@ public class InternCompressedStringTest extends TransparentTestBase {
     initializeTestRunner();
   }
 
-  public static class App extends AbstractErrorCatchingTransparentApp {
+  public static class InternCompressedStringTestApp extends AbstractErrorCatchingTransparentApp {
     
     private final List root;
     private final CyclicBarrier barrier;
 
-    public App(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
+    public InternCompressedStringTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
       super(appId, cfg, listenerProvider);
       root = new ArrayList();
       barrier = new CyclicBarrier(getParticipantCount());
     }
     
     public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-      final String testClass = App.class.getName();
+      final String testClass = InternCompressedStringTestApp.class.getName();
       final TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
       spec.addRoot("root", "root");
       spec.addRoot("barrier", "barrier");
