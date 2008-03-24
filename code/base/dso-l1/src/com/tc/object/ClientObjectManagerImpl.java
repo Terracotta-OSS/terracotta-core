@@ -165,6 +165,12 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
                    + cache.getCacheCapacity());
     }
     startReaper();
+    ensureLocalLookupContextLoaded();
+  }
+
+  private void ensureLocalLookupContextLoaded() {
+    //load LocalLookupContext early to avoid ClassCircularityError: DEV-1386
+    new LocalLookupContext();
   }
 
   public Class getClassFor(String className, String loaderDesc) throws ClassNotFoundException {
