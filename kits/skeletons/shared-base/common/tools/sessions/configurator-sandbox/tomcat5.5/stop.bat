@@ -23,7 +23,7 @@ if not exist %JAVA_HOME% set JAVA_HOME=%TC_INSTALL_DIR%\jre
 for %%i IN (%JAVA_HOME%) do set JAVA_HOME=%%~fsi
 
 if not defined CATALINA_HOME (
-  echo CATALINA_HOME must be set to a Tomcat5.0 installation.
+  echo CATALINA_HOME must be set to a Tomcat5.5 installation.
   exit 1
 ) else (
   set CATALINA_HOME="%CATALINA_HOME:"=%"
