@@ -23,6 +23,7 @@ import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Os;
 import com.tctest.runner.AbstractTransparentApp;
 
@@ -240,18 +241,18 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
     } else if (index == 1) {
       ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
       waitForTwoToMoveOn();
-      Thread.sleep(2000);
+      ThreadUtil.reallySleep(2000);
       ManagerUtil.monitorExit(lockName);
       waitForTwoToMoveOn();
       ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
-      Thread.sleep(3000);
+      ThreadUtil.reallySleep(3000);
       ManagerUtil.monitorExit(lockName);
       waitForAllToMoveOn();
     } else if (index == 2) {
       waitForTwoToMoveOn();
       ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
       waitForTwoToMoveOn();
-      Thread.sleep(2000);
+      ThreadUtil.reallySleep(2000);
       ManagerUtil.monitorExit(lockName);
       waitForAllToMoveOn();
     }
@@ -273,18 +274,18 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
     } else if (index == 1) {
       ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
       waitForTwoToMoveOn();
-      Thread.sleep(2000);
+      ThreadUtil.reallySleep(2000);
       ManagerUtil.monitorExit(lockName);
       waitForTwoToMoveOn();
       ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
-      Thread.sleep(3000);
+      ThreadUtil.reallySleep(3000);
       ManagerUtil.monitorExit(lockName);
       waitForAllToMoveOn();
     } else if (index == 2) {
       waitForTwoToMoveOn();
       ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
       waitForTwoToMoveOn();
-      Thread.sleep(2000);
+      ThreadUtil.reallySleep(2000);
       ManagerUtil.monitorExit(lockName);
       waitForAllToMoveOn();
     }
