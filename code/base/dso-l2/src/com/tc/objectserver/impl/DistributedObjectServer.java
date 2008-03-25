@@ -811,7 +811,7 @@ public class DistributedObjectServer implements TCDumper {
   private void populateStatisticsRetrievalRegistry(final DSOGlobalServerStats serverStats, final StageManager stageManager,
                                                    final MessageMonitor messageMonitor,
                                                    final ManagedObjectFaultHandler managedObjectFaultHandler,
-                                                   final ServerTransactionManagerImpl transactionManager){
+                                                   final ServerTransactionManagerImpl txnManager){
     if (statisticsAgentSubSystem.isActive()) {
       StatisticsRetrievalRegistry registry = statisticsAgentSubSystem.getStatisticsRetrievalRegistry();
       registry.registerActionInstance(new SRAL2ToL1FaultRate(serverStats));
@@ -833,7 +833,7 @@ public class DistributedObjectServer implements TCDumper {
       registry.registerActionInstance(new SRAMessages(messageMonitor));
       registry.registerActionInstance(new SRAL2FaultsFromDisk(managedObjectFaultHandler));
       registry.registerActionInstance(new SRAL1ToL2FlushRate(serverStats));
-      registry.registerActionInstance(new SRAL2PendingTransactions(transactionManager));
+      registry.registerActionInstance(new SRAL2PendingTransactions(txnManager));
     }
   }
 
