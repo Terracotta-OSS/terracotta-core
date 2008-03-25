@@ -4,8 +4,6 @@
  */
 package com.tc.object;
 
-import EDU.oswego.cs.dl.util.concurrent.Latch;
-
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.exception.TCRuntimeException;
@@ -56,6 +54,7 @@ import com.tc.util.NonPortableReason;
 import com.tc.util.ToggleableReferenceManager;
 import com.tc.util.State;
 import com.tc.util.Util;
+import com.tc.util.concurrent.ResetableLatch;
 import com.tc.util.concurrent.StoppableThread;
 
 import java.io.IOException;
@@ -1351,23 +1350,9 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
       state = CREATE_STATE;
     }
 
-    public boolean equals(Object obj) {
-      if (object == null) { return false; }
-      ObjectLatchState ols = (ObjectLatchState) obj;
-      return ols.getObjectID().equals(ols.getObjectID());
-    }
-
     public String toString() {
       return "ObjectLatchState [" + objectID + " , " + latch + ", " + state + " ]";
     }
-  }
-
-  private static class ResetableLatch extends Latch {
-
-    public synchronized void reset() {
-      this.latched_ = false;
-    }
-    
   }
 
 }
