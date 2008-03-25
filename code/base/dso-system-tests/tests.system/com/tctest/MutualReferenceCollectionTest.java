@@ -79,14 +79,14 @@ public class MutualReferenceCollectionTest extends TransparentTestBase {
           for (int i = 0; i < 5000; i++) {
             firstList.add(new Object());
           }
-          // reference oddList
+          // reference secondList
           firstList.add(secondList);
         }
         synchronized (secondList) {
           for (int i = 1; i < 5000; i++) {
             secondList.add(new Object());
           }
-          // reference evenList
+          // reference firstList
           secondList.add(firstList);
         }
       }
