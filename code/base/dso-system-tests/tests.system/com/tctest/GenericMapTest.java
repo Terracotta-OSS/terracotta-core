@@ -6,6 +6,11 @@ package com.tctest;
 public class GenericMapTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 3;
+  
+  public GenericMapTest() {
+    disableAllUntil("2008-03-31");
+  }
+
 
   protected void setUp() throws Exception {
     super.setUp();
