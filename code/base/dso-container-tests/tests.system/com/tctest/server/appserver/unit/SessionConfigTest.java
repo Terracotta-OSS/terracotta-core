@@ -113,75 +113,13 @@ public class SessionConfigTest extends AbstractDeploymentTest {
     assertEquals(69, idLength);
   }
 
-  // test session-timeout field in web.xml
-  public void testSessionTimeOutNegative() throws Exception {
-    initWithSessionTimeout(-1);
-    WebConversation wc = new WebConversation();
-    WebResponse response = request(server, "testcase=testSessionTimeOutNegative&hit=0", wc);
-    long actual = Long.parseLong(response.getText().replaceAll("[^\\d+-]", ""));
-    System.out.println("actual: " + actual);
-    assertTrue(actual < 0);
-
-    // even though negative number should dictate the session never timeouts
-    // we only test it for 1 minute to save time.
-    Thread.sleep(60 * 1000);
-    response = request(server, "testcase=testSessionTimeOutNegative&hit=1", wc);
-    assertEquals("OK", response.getText().trim());
-  }
-
-  // test session-timeout field in web.xml
-  public void testSessionTimeOutArbitrary() throws Exception {
-    int someBigValue = Integer.MAX_VALUE / 60;
-    initWithSessionTimeout(someBigValue);
-    WebConversation wc = new WebConversation();
-    WebResponse response = request(server, "testcase=testSessionTimeOutArbitrary", wc);
-    int actual = Integer.parseInt(response.getText().replaceAll("[^\\d+]", ""));
-    assertEquals(someBigValue * 60, actual);
-  }
-
-  public void testSessionTimeOutFromTCProperties() throws Exception {
-    if (appServerInfo().getId() == AppServerInfo.JETTY) return;
-    extraServerJvmArgs.put("com.tc.session.maxidle.seconds", String.valueOf(Integer.MAX_VALUE));
-    init();
-    WebConversation wc = new WebConversation();
-    WebResponse response = request(server, "testcase=testSessionTimeOutArbitrary", wc);
-    int actual = Integer.parseInt(response.getText().replaceAll("[^\\d+]", ""));
-    assertEquals(Integer.MAX_VALUE, actual);
-  }
-
-  public void testResetTimeoutToLowerValue() throws Exception {
-    // CDV-634
-    if (true) return;
-
-    init();
-    int timeoutValue = 30;
-    WebConversation wc = new WebConversation();
-
-    System.out.println("Setting timeout value to: " + timeoutValue);
-    WebResponse response = request(server, "testcase=testResetTimeoutToLowerValue&hit=0&timeout=" + timeoutValue, wc);
-    assertEquals("OK", response.getText().trim());
-
-    System.out.println("About to sleep for: " + (timeoutValue / 2));
-    Thread.sleep(1000 * (timeoutValue / 2));
-
-    System.out.println("Setting timeout value to: " + (timeoutValue / 2));
-    response = request(server, "testcase=testResetTimeoutToLowerValue&hit=1&value=ABC&timeout=" + (timeoutValue / 2),
-                       wc);
-    assertEquals("OK", response.getText().trim());
-
-    System.out.println("Retrieving previous stored value in session...");
-    response = request(server, "testcase=testResetTimeoutToLowerValue&hit=2&value=ABC", wc);
-    assertEquals("OK", response.getText().trim());
-  }
-
-  private void initWithSessionTimeout(int timeOutInMinutes) throws Exception {
-    createTestDeployment();
-    builder.addSessionConfig("session-timeout", String.valueOf(timeOutInMinutes));
-    createAndStartAppServer();
-  }
-
   private WebResponse request(WebApplicationServer appserver, String params, WebConversation con) throws Exception {
     return appserver.ping("/" + CONTEXT + "/" + MAPPING + "?" + params, con);
+  }
+
+  private void init() throws Exception {
+    createTestDeployment();
+    createAndStartAppServer();
   }
 
   private DeploymentBuilder createTestDeployment() {
@@ -206,11 +144,6 @@ public class SessionConfigTest extends AbstractDeploymentTest {
       }
     }
     server.start();
-  }
-
-  private void init() throws Exception {
-    createTestDeployment();
-    createAndStartAppServer();
   }
 
   private void addSessionDescriptor() throws Exception {
