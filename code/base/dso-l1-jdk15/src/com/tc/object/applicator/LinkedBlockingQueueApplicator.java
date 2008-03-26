@@ -193,7 +193,7 @@ public class LinkedBlockingQueueApplicator extends BaseApplicator {
         break;
       case SerializationUtil.TAKE:
         try {
-          Object o = TC_TAKE_METHOD.invoke(queue, new Object[0]);
+          TC_TAKE_METHOD.invoke(queue, new Object[0]);
         } catch (InvocationTargetException e) {
           throw new TCRuntimeException(e);
         } catch (IllegalAccessException e) {
