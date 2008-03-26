@@ -168,7 +168,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
   }
 
   private void ensureLocalLookupContextLoaded() {
-    //load LocalLookupContext early to avoid ClassCircularityError: DEV-1386
+    // load LocalLookupContext early to avoid ClassCircularityError: DEV-1386
     new LocalLookupContext();
   }
 
@@ -539,7 +539,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
           obj = basicLookupByID(id);
           if (obj != null) {
             // object exists in local cache
-             return obj;
+            return obj;
           } else if (ols != null && ols.isCreateState()) {
             // if the object is being created, add to the wait set and return the object
             lookupContext.getObjectLatchWaitSet().add(ols);
@@ -577,13 +577,12 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
           // now hydrate the object, this could call resolveReferences which would call this method recursively
           obj.hydrate(dna, false);
         } catch (ClassNotFoundException e) {
-          logger.warn("Exception: ", e);
-          throw e;
-        } finally {
           // remove the object creating in progress from the list.
           removeCreateInProgress(id);
+          logger.warn("Exception: ", e);
+          throw e;
         }
-        basicAddLocal(obj);
+        basicAddLocal(obj, true);
       }
     } finally {
       if (lookupContext.getCallStackCount().decrement() == 0) {
@@ -938,12 +937,12 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     return tcobj;
   }
 
-  private void basicAddLocal(TCObject obj) {
+  private void basicAddLocal(TCObject obj, boolean removeCreateInProgress) {
     synchronized (this) {
       Assert.eval(!(obj instanceof TCObjectClone));
-      if (basicHasLocal(obj.getObjectID())) { throw Assert.failure("Attempt to add an object that already exists: "
-                                                                   + obj); }
-      idToManaged.put(obj.getObjectID(), obj);
+      ObjectID id = obj.getObjectID();
+      if (basicHasLocal(id)) { throw Assert.failure("Attempt to add an object that already exists: " + obj); }
+      idToManaged.put(id, obj);
 
       Object pojo = obj.getPeerObject();
 
@@ -968,6 +967,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
         }
       }
       cache.add(obj);
+      if (removeCreateInProgress) removeCreateInProgress(id);
       notifyAll();
     }
   }
@@ -1060,7 +1060,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     if ((obj = basicLookup(pojo)) == null) {
       obj = factory.getNewInstance(nextObjectID(), pojo, pojo.getClass(), true);
       txManager.createObject(obj);
-      basicAddLocal(obj);
+      basicAddLocal(obj, false);
       executePostCreateMethod(pojo);
     }
     return obj;
@@ -1081,7 +1081,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     if ((obj = basicLookup(pojo)) == null) {
       obj = factory.getNewInstance(nextObjectID(), pojo, pojo.getClass(), true);
       pendingCreateTCObjects.add(obj);
-      basicAddLocal(obj);
+      basicAddLocal(obj, false);
     }
     return obj;
   }
