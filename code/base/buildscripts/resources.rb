@@ -81,6 +81,24 @@ check_one <test_name>
 
     Example: tcbuild check_one AssertTest --no-ivy compile_only=common
 
+check_<module-group>
+check_<test-type>
+check_<module-group>_<test-type>
+    Runs all tests that match the given <module-group> and <test-type>.
+    Module groups are defined in modules.def.yml.  <test-type> may be either
+    'unit' or 'system'.  If <test-type> is not specified, both unit and system
+    tests are included.
+
+    Examples:
+      Run all unit tests in all modules:
+          tcbuild check_unit
+
+      Run all tests for all modules that are part of the spring group:
+          tcbuild check_spring
+
+      Run system tests for all modules that are part of the framework group:
+          tcbuild check_framework_system
+
 show_classpath <project> <subtree>
     Show the classpath of the subtree in this project
     Ex: tcbuild show_classpath dso-container-tets tests.system
