@@ -9,9 +9,9 @@ import java.util.Iterator;
 import java.util.List;
 
 /*
- * This stack implementation uses ArrayList internally. This is mainly created so that we dont have synchronization
- * overheads that java.util.Stack imposses since it is based on Vector. This class maintains an interface level compatibility
- * with java.util.Stack but doesnot implement all of Vector interfaces.
+ * This stack implementation uses ArrayList internally. This is mainly created so that we don't have synchronization
+ * overheads that java.util.Stack imposes since it is based on Vector. This class maintains an interface level compatibility
+ * with java.util.Stack but doesn't implement all of Vector interfaces.
  */
 public class Stack {
 
