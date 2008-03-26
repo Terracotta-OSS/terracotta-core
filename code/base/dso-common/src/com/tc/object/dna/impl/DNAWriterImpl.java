@@ -68,7 +68,7 @@ public class DNAWriterImpl implements DNAWriter {
 
   public DNAWriter createAppender() {
     if (contiguous) {
-      contiguous &= (output.getBytesWritten() == lastStreamPos);
+      contiguous = (output.getBytesWritten() == lastStreamPos);
     }
     Appender appender = new Appender(this, output);
     appenders.add(appender);
