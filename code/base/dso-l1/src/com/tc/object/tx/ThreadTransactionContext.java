@@ -13,16 +13,16 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * We have two concepts. Transactions which carry changes/creates etc... And the locks That are associated with those
+ * We have two concepts. Transactions which carry changes/creates etc... And the locks that are associated with those
  * transactions. Transactions need to be created and then continued until the next transaction exit (in other words not
- * just until the next begin) if we are to maintain proper semantics/ordering. The Locks on the otherhand work more like
- * a stack. When a block is entered the locks get pushed onto the stack and associated with the current transaction and
- * when they are exited they are removed from the current transaction. This class maintains both the current transaction
- * and the stack of contexts that are associated with the thread.
+ * just until the next begin) if we are to maintain proper semantics/ordering. The Locks on the other hand work more
+ * like a stack. When a block is entered the locks get pushed onto the stack and associated with the current transaction
+ * and when they are exited they are removed from the current transaction. This class maintains both the current
+ * transaction and the stack of contexts that are associated with the thread.
  */
 public class ThreadTransactionContext {
+  private final Stack       transactionStack = new Stack();
   private ClientTransaction currentTransaction;
-  private Stack             transactionStack = new Stack();
 
   public void setCurrentTransaction(ClientTransaction tx) {
     Assert.eval(tx != null);
@@ -82,10 +82,10 @@ public class ThreadTransactionContext {
   }
 
   private List getAllLockIDs(LockID id) {
-    List lids = new ArrayList();
+    List lids = new ArrayList(transactionStack.size() + 1);
     lids.add(id);
-    for (int i = 1; i < transactionStack.size(); i++) {
-      TransactionContext tc = (TransactionContext) transactionStack.get(i - 1);
+    for (int i = 0, n = transactionStack.size(); i < n; i++) {
+      TransactionContext tc = (TransactionContext) transactionStack.get(i);
       lids.add(tc.getLockID());
     }
     return lids;
