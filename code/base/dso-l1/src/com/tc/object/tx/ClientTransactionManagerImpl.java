@@ -430,15 +430,17 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
       }
 
       currentTransaction.setAlreadyCommitted();
+      
+      if (DebugUtil.DEBUG) {
+        System.err.println(ManagerUtil.getClientID() + " txID " + currentTransaction.getTransactionID() + " changes: "
+                           + currentTransaction.hasChangesOrNotifies() + " create: " + hasPendingCreateObjects);
+      }
+
       if (currentTransaction.hasChangesOrNotifies() || hasPendingCreateObjects) {
         if (txMonitor.isEnabled()) {
           currentTransaction.updateMBean(txMonitor);
         }
         remoteTxManager.commit(currentTransaction);
-      } else {
-        if (DebugUtil.DEBUG) {
-          System.err.println(ManagerUtil.getClientID() + " txID " + currentTransaction.getTransactionID() + " changes: " + currentTransaction.hasChangesOrNotifies() + " create: " + hasPendingCreateObjects);
-        }
       }
       return true;
     } finally {
@@ -795,9 +797,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     Assert.assertNotNull(txnStack);
     final int size = txnStack.decrement();
 
-    if (size < 0) {
-      throw new AssertionError("size=" + size);
-    }
+    if (size < 0) { throw new AssertionError("size=" + size); }
   }
 
   public boolean isTransactionLoggingDisabled() {
