@@ -11,6 +11,7 @@ import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
+import com.sleepycat.je.Transaction;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
@@ -23,6 +24,7 @@ import com.tc.util.Conversion;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.SortedSet;
 
 class TransactionPersistorImpl extends SleepycatPersistorBase implements TransactionPersistor {
 
@@ -86,13 +88,14 @@ class TransactionPersistorImpl extends SleepycatPersistorBase implements Transac
     return ServerTransactionID.createFrom(data);
   }
 
-  public void deleteAllGlobalTransactionDescriptors(PersistenceTransaction tx, Collection toDelete) {
+  public void deleteAllGlobalTransactionDescriptors(PersistenceTransaction tx, SortedSet<ServerTransactionID> serverTxnIDs) {
     DatabaseEntry key = new DatabaseEntry();
-    for (Iterator i = toDelete.iterator(); i.hasNext();) {
-      ServerTransactionID stxID = ((GlobalTransactionDescriptor) i.next()).getServerTransactionID();
+    Transaction txn = pt2nt(tx);
+    for (Iterator i = serverTxnIDs.iterator(); i.hasNext();) {
+      ServerTransactionID stxID = (ServerTransactionID) i.next();
       key.setData(serverTxnID2Bytes(stxID));
       try {
-        db.delete(pt2nt(tx), key);
+        db.delete(txn, key);
       } catch (DatabaseException e) {
         throw new DBException(e);
       }

@@ -181,14 +181,14 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
   }
 
   public synchronized void nodeJoined(NodeID nodeID) {
-    String nodeName = ((NodeIdComparable) nodeID).getName();
+    String nodeName = ((NodeIDImpl) nodeID).getName();
     nodeStateMap.get(nodeName).nodeJoined();
     joinedNodes++;
   }
 
   public synchronized void nodeLeft(NodeID nodeID) {
     joinedNodes--;
-    String nodeName = ((NodeIdComparable) nodeID).getName();
+    String nodeName = ((NodeIDImpl) nodeID).getName();
     nodeStateMap.get(nodeName).nodeLeft();
     notifyAll();
   }

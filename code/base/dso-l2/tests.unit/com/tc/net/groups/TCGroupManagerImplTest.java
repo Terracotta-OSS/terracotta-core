@@ -317,8 +317,7 @@ public class TCGroupManagerImplTest extends TestCase {
 
   private L2StateMessage createL2StateMessage() {
     long weights[] = new long[] { 1, 23, 44, 78 };
-    Enrollment enroll = new Enrollment(new NodeIdComparable("test", UUID.getUUID().toString().getBytes()), true,
-                                       weights);
+    Enrollment enroll = new Enrollment(new NodeIDImpl("test", UUID.getUUID().toString().getBytes()), true, weights);
     L2StateMessage message = new L2StateMessage(L2StateMessage.START_ELECTION, enroll);
     return (message);
   }

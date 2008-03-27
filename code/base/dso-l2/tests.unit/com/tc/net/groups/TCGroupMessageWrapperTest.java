@@ -239,8 +239,8 @@ public class TCGroupMessageWrapperTest extends TestCase {
     sendGroupMessage(sendMesg);
   }
 
-  private NodeIdComparable makeNodeID(String name) {
-    return (new NodeIdComparable(name, UUID.getUUID().toString().getBytes()));
+  private NodeIDImpl makeNodeID(String name) {
+    return (new NodeIDImpl(name, UUID.getUUID().toString().getBytes()));
   }
 
 }

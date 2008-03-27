@@ -20,11 +20,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 public class TransactionStoreImpl implements TransactionStore {
 
@@ -134,15 +135,17 @@ public class TransactionStoreImpl implements TransactionStore {
   }
 
   /**
-   * Global Tranasaction descriptors should have been deleted from sids datastructure, before this call.
+   * Global Transaction descriptors should have been deleted from sids data structure, before this call.
    */
   private void removeGlobalTransacionDescs(Collection gidDescs, PersistenceTransaction tx) {
+    SortedSet<ServerTransactionID> toRemove = new TreeSet<ServerTransactionID>();
     for (Iterator i = gidDescs.iterator(); i.hasNext();) {
       GlobalTransactionDescriptor gd = (GlobalTransactionDescriptor) i.next();
       ids.remove(gd.getGlobalTransactionID());
+      toRemove.add(gd.getServerTransactionID());
     }
     if (!gidDescs.isEmpty()) {
-      persistor.deleteAllGlobalTransactionDescriptors(tx, gidDescs);
+      persistor.deleteAllGlobalTransactionDescriptors(tx, toRemove);
     }
   }
 
@@ -160,15 +163,16 @@ public class TransactionStoreImpl implements TransactionStore {
 
   // Used in Passive server
   public void clearCommitedTransactionsBelowLowWaterMark(PersistenceTransaction tx, GlobalTransactionID lowWaterMark) {
-    List toRemove = new ArrayList(100);
+    SortedSet<ServerTransactionID> toRemove = new TreeSet<ServerTransactionID>();
     synchronized (ids) {
       Map lowerThanLWM = ids.headMap(lowWaterMark);
       for (Iterator i = lowerThanLWM.values().iterator(); i.hasNext();) {
         GlobalTransactionDescriptor gd = (GlobalTransactionDescriptor) i.next();
         if (gd.complete()) {
           i.remove();
-          sids.remove(gd.getServerTransactionID());
-          toRemove.add(gd);
+          ServerTransactionID sid = gd.getServerTransactionID();
+          sids.remove(sid);
+          toRemove.add(sid);
         }
       }
     }

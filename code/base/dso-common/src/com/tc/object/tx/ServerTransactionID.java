@@ -16,10 +16,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 /**
- * A class that represents a particular client transaction from the server's perspective (ie. the combination of
- * NodeID and a client TransactionID)
+ * A class that represents a particular client transaction from the server's perspective (ie. the combination of NodeID
+ * and a client TransactionID)
  */
-public class ServerTransactionID {
+public class ServerTransactionID implements Comparable {
   public static final ServerTransactionID NULL_ID = new ServerTransactionID(ClientID.NULL_ID, TransactionID.NULL_ID);
 
   private final TransactionID             txnID;
@@ -45,7 +45,7 @@ public class ServerTransactionID {
   }
 
   public boolean isServerGeneratedTransaction() {
-    //TODO::Move this logic away from here
+    // TODO::Move this logic away from here
     return (sourceID instanceof NodeIDImpl);
   }
 
@@ -69,7 +69,7 @@ public class ServerTransactionID {
     }
     return false;
   }
-  
+
   /**
    * Utility method for serialization.
    */
@@ -97,5 +97,16 @@ public class ServerTransactionID {
     } catch (Exception e) {
       throw new AssertionError(e);
     }
+  }
+
+  public int compareTo(Object o) {
+    ServerTransactionID other = (ServerTransactionID) o;
+    int cmp = sourceID.compareTo(other.sourceID);
+    if (cmp == 0) {
+      return txnID.compareTo(other.txnID);
+    } else {
+      return cmp;
+    }
+
   }
 }

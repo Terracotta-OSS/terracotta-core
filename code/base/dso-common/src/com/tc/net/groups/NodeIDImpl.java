@@ -122,4 +122,19 @@ public class NodeIDImpl implements NodeID {
   public byte getType() {
     return L2_NODE_TYPE;
   }
+
+  public int compareTo(Object o) {
+    NodeID n = (NodeID) o;
+    if (getType() != n.getType()) { return getType() - n.getType(); }
+    NodeIDImpl target = (NodeIDImpl) n;
+    byte[] targetUid = target.getUID();
+    int length = uid.length;
+    int diff = length - targetUid.length;
+    if (diff != 0) return (diff);
+    for (int i = 0; i < length; ++i) {
+      diff = uid[i] - targetUid[i];
+      if (diff != 0) return (diff);
+    }
+    return 0;
+  }
 }

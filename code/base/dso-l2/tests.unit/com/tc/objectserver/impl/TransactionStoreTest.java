@@ -28,6 +28,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
 
 public class TransactionStoreTest extends TCTestCase {
 
@@ -69,13 +71,15 @@ public class TransactionStoreTest extends TCTestCase {
     // make sure the min has been adjusted properly
     assertEquals(getGlobalTransactionID(currentMin), store.getLeastGlobalTransactionID());
     // make sure the deleted set has actually been deleted
+    Set deletedSids = new HashSet();
     for (Iterator i = toDelete.iterator(); i.hasNext();) {
       GlobalTransactionDescriptor desc = (GlobalTransactionDescriptor) i.next();
       assertNull(store.getTransactionDescriptor(desc.getServerTransactionID()));
+      deletedSids.add(desc.getServerTransactionID());
     }
 
     // make sure the persistor is told to delete them all
-    assertEquals(toDelete, new HashSet((Collection) persistor.deleteQueue.poll(1)));
+    assertEquals(deletedSids, new HashSet((Collection) persistor.deleteQueue.poll(1)));
   }
 
   public void testLeastGlobalTransactionID() throws Exception {
@@ -200,11 +204,11 @@ public class TransactionStoreTest extends TCTestCase {
     // least Global Txn ID is STILL the same, only when the next LWM msg comes along it clears the data structures.
     assertEquals(currentLWM, store.getLeastGlobalTransactionID());
     assertFalse(currentLWM.toLong() < store.getLeastGlobalTransactionID().toLong());
-    
+
     // send LWM again
     store.clearCommitedTransactionsBelowLowWaterMark(null, ((GlobalTransactionDescriptor) gds.get(1))
         .getGlobalTransactionID());
-    
+
     // Now LWM should have moved up
     assertNotEquals(currentLWM, store.getLeastGlobalTransactionID());
     assertTrue(currentLWM.toLong() < store.getLeastGlobalTransactionID().toLong());
@@ -226,11 +230,11 @@ public class TransactionStoreTest extends TCTestCase {
     // least Global Txn ID is STILL the same, only when the next LWM msg comes along it clears the data structures.
     assertEquals(currentLWM, store.getLeastGlobalTransactionID());
     assertFalse(currentLWM.toLong() < store.getLeastGlobalTransactionID().toLong());
-    
+
     // send LWM again
     store.clearCommitedTransactionsBelowLowWaterMark(null, ((GlobalTransactionDescriptor) gds.get(gds.size() - 1))
         .getGlobalTransactionID());
-    
+
     // least Global Txn ID is not the same
     assertNotEquals(currentLWM, store.getLeastGlobalTransactionID());
     assertTrue(currentLWM.toLong() < store.getLeastGlobalTransactionID().toLong());
@@ -409,11 +413,11 @@ public class TransactionStoreTest extends TCTestCase {
       return sequence;
     }
 
-    public void deleteAllGlobalTransactionDescriptors(PersistenceTransaction tx, Collection toDelete) {
+    public void deleteAllGlobalTransactionDescriptors(PersistenceTransaction tx, SortedSet<ServerTransactionID> toDelete) {
       deleteQueue.put(toDelete);
-      for (Iterator i = toDelete.iterator(); i.hasNext();) {
-        GlobalTransactionDescriptor gd = (GlobalTransactionDescriptor) i.next();
-        persisted.remove(gd.getServerTransactionID());
+      for (Iterator<ServerTransactionID> i = toDelete.iterator(); i.hasNext();) {
+        ServerTransactionID sid = i.next();
+        persisted.remove(sid);
       }
     }
   }

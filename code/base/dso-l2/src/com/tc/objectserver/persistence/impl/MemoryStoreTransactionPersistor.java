@@ -16,6 +16,7 @@ import com.tc.util.Conversion;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.SortedSet;
 
 class MemoryStoreTransactionPersistor implements TransactionPersistor {
 
@@ -56,7 +57,7 @@ class MemoryStoreTransactionPersistor implements TransactionPersistor {
     return ServerTransactionID.createFrom(data);
   }
 
-  public void deleteAllGlobalTransactionDescriptors(PersistenceTransaction tx, Collection toDelete) {
+  public void deleteAllGlobalTransactionDescriptors(PersistenceTransaction tx, SortedSet<ServerTransactionID> toDelete) {
     for (Iterator i = toDelete.iterator(); i.hasNext();) {
       ServerTransactionID stxID = (ServerTransactionID) i.next();
       db.remove(serverTxnID2Bytes(stxID));

@@ -3,9 +3,11 @@
  */
 package com.tc.objectserver.persistence.api;
 
+import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
 
 import java.util.Collection;
+import java.util.SortedSet;
 
 public interface TransactionPersistor {
   
@@ -13,6 +15,6 @@ public interface TransactionPersistor {
     
   public void saveGlobalTransactionDescriptor(PersistenceTransaction tx, GlobalTransactionDescriptor gtx);
 
-  public void deleteAllGlobalTransactionDescriptors(PersistenceTransaction tx, Collection toDelete);
+  public void deleteAllGlobalTransactionDescriptors(PersistenceTransaction tx, SortedSet<ServerTransactionID> toDelete);
 
 }

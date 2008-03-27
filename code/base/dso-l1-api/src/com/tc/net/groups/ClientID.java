@@ -81,4 +81,13 @@ public class ClientID implements NodeID {
     return L1_NODE_TYPE;
   }
 
+  public int compareTo(Object o) {
+    NodeID n = (NodeID) o;
+    if(getType() != n.getType()) {
+      return getType() - n.getType();
+    }
+    ClientID c = (ClientID) n;
+    return this.channelID.compareTo(c.channelID);
+  }
+
 }

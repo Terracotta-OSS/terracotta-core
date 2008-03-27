@@ -8,9 +8,9 @@ import com.tc.net.protocol.tcm.MessageChannel;
 
 public interface TCGroupMember {
 
-  public NodeIdComparable getLocalNodeID();
+  public NodeIDImpl getLocalNodeID();
 
-  public NodeIdComparable getPeerNodeID();
+  public NodeIDImpl getPeerNodeID();
 
   public MessageChannel getChannel();
 
@@ -21,20 +21,20 @@ public interface TCGroupMember {
   public TCGroupManagerImpl getTCGroupManager();
 
   public boolean isReady();
-  
+
   public void setReady(boolean isReady);
 
   public boolean isJoinedEventFired();
-  
+
   public void setJoinedEventFired(boolean isReady);
 
   public void close();
 
   public boolean isHighPriorityNode();
-  
+
   public void eventFiringInProcess();
-  
+
   public void abortEventFiring();
-  
+
   public void notifyEventFired();
 }

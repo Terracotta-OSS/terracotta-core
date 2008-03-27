@@ -16,17 +16,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Each TCGroupMember sits on top of a channel.
  */
 public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
-  private TCGroupManagerImpl     manager;
-  private final MessageChannel   channel;
-  private final NodeIdComparable localNodeID;
-  private final NodeIdComparable peerNodeID;
+  private TCGroupManagerImpl   manager;
+  private final MessageChannel channel;
+  private final NodeIDImpl     localNodeID;
+  private final NodeIDImpl     peerNodeID;
   // set member ready only when both ends are in group
-  private final AtomicBoolean    ready              = new AtomicBoolean(false);
-  private final AtomicBoolean    joined             = new AtomicBoolean(false);
-  private volatile boolean       closeEventNotified = false;
-  private volatile boolean       eventFiring        = false;
+  private final AtomicBoolean  ready              = new AtomicBoolean(false);
+  private final AtomicBoolean  joined             = new AtomicBoolean(false);
+  private volatile boolean     closeEventNotified = false;
+  private volatile boolean     eventFiring        = false;
 
-  public TCGroupMemberImpl(NodeIdComparable localNodeID, NodeIdComparable peerNodeID, MessageChannel channel) {
+  public TCGroupMemberImpl(NodeIDImpl localNodeID, NodeIDImpl peerNodeID, MessageChannel channel) {
     this.channel = channel;
     this.localNodeID = localNodeID;
     this.peerNodeID = peerNodeID;
@@ -63,11 +63,11 @@ public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
     }
   }
 
-  public NodeIdComparable getLocalNodeID() {
+  public NodeIDImpl getLocalNodeID() {
     return localNodeID;
   }
 
-  public NodeIdComparable getPeerNodeID() {
+  public NodeIDImpl getPeerNodeID() {
     return peerNodeID;
   }
 

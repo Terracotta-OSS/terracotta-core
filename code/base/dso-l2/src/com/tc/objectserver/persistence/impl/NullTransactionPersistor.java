@@ -3,12 +3,14 @@
  */
 package com.tc.objectserver.persistence.impl;
 
+import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.TransactionPersistor;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.SortedSet;
 
 public class NullTransactionPersistor implements TransactionPersistor {
 
@@ -20,7 +22,7 @@ public class NullTransactionPersistor implements TransactionPersistor {
     return;
   }
 
-  public void deleteAllGlobalTransactionDescriptors(PersistenceTransaction tx, Collection toDelete) {
+  public void deleteAllGlobalTransactionDescriptors(PersistenceTransaction tx, SortedSet<ServerTransactionID> toDelete) {
     return;
   }
 }
