@@ -328,7 +328,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
 
     public void actionPerformed(ActionEvent ae) {
       block();
-      BrowserLauncher.openURL("http://www.terracotta.org/kit/reflector?kitID=2.4&pageID=ConsoleGuide");
+      BrowserLauncher.openURL("http://www.terracotta.org/kit/reflector?kitID=2.7&pageID=ConsoleGuide");
       unblock();
     }
   }
