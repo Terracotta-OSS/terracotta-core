@@ -33,7 +33,7 @@ public class RenameStandardLoaderTest extends AbstractOneServerDeploymentTest {
 
   public RenameStandardLoaderTest() {
     if (appServerInfo().getId() == AppServerInfo.WEBSPHERE) {
-      disableAllUntil("2008-03-81");
+      disableAllUntil("2008-03-31");
     }
   }
 
@@ -89,12 +89,6 @@ public class RenameStandardLoaderTest extends AbstractOneServerDeploymentTest {
     assertEquals("OK", getLastLine(br).trim());
 
     return exitCode;
-  }
-
-  private void print(ByteArrayOutputStream outputStream) {
-    System.out.println("L1 Output starts >>>");
-    System.out.println(new String(outputStream.toByteArray()));
-    System.out.println("<<< L1 Output ends.");
   }
 
   private String getLastLine(BufferedReader br) throws IOException {

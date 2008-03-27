@@ -56,6 +56,10 @@ public class TCTestCase extends TestCase {
   private static final long                DEFAULT_TIMEOUT_THRESHOLD = 60000;
   private static final DateFormat          DATE_FORMAT               = new SimpleDateFormat("yyyy-MM-dd");
 
+  static {
+    DATE_FORMAT.setLenient(false);
+  }
+
   private final SynchronizedRef            beforeTimeoutException    = new SynchronizedRef(null);
 
   private DataDirectoryHelper              dataDirectoryHelper;
