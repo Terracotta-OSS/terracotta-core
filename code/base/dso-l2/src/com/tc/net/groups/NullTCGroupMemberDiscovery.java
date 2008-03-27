@@ -47,7 +47,7 @@ public class NullTCGroupMemberDiscovery implements TCGroupMemberDiscovery {
   }
 
   public boolean isValidClusterNode(NodeID nodeID) {
-    return false;
+    return true;
   }
 
 }

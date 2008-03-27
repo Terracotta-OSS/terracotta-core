@@ -61,10 +61,6 @@ public class TCGroupManagerImplTest extends TCTestCase {
   private TestGroupMessageListener listeners[];
   private Node                     nodes[];
 
-  public TCGroupManagerImplTest() {
-    disableAllUntil("2008-03-30");
-  }
-
   private void setupGroups(int n) throws Exception {
     groupPorts = new int[n];
     groups = new TCGroupManagerImpl[n];
