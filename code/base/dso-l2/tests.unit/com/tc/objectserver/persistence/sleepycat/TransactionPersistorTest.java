@@ -24,6 +24,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 public class TransactionPersistorTest extends TCTestCase {
 
@@ -58,9 +60,9 @@ public class TransactionPersistorTest extends TCTestCase {
   }
 
   /**
-   * This test was written just so that I can understand sleepycat behavior under various conditions. Things that I noticed are 
-   * 1) If save happens before delete, delete doesnt go thru until save is committed. (record level lock)
-   * 2) If commit doesnt happen with the default(500ms) time sleepcat throws a deadlock exception.
+   * This test was written just so that I can understand sleepycat behavior under various conditions. Things that I
+   * noticed are 1) If save happens before delete, delete doesnt go thru until save is committed. (record level lock) 2)
+   * If commit doesnt happen with the default(500ms) time sleepcat throws a deadlock exception.
    */
   public void testSimultaneousSaveAndDeletes() throws Exception {
     DBEnvironment env = newEnv(true);
@@ -99,10 +101,10 @@ public class TransactionPersistorTest extends TCTestCase {
       public void run() {
         try {
           PersistenceTransaction pt = persistenceTransactionProvider.newTransaction();
-          ArrayList al = new ArrayList();
-          al.add(gtd);
+          SortedSet ss = new TreeSet();
+          ss.add(gtd.getServerTransactionID());
           cb.barrier();
-          tpl.deleteAllGlobalTransactionDescriptors(pt, al);
+          tpl.deleteAllGlobalTransactionDescriptors(pt, ss);
           System.err.println("T2 : Delete done");
           pt.commit();
           System.err.println("T2 : Delete commit done");
@@ -112,14 +114,14 @@ public class TransactionPersistorTest extends TCTestCase {
         }
       }
     };
-    
+
     t1.start();
     t2.start();
-    
+
     t1.join();
     t2.join();
-    if(ex[0] != null) throw ex[0];
-    if(ex[1] != null) throw ex[1];
+    if (ex[0] != null) throw ex[0];
+    if (ex[1] != null) throw ex[1];
   }
 
   protected void tearDown() throws Exception {

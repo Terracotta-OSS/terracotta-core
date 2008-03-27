@@ -60,7 +60,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
   }
 
   public boolean isValidClusterNode(NodeID nodeID) {
-    String nodeName = ((NodeIdComparable) nodeID).getName();
+    String nodeName = ((NodeIDImpl) nodeID).getName();
     return (nodeStateMap.get(nodeName) != null);
   }
 
