@@ -105,7 +105,7 @@ public class ResolverTest extends TestCase {
   private void resolveJars(URL[] repos, Collection jars, boolean expected) {
     for (Iterator i = jars.iterator(); i.hasNext();) {
       File jar = new File(i.next().toString());
-      String version = "2.6.0-SNAPSHOT";
+      String version = "2.7.0-SNAPSHOT";
       String name = jar.getName().replaceAll("-" + version + ".jar", "");
       resolve(repos, name, version, expected);
     }

@@ -8,7 +8,7 @@ Bundle-Name: Standard DSO Excludes Configuration
 Bundle-RequiredExecutionEnvironment: J2SE-1.4
 Bundle-SymbolicName: org.terracotta.modules.excludes-config
 Bundle-Vendor: Terracotta, Inc.
-Bundle-Version: 2.6.0.SNAPSHOT
+Bundle-Version: 2.7.0.SNAPSHOT
 Import-Package: org.terracotta.modules.configuration
-Require-Bundle: org.terracotta.modules.modules-common;bundle-version:=2.6.0.SNAPSHOT
-Terracotta-RequireVersion: 2.6.0.SNAPSHOT
+Require-Bundle: org.terracotta.modules.modules-common;bundle-version:=2.7.0.SNAPSHOT
+Terracotta-RequireVersion: 2.7.0.SNAPSHOT

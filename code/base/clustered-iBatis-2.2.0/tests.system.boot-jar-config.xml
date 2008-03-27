@@ -16,8 +16,8 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<clients>
 		<modules>
-			<module name="clustered-iBatis-2.2.0" version="2.6.0.SNAPSHOT" />
-			<module name="clustered-cglib-2.1.3" version="2.6.0.SNAPSHOT" />
+			<module name="clustered-iBatis-2.2.0" version="2.7.0.SNAPSHOT" />
+			<module name="clustered-cglib-2.1.3" version="2.7.0.SNAPSHOT" />
 		</modules>
 	</clients>
 </tc:tc-config>

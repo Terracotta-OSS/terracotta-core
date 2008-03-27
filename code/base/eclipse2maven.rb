@@ -21,7 +21,7 @@ POM_DEF = <<POM
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>parent</artifactId>
-    <version>2.6.0-SNAPSHOT</version>
+    <version>2.7.0-SNAPSHOT</version>
   </parent>
   <artifactId>${artifactId}</artifactId>
   ${dependencies}

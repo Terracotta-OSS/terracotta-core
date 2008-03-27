@@ -3,8 +3,8 @@
 <!-- Run from root of source tree to change version of TIMS -->
 
 <target name="updateversion">
-  <replace token='2.5.0.SNAPSHOT' value='2.5.0' dir="."/>
-  <replace token='2.5.0-SNAPSHOT' value='2.5.0' dir="."/>
+  <replace token='2.6.0.SNAPSHOT' value='2.7.0.SNAPSHOT' dir="."/>
+  <replace token='2.6.0-SNAPSHOT' value='2.7.0-SNAPSHOT' dir="."/>
 </target>
  
 </project>
