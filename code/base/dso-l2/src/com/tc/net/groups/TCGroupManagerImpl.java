@@ -150,8 +150,8 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     logger.info("Creating group node: " + aNodeID);
 
     int maxStageSize = 5000;
-    hydrateStage = stageManager.createStage(ServerConfigurationContext.GROUP_HYDRATE_MESSAGE_SINK, new HydrateHandler(), 1,
-                                            maxStageSize);
+    hydrateStage = stageManager.createStage(ServerConfigurationContext.GROUP_HYDRATE_MESSAGE_SINK,
+                                            new HydrateHandler(), 1, maxStageSize);
     receiveGroupMessageStage = stageManager.createStage(ServerConfigurationContext.RECEIVE_GROUP_MESSAGE_STAGE,
                                                         new ReceiveGroupMessageHandler(this), 1, maxStageSize);
     handshakeMessageStage = stageManager.createStage(ServerConfigurationContext.GROUP_HANDSHAKE_MESSAGE_STAGE,
@@ -864,6 +864,10 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
       public void execute(TCGroupHandshakeMessage msg) {
         setPeerNodeID(msg);
+        if (!manager.getDiscover().isValidClusterNode(peerNodeID)) {
+          logger.warn("Drop connection from non-member node " + peerNodeID);
+          switchToState(STATE_FAILURE);
+        }
         if (!manager.isZappedNode(peerNodeID)) {
           switchToState(STATE_TRY_ADD_MEMBER);
         } else {

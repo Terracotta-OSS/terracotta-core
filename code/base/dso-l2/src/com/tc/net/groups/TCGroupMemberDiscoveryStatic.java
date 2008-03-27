@@ -59,6 +59,11 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     return (TCGroupManagerImpl.makeGroupNodeName(node.getHost(), node.getPort()));
   }
 
+  public boolean isValidClusterNode(NodeID nodeID) {
+    String nodeName = ((NodeIdComparable) nodeID).getName();
+    return (nodeStateMap.get(nodeName) != null);
+  }
+
   private void discoveryPut(DiscoveryStateMachine stateMachine) {
     manager.getDiscoveryHandlerSink().add(stateMachine);
   }

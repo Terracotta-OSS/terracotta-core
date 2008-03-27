@@ -18,4 +18,6 @@ public interface TCGroupMemberDiscovery extends GroupEventsListener {
   
   public void discoveryHandler(EventContext context);
   
+  public boolean isValidClusterNode(NodeID nodeID);
+  
 }
