@@ -30,8 +30,7 @@ public class ThreadDumpUtilJdk15 {
       for (int i = 0; i < threadIds.length; i++) {
         ThreadInfo threadInfo = threadMXBean.getThreadInfo(threadIds[i], Integer.MAX_VALUE);
         if (threadInfo != null) {
-          String s = threadInfo.toString();
-
+         
           sb.append(threadHeader(threadInfo, threadIds[i]));
           sb.append('\n');
 
