@@ -29,13 +29,13 @@ import java.util.List;
  * Test that calling intern() on a String which is still compressed in L1 will
  * decompress String before interning it
  */
-public class CompressedStringTests extends TransparentTestBase {
+public class CompressedStringTest extends TransparentTestBase {
 
   private static final int NODE_COUNT    = 2;
   private static final String SERIALIZED_UNINSTRUMENTED = "serialized_string.data";
   
   protected Class getApplicationClass() {
-    return CompresedStringTestsApp.class;
+    return CompresedStringTestApp.class;
   }
 
   protected void setUp() throws Exception {
@@ -44,21 +44,21 @@ public class CompressedStringTests extends TransparentTestBase {
     initializeTestRunner();
   }
 
-  public static class CompresedStringTestsApp extends AbstractErrorCatchingTransparentApp {
+  public static class CompresedStringTestApp extends AbstractErrorCatchingTransparentApp {
     
     private final List root;
     private final CyclicBarrier barrier;
     private static final String EXPECTED = getTestString();
     private int nodeIndex;
 
-    public CompresedStringTestsApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
+    public CompresedStringTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
       super(appId, cfg, listenerProvider);
       root = new ArrayList();
       barrier = new CyclicBarrier(getParticipantCount());
     }
     
     public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-      final String testClass = CompresedStringTestsApp.class.getName();
+      final String testClass = CompresedStringTestApp.class.getName();
       final TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
       spec.addRoot("root", "root");
       spec.addRoot("barrier", "barrier");
@@ -178,11 +178,11 @@ public class CompressedStringTests extends TransparentTestBase {
 //  }
   
   private static Object deserializeFromFile() throws IOException, ClassNotFoundException {
-    return deserialize(CompressedStringTests.class.getClassLoader().getResourceAsStream(SERIALIZED_UNINSTRUMENTED));
+    return deserialize(CompressedStringTest.class.getClassLoader().getResourceAsStream(SERIALIZED_UNINSTRUMENTED));
   }
   
   private static byte[] getSerializedBytes() throws IOException{
-    InputStream fis = CompressedStringTests.class.getClassLoader().getResourceAsStream(SERIALIZED_UNINSTRUMENTED);
+    InputStream fis = CompressedStringTest.class.getClassLoader().getResourceAsStream(SERIALIZED_UNINSTRUMENTED);
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     while (fis.available() > 0){
       baos.write(fis.read());
