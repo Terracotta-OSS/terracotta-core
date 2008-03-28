@@ -462,8 +462,9 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
 
     public String toString() {
       return "LookupContext [ txnID = " + txn.getServerTransactionID() + ", oids = " + oids + ", seqID = "
-             + txn.getClientSequenceID() + ", clientTxnID=" + txn.getTransactionID() + "] = { pending = " + pending
-             + ", lookedupObjects = " + (lookedUpObjects == null ? "null" : lookedUpObjects.keySet().toString()) + "}";
+             + txn.getClientSequenceID() + ", clientTxnID = " + txn.getTransactionID() + ", numTxn = "
+             + txn.getNumApplicationTxn() + "] = { pending = " + pending + ", lookedupObjects = "
+             + (lookedUpObjects == null ? "null" : lookedUpObjects.keySet().toString()) + "}";
     }
 
     public Set getLookupIDs() {
