@@ -82,24 +82,34 @@ public class StringCompressionUtil {
     int charIndex = 3;
     int startByte = 0;
     if(remainder==1) {
-      int anInt = ODD_MARKER << 8;
-      anInt = anInt | 0x000000FF & bytes[0];
-      result[charIndex++] = (char) anInt;
+      result[charIndex++] = encodeTwoBytesAsChar(ODD_MARKER, bytes[0]);
       startByte = 1;
     }
     
     for (int i=startByte; i< compressedLength; i=i+2){
-      int anInt = bytes[i];
-      anInt = anInt << 8; //shift first byte up 8 bits, making room for the second byte
-      if (i+1 < compressedLength){
-        int bitmask = 0x000000FF & bytes[i+1]; //zero out all bits in this bitmask to the left of the 8 bits coming from the byte
-        anInt = anInt | bitmask; //now paste those 8 bits into the low bits of "anInt" (whose low 8 bits should be zeroes due to the previous shift)
-      }
-      //System.out.println("an Int " +anInt + ", hex " + Integer.toHexString(anInt)+ ", binary " + Integer.toBinaryString(anInt));
-      result[charIndex++] = (char) anInt; //cast to char (drop all but low 16 bits)
-      
+      result[charIndex++] = encodeTwoBytesAsChar(bytes[i], getLowByte(bytes, compressedLength, i));
     }
     return result;
+  }
+
+  static char encodeTwoBytesAsChar(int highByte, byte lowByte){
+    highByte = highByte << 8; //shift first byte up 8 bits, making room for the second byte
+    highByte = appendByteToLowBitsOfInt(lowByte, highByte);
+    return (char) highByte; //cast to char (drop all but low 16 bits)
+  }
+  
+  private static byte getLowByte(byte[] bytes, int compressedLength, int i) {
+    byte lowByte = 0x00;
+    if (i+1 < compressedLength){
+      lowByte = bytes[i+1];
+    }
+    return lowByte;
+  }
+  
+  static int appendByteToLowBitsOfInt(byte lowByte, int anInt){
+    int bitmask = 0x000000FF & lowByte; //zero out all bits in this bitmask to the left of the 8 bits coming from the byte
+    anInt = anInt | bitmask; //now paste those 8 bits into the low bits of "anInt" (whose low 8 bits should be zeroes due to the previous shift)
+    return anInt;
   }
   
   static void intToChars(int value, char[] chars, int offset) {

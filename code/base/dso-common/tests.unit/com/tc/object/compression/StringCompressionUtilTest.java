@@ -65,6 +65,7 @@ public class StringCompressionUtilTest extends TestCase {
   }
   
   private void helpTestConvertTwoBytesToExpectedChar(byte firstByte, byte secondByte, char expected){
+    assertEquals(expected, StringCompressionUtil.encodeTwoBytesAsChar(firstByte, secondByte));
     byte[] bytes = new byte[]{firstByte, secondByte};
     char[] result = StringCompressionUtil.packCompressed(new CompressedData(bytes, 1));
     assertEquals(4, result.length);
@@ -73,6 +74,35 @@ public class StringCompressionUtilTest extends TestCase {
     assertEquals(1, out.getUncompressedSize());
   }
   
+  public void testIntToChars() throws Exception {
+    helpTestIntToChars(0x80803080, '\u8080', '\u3080');
+    helpTestIntToChars(0xFFFFFFFF, '\uFFFF', '\uFFFF');
+    helpTestIntToChars(0x0000FFFF, '\u0000', '\uFFFF');
+    helpTestIntToChars(0x00000000, '\u0000', '\u0000');
+  }
+  
+  private void helpTestIntToChars(int convertToChars, char expectedHigh, char expectedLow) {
+    final int offset = 3;
+    final char[] chars = new char[offset + 2];
+    StringCompressionUtil.intToChars(convertToChars, chars, offset);
+    assertEquals(expectedHigh, chars[offset + 0]);
+    assertEquals(expectedLow, chars[offset + 1]);
+  }
+  
+  public void testCharsToInt() throws Exception {
+    helpTestCharsToInt('\u0000', '\u0000', 0x00000000);
+    helpTestCharsToInt('\u0FAB', '\u0F00', 0x0FAB0F00);
+  }
+
+  private void helpTestCharsToInt(char highChar, char lowChar, int expected) {
+    final int offset = 3;
+    final char[] chars = new char[offset + 2];
+    chars[offset] = highChar;
+    chars[offset + 1] = lowChar;
+    int actual = StringCompressionUtil.charsToInt(chars, offset);
+    assertEquals(expected, actual);
+  }
+
   public void testDoNotDecompressAlreadyDecompressedString() throws Exception {
     String test = "foo";
     char[] testChars = new char[test.length()];
@@ -94,6 +124,14 @@ public class StringCompressionUtilTest extends TestCase {
     assertEquals(0, StringCompressionUtil.isOdd(0));
     assertEquals(1, StringCompressionUtil.isOdd(-1));
     assertEquals(0, StringCompressionUtil.isOdd(-2));
+  }
+  
+  public void testAppendByteToLowBitsOfInt() throws Exception {
+    assertEquals(0x000000FF, StringCompressionUtil.appendByteToLowBitsOfInt((byte)0xFF, 0x00000000));
+    assertEquals(0xFFFF00FF, StringCompressionUtil.appendByteToLowBitsOfInt((byte)0xFF, 0xFFFF0000));
+    assertEquals(0xFFFF00FF, StringCompressionUtil.appendByteToLowBitsOfInt((byte)0xFF, 0xFFFF00EE));
+    assertEquals(0xFFFFFFFF, StringCompressionUtil.appendByteToLowBitsOfInt((byte)0xFF, 0xFFFFFF00));
+    
   }
   
 }
