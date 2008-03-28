@@ -10,6 +10,8 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCByteBufferOutputStream.Mark;
 import com.tc.lang.Recyclable;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.object.TCClass;
 import com.tc.object.TCObject;
@@ -24,6 +26,7 @@ import com.tc.object.lockmanager.api.Notify;
 import com.tc.object.msg.CommitTransactionMessage;
 import com.tc.object.msg.CommitTransactionMessageFactory;
 import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
 import com.tc.util.SequenceGenerator;
@@ -43,9 +46,16 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 public class TransactionBatchWriter implements ClientTransactionBatch {
+  public static final String                    FOLDING_DEBUG_PROP        = "l1.transactionmanager.folding.debug";
   public static final String                    FOLDING_ENABLED_PROP      = "l1.transactionmanager.folding.enabled";
   public static final String                    FOLDING_OBJECT_LIMIT_PROP = "l1.transactionmanager.folding.object.limit";
   public static final String                    FOLDING_LOCK_LIMIT_PROP   = "l1.transactionmanager.folding.lock.limit";
+
+  private static final boolean                  DEBUG                     = TCPropertiesImpl.getProperties()
+                                                                              .getBoolean(FOLDING_DEBUG_PROP);
+
+  private static final TCLogger                 logger                    = TCLogging
+                                                                              .getLogger(TransactionBatchWriter.class);
 
   private final CommitTransactionMessageFactory commitTransactionMessageFactory;
   private final TxnBatchID                      batchID;
@@ -126,6 +136,8 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
       final boolean scanForClose = (txn.getNewRoots().size() > 0) || (txn.getDmiDescriptors().size() > 0)
                                    || (txn.getNotifies().size() > 0) || exceedsLimits;
 
+      if (DEBUG) log_incomingTxn(txn, exceedsLimits, scanForClose);
+
       if (scanForClose) {
         scanForClose(txn);
       } else {
@@ -137,55 +149,77 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
           TCChangeBuffer changeBuffer = (TCChangeBuffer) i.next();
           TCObject tco = changeBuffer.getTCObject();
           if (tco.isNew()) {
+            if (DEBUG) logger.info("isNew for " + tco.getObjectID());
             continue;
           }
 
-          ObjectID oid = tco.getObjectID();
-          FoldingKey key = (FoldingKey) foldingKeys.get(oid);
+          final ObjectID oid = tco.getObjectID();
+          final FoldingKey key = (FoldingKey) foldingKeys.get(oid);
           if (key == null) {
+            if (DEBUG) logger.info("no fold key for " + oid);
             continue;
           }
 
           if (potential == null) {
+            if (DEBUG) logger.info("setting potential key to " + System.identityHashCode(key) + " on " + oid);
             potential = key;
             continue;
           }
 
-          if (dependencyFound || potential != key) {
-            dependencyFound = true;
+          if (dependencyFound || potential != key || potential.isClosed()) {
+            if (!dependencyFound) {
+              if (DEBUG) logger.info("dependency for " + oid + ", potential(" + System.identityHashCode(potential)
+                                     + "), key(" + System.identityHashCode(key) + "), potential.closed="
+                                     + potential.isClosed());
+            }
+
             if (dependentKeys == null) {
+              Assert.assertFalse(dependencyFound);
               dependentKeys = new IdentityHashMap();
+              if (DEBUG) logger.info("add " + System.identityHashCode(potential) + " to depKey set on " + oid);
               dependentKeys.put(potential, null);
             }
+
+            dependencyFound = true;
+
+            if (DEBUG) logger.info("add " + System.identityHashCode(key) + " to depKey set on " + oid);
             dependentKeys.put(key, null);
           }
         }
 
         if (dependencyFound) {
+          if (DEBUG) logger.info("Dependency found -- closing dependent keys");
           closeDependentKeys(dependentKeys.keySet());
         } else if (!exceedsLimits && potential != null) {
+          if (DEBUG) logger.info("potential fold found " + System.identityHashCode(potential));
           if (potential.canAcceptFold(txn.getAllLockIDs(), txn.getTransactionType())) {
-            // need to take on the new ObjectIDs present in the buffer we are folding into here
-            potential.getObjectIDs().addAll(txn.getChangeBuffers().keySet());
+            if (DEBUG) logger.info("fold accepted into " + System.identityHashCode(potential));
+
+            // need to take on the incoming ObjectIDs present in the buffer we are folding into here
+            Set incomingOids = txn.getChangeBuffers().keySet();
+            potential.getObjectIDs().addAll(incomingOids);
+
+            registerKeyForOids(incomingOids, potential);
+
             return potential.getBuffer();
+          } else {
+            if (DEBUG) logger.info("fold denied into " + System.identityHashCode(potential));
           }
         }
       }
     }
 
     // if we are here, we are not folding
-
     SequenceID sid = new SequenceID(sequenceGenerator.getNextSequence());
     txn.setSequenceID(sid);
+    if (DEBUG) logger.info("NOT folding, created new sequence " + sid);
 
     TransactionBuffer txnBuffer = new TransactionBuffer(sid, newOutputStream(), serializer, encoding);
 
     if (foldingEnabled) {
       FoldingKey key = new FoldingKey(txnBuffer, txn.getTransactionType(), txn.getAllLockIDs(), new HashSet(txn
           .getChangeBuffers().keySet()));
-      for (Iterator i = txn.getChangeBuffers().keySet().iterator(); i.hasNext();) {
-        foldingKeys.put(i.next(), key);
-      }
+      registerKeyForOids(txn.getChangeBuffers().keySet(), key);
     }
 
     transactionData.put(txn.getTransactionID(), txnBuffer);
@@ -193,16 +227,27 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     return txnBuffer;
   }
 
-  private void closeDependentKeys(Collection dependentKeys) {
-    for (Iterator i = dependentKeys.iterator(); i.hasNext();) {
-      closeKey((FoldingKey) i.next());
+  private void registerKeyForOids(Set oids, FoldingKey key) {
+    for (Iterator i = oids.iterator(); i.hasNext();) {
+      ObjectID oid = (ObjectID) i.next();
+      Object prev = foldingKeys.put(oid, key);
+      if (DEBUG) logger.info("registered key(" + System.identityHashCode(key) + " for " + oid + ", replaces key("
+                             + System.identityHashCode(prev) + ")");
     }
   }
 
-  private void closeKey(FoldingKey key) {
-    key.close();
-    for (Iterator i = key.getObjectIDs().iterator(); i.hasNext();) {
-      foldingKeys.remove(i.next());
+  private void log_incomingTxn(ClientTransaction txn, boolean exceedsLimits, boolean scanForClose) {
+    logger.info("incoming txn [" + txn.getTransactionID() + " locks=" + txn.getAllLockIDs() + ", oids="
+                + txn.getChangeBuffers().keySet() + ", dmi=" + txn.getDmiDescriptors() + ", roots=" + txn.getNewRoots()
+                + ", notifies=" + txn.getNotifies() + ", type=" + txn.getTransactionType() + "] exceedsLimit="
+                + exceedsLimits + ", scanForClose=" + scanForClose);
+  }
+
+  private void closeDependentKeys(Collection dependentKeys) {
+    for (Iterator i = dependentKeys.iterator(); i.hasNext();) {
+      FoldingKey key = (FoldingKey) i.next();
+      if (DEBUG) logger.info("closing dependent key " + System.identityHashCode(key));
+      key.close();
     }
   }
 
@@ -212,7 +257,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
   }
 
   private void scanForClose(ClientTransaction txn) {
-    Collection locks = new HashSet(txn.getAllLockIDs());
+    Collection locks = new HashSet(txn.getAllLockIDs()); // XXX: only create set if needed?
     Set oids = txn.getChangeBuffers().keySet();
 
     for (Iterator i = foldingKeys.values().iterator(); i.hasNext();) {
@@ -519,6 +564,11 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
       this.txnType = txnType;
       this.lockIDs = lockIDs;
       this.objectIDs = objectIDs;
+
+      if (DEBUG) {
+        logger.info("created new fold key(" + System.identityHashCode(this) + "), locks=" + lockIDs + ", txnType="
+                    + txnType + ", oids=" + objectIDs);
+      }
     }
 
     Set getObjectIDs() {
@@ -534,6 +584,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     }
 
     public boolean hasCommonality(Collection locks, Collection oids) {
+      // XXX: Take a lock list here, and only upgrade the larger collection to a set if size > 3
       return CollectionUtils.containsAny(new HashSet(lockIDs), locks) || CollectionUtils.containsAny(objectIDs, oids);
     }
 
@@ -542,12 +593,23 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     }
 
     public boolean canAcceptFold(List txnLocks, TxnType type) {
-      if (lockIDs.size() != txnLocks.size()) { return false; }
+      if (lockIDs.size() != txnLocks.size()) {
+        if (DEBUG) logger.info(System.identityHashCode(this)
+                               + ": not accepting fold since lock lists are not equal size");
+        return false;
+      }
 
-      if (!type.equals(txnType)) { return false; }
+      if (!type.equals(txnType)) {
+        if (DEBUG) logger.info(System.identityHashCode(this) + ": not accepting fold since txn type is different");
+        return false;
+      }
 
-      if (!lockIDs.equals(txnLocks)) { return false; }
+      if (!lockIDs.equals(txnLocks)) {
+        if (DEBUG) logger.info(System.identityHashCode(this) + ": not accepting fold since locks lists are not equal");
+        return false;
+      }
 
+      if (DEBUG) logger.info(System.identityHashCode(this) + ": fold accepted");
       return true;
     }
   }

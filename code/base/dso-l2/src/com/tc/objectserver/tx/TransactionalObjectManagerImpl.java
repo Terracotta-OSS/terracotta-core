@@ -151,7 +151,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     // TODO:: make cache and stats right
     LookupContext lookupContext = null;
     if (!newRequests.isEmpty()) {
-      lookupContext = new LookupContext(newRequests, txn.getNewObjectIDs(), txn.getServerTransactionID());
+      lookupContext = new LookupContext(newRequests, txn);
       if (objectManager.lookupObjectsFor(txn.getSourceID(), lookupContext)) {
         addLookedupObjects(lookupContext);
       } else {
@@ -160,6 +160,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
         makePending = true;
         pendingObjectRequest.addAll(newRequests);
       }
+
     }
     if (makePending) {
       // log("lookupObjectsForApplyAndAddToSink(): Make Pending : " + txn.getServerTransactionID());
@@ -429,17 +430,15 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
 
   private class LookupContext implements ObjectManagerResultsContext {
 
-    private boolean                   pending    = false;
-    private boolean                   resultsSet = false;
-    private Map                       lookedUpObjects;
-    private final Set                 oids;
-    private final Set                 newOids;
-    private final ServerTransactionID transactionID;
+    private final Set               oids;
+    private final ServerTransaction txn;
+    private boolean                 pending    = false;
+    private boolean                 resultsSet = false;
+    private Map                     lookedUpObjects;
 
-    public LookupContext(Set oids, Set newOids, ServerTransactionID transactionID) {
+    public LookupContext(Set oids, ServerTransaction txn) {
       this.oids = oids;
-      this.newOids = newOids;
-      this.transactionID = transactionID;
+      this.txn = txn;
     }
 
     public synchronized void makePending() {
@@ -462,7 +461,8 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     }
 
     public String toString() {
-      return "LookupContext [ txnID = " + transactionID + ", oids = " + oids + "] = { pending = " + pending
+      return "LookupContext [ txnID = " + txn.getServerTransactionID() + ", oids = " + oids + ", seqID = "
+             + txn.getClientSequenceID() + ", clientTxnID=" + txn.getTransactionID() + "] = { pending = " + pending
              + ", lookedupObjects = " + (lookedUpObjects == null ? "null" : lookedUpObjects.keySet().toString()) + "}";
     }
 
@@ -471,7 +471,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     }
 
     public Set getNewObjectIDs() {
-      return newOids;
+      return txn.getNewObjectIDs();
     }
 
     public void missingObject(ObjectID oid) {
