@@ -23,12 +23,10 @@ rem
 
 setlocal
 set TC_INSTALL_DIR=%~d0%~p0..\..\..
-for %%i in ("%TC_INSTALL_DIR%") do set TC_INSTALL_DIR=%%~fsi
+set TC_INSTALL_DIR="%TC_INSTALL_DIR:"=%"
 
 if not defined JAVA_HOME set JAVA_HOME="%TC_INSTALL_DIR%\jre"
 set JAVA_HOME="%JAVA_HOME:"=%"
-if not exist %JAVA_HOME% set JAVA_HOME=%TC_INSTALL_DIR%\jre
-FOR %%i IN (%JAVA_HOME%) DO SET JAVA_HOME=%%~fsi
 
 set CLASSPATH=%TC_INSTALL_DIR%\lib\tc.jar
 set JAVA_OPTS=-Dtc.install-root=%TC_INSTALL_DIR% -Ddaemon=true %JAVA_OPTS%

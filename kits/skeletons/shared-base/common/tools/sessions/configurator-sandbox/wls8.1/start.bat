@@ -13,7 +13,7 @@ rem -------------------------------------
 setlocal
 cd %~d0%~p0..
 set SANDBOX=%CD%
-for %%i in ("%SANDBOX%") do set SANDBOX=%%~fsi
+set SANDBOX="%SANDBOX:"=%"
 set TC_INSTALL_DIR=%SANDBOX%\..\..\..
 
 if not defined BEA_HOME (
@@ -22,11 +22,11 @@ if not defined BEA_HOME (
 	endlocal  
 )
 set BEA_HOME="%BEA_HOME:"=%"
-for %%i in (%BEA_HOME%) do set BEA_HOME=%%~fsi
+
 
 if not defined JAVA_HOME set JAVA_HOME=%BEA_HOME%\jdk142_11
 set JAVA_HOME="%JAVA_HOME:"=%"
-for %%i in (%JAVA_HOME%) do set JAVA_HOME=%%~fsi
+
 if not exist %JAVA_HOME% (
   echo JAVA_HOME %JAVA_HOME% does not exist.
   exit 1

@@ -13,7 +13,7 @@ if not defined BEA_HOME (
 	endlocal  
 )
 set BEA_HOME="%BEA_HOME:"=%"
-for %%i in (%BEA_HOME%) do set BEA_HOME=%%~fsi
+
 if not exist %BEA_HOME% (
   echo BEA_HOME %BEA_HOME% does not exist.
   exit 1
@@ -22,7 +22,7 @@ if not exist %BEA_HOME% (
 
 if not defined WL_HOME set WL_HOME=%BEA_HOME%\weblogic92
 set WL_HOME="%WL_HOME:"=%"
-for %%i in (%WL_HOME%) do set WL_HOME=%%~fsi
+
 if not exist "%WL_HOME%" (
   echo WL_HOME %WL_HOME% does not exist.
   exit 1
@@ -40,7 +40,7 @@ set WLS_PW=weblogic
 
 if not defined JAVA_HOME set JAVA_HOME=%BEA_HOME%\jdk150_10
 set JAVA_HOME="%JAVA_HOME:"=%"
-for %%i in (%JAVA_HOME%) do set JAVA_HOME=%%~fsi
+
 if not exist %JAVA_HOME% (
   echo JAVA_HOME %JAVA_HOME% does not exist.
   exit 1

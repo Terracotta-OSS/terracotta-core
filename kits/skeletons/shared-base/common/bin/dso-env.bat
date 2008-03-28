@@ -7,7 +7,7 @@ rem  All rights reserved.
 rem
 
 set TC_INSTALL_DIR=%~d0%~p0..
-for %%i in ("%TC_INSTALL_DIR%") do set TC_INSTALL_DIR=%%~fsi
+set TC_INSTALL_DIR="%TC_INSTALL_DIR:"=%"
 
 if "%1" == "-q" GOTO tc_dso_env_0
 setlocal

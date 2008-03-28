@@ -25,14 +25,12 @@ rem
 setlocal
 cd %~d0%~p0
 set TC_INSTALL_DIR=..\..\..
-for %%i in ("%TC_INSTALL_DIR%") do set TC_INSTALL_DIR=%%~fsi
+set TC_INSTALL_DIR="%TC_INSTALL_DIR:"=%"
 
 set CATALINA_HOME=%TC_INSTALL_DIR%\vendors\tomcat5.5
 
 if not defined JAVA_HOME set JAVA_HOME="%TC_INSTALL_DIR%\jre"
 set JAVA_HOME="%JAVA_HOME:"=%"
-if not exist %JAVA_HOME% set JAVA_HOME=%TC_INSTALL_DIR%\jre
-FOR %%i IN (%JAVA_HOME%) DO SET JAVA_HOME=%%~fsi
 
 set TC_CONFIG_PATH=tc-config.xml
 call %TC_INSTALL_DIR%\bin\dso-env.bat -q "%TC_CONFIG%"

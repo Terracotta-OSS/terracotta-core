@@ -15,7 +15,7 @@ cd %~d0%~p0
 echo %~d0%~p0
 set WAS_SANDBOX=%CD%
 set WAS_SANDBOX="%WAS_SANDBOX:"=%"
-for %%i in (%WAS_SANDBOX%) do set WAS_SANDBOX=%%~fsi
+
 
 set TC_INSTALL_DIR=%WAS_SANDBOX%\..\..\..\..
 if ""%1"" == ""-debug"" set DEBUG=true
@@ -28,7 +28,7 @@ if not defined WAS_HOME (
   goto end
 )
 set WAS_HOME="%WAS_HOME:"=%"
-for %%i in (%WAS_HOME%) do set WAS_HOME=%%~fsi
+
 
 set JAVA_HOME=%WAS_HOME%\java
 if not exist %JAVA_HOME% (
