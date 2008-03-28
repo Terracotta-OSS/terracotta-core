@@ -91,7 +91,7 @@ public class DSOContextImpl implements DSOContext {
 
   private void validateBootJar() {
     try {
-      configHelper.verifyBootJarContents();
+      configHelper.verifyBootJarContents(null);
     } catch (final UnverifiedBootJarException ubjex) {
       final StringBuffer msg = new StringBuffer(ubjex.getMessage() + " ");
       msg.append("Unable to verify the contents of the boot jar; ");

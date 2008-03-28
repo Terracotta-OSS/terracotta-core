@@ -34,6 +34,7 @@ import com.tc.object.config.schema.InstrumentedClass;
 import com.tc.object.logging.InstrumentationLogger;
 import com.terracottatech.config.Modules;
 
+import java.io.File;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Iterator;
@@ -366,7 +367,7 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return false;
   }
 
-  public void verifyBootJarContents() {
+  public void verifyBootJarContents(File bjf) {
     /**/
   }
 

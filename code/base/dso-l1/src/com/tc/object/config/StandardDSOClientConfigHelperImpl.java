@@ -84,6 +84,7 @@ import com.terracottatech.config.Module;
 import com.terracottatech.config.Modules;
 import com.terracottatech.config.SpringApplication;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.net.URL;
@@ -1765,30 +1766,17 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return rv;
   }
 
-  private void scanForMissingClassesDeclaredInConfig() throws BootJarException, IOException {
+  private void scanForMissingClassesDeclaredInConfig(BootJar bootJar) throws BootJarException, IOException {
     int missingCount = 0;
     int preInstrumentedCount = 0;
-    BootJar bootJar = BootJar.getDefaultBootJarForReading();
     Set preinstClasses = bootJar.getAllPreInstrumentedClasses();
     int bootJarPopulation = preinstClasses.size();
-
     TransparencyClassSpec[] allSpecs = getAllSpecs(true);
     for (int i = 0; i < allSpecs.length; i++) {
       TransparencyClassSpec classSpec = allSpecs[i];
       Assert.assertNotNull(classSpec);
-
-      if (!classSpec.isForeign()) {
-        String cname = classSpec.getClassName().replace('/', '.');
-        if (userDefinedBootSpecs.get(cname) != null) {
-          final String msg = "The class "
-                             + classSpec.getClassName()
-                             + " already belongs in the bootjar by default, you don't need to declare it in the <additional-boot-jar-classes/> section of your tc-config file.";
-          logger.warn(msg);
-          consoleLogger.warn(msg);
-          continue;
-        }
-      }
-
+      String cname = classSpec.getClassName().replace('/', '.');
+      if (!classSpec.isForeign() && (userDefinedBootSpecs.get(cname) != null)) continue;
       if (classSpec.isPreInstrumented()) {
         preInstrumentedCount++;
         if (!(preinstClasses.contains(classSpec.getClassName()) || classSpec.isHonorJDKSubVersionSpecific())) {
@@ -1812,10 +1800,11 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
    * This method will: - check the contents of the boot-jar against tc-config.xml - check that all that all the
    * necessary referenced classes are also present in the boot jar
    */
-  public void verifyBootJarContents() throws UnverifiedBootJarException {
+  public void verifyBootJarContents(File bjf) throws UnverifiedBootJarException {
     logger.debug("Verifying boot jar contents...");
     try {
-      scanForMissingClassesDeclaredInConfig();
+      BootJar bootJar = (bjf == null) ? BootJar.getDefaultBootJarForReading() : BootJar.getBootJarForReading(bjf);
+      scanForMissingClassesDeclaredInConfig(bootJar);
     } catch (BootJarException bjex) {
       throw new UnverifiedBootJarException(
                                            "BootJarException occurred while attempting to verify the contents of the boot jar.",

@@ -21,6 +21,7 @@ import com.tc.object.config.schema.InstrumentedClass;
 import com.tc.object.logging.InstrumentationLogger;
 import com.terracottatech.config.Modules;
 
+import java.io.File;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Iterator;
@@ -44,7 +45,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   DSOInstrumentationLoggingOptions getInstrumentationLoggingOptions();
 
-  void verifyBootJarContents() throws IncompleteBootJarException, UnverifiedBootJarException;
+  void verifyBootJarContents(File bjf) throws IncompleteBootJarException, UnverifiedBootJarException;
 
   TransparencyClassSpec[] getAllSpecs();
 

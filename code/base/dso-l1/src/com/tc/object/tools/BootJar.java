@@ -192,6 +192,7 @@ public class BootJar {
   private static final int QUERY_PREINSTRUMENTED = 1;
   private static final int QUERY_UNINSTRUMENTED  = 2;
   private static final int QUERY_FOREIGN         = 3;
+  private static final int QUERY_NOT_FOREIGN     = 4;
 
   public synchronized byte[] getBytesForClass(final String name) throws IOException {
     JarEntry entry = jarFileInput.getJarEntry(BootJar.classNameToFileName(name));
@@ -222,22 +223,20 @@ public class BootJar {
             rv.add(fileNameToClassName(entry.getName()));
             break;
           case QUERY_PREINSTRUMENTED:
-            if (isPreInstrumentedEntry(entry)) {
-              rv.add(fileNameToClassName(entry.getName()));
-            }
+            if (isPreInstrumentedEntry(entry)) rv.add(fileNameToClassName(entry.getName()));
             break;
           case QUERY_UNINSTRUMENTED:
-            if (!isPreInstrumentedEntry(entry)) {
-              rv.add(fileNameToClassName(entry.getName()));
-            }
+            if (!isPreInstrumentedEntry(entry)) rv.add(fileNameToClassName(entry.getName()));
             break;
           case QUERY_FOREIGN:
-            if (isForeign(entry)) {
-              rv.add(fileNameToClassName(entry.getName()));
-            }
+            if (isForeign(entry)) rv.add(fileNameToClassName(entry.getName()));
+            break;
+          case QUERY_NOT_FOREIGN:
+            if (!isForeign(entry)) rv.add(fileNameToClassName(entry.getName()));
+            break;
           default:
             Assert
-                .failure("Query arg for getBootJarClasses() must be one of the following: QUERY_ALL, QUERY_PREINSTRUMENTED, QUERY_UNINSTRUMENTED, QUERY_FOREIGN");
+                .failure("Query arg for getBootJarClasses() must be one of the following: QUERY_ALL, QUERY_PREINSTRUMENTED, QUERY_UNINSTRUMENTED, QUERY_FOREIGN, QUERY_NOT_FOREIGN");
             break;
         }
       }
@@ -259,6 +258,10 @@ public class BootJar {
 
   public synchronized Set getAllForeignClasses() throws IOException {
     return getBootJarClassNames(QUERY_FOREIGN);
+  }
+
+  public synchronized Set getAllNonForeignClasses() throws IOException {
+    return getBootJarClassNames(QUERY_NOT_FOREIGN);
   }
 
   private void assertOpen() {
