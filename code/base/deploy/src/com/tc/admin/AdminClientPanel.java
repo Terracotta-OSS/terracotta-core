@@ -37,6 +37,7 @@ import com.tc.admin.common.XTabbedPane;
 import com.tc.admin.common.XTextField;
 import com.tc.admin.common.XTreeModel;
 import com.tc.admin.common.XTreeNode;
+import com.tc.util.Assert;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -322,13 +323,18 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
   }
 
   class HelpAction extends XAbstractAction {
+    String url;
+
     HelpAction() {
       super("AdminConsole Help");
+      String kitID = com.tc.util.ProductInfo.getInstance().kitID();
+      Assert.assertNotNull(kitID);
+      url = "http://www.terracotta.org/kit/reflector?kitID=" + kitID + "&pageID=ConsoleGuide";
     }
 
     public void actionPerformed(ActionEvent ae) {
       block();
-      BrowserLauncher.openURL("http://www.terracotta.org/kit/reflector?kitID=2.7&pageID=ConsoleGuide");
+      BrowserLauncher.openURL(url);
       unblock();
     }
   }
@@ -434,11 +440,11 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       }
       Dimension emptySize = new Dimension();
       java.awt.Component left = m_leftSplitter.getLeftComponent();
-      if(left != null) {
+      if (left != null) {
         left.setMinimumSize(emptySize);
       }
       java.awt.Component right = m_leftSplitter.getLeftComponent();
-      if(right != null) {
+      if (right != null) {
         right.setMinimumSize(emptySize);
       }
     }

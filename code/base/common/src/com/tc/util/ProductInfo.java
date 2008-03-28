@@ -18,35 +18,40 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Utility class to retrieve the build information for the product.
  */
 public final class ProductInfo {
-  private static final ResourceBundleHelper bundleHelper             = new ResourceBundleHelper(ProductInfo.class);
+  private static final ResourceBundleHelper bundleHelper                 = new ResourceBundleHelper(ProductInfo.class);
 
-  private static final DateFormat           DATE_FORMAT              = new SimpleDateFormat("yyyyMMdd-HHmmss");
+  private static final DateFormat           DATE_FORMAT                  = new SimpleDateFormat("yyyyMMdd-HHmmss");
+  private static final Pattern              KITIDPATTERN                 = Pattern.compile("(\\d+\\.\\d+).*");
+  private static final String               BUILD_DATA_RESOURCE_NAME     = "/build-data.txt";
 
-  private static final String               BUILD_DATA_RESOURCE_NAME = "/build-data.txt";
-
-  private static final String               BUILD_DATA_ROOT_KEY      = "terracotta.build.";
-  private static final String               BUILD_DATA_VERSION_KEY   = "version";
-  private static final String               BUILD_DATA_EDITION_KEY   = "edition";
-  private static final String               BUILD_DATA_TIMESTAMP_KEY = "timestamp";
-  private static final String               BUILD_DATA_HOST_KEY      = "host";
-  private static final String               BUILD_DATA_USER_KEY      = "user";
-  private static final String               BUILD_DATA_REVISION_KEY  = "revision";
-  private static final String               BUILD_DATA_BRANCH_KEY    = "branch";
-  private static final String               UNKNOWN_VALUE            = "[unknown]";
+  private static final String               BUILD_DATA_ROOT_KEY          = "terracotta.build.";
+  private static final String               BUILD_DATA_VERSION_KEY       = "version";
+  private static final String               BUILD_DATA_MAVEN_VERSION_KEY = "maven.artifacts.version";
+  private static final String               BUILD_DATA_EDITION_KEY       = "edition";
+  private static final String               BUILD_DATA_TIMESTAMP_KEY     = "timestamp";
+  private static final String               BUILD_DATA_HOST_KEY          = "host";
+  private static final String               BUILD_DATA_USER_KEY          = "user";
+  private static final String               BUILD_DATA_REVISION_KEY      = "revision";
+  private static final String               BUILD_DATA_BRANCH_KEY        = "branch";
+  private static final String               UNKNOWN_VALUE                = "[unknown]";
 
   private final String                      moniker;
   private final String                      version;
+  private final String                      maven_version;
   private final Date                        timestamp;
   private final String                      host;
   private final String                      user;
   private final String                      branch;
   private final String                      edition;
   private final String                      revision;
+  private final String                      kitID;
 
   private ProductInfo(InputStream in, String fromWhere) {
     Properties properties = new Properties();
@@ -63,6 +68,7 @@ public final class ProductInfo {
     }
 
     this.version = getProperty(properties, BUILD_DATA_VERSION_KEY, UNKNOWN_VALUE);
+    this.maven_version = getProperty(properties, BUILD_DATA_MAVEN_VERSION_KEY, UNKNOWN_VALUE);
     this.edition = getProperty(properties, BUILD_DATA_EDITION_KEY, "opensource");
 
     String timestampString = getProperty(properties, BUILD_DATA_TIMESTAMP_KEY, null);
@@ -82,6 +88,13 @@ public final class ProductInfo {
     }
 
     this.timestamp = realTimestamp;
+
+    Matcher matcher = KITIDPATTERN.matcher(maven_version);
+    if (matcher.matches()) {
+      kitID = matcher.group(1);
+    } else {
+      kitID = null;
+    }
   }
 
   private String getProperty(Properties properties, String name, String defaultValue) {
@@ -112,13 +125,21 @@ public final class ProductInfo {
   public String edition() {
     return this.edition;
   }
-  
+
   public String rawVersion() {
     return this.version;
   }
 
   public String buildVersion() {
     return this.version;
+  }
+
+  public String mavenArtifactsVersion() {
+    return this.maven_version;
+  }
+
+  public String kitID() {
+    return this.kitID;
   }
 
   public Date buildTimestamp() {
@@ -155,9 +176,8 @@ public final class ProductInfo {
   }
 
   public String toLongString() {
-    return toShortString() + ", as of " + buildTimestampAsString() + " (Revision " + buildRevision()
-        + " by " + buildUser() + "@" + buildHost()
-        + " from " + buildBranch() + ")";
+    return toShortString() + ", as of " + buildTimestampAsString() + " (Revision " + buildRevision() + " by "
+           + buildUser() + "@" + buildHost() + " from " + buildBranch() + ")";
   }
 
   public String toString() {
