@@ -20,7 +20,7 @@ import com.tc.util.State;
  * A HealthChecker Context takes care of sending and receiving probe signals, book-keeping, sending additional probes
  * and all the logic to monitor peers health. One Context per Transport is assigned as soon as a TC Connection is
  * Established.
- *
+ * 
  * @author Manoj
  */
 
@@ -195,25 +195,21 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     // Async connect goes thru
     socketConnectSuccessCount++;
     if (socketConnectSuccessCount < config.getMaxSocketConnectCount()) {
-      if (logger.isDebugEnabled()) logger.debug("Peer might be in Long GC.");
+      logger.warn("Peer might be in Long GC.");
       initProbeCycle();
     } else {
-      if (logger.isDebugEnabled()) logger.debug("Peer might be in Long GC. But its too long. No more retries");
+      logger.error("Peer might be in Long GC. But its too long. No more retries");
       changeState(DEAD);
     }
   }
 
   public synchronized void endOfFileEvent(TCConnectionEvent event) {
-    if (logger.isDebugEnabled()) {
-      logger.debug("Socket Connect EOF event:" + event.toString());
-    }
+    logger.warn("Socket Connect EOF event:" + event.toString());
     changeState(DEAD);
   }
 
   public synchronized void errorEvent(TCConnectionErrorEvent errorEvent) {
-    if (logger.isDebugEnabled()) {
-      logger.debug("Socket Connect Error Event:" + errorEvent.toString());
-    }
+    logger.error("Socket Connect Error Event:" + errorEvent.toString());
     changeState(DEAD);
   }
 
