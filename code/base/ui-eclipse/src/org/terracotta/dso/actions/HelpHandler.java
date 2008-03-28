@@ -9,7 +9,6 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
 
-import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 
 public class HelpHandler extends BaseMenuCreator {
@@ -35,7 +34,6 @@ public class HelpHandler extends BaseMenuCreator {
 
   protected void fillMenu(Menu menu) {
     String kitID = ProductInfo.getInstance().kitID();
-    Assert.assertNotNull(kitID);
 
     addMenuAction(menu, new HelpAction("Concept and Architecture Guide",
                                        "http://www.terracotta.org/kit/reflector?kitID=" + kitID
