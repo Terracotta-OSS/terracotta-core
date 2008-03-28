@@ -24,6 +24,13 @@ public interface JavaLangStringTC {
   public String __tc_intern();
 
   /**
+   * Indicates whether TC-instrumented String is internally compressed or not
+   * 
+   * @return whether String is compressed or not
+   */
+  public boolean __tc_isCompressed();
+
+  /**
    * Force String to decompress if it was compressed
    * 
    * @return true if String was compressed
