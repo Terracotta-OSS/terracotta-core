@@ -54,7 +54,10 @@ set JAVA_OPTS=%OPTS% %JAVA_OPTS%
 :runCatalina
 
 cd %SANDBOX%
-call %CATALINA_HOME%\bin\catalina.bat run
+set CATALINA_HOME=%CATALINA_HOME%:"=%
+set CATALINA_BASE=%CATALINA_BASE%:"=%
+set JAVA_HOME=%JAVA_HOME%:"=%
+call "%CATALINA_HOME%\bin\catalina.bat" run
 
 :end
 exit %ERRORLEVEL%

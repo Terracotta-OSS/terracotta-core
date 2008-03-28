@@ -31,7 +31,11 @@ if not defined CATALINA_HOME (
     exit 1
   )
 )
+
 set CATALINA_BASE=%SANDBOX%\tomcat6.0\%1
-call %CATALINA_HOME%\bin\shutdown.bat
+set CATALINA_HOME=%CATALINA_HOME%:"=%
+set CATALINA_BASE=%CATALINA_BASE%:"=%
+set JAVA_HOME=%JAVA_HOME%:"=%
+call "%CATALINA_HOME%\bin\shutdown.bat"
 exit %ERRORLEVEL%
 endlocal

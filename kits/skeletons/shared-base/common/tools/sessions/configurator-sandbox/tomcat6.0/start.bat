@@ -54,7 +54,10 @@ set JAVA_OPTS=%JAVA_OPTS% -Dtc.node-name=tomcat-%1
 :runCatalina
 
 cd %SANDBOX%
-call %CATALINA_HOME%\bin\catalina.bat run
+set CATALINA_HOME=%CATALINA_HOME%:"=%
+set CATALINA_BASE=%CATALINA_BASE%:"=%
+set JAVA_HOME=%JAVA_HOME%:"=%
+call "%CATALINA_HOME%\bin\catalina.bat" run
 
 :end
 exit %ERRORLEVEL%
