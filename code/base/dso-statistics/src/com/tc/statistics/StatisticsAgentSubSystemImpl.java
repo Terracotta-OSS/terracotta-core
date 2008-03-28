@@ -67,8 +67,8 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
         + "Unable to create the directory '" + stat_path.getAbsolutePath() + "' for the statistics buffer.\n"
         + "The CVT system will not be active for this node.\n"
         + "**************************************************************************************\n";
-      consoleLogger.error(msg);
-      logger.error(msg, e);
+      consoleLogger.warn(msg);
+      logger.warn(msg, e);
       return false;
     }
     try {
@@ -86,8 +86,8 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
         + "A simple solution is to delete the directory in which the statistics are stored so\n"
         + "that a new version of the database can be installed.\n"
         + "**************************************************************************************\n";
-      consoleLogger.error(msg);
-      logger.error(msg, e);
+      consoleLogger.warn(msg);
+      logger.warn(msg, e);
       return false;
     } catch (StatisticsBufferException e) {
       // TODO: needs to be properly written and put in a properties file
@@ -111,8 +111,8 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
         + "up when the statistics directory is configured by using %(tc.node-name) in the\n"
         + "statistics path.\n"
         + "**************************************************************************************\n";
-      consoleLogger.error(msg);
-      logger.error(msg, e);
+      consoleLogger.warn(msg);
+      logger.warn(msg, e);
       return false;
     }
     String infoMsg = "Statistics buffer: '" + stat_path.getAbsolutePath() + "'.";

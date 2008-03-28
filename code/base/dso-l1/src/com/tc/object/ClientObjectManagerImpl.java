@@ -1062,6 +1062,9 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
       txManager.createObject(obj);
       basicAddLocal(obj, false);
       executePostCreateMethod(pojo);
+      if (runtimeLogger.getNewManagedObjectDebug()) {
+        runtimeLogger.newManagedObject(obj);
+      }
     }
     return obj;
   }

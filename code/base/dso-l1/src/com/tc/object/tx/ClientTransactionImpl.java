@@ -100,10 +100,6 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   }
 
   protected void basicCreate(TCObject object) {
-    if (runtimeLogger.getNewManagedObjectDebug()) {
-      runtimeLogger.newManagedObject(object);
-    }
-
     getOrCreateChangeBuffer(object);
   }
 
