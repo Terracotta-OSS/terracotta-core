@@ -181,6 +181,7 @@ import com.tc.statistics.retrieval.actions.SRAL2ToL1FaultRate;
 import com.tc.statistics.retrieval.actions.SRAL2TransactionCount;
 import com.tc.statistics.retrieval.actions.SRAMemoryUsage;
 import com.tc.statistics.retrieval.actions.SRAMessages;
+import com.tc.statistics.retrieval.actions.SRAServerTransactionSequencer;
 import com.tc.statistics.retrieval.actions.SRAStageQueueDepths;
 import com.tc.statistics.retrieval.actions.SRASystemProperties;
 import com.tc.statistics.retrieval.actions.SRAVmGarbageCollector;
@@ -267,6 +268,8 @@ public class DistributedObjectServer implements TCDumper {
   private final TCThreadGroup                  threadGroup;
 
   private final SEDA                           seda;
+
+  private ServerTransactionSequencerImpl       serverTransactionSequencerImpl;
 
   // used by a test
   public DistributedObjectServer(L2TVSConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
@@ -604,7 +607,8 @@ public class DistributedObjectServer implements TCDumper {
                                                                                  globalTransactionIDSequence);
 
     TransactionalStagesCoordinatorImpl txnStageCoordinator = new TransactionalStagesCoordinatorImpl(stageManager);
-    txnObjectManager = new TransactionalObjectManagerImpl(objectManager, new ServerTransactionSequencerImpl(), gtxm,
+    serverTransactionSequencerImpl = new ServerTransactionSequencerImpl();
+    txnObjectManager = new TransactionalObjectManagerImpl(objectManager, serverTransactionSequencerImpl, gtxm,
                                                           txnStageCoordinator);
     threadGroup.addCallbackOnExitHandler(new CallbackDumpAdapter(txnObjectManager));
     objectManager.setTransactionalObjectManager(txnObjectManager);
@@ -786,7 +790,8 @@ public class DistributedObjectServer implements TCDumper {
     stageManager.startAll(context);
 
     // populate the statistics retrieval registry
-    populateStatisticsRetrievalRegistry(serverStats, seda.getStageManager(), mm, managedObjectFaultHandler, transactionManager);
+    populateStatisticsRetrievalRegistry(serverStats, seda.getStageManager(), mm, managedObjectFaultHandler,
+                                        transactionManager);
 
     // XXX: yucky casts
     managementContext = new ServerManagementContext(transactionManager, (ObjectManagerMBean) objectManager,
@@ -808,10 +813,11 @@ public class DistributedObjectServer implements TCDumper {
     }
   }
 
-  private void populateStatisticsRetrievalRegistry(final DSOGlobalServerStats serverStats, final StageManager stageManager,
+  private void populateStatisticsRetrievalRegistry(final DSOGlobalServerStats serverStats,
+                                                   final StageManager stageManager,
                                                    final MessageMonitor messageMonitor,
                                                    final ManagedObjectFaultHandler managedObjectFaultHandler,
-                                                   final ServerTransactionManagerImpl txnManager){
+                                                   final ServerTransactionManagerImpl txnManager) {
     if (statisticsAgentSubSystem.isActive()) {
       StatisticsRetrievalRegistry registry = statisticsAgentSubSystem.getStatisticsRetrievalRegistry();
       registry.registerActionInstance(new SRAL2ToL1FaultRate(serverStats));
@@ -834,6 +840,7 @@ public class DistributedObjectServer implements TCDumper {
       registry.registerActionInstance(new SRAL2FaultsFromDisk(managedObjectFaultHandler));
       registry.registerActionInstance(new SRAL1ToL2FlushRate(serverStats));
       registry.registerActionInstance(new SRAL2PendingTransactions(txnManager));
+      registry.registerActionInstance(new SRAServerTransactionSequencer(serverTransactionSequencerImpl));
     }
   }
 

@@ -16,20 +16,21 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-public class ServerTransactionSequencerImpl implements ServerTransactionSequencer {
+public class ServerTransactionSequencerImpl implements ServerTransactionSequencer, ServerTransactionSequencerStats {
 
-  private static final TCLogger    logger      = TCLogging.getLogger(ServerTransactionSequencerImpl.class);
+  private static final TCLogger    logger            = TCLogging.getLogger(ServerTransactionSequencerImpl.class);
 
-  private final Set                pendingTxns = new HashSet();
+  private final Set                pendingTxns       = new HashSet();
 
-  private final MergableLinkedList txnQ        = new MergableLinkedList();
-  private final MergableLinkedList blockedQ    = new MergableLinkedList();
+  private final MergableLinkedList txnQ              = new MergableLinkedList();
+  private final MergableLinkedList blockedQ          = new MergableLinkedList();
 
   private final BlockedSet         locks       = new BlockedSet();
   private final BlockedSet         objects     = new BlockedSet();
 
   private int                      txnsCount;
-  private boolean                  reconcile   = false;
+  private boolean                  reconcile         = false;
+
 
   public synchronized void addTransactionLookupContexts(Collection<TransactionLookupContext> txnLookupContexts) {
     if (false) log_incoming(txnLookupContexts);
@@ -148,5 +149,36 @@ public class ServerTransactionSequencerImpl implements ServerTransactionSequence
     public void clearBlocked() {
       effect.clear();
     }
+
+    public String toString() {
+      StringBuffer toStringBuffer = new StringBuffer();
+      toStringBuffer.append("cause: " + cause).append("\n").append("effect: " + effect).append("\n");
+      return toStringBuffer.toString();
+    }
+
+  }
+
+  public String dumpBlockedQ() {
+    return blockedQ.toString();
+  }
+
+  public String dumpLocks() {
+    return "";
+  }
+
+  public String dumpObjects() {
+    return objects.toString();
+  }
+
+  public String dumpPendingTxns() {
+    return pendingTxns.toString();
+  }
+
+  public String dumpTxnQ() {
+    return txnQ.toString();
+  }
+
+  public String reconcileStatus() {
+    return String.valueOf(reconcile);
   }
 }
