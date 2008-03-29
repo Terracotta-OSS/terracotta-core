@@ -67,7 +67,10 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   def createVersionString(build_environment)
     # eclipse plugin standard
     # 3.2.2.r322_v20070109
-    raw_version = get_config(:version, "1.0.0")
+    raw_version = get_config(:version, build_environment.maven_version)
+    if raw_version =~ /trunk/
+      raw_version = build_environment.maven_version
+    end
     tokens = raw_version.split(/-/).delete_if { |t| t =~ /rev/ }    
     if tokens.first =~ /^\d+\.\d+/
       version_number = tokens.first

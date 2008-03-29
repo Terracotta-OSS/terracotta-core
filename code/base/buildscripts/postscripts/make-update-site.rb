@@ -3,6 +3,8 @@
 # except as may otherwise be noted in a separate copyright notice.
 # All rights reserved
 #
+require 'net/http'
+require 'uri'
 
 class BaseCodeTerracottaBuilder <  TerracottaBuilder
   # - create the eclipse update site
@@ -34,6 +36,21 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     ant.delete(:dir => plugin_dir.to_s)
 
     site_file = FilePath.new(update_dir, 'site.xml')
+    retrieveSiteXml(site_file)
     ant.replace(:file => site_file, :token => "VERSION", :value => plugin_version)
+  end
+  
+  def retrieveSiteXml(site_file)
+    url = "http://svn.terracotta.org/svn/tc/eclipse-update-site/site.xml"
+    begin
+      res = Net::HTTP.get_response(URI.parse(url))
+      res.value
+      puts "Records of published TC plugins read from #{url}"
+      File.open(site_file.to_s, "w") do |f|
+        f.puts res.body
+      end
+    rescue
+      STDERR.puts "Can't read records of published TC plugins from #{url}"
+    end
   end
 end
