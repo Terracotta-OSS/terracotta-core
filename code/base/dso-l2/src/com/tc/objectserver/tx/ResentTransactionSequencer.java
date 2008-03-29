@@ -127,6 +127,7 @@ public class ResentTransactionSequencer implements ServerTransactionListener {
     for (Iterator i = stxIDs.iterator(); i.hasNext();) {
       ServerTransactionID stxID = (ServerTransactionID) i.next();
       GlobalTransactionID gid = gtxm.getGlobalTransactionID(stxID);
+      logger.info("Resent Transaction : " + stxID + " gid = " + gid);
       if (!gid.isNull()) {
         addOrdered(stxID, gid);
       }
