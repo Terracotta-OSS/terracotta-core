@@ -93,7 +93,7 @@ public final class ProductInfo {
     if (matcher.matches()) {
       kitID = matcher.group(1);
     } else {
-      kitID = null;
+      kitID = UNKNOWN_VALUE;
     }
   }
 
