@@ -46,6 +46,10 @@ public class ServerTransactionSequencerTest extends TCTestCase {
   private int                            start;
   private GlobalTransactionIDGenerator   gidGenerator;
 
+  public ServerTransactionSequencerTest() {
+    disableAllUntil("2008-04-15");
+  }
+  
   public void setUp() throws Exception {
     txnID = 100;
     sqID = 100;
