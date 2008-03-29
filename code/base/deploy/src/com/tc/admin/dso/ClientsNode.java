@@ -73,7 +73,6 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
           addClientNode(createClientNode(m_cc, m_clients[i]));
         }
         updateLabel();
-        m_acc.controller.expand(ClientsNode.this);
       }
     }
   }
@@ -113,7 +112,6 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
     XTreeModel model = getModel();
     if (model != null) {
       model.insertNodeInto(clientNode, this, getChildCount());
-      m_acc.controller.expand(clientNode);
     } else {
       add(clientNode);
     }

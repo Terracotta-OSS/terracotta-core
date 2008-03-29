@@ -276,11 +276,6 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
     }
   }
 
-  public void addNotify() {
-    super.addNotify();
-    startMonitoringRuntimeStats();
-  }
-
   private void clearAllTimeSeries() {
     ArrayList<TimeSeries> list = new ArrayList<TimeSeries>();
     if (m_cpuTimeSeries != null) {

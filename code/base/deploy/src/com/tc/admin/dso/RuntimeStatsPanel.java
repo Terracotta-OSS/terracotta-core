@@ -63,7 +63,8 @@ public class RuntimeStatsPanel extends XContainer {
   private Button                m_clearSamplesButton;
   private Spinner               m_samplePeriodSpinner;
   private Spinner               m_sampleHistorySpinner;
-
+  private boolean               m_shouldAutoStart;
+  
   protected static Dimension    fDefaultGraphSize                       = new Dimension(
                                                                                         ChartPanel.DEFAULT_MINIMUM_DRAW_WIDTH,
                                                                                         ChartPanel.DEFAULT_MINIMUM_DRAW_HEIGHT);
@@ -85,6 +86,7 @@ public class RuntimeStatsPanel extends XContainer {
     m_acc = AdminClient.getContext();
     m_allSeries = new ArrayList<TimeSeries>();
     m_allCharts = new ArrayList<JFreeChart>();
+    m_shouldAutoStart = true;
     load((ContainerResource) AdminClient.getContext().topRes.child("RuntimeStatsPanel"));
   }
 
@@ -103,14 +105,13 @@ public class RuntimeStatsPanel extends XContainer {
     m_clearSamplesButton.addActionListener(new ClearSamplesAction());
 
     m_samplePeriodSpinner = (Spinner) findComponent("SamplePeriodSpinner");
-    m_samplePeriodSpinner.setModel(new SpinnerNumberModel(new Integer(getDefaultPollPeriodSeconds()), new Integer(1),
-                                                          null, new Integer(1)));
+    m_samplePeriodSpinner.setModel(new SpinnerNumberModel(Integer.valueOf(getDefaultPollPeriodSeconds()), Integer
+        .valueOf(1), null, Integer.valueOf(1)));
     m_samplePeriodSpinner.addChangeListener(new SamplePeriodChangeHandler());
 
     m_sampleHistorySpinner = (Spinner) findComponent("SampleHistorySpinner");
-    m_sampleHistorySpinner.setModel(new SpinnerNumberModel(new Integer(getDefaultSampleHistoryMinutes()),
-                                                           new Integer(1), null,
-                                                           new Integer(SAMPLE_SAMPLE_HISTORY_STEP_SIZE)));
+    m_sampleHistorySpinner.setModel(new SpinnerNumberModel(Integer.valueOf(getDefaultSampleHistoryMinutes()), Integer
+        .valueOf(1), null, Integer.valueOf(SAMPLE_SAMPLE_HISTORY_STEP_SIZE)));
     m_sampleHistorySpinner.addChangeListener(new SampleHistoryChangeHandler());
   }
 
@@ -179,7 +180,6 @@ public class RuntimeStatsPanel extends XContainer {
 
   protected JFreeChart createChart(TimeSeries[] seriesArray) {
     JFreeChart chart = DemoChartFactory.getXYLineChart("", "", "", seriesArray);
-
     int sampleHistoryMinutes = getRuntimeStatsSampleHistoryMinutes();
     int sampleHistoryMillis = sampleHistoryMinutes * 60 * 1000;
     ((XYPlot) chart.getPlot()).getDomainAxis().setFixedAutoRange(sampleHistoryMillis);
@@ -188,8 +188,8 @@ public class RuntimeStatsPanel extends XContainer {
     for (TimeSeries series : seriesArray) {
       series.setMaximumItemCount(maxSampleCount);
     }
-
     m_allCharts.add(chart);
+
     return chart;
   }
 
@@ -218,6 +218,11 @@ public class RuntimeStatsPanel extends XContainer {
     while (plotIter.hasNext()) {
       XYPlot plot = plotIter.next();
       plot.setFixedRangeAxisSpace(rangeAxisSpace);
+    }
+    
+    if(m_shouldAutoStart) {
+      startMonitoringRuntimeStats();
+      m_shouldAutoStart = false;
     }
   }
 
@@ -303,7 +308,7 @@ public class RuntimeStatsPanel extends XContainer {
       int pollMillis = seconds * 1000;
       m_statsGathererTimer.setInitialDelay(pollMillis);
       m_statsGathererTimer.restart();
-      
+
       Iterator<JFreeChart> chartIter = m_allCharts.iterator();
       int sampleHistoryMinutes = getRuntimeStatsSampleHistoryMinutes();
       int sampleHistoryMillis = sampleHistoryMinutes * 60 * 1000;

@@ -359,11 +359,14 @@ public class LocksPanel extends XContainer implements NotificationListener {
 
   private void setLocksPanelEnabled(boolean enabled) {
     fRefreshButton.setEnabled(enabled);
-//    fLockStats.setLockStatisticsEnabled(enabled);
 
     fLocksPanelEnabled = enabled;
+
     fEnableButton.setSelected(enabled);
+    fEnableButton.setEnabled(!enabled);
+    
     fDisableButton.setSelected(!enabled);
+    fDisableButton.setEnabled(enabled);
 
     fLocksNode.notifyChanged();
   }

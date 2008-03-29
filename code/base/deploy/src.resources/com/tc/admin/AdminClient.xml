@@ -78,9 +78,9 @@
           <item bottom="-1,bottom:s" height="n" left="1,right:n" right="-1,right:n" top="-1,top:s" width="n" />
           <item bottom="-1,bottom:s" height="n" left="2,right:n" right="0,left:n" top="-1,top:s" width="n" />
           <item bottom="-1,bottom:s" height="n" left="3,right:sn" right="1,left:n" top="-1,top:s" width="n" />
-          <item bottom="-1,bottom:s" height="n" left="4,right:n" right="2,left:sn" top="-1,top:s" width="n" />
-          <item bottom="3,bottom:s" height="n" left="5,right:20" right="3,left:n" top="3,top:s" width="n" />
-          <item bottom="-1,bottom:s" height="n" left="6,right:n" right="4,left:20" top="-1,top:s" width="n" />
+          <item bottom="-1,bottom:s" height="n" left="4,right:n" right="2,left:sn" top="-1,top:s" width="50" />
+          <item bottom="3,bottom:s" height="n" left="5,right:10" right="3,left:n" top="3,top:s" width="n" />
+          <item bottom="-1,bottom:s" height="n" left="6,right:n" right="4,left:10" top="-1,top:s" width="50" />
           <item bottom="5,bottom:s" height="n" left="-1,left:n" right="5,left:n" top="5,top:s" width="n" />
         </connections>
       </container>
@@ -698,7 +698,7 @@
                    </children>
                   <connections>
                     <item bottom="1,bottom:s" height="n" left="-1,left:0" right="1,left:n" top="1,top:s" width="n" />
-                    <item bottom="-1,bottom:ns" height="n" left="0,right:n" right="-1,right:ns" top="-1,top:ns" width="n" />
+                    <item bottom="-1,bottom:ns" height="n" left="0,right:n" right="-1,right:ns" top="-1,top:ns" width="50" />
                   </connections>
                 </container>
                 <container>
@@ -730,14 +730,16 @@
             </scrollpane>
             <container>
               <children>
-                <button text="Export all sessions" name="ExportStatsButton" enabled="false"/>
+                <button text="Export all sessions..." name="ExportStatsButton" enabled="false"/>
                 <button text="Clear session" name="ClearStatsSessionButton" enabled="false"/>
                 <button text="Clear all sessions" name="ClearAllStatsSessionsButton" enabled="false"/>
+                <button text="View..." name="ViewStatsSessionsButton" enabled="false"/>
               </children>
               <connections>
                 <item bottom="1,top:n" height="n" left="-1,left:n" right="-1,right:n" top="-1,top:n" width="ns" />
                 <item bottom="2,top:n" height="n" left="-1,left:n" right="-1,right:n" top="0,bottom:n" width="ns" />
-                <item bottom="-1,bottom:ns" height="n" left="-1,left:n" right="-1,right:n" top="1,bottom:n" width="ns" />                      
+                <item bottom="3,top:n" height="n" left="-1,left:n" right="-1,right:n" top="1,bottom:n" width="ns" />                      
+                <item bottom="-1,bottom:ns" height="n" left="-1,left:n" right="-1,right:n" top="2,bottom:n" width="ns" />                      
               </connections>
             </container>
           </children>

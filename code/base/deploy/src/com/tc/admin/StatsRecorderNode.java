@@ -51,6 +51,10 @@ public class StatsRecorderNode extends ComponentNode {
     return m_authScope = m_clusterNode.getAuthScope();
   }
 
+  String getActiveServerAddress() throws Exception {
+    return m_clusterNode.getHost()+":"+m_clusterNode.getDSOListenPort();
+  }
+  
   void notifyChanged() {
     nodeChanged();
     m_clusterNode.notifyChanged();

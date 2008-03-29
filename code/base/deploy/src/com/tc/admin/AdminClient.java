@@ -35,11 +35,25 @@ public class AdminClient extends ApplicationManager {
   private static final String PREF_FILE = ".AdminClient.xml";
 
   static {
+    // Silence jmx remote
     Logger.getLogger("javax.management.remote.generic").setLevel(Level.OFF);
     Logger.getLogger("javax.management.remote.misc").setLevel(Level.OFF);
     Logger.getLogger("com.sun.jmx.remote.opt.util").setLevel(Level.OFF);
     Logger.getLogger("com.sun.jmx.remote.opt.util").setLevel(Level.OFF);
     Logger.getLogger("javax.management.remote.rmi").setLevel(Level.OFF);
+
+    // Silence httpclient
+    Logger.getLogger("org.apache.commons.httpclient.HttpClient").setLevel(Level.OFF);
+    Logger.getLogger("org.apache.commons.httpclient.params.DefaultHttpParams").setLevel(Level.OFF);
+    Logger.getLogger("org.apache.commons.httpclient.methods.GetMethod").setLevel(Level.OFF);
+    Logger.getLogger("org.apache.commons.httpclient.HttpMethodDirector").setLevel(Level.OFF);
+    Logger.getLogger("org.apache.commons.httpclient.HttpConnection").setLevel(Level.OFF);
+    Logger.getLogger("org.apache.commons.httpclient.HttpMethodBase").setLevel(Level.OFF);
+    Logger.getLogger("org.apache.commons.httpclient.HttpState").setLevel(Level.OFF);
+    Logger.getLogger("org.apache.commons.httpclient.HttpParser").setLevel(Level.OFF);
+    Logger.getLogger("org.apache.commons.httpclient.cookie.CookieSpec").setLevel(Level.OFF);
+    Logger.getLogger("httpclient.wire.header").setLevel(Level.OFF);
+    Logger.getLogger("httpclient.wire.content").setLevel(Level.OFF);
   }
   
   protected AdminClient() {

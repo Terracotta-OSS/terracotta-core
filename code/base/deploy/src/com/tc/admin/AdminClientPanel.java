@@ -8,8 +8,6 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.dijon.Button;
 import org.dijon.CheckBox;
 import org.dijon.Container;
@@ -327,6 +325,11 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     HelpAction() {
       super("AdminConsole Help");
       String kitID = com.tc.util.ProductInfo.getInstance().kitID();
+      if(kitID == null || "[unknown]".equals(kitID)) {
+        if((kitID = System.getProperty("com.tc.kitID")) == null) {
+          kitID = "42.0";
+        }
+      }
       url = "http://www.terracotta.org/kit/reflector?kitID=" + kitID + "&pageID=ConsoleGuide";
     }
 
@@ -844,18 +847,6 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
 
     UpdateCheckerAction() {
       super(getBundleString("update-checker.action.label"));
-
-      Logger.getLogger("org.apache.commons.httpclient.HttpClient").setLevel(Level.OFF);
-      Logger.getLogger("org.apache.commons.httpclient.params.DefaultHttpParams").setLevel(Level.OFF);
-      Logger.getLogger("org.apache.commons.httpclient.methods.GetMethod").setLevel(Level.OFF);
-      Logger.getLogger("org.apache.commons.httpclient.HttpMethodDirector").setLevel(Level.OFF);
-      Logger.getLogger("org.apache.commons.httpclient.HttpConnection").setLevel(Level.OFF);
-      Logger.getLogger("org.apache.commons.httpclient.HttpMethodBase").setLevel(Level.OFF);
-      Logger.getLogger("org.apache.commons.httpclient.HttpState").setLevel(Level.OFF);
-      Logger.getLogger("org.apache.commons.httpclient.HttpParser").setLevel(Level.OFF);
-      Logger.getLogger("org.apache.commons.httpclient.cookie.CookieSpec").setLevel(Level.OFF);
-      Logger.getLogger("httpclient.wire.header").setLevel(Level.OFF);
-      Logger.getLogger("httpclient.wire.content").setLevel(Level.OFF);
 
       if (!isEnabled()) return;
 
