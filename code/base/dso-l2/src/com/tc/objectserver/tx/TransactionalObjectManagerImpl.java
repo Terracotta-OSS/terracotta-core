@@ -6,6 +6,7 @@ package com.tc.objectserver.tx;
 
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
+import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
@@ -79,9 +80,19 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
 
   // ProcessTransactionHandler Method
   public void addTransactions(Collection txns) {
-    Collection txnLookupContexts = createAndPreFetchObjectsFor(txns);
-    sequencer.addTransactionLookupContexts(txnLookupContexts);
-    txnStageCoordinator.initiateLookup();
+    try {
+      Collection txnLookupContexts = createAndPreFetchObjectsFor(txns);
+      sequencer.addTransactionLookupContexts(txnLookupContexts);
+      txnStageCoordinator.initiateLookup();
+    } catch (Throwable t) {
+      // TODO :: remove after debug
+      logger.error(t);
+      for (Iterator i = txns.iterator(); i.hasNext();) {
+        ServerTransaction stx = (ServerTransaction) i.next();
+        logger.error("Txn = " + stx);
+      }
+      throw new TCRuntimeException(t);
+    }
   }
 
   private Collection createAndPreFetchObjectsFor(Collection txns) {
