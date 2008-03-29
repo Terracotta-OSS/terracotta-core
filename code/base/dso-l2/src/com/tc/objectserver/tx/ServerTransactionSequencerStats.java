@@ -11,8 +11,6 @@ public interface ServerTransactionSequencerStats {
   
   public String dumpBlockedQ();
   
-  public String dumpLocks();
-  
   public String dumpObjects();
   
   public String reconcileStatus();

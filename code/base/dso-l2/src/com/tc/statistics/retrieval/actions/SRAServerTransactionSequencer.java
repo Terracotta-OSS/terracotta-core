@@ -18,8 +18,6 @@ public class SRAServerTransactionSequencer implements StatisticRetrievalAction {
 
   private final static String                   DUMP_TXNQ         = "dumpTxnQ";
 
-  private final static String                   DUMP_LOCKS        = "dumpLocks";
-
   private final static String                   DUMP_OBJECTS      = "dumpObjects";
 
   private final static String                   DUMP_PENDING_TXNS = "dumpPendingTxns";
@@ -44,7 +42,6 @@ public class SRAServerTransactionSequencer implements StatisticRetrievalAction {
   public StatisticData[] retrieveStatisticData() {
     return new StatisticData[] { new StatisticData(DUMP_BLOCKEDQ, serverTransactionSequencerStats.dumpBlockedQ()),
         new StatisticData(DUMP_TXNQ, serverTransactionSequencerStats.dumpTxnQ()),
-        new StatisticData(DUMP_LOCKS, serverTransactionSequencerStats.dumpLocks()),
         new StatisticData(DUMP_OBJECTS, serverTransactionSequencerStats.dumpObjects()),
         new StatisticData(DUMP_PENDING_TXNS, serverTransactionSequencerStats.dumpPendingTxns()),
         new StatisticData(RECONCILE_STATUS, serverTransactionSequencerStats.reconcileStatus()) };
