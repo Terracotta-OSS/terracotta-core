@@ -40,18 +40,29 @@ public class ThreadDumpUtil {
 
       Method method = null;
       if (Vm.isJDK15()) {
-        method = threadDumpUtilJdk15Type.getMethod("getThreadDump", EMPTY_PARAM_TYPES);
+        if (threadDumpUtilJdk15Type != null) {
+          method = threadDumpUtilJdk15Type.getMethod("getThreadDump", EMPTY_PARAM_TYPES);
+        } else {
+          return "ThreadDump Classes class not available";
+        }
+
       } else if (Vm.isJDK16Compliant()) {
-        method = threadDumpUtilJdk16Type.getMethod("getThreadDump", EMPTY_PARAM_TYPES);
+        if (threadDumpUtilJdk16Type != null) {
+          method = threadDumpUtilJdk16Type.getMethod("getThreadDump", EMPTY_PARAM_TYPES);
+        } else if (threadDumpUtilJdk15Type != null) {
+          method = threadDumpUtilJdk15Type.getMethod("getThreadDump", EMPTY_PARAM_TYPES);
+        } else {
+          return "ThreadDump Classes class not available";
+        }
       } else {
         return "Thread dumps require JRE-1.5 or greater";
       }
-      return (String)method.invoke(null, EMPTY_PARAMS);
+      return (String) method.invoke(null, EMPTY_PARAMS);
     } catch (Exception e) {
       logger.error("Cannot take thread dumps - " + e.getMessage(), e);
       exception = e;
     }
-    return "Cannot take thread dumps " + exception.getMessage() ;
+    return "Cannot take thread dumps " + exception.getMessage();
   }
 
   public static void main(String[] args) {
