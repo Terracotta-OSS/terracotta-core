@@ -11,10 +11,6 @@ import com.tc.util.runtime.ThreadDumpUtilJdk15;
 
 public class ThreadDumpUtilJdk15Test extends TCTestCase {
 
-  public ThreadDumpUtilJdk15Test() {
-    disableAllUntil("2008-04-15");
-  }
-
   public void testThreadDump15() {
     String st = ThreadDumpUtilJdk15.getThreadDump();
     Assert.eval("The text \"Full thread dump \" should be present in the thread dump",
