@@ -18,14 +18,11 @@ import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XObjectTable;
-import com.tc.admin.common.XTreeCellRenderer;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.LockStatisticsMonitorMBean;
 import com.tc.management.lock.stats.LockSpec;
 
 import java.awt.Color;
-import java.awt.Component;
-import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -46,7 +43,6 @@ import javax.swing.JSpinner;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.JTree;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
@@ -93,17 +89,6 @@ public class LocksPanel extends XContainer implements NotificationListener {
     fAdminClientContext = AdminClient.getContext();
     fConnectionContext = locksNode.getConnectionContext();
     fLocksNode = locksNode;
-    fLocksNode.setRenderer(new XTreeCellRenderer() {
-      public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded,
-                                                    boolean leaf, int row, boolean focused) {
-        Component comp = super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, focused);
-        if (fEnableButton.isSelected()) {
-          m_label.setForeground(sel ? Color.white : Color.red);
-          m_label.setText(fLocksNode.getBaseLabel() + " (enabled)");
-        }
-        return comp;
-      }
-    });
 
     load((ContainerResource) fAdminClientContext.topRes.getComponent("LocksPanel"));
 
@@ -116,81 +101,37 @@ public class LocksPanel extends XContainer implements NotificationListener {
     fLastTraceDepth = fLockStats.getTraceDepth();
 
     fEnableButton = (ToggleButton) findComponent("EnableButton");
-    fEnableButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        toggleLocksPanelEnabled();
-      }
-    });
+    fEnableButton.addActionListener(new EnablementButtonHandler());
+
     fDisableButton = (ToggleButton) findComponent("DisableButton");
-    fDisableButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        toggleLocksPanelEnabled();
-      }
-    });
+    fDisableButton.addActionListener(new EnablementButtonHandler());
+
     fTraceDepthSpinner = (Spinner) findComponent("TraceDepthSpinner");
     ((SpinnerNumberModel) fTraceDepthSpinner.getModel()).setValue(Integer.valueOf(fLastTraceDepth));
-    fTraceDepthSpinner.addFocusListener(new FocusAdapter() {
-      public void focusLost(FocusEvent e) {
-        testSetTraceDepth();
-      }
-    });
-    fTraceDepthChangeTimer = new Timer(1000, new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        testSetTraceDepth();
-      }
-    });
+    fTraceDepthSpinner.addFocusListener(new TraceDepthSpinnerFocusListener());
+    fTraceDepthChangeTimer = new Timer(1000, new TraceDepthChangeTimerHandler());
     fTraceDepthChangeTimer.setRepeats(false);
     fTraceDepthSpinnerChangeListener = new TraceDepthSpinnerChangeListener();
     fTraceDepthSpinner.addChangeListener(fTraceDepthSpinnerChangeListener);
+
     fRefreshButton = (Button) findComponent("RefreshButton");
-    fRefreshButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        refresh();
-      }
-    });
+    fRefreshButton.addActionListener(new RefreshButtonHandler());
+
     fLocksTabbedPane = (JTabbedPane) findComponent("LocksTabbedPane");
     fTreeTableModel = new LockTreeTableModel(EMPTY_LOCK_SPEC_COLLECTION);
     fTreeTable = (LockTreeTable) findComponent("LockTreeTable");
     fTreeTable.setTreeTableModel(fTreeTableModel);
     fTreeTable.setPreferences(fAdminClientContext.prefs.node("LockTreeTable"));
-    fTreeTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
-    fTreeTable.addTreeSelectionListener(new TreeSelectionListener() {
-      public void valueChanged(TreeSelectionEvent e) {
-        TreePath treePath = e.getNewLeadSelectionPath();
-        if (treePath == null) return;
-        Object[] path = treePath.getPath();
-        LockSpecNode lockSpecNode = (LockSpecNode) path[1];
-        Object last = path[path.length - 1];
-        String text = "";
-        if (last instanceof LockTraceElementNode) {
-          LockTraceElementNode lastNode = (LockTraceElementNode) last;
-          text = lastNode.getConfigText();
-        }
-        fConfigText.setText(text);
-        fConfigLabel.setText(lockSpecNode.toString());
-        populateTraceText(path);
-      }
-    });
+    fTreeTable.addTreeSelectionListener(new LockSelectionHandler());
 
-    ActionListener findNextAction = new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        doSearch(true);
-      }
-    };
-    ActionListener findPreviousAction = new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        doSearch(false);
-      }
-    };
+    ActionListener findNextAction = new FindNextHandler();
+    ActionListener findPreviousAction = new FindPreviousHandler();
+
     fClientLocksFindField = (JTextField) findComponent("ClientLocksFindField");
     fClientLocksFindField.addActionListener(findNextAction);
     fClientLocksFindNextButton = (JButton) findComponent("ClientLocksFindNextButton");
-    Insets margin = fClientLocksFindNextButton.getMargin();
-    margin.left = margin.right = 1;
-    fClientLocksFindNextButton.setMargin(margin);
     fClientLocksFindNextButton.addActionListener(findNextAction);
     fClientLocksFindPreviousButton = (JButton) findComponent("ClientLocksFindPreviousButton");
-    fClientLocksFindPreviousButton.setMargin(margin);
     fClientLocksFindPreviousButton.addActionListener(findPreviousAction);
 
     fServerLocksTable = (XObjectTable) findComponent("ServerLocksTable");
@@ -200,10 +141,8 @@ public class LocksPanel extends XContainer implements NotificationListener {
     fServerLocksFindField = (JTextField) findComponent("ServerLocksFindField");
     fServerLocksFindField.addActionListener(findNextAction);
     fServerLocksFindNextButton = (JButton) findComponent("ServerLocksFindNextButton");
-    fServerLocksFindNextButton.setMargin(margin);
     fServerLocksFindNextButton.addActionListener(findNextAction);
     fServerLocksFindPreviousButton = (JButton) findComponent("ServerLocksFindPreviousButton");
-    fServerLocksFindPreviousButton.setMargin(margin);
     fServerLocksFindPreviousButton.addActionListener(findPreviousAction);
 
     fTraceText = (TextArea) findComponent("TraceText");
@@ -215,8 +154,65 @@ public class LocksPanel extends XContainer implements NotificationListener {
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
-    
+
     fAdminClientContext.executorService.execute(new LocksPanelEnabledWorker());
+  }
+
+  private class FindNextHandler implements ActionListener {
+    public void actionPerformed(ActionEvent ae) {
+      doSearch(true);
+    }
+  }
+
+  private class FindPreviousHandler implements ActionListener {
+    public void actionPerformed(ActionEvent ae) {
+      doSearch(false);
+    }
+  }
+
+  private class TraceDepthSpinnerFocusListener extends FocusAdapter {
+    public void focusLost(FocusEvent e) {
+      testSetTraceDepth();
+    }
+  }
+
+  private class TraceDepthChangeTimerHandler implements ActionListener {
+    public void actionPerformed(ActionEvent ae) {
+      testSetTraceDepth();
+    }
+  }
+
+  private class EnablementButtonHandler implements ActionListener {
+    public void actionPerformed(ActionEvent ae) {
+      toggleLocksPanelEnabled();
+    }
+  }
+
+  private class RefreshButtonHandler implements ActionListener {
+    public void actionPerformed(ActionEvent ae) {
+      refresh();
+    }
+  }
+
+  private class LockSelectionHandler implements TreeSelectionListener {
+    public void valueChanged(TreeSelectionEvent e) {
+      resetSelectedLockDetails();
+
+      TreePath treePath = e.getNewLeadSelectionPath();
+      if (treePath == null) return;
+
+      Object[] path = treePath.getPath();
+      LockSpecNode lockSpecNode = (LockSpecNode) path[1];
+      Object last = path[path.length - 1];
+      String text = "";
+      if (last instanceof LockTraceElementNode) {
+        LockTraceElementNode lastNode = (LockTraceElementNode) last;
+        text = lastNode.getConfigText();
+      }
+      fConfigText.setText(text);
+      fConfigLabel.setText(lockSpecNode.toString());
+      populateTraceText(path);
+    }
   }
 
   private class LocksPanelEnabledWorker extends BasicWorker<Boolean> {
@@ -227,35 +223,35 @@ public class LocksPanel extends XContainer implements NotificationListener {
         }
       });
     }
-    
+
     public void finished() {
       Exception e = getException();
-      if(e != null) {
+      if (e != null) {
         fAdminClientContext.log(e);
       } else {
         setLocksPanelEnabled(getResult());
       }
     }
   }
-  
+
   private class NewConnectionContextWorker extends BasicWorker<Boolean> {
     private NewConnectionContextWorker() {
       super(new Callable<Boolean>() {
         public Boolean call() throws Exception {
           fConnectionContext = fLocksNode.getConnectionContext();
           fLockStats = (LockStatisticsMonitorMBean) MBeanServerInvocationHandler
-              .newProxyInstance(fConnectionContext.mbsc, L2MBeanNames.LOCK_STATISTICS, LockStatisticsMonitorMBean.class,
-                                false);
+              .newProxyInstance(fConnectionContext.mbsc, L2MBeanNames.LOCK_STATISTICS,
+                                LockStatisticsMonitorMBean.class, false);
           fLastTraceDepth = fLockStats.getTraceDepth();
           fConnectionContext.addNotificationListener(L2MBeanNames.LOCK_STATISTICS, LocksPanel.this);
           return fLockStats.isLockStatisticsEnabled();
         }
       });
     }
-    
+
     protected void finished() {
       Exception e = getException();
-      if(e != null) {
+      if (e != null) {
         fAdminClientContext.log(e);
       } else {
         ((SpinnerNumberModel) fTraceDepthSpinner.getModel()).setValue(Integer.valueOf(fLastTraceDepth));
@@ -263,9 +259,13 @@ public class LocksPanel extends XContainer implements NotificationListener {
       }
     }
   }
-  
+
   void newConnectionContext() {
     fAdminClientContext.executorService.execute(new NewConnectionContextWorker());
+  }
+
+  boolean isProfiling() {
+    return fEnableButton.isSelected();
   }
 
   private boolean testSelectMatch(JTable table, String text, int row) {
@@ -326,6 +326,12 @@ public class LocksPanel extends XContainer implements NotificationListener {
     }
   }
 
+  private void resetSelectedLockDetails() {
+    fConfigText.setText("");
+    fConfigLabel.setText("");
+    fTraceText.setText("");
+  }
+
   private void populateTraceText(Object[] nodePath) {
     String nl = System.getProperty("line.separator");
     fTraceText.setText("");
@@ -346,12 +352,12 @@ public class LocksPanel extends XContainer implements NotificationListener {
         }
       });
     }
-      
+
     protected void finished() {
       // Wait for JMX notification to update display
     }
   }
-  
+
   private void toggleLocksPanelEnabled() {
     boolean lockStatsEnabled = fLocksPanelEnabled ? false : true;
     fAdminClientContext.executorService.execute(new LockStatsStateWorker(lockStatsEnabled));
@@ -380,7 +386,7 @@ public class LocksPanel extends XContainer implements NotificationListener {
 
   class LockSpecsGetter extends BasicWorker<Collection<LockSpec>> {
     private String fRefreshButtonLabel;
-   
+
     LockSpecsGetter(String refreshButtonLabel) {
       super(new Callable<Collection<LockSpec>>() {
         public Collection<LockSpec> call() throws Exception {
@@ -396,7 +402,7 @@ public class LocksPanel extends XContainer implements NotificationListener {
         AdminClient.getContext().log(e);
       } else {
         Collection<LockSpec> lockSpecs = getResult();
-        
+
         fTreeTable.setTreeTableModel(fTreeTableModel = new LockTreeTableModel(lockSpecs));
         fTreeTable.sort();
 
@@ -408,7 +414,7 @@ public class LocksPanel extends XContainer implements NotificationListener {
       }
     }
   }
-  
+
   private int getSpinnerValue(JSpinner spinner) {
     try {
       spinner.commitEdit();
@@ -481,7 +487,7 @@ public class LocksPanel extends XContainer implements NotificationListener {
 
   public void tearDown() {
     super.tearDown();
-    
+
     try {
       fConnectionContext.addNotificationListener(L2MBeanNames.LOCK_STATISTICS, this);
     } catch (Exception e) {

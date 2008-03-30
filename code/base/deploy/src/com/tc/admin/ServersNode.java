@@ -68,6 +68,10 @@ public class ServersNode extends ComponentNode {
     return m_serversPanel;
   }
 
+  public ConnectionContext getConnectionContext() {
+    return m_clusterNode.getConnectionContext();
+  }
+  
   void newConnectionContext() {
     /**
      * what if the new active has a different config with a different set of cluster members? if so, we need to
@@ -81,6 +85,10 @@ public class ServersNode extends ComponentNode {
     }
   }
 
+  void selectClientNode(String remoteAddr) {
+    m_clusterNode.selectClientNode(remoteAddr);
+  }
+  
   /**
    * Return any credentials that were used when the initial cluster server was connected.
    */

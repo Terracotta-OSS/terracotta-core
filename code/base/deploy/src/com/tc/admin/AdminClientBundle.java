@@ -12,7 +12,7 @@ public class AdminClientBundle extends ListResourceBundle {
   }
 
   static final Object[][] contents = {
-      { "stats.recorder.node.label", "Statistics recorder" },
+      { "stats.recorder.node.label", "Cluster statistics recorder" },
 
       { "sessions", "Sessions" },
 
@@ -72,6 +72,8 @@ public class AdminClientBundle extends ListResourceBundle {
 
       { "dso.locks", "Lock profiler" },
 
+      { "dso.locks.profiling.suffix", " (enabled)" },
+
       {
       "dso.locks.column.headings",
       new String[] { "Lock", "<html>Times<br>Requested</html>", "<html>Times<br>Hopped</html>",
@@ -114,6 +116,8 @@ public class AdminClientBundle extends ListResourceBundle {
 
       { "dso.pending.transaction.count", "Pending Transaction Count" },
 
+      { "dso.pending.client.transactions", "Pending Client Transactions" },
+      
       { "dso.root.retrieving", "Retrieving new DSO root..." },
 
       { "dso.root.new", "Added new DSO root: " },

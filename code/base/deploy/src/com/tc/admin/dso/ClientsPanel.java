@@ -16,9 +16,9 @@ public class ClientsPanel extends XContainer {
   protected ClientsNode       m_clientsNode;
   protected ClientsTable      m_table;
 
-  public ClientsPanel(ConnectionContext cc, ClientsNode clientsNode, DSOClient[] clients) {
+  public ClientsPanel(ClientsNode clientsNode, DSOClient[] clients) {
     super(new BorderLayout());
-    m_cc = cc;
+    m_cc = clientsNode.getConnectionContext();
     setNode(m_clientsNode = clientsNode);
     add(new JScrollPane(m_table = new ClientsTable(clients)));
   }
@@ -27,6 +27,10 @@ public class ClientsPanel extends XContainer {
     m_table.setClients(clients);
   }
 
+  public boolean haveAnyClients() {
+    return m_table.getModel().getRowCount() > 0;
+  }
+  
   public void add(DSOClient client) {
     m_table.addClient(client);
   }

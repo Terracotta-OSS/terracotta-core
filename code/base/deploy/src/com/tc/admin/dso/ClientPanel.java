@@ -32,36 +32,37 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableCellRenderer;
 
 public class ClientPanel extends XContainer implements NotificationListener {
-  private AdminClientContext        m_acc;
-  protected DSOClient               m_client;
-  private L1InfoMBean               m_l1InfoBean;
+  protected AdminClientContext        m_acc;
+  protected ClientNode                m_clientNode;
+  protected DSOClient                 m_client;
+  protected L1InfoMBean               m_l1InfoBean;
 
-  private PropertyTable             m_propertyTable;
+  protected PropertyTable             m_propertyTable;
 
-  private TextArea                  m_environmentTextArea;
-  private TextArea                  m_configTextArea;
+  protected TextArea                  m_environmentTextArea;
+  protected TextArea                  m_configTextArea;
 
-  private CheckBox                  m_classCheckBox;
-  private CheckBox                  m_locksCheckBox;
-  private CheckBox                  m_transientRootCheckBox;
-  private CheckBox                  m_rootsCheckBox;
-  private CheckBox                  m_distributedMethodsCheckBox;
+  protected CheckBox                  m_classCheckBox;
+  protected CheckBox                  m_locksCheckBox;
+  protected CheckBox                  m_transientRootCheckBox;
+  protected CheckBox                  m_rootsCheckBox;
+  protected CheckBox                  m_distributedMethodsCheckBox;
 
-  private CheckBox                  m_nonPortableDumpCheckBox;
-  private CheckBox                  m_lockDebugCheckBox;
-  private CheckBox                  m_fieldChangeDebugCheckBox;
-  private CheckBox                  m_waitNotifyDebugCheckBox;
-  private CheckBox                  m_distributedMethodDebugCheckBox;
-  private CheckBox                  m_newObjectDebugCheckBox;
+  protected CheckBox                  m_nonPortableDumpCheckBox;
+  protected CheckBox                  m_lockDebugCheckBox;
+  protected CheckBox                  m_fieldChangeDebugCheckBox;
+  protected CheckBox                  m_waitNotifyDebugCheckBox;
+  protected CheckBox                  m_distributedMethodDebugCheckBox;
+  protected CheckBox                  m_newObjectDebugCheckBox;
 
-  private CheckBox                  m_autoLockDetailsCheckBox;
-  private CheckBox                  m_callerCheckBox;
-  private CheckBox                  m_fullStackCheckBox;
+  protected CheckBox                  m_autoLockDetailsCheckBox;
+  protected CheckBox                  m_callerCheckBox;
+  protected CheckBox                  m_fullStackCheckBox;
 
-  private ActionListener            m_loggingChangeHandler;
-  private HashMap<String, CheckBox> m_loggingControlMap;
+  protected ActionListener            m_loggingChangeHandler;
+  protected HashMap<String, CheckBox> m_loggingControlMap;
 
-  public ClientPanel(DSOClient client) {
+  public ClientPanel(ClientNode clientNode) {
     super();
 
     m_acc = AdminClient.getContext();
@@ -95,7 +96,7 @@ public class ClientPanel extends XContainer implements NotificationListener {
 
     m_loggingControlMap = new HashMap<String, CheckBox>();
 
-    setClient(client);
+    setClient(clientNode.getClient());
   }
 
   public void setClient(DSOClient client) {
@@ -304,6 +305,7 @@ public class ClientPanel extends XContainer implements NotificationListener {
     super.tearDown();
 
     m_acc = null;
+    m_clientNode = null;
     m_client = null;
 
     m_propertyTable = null;

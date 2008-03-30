@@ -503,6 +503,7 @@ public class StatsRecorderPanel extends XContainer {
   }
 
   private String getSelectedSessionId() {
+    if(m_statsSessionsList == null) return null;
     StatsSessionListItem item = (StatsSessionListItem) m_statsSessionsList.getSelectedValue();
     return item != null ? item.getSessionId() : null;
   }

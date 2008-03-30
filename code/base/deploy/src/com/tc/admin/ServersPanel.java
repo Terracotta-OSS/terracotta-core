@@ -12,16 +12,20 @@ import com.tc.admin.common.XObjectTable;
 import javax.swing.table.TableColumnModel;
 
 public class ServersPanel extends XContainer {
-  private ServersNode             m_serversNode;
-  private XObjectTable            m_clusterMemberTable;
-  private ClusterMemberTableModel m_clusterMemberTableModel;
- 
+  protected AdminClientContext      m_acc;
+  protected ServersNode             m_serversNode;
+  protected ConnectionContext       m_connectionContext;
+  protected XObjectTable            m_clusterMemberTable;
+  protected ClusterMemberTableModel m_clusterMemberTableModel;
+
   public ServersPanel(ServersNode serversNode) {
     super();
 
+    m_acc = AdminClient.getContext();
     m_serversNode = serversNode;
+    m_connectionContext = serversNode.getConnectionContext();
 
-    load((ContainerResource) AdminClient.getContext().topRes.getComponent("ServersPanel"));
+    load((ContainerResource) m_acc.topRes.getComponent("ServersPanel"));
 
     m_clusterMemberTable = (XObjectTable) findComponent("ClusterMembersTable");
     m_clusterMemberTableModel = new ClusterMemberTableModel();
@@ -29,21 +33,23 @@ public class ServersPanel extends XContainer {
     TableColumnModel colModel = m_clusterMemberTable.getColumnModel();
     colModel.getColumn(0).setCellRenderer(new ClusterMemberStatusRenderer());
     colModel.getColumn(2).setCellRenderer(new XObjectTable.PortNumberRenderer());
-    
-    for(int i = 0; i < m_serversNode.getChildCount(); i++) {
-      ServerNode serverNode = (ServerNode)m_serversNode.getChildAt(i);
+
+    for (int i = 0; i < m_serversNode.getChildCount(); i++) {
+      ServerNode serverNode = (ServerNode) m_serversNode.getChildAt(i);
       m_clusterMemberTableModel.addClusterMember(serverNode.getServerConnectionManager());
     }
   }
-  
+
   void serverStateChanged(ServerNode serverNode) {
     m_clusterMemberTable.repaint();
   }
-  
+
   public void tearDown() {
     super.tearDown();
-    
+
+    m_acc = null;
     m_serversNode = null;
+    m_connectionContext = null;
     m_clusterMemberTable = null;
     m_clusterMemberTableModel = null;
   }

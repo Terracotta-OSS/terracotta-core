@@ -6,29 +6,30 @@ package com.tc.admin.dso;
 
 import org.dijon.Component;
 
-import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.ComponentNode;
 import com.tc.management.beans.l1.L1InfoMBean;
 
 public class ClientNode extends ComponentNode {
+  protected ClientsNode            m_clientsNode;
   protected DSOClient              m_client;
   protected ClientPanel            m_clientPanel;
   protected ClientThreadDumpsNode  m_threadDumpsNode;
   protected ClientRuntimeStatsNode m_runtimeStatsNode;
 
-  public ClientNode(ConnectionContext cc, DSOClient client) {
+  public ClientNode(ClientsNode clientsNode, DSOClient client) {
     super(client.getRemoteAddress());
+    m_clientsNode = clientsNode;
     m_client = client;
     addChildren();
   }
 
-  protected ClientPanel createClientPanel(DSOClient client) {
-    return new ClientPanel(client);
+  protected ClientPanel createClientPanel() {
+    return new ClientPanel(this);
   }
 
   public Component getComponent() {
     if (m_clientPanel == null) {
-      m_clientPanel = createClientPanel(m_client);
+      m_clientPanel = createClientPanel();
     }
     return m_clientPanel;
   }
@@ -62,6 +63,7 @@ public class ClientNode extends ComponentNode {
 
     super.tearDown();
 
+    m_clientsNode = null;
     m_client = null;
     m_threadDumpsNode = null;
     m_runtimeStatsNode = null;

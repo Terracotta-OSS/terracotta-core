@@ -832,6 +832,10 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
     return new ClientsNode(this);
   }
 
+  public void selectClientNode(String remoteAddr) {
+    m_clientsNode.selectClientNode(remoteAddr);
+  }
+  
   void handlePassiveUninitialized() {
     try {
       tryAddChildren();

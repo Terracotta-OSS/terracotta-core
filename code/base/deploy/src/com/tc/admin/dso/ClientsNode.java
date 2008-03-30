@@ -70,33 +70,37 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
       } else {
         m_clients = getResult();
         for (int i = 0; i < m_clients.length; i++) {
-          addClientNode(createClientNode(m_cc, m_clients[i]));
+          addClientNode(createClientNode(m_clients[i]));
         }
         updateLabel();
       }
     }
   }
 
-  protected ClientNode createClientNode(ConnectionContext cc, DSOClient client) {
-    return new ClientNode(cc, client);
+  protected ClientNode createClientNode(DSOClient client) {
+    return new ClientNode(this, client);
   }
 
-  protected ClientsPanel createClientsPanel(ConnectionContext cc, ClientsNode clientsNode, DSOClient[] clients) {
-    return new ClientsPanel(cc, this, clients);
+  protected ClientsPanel createClientsPanel(ClientsNode clientsNode, DSOClient[] clients) {
+    return new ClientsPanel(this, clients);
   }
 
   public Component getComponent() {
     if (m_clientsPanel == null) {
-      m_clientsPanel = createClientsPanel(m_cc, ClientsNode.this, m_clients);
+      m_clientsPanel = createClientsPanel(ClientsNode.this, m_clients);
     }
     return m_clientsPanel;
   }
 
+  public ConnectionContext getConnectionContext() {
+    return m_clusterNode.getConnectionContext();
+  }
+  
   public void newConnectionContext() {
     init();
   }
 
-  void selectClientNode(String remoteAddr) {
+  public void selectClientNode(String remoteAddr) {
     int childCount = getChildCount();
     for (int i = 0; i < childCount; i++) {
       ClientNode ctn = (ClientNode) getChildAt(i);
@@ -164,7 +168,7 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
 
       list.add(client);
       m_clients = list.toArray(new DSOClient[0]);
-      addClientNode(createClientNode(m_cc, client));
+      addClientNode(createClientNode(client));
 
       m_acc.setStatus(m_acc.getMessage("dso.client.new") + client);
     } else if (DSOMBean.CLIENT_DETACHED.equals(type)) {
