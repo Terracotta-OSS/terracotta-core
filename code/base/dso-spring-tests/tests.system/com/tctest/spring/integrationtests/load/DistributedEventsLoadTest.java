@@ -19,7 +19,7 @@ import java.util.List;
 import junit.framework.Test;
 
 public class DistributedEventsLoadTest extends SpringDeploymentTest {
-  private static final boolean DEBUG                         = false;
+  private static final boolean DEBUG                         = true;
   private static final int     NUM_ITERATION                 = 500;
 
   private static final String  REMOTE_SERVICE_NAME           = "EventManager";
