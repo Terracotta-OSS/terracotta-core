@@ -10,6 +10,7 @@ import com.tc.util.concurrent.CopyOnWriteArrayMap;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,7 +28,7 @@ import java.util.Map.Entry;
  * We have to fix it so that GIDs are assigned just before applies and are somehow broadcasted to passive too and
  * passive has to apply the transactions in that order. Right now this class is purely experimental.
  */
-public class MetaServerTransactionSequencerImpl implements ServerTransactionSequencer {
+public class MetaServerTransactionSequencerImpl implements ServerTransactionSequencer, ServerTransactionSequencerStats {
 
   private CopyOnWriteArrayMap txnSequencers = new CopyOnWriteArrayMap(new CopyOnWriteArrayMap.TypedArrayFactory() {
                                               public Object[] createTypedArray(int size) {
@@ -104,4 +105,66 @@ public class MetaServerTransactionSequencerImpl implements ServerTransactionSequ
   int getTxnSequencersCount() {
     return txnSequencers.size();
   }
+
+  public synchronized String dumpBlockedQ() {
+    StringBuffer dumpBuff = new StringBuffer();
+    int i = 0;
+    for(Enumeration enumeration = txnSequencers.elements(); enumeration.hasMoreElements();) {
+      ServerTransactionSequencerImpl stsi = (ServerTransactionSequencerImpl)enumeration.nextElement();
+      dumpBuff.append("MetaServerTransactionSequencerImpl.ServerTransactionSequencerImpl[" + i +"]");
+      dumpBuff.append(stsi.dumpBlockedQ());
+       i++;
+    }
+    return dumpBuff.toString();
+  }
+
+  public synchronized String dumpObjects() {
+    StringBuffer dumpBuff = new StringBuffer();
+    int i = 0;
+    for(Enumeration enumeration = txnSequencers.elements(); enumeration.hasMoreElements();) {
+      ServerTransactionSequencerImpl stsi = (ServerTransactionSequencerImpl)enumeration.nextElement();
+      dumpBuff.append("MetaServerTransactionSequencerImpl.ServerTransactionSequencerImpl[" + i +"]");
+      dumpBuff.append(stsi.dumpObjects());
+       i++;
+    }
+    return dumpBuff.toString();
+  }
+
+  public synchronized String dumpPendingTxns() {
+    StringBuffer dumpBuff = new StringBuffer();
+    int i = 0;
+    for(Enumeration enumeration = txnSequencers.elements(); enumeration.hasMoreElements();) {
+      ServerTransactionSequencerImpl stsi = (ServerTransactionSequencerImpl)enumeration.nextElement();
+      dumpBuff.append("MetaServerTransactionSequencerImpl.ServerTransactionSequencerImpl[" + i +"]");
+      dumpBuff.append(stsi.dumpPendingTxns());
+       i++;
+    }
+    return dumpBuff.toString();
+  }
+
+  public synchronized String dumpTxnQ() {
+    StringBuffer dumpBuff = new StringBuffer();
+    int i = 0;
+    for(Enumeration enumeration = txnSequencers.elements(); enumeration.hasMoreElements();) {
+      ServerTransactionSequencerImpl stsi = (ServerTransactionSequencerImpl)enumeration.nextElement();
+      dumpBuff.append("MetaServerTransactionSequencerImpl.ServerTransactionSequencerImpl[" + i +"]");
+      dumpBuff.append(stsi.dumpTxnQ());
+       i++;
+    }
+    return dumpBuff.toString();
+  }
+
+  public String reconcileStatus() {
+    StringBuffer dumpBuff = new StringBuffer();
+    int i = 0;
+    for(Enumeration enumeration = txnSequencers.elements(); enumeration.hasMoreElements();) {
+      ServerTransactionSequencerImpl stsi = (ServerTransactionSequencerImpl)enumeration.nextElement();
+      dumpBuff.append("MetaServerTransactionSequencerImpl.ServerTransactionSequencerImpl[" + i +"]");
+      dumpBuff.append(stsi.reconcileStatus());
+       i++;
+    }
+    return dumpBuff.toString();
+  }
+  
+  
 }
