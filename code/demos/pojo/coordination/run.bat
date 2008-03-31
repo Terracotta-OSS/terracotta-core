@@ -31,7 +31,7 @@ if not defined JAVA_HOME set JAVA_HOME="%TC_INSTALL_DIR%\jre"
 set JAVA_HOME="%JAVA_HOME:"=%"
 
 set TC_CONFIG_PATH=tc-config.xml
-call %TC_INSTALL_DIR%\bin\dso-env.bat -q "%TC_CONFIG%"
+call %TC_INSTALL_DIR%\bin\dso-env.bat -q --config "%TC_CONFIG%"
 set CLASSPATH=classes;lib\concurrent-1.3.4.jar
 set JAVA_OPTS=%TC_JAVA_OPTS% %JAVA_OPTS%
 start "coordination" %JAVA_HOME%\bin\java %JAVA_OPTS% -cp %CLASSPATH% demo.coordination.Main %*

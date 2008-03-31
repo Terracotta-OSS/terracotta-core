@@ -33,7 +33,7 @@ if not defined JAVA_HOME set JAVA_HOME="%TC_INSTALL_DIR%\jre"
 set JAVA_HOME="%JAVA_HOME:"=%"
 
 set TC_CONFIG_PATH=tc-config.xml
-call %TC_INSTALL_DIR%\bin\dso-env.bat -q "%TC_CONFIG%"
+call %TC_INSTALL_DIR%\bin\dso-env.bat -q --config "%TC_CONFIG%"
 set OPTS=%TC_JAVA_OPTS% -Dcom.sun.management.jmxremote
 set OPTS=%OPTS% -Dcom.sun.management.jmxremote.port=8092
 set OPTS=%OPTS% -Dcom.sun.management.jmxremote.authenticate=false

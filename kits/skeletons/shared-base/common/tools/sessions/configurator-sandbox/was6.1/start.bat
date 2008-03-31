@@ -38,7 +38,7 @@ if not exist %JAVA_HOME% (
 )
 
 set TC_CONFIG_PATH=%WAS_SANDBOX%\tc-config.xml
-call %TC_INSTALL_DIR%\bin\dso-env.bat -q "%TC_CONFIG%"
+call %TC_INSTALL_DIR%\bin\dso-env.bat -q --config "%TC_CONFIG%"
 if %ERRORLEVEL% neq 0 goto end
 
 if ""%2"" == ""nodso"" (

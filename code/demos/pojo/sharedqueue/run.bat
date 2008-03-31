@@ -31,7 +31,7 @@ if not defined JAVA_HOME set JAVA_HOME="%TC_INSTALL_DIR%\jre"
 set JAVA_HOME="%JAVA_HOME:"=%"
 
 set TC_CONFIG_PATH=tc-config.xml
-call %TC_INSTALL_DIR%\bin\dso-env.bat -q "%TC_CONFIG%"
+call %TC_INSTALL_DIR%\bin\dso-env.bat -q --config "%TC_CONFIG%"
 set JAVA_OPTS=%TC_JAVA_OPTS% -Dcom.sun.management.jmxremote %JAVA_OPTS%
 set CLASSPATH=classes
 set CLASSPATH=%CLASSPATH%;lib\jetty-6.1.1.jar

@@ -31,7 +31,7 @@ if not defined JAVA_HOME set JAVA_HOME="%TC_INSTALL_DIR%\jre"
 set JAVA_HOME="%JAVA_HOME:"=%"
 
 set TC_CONFIG_PATH=tc-config.xml
-call %TC_INSTALL_DIR%\bin\dso-env.bat -q "%TC_CONFIG%"
+call %TC_INSTALL_DIR%\bin\dso-env.bat -q --config "%TC_CONFIG%"
 set OPTS=%TC_JAVA_OPTS% -Djava.awt.Window.locationByPlatform=true
 set JAVA_OPTS=%OPTS% %JAVA_OPTS%
 start "chatter" /B %JAVA_HOME%\bin\java %JAVA_OPTS% -cp classes demo.chatter.Main %*
