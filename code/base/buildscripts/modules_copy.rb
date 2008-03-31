@@ -27,7 +27,7 @@ class BuildSubtree
   # Copies the native libraries, if any, from this build subtree into the given
   # destination directory.
   def copy_native_runtime_libraries(destdir, ant, build_environment, excludes='')
-      copy_directories_to(destdir, subtree_only_native_library_roots(build_environment), excludes)
+      copy_directories_to(destdir, subtree_only_native_library_roots(build_environment), ant, excludes)
   end
 
   private
