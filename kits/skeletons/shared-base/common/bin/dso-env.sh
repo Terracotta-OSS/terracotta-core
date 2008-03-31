@@ -23,10 +23,25 @@ if test \! -d "${JAVA_HOME}"; then
   exit 2
 fi
 
-TC_INSTALL_DIR=`dirname "$0"`/..
+if test "$1" = "-q" || test -n "${TC_INSTALL_DIR}"; then
+  if test -z "${TC_INSTALL_DIR}"; then
+    echo "Error: When the -q option is specified, I expect that"
+    echo "the environment variable TC_INSTALL_DIR is set so that I"
+    echo "can locate your Terracotta installation."
+    exit 1
+  fi
+  if test "$1" = "-q"; then
+    shift
+    __DSO_ENV_QUIET="true"
+  fi
+else
+  TC_INSTALL_DIR=`dirname "$0"`/..
+fi
 
-test "$1" = "-q" && shift && __DSO_ENV_QUIET="true"
-(test "$1" = "-f" || test "$1" = "--config") && shift && TC_CONFIG_PATH="$1"
+if (test "$1" = "-f") || (test "$1" = "--config"); then
+  shift
+  TC_CONFIG_PATH="$1"
+fi
 
 . "${TC_INSTALL_DIR}/bin/boot-jar-path.sh"
 
@@ -38,8 +53,7 @@ if $cygwin; then
 fi
 
 TC_JAVA_OPTS="-Xbootclasspath/p:${DSO_BOOT_JAR} -Dtc.install-root=${TC_INSTALL_DIR}"
-
-test "$TC_CONFIG_PATH" && TC_JAVA_OPTS="${TC_JAVA_OPTS} -Dtc.config=${TC_CONFIG_PATH}" && shift
+ 
+test "${TC_CONFIG_PATH}" && TC_JAVA_OPTS="${TC_JAVA_OPTS} -Dtc.config=${TC_CONFIG_PATH}" 
 test "${TC_SERVER}" && TC_JAVA_OPTS="${TC_JAVA_OPTS} -Dtc.server=${TC_SERVER}"
-TC_JAVA_OPTS="${TC_JAVA_OPTS} $*"
 test -z "${__DSO_ENV_QUIET}" && echo "${TC_JAVA_OPTS}"
