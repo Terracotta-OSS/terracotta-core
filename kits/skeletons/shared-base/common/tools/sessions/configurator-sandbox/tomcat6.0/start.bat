@@ -41,7 +41,7 @@ rem --------------------------------------------------------------------
 if "%2" == "nodso" goto runCatalina
 
 set TC_CONFIG_PATH=%SANDBOX%\tomcat6.0\tc-config.xml
-call %TC_INSTALL_DIR%\bin\dso-env.bat -q --config "%TC_CONFIG%"
+call %TC_INSTALL_DIR%\bin\dso-env.bat -q "%TC_CONFIG%"
 
 if "%EXITFLAG%"=="TRUE" goto end
 

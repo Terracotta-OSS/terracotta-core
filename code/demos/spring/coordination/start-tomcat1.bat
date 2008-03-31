@@ -33,7 +33,7 @@ if not defined JAVA_HOME set JAVA_HOME="%TC_INSTALL_DIR%\jre"
 set JAVA_HOME="%JAVA_HOME:"=%"
 
 set TC_CONFIG_PATH=tc-config.xml
-call %TC_INSTALL_DIR%\bin\dso-env.bat -q --config "%TC_CONFIG%"
+call %TC_INSTALL_DIR%\bin\dso-env.bat -q "%TC_CONFIG%"
 set JAVA_OPTS=%TC_JAVA_OPTS% -Dcounter.log.prefix="CounterService-Tomcat-Node-1:" %JAVA_OPTS%
 set CATALINA_BASE=tomcat1
 start "terracotta for spring: thread coordination sample: tomcat server node 1" %CATALINA_HOME%\bin\catalina.bat run
