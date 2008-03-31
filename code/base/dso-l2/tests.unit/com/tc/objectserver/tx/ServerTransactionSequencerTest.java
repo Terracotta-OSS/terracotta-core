@@ -46,10 +46,6 @@ public class ServerTransactionSequencerTest extends TCTestCase {
   private int                            start;
   private GlobalTransactionIDGenerator   gidGenerator;
 
-  public ServerTransactionSequencerTest() {
-    disableAllUntil("2008-04-15");
-  }
-  
   public void setUp() throws Exception {
     txnID = 100;
     sqID = 100;
@@ -107,27 +103,8 @@ public class ServerTransactionSequencerTest extends TCTestCase {
     // No more txns
     assertNull(sequencer.getNextTxnLookupContextToProcess());
   }
-
-  // Test 4
-  // txn goes pending - intersecting set
-  public void testPendingJointAtLocksTxn() throws Exception {
-    List txns = createIntersectingLocksTxns(5);
-    sequencer.addTransactionLookupContexts(createTxnLookupContexts(txns));
-    ServerTransaction t1 = sequencer.getNextTxnLookupContextToProcess().getTransaction();
-    assertNotNull(t1);
-    // Make it pending
-    sequencer.makePending(t1);
-    assertTrue(sequencer.isPending(txns));
-    txns.remove(t1);
-
-    // Since locks are common no txn should be available
-    assertNull(sequencer.getNextTxnLookupContextToProcess());
-    assertTrue(sequencer.isPending(Arrays.asList(new Object[] { t1 })));
-    sequencer.makeUnpending(t1);
-    assertFalse(sequencer.isPending(Arrays.asList(new Object[] { t1 })));
-    // Rest of the txns
-    assertEquals(txns, getAllTxnsPossible());
-  }
+  
+  // Test 4 - Removed it is not valid anymore
 
   // Test 5
   // txn goes pending - intersecting set
@@ -151,7 +128,7 @@ public class ServerTransactionSequencerTest extends TCTestCase {
   }
 
   // Test 6
-  // txn goes pending - intersecting set
+  // txn goes pending - intersecting set - Note : Locks are not considered anymore.
   public void testPendingJointAtBothLocksAndObjectsTxn() throws Exception {
     List txns = createIntersectingLocksObjectsTxns(5);
     sequencer.addTransactionLookupContexts(createTxnLookupContexts(txns));
@@ -254,60 +231,6 @@ public class ServerTransactionSequencerTest extends TCTestCase {
     Assert.assertEquals(txn4, shouldBe4);
   }
 
-  public void testOrderingByLock() {
-    List txns = new ArrayList();
-
-    int oid = 0;
-
-    ServerTransaction txn1 = new ServerTransactionImpl(gidGenerator, new TxnBatchID(batchID), new TransactionID(1),
-                                                       new SequenceID(sqID++), createLocks(1, 1), clientID,
-                                                       createDNAs(oid, oid++), new ObjectStringSerializer(),
-                                                       Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                       DmiDescriptor.EMPTY_ARRAY, 1);
-
-    ServerTransaction txn2 = new ServerTransactionImpl(gidGenerator, new TxnBatchID(batchID), new TransactionID(2),
-                                                       new SequenceID(sqID++), createLocks(2, 2), clientID,
-                                                       createDNAs(oid, oid++), new ObjectStringSerializer(),
-                                                       Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                       DmiDescriptor.EMPTY_ARRAY, 1);
-
-    ServerTransaction txn3 = new ServerTransactionImpl(gidGenerator, new TxnBatchID(batchID), new TransactionID(3),
-                                                       new SequenceID(sqID++), createLocks(2, 3), clientID,
-                                                       createDNAs(oid, oid++), new ObjectStringSerializer(),
-                                                       Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                       DmiDescriptor.EMPTY_ARRAY, 1);
-
-    ServerTransaction txn4 = new ServerTransactionImpl(gidGenerator, new TxnBatchID(batchID), new TransactionID(4),
-                                                       new SequenceID(sqID++), createLocks(1, 2), clientID,
-                                                       createDNAs(oid, oid++), new ObjectStringSerializer(),
-                                                       Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                       DmiDescriptor.EMPTY_ARRAY, 1);
-
-    txns.add(txn1);
-    txns.add(txn2);
-    txns.add(txn3);
-    txns.add(txn4);
-    sequencer.addTransactionLookupContexts(createTxnLookupContexts(txns));
-
-    sequencer.makePending(sequencer.getNextTxnLookupContextToProcess().getTransaction());
-    sequencer.makePending(sequencer.getNextTxnLookupContextToProcess().getTransaction());
-
-    Object o;
-    o = sequencer.getNextTxnLookupContextToProcess();
-    Assert.assertNull(o);
-    o = sequencer.getNextTxnLookupContextToProcess();
-    Assert.assertNull(o);
-
-    sequencer.makeUnpending(txn2);
-    sequencer.makeUnpending(txn1);
-
-    ServerTransaction shouldBe3 = sequencer.getNextTxnLookupContextToProcess().getTransaction();
-    ServerTransaction shouldBe4 = sequencer.getNextTxnLookupContextToProcess().getTransaction();
-
-    Assert.assertEquals(txn3, shouldBe3);
-    Assert.assertEquals(txn4, shouldBe4);
-  }
-
   public void testRandom() {
     for (int i = 0; i < 100; i++) {
       System.err.println("Running testRandom : " + i);
@@ -329,7 +252,6 @@ public class ServerTransactionSequencerTest extends TCTestCase {
   }
 
   // XXX: multi-threaded version of this?
-  // XXX: add cases with locks in common between TXNs
   private void doRandom() {
     final long seed = new SecureRandom().nextLong();
     System.err.println("seed is " + seed);
