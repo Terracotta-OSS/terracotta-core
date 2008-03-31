@@ -104,6 +104,13 @@ modules:
       dependencies:
         - common
         - common-api
+  - sigarstats:
+      options:
+        jdk: J2SE-1.4
+      dependencies:
+        - common
+        - common-api
+        - dso-statistics-api
   - dso-common:
       options:
         jdk: J2SE-1.4
@@ -278,6 +285,7 @@ modules:
         - dso-statistics-api
         - linked-child-process
         - management
+        - sigarstats
         - thirdparty
         - thirdparty-api
   - simulator:

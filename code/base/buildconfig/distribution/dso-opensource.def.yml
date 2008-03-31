@@ -95,6 +95,8 @@ bundled_components:
         - dso-spring:
             exclude-runtime-libraries: true
         - dso-statistics-api
+        - sigarstats:
+            exclude-runtime-libraries: true
         - dso-statistics
         - linked-child-process
         - management
