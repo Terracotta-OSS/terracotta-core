@@ -23,13 +23,12 @@ set JAVA_HOME="%JAVA_HOME:"=%"
 if not defined CATALINA_HOME (
   echo CATALINA_HOME must be set to a Tomcat6.0 installation.
   exit 1
-) else (
-  set CATALINA_HOME="%CATALINA_HOME:"=%"
-  
-  if not exist %CATALINA_HOME% (
-    echo CATALINA_HOME %CATALINA_HOME% does not exist.
-    exit 1
-  )
+)
+set CATALINA_HOME="%CATALINA_HOME:"=%"
+
+if not exist %CATALINA_HOME% (
+  echo CATALINA_HOME %CATALINA_HOME% does not exist.
+  exit 1
 )
 
 set CATALINA_BASE=%SANDBOX%\tomcat6.0\%1
