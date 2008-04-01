@@ -46,6 +46,28 @@ public class AtomicLongTestApp extends AbstractTransparentApp {
     getAndAddTesting();
     incrementAndGetTesting();
     decrementAndGetTesting();
+
+    loadTest();
+
+  }
+
+  /**
+   * This method was added to make it likely that some transactions on AtomicLong get folded (DEV-1439)
+   */
+  private void loadTest() throws Exception {
+    clear();
+    initialize();
+
+    int index = barrier.barrier();
+    if (index == 0) {
+      for (int i = 0; i < 5000; i++) {
+        root.getLongValue().incrementAndGet();
+      }
+    }
+
+    barrier.barrier();
+
+    Assert.assertEquals(5010, root.getLongValue().get());
   }
 
   private void clear() throws Exception {
