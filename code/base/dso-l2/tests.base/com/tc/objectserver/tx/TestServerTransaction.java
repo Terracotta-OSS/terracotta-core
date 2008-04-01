@@ -59,7 +59,7 @@ public final class TestServerTransaction implements ServerTransaction {
   }
 
   public SequenceID getClientSequenceID() {
-    throw new ImplementMe();
+    return SequenceID.NULL_ID;
   }
 
   public List getChanges() {

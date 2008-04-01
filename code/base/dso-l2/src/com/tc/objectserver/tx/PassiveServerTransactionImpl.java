@@ -29,10 +29,6 @@ public class PassiveServerTransactionImpl extends ServerTransactionImpl implemen
           dmis, numApplicationTxn);
   }
 
-  public SequenceID getClientSequenceID() {
-    throw new UnsupportedOperationException();
-  }
-
   public DmiDescriptor[] getDmiDescriptors() {
     throw new UnsupportedOperationException();
   }

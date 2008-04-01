@@ -61,7 +61,7 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
   }
 
   public SequenceID getClientSequenceID() {
-    throw new UnsupportedOperationException();
+    return SequenceID.NULL_ID;
   }
 
   public DmiDescriptor[] getDmiDescriptors() {
