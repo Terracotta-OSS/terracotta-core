@@ -40,7 +40,6 @@ import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
 import com.tc.l2.state.StateManagerConfigImpl;
 import com.tc.l2.state.StateManagerImpl;
-import com.tc.lang.TCThreadGroup;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.groups.GroupEventsListener;
@@ -88,15 +87,13 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
 
   private NewHaConfig                          haConfig;
   private final L2TVSConfigurationSetupManager configSetupManager;
-  private final TCThreadGroup                  threadGroup;
 
-  public L2HACoordinator(L2TVSConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
-                         TCLogger consoleLogger, DistributedObjectServer server, StageManager stageManager,
+  public L2HACoordinator(L2TVSConfigurationSetupManager configSetupManager, TCLogger consoleLogger,
+                         DistributedObjectServer server, StageManager stageManager,
                          PersistentMapStore clusterStateStore, ObjectManager objectManager,
                          ServerTransactionManager transactionManager, ServerGlobalTransactionManager gtxm,
                          DSOChannelManager channelManager, NewHaConfig haConfig, MessageRecycler recycler) {
     this.configSetupManager = configSetupManager;
-    this.threadGroup = threadGroup;
     this.consoleLogger = consoleLogger;
     this.server = server;
     this.haConfig = haConfig;
