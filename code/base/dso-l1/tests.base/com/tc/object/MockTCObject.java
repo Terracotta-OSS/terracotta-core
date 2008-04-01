@@ -26,6 +26,7 @@ public class MockTCObject implements TCObject {
   private long         version     = 0;
   private TCClass      tcClazz;
   private boolean      accessed    = false;
+  private boolean      isNew       = false;
 
   public MockTCObject(final ObjectID id, final Object obj) {
     this(id, obj, false, false);
@@ -201,7 +202,11 @@ public class MockTCObject implements TCObject {
   }
 
   public boolean isNew() {
-    return false;
+    return isNew;
+  }
+
+  public void setNew(boolean isNew) {
+    this.isNew = isNew;
   }
 
   public boolean isShared() {
@@ -261,10 +266,10 @@ public class MockTCObject implements TCObject {
   }
 
   public void setNotNew() {
-    throw new ImplementMe();
+    isNew = false;
   }
 
   public void dehydrate(DNAWriter writer) {
-    throw new ImplementMe();
+    //
   }
 }

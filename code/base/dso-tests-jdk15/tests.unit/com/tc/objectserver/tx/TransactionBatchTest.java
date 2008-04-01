@@ -425,6 +425,53 @@ public class TransactionBatchTest extends TestCase {
     assertEquals(4 + startSeq, sequenceGenerator.getCurrentSequence());
   }
 
+  public void testFoldBug1() {
+    // Consider these 3 txns...
+    // (txn1) - Lock1, Obj1(delta)
+    // (txn2) - Lock2, Obj2(new)
+    // (txn3) - Lock1, Obj1(delta), Obj2(delta)
+    //
+    // txn3 cannot be folded into txn1 because it would put the Obj2 delta before the txn that creates it (txn2)
+
+    ObjectStringSerializer serializer = new ObjectStringSerializer();
+    writer = newWriter(serializer, true, 0, 0);
+
+    LockID lid1 = new LockID("1");
+    LockID lid2 = new LockID("2");
+
+    TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL);
+    ClientTransaction txn1 = new ClientTransactionImpl(new TransactionID(101), new NullRuntimeLogger());
+    txn1.setTransactionContext(tc);
+    txn1.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
+
+    tc = new TransactionContextImpl(lid2, TxnType.NORMAL);
+    ClientTransaction txn2 = new ClientTransactionImpl(new TransactionID(102), new NullRuntimeLogger());
+    txn2.setTransactionContext(tc);
+    MockTCObject mtco = new MockTCObject(new ObjectID(2), new Object());
+    mtco.setNew(true);
+    txn2.createObject(mtco);
+
+    tc = new TransactionContextImpl(lid1, TxnType.NORMAL);
+    ClientTransaction txn3 = new ClientTransactionImpl(new TransactionID(101), new NullRuntimeLogger());
+    txn3.setTransactionContext(tc);
+    txn3.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
+    txn3.fieldChanged(new MockTCObject(new ObjectID(2), this), "class", "class.field", ObjectID.NULL_ID, -1);
+
+    SequenceGenerator sequenceGenerator = new SequenceGenerator();
+    final long startSeq = sequenceGenerator.getCurrentSequence();
+
+    boolean folded;
+
+    folded = writer.addTransaction(txn1, sequenceGenerator);
+    assertFalse(folded);
+    assertEquals(1 + startSeq, sequenceGenerator.getCurrentSequence());
+    folded = writer.addTransaction(txn2, sequenceGenerator);
+    assertFalse(folded);
+    assertEquals(2 + startSeq, sequenceGenerator.getCurrentSequence());
+    folded = writer.addTransaction(txn3, sequenceGenerator);
+    assertFalse(folded);
+  }
+
   public void testOrdering() {
     ObjectStringSerializer serializer = new ObjectStringSerializer();
     writer = newWriter(serializer, true, 0, 0);
