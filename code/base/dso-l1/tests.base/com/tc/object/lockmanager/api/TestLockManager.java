@@ -7,7 +7,7 @@ import com.tc.exception.ImplementMe;
 import com.tc.object.lockmanager.impl.GlobalLockInfo;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
-import com.tc.object.tx.WaitInvocation;
+import com.tc.object.tx.TimerSpec;
 import com.tc.text.PrettyPrinter;
 
 
@@ -44,7 +44,7 @@ public class TestLockManager implements ClientLockManager {
     locks.add(new Object[] { id, threadID, new Integer(lockType) });
   }
 
-  public void wait(LockID lockID, ThreadID transactionID, WaitInvocation call, Object waitLock,
+  public void wait(LockID lockID, ThreadID transactionID, TimerSpec call, Object waitLock,
                    WaitListener listener) {
     waitCalls.add(new Object[] { lockID, transactionID, call, waitLock, listener });
   }
@@ -126,7 +126,7 @@ public class TestLockManager implements ClientLockManager {
     throw new ImplementMe();
   }
 
-  public boolean tryLock(LockID id, ThreadID threadID, WaitInvocation timeout, int lockType, String lockObjectType) {
+  public boolean tryLock(LockID id, ThreadID threadID, TimerSpec timeout, int lockType, String lockObjectType) {
     throw new ImplementMe();
   }
 

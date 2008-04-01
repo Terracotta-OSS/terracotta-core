@@ -18,7 +18,7 @@ import com.tc.object.lockmanager.api.WaitContext;
 import com.tc.object.lockmanager.api.WaitLockRequest;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockRequestMessageFactory;
-import com.tc.object.tx.WaitInvocation;
+import com.tc.object.tx.TimerSpec;
 import com.tc.util.Assert;
 
 import java.util.Collection;
@@ -49,7 +49,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     req.send();
   }
 
-  public void tryRequestLock(LockID lockID, ThreadID threadID, WaitInvocation timeout, int lockType, String lockObjectType) {
+  public void tryRequestLock(LockID lockID, ThreadID threadID, TimerSpec timeout, int lockType, String lockObjectType) {
     Assert.assertTrue(LockLevel.isDiscrete(lockType));
     LockRequestMessage req = createRequest();
     req.initializeTryObtainLock(lockID, threadID, timeout, lockType, lockObjectType);
@@ -62,7 +62,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     send(req);
   }
 
-  public void releaseLockWait(LockID lockID, ThreadID threadID, WaitInvocation call) {
+  public void releaseLockWait(LockID lockID, ThreadID threadID, TimerSpec call) {
     LockRequestMessage req = createRequest();
     req.initializeLockReleaseWait(lockID, threadID, call);
     send(req);
@@ -98,7 +98,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     for (Iterator i = waitContext.iterator(); i.hasNext();) {
       WaitLockRequest request = (WaitLockRequest) i.next();
       WaitContext ctxt = new WaitContext(request.lockID(), req.getClientID(), request.threadID(), request.lockLevel(), request.lockType(),
-                                         request.getWaitInvocation());
+                                         request.getTimerSpec());
       req.addWaitContext(ctxt);
     }
 
@@ -111,7 +111,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     for (Iterator i = pendingTryLockRequests.iterator(); i.hasNext();) {
       TryLockRequest request = (TryLockRequest) i.next();
       LockContext ctxt = new TryLockContext(request.lockID(), req.getClientID(), request.threadID(), request
-          .lockLevel(), request.lockType(), request.getWaitInvocation());
+          .lockLevel(), request.lockType(), request.getTimerSpec());
       req.addPendingTryLockContext(ctxt);
     }
 

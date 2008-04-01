@@ -22,7 +22,7 @@ import com.tc.object.lockmanager.api.TryLockRequest;
 import com.tc.object.lockmanager.api.WaitContext;
 import com.tc.object.lockmanager.api.WaitLockRequest;
 import com.tc.object.session.SessionProvider;
-import com.tc.object.tx.WaitInvocation;
+import com.tc.object.tx.TimerSpec;
 import com.tc.objectserver.api.TestSink;
 import com.tc.objectserver.context.LockResponseContext;
 import com.tc.objectserver.lockmanager.api.NotifiedWaiters;
@@ -70,7 +70,7 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
     serverLockManager.unlock(lockID, clientID, threadID);
   }
 
-  public void releaseLockWait(LockID lockID, ThreadID threadID, WaitInvocation call) {
+  public void releaseLockWait(LockID lockID, ThreadID threadID, TimerSpec call) {
     serverLockManager.wait(lockID, clientID, threadID, call, sink);
   }
 
@@ -87,7 +87,7 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
     for (Iterator i = waitContext.iterator(); i.hasNext();) {
       WaitLockRequest request = (WaitLockRequest) i.next();
       WaitContext ctxt = new WaitContext(request.lockID(), clientID, request.threadID(), request.lockLevel(), request.lockType(), request
-          .getWaitInvocation());
+          .getTimerSpec());
       serverWC.add(ctxt);
     }
 
@@ -102,7 +102,7 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
     for (Iterator i = pendingTryLockRequests.iterator(); i.hasNext();) {
       TryLockRequest request = (TryLockRequest) i.next();
       LockContext ctxt = new TryLockContext(request.lockID(), clientID, request.threadID(), request.lockLevel(), request.lockType(),
-                                            request.getWaitInvocation());
+                                            request.getTimerSpec());
       serverPTC.add(ctxt);
     }
 
@@ -154,7 +154,7 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
     for (Iterator i = clientLockManager.addAllWaitersTo(new HashSet()).iterator(); i.hasNext();) {
       WaitLockRequest request = (WaitLockRequest) i.next();
       serverLockManager.reestablishWait(request.lockID(), clientID, request.threadID(), request.lockLevel(), request
-          .getWaitInvocation(), sink);
+          .getTimerSpec(), sink);
     }
 
     for (Iterator i = clientLockManager.addAllPendingLockRequestsTo(new HashSet()).iterator(); i.hasNext();) {
@@ -189,7 +189,7 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
   }
 
   public void tryRequestLock(LockID lockID, ThreadID threadID, int lockType, String lockObjectType) {
-    serverLockManager.tryRequestLock(lockID, clientID, threadID, lockType, lockObjectType, new WaitInvocation(0), sink);
+    serverLockManager.tryRequestLock(lockID, clientID, threadID, lockType, lockObjectType, new TimerSpec(0), sink);
   }
 
   public void interrruptWait(LockID lockID, ThreadID threadID) {
@@ -197,7 +197,7 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
 
   }
 
-  public void tryRequestLock(LockID lockID, ThreadID threadID, WaitInvocation timeout, int lockType, String lockObjectType) {
+  public void tryRequestLock(LockID lockID, ThreadID threadID, TimerSpec timeout, int lockType, String lockObjectType) {
     serverLockManager.tryRequestLock(lockID, clientID, threadID, lockType, lockObjectType, timeout, sink);
   }
 }

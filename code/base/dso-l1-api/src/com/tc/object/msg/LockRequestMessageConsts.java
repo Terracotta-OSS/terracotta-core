@@ -9,8 +9,8 @@ package com.tc.object.msg;
 public interface LockRequestMessageConsts {
 
   /**
-   * Uninitialized time to wait (value=-1)
+   * Uninitialized time interval (value=-1)
    */
-  public final static int UNITIALIZED_WAIT_TIME = -1;
+  public final static int UNITIALIZED_TIME_INTERVAL = -1;
 
 }

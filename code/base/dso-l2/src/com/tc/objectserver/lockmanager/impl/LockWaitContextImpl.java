@@ -7,7 +7,7 @@ import com.tc.async.api.Sink;
 import com.tc.net.groups.NodeID;
 import com.tc.object.lockmanager.api.ServerThreadID;
 import com.tc.object.lockmanager.api.ThreadID;
-import com.tc.object.tx.WaitInvocation;
+import com.tc.object.tx.TimerSpec;
 import com.tc.objectserver.lockmanager.api.LockWaitContext;
 import com.tc.util.Assert;
 
@@ -16,12 +16,12 @@ public class LockWaitContextImpl implements LockWaitContext {
   private final NodeID           nodeID;
   private final ThreadID            threadID;
   private final Sink                lockResponseSink;
-  private final WaitInvocation      call;
+  private final TimerSpec      call;
   private final Lock                lock;
   private long                      timestamp;
   private final int                 lockLevel;
 
-  public LockWaitContextImpl(ServerThreadContext threadContext, Lock lock, WaitInvocation call, int lockLevel,
+  public LockWaitContextImpl(ServerThreadContext threadContext, Lock lock, TimerSpec call, int lockLevel,
                              Sink lockResponseSink) {
     this.lockLevel = lockLevel;
     Assert.assertNoNullElements(new Object[] { threadContext, lock, call, lockResponseSink });
@@ -64,7 +64,7 @@ public class LockWaitContextImpl implements LockWaitContext {
     return threadContext;
   }
 
-  public WaitInvocation getWaitInvocation() {
+  public TimerSpec getTimerSpec() {
     return this.call;
   }
 

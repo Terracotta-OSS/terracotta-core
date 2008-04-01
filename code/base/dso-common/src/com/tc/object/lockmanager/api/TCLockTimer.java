@@ -3,15 +3,15 @@
  */
 package com.tc.object.lockmanager.api;
 
-import com.tc.object.tx.WaitInvocation;
+import com.tc.object.tx.TimerSpec;
 
 import java.util.Timer;
 import java.util.TimerTask;
 
 
-public interface WaitTimer {
+public interface TCLockTimer {
   
-  public TimerTask scheduleTimer(WaitTimerCallback callback, WaitInvocation call, Object callbackObject);
+  public TimerTask scheduleTimer(TimerCallback callback, TimerSpec call, Object callbackObject);
   
   public void shutdown();
 

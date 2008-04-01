@@ -36,7 +36,7 @@ import com.tc.object.logging.InstrumentationLoggerImpl;
 import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.tx.ClientTransactionManager;
-import com.tc.object.tx.WaitInvocation;
+import com.tc.object.tx.TimerSpec;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.object.tx.optimistic.OptimisticTransactionManagerImpl;
 import com.tc.properties.TCProperties;
@@ -341,7 +341,7 @@ public class ManagerImpl implements Manager {
     }
   }
 
-  private boolean tryBegin(String lockID, int type, Object instance, WaitInvocation timeout, TCObject tcobj) {
+  private boolean tryBegin(String lockID, int type, Object instance, TimerSpec timeout, TCObject tcobj) {
     String lockObjectType = instance == null? LockContextInfo.NULL_LOCK_OBJECT_TYPE : instance.getClass().getName();
     
     boolean locked = this.txManager.tryBegin(lockID, timeout, type, lockObjectType);
@@ -352,7 +352,7 @@ public class ManagerImpl implements Manager {
   }
 
   private boolean tryBegin(String lockID, int type, Object instance, TCObject tcobj) {
-    return tryBegin(lockID, type, instance, new WaitInvocation(0), tcobj);
+    return tryBegin(lockID, type, instance, new TimerSpec(0), tcobj);
   }
 
   public void commitVolatile(TCObject tcObject, String fieldName) {
@@ -410,7 +410,7 @@ public class ManagerImpl implements Manager {
 
     if (tco != null) {
       try {
-        WaitInvocation call = new WaitInvocation();
+        TimerSpec call = new TimerSpec();
         if (runtimeLogger.getWaitNotifyDebug()) {
           runtimeLogger.objectWait(call, obj, tco);
         }
@@ -429,7 +429,7 @@ public class ManagerImpl implements Manager {
     TCObject tco = lookupExistingOrNull(obj);
     if (tco != null) {
       try {
-        WaitInvocation call = new WaitInvocation(millis);
+        TimerSpec call = new TimerSpec(millis);
         if (runtimeLogger.getWaitNotifyDebug()) {
           runtimeLogger.objectWait(call, obj, tco);
         }
@@ -449,7 +449,7 @@ public class ManagerImpl implements Manager {
 
     if (tco != null) {
       try {
-        WaitInvocation call = new WaitInvocation(millis, nanos);
+        TimerSpec call = new TimerSpec(millis, nanos);
         if (runtimeLogger.getWaitNotifyDebug()) {
           runtimeLogger.objectWait(call, obj, tco);
         }
@@ -554,13 +554,13 @@ public class ManagerImpl implements Manager {
     TCObject tco = lookupExistingOrNull(obj);
 
     try {
-      WaitInvocation timeout = null;
+      TimerSpec timeout = null;
       if (timeoutInNanos <= 0) {
-        timeout = new WaitInvocation(0);
+        timeout = new TimerSpec(0);
       } else {
         long mills = Util.getMillis(timeoutInNanos);
         int nanos = Util.getNanos(timeoutInNanos, mills);
-        timeout = new WaitInvocation(mills, nanos);
+        timeout = new TimerSpec(mills, nanos);
       }
 
       if (tco != null) {

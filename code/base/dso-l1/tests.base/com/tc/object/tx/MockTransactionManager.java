@@ -96,7 +96,7 @@ public class MockTransactionManager implements ClientTransactionManager {
     }
   }
 
-  public void wait(WaitInvocation call, Object object) {
+  public void wait(TimerSpec call, Object object) {
     throw new ImplementMe();
   }
 
@@ -139,7 +139,7 @@ public class MockTransactionManager implements ClientTransactionManager {
     this.commitCount++;
   }
 
-  public void wait(String lockName, WaitInvocation call, Object object) throws UnlockedSharedObjectException {
+  public void wait(String lockName, TimerSpec call, Object object) throws UnlockedSharedObjectException {
     throw new ImplementMe();
   }
 
@@ -193,7 +193,7 @@ public class MockTransactionManager implements ClientTransactionManager {
     throw new ImplementMe();
   }
 
-  public boolean tryBegin(String lock, WaitInvocation timeout, int lockLevel, String lockObjectType) {
+  public boolean tryBegin(String lock, TimerSpec timeout, int lockLevel, String lockObjectType) {
     throw new ImplementMe();
   }
 

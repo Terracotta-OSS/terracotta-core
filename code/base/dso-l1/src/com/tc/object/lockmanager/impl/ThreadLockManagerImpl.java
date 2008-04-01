@@ -9,7 +9,7 @@ import com.tc.object.lockmanager.api.Notify;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.lockmanager.api.ThreadLockManager;
 import com.tc.object.lockmanager.api.WaitListener;
-import com.tc.object.tx.WaitInvocation;
+import com.tc.object.tx.TimerSpec;
 
 public class ThreadLockManagerImpl implements ThreadLockManager {
 
@@ -46,11 +46,11 @@ public class ThreadLockManagerImpl implements ThreadLockManager {
     lockManager.lock(lockID, getThreadID(), lockLevel, lockObjectType, contextInfo);
   }
 
-  public boolean tryLock(LockID lockID, WaitInvocation timeout, int lockLevel, String lockObjectType) {
+  public boolean tryLock(LockID lockID, TimerSpec timeout, int lockLevel, String lockObjectType) {
     return lockManager.tryLock(lockID, getThreadID(), timeout, lockLevel, lockObjectType);
   }
 
-  public void wait(LockID lockID, WaitInvocation call, Object object, WaitListener waitListener) throws InterruptedException {
+  public void wait(LockID lockID, TimerSpec call, Object object, WaitListener waitListener) throws InterruptedException {
     lockManager.wait(lockID, getThreadID(), call, object, waitListener);
   }
 

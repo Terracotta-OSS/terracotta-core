@@ -5,7 +5,7 @@
 package com.tc.object.logging;
 
 import com.tc.object.TCObject;
-import com.tc.object.tx.WaitInvocation;
+import com.tc.object.tx.TimerSpec;
 
 public class NullRuntimeLogger implements RuntimeLogger {
 
@@ -45,7 +45,7 @@ public class NullRuntimeLogger implements RuntimeLogger {
     return;
   }
 
-  public void objectWait(WaitInvocation call, Object obj, TCObject tcObject) {
+  public void objectWait(TimerSpec call, Object obj, TCObject tcObject) {
     return;
   }
 

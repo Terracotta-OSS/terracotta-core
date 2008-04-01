@@ -19,7 +19,7 @@ import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.ServerThreadID;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.lockmanager.impl.LockHolder;
-import com.tc.object.tx.WaitInvocation;
+import com.tc.object.tx.TimerSpec;
 import com.tc.objectserver.api.TestSink;
 import com.tc.objectserver.context.LockResponseContext;
 import com.tc.objectserver.lockmanager.api.DeadlockChain;
@@ -98,7 +98,7 @@ public class LockManagerTest extends TestCase {
     LockID lid2 = new LockID("2");
     LockID lid3 = new LockID("3");
     ThreadID tid1 = new ThreadID(1);
-    WaitInvocation wait = new WaitInvocation(Integer.MAX_VALUE);
+    TimerSpec wait = new TimerSpec(Integer.MAX_VALUE);
 
     L2LockStatsManager lockStatsManager = new L2LockStatisticsManagerImpl();
     lockManager = new LockManagerImpl(new NullChannelManager() {
@@ -146,7 +146,7 @@ public class LockManagerTest extends TestCase {
     lockManager.clearAllLocksFor(cid2);
   }
 
-  private void validateBean3(LockMBean bean3, long time, WaitInvocation wait) {
+  private void validateBean3(LockMBean bean3, long time, TimerSpec wait) {
     LockHolder[] holders = bean3.getHolders();
     ServerLockRequest[] reqs = bean3.getPendingRequests();
     Waiter[] waiters = bean3.getWaiters();
@@ -244,7 +244,7 @@ public class LockManagerTest extends TestCase {
     try {
       assertEquals(0, lockManager.getLockCount());
       long waitTime = 1000;
-      WaitInvocation waitCall = new WaitInvocation(waitTime);
+      TimerSpec waitCall = new TimerSpec(waitTime);
       TestSink responseSink = new TestSink();
       long t0 = System.currentTimeMillis();
       lockManager.reestablishWait(lockID1, nid1, tx1, LockLevel.WRITE, waitCall, responseSink);
@@ -276,7 +276,7 @@ public class LockManagerTest extends TestCase {
     ThreadID tx1 = new ThreadID(1);
     ThreadID tx2 = new ThreadID(2);
     int requestedLevel = LockLevel.WRITE;
-    WaitInvocation waitCall = new WaitInvocation();
+    TimerSpec waitCall = new TimerSpec();
     try {
       TestSink responseSink = new TestSink();
       assertEquals(0, lockManager.getLockCount());
@@ -420,7 +420,7 @@ public class LockManagerTest extends TestCase {
     ThreadID tx1 = new ThreadID(1);
     try {
       long waitTime = 1000;
-      WaitInvocation waitInvocation = new WaitInvocation(waitTime);
+      TimerSpec waitInvocation = new TimerSpec(waitTime);
       TestSink responseSink = new TestSink();
       lockManager.reestablishWait(lockID, cid1, tx1, LockLevel.WRITE, waitInvocation, responseSink);
 
@@ -446,7 +446,7 @@ public class LockManagerTest extends TestCase {
     boolean granted = lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, String.class.getName(), sink);
     assertTrue(granted);
 
-    lockManager.wait(lockID, cid, txID, new WaitInvocation(1000), sink);
+    lockManager.wait(lockID, cid, txID, new TimerSpec(1000), sink);
     lockManager.stop();
 
     assertFalse(lockManager.hasPending(lockID));
@@ -483,7 +483,7 @@ public class LockManagerTest extends TestCase {
       // make sure that waiting on an outstanding lock causes the lock to be
       // released and allows shutdown to
       // complete.
-      lockManager.wait(lockID, cid, new ThreadID(1), new WaitInvocation(), sink);
+      lockManager.wait(lockID, cid, new ThreadID(1), new TimerSpec(), sink);
       shutdownSteps.take();
 
     } finally {

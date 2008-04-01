@@ -14,9 +14,9 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.ThreadID;
-import com.tc.object.lockmanager.api.WaitTimer;
-import com.tc.object.lockmanager.impl.WaitTimerImpl;
-import com.tc.object.tx.WaitInvocation;
+import com.tc.object.lockmanager.api.TCLockTimer;
+import com.tc.object.lockmanager.impl.TCLockTimerImpl;
+import com.tc.object.tx.TimerSpec;
 import com.tc.objectserver.lockmanager.api.LockAwardContext;
 import com.tc.objectserver.lockmanager.api.LockEventListener;
 import com.tc.objectserver.lockmanager.api.LockEventMonitor;
@@ -36,7 +36,7 @@ public class LockTest extends TestCase {
 
   private Sink            sink;
   private long            uniqueId = 100000L;
-  private WaitTimer       waitTimer;
+  private TCLockTimer       waitTimer;
   private LockManagerImpl lockMgr  = new LockManagerImpl(new NullChannelManager(), L2LockStatsManager.NULL_LOCK_STATS_MANAGER);
   private NotifiedWaiters notifiedWaiters;
 
@@ -44,7 +44,7 @@ public class LockTest extends TestCase {
     super.setUp();
     this.notifiedWaiters = new NotifiedWaiters();
     this.sink = new MockSink();
-    this.waitTimer = new WaitTimerImpl();
+    this.waitTimer = new TCLockTimerImpl();
   }
 
   public void testLockClear() {
@@ -140,13 +140,13 @@ public class LockTest extends TestCase {
     lock.requestLock(thread1, LockLevel.WRITE, sink);
     assertEquals(1, lock.getHoldersCount());
     assertEquals(0, lock.getWaiterCount());
-    lock.wait(thread1, waitTimer, new WaitInvocation(), lockMgr, sink); // indefinite
+    lock.wait(thread1, waitTimer, new TimerSpec(), lockMgr, sink); // indefinite
     // wait()
     assertEquals(0, lock.getHoldersCount());
     assertEquals(1, lock.getWaiterCount());
 
     try {
-      lock.wait(thread1, waitTimer, new WaitInvocation(), lockMgr, sink);
+      lock.wait(thread1, waitTimer, new TimerSpec(), lockMgr, sink);
       fail("able to join wait set twice");
     } catch (TCAssertionError e) {
       // exptected
@@ -177,7 +177,7 @@ public class LockTest extends TestCase {
 
     try {
       // different lock owner should not be to do a wait()
-      lock.wait(bad, waitTimer, new WaitInvocation(), lockMgr, sink);
+      lock.wait(bad, waitTimer, new TimerSpec(), lockMgr, sink);
       fail("Not expected");
     } catch (TCIllegalMonitorStateException e) {
       try {
@@ -202,7 +202,7 @@ public class LockTest extends TestCase {
 
     try {
       // should not be able to wait() if no one holds a lock
-      lock.wait(good, waitTimer, new WaitInvocation(), lockMgr, sink);
+      lock.wait(good, waitTimer, new TimerSpec(), lockMgr, sink);
       fail("Not expected");
     } catch (TCIllegalMonitorStateException e) {
       try {
@@ -227,7 +227,7 @@ public class LockTest extends TestCase {
 
     try {
       // should not be able to wait() if not holding a write lock
-      lock.wait(good, waitTimer, new WaitInvocation(), lockMgr, sink);
+      lock.wait(good, waitTimer, new TimerSpec(), lockMgr, sink);
       fail("Not expected");
     } catch (TCIllegalMonitorStateException e) {
       try {
@@ -261,7 +261,7 @@ public class LockTest extends TestCase {
     assertEquals(0, lock.getWaiterCount());
     assertFalse(lock.hasPending());
 
-    lock.wait(thread1, waitTimer, new WaitInvocation(200), lockMgr, sink);
+    lock.wait(thread1, waitTimer, new TimerSpec(200), lockMgr, sink);
     assertEquals(0, lock.getHoldersCount());
     assertEquals(1, lock.getWaiterCount());
     assertFalse(lock.hasPending());
@@ -294,7 +294,7 @@ public class LockTest extends TestCase {
     assertFalse(lock.hasPending());
 
     long t1 = System.currentTimeMillis();
-    lock.wait(thread1, waitTimer, new WaitInvocation(2000, 500), lockMgr, sink);
+    lock.wait(thread1, waitTimer, new TimerSpec(2000, 500), lockMgr, sink);
     // This is still not perfect - This can only raise false negatives
     // assertEquals(0, lock.getHoldersCount());
     // assertEquals(1, lock.getWaiterCount());
@@ -325,7 +325,7 @@ public class LockTest extends TestCase {
     assertEquals(0, lock.getWaiterCount());
     assertFalse(lock.hasPending());
 
-    lock.wait(thread1, waitTimer, new WaitInvocation(1000), lockMgr, sink);
+    lock.wait(thread1, waitTimer, new TimerSpec(1000), lockMgr, sink);
     assertEquals(0, lock.getHoldersCount());
     assertEquals(1, lock.getWaiterCount());
     assertFalse(lock.hasPending());
@@ -365,7 +365,7 @@ public class LockTest extends TestCase {
       assertFalse(lock.hasPending());
 
       long t1 = System.currentTimeMillis();
-      lock.wait(thread1, waitTimer, new WaitInvocation(1000), lockMgr, sink);
+      lock.wait(thread1, waitTimer, new TimerSpec(1000), lockMgr, sink);
       // This is still not perfect - This can only raise false negatives
       // assertEquals(0, lock.getHoldersCount());
       // assertEquals(1, lock.getWaiterCount());
@@ -395,7 +395,7 @@ public class LockTest extends TestCase {
       assertEquals(0, lock.getWaiterCount());
       assertFalse(lock.hasPending());
 
-      lock.wait(thread1, waitTimer, new WaitInvocation(500), lockMgr, sink);
+      lock.wait(thread1, waitTimer, new TimerSpec(500), lockMgr, sink);
       assertEquals(0, lock.getHoldersCount());
       assertEquals(1, lock.getWaiterCount());
       assertFalse(lock.hasPending());
@@ -436,7 +436,7 @@ public class LockTest extends TestCase {
     assertEquals(0, lock.getWaiterCount());
     assertFalse(lock.hasPending());
 
-    lock.wait(thread1, waitTimer, new WaitInvocation(), lockMgr, sink);
+    lock.wait(thread1, waitTimer, new TimerSpec(), lockMgr, sink);
 
     assertEquals(0, lock.getHoldersCount());
     assertEquals(1, lock.getWaiterCount());
@@ -455,7 +455,7 @@ public class LockTest extends TestCase {
     assertEquals(0, lock.getWaiterCount());
     assertFalse(lock.hasPending());
 
-    lock.wait(thread1, waitTimer, new WaitInvocation(), lockMgr, sink);
+    lock.wait(thread1, waitTimer, new TimerSpec(), lockMgr, sink);
     assertEquals(0, lock.getHoldersCount());
     assertEquals(1, lock.getWaiterCount());
     assertFalse(lock.hasPending());
@@ -566,7 +566,7 @@ public class LockTest extends TestCase {
 
       ServerThreadContext me = makeTxn(getUniqueClientID(), getUniqueTransactionID());
       lock.requestLock(me, LockLevel.WRITE, sink);
-      lock.wait(me, waitTimer, new WaitInvocation(), lockMgr, sink);
+      lock.wait(me, waitTimer, new TimerSpec(), lockMgr, sink);
       assertEquals(before + 1, lock.getWaiterCount());
     }
 

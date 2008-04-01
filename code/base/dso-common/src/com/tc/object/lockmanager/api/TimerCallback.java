@@ -3,8 +3,8 @@
  */
 package com.tc.object.lockmanager.api;
 
-public interface WaitTimerCallback {
+public interface TimerCallback {
   
-  public void waitTimeout(Object callbackObject);
+  public void timerTimeout(Object callbackObject);
 
 }

@@ -16,7 +16,7 @@ import com.tc.object.lockmanager.api.LockRequest;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.lockmanager.api.WaitListener;
 import com.tc.object.session.TestSessionManager;
-import com.tc.object.tx.WaitInvocation;
+import com.tc.object.tx.TimerSpec;
 import com.tc.objectserver.lockmanager.api.LockMBean;
 import com.tc.objectserver.lockmanager.api.NullChannelManager;
 import com.tc.objectserver.lockmanager.api.ServerLockRequest;
@@ -100,7 +100,7 @@ public class ClientServerLockManagerTest extends TestCase {
 
       public void run() {
         try {
-          clientLockManager.wait(lockID1, tx1, new WaitInvocation(), new Object(), new WaitListener() {
+          clientLockManager.wait(lockID1, tx1, new TimerSpec(), new Object(), new WaitListener() {
 
             public void handleWaitEvent() {
               try {
@@ -138,7 +138,7 @@ public class ClientServerLockManagerTest extends TestCase {
 
       public void run() {
         try {
-          clientLockManager.wait(lockID1, tx1, new WaitInvocation(), new Object(), new WaitListener() {
+          clientLockManager.wait(lockID1, tx1, new TimerSpec(), new Object(), new WaitListener() {
 
             public void handleWaitEvent() {
               // Formatter
@@ -172,7 +172,7 @@ public class ClientServerLockManagerTest extends TestCase {
 
       public void run() {
         try {
-          clientLockManager.wait(lockID1, tx1, new WaitInvocation(), new Object(), new WaitListener() {
+          clientLockManager.wait(lockID1, tx1, new TimerSpec(), new Object(), new WaitListener() {
 
             public void handleWaitEvent() {
               // Formatter
@@ -217,7 +217,7 @@ public class ClientServerLockManagerTest extends TestCase {
 
       public void run() {
         try {
-          clientLockManager.wait(lockID1, tx1, new WaitInvocation(), new Object(), new WaitListener() {
+          clientLockManager.wait(lockID1, tx1, new TimerSpec(), new Object(), new WaitListener() {
 
             public void handleWaitEvent() {
               // Formatter
@@ -276,7 +276,7 @@ public class ClientServerLockManagerTest extends TestCase {
 
       public void run() {
         try {
-          clientLockManager.wait(lockID1, tx1, new WaitInvocation(), new Object(), new WaitListener() {
+          clientLockManager.wait(lockID1, tx1, new TimerSpec(), new Object(), new WaitListener() {
 
             public void handleWaitEvent() {
               // Formatter
@@ -334,7 +334,7 @@ public class ClientServerLockManagerTest extends TestCase {
 
       public void run() {
         try {
-          clientLockManager.wait(lockID1, tx1, new WaitInvocation(), new Object(), new WaitListener() {
+          clientLockManager.wait(lockID1, tx1, new TimerSpec(), new Object(), new WaitListener() {
 
             public void handleWaitEvent() {
               // Formatter
@@ -395,7 +395,7 @@ public class ClientServerLockManagerTest extends TestCase {
 
       public void run() {
         try {
-          clientLockManager.wait(lockID1, tx1, new WaitInvocation(), new Object(), new WaitListener() {
+          clientLockManager.wait(lockID1, tx1, new TimerSpec(), new Object(), new WaitListener() {
 
             public void handleWaitEvent() {
               // Formatter

@@ -3,16 +3,16 @@
  */
 package com.tc.object.lockmanager.impl;
 
-import com.tc.object.lockmanager.api.WaitTimer;
-import com.tc.object.lockmanager.api.WaitTimerCallback;
-import com.tc.object.tx.WaitInvocation;
+import com.tc.object.lockmanager.api.TCLockTimer;
+import com.tc.object.lockmanager.api.TimerCallback;
+import com.tc.object.tx.TimerSpec;
 
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class NullWaitTimer implements WaitTimer {
+public class NullLockTimer implements TCLockTimer {
 
-  public TimerTask scheduleTimer(WaitTimerCallback callback, WaitInvocation call, Object callbackObject) {
+  public TimerTask scheduleTimer(TimerCallback callback, TimerSpec call, Object callbackObject) {
     return new TimerTask() {
       public void run() {
         // NOP

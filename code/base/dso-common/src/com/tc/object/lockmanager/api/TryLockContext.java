@@ -5,7 +5,7 @@
 package com.tc.object.lockmanager.api;
 
 import com.tc.net.groups.ClientID;
-import com.tc.object.tx.WaitInvocation;
+import com.tc.object.tx.TimerSpec;
 
 public class TryLockContext extends WaitContext {
   public TryLockContext() {
@@ -13,7 +13,7 @@ public class TryLockContext extends WaitContext {
   }
 
   public TryLockContext(LockID lockID, ClientID clientID, ThreadID threadID, int lockLevel, String lockType,
-                        WaitInvocation waitInvocation) {
-    super(lockID, clientID, threadID, lockLevel, lockType, waitInvocation);
+                        TimerSpec timeSpan) {
+    super(lockID, clientID, threadID, lockLevel, lockType, timeSpan);
   }
 }

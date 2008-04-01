@@ -8,7 +8,7 @@ import com.tc.logging.DumpHandler;
 import com.tc.net.groups.NodeID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.ThreadID;
-import com.tc.object.tx.WaitInvocation;
+import com.tc.object.tx.TimerSpec;
 import com.tc.text.PrettyPrintable;
 
 import java.util.Collection;
@@ -20,16 +20,16 @@ public interface LockManager extends DumpHandler, PrettyPrintable {
   
   public void notify(LockID lid, NodeID cid, ThreadID tid, boolean all, NotifiedWaiters addNotifiedWaitersTo);
 
-  public void wait(LockID lid, NodeID cid, ThreadID tid, WaitInvocation waitInvocation, Sink lockResponseSink);
+  public void wait(LockID lid, NodeID cid, ThreadID tid, TimerSpec waitInvocation, Sink lockResponseSink);
 
   public void reestablishLock(LockID lid, NodeID cid, ThreadID tid, int level, Sink lockResponseSink);
 
-  public void reestablishWait(LockID lid, NodeID cid, ThreadID tid, int level, WaitInvocation waitInvocation,
+  public void reestablishWait(LockID lid, NodeID cid, ThreadID tid, int level, TimerSpec waitInvocation,
                               Sink lockResponseSink);
 
   public boolean requestLock(LockID lockID, NodeID cid, ThreadID source, int level, String lockType, Sink awardLockSink);
 
-  public boolean tryRequestLock(LockID lockID, NodeID cid, ThreadID threadID, int level, String lockType, WaitInvocation timeout, Sink awardLockSink);
+  public boolean tryRequestLock(LockID lockID, NodeID cid, ThreadID threadID, int level, String lockType, TimerSpec timeout, Sink awardLockSink);
 
   public void unlock(LockID id, NodeID receiverID, ThreadID threadID);
 

@@ -19,27 +19,27 @@ import com.tc.object.session.SessionID;
 import java.io.IOException;
 
 public class LockResponseMessage extends DSOMessageBase {
-  private static final int  AWARD_ON_LEASE               = -1;
-  
-  private static final byte TYPE                        = 1;
-  private static final byte THREAD_ID                   = 2;
-  private static final byte LOCK_ID                     = 3;
-  private static final byte LOCK_LEVEL                  = 7;
-  private static final byte GLOBAL_LOCK_INFO            = 8;
-  private static final byte LOCK_LEASE_MILLIS           = 9;
+  private static final int  AWARD_NOT_ON_LEASE    = 0;
 
-  public static final int   LOCK_AWARD                  = 1;
-  public static final int   LOCK_RECALL                 = 2;
-  public static final int   LOCK_WAIT_TIMEOUT           = 3;
-  public static final int   LOCK_INFO                   = 4;
-  public static final int   LOCK_NOT_AWARDED            = 5;
+  private static final byte TYPE              = 1;
+  private static final byte THREAD_ID         = 2;
+  private static final byte LOCK_ID           = 3;
+  private static final byte LOCK_LEVEL        = 7;
+  private static final byte GLOBAL_LOCK_INFO  = 8;
+  private static final byte LOCK_LEASE_MILLIS = 9;
+
+  public static final int   LOCK_AWARD        = 1;
+  public static final int   LOCK_RECALL       = 2;
+  public static final int   LOCK_WAIT_TIMEOUT = 3;
+  public static final int   LOCK_INFO         = 4;
+  public static final int   LOCK_NOT_AWARDED  = 5;
 
   private int               type;
   private ThreadID          threadID;
   private LockID            lockID;
   private int               lockLevel;
   private GlobalLockInfo    globalLockInfo;
-  private int               leaseTimeInMs = AWARD_ON_LEASE;
+  private int               leaseTimeInMs     = AWARD_NOT_ON_LEASE;
 
   public LockResponseMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                              MessageChannel channel, TCMessageType type) {
@@ -137,11 +137,11 @@ public class LockResponseMessage extends DSOMessageBase {
   public boolean isLockNotAwarded() {
     return (this.type == LOCK_NOT_AWARDED);
   }
-  
+
   public boolean isAwardOnLease() {
-    return this.leaseTimeInMs != AWARD_ON_LEASE;
+    return this.leaseTimeInMs > AWARD_NOT_ON_LEASE;
   }
-  
+
   public int getAwardLeaseTime() {
     return this.leaseTimeInMs;
   }
@@ -166,12 +166,12 @@ public class LockResponseMessage extends DSOMessageBase {
     this.type = LOCK_AWARD;
     initialize(lid, sid, level, null);
   }
-  
+
   public void initializeLockNotAwarded(LockID lid, ThreadID sid, int level) {
     this.type = LOCK_NOT_AWARDED;
     initialize(lid, sid, level);
   }
-  
+
   public void initializeLockRecall(LockID lid, ThreadID sid, int level, int leaseTimeInMs) {
     this.type = LOCK_RECALL;
     initialize(lid, sid, level, null, leaseTimeInMs);
@@ -195,9 +195,9 @@ public class LockResponseMessage extends DSOMessageBase {
   private void initialize(LockID lid, ThreadID sid, int level) {
     initialize(lid, sid, level, null);
   }
-  
+
   private void initialize(LockID lid, ThreadID sid, int level, GlobalLockInfo info) {
-    initialize(lid, sid, level, info, AWARD_ON_LEASE);
+    initialize(lid, sid, level, info, AWARD_NOT_ON_LEASE);
   }
 
   private void initialize(LockID lid, ThreadID sid, int level, GlobalLockInfo info, int leaseTimeInMs) {

@@ -18,10 +18,10 @@ import com.tc.object.lockmanager.api.QueryLockRequest;
 import com.tc.object.lockmanager.api.RemoteLockManager;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.lockmanager.api.WaitListener;
-import com.tc.object.lockmanager.api.WaitTimer;
+import com.tc.object.lockmanager.api.TCLockTimer;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
-import com.tc.object.tx.WaitInvocation;
+import com.tc.object.tx.TimerSpec;
 import com.tc.text.ConsoleParagraphFormatter;
 import com.tc.text.ParagraphFormatter;
 import com.tc.text.PrettyPrinter;
@@ -61,7 +61,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   private final Map                   pendingQueryLockRequestsByID = new ListOrderedMap();
   private final Map                   lockInfoByID                 = new HashMap();
   private final RemoteLockManager     remoteLockManager;
-  private final WaitTimer             waitTimer                    = new WaitTimerImpl();
+  private final TCLockTimer             waitTimer                    = new TCLockTimerImpl();
   private final TCLogger              logger;
   private final SessionManager        sessionManager;
   private final ClientLockStatManager lockStatManager;
@@ -231,7 +231,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     lock.lock(threadID, lockType, contextInfo);
   }
 
-  public boolean tryLock(LockID lockID, ThreadID threadID, WaitInvocation timeout, int lockType, String lockObjectType) {
+  public boolean tryLock(LockID lockID, ThreadID threadID, TimerSpec timeout, int lockType, String lockObjectType) {
     Assert.assertNotNull("threadID", threadID);
     final ClientLock lock;
 
@@ -268,7 +268,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     return new AssertionError(MISSING_LOCK_TEXT + " Missing lock ID is " + lockID);
   }
 
-  public void wait(LockID lockID, ThreadID threadID, WaitInvocation call, Object waitLock, WaitListener listener)
+  public void wait(LockID lockID, ThreadID threadID, TimerSpec call, Object waitLock, WaitListener listener)
       throws InterruptedException {
     final ClientLock myLock;
     synchronized (this) {

@@ -138,7 +138,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     }
   }
 
-  public boolean tryBegin(String lockName, WaitInvocation timeout, int lockLevel, String lockObjectType) {
+  public boolean tryBegin(String lockName, TimerSpec timeout, int lockLevel, String lockObjectType) {
     logTryBegin0(lockName, lockLevel);
 
     if (isTransactionLoggingDisabled() || objectManager.isCreationInProgress()) { return true; }
@@ -212,7 +212,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     }
   }
 
-  public void wait(String lockName, WaitInvocation call, Object object) throws UnlockedSharedObjectException,
+  public void wait(String lockName, TimerSpec call, Object object) throws UnlockedSharedObjectException,
       InterruptedException {
     final ClientTransaction topTxn = getTransactionOrNull();
 

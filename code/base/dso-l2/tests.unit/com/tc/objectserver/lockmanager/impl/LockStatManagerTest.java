@@ -12,7 +12,7 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.ThreadID;
-import com.tc.object.tx.WaitInvocation;
+import com.tc.object.tx.TimerSpec;
 import com.tc.objectserver.api.TestSink;
 import com.tc.objectserver.lockmanager.api.NullChannelManager;
 import com.tc.util.Assert;
@@ -189,7 +189,7 @@ public class LockStatManagerTest extends TestCase {
     assertEquals(0, lockStatManager.getNumberOfPendingRequests(l1));
     assertEquals(1, lockStatManager.getNumberOfLockHopRequests(l1));
 
-    lockManager.tryRequestLock(l1, cid3, s1, LockLevel.WRITE, String.class.getName(), new WaitInvocation(0, 0), sink);
+    lockManager.tryRequestLock(l1, cid3, s1, LockLevel.WRITE, String.class.getName(), new TimerSpec(0, 0), sink);
     assertEquals(3, lockStatManager.getNumberOfLockRequested(l1));
     assertEquals(1, lockStatManager.getNumberOfPendingRequests(l1));
 

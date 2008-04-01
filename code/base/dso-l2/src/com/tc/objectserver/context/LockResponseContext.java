@@ -21,7 +21,7 @@ import java.util.Iterator;
 
 public class LockResponseContext implements EventContext {
 
-  private static final int     LOCK_NO_LEASE     = -1;
+  private static final int     LOCK_NO_LEASE     = 0;
 
   public static final int      LOCK_AWARD        = 1;
   public static final int      LOCK_RECALL       = 2;

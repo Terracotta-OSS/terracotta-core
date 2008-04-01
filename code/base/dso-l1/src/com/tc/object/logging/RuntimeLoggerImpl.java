@@ -11,7 +11,7 @@ import com.tc.object.TCObject;
 import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.lockmanager.api.LockLevel;
-import com.tc.object.tx.WaitInvocation;
+import com.tc.object.tx.TimerSpec;
 import com.tc.util.Util;
 
 public class RuntimeLoggerImpl implements RuntimeLogger {
@@ -233,7 +233,7 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
     logger.info(message.toString());
   }
 
-  public void objectWait(WaitInvocation call, Object obj, TCObject tcObject) {
+  public void objectWait(TimerSpec call, Object obj, TCObject tcObject) {
     StringBuffer message = new StringBuffer(call.toString()).append(" called on ");
     message.append(baseToString(obj)).append(", ObjectID: ").append(tcObject.getObjectID().toLong());
     logger.info(message.toString());

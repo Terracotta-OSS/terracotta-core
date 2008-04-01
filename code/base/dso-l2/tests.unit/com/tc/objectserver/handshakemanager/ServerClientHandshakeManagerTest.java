@@ -24,7 +24,7 @@ import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.TestClientHandshakeMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
-import com.tc.object.tx.WaitInvocation;
+import com.tc.object.tx.TimerSpec;
 import com.tc.objectserver.api.TestSink;
 import com.tc.objectserver.l1.api.TestClientStateManager;
 import com.tc.objectserver.l1.api.TestClientStateManager.AddReferenceContext;
@@ -174,7 +174,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     handshake.lockContexts.addAll(lockContexts);
 
     WaitContext waitContext = new WaitContext(new LockID("d;alkjd"), clientID1, new ThreadID(101), LockLevel.WRITE,
-                                              String.class.getName(), new WaitInvocation());
+                                              String.class.getName(), new TimerSpec());
     handshake.waitContexts.add(waitContext);
     handshake.isChangeListener = true;
 
@@ -234,7 +234,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     assertEquals(waitContext.getLockID(), ctxt.lockID);
     assertEquals(waitContext.getNodeID(), ctxt.nid);
     assertEquals(waitContext.getThreadID(), ctxt.threadID);
-    assertEquals(waitContext.getWaitInvocation(), ctxt.waitInvocation);
+    assertEquals(waitContext.getTimerSpec(), ctxt.waitInvocation);
     assertSame(lockResponseSink, ctxt.lockResponseSink);
 
     assertEquals(0, timer.cancelCalls.size());

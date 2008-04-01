@@ -18,8 +18,8 @@ import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.lockmanager.api.TryLockContext;
 import com.tc.object.lockmanager.api.WaitContext;
 import com.tc.object.session.SessionID;
-import com.tc.object.tx.WaitInvocation;
-import com.tc.object.tx.WaitInvocationFactory;
+import com.tc.object.tx.TimerSpec;
+import com.tc.object.tx.TimerSpecFactory;
 import com.tc.util.Assert;
 
 import java.io.IOException;
@@ -32,12 +32,12 @@ import java.util.Set;
 
 /**
  * Message for obtaining/releasing locks, and for modifying them (ie. wait/notify)
- * 
+ *
  * @author steve
  */
 public class LockRequestMessage extends DSOMessageBase implements LockRequestMessageConsts {
 
-  private static final WaitInvocationFactory waitInvocationFactory           = new WaitInvocationFactory();
+  private static final TimerSpecFactory waitInvocationFactory           = new TimerSpecFactory();
 
   private final static byte                  LOCK_ID                         = 1;
   private final static byte                  LOCK_LEVEL                      = 2;
@@ -76,8 +76,8 @@ public class LockRequestMessage extends DSOMessageBase implements LockRequestMes
   private ThreadID                           threadID                        = ThreadID.NULL_ID;
   private byte                               requestType                     = UNITIALIZED_REQUEST_TYPE;
   private boolean                            withWait;
-  private long                               waitMillis                      = UNITIALIZED_WAIT_TIME;
-  private int                                waitNanos                       = UNITIALIZED_WAIT_TIME;
+  private long                               waitMillis                      = UNITIALIZED_TIME_INTERVAL;
+  private int                                waitNanos                       = UNITIALIZED_TIME_INTERVAL;
   private boolean                            notifyAll;
   private int                                waitArgCount                    = -1;
 
@@ -328,9 +328,9 @@ public class LockRequestMessage extends DSOMessageBase implements LockRequestMes
     return requestType == RECALL_COMMIT_LOCK_REQUEST_TYPE;
   }
 
-  public WaitInvocation getWaitInvocation() {
+  public TimerSpec getWaitInvocation() {
     if (!this.withWait && !isTryObtainLockRequest()) { throw new IllegalStateException("not a wait request"); }
-    return waitInvocationFactory.newWaitInvocation(this.waitArgCount, this.waitMillis, this.waitNanos);
+    return waitInvocationFactory.newTimerSpec(this.waitArgCount, this.waitMillis, this.waitNanos);
   }
 
   public boolean isWaitRelease() {
@@ -338,43 +338,43 @@ public class LockRequestMessage extends DSOMessageBase implements LockRequestMes
   }
 
   public void initializeInterruptWait(LockID lid, ThreadID id) {
-    initialize(lid, id, LockLevel.NIL_LOCK_LEVEL, INTERRUPT_WAIT_REQUEST_TYPE, false, false, UNITIALIZED_WAIT_TIME,
-               UNITIALIZED_WAIT_TIME, -1);
+    initialize(lid, id, LockLevel.NIL_LOCK_LEVEL, INTERRUPT_WAIT_REQUEST_TYPE, false, false, UNITIALIZED_TIME_INTERVAL,
+               UNITIALIZED_TIME_INTERVAL, -1);
   }
 
   public void initializeQueryLock(LockID lid, ThreadID id) {
-    initialize(lid, id, LockLevel.NIL_LOCK_LEVEL, QUERY_LOCK_REQUEST_TYPE, false, false, UNITIALIZED_WAIT_TIME,
-               UNITIALIZED_WAIT_TIME, -1);
+    initialize(lid, id, LockLevel.NIL_LOCK_LEVEL, QUERY_LOCK_REQUEST_TYPE, false, false, UNITIALIZED_TIME_INTERVAL,
+               UNITIALIZED_TIME_INTERVAL, -1);
   }
 
-  public void initializeObtainLock(LockID lid, ThreadID id, int lockLevelArg, String lockObjectTypeArg) {
-    initialize(lid, id, lockLevelArg, OBTAIN_LOCK_REQUEST_TYPE, false, false, UNITIALIZED_WAIT_TIME, UNITIALIZED_WAIT_TIME, -1);
-    if (lockObjectTypeArg != null) {
-      this.lockObjectType = lockObjectTypeArg;
+  public void initializeObtainLock(LockID lid, ThreadID id, int lockLevel, String lockObjectType) {
+    initialize(lid, id, lockLevel, OBTAIN_LOCK_REQUEST_TYPE, false, false, UNITIALIZED_TIME_INTERVAL, UNITIALIZED_TIME_INTERVAL, -1);
+    if (lockObjectType != null) {
+      this.lockObjectType = lockObjectType;
     }
   }
 
-  public void initializeTryObtainLock(LockID lid, ThreadID id, WaitInvocation timeout, int lockLevelArg, String lockObjectTypeArg) {
-    initialize(lid, id, lockLevelArg, TRY_OBTAIN_LOCK_REQUEST_TYPE, false, false, timeout.getMillis(), timeout.getNanos(),
+  public void initializeTryObtainLock(LockID lid, ThreadID id, TimerSpec timeout, int lockLevel, String lockObjectType) {
+    initialize(lid, id, lockLevel, TRY_OBTAIN_LOCK_REQUEST_TYPE, false, false, timeout.getMillis(), timeout.getNanos(),
                timeout.getSignature().getArgCount());
-    if (lockObjectTypeArg != null) {
-      this.lockObjectType = lockObjectTypeArg;
+    if (lockObjectType != null) {
+      this.lockObjectType = lockObjectType;
     }
   }
 
   public void initializeLockRelease(LockID lid, ThreadID id) {
-    initialize(lid, id, LockLevel.NIL_LOCK_LEVEL, RELEASE_LOCK_REQUEST_TYPE, false, false, UNITIALIZED_WAIT_TIME,
-               UNITIALIZED_WAIT_TIME, -1);
+    initialize(lid, id, LockLevel.NIL_LOCK_LEVEL, RELEASE_LOCK_REQUEST_TYPE, false, false, UNITIALIZED_TIME_INTERVAL,
+               UNITIALIZED_TIME_INTERVAL, -1);
   }
 
-  public void initializeLockReleaseWait(LockID lid, ThreadID id, WaitInvocation call) {
+  public void initializeLockReleaseWait(LockID lid, ThreadID id, TimerSpec call) {
     initialize(lid, id, LockLevel.NIL_LOCK_LEVEL, RELEASE_LOCK_REQUEST_TYPE, true, false, call.getMillis(), call
         .getNanos(), call.getSignature().getArgCount());
   }
 
   public void initializeLockRecallCommit(LockID lid) {
     initialize(lid, ThreadID.VM_ID, LockLevel.NIL_LOCK_LEVEL, RECALL_COMMIT_LOCK_REQUEST_TYPE, false, false,
-               UNITIALIZED_WAIT_TIME, UNITIALIZED_WAIT_TIME, -1);
+               UNITIALIZED_TIME_INTERVAL, UNITIALIZED_TIME_INTERVAL, -1);
   }
 
   private void initialize(LockID lid, ThreadID id, int level, byte reqType, boolean wait, boolean all, long millis,

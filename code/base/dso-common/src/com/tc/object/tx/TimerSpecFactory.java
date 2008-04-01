@@ -5,17 +5,17 @@ package com.tc.object.tx;
 
 import com.tc.util.Assert;
 
-public class WaitInvocationFactory {
-  public WaitInvocation newWaitInvocation(int waitArgCount, long millis, int nanos) {
+public class TimerSpecFactory {
+  public TimerSpec newTimerSpec(int waitArgCount, long millis, int nanos) {
     switch (waitArgCount) {
       case 2: {
-        return new WaitInvocation(millis, nanos);
+        return new TimerSpec(millis, nanos);
       }
       case 1: {
-        return new WaitInvocation(millis);
+        return new TimerSpec(millis);
       }
       case 0: {
-        return new WaitInvocation();
+        return new TimerSpec();
       }
       default: {
         throw Assert.failure("Invalid wait argument count: " + waitArgCount);

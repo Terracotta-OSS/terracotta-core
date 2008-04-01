@@ -6,10 +6,10 @@ package com.tc.object.lockmanager.impl;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.object.lockmanager.api.WaitTimer;
-import com.tc.object.lockmanager.api.WaitTimerCallback;
-import com.tc.object.tx.WaitInvocation;
-import com.tc.object.tx.WaitInvocation.Signature;
+import com.tc.object.lockmanager.api.TCLockTimer;
+import com.tc.object.lockmanager.api.TimerCallback;
+import com.tc.object.tx.TimerSpec;
+import com.tc.object.tx.TimerSpec.Signature;
 import com.tc.util.Assert;
 import com.tc.util.TCTimerImpl;
 
@@ -21,14 +21,13 @@ import java.util.TimerTask;
  * 
  * @author teck
  */
-public class WaitTimerImpl implements WaitTimer {
-  private static final TCLogger logger   = TCLogging.getLogger(WaitTimer.class);
+public class TCLockTimerImpl implements TCLockTimer {
+  private static final TCLogger logger   = TCLogging.getLogger(TCLockTimer.class);
 
   private final Timer           timer    = new TCTimerImpl("DSO Lock Object.wait() timer", true);
   private boolean               shutdown = false;
-  //public WaitInvocation         originalCall;
 
-  public WaitTimerImpl() {
+  public TCLockTimerImpl() {
     super();
   }
 
@@ -36,15 +35,14 @@ public class WaitTimerImpl implements WaitTimer {
     return timer;
   }
 
-  public TimerTask scheduleTimer(WaitTimerCallback callback, WaitInvocation call, Object callbackObject) {
-    //this.originalCall = call;
+  public TimerTask scheduleTimer(TimerCallback callback, TimerSpec call, Object callbackObject) {
     final Signature signature = call.getSignature();
 
-    if (signature == WaitInvocation.NO_ARGS) {
+    if (signature == TimerSpec.NO_ARGS) {
       return null;
-    } else if (signature == WaitInvocation.LONG) {
+    } else if (signature == TimerSpec.LONG) {
       if (call.getMillis() == 0) { return null; }
-    } else if (signature == WaitInvocation.LONG_INT) {
+    } else if (signature == TimerSpec.LONG_INT) {
       if ((call.getMillis() == 0) && (call.getNanos() == 0)) { return null; }
     } else {
       throw Assert.failure("unknown wait signature: " + signature);
@@ -52,7 +50,7 @@ public class WaitTimerImpl implements WaitTimer {
 
     final TimerTask rv = new TaskImpl(callback, call, callbackObject);
 
-    if (signature == WaitInvocation.LONG_INT) {
+    if (signature == TimerSpec.LONG_INT) {
       // logger.warn("Nanosecond granualarity not yet supported, adding 1ms to wait time instead");
       timer.schedule(rv, call.getMillis() + 1);
     } else {
@@ -65,11 +63,11 @@ public class WaitTimerImpl implements WaitTimer {
 
   private static class TaskImpl extends TimerTask {
 
-    private final WaitTimerCallback callback;
+    private final TimerCallback callback;
     private final Object            callbackObject;
-    private final WaitInvocation    call;
+    private final TimerSpec    call;
 
-    TaskImpl(WaitTimerCallback callback, WaitInvocation call, Object callbackObject) {
+    TaskImpl(TimerCallback callback, TimerSpec call, Object callbackObject) {
       this.callback = callback;
       this.call = call;
       this.callbackObject = callbackObject;
@@ -77,7 +75,7 @@ public class WaitTimerImpl implements WaitTimer {
 
     public void run() {
       try {
-        callback.waitTimeout(callbackObject);
+        callback.timerTimeout(callbackObject);
       } catch (Exception e) {
         logger.error("Error processing wait timeout for " + callbackObject, e);
       }

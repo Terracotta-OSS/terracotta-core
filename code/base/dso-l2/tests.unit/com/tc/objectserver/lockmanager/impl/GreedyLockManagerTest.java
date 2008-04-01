@@ -25,7 +25,7 @@ import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.ServerThreadID;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.lockmanager.impl.LockHolder;
-import com.tc.object.tx.WaitInvocation;
+import com.tc.object.tx.TimerSpec;
 import com.tc.objectserver.api.TestSink;
 import com.tc.objectserver.context.LockResponseContext;
 import com.tc.objectserver.lockmanager.api.DeadlockChain;
@@ -106,7 +106,7 @@ public class GreedyLockManagerTest extends TestCase {
     LockID lid2 = new LockID("2");
     LockID lid3 = new LockID("3");
     ThreadID tid1 = new ThreadID(1);
-    WaitInvocation wait = new WaitInvocation(Integer.MAX_VALUE);
+    TimerSpec wait = new TimerSpec(Integer.MAX_VALUE);
 
     lockManager = new LockManagerImpl(new NullChannelManager() {
       public MessageChannel getChannel(ChannelID id) {
@@ -151,7 +151,7 @@ public class GreedyLockManagerTest extends TestCase {
     lockManager.clearAllLocksFor(cid3);
   }
 
-  private void validateBean3(LockMBean bean3, long time, WaitInvocation wait) {
+  private void validateBean3(LockMBean bean3, long time, TimerSpec wait) {
     LockHolder[] holders = bean3.getHolders();
     ServerLockRequest[] reqs = bean3.getPendingRequests();
     Waiter[] waiters = bean3.getWaiters();
@@ -260,8 +260,8 @@ public class GreedyLockManagerTest extends TestCase {
     try {
       assertEquals(0, lockManager.getLockCount());
       long waitTime = 1000;
-      WaitInvocation waitCall1 = new WaitInvocation(waitTime);
-      WaitInvocation waitCall2 = new WaitInvocation(waitTime * 2);
+      TimerSpec waitCall1 = new TimerSpec(waitTime);
+      TimerSpec waitCall2 = new TimerSpec(waitTime * 2);
       TestSink responseSink = new TestSink();
       long t0 = System.currentTimeMillis();
       lockManager.reestablishWait(lockID1, cid1, tx1, LockLevel.WRITE, waitCall1, responseSink);
@@ -324,7 +324,7 @@ public class GreedyLockManagerTest extends TestCase {
     ThreadID tx1 = new ThreadID(1);
     ThreadID tx2 = new ThreadID(2);
     int requestedLevel = LockLevel.WRITE;
-    WaitInvocation waitCall = new WaitInvocation();
+    TimerSpec waitCall = new TimerSpec();
     try {
       TestSink responseSink = new TestSink();
       assertEquals(0, lockManager.getLockCount());
@@ -470,7 +470,7 @@ public class GreedyLockManagerTest extends TestCase {
     ThreadID tx1 = new ThreadID(1);
     try {
       long waitTime = 1000;
-      WaitInvocation waitInvocation = new WaitInvocation(waitTime);
+      TimerSpec waitInvocation = new TimerSpec(waitTime);
       TestSink responseSink = new TestSink();
       lockManager.reestablishWait(lockID, cid1, tx1, LockLevel.WRITE, waitInvocation, responseSink);
 

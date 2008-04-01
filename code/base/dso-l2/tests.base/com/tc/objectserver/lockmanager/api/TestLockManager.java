@@ -11,7 +11,7 @@ import com.tc.net.groups.NodeID;
 import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.ThreadID;
-import com.tc.object.tx.WaitInvocation;
+import com.tc.object.tx.TimerSpec;
 import com.tc.text.PrettyPrinter;
 
 import java.io.Writer;
@@ -31,7 +31,7 @@ public class TestLockManager implements LockManager {
     notifyCalls.add(new Object[] { lid, cid, tid, new Boolean(all), addNotifiedWaitersTo });
   }
 
-  public void wait(LockID lid, NodeID cid, ThreadID tid, WaitInvocation waitInvocation, Sink lockResponseSink) {
+  public void wait(LockID lid, NodeID cid, ThreadID tid, TimerSpec waitInvocation, Sink lockResponseSink) {
     throw new ImplementMe();
   }
 
@@ -39,10 +39,10 @@ public class TestLockManager implements LockManager {
     public final LockID         lockID;
     public final NodeID         nid;
     public final ThreadID       threadID;
-    public final WaitInvocation waitInvocation;
+    public final TimerSpec waitInvocation;
     public final Sink           lockResponseSink;
 
-    private WaitCallContext(LockID lockID, NodeID cid, ThreadID tid, int level, WaitInvocation waitInvocation,
+    private WaitCallContext(LockID lockID, NodeID cid, ThreadID tid, int level, TimerSpec waitInvocation,
                             Sink lockResponseSink) {
       this.lockID = lockID;
       this.nid = cid;
@@ -92,7 +92,7 @@ public class TestLockManager implements LockManager {
     throw new ImplementMe();
   }
 
-  public void reestablishWait(LockID lid, NodeID cid, ThreadID tid, int level, WaitInvocation waitInvocation,
+  public void reestablishWait(LockID lid, NodeID cid, ThreadID tid, int level, TimerSpec waitInvocation,
                               Sink lockResponseSink) {
     reestablishWaitCalls.add(new WaitCallContext(lid, cid, tid, level, waitInvocation, lockResponseSink));
   }
@@ -121,7 +121,7 @@ public class TestLockManager implements LockManager {
     throw new ImplementMe();
   }
 
-  public boolean tryRequestLock(LockID lockID, NodeID channelID, ThreadID threadID, int level, String lockType, WaitInvocation timeout,
+  public boolean tryRequestLock(LockID lockID, NodeID channelID, ThreadID threadID, int level, String lockType, TimerSpec timeout,
                                 Sink awardLockSink) {
     throw new ImplementMe();
   }

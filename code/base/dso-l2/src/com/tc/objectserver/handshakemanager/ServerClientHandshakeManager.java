@@ -131,7 +131,7 @@ public class ServerClientHandshakeManager {
       for (Iterator i = handshake.getWaitContexts().iterator(); i.hasNext();) {
         WaitContext ctxt = (WaitContext) i.next();
         lockManager.reestablishWait(ctxt.getLockID(), ctxt.getNodeID(), ctxt.getThreadID(), ctxt.getLockLevel(),
-                                    ctxt.getWaitInvocation(), lockResponseSink);
+                                    ctxt.getTimerSpec(), lockResponseSink);
       }
 
       for (Iterator i = handshake.getPendingLockContexts().iterator(); i.hasNext();) {
@@ -143,7 +143,7 @@ public class ServerClientHandshakeManager {
       for (Iterator i = handshake.getPendingTryLockContexts().iterator(); i.hasNext();) {
         TryLockContext ctxt = (TryLockContext) i.next();
         lockManager.tryRequestLock(ctxt.getLockID(), ctxt.getNodeID(), ctxt.getThreadID(), ctxt.getLockLevel(), ctxt.getLockType(), ctxt
-            .getWaitInvocation(), lockResponseSink);
+            .getTimerSpec(), lockResponseSink);
       }
 
       if (handshake.isObjectIDsRequested()) {

@@ -6,8 +6,8 @@ package com.tc.object.lockmanager.api;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.net.groups.ClientID;
-import com.tc.object.tx.WaitInvocation;
-import com.tc.object.tx.WaitInvocationFactory;
+import com.tc.object.tx.TimerSpec;
+import com.tc.object.tx.TimerSpecFactory;
 
 import java.io.IOException;
 
@@ -16,33 +16,33 @@ import java.io.IOException;
  */
 public class WaitContext extends LockContext {
 
-  private static final WaitInvocationFactory waitInvocationFactory = new WaitInvocationFactory();
+  private static final TimerSpecFactory waitInvocationFactory = new TimerSpecFactory();
 
-  private WaitInvocation                     waitInvocation;
+  private TimerSpec                     timerSpec;
 
-  public WaitContext(LockID lockID, ClientID cid, ThreadID threadID, int lockLevel, String lockType, WaitInvocation waitInvocation) {
+  public WaitContext(LockID lockID, ClientID cid, ThreadID threadID, int lockLevel, String lockType, TimerSpec timerSpec) {
     super(lockID, cid, threadID, lockLevel, lockType);
-    this.waitInvocation = waitInvocation;
+    this.timerSpec = timerSpec;
   }
 
   public WaitContext() {
     return;
   }
 
-  public WaitInvocation getWaitInvocation() {
-    return waitInvocation;
+  public TimerSpec getTimerSpec() {
+    return timerSpec;
   }
 
   public void serializeTo(TCByteBufferOutput output) {
     super.serializeTo(output);
-    output.writeByte(waitInvocation.getSignature().getArgCount());
-    output.writeLong(waitInvocation.getMillis());
-    output.writeInt(waitInvocation.getNanos());
+    output.writeByte(timerSpec.getSignature().getArgCount());
+    output.writeLong(timerSpec.getMillis());
+    output.writeInt(timerSpec.getNanos());
   }
 
   public Object deserializeFrom(TCByteBufferInput input) throws IOException {
     super.deserializeFrom(input);
-    waitInvocation = waitInvocationFactory.newWaitInvocation(input.readByte(), input.readLong(), input.readInt());
+    timerSpec = waitInvocationFactory.newTimerSpec(input.readByte(), input.readLong(), input.readInt());
     return this;
   }
 }

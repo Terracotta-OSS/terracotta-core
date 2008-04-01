@@ -5,7 +5,7 @@
 package com.tc.object.logging;
 
 import com.tc.object.TCObject;
-import com.tc.object.tx.WaitInvocation;
+import com.tc.object.tx.TimerSpec;
 
 /**
  * Logging interface for various DSO runtime events
@@ -62,7 +62,7 @@ public interface RuntimeLogger {
 
   void objectNotify(boolean all, Object obj, TCObject tcObject);
 
-  void objectWait(WaitInvocation call, Object obj, TCObject tcObject);
+  void objectWait(TimerSpec call, Object obj, TCObject tcObject);
 
   void distributedMethodCall(String receiverClassName, String methodName, String params);
 

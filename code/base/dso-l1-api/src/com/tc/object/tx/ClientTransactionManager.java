@@ -38,7 +38,7 @@ public interface ClientTransactionManager extends DumpHandler, PrettyPrintable {
    * @param lockLevel Lock level
    * @return If begun
    */
-  public boolean tryBegin(String lock, WaitInvocation timeout, int lockLevel, String lockObjectType);
+  public boolean tryBegin(String lock, TimerSpec timeout, int lockLevel, String lockObjectType);
 
   /**
    * Commit a thread local current transaction
@@ -108,7 +108,7 @@ public interface ClientTransactionManager extends DumpHandler, PrettyPrintable {
    * @throws UnlockedSharedObjectException If shared object accessed outside lock
    * @throws InterruptedException If thread interrupted
    */
-  public void wait(String lockName, WaitInvocation call, Object object) throws UnlockedSharedObjectException,  InterruptedException;
+  public void wait(String lockName, TimerSpec call, Object object) throws UnlockedSharedObjectException,  InterruptedException;
 
   /**
    * Record notify() or notifyAll() call on object in current transaction

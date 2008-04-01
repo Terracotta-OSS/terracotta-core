@@ -4,10 +4,10 @@
 package com.tc.objectserver.lockmanager.impl;
 
 import com.tc.async.api.Sink;
-import com.tc.object.tx.WaitInvocation;
+import com.tc.object.tx.TimerSpec;
 
 public class TryLockContextImpl extends LockWaitContextImpl {
-  public TryLockContextImpl(ServerThreadContext threadContext, Lock lock, WaitInvocation call, int lockLevel,
+  public TryLockContextImpl(ServerThreadContext threadContext, Lock lock, TimerSpec call, int lockLevel,
                             Sink lockResponseSink) {
     super(threadContext, lock, call, lockLevel, lockResponseSink);
   }

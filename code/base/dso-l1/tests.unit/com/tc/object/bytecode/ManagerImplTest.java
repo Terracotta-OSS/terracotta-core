@@ -24,7 +24,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.object.tx.UnlockedSharedObjectException;
-import com.tc.object.tx.WaitInvocation;
+import com.tc.object.tx.TimerSpec;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.object.util.ToggleableStrongReference;
 import com.tc.text.PrettyPrinter;
@@ -76,7 +76,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public void wait(WaitInvocation call, Object object) throws UnlockedSharedObjectException {
+    public void wait(TimerSpec call, Object object) throws UnlockedSharedObjectException {
       throw new ImplementMe();
     }
 
@@ -116,7 +116,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new AssertionError("should not be called");
     }
 
-    public void wait(String lockName, WaitInvocation call, Object object) throws UnlockedSharedObjectException {
+    public void wait(String lockName, TimerSpec call, Object object) throws UnlockedSharedObjectException {
       throw new ImplementMe();
 
     }
@@ -157,7 +157,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public boolean tryBegin(String lock, WaitInvocation timeout, int lockLevel, String lockType) {
+    public boolean tryBegin(String lock, TimerSpec timeout, int lockLevel, String lockType) {
       throw new ImplementMe();
     }
 

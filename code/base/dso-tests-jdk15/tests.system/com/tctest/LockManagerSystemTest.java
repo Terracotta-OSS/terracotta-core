@@ -50,6 +50,8 @@ import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
 
 public class LockManagerSystemTest extends BaseDSOTestCase {
 
@@ -116,6 +118,59 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     amount *= (slow ? 300 : 50);
     ThreadUtil.reallySleep(amount);
   }
+  
+  public void testLockAwardOrder() throws Exception {
+    final LockID l1 = new LockID("1");
+
+    final ThreadID tid1 = new ThreadID(1);
+    final ThreadID tid2 = new ThreadID(2);
+    final ThreadID tid3 = new ThreadID(3);
+    
+    final List lockRequestOrder = new ArrayList(2);
+    final List lockAwardOrder = new ArrayList(2);
+
+    clientLockManager.lock(l1, tid1, LockLevel.READ, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    Thread t1 = new Thread() {
+      public void run() {
+        String threadName = "t1";
+        System.err.println("Thread " + threadName + " request lock");
+        lockRequestOrder.add(threadName);
+        LockManagerSystemTest.this.clientLockManager.lock(l1, tid3, LockLevel.WRITE, String.class.getName(),
+                                                    LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+        System.err.println("Thread " + threadName + " obtain lock");
+        lockAwardOrder.add(threadName);
+      }
+    };
+    
+    Thread t2 = new Thread() {
+      public void run() {
+        String threadName = "t2";
+        System.err.println("Thread " + threadName + " request lock");
+        lockRequestOrder.add(threadName);
+        LockManagerSystemTest.this.clientLockManager.lock(l1, tid2, LockLevel.READ, String.class.getName(),
+                                                    LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+        System.err.println("Thread " + threadName + " obtain lock");
+        lockAwardOrder.add(threadName);
+      }
+    };
+    
+    t1.start();
+    sleep(5);
+    t2.start();
+
+    sleep(50);
+    clientLockManager.unlock(l1, tid1);
+    t1.join();
+    clientLockManager.unlock(l1, tid3);
+    t2.join();
+    
+    System.err.println(lockRequestOrder);
+    System.err.println(lockAwardOrder);
+    
+    assertEquals(lockRequestOrder.get(0), lockAwardOrder.get(0));
+    assertEquals(lockRequestOrder.get(1), lockAwardOrder.get(1));
+  }
+
 
   public void testUpgradeNotSupported() throws Exception {
     final LockID l1 = new LockID("1");

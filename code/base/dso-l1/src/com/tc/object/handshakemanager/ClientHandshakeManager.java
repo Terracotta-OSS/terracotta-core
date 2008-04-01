@@ -114,7 +114,7 @@ public class ClientHandshakeManager implements ChannelEventListener {
     for (Iterator i = lockManager.addAllWaitersTo(new HashSet()).iterator(); i.hasNext();) {
       WaitLockRequest request = (WaitLockRequest) i.next();
       WaitContext ctxt = new WaitContext(request.lockID(), cidp.getClientID(), request.threadID(),
-                                         request.lockLevel(), request.lockType(), request.getWaitInvocation());
+                                         request.lockLevel(), request.lockType(), request.getTimerSpec());
       handshakeMessage.addWaitContext(ctxt);
     }
 
@@ -129,7 +129,7 @@ public class ClientHandshakeManager implements ChannelEventListener {
     for (Iterator i = lockManager.addAllPendingTryLockRequestsTo(new HashSet()).iterator(); i.hasNext();) {
       TryLockRequest request = (TryLockRequest) i.next();
       LockContext ctxt = new TryLockContext(request.lockID(), cidp.getClientID(), request.threadID(), request
-          .lockLevel(), request.lockType(), request.getWaitInvocation());
+          .lockLevel(), request.lockType(), request.getTimerSpec());
       handshakeMessage.addPendingTryLockContext(ctxt);
     }
 

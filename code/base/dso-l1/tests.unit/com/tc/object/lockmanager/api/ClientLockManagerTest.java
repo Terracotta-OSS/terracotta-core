@@ -21,7 +21,7 @@ import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
 import com.tc.object.session.TestSessionManager;
-import com.tc.object.tx.WaitInvocation;
+import com.tc.object.tx.TimerSpec;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -141,7 +141,7 @@ public class ClientLockManagerTest extends TestCase {
     lockManager.lock(lockID_1, threadID_1, LockLevel.SYNCHRONOUS_WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     assertEquals(0, rmtLockManager.getFlushCount());
 
-    WaitInvocation waitInvocation = new WaitInvocation();
+    TimerSpec waitInvocation = new TimerSpec();
     NoExceptionLinkedQueue barrier = new NoExceptionLinkedQueue();
     WaitLockRequest waitLockRequest = new WaitLockRequest(lockID_1, threadID_1, LockLevel.SYNCHRONOUS_WRITE, String.class.getName(),
                                                           waitInvocation);
@@ -157,7 +157,7 @@ public class ClientLockManagerTest extends TestCase {
     lockManager.lock(lockID_2, threadID_2, LockLevel.SYNCHRONOUS_WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     assertEquals(1, rmtLockManager.getFlushCount());
 
-    waitInvocation = new WaitInvocation();
+    waitInvocation = new TimerSpec();
     waitLockRequest = new WaitLockRequest(lockID_2, threadID_2, LockLevel.SYNCHRONOUS_WRITE, String.class.getName(), waitInvocation);
     waiterThread = new LockWaiter(barrier, waitLockRequest, new Object());
     waiterThread.start();
@@ -182,7 +182,7 @@ public class ClientLockManagerTest extends TestCase {
         this.awardBarrier = awardBarrier;
       }
 
-      public void tryRequestLock(LockID lockID, ThreadID threadID, WaitInvocation timeout, int type, String lockType) {
+      public void tryRequestLock(LockID lockID, ThreadID threadID, TimerSpec timeout, int type, String lockType) {
         try {
           requestBarrier.barrier();
           awardBarrier.barrier();
@@ -239,7 +239,7 @@ public class ClientLockManagerTest extends TestCase {
     });
     t1.start();
 
-    lockManager.tryLock(lockID1, txID, new WaitInvocation(0), LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE);
+    lockManager.tryLock(lockID1, txID, new TimerSpec(0), LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE);
 
   }
 
@@ -289,7 +289,7 @@ public class ClientLockManagerTest extends TestCase {
     assertNotNull(rmtLockManager.lockRequestCalls.poll(1));
 
     NoExceptionLinkedQueue barrier = new NoExceptionLinkedQueue();
-    WaitInvocation waitInvocation = new WaitInvocation();
+    TimerSpec waitInvocation = new TimerSpec();
 
     // In order to wait on a lock, we must first request and be granted the
     // write lock. The TestRemoteLockManager
@@ -435,7 +435,7 @@ public class ClientLockManagerTest extends TestCase {
   public void testAddAllOutstandingWaitersTo() throws Exception {
     final LockID lockID = new LockID("my lock");
     final ThreadID tx1 = new ThreadID(1);
-    final WaitInvocation waitInvocation = new WaitInvocation();
+    final TimerSpec waitInvocation = new TimerSpec();
     final Object waitObject = new Object();
     final NoExceptionLinkedQueue barrier = new NoExceptionLinkedQueue();
     lockManager.lock(lockID, tx1, LockLevel.WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
@@ -459,7 +459,7 @@ public class ClientLockManagerTest extends TestCase {
     WaitLockRequest waitRequest = (WaitLockRequest) waiters.get(0);
     assertEquals(lockID, waitRequest.lockID());
     assertEquals(tx1, waitRequest.threadID());
-    assertEquals(waitInvocation, waitRequest.getWaitInvocation());
+    assertEquals(waitInvocation, waitRequest.getTimerSpec());
 
     // The lock this waiter was in when wait was called should no longer be
     // outstanding.
@@ -749,7 +749,7 @@ public class ClientLockManagerTest extends TestCase {
 
     private final ThreadID               tid;
 
-    private final WaitInvocation         call;
+    private final TimerSpec         call;
 
     private final NoExceptionLinkedQueue preWaitSignalQueue;
 
@@ -758,10 +758,10 @@ public class ClientLockManagerTest extends TestCase {
     private final List                   exceptions = new LinkedList();
 
     private LockWaiter(NoExceptionLinkedQueue preWaitSignalQueue, WaitLockRequest request, Object waitObject) {
-      this(preWaitSignalQueue, request.lockID(), request.threadID(), request.getWaitInvocation(), waitObject);
+      this(preWaitSignalQueue, request.lockID(), request.threadID(), request.getTimerSpec(), waitObject);
     }
 
-    private LockWaiter(NoExceptionLinkedQueue preWaitSignalQueue, LockID lid, ThreadID threadID, WaitInvocation call,
+    private LockWaiter(NoExceptionLinkedQueue preWaitSignalQueue, LockID lid, ThreadID threadID, TimerSpec call,
                        Object waitObject) {
       this.preWaitSignalQueue = preWaitSignalQueue;
       this.lid = lid;

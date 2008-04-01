@@ -3,10 +3,10 @@
  */
 package com.tc.object.lockmanager.api;
 
-import com.tc.object.tx.WaitInvocation;
+import com.tc.object.tx.TimerSpec;
 
 public class TryLockRequest extends WaitLockRequest {
-  public TryLockRequest(LockID lockID, ThreadID threadID, int lockLevel, String lockType, WaitInvocation call ) {
+  public TryLockRequest(LockID lockID, ThreadID threadID, int lockLevel, String lockType, TimerSpec call ) {
     super(lockID, threadID, lockLevel, lockType, call);
     call.mark();
   }

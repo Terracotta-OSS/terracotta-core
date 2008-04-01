@@ -6,47 +6,47 @@ package com.tc.object.tx;
 import com.tc.object.msg.LockRequestMessageConsts;
 
 /**
- * Encapsulates an invocation of Object.wait(...)
+ * Encapsulates a time interval for Object.wait(...) and tryLock.
  */
-public final class WaitInvocation {
+public final class TimerSpec {
 
   private final Signature signature;
 
   private long            millis;
   private int             nanos;
-  private long            mark = LockRequestMessageConsts.UNITIALIZED_WAIT_TIME;
+  private long            mark = LockRequestMessageConsts.UNITIALIZED_TIME_INTERVAL;
 
   /**
-   * Untimed wait
+   * Untimed interval
    */
-  public WaitInvocation() {
-    this(NO_ARGS, LockRequestMessageConsts.UNITIALIZED_WAIT_TIME, LockRequestMessageConsts.UNITIALIZED_WAIT_TIME);
+  public TimerSpec() {
+    this(NO_ARGS, LockRequestMessageConsts.UNITIALIZED_TIME_INTERVAL, LockRequestMessageConsts.UNITIALIZED_TIME_INTERVAL);
   }
 
   /**
-   * Wait for millis
+   * Time interval specified in millis
    * @param millis Milliseconds to wait
    */
-  public WaitInvocation(long millis) {
-    this(LONG, millis, LockRequestMessageConsts.UNITIALIZED_WAIT_TIME);
+  public TimerSpec(long millis) {
+    this(LONG, millis, LockRequestMessageConsts.UNITIALIZED_TIME_INTERVAL);
   }
 
   /**
-   * Wait for millis and nanos
+   * Time interval specified in millis and nanos
    * @param millis Milliseconds
    * @param nanos Nanoseconds
    */
-  public WaitInvocation(long millis, int nanos) {
+  public TimerSpec(long millis, int nanos) {
     this(LONG_INT, millis, nanos);
   }
 
   /**
-   * Wait on method signature 
+   * Time interval specified by a signature 
    * @param signature Method signature
    * @param millis Milliseconds
    * @param nanos Nanoseconds
    */
-  private WaitInvocation(Signature signature, long millis, int nanos) {
+  private TimerSpec(Signature signature, long millis, int nanos) {
     this.signature = signature;
 
     if (signature == LONG) {
@@ -107,7 +107,7 @@ public final class WaitInvocation {
    * Adjust by removing time to wait by now-last mark. 
    */
   public void adjust() {
-    if (mark <= LockRequestMessageConsts.UNITIALIZED_WAIT_TIME || signature == NO_ARGS) return;
+    if (mark <= LockRequestMessageConsts.UNITIALIZED_TIME_INTERVAL || signature == NO_ARGS) return;
     long now = System.currentTimeMillis();
     millis -= (now - mark);
 

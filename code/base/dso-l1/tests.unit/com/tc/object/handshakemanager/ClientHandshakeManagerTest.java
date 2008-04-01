@@ -35,7 +35,7 @@ import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TestRemoteTransactionManager;
 import com.tc.object.tx.TransactionID;
-import com.tc.object.tx.WaitInvocation;
+import com.tc.object.tx.TimerSpec;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.text.PrettyPrinter;
@@ -100,7 +100,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     }
 
     WaitLockRequest waitLockRequest = new WaitLockRequest(new LockID("1"), new ThreadID(1), LockLevel.WRITE, String.class.getName(),
-                                                          new WaitInvocation());
+                                                          new TimerSpec());
     lockManager.outstandingWaitLockRequests.add(waitLockRequest);
 
     LockRequest lockRequest = new LockRequest(new LockID("2"), new ThreadID(2), LockLevel.WRITE);
@@ -144,7 +144,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     WaitContext wctxt = (WaitContext) waitContexts.get(0);
     assertEquals(waitLockRequest.lockID(), wctxt.getLockID());
     assertEquals(waitLockRequest.threadID(), wctxt.getThreadID());
-    assertEquals(waitLockRequest.getWaitInvocation(), wctxt.getWaitInvocation());
+    assertEquals(waitLockRequest.getTimerSpec(), wctxt.getTimerSpec());
 
     // make sure that the manager called addAllOutstandingLocksTo on the lock
     // manager.
@@ -292,7 +292,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
       return null;
     }
 
-    public void wait(LockID lockID, ThreadID threadID, WaitInvocation call, Object waitObject, WaitListener listener) {
+    public void wait(LockID lockID, ThreadID threadID, TimerSpec call, Object waitObject, WaitListener listener) {
       return;
     }
 
@@ -378,7 +378,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public boolean tryLock(LockID id, ThreadID threadID, WaitInvocation timeout, int level, String lockObjectType) {
+    public boolean tryLock(LockID id, ThreadID threadID, TimerSpec timeout, int level, String lockObjectType) {
       throw new ImplementMe();
     }
 
