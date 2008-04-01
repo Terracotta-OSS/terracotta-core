@@ -109,8 +109,12 @@ public class AccessibleObjectTestApp extends AbstractTransparentApp {
 
     if (index == 1) {
       Field f = root.getF1();
-      synchronized (root) {
-        f.setAccessible(true);
+
+      // Do this many times to potentially get this action folded
+      for (int i = 0; i < 1000; i++) {
+        synchronized (root) {
+          f.setAccessible(true);
+        }
       }
     }
 

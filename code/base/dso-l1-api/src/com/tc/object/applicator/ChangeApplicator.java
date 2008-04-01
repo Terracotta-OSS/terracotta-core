@@ -14,10 +14,10 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * Applies a serialzed change to an object.
+ * Applies a serialized change to an object.
  */
 public interface ChangeApplicator {
-  
+
   /**
    * Reconstitute the state of an object from DNA.
    * @param objectManager The client-side object manager
@@ -39,8 +39,8 @@ public interface ChangeApplicator {
 
   /**
    * Create a new copy of the source object in the dest object, replacing connected objects with a new or
-   * existing clone as necessary.  New clones that are created are returned so they can be properly 
-   * updated from their originals.  
+   * existing clone as necessary.  New clones that are created are returned so they can be properly
+   * updated from their originals.
    * @param source The source object
    * @param dest The destination copy object
    * @param visited A Map of already visited objects and their clones (key=obj, value=clone)

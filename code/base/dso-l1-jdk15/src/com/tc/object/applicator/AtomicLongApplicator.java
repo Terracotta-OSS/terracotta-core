@@ -15,6 +15,7 @@ import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
+import com.tc.util.Assert;
 
 import java.io.IOException;
 import java.util.Map;
@@ -34,13 +35,13 @@ public class AtomicLongApplicator extends BaseApplicator {
       IllegalArgumentException, ClassNotFoundException {
     DNACursor cursor = dna.getCursor();
 
-    if (po instanceof AtomicLong) {
-      // You can get multiple actions for an AtomicLong if txn get folded in the client
-      while (cursor.next(encoding)) {
-        PhysicalAction a = (PhysicalAction) cursor.getAction();
-        Long value = (Long)a.getObject();
-        ((AtomicLong)po).set(value.longValue());
-      }
+    Assert.assertTrue(po.getClass().getName(), po instanceof AtomicLong);
+
+    // You can get multiple actions for an AtomicLong if txn get folded in the client
+    while (cursor.next(encoding)) {
+      PhysicalAction a = (PhysicalAction) cursor.getAction();
+      Long value = (Long) a.getObject();
+      ((AtomicLong) po).set(value.longValue());
     }
   }
 

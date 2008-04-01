@@ -10,11 +10,10 @@ import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
-import com.tc.util.Assert;
 
 import java.io.IOException;
 import java.lang.reflect.AccessibleObject;
@@ -26,7 +25,7 @@ import java.util.Map;
 public class AccessibleObjectApplicator extends BaseApplicator {
   private static final String DECLARING_CLASS_FIELD_NAME        = "java.lang.reflect.AccessibleObject.declaringClass";
   private static final String ACCESSIBLE_OBJECT_NAME_FILED_NAME = "java.lang.reflect.AccessibleObject.name";
-  private static final String OVERRIDE_FILED_NAME               = "java.lang.reflect.AccessibleObject.override";
+  private static final String OVERRIDE_FIELD_NAME               = "java.lang.reflect.AccessibleObject.override";
   private static final String PARAMETER_TYPES                   = "java.lang.reflect.AccessibleObject.parameterTypes";
   private static final String ACCESSIBLE_OBJECT_TYPE            = "java.lang.reflect.AccessibleObject.type";
   private static final String METHOD_CLASS_NAME                 = Method.class.getName();
@@ -59,9 +58,8 @@ public class AccessibleObjectApplicator extends BaseApplicator {
   public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
       IllegalArgumentException, ClassNotFoundException {
     DNACursor cursor = dna.getCursor();
-    Assert.eval(cursor.getActionCount() <= 1);
 
-    if (cursor.next(encoding)) {
+    while (cursor.next(encoding)) {
       PhysicalAction a = (PhysicalAction) cursor.getAction();
       Boolean value = (Boolean) a.getObject();
       ((AccessibleObject) po).setAccessible(value.booleanValue());
@@ -92,7 +90,7 @@ public class AccessibleObjectApplicator extends BaseApplicator {
     writer.addPhysicalAction(ACCESSIBLE_OBJECT_TYPE, ao.getClass().getName());
     writer.addPhysicalAction(DECLARING_CLASS_FIELD_NAME, declaringClass);
     writer.addPhysicalAction(ACCESSIBLE_OBJECT_NAME_FILED_NAME, name);
-    writer.addPhysicalAction(OVERRIDE_FILED_NAME, new Boolean(override));
+    writer.addPhysicalAction(OVERRIDE_FIELD_NAME, new Boolean(override));
     if (!(ao instanceof Field)) {
       writer.addPhysicalAction(PARAMETER_TYPES, parameterTypes);
     }
@@ -100,7 +98,7 @@ public class AccessibleObjectApplicator extends BaseApplicator {
 
   public Object getNewInstance(ClientObjectManager objectManager, DNA dna) throws IOException, ClassNotFoundException {
     Class[] parameterTypes = null;
-    
+
     DNACursor cursor = dna.getCursor();
 
     cursor.next(encoding);
