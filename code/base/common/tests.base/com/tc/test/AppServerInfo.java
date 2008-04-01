@@ -4,6 +4,9 @@
  */
 package com.tc.test;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class AppServerInfo {
   public static final int WEBLOGIC  = 0;
   public static final int JBOSS     = 1;
@@ -14,14 +17,38 @@ public class AppServerInfo {
   public static final int WEBSPHERE = 6;
   public static final int RESIN     = 7;
 
-  private int             id        = -1;
-  private String          name;
-  private String          major;
-  private String          minor;
+  private final int       id;
+  private final String    name;
+  private final String    major;
+  private final String    minor;
 
-  public int getId() {
-    if (id >= 0) return id;
-    if (name == null) throw new RuntimeException("No appserver name has been set");
+  private static final Pattern nameAndVersionPattern =
+      Pattern.compile("^(\\w+)-(\\w+)\\.([\\w\\-\\.]+)$");
+
+  /**
+   * Creates a new {@link AppServerInfo} object whose properties are parsed from
+   * the given <code>nameAndVersion> string, which must be of the form
+   * name-major-version.minor-version.
+   *
+   * @throws IllegalArgumentException if the <code>nameAndVersion</code> does
+   *         not parse properly.
+   */
+  public static AppServerInfo parse(final String nameAndVersion) {
+    Matcher matcher = nameAndVersionPattern.matcher(nameAndVersion);
+    if (!matcher.matches()) {
+      throw new IllegalArgumentException("Cannot parse appserver specification: " + nameAndVersion);
+    }
+    return new AppServerInfo(matcher.group(1), matcher.group(2), matcher.group(3));
+  }
+
+  public AppServerInfo(String name, String majorVersion, String minorVersion) {
+    this.name = name;
+    this.major = majorVersion;
+    this.minor = minorVersion;
+
+    if (name == null)
+      throw new RuntimeException("No appserver name has been set");
+
     if (name.equals("weblogic")) {
       id = WEBLOGIC;
     } else if (name.equals("jboss")) {
@@ -41,6 +68,9 @@ public class AppServerInfo {
     } else {
       throw new RuntimeException("App server [" + name + "] is not yet defined!");
     }
+  }
+
+  public int getId() {
     return id;
   }
 
@@ -48,24 +78,12 @@ public class AppServerInfo {
     return name;
   }
 
-  public void setName(String name) {
-    this.name = name;
-  }
-
   public String getMajor() {
     return major;
   }
 
-  public void setMajor(String major) {
-    this.major = major;
-  }
-
   public String getMinor() {
     return minor;
-  }
-
-  public void setMinor(String minor) {
-    this.minor = minor;
   }
 
   public String toString() {

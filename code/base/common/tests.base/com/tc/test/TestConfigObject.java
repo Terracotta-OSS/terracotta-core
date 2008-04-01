@@ -89,6 +89,8 @@ public class TestConfigObject {
   private static final String     APP_SERVER_MINOR_VERSION         = STATIC_PROPERTIES_PREFIX
                                                                      + "appserver.minor-version";
 
+  private static final String     APP_SERVER_SPECIFICATION         = STATIC_PROPERTIES_PREFIX + "appserver";
+
   private static final String     TRANSPARENT_TESTS_MODE           = STATIC_PROPERTIES_PREFIX
                                                                      + "transparent-tests.mode";
 
@@ -146,12 +148,19 @@ public class TestConfigObject {
 
     this.properties.putAll(System.getProperties());
 
-    appServerInfo = new AppServerInfo();
-    appServerInfo.setName(properties.getProperty(APP_SERVER_FACTORY_NAME, "unknown"));
-    appServerInfo.setMajor(properties.getProperty(APP_SERVER_MAJOR_VERSION, "unknown"));
-    appServerInfo.setMinor(properties.getProperty(APP_SERVER_MINOR_VERSION, "unknown"));
+    this.appServerInfo = createAppServerInfo();
 
     logger.info("Loaded test configuration from " + loadedFrom.toString());
+  }
+
+  private AppServerInfo createAppServerInfo() {
+    if (properties.containsKey(APP_SERVER_SPECIFICATION)) {
+      return AppServerInfo.parse(properties.getProperty(APP_SERVER_SPECIFICATION));
+    }
+
+    return new AppServerInfo(properties.getProperty(APP_SERVER_FACTORY_NAME, "unknown"),
+                             properties.getProperty(APP_SERVER_MAJOR_VERSION, "unknown"),
+                             properties.getProperty(APP_SERVER_MAJOR_VERSION, "unknown"));
   }
 
   public static synchronized TestConfigObject getInstance() {
