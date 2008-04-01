@@ -472,6 +472,43 @@ public class TransactionBatchTest extends TestCase {
     assertFalse(folded);
   }
 
+  public void testTxnWithNewObjCanBeFolded() {
+    // (txn1) - Lock1, Obj1(delta)
+    // (txn2) - Lock1, Obj1(delta), Obj2(new)
+    //
+    // txn2 should be folded into txn1 even though it contains a "new" object
+
+    ObjectStringSerializer serializer = new ObjectStringSerializer();
+    writer = newWriter(serializer, true, 0, 0);
+
+    LockID lid1 = new LockID("1");
+
+    TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL);
+    ClientTransaction txn1 = new ClientTransactionImpl(new TransactionID(101), new NullRuntimeLogger());
+    txn1.setTransactionContext(tc);
+    txn1.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
+
+    tc = new TransactionContextImpl(lid1, TxnType.NORMAL);
+    ClientTransaction txn2 = new ClientTransactionImpl(new TransactionID(102), new NullRuntimeLogger());
+    txn2.setTransactionContext(tc);
+    txn2.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
+    MockTCObject mtco = new MockTCObject(new ObjectID(2), new Object());
+    mtco.setNew(true);
+    txn2.createObject(mtco);
+
+    SequenceGenerator sequenceGenerator = new SequenceGenerator();
+    final long startSeq = sequenceGenerator.getCurrentSequence();
+
+    boolean folded;
+
+    folded = writer.addTransaction(txn1, sequenceGenerator);
+    assertFalse(folded);
+    assertEquals(1 + startSeq, sequenceGenerator.getCurrentSequence());
+    folded = writer.addTransaction(txn2, sequenceGenerator);
+    assertTrue(folded);
+    assertEquals(1 + startSeq, sequenceGenerator.getCurrentSequence());
+  }
+
   public void testOrdering() {
     ObjectStringSerializer serializer = new ObjectStringSerializer();
     writer = newWriter(serializer, true, 0, 0);
