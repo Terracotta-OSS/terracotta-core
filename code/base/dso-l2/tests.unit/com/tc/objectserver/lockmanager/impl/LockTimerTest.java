@@ -8,19 +8,11 @@ import com.tc.exception.ImplementMe;
 import com.tc.net.groups.ClientID;
 import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
-import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MockMessageChannel;
 import com.tc.object.lockmanager.api.LockID;
-import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
-import com.tc.object.net.DSOChannelManager;
-import com.tc.object.net.DSOChannelManagerEventListener;
+import com.tc.object.net.MockChannelManager;
 import com.tc.objectserver.lockmanager.api.LockAwardContext;
 import com.tc.util.TCAssertionError;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 import junit.framework.TestCase;
 
@@ -202,68 +194,6 @@ public class LockTimerTest extends TestCase {
   private void checkTimerFires() throws InterruptedException {
     assertTrue(timeout > 0);
     assertTrue(this.channel.waitForCloseCall(timeout + 1000));
-  }
-
-  public static class MockChannelManager implements DSOChannelManager {
-
-    private Map channels = new HashMap();
-
-    public void addChannel(MessageChannel channel) {
-      synchronized (channels) {
-        this.channels.put(new ClientID(channel.getChannelID()), channel);
-      }
-    }
-
-    public MessageChannel getActiveChannel(NodeID id) {
-      synchronized (channels) {
-        return (MessageChannel) this.channels.get(id);
-      }
-    }
-
-    public MessageChannel[] getActiveChannels() {
-      throw new ImplementMe();
-    }
-
-    public boolean isActiveID(NodeID nodeID) {
-      throw new ImplementMe();
-    }
-
-    public void closeAll(Collection channelIDs) {
-      throw new ImplementMe();
-    }
-
-    public String getChannelAddress(NodeID nid) {
-      return null;
-    }
-
-    public BatchTransactionAcknowledgeMessage newBatchTransactionAcknowledgeMessage(NodeID nid) {
-      throw new ImplementMe();
-    }
-
-    public Set getAllActiveClientIDs() {
-      throw new ImplementMe();
-    }
-
-    public void addEventListener(DSOChannelManagerEventListener listener) {
-      throw new ImplementMe();
-    }
-
-    public void makeChannelActive(ClientID clientID, long startIDs, long endIDs, boolean persistent) {
-      throw new ImplementMe();
-    }
-
-    public Set getAllClientIDs() {
-      throw new ImplementMe();
-    }
-
-    public void makeChannelActiveNoAck(MessageChannel channel) {
-      throw new ImplementMe();
-    }
-
-    public ClientID getClientIDFor(ChannelID channelID) {
-      return new ClientID(channelID);
-    }
-
   }
 
 }

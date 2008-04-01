@@ -26,46 +26,46 @@ public class RespondToRequestLockHandler extends AbstractEventHandler {
 
   public void handleEvent(EventContext context) {
     LockResponseContext lrc = (LockResponseContext) context;
-
     NodeID cid = lrc.getNodeID();
-    try {
-      MessageChannel channel = channelManager.getActiveChannel(cid);
 
+    try {
       LockResponseMessage responseMessage = null;
 
       if (lrc.isLockAward()) {
-        responseMessage = (LockResponseMessage) channel.createMessage(TCMessageType.LOCK_RESPONSE_MESSAGE);
+        responseMessage = createMessage(context, TCMessageType.LOCK_RESPONSE_MESSAGE);
         responseMessage.initializeLockAward(lrc.getLockID(), lrc.getThreadID(), lrc.getLockLevel());
       } else if (lrc.isLockNotAwarded()) {
-        responseMessage = (LockResponseMessage) channel.createMessage(TCMessageType.LOCK_RESPONSE_MESSAGE);
+        responseMessage = createMessage(context, TCMessageType.LOCK_RESPONSE_MESSAGE);
         responseMessage.initializeLockNotAwarded(lrc.getLockID(), lrc.getThreadID(), lrc.getLockLevel());
       } else if (lrc.isLockRecall()) {
-        responseMessage = (LockResponseMessage) channel.createMessage(TCMessageType.LOCK_RECALL_MESSAGE);
+        responseMessage = createMessage(context, TCMessageType.LOCK_RECALL_MESSAGE);
         responseMessage.initializeLockRecall(lrc.getLockID(), lrc.getThreadID(), lrc.getLockLevel(), lrc.getAwardLeaseTime());
       } else if (lrc.isLockWaitTimeout()) {
-        responseMessage = (LockResponseMessage) channel.createMessage(TCMessageType.LOCK_RESPONSE_MESSAGE);
+        responseMessage = createMessage(context, TCMessageType.LOCK_RESPONSE_MESSAGE);
         responseMessage.initializeLockWaitTimeout(lrc.getLockID(), lrc.getThreadID(), lrc.getLockLevel());
       } else if (lrc.isLockInfo()) {
-        responseMessage = (LockResponseMessage) channel.createMessage(TCMessageType.LOCK_QUERY_RESPONSE_MESSAGE);
+        responseMessage = createMessage(context, TCMessageType.LOCK_QUERY_RESPONSE_MESSAGE);
         responseMessage.initializeLockInfo(lrc.getLockID(), lrc.getThreadID(), lrc.getLockLevel(), lrc
             .getGlobalLockInfo());
-//      } else if (lrc.isLockStatEnabled()) {
-//        responseMessage = (LockResponseMessage) channel.createMessage(TCMessageType.LOCK_STAT_MESSAGE);
-//        responseMessage.initializeLockStatEnable(lrc.getLockID(), lrc.getThreadID(), lrc.getLockLevel(), lrc.getStatTraceDepth(), lrc.getStatGatherInterval());
-//      } else if (lrc.isLockStatDisabled()) {
-//        responseMessage = (LockResponseMessage) channel.createMessage(TCMessageType.LOCK_STAT_MESSAGE);
-//        responseMessage.initializeLockStatDisable(lrc.getLockID(), lrc.getThreadID(), lrc.getLockLevel());
       } else {
         throw new AssertionError("Unknown lock response context : " + lrc);
       }
 
-      responseMessage.send();
+      send(responseMessage);
 
     } catch (NoSuchChannelException e) {
       logger.info("Failed to send lock response message:" + lrc.getLockID().asString() + " to:" + cid
                   + " because the session is dead.");
       return;
     }
+  }
+
+  protected LockResponseMessage createMessage(EventContext context, TCMessageType messageType)
+      throws NoSuchChannelException {
+    LockResponseContext lrc = (LockResponseContext) context;
+    NodeID cid = lrc.getNodeID();
+    MessageChannel channel = channelManager.getActiveChannel(cid);
+    return (LockResponseMessage) channel.createMessage(messageType);
   }
 
   public void initialize(ConfigurationContext context) {
@@ -75,4 +75,8 @@ public class RespondToRequestLockHandler extends AbstractEventHandler {
     this.logger = oscc.getLogger(this.getClass());
   }
 
+  //used in tests to by pass the network
+  protected void send(LockResponseMessage responseMessage){
+    responseMessage.send();
+  }
 }

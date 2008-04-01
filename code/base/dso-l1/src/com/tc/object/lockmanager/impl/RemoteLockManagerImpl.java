@@ -26,8 +26,6 @@ import java.util.Iterator;
 
 /**
  * Responsible for communicating to server to request/release locks
- * 
- * @author steve
  */
 public class RemoteLockManagerImpl implements RemoteLockManager {
 
@@ -43,6 +41,11 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     Assert.assertTrue(LockLevel.isDiscrete(lockType));
     LockRequestMessage req = createRequest();
     req.initializeObtainLock(lockID, threadID, lockType, lockObjectType);
+    send(req);
+  }
+
+  // used for tests
+  protected void send(LockRequestMessage req) {
     req.send();
   }
 
@@ -50,31 +53,31 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     Assert.assertTrue(LockLevel.isDiscrete(lockType));
     LockRequestMessage req = createRequest();
     req.initializeTryObtainLock(lockID, threadID, timeout, lockType, lockObjectType);
-    req.send();
+    send(req);
   }
 
   public void releaseLock(LockID lockID, ThreadID threadID) {
     LockRequestMessage req = createRequest();
     req.initializeLockRelease(lockID, threadID);
-    req.send();
+    send(req);
   }
 
   public void releaseLockWait(LockID lockID, ThreadID threadID, WaitInvocation call) {
     LockRequestMessage req = createRequest();
     req.initializeLockReleaseWait(lockID, threadID, call);
-    req.send();
+    send(req);
   }
 
   public void queryLock(LockID lockID, ThreadID threadID) {
     LockRequestMessage req = createRequest();
     req.initializeQueryLock(lockID, threadID);
-    req.send();
+    send(req);
   }
 
   public void interrruptWait(LockID lockID, ThreadID threadID) {
     LockRequestMessage req = createRequest();
     req.initializeInterruptWait(lockID, threadID);
-    req.send();
+    send(req);
   }
 
   private LockRequestMessage createRequest() {
@@ -112,7 +115,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
       req.addPendingTryLockContext(ctxt);
     }
 
-    req.send();
+    send(req);
   }
 
   public void flush(LockID lockID) {

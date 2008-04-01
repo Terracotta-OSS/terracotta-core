@@ -4,133 +4,112 @@
  */
 package com.tctest;
 
-import org.apache.xmlbeans.XmlObject;
+import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
 
-import com.tc.cluster.Cluster;
+import com.tc.async.api.AbstractEventHandler;
+import com.tc.async.api.EventContext;
+import com.tc.async.impl.MockStage;
+import com.tc.async.impl.TestClientConfigurationContext;
 import com.tc.config.lock.LockContextInfo;
-import com.tc.config.schema.NewCommonL2Config;
-import com.tc.config.schema.NewHaConfig;
-import com.tc.config.schema.NewSystemConfig;
-import com.tc.config.schema.UpdateCheckConfig;
-import com.tc.config.schema.dynamic.BooleanConfigItem;
-import com.tc.config.schema.dynamic.ConfigItem;
-import com.tc.config.schema.dynamic.ConfigItemListener;
-import com.tc.config.schema.dynamic.IntConfigItem;
-import com.tc.config.schema.dynamic.StringConfigItem;
-import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.exception.ImplementMe;
 import com.tc.exception.TCLockUpgradeNotSupportedError;
-import com.tc.lang.StartupHelper;
-import com.tc.lang.TCThreadGroup;
-import com.tc.lang.ThrowableHandler;
-import com.tc.lang.StartupHelper.StartupAction;
-import com.tc.logging.TCLogging;
-import com.tc.net.protocol.transport.NullConnectionPolicy;
+import com.tc.io.TCByteBufferOutputStream;
+import com.tc.logging.CustomerLogging;
+import com.tc.logging.TCLogger;
+import com.tc.management.ClientLockStatManager;
+import com.tc.management.L2LockStatsManager;
+import com.tc.management.lock.stats.LockSpec;
+import com.tc.management.lock.stats.TCStackTraceElement;
+import com.tc.net.groups.NodeID;
+import com.tc.net.protocol.tcm.NullMessageMonitor;
+import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.BaseDSOTestCase;
-import com.tc.object.DistributedObjectClient;
-import com.tc.object.bytecode.MockClassProvider;
-import com.tc.object.bytecode.NullManager;
-import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
-import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.StandardDSOClientConfigHelperImpl;
-import com.tc.object.config.schema.NewDSOApplicationConfig;
-import com.tc.object.config.schema.NewL2DSOConfig;
+import com.tc.object.gtx.ClientGlobalTransactionManager;
+import com.tc.object.gtx.TestClientGlobalTransactionManager;
+import com.tc.object.handler.LockResponseHandler;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.lockmanager.impl.ClientLockManagerImpl;
-import com.tc.objectserver.impl.DistributedObjectServer;
-import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
-import com.tc.properties.TCPropertiesImpl;
-import com.tc.server.NullTCServerInfo;
+import com.tc.object.lockmanager.impl.RemoteLockManagerImpl;
+import com.tc.object.msg.LockRequestMessage;
+import com.tc.object.msg.LockRequestMessageFactory;
+import com.tc.object.msg.LockResponseMessage;
+import com.tc.object.net.DSOChannelManager;
+import com.tc.object.net.MockChannelManager;
+import com.tc.object.session.NullSessionManager;
+import com.tc.object.session.SessionID;
+import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.core.impl.TestServerConfigurationContext;
+import com.tc.objectserver.handler.RequestLockUnLockHandler;
+import com.tc.objectserver.handler.RespondToRequestLockHandler;
+import com.tc.objectserver.lockmanager.api.LockManager;
+import com.tc.objectserver.lockmanager.api.NullChannelManager;
+import com.tc.objectserver.lockmanager.impl.LockManagerImpl;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.ThreadUtil;
 
-import java.io.InputStream;
+import java.util.Collection;
 
 public class LockManagerSystemTest extends BaseDSOTestCase {
 
   // please keep this set to true so that tests on slow/loaded machines don't fail. When working on this test though, it
   // can be convenient to temporarily flip it to false
-  private static final boolean    slow  = true;
+  private static final boolean  slow   = true;
 
-  private DistributedObjectServer server;
-  private DistributedObjectClient client;
-  private ClientLockManagerImpl   lockManager;
-  private TCThreadGroup           group = new TCThreadGroup(new ThrowableHandler(TCLogging
-                                            .getLogger(DistributedObjectServer.class)));
+  private static final TCLogger logger = CustomerLogging.getDSOGenericLogger();
 
-  static {
-    /*
-     * This test run against JDK1.4 and creates and executes multiple embedded DistributedObjectServers. L2Management
-     * creates an RMI registry on the JMX port, which is randomly changing in this test. In 1.4 it's not possible to
-     * create multiple RMI Registries in a single VM. Remove this when we no longer support 1.4.
-     */
-    System.setProperty("org.terracotta.server.disableJmxConnector", "true");
-    /*
-     * disable OOO temporary because: It keeps starting and stopping different client/server within the same process and
-     * cleaning up the environement etc. Since the shutdown methods are poorly supported as of now Sometimes the clients
-     * are still trying to reconnect to non-exisitent servers and with OOO it seems to happen more.
-     */
-    TCPropertiesImpl.setProperty("l1.reconnect.enabled", "false");
-  }
-
-  private class StartAction implements StartupAction {
-    private final L2TVSConfigurationSetupManager l2Manager;
-
-    StartAction(L2TVSConfigurationSetupManager l2manager) {
-      this.l2Manager = l2manager;
-    }
-
-    public void execute() throws Throwable {
-      server = new DistributedObjectServer(new ConfigOverride(l2Manager), group, new NullConnectionPolicy(),
-                                           new NullTCServerInfo());
-      server.start();
-    }
-  }
+  private ClientLockManagerImpl clientLockManager;
 
   public void setUp() throws Exception {
-    TestTVSConfigurationSetupManagerFactory factory = createDistributedConfigFactory();
+    BoundedLinkedQueue clientLockRequestQueue = new BoundedLinkedQueue();
+    BoundedLinkedQueue serverLockRespondQueue = new BoundedLinkedQueue();
+    
+    TestRemoteLockManagerImpl rmtLockManager = new TestRemoteLockManagerImpl(new TestLockRequestMessageFactory(),
+                                                                             new TestClientGlobalTransactionManager(),
+                                                                             clientLockRequestQueue);
+    clientLockManager = new ClientLockManagerImpl(logger, rmtLockManager, new NullSessionManager(),
+                                                  ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER);
 
-    ManagedObjectStateFactory.disableSingleton(true);
-    L2TVSConfigurationSetupManager l2Manager = factory.createL2TVSConfigurationSetupManager(null);
+    LockManager serverLockManager = new LockManagerImpl(new MockChannelManager(), new MockL2LockStatsManager());
 
-    new StartupHelper(group, new StartAction(l2Manager)).startUp();
+    AbstractEventHandler serverLockUnlockHandler = new RequestLockUnLockHandler();
 
-    factory.addServerToL1Config(null, server.getListenPort(), -1);
+    TestServerConfigurationContext serverLockUnlockContext = new TestServerConfigurationContext();
+    MockStage serverStage = new MockStage("LockManagerSystemTest");
+    serverLockUnlockContext.addStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE, serverStage);
+    serverLockUnlockContext.lockManager = serverLockManager;
 
-    L1TVSConfigurationSetupManager manager = factory.createL1TVSConfigurationSetupManager();
-    DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelperImpl(manager);
+    serverLockUnlockHandler.initializeContext(serverLockUnlockContext);
 
-    PreparedComponentsFromL2Connection components = new PreparedComponentsFromL2Connection(manager);
+    AbstractEventHandler serverRespondToRequestLcokHandler = new TestRespondToRequestLockHandler(serverLockRespondQueue);
+    TestServerConfigurationContext serverRespondToRequestContext = new TestServerConfigurationContext();
+    serverRespondToRequestContext.channelManager = new NullChannelManager();
 
-    client = new DistributedObjectClient(configHelper, new TCThreadGroup(new ThrowableHandler(TCLogging
-        .getLogger(DistributedObjectClient.class))), new MockClassProvider(), components, NullManager.getInstance(),
-                                         new Cluster());
-    client.setCreateDedicatedMBeanServer(true);
-    client.start();
+    serverRespondToRequestLcokHandler.initializeContext(serverRespondToRequestContext);
 
-    lockManager = (ClientLockManagerImpl) client.getLockManager();
-  }
+    TestClientConfigurationContext clientLockResponseContext = new TestClientConfigurationContext();
+    clientLockResponseContext.clientLockManager = this.clientLockManager;
+    AbstractEventHandler clientLockResponseHandler = new LockResponseHandler(new NullSessionManager());
 
-  protected void tearDown() {
-    if (client != null) {
-      try {
-        client.stop();
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    }
-    ThreadUtil.reallySleep(3000);
-    if (server != null) {
-      try {
-        server.stop();
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    }
+    clientLockResponseHandler.initializeContext(clientLockResponseContext);
+
+    serverLockManager.start();
+
+    // start the client side lock handler thread
+    Thread clientLockRequestHandlerThread = new StageThread("Client Lock Handler", clientLockRequestQueue,
+                                                            serverLockUnlockHandler);
+    clientLockRequestHandlerThread.start();
+
+    // start the server side lock respond thread
+    Thread serverLockRespondHandlerThread = new StageThread("Server Lock Respond Handler", serverStage.sink.queue,
+                                                            serverRespondToRequestLcokHandler);
+    serverLockRespondHandlerThread.start();
+
+    // start the client lock response handler
+    Thread clientLockRespondHandlerThread = new StageThread("Client Lock Respond Thread", serverLockRespondQueue,
+                                                            clientLockResponseHandler);
+    clientLockRespondHandlerThread.start();
   }
 
   private static void sleep(long amount) {
@@ -146,15 +125,15 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     final ThreadID tid3 = new ThreadID(3);
 
     final SetOnceFlag flag = new SetOnceFlag();
-    lockManager.lock(l1, tid1, LockLevel.READ, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
-    lockManager.lock(l1, tid2, LockLevel.READ, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
-    lockManager.lock(l1, tid3, LockLevel.READ, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    clientLockManager.lock(l1, tid1, LockLevel.READ, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    clientLockManager.lock(l1, tid2, LockLevel.READ, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    clientLockManager.lock(l1, tid3, LockLevel.READ, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
 
     Thread t = new Thread() {
       public void run() {
         try {
-          LockManagerSystemTest.this.lockManager.lock(l1, tid1, LockLevel.WRITE, String.class.getName(),
-                                                      LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+          LockManagerSystemTest.this.clientLockManager.lock(l1, tid1, LockLevel.WRITE, String.class.getName(),
+                                                            LockContextInfo.NULL_LOCK_CONTEXT_INFO);
           throw new AssertionError("Should have thrown a TCLockUpgradeNotSupportedError.");
         } catch (TCLockUpgradeNotSupportedError e) {
           flag.set();
@@ -166,16 +145,16 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     sleep(5);
     assertTrue(flag.isSet());
 
-    lockManager.unlock(l1, tid2);
-    lockManager.unlock(l1, tid3);
+    clientLockManager.unlock(l1, tid2);
+    clientLockManager.unlock(l1, tid3);
 
     t.join();
 
     Thread secondReader = new Thread() {
       public void run() {
         System.out.println("Read requested !");
-        LockManagerSystemTest.this.lockManager.lock(l1, tid2, LockLevel.READ, String.class.getName(),
-                                                    LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+        LockManagerSystemTest.this.clientLockManager.lock(l1, tid2, LockLevel.READ, String.class.getName(),
+                                                          LockContextInfo.NULL_LOCK_CONTEXT_INFO);
         System.out.println("Got Read !");
       }
     };
@@ -186,8 +165,8 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     Thread secondWriter = new Thread() {
       public void run() {
         System.out.println("Write requested !");
-        LockManagerSystemTest.this.lockManager.lock(l1, tid3, LockLevel.WRITE, String.class.getName(),
-                                                    LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+        LockManagerSystemTest.this.clientLockManager.lock(l1, tid3, LockLevel.WRITE, String.class.getName(),
+                                                          LockContextInfo.NULL_LOCK_CONTEXT_INFO);
         System.out.println("Got Write !");
       }
     };
@@ -197,10 +176,10 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     secondReader.join(5000);
     assertFalse(secondReader.isAlive());
 
-    lockManager.unlock(l1, tid1);
+    clientLockManager.unlock(l1, tid1);
     assertTrue(secondWriter.isAlive());
 
-    lockManager.unlock(l1, tid2);
+    clientLockManager.unlock(l1, tid2);
     secondWriter.join(60000);
     assertFalse(secondWriter.isAlive());
   }
@@ -216,12 +195,12 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
 
     // Get the lock for threadID 1
     System.out.println("Asked for first lock");
-    lockManager.lock(l1, tid1, LockLevel.WRITE, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    clientLockManager.lock(l1, tid1, LockLevel.WRITE, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
 
     System.out.println("Got first lock");
 
     // Try to get it again, this should pretty much be a noop as we handle recursive lock calls
-    lockManager.lock(l1, tid1, LockLevel.WRITE, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    clientLockManager.lock(l1, tid1, LockLevel.WRITE, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     System.out.println("Got first lock again");
 
     final boolean[] done = new boolean[2];
@@ -231,7 +210,8 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     Thread t = new Thread() {
       public void run() {
         System.out.println("Asked for second lock");
-        lockManager.lock(l1, tid2, LockLevel.WRITE, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+        clientLockManager.lock(l1, tid2, LockLevel.WRITE, String.class.getName(),
+                               LockContextInfo.NULL_LOCK_CONTEXT_INFO);
         System.out.println("Got second lock");
         done[0] = true;
       }
@@ -240,20 +220,21 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     t.start();
     sleep(5);
     assertFalse(done[0]);
-    lockManager.unlock(l1, tid1);
-    lockManager.unlock(l1, tid1); // should unblock thread above
+    clientLockManager.unlock(l1, tid1);
+    clientLockManager.unlock(l1, tid1); // should unblock thread above
     sleep(5);
     assertTrue(done[0]); // thread should have been unblocked and finished
 
     // Get a bunch of read locks on l3
-    lockManager.lock(l3, tid1, LockLevel.READ, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
-    lockManager.lock(l3, tid2, LockLevel.READ, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
-    lockManager.lock(l3, tid3, LockLevel.READ, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    clientLockManager.lock(l3, tid1, LockLevel.READ, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    clientLockManager.lock(l3, tid2, LockLevel.READ, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    clientLockManager.lock(l3, tid3, LockLevel.READ, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     done[0] = false;
     t = new Thread() {
       public void run() {
         System.out.println("Asking for write lock");
-        lockManager.lock(l3, tid4, LockLevel.WRITE, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+        clientLockManager.lock(l3, tid4, LockLevel.WRITE, String.class.getName(),
+                               LockContextInfo.NULL_LOCK_CONTEXT_INFO);
         System.out.println("Got write lock");
         done[0] = true;
       }
@@ -262,15 +243,15 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     sleep(5);
     assertFalse(done[0]);
 
-    lockManager.unlock(l3, tid1);
+    clientLockManager.unlock(l3, tid1);
     sleep(5);
     assertFalse(done[0]);
 
-    lockManager.unlock(l3, tid2);
+    clientLockManager.unlock(l3, tid2);
     sleep(5);
     assertFalse(done[0]);
 
-    lockManager.unlock(l3, tid3);
+    clientLockManager.unlock(l3, tid3);
     sleep(5);
     assertTrue(done[0]);
 
@@ -278,7 +259,8 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     t = new Thread() {
       public void run() {
         System.out.println("Asking for read lock");
-        lockManager.lock(l3, tid1, LockLevel.READ, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+        clientLockManager
+            .lock(l3, tid1, LockLevel.READ, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
         System.out.println("Got read lock");
         done[0] = true;
       }
@@ -289,7 +271,8 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     t = new Thread() {
       public void run() {
         System.out.println("Asking for read lock");
-        lockManager.lock(l3, tid2, LockLevel.READ, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+        clientLockManager
+            .lock(l3, tid2, LockLevel.READ, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
         System.out.println("Got read lock");
         done[1] = true;
       }
@@ -299,167 +282,158 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     sleep(5);
     assertFalse(done[0]);
     assertFalse(done[1]);
-    lockManager.unlock(l3, tid4);
+    clientLockManager.unlock(l3, tid4);
     sleep(5);
     assertTrue(done[0]);
     assertTrue(done[1]);
-    lockManager.unlock(l3, tid1);
-    lockManager.unlock(l3, tid2);
+    clientLockManager.unlock(l3, tid1);
+    clientLockManager.unlock(l3, tid2);
   }
 
-  private static class ConfigOverride implements L2TVSConfigurationSetupManager {
+  private static class TestRemoteLockManagerImpl extends RemoteLockManagerImpl {
+    private BoundedLinkedQueue clientLockRequestQueue = null;
 
-    private final L2TVSConfigurationSetupManager realConfig;
-
-    ConfigOverride(L2TVSConfigurationSetupManager realConfig) {
-      this.realConfig = realConfig;
+    public TestRemoteLockManagerImpl(LockRequestMessageFactory lrmf, ClientGlobalTransactionManager gtxManager,
+                                     BoundedLinkedQueue clientLockRequestQueue) {
+      super(lrmf, gtxManager);
+      this.clientLockRequestQueue = clientLockRequestQueue;
     }
 
-    public String[] allCurrentlyKnownServers() {
-      return realConfig.allCurrentlyKnownServers();
-    }
-
-    public String[] applicationNames() {
-      return realConfig.applicationNames();
-    }
-
-    public NewCommonL2Config commonl2Config() {
-      return realConfig.commonl2Config();
-    }
-
-    public NewCommonL2Config commonL2ConfigFor(String name) throws ConfigurationSetupException {
-      return realConfig.commonL2ConfigFor(name);
-    }
-
-    public String describeSources() {
-      return realConfig.describeSources();
-    }
-
-    public NewDSOApplicationConfig dsoApplicationConfigFor(String applicationName) {
-      return realConfig.dsoApplicationConfigFor(applicationName);
-    }
-
-    public NewL2DSOConfig dsoL2Config() {
-      return new L2ConfigOverride(realConfig.dsoL2Config());
-    }
-
-    public NewL2DSOConfig dsoL2ConfigFor(String name) throws ConfigurationSetupException {
-      return realConfig.dsoL2ConfigFor(name);
-    }
-
-    public InputStream rawConfigFile() {
-      return realConfig.rawConfigFile();
-    }
-
-    public NewSystemConfig systemConfig() {
-      return realConfig.systemConfig();
-    }
-
-    public NewHaConfig haConfig() {
-      return realConfig.haConfig();
-    }
-
-    public UpdateCheckConfig updateCheckConfig() {
-      return realConfig.updateCheckConfig();
-    }
-
-    public InputStream effectiveConfigFile() {
-      return realConfig.effectiveConfigFile();
-    }
-
-    private static class L2ConfigOverride implements NewL2DSOConfig {
-
-      private final NewL2DSOConfig config;
-
-      public L2ConfigOverride(NewL2DSOConfig config) {
-        this.config = config;
+    protected void send(LockRequestMessage req) {
+      try {
+        clientLockRequestQueue.put(req);
+      } catch (Exception e) {
+        throw new AssertionError(e);
       }
+    }
+  }
 
-      public void changesInItemForbidden(ConfigItem item) {
-        config.changesInItemForbidden(item);
-      }
+  private static class MockL2LockStatsManager implements L2LockStatsManager {
 
-      public void changesInItemIgnored(ConfigItem item) {
-        config.changesInItemIgnored(item);
-      }
-
-      public IntConfigItem clientReconnectWindow() {
-        return config.clientReconnectWindow();
-      }
-
-      public BooleanConfigItem garbageCollectionEnabled() {
-        return config.garbageCollectionEnabled();
-      }
-
-      public IntConfigItem garbageCollectionInterval() {
-        return config.garbageCollectionInterval();
-      }
-
-      public BooleanConfigItem garbageCollectionVerbose() {
-        return config.garbageCollectionVerbose();
-      }
-
-      public IntConfigItem l2GroupPort() {
-        return config.l2GroupPort();
-      }
-
-      public IntConfigItem listenPort() {
-        return new IntConfigItem() {
-          public int getInt() {
-            return 0;
-          }
-
-          public void addListener(ConfigItemListener changeListener) {
-            //
-          }
-
-          public Object getObject() {
-            return new Integer(0);
-          }
-
-          public void removeListener(ConfigItemListener changeListener) {
-            //
-          }
-        };
-      }
-
-      public ConfigItem persistenceMode() {
-        return config.persistenceMode();
-      }
-
-      public XmlObject getBean() {
-        return config.getBean();
-      }
-
-      public StringConfigItem host() {
-        return new StringConfigItem() {
-
-          public String getString() {
-            return "localhost";
-          }
-
-          public void addListener(ConfigItemListener changeListener) {
-            //
-          }
-
-          public Object getObject() {
-            return getString();
-          }
-
-          public void removeListener(ConfigItemListener changeListener) {
-            //
-          }
-
-        };
-      }
-
-      public StringConfigItem bind() {
-        return config.bind();
-      }
-
+    public void clearAllStatsFor(NodeID nodeID) {
+      throw new ImplementMe();
     }
 
+    public void enableStatsForNodeIfNeeded(NodeID nodeID) {
+      throw new ImplementMe();
+    }
+
+    public int getGatherInterval() {
+      throw new ImplementMe();
+    }
+
+    public Collection<LockSpec> getLockSpecs() {
+      throw new ImplementMe();
+    }
+
+    public long getNumberOfLockHopRequests(LockID lockID) {
+      throw new ImplementMe();
+    }
+
+    public long getNumberOfLockReleased(LockID lockID) {
+      throw new ImplementMe();
+    }
+
+    public long getNumberOfLockRequested(LockID lockID) {
+      throw new ImplementMe();
+    }
+
+    public long getNumberOfPendingRequests(LockID lockID) {
+      throw new ImplementMe();
+    }
+
+    public int getTraceDepth() {
+      throw new ImplementMe();
+    }
+
+    public boolean isLockStatisticsEnabled() {
+      throw new ImplementMe();
+    }
+
+    public void recordClientStat(NodeID nodeID, Collection<TCStackTraceElement> lockStatElements) {
+      throw new ImplementMe();
+    }
+
+    public void recordLockAwarded(LockID lockID, NodeID nodeID, ThreadID threadID, boolean isGreedy,
+                                  long lockAwardTimestamp) {
+      //
+    }
+
+    public void recordLockHopRequested(LockID lockID) {
+      //
+    }
+
+    public void recordLockRejected(LockID lockID, NodeID nodeID, ThreadID threadID) {
+      throw new ImplementMe();
+    }
+
+    public void recordLockReleased(LockID lockID, NodeID nodeID, ThreadID threadID) {
+      //
+    }
+
+    public void recordLockRequested(LockID lockID, NodeID nodeID, ThreadID threadID, String lockType,
+                                    int numberOfPendingRequests) {
+      //
+    }
+
+    public void setLockStatisticsConfig(int traceDepth, int gatherInterval) {
+      throw new ImplementMe();
+    }
+
+    public void setLockStatisticsEnabled(boolean lockStatsEnabled) {
+      throw new ImplementMe();
+    }
+
+    public void start(DSOChannelManager channelManager) {
+      throw new ImplementMe();
+    }
 
   }
 
+  private static class TestRespondToRequestLockHandler extends RespondToRequestLockHandler {
+    BoundedLinkedQueue serverLockRespondQueue;
+
+    public TestRespondToRequestLockHandler(BoundedLinkedQueue serverLockRespondQueue) {
+      this.serverLockRespondQueue = serverLockRespondQueue;
+    }
+
+    protected LockResponseMessage createMessage(EventContext context, TCMessageType messageType) {
+      return new LockResponseMessage(new SessionID(100), new NullMessageMonitor(), new TCByteBufferOutputStream(),
+                                     null, messageType);
+    }
+
+    protected void send(LockResponseMessage responseMessage) {
+      try {
+        serverLockRespondQueue.put(responseMessage);
+      } catch (Exception e) {
+        throw new AssertionError(e);
+      }
+    }
+  }
+
+  private static class StageThread extends Thread {
+
+    private final AbstractEventHandler handler;
+    private final BoundedLinkedQueue   queue;
+
+    StageThread(String name, BoundedLinkedQueue queue, AbstractEventHandler handler) {
+      this.setName(name);
+      this.queue = queue;
+      this.handler = handler;
+      this.setDaemon(true);
+    }
+
+    public void run() {
+      while (true) {
+        EventContext ec;
+        try {
+          ec = (EventContext) queue.take();
+          handler.handleEvent(ec);
+        } catch (Exception e) {
+          throw new AssertionError(e);
+        }
+      }
+    }
+
+  }
 }

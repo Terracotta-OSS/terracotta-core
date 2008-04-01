@@ -10,6 +10,7 @@ import org.apache.commons.lang.ClassUtils;
 import com.tc.config.schema.SettableConfigItem;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
+import com.tc.l1propertiesfroml2.L1ReconnectConfig;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.net.proxy.TCPProxy;
@@ -106,10 +107,10 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   }
 
   protected void setJvmArgsL1Reconnect(final ArrayList jvmArgs) {
-    System.setProperty("com.tc.l1.reconnect.enabled", "true");
-    TCPropertiesImpl.setProperty("l1.reconnect.enabled", "true");
+    System.setProperty("com.tc." + L1ReconnectConfig.L2_L1RECONNECT_ENABLED, "true");
+    TCPropertiesImpl.setProperty(L1ReconnectConfig.L2_L1RECONNECT_ENABLED, "true");
 
-    jvmArgs.add("-Dcom.tc.l1.reconnect.enabled=true");
+    jvmArgs.add("-Dcom.tc." + L1ReconnectConfig.L2_L1RECONNECT_ENABLED + "=true");
   }
 
   protected void setJvmArgsCvtIsolation(final ArrayList jvmArgs) {
@@ -469,8 +470,8 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     }
   }
 
-  protected void duringRunningCluster() throws Exception {
-  }
+//  protected void duringRunningCluster() throws Exception {
+//  }
 
   public void test() throws Exception {
     if (canRun()) {
@@ -495,7 +496,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
         }
       }
       this.runner.run();
-      duringRunningCluster();
+      //duringRunningCluster();
 
       if (this.runner.executionTimedOut() || this.runner.startTimedOut()) {
         try {
@@ -643,8 +644,8 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     }
   }
 
-  protected File writeMinimalConfig(int port, int adminPort) {
-    TerracottaConfigBuilder builder = createConfigBuilder(port, adminPort);
+  protected File writeMinimalConfig(int port, int administratorPort ) {
+    TerracottaConfigBuilder builder = createConfigBuilder(port, administratorPort);
     FileOutputStream out = null;
     File configFile = null;
     try {
@@ -663,11 +664,11 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     return configFile;
   }
 
-  protected TerracottaConfigBuilder createConfigBuilder(int port, int adminPort) {
+  protected TerracottaConfigBuilder createConfigBuilder(int port, int administratorPort) {
     TerracottaConfigBuilder out = new TerracottaConfigBuilder();
 
     out.getServers().getL2s()[0].setDSOPort(port);
-    out.getServers().getL2s()[0].setJMXPort(adminPort);
+    out.getServers().getL2s()[0].setJMXPort(administratorPort);
 
     return out;
   }

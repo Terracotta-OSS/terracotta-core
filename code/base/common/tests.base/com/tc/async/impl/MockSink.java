@@ -1,5 +1,6 @@
 package com.tc.async.impl;
 
+import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
 
 import com.tc.async.api.AddPredicate;
 import com.tc.async.api.EventContext;
@@ -7,8 +8,8 @@ import com.tc.async.api.Sink;
 import com.tc.exception.ImplementMe;
 import com.tc.stats.Stats;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -16,19 +17,32 @@ import java.util.List;
  */
 public class MockSink implements Sink {
 
-  public List queue = new ArrayList();
+  public BoundedLinkedQueue queue = new BoundedLinkedQueue();
 
   public boolean addLossy(EventContext context) {
-    queue.add(context);
+    try {
+      queue.put(context);
+    } catch (Exception e) {
+      throw new AssertionError(e);
+    }
     return true;
   }
 
   public void addMany(Collection contexts) {
-    queue.addAll(contexts);
+    for (Iterator i = contexts.iterator(); i.hasNext();)
+      try {
+        queue.put(contexts);
+      } catch (Exception e) {
+        throw new AssertionError(e);
+      }
   }
 
   public void add(EventContext context) {
-    queue.add(context);
+    try {
+      queue.put(context);
+    } catch (Exception e) {
+      throw new AssertionError(e);
+    }
   }
 
   public void setAddPredicate(AddPredicate predicate) {
@@ -41,10 +55,6 @@ public class MockSink implements Sink {
 
   public int size() {
     return queue.size();
-  }
-
-  public EventContext getContext(int index) {
-    return (EventContext) queue.get(index);
   }
 
   public void turnTracingOn() {

@@ -72,7 +72,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     txObjectManager.addTransactions(txns);
 
     // Lookup context should have been fired
-    LookupEventContext loc = (LookupEventContext) coordinator.lookupSink.queue.remove(0);
+    LookupEventContext loc = (LookupEventContext) coordinator.lookupSink.queue.take();
     assertNotNull(loc);
     assertTrue(coordinator.lookupSink.queue.isEmpty());
 
@@ -83,7 +83,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     assertNotNull(args);
 
     // Apply should have been called as we have Object 1, 2
-    ApplyTransactionContext aoc = (ApplyTransactionContext) coordinator.applySink.queue.remove(0);
+    ApplyTransactionContext aoc = (ApplyTransactionContext) coordinator.applySink.queue.take();
     assertTrue(stxn1 == aoc.getTxn());
     assertNotNull(aoc);
     assertTrue(coordinator.applySink.queue.isEmpty());
@@ -105,7 +105,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     txObjectManager.addTransactions(txns);
 
     // Lookup context should have been fired
-    loc = (LookupEventContext) coordinator.lookupSink.queue.remove(0);
+    loc = (LookupEventContext) coordinator.lookupSink.queue.take();
     assertNotNull(loc);
     assertTrue(coordinator.lookupSink.queue.isEmpty());
 
@@ -118,12 +118,12 @@ public class TransactionalObjectManagerTest extends TCTestCase {
 
     // Apply and commit complete for the first transaction
     txObjectManager.applyTransactionComplete(stxn1.getServerTransactionID());
-    ApplyCompleteEventContext acec = (ApplyCompleteEventContext) coordinator.applyCompleteSink.queue.remove(0);
+    ApplyCompleteEventContext acec = (ApplyCompleteEventContext) coordinator.applyCompleteSink.queue.take();
     assertNotNull(acec);
     assertTrue(coordinator.applyCompleteSink.queue.isEmpty());
 
     txObjectManager.processApplyComplete();
-    CommitTransactionContext ctc = (CommitTransactionContext) coordinator.commitSink.queue.remove(0);
+    CommitTransactionContext ctc = (CommitTransactionContext) coordinator.commitSink.queue.take();
     assertNotNull(ctc);
     assertTrue(coordinator.commitSink.queue.isEmpty());
 
@@ -152,7 +152,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     objectManager.processPending(args);
 
     // Lookup context should have been fired
-    loc = (LookupEventContext) coordinator.lookupSink.queue.remove(0);
+    loc = (LookupEventContext) coordinator.lookupSink.queue.take();
     assertNotNull(loc);
     assertTrue(coordinator.lookupSink.queue.isEmpty());
 
@@ -169,7 +169,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
 
     // now do a recall.
     txObjectManager.recallAllCheckedoutObject();
-    RecallObjectsContext roc = (RecallObjectsContext) coordinator.recallSink.queue.remove(0);
+    RecallObjectsContext roc = (RecallObjectsContext) coordinator.recallSink.queue.take();
     assertNotNull(roc);
     assertTrue(coordinator.recallSink.queue.isEmpty());
 
@@ -219,7 +219,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     txObjectManager.addTransactions(txns);
 
     // Lookup context should have been fired
-    LookupEventContext loc = (LookupEventContext) coordinator.lookupSink.queue.remove(0);
+    LookupEventContext loc = (LookupEventContext) coordinator.lookupSink.queue.take();
     assertNotNull(loc);
     assertTrue(coordinator.lookupSink.queue.isEmpty());
 
@@ -230,7 +230,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     assertNotNull(args);
 
     // Apply should have been called as we have Obejct 1, 2
-    ApplyTransactionContext aoc = (ApplyTransactionContext) coordinator.applySink.queue.remove(0);
+    ApplyTransactionContext aoc = (ApplyTransactionContext) coordinator.applySink.queue.take();
     assertTrue(stxn1 == aoc.getTxn());
     assertNotNull(aoc);
     assertTrue(coordinator.applySink.queue.isEmpty());
@@ -252,7 +252,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     txObjectManager.addTransactions(txns);
 
     // Lookup context should have been fired
-    loc = (LookupEventContext) coordinator.lookupSink.queue.remove(0);
+    loc = (LookupEventContext) coordinator.lookupSink.queue.take();
     assertNotNull(loc);
     assertTrue(coordinator.lookupSink.queue.isEmpty());
 
@@ -265,12 +265,12 @@ public class TransactionalObjectManagerTest extends TCTestCase {
 
     // Apply and commit complete for the first transaction
     txObjectManager.applyTransactionComplete(stxn1.getServerTransactionID());
-    ApplyCompleteEventContext acec = (ApplyCompleteEventContext) coordinator.applyCompleteSink.queue.remove(0);
+    ApplyCompleteEventContext acec = (ApplyCompleteEventContext) coordinator.applyCompleteSink.queue.take();
     assertNotNull(acec);
     assertTrue(coordinator.applyCompleteSink.queue.isEmpty());
 
     txObjectManager.processApplyComplete();
-    CommitTransactionContext ctc = (CommitTransactionContext) coordinator.commitSink.queue.remove(0);
+    CommitTransactionContext ctc = (CommitTransactionContext) coordinator.commitSink.queue.take();
     assertNotNull(ctc);
     assertTrue(coordinator.commitSink.queue.isEmpty());
 
@@ -299,7 +299,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     objectManager.processPending(args);
 
     // Lookup context should have been fired
-    loc = (LookupEventContext) coordinator.lookupSink.queue.remove(0);
+    loc = (LookupEventContext) coordinator.lookupSink.queue.take();
     assertNotNull(loc);
     assertTrue(coordinator.lookupSink.queue.isEmpty());
 
@@ -330,7 +330,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     txObjectManager.addTransactions(txns);
 
     // Lookup context should have been fired
-    loc = (LookupEventContext) coordinator.lookupSink.queue.remove(0);
+    loc = (LookupEventContext) coordinator.lookupSink.queue.take();
     assertNotNull(loc);
     assertTrue(coordinator.lookupSink.queue.isEmpty());
 
@@ -342,7 +342,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     assertNotNull(args);
 
     // Apply should have been called as we have Object 5
-    aoc = (ApplyTransactionContext) coordinator.applySink.queue.remove(0);
+    aoc = (ApplyTransactionContext) coordinator.applySink.queue.take();
     assertTrue(stxn3 == aoc.getTxn());
     assertNotNull(aoc);
     assertTrue(coordinator.applySink.queue.isEmpty());
@@ -361,7 +361,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     txObjectManager.addTransactions(txns);
 
     // Lookup context should have been fired
-    loc = (LookupEventContext) coordinator.lookupSink.queue.remove(0);
+    loc = (LookupEventContext) coordinator.lookupSink.queue.take();
     assertNotNull(loc);
     assertTrue(coordinator.lookupSink.queue.isEmpty());
 
@@ -374,12 +374,12 @@ public class TransactionalObjectManagerTest extends TCTestCase {
 
     // Apply and commit complete for the 3'rd transaction
     txObjectManager.applyTransactionComplete(stxn3.getServerTransactionID());
-    acec = (ApplyCompleteEventContext) coordinator.applyCompleteSink.queue.remove(0);
+    acec = (ApplyCompleteEventContext) coordinator.applyCompleteSink.queue.take();
     assertNotNull(acec);
     assertTrue(coordinator.applyCompleteSink.queue.isEmpty());
 
     txObjectManager.processApplyComplete();
-    ctc = (CommitTransactionContext) coordinator.commitSink.queue.remove(0);
+    ctc = (CommitTransactionContext) coordinator.commitSink.queue.take();
     assertNotNull(ctc);
     assertTrue(coordinator.commitSink.queue.isEmpty());
 
@@ -406,7 +406,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     objectManager.processPending(args);
 
     // Lookup context should have been fired
-    loc = (LookupEventContext) coordinator.lookupSink.queue.remove(0);
+    loc = (LookupEventContext) coordinator.lookupSink.queue.take();
     assertNotNull(loc);
     assertTrue(coordinator.lookupSink.queue.isEmpty());
 
@@ -416,7 +416,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
 
     // now do a recall.
     txObjectManager.recallAllCheckedoutObject();
-    RecallObjectsContext roc = (RecallObjectsContext) coordinator.recallSink.queue.remove(0);
+    RecallObjectsContext roc = (RecallObjectsContext) coordinator.recallSink.queue.take();
     assertNotNull(roc);
     assertTrue(coordinator.recallSink.queue.isEmpty());
 

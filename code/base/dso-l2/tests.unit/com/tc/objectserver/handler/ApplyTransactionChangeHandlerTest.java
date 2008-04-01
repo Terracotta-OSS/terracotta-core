@@ -95,7 +95,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     // even if the transaction has already been applied, the notifies must be applied, since they aren't persistent.
     assertEquals(notifies.size(), lockManager.notifyCalls.size());
     lockManager.notifyCalls.clear();
-    assertNotNull(broadcastSink.queue.remove(0));
+    assertNotNull(broadcastSink.queue.take());
 
     // call handleEvent with the global transaction reporting that it DOES need an apply...
     handler.handleEvent(getApplyTxnContext(tx));
@@ -117,7 +117,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     }
 
     // next, check to see that the handler puts the newly pending waiters into the broadcast context.
-    BroadcastChangeContext bctxt = (BroadcastChangeContext) broadcastSink.queue.remove(0);
+    BroadcastChangeContext bctxt = (BroadcastChangeContext) broadcastSink.queue.take();
     assertNotNull(bctxt);
     assertEquals(notifiedWaiters, bctxt.getNewlyPendingWaiters());
   }
