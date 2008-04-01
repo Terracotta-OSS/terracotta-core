@@ -43,7 +43,7 @@ goto tc_set_dso_boot_jar__1_0
    :tc_set_dso_boot_jar__1_0_1
      echo We were unable to determine the correct
      echo name of the DSO boot JAR using the following command:
-     echo %JAVACMD% -cp "%TC_JAR%" com.tc.object.tools.BootJarSignature
+     echo %JAVACMD% -cp %TC_JAR% com.tc.object.tools.BootJarSignature
      echo ...but we got exit code %__BOOT_JAR_SIG_EXIT_CODE%. Stop.
      goto error
 
@@ -60,14 +60,14 @@ goto tc_set_dso_boot_jar__1_0
    
    set DSO_BOOT_JAR="%DSO_BOOT_JAR:"=%"
    
-   call "%TC_INSTALL_DIR%\bin\make-boot-jar.bat" -o %DSO_BOOT_JAR% -f %TC_CONFIG_PATH%
+   call %TC_INSTALL_DIR%\bin\make-boot-jar.bat -o %DSO_BOOT_JAR% -f %TC_CONFIG_PATH%
    if %ERRORLEVEL% NEQ 0 goto error
    goto return
 
    :tc_set_dso_boot_jar__1_1_1
      set DSO_BOOT_JAR="%DSO_BOOT_JAR:"=%"
      
-     call "%TC_INSTALL_DIR%\bin\make-boot-jar.bat" -o %DSO_BOOT_JAR%
+     call %TC_INSTALL_DIR%\bin\make-boot-jar.bat -o %DSO_BOOT_JAR%
      if %ERRORLEVEL% NEQ 0 goto error
      goto return
 
