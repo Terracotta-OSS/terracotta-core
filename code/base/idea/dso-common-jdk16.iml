@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module relativePaths="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_5" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../dso-common-jdk16">
+      <sourceFolder url="file://$MODULE_DIR$/../dso-common-jdk16/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../dso-common-jdk16/tests.unit" isTestSource="false" />
+    </content>
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="jdk" jdkName="J2SE-1.6" jdkType="JavaSDK" />
+    <orderEntry type="module" module-name="common" />
+    <orderEntry type="module" module-name="common-api" />
+    <orderEntry type="module" module-name="dso-common" />
+    <orderEntryProperties />
+  </component>
+</module>
+
