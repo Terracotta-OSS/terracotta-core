@@ -10,7 +10,6 @@ import org.apache.commons.lang.ClassUtils;
 import com.tc.config.schema.SettableConfigItem;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
-import com.tc.l1propertiesfroml2.L1ReconnectConfig;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.net.proxy.TCPProxy;
@@ -107,10 +106,10 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   }
 
   protected void setJvmArgsL1Reconnect(final ArrayList jvmArgs) {
-    System.setProperty("com.tc." + L1ReconnectConfig.L2_L1RECONNECT_ENABLED, "true");
-    TCPropertiesImpl.setProperty(L1ReconnectConfig.L2_L1RECONNECT_ENABLED, "true");
+    System.setProperty("com.tc.l1.reconnect.enabled", "true");
+    TCPropertiesImpl.setProperty("l1.reconnect.enabled", "true");
 
-    jvmArgs.add("-Dcom.tc." + L1ReconnectConfig.L2_L1RECONNECT_ENABLED + "=true");
+    jvmArgs.add("-Dcom.tc.l1.reconnect.enabled=true");
   }
 
   protected void setJvmArgsCvtIsolation(final ArrayList jvmArgs) {
