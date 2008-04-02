@@ -72,7 +72,7 @@ public class MutualReferenceCollectionTest extends TransparentTestBase {
     private void initLists() throws Exception {
       if (barrier.barrier() == 0) {
         synchronized (firstList) {
-          for (int i = 0; i < 5000; i++) {
+          for (int i = 0; i < 3000; i++) {
            firstList.add(new Object());
            if((i % 100) == 0) {
              System.out.println(i + "entries has been intialized for firstList thus far, for thread " + Thread.currentThread());
@@ -82,7 +82,7 @@ public class MutualReferenceCollectionTest extends TransparentTestBase {
           firstList.add(secondList);
         }
         synchronized (secondList) {
-          for (int i = 1; i < 5000; i++) {
+          for (int i = 1; i < 3000; i++) {
            secondList.add(new Object());
            if((i % 100) == 0) {
              System.out.println(i + "entries has been intialized for secondList thus far, for thread " + Thread.currentThread());
