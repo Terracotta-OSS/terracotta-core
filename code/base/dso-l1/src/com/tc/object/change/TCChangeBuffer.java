@@ -18,6 +18,8 @@ public interface TCChangeBuffer {
   public final static int LOGICAL  = 3;
   public final static int ARRAY    = 7;
 
+  public boolean isEmpty();
+
   public void literalValueChanged(Object newValue);
 
   public void fieldChanged(String classname, String fieldname, Object newValue, int index);

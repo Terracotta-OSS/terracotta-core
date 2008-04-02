@@ -175,6 +175,11 @@ public class DNAWriterImpl implements DNAWriter {
   }
 
   public void finalizeHeader() {
+    if (Conversion.getFlag(flags, DNA.IS_DELTA) && actionCount == 0) {
+      // this scenario (empty delta DNA) should be caught when txns are committed
+      throw new AssertionError("sending delta DNA with no actions!");
+    }
+
     byte[] lengths = new byte[9];
     Conversion.writeInt(totalLength, lengths, 0);
     Conversion.writeInt(actionCount, lengths, 4);

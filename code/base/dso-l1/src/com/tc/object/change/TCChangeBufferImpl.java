@@ -71,6 +71,15 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
     }
   }
 
+  public boolean isEmpty() {
+    if ((physicalEvents != null) && (!physicalEvents.isEmpty())) { return false; }
+    if ((literalValueChangedEvents != null) && (!literalValueChangedEvents.isEmpty())) { return false; }
+    if ((logicalEvents != null) && (!logicalEvents.isEmpty())) { return false; }
+    if ((arrayEvents != null) && (!arrayEvents.isEmpty())) { return false; }
+
+    return true;
+  }
+
   public void writeTo(DNAWriter writer) {
     if (dnaCreated.attemptSet()) {
       if (arrayEvents != null) {

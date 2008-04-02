@@ -277,11 +277,23 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
   public synchronized boolean addTransaction(ClientTransaction txn, SequenceGenerator sequenceGenerator) {
     numTxns++;
 
+    removeEmptyDeltaDna(txn);
+
     TransactionBuffer txnBuffer = getOrCreateBuffer(txn, sequenceGenerator);
 
     bytesWritten += txnBuffer.write(txn);
 
     return txnBuffer.getTxnCount() > 1;
+  }
+
+  private void removeEmptyDeltaDna(ClientTransaction txn) {
+    for (Iterator i = txn.getChangeBuffers().entrySet().iterator(); i.hasNext();) {
+      Map.Entry entry = (Entry) i.next();
+      TCChangeBuffer buffer = (TCChangeBuffer) entry.getValue();
+      if ((!buffer.getTCObject().isNew()) && buffer.isEmpty()) {
+        i.remove();
+      }
+    }
   }
 
   // Called from CommitTransactionMessageImpl
