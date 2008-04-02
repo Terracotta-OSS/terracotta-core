@@ -9,29 +9,32 @@ import com.tc.asm.ClassVisitor;
 import com.tc.asm.Label;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
+import com.tc.util.runtime.Vm;
 
+/**
+ * NOTE: This adapter is only used for IBM JDK
+ */
 public class AtomicLongAdapter extends ClassAdapter implements Opcodes {
 
   public static final String VALUE_FIELD_NAME = "java.util.concurrent.atomic.AtomicLong.value";
 
   public AtomicLongAdapter(ClassVisitor cv) {
     super(cv);
+    Vm.assertIsIbm();
   }
-  
+
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
     MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
     if ("set".equals(name) && "(J)V".equals(desc)) {
       return new SetMethodVisitor(mv);
-    } else if ("get".equals(name) && "()J".equals(desc)) {
-      return new GetMethodVisitor(mv);
-    }
+    } else if ("get".equals(name) && "()J".equals(desc)) { return new GetMethodVisitor(mv); }
 
     return mv;
   }
 
   private static class SetMethodVisitor extends AbstractVolatileFieldMethodVisitor {
     private int long_var_store;
-    
+
     private SetMethodVisitor(MethodVisitor mv) {
       super(mv);
     }
@@ -53,7 +56,7 @@ public class AtomicLongAdapter extends ClassAdapter implements Opcodes {
     public void visitFieldInsn(int opcode, String owner, String name, String desc) {
       if (PUTFIELD == opcode && owner.equals("java/util/concurrent/atomic/AtomicLong") && name.equals("value")
           && desc.equals("J")) {
-        
+
         long_var_store = getMaxLocalVarStore() + 1;
 
         // make a copy of the long that's currently on the stack,
@@ -64,7 +67,7 @@ public class AtomicLongAdapter extends ClassAdapter implements Opcodes {
         mv.visitVarInsn(LSTORE, long_var_store);
 
         doVolatileBeginCommitLogic(VALUE_FIELD_NAME, long_var_store + 1);
-        
+
         // setup stack for original putfield operation
         mv.visitVarInsn(ALOAD, 0);
         mv.visitVarInsn(LLOAD, long_var_store);

@@ -218,7 +218,6 @@ public class BootJarTool {
   public static final String          SYSTEM_CLASSLOADER_NAME_PROPERTY = "com.tc.loader.system.name";
   public static final String          EXT_CLASSLOADER_NAME_PROPERTY    = "com.tc.loader.ext.name";
 
-  private static final TCLogger       logger                           = CustomerLogging.getDSOGenericLogger();
   private static final TCLogger       consoleLogger                    = CustomerLogging.getConsoleLogger();
 
   public BootJarTool(DSOClientConfigHelper configuration, File outputFile, ClassLoader systemProvider, boolean quiet) {
@@ -296,7 +295,7 @@ public class BootJarTool {
    * Checks if the given bootJarFile is complete; meaning: - All the classes declared in the configurations
    * <additional-boot-jar-classes/> section is present in the boot jar. - And there are no user-classes present in the
    * boot jar that is not declared in the <additional-boot-jar-classes/> section
-   * 
+   *
    * @return <code>true</code> if the boot jar is complete.
    */
   private final boolean isBootJarComplete(File bootJarFile) {
@@ -525,13 +524,6 @@ public class BootJarTool {
       addInstrumentedJavaNetURL();
       addInstrumentedProxy();
       addTreeMap();
-      addInstrumentedAtomicInteger();
-
-      if (!Vm.isAzul()) {
-        addInstrumentedAtomicLong();
-      } else {
-        Banner.warnBanner("Not including AtomicLong for Terracotta instrumentation");
-      }
 
       addIBMSpecific();
 
@@ -567,6 +559,9 @@ public class BootJarTool {
     if (Vm.isIBM()) {
       // Yes, the class name is misspelled
       adaptAndLoad("com.ibm.misc.SystemIntialization", new SystemInitializationAdapter());
+
+      addIbmInstrumentedAtomicInteger();
+      addIbmInstrumentedAtomicLong();
     }
   }
 
@@ -1453,7 +1448,8 @@ public class BootJarTool {
     loadClassIntoJar(spec.getClassName(), bytes, spec.isPreInstrumented());
   }
 
-  private void addInstrumentedAtomicInteger() {
+  private void addIbmInstrumentedAtomicInteger() {
+    Vm.assertIsIbm();
     if (!Vm.isJDK15Compliant()) { return; }
 
     String classname = "java.util.concurrent.atomic.AtomicInteger";
@@ -1473,7 +1469,8 @@ public class BootJarTool {
     loadClassIntoJar(spec.getClassName(), bytes, spec.isPreInstrumented());
   }
 
-  private void addInstrumentedAtomicLong() {
+  private void addIbmInstrumentedAtomicLong() {
+    Vm.assertIsIbm();
     if (!Vm.isJDK15Compliant()) { return; }
 
     String classname = "java.util.concurrent.atomic.AtomicLong";

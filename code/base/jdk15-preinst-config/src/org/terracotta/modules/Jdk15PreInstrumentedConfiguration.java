@@ -10,53 +10,61 @@ import org.terracotta.modules.configuration.TerracottaConfiguratorModule;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.util.runtime.Vm;
 
-public class Jdk15PreInstrumentedConfiguration
-      extends TerracottaConfiguratorModule {
+public class Jdk15PreInstrumentedConfiguration extends TerracottaConfiguratorModule {
 
-   protected void addInstrumentation(final BundleContext context) {
-      super.addInstrumentation(context);
-      addJDK15PreInstrumentedSpec();
-   }
+  protected void addInstrumentation(final BundleContext context) {
+    super.addInstrumentation(context);
+    addJDK15PreInstrumentedSpec();
+  }
 
-   private void addJDK15PreInstrumentedSpec() {
-      if (Vm.getMegaVersion() >= 1 && Vm.getMajorVersion() > 4) {
-         getOrCreateSpec("java.util.concurrent.CyclicBarrier");
-         TransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.CyclicBarrier$Generation");
-         spec.setHonorJDKSubVersionSpecific(true);
-         getOrCreateSpec("java.util.concurrent.TimeUnit");
+  private void addJDK15PreInstrumentedSpec() {
+    if (Vm.getMegaVersion() >= 1 && Vm.getMajorVersion() > 4) {
+      getOrCreateSpec("java.util.concurrent.CyclicBarrier");
+      TransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.CyclicBarrier$Generation");
+      spec.setHonorJDKSubVersionSpecific(true);
+      getOrCreateSpec("java.util.concurrent.TimeUnit");
 
-         // ---------------------------------------------------------------------
-         // The following section of specs are specified in the BootJarTool
-         // also.
-         // They are placed again so that the honorTransient flag will
-         // be honored during runtime.
-         // ---------------------------------------------------------------------
+      if (!Vm.isIBM()) {
+        spec = getOrCreateSpec("java.util.concurrent.atomic.AtomicInteger");
+        spec.setHonorVolatile(true);
 
-         // ---------------------------------------------------------------------
-         // SECTION BEGINS
-         // ---------------------------------------------------------------------
-
-         spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantLock");
-         spec.setHonorTransient(true);
-         spec.setCallConstructorOnLoad(true);
-
-         // addJavaUtilConcurrentHashMapSpec();
-         // addLogicalAdaptedLinkedBlockingQueueSpec();
-         addJavaUtilConcurrentFutureTaskSpec();
-
-         // ---------------------------------------------------------------------
-         // SECTION ENDS
-         // ---------------------------------------------------------------------
+        if (!Vm.isAzul()) {
+          spec = getOrCreateSpec("java.util.concurrent.atomic.AtomicLong");
+          spec.setHonorVolatile(true);
+        }
       }
-   }
 
-   private void addJavaUtilConcurrentFutureTaskSpec() {
-      TransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.FutureTask$Sync");
-      configHelper
-            .addWriteAutolock("* java.util.concurrent.FutureTask$Sync.*(..)");
+      // ---------------------------------------------------------------------
+      // The following section of specs are specified in the BootJarTool
+      // also.
+      // They are placed again so that the honorTransient flag will
+      // be honored during runtime.
+      // ---------------------------------------------------------------------
+
+      // ---------------------------------------------------------------------
+      // SECTION BEGINS
+      // ---------------------------------------------------------------------
+
+      spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantLock");
       spec.setHonorTransient(true);
-      spec.addDistributedMethodCall("managedInnerCancel", "()V", false);
-      getOrCreateSpec("java.util.concurrent.FutureTask");
-      getOrCreateSpec("java.util.concurrent.Executors$RunnableAdapter");
-   }
+      spec.setCallConstructorOnLoad(true);
+
+      // addJavaUtilConcurrentHashMapSpec();
+      // addLogicalAdaptedLinkedBlockingQueueSpec();
+      addJavaUtilConcurrentFutureTaskSpec();
+
+      // ---------------------------------------------------------------------
+      // SECTION ENDS
+      // ---------------------------------------------------------------------
+    }
+  }
+
+  private void addJavaUtilConcurrentFutureTaskSpec() {
+    TransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.FutureTask$Sync");
+    configHelper.addWriteAutolock("* java.util.concurrent.FutureTask$Sync.*(..)");
+    spec.setHonorTransient(true);
+    spec.addDistributedMethodCall("managedInnerCancel", "()V", false);
+    getOrCreateSpec("java.util.concurrent.FutureTask");
+    getOrCreateSpec("java.util.concurrent.Executors$RunnableAdapter");
+  }
 }

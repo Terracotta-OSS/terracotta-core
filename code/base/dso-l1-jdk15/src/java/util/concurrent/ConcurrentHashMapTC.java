@@ -22,7 +22,7 @@ import java.util.Set;
 @SuppressWarnings("unchecked")
 /**
  * Note that not all the methods of TCMap are implemented here.
- * 
+ *
  * The ones that can't be found in this class are implemented through
  * byte-code instrumentation, by adapting or renaming the original put and
  * remove methods. This is done in the JavaUtilConcurrentHashMapAdapter class.
@@ -36,7 +36,7 @@ public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements T
   // are implemented during the actual instrumentation of ConcurrentHashMap.
   abstract void __tc_fullyReadLock();
   abstract void __tc_fullyReadUnlock();
-  
+
   /*
    * ConcurrentHashMap uses the hashcode of the key and identify the segment to use. Each segment is an ReentrantLock.
    * This prevents multiple threads to update the same segment at the same time. To support in DSO, we need to check if
@@ -64,7 +64,7 @@ public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements T
   private int __tc_hash(Object obj, boolean flag) {
     int i = obj.hashCode();
     boolean useObjectIDHashCode = false;
-    
+
     if (System.identityHashCode(obj) == i) {
       if (flag) {
         if (__tc_managed() != null || ManagerUtil.isCreationInProgress())
@@ -73,32 +73,31 @@ public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements T
         useObjectIDHashCode = true;
       }
     }
-    
+
     if (useObjectIDHashCode) {
       TCObject tcobject = ManagerUtil.shareObjectIfNecessary(obj);
       if (tcobject != null) {
         i = tcobject.getObjectID().hashCode();
       }
     }
-    
+
     i += ~(i << 9);
     i ^= i >>> 14;
     i += i << 4;
     i ^= i >>> 10;
-    
+
     return i;
   }
 
   private boolean __tc_isDsoHashRequired(Object obj) {
-    ManagerUtil.lookupExistingOrNull(obj);
-    return __tc_managed() == null 
-      || ManagerUtil.lookupExistingOrNull(obj) != null 
+    return __tc_managed() == null
+      || ManagerUtil.lookupExistingOrNull(obj) != null
       || obj.hashCode() != System.identityHashCode(obj);
   }
 
-  
+
   /*
-   * Provides access to the real entryset that is wrapped by the 
+   * Provides access to the real entryset that is wrapped by the
    * ConcurrentHashMapEntrySetWrapper.
    */
   public Set __tc_delegateEntrySet() {
@@ -110,7 +109,7 @@ public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements T
     }
   }
 
-  
+
   /*
    * CHM-wide locking methods
    */
@@ -126,7 +125,7 @@ public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements T
     }
   }
 
-  
+
   /*
    * TCMap methods
    */
@@ -146,7 +145,7 @@ public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements T
   public synchronized Collection __tc_getAllEntriesSnapshotInternal() {
     return new ArrayList(entrySet());
   }
-  
+
   public Collection __tc_getAllLocalEntriesSnapshot() {
     if (__tc_isManaged()) {
       try {
@@ -180,7 +179,7 @@ public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements T
     System.arraycopy(tmp, 0, rv, 0, index + 1);
     return Arrays.asList(rv);
   }
-  
+
   /*
    * Clearable methods
    */

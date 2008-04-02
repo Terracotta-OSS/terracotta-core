@@ -21,6 +21,7 @@ import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.field.TCFieldFactory;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.util.ClassUtils;
+import com.tc.util.runtime.Vm;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -32,6 +33,8 @@ import java.util.Map;
  * @author steve
  */
 public class TCClassFactoryImpl implements TCClassFactory {
+  private static final boolean        IS_IBM                    = Vm.isIBM();
+
   private static final LiteralValues  literalValues             = new LiteralValues();
   private static Class[]              APPLICATOR_CSTR_SIGNATURE = new Class[] { DNAEncoding.class };
 
@@ -111,7 +114,7 @@ public class TCClassFactoryImpl implements TCClassFactory {
         return new FileApplicator(clazz, encoding);
       } else if (Calendar.class.isAssignableFrom(clazz.getPeerClass())) {
         return new CalendarApplicator(clazz, encoding);
-      } else if ("java.util.concurrent.atomic.AtomicInteger".equals(name)) {
+      } else if (IS_IBM && "java.util.concurrent.atomic.AtomicInteger".equals(name)) {
         try {
           Class klass = Class.forName("com.tc.object.applicator.AtomicIntegerApplicator");
           Constructor constructor = klass.getDeclaredConstructor(APPLICATOR_CSTR_SIGNATURE);
@@ -119,7 +122,7 @@ public class TCClassFactoryImpl implements TCClassFactory {
         } catch (Exception e) {
           throw new AssertionError(e);
         }
-      } else if ("java.util.concurrent.atomic.AtomicLong".equals(name)) {
+      } else if (IS_IBM && "java.util.concurrent.atomic.AtomicLong".equals(name)) {
         try {
           Class klass = Class.forName("com.tc.object.applicator.AtomicLongApplicator");
           Constructor constructor = klass.getDeclaredConstructor(APPLICATOR_CSTR_SIGNATURE);

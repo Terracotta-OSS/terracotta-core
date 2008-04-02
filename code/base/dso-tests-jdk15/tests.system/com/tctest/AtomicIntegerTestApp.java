@@ -6,12 +6,14 @@ package com.tctest;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
+import com.tc.object.bytecode.Manageable;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.runtime.Vm;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.ArrayList;
@@ -33,6 +35,14 @@ public class AtomicIntegerTestApp extends AbstractTransparentApp {
 
   public void run() {
     try {
+      AtomicInteger ai = new AtomicInteger();
+
+      if (Vm.isIBM()) {
+        Assert.assertFalse(ai instanceof Manageable);
+      } else {
+        Assert.assertTrue(ai instanceof Manageable);
+      }
+
       atomicIntegerTesting();
     } catch (Throwable t) {
       notifyError(t);

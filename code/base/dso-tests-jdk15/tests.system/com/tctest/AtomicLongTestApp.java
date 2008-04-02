@@ -1,16 +1,19 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
+import com.tc.object.bytecode.Manageable;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.runtime.Vm;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -28,6 +31,14 @@ public class AtomicLongTestApp extends AbstractTransparentApp {
 
   public void run() {
     try {
+      AtomicLong al = new AtomicLong();
+
+      if (Vm.isIBM()) {
+        Assert.assertFalse(al instanceof Manageable);
+      } else {
+        Assert.assertTrue(al instanceof Manageable);
+      }
+
       atomicIntegerTesting();
     } catch (Throwable t) {
       notifyError(t);

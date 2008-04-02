@@ -25,7 +25,7 @@ public class Vm {
   }
 
   private Vm() {
-  // utility class
+    // utility class
   }
 
   /**
@@ -130,6 +130,10 @@ public class Vm {
       return VmVersion.thisVMisIBM();
     }
     return VERSION.isIBM();
+  }
+
+  public static void assertIsIbm() {
+    if (!isIBM()) { throw new AssertionError("not ibm"); }
   }
 
   /**

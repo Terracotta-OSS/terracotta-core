@@ -9,29 +9,32 @@ import com.tc.asm.ClassVisitor;
 import com.tc.asm.Label;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
+import com.tc.util.runtime.Vm;
 
+/**
+ * NOTE: This adapter is only used for IBM JDK
+ */
 public class AtomicIntegerAdapter extends ClassAdapter implements Opcodes {
 
   public static final String VALUE_FIELD_NAME = "java.util.concurrent.atomic.AtomicInteger.value";
 
   public AtomicIntegerAdapter(ClassVisitor cv) {
     super(cv);
+    Vm.assertIsIbm();
   }
-  
+
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
     MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
     if ("set".equals(name) && "(I)V".equals(desc)) {
       return new SetMethodVisitor(mv);
-    } else if ("get".equals(name) && "()I".equals(desc)) {
-      return new GetMethodVisitor(mv);
-    }
+    } else if ("get".equals(name) && "()I".equals(desc)) { return new GetMethodVisitor(mv); }
 
     return mv;
   }
 
   private static class SetMethodVisitor extends AbstractVolatileFieldMethodVisitor {
     private int int_var_store;
-    
+
     private SetMethodVisitor(MethodVisitor mv) {
       super(mv);
     }
@@ -53,7 +56,7 @@ public class AtomicIntegerAdapter extends ClassAdapter implements Opcodes {
     public void visitFieldInsn(int opcode, String owner, String name, String desc) {
       if (PUTFIELD == opcode && owner.equals("java/util/concurrent/atomic/AtomicInteger") && name.equals("value")
           && desc.equals("I")) {
-        
+
         int_var_store = getMaxLocalVarStore() + 1;
 
         // make a copy of the int that's currently on the stack,
@@ -64,7 +67,7 @@ public class AtomicIntegerAdapter extends ClassAdapter implements Opcodes {
         mv.visitVarInsn(ISTORE, int_var_store);
 
         doVolatileBeginCommitLogic(VALUE_FIELD_NAME, int_var_store + 1);
-        
+
         // setup stack for original putfield operation
         mv.visitVarInsn(ALOAD, 0);
         mv.visitVarInsn(ILOAD, int_var_store);
