@@ -46,9 +46,9 @@ import java.util.TimerTask;
 public class Lock {
   private static final TCLogger            logger              = TCLogging.getLogger(Lock.class);
   private final static boolean             LOCK_LEASE_ENABLE   = TCPropertiesImpl.getProperties()
-                                                                   .getBoolean("lock.greedy.lease.enabled");
+                                                                   .getBoolean("l2.lockmanager.greedy.lease.enabled");
   private final static int                 LOCK_LEASE_TIME     = TCPropertiesImpl.getProperties()
-                                                                   .getInt("lock.greedy.lease.leaseTimeInMillis");
+                                                                   .getInt("l2.lockmanager.greedy.lease.leaseTimeInMillis");
   public final static Lock                 NULL_LOCK           = new Lock(LockID.NULL_ID, 0,
                                                                           new LockEventListener[] {}, true,
                                                                           LockManagerImpl.ALTRUISTIC_LOCK_POLICY,

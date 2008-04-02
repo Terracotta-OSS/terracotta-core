@@ -16,7 +16,7 @@ public abstract class BasicLockNode implements LockNode {
       case 3:
         return Long.valueOf(getStats().getAvgNumberOfPendingRequests());
       case 4:
-        return Long.valueOf(getStats().getTotalWaitTimeToAwardedInMillis());
+        return Long.valueOf(getStats().getAvgWaitTimeToAwardInMillis());
       case 5:
         return Long.valueOf(getStats().getAvgHeldTimeInMillis());
       case 6:

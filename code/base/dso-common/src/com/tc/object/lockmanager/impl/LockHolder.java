@@ -80,11 +80,11 @@ public class LockHolder implements Serializable {
     getAndSetWaitTimeInMillis();
   }
 
-  public void lockReleased() {
-    this.timeReleased = System.currentTimeMillis();
+  public void lockReleased(long timeReleased) {
     if (timeAcquired <= 0) {
       timeAcquired = timeReleased;
     }
+    this.timeReleased = timeReleased;
     getAndSetHeldTimeInMillis();
   }
   
@@ -141,10 +141,14 @@ public class LockHolder implements Serializable {
     sb.append(getAndSetHeldTimeInMillis());
     sb.append(", wait time in millis: ");
     sb.append(getAndSetWaitTimeInMillis());
+    sb.append(", time requested: ");
+    sb.append(timeRequested);
     sb.append(", time acquired: ");
     sb.append(timeAcquired);
     sb.append(", time released: ");
     sb.append(timeReleased);
+    sb.append(" ");
+    sb.append(System.identityHashCode(this));
     sb.append("]");
     return sb.toString();
   }
