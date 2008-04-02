@@ -56,6 +56,15 @@ public class ResolverTest extends TestCase {
   public void testFindJarWithFlatAndMavenLikeRepos() throws IOException {
     resolveJars(splitRepo("modules.2", "modules.3"), jarFiles(), PASS);
   }
+ 
+  // CDV-691
+  public void testModuleWithNoVersion() throws Exception {
+    resolve(new URL[] {}, "foo", null, false);
+  }
+
+  public void testModuleWithNoName() throws Exception {
+    resolve(new URL[] {}, null, "1.0.0", false);
+  }
 
   private URL makeRepoDir(String repoName) throws IOException {
     URL flatRepoUrl = new URL("file://" + System.getProperty(TestConfigObject.TC_BASE_DIR) + File.separator + "build"

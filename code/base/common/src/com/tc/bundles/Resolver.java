@@ -105,6 +105,13 @@ public class Resolver {
     final String version = module.getVersion();
     final String groupId = module.getGroupId();
 
+    // CDV-691: If you are defining a module in the tc-config.xml, the schema requires that you specify
+    // a name and version, so this will never happen (although version could still be invalid).  
+    // But if you define programatically in a TIM or in a test, it is possible to screw this up.
+    if(name == null || version == null) {
+      throw new BundleException("Invalid module specification (name and version are required): name=" + name + ", version=" + version + ", groupId=" + groupId);
+    }
+    
     final URL location = resolveLocation(name, version, groupId);
     if (location == null) {
       final String msg = formatMessage(Message.ERROR_BUNDLE_UNRESOLVED, new Object[] { name, version, groupId,
