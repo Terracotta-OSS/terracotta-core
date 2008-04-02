@@ -132,7 +132,11 @@ public class TransactionBatchTest extends TestCase {
     txn1.setTransactionContext(tc);
 
     txn1.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
-    txn1.createObject(new MockTCObject(new ObjectID(2), this));
+
+    MockTCObject mtco = new MockTCObject(new ObjectID(2), this);
+    mtco.setNew(true);
+
+    txn1.createObject(mtco);
     txn1.createRoot("root", new ObjectID(3));
     for (int i = 0; i < 10; i++) {
       Notify notify = new Notify(new LockID("" + i), new ThreadID(i), i % 2 == 0);
