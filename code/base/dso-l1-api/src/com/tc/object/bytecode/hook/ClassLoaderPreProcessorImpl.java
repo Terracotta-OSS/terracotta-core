@@ -13,6 +13,7 @@ import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.asm.Type;
+import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.util.runtime.Vm;
 
 import java.util.HashMap;
@@ -106,6 +107,8 @@ public class ClassLoaderPreProcessorImpl {
     }
 
     public void visitEnd() {
+      Label postDefine = new Label();
+
       MethodVisitor mv = super.visitMethod(ACC_PRIVATE | ACC_SYNTHETIC, "__tc_defineClassImpl",
                                            "(Ljava/lang/String;[BIILjava/lang/Object;)Ljava/lang/Class;", null, null);
       mv.visitCode();
@@ -134,7 +137,7 @@ public class ClassLoaderPreProcessorImpl {
       mv.visitVarInsn(ALOAD, 5);
       mv.visitMethodInsn(INVOKESPECIAL, "java/lang/ClassLoader", "defineClassImpl",
                          "(Ljava/lang/String;[BIILjava/lang/Object;)Ljava/lang/Class;");
-      mv.visitInsn(ARETURN);
+      mv.visitJumpInsn(Opcodes.GOTO, postDefine);
       mv.visitLabel(notInstrumented); // } else {
       mv.visitVarInsn(ALOAD, 0);
       mv.visitVarInsn(ALOAD, 1);
@@ -144,7 +147,12 @@ public class ClassLoaderPreProcessorImpl {
       mv.visitVarInsn(ALOAD, 5);
       mv.visitMethodInsn(INVOKESPECIAL, "java/lang/ClassLoader", "defineClassImpl",
                          "(Ljava/lang/String;[BIILjava/lang/Object;)Ljava/lang/Class;");
-
+      mv.visitLabel(postDefine);
+      mv.visitVarInsn(ASTORE, 7);
+      mv.visitVarInsn(ALOAD, 7);
+      mv.visitVarInsn(ALOAD, 0);
+      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/ClassProcessorHelper", "defineClass0Post", "(Ljava/lang/Class;Ljava/lang/ClassLoader;)V");
+      mv.visitVarInsn(ALOAD, 7);
       mv.visitInsn(ARETURN);
       mv.visitMaxs(0, 0);
       mv.visitEnd();
@@ -196,6 +204,11 @@ public class ClassLoaderPreProcessorImpl {
       }
     }
   }
+
+  void food(Class c, ClassLoader cl) {
+    ClassProcessorHelper.defineClass0Post(c, cl);
+  }
+
 
   /**
    * Adding hook for loading tc classes. Uses a primitive state machine to insert new code after first line attribute

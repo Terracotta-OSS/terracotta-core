@@ -624,6 +624,13 @@ public class ClassProcessorHelper {
    * @param caller Classloader doing definition
    */
   public static void defineClass0Post(Class clazz, ClassLoader caller) {
+    if (IBM_DEBUG) {
+      StringBuffer msg = new StringBuffer();
+      msg.append("[" + Thread.currentThread().getName() + "] " + clazz.getName() + " has been defined\n");
+      System.err.println(msg);
+      System.err.flush();
+    }
+
     ClassPostProcessor postProcessor = getPostProcessor(caller);
     if (!initState.isInitialized()) { return; }
 
