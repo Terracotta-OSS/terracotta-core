@@ -29,6 +29,6 @@ if not defined JAVA_HOME set JAVA_HOME="%TC_INSTALL_DIR%\jre"
 set JAVA_HOME="%JAVA_HOME:"=%"
 
 set CLASSPATH=%TC_INSTALL_DIR%\lib\tc.jar
-set JAVA_OPTS=-Dtc.install-root="%TC_INSTALL_DIR%" -Ddaemon=true %JAVA_OPTS%
+set JAVA_OPTS=-Dtc.install-root=%TC_INSTALL_DIR% -Ddaemon=true %JAVA_OPTS%
 start "loadbalancer" %JAVA_HOME%\bin\java %JAVA_OPTS% -cp %CLASSPATH% com.tc.net.proxy.TCPProxy 8080 localhost:8081,localhost:8082,localhost:8083
 endlocal

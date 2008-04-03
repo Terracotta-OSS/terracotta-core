@@ -40,5 +40,7 @@ set OPTS=%OPTS% -Dcom.sun.management.jmxremote.authenticate=false
 set OPTS=%OPTS% -Dcom.sun.management.jmxremote.ssl=false
 set JAVA_OPTS=%OPTS% %JAVA_OPTS%
 set CATALINA_BASE=tomcat1
+
+set JAVA_HOME=%JAVA_HOME:"=%
 start "terracotta for spring: jmx sample: 8081" %CATALINA_HOME%\bin\catalina.bat run
 endlocal

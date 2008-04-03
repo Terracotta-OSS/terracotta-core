@@ -18,5 +18,7 @@ set JAVA_HOME="%JAVA_HOME:"=%"
 
 set CATALINA_BASE=tomcat1
 echo "stopping terracotta for spring: thread coordination sample: tomcat server node 1" 
+
+set JAVA_HOME=%JAVA_HOME:"=%
 %CATALINA_HOME%\bin\catalina.bat stop
 endlocal

@@ -36,6 +36,8 @@ set TC_CONFIG_PATH=tc-config.xml
 call %TC_INSTALL_DIR%\bin\dso-env.bat -q "%TC_CONFIG%"
 set JAVA_OPTS=%TC_JAVA_OPTS% -Dcounter.log.prefix="CounterService-Tomcat-Node-2:" %JAVA_OPTS%
 set CATALINA_BASE=tomcat2
+
+set JAVA_HOME=%JAVA_HOME:"=%
 start "terracotta for spring: thread coordination sample: tomcat server node 2" %CATALINA_HOME%\bin\catalina.bat run
 endlocal
 

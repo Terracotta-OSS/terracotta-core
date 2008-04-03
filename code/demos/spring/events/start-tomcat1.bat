@@ -36,5 +36,7 @@ set TC_CONFIG_PATH=tc-config.xml
 call %TC_INSTALL_DIR%\bin\dso-env.bat -q "%TC_CONFIG%"
 set JAVA_OPTS=%TC_JAVA_OPTS% -Dcom.sun.management.jmxremote %JAVA_OPTS%
 set CATALINA_BASE=tomcat1
+
+set JAVA_HOME=%JAVA_HOME:"=%
 start "terracotta for spring: event sample: 8081" %CATALINA_HOME%\bin\catalina.bat run
 endlocal

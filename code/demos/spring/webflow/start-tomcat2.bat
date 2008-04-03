@@ -41,5 +41,7 @@ set OPTS=%OPTS% -Dcom.sun.management.jmxremote.ssl=false
 set OPTS=%OPTS% -Dtc.node-name=Node2
 set JAVA_OPTS=%OPTS% %JAVA_OPTS%
 set CATALINA_BASE=tomcat2
+
+set JAVA_HOME=%JAVA_HOME:"=%
 start "terracotta for spring: webflow sample: 8082" %CATALINA_HOME%\bin\catalina.bat run
 endlocal
