@@ -100,6 +100,20 @@
       -->
       <logs>/opt/terracotta/server-logs</logs>
 
+      <!-- In which directory should the server store statistics data that is
+         being buffered? Again, this value undergoes parameter substitution
+         before being used; thus, a value like 'statistics-data-%h' would
+         expand to 'statistics-data' if running on host 'artichoke'.
+        
+         If this is a relative path, then it is interpreted relative to the
+         current working directory of the server (that is, the directory you
+         were in when you started server). It is thus recommended that you
+         specify an absolute path here.
+        
+         Default: 'statistics' This places the 'statistics' directory in the
+         directory you were in when you invoked 'start-tc-server'. -->
+      <statistics>/opt/terracotta/server-statistics</statistics>
+
       <!-- On what port should the DSO server listen for connections from DSO
          clients? This can be any port you like, but note that
          ports below 1024 typically require 'root' privileges to use
@@ -127,6 +141,48 @@
          Default: 9530
       -->
       <l2-group-port>9530</l2-group-port>
+      
+      <!-- Turn on authentication for the Terracotta server. An empty tag
+         <authentication> defaults to the standard Java JMX authentication
+         mechanism referring to password and access files in:
+         $JAVA_HOME/jre/lib/management.
+         - $JAVA_HOME/jre/lib/management/jmxremote.password
+         - $JAVA_HOME/jre/lib/management/jmxremote.access
+        
+         You must modify these files as such (if none exist create them):
+        
+         - jmxremote.password: add a line to the end of the file declaring
+           your username and password followed by a caridge return:
+           secretusername secretpassword
+        
+         - jmxremote.access: add the following line (with a caridge return)
+           to the end of your file:
+           secretusername readwrite
+        
+         You must also do:
+         $ chmod 500 jmxremote.password
+         $ chown <user who will execute the tc-server> jmxremote.password
+      -->
+      <authentication/>
+      
+      <!-- Turn on authentication for the embedded Terracotta HTTP Server.
+         This requires a properties file that contains the users and passwords
+         that have access to the HTTP server.
+        
+         The format of the properties file is:
+         username: password [,rolename ...]
+        
+         The supported roles and protected sections are: 
+         - statistics: for the statistics gatherer at /statistics-gatherer
+        
+         Passwords may be clear text, obfuscated or checksummed.
+         
+         The class com.mortbay.Util.Password should be used to generate
+         obfuscated passwords or password checksums.
+      -->
+      <http-authentication>
+        <user-realm-file>/opt/terracotta/realm.properties</user-realm-file>
+      </http-authentication>
 
       <!-- Configuration data for DSO that's specific to the DSO server. -->
       <dso>
@@ -136,7 +192,7 @@
              not be allowed to reconnect.
 
              Default: 120 seconds
-        --> 
+        -->
         <client-reconnect-window>120</client-reconnect-window>
 
         <!-- Information about how DSO should persist data to disk. -->
@@ -366,6 +422,26 @@
        address 10.0.0.57.
     -->
     <logs>logs-%i</logs>
+    
+    <!-- Where should the client store statistics data that is being buffered?
+       
+       This value undergoes parameter substitution before being used;
+       thus, a value like 'statistics-data-%h' would expand to
+       'statistics-data-banana' if running on host 'banana'.
+      
+       If this is a relative path, then it is interpreted relative to
+       the current working directory of the client (that is, the directory 
+       you were in when you started the program that uses Terracotta
+       services). It is thus recommended that you specify an absolute
+       path here.
+      
+       Default: 'statistics-%i'; this places the logs in a directory relative
+       to the directory you were in when you invoked the program that uses
+       Terracotta services (your client), and calls that directory, for example,
+       'statistics-10.0.0.57' if the machine that the client is on has assigned IP
+       address 10.0.0.57.
+    -->
+    <statistics>statistics-%i</statistics>
 
     <!-- This section contains data for Terracotta DSO that's specific to
        the DSO client only. -->
