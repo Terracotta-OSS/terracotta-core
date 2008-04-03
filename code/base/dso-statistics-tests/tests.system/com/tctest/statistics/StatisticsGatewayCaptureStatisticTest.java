@@ -31,7 +31,7 @@ public class StatisticsGatewayCaptureStatisticTest extends TransparentTestBase {
         .newProxyInstance(mbsc, StatisticsMBeanNames.STATISTICS_GATEWAY, StatisticsGatewayMBean.class, false);
 
     List<StatisticData> data = new ArrayList<StatisticData>();
-    CollectingNotificationListener listener = new CollectingNotificationListener(StatisticsGatewayNoActionsTestApp.NODE_COUNT + 1);
+    CollectingNotificationListener listener = new CollectingNotificationListener(total_node_count);
     mbsc.addNotificationListener(StatisticsMBeanNames.STATISTICS_GATEWAY, listener, null, data);
     stat_gateway.enable();
 
