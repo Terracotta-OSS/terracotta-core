@@ -8,25 +8,25 @@ rem
 setlocal
 
 if not defined BEA_HOME (
-	echo BEA_HOME must be set to a Weblogic Server 9.2 installation.
-	exit 1
-	endlocal  
+  echo BEA_HOME must be set to a Weblogic Server 9.2 installation.
+  endlocal  
+  exit 1
 )
 set BEA_HOME="%BEA_HOME:"=%"
 
 if not exist %BEA_HOME% (
   echo BEA_HOME %BEA_HOME% does not exist.
-  exit 1
   endlocal
+  exit 1
 )
 
 if not defined WL_HOME set WL_HOME=%BEA_HOME%\weblogic92
 set WL_HOME="%WL_HOME:"=%"
 
-if not exist "%WL_HOME%" (
+if not exist %WL_HOME% (
   echo WL_HOME %WL_HOME% does not exist.
-  exit 1
   endlocal
+  exit 1
 )
 
 set PRODUCTION_MODE=
@@ -49,6 +49,6 @@ if not exist %JAVA_HOME% (
 
 set CLASSPATH=%WEBLOGIC_CLASSPATH%;%POINTBASE_CLASSPATH%;%JAVA_HOME%\jre\lib\rt.jar;%WL_HOME%\server\lib\webservices.jar;%CLASSPATH%
 
-%JAVA_HOME%\bin\java %JAVA_VM% %MEM_ARGS% %JAVA_OPTIONS% -classpath "%CLASSPATH%" -Dweblogic.Name=%SERVER_NAME% -Dweblogic.management.username=%WLS_USER% -Dweblogic.management.password=%WLS_PW% -Dweblogic.ProductionModeEnabled=%PRODUCTION_MODE% -Djava.security.policy="%WL_HOME%\server\lib\weblogic.policy" weblogic.Server
+%JAVA_HOME%\bin\java %JAVA_VM% %MEM_ARGS% %JAVA_OPTIONS% -classpath %CLASSPATH% -Dweblogic.Name=%SERVER_NAME% -Dweblogic.management.username=%WLS_USER% -Dweblogic.management.password=%WLS_PW% -Dweblogic.ProductionModeEnabled=%PRODUCTION_MODE% -Djava.security.policy="%WL_HOME%\server\lib\weblogic.policy" weblogic.Server
 endlocal
 
