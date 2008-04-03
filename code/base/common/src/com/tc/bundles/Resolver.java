@@ -106,12 +106,13 @@ public class Resolver {
     final String groupId = module.getGroupId();
 
     // CDV-691: If you are defining a module in the tc-config.xml, the schema requires that you specify
-    // a name and version, so this will never happen (although version could still be invalid).  
+    // a name and version, so this will never happen (although version could still be invalid).
     // But if you define programatically in a TIM or in a test, it is possible to screw this up.
-    if(name == null || version == null) {
-      throw new BundleException("Invalid module specification (name and version are required): name=" + name + ", version=" + version + ", groupId=" + groupId);
-    }
-    
+    if (name == null || version == null) { throw new BundleException(
+                                                                     "Invalid module specification (name and version are required): name="
+                                                                         + name + ", version=" + version + ", groupId="
+                                                                         + groupId); }
+
     final URL location = resolveLocation(name, version, groupId);
     if (location == null) {
       final String msg = formatMessage(Message.ERROR_BUNDLE_UNRESOLVED, new Object[] { name, version, groupId,
@@ -119,8 +120,7 @@ public class Resolver {
       fatal(msg);
       throw new MissingBundleException(msg);
     }
- 
-    logger.info("Resolved module " + groupId + ":" + name + ":" + version + " from " + location);
+    logger.info("Resolved TIM location " + groupId + ":" + name + ":" + version + " (filename: " +  name + "-" + version + ".jar) from " + location);
     resolveDependencies(location);
     return location;
   }
@@ -233,7 +233,6 @@ public class Resolver {
       try {
         url = new URL(repositoryURL);
       } catch (MalformedURLException e) {
-        // ignore bad URLs
         logger.warn("Ignoring bad repository URL during resolution: " + repositoryURL, e);
         continue;
       }
