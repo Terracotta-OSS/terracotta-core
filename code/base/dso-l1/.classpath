@@ -16,4 +16,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/management"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty-api"/>
+	<classpathentry kind="lib" path="/dso-common/lib/tc-l1-prop-from-l2-xmlbeans-generated.jar"/>
+	<classpathentry kind="output" path="bin"/>
 </classpath>

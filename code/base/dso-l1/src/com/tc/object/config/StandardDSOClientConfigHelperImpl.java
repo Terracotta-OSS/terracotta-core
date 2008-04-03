@@ -28,6 +28,8 @@ import com.tc.geronimo.transform.TomcatClassLoaderAdapter;
 import com.tc.jam.transform.ReflectClassBuilderAdapter;
 import com.tc.jboss.transform.MainAdapter;
 import com.tc.jboss.transform.UCLAdapter;
+import com.tc.l1propertiesfroml2.L1ReconnectConfig;
+import com.tc.l1propertiesfroml2.L1ReconnectConfigImpl;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.object.LiteralValues;
@@ -70,6 +72,7 @@ import com.tc.tomcat.transform.WebAppLoaderAdapter;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
 import com.tc.util.ClassUtils.ClassSpec;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Vm;
 import com.tc.weblogic.WeblogicHelper;
 import com.tc.weblogic.transform.EJBCodeGeneratorAdapter;
@@ -80,12 +83,14 @@ import com.tc.weblogic.transform.ServerAdapter;
 import com.tc.weblogic.transform.ServletResponseImplAdapter;
 import com.tc.weblogic.transform.WebAppServletContextAdapter;
 import com.terracottatech.config.DsoApplication;
+import com.terracottatech.config.L1ReconnectPropertiesFromL2Document;
 import com.terracottatech.config.Module;
 import com.terracottatech.config.Modules;
 import com.terracottatech.config.SpringApplication;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.text.ParseException;
@@ -171,6 +176,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   private final ModulesContext                   modulesContext                     = new ModulesContext();
 
   private volatile boolean                       allowCGLIBInstrumentation          = false;
+
+  private L1ReconnectConfig                      l1ReconnectConfig              = null;
 
   public StandardDSOClientConfigHelperImpl(L1TVSConfigurationSetupManager configSetupManager)
       throws ConfigurationSetupException {
@@ -1957,6 +1964,37 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       if (webApp.equals(appName)) { return LockLevel.SYNCHRONOUS_WRITE; }
     }
     return LockLevel.WRITE;
+  }
+
+  private void setL1ReconnectProperties() {
+    InputStream in = null;
+    while (in == null) {
+      try {
+        in = configSetupManager.getL1PropertiesFromL2Stream();
+      } catch (IOException e) {
+        String text = "We couldn't load l1 reconnect properties from any of the servers. Retrying.....";
+        CustomerLogging.getConsoleLogger().error(text);
+        ThreadUtil.reallySleep(1000);
+      } catch (Exception e) {
+        throw new AssertionError(e);
+      }
+    }
+
+    L1ReconnectPropertiesFromL2Document l1PropFroL2;
+    try {
+      l1PropFroL2 = L1ReconnectPropertiesFromL2Document.Factory.parse(in);
+    } catch (Exception e) {
+      throw new AssertionError(e);
+    }
+
+    boolean l1ReconnectEnabled = l1PropFroL2.getL1ReconnectPropertiesFromL2().getL1ReconnectEnabled();
+    int l1ReconnectTimeout = l1PropFroL2.getL1ReconnectPropertiesFromL2().getL1ReconnectTimeout().intValue();
+    this.l1ReconnectConfig = new L1ReconnectConfigImpl(l1ReconnectEnabled, l1ReconnectTimeout);
+  }
+
+  public synchronized L1ReconnectConfig getL1ReconnectProperties() {
+    if (l1ReconnectConfig == null) setL1ReconnectProperties();
+    return l1ReconnectConfig;
   }
 
 }

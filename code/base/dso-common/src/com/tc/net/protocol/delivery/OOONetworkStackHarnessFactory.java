@@ -5,6 +5,7 @@
 package com.tc.net.protocol.delivery;
 
 import com.tc.async.api.Sink;
+import com.tc.l1propertiesfroml2.L1ReconnectConfig;
 import com.tc.net.protocol.NetworkStackHarness;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.MessageChannelInternal;
@@ -17,22 +18,25 @@ public class OOONetworkStackHarnessFactory implements NetworkStackHarnessFactory
 
   private final Sink                                       sink;
   private final OnceAndOnlyOnceProtocolNetworkLayerFactory factory;
+  private final L1ReconnectConfig                      l1ReconnectConfig;
 
-  public OOONetworkStackHarnessFactory(OnceAndOnlyOnceProtocolNetworkLayerFactory factory, Sink sink) {
+  public OOONetworkStackHarnessFactory(OnceAndOnlyOnceProtocolNetworkLayerFactory factory, Sink sink,
+                                       L1ReconnectConfig l1ReconnectConfig) {
     this.factory = factory;
     this.sink = sink;
+    this.l1ReconnectConfig = l1ReconnectConfig;
   }
 
   public NetworkStackHarness createClientHarness(MessageTransportFactory transportFactory,
                                                  MessageChannelInternal channel,
                                                  MessageTransportListener[] transportListeners) {
-    return new OOONetworkStackHarness(transportFactory, channel, factory, sink);
+    return new OOONetworkStackHarness(transportFactory, channel, factory, sink, l1ReconnectConfig);
   }
 
   public NetworkStackHarness createServerHarness(ServerMessageChannelFactory channelFactory,
                                                  MessageTransport transport,
                                                  MessageTransportListener[] transportListeners) {
-    return new OOONetworkStackHarness(channelFactory, transport, factory, sink);
+    return new OOONetworkStackHarness(channelFactory, transport, factory, sink, l1ReconnectConfig);
   }
 
 }

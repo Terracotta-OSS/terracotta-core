@@ -104,6 +104,29 @@ class StaticResources
     def config_schema_config_directory(module_set)
         FilePath.new(module_set['common'].subtree('src').resource_root, "com", "tc", "config", "schema-config")
     end
+    
+    # Where does the compiled version of the l1 properties from l2 live (a JAR, that is)?
+    def compiled_l1_prop_from_l2_jar(module_set)
+        out = nil
+        module_set['dso-common'].subtree('src').subtree_only_library_roots(:runtime).each do |root|
+            test = FilePath.new(root, "tc-l1-prop-from-l2-xmlbeans-generated.jar")
+            out = test if FileTest.file?(test.to_s)
+        end
+
+        assert { not out.nil? }
+
+        out
+    end
+
+    # Where do the .xsd files for l1 properties from l2 live?
+    def l1_prop_from_l2_schema_source_directory(module_set)
+        FilePath.new(module_set['dso-common'].subtree('src').resource_root, "com", "tc", "config", "schema")
+    end
+
+    # Where do the .xsdconfig files for l1 properties from l2 live?
+    def l1_prop_from_l2_schema_config_directory(module_set)
+        FilePath.new(module_set['dso-common'].subtree('src').resource_root, "com", "tc", "config", "schema-config")
+    end
 
     def compiled_stats_config_schema_jar(module_set)
         out = nil

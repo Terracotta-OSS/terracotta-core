@@ -5,6 +5,7 @@
 package com.tc.net.protocol.delivery;
 
 import com.tc.async.api.Sink;
+import com.tc.l1propertiesfroml2.L1ReconnectConfig;
 import com.tc.net.protocol.AbstractNetworkStackHarness;
 import com.tc.net.protocol.tcm.MessageChannelInternal;
 import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
@@ -12,7 +13,6 @@ import com.tc.net.protocol.transport.ClientConnectionEstablisher;
 import com.tc.net.protocol.transport.ClientMessageTransport;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.MessageTransportFactory;
-import com.tc.properties.TCPropertiesImpl;
 
 public class OOONetworkStackHarness extends AbstractNetworkStackHarness {
 
@@ -20,21 +20,26 @@ public class OOONetworkStackHarness extends AbstractNetworkStackHarness {
   private Sink                                             sink;
   private OnceAndOnlyOnceProtocolNetworkLayer              oooLayer;
   private final boolean                                    isClient;
+  private final L1ReconnectConfig                      l1ReconnectConfig;
 
   OOONetworkStackHarness(ServerMessageChannelFactory channelFactory, MessageTransport transport,
-                         OnceAndOnlyOnceProtocolNetworkLayerFactory factory, Sink sink) {
+                         OnceAndOnlyOnceProtocolNetworkLayerFactory factory, Sink sink,
+                         L1ReconnectConfig l1ReconnectConfig) {
     super(channelFactory, transport);
     this.isClient = false;
     this.factory = factory;
     this.sink = sink;
+    this.l1ReconnectConfig = l1ReconnectConfig;
   }
 
   OOONetworkStackHarness(MessageTransportFactory transportFactory, MessageChannelInternal channel,
-                         OnceAndOnlyOnceProtocolNetworkLayerFactory factory, Sink sink) {
+                         OnceAndOnlyOnceProtocolNetworkLayerFactory factory, Sink sink,
+                         L1ReconnectConfig l1ReconnectConfig) {
     super(transportFactory, channel);
     this.isClient = true;
     this.factory = factory;
     this.sink = sink;
+    this.l1ReconnectConfig = l1ReconnectConfig;
   }
 
   protected void connectStack() {
@@ -47,7 +52,8 @@ public class OOONetworkStackHarness extends AbstractNetworkStackHarness {
     oooLayer.setSendLayer(transport);
     transport.setReceiveLayer(oooLayer);
 
-    final long timeout = TCPropertiesImpl.getProperties().getLong("l1.reconnect.timeout.millis");
+    long timeout = 0; 
+    if (l1ReconnectConfig.getReconnectEnabled()) timeout = l1ReconnectConfig.getL1ReconnectTimeout();
     // XXX: this is super ugly, but...
     if (transport instanceof ClientMessageTransport) {
       ClientMessageTransport cmt = (ClientMessageTransport) transport;

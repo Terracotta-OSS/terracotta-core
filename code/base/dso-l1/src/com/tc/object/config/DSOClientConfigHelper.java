@@ -11,6 +11,7 @@ import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.config.schema.NewCommonL1Config;
+import com.tc.l1propertiesfroml2.L1ReconnectConfig;
 import com.tc.object.Portability;
 import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.TransparencyClassAdapter;
@@ -218,4 +219,6 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   ClassAdapterFactory getCustomAdapter(ClassInfo classInfo);
 
   boolean reflectionEnabled();
+  
+  public L1ReconnectConfig getL1ReconnectProperties();
 }

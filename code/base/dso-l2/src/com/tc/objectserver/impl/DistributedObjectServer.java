@@ -15,6 +15,8 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.io.TCFile;
 import com.tc.io.TCFileImpl;
 import com.tc.io.TCRandomFileAccessImpl;
+import com.tc.l1propertiesfroml2.L1ReconnectConfig;
+import com.tc.l1propertiesfroml2.L1ReconnectConfigImpl;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.L2HACoordinator;
 import com.tc.l2.ha.L2HADisabledCooridinator;
@@ -270,6 +272,8 @@ public class DistributedObjectServer implements TCDumper {
 
   private final SEDA                           seda;
 
+  private L1ReconnectConfig                    l1ReconnectConfig;
+
   // used by a test
   public DistributedObjectServer(L2TVSConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
                                  ConnectionPolicy connectionPolicy, TCServerInfoMBean tcServerInfoMBean) {
@@ -372,6 +376,9 @@ public class DistributedObjectServer implements TCDumper {
     PersistenceMode persistenceMode = (PersistenceMode) l2DSOConfig.persistenceMode().getObject();
 
     l2Properties = TCPropertiesImpl.getProperties().getPropertiesFor("l2");
+    l1ReconnectConfig = new L1ReconnectConfigImpl(TCPropertiesImpl.getProperties()
+        .getBoolean(L1ReconnectConfig.L2_L1RECONNECT_ENABLED), TCPropertiesImpl.getProperties()
+        .getInt(L1ReconnectConfig.L2_L1RECONNECT_TIMEOUT));
 
     final boolean swapEnabled = true; // 2006-01-31 andrew -- no longer possible to use in-memory only; DSO folks say
     // it's broken
@@ -470,12 +477,12 @@ public class DistributedObjectServer implements TCDumper {
     ManagedObjectStateFactory.createInstance(managedObjectChangeListenerProvider, persistor);
 
     final NetworkStackHarnessFactory networkStackHarnessFactory;
-    final boolean useOOOLayer = TCPropertiesImpl.getProperties().getBoolean("l1.reconnect.enabled");
+    final boolean useOOOLayer = l1ReconnectConfig.getReconnectEnabled();
     if (useOOOLayer) {
       final Stage oooStage = stageManager.createStage("OOONetStage", new OOOEventHandler(), 1, maxStageSize);
       networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
                                                                      new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
-                                                                     oooStage.getSink());
+                                                                     oooStage.getSink(), l1ReconnectConfig);
     } else {
       networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
     }
@@ -1095,5 +1102,9 @@ public class DistributedObjectServer implements TCDumper {
     } finally {
       l2Management = null;
     }
+  }
+
+  public L1ReconnectConfig getL1ReconnectProperties() {
+    return l1ReconnectConfig;
   }
 }

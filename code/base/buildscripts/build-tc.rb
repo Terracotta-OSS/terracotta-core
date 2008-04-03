@@ -427,6 +427,44 @@ END
       ant.fileset(:dir => schema_config_dir.to_s, :includes => '*.xsdconfig')
     }
   end
+  
+  # Generates the JAR containg the class files that represent the XML schema  
+  # for the l1 properties from l2 
+  def generate_l1_prop_from_l2_classes
+    schema_dir = @static_resources.l1_prop_from_l2_schema_source_directory(@module_set)
+    schema_config_dir = @static_resources.l1_prop_from_l2_schema_config_directory(@module_set)
+    dest_jar = @static_resources.compiled_l1_prop_from_l2_jar(@module_set)
+    generated_source_dir = @build_results.l1_prop_from_l2_schema_generation_directory
+
+    text = <<END
+BUILDING NEW L1 PROPERTIES FROMM L2 JAR.
+
+You are creating new Java classes
+to correspond to the XML Schema currently in
+
+    %s
+
+The JAR at
+
+    %s
+
+will be overwritten; you must make sure you CHECK THIS FILE IN
+to source-code control. (We check this file in, rather than
+generating it each time, both to save time and to avoid
+accidental changes to our config schema.)
+END
+    puts text % [ schema_dir.to_s, dest_jar.to_s ]
+
+    generated_source_dir.delete
+
+    ant.xmlbean(:destfile => dest_jar.to_s,
+                :executable => @jvm_set['J2SE-1.4'].javac.to_s,
+    :debug => true, :classpath => @module_set['dso-common'].subtree('src').classpath(@build_results, :full, :runtime).to_s,
+    :srcgendir => generated_source_dir.to_s) {
+      ant.fileset(:dir => schema_dir.to_s, :includes => '*.xsd')
+      ant.fileset(:dir => schema_config_dir.to_s, :includes => '*.xsdconfig')
+    }
+  end
 
   def generate_stats_config_classes
     schema_dir = @static_resources.stats_config_schema_source_directory(@module_set)

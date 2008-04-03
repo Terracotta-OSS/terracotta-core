@@ -6,6 +6,7 @@ package com.tc.net.protocol.transport;
 
 import com.tc.async.api.Stage;
 import com.tc.async.impl.StageManagerImpl;
+import com.tc.l1propertiesfroml2.L1ReconnectConfigImpl;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.logging.LogLevel;
@@ -54,13 +55,14 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
 
     logger.setLevel(LogLevel.DEBUG);
 
-    if (false /* TCPropertiesImpl.getProperties().getBoolean("l1.reconnect.enabled") */) {
+    if (false /* TCPropertiesImpl.getProperties().getBoolean(L1ReconnectProperties.L1_RECONNECT_ENABLED) */) {
       StageManagerImpl stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(TCLogging
           .getLogger(StageManagerImpl.class))));
       final Stage oooStage = stageManager.createStage("OOONetStage", new OOOEventHandler(), 1, 5000);
       networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
                                                                      new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
-                                                                     oooStage.getSink());
+                                                                     oooStage.getSink(),
+                                                                     new L1ReconnectConfigImpl());
     } else {
       networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
     }

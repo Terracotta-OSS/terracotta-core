@@ -7,6 +7,7 @@ package com.tc.net.protocol.transport;
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 
+import com.tc.l1propertiesfroml2.L1ReconnectConfigImpl;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
@@ -33,15 +34,15 @@ import java.util.List;
  * x normal connect and handshake o reconnect and handshake
  */
 public class ClientMessageTransportTest extends TCTestCase {
-  private ConnectionID                     connectionId;
-  private ClientMessageTransport           transport;
-  private MockConnectionManager            connectionManager;
-  private MockTCConnection                 connection;
-  private TransportHandshakeMessageFactory transportMessageFactory;
-  private TestTransportHandshakeErrorHandler   handshakeErrorHandler;
-  private final int                        maxRetries         = 10;
-  private MessageTransportFactory          transportFactory;
-  private final int                        timeout            = 3000;
+  private ConnectionID                       connectionId;
+  private ClientMessageTransport             transport;
+  private MockConnectionManager              connectionManager;
+  private MockTCConnection                   connection;
+  private TransportHandshakeMessageFactory   transportMessageFactory;
+  private TestTransportHandshakeErrorHandler handshakeErrorHandler;
+  private final int                          maxRetries = 10;
+  private MessageTransportFactory            transportFactory;
+  private final int                          timeout    = 3000;
 
   public void setUp() {
     DefaultConnectionIdFactory connectionIDProvider = new DefaultConnectionIdFactory();
@@ -140,7 +141,8 @@ public class ClientMessageTransportTest extends TCTestCase {
                                                                          new NullMessageMonitor(),
                                                                          new OOONetworkStackHarnessFactory(
                                                                                                            new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
-                                                                                                           null),
+                                                                                                           null,
+                                                                                                           new L1ReconnectConfigImpl()),
                                                                          new NullConnectionPolicy(), 0);
 
     CommunicationsManager clientCommsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
@@ -165,8 +167,9 @@ public class ClientMessageTransportTest extends TCTestCase {
                                                    new NullMessageMonitor(),
                                                    new OOONetworkStackHarnessFactory(
                                                                                      new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
-                                                                                     null), new NullConnectionPolicy(),
-                                                   0);
+                                                                                     null,
+                                                                                     new L1ReconnectConfigImpl()),
+                                                   new NullConnectionPolicy(), 0);
 
     try {
       createStacksAndTest(serverCommsMgr, clientCommsMgr);
@@ -239,11 +242,10 @@ public class ClientMessageTransportTest extends TCTestCase {
     assertTrue(handshakeErrorHandler.getStackLayerMismatch());
     listener.stop(5000);
   }
-  
-  private static class TestTransportHandshakeErrorHandler implements TransportHandshakeErrorHandler {
-    
-    private boolean                          stackLayerMismatch = false;
 
+  private static class TestTransportHandshakeErrorHandler implements TransportHandshakeErrorHandler {
+
+    private boolean stackLayerMismatch = false;
 
     public void handleHandshakeError(TransportHandshakeErrorContext e) {
       if (e.getErrorType() == TransportHandshakeError.ERROR_STACK_MISMATCH) stackLayerMismatch = true;
@@ -252,8 +254,8 @@ public class ClientMessageTransportTest extends TCTestCase {
     public void handleHandshakeError(TransportHandshakeErrorContext e, TransportHandshakeMessage m) {
       if (e.getErrorType() == TransportHandshakeError.ERROR_STACK_MISMATCH) stackLayerMismatch = true;
     }
-    
-    public boolean getStackLayerMismatch(){
+
+    public boolean getStackLayerMismatch() {
       return stackLayerMismatch;
     }
   }
