@@ -3,8 +3,6 @@
  */
 package com.tc.statistics.retrieval.actions;
 
-import junit.framework.TestCase;
-
 import org.hyperic.sigar.Sigar;
 
 import com.tc.statistics.StatisticData;
@@ -12,6 +10,8 @@ import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.retrieval.SigarUtil;
 
 import java.math.BigDecimal;
+
+import junit.framework.TestCase;
 
 public class SRACpuTest extends TestCase {
   static {
@@ -67,8 +67,9 @@ public class SRACpuTest extends TestCase {
 
     // assert that the cpu usage was almost the maximum during the second data collection
     for (int i = 0; i < cpuCount; i++) {
-      assertTrue(values2[i][0].compareTo(new BigDecimal("0.95")) > 0);
-      assertTrue(values2[i][1].compareTo(new BigDecimal("0.05")) < 0);
+      System.out.println("cpu "+i+ ": combined "+values2[i][0]+" idle "+values2[i][1]);
+      assertTrue(values2[i][0].compareTo(new BigDecimal("0.95")) >= 0);
+      assertTrue(values2[i][1].compareTo(new BigDecimal("0.05")) <= 0);
     }
   }
 

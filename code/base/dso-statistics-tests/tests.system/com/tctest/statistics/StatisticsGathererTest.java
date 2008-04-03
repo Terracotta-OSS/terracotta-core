@@ -147,6 +147,13 @@ public class StatisticsGathererTest extends TransparentTestBase implements Stati
 
     // check the data
     assertTrue(data_list.size() > 2);
+    System.out.println("=========================");
+    System.out.println("Received Statistics Data:");
+    System.out.println("-------------------------");
+    for (StatisticData data : data_list) {
+      System.out.println(data);
+    }
+    System.out.println("=========================");
     assertEquals(SRAStartupTimestamp.ACTION_NAME, data_list.get(0).getName());
     assertEquals(SRAShutdownTimestamp.ACTION_NAME, data_list.get(data_list.size() - 1).getName());
     Set<String> received_data_names = new HashSet<String>();

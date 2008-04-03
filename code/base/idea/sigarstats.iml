@@ -24,7 +24,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../dependencies/lib/sigar-1.5.0.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../sigarstats/lib/sigar-1.5.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
