@@ -13,6 +13,7 @@ import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.event.TCConnectionErrorEvent;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.core.event.TCConnectionEventListener;
+import com.tc.net.groups.NodeIDImpl;
 import com.tc.net.protocol.NullProtocolAdaptor;
 import com.tc.util.State;
 
@@ -44,6 +45,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
 
   // Context info
   private final HealthCheckerConfig              config;
+  private final String                           nodeID;
 
   // Socket Connect probes
   private int                                    socketConnectSuccessCount  = 0;
@@ -62,22 +64,25 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     this.config = config;
     this.connectionManager = connMgr;
     this.logger = TCLogging.getLogger(ConnectionHealthCheckerImpl.class.getName() + ". "
-                                      + config.getHealthCheckerName() + "(" + mtb.getConnectionId() + ")");
-    logger.info("Health monitoring agent started");
+                                      + config.getHealthCheckerName());
+    this.nodeID = "NodeID[" + mtb.getConnectionId().getChannelID() + "]";
+    logger.info("Health monitoring agent started for " + nodeID);
   }
 
   /* all callers of this method are already synchronized */
   private void changeState(State newState) {
     if (logger.isDebugEnabled() && currentState != newState) {
-      logger.debug("Context state change: " + currentState.toString() + " ===> " + newState.toString());
+      logger.debug("Context state change for " + nodeID + " : " + currentState.toString() + " ===> "
+                   + newState.toString());
     }
     currentState = newState;
   }
 
   private boolean canPingProbe() {
     if (logger.isDebugEnabled()) {
-      if (this.probeReplyNotRecievedCount.get() > 0) logger.debug("PING_REPLY not received for "
-                                                                  + this.probeReplyNotRecievedCount + "(max allowed:"
+      if (this.probeReplyNotRecievedCount.get() > 0) logger.debug("PING_REPLY not received from " + nodeID + " for "
+                                                                  + this.probeReplyNotRecievedCount
+                                                                  + " times (max allowed:"
                                                                   + this.maxProbeCountWithoutReply + ").");
     }
 
@@ -89,7 +94,10 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     // trigger the socket connect
     conn = connectionManager.createConnection(new NullProtocolAdaptor());
     conn.addListener(this);
-    sockectConnect = new HealthCheckerSocketConnectImpl(transport.getRemoteAddress(), conn, logger);
+    sockectConnect = new HealthCheckerSocketConnectImpl(transport.getRemoteAddress(), conn,
+                                                        new NodeIDImpl(""
+                                                                       + this.transport.getConnectionId()
+                                                                           .getChannelID(), new byte[0]), logger);
 
     if (sockectConnect.start()) {
       return true;
@@ -121,7 +129,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
       /* Send Probe again; if not possible move to next state */
       if (canPingProbe()) {
         if (logger.isDebugEnabled()) {
-          logger.debug("Sending PING Probe to this IDLE connection");
+          logger.debug("Sending PING Probe to IDLE " + nodeID);
         }
         sendProbeMessage(this.messageFactory.createPing(transport.getConnectionId(), transport.getConnection()));
         pingProbeSentCount.increment();
@@ -138,7 +146,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     }
 
     if (currentState.equals(DEAD)) {
-      logger.info("is DEAD.");
+      logger.info(nodeID + " is DEAD");
       return false;
     }
     return true;
@@ -195,21 +203,21 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     // Async connect goes thru
     socketConnectSuccessCount++;
     if (socketConnectSuccessCount < config.getMaxSocketConnectCount()) {
-      logger.warn("Peer might be in Long GC.");
+      logger.warn(nodeID + " might be in Long GC.");
       initProbeCycle();
     } else {
-      logger.error("Peer might be in Long GC. But its too long. No more retries");
+      logger.error(nodeID + " might be in Long GC. But its too long. No more retries");
       changeState(DEAD);
     }
   }
 
   public synchronized void endOfFileEvent(TCConnectionEvent event) {
-    logger.warn("Socket Connect EOF event:" + event.toString());
+    logger.warn("Socket Connect EOF event:" + event.toString() + " on " + nodeID);
     changeState(DEAD);
   }
 
   public synchronized void errorEvent(TCConnectionErrorEvent errorEvent) {
-    logger.error("Socket Connect Error Event:" + errorEvent.toString());
+    logger.error("Socket Connect Error Event:" + errorEvent.toString() + " on " + nodeID);
     changeState(DEAD);
   }
 
