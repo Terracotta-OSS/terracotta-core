@@ -148,7 +148,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
         System.err.println("Thread " + threadName + " request lock");
         lockRequestOrder.add(threadName);
         //to make sure that lock request order is correct i.e. t2 request the lock after t1
-        ThreadUtil.reallySleep(3000);
+        ThreadUtil.reallySleep(30000);
         LockManagerSystemTest.this.clientLockManager.lock(l1, tid2, LockLevel.READ, String.class.getName(),
                                                     LockContextInfo.NULL_LOCK_CONTEXT_INFO);
         System.err.println("Thread " + threadName + " obtain lock");
