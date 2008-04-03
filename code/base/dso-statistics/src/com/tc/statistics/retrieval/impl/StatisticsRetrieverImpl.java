@@ -32,7 +32,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsBufferListener {
-  public final static int DEFAULT_NOTIFICATION_INTERVAL = 5;
+  public final static int DEFAULT_NOTIFICATION_INTERVAL = 60;
 
   private final static TCLogger logger = TCLogging.getLogger(StatisticsRetrieverImpl.class);
 
