@@ -31,7 +31,9 @@ import com.tc.jboss.transform.UCLAdapter;
 import com.tc.l1propertiesfroml2.L1ReconnectConfig;
 import com.tc.l1propertiesfroml2.L1ReconnectConfigImpl;
 import com.tc.logging.CustomerLogging;
+import com.tc.logging.LogLevel;
 import com.tc.logging.TCLogger;
+import com.tc.net.core.ConnectionInfo;
 import com.tc.object.LiteralValues;
 import com.tc.object.Portability;
 import com.tc.object.PortabilityImpl;
@@ -50,6 +52,7 @@ import com.tc.object.bytecode.THashMapAdapter;
 import com.tc.object.bytecode.TransparencyClassAdapter;
 import com.tc.object.bytecode.TreeMapAdapter;
 import com.tc.object.bytecode.aspectwerkz.ExpressionHelper;
+import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.schema.DSOInstrumentationLoggingOptions;
 import com.tc.object.config.schema.DSORuntimeLoggingOptions;
 import com.tc.object.config.schema.DSORuntimeOutputOptions;
@@ -93,6 +96,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Modifier;
 import java.net.URL;
+import java.net.URLConnection;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -177,7 +181,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   private volatile boolean                       allowCGLIBInstrumentation          = false;
 
-  private L1ReconnectConfig                      l1ReconnectConfig              = null;
+  private L1ReconnectConfig                      l1ReconnectConfig                  = null;
 
   public StandardDSOClientConfigHelperImpl(L1TVSConfigurationSetupManager configSetupManager)
       throws ConfigurationSetupException {
@@ -1966,14 +1970,40 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return LockLevel.WRITE;
   }
 
-  private void setL1ReconnectProperties() {
+  public InputStream getL1PropertiesFromL2Stream(ConnectionInfo[] connectInfo) throws Exception {
+    URLConnection connection = null;
+    InputStream l1PropFromL2Stream = null;
+    URL theURL = null;
+    for (int i = 0; i < connectInfo.length; i++) {
+      try {
+        ConnectionInfo ci = connectInfo[i];
+        theURL = new URL("http", ci.getHostname(), ci.getPort(), "/l1reconnectproperties");
+        consoleLogger.log(LogLevel.INFO, "Trying to get L1 Reconnect Properties from " + ci);
+        connection = theURL.openConnection();
+        l1PropFromL2Stream = connection.getInputStream();
+        if (l1PropFromL2Stream != null) return l1PropFromL2Stream;
+      } catch (IOException e) {
+        String text = "We couldn't load l1 reconnect properties from the " + theURL.toString();
+        text += "; this error is permanent, so this source will not be retried.";
+        boolean tryAgain = i < connectInfo.length;
+        if (tryAgain) text += " Skipping this source and going to the next one.";
+        consoleLogger.warn(text);
+        if (!tryAgain) { throw e; }
+      }
+    }
+    return null;
+  }
+
+  private void setupL1ReconnectProperties() {
     InputStream in = null;
     while (in == null) {
       try {
-        in = configSetupManager.getL1PropertiesFromL2Stream();
+        PreparedComponentsFromL2Connection serverInfos = new PreparedComponentsFromL2Connection(configSetupManager);
+        ConnectionInfoConfigItem connectInfo = (ConnectionInfoConfigItem) serverInfos.createConnectionInfoConfigItem();
+        in = getL1PropertiesFromL2Stream((ConnectionInfo[]) connectInfo.getObject());
       } catch (IOException e) {
         String text = "We couldn't load l1 reconnect properties from any of the servers. Retrying.....";
-        CustomerLogging.getConsoleLogger().error(text);
+        consoleLogger.error(text);
         ThreadUtil.reallySleep(1000);
       } catch (Exception e) {
         throw new AssertionError(e);
@@ -1993,7 +2023,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   public synchronized L1ReconnectConfig getL1ReconnectProperties() {
-    if (l1ReconnectConfig == null) setL1ReconnectProperties();
+    if (l1ReconnectConfig == null) setupL1ReconnectProperties();
     return l1ReconnectConfig;
   }
 

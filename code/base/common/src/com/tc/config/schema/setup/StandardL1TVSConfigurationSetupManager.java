@@ -11,26 +11,17 @@ import com.tc.config.schema.L2ConfigForL1;
 import com.tc.config.schema.L2ConfigForL1Object;
 import com.tc.config.schema.NewCommonL1Config;
 import com.tc.config.schema.NewCommonL1ConfigObject;
-import com.tc.config.schema.L2ConfigForL1.L2Data;
 import com.tc.config.schema.defaults.DefaultValueProvider;
 import com.tc.config.schema.dynamic.FileConfigItem;
-import com.tc.config.schema.dynamic.ObjectArrayConfigItem;
 import com.tc.config.schema.repository.ChildBeanFetcher;
 import com.tc.config.schema.repository.ChildBeanRepository;
 import com.tc.config.schema.utils.XmlObjectComparator;
-import com.tc.logging.CustomerLogging;
-import com.tc.logging.LogLevel;
 import com.tc.logging.TCLogging;
 import com.tc.object.config.schema.NewL1DSOConfig;
 import com.tc.object.config.schema.NewL1DSOConfigObject;
 import com.tc.util.Assert;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.DsoClientData;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.net.URLConnection;
 
 /**
  * The standard implementation of {@link com.tc.config.schema.setup.L1TVSConfigurationSetupManager}.
@@ -96,34 +87,4 @@ public class StandardL1TVSConfigurationSetupManager extends BaseTVSConfiguration
     return this.dsoL1Config;
   }
 
-  public InputStream getL1PropertiesFromL2Stream() throws Exception{
-    ObjectArrayConfigItem l2Data = this.l2ConfigForL1.l2Data();
-    Object l2Objects[] = l2Data.getObjects();
-    URLConnection connection = null;
-    InputStream l1PropFromL2Stream = null;
-    int numberOfL2Servers = l2Objects.length;
-    URL theURL = null;
-    L2Data l2data = null;
-    for (int i = 0; i < numberOfL2Servers; i++) {
-      try{
-        l2data = (L2Data) l2Objects[i];
-        theURL = new URL("http", l2data.host(), l2data.dsoPort(), "/l1reconnectproperties");
-        CustomerLogging.getConsoleLogger().log(LogLevel.INFO,
-                                               "Trying to get L1 Reconnect Properties from " + theURL.toString());
-        connection = theURL.openConnection();
-        l1PropFromL2Stream = connection.getInputStream();
-        if (l1PropFromL2Stream != null) return l1PropFromL2Stream;
-        
-      }catch(IOException e){
-        String text = "We couldn't load l1 reconnect properties from the " + theURL.toString();
-        text += "; this error is permanent, so this source will not be retried.";
-        
-        if (i < numberOfL2Servers) text += " Skipping this source and going to the next one.";
-
-        CustomerLogging.getConsoleLogger().warn(text);
-        throw e;
-      }
-    }
-    return null;
-  }
 }

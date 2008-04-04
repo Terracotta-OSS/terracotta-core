@@ -10,8 +10,6 @@ import com.tc.object.config.schema.NewDSOApplicationConfig;
 import com.tc.object.config.schema.NewL1DSOConfig;
 import com.tc.object.config.schema.NewSpringApplicationConfig;
 
-import java.io.InputStream;
-
 /**
  * Knows how to set up configuration for L1.
  */
@@ -34,6 +32,4 @@ public interface L1TVSConfigurationSetupManager {
   NewDSOApplicationConfig dsoApplicationConfigFor(String applicationName);
 
   NewSpringApplicationConfig springApplicationConfigFor(String applicationName);
-
-  InputStream getL1PropertiesFromL2Stream() throws Exception;
 }
