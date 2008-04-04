@@ -105,9 +105,6 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     for (int i = 0; i < numDNA; i++) {
       DNAImpl dna = new DNAImpl(serializer, true);
       dna.deserializeFrom(in);
-
-      if (dna.isDelta() && dna.getActionCount() < 1) { throw new AssertionError("Delta DNA with not actions: " + dna); }
-
       dnas.add(dna);
     }
 
