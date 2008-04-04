@@ -37,7 +37,11 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
 
-public class SRACorrectnessChecker extends BaseDSOTestCase {
+public class SRACorrectnessTest extends BaseDSOTestCase {
+  
+  public SRACorrectnessTest() {
+    disableAllUntil("2008-04-30");
+  }
 
   public void testCorrectnessLogic() throws Exception {
     try {
@@ -256,7 +260,7 @@ public class SRACorrectnessChecker extends BaseDSOTestCase {
     }
 
     private L2TVSConfigurationSetupManager createL2Manager(String bindAddress) throws ConfigurationSetupException {
-      TestTVSConfigurationSetupManagerFactory factory = SRACorrectnessChecker.this.configFactory();
+      TestTVSConfigurationSetupManagerFactory factory = SRACorrectnessTest.this.configFactory();
       L2TVSConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
       ((SettableConfigItem) factory.l2DSOConfig().bind()).setValue(bindAddress);
       ((SettableConfigItem) factory.l2DSOConfig().listenPort()).setValue(dsoPort);
