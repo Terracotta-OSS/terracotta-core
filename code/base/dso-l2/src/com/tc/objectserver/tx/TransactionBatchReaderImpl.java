@@ -6,6 +6,8 @@ package com.tc.objectserver.tx;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferInputStream;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.groups.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
@@ -27,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 
 public class TransactionBatchReaderImpl implements TransactionBatchReader {
+
+  private static final TCLogger              logger = TCLogging.getLogger(TransactionBatchReaderImpl.class);
 
   private final TCByteBufferInputStream      in;
   private final TxnBatchID                   batchID;
@@ -105,6 +109,15 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     for (int i = 0; i < numDNA; i++) {
       DNAImpl dna = new DNAImpl(serializer, true);
       dna.deserializeFrom(in);
+
+      if (dna.isDelta() && dna.getActionCount() < 1) {
+        // This is really unexpected and indicates an error in the client, but the server
+        // should not be harmed by it (other than extra processing)
+        logger.warn("received delta dna with no actions: " + dna);
+      }
+
+      // to be on the safe side, still adding all DNAs received to the list even if they
+      // triggered the error logging above
       dnas.add(dna);
     }
 
