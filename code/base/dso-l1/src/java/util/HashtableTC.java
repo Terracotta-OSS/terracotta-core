@@ -62,10 +62,14 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
   public synchronized Object clone() {
     if (__tc_isManaged()) {
       synchronized (__tc_managed().getResolveLock()) {
-        Hashtable clone = new Hashtable(this);
+        Hashtable clone = (Hashtable) super.clone();
 
-        // This call to fixTCObjectReference isn't strictly required, but if someone every changes
-        // this method to actually use any built-in clone mechanism, it will be needed -- better safe than sorry here
+        for (Iterator it = clone.entrySet().iterator(); it.hasNext();) {
+          Map.Entry cloneEntry = (Map.Entry)it.next();
+          //make sure any cleared references are looked-up before returning the clone
+          //otherwise the clone may end up having ValueWrapper's with ObjectID's instead of the actual value object
+          ((HashtableTC)clone).lookUpAndStoreIfNecessary(cloneEntry);
+        }
         return Util.fixTCObjectReferenceOfClonedObject(this, clone);
       }
     }
@@ -586,7 +590,7 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
     public CollectionWrapper() {
       super();
     }
-    
+
     public Object[] toArray() {
       synchronized (HashtableTC.this) {
         if (__tc_isManaged()) {
