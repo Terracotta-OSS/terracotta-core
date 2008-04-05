@@ -273,7 +273,7 @@ public class ClientServerLockStatisticsTest extends TCTestCase {
 
     }
 
-    public void routeMessageType(TCMessageType type, TCMessageSink sink) {
+    public void routeMessageType(TCMessageType type, TCMessageSink sinkArg) {
       throw new ImplementMe();
 
     }

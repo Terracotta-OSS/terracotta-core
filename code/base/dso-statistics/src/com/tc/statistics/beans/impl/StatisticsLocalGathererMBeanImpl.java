@@ -69,6 +69,7 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public void reset() {
+    //
   }
 
   public void startup() {

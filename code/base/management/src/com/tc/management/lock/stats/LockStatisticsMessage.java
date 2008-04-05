@@ -115,9 +115,9 @@ public class LockStatisticsMessage extends DSOMessageBase {
     return this.gatherInterval;
   }
 
-  public void initializeEnableStat(int traceDepth, int gatherInterval) {
-    this.traceDepth = traceDepth;
-    this.gatherInterval = gatherInterval;
+  public void initializeEnableStat(int traceDepthArg, int gatherIntervalArg) {
+    this.traceDepth = traceDepthArg;
+    this.gatherInterval = gatherIntervalArg;
     this.type = LOCK_STATISTICS_ENABLE_MESSAGE_TYPE;
   }
 

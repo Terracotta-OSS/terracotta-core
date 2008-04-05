@@ -99,9 +99,9 @@ final class BundleSpecImpl extends BundleSpec {
     return (verspec == null) ? "" : verspec;
   }
 
-  public boolean isCompatible(final String symbolicName, final String version) {
+  public boolean isCompatible(final String symbolicNameArg, final String version) {
     // symbolic-names must match
-    if (!BundleSpec.isMatchingSymbolicName(this.symbolicName, symbolicName)) return false;
+    if (!BundleSpec.isMatchingSymbolicName(this.symbolicName, symbolicNameArg)) return false;
 
     // if symbolic-names are matching, then check for version compatibility -
     // and if no specific bundle-version required/specified so it must be compatible with the version

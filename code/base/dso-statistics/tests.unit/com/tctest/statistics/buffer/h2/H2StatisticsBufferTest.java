@@ -727,28 +727,28 @@ public class H2StatisticsBufferTest extends TestCase {
 
     private boolean limitWithExceptions = false;
 
-    public TestStaticticConsumer countOffset1(int countOffset1) {
-      this.countOffset1 = countOffset1;
+    public TestStaticticConsumer countOffset1(int countOffset) {
+      this.countOffset1 = countOffset;
       return this;
     }
 
-    public TestStaticticConsumer countOffset2(int countOffset2) {
-      this.countOffset2 = countOffset2;
+    public TestStaticticConsumer countOffset2(int countOffset) {
+      this.countOffset2 = countOffset;
       return this;
     }
 
-    public TestStaticticConsumer countLimit1(int countLimit1) {
-      this.countLimit1 = countLimit1;
+    public TestStaticticConsumer countLimit1(int countLimit) {
+      this.countLimit1 = countLimit;
       return this;
     }
 
-    public TestStaticticConsumer countLimit2(int countLimit2) {
-      this.countLimit2 = countLimit2;
+    public TestStaticticConsumer countLimit2(int countLimit) {
+      this.countLimit2 = countLimit;
       return this;
     }
 
-    public TestStaticticConsumer limitWithExceptions(boolean limitWithExceptions) {
-      this.limitWithExceptions = limitWithExceptions;
+    public TestStaticticConsumer limitWithExceptions(boolean limitWithExceptionsArg) {
+      this.limitWithExceptions = limitWithExceptionsArg;
       return this;
     }
 
@@ -825,17 +825,17 @@ public class H2StatisticsBufferTest extends TestCase {
       return closed;
     }
 
-    public void capturingStarted(String sessionId) {
+    public void capturingStarted(String sessionID) {
       assertEquals(false, started);
       assertEquals(false, stopped);
-      assertEquals(this.sessionId, sessionId);
+      assertEquals(this.sessionId, sessionID);
       started = true;
     }
 
-    public void capturingStopped(String sessionId) {
+    public void capturingStopped(String sessionID) {
       assertEquals(true, started);
       assertEquals(false, stopped);
-      assertEquals(this.sessionId, sessionId);
+      assertEquals(this.sessionId, sessionID);
       stopped = true;
     }
 

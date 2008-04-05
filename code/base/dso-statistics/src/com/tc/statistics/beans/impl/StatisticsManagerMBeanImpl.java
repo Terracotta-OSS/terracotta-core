@@ -54,6 +54,7 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
   }
 
   public void reset() {
+    //
   }
 
   public synchronized void reinitialize() {

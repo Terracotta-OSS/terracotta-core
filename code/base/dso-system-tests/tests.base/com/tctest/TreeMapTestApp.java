@@ -328,15 +328,15 @@ public class TreeMapTestApp extends AbstractTransparentApp {
     barrier.barrier();
   }
 
-  private void validate(Map map, int count, Comparator comparator) {
+  private void validate(Map mapp, int count, Comparator comparator) {
     int expect = count;
-    Assert.assertEquals(expect, getMapSize(map));
+    Assert.assertEquals(expect, getMapSize(mapp));
 
     TreeMap compare = comparator == null ? new TreeMap() : new TreeMap(comparator);
-    synchronized (map) {
-      compare.putAll(map);
+    synchronized (mapp) {
+      compare.putAll(mapp);
 
-      Iterator sharedIter = map.entrySet().iterator();
+      Iterator sharedIter = mapp.entrySet().iterator();
       Iterator localIter = compare.entrySet().iterator();
 
       while (true) {

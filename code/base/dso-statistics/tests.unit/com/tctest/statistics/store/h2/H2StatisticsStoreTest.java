@@ -934,18 +934,18 @@ public class H2StatisticsStoreTest extends TestCase {
 
     private boolean limitWithExceptions = false;
 
-    public TestStaticticConsumer countLimit1(int countLimit1) {
-      this.countLimit1 = countLimit1;
+    public TestStaticticConsumer countLimit1(int countLimit) {
+      this.countLimit1 = countLimit;
       return this;
     }
 
-    public TestStaticticConsumer countLimit2(int countLimit2) {
-      this.countLimit2 = countLimit2;
+    public TestStaticticConsumer countLimit2(int countLimit) {
+      this.countLimit2 = countLimit;
       return this;
     }
 
-    public TestStaticticConsumer limitWithExceptions(boolean limitWithExceptions) {
-      this.limitWithExceptions = limitWithExceptions;
+    public TestStaticticConsumer limitWithExceptions(boolean limitWithExceptionsArg) {
+      this.limitWithExceptions = limitWithExceptionsArg;
       return this;
     }
 

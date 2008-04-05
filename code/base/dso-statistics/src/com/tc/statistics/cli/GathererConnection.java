@@ -25,6 +25,7 @@ public class GathererConnection {
   private TCServerInfoMBean info;
 
   public GathererConnection() {
+    //
   }
 
   public StatisticsLocalGathererMBean getGatherer() {

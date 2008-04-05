@@ -347,18 +347,18 @@ public class LockRequestMessage extends DSOMessageBase implements LockRequestMes
                UNITIALIZED_TIME_INTERVAL, -1);
   }
 
-  public void initializeObtainLock(LockID lid, ThreadID id, int lockLevel, String lockObjectType) {
-    initialize(lid, id, lockLevel, OBTAIN_LOCK_REQUEST_TYPE, false, false, UNITIALIZED_TIME_INTERVAL, UNITIALIZED_TIME_INTERVAL, -1);
-    if (lockObjectType != null) {
-      this.lockObjectType = lockObjectType;
+  public void initializeObtainLock(LockID lid, ThreadID id, int lockLevelArg, String lockObjectTypeArg) {
+    initialize(lid, id, lockLevelArg, OBTAIN_LOCK_REQUEST_TYPE, false, false, UNITIALIZED_TIME_INTERVAL, UNITIALIZED_TIME_INTERVAL, -1);
+    if (lockObjectTypeArg != null) {
+      this.lockObjectType = lockObjectTypeArg;
     }
   }
 
-  public void initializeTryObtainLock(LockID lid, ThreadID id, TimerSpec timeout, int lockLevel, String lockObjectType) {
-    initialize(lid, id, lockLevel, TRY_OBTAIN_LOCK_REQUEST_TYPE, false, false, timeout.getMillis(), timeout.getNanos(),
+  public void initializeTryObtainLock(LockID lid, ThreadID id, TimerSpec timeout, int lockLevelArg, String lockObjectTypeArg) {
+    initialize(lid, id, lockLevelArg, TRY_OBTAIN_LOCK_REQUEST_TYPE, false, false, timeout.getMillis(), timeout.getNanos(),
                timeout.getSignature().getArgCount());
-    if (lockObjectType != null) {
-      this.lockObjectType = lockObjectType;
+    if (lockObjectTypeArg != null) {
+      this.lockObjectType = lockObjectTypeArg;
     }
   }
 

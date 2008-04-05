@@ -103,26 +103,26 @@ public class MemoryDataStoreRequestMessage extends DSOMessageBase {
     }
   }
 
-  public void initializePut(ThreadID threadID, String dataStoreName, byte[] key, byte[] value) {
+  public void initializePut(ThreadID threadId, String dataStoreNameArg, byte[] key, byte[] value) {
     this.type = PUT;  
-    this.threadID = threadID;
-    this.dataStoreName = dataStoreName;
+    this.threadID = threadId;
+    this.dataStoreName = dataStoreNameArg;
     this.data = new TCMemoryDataStoreMessageData(type, key, value);
   }
 
-  public void initializeGet(ThreadID threadID, String dataStoreName, byte[] key, boolean getAll) {
+  public void initializeGet(ThreadID threadId, String dataStoreNameArg, byte[] key, boolean getAllArg) {
     this.type = GET;
-    this.threadID = threadID;
-    this.dataStoreName = dataStoreName;
-    this.getAll = getAll;
+    this.threadID = threadId;
+    this.dataStoreName = dataStoreNameArg;
+    this.getAll = getAllArg;
     this.data = new TCMemoryDataStoreMessageData(type, key);
   }
   
-  public void initializeRemove(ThreadID threadID, String dataStoreName, byte[] key, boolean removeAll) {
+  public void initializeRemove(ThreadID threadId, String dataStoreNameArg, byte[] key, boolean removeAllArg) {
     this.type = REMOVE;
-    this.threadID = threadID;
-    this.dataStoreName = dataStoreName;
-    this.removeAll = removeAll;
+    this.threadID = threadId;
+    this.dataStoreName = dataStoreNameArg;
+    this.removeAll = removeAllArg;
     this.data = new TCMemoryDataStoreMessageData(type, key);
   }
 

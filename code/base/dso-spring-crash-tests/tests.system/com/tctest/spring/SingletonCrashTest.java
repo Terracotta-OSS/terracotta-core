@@ -75,6 +75,7 @@ public class SingletonCrashTest extends TransparentTestBase {
           try {
             Thread.sleep(INTERVAL);
           } catch (InterruptedException ex) {
+            //
           }
         }
         System.err.println("Closing context ... ");

@@ -31,13 +31,13 @@ public class AopUtilsClassAdapter extends ClassAdapter implements ClassAdapterFa
     MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
     if("canApply".equals(name) && "(Lorg/springframework/aop/Pointcut;Ljava/lang/Class;Z)Z".equals(desc)) {
       return new MethodAdapter(mv) {
-        public void visitMethodInsn(int opcode, String owner, String name, String desc) {
-          super.visitMethodInsn(opcode, owner, name, desc);
+        public void visitMethodInsn(int opcode, String owner, String nameArg, String descArg) {
+          super.visitMethodInsn(opcode, owner, nameArg, descArg);
           
           if(opcode==INVOKEVIRTUAL //
               && "java/lang/Class".equals(owner) //
-              && "getMethods".equals(name) //
-              && "()[Ljava/lang/reflect/Method;".equals(desc)) {
+              && "getMethods".equals(nameArg) //
+              && "()[Ljava/lang/reflect/Method;".equals(descArg)) {
             super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ByteCodeUtil", "purgeTCMethods", "([Ljava/lang/reflect/Method;)[Ljava/lang/reflect/Method;");
           }
         }

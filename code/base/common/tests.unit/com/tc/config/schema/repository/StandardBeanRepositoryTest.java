@@ -25,7 +25,7 @@ public class StandardBeanRepositoryTest extends TCTestCase {
     // and MyXmlObject, because that's the way XMLBeans does it; various classes use reflection to find this, and so
     // you'll break tests if you change it. If you know of a way to simply get Eclipse to ignore the warning,
     // please, by all means, do so.
-    public static final SchemaType type = new MockSchemaType();
+    public static final SchemaType schemaType = new MockSchemaType();
 
     private boolean                returnedValidate;
 

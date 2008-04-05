@@ -121,25 +121,25 @@ public class CacheManager implements MemoryEventsListener {
       return this.toEvict;
     }
 
-    private synchronized void storeCacheEvictRequestStats(int currentCount, int toEvict, int calculatedCacheSize, int usedPercentage, long collectionCount) {
+    private synchronized void storeCacheEvictRequestStats(int currentCount, int toEvictArg, int cacheSize, int usedPercentage, long collectionCount) {
       Date moment = new Date();
       AgentStatisticsManager agentStatisticsManager = statisticsAgentSubSystem.getStatisticsManager();
       Collection sessions = agentStatisticsManager.getActiveSessionIDsForAction(CACHE_OBJECTS_EVICT_REQUEST);
       if (sessions != null && sessions.size() > 0) {
-        StatisticData[] datas = getCacheObjectsEvictRequestData(currentCount, toEvict, calculatedCacheSize, usedPercentage, collectionCount);
+        StatisticData[] datas = getCacheObjectsEvictRequestData(currentCount, toEvictArg, cacheSize, usedPercentage, collectionCount);
         storeStatisticsDatas(moment, sessions, datas);
       }
     }
 
-    private synchronized StatisticData[] getCacheObjectsEvictRequestData(int currentCount, int toEvict, int calculatedCacheSize, int usedPercentage, long collectionCount) {
+    private synchronized StatisticData[] getCacheObjectsEvictRequestData(int currentCount, int toEvictArg, int cacheSize, int usedPercentage, long collectionCount) {
       List datas = new ArrayList();
-      StatisticData statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "asking to evict count", new Long(toEvict));
+      StatisticData statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "asking to evict count", new Long(toEvictArg));
       datas.add(statisticData);
 
       statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "current size", new Long(currentCount));
       datas.add(statisticData);
 
-      statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "calculated cache size", new Long(calculatedCacheSize));
+      statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "calculated cache size", new Long(cacheSize));
       datas.add(statisticData);
 
       statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "percentage heap used", new Long(usedPercentage));

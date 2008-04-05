@@ -8,4 +8,5 @@ import com.tc.management.TerracottaMBean;
 import com.tc.statistics.StatisticsManager;
 
 public interface StatisticsManagerMBean extends TerracottaMBean, StatisticsManager {
+  //
 }

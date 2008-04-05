@@ -67,6 +67,7 @@ public class WebAppServletContext {
 			this.getClass().getDeclaredField("sessionCookieName");
 			return true;
 		} catch(Exception e) {
+		  //
 		}
 		return false;
 	}

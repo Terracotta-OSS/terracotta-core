@@ -3,7 +3,7 @@
  */
 package com.tc.statistics.config.impl;
 
-import com.tc.statistics.beans.impl.StatisticsEmitterMBeanImpl;
+import com.tc.statistics.beans.StatisticsEmitterMBean;
 import com.tc.statistics.config.StatisticsConfig;
 import com.tc.statistics.retrieval.StatisticsRetriever;
 import com.tc.util.Assert;
@@ -23,8 +23,8 @@ public class StatisticsConfigImpl implements StatisticsConfig {
     // initialize default parameters
     Map defaultParamsMap = new HashMap();
     defaultParamsMap.put(KEY_RETRIEVER_SCHEDULE_INTERVAL, StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY);
-    defaultParamsMap.put(KEY_EMITTER_SCHEDULE_INTERVAL, StatisticsEmitterMBeanImpl.DEFAULT_FREQUENCY);
-    defaultParamsMap.put(KEY_EMITTER_BATCH_SIZE, StatisticsEmitterMBeanImpl.DEFAULT_BATCH_SIZE);
+    defaultParamsMap.put(KEY_EMITTER_SCHEDULE_INTERVAL, StatisticsEmitterMBean.DEFAULT_FREQUENCY);
+    defaultParamsMap.put(KEY_EMITTER_BATCH_SIZE, StatisticsEmitterMBean.DEFAULT_BATCH_SIZE);
     defaultParams = Collections.unmodifiableMap(defaultParamsMap);
 
     parent = null;

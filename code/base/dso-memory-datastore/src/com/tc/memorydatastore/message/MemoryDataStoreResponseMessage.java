@@ -102,38 +102,38 @@ public class MemoryDataStoreResponseMessage extends DSOMessageBase {
     }
   }
 
-  public void initializePutResponse(ThreadID threadID, boolean requestCompletedFlag) {
+  public void initializePutResponse(ThreadID threadId, boolean reqCompletedFlag) {
     this.type = PUT_RESPONSE;
-    this.threadID = threadID;
-    this.requestCompletedFlag = requestCompletedFlag;
+    this.threadID = threadId;
+    this.requestCompletedFlag = reqCompletedFlag;
   }
 
-  public void initializeGetResponse(ThreadID threadID, byte[] value, boolean requestCompletedFlag) {
+  public void initializeGetResponse(ThreadID threadId, byte[] val, boolean reqCompletedFlag) {
     this.type = GET_RESPONSE;
-    this.threadID = threadID;
-    this.requestCompletedFlag = requestCompletedFlag;
-    this.value = new TCMemoryDataStoreMessageData(type, null, value);
+    this.threadID = threadId;
+    this.requestCompletedFlag = reqCompletedFlag;
+    this.value = new TCMemoryDataStoreMessageData(type, null, val);
   }
   
-  public void initializeGetAllResponse(ThreadID threadID, Collection values, boolean requestCompletedFlag) {
+  public void initializeGetAllResponse(ThreadID threadId, Collection values, boolean reqCompletedFlag) {
     this.type = GET_ALL_RESPONSE;
-    this.threadID = threadID;
-    this.requestCompletedFlag = requestCompletedFlag;
+    this.threadID = threadId;
+    this.requestCompletedFlag = reqCompletedFlag;
     this.value = new TCMemoryDataStoreMessageData(type, null, values);
   }
   
-  public void initializeRemoveResponse(ThreadID threadID, byte[] value, boolean requestCompletedFlag) {
+  public void initializeRemoveResponse(ThreadID threadId, byte[] val, boolean reqCompletedFlag) {
     this.type = REMOVE_RESPONSE;
-    this.threadID = threadID;
-    this.requestCompletedFlag = requestCompletedFlag;
-    this.value = new TCMemoryDataStoreMessageData(type, null, value);
+    this.threadID = threadId;
+    this.requestCompletedFlag = reqCompletedFlag;
+    this.value = new TCMemoryDataStoreMessageData(type, null, val);
   }
   
-  public void initializeRemoveAllResponse(ThreadID threadID, int numOfRemove, boolean requestCompletedFlag) {
+  public void initializeRemoveAllResponse(ThreadID threadId, int numberOfRemove, boolean reqCompletedFlag) {
     this.type = REMOVE_ALL_RESPONSE;
-    this.threadID = threadID;
-    this.numOfRemove = numOfRemove;
-    this.requestCompletedFlag = requestCompletedFlag;
+    this.threadID = threadId;
+    this.numOfRemove = numberOfRemove;
+    this.requestCompletedFlag = reqCompletedFlag;
   }
 
   public boolean isRequestCompletedFlag() {

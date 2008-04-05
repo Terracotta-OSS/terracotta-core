@@ -73,8 +73,8 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
       return lock;
     }
 
-    public String getLockState(int lockLevel) {
-      return (ManagerUtil.isLocked(lock, lockLevel) ? (ManagerUtil.isHeldByCurrentThread(lock, lockLevel) ? "[Locally locked]"
+    public String getLockState(int level) {
+      return (ManagerUtil.isLocked(lock, level) ? (ManagerUtil.isHeldByCurrentThread(lock, level) ? "[Locally locked]"
           : "[Remotelly locked]")
           : "[Unlocked]");
     }

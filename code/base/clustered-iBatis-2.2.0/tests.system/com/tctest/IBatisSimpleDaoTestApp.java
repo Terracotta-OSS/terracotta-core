@@ -55,12 +55,12 @@ public class IBatisSimpleDaoTestApp extends AbstractTransparentApp {
             Account acc = new Account();
             acc.setNumber("ASI-001");
             accountDAO.insertAccount(acc);
-            Customer cus = new Customer();
-            cus.setEmailAddress("asi@yahoo.com");
-            cus.setFirstName("Antonio");
-            cus.setLastName("Si");
-            cus.setAccount(acc);
-            customerDAO.insertCustomer(cus);
+            Customer customer = new Customer();
+            customer.setEmailAddress("asi@yahoo.com");
+            customer.setFirstName("Antonio");
+            customer.setLastName("Si");
+            customer.setAccount(acc);
+            customerDAO.insertCustomer(customer);
           }
         }
 
@@ -126,8 +126,8 @@ public class IBatisSimpleDaoTestApp extends AbstractTransparentApp {
     dbServer.stop();
   }
 
-  private Connection getConnection(DaoManager daoManager, Dao dao) {
-    com.ibatis.dao.client.DaoTransaction trans = daoManager.getTransaction(dao);
+  private Connection getConnection(DaoManager daoManager, Dao daoArg) {
+    com.ibatis.dao.client.DaoTransaction trans = daoManager.getTransaction(daoArg);
     if (!(trans instanceof ConnectionDaoTransaction)) throw new DaoException(
                                                                              "The DAO manager of type "
                                                                                  + daoManager.getClass().getName()

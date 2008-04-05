@@ -6,6 +6,7 @@ package com.tctest.spring.bean;
 public class FooServiceImpl implements FooService {
 
   public FooServiceImpl() {
+    //
   }
   
   public String serviceMethod() {

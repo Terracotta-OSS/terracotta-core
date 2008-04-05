@@ -104,6 +104,7 @@ public class StatisticsEmitterMBeanImpl extends AbstractTerracottaMBean implemen
   }
 
   public void reset() {
+    //
   }
 
   public void capturingStarted(final String sessionId) {
@@ -111,9 +112,11 @@ public class StatisticsEmitterMBeanImpl extends AbstractTerracottaMBean implemen
   }
 
   public void capturingStopped(final String sessionId) {
+    //
   }
 
   public void opened() {
+    //
   }
 
   public void closing() {
@@ -121,6 +124,7 @@ public class StatisticsEmitterMBeanImpl extends AbstractTerracottaMBean implemen
   }
 
   public void closed() {
+    //
   }
 
   private class SendStatsTask extends TimerTask {

@@ -14,6 +14,7 @@ public class PersistentObject {
 	private PersistentSubobject status = new PersistentSubobject(PersistentSubobject.NOT_SENT);
 
 	public PersistentObject() {
+	  //
 	}
 
 	public PersistentObject(int id, String phoneNumber, String message) {

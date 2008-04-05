@@ -375,8 +375,8 @@ public class CacheTC implements Ehcache {
 
   }
 
-  private void changeStatus(Status status) {
-    this.status = status;
+  private void changeStatus(Status statusArg) {
+    this.status = statusArg;
   }
 
   /**

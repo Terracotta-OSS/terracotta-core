@@ -76,6 +76,6 @@ public class StandardLoaderApp {
 
 
   public static class AppInnerClass {
-
+    //
   }
 }

@@ -135,7 +135,8 @@ public class MemoryStorePersistableMap implements Map {
       Collection all = db.getAll(persistor.serialize(id));
       for (Iterator i = all.iterator(); i.hasNext();) {
         TCByteArrayKeyValuePair pair = (TCByteArrayKeyValuePair) i.next();
-        maps.put(persistor.deserialize(Conversion.long2Bytes(id).length, pair.getKey()), persistor.deserialize(pair.getValue()));
+        maps.put(persistor.deserialize(Conversion.long2Bytes(id).length, pair.getKey()), persistor.deserialize(pair
+            .getValue()));
       }
     } catch (Exception e) {
       throw new TCRuntimeException(e);
@@ -144,7 +145,9 @@ public class MemoryStorePersistableMap implements Map {
     return maps.entrySet();
   }
 
-  public void commit(MemoryStoreCollectionsPersistor persistor, MemoryDataStoreClient db) throws IOException {
+  public void commit(MemoryStoreCollectionsPersistor memeoryStoreCollectionsPersistor,
+                     MemoryDataStoreClient memoryDataStoreClient) throws IOException {
+    //
   }
 
   public boolean equals(Object other) {

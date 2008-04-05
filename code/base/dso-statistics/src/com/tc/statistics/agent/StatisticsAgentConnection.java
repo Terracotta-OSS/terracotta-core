@@ -161,18 +161,18 @@ public class StatisticsAgentConnection implements StatisticsManager {
     }
   }
 
-  public void connect(final MBeanServerConnection serverConnection, final NotificationListener listener) throws StatisticsAgentConnectionException {
-    Assert.assertNotNull("serverConnection", serverConnection);
+  public void connect(final MBeanServerConnection serverConn, final NotificationListener notificationListener) throws StatisticsAgentConnectionException {
+    Assert.assertNotNull("serverConnection", serverConn);
     if (statManager != null) throw new StatisticsAgentConnectionAlreadyConnectedException();
 
-    this.serverConnection = serverConnection;
-    setupManagerMBean(serverConnection);
-    ObjectName emitter_name = setupEmitterMBean(serverConnection);
+    this.serverConnection = serverConn;
+    setupManagerMBean(serverConn);
+    ObjectName emitter_name = setupEmitterMBean(serverConn);
 
     // register the statistics data listener
-    this.listener = listener;
+    this.listener = notificationListener;
     try {
-      serverConnection.addNotificationListener(emitter_name, listener, null, null);
+      serverConn.addNotificationListener(emitter_name, notificationListener, null, null);
     } catch (Exception e) {
       throw new StatisticsAgentConnectionConnectErrorException("Unexpected error while registering the notification listener for statistics emitting.", e);
     }

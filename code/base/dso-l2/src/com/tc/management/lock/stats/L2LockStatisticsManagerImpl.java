@@ -63,8 +63,8 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
     }
   }
 
-  public synchronized void start(DSOChannelManager channelManager) {
-    this.channelManager = channelManager;
+  public synchronized void start(DSOChannelManager dsoChannelManager) {
+    this.channelManager = dsoChannelManager;
   }
 
   /**
@@ -132,8 +132,8 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
                                              long awardedTimeInMillis) {
     if (!lockStatisticsEnabled) { return; }
 
-    int nestedDepth = super.incrementNestedDepth(new LockKey(nodeID, threadID));
-    super.recordLockAwarded(lockID, nodeID, threadID, isGreedy, awardedTimeInMillis, nestedDepth);
+    int depth = super.incrementNestedDepth(new LockKey(nodeID, threadID));
+    super.recordLockAwarded(lockID, nodeID, threadID, isGreedy, awardedTimeInMillis, depth);
   }
 
   public synchronized void recordLockReleased(LockID lockID, NodeID nodeID, ThreadID threadID) {

@@ -48,12 +48,12 @@ public class IBatisSimpleTestApp extends AbstractTransparentApp {
           Account acc = new Account();
           acc.setNumber("ASI-001");
           insertAccount(acc);
-          Customer cus = new Customer();
-          cus.setEmailAddress("asi@yahoo.com");
-          cus.setFirstName("Antonio");
-          cus.setLastName("Si");
-          cus.setAccount(acc);
-          insertCustomer(cus);
+          Customer customer = new Customer();
+          customer.setEmailAddress("asi@yahoo.com");
+          customer.setFirstName("Antonio");
+          customer.setLastName("Si");
+          customer.setAccount(acc);
+          insertCustomer(customer);
 
         }
 
@@ -102,10 +102,10 @@ public class IBatisSimpleTestApp extends AbstractTransparentApp {
     dbServer.start();
 
     Reader reader = Resources.getResourceAsReader("com/tctest/SqlMapConfig.xml");
-    SqlMapClient sqlMapper = SqlMapClientBuilder.buildSqlMapClient(reader);
+    SqlMapClient sqlMapClient = SqlMapClientBuilder.buildSqlMapClient(reader);
     reader.close();
 
-    return sqlMapper;
+    return sqlMapClient;
   }
 
   private void shutdownDatabase() throws Exception {

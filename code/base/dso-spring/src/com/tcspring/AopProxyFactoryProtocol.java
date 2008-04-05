@@ -59,8 +59,8 @@ public class AopProxyFactoryProtocol {
   public static class BeanFactoryAwareMixin implements BeanFactoryAware {
     private transient BeanFactory beanFactory;
     
-    public void tc$setBeanFactory(BeanFactory beanFactory) {
-      this.beanFactory = beanFactory;
+    public void tc$setBeanFactory(BeanFactory beanFactoryArg) {
+      this.beanFactory = beanFactoryArg;
     }
 
     public BeanFactory tc$getBeanFactory() {

@@ -196,9 +196,9 @@ public class Lock {
                                                           this.holders.values(), this.waiters.values()));
   }
 
-  boolean tryRequestLock(ServerThreadContext txn, int requestedLockLevel, TimerSpec timeout, TCLockTimer waitTimer,
+  boolean tryRequestLock(ServerThreadContext txn, int requestedLockLevel, TimerSpec lockRequestTimeout, TCLockTimer waitTimer,
                          TimerCallback callback, Sink lockResponseSink) {
-    return requestLock(txn, requestedLockLevel, lockResponseSink, true, timeout, waitTimer, callback);
+    return requestLock(txn, requestedLockLevel, lockResponseSink, true, lockRequestTimeout, waitTimer, callback);
   }
 
   boolean requestLock(ServerThreadContext txn, int requestedLockLevel, Sink lockResponseSink) {
@@ -207,7 +207,7 @@ public class Lock {
 
   // XXX:: UPGRADE Requests can come in with requestLockLevel == UPGRADE on a notified wait during server crash
   synchronized boolean requestLock(ServerThreadContext txn, int requestedLockLevel, Sink lockResponseSink,
-                                   boolean noBlock, TimerSpec timeout, TCLockTimer waitTimer,
+                                   boolean noBlock, TimerSpec lockRequestTimeout, TCLockTimer waitTimer,
                                    TimerCallback callback) {
 
     if (holdsReadLock(txn) && LockLevel.isWrite(requestedLockLevel)) {
@@ -224,7 +224,7 @@ public class Lock {
     // it is an error (probably originating from the client side) to
     // request a lock you already hold
     Holder holder = getHolder(txn);
-    if (noBlock && !timeout.needsToWait() && holder == null && (requestedLockLevel != LockLevel.READ || !this.isRead())
+    if (noBlock && !lockRequestTimeout.needsToWait() && holder == null && (requestedLockLevel != LockLevel.READ || !this.isRead())
         && (getHoldersCount() > 0 || hasGreedyHolders())) {
       cannotAwardAndRespond(txn, requestedLockLevel, lockResponseSink);
       return false;
@@ -249,7 +249,7 @@ public class Lock {
         // add to pending until recall process is complete, those who hold the lock greedily will send the
         // pending state during recall commit.
         if (!holdsGreedyLock(txn)) {
-          queueRequest(txn, requestedLockLevel, lockResponseSink, noBlock, timeout, waitTimer, callback);
+          queueRequest(txn, requestedLockLevel, lockResponseSink, noBlock, lockRequestTimeout, waitTimer, callback);
         }
         return false;
       }
@@ -275,7 +275,7 @@ public class Lock {
         recall(requestedLockLevel);
       }
       if (!holdsGreedyLock(txn)) {
-        queueRequest(txn, requestedLockLevel, lockResponseSink, noBlock, timeout, waitTimer, callback);
+        queueRequest(txn, requestedLockLevel, lockResponseSink, noBlock, lockRequestTimeout, waitTimer, callback);
       }
       return false;
     }
@@ -284,11 +284,11 @@ public class Lock {
   }
 
   private void queueRequest(ServerThreadContext txn, int requestedLockLevel, Sink lockResponseSink, boolean noBlock,
-                            TimerSpec timeout, TCLockTimer waitTimer, TimerCallback callback) {
+                            TimerSpec lockRequesttimeout, TCLockTimer waitTimer, TimerCallback callback) {
     if (noBlock) {
       // By the time it reaches here, timeout.needsToWait() must be true
-      Assert.assertTrue(timeout.needsToWait());
-      addPendingTryLockRequest(txn, requestedLockLevel, timeout, lockResponseSink, waitTimer, callback);
+      Assert.assertTrue(lockRequesttimeout.needsToWait());
+      addPendingTryLockRequest(txn, requestedLockLevel, lockRequesttimeout, lockResponseSink, waitTimer, callback);
     } else {
       addPendingLockRequest(txn, requestedLockLevel, lockResponseSink);
     }
@@ -310,24 +310,24 @@ public class Lock {
     addPendingLockRequest(txn, lockLevel, lockResponseSink);
   }
 
-  synchronized void addRecalledTryLockPendingRequest(ServerThreadContext txn, int lockLevel, TimerSpec timeout,
+  synchronized void addRecalledTryLockPendingRequest(ServerThreadContext txn, int lockLevel, TimerSpec lockRequestTimeout,
                                                      Sink lockResponseSink, TCLockTimer waitTimer,
                                                      TimerCallback callback) {
     recordLockRequestStat(txn.getId().getNodeID(), txn.getId().getClientThreadID());
 
-    if (!timeout.needsToWait()) {
+    if (!lockRequestTimeout.needsToWait()) {
       cannotAwardAndRespond(txn, lockLevel, lockResponseSink);
       return;
     }
 
-    addPendingTryLockRequest(txn, lockLevel, timeout, lockResponseSink, waitTimer, callback);
+    addPendingTryLockRequest(txn, lockLevel, lockRequestTimeout, lockResponseSink, waitTimer, callback);
   }
 
-  private void addPendingTryLockRequest(ServerThreadContext txn, int lockLevel, TimerSpec timeout,
+  private void addPendingTryLockRequest(ServerThreadContext txn, int lockLevel, TimerSpec lockRequestTimeout,
                                         Sink lockResponseSink, TCLockTimer waitTimer, TimerCallback callback) {
-    Request request = addPending(txn, lockLevel, lockResponseSink, timeout, true);
+    Request request = addPending(txn, lockLevel, lockResponseSink, lockRequestTimeout, true);
 
-    TryLockContextImpl tryLockWaitRequestContext = new TryLockContextImpl(txn, this, timeout, lockLevel,
+    TryLockContextImpl tryLockWaitRequestContext = new TryLockContextImpl(txn, this, lockRequestTimeout, lockLevel,
                                                                           lockResponseSink);
 
     scheduleWaitForTryLock(callback, waitTimer, request, tryLockWaitRequestContext);
@@ -338,11 +338,11 @@ public class Lock {
   }
 
   private Request addPending(ServerThreadContext threadContext, int lockLevel, Sink awardLockSink,
-                             TimerSpec timeout, boolean noBlock) {
+                             TimerSpec lockRequestTimeout, boolean noBlock) {
     Assert.assertFalse(isNull());
     // debug("addPending() - BEGIN -", threadContext, ", ", LockLevel.toString(lockLevel));
 
-    Request request = createRequest(threadContext, lockLevel, awardLockSink, timeout, noBlock);
+    Request request = createRequest(threadContext, lockLevel, awardLockSink, lockRequestTimeout, noBlock);
 
     if (pendingLockRequests.containsValue(request)) {
       logger.debug("Ignoring existing Request " + request + " in Lock " + lockID);

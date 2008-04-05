@@ -48,9 +48,9 @@ public class ClientLockStatisticsManagerImpl extends LockStatisticsManager imple
     return message;
   }
 
-  public void start(DSOClientMessageChannel channel, Sink sink) {
-    this.channel = channel;
-    this.sink = sink;
+  public void start(DSOClientMessageChannel clientMessageChannel, Sink sinkArg) {
+    this.channel = clientMessageChannel;
+    this.sink = sinkArg;
   }
 
   public synchronized void recordLockRequested(LockID lockID, ThreadID threadID, String contextInfo,
@@ -65,8 +65,8 @@ public class ClientLockStatisticsManagerImpl extends LockStatisticsManager imple
   public synchronized void recordLockAwarded(LockID lockID, ThreadID threadID) {
     if (!isClientStatEnabled()) { return; }
 
-    int nestedDepth = super.incrementNestedDepth(threadID);
-    super.recordLockAwarded(lockID, NULL_NODE_ID, threadID, false, System.currentTimeMillis(), nestedDepth);
+    int depth = super.incrementNestedDepth(threadID);
+    super.recordLockAwarded(lockID, NULL_NODE_ID, threadID, false, System.currentTimeMillis(), depth);
   }
 
   public synchronized void recordLockReleased(LockID lockID, ThreadID threadID) {

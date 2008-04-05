@@ -240,11 +240,11 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
     session.getTransaction().commit();
   }
 
-  private void assertEqualPromotion(Promotion promotion) {
-    PromotionId pId = promotion.getId();
+  private void assertEqualPromotion(Promotion promotionArg) {
+    PromotionId pId = promotionArg.getId();
     Assert.assertEquals(2, pId.getCustomerId().intValue());
     Assert.assertEquals(2, pId.getGiftId().intValue());
-    Assert.assertEquals("holiday", promotion.getReason());
+    Assert.assertEquals("holiday", promotionArg.getReason());
   }
 
   private void assertEqualCustomer(Customer customer) {
@@ -275,31 +275,31 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
       List accounts = new ArrayList();
       accounts.add(acc);
 
-      Customer cus = new Customer();
+      Customer customer = new Customer();
 
       Set products = new HashSet();
       Product prod = new Product();
       prod.setNumber("prod-001");
-      prod.setCustomer(cus);
+      prod.setCustomer(customer);
       products.add(prod);
       prod = new Product();
       prod.setNumber("prod-002");
-      prod.setCustomer(cus);
+      prod.setCustomer(customer);
       products.add(prod);
 
-      cus.setEmailAddress("asi@yahoo.com");
-      cus.setFirstName("Antonio");
-      cus.setLastName("Si");
-      cus.setAccount(acc);
-      cus.setProducts(products);
-      save(cus);
+      customer.setEmailAddress("asi@yahoo.com");
+      customer.setFirstName("Antonio");
+      customer.setLastName("Si");
+      customer.setAccount(acc);
+      customer.setProducts(products);
+      save(customer);
 
       Gifts gift = new Gifts();
       gift.setName("lego");
       gift.setCategory("toy");
       save(gift);
 
-      PromotionId pId = new PromotionId(new Long(cus.getId()), new Long(gift.getId()));
+      PromotionId pId = new PromotionId(new Long(customer.getId()), new Long(gift.getId()));
       Promotion p = new Promotion();
       p.setId(pId);
       p.setReason("holiday");

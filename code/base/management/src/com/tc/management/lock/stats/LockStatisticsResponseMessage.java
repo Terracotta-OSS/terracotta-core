@@ -45,9 +45,9 @@ public class LockStatisticsResponseMessage extends DSOMessageBase {
     put(allTCStackTraceElements);
   }
 
-  private void put(Collection allTCStackTraceElements) {
-    super.putNVPair(NUMBER_OF_LOCK_STAT_ELEMENTS, allTCStackTraceElements.size());
-    for (Iterator i = allTCStackTraceElements.iterator(); i.hasNext();) {
+  private void put(Collection allTCStackTraceElementsCollection) {
+    super.putNVPair(NUMBER_OF_LOCK_STAT_ELEMENTS, allTCStackTraceElementsCollection.size());
+    for (Iterator i = allTCStackTraceElementsCollection.iterator(); i.hasNext();) {
       TCStackTraceElement lse = (TCStackTraceElement) i.next();
       putNVPair(TC_STACK_TRACE_ELEMENT, lse);
     }
@@ -93,8 +93,8 @@ public class LockStatisticsResponseMessage extends DSOMessageBase {
     return this.allTCStackTraceElements;
   }
 
-  public void initialize(Collection allTCStackTraceElements) {
-    this.allTCStackTraceElements = allTCStackTraceElements;
+  public void initialize(Collection allTCStackTraceElementsCollection) {
+    this.allTCStackTraceElements = allTCStackTraceElementsCollection;
     this.type = LOCK_STATISTICS_RESPONSE_MESSAGE_TYPE;
   }
 

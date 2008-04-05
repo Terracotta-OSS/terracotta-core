@@ -90,7 +90,7 @@ public class SRACpuTest extends TestCase {
     BigDecimal[][] values = new BigDecimal[cpuCount][6];
     assertEquals(cpuCount * 6, data.length);
     for (int i = 0; i < data.length; i++) {
-      assertTrue(data[i].getName().startsWith(SRACpu.ACTION_NAME));
+      assertTrue(data[i].getName().startsWith(SRACpuConstants.ACTION_NAME));
       assertNull(data[i].getAgentIp()); // will be filled in with default
       assertNull(data[i].getAgentDifferentiator()); // will be filled in with default
       assertNull(data[i].getMoment()); // will be filled in with default
@@ -101,22 +101,22 @@ public class SRACpuTest extends TestCase {
       assertEquals("cpu " + cpu, data[i].getElement());
       switch (part) {
         case 0:
-          assertEquals(SRACpu.DATA_NAME_COMBINED, data[i].getName());
+          assertEquals(SRACpuConstants.DATA_NAME_COMBINED, data[i].getName());
           break;
         case 1:
-          assertEquals(SRACpu.DATA_NAME_IDLE, data[i].getName());
+          assertEquals(SRACpuConstants.DATA_NAME_IDLE, data[i].getName());
           break;
         case 2:
-          assertEquals(SRACpu.DATA_NAME_NICE, data[i].getName());
+          assertEquals(SRACpuConstants.DATA_NAME_NICE, data[i].getName());
           break;
         case 3:
-          assertEquals(SRACpu.DATA_NAME_SYS, data[i].getName());
+          assertEquals(SRACpuConstants.DATA_NAME_SYS, data[i].getName());
           break;
         case 4:
-          assertEquals(SRACpu.DATA_NAME_USER, data[i].getName());
+          assertEquals(SRACpuConstants.DATA_NAME_USER, data[i].getName());
           break;
         case 5:
-          assertEquals(SRACpu.DATA_NAME_WAIT, data[i].getName());
+          assertEquals(SRACpuConstants.DATA_NAME_WAIT, data[i].getName());
           break;
         default:
           fail();

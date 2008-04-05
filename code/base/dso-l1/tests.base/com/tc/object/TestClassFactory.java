@@ -38,7 +38,7 @@ public class TestClassFactory implements TCClassFactory {
     private boolean portable = false;
 
     public MockTCClass() {
-      
+      //
     }
     
     public MockTCClass(ClientObjectManager clientObjectManager, boolean hasOnLoadExecuteScript, boolean hasOnLoadMethod, boolean portable, TCField [] portableFields  ) {

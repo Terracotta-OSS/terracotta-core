@@ -170,10 +170,10 @@ public abstract class EhcacheGlobalEvictionTestApp extends ServerCrashingAppBase
       return CacheManager.create(getClass().getResource("cache-global-evictor-test.xml"));
     }
 
-    private void populateCache(Cache cache, int index, int startValue) throws Exception {
-      cache.put(new Element("key" + index + startValue, "val" + index + startValue));
-      cache.put(new Element("key" + index + (startValue + 1), "val" + index + (startValue + 1)));
-      cache.put(new Element("key" + index + (startValue + 2), "val" + index + (startValue + 2)));
+    private void populateCache(Cache cache, int indexArg, int startValue) throws Exception {
+      cache.put(new Element("key" + indexArg + startValue, "val" + indexArg + startValue));
+      cache.put(new Element("key" + indexArg + (startValue + 1), "val" + indexArg + (startValue + 1)));
+      cache.put(new Element("key" + indexArg + (startValue + 2), "val" + indexArg + (startValue + 2)));
     }
   }
 

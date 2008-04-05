@@ -72,19 +72,19 @@ public class LockHolder implements Serializable {
     return threadID;
   }
 
-  public void lockAcquired(long timeAcquired) {
+  public void lockAcquired(long lockTimeAcquired) {
     if (timeRequested <= 0) {
-      this.timeRequested = timeAcquired;
+      this.timeRequested = lockTimeAcquired;
     }
-    this.timeAcquired = timeAcquired;
+    this.timeAcquired = lockTimeAcquired;
     getAndSetWaitTimeInMillis();
   }
 
-  public void lockReleased(long timeReleased) {
+  public void lockReleased(long lockTimeReleased) {
     if (timeAcquired <= 0) {
-      timeAcquired = timeReleased;
+      timeAcquired = lockTimeReleased;
     }
-    this.timeReleased = timeReleased;
+    this.timeReleased = lockTimeReleased;
     getAndSetHeldTimeInMillis();
   }
   

@@ -262,12 +262,12 @@ public class ConcurrentReadLockTestApp extends AbstractTransparentApp {
       super();
     }
 
-    public synchronized void makeShared(SharedObject obj) {
-      this.obj = obj;
+    public synchronized void makeShared(SharedObject object) {
+      this.obj = object;
     }
     
-    public synchronized void makeShared(String obj) {
-      this.str = obj;
+    public synchronized void makeShared(String object) {
+      this.str = object;
     }
   }
 

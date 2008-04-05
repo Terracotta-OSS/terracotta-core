@@ -33,8 +33,8 @@ public class StatisticsRetrievalCriteria {
     this.sessionId = sessionId;
   }
 
-  public StatisticsRetrievalCriteria sessionId(final String sessionId) {
-    setSessionId(sessionId);
+  public StatisticsRetrievalCriteria sessionId(final String sessionID) {
+    setSessionId(sessionID);
     return this;
   }
 
@@ -46,8 +46,8 @@ public class StatisticsRetrievalCriteria {
     this.start = start;
   }
 
-  public StatisticsRetrievalCriteria start(final Date start) {
-    setStart(start);
+  public StatisticsRetrievalCriteria start(final Date startDate) {
+    setStart(startDate);
     return this;
   }
 
@@ -59,8 +59,8 @@ public class StatisticsRetrievalCriteria {
     this.stop = stop;
   }
 
-  public StatisticsRetrievalCriteria stop(final Date stop) {
-    setStop(stop);
+  public StatisticsRetrievalCriteria stop(final Date stopDate) {
+    setStop(stopDate);
     return this;
   }
 
@@ -72,8 +72,8 @@ public class StatisticsRetrievalCriteria {
     this.agentIp = agentip;
   }
 
-  public StatisticsRetrievalCriteria agentIp(final String agentIp) {
-    setAgentIp(agentIp);
+  public StatisticsRetrievalCriteria agentIp(final String agentIP) {
+    setAgentIp(agentIP);
     return this;
   }
 
@@ -85,8 +85,8 @@ public class StatisticsRetrievalCriteria {
     this.agentDifferentiator = agentDifferentiator;
   }
 
-  public StatisticsRetrievalCriteria agentDifferentiator(final String agentDifferentiator) {
-    setAgentDifferentiator(agentDifferentiator);
+  public StatisticsRetrievalCriteria agentDifferentiator(final String agentDiff) {
+    setAgentDifferentiator(agentDiff);
     return this;
   }
 

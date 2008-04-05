@@ -9,7 +9,7 @@ public class PersistentSubobject {
 
 	public static final String QUEUED = "Queued";
 
-	private static final String PENDING = "Pending";
+	public static final String PENDING = "Pending";
 
 	public static final String SENT = "Sent";
 
@@ -24,6 +24,7 @@ public class PersistentSubobject {
 	private String smscMessageId;
 
 	PersistentSubobject() {
+	  //
 	}
 
 	public PersistentSubobject(String code) {

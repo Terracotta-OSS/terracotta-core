@@ -63,11 +63,11 @@ public class AgentStatisticsManagerTest extends TCTestCase {
           }
 
           public void addListener(ConfigItemListener changeListener) {
-
+            //
           }
 
           public void removeListener(ConfigItemListener changeListener) {
-
+            //
           }
         };
       }

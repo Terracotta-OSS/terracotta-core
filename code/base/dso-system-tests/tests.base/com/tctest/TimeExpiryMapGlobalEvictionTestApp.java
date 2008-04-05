@@ -183,10 +183,10 @@ public class TimeExpiryMapGlobalEvictionTestApp extends ServerCrashingAppBase {
       }
     }
 
-    private void addData(int index, int startIndex) {
-      dataRoot.put("key" + index + startIndex, "val" + index + startIndex);
-      dataRoot.put("key" + index + (startIndex + 1), "val" + index + (startIndex + 1));
-      dataRoot.put("key" + index + (startIndex + 2), "val" + index + (startIndex + 2));
+    private void addData(int indexArg, int startIndex) {
+      dataRoot.put("key" + indexArg + startIndex, "val" + indexArg + startIndex);
+      dataRoot.put("key" + indexArg + (startIndex + 1), "val" + indexArg + (startIndex + 1));
+      dataRoot.put("key" + indexArg + (startIndex + 2), "val" + indexArg + (startIndex + 2));
     }
   }
 

@@ -89,8 +89,8 @@ public class FutureTaskTC implements Future, Runnable {
       ran       = null;
     }
 
-    private boolean ranOrCancelled(int state) {
-      return (state & (RAN | CANCELLED)) != 0;
+    private boolean ranOrCancelled(int stateArg) {
+      return (stateArg & (RAN | CANCELLED)) != 0;
     }
 
     private int tryAcquireShared() {

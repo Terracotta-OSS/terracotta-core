@@ -105,6 +105,7 @@ public class StatisticsGatewayMBeanImpl extends AbstractTerracottaMBean implemen
   }
 
   public void reset() {
+    //
   }
 
   public String[] getSupportedStatistics() {

@@ -90,6 +90,7 @@ public class TestBean implements BeanNameAware, BeanFactoryAware, ITestBean, IOt
 
 
 	public TestBean() {
+	  //
 	}
 
 	public TestBean(String name) {
@@ -308,6 +309,7 @@ public class TestBean implements BeanNameAware, BeanFactoryAware, ITestBean, IOt
 	 * @see IOther#absquatulate()
 	 */
 	public void absquatulate() {
+	  //
 	}
 
 	public int haveBirthday() {

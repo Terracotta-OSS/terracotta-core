@@ -114,6 +114,7 @@ public class SessionProtocol {
     }
 
     public void valueBound(HttpSessionBindingEvent event) {
+      //
     }
 
     public void valueUnbound(HttpSessionBindingEvent event) {

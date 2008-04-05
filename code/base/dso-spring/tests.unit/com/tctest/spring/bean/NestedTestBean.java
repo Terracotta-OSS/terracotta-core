@@ -27,6 +27,7 @@ public class NestedTestBean implements INestedTestBean {
 	private String company = "";
 
 	public NestedTestBean() {
+	  //
 	}
 
 	public NestedTestBean(String company) {

@@ -18,10 +18,12 @@ public final class MockClientTxMonitor extends AbstractTerracottaMBean implement
   }
 
   public void committedReadTransaction() {
+    //
   }
 
   public void committedWriteTransaction(int notifyCount, int modifiedObjectCount, int[] writeCountPerObject,
                                         Map newObjectCountByClass) {
+    //
   }
 
   public int getAvgModifiedObjectsPerTransaction() {

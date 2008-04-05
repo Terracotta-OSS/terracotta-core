@@ -44,8 +44,8 @@ public class GlobalLockInfo implements TCSerializable {
     return lockRequestQueueLength;
   }
 
-  public boolean isLocked(int level) {
-    return (this.level == level)
+  public boolean isLocked(int lockLevel) {
+    return (this.level == lockLevel)
            && ((holdersInfo != null && holdersInfo.size() > 0) || (greedyHoldersInfo != null && greedyHoldersInfo
                .size() > 0));
   }

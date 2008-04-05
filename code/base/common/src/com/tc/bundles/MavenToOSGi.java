@@ -14,6 +14,7 @@ import java.util.regex.Matcher;
  */
 public class MavenToOSGi implements IConstants {
   private MavenToOSGi() {
+    //
   }
 
   private static String replaceInvalidChars(String value) {

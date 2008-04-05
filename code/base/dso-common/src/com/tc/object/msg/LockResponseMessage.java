@@ -172,9 +172,9 @@ public class LockResponseMessage extends DSOMessageBase {
     initialize(lid, sid, level);
   }
 
-  public void initializeLockRecall(LockID lid, ThreadID sid, int level, int leaseTimeInMs) {
+  public void initializeLockRecall(LockID lid, ThreadID sid, int level, int leaseTimeInMills) {
     this.type = LOCK_RECALL;
-    initialize(lid, sid, level, null, leaseTimeInMs);
+    initialize(lid, sid, level, null, leaseTimeInMills);
   }
 
   public void initializeLockRecall(LockID lid, ThreadID sid, int level) {
@@ -200,12 +200,12 @@ public class LockResponseMessage extends DSOMessageBase {
     initialize(lid, sid, level, info, AWARD_NOT_ON_LEASE);
   }
 
-  private void initialize(LockID lid, ThreadID sid, int level, GlobalLockInfo info, int leaseTimeInMs) {
+  private void initialize(LockID lid, ThreadID sid, int level, GlobalLockInfo info, int leaseTimeInMills) {
     this.threadID = sid;
     this.lockID = lid;
     this.lockLevel = level;
     this.globalLockInfo = info;
-    this.leaseTimeInMs = leaseTimeInMs;
+    this.leaseTimeInMs = leaseTimeInMills;
   }
 
 }

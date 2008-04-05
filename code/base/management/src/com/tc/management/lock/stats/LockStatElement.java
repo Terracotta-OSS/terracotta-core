@@ -361,12 +361,12 @@ public class LockStatElement implements TCSerializable, Serializable, LockTraceE
     return child;
   }
 
-  private LockKey newLockKey(LockID lockID, NodeID nodeID, ThreadID threadID) {
-    return new LockKey(lockID, nodeID, threadID);
+  private LockKey newLockKey(LockID lockId, NodeID nodeID, ThreadID threadID) {
+    return new LockKey(lockId, nodeID, threadID);
   }
 
-  private LockHolder newLockHolder(LockID lockID, NodeID nodeID, ThreadID threadID, long timeStamp) {
-    return new LockHolder(lockID, nodeID, threadID, timeStamp);
+  private LockHolder newLockHolder(LockID lockId, NodeID nodeID, ThreadID threadID, long timeStamp) {
+    return new LockHolder(lockId, nodeID, threadID, timeStamp);
   }
 
   /**

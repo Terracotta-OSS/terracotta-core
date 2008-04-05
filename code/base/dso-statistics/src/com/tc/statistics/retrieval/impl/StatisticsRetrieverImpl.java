@@ -204,19 +204,20 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
     }
   }
 
-  public void capturingStarted(final String sessionId) {
-    if (sessionId.equals(this.sessionId)) {
+  public void capturingStarted(final String sessionID) {
+    if (sessionID.equals(this.sessionId)) {
       startup();
     }
   }
 
-  public void capturingStopped(final String sessionId) {
-    if (sessionId.equals(this.sessionId)) {
+  public void capturingStopped(final String sessionID) {
+    if (sessionID.equals(this.sessionId)) {
       shutdown();
     }
   }
 
   public void opened() {
+    //
   }
 
   public void closing() {
@@ -224,6 +225,7 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
   }
 
   public void closed() {
+    //
   }
 
   private class RetrieveStatsTask extends TimerTask {

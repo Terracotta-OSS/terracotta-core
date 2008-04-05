@@ -146,16 +146,16 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
     fireDisconnected();
   }
 
-  public void createSession(final String sessionId) throws StatisticsGathererException {
+  public void createSession(final String sessionID) throws StatisticsGathererException {
     synchronized (this) {
       if (null == statGateway) throw new StatisticsGathererConnectionRequiredException();
 
       closeSession();
 
       // create a new capturing session
-      statGateway.createSession(sessionId);
-      this.sessionId = sessionId;
-      topologyChangeHandler.setSessionId(sessionId);
+      statGateway.createSession(sessionID);
+      this.sessionId = sessionID;
+      topologyChangeHandler.setSessionId(sessionID);
       statGateway.setTopologyChangeHandler(topologyChangeHandler);
 
       // register the statistics data listener
@@ -167,7 +167,7 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
       }
     }
 
-    fireSessionCreated(sessionId);
+    fireSessionCreated(sessionID);
   }
 
   public void reinitialize() throws StatisticsGathererException {
@@ -295,20 +295,20 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
     }
   }
 
-  public void addListener(final StatisticsGathererListener listener) {
-    if (null == listener) {
+  public void addListener(final StatisticsGathererListener gathererListener) {
+    if (null == gathererListener) {
       return;
     }
 
-    listeners.add(listener);
+    listeners.add(gathererListener);
   }
 
-  public void removeListener(final StatisticsGathererListener listener) {
-    if (null == listener) {
+  public void removeListener(final StatisticsGathererListener gathererListener) {
+    if (null == gathererListener) {
       return;
     }
 
-    listeners.remove(listener);
+    listeners.remove(gathererListener);
   }
 
   private void fireConnected(final String managerHostName, final int managerPort) {
@@ -335,34 +335,34 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
     }
   }
 
-  private void fireCapturingStarted(final String sessionId) {
+  private void fireCapturingStarted(final String sessionID) {
     if (listeners.size() > 0) {
       for (Iterator it = listeners.iterator(); it.hasNext(); ) {
-        ((StatisticsGathererListener)it.next()).capturingStarted(sessionId);
+        ((StatisticsGathererListener)it.next()).capturingStarted(sessionID);
       }
     }
   }
 
-  private void fireCapturingStopped(final String sessionId) {
+  private void fireCapturingStopped(final String sessionID) {
     if (listeners.size() > 0) {
       for (Iterator it = listeners.iterator(); it.hasNext(); ) {
-        ((StatisticsGathererListener)it.next()).capturingStopped(sessionId);
+        ((StatisticsGathererListener)it.next()).capturingStopped(sessionID);
       }
     }
   }
 
-  private void fireSessionCreated(final String sessionId) {
+  private void fireSessionCreated(final String sessionID) {
     if (listeners.size() > 0) {
       for (Iterator it = listeners.iterator(); it.hasNext(); ) {
-        ((StatisticsGathererListener)it.next()).sessionCreated(sessionId);
+        ((StatisticsGathererListener)it.next()).sessionCreated(sessionID);
       }
     }
   }
 
-  private void fireSessionClosed(final String sessionId) {
+  private void fireSessionClosed(final String sessionID) {
     if (listeners.size() > 0) {
       for (Iterator it = listeners.iterator(); it.hasNext(); ) {
-        ((StatisticsGathererListener)it.next()).sessionClosed(sessionId);
+        ((StatisticsGathererListener)it.next()).sessionClosed(sessionID);
       }
     }
   }

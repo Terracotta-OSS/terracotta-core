@@ -77,10 +77,10 @@ public class IndexedTestBean {
 		this.map.put("key1", tb4);
 		this.map.put("key2", tb5);
 		this.map.put("key.3", tb5);
-		List list = new ArrayList();
-		list.add(tbX);
-		list.add(tbY);
-		this.map.put("key4", list);
+		List testBeanList = new ArrayList();
+		testBeanList.add(tbX);
+		testBeanList.add(tbY);
+		this.map.put("key4", testBeanList);
 	}
 
 

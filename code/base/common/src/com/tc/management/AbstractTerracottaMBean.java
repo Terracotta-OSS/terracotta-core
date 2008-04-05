@@ -145,6 +145,7 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
   }
   
   protected synchronized void enabledStateChanged() {
+    //
   }
 
   public final synchronized boolean isEnabled() {

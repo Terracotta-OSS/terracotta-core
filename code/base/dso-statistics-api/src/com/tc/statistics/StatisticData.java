@@ -65,6 +65,7 @@ public class StatisticData implements Serializable {
   private Object data;
 
   public StatisticData() {
+    //
   }
   
   public StatisticData(final String name, final Long value) {
@@ -119,8 +120,8 @@ public class StatisticData implements Serializable {
     this.sessionId = sessionId;
   }
 
-  public StatisticData sessionId(String sessionId) {
-    setSessionId(sessionId);
+  public StatisticData sessionId(String sessionID) {
+    setSessionId(sessionID);
     return this;
   }
 
@@ -132,8 +133,8 @@ public class StatisticData implements Serializable {
     this.agentIp = agentIp;
   }
 
-  public StatisticData agentIp(String agentIp) {
-    setAgentIp(agentIp);
+  public StatisticData agentIp(String agentIP) {
+    setAgentIp(agentIP);
     return this;
   }
 
@@ -141,8 +142,8 @@ public class StatisticData implements Serializable {
     return agentDifferentiator;
   }
 
-  public StatisticData agentDifferentiator(String agentDifferentiator) {
-    setAgentDifferentiator(agentDifferentiator);
+  public StatisticData agentDifferentiator(String agentDiff) {
+    setAgentDifferentiator(agentDiff);
     return this;
   }
 
@@ -154,8 +155,8 @@ public class StatisticData implements Serializable {
     this.moment = moment;
   }
 
-  public StatisticData moment(Date moment) {
-    setMoment(moment);
+  public StatisticData moment(Date date) {
+    setMoment(date);
     return this;
   }
 
@@ -171,8 +172,8 @@ public class StatisticData implements Serializable {
     this.name = name;
   }
 
-  public StatisticData name(String name) {
-    setName(name);
+  public StatisticData name(String nameArg) {
+    setName(nameArg);
     return this;
   }
 
@@ -184,8 +185,8 @@ public class StatisticData implements Serializable {
     this.element = element;
   }
 
-  public StatisticData element(String element) {
-    setElement(element);
+  public StatisticData element(String elementArg) {
+    setElement(elementArg);
     return this;
   }
 
@@ -197,8 +198,8 @@ public class StatisticData implements Serializable {
     this.data = data;
   }
 
-  private StatisticData data(Object data) {
-    setData(data);
+  private StatisticData data(Object obj) {
+    setData(obj);
     return this;
   }
 
@@ -206,32 +207,32 @@ public class StatisticData implements Serializable {
     setData((Object)data);
   }
 
-  public StatisticData data(Long data) {
-    return data((Object)data);
+  public StatisticData data(Long longData) {
+    return data((Object)longData);
   }
 
   public void setData(String data) {
     setData((Object)data);
   }
 
-  public StatisticData data(String data) {
-    return data((Object)data);
+  public StatisticData data(String strData) {
+    return data((Object)strData);
   }
 
   public void setData(Date data) {
     setData((Object)data);
   }
 
-  public StatisticData data(Date data) {
-    return data((Object)data);
+  public StatisticData data(Date dateData) {
+    return data((Object)dateData);
   }
 
   public void setData(BigDecimal data) {
     setData((Object)data);
   }
 
-  public StatisticData data(BigDecimal data) {
-    return data((Object)data);
+  public StatisticData data(BigDecimal bigDecimalData) {
+    return data((Object)bigDecimalData);
   }
 
   public Object clone() {
