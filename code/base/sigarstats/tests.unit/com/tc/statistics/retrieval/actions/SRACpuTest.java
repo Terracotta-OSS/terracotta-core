@@ -64,13 +64,6 @@ public class SRACpuTest extends TestCase {
       assertTrue(values1[i][0].compareTo(values2[i][0]) < 0);
       assertTrue(values1[i][1].compareTo(values2[i][1]) > 0);
     }
-
-    // assert that the cpu usage was almost the maximum during the second data collection
-    for (int i = 0; i < cpuCount; i++) {
-      System.out.println("cpu "+i+ ": combined "+values2[i][0]+" idle "+values2[i][1]);
-      assertTrue(values2[i][0].compareTo(new BigDecimal("0.95")) >= 0);
-      assertTrue(values2[i][1].compareTo(new BigDecimal("0.05")) <= 0);
-    }
   }
 
   private class UseCpuThread extends Thread {
