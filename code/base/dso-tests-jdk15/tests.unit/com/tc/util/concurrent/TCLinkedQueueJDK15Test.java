@@ -14,7 +14,7 @@ import java.util.Date;
 import junit.framework.TestCase;
 
 public class TCLinkedQueueJDK15Test extends TestCase {
-  public static final int              NUMBER_OF_TRANSACTIONS = 10000000;
+  public static final int              NUMBER_OF_TRANSACTIONS = 100000;
   public static final int              TIMEOUT                = 500;
   private static final SynchronizedInt nodeId                 = new SynchronizedInt(0);
 
@@ -52,9 +52,6 @@ public class TCLinkedQueueJDK15Test extends TestCase {
 
     System.out.println("Inserted " + NUMBER_OF_TRANSACTIONS + " nodes in " + timeTakenProducer + " milliseconds");
     System.out.println("Removed " + NUMBER_OF_TRANSACTIONS + " nodes in " + timeTakenConsumer + " milliseconds");
-    
-    ThreadUtil.reallySleep(10000);
-    
   }
 
   public void testTCQueueMultiThreadPrformance() throws Exception {
@@ -127,7 +124,7 @@ public class TCLinkedQueueJDK15Test extends TestCase {
         if (id > NUMBER_OF_TRANSACTIONS) break;
         MyNode node = new MyNode(id);
         try {
-          if (id % 100000 == 0) System.out.println("Thread " + this.getName() + " inserted node number " + id);
+          if (id % 5000 == 0) System.out.println("Thread " + this.getName() + " inserted node number " + id);
           queue.put(node);
         } catch (InterruptedException e) {
           throw new AssertionError(e);
@@ -158,7 +155,7 @@ public class TCLinkedQueueJDK15Test extends TestCase {
           continue;
         }
         int id = myNode.getId();
-        if (id % 100000 == 0) System.out.println("Thread " + this.getName() + " removed node number " + id);
+        if (id % 5000 == 0) System.out.println("Thread " + this.getName() + " removed node number " + id);
         if (id > NUMBER_OF_TRANSACTIONS) break;
       }
     }
