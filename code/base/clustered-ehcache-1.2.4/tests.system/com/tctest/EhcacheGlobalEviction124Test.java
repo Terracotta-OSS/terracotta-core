@@ -6,11 +6,12 @@ package com.tctest;
 
 import com.tc.util.TIMUtil;
 
+import java.util.Date;
 
 public class EhcacheGlobalEviction124Test extends EhcacheGlobalEvictionTestBase {
 
   public EhcacheGlobalEviction124Test() {
-    //disableAllUntil("2008-01-15");
+    disableAllUntil(new Date(Long.MAX_VALUE));
   }
 
   protected Class getApplicationClass() {

@@ -10,7 +10,13 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.TIMUtil;
 
+import java.util.Date;
+
 public class Ehcache130JMXTest extends EhcacheJMXTestBase {
+
+  public Ehcache130JMXTest() {
+    disableAllUntil(new Date(Long.MAX_VALUE));
+  }
 
   protected Class getApplicationClass() {
     return App.class;
