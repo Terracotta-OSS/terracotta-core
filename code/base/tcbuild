@@ -9,7 +9,8 @@ if test -z "${JAVA_HOME}"; then
 	export JAVA_HOME
 fi
 
-JRUBY_HOME="`dirname $0`/../../buildsystems/jruby-1.0-20070622a"
+#JRUBY_HOME="`dirname $0`/../../buildsystems/jruby-1.0-20070622a"
+JRUBY_HOME="`dirname $0`/../../buildsystems/jruby-1.1"
 export JRUBY_HOME
 
 "${ANT_HOME}/bin/ant" -buildfile "`dirname $0`/buildconfig/build.xml" install-ivy
@@ -26,4 +27,4 @@ fi
 	echo "--------------------------------------------------------------------------------"
 	echo "RUNNING TCBUILD"
 	echo ""
-	exec /bin/sh "${JRUBY_HOME}/bin/jruby" -Ibuildscripts buildscripts/build-tc.rb "$@"
+	exec /bin/sh "${JRUBY_HOME}/bin/jruby" -J-Djruby.thread.pooling=true -J-Xms64m -J-Xmx512m -Ibuildscripts buildscripts/build-tc.rb "$@"

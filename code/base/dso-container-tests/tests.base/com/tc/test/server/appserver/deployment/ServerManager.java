@@ -106,9 +106,6 @@ public class ServerManager {
 
   private void startDSO(boolean withPersistentStore) throws Exception {
     dsoServer = new DSOServer(withPersistentStore, tempDir, serverTcConfig);
-    if (!Vm.isIBM() && !(Os.isMac() && Vm.isJDK14())) {
-      dsoServer.getJvmArgs().add("-XX:+HeapDumpOnOutOfMemoryError");
-    }
     dsoServer.getJvmArgs().add("-Xmx128m");
 
     for (Iterator iterator = jvmArgs.iterator(); iterator.hasNext();) {

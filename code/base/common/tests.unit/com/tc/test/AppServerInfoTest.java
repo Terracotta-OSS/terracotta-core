@@ -39,6 +39,9 @@ public class AppServerInfoTest extends TestCase {
   public final void testToString() {
     String nameAndVersion = "glassfish-v1.ur1-p01-b02";
     assertEquals(nameAndVersion, AppServerInfo.parse(nameAndVersion).toString());
+    
+    nameAndVersion = "tomcat-5.5.26";
+    assertEquals(nameAndVersion, AppServerInfo.parse(nameAndVersion).toString());
   }
 
 }

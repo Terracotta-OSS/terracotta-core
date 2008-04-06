@@ -1,7 +1,7 @@
 @ECHO OFF
 IF NOT EXIST buildscripts/build-tc.rb GOTO no_build_tc
 
-set JRUBY_HOME=%~dp0..\..\buildsystems\jruby-1.0-20070622a
+set JRUBY_HOME=%~dp0..\..\buildsystems\jruby-1.1
 
 call %ANT_HOME%\bin\ant.bat -buildfile %~p0buildconfig\build.xml install-ivy
 
@@ -38,7 +38,7 @@ GOTO run_jruby
 
 :run_jruby
 
-%JRUBY_HOME%\bin\jruby.bat -Ibuildscripts buildscripts/build-tc.rb %*
+%JRUBY_HOME%\bin\jruby.bat -J-Djruby.thread.pooling=true -J-Xms64m -J-Xmx512m -Ibuildscripts buildscripts/build-tc.rb %*
 set TCBUILD_ERR=%ERRORLEVEL%
 GOTO end
 
