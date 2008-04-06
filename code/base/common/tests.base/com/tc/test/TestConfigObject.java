@@ -160,7 +160,7 @@ public class TestConfigObject {
 
     return new AppServerInfo(properties.getProperty(APP_SERVER_FACTORY_NAME, "unknown"),
                              properties.getProperty(APP_SERVER_MAJOR_VERSION, "unknown"),
-                             properties.getProperty(APP_SERVER_MAJOR_VERSION, "unknown"));
+                             properties.getProperty(APP_SERVER_MINOR_VERSION, "unknown"));
   }
 
   public static synchronized TestConfigObject getInstance() {
