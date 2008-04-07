@@ -1994,7 +1994,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
         logger.warn(text);
       }
     }
-    throw new IOException();
+    return null;
   }
 
   private void setupL1ReconnectProperties() {
@@ -2004,6 +2004,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
         PreparedComponentsFromL2Connection serverInfos = new PreparedComponentsFromL2Connection(configSetupManager);
         ConnectionInfoConfigItem connectInfo = (ConnectionInfoConfigItem) serverInfos.createConnectionInfoConfigItem();
         in = getL1PropertiesFromL2Stream((ConnectionInfo[]) connectInfo.getObject());
+        if (in == null) throw new IOException();
       } catch (IOException e) {
         String text = "We couldn't load l1 reconnect properties from any of the servers. Retrying.....";
         if (this.loggedInConsole == false) {
