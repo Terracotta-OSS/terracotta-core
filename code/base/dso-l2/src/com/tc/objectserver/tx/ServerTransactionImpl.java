@@ -27,8 +27,6 @@ import java.util.Set;
 
 /**
  * Represents an atomic change to the states of objects on the server
- * 
- * @author steve
  */
 public class ServerTransactionImpl implements ServerTransaction {
   private final ServerTransactionID    serverTxID;
@@ -140,7 +138,18 @@ public class ServerTransactionImpl implements ServerTransaction {
   public String toString() {
     return "ServerTransaction[" + seqID + " , " + txID + "," + sourceID + "," + transactionType + "] = { changes = "
            + changes.size() + ", notifies = " + notifies.size() + ", newRoots = " + newRoots.size() + ", numTxns = "
-           + getNumApplicationTxn() + ", oids =  " + objectIDs + ", newObjectIDs = " + newObjectIDs + " }";
+           + getNumApplicationTxn() + ", oids =  " + objectIDs + ", newObjectIDs = " + newObjectIDs +
+           ",\n" + getChangesDetails() +
+           " }";
+  }
+
+  private String getChangesDetails() {
+    StringBuilder sb = new StringBuilder();
+    for (Iterator i = changes.iterator(); i.hasNext();) {
+      DNA dna = (DNA) i.next();
+      sb.append("\t").append(dna.toString()).append("\n");
+    }
+    return sb.toString();
   }
 
   public ServerTransactionID getServerTransactionID() {
