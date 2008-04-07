@@ -182,6 +182,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   private L1ReconnectConfig                      l1ReconnectConfig                  = null;
 
+  private boolean                                loggedInConsole                    = false;
+
   public StandardDSOClientConfigHelperImpl(L1TVSConfigurationSetupManager configSetupManager)
       throws ConfigurationSetupException {
     this(configSetupManager, true);
@@ -1977,7 +1979,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       try {
         ConnectionInfo ci = connectInfo[i];
         theURL = new URL("http", ci.getHostname(), ci.getPort(), "/l1reconnectproperties");
-        logger.info("Trying to get L1 Reconnect Properties from " + ci);
+        String text = "Trying to get L1 Reconnect Properties from " + theURL.toString();
+        if (this.loggedInConsole == false) consoleLogger.info(text);
+        logger.info(text);
         connection = theURL.openConnection();
         l1PropFromL2Stream = connection.getInputStream();
         if (l1PropFromL2Stream != null) return l1PropFromL2Stream;
@@ -1986,11 +1990,11 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
         text += "; this error is permanent, so this source will not be retried.";
         boolean tryAgain = i < connectInfo.length;
         if (tryAgain) text += " Skipping this source and going to the next one.";
+        if (this.loggedInConsole == false) consoleLogger.warn(text);
         logger.warn(text);
-        if (!tryAgain) { throw e; }
       }
     }
-    return null;
+    throw new IOException();
   }
 
   private void setupL1ReconnectProperties() {
@@ -2002,6 +2006,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
         in = getL1PropertiesFromL2Stream((ConnectionInfo[]) connectInfo.getObject());
       } catch (IOException e) {
         String text = "We couldn't load l1 reconnect properties from any of the servers. Retrying.....";
+        if (this.loggedInConsole == false) {
+          this.loggedInConsole = true;
+          consoleLogger.error(text);
+        }
         logger.error(text);
         ThreadUtil.reallySleep(1000);
       } catch (Exception e) {
