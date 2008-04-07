@@ -24,21 +24,21 @@ import java.util.Set;
 
 public class SleepycatPersistableMap implements Map {
 
-  private static final Object   REMOVED     = new Object();
+  private static final Object REMOVED     = new Object();
 
   /*
    * This map contains the mappings already in the database
    */
-  private final Map             map         = new HashMap(0);
+  private final Map           map         = new HashMap(0);
 
   /*
    * This map contains the newly added mappings that are not in the database yet
    */
-  private final Map             delta       = new HashMap(0);
+  private final Map           delta       = new HashMap(0);
 
-  private final long            id;
-  private int                   removeCount = 0;
-  private boolean               clear       = false;
+  private final long          id;
+  private int                 removeCount = 0;
+  private boolean             clear       = false;
 
   public SleepycatPersistableMap(ObjectID id) {
     this.id = id.toLong();
@@ -121,14 +121,15 @@ public class SleepycatPersistableMap implements Map {
     return new EntryView();
   }
 
-  public void commit(SleepycatCollectionsPersistor persistor, PersistenceTransaction tx, Database db)
+  public int commit(SleepycatCollectionsPersistor persistor, PersistenceTransaction tx, Database db)
       throws IOException, DatabaseException {
     // long t1 = System.currentTimeMillis();
     // StringBuffer sb = new StringBuffer("Time to commit : ");
 
+    int written = 0;
     // First :: clear the map if necessary
     if (clear) {
-      basicClear(persistor, tx, db);
+      written += basicClear(persistor, tx, db);
       clear = false;
       // sb.append(" clear = ").append((System.currentTimeMillis() - t1)).append(" ms : ");
       // t1 = System.currentTimeMillis();
@@ -136,7 +137,7 @@ public class SleepycatPersistableMap implements Map {
 
     // Second :: put new or changed objects
     if (delta.size() > 0) {
-      basicPut(persistor, tx, db);
+      written += basicPut(persistor, tx, db);
       // sb.append(" put(").append(delta.size()).append(") = ").append((System.currentTimeMillis() - t1)).append(" ms :
       // ");
       // t1 = System.currentTimeMillis();
@@ -146,16 +147,18 @@ public class SleepycatPersistableMap implements Map {
     // Third :: remove old mappings :: This is slightly inefficient for huge maps. Keeping track of removed records is
     // again a trade off between memory and performance
     if (removeCount > 0) {
-      basicRemove(persistor, tx, db);
+      written += basicRemove(persistor, tx, db);
       // sb.append(" remove(").append(removeCount).append(") = ").append((System.currentTimeMillis() - t1))
       // .append(" ms : ");
       removeCount = 0;
     }
     // flakyLogger(sb.toString(), t1);
+    return written;
   }
 
-  private void basicRemove(SleepycatCollectionsPersistor persistor, PersistenceTransaction tx, Database db)
+  private int basicRemove(SleepycatCollectionsPersistor persistor, PersistenceTransaction tx, Database db)
       throws IOException, DatabaseException {
+    int written = 0;
     for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
       Map.Entry e = (Entry) i.next();
       Object k = e.getKey();
@@ -163,6 +166,7 @@ public class SleepycatPersistableMap implements Map {
       if (v == REMOVED) {
         DatabaseEntry key = new DatabaseEntry();
         key.setData(persistor.serialize(id, k));
+        written += key.getSize();
         OperationStatus status = db.delete(persistor.pt2nt(tx), key);
         if (!(OperationStatus.NOTFOUND.equals(status) || OperationStatus.SUCCESS.equals(status))) {
           // make the formatter happy
@@ -172,11 +176,13 @@ public class SleepycatPersistableMap implements Map {
         i.remove();
       }
     }
+    return written;
 
   }
 
-  private void basicPut(SleepycatCollectionsPersistor persistor, PersistenceTransaction tx, Database db)
+  private int basicPut(SleepycatCollectionsPersistor persistor, PersistenceTransaction tx, Database db)
       throws IOException, DatabaseException {
+    int written = 0;
     for (Iterator i = delta.entrySet().iterator(); i.hasNext();) {
       Map.Entry e = (Entry) i.next();
       Object k = e.getKey();
@@ -185,19 +191,23 @@ public class SleepycatPersistableMap implements Map {
       key.setData(persistor.serialize(id, k));
       DatabaseEntry value = new DatabaseEntry();
       value.setData(persistor.serialize(v));
+      written += value.getSize();
+      written += key.getSize();
       OperationStatus status = db.put(persistor.pt2nt(tx), key, value);
       if (!OperationStatus.SUCCESS.equals(status)) { throw new DBException("Unable to update Map table : " + id
                                                                            + " status : " + status); }
       map.put(k, v);
     }
+    return written;
   }
 
-  private void basicClear(SleepycatCollectionsPersistor persistor, PersistenceTransaction tx, Database db)
+  private int basicClear(SleepycatCollectionsPersistor persistor, PersistenceTransaction tx, Database db)
       throws DatabaseException {
     // XXX::Sleepycat has the most inefficent way to delete objects. Another way would be to delete all records
     // explicitly.
     // XXX:: Since we read in one direction and since we have to read the first record of the next map to break out, we
     // need READ_COMMITTED to avoid deadlocks between commit thread and GC thread.
+    int written = 0;
     Cursor c = db.openCursor(persistor.pt2nt(tx), CursorConfig.READ_COMMITTED);
     byte idb[] = Conversion.long2Bytes(id);
     DatabaseEntry key = new DatabaseEntry();
@@ -207,6 +217,7 @@ public class SleepycatPersistableMap implements Map {
     if (c.getSearchKeyRange(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
       do {
         if (partialMatch(idb, key.getData())) {
+          written += key.getSize();
           c.delete();
         } else {
           break;
@@ -214,6 +225,7 @@ public class SleepycatPersistableMap implements Map {
       } while (c.getNext(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS);
     }
     c.close();
+    return written;
   }
 
   // long lastlog;

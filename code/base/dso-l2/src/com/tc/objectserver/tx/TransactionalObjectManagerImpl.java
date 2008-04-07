@@ -6,7 +6,6 @@ package com.tc.objectserver.tx;
 
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
-import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
@@ -91,7 +90,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
         ServerTransaction stx = (ServerTransaction) i.next();
         logger.error("Txn = " + stx);
       }
-      throw new TCRuntimeException(t);
+      throw new AssertionError(t);
     }
   }
 

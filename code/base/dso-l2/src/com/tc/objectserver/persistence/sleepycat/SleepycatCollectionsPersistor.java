@@ -43,8 +43,8 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
     this.oo = new TCObjectOutputStream(bao);
   }
 
-  public void saveMap(PersistenceTransaction tx, SleepycatPersistableMap map) throws IOException, DatabaseException {
-    map.commit(this, tx, database);
+  public int saveMap(PersistenceTransaction tx, SleepycatPersistableMap map) throws IOException, DatabaseException {
+    return map.commit(this, tx, database);
   }
 
   public synchronized byte[] serialize(long id, Object o) throws IOException {

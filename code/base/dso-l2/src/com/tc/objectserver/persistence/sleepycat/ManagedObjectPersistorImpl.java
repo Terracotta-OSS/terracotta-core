@@ -14,6 +14,7 @@ import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
@@ -30,6 +31,7 @@ import com.tc.util.Assert;
 import com.tc.util.Conversion;
 import com.tc.util.SyncObjectIdSet;
 import com.tc.util.SyncObjectIdSetImpl;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.sequence.MutableSequence;
 
 import java.io.IOException;
@@ -42,27 +44,39 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase implements ManagedObjectPersistor,
     PrettyPrintable {
 
-  private static final Comparator              MO_COMPARATOR      = new Comparator() {
-                                                                    public int compare(Object o1, Object o2) {
-                                                                      long oid1 = ((ManagedObject) o1).getID().toLong();
-                                                                      long oid2 = ((ManagedObject) o2).getID().toLong();
-                                                                      if (oid1 < oid2) {
-                                                                        return -1;
-                                                                      } else if (oid1 > oid2) {
-                                                                        return 1;
-                                                                      } else {
-                                                                        return 0;
-                                                                      }
-                                                                    }
-                                                                  };
+  private final static TCLogger                statsLogger           = TCLogging.getLogger("com.tc.StatsLogger");
 
-  private static final Object                  MO_PERSISTOR_KEY   = ManagedObjectPersistorImpl.class.getName()
-                                                                    + ".saveAllObjects";
-  private static final Object                  MO_PERSISTOR_VALUE = "Complete";
+  private static final Comparator              MO_COMPARATOR         = new Comparator() {
+                                                                       public int compare(Object o1, Object o2) {
+                                                                         long oid1 = ((ManagedObject) o1).getID()
+                                                                             .toLong();
+                                                                         long oid2 = ((ManagedObject) o2).getID()
+                                                                             .toLong();
+                                                                         if (oid1 < oid2) {
+                                                                           return -1;
+                                                                         } else if (oid1 > oid2) {
+                                                                           return 1;
+                                                                         } else {
+                                                                           return 0;
+                                                                         }
+                                                                       }
+                                                                     };
+
+  private static final Object                  MO_PERSISTOR_KEY      = ManagedObjectPersistorImpl.class.getName()
+                                                                       + ".saveAllObjects";
+  private static final Object                  MO_PERSISTOR_VALUE    = "Complete";
+
+  private static final boolean                 STATS_LOGGING_ENABLED = TCPropertiesImpl
+                                                                         .getProperties()
+                                                                         .getBoolean(
+                                                                                     "l2.objectmanager.persistor.logging.enabled");
 
   private final Database                       objectDB;
   private final SerializationAdapterFactory    saf;
@@ -75,8 +89,9 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   private final ClassCatalog                   classCatalog;
   private SerializationAdapter                 serializationAdapter;
   private final SleepycatCollectionsPersistor  collectionsPersistor;
-  public final static String                   OID_FAST_LOAD      = "l2.objectmanager.loadObjectID.fastLoad";
+  public final static String                   OID_FAST_LOAD         = "l2.objectmanager.loadObjectID.fastLoad";
   private final ObjectIDManager                objectIDManager;
+  private final ConcurrentHashMap              statsRecords          = new ConcurrentHashMap();
 
   public ManagedObjectPersistorImpl(TCLogger logger, ClassCatalog classCatalog,
                                     SerializationAdapterFactory serializationAdapterFactory, Database objectDB,
@@ -105,6 +120,8 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
       // read objectIDs from object DB
       this.objectIDManager = new PlainObjectIDManagerImpl(objectDB, ptp, dBCursorConfig);
     }
+
+    if (STATS_LOGGING_ENABLED) startStatsPrinter();
   }
 
   public long nextObjectIDBatch(int batchSize) {
@@ -284,34 +301,90 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
     DatabaseEntry value = new DatabaseEntry();
     setObjectIDData(key, managedObject.getID());
     setManagedObjectData(value, managedObject);
+    int length = value.getSize();
+    length += key.getSize();
     try {
       status = this.objectDB.put(pt2nt(tx), key, value);
       if (OperationStatus.SUCCESS.equals(status)) {
-        basicSaveCollection(tx, managedObject);
+        length += basicSaveCollection(tx, managedObject);
         managedObject.setIsDirty(false);
         saveCount++;
         if (saveCount == 1 || saveCount % (100 * 1000) == 0) {
           logger.debug("saveCount: " + saveCount);
         }
       }
+      if (STATS_LOGGING_ENABLED) updateStats(managedObject, length);
     } catch (DatabaseException de) {
       throw new TCDatabaseException(de);
     }
     return status;
   }
 
-  private void basicSaveCollection(PersistenceTransaction tx, ManagedObject managedObject) throws IOException,
+  private void updateStats(ManagedObject managedObject, int length) {
+    String className = managedObject.getManagedObjectState().getClassName();
+    record(className, length, managedObject.isNew());
+  }
+
+  private void record(String className, int length, boolean isNew) {
+    StatsRecord r = (StatsRecord) statsRecords.get(className);
+    if (r == null) {
+      r = new StatsRecord(className);
+      statsRecords.put(className, r);
+    }
+    r.update(length, isNew);
+  }
+
+  private void startStatsPrinter() {
+    Thread t = new Thread(new Runnable() {
+      public void run() {
+        while (true) {
+          ThreadUtil.reallySleep(5000);
+          statsLogger.info("Commits in last 5 seconds");
+          statsLogger.info("===========================");
+          StatsRecord total = new StatsRecord("TOTAL");
+          for (Iterator i = statsRecords.entrySet().iterator(); i.hasNext();) {
+            Map.Entry e = (Entry) i.next();
+            StatsRecord r = (StatsRecord) e.getValue();
+            r.printDetailsIfNecessary(total);
+          }
+          total.printDetailsIfNecessary(null);
+        }
+      }
+    }, "ManagedObjects Stats printer");
+    t.start();
+  }
+
+  private static String createLogString(String className, long written, int count, int newCount) {
+    StringBuilder sb = new StringBuilder();
+    appendFixedSpaceString(sb, className, 50);
+    sb.append(": bytes = ");
+    appendFixedSpaceString(sb, String.valueOf(written), 8).append(" count = ");
+    appendFixedSpaceString(sb, String.valueOf(count), 5).append(" new = ").append(newCount);
+    return sb.toString();
+  }
+
+  private static StringBuilder appendFixedSpaceString(StringBuilder sb, String msg, int length) {
+    int spaces = Math.max(length - msg.length(), 0);
+    sb.append(msg);
+    while (spaces-- > 0) {
+      sb.append(" ");
+    }
+    return sb;
+  }
+
+  private int basicSaveCollection(PersistenceTransaction tx, ManagedObject managedObject) throws IOException,
       TCDatabaseException {
     ManagedObjectState state = managedObject.getManagedObjectState();
     if (PersistentCollectionsUtil.isPersistableCollectionType(state.getType())) {
       MapManagedObjectState mapState = (MapManagedObjectState) state;
       SleepycatPersistableMap map = (SleepycatPersistableMap) mapState.getMap();
       try {
-        collectionsPersistor.saveMap(tx, map);
+        return collectionsPersistor.saveMap(tx, map);
       } catch (DatabaseException e) {
         throw new TCDatabaseException(e);
       }
     }
+    return 0;
   }
 
   public void saveAllObjects(PersistenceTransaction persistenceTransaction, Collection managedObjects) {
@@ -470,5 +543,38 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   // for testing purpose only
   ObjectIDManager getOibjectIDManager() {
     return objectIDManager;
+  }
+
+  private static final class StatsRecord {
+    private final AtomicInteger written    = new AtomicInteger(0);
+    private final AtomicInteger count      = new AtomicInteger(0);
+    private final AtomicInteger newObjects = new AtomicInteger(0);
+    private final String        className;
+
+    public StatsRecord(String className) {
+      this.className = className;
+    }
+
+    public void update(int length, boolean isNew) {
+      written.addAndGet(length);
+      count.incrementAndGet();
+      if (isNew) newObjects.incrementAndGet();
+    }
+
+    public void printDetailsIfNecessary(StatsRecord total) {
+      int length = written.getAndSet(0);
+      int c = count.getAndSet(0);
+      int newCount = newObjects.getAndSet(0);
+      if (c != 0) {
+        statsLogger.info(createLogString(className, length, c, newCount));
+        if (total != null) total.add(length, c, newCount);
+      }
+    }
+
+    private void add(int length, int c, int newCount) {
+      written.addAndGet(length);
+      count.addAndGet(c);
+      newObjects.addAndGet(newCount);
+    }
   }
 }

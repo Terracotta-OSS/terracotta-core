@@ -82,6 +82,13 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
   private volatile State                                state                    = PASSIVE_MODE;
   private final AtomicInteger                           totalPendingTransactions = new AtomicInteger(0);
+  private final AtomicInteger                           txnsCommitted            = new AtomicInteger(0);
+  private final AtomicInteger                           objectsCommitted         = new AtomicInteger(0);
+  private final AtomicInteger                           noOfCommits              = new AtomicInteger(0);
+  private final boolean                                 commitLoggingEnabled;
+  private volatile long                                 lastStatsTime            = 0;
+
+  private Object                                        statsLock                = new Object();
 
   public ServerTransactionManagerImpl(ServerGlobalTransactionManager gtxm, TransactionStore transactionStore,
                                       LockManager lockManager, ClientStateManager stateManager,
@@ -101,6 +108,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     if (config.isLoggingEnabled()) {
       enableTransactionLogger();
     }
+    this.commitLoggingEnabled = config.isPrintCommitsEnabled();
   }
 
   public void enableTransactionLogger() {
@@ -342,7 +350,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
    * imposes a problem. The clients could read an object that has changes but it not committed to the disk yet and If
    * the server crashes then transactions are resent and may be re-applied in the clients when it should not have
    * re-applied. To avoid this we now commit inline before releasing the objects.
-   *
+   * 
    * @see ObjectManagerImpl.releaseAll() for more details.
    */
   public void commit(PersistenceTransactionProvider ptxp, Collection objects, Map newRoots,
@@ -353,6 +361,24 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     objectManager.releaseAll(ptx, objects);
     fireRootCreatedEvents(newRoots);
     committed(appliedServerTransactionIDs);
+    if (commitLoggingEnabled) updateCommittedStats(appliedServerTransactionIDs.size(), objects.size());
+  }
+
+  private void updateCommittedStats(int noOfTxns, int noOfObjects) {
+    txnsCommitted.addAndGet(noOfTxns);
+    objectsCommitted.addAndGet(noOfObjects);
+    noOfCommits.incrementAndGet();
+    long now = System.currentTimeMillis();
+    if (now - lastStatsTime > 5000) {
+      synchronized (statsLock) {
+        if (now - lastStatsTime > 5000) {
+          lastStatsTime = now;
+          logger.info("Last 5 secs : No Of Txns committed : " + txnsCommitted.getAndSet(0)
+                      + " No of Objects Commited : " + objectsCommitted.getAndSet(0) + " No of commits : "
+                      + noOfCommits.getAndSet(0));
+        }
+      }
+    }
   }
 
   /**
