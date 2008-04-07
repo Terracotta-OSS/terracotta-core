@@ -3,7 +3,6 @@
  */
 package com.tc.statistics.retrieval.actions;
 
-import com.tc.exception.TCRuntimeException;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
@@ -34,7 +33,8 @@ public class SRASystemProperties implements StatisticRetrievalAction {
       properties.store(out, null);
       return new StatisticData[] { new StatisticData(ACTION_NAME, out.toString("ISO-8859-1")) };
     } catch (IOException e) {
-      throw new TCRuntimeException("Unexpected error while storing the system properties.", e);
+      LOGGER.warn(e);
+      return EMPTY_STATISTIC_DATA;
     }
   }
 }

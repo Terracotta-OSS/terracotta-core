@@ -7,7 +7,6 @@ import org.hyperic.sigar.CpuPerc;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 
-import com.tc.exception.TCRuntimeException;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
@@ -51,7 +50,8 @@ public class SRACpu implements StatisticRetrievalAction, SRACpuConstants {
       }
       return data;
     } catch (SigarException e) {
-      throw new TCRuntimeException(e);
+      LOGGER.warn(e);
+      return EMPTY_STATISTIC_DATA;
     }
   }
 

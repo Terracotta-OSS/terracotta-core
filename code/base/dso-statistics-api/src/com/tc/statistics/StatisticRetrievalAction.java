@@ -3,6 +3,9 @@
  */
 package com.tc.statistics;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
+
 /**
  * This interface has to be implemented to retrieve data from system, for
  * storage into the CVT. {@code StatisticRetrievalAction} is abbreviated as SRA
@@ -22,6 +25,11 @@ public interface StatisticRetrievalAction {
    * Convenience field that allows SRAs to return empty data.
    */
   public final static StatisticData[] EMPTY_STATISTIC_DATA = new StatisticData[0];
+
+  /**
+   * Logger that can be used by all SRAs.
+   */
+  public final static TCLogger LOGGER = TCLogging.getLogger(StatisticRetrievalAction.class);
 
   /**
    * Retrieves statistics data from the system and formats it as an array of

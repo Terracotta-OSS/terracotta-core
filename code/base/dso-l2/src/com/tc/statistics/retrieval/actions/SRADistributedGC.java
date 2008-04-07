@@ -31,8 +31,9 @@ public class SRADistributedGC implements StatisticRetrievalAction {
   public static final String ACTION_NAME = MarkAndSweepGarbageCollector.DISTRIBUTED_GC_STATISTICS;
 
   public StatisticData[] retrieveStatisticData() {
-    throw new UnsupportedOperationException(ACTION_NAME + " Statistics cannot be retrieved using the action instance." +
-                                            " It will be collected automatically when triggered by the system.");
+    LOGGER.warn(ACTION_NAME + " Statistics cannot be retrieved using the action instance." +
+                " It will be collected automatically when triggered by the system.");
+    return EMPTY_STATISTIC_DATA;
   }
 
   public String getName() {

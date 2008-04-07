@@ -8,7 +8,6 @@ import org.hyperic.sigar.FileSystemUsage;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 
-import com.tc.exception.TCRuntimeException;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
@@ -29,10 +28,10 @@ import java.util.List;
 public class SRADiskActivity implements StatisticRetrievalAction {
   
   public final static String ACTION_NAME = "disk activity";
-  public static final String ELEMENT_BYTES_READ = "bytes read";
-  public static final String ELEMENT_BYTES_WRITTEN = "bytes written";
-  public static final String ELEMENT_READS = "reads";
-  public static final String ELEMENT_WRITES = "writes";
+  public final static String ELEMENT_BYTES_READ = "bytes read";
+  public final static String ELEMENT_BYTES_WRITTEN = "bytes written";
+  public final static String ELEMENT_READS = "reads";
+  public final static String ELEMENT_WRITES = "writes";
 
   private final Sigar sigar;
 
@@ -64,7 +63,8 @@ public class SRADiskActivity implements StatisticRetrievalAction {
       return (StatisticData[])data.toArray(new StatisticData[data.size()]);
 
     } catch (SigarException e) {
-      throw new TCRuntimeException(e);
+      LOGGER.warn(e);
+      return EMPTY_STATISTIC_DATA;
     }
   }
 

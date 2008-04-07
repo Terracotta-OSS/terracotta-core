@@ -7,7 +7,6 @@ import org.hyperic.sigar.NetInterfaceStat;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 
-import com.tc.exception.TCRuntimeException;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
@@ -24,8 +23,7 @@ import java.util.List;
  * <li>bytes written</li>
  */
 public class SRANetworkActivity implements StatisticRetrievalAction {
-
-
+  
   public final static String ACTION_NAME = "network activity";
   public static final String ELEMENT_BYTES_READ = "bytes read";
   public static final String ELEMENT_BYTES_WRITTEN = "bytes written";
@@ -54,7 +52,8 @@ public class SRANetworkActivity implements StatisticRetrievalAction {
       return (StatisticData[])data.toArray(new StatisticData[data.size()]);
 
     } catch (SigarException e) {
-      throw new TCRuntimeException(e);
+      LOGGER.warn(e);
+      return EMPTY_STATISTIC_DATA;
     }
   }
 
