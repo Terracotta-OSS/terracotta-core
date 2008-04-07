@@ -72,7 +72,7 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
       case NODE_JOINED_WITH_DIRTY_DB:
         return "Newly Joined Node Contains dirty database. (Please clean up DB and restart node)";
       case SPLIT_BRAIN:
-        return "SPLIT BRAIN DEDUCTED";
+        return "SPLIT BRAIN DETECTED";
       default:
         throw new AssertionError("Unknown type : " + type);
     }
