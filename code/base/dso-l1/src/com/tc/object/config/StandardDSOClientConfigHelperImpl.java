@@ -31,7 +31,6 @@ import com.tc.jboss.transform.UCLAdapter;
 import com.tc.l1propertiesfroml2.L1ReconnectConfig;
 import com.tc.l1propertiesfroml2.L1ReconnectConfigImpl;
 import com.tc.logging.CustomerLogging;
-import com.tc.logging.LogLevel;
 import com.tc.logging.TCLogger;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.object.LiteralValues;
@@ -1978,7 +1977,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       try {
         ConnectionInfo ci = connectInfo[i];
         theURL = new URL("http", ci.getHostname(), ci.getPort(), "/l1reconnectproperties");
-        consoleLogger.log(LogLevel.INFO, "Trying to get L1 Reconnect Properties from " + ci);
+        logger.info("Trying to get L1 Reconnect Properties from " + ci);
         connection = theURL.openConnection();
         l1PropFromL2Stream = connection.getInputStream();
         if (l1PropFromL2Stream != null) return l1PropFromL2Stream;
@@ -1987,7 +1986,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
         text += "; this error is permanent, so this source will not be retried.";
         boolean tryAgain = i < connectInfo.length;
         if (tryAgain) text += " Skipping this source and going to the next one.";
-        consoleLogger.warn(text);
+        logger.warn(text);
         if (!tryAgain) { throw e; }
       }
     }
@@ -2003,7 +2002,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
         in = getL1PropertiesFromL2Stream((ConnectionInfo[]) connectInfo.getObject());
       } catch (IOException e) {
         String text = "We couldn't load l1 reconnect properties from any of the servers. Retrying.....";
-        consoleLogger.error(text);
+        logger.error(text);
         ThreadUtil.reallySleep(1000);
       } catch (Exception e) {
         throw new AssertionError(e);
