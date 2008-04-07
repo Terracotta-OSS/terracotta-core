@@ -66,11 +66,13 @@ public class AppServerInfo {
     } else if (name.equals("resin")) {
       id = RESIN;
     } else {
-      throw new RuntimeException("App server [" + name + "] is not yet defined!");
+      id = -1;
     }
   }
 
   public int getId() {
+    if (id < 0)
+      throw new RuntimeException("App server [" + name + "] is not yet defined!");
     return id;
   }
 
