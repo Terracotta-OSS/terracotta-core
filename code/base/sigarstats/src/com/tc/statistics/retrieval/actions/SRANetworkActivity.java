@@ -52,7 +52,7 @@ public class SRANetworkActivity implements StatisticRetrievalAction {
       return (StatisticData[])data.toArray(new StatisticData[data.size()]);
 
     } catch (SigarException e) {
-      LOGGER.warn(e);
+      LOGGER.warn("Couldn't retrieve data for statistic '" + ACTION_NAME + "'", e);
       return EMPTY_STATISTIC_DATA;
     }
   }

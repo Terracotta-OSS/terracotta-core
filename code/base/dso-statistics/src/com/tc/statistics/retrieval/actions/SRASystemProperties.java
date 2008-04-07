@@ -33,7 +33,7 @@ public class SRASystemProperties implements StatisticRetrievalAction {
       properties.store(out, null);
       return new StatisticData[] { new StatisticData(ACTION_NAME, out.toString("ISO-8859-1")) };
     } catch (IOException e) {
-      LOGGER.warn(e);
+      LOGGER.warn("Couldn't retrieve data for statistic '" + ACTION_NAME + "'", e);
       return EMPTY_STATISTIC_DATA;
     }
   }
