@@ -3,10 +3,11 @@
  */
 package com.tc.statistics.retrieval.actions;
 
-import junit.framework.TestCase;
-
-import com.tc.util.Assert;
+import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
+import com.tc.util.Assert;
+
+import junit.framework.TestCase;
 
 public class SRADistributedGCTest extends TestCase {
 
@@ -15,11 +16,6 @@ public class SRADistributedGCTest extends TestCase {
     Assert.assertEquals(sra.getName(), SRADistributedGC.ACTION_NAME);
     Assert.assertEquals(sra.getType(), StatisticType.TRIGGERED);
 
-    try {
-      sra.retrieveStatisticData();
-      fail("SRADistributedGC cannot be used to collect statistics data");
-    } catch (UnsupportedOperationException e) {
-      //ok
-    }
+    Assert.assertSame(StatisticRetrievalAction.EMPTY_STATISTIC_DATA, sra.retrieveStatisticData());
   }
 }
