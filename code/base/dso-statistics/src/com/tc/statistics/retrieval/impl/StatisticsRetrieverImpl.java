@@ -5,7 +5,6 @@ package com.tc.statistics.retrieval.impl;
 
 import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
 
-import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesImpl;
@@ -34,7 +33,7 @@ import java.util.TimerTask;
 public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsBufferListener {
   public final static int DEFAULT_NOTIFICATION_INTERVAL = 60;
 
-  private final static TCLogger logger = TCLogging.getLogger(StatisticsRetrieverImpl.class);
+  private final static TCLogger LOGGER = TCLogging.getLogger(StatisticsRetrieverImpl.class);
 
   private final Timer timer = new TCTimerImpl("Statistics Retriever Timer", true);
 
@@ -141,7 +140,13 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
   }
 
   private void retrieveAction(final Date moment, final StatisticRetrievalAction action) {
-    StatisticData[] data = action.retrieveStatisticData();
+    StatisticData[] data = null;
+    try {
+      data = action.retrieveStatisticData();
+    } catch (Throwable e) {
+      LOGGER.error("Unexpected exception while retrieving the statistic data for SRA '" + action.getName() + "'", e);
+      return;
+    }
     if (data != null) {
       for (int i = 0; i < data.length; i++) {
         data[i].setSessionId(sessionId);
@@ -155,7 +160,7 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
     try {
       buffer.storeStatistic(data);
     } catch (StatisticsBufferException e) {
-      throw new TCRuntimeException(e);
+      LOGGER.error("Couldn't buffer the statistic data " + data, e);
     }
   }
 
@@ -267,18 +272,18 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
 
     private LogRetrievalInProcessTask() {
       start = System.currentTimeMillis();
-      logger.info("Statistics retrieval is STARTING for session ID '" + sessionId + "' on node '" + buffer.getDefaultNodeName() + "'.");
+      LOGGER.info("Statistics retrieval is STARTING for session ID '" + sessionId + "' on node '" + buffer.getDefaultNodeName() + "'.");
     }
 
     public void shutdown() {
       shutdown = true;
-      logger.info("Statistics retrieval has STOPPED for session ID '" + sessionId + "' on node '" + buffer.getDefaultNodeName() + "' after running for " + ((System.currentTimeMillis() - start) / 1000) + " seconds.");
+      LOGGER.info("Statistics retrieval has STOPPED for session ID '" + sessionId + "' on node '" + buffer.getDefaultNodeName() + "' after running for " + ((System.currentTimeMillis() - start) / 1000) + " seconds.");
       this.cancel();
     }
 
     public void run() {
       if (!shutdown) {
-        logger.info("Statistics retrieval in PROCESS for session ID '" + sessionId + "' on node '" + buffer.getDefaultNodeName() + "' for " + ((System.currentTimeMillis() - start) / 1000) + " seconds.");
+        LOGGER.info("Statistics retrieval in PROCESS for session ID '" + sessionId + "' on node '" + buffer.getDefaultNodeName() + "' for " + ((System.currentTimeMillis() - start) / 1000) + " seconds.");
       }
     }
   }
