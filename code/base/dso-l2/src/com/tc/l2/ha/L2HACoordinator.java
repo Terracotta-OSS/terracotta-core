@@ -263,9 +263,6 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
       } catch (IOException e) {
         throw new AssertionError(e);
       }
-    } else {
-      // TODO:// handle
-      logger.info("Recd. " + sce + " ! Ignoring for now !!!!");
     }
   }
 
