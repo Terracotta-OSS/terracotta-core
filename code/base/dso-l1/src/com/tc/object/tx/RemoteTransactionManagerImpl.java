@@ -227,7 +227,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     if (!txn.hasChangesOrNotifies()) throw new AssertionError("Attempt to commit an empty transaction.");
 
     if (DebugUtil.DEBUG) {
-      System.err.println(ManagerUtil.getClientID() + " commiting " + txID.toString());
+      System.err.println(ManagerUtil.getClientID() + " commiting " + txn.getTransactionID());
     }
 
     long start = System.currentTimeMillis();
@@ -382,7 +382,8 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
       Set completedLocks = lockAccounting.acknowledge(txID);
       if (DebugUtil.DEBUG) {
-        System.err.println(ManagerUtil.getClientID() + " receive ack " + txID.toString() + " completedLocks: " + completedLocks);
+        System.err.println(ManagerUtil.getClientID() + " receive ack " + txID.toString() + " completedLocks: "
+                           + completedLocks);
       }
 
       TxnBatchID container = batchAccounting.getBatchByTransactionID(txID);
