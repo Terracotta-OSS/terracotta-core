@@ -114,8 +114,7 @@ public class ServerClientHandshakeManager {
 
       if (state == STARTING) {
         channelManager.makeChannelActiveNoAck(handshake.getChannel());
-        transactionManager.setResentTransactionIDs(clientID, handshake
-            .getResentTransactionIDs());
+        transactionManager.setResentTransactionIDs(clientID, handshake.getResentTransactionIDs());
       }
 
       this.sequenceValidator.initSequence(clientID, handshake.getTransactionSequenceIDs());
@@ -130,20 +129,20 @@ public class ServerClientHandshakeManager {
 
       for (Iterator i = handshake.getWaitContexts().iterator(); i.hasNext();) {
         WaitContext ctxt = (WaitContext) i.next();
-        lockManager.reestablishWait(ctxt.getLockID(), ctxt.getNodeID(), ctxt.getThreadID(), ctxt.getLockLevel(),
-                                    ctxt.getTimerSpec(), lockResponseSink);
+        lockManager.reestablishWait(ctxt.getLockID(), ctxt.getNodeID(), ctxt.getThreadID(), ctxt.getLockLevel(), ctxt
+            .getTimerSpec(), lockResponseSink);
       }
 
       for (Iterator i = handshake.getPendingLockContexts().iterator(); i.hasNext();) {
         LockContext ctxt = (LockContext) i.next();
-        lockManager.requestLock(ctxt.getLockID(), ctxt.getNodeID(), ctxt.getThreadID(), ctxt.getLockLevel(), ctxt.getLockType(),
-                                lockResponseSink);
+        lockManager.requestLock(ctxt.getLockID(), ctxt.getNodeID(), ctxt.getThreadID(), ctxt.getLockLevel(), ctxt
+            .getLockType(), lockResponseSink);
       }
 
       for (Iterator i = handshake.getPendingTryLockContexts().iterator(); i.hasNext();) {
         TryLockContext ctxt = (TryLockContext) i.next();
-        lockManager.tryRequestLock(ctxt.getLockID(), ctxt.getNodeID(), ctxt.getThreadID(), ctxt.getLockLevel(), ctxt.getLockType(), ctxt
-            .getTimerSpec(), lockResponseSink);
+        lockManager.tryRequestLock(ctxt.getLockID(), ctxt.getNodeID(), ctxt.getThreadID(), ctxt.getLockLevel(), ctxt
+            .getLockType(), ctxt.getTimerSpec(), lockResponseSink);
       }
 
       if (handshake.isObjectIDsRequested()) {
@@ -187,17 +186,21 @@ public class ServerClientHandshakeManager {
   }
 
   public synchronized void notifyTimeout() {
-    assertNotStarted();
-    logger.info("Reconnect window closing.  Killing any previously connected clients that failed to connect in time: "
+    if (!isStarted()) {
+      logger
+          .info("Reconnect window closing.  Killing any previously connected clients that failed to connect in time: "
                 + existingUnconnectedClients);
-    this.channelManager.closeAll(existingUnconnectedClients);
-    for (Iterator i = existingUnconnectedClients.iterator(); i.hasNext();) {
-      ClientID deadClient = (ClientID) i.next();
-      this.clientStateManager.shutdownNode(deadClient);
-      i.remove();
+      this.channelManager.closeAll(existingUnconnectedClients);
+      for (Iterator i = existingUnconnectedClients.iterator(); i.hasNext();) {
+        ClientID deadClient = (ClientID) i.next();
+        this.clientStateManager.shutdownNode(deadClient);
+        i.remove();
+      }
+      logger.info("Reconnect window closed. All dead clients removed.");
+      start();
+    } else {
+      logger.info("Reconnect window closed, but server already started.");
     }
-    logger.info("Reconnect window closed. All dead clients removed.");
-    start();
   }
 
   // Should be called from within the sync block
@@ -220,7 +223,8 @@ public class ServerClientHandshakeManager {
       start();
     } else {
       for (Iterator i = existingConnections.iterator(); i.hasNext();) {
-        existingUnconnectedClients.add(channelManager.getClientIDFor(new ChannelID(((ConnectionID) i.next()).getChannelID())));
+        existingUnconnectedClients.add(channelManager.getClientIDFor(new ChannelID(((ConnectionID) i.next())
+            .getChannelID())));
       }
 
       consoleLogger.info("Starting reconnect window: " + this.reconnectTimeout + " ms.");
@@ -230,10 +234,6 @@ public class ServerClientHandshakeManager {
 
   private void assertInit() {
     if (state != INIT) throw new AssertionError("Should be in STARTING state: " + state);
-  }
-
-  private void assertNotStarted() {
-    if (state == STARTED) throw new AssertionError("In STARTING state, but shouldn't be.");
   }
 
   /**
