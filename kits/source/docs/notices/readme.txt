@@ -1,7 +1,7 @@
 Terracotta
 ==========
 
-Documentation: http://docs.terracotta.org
+Documentation: http://www.terracotta.org/kit/reflector?kitID=2.6&pageID=Documentation 
 Forums:        http://www.terracottatech.com/forums/
 Mailing Lists: http://lists.terracotta.org
 Services:      http://www.terracottatech.com/support_services.shtml
@@ -29,6 +29,18 @@ Terracotta DSO Eclipse Plug-in
       - http://www.terracotta.org/eclipse
 
 
+Sign Up
+--------------
+To get the most out of your Terracotta experience, please sign up for a Terracotta account:
+    - http://www.terracotta.org/confluence/display/orgsite/Sign+Up
+
+With a Terracotta account, you can:
+    - Access all services with a site-wide ID
+    - Post questions to the Forums
+    - Submit JIRA reports
+    - Vote on bugs to be fixed, or features for the next release 
+    
+    
 Configuration File Samples
 --------------------------
 
@@ -64,6 +76,17 @@ The Console tool provides a view inside the Terracotta Server, letting you see
 activity inside Terracotta at run-time.
 
 
+Terracotta Forge
+--------------------
+Terracotta has integration modules (TIMs) that enable integration with many common frameworks,
+such as EHCache and Quartz. For the latest information please visit:
+
+    - http://www.terracotta.org/confluence/display/integrations/Home
+
+Projects for the Forge can be found at:
+    - http://forge.terracotta.org 
+
+     
 Java Virtual Machine (Windows only)
 --------------------
 
@@ -80,5 +103,5 @@ as doing so may cause the Terracotta Server to run with an unsupported JVM.
 
 
 ----
-Copyright (c) 2007, Terracotta, Inc.
+Copyright (c) 2008, Terracotta, Inc.
 http://www.terracotta.org
