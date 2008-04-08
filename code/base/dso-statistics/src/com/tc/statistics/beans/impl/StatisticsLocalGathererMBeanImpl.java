@@ -72,6 +72,10 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
     //
   }
 
+  public boolean isActive() {
+    return subsystem.isActive();
+  }
+
   public void startup() {
     if (!subsystem.isActive()) {
       return;
