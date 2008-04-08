@@ -1063,8 +1063,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   private static class PendingList {
-    List pending = new ArrayList();
-    Map  blocked = new HashMap();
+    List pending      = new ArrayList();
+    Map  blocked      = new HashMap();
+    int  blockedCount = 0;
 
     public void makeBlocked(ObjectID blockedOid, Pending pd) {
       ArrayList blockedRequests = (ArrayList) blocked.get(blockedOid);
@@ -1073,6 +1074,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         blocked.put(blockedOid, blockedRequests);
       }
       blockedRequests.add(pd);
+      blockedCount++;
     }
 
     public boolean isBlocked(ObjectID id) {
@@ -1083,6 +1085,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       ArrayList blockedRequests = (ArrayList) blocked.remove(id);
       if (blockedRequests != null) {
         pending.addAll(blockedRequests);
+        blockedCount -= blockedRequests.size();
       }
     }
 
@@ -1101,7 +1104,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
 
     public String toString() {
-      return "PendingList { pending lookups = " + pending.size() + ", blocked oids = " + blocked.keySet() + " } ";
+      return "PendingList { pending lookups = " + pending.size() + ", blocked count = " + blockedCount
+             + ", blocked oids = " + blocked.keySet() + " } ";
     }
   }
 
