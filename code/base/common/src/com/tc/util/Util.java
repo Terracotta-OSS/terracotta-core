@@ -3,6 +3,8 @@
  */
 package com.tc.util;
 
+import com.tc.exception.ExceptionWrapper;
+import com.tc.exception.ExceptionWrapperImpl;
 import com.tc.logging.TCLogger;
 import java.lang.reflect.Array;
 
@@ -10,6 +12,8 @@ import java.lang.reflect.Array;
  * Generic utility methods.
  */
 public class Util {
+  private static final ExceptionWrapper wrapper = new ExceptionWrapperImpl();
+  
   private static final Error FATAL_ERROR = new Error(
   "Fatal error -- Please refer to console output and Terracotta log files for more information");
 
@@ -112,5 +116,9 @@ public class Util {
     h += (h << 4);
     h ^= (h >>> 10);
     return h;
+  }
+  
+  public static String getFormattedMessage(String msg) {
+    return wrapper.wrap(msg);
   }
 }
