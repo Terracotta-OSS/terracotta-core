@@ -6,10 +6,14 @@ package org.terracotta.dso.editors.chooser;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
+import org.eclipse.jdt.core.IClasspathEntry;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaModel;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.internal.ui.packageview.ClassPathContainer;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
@@ -38,13 +42,40 @@ public class FileBehavior implements NavigatorBehavior {
     };
   }
 
+  protected boolean packageFragmentContainsJavaResources(final IPackageFragment packageFragment) {
+    try {
+      return packageFragment.containsJavaResources();
+    } catch (JavaModelException jme) {
+      return false;
+    }
+  }
+
+  protected boolean isPackageFragmentBinaryKind(final IPackageFragment packageFragment) {
+    try {
+      return packageFragment.getKind() == IPackageFragmentRoot.K_BINARY;
+    } catch (JavaModelException jme) {
+      return false;
+    }
+  }
+
   protected boolean filterSelect(Viewer viewer, Object parentElement, Object element) {
     if (element instanceof IJavaModel) return true;
     if (element instanceof IJavaProject) return true;
     if (element instanceof IFolder) return true;
     if (element instanceof IFile) return true;
-    if (element instanceof IPackageFragment) return true;
+    if (element instanceof IPackageFragment) {
+      IPackageFragment packageFragment = (IPackageFragment) element;
+      if (isPackageFragmentBinaryKind(packageFragment)
+          || (packageFragment.isDefaultPackage() && !packageFragmentContainsJavaResources(packageFragment))) { return false; }
+      return true;
+    }
     if (element instanceof IPackageFragmentRoot) return true;
+    if (element instanceof ClassPathContainer) {
+      ClassPathContainer container = (ClassPathContainer) element;
+      IClasspathEntry cpe = container.getClasspathEntry();
+      return (cpe.getEntryKind() == IClasspathEntry.CPE_SOURCE);
+    }
+    if (element instanceof ICompilationUnit) return true;
     return false;
   }
 

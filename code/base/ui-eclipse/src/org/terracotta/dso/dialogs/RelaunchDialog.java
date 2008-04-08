@@ -30,7 +30,6 @@ import org.terracotta.ui.util.SWTUtil;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * <p>
@@ -50,36 +49,36 @@ import java.util.Map;
 
 public class RelaunchDialog extends MessageDialog implements SelectionListener {
 
-  private IProject             fProject;
-  private Tree                 fTree;
-  private TreeItem             fServersItem;
-  private TreeItem             fLaunchesItem;
-  private Map<String, ILaunch> fServerLaunches;
-  private List<ILaunch>        fLaunches;
+  private IProject      fProject;
+  private Tree          fTree;
+  private TreeItem      fServersItem;
+  private TreeItem      fLaunchesItem;
+  private List<ILaunch> fServerLaunches;
+  private List<ILaunch> fLaunches;
 
-  private Button               fDisableRelaunchQueryButton;
+  private Button        fDisableRelaunchQueryButton;
 
-  private static String        DISABLE_RELAUNCH_QUERY_MSG = "Don't bother me with this anymore";
+  private static String DISABLE_RELAUNCH_QUERY_MSG = "Don't bother me with this anymore";
 
-  private static String        TITLE                      = "Terracotta";
-  private static String        MSG                        = "The configuration file changed. Relaunch all related launch targets?";
+  private static String TITLE                      = "Terracotta";
+  private static String MSG                        = "The configuration file changed. Relaunch all related launch targets?";
 
-  public static int            CONTINUE_ID                = 0;
-  public static int            TERMINATE_ID               = CONTINUE_ID + 1;
-  public static int            RESTART_ID                 = TERMINATE_ID + 1;
+  public static int     CONTINUE_ID                = 0;
+  public static int     TERMINATE_ID               = CONTINUE_ID + 1;
+  public static int     RESTART_ID                 = TERMINATE_ID + 1;
 
-  private static String        CONTINUE_LABEL             = "Continue";
-  private static String        TERMINATE_LABEL            = "Terminate";
-  private static String        RESTART_LABEL              = "Restart";
+  private static String CONTINUE_LABEL             = "Continue";
+  private static String TERMINATE_LABEL            = "Terminate";
+  private static String RESTART_LABEL              = "Restart";
 
   /*
    * We attempt to show all the launch items by expanding the nodes and setting hints on the tree layout to display it's
    * full content. This is the maximum number of items we'll try to accomodate in that way before the tree will scrolled
    * vertically. This is all about the initial dialog size.
    */
-  private static int           MAX_VISIBLE_LAUNCH_ITEMS   = 10;
+  private static int    MAX_VISIBLE_LAUNCH_ITEMS   = 10;
 
-  public RelaunchDialog(Shell shell, IProject project, Map<String, ILaunch> serverLaunches, List<ILaunch> launches) {
+  public RelaunchDialog(Shell shell, IProject project, List<ILaunch> serverLaunches, List<ILaunch> launches) {
     super(shell, TITLE, null, MSG, MessageDialog.NONE, new String[] { CONTINUE_LABEL, TERMINATE_LABEL, RESTART_LABEL },
           0);
     setShellStyle(getShellStyle() | SWT.RESIZE);
@@ -101,13 +100,12 @@ public class RelaunchDialog extends MessageDialog implements SelectionListener {
     fTree = new Tree(comp, SWT.BORDER | SWT.MULTI | SWT.CHECK);
     if (fServerLaunches.size() > 0) {
       fServersItem = new TreeItem(fTree, SWT.NONE);
-      Iterator<String> iter = fServerLaunches.keySet().iterator();
+      Iterator<ILaunch> iter = fServerLaunches.iterator();
 
       fServersItem.setText("Terracotta Servers");
       fServersItem.setChecked(true);
       while (iter.hasNext()) {
-        String name = iter.next();
-        ILaunch launch = fServerLaunches.get(name);
+        ILaunch launch = iter.next();
         TreeItem serverLaunchItem = new TreeItem(fServersItem, SWT.NONE);
         serverLaunchItem.setData(launch);
         serverLaunchItem.setText(computeName(launch));
@@ -182,7 +180,7 @@ public class RelaunchDialog extends MessageDialog implements SelectionListener {
         for (int i = 0; i < serverLaunchCount; i++) {
           TreeItem item = fServersItem.getItem(i);
           if (!item.getChecked()) {
-            fServerLaunches.values().remove(item.getData());
+            fServerLaunches.remove(item.getData());
           }
         }
       }

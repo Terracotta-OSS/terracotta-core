@@ -12,12 +12,10 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
-
 import org.terracotta.dso.ConfigurationHelper;
 import org.terracotta.dso.ProjectNature;
 import org.terracotta.dso.TcPlugin;
 
-import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 
@@ -29,9 +27,7 @@ import com.terracottatech.config.Servers;
  * @see ManageServerAction
  */
 
-public class ManageServerHandler extends BaseMenuCreator
-  implements IProjectAction
-{
+public class ManageServerHandler extends BaseMenuCreator implements IProjectAction {
   private IJavaProject m_javaProject;
 
   public ManageServerHandler() {
@@ -50,31 +46,30 @@ public class ManageServerHandler extends BaseMenuCreator
   }
 
   private void update(IJavaProject javaProject) {
-    if(javaProject != null) {
+    if (javaProject != null) {
       try {
-        if(javaProject.getProject().hasNature(ProjectNature.NATURE_ID)) {
+        if (javaProject.getProject().hasNature(ProjectNature.NATURE_ID)) {
           m_javaProject = javaProject;
-        }
-        else {
+        } else {
           m_javaProject = null;
         }
-      } catch(CoreException ce) {/**/}
-    }
-    else {
+      } catch (CoreException ce) {/**/
+      }
+    } else {
       m_javaProject = null;
     }
   }
-  
+
   public void update(IProject project) {
     update(ActionUtil.findJavaProject(project));
-    if(m_delegateAction != null) {
+    if (m_delegateAction != null) {
       m_delegateAction.setEnabled(m_javaProject != null);
     }
   }
-  
+
   public Menu getMenu(Control parent) {
     Menu menu = null;
-    
+
     buildMenu(menu = new Menu(parent));
 
     return menu;
@@ -82,43 +77,30 @@ public class ManageServerHandler extends BaseMenuCreator
 
   public Menu getMenu(Menu parent) {
     Menu menu = null;
-    
+
     buildMenu(menu = new Menu(parent));
 
     return menu;
   }
 
   protected void fillMenu(Menu menu) {
-    if(m_javaProject != null) {
-      TcPlugin            plugin       = TcPlugin.getDefault();
-      IProject            project      = m_javaProject.getProject();
+    if (m_javaProject != null) {
+      TcPlugin plugin = TcPlugin.getDefault();
+      IProject project = m_javaProject.getProject();
       ConfigurationHelper configHelper = plugin.getConfigurationHelper(project);
-      Servers             servers      = configHelper.getServers();
+      Servers servers = configHelper.getServers();
 
-      if(servers == null) {
+      if (servers == null) {
         m_delegateAction.setEnabled(true);
-        addMenuAction(menu, new ManageServerAction(m_javaProject, "default"));
+        addMenuAction(menu, new ManageServerAction(m_javaProject));
       } else {
         Server[] serverArray = servers.getServerArray();
-
         m_delegateAction.setEnabled(true);
-
-        if(serverArray != null) {
-          for(int i = 0; i < serverArray.length; i++) {
-            Server server = serverArray[i];
-            String name;
-            
-            if(server.isSetName()) {
-              name = server.getName();
-            } else {
-              int dsoPort = server.isSetDsoPort() ? server.getDsoPort() : 9510;
-              name = server.getHost() + ":" + dsoPort;
-            }
-            name = ParameterSubstituter.substitute(name);
-            addMenuAction(menu, new ManageServerAction(m_javaProject, name));
+        if (serverArray != null) {
+          for (int i = 0; i < serverArray.length; i++) {
+            addMenuAction(menu, new ManageServerAction(m_javaProject, serverArray[i]));
           }
-        }
-        else {
+        } else {
           m_delegateAction.setEnabled(false);
         }
       }

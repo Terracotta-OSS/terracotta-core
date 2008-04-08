@@ -7,7 +7,9 @@ package org.terracotta.dso;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.DebugEvent;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
@@ -38,6 +40,7 @@ import com.tc.object.appevent.NonPortableObjectEvent;
 import com.tc.object.appevent.ReadOnlyObjectEvent;
 import com.tc.object.appevent.UnlockedSharedObjectEvent;
 import com.tc.util.concurrent.ThreadUtil;
+import com.terracottatech.config.Server;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -55,7 +58,7 @@ import javax.management.ObjectName;
  * server and it's done this way to because otherwise we must rely on the configuration, which the user can change.
  * 
  * @see TcPlugin.launchServer
- */
+ */ 
 
 public class ServerTracker implements IDebugEventSetListener {
   private static ServerTracker          m_instance          = new ServerTracker();
@@ -148,53 +151,50 @@ public class ServerTracker implements IDebugEventSetListener {
     }
   }
 
-  public void startServer(IJavaProject javaProject, String name, IProgressMonitor monitor)
+  public void startServer(IJavaProject javaProject, String name, Server server, IProgressMonitor monitor)
       throws InvocationTargetException {
     if (isRunning(javaProject, name)) {
-      internalStopServer(javaProject, true, name, monitor);
+      internalStopServer(javaProject, true, name, server, monitor);
     } else {
       try {
-        internalStartServer(javaProject, name, monitor);
+        internalStartServer(javaProject, name, server, monitor);
       } catch (CoreException ce) {
         throw new InvocationTargetException(ce);
       }
     }
   }
 
-  private void internalStartServer(final IJavaProject javaProject, final String name, final IProgressMonitor monitor)
+  private void internalStartServer(final IJavaProject javaProject, final String name, final Server server, final IProgressMonitor monitor)
       throws CoreException {
     monitor.beginTask("Starting Terracotta Server '" + name + "' ...", IProgressMonitor.UNKNOWN);
 
     TcPlugin plugin = TcPlugin.getDefault();
     String projName = javaProject.getElementName();
-    int jmxPort = plugin.getJmxPort(javaProject.getProject(), name);
-    ILaunch launch = plugin.launchServer(javaProject, projName, name, null);
-    String statusMsg = null;
+    ILaunch launch = plugin.launchServer(javaProject, projName, name, server, null);
 
     if (launch != null) {
-      ServerInfo info = new ServerInfo(javaProject, name, jmxPort != 0 ? jmxPort : 9520);
+      ServerInfo info = new ServerInfo(javaProject, name, server);
       IProcess[] processes = launch.getProcesses();
 
       if (processes.length > 0) {
         m_servers.put(processes[0], info);
 
         DebugPlugin.getDefault().addDebugEventListener(this);
-
-        waitForMBean(javaProject, name, jmxPort > 0 ? jmxPort : 9520);
+        waitForMBean(javaProject, name, server);
         while (!info.isTerminated() && info.isStarting()) {
           ThreadUtil.reallySleep(1000);
         }
+        
+        monitor.done();
+        
         if (info.isTerminated()) {
-          statusMsg = "Terracotta Server '" + name + "' failed to start.";
+          String msg = "Terracotta Server '" + name + "' failed to start.";
+          Status status = new Status(IStatus.ERROR, TcPlugin.getPluginId(), msg);
+          throw new CoreException(status);
         } else if (info.isStarted()) {
-          statusMsg = "Terracotta Server '" + name + "' started.";
+          displayStatus("Terracotta Server '" + name + "' started.");
         }
       }
-    }
-    monitor.done();
-
-    if (statusMsg != null) {
-      displayStatus(statusMsg);
     }
   }
 
@@ -310,9 +310,9 @@ public class ServerTracker implements IDebugEventSetListener {
     }
   }
 
-  private void waitForMBean(final IJavaProject javaProject, final String name, final int jmxPort) {
+  private void waitForMBean(final IJavaProject javaProject, final String name, final Server server) {
     L2ConnectListener connectListener = new L2ConnectListener(javaProject, name);
-    ServerConnectionManager connectManager = new ServerConnectionManager("localhost", jmxPort, false,
+    ServerConnectionManager connectManager = new ServerConnectionManager(server.getHost(), server.getJmxPort(), false,
         connectListener);
     connectListener.setServerConnectionManager(connectManager);
     connectManager.setAutoConnect(true);
@@ -338,40 +338,42 @@ public class ServerTracker implements IDebugEventSetListener {
   }
 
   public void stopServer(IJavaProject javaProject, IProgressMonitor monitor) throws InvocationTargetException {
-    internalStopServer(javaProject, false, null, monitor);
+    internalStopServer(javaProject, false, null, null, monitor);
   }
 
-  public void stopServer(IJavaProject javaProject, String name, IProgressMonitor monitor)
+  public void stopServer(IJavaProject javaProject, String name, Server server, IProgressMonitor monitor)
       throws InvocationTargetException {
-    internalStopServer(javaProject, false, name, monitor);
+    internalStopServer(javaProject, false, name, server, monitor);
   }
 
-  private void internalStopServer(IJavaProject javaProject, boolean restart, String name, IProgressMonitor monitor)
+  private void internalStopServer(IJavaProject javaProject, boolean restart, String name, Server server, IProgressMonitor monitor)
       throws InvocationTargetException {
-    new TCStopper(javaProject, restart, name).run(monitor);
+    new TCStopper(javaProject, restart, name, server).run(monitor);
   }
 
   class TCStopper implements IRunnableWithProgress {
     IJavaProject m_javaProject;
     boolean      m_restart;
     String       m_name;
+    Server       m_server;
 
     TCStopper(IJavaProject javaProject) {
-      this(javaProject, false, null);
+      this(javaProject, false, null, null);
     }
 
-    TCStopper(IJavaProject javaProject, boolean restart, String name) {
+    TCStopper(IJavaProject javaProject, boolean restart, String name, Server server) {
       m_javaProject = javaProject;
       m_restart = restart;
       m_name = name;
+      m_server = server;
     }
 
     public void run(IProgressMonitor monitor) throws InvocationTargetException {
       try {
         monitor.beginTask("Stopping Terracotta Server '" + m_name + "' ...", IProgressMonitor.UNKNOWN);
-        doStopServer(m_javaProject, m_name, monitor);
+        doStopServer(m_javaProject, m_name, m_server, monitor);
         if (m_restart) {
-          internalStartServer(m_javaProject, m_name, monitor);
+          internalStartServer(m_javaProject, m_name, m_server, monitor);
         }
       } catch (Exception e) {
         throw new InvocationTargetException(e);
@@ -379,13 +381,12 @@ public class ServerTracker implements IDebugEventSetListener {
     }
   }
 
-  private void doStopServer(IJavaProject targetProj, String targetName, IProgressMonitor monitor) throws IOException,
+  private void doStopServer(IJavaProject targetProj, String targetName, Server server, IProgressMonitor monitor) throws IOException,
       DebugException {
     Iterator<IProcess> iter = m_servers.keySet().iterator();
     IProcess proc;
     ServerInfo serverInfo;
     IJavaProject javaProject;
-    int jmxPort;
     String name;
 
     while (iter.hasNext()) {
@@ -398,11 +399,10 @@ public class ServerTracker implements IDebugEventSetListener {
       }
       
       javaProject = serverInfo.getJavaProject();
-      jmxPort = serverInfo.getJmxPort();
       name = serverInfo.getName();
 
       if (javaProject.getProject().isOpen() && targetProj.equals(javaProject) && targetName.equals(name)) {
-        TCStop stopper = new TCStop("localhost", jmxPort != -1 ? jmxPort : 9520);
+        TCStop stopper = new TCStop(server.getHost(), server.getJmxPort());
 
         stopper.stop();
 
@@ -425,6 +425,19 @@ public class ServerTracker implements IDebugEventSetListener {
     }
   }
 
+  ServerInfo getServerInfoByName(String name) {
+    if(name == null) return null;
+    Iterator<ServerInfo> iter = m_servers.values().iterator();
+    while (iter.hasNext()) {
+      ServerInfo info = iter.next();
+      String serverName = info.getName();
+      if(serverName.equals(name)) {
+        return info;
+      }
+    }
+    return null;
+  }
+  
   public void shutdownAllServers() {
     Iterator<ServerInfo> iter = m_servers.values().iterator();
     ServerInfo info;

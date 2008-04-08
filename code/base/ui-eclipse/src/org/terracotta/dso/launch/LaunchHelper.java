@@ -43,6 +43,9 @@ import org.terracotta.dso.TcPlugin;
 import org.terracotta.dso.ConfigSpec.Type;
 import org.terracotta.dso.actions.BuildBootJarAction;
 
+import com.terracottatech.config.Server;
+
+import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -94,7 +97,14 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
           ServerTracker tracker = ServerTracker.getDefault();
           boolean autoStartServer = plugin.getAutoStartServerOption(project);
           if(!tracker.anyRunning(javaProject) && (autoStartServer || queryStartServer(project, monitor))) {
-            tracker.startServer(javaProject, plugin.getAnyServerName(project), monitor);
+            Server server = plugin.getAnyServer(project);
+            String name = TcPlugin.getServerName(server);
+            try {
+              tracker.startServer(javaProject, name, server, monitor);
+            } catch(InvocationTargetException ite) {
+              Throwable cause = ite.getCause();
+              throw cause != null ? cause : ite;
+            }
           }
           if(monitor.isCanceled()) {
             return null;
@@ -178,17 +188,17 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
     final IFile        bootJar,
     final String       jreContainerPath)
   {
-    IProject            project                 = javaProject.getProject();
-    ConfigurationHelper configHelper            = plugin.getConfigurationHelper(project);
-    boolean             stdBootJarExists        = false;
-    boolean             configHasBootJarClasses = configHelper.hasBootJarClasses();
-    boolean             configHasModules        = configHelper.hasModules();
-    
+    IProject            project                          = javaProject.getProject();
+    ConfigurationHelper configHelper                     = plugin.getConfigurationHelper(project);
+    boolean             stdBootJarExists                 = false;
+    boolean             configHasBootJarClasses          = configHelper.hasBootJarClasses();
+    boolean             configHasModules                 = configHelper.hasModules();
+    boolean             configHasModulesOrBootJarClasses = (configHasModules || configHasBootJarClasses);
     try {
       stdBootJarExists = BootJarHelper.getHelper().getBootJarFile().exists();
     } catch(CoreException ce) {/**/}
     
-    if(!stdBootJarExists || (configSpec.isFile() && configHasBootJarClasses)) {
+    if(!stdBootJarExists || (configSpec.isFile() && configHasModulesOrBootJarClasses)) {
       try {
         bootJar.refreshLocal(IResource.DEPTH_ZERO, null);
       } catch(CoreException ce) {/**/}
@@ -199,7 +209,7 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
         confStamp = new Path(configSpec.getSpec()).toFile().lastModified();
       }
       
-      if(configSpec.isServer() || !bootJar.exists() || ((configHasModules || configHasBootJarClasses) && bootStamp < confStamp)) {
+      if(configSpec.isServer() || !bootJar.exists() || (configHasModulesOrBootJarClasses && bootStamp < confStamp)) {
         Display.getDefault().syncExec(new Runnable() {
           public void run() {
             BuildBootJarAction bbja = new BuildBootJarAction(javaProject);
@@ -208,6 +218,12 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
             bbja.run((IAction)null);
           }
         });
+        try {
+          bootJar.refreshLocal(IResource.DEPTH_ZERO, null);
+        } catch(CoreException ce) {/**/}
+        if(!bootJar.exists()) {
+          throw new RuntimeException("Failed to create DSO bootjar");
+        }
       }
     }
   }
