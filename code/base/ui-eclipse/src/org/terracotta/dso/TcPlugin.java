@@ -990,8 +990,10 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     server.setLogs("terracotta/server-logs");
     server.setStatistics("terracotta/cluster-statistics");
 
-    config.addNewClients().setLogs("terracotta/client-logs");
-
+    Client clients = config.addNewClients();
+    clients.setLogs("terracotta/client-logs");
+    clients.setStatistics("terracotta/client-statistics");
+    
     servers.addNewUpdateCheck().setEnabled(true);
 
     return doc;
