@@ -22,7 +22,7 @@ public class MultiChangeSignaller {
     if (rootsChanged) plugin.fireRootsChanged(project);
     if (namedLocksChanged) plugin.fireNamedLocksChanged(project);
     if (autolocksChanged) plugin.fireAutolocksChanged(project);
-    if (bootClassesChanged) plugin.fireAutolocksChanged(project);
+    if (bootClassesChanged) plugin.fireBootClassesChanged(project);
     if (transientFieldsChanged) plugin.fireTransientFieldsChanged(project);
     if (distributedMethodsChanged) plugin.fireDistributedMethodsChanged(project);
     if (includeRulesChanged) plugin.fireIncludeRulesChanged(project);
