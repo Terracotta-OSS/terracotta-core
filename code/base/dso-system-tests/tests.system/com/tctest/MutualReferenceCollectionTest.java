@@ -85,7 +85,7 @@ public class MutualReferenceCollectionTest extends TransparentTestBase {
           for (int i = 1; i < 3000; i++) {
            secondList.add(new Object());
            if((i % 100) == 0) {
-             System.out.println(i + "entries has been intialized for secondList thus far, for thread " + Thread.currentThread());
+             System.out.println(i + " entries has been intialized for secondList thus far, for thread " + Thread.currentThread());
            }
           }
           // reference firstList
@@ -127,7 +127,7 @@ public class MutualReferenceCollectionTest extends TransparentTestBase {
           for (Iterator it = list.iterator(); it.hasNext();) {
             it.next();
             if((i % 100) == 0) {
-              System.out.println(i + "entries has been read thus far for " + Thread.currentThread());
+              System.out.println(i + " entries has been read thus far for " + Thread.currentThread());
             }
             i++;
             Thread.sleep(5 + (int) (Math.random() * 10));

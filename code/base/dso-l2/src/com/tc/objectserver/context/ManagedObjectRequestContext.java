@@ -11,10 +11,12 @@ import com.tc.object.ObjectRequestID;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -22,17 +24,21 @@ import java.util.Set;
  * This is the context needed to make a request to the server for a specific Managed root.
  */
 public class ManagedObjectRequestContext implements ObjectManagerResultsContext, PrettyPrintable {
+
+  // XXX:: move to property file
+  private static final int      MAX_OBJECTS_TO_LOOKUP = 50;
+
   private final long            timestamp;
   private final ClientID        clientID;
   private final Set             requestedObjectIDs;
   private Map                   objects;
   private final ObjectRequestID requestID;
-  private boolean               moreObjects    = false;
-  private int                   batchCount     = 0;
+  private boolean               moreObjects           = false;
+  private int                   batchCount            = 0;
   private Set                   lookupPendingObjectIDs;
   private final int             maxRequestDepth;
   private final Sink            sink;
-  private final Set             missingObjects = new HashSet();
+  private final Set             missingObjects        = new HashSet();
   private final String          requestingThreadName;
   private final boolean         isServerInitiated;
 
@@ -129,6 +135,28 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
 
   public boolean isServerInitiated() {
     return isServerInitiated;
+  }
+
+  // Utility method to create 1 or more server initiated requests.
+  public static void createAndAddManagedObjectRequestContextsTo(Sink addTo, ClientID requestedNodeID,
+                                                                ObjectRequestID rid, Set lookupOids, int maxDepth,
+                                                                Sink nextDestination) {
+    if (lookupOids.size() <= MAX_OBJECTS_TO_LOOKUP) {
+      addTo.add(new ManagedObjectRequestContext(requestedNodeID, rid, lookupOids, -1, nextDestination, Thread
+          .currentThread().getName(), true));
+    } else {
+      String threadName = Thread.currentThread().getName();
+      // split into multiple request
+      Set split = new HashSet(MAX_OBJECTS_TO_LOOKUP);
+      for (Iterator i = lookupOids.iterator(); i.hasNext();) {
+        split.add(i.next());
+        if (split.size() >= MAX_OBJECTS_TO_LOOKUP) {
+          addTo
+              .add(new ManagedObjectRequestContext(requestedNodeID, rid, split, -1, nextDestination, threadName, true));
+          if (i.hasNext()) split = new HashSet(MAX_OBJECTS_TO_LOOKUP);
+        }
+      }
+    }
   }
 
 }

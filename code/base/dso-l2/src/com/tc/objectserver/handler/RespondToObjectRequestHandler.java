@@ -25,8 +25,6 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SimpleSequence;
 
-import gnu.trove.THashSet;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -35,14 +33,11 @@ import java.util.Set;
 
 public class RespondToObjectRequestHandler extends AbstractEventHandler {
 
-  // XXX:: move to property file
-  private static final int   MAX_OBJECTS_TO_LOOKUP = 50;
-
   private DSOChannelManager  channelManager;
   private ObjectManager      objectManager;
   private ClientStateManager stateManager;
   private TCLogger           logger;
-  private Sequence           batchIDSequence       = new SimpleSequence();
+  private Sequence           batchIDSequence = new SimpleSequence();
   private Sink               managedObjectRequestSink;
 
   public void handleEvent(EventContext context) {
@@ -133,28 +128,14 @@ public class RespondToObjectRequestHandler extends AbstractEventHandler {
   private void createNewLookupRequestsIfNecessary(ManagedObjectRequestContext morc) {
     Set oids = morc.getLookupPendingObjectIDs();
     if (oids.isEmpty()) { return; }
-    int maxRequestDepth = morc.getMaxRequestDepth();
     if (logger.isDebugEnabled()) {
       logger.debug("Creating Server initiated requests for : " + morc.getRequestedNodeID()
                    + " org request Id length = " + morc.getLookupIDs().size()
                    + "  Reachable object(s) to be looked up  length = " + oids.size());
     }
-    if (oids.size() <= MAX_OBJECTS_TO_LOOKUP) {
-      this.managedObjectRequestSink.add(new ManagedObjectRequestContext(morc.getRequestedNodeID(), morc.getRequestID(),
-                                                                        oids, -1, morc.getSink(),
-                                                                        "RespondToObjectRequestHandler", true));
-    } else {
-      // split into multiple request
-      Set split = new HashSet(MAX_OBJECTS_TO_LOOKUP);
-      for (Iterator i = oids.iterator(); i.hasNext();) {
-        split.add(i.next());
-        if (split.size() >= MAX_OBJECTS_TO_LOOKUP) {
-          this.managedObjectRequestSink.add(new ManagedObjectRequestContext(morc.getRequestedNodeID(), morc
-              .getRequestID(), split, -1, morc.getSink(), "RespondToObjectRequestHandler", true));
-          if (i.hasNext()) split = new THashSet(maxRequestDepth);
-        }
-      }
-    }
+    ManagedObjectRequestContext.createAndAddManagedObjectRequestContextsTo(managedObjectRequestSink, morc
+        .getRequestedNodeID(), morc.getRequestID(), oids, -1, morc.getSink());
+
   }
 
   public void initialize(ConfigurationContext context) {

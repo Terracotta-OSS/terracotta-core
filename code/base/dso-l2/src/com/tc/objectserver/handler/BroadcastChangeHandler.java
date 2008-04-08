@@ -33,8 +33,6 @@ import java.util.Set;
 
 /**
  * Broadcast the change to all connected clients
- * 
- * @author steve
  */
 public class BroadcastChangeHandler extends AbstractEventHandler {
   private DSOChannelManager        channelManager;
@@ -43,10 +41,8 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
   private Sink                     managedObjectRequestSink;
   private Sink                     respondObjectRequestSink;
 
-
-  private SampledCounter broadcastCounter;
-  private SampledCounter changeCounter;
-
+  private SampledCounter           broadcastCounter;
+  private SampledCounter           changeCounter;
 
   public BroadcastChangeHandler(SampledCounter broadcastCounter, SampledCounter changeCounter) {
     this.broadcastCounter = broadcastCounter;
@@ -82,13 +78,10 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
           || includeDmi) {
         transactionManager.addWaitingForAcknowledgement(committerID, txnID, clientID);
         if (lookupObjectIDs.size() > 0) {
-          // TODO:: Request ID is not used anywhere. RemoveIT.
-          // XXX:: It is important to keep the maxReachableSize to <= 0 so that we dont go into recursive lookups @see
-          // ObjectManagerImpl
-          this.managedObjectRequestSink.add(new ManagedObjectRequestContext(clientID, ObjectRequestID.NULL_ID,
-                                                                            lookupObjectIDs, -1,
-                                                                            this.respondObjectRequestSink,
-                                                                            "BroadcastChangeHandler", true));
+          ManagedObjectRequestContext.createAndAddManagedObjectRequestContextsTo(this.managedObjectRequestSink,
+                                                                                 clientID, ObjectRequestID.NULL_ID,
+                                                                                 lookupObjectIDs, -1,
+                                                                                 this.respondObjectRequestSink);
         }
         final DmiDescriptor[] dmi = (includeDmi) ? prunedDmis : DmiDescriptor.EMPTY_ARRAY;
         BroadcastTransactionMessage responseMessage = (BroadcastTransactionMessage) client
