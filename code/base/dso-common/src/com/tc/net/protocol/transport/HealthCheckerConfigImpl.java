@@ -9,14 +9,14 @@ import com.tc.properties.TCProperties;
 /**
  * Main implementation of the Health Checker Config. Health Checker related tc.properties are read and a config data
  * structure is built which is passed on to various health checker modules.
- * 
+ *
  * @author Manoj
  */
 public class HealthCheckerConfigImpl implements HealthCheckerConfig {
 
   private final boolean    enable;
-  private final int        pingIdleTime;
-  private final int        pingInterval;
+  private final long        pingIdleTime;
+  private final long        pingInterval;
   private final int        pingProbes;
   private final boolean    doSocketConnect;
   private final int        maxSocketConnectCount;
@@ -28,8 +28,8 @@ public class HealthCheckerConfigImpl implements HealthCheckerConfig {
   private final static int PING_PROBECNT = 3;
 
   public HealthCheckerConfigImpl(TCProperties healthCheckerProperties, String hcName) {
-    this.pingIdleTime = healthCheckerProperties.getInt("ping.idletime");
-    this.pingInterval = healthCheckerProperties.getInt("ping.interval");
+    this.pingIdleTime = healthCheckerProperties.getLong("ping.idletime");
+    this.pingInterval = healthCheckerProperties.getLong("ping.interval");
     this.pingProbes = healthCheckerProperties.getInt("ping.probes");
     this.name = hcName;
     this.doSocketConnect = healthCheckerProperties.getBoolean("socketConnect");
@@ -63,11 +63,11 @@ public class HealthCheckerConfigImpl implements HealthCheckerConfig {
     return enable;
   }
 
-  public int getPingIdleTime() {
+  public long getPingIdleTimeMillis() {
     return this.pingIdleTime;
   }
 
-  public int getPingInterval() {
+  public long getPingIntervalMillis() {
     return this.pingInterval;
   }
 

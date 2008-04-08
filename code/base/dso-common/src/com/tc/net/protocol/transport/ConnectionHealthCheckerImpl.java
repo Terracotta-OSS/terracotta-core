@@ -18,7 +18,7 @@ import java.util.Iterator;
 /**
  * The Engine which does the peer health checking work. Based on the config passed, it probes the peer once in specified
  * interval. When it doesn't get a reply from the peer, it disconnects the transport.
- * 
+ *
  * @author Manoj
  */
 public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
@@ -66,7 +66,8 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
   public void notifyTransportClosed(MessageTransport transport) {
     // HealthChecker Ping Thread can anyway determine this in the next probe interval thru mtb.isConnected and remove it
     // from its radar. still lets do it earlier
-    logger.info("Connection to NodeID[" + transport.getConnectionId().getChannelID() + "] CLOSED. Health Monitoring for this node is now disabled.");
+    logger.info("Connection to NodeID[" + transport.getConnectionId().getChannelID()
+                + "] CLOSED. Health Monitoring for this node is now disabled.");
     monitorThreadEngine.removeConnection(transport);
   }
 
@@ -84,8 +85,8 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
 
   private static class HealthCheckerMonitorThreadEngine implements Runnable {
     private ConcurrentHashMap         connectionMap = new ConcurrentHashMap();
-    private final int                 pingIdleTime;
-    private final int                 pingInterval;
+    private final long                pingIdleTime;
+    private final long                pingInterval;
     private final int                 pingProbes;
     private final SetOnceFlag         stop          = new SetOnceFlag();
     private final HealthCheckerConfig config;
@@ -94,8 +95,8 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
 
     public HealthCheckerMonitorThreadEngine(HealthCheckerConfig healthCheckerConfig,
                                             TCConnectionManager connectionManager, TCLogger logger) {
-      pingIdleTime = healthCheckerConfig.getPingIdleTime() * 1000;
-      pingInterval = healthCheckerConfig.getPingInterval() * 1000;
+      pingIdleTime = healthCheckerConfig.getPingIdleTimeMillis();
+      pingInterval = healthCheckerConfig.getPingIntervalMillis();
       pingProbes = healthCheckerConfig.getPingProbes();
       this.connectionManager = connectionManager;
       this.config = healthCheckerConfig;
@@ -140,7 +141,8 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
           MessageTransportBase mtb = (MessageTransportBase) connectionIterator.next();
 
           if (!mtb.isConnected()) {
-            logger.info("NodeID[" + mtb.getConnectionId().getChannelID() + "] is not connected. Disabling Health Monitoring for the same.");
+            logger.info("NodeID[" + mtb.getConnectionId().getChannelID()
+                        + "] is not connected. Disabling Health Monitoring for the same.");
             connectionIterator.remove();
             continue;
           }

@@ -6,7 +6,7 @@ package com.tc.net.protocol.transport;
 
 /**
  * Default Health Chcker config passed to the Communications Manager
- * 
+ *
  * @author Manoj
  */
 public class DisabledHealthCheckerConfigImpl implements HealthCheckerConfig {
@@ -15,11 +15,11 @@ public class DisabledHealthCheckerConfigImpl implements HealthCheckerConfig {
     return false;
   }
 
-  public int getPingIdleTime() {
+  public long getPingIdleTimeMillis() {
     throw new AssertionError("Disabled HealthChecker");
   }
 
-  public int getPingInterval() {
+  public long getPingIntervalMillis() {
     throw new AssertionError("Disabled HealthChecker");
   }
 

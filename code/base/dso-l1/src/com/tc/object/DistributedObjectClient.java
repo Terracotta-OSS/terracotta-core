@@ -239,7 +239,7 @@ public class DistributedObjectClient extends SEDA {
     // //////////////////////////////////
     // create NetworkStackHarnessFactory
     L1ReconnectConfig l1ReconnectConfig = config.getL1ReconnectProperties();
-    final boolean useOOOLayer = l1ReconnectConfig.getReconnectEnabled(); 
+    final boolean useOOOLayer = l1ReconnectConfig.getReconnectEnabled();
     final NetworkStackHarnessFactory networkStackHarnessFactory;
     if (useOOOLayer) {
       final Stage oooStage = stageManager.createStage("OOONetStage", new OOOEventHandler(), 1, maxSize);
@@ -268,9 +268,12 @@ public class DistributedObjectClient extends SEDA {
     String serverHost = connectionInfo[0].getHostname();
     int serverPort = connectionInfo[0].getPort();
 
+    int timeout = tcProperties.getInt("l1.socket.connect.timeout");
+    if (timeout < 0) { throw new IllegalArgumentException("invalid socket time value: " + timeout); }
+
     channel = new DSOClientMessageChannelImpl(communicationsManager.createClientChannel(sessionProvider, -1,
-                                                                                        serverHost, serverPort, 10000,
-                                                                                        addrProvider));
+                                                                                        serverHost, serverPort,
+                                                                                        timeout, addrProvider));
     ChannelIDLoggerProvider cidLoggerProvider = new ChannelIDLoggerProvider(channel.getChannelIDProvider());
     stageManager.setLoggerProvider(cidLoggerProvider);
 
@@ -558,5 +561,5 @@ public class DistributedObjectClient extends SEDA {
   public StatisticsAgentSubSystem getStatisticsAgentSubSystem() {
     return statisticsAgentSubSystem;
   }
-  
+
 }

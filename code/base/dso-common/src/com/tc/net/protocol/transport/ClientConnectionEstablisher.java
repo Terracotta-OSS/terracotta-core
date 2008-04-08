@@ -7,6 +7,7 @@ package com.tc.net.protocol.transport;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
 import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressIterator;
@@ -14,6 +15,7 @@ import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
@@ -25,7 +27,21 @@ import java.io.IOException;
  */
 public class ClientConnectionEstablisher {
 
-  private static final long               CONNECT_RETRY_INTERVAL = 1000;
+  private static final long               CONNECT_RETRY_INTERVAL;
+
+  private static final long               MIN_RETRY_INTERVAL = 10;
+
+  static {
+    TCLogger logger = TCLogging.getLogger(ClientConnectionEstablisher.class);
+
+    long value = TCPropertiesImpl.getProperties().getLong("l1.reconnect.waitInterval");
+    if (value < MIN_RETRY_INTERVAL) {
+      logger.warn("Forcing reconnect wait interval to " + MIN_RETRY_INTERVAL + " (configured value was " + value + ")");
+      value = MIN_RETRY_INTERVAL;
+    }
+
+    CONNECT_RETRY_INTERVAL = value;
+  }
 
   private final String                    desc;
   private final int                       maxReconnectTries;
@@ -33,11 +49,11 @@ public class ClientConnectionEstablisher {
   private final ConnectionAddressProvider connAddressProvider;
   private final TCConnectionManager       connManager;
 
-  private final SynchronizedBoolean       asyncReconnecting      = new SynchronizedBoolean(false);
+  private final SynchronizedBoolean       asyncReconnecting  = new SynchronizedBoolean(false);
 
   private Thread                          connectionEstablisher;
 
-  private NoExceptionLinkedQueue          reconnectRequest       = new NoExceptionLinkedQueue();  // <ConnectionRequest>
+  private NoExceptionLinkedQueue          reconnectRequest   = new NoExceptionLinkedQueue();  // <ConnectionRequest>
 
   public ClientConnectionEstablisher(TCConnectionManager connManager, ConnectionAddressProvider connAddressProvider,
                                      int maxReconnectTries, int timeout) {
@@ -144,7 +160,7 @@ public class ClientConnectionEstablisher {
           } catch (Exception e) {
             handleConnectException(e, true, cmt.logger, connection);
           }
-          
+
         }
       }
       cmt.endIfDisconnected();
@@ -195,10 +211,13 @@ public class ClientConnectionEstablisher {
     } else {
       logger.warn(e.getMessage());
     }
-    try {
-      Thread.sleep(CONNECT_RETRY_INTERVAL);
-    } catch (InterruptedException e1) {
-      //
+
+    if (CONNECT_RETRY_INTERVAL > 0) {
+      try {
+        Thread.sleep(CONNECT_RETRY_INTERVAL);
+      } catch (InterruptedException e1) {
+        //
+      }
     }
   }
 

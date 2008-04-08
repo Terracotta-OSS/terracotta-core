@@ -146,19 +146,19 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
   public long getMinSleepTimeToSendFirstProbe(HealthCheckerConfig config) {
     assertNotNull(config);
     /* Interval time is doubled to give grace period */
-    return ((config.getPingIdleTime() + 2 * config.getPingInterval()) * 1000);
+    return config.getPingIdleTimeMillis() + (2 * config.getPingIntervalMillis());
   }
 
   public long getMinSleepTimeToConirmDeath(HealthCheckerConfig config) {
     assertNotNull(config);
     /* Interval time is doubled to give grace period */
-    long exact_time = (config.getPingIdleTime() + (config.getPingInterval() * config.getPingProbes())) * 1000;
-    long grace_time = config.getPingInterval() * 1000;
+    long exact_time = config.getPingIdleTimeMillis() + (config.getPingIntervalMillis() * config.getPingProbes());
+    long grace_time = config.getPingIntervalMillis();
     return (exact_time + grace_time);
   }
 
   public void testL1DisconnectAndL1Reconnect() throws Exception {
-    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(10, 4, 2, "ServerCommsHC-Test11");
+    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(10000, 4000, 2, "ServerCommsHC-Test11");
     this.setUp(hcConfig, null);
     ClientMessageChannel clientMsgCh = createClientMsgCh();
     clientMsgCh.open();
@@ -207,7 +207,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
   }
 
   public void testL2CloseL1Reconnect() throws Exception {
-    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(10, 4, 2, "ServerCommsHC-Test12");
+    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(10000, 4000, 2, "ServerCommsHC-Test12");
     this.setUp(hcConfig, null);
     ClientMessageChannel clientMsgCh = createClientMsgCh();
     clientMsgCh.open();

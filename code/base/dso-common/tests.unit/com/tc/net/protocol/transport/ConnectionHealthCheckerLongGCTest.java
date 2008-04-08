@@ -61,8 +61,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
       final Stage oooStage = stageManager.createStage("OOONetStage", new OOOEventHandler(), 1, 5000);
       networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
                                                                      new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
-                                                                     oooStage.getSink(),
-                                                                     new L1ReconnectConfigImpl());
+                                                                     oooStage.getSink(), new L1ReconnectConfigImpl());
     } else {
       networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
     }
@@ -146,35 +145,35 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
   public long getMinSleepTimeToSendFirstProbe(HealthCheckerConfig config) {
     assertNotNull(config);
     /* Interval time is doubled to give grace period */
-    return ((config.getPingIdleTime() + 2 * config.getPingInterval()) * 1000);
+    return (config.getPingIdleTimeMillis() + (2 * config.getPingIntervalMillis()));
   }
 
   public long getMinSleepTimeToStartLongGCTest(HealthCheckerConfig config) {
     assertNotNull(config);
     /* Interval time is doubled to give grace period */
-    long exact_time = (config.getPingIdleTime() + (config.getPingInterval() * config.getPingProbes())) * 1000;
-    long grace_time = config.getPingInterval() * 1000;
+    long exact_time = config.getPingIdleTimeMillis() + (config.getPingIntervalMillis() * config.getPingProbes());
+    long grace_time = config.getPingIntervalMillis();
     return (exact_time + grace_time);
   }
 
   public long getMinScoketConnectResultTime(HealthCheckerConfig config) {
     assertNotNull(config);
-    long extraTimeSecs = (config.getPingInterval() * config.getPingProbes())
-                         + (HealthCheckerSocketConnectImpl.SOCKETCONNECT_NOREPLY_MAXWAIT_CYCLE * config
-                             .getPingInterval());
-    return (extraTimeSecs * 1000);
+    long extraTime = (config.getPingIntervalMillis() * config.getPingProbes())
+                     + (HealthCheckerSocketConnectImpl.SOCKETCONNECT_NOREPLY_MAXWAIT_CYCLE * config
+                         .getPingIntervalMillis());
+    return extraTime;
   }
 
   public long getFullExtraCheckTime(HealthCheckerConfig config) {
     assertNotNull(config);
-    long extraTimeSecs = config.getPingInterval()
-                         * ((HealthCheckerSocketConnectImpl.SOCKETCONNECT_NOREPLY_MAXWAIT_CYCLE * config
-                             .getPingProbes()) * config.getMaxSocketConnectCount());
-    return (extraTimeSecs * 1000);
+    long extraTime = config.getPingIntervalMillis()
+                     * ((HealthCheckerSocketConnectImpl.SOCKETCONNECT_NOREPLY_MAXWAIT_CYCLE * config.getPingProbes()) * config
+                         .getMaxSocketConnectCount());
+    return extraTime;
   }
 
   public void testL2ExtraCheckL1() throws Exception {
-    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(5, 2, 1, "ServerCommsHC-Test31", true /* EXTRA CHECK ON */);
+    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(5000, 2000, 1, "ServerCommsHC-Test31", true /* EXTRA CHECK ON */);
     this.setUp(hcConfig, null);
     ((CommunicationsManagerImpl) clientComms).setConnHealthChecker(new ConnectionHealthCheckerDummyImpl());
     ClientMessageChannel clientMsgCh = createClientMsgCh();
@@ -211,7 +210,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
   }
 
   public void testL1ExtraCheckL2() throws Exception {
-    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(5, 2, 2, "ServerCommsHC-Test32", true /* EXTRA CHECK ON */);
+    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(5000, 2000, 2, "ServerCommsHC-Test32", true /* EXTRA CHECK ON */);
     this.setUp(null, hcConfig);
     ((CommunicationsManagerImpl) serverComms).setConnHealthChecker(new ConnectionHealthCheckerDummyImpl());
     ClientMessageChannel clientMsgCh = createClientMsgCh();
@@ -252,7 +251,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
   }
 
   public void testL2ExtraCheckL1WithProxyDelay() throws Exception {
-    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(5, 2, 2, "ServerCommsHC-Test33", true /* EXTRA CHECK ON */);
+    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(5000, 2000, 2, "ServerCommsHC-Test33", true /* EXTRA CHECK ON */);
     this.setUp(hcConfig, null);
 
     ClientMessageChannel clientMsgCh = createClientMsgCh();

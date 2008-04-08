@@ -15,22 +15,22 @@ public interface HealthCheckerConfig {
   String getHealthCheckerName();
 
   /* HC tests liveness of a connection when no message transaction is seen on it for more than ping_idle time */
-  int getPingIdleTime();
+  long getPingIdleTimeMillis();
 
   /* HC probes a connection once in ping_interval time after it is found idle for ping_idle time */
-  int getPingInterval();
+  long getPingIntervalMillis();
 
   /* HC probes a idle connection for ping_probes times before tagging it as dead */
   int getPingProbes();
 
   /*
-   * When HC detected the peer has died by above probes, it can do additional checks to see any traces of life left out 
+   * When HC detected the peer has died by above probes, it can do additional checks to see any traces of life left out
    *  1. chk whether the peer is in Long GC
    *  2. more similar checks
-   *  
+   *
    *  If the peer is un-responsive and not died, a grace period is given before deciding it as dead.
    */
   boolean isSocketConnectOnPingFail();
-  
+
   int getMaxSocketConnectCount();
 }
