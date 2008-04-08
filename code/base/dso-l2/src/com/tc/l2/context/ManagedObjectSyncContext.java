@@ -32,17 +32,25 @@ public class ManagedObjectSyncContext implements ObjectManagerResultsContext {
   private int                        dnaCount;
   private ObjectStringSerializer     serializer;
   private long                       sequenceID;
+  private final int                  totalObjectsToSync;
+  private final int                  totalObjectsSynced;
 
-  public ManagedObjectSyncContext(NodeID nodeID, Set oids, boolean more, Sink sink) {
+  public ManagedObjectSyncContext(NodeID nodeID, Set oids, boolean more, Sink sink, int totalObjectsToSync,
+                                  int totalObjectsSynced) {
     this.nodeID = nodeID;
     this.oids = oids;
     this.more = more;
     this.nextSink = sink;
+    this.totalObjectsToSync = totalObjectsToSync;
+    this.totalObjectsSynced = totalObjectsSynced;
     this.rootsMap = Collections.EMPTY_MAP;
   }
 
-  public ManagedObjectSyncContext(NodeID nodeID, HashMap rootsMap, boolean more, Sink sink) {
+  public ManagedObjectSyncContext(NodeID nodeID, HashMap rootsMap, boolean more, Sink sink, int totalObjectsToSync,
+                                  int totalObjectsSynced) {
     this.nodeID = nodeID;
+    this.totalObjectsToSync = totalObjectsToSync;
+    this.totalObjectsSynced = totalObjectsSynced;
     this.oids = new HashSet(rootsMap.values());
     this.more = more;
     this.nextSink = sink;
@@ -65,6 +73,14 @@ public class ManagedObjectSyncContext implements ObjectManagerResultsContext {
   public Map getObjects() {
     Assert.assertNotNull(result);
     return result.getObjects();
+  }
+
+  public int getTotalObjectsToSync() {
+    return totalObjectsToSync;
+  }
+
+  public int getTotalObjectsSynced() {
+    return totalObjectsSynced;
   }
 
   public void setDehydratedBytes(TCByteBuffer[] buffers, int count, ObjectStringSerializer os) {

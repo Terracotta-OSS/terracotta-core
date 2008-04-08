@@ -130,6 +130,9 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
 
     private ManagedObjectSyncContext syncingContext = null;
 
+    private int                      totalObjectsToSync;
+    private int                      totalObjectsSynced;
+
     public L2ObjectStateImpl(NodeID nodeID, Set oids) {
       this.nodeID = nodeID;
       this.existingOids = oids;
@@ -159,14 +162,16 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
         // i.remove();
       }
       missingOids.removeAll(oids); // @see above comment
-      syncingContext = new ManagedObjectSyncContext(nodeID, oids, !missingOids.isEmpty(), sink);
+      totalObjectsSynced += oids.size();
+      syncingContext = new ManagedObjectSyncContext(nodeID, oids, !missingOids.isEmpty(), sink, totalObjectsToSync, totalObjectsSynced);
       return syncingContext;
     }
 
     private ManagedObjectSyncContext getMissingRootsSynccontext(Sink sink) {
       missingOids.removeAll(this.missingRoots.values());
+      totalObjectsSynced += missingRoots.size();
       syncingContext = new ManagedObjectSyncContext(nodeID, new HashMap(this.missingRoots), !missingOids.isEmpty(),
-                                                    sink);
+                                                    sink, totalObjectsToSync, totalObjectsSynced);
       this.missingRoots.clear();
       return syncingContext;
     }
@@ -186,6 +191,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
           missingHere.add(o);
         }
       }
+      totalObjectsToSync = missingOids.size();
       existingOids = null; // Let GC work for us
       missingRoots.values().retainAll(this.missingOids);
       logger.info(nodeID + " : is missing " + missingOids.size() + " out of " + objectCount

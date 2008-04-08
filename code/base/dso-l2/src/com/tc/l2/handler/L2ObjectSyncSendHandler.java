@@ -135,8 +135,8 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
     ObjectSyncMessage msg = ObjectSyncMessageFactory.createObjectSyncMessageFrom(mosc);
     try {
       this.groupManager.sendTo(mosc.getNodeID(), msg);
-      logger.info("Sent " + mosc.getDNACount() + " objects to " + mosc.getNodeID() + " roots = "
-                  + mosc.getRootsMap().size());
+      logger.info("Sent " + mosc.getTotalObjectsSynced() + " objects out of " + mosc.getTotalObjectsToSync() + " to "
+                  + mosc.getNodeID() + (mosc.getRootsMap().size() == 0 ? "" : " roots = " + mosc.getRootsMap().size()));
       objectStateManager.close(mosc);
       return true;
     } catch (GroupException e) {

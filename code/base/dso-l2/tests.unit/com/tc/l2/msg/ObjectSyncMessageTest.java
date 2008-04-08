@@ -43,7 +43,7 @@ public class ObjectSyncMessageTest extends TestCase {
     objectStringSerializer = new ObjectStringSerializer();
     TCByteBuffer tcbb = TCByteBufferFactory.getInstance(false, 3452);
     tcByteBufferArray = new TCByteBuffer[] { tcbb };
-    managedObjectSyncContext = new ManagedObjectSyncContext(nodeID, rootsMap, true, sink);
+    managedObjectSyncContext = new ManagedObjectSyncContext(nodeID, rootsMap, true, sink, 100, 10);
     managedObjectSyncContext.setDehydratedBytes(new TCByteBuffer[] { tcbb }, dnaCount, objectStringSerializer);
     managedObjectSyncContext.setSequenceID(11);
   }
@@ -72,9 +72,9 @@ public class ObjectSyncMessageTest extends TestCase {
     assertTrue(oids1.isEmpty());
 
     TCByteBuffer[] dnas1 = osm1.getUnprocessedDNAs();
-    
+
     TCByteBufferTestUtil.checkEquals(tcByteBufferArray, dnas1);
-    
+
     assertEquals(osm.getSequenceID(), osm1.getSequenceID());
   }
 
