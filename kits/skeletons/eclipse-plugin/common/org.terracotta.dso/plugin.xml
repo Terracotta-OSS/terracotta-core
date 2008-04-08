@@ -728,7 +728,7 @@
               id="propertyPages">
       <page
             objectClass="org.eclipse.jdt.core.IJavaProject"
-            name="Terracotta Server"
+            name="Terracotta"
             class="org.terracotta.dso.properties.PropertyPage"
             id="propertyPagesPage">
          <filter name="nature" value="org.terracotta.dso.ProjectNature"/>
