@@ -255,15 +255,20 @@ public class StatsRecorderPanel extends XContainer {
         String[] allSessions = connectedState.getAllSessions();
         String[] supportedStats = connectedState.getSupportedStats();
 
+        m_currentStatsSessionId = connectedState.getActiveStatsSessionId();
+        boolean sessionInProgress = m_currentStatsSessionId != null;
         for (int i = 0; i < allSessions.length; i++) {
-          m_statsSessionsListModel.addElement(new StatsSessionListItem(allSessions[i]));
+          String sessionId = allSessions[i];
+          if(sessionInProgress && sessionId.equals(m_currentStatsSessionId)) {
+            continue;
+          }
+          m_statsSessionsListModel.addElement(new StatsSessionListItem(sessionId));
         }
         boolean haveAnySessions = allSessions.length > 0;
         m_clearAllStatsSessionsButton.setEnabled(haveAnySessions);
         m_exportStatsButton.setEnabled(haveAnySessions);
         m_viewStatsButton.setEnabled(haveAnySessions);
-        m_currentStatsSessionId = connectedState.getActiveStatsSessionId();
-        m_statsGathererListener.init(m_currentStatsSessionId != null);
+        m_statsGathererListener.init(sessionInProgress);
         setupStatsConfigPanel(supportedStats);
       }
     }

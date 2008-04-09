@@ -601,8 +601,13 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
     }
 
     public void actionPerformed(ActionEvent ae) {
-      m_userDisconnecting = true;
-      disconnect();
+      String msg = "There is an active statistic recording sessions.  Quit anyway?";
+      Frame frame = (Frame) m_clusterPanel.getAncestorOfClass(Frame.class);
+      int answer = JOptionPane.showConfirmDialog(m_clusterPanel, msg, frame.getTitle(), JOptionPane.OK_CANCEL_OPTION);
+      if (answer == JOptionPane.OK_OPTION) {
+        m_userDisconnecting = true;
+        disconnect();
+      }
     }
   }
 
