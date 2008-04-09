@@ -193,6 +193,7 @@ import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.util.Assert;
+import com.tc.util.CommonShutDownHook;
 import com.tc.util.PortChooser;
 import com.tc.util.ProductInfo;
 import com.tc.util.SequenceValidator;
@@ -820,6 +821,15 @@ public class DistributedObjectServer implements TCDumper {
       // In non-network enabled HA, Only active server reached here.
       startActiveMode();
     }
+    setLoggerOnExit();
+  }
+
+  private void setLoggerOnExit() {
+    CommonShutDownHook.addShutdownHook(new Runnable() {
+      public void run() {
+        logger.info("L2 Exiting...");
+      }
+    });
   }
 
   private void populateStatisticsRetrievalRegistry(final DSOGlobalServerStats serverStats,

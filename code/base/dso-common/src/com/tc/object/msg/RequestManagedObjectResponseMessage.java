@@ -14,7 +14,6 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.dna.impl.ObjectDNAImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.session.SessionID;
-import com.tc.util.CommonShutDownHook;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -112,19 +111,7 @@ public class RequestManagedObjectResponseMessage extends DSOMessageBase implemen
     }
   }
 
-  static int rcount;
-  static int bufferCount;
-  static {
-    CommonShutDownHook.addShutdownHook(new Runnable() {
-      public void run() {
-        logger.info("No of times Buffers wasted = " + rcount + " Buffers wasted count = " + bufferCount);
-      }
-    });
-  }
-
-  // TODO :: It is recycled only on write. Not on read.
   public void doRecycleOnRead() {
-    rcount++;
-    bufferCount += getEntireMessageData().length;
+    // TODO :: It is recycled only on write. Not on read.
   }
 }

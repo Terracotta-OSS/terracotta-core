@@ -132,6 +132,7 @@ import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.util.Assert;
+import com.tc.util.CommonShutDownHook;
 import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.ToggleableReferenceManager;
@@ -511,6 +512,15 @@ public class DistributedObjectClient extends SEDA {
     }
 
     cluster.addClusterEventListener(l1Management.getTerracottaCluster());
+    setLoggerOnExit();
+  }
+
+  private void setLoggerOnExit() {
+    CommonShutDownHook.addShutdownHook(new Runnable() {
+      public void run() {
+        logger.info("L1 Exiting...");
+      }
+    });
   }
 
   public synchronized void stop() {
