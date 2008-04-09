@@ -15,6 +15,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-statistics"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-statistics-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/management"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/management-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty-api"/>
 </classpath>

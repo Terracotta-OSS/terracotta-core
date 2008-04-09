@@ -19,7 +19,6 @@ import com.tc.object.appevent.ReadOnlyObjectEvent;
 import com.tc.object.appevent.ReadOnlyObjectEventContext;
 import com.tc.object.appevent.UnlockedSharedObjectEvent;
 import com.tc.object.appevent.UnlockedSharedObjectEventContext;
-import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAException;

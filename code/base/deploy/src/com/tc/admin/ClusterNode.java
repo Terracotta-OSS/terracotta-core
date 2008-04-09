@@ -1068,6 +1068,16 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
     reallyHandleDisconnect();
   }
 
+  public void tearDownChildren() {
+    super.tearDownChildren();
+    m_rootsNode = null;
+    m_locksNode = null;
+    m_serversNode = null;
+    m_clientsNode = null;
+    m_gcStatsNode = null;
+    m_threadDumpsNode = null;
+  }
+  
   private void reallyHandleDisconnect() {
     m_clusterMembers = null;
     m_acc.controller.select(this);
@@ -1151,7 +1161,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
       ClientNode clientNode = (ClientNode) m_clientsNode.getChildAt(i);
       DSOClient client = clientNode.getClient();
       try {
-        L1InfoMBean l1Info = client.getL1InfoMBean();
+        L1InfoMBean l1Info = client.getL1InfoBean();
         if (l1Info != null) {
           tde.add(client.getRemoteAddress(), l1Info.takeThreadDump(requestMillis));
         }

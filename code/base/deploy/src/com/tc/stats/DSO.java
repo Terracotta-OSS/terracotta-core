@@ -9,6 +9,7 @@ import org.apache.commons.collections.set.ListOrderedSet;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2MBeanNames;
+import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ObjectID;
@@ -21,12 +22,15 @@ import com.tc.objectserver.api.ObjectInstanceMonitorMBean;
 import com.tc.objectserver.api.ObjectManagerEventListener;
 import com.tc.objectserver.api.ObjectManagerMBean;
 import com.tc.objectserver.core.impl.ServerManagementContext;
-import com.tc.objectserver.lockmanager.api.DeadlockChain;
 import com.tc.objectserver.lockmanager.api.LockMBean;
 import com.tc.objectserver.lockmanager.api.LockManagerMBean;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.tx.ServerTransactionManagerEventListener;
 import com.tc.objectserver.tx.ServerTransactionManagerMBean;
+import com.tc.statistics.StatisticData;
+import com.tc.stats.DSOClassInfo;
+import com.tc.stats.DSOMBean;
+import com.tc.stats.DSOStats;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.statistics.CountStatistic;
 import com.tc.stats.statistics.DoubleStatistic;
@@ -141,10 +145,6 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     }
   }
 
-  public DeadlockChain[] scanForDeadLocks() {
-    return this.lockMgr.scanForDeadlocks();
-  }
-
   public DSOClassInfo[] getClassInfo() {
     Map counts = instanceMonitor.getInstanceCounts();
     DSOClassInfo[] rv = new DSOClassInfo[counts.size()];
@@ -255,7 +255,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
       }
 
       try {
-        final DSOClient client = new DSOClient(channel, channelStats);
+        final DSOClient client = new DSOClient(mbeanServer, channel, channelStats);
         mbeanServer.registerMBean(client, clientName);
         clientObjectNames.add(clientName);
         sendNotification(CLIENT_ATTACHED, clientName);
@@ -278,23 +278,52 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return map;
   }
 
-  private class TransactionManagerListener implements ServerTransactionManagerEventListener {
+  public Map<ObjectName, CountStatistic> getClientTransactionRates() {
+    Map<ObjectName, CountStatistic> result = new HashMap<ObjectName, CountStatistic>();
+    synchronized (clientObjectNames) {
+      Iterator<ObjectName> iter = clientObjectNames.iterator();
+      while (iter.hasNext()) {
+        ObjectName clientBeanName = iter.next();
+        try {
+          CountStatistic txnRate = (CountStatistic) mbeanServer.getAttribute(clientBeanName, "TransactionRate");
+          result.put(clientBeanName, txnRate);
+        } catch (Exception e) {/**/
+        }
+      }
+    }
+    return result;
+  }
 
+  public Map<ObjectName, StatisticData[]> getL1CpuUsages() {
+    Map<ObjectName, StatisticData[]> result = new HashMap<ObjectName, StatisticData[]>();
+    synchronized (clientObjectNames) {
+      Iterator<ObjectName> iter = clientObjectNames.iterator();
+      while (iter.hasNext()) {
+        ObjectName clientBeanName = iter.next();
+        try {
+          L1InfoMBean l1InfoBean = (L1InfoMBean) mbeanServer.getAttribute(clientBeanName, "L1InfoBean");
+          StatisticData[] cpu = l1InfoBean.getCpuUsage();
+          result.put(clientBeanName, cpu);
+        } catch (Exception e) {/**/
+        }
+      }
+    }
+    return result;
+  }
+
+  private class TransactionManagerListener implements ServerTransactionManagerEventListener {
     public void rootCreated(String name, ObjectID rootID) {
       addRootMBean(name, rootID);
     }
-
   }
 
   private class ObjectManagerListener implements ObjectManagerEventListener {
     public void garbageCollectionComplete(GCStats stats, Set deleted) {
       sendNotification(GC_COMPLETED, stats);
     }
-
   }
 
   private class ChannelManagerListener implements DSOChannelManagerEventListener {
-
     public void channelCreated(MessageChannel channel) {
       addClientMBean(channel);
     }
@@ -302,7 +331,5 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     public void channelRemoved(MessageChannel channel) {
       removeClientMBean(channel);
     }
-
   }
-
 }

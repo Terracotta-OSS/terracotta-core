@@ -152,6 +152,8 @@ public class StatsRecorderPanel extends XContainer {
     m_progressBar.setIndeterminate(true);
     m_progressBar.setVisible(false);
 
+    setVisible(false);
+    
     m_acc.executorService.execute(new StatsGathererConnectWorker());
   }
 
@@ -270,6 +272,7 @@ public class StatsRecorderPanel extends XContainer {
         m_viewStatsButton.setEnabled(haveAnySessions);
         m_statsGathererListener.init(sessionInProgress);
         setupStatsConfigPanel(supportedStats);
+        StatsRecorderPanel.this.setVisible(true);
       }
     }
   }

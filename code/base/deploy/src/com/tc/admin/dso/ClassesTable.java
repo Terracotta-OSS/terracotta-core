@@ -6,8 +6,8 @@ package com.tc.admin.dso;
 import com.tc.admin.AdminClient;
 import com.tc.admin.common.XObjectTable;
 import com.tc.admin.common.XObjectTableModel;
-
 import com.tc.stats.DSOClassInfo;
+
 
 public class ClassesTable extends XObjectTable {
   public ClassesTable() {

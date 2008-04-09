@@ -10,4 +10,5 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/management"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/management-api"/>
 </classpath>

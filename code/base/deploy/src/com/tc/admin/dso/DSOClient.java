@@ -7,7 +7,6 @@ package com.tc.admin.dso;
 import com.tc.admin.AdminClient;
 import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.MBeanServerInvocationProxy;
-import com.tc.management.beans.L1MBeanNames;
 import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.management.beans.logging.InstrumentationLoggingMBean;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
@@ -20,33 +19,99 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 import javax.management.MBeanServerInvocationHandler;
-import javax.management.MalformedObjectNameException;
+import javax.management.Notification;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
 
-public class DSOClient {
-  private ConnectionContext       cc;
-  private ObjectName              bean;
-  private DSOClientMBean          delegate;
-  private L1InfoMBean             l1InfoBean;
-  private long                    channelID;
-  private String                  remoteAddress;
-  private String                  host;
-  private Integer                 port;
-  protected PropertyChangeSupport changeHelper;
+public class DSOClient implements NotificationListener {
+  private ConnectionContext           cc;
+  private ObjectName                  beanName;
+  private DSOClientMBean              delegate;
+  private long                        channelID;
+  private String                      remoteAddress;
+  private String                      host;
+  private Integer                     port;
+  protected PropertyChangeSupport     changeHelper;
 
-  public DSOClient(ConnectionContext cc, ObjectName bean) {
+  private boolean                     isListeningForTunneledBeans;
+  private L1InfoMBean                 l1InfoBean;
+  private InstrumentationLoggingMBean instrumentationLoggingBean;
+  private RuntimeLoggingMBean         runtimeLoggingBean;
+  private RuntimeOutputOptionsMBean   runtimeOutputOptionsBean;
+
+  public DSOClient(ConnectionContext cc, ObjectName beanName) {
     this.cc = cc;
-    this.bean = bean;
-    this.delegate = (DSOClientMBean) MBeanServerInvocationProxy.newProxyInstance(cc.mbsc, bean, DSOClientMBean.class,
-                                                                                 true);
+    this.beanName = beanName;
+    this.delegate = (DSOClientMBean) MBeanServerInvocationProxy.newProxyInstance(cc.mbsc, beanName,
+                                                                                 DSOClientMBean.class, true);
     channelID = delegate.getChannelID().toLong();
     remoteAddress = delegate.getRemoteAddress();
     changeHelper = new PropertyChangeSupport(this);
+
+    testSetupTunneledBeans();
   }
 
+  private void testSetupTunneledBeans() {
+    if(delegate.isTunneledBeansRegistered()) {
+      setupTunneledBeans();
+    } else {
+      startListeningForTunneledBeans();
+    }
+  }
+
+  private void setupTunneledBeans() {
+    l1InfoBean = (L1InfoMBean) MBeanServerInvocationHandler.newProxyInstance(cc.mbsc, delegate.getL1InfoBeanName(),
+                                                                             L1InfoMBean.class, false);
+    instrumentationLoggingBean = (InstrumentationLoggingMBean) MBeanServerInvocationHandler
+        .newProxyInstance(cc.mbsc, delegate.getInstrumentationLoggingBeanName(), InstrumentationLoggingMBean.class,
+                          true);
+    runtimeLoggingBean = (RuntimeLoggingMBean) MBeanServerInvocationHandler.newProxyInstance(cc.mbsc, delegate
+        .getRuntimeLoggingBeanName(), RuntimeLoggingMBean.class, true);
+    runtimeOutputOptionsBean = (RuntimeOutputOptionsMBean) MBeanServerInvocationHandler
+        .newProxyInstance(cc.mbsc, delegate.getRuntimeOutputOptionsBeanName(), RuntimeOutputOptionsMBean.class, true);
+  }
+  
+  private void startListeningForTunneledBeans() {
+    if (isListeningForTunneledBeans) return;
+    try {
+      cc.addNotificationListener(beanName, this);
+    } catch (Exception e) {
+      throw new RuntimeException("Adding listener to DSOClientMBean", e);
+    }
+    isListeningForTunneledBeans = true;
+  }
+
+  private void stopListeningForTunneledBeans() {
+    if (!isListeningForTunneledBeans) return;
+    try {
+      cc.removeNotificationListener(beanName, this);
+    } catch (Exception e) {
+      throw new RuntimeException("Removing listener from DSOClientMBean", e);
+    }
+    isListeningForTunneledBeans = false;
+  }
+
+  public void handleNotification(Notification notification, Object handback) {
+    String type = notification.getType();
+
+    if(DSOClientMBean.TUNNELED_BEANS_REGISTERED.equals(type)) {
+      setupTunneledBeans();
+      stopListeningForTunneledBeans();
+      fireTunneledBeansRegistered();
+    }
+  }
+  
+  private void fireTunneledBeansRegistered() {
+    PropertyChangeEvent pce = new PropertyChangeEvent(this, DSOClientMBean.TUNNELED_BEANS_REGISTERED, null, null);
+    changeHelper.firePropertyChange(pce);
+  }
+  
   public ObjectName getObjectName() {
-    return bean;
+    return beanName;
+  }
+
+  public boolean isTunneledBeansRegistered() {
+    return delegate.isTunneledBeansRegistered();
   }
 
   public long getChannelID() {
@@ -88,7 +153,7 @@ public class DSOClient {
 
   public void refresh() {
     try {
-      cc.invoke(bean, "refresh", new Object[] {}, new String[] {});
+      cc.invoke(beanName, "refresh", new Object[] {}, new String[] {});
       changeHelper.firePropertyChange(new PropertyChangeEvent(this, null, null, null));
     } catch (Exception e) {
       AdminClient.getContext().log(e);
@@ -103,108 +168,44 @@ public class DSOClient {
     return delegate.getStatistics(names);
   }
 
-  void addNotificationListener(ObjectName on, NotificationListener listener) throws Exception {
+  public void addNotificationListener(NotificationListener listener) throws Exception {
+    cc.addNotificationListener(beanName, listener);
+  }
+
+  public void addNotificationListener(ObjectName on, NotificationListener listener) throws Exception {
     cc.addNotificationListener(on, listener);
   }
 
-  private void addRegistrationListener(NotificationListener listener) throws Exception {
-    ObjectName mbsd = cc.queryName("JMImplementation:type=MBeanServerDelegate");
-    if (mbsd != null) {
-      try {
-        cc.removeNotificationListener(mbsd, listener);
-      } catch (Exception e) {/**/
-      }
-      addNotificationListener(mbsd, listener);
-    }
-  }
-
-  private ObjectName getTunneledBeanName(ObjectName on) {
-    try {
-      String name = on.getCanonicalName() + ",clients=Clients,node=" + getRemoteAddress().replace(':', '/');
-      return new ObjectName(name);
-    } catch (MalformedObjectNameException mone) {
-      throw new RuntimeException("Creating ObjectName", mone);
-    }
-  }
-
   public ObjectName getL1InfoObjectName() {
-    return getTunneledBeanName(L1MBeanNames.L1INFO_PUBLIC);
+    return delegate.getL1InfoBeanName();
   }
 
-  public L1InfoMBean getL1InfoMBean() throws Exception {
-    return getL1InfoMBean(null);
-  }
-
-  public L1InfoMBean getL1InfoMBean(NotificationListener listener) throws Exception {
-    if (l1InfoBean != null) return l1InfoBean;
-
-    ObjectName o = getL1InfoObjectName();
-    if (cc.mbsc.isRegistered(o)) {
-      l1InfoBean = (L1InfoMBean) MBeanServerInvocationHandler.newProxyInstance(cc.mbsc, o, L1InfoMBean.class, true);
-    } else if (listener != null) {
-      addRegistrationListener(listener);
-    }
+  public L1InfoMBean getL1InfoBean() {
     return l1InfoBean;
   }
 
   public ObjectName getInstrumentationLoggingObjectName() {
-    return getTunneledBeanName(L1MBeanNames.INSTRUMENTATION_LOGGING_PUBLIC);
+    return delegate.getInstrumentationLoggingBeanName();
   }
 
-  public InstrumentationLoggingMBean getInstrumentationLoggingMBean() throws Exception {
-    return getInstrumentationLoggingMBean(null);
-  }
-
-  public InstrumentationLoggingMBean getInstrumentationLoggingMBean(NotificationListener listener) throws Exception {
-    ObjectName o = getInstrumentationLoggingObjectName();
-    if (cc.mbsc.isRegistered(o)) {
-      InstrumentationLoggingMBean instrumentationLoggingBean = (InstrumentationLoggingMBean) MBeanServerInvocationHandler
-          .newProxyInstance(cc.mbsc, o, InstrumentationLoggingMBean.class, false);
-      return instrumentationLoggingBean;
-    } else if (listener != null) {
-      addRegistrationListener(listener);
-    }
-    return null;
+  public InstrumentationLoggingMBean getInstrumentationLoggingBean() {
+    return instrumentationLoggingBean;
   }
 
   public ObjectName getRuntimeLoggingObjectName() {
-    return getTunneledBeanName(L1MBeanNames.RUNTIME_LOGGING_PUBLIC);
+    return delegate.getRuntimeLoggingBeanName();
   }
 
-  public RuntimeLoggingMBean getRuntimeLoggingMBean() throws Exception {
-    return getRuntimeLoggingMBean(null);
-  }
-
-  public RuntimeLoggingMBean getRuntimeLoggingMBean(NotificationListener listener) throws Exception {
-    ObjectName o = getRuntimeLoggingObjectName();
-    if (cc.mbsc.isRegistered(o)) {
-      RuntimeLoggingMBean runtimeLoggingBean = (RuntimeLoggingMBean) MBeanServerInvocationHandler
-          .newProxyInstance(cc.mbsc, o, RuntimeLoggingMBean.class, false);
-      return runtimeLoggingBean;
-    } else if (listener != null) {
-      addRegistrationListener(listener);
-    }
-    return null;
+  public RuntimeLoggingMBean getRuntimeLoggingBean() {
+    return runtimeLoggingBean;
   }
 
   public ObjectName getRuntimeOutputOptionsObjectName() {
-    return getTunneledBeanName(L1MBeanNames.RUNTIME_OUTPUT_OPTIONS_PUBLIC);
+    return delegate.getRuntimeOutputOptionsBeanName();
   }
 
-  public RuntimeOutputOptionsMBean getRuntimeOutputOptionsMBean() throws Exception {
-    return getRuntimeOutputOptionsMBean(null);
-  }
-
-  public RuntimeOutputOptionsMBean getRuntimeOutputOptionsMBean(NotificationListener listener) throws Exception {
-    ObjectName o = getRuntimeOutputOptionsObjectName();
-    if (cc.mbsc.isRegistered(o)) {
-      RuntimeOutputOptionsMBean runtimeOutputOptionsBean = (RuntimeOutputOptionsMBean) MBeanServerInvocationHandler
-          .newProxyInstance(cc.mbsc, o, RuntimeOutputOptionsMBean.class, false);
-      return runtimeOutputOptionsBean;
-    } else if (listener != null) {
-      addRegistrationListener(listener);
-    }
-    return null;
+  public RuntimeOutputOptionsMBean getRuntimeOutputOptionsBean() {
+    return runtimeOutputOptionsBean;
   }
 
   public void killClient() {

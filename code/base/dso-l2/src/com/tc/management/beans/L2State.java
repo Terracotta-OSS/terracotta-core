@@ -81,4 +81,7 @@ public class L2State implements StateChangeListener {
     changeListener = listener;
   }
 
+  public String toString() {
+    return getState().getName();
+  }
 }

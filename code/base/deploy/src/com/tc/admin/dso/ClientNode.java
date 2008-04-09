@@ -52,7 +52,7 @@ public class ClientNode extends ComponentNode {
   }
 
   L1InfoMBean getL1InfoBean() throws Exception {
-    return m_client.getL1InfoMBean();
+    return m_client.getL1InfoBean();
   }
 
   public void tearDown() {

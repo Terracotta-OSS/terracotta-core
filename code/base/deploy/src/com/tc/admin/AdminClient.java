@@ -43,6 +43,7 @@ public class AdminClient extends ApplicationManager {
     Logger.getLogger("javax.management.remote.rmi").setLevel(Level.OFF);
 
     // Silence httpclient
+    Logger.getLogger("org.apache.commons.httpclient").setLevel(Level.OFF);
     Logger.getLogger("org.apache.commons.httpclient.HttpClient").setLevel(Level.OFF);
     Logger.getLogger("org.apache.commons.httpclient.params.DefaultHttpParams").setLevel(Level.OFF);
     Logger.getLogger("org.apache.commons.httpclient.methods.GetMethod").setLevel(Level.OFF);

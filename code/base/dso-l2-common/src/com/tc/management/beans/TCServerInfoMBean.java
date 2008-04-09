@@ -7,6 +7,7 @@ package com.tc.management.beans;
 import com.tc.config.schema.L2Info;
 import com.tc.management.RuntimeStatisticConstants;
 import com.tc.management.TerracottaMBean;
+import com.tc.statistics.StatisticData;
 
 import java.util.Map;
 
@@ -50,6 +51,8 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   
   Map getStatistics();
   
+  StatisticData[] getCpuUsage();
+
   String takeThreadDump(long requestMillis);
   
   String getEnvironment();

@@ -14,28 +14,28 @@ import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.PropertyTable;
 import com.tc.admin.common.PropertyTableModel;
 import com.tc.admin.common.XContainer;
-import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.management.beans.logging.InstrumentationLoggingMBean;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
 import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
+import com.tc.stats.DSOClientMBean;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.concurrent.Callable;
 
-import javax.management.MBeanServerNotification;
 import javax.management.Notification;
 import javax.management.NotificationListener;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableCellRenderer;
 
-public class ClientPanel extends XContainer implements NotificationListener {
+public class ClientPanel extends XContainer implements NotificationListener, PropertyChangeListener {
   protected AdminClientContext        m_acc;
   protected ClientNode                m_clientNode;
   protected DSOClient                 m_client;
-  protected L1InfoMBean               m_l1InfoBean;
 
   protected PropertyTable             m_propertyTable;
 
@@ -105,47 +105,16 @@ public class ClientPanel extends XContainer implements NotificationListener {
     String[] fields = { "Host", "Port", "ChannelID" };
     m_propertyTable.setModel(new PropertyTableModel(client, fields, fields));
 
-    try {
-      m_l1InfoBean = client.getL1InfoMBean(this);
-      if (m_l1InfoBean != null) {
-        m_l1InfoBean.addNotificationListener(this, null, null);
-        m_environmentTextArea.setText(m_l1InfoBean.getEnvironment());
-        m_configTextArea.setText(m_l1InfoBean.getConfig());
-      }
-    } catch (Exception e) {
-      m_acc.log(e);
-    }
-
     m_loggingChangeHandler = new LoggingChangeHandler();
 
-    try {
-      InstrumentationLoggingMBean instrumentationLoggingBean = client.getInstrumentationLoggingMBean(this);
-      if (instrumentationLoggingBean != null) {
-        setupInstrumentationLogging(instrumentationLoggingBean);
-        instrumentationLoggingBean.addNotificationListener(this, null, null);
+    if(client.isTunneledBeansRegistered()) {
+      try {
+        setupTunneledBeans();
+      } catch(Exception e) {
+        m_acc.log(e);
       }
-    } catch (Exception e) {
-      m_acc.log(e);
-    }
-
-    try {
-      RuntimeLoggingMBean runtimeLoggingBean = client.getRuntimeLoggingMBean(this);
-      if (runtimeLoggingBean != null) {
-        setupRuntimeLogging(runtimeLoggingBean);
-        runtimeLoggingBean.addNotificationListener(this, null, null);
-      }
-    } catch (Exception e) {
-      m_acc.log(e);
-    }
-
-    try {
-      RuntimeOutputOptionsMBean runtimeOutputOptionsBean = client.getRuntimeOutputOptionsMBean(this);
-      if (runtimeOutputOptionsBean != null) {
-        setupRuntimeOutputOptions(runtimeOutputOptionsBean);
-        runtimeOutputOptionsBean.addNotificationListener(this, null, null);
-      }
-    } catch (Exception e) {
-      m_acc.log(e);
+    } else {
+      m_client.addPropertyChangeListener(this);
     }
   }
 
@@ -153,27 +122,48 @@ public class ClientPanel extends XContainer implements NotificationListener {
     return m_client;
   }
 
-  private void setupInstrumentationLogging(InstrumentationLoggingMBean instrumentationLoggingBean) {
+  private void setupTunneledBeans() throws Exception {
+    m_environmentTextArea.setText(m_client.getL1InfoBean().getEnvironment());
+    m_configTextArea.setText(m_client.getL1InfoBean().getConfig());
+
+    setupInstrumentationLogging();
+    setupRuntimeLogging();
+    setupRuntimeOutputOptions();
+  }
+  
+  private void setupInstrumentationLogging() throws Exception {
+    InstrumentationLoggingMBean instrumentationLoggingBean = m_client.getInstrumentationLoggingBean();
+
     setupLoggingControl(m_classCheckBox, instrumentationLoggingBean);
     setupLoggingControl(m_locksCheckBox, instrumentationLoggingBean);
     setupLoggingControl(m_transientRootCheckBox, instrumentationLoggingBean);
     setupLoggingControl(m_rootsCheckBox, instrumentationLoggingBean);
     setupLoggingControl(m_distributedMethodsCheckBox, instrumentationLoggingBean);
+
+    m_client.addNotificationListener(m_client.getInstrumentationLoggingObjectName(), this);
   }
 
-  private void setupRuntimeLogging(RuntimeLoggingMBean runtimeLoggingBean) {
+  private void setupRuntimeLogging() throws Exception {
+    RuntimeLoggingMBean runtimeLoggingBean = m_client.getRuntimeLoggingBean();
+
     setupLoggingControl(m_nonPortableDumpCheckBox, runtimeLoggingBean);
     setupLoggingControl(m_lockDebugCheckBox, runtimeLoggingBean);
     setupLoggingControl(m_fieldChangeDebugCheckBox, runtimeLoggingBean);
     setupLoggingControl(m_waitNotifyDebugCheckBox, runtimeLoggingBean);
     setupLoggingControl(m_distributedMethodDebugCheckBox, runtimeLoggingBean);
     setupLoggingControl(m_newObjectDebugCheckBox, runtimeLoggingBean);
+
+    m_client.addNotificationListener(m_client.getRuntimeLoggingObjectName(), this);
   }
 
-  private void setupRuntimeOutputOptions(RuntimeOutputOptionsMBean runtimeOutputOptionsBean) {
+  private void setupRuntimeOutputOptions() throws Exception {
+    RuntimeOutputOptionsMBean runtimeOutputOptionsBean = m_client.getRuntimeOutputOptionsBean();
+
     setupLoggingControl(m_autoLockDetailsCheckBox, runtimeOutputOptionsBean);
     setupLoggingControl(m_callerCheckBox, runtimeOutputOptionsBean);
     setupLoggingControl(m_fullStackCheckBox, runtimeOutputOptionsBean);
+
+    m_client.addNotificationListener(m_client.getRuntimeOutputOptionsObjectName(), this);
   }
 
   private void setupLoggingControl(CheckBox checkBox, Object bean) {
@@ -235,70 +225,23 @@ public class ClientPanel extends XContainer implements NotificationListener {
       if (checkBox != null) {
         checkBox.setSelected(Boolean.valueOf(notification.getMessage()));
       }
-      return;
-    }
-
-    if (notification instanceof MBeanServerNotification) {
-      MBeanServerNotification mbsn = (MBeanServerNotification) notification;
-
-      if (type.equals(MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
-        String on = mbsn.getMBeanName().getCanonicalName();
-
-        if (on.equals(m_client.getInstrumentationLoggingObjectName().getCanonicalName())) {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              try {
-                InstrumentationLoggingMBean instrumentationLoggingBean = m_client.getInstrumentationLoggingMBean();
-                setupInstrumentationLogging(instrumentationLoggingBean);
-              } catch (Exception e) {
-                // just wait for disconnect to occur
-              }
-            }
-          });
-        } else if (on.equals(m_client.getRuntimeLoggingObjectName().getCanonicalName())) {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              try {
-                RuntimeLoggingMBean runtimeLoggingBean = m_client.getRuntimeLoggingMBean();
-                setupRuntimeLogging(runtimeLoggingBean);
-                runtimeLoggingBean.addNotificationListener(ClientPanel.this, null, null);
-              } catch (Exception e) {
-                // just wait for disconnect to occur
-              }
-            }
-          });
-        } else if (on.equals(m_client.getRuntimeOutputOptionsObjectName().getCanonicalName())) {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              try {
-                RuntimeOutputOptionsMBean runtimeOutputOptionsBean = m_client.getRuntimeOutputOptionsMBean();
-                setupRuntimeOutputOptions(runtimeOutputOptionsBean);
-                runtimeOutputOptionsBean.addNotificationListener(ClientPanel.this, null, null);
-              } catch (Exception e) {
-                // just wait for disconnect to occur
-              }
-            }
-          });
-        } else if (on.equals(m_client.getL1InfoObjectName().getCanonicalName())) {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              try {
-                m_l1InfoBean = m_client.getL1InfoMBean();
-                m_l1InfoBean.addNotificationListener(ClientPanel.this, null, null);
-                m_environmentTextArea.setText(m_l1InfoBean.getEnvironment());
-                m_configTextArea.setText(m_l1InfoBean.getConfig());
-              } catch (Exception e) {
-                // just wait for disconnect to occur
-              }
-            }
-          });
-        }
-      }
     }
   }
 
-  L1InfoMBean getL1InfoBean() {
-    return m_l1InfoBean;
+
+  public void propertyChange(PropertyChangeEvent evt) {
+    String propName = evt.getPropertyName();
+    if(DSOClientMBean.TUNNELED_BEANS_REGISTERED.equals(propName)) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          try {
+            setupTunneledBeans();
+          } catch(Exception e) {
+            m_acc.log(e);
+          }
+        }
+      });
+    }
   }
 
   public void tearDown() {

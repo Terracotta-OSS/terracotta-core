@@ -78,7 +78,7 @@ public abstract class TerracottaManagement {
 
   public static interface MBeanKeys {
     public static final String TYPE      = "type";
-    public static final String MBEAN_NODE      = "node";
+    public static final String NODE      = "node";
     public static final String SUBSYSTEM = "subsystem";
     public static final String NAME      = "name";
   }
@@ -101,9 +101,9 @@ public abstract class TerracottaManagement {
     final StringBuffer objName = new StringBuffer(isPublic ? PUBLIC_DOMAIN : INTERNAL_DOMAIN);
     objName.append(COLON);
     if (NODE != null) {
-      objName.append(NODE_PREFIX).append(COMMA).append(MBeanKeys.MBEAN_NODE).append(EQUALS).append(NODE).append(COMMA);
+      objName.append(NODE_PREFIX).append(COMMA).append(MBeanKeys.NODE).append(EQUALS).append(NODE).append(COMMA);
     } else if (remoteBeanHome != null) {
-      objName.append(NODE_PREFIX).append(COMMA).append(MBeanKeys.MBEAN_NODE).append(EQUALS).append(
+      objName.append(NODE_PREFIX).append(COMMA).append(MBeanKeys.NODE).append(EQUALS).append(
           remoteBeanHome.getAddress().getCanonicalHostName()).append(SLASH).append(remoteBeanHome.getPort()).append(
           COMMA);
     }
@@ -116,7 +116,7 @@ public abstract class TerracottaManagement {
   }
 
   public static ObjectName addNodeInfo(ObjectName objName, TCSocketAddress addr) throws MalformedObjectNameException {
-    if (objName.getKeyProperty(MBeanKeys.MBEAN_NODE) != null) { return objName; }
+    if (objName.getKeyProperty(MBeanKeys.NODE) != null) { return objName; }
 
     String keyProperty = objName.getKeyProperty(MBeanKeys.SUBSYSTEM);
     Subsystem subsystem = keyProperty != null ? Subsystem.getSubsystem(keyProperty) : Subsystem.None;
@@ -157,7 +157,7 @@ public abstract class TerracottaManagement {
       Set sessionMonitorMBeans, String nodeName) throws IOException {
     for (Iterator iter = sessionMonitorMBeans.iterator(); iter.hasNext();) {
       ObjectName smObjectName = (ObjectName) iter.next();
-      if (nodeName.equals(smObjectName.getKeyProperty(MBeanKeys.MBEAN_NODE))) { return (SessionMonitorMBean) TerracottaManagement
+      if (nodeName.equals(smObjectName.getKeyProperty(MBeanKeys.NODE))) { return (SessionMonitorMBean) TerracottaManagement
           .findMBean(smObjectName, SessionMonitorMBean.class, mbs); }
     }
     throw new AssertionError("No SessionMonitorMBean found for " + nodeName);

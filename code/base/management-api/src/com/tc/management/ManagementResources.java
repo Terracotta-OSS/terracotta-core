@@ -10,7 +10,7 @@ class ManagementResources {
   private final ResourceBundle resources;
 
   ManagementResources() {
-    resources = ResourceBundle.getBundle("management");
+    resources = ResourceBundle.getBundle(getClass().getPackage().getName()+".management");
   }
 
   String getPublicMBeanDomain() {

@@ -166,10 +166,12 @@ public class RuntimeStatsPanel extends XContainer {
 
   protected JFreeChart createChart(TimeSeries series) {
     JFreeChart chart = DemoChartFactory.getXYLineChart("", "", "", series);
-
     int sampleHistoryMinutes = getRuntimeStatsSampleHistoryMinutes();
     int sampleHistoryMillis = sampleHistoryMinutes * 60 * 1000;
-    ((XYPlot) chart.getPlot()).getDomainAxis().setFixedAutoRange(sampleHistoryMillis);
+
+    XYPlot plot = (XYPlot) chart.getPlot();
+    plot.getDomainAxis().setFixedAutoRange(sampleHistoryMillis);
+    ((NumberAxis) plot.getRangeAxis()).setAutoRangeIncludesZero(true);
 
     int maxSampleCount = (sampleHistoryMinutes * 60) / getRuntimeStatsPollPeriodSeconds();
     series.setMaximumItemCount(maxSampleCount);
@@ -182,14 +184,17 @@ public class RuntimeStatsPanel extends XContainer {
     JFreeChart chart = DemoChartFactory.getXYLineChart("", "", "", seriesArray);
     int sampleHistoryMinutes = getRuntimeStatsSampleHistoryMinutes();
     int sampleHistoryMillis = sampleHistoryMinutes * 60 * 1000;
-    ((XYPlot) chart.getPlot()).getDomainAxis().setFixedAutoRange(sampleHistoryMillis);
+
+    XYPlot plot = (XYPlot) chart.getPlot();
+    plot.getDomainAxis().setFixedAutoRange(sampleHistoryMillis);
+    ((NumberAxis) plot.getRangeAxis()).setAutoRangeIncludesZero(true);
 
     int maxSampleCount = (sampleHistoryMinutes * 60) / getRuntimeStatsPollPeriodSeconds();
     for (TimeSeries series : seriesArray) {
       series.setMaximumItemCount(maxSampleCount);
     }
+    
     m_allCharts.add(chart);
-
     return chart;
   }
 

@@ -318,10 +318,11 @@ public class TCServerImpl extends SEDA implements TCServer {
       // the following code starts the jmx server as well
       startDSOServer(stage.getSink());
 
-      updateActivateTime();
-
-      if (activationListener != null) {
-        activationListener.serverActivated();
+      if (isActive()) {
+        updateActivateTime();
+        if (activationListener != null) {
+          activationListener.serverActivated();
+        }
       }
 
       if (updateCheckEnabled()) {
@@ -356,7 +357,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     httpServer = new Server();
     httpServer.addConnector(tcConnector);
 
-    Context context = new Context(null, "/", Context.NO_SESSIONS|Context.SECURITY);
+    Context context = new Context(null, "/", Context.NO_SESSIONS | Context.SECURITY);
 
     if (commonL2Config.httpAuthentication()) {
       Constraint constraint = new Constraint();
@@ -397,10 +398,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     File userDir = new File(System.getProperty("user.dir"));
     boolean tcInstallDirValid = false;
     File resourceBaseDir = userDir;
-    if (tcInstallDir != null &&
-        tcInstallDir.exists() &&
-        tcInstallDir.isDirectory() &&
-        tcInstallDir.canRead()) {
+    if (tcInstallDir != null && tcInstallDir.exists() && tcInstallDir.isDirectory() && tcInstallDir.canRead()) {
       tcInstallDirValid = true;
       resourceBaseDir = tcInstallDir;
     }
