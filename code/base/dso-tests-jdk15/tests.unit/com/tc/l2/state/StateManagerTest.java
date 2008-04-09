@@ -40,7 +40,8 @@ public class StateManagerTest extends TCTestCase {
   private static short          portnum = 0;
 
   public StateManagerTest() {
-    // disableAllUntil("2007-05-23");
+    // disable tribe tests
+    disableAllUntil("2008-08-30");
     useRandomMcastPort();
   }
 
