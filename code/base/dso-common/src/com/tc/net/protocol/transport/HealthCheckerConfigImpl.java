@@ -15,17 +15,19 @@ import com.tc.properties.TCProperties;
 public class HealthCheckerConfigImpl implements HealthCheckerConfig {
 
   private final boolean    enable;
-  private final long        pingIdleTime;
-  private final long        pingInterval;
+  private final long       pingIdleTime;
+  private final long       pingInterval;
   private final int        pingProbes;
   private final boolean    doSocketConnect;
   private final int        maxSocketConnectCount;
   private final String     name;
 
   // Default ping probe values in seconds
-  private final static int PING_IDLETIME = 45;
-  private final static int PING_INTERVAL = 15;
-  private final static int PING_PROBECNT = 3;
+  private final static int PING_IDLETIME             = 45;
+  private final static int PING_INTERVAL             = 15;
+  private final static int PING_PROBECNT             = 3;
+
+  private static final int DEFAULT_MAX_CONNECT_COUNT = 3;
 
   public HealthCheckerConfigImpl(TCProperties healthCheckerProperties, String hcName) {
     this.pingIdleTime = healthCheckerProperties.getLong("ping.idletime");
@@ -41,18 +43,23 @@ public class HealthCheckerConfigImpl implements HealthCheckerConfig {
     this(PING_IDLETIME, PING_INTERVAL, PING_PROBECNT, name, false);
   }
 
-  public HealthCheckerConfigImpl(int idle, int interval, int probes, String name) {
+  public HealthCheckerConfigImpl(long idle, long interval, int probes, String name) {
     this(idle, interval, probes, name, false);
   }
 
-  public HealthCheckerConfigImpl(int idle, int interval, int probes, String name, boolean extraCheck) {
+  public HealthCheckerConfigImpl(long idle, long interval, int probes, String name, boolean extraCheck) {
+    this(idle, interval, probes, name, extraCheck, DEFAULT_MAX_CONNECT_COUNT);
+  }
+
+  public HealthCheckerConfigImpl(long idle, long interval, int probes, String name, boolean extraCheck,
+                                 int maxConnectCount) {
     this.pingIdleTime = idle;
     this.pingInterval = interval;
     this.pingProbes = probes;
     this.name = name;
     this.doSocketConnect = extraCheck;
     this.enable = true;
-    this.maxSocketConnectCount = 3; // DEFAULT
+    this.maxSocketConnectCount = maxConnectCount;
   }
 
   public boolean isSocketConnectOnPingFail() {

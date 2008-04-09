@@ -6,8 +6,8 @@ package com.tc.net.protocol.transport;
 
 /**
  * A Context per Transport takes care of sending and receiving the health checking probe signals to peer nodes. Also the
- * extra checks like socker connect to detect Long GC.
- * 
+ * extra checks like socket connect to detect Long GC.
+ *
  * @author Manoj
  */
 public interface ConnectionHealthCheckerContext {

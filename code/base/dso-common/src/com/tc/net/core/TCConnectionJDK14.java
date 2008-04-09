@@ -25,10 +25,12 @@ import com.tc.util.concurrent.SetOnceRef;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedSelectorException;
 import java.nio.channels.GatheringByteChannel;
@@ -543,8 +545,22 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
   private final void recordSocketAddress(Socket socket) {
     if (socket != null) {
       isSocketEndpoint.set(true);
-      localSocketAddress.set(new TCSocketAddress(socket.getLocalAddress(), socket.getLocalPort()));
-      remoteSocketAddress.set(new TCSocketAddress(socket.getInetAddress(), socket.getPort()));
+      localSocketAddress.set(new TCSocketAddress(cloneInetAddress(socket.getLocalAddress()), socket.getLocalPort()));
+      remoteSocketAddress.set(new TCSocketAddress(cloneInetAddress(socket.getInetAddress()), socket.getPort()));
+    }
+  }
+
+  /**
+   * This madness to workaround a SocketException("protocol family not available"). For whatever reason, the actual
+   * InetAddress instances obtained directly from the connected socket has it's "family" field set to IPv6 even though
+   * when it is an instance of Inet4Address. Trying to use that instance to connect to throws an exception
+   */
+  private static InetAddress cloneInetAddress(InetAddress addr) {
+    try {
+      byte[] address = addr.getAddress();
+      return InetAddress.getByAddress(address);
+    } catch (UnknownHostException e) {
+      throw new AssertionError(e);
     }
   }
 
