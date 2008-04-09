@@ -4,6 +4,8 @@
  */
 package com.tc.net.protocol.transport;
 
+import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
+
 import com.tc.async.api.Stage;
 import com.tc.async.impl.StageManagerImpl;
 import com.tc.l1propertiesfroml2.L1ReconnectConfigImpl;
@@ -58,7 +60,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
 
     if (true /* TCPropertiesImpl.getProperties().getBoolean(L1ReconnectProperties.L1_RECONNECT_ENABLED) */) {
       StageManagerImpl stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(TCLogging
-          .getLogger(StageManagerImpl.class))), new QueueFactory());
+          .getLogger(StageManagerImpl.class))), new QueueFactory(BoundedLinkedQueue.class.getName()));
       final Stage oooStage = stageManager.createStage("OOONetStage", new OOOEventHandler(), 1, 5000);
       networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
                                                                      new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),

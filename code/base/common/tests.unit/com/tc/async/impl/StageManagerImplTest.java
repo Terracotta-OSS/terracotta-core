@@ -3,6 +3,8 @@
  */
 package com.tc.async.impl;
 
+import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
+
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Stage;
 import com.tc.lang.TCThreadGroup;
@@ -47,7 +49,7 @@ public class StageManagerImplTest extends TestCase {
     super.setUp();
     try {
     stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(TCLogging
-        .getLogger(StageManagerImpl.class))), new QueueFactory());
+        .getLogger(StageManagerImpl.class))), new QueueFactory(BoundedLinkedQueue.class.getName()));
     testEventHandler = new TestEventHandler();
     } catch(Throwable t) {
       t.printStackTrace();
@@ -66,7 +68,6 @@ public class StageManagerImplTest extends TestCase {
     assertTrue(testEventHandler.getContexts().size() == 0);
     s.start(new ConfigurationContextImpl(null));
     ThreadUtil.reallySleep(1000);
-    System.out.println("size=" + s.getSink().size());
     assertTrue(s.getSink().size() == 0);
     assertTrue(testEventHandler.getContexts().size() == 2);
     stageManager.stopAll();
