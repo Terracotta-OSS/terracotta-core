@@ -50,7 +50,7 @@ public class NullChannelManager implements DSOChannelManager {
     //
   }
 
-  public void makeChannelActive(ClientID clientID, long startIDs, long endIDs, boolean persistent) {
+  public void makeChannelActive(ClientID clientID, boolean persistent) {
     //
   }
 

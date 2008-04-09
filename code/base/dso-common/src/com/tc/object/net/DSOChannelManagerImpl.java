@@ -104,13 +104,13 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
     return activeChannels.keySet();
   }
 
-  public void makeChannelActive(ClientID clientID, long startIDs, long endIDs, boolean persistent) {
+  public void makeChannelActive(ClientID clientID, boolean persistent) {
     try {
       ClientHandshakeAckMessage ackMsg = newClientHandshakeAckMessage(clientID);
       MessageChannel channel = ackMsg.getChannel();
       synchronized (activeChannels) {
         activeChannels.put(clientID, channel);
-        ackMsg.initialize(startIDs, endIDs, persistent, getAllActiveClientIDsString(), clientID.toString(),
+        ackMsg.initialize(persistent, getAllActiveClientIDsString(), clientID.toString(),
                           serverVersion);
         ackMsg.send();
       }

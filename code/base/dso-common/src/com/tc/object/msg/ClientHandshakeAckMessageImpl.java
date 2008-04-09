@@ -19,16 +19,12 @@ import java.util.Set;
 
 public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements ClientHandshakeAckMessage {
 
-  private static final byte OBJECT_ID_START_SEQUENCE = 1;
-  private static final byte OBJECT_ID_END_SEQUENCE   = 2;
-  private static final byte PERSISTENT_SERVER        = 3;
-  private static final byte ALL_NODES                = 4;
-  private static final byte THIS_NODE_ID             = 5;
-  private static final byte SERVER_VERSION           = 6;
+  private static final byte PERSISTENT_SERVER = 1;
+  private static final byte ALL_NODES         = 2;
+  private static final byte THIS_NODE_ID      = 3;
+  private static final byte SERVER_VERSION    = 4;
 
-  private final Set         allNodes                 = new HashSet();
-  private long              oidStart;
-  private long              oidEnd;
+  private final Set         allNodes          = new HashSet();
   private boolean           persistentServer;
   private String            thisNodeId;
   private String            serverVersion;
@@ -44,8 +40,6 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
   }
 
   protected void dehydrateValues() {
-    putNVPair(OBJECT_ID_START_SEQUENCE, oidStart);
-    putNVPair(OBJECT_ID_END_SEQUENCE, oidEnd);
     putNVPair(PERSISTENT_SERVER, persistentServer);
 
     for (Iterator i = allNodes.iterator(); i.hasNext();) {
@@ -58,12 +52,6 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
 
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
-      case OBJECT_ID_START_SEQUENCE:
-        oidStart = getLongValue();
-        return true;
-      case OBJECT_ID_END_SEQUENCE:
-        oidEnd = getLongValue();
-        return true;
       case PERSISTENT_SERVER:
         persistentServer = getBooleanValue();
         return true;
@@ -81,22 +69,12 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
     }
   }
 
-  public void initialize(long start, long end, boolean persistent, Set allNodeIDs, String thisNodeID, String sv) {
-    this.oidStart = start;
-    this.oidEnd = end;
+  public void initialize(boolean persistent, Set allNodeIDs, String thisNodeID, String sv) {
     this.persistentServer = persistent;
     this.allNodes.addAll(allNodeIDs);
 
     this.thisNodeId = thisNodeID;
     this.serverVersion = sv;
-  }
-
-  public long getObjectIDSequenceStart() {
-    return oidStart;
-  }
-
-  public long getObjectIDSequenceEnd() {
-    return oidEnd;
   }
 
   public boolean getPersistentServer() {

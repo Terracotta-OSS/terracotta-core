@@ -769,7 +769,10 @@ public class DistributedObjectServer implements TCDumper {
                                                                                                .getStage(
                                                                                                          ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE)
                                                                                                .getSink(),
-                                                                                           objectStore,
+                                                                                           stageManager
+                                                                                               .getStage(
+                                                                                                         ServerConfigurationContext.OBJECT_ID_BATCH_REQUEST_STAGE)
+                                                                                               .getSink(),
                                                                                            new TCTimerImpl(
                                                                                                            "Reconnect timer",
                                                                                                            true),

@@ -4,23 +4,25 @@
  */
 package com.tc.objectserver.handshakemanager;
 
+import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.impl.NullSink;
 import com.tc.logging.TCLogger;
 import com.tc.net.groups.ClientID;
+import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.TryLockContext;
 import com.tc.object.lockmanager.api.WaitContext;
 import com.tc.object.msg.ClientHandshakeMessage;
+import com.tc.object.msg.ObjectIDBatchRequest;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.lockmanager.api.LockManager;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.util.SequenceValidator;
 import com.tc.util.TCTimer;
-import com.tc.util.sequence.ObjectIDSequence;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -44,12 +46,12 @@ public class ServerClientHandshakeManager {
   private final ClientStateManager       clientStateManager;
   private final LockManager              lockManager;
   private final Sink                     lockResponseSink;
+  private final Sink                     oidRequestSink;
   private final long                     reconnectTimeout;
   private final DSOChannelManager        channelManager;
   private final TCLogger                 logger;
   private final SequenceValidator        sequenceValidator;
   private final Set                      existingUnconnectedClients        = new HashSet();
-  private final ObjectIDSequence         oidSequence;
   private final Set                      clientsRequestingObjectIDSequence = new HashSet();
   private final boolean                  persistent;
   private final ServerTransactionManager transactionManager;
@@ -58,8 +60,8 @@ public class ServerClientHandshakeManager {
   public ServerClientHandshakeManager(TCLogger logger, DSOChannelManager channelManager,
                                       ServerTransactionManager transactionManager, SequenceValidator sequenceValidator,
                                       ClientStateManager clientStateManager, LockManager lockManager,
-                                      Sink lockResponseSink, ObjectIDSequence oidSequence, TCTimer timer,
-                                      long reconnectTimeout, boolean persistent, TCLogger consoleLogger) {
+                                      Sink lockResponseSink, Sink oidRequestSink, TCTimer timer, long reconnectTimeout,
+                                      boolean persistent, TCLogger consoleLogger) {
     this.logger = logger;
     this.channelManager = channelManager;
     this.transactionManager = transactionManager;
@@ -67,7 +69,7 @@ public class ServerClientHandshakeManager {
     this.clientStateManager = clientStateManager;
     this.lockManager = lockManager;
     this.lockResponseSink = lockResponseSink;
-    this.oidSequence = oidSequence;
+    this.oidRequestSink = oidRequestSink;
     this.reconnectTimeout = reconnectTimeout;
     this.timer = timer;
     this.persistent = persistent;
@@ -104,7 +106,6 @@ public class ServerClientHandshakeManager {
           throw new ClientHandshakeException("Clients connected after startup should not resend transactions.");
         }
         if (handshake.isObjectIDsRequested()) {
-          logger.debug("Client " + clientID + " requested Object ID Sequences ");
           clientsRequestingObjectIDSequence.add(clientID);
         }
         // XXX: It would be better to not have two different code paths that both call sendAckMessageFor(..)
@@ -146,7 +147,6 @@ public class ServerClientHandshakeManager {
       }
 
       if (handshake.isObjectIDsRequested()) {
-        logger.debug("Client " + clientID + " requested Object ID Sequences ");
         clientsRequestingObjectIDSequence.add(clientID);
       }
 
@@ -167,22 +167,13 @@ public class ServerClientHandshakeManager {
   private void sendAckMessageFor(ClientID clientID) {
     logger.debug("Sending handshake acknowledgement to " + clientID);
 
-    final long startIDs;
-    final long endIDs;
     if (clientsRequestingObjectIDSequence.remove(clientID)) {
-      final long ids = oidSequence.nextObjectIDBatch(BATCH_SEQUENCE_SIZE);
-      logger.debug("Giving out Object ID Sequences to " + clientID + " from " + ids + " to "
-                   + (ids + BATCH_SEQUENCE_SIZE));
-
-      startIDs = ids;
-      endIDs = ids + BATCH_SEQUENCE_SIZE;
-    } else {
-      startIDs = endIDs = 0;
+      oidRequestSink.add(new ObjectIDBatchRequestImpl(clientID, BATCH_SEQUENCE_SIZE));
     }
 
     // NOTE: handshake ack message initialize()/send() must be done atomically with making the channel active
     // and is thus done inside this channel manager call
-    channelManager.makeChannelActive(clientID, startIDs, endIDs, persistent);
+    channelManager.makeChannelActive(clientID, persistent);
   }
 
   public synchronized void notifyTimeout() {
@@ -268,6 +259,26 @@ public class ServerClientHandshakeManager {
     public String toString() {
       return getClass().getName() + "[" + name + "]";
     }
+  }
+
+  private static class ObjectIDBatchRequestImpl implements ObjectIDBatchRequest, EventContext {
+
+    private final ClientID clientID;
+    private final int      batchSize;
+
+    public ObjectIDBatchRequestImpl(ClientID clientID, int batchSize) {
+      this.clientID = clientID;
+      this.batchSize = batchSize;
+    }
+
+    public int getBatchSize() {
+      return batchSize;
+    }
+
+    public NodeID getRequestingNodeID() {
+      return clientID;
+    }
+
   }
 
 }

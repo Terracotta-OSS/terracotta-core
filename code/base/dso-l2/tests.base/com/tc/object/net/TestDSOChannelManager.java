@@ -70,7 +70,7 @@ public class TestDSOChannelManager implements DSOChannelManager {
     throw new ImplementMe();
   }
 
-  public void makeChannelActive(ClientID clientID, long startIDs, long endIDs, boolean persistent) {
+  public void makeChannelActive(ClientID clientID, boolean persistent) {
     throw new ImplementMe();
   }
 

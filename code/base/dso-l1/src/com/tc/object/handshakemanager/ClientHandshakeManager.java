@@ -106,22 +106,24 @@ public class ClientHandshakeManager implements ChannelEventListener {
     logger.debug("Getting lock holders...");
     for (Iterator i = lockManager.addAllHeldLocksTo(new HashSet()).iterator(); i.hasNext();) {
       LockRequest request = (LockRequest) i.next();
-      LockContext ctxt = new LockContext(request.lockID(), cidp.getClientID(), request.threadID(), request.lockLevel(), request.lockType());
+      LockContext ctxt = new LockContext(request.lockID(), cidp.getClientID(), request.threadID(), request.lockLevel(),
+                                         request.lockType());
       handshakeMessage.addLockContext(ctxt);
     }
 
     logger.debug("Getting lock waiters...");
     for (Iterator i = lockManager.addAllWaitersTo(new HashSet()).iterator(); i.hasNext();) {
       WaitLockRequest request = (WaitLockRequest) i.next();
-      WaitContext ctxt = new WaitContext(request.lockID(), cidp.getClientID(), request.threadID(),
-                                         request.lockLevel(), request.lockType(), request.getTimerSpec());
+      WaitContext ctxt = new WaitContext(request.lockID(), cidp.getClientID(), request.threadID(), request.lockLevel(),
+                                         request.lockType(), request.getTimerSpec());
       handshakeMessage.addWaitContext(ctxt);
     }
 
     logger.debug("Getting pending lock requests...");
     for (Iterator i = lockManager.addAllPendingLockRequestsTo(new HashSet()).iterator(); i.hasNext();) {
       LockRequest request = (LockRequest) i.next();
-      LockContext ctxt = new LockContext(request.lockID(), cidp.getClientID(), request.threadID(), request.lockLevel(), request.lockType());
+      LockContext ctxt = new LockContext(request.lockID(), cidp.getClientID(), request.threadID(), request.lockLevel(),
+                                         request.lockType());
       handshakeMessage.addPendingLockContext(ctxt);
     }
 
@@ -177,13 +179,12 @@ public class ClientHandshakeManager implements ChannelEventListener {
   }
 
   public void acknowledgeHandshake(ClientHandshakeAckMessage handshakeAck) {
-    acknowledgeHandshake(handshakeAck.getObjectIDSequenceStart(), handshakeAck.getObjectIDSequenceEnd(), handshakeAck
-        .getPersistentServer(), handshakeAck.getThisNodeId(), handshakeAck.getAllNodes(), handshakeAck
-        .getServerVersion());
+    acknowledgeHandshake(handshakeAck.getPersistentServer(), handshakeAck.getThisNodeId(), handshakeAck.getAllNodes(),
+                         handshakeAck.getServerVersion());
   }
 
-  protected void acknowledgeHandshake(long objectIDStart, long objectIDEnd, boolean persistentServer,
-                                      String thisNodeId, String[] clusterMembers, String serverVersion) {
+  protected void acknowledgeHandshake(boolean persistentServer, String thisNodeId, String[] clusterMembers,
+                                      String serverVersion) {
     if (getState() != STARTING) {
       logger.warn("Handshake acknowledged while not STARTING: " + getState());
       return;
@@ -198,11 +199,6 @@ public class ClientHandshakeManager implements ChannelEventListener {
     this.serverIsPersistent = persistentServer;
 
     cluster.thisNodeConnected(thisNodeId, clusterMembers);
-
-    if (objectIDStart < objectIDEnd) {
-      logger.debug("Setting the ObjectID sequence to: " + objectIDStart + " , " + objectIDEnd);
-      sequenceReceiver.setNextBatch(objectIDStart, objectIDEnd);
-    }
 
     logger.debug("Re-requesting outstanding object requests...");
     remoteObjectManager.requestOutstanding();

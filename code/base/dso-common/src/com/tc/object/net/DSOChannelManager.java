@@ -38,7 +38,7 @@ public interface DSOChannelManager {
 
   public Set getAllClientIDs();
 
-  public void makeChannelActive(ClientID clientID, long startIDs, long endIDs, boolean persistent);
+  public void makeChannelActive(ClientID clientID, boolean persistent);
 
   public void makeChannelActiveNoAck(MessageChannel channel);
 

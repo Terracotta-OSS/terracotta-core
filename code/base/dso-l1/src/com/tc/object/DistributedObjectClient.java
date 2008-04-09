@@ -325,6 +325,7 @@ public class DistributedObjectClient extends SEDA {
         .getObjectIDBatchRequestMessageFactory());
     BatchSequence sequence = new BatchSequence(remoteIDProvider, 50000);
     ObjectIDProvider idProvider = new ObjectIDProviderImpl(sequence);
+    remoteIDProvider.setBatchSequenceReceiver(sequence);
 
     TCClassFactory classFactory = new TCClassFactoryImpl(new TCFieldFactory(config), config, classProvider, encoding);
     TCObjectFactory objectFactory = new TCObjectFactoryImpl(classFactory);

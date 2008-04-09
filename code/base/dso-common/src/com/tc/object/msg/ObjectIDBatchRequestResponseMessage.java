@@ -18,11 +18,9 @@ import java.io.IOException;
  */
 public class ObjectIDBatchRequestResponseMessage extends DSOMessageBase {
 
-  private final static byte REQUEST_ID  = 1;
-  private final static byte BATCH_START = 2;
-  private final static byte BATCH_END   = 3;
+  private final static byte BATCH_START = 1;
+  private final static byte BATCH_END   = 2;
 
-  private long              requestID;
   private long              batchStart;
   private long              batchEnd;
 
@@ -35,16 +33,12 @@ public class ObjectIDBatchRequestResponseMessage extends DSOMessageBase {
   }
 
   protected void dehydrateValues() {
-    putNVPair(REQUEST_ID, requestID);
     putNVPair(BATCH_START, batchStart);
     putNVPair(BATCH_END, batchEnd);
   }
 
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
-      case REQUEST_ID:
-        requestID = getLongValue();
-        return true;
       case BATCH_START:
         batchStart = getLongValue();
         return true;
@@ -56,8 +50,7 @@ public class ObjectIDBatchRequestResponseMessage extends DSOMessageBase {
     }
   }
 
-  public void initialize(long reqID, long start, long end) {
-    this.requestID = reqID;
+  public void initialize(long start, long end) {
     this.batchStart = start;
     this.batchEnd = end;
   }
@@ -68,9 +61,5 @@ public class ObjectIDBatchRequestResponseMessage extends DSOMessageBase {
 
   public long getBatchEnd() {
     return batchEnd;
-  }
-
-  public long getRequestID() {
-    return requestID;
   }
 }
