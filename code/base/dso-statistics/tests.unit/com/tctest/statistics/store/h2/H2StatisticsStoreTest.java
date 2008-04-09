@@ -719,6 +719,7 @@ public class H2StatisticsStoreTest extends TestCase {
     StringWriter writer1 = new StringWriter();
     store.aggregateStatisticsData(writer1, TextualDataFormat.CSV, "somesession1", "D1", new String[] {"stat1","stat2"}, null, null);
     String result1 = writer1.getBuffer().toString();
+    System.out.println("result1 : "+result1);
     String[] result1b = StringUtils.split(result1, '\n');
     assertEquals(result1b.length, 1);
     assertEquals(",1,2,3,4,5,6,7,8,9,10", result1.substring(result1.indexOf(',')));
@@ -726,6 +727,7 @@ public class H2StatisticsStoreTest extends TestCase {
     StringWriter writer2 = new StringWriter();
     store.aggregateStatisticsData(writer2, TextualDataFormat.CSV, "somesession2", "D2", new String[] {"stat1","stat2"}, null, null);
     String result2 = writer2.getBuffer().toString();
+    System.out.println("result2 : "+result2);
     String[] result2b = StringUtils.split(result2, '\n');
     assertEquals(result2b.length, 2);
     assertEquals(",1.0000,2.0000,3.0000,4.0000", result2b[0].substring(result2b[0].indexOf(',')));
@@ -736,13 +738,15 @@ public class H2StatisticsStoreTest extends TestCase {
     StringWriter writer3 = new StringWriter();
     store.aggregateStatisticsData(writer3, TextualDataFormat.CSV, "somesession1", "D1", new String[] {"stat1","stat2"}, null, new Long(3000));
     String result3 = writer3.getBuffer().toString();
+    System.out.println("result3 : "+result3);
     assertTrue(result3.length() > 0);
 
-    Thread.sleep(3500);
+    Thread.sleep(4000);
 
     StringWriter writer4 = new StringWriter();
     store.aggregateStatisticsData(writer4, TextualDataFormat.CSV, "somesession1", "D1", new String[] {"stat1","stat2"}, null, new Long(3000));
     String result4 = writer4.getBuffer().toString();
+    System.out.println("result4 : "+result4);
     assertTrue(0 == result4.length());
   }
 
@@ -755,6 +759,7 @@ public class H2StatisticsStoreTest extends TestCase {
     StringWriter writer1 = new StringWriter();
     store.aggregateStatisticsData(writer1, TextualDataFormat.XML, "somesession1", "D1", new String[] {"stat1","stat2"}, null, null);
     String result1 = writer1.getBuffer().toString();
+    System.out.println("result1 : "+result1);
     String[] result1b = StringUtils.split(result1, '\n');
     assertEquals(result1b.length, 4);
     assertEquals("</m><v1>1</v1><v2>2</v2><v3>3</v3><v4>4</v4><v5>5</v5><v6>6</v6><v7>7</v7><v8>8</v8><v9>9</v9><v10>10</v10></d>", result1b[2].substring(result1b[2].indexOf("</m>")));
@@ -764,6 +769,7 @@ public class H2StatisticsStoreTest extends TestCase {
     StringWriter writer2 = new StringWriter();
     store.aggregateStatisticsData(writer2, TextualDataFormat.XML, "somesession2", "D2", new String[] {"stat1","stat2"}, null, null);
     String result2 = writer2.getBuffer().toString();
+    System.out.println("result2 : "+result2);
     String[] result2b = StringUtils.split(result2, '\n');
     assertEquals(result2b.length, 5);
     assertEquals("</m><v1>1.0000</v1><v2>2.0000</v2><v3>3.0000</v3><v4>4.0000</v4></d>", result2b[2].substring(result2b[2].indexOf("</m>")));
@@ -777,16 +783,18 @@ public class H2StatisticsStoreTest extends TestCase {
     StringWriter writer3 = new StringWriter();
     store.aggregateStatisticsData(writer3, TextualDataFormat.XML, "somesession1", "D1", new String[] {"stat1","stat2"}, null, new Long(3000));
     String result3 = writer3.getBuffer().toString();
+    System.out.println("result3 : "+result3);
     String[] result3b = StringUtils.split(result3, '\n');
     assertTrue(result3b.length > 3);
 
     db.parse(new InputSource(new StringReader(result3)));
 
-    Thread.sleep(3500);
+    Thread.sleep(4000);
 
     StringWriter writer4 = new StringWriter();
     store.aggregateStatisticsData(writer4, TextualDataFormat.XML, "somesession1", "D1", new String[] {"stat1","stat2"}, null, new Long(3000));
     String result4 = writer4.getBuffer().toString();
+    System.out.println("result4 : "+result4);
     String[] result4b = StringUtils.split(result4, '\n');
     assertTrue(3 == result4b.length);
     assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\"?>", result4b[0]);
