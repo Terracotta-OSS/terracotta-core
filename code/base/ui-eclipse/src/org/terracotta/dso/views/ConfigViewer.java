@@ -35,6 +35,7 @@ class ConfigViewer extends TreeViewer {
   }
 
   void setConfig(TcConfig config) {
+    if(fContentProvider == null) return;
     if(config != null && config != TcPlugin.BAD_CONFIG) {
       setInput(getTreeRoot(config));
     } else {
@@ -197,6 +198,7 @@ class ConfigViewer extends TreeViewer {
   }
 
   void clearViewer() {
+    if(fContentProvider == null) return;
     setInput(TreeRoot.EMPTY_ROOT);
   }
 }

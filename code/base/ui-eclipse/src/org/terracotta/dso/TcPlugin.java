@@ -622,6 +622,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
 
       doc = m_configLoader.parse(file, m_xmlOptions);
       config = doc.getTcConfig();
+      setSessionProperty(project, CONFIGURATION, config);
 
       m_xmlOptions.setErrorListener(errors);
       if (!doc.validate(m_xmlOptions)) {
@@ -636,7 +637,6 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
         initModules(client.getModules(), modulesConfig);
       }
 
-      setSessionProperty(project, CONFIGURATION, config);
       setBootClassHelper(project, new BootClassHelper(JavaCore.create(project)));
 
       getConfigurationHelper(project).validateAll();
@@ -813,6 +813,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
 
       doc = m_configLoader.parse(xmlText, m_xmlOptions);
       config = doc.getTcConfig();
+      setSessionProperty(project, CONFIGURATION, config);
 
       m_xmlOptions.setErrorListener(errors);
       if (!doc.validate(m_xmlOptions)) {
@@ -827,7 +828,6 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
         initModules(client.getModules(), modulesConfig);
       }
 
-      setSessionProperty(project, CONFIGURATION, config);
       setBootClassHelper(project, new BootClassHelper(JavaCore.create(project)));
 
       getConfigurationHelper(project).validateAll();
@@ -942,14 +942,13 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
 
     try {
       loadConfiguration(project, xmlText);
-      config = (TcConfig) getSessionProperty(project, CONFIGURATION);
-    } catch (XmlException xmle) {
+     } catch (XmlException xmle) {
       LineLengths lineLengths = getConfigurationLineLengths(project);
       handleXmlException(getConfigurationFile(project), lineLengths, xmle);
     } catch (Exception e) {
       openError("Loading configuration", e);
     }
-
+    config = (TcConfig) getSessionProperty(project, CONFIGURATION);
     if (config == null) {
       config = BAD_CONFIG;
       setSessionProperty(project, CONFIGURATION, config);
@@ -1009,7 +1008,6 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       if (config == null) {
         try {
           loadConfiguration(project);
-          config = (TcConfig) getSessionProperty(project, CONFIGURATION);
         } catch (XmlException e) {
           LineLengths lineLengths = getConfigurationLineLengths(project);
           handleXmlException(getConfigurationFile(project), lineLengths, e);
@@ -1018,7 +1016,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
         } catch (NoClassDefFoundError noClassDef) {
           openError("Loading configuration", noClassDef);
         }
-
+        config = (TcConfig) getSessionProperty(project, CONFIGURATION);
         if (config == null) {
           config = BAD_CONFIG;
           setSessionProperty(project, CONFIGURATION, config);
