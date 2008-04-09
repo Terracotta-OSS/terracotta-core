@@ -53,7 +53,6 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
   }
 
   public String getTypeName() {
-    Assert.assertNotNull(this.typeName);
     return typeName;
   }
 
@@ -269,7 +268,6 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
   }
 
   public String getDefiningLoaderDescription() {
-    Assert.assertNotNull(this.loaderDesc);
     return this.loaderDesc;
   }
 
