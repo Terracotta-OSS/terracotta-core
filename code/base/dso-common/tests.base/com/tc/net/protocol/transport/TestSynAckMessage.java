@@ -15,7 +15,7 @@ public class TestSynAckMessage extends TestTransportHandshakeMessage implements 
   public short getErrorType() {
     throw new ImplementMe();
   }
-  
+
   public boolean hasErrorContext() {
     throw new ImplementMe();
   }
@@ -38,6 +38,10 @@ public class TestSynAckMessage extends TestTransportHandshakeMessage implements 
 
   public short getStackLayerFlags() {
     return NetworkLayer.TYPE_TEST_MESSAGE;
+  }
+
+  public int getCallbackPort() {
+    throw new ImplementMe();
   }
 
 }

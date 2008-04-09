@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.transport;
 
@@ -16,7 +17,8 @@ public class MockTransportMessageFactory implements TransportHandshakeMessageFac
   public final NoExceptionLinkedQueue createAckCalls    = new NoExceptionLinkedQueue();
   public final NoExceptionLinkedQueue createSynAckCalls = new NoExceptionLinkedQueue();
 
-  public TransportHandshakeMessage createSyn(ConnectionID connectionId, TCConnection source, short stackLayerFlags) {
+  public TransportHandshakeMessage createSyn(ConnectionID connectionId, TCConnection source, short stackLayerFlags,
+                                             int callbackPort) {
     createSynCalls.put(new Object[] { connectionId, source });
     return this.syn;
   }
@@ -27,7 +29,7 @@ public class MockTransportMessageFactory implements TransportHandshakeMessageFac
   }
 
   public TransportHandshakeMessage createSynAck(ConnectionID connectionId, TCConnection source,
-                                                boolean isMaxConnectionsExceeded, int maxConnections) {
+                                                boolean isMaxConnectionsExceeded, int maxConnections, int callbackPort) {
     return createSynAck(connectionId, null, source, isMaxConnectionsExceeded, maxConnections);
   }
 

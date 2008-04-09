@@ -100,7 +100,8 @@ public class ConnectionHealthCheckerTest extends TCTestCase {
                              new ConnectionAddressProvider(
                                                            new ConnectionInfo[] { new ConnectionInfo("localhost",
                                                                                                      serverLsnr
-                                                                                                         .getBindPort()) }));
+                                                                                                         .getBindPort()) }),
+                             TransportHandshakeMessage.NO_CALLBACK_PORT);
     clientMsgCh.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     clientMsgCh.routeMessageType(TCMessageType.PING_MESSAGE, new TCMessageSink() {
 

@@ -77,6 +77,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   }
 
   private final NodeIDImpl                                    thisNodeID;
+  private final int                                           groupPort;
   private final ConnectionPolicy                              connectionPolicy;
   private final CopyOnWriteArrayList<GroupEventsListener>     groupListeners              = new CopyOnWriteArrayList<GroupEventsListener>();
   private final Map<String, GroupMessageListener>             messageListeners            = new ConcurrentHashMap<String, GroupMessageListener>();
@@ -116,7 +117,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     NewL2DSOConfig l2DSOConfig = configSetupManager.dsoL2Config();
 
     l2DSOConfig.changesInItemIgnored(l2DSOConfig.l2GroupPort());
-    int groupPort = l2DSOConfig.l2GroupPort().getInt();
+    this.groupPort = l2DSOConfig.l2GroupPort().getInt();
 
     TCSocketAddress socketAddress;
     try {
@@ -135,6 +136,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   TCGroupManagerImpl(ConnectionPolicy connectionPolicy, String hostname, int groupPort, StageManager stageManager) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
+    this.groupPort = groupPort;
     thisNodeID = init(makeGroupNodeName(hostname, groupPort), new TCSocketAddress(TCSocketAddress.WILDCARD_ADDR,
                                                                                   groupPort));
   }
@@ -365,7 +367,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     if (isStopped.get()) return;
 
     ClientMessageChannel channel = communicationsManager
-        .createClientChannel(new SessionManagerImpl(new SimpleSequence()), 0, null, -1, 10000, addrProvider);
+        .createClientChannel(new SessionManagerImpl(new SimpleSequence()), 0, null, -1, 10000, addrProvider, groupPort);
 
     channel.addClassMapping(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
     channel.routeMessageType(TCMessageType.GROUP_WRAPPER_MESSAGE, receiveGroupMessageStage.getSink(), hydrateStage
@@ -381,9 +383,9 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     return;
   }
 
-  public void openChannel(String hostname, int groupPort, ChannelEventListener listener) throws TCTimeoutException,
+  public void openChannel(String hostname, int port, ChannelEventListener listener) throws TCTimeoutException,
       UnknownHostException, MaxConnectionsExceededException, IOException {
-    openChannel(new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo(hostname, groupPort) }),
+    openChannel(new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo(hostname, port) }),
                 listener);
   }
 

@@ -43,6 +43,7 @@ import com.tc.net.protocol.tcm.MessageMonitorImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
+import com.tc.net.protocol.transport.TransportHandshakeMessage;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.cache.CacheConfigImpl;
@@ -271,9 +272,9 @@ public class DistributedObjectClient extends SEDA {
     int timeout = tcProperties.getInt("l1.socket.connect.timeout");
     if (timeout < 0) { throw new IllegalArgumentException("invalid socket time value: " + timeout); }
 
-    channel = new DSOClientMessageChannelImpl(communicationsManager.createClientChannel(sessionProvider, -1,
-                                                                                        serverHost, serverPort,
-                                                                                        timeout, addrProvider));
+    channel = new DSOClientMessageChannelImpl(communicationsManager
+        .createClientChannel(sessionProvider, -1, serverHost, serverPort, timeout, addrProvider,
+                             TransportHandshakeMessage.NO_CALLBACK_PORT));
     ChannelIDLoggerProvider cidLoggerProvider = new ChannelIDLoggerProvider(channel.getChannelIDProvider());
     stageManager.setLoggerProvider(cidLoggerProvider);
 

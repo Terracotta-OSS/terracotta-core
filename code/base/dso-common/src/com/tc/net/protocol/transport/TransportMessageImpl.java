@@ -13,7 +13,8 @@ import com.tc.util.Assert;
 
 import java.io.IOException;
 
-class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage, SynAckMessage, AckMessage, HealthCheckerProbeMessage {
+class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage, SynAckMessage, AckMessage,
+    HealthCheckerProbeMessage {
   static final byte          VERSION_1  = 1;
 
   static final byte          SYN        = 1;
@@ -31,9 +32,9 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
   private final boolean      isMaxConnectionsExceeded;
   private final short        stackLayerFlags;
   private final short        errorType;
+  private final int          callbackPort;
 
-  TransportMessageImpl(TCConnection source, TCNetworkHeader header, TCByteBuffer[] payload)
-      throws TCProtocolException {
+  TransportMessageImpl(TCConnection source, TCNetworkHeader header, TCByteBuffer[] payload) throws TCProtocolException {
     super(source, header, payload);
 
     try {
@@ -53,6 +54,7 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
       this.isMaxConnectionsExceeded = in.readBoolean();
       this.maxConnections = in.readInt();
       this.stackLayerFlags = in.readShort();
+      this.callbackPort = in.readInt();
       this.hasErrorContext = in.readBoolean();
 
       if (this.hasErrorContext) {
@@ -106,11 +108,11 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
     return this.errorContext;
   }
 
-  public short getErrorType(){
+  public short getErrorType() {
     Assert.eval(hasErrorContext());
     return this.errorType;
   }
-  
+
   public boolean isPing() {
     return type == PING;
   }
@@ -146,6 +148,10 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
 
   public short getStackLayerFlags() {
     return this.stackLayerFlags;
+  }
+
+  public int getCallbackPort() {
+    return this.callbackPort;
   }
 
 }

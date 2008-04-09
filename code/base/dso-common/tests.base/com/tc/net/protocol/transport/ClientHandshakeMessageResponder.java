@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.transport;
 
@@ -20,7 +21,8 @@ class ClientHandshakeMessageResponder extends HandshakeMessageResponderBase {
     if (message.isSyn()) {
 
       Assert.assertNotNull(message.getConnectionId());
-      sendResponseMessage(messageFactory.createSynAck(this.assignedConnectionId, message.getSource(), false, -1));
+      sendResponseMessage(messageFactory.createSynAck(this.assignedConnectionId, message.getSource(), false, -1,
+                                                      TransportHandshakeMessage.NO_CALLBACK_PORT));
     } else if (message.isAck()) {
       // nothing to do.
     } else {

@@ -19,7 +19,7 @@ import java.io.IOException;
  * When the peer node doesn't reply for the PING probes, an extra check(on demand) is made to make sure if it is really
  * dead. Today's heuristic to detect the Long GC is to connect to some of the peer listener ports. If it succeeds, we
  * will cycle again the probe sends.
- * 
+ *
  * @author Manoj
  */
 public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnect {
@@ -76,7 +76,7 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
   /*
    * Returns true if connection is still in progress.
    */
-  public synchronized boolean porobeConnectStatus() {
+  public synchronized boolean probeConnectStatus() {
 
     if (currentState == SOCKETCONNECT_FAIL) {
       // prev async connect failed

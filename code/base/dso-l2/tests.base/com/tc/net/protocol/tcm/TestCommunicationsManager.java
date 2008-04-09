@@ -35,7 +35,13 @@ public class TestCommunicationsManager implements CommunicationsManager {
                                                   ConnectionAddressProvider addressProvider) {
     throw new ImplementMe();
   }
-  
+
+  public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
+                                                  String hostname, int port, int timeout,
+                                                  ConnectionAddressProvider addressProvider, int callbackPort) {
+    throw new ImplementMe();
+  }
+
   public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
                                                   String hostname, int port, int timeout,
                                                   ConnectionAddressProvider addressProvider,

@@ -102,6 +102,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
         rv = harness.attachNewConnection(connection);
       }
     }
+
     return rv;
   }
 
@@ -255,6 +256,9 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
         return;
       }
 
+
+      this.transport.setRemoteCallbackPort(syn.getCallbackPort());
+
       // now check that the client side stack and server side stack are both in sync
 
       // get the client side stack layer
@@ -272,8 +276,9 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
         sendSynAck(connectionId, new TransportHandshakeErrorContext(layersPresentInServer,
                                                                     TransportHandshakeError.ERROR_STACK_MISMATCH), syn
             .getSource());
-        
-        if ((serverStackLayerFlags & NetworkLayer.TYPE_OOO_LAYER) != 0) logger.error(NetworkLayer.ERROR_OOO_IN_SERVER_NOT_IN_CLIENT);
+
+        if ((serverStackLayerFlags & NetworkLayer.TYPE_OOO_LAYER) != 0) logger
+            .error(NetworkLayer.ERROR_OOO_IN_SERVER_NOT_IN_CLIENT);
         else logger.error(NetworkLayer.ERROR_OOO_IN_CLIENT_NOT_IN_SERVER);
         this.isHandshakeError = true;
         return;
@@ -302,7 +307,8 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
         synAck = handshakeMessageFactory.createSynAck(connectionId, errorContext, source, isMaxConnectionsExceeded,
                                                       maxConnections);
       } else {
-        synAck = handshakeMessageFactory.createSynAck(connectionId, source, isMaxConnectionsExceeded, maxConnections);
+        synAck = handshakeMessageFactory.createSynAck(connectionId, source, isMaxConnectionsExceeded, maxConnections,
+                                                      source.getLocalAddress().getPort());
       }
       sendMessage(synAck);
     }

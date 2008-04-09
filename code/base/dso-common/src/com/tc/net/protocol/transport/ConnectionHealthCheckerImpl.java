@@ -84,7 +84,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
   }
 
   private static class HealthCheckerMonitorThreadEngine implements Runnable {
-    private ConcurrentHashMap         connectionMap = new ConcurrentHashMap();
+    private final ConcurrentHashMap   connectionMap = new ConcurrentHashMap();
     private final long                pingIdleTime;
     private final long                pingInterval;
     private final int                 pingProbes;
@@ -95,9 +95,9 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
 
     public HealthCheckerMonitorThreadEngine(HealthCheckerConfig healthCheckerConfig,
                                             TCConnectionManager connectionManager, TCLogger logger) {
-      pingIdleTime = healthCheckerConfig.getPingIdleTimeMillis();
-      pingInterval = healthCheckerConfig.getPingIntervalMillis();
-      pingProbes = healthCheckerConfig.getPingProbes();
+      this.pingIdleTime = healthCheckerConfig.getPingIdleTimeMillis();
+      this.pingInterval = healthCheckerConfig.getPingIntervalMillis();
+      this.pingProbes = healthCheckerConfig.getPingProbes();
       this.connectionManager = connectionManager;
       this.config = healthCheckerConfig;
 
@@ -151,7 +151,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
           if ((mtb.getConnection().getIdleReceiveTime() >= this.pingIdleTime)) {
 
             if (!connContext.probeIfAlive()) {
-              // Conn is dead. Diconnect the transport.
+              // Connection is dead. Disconnect the transport.
               mtb.disconnect();
               connectionIterator.remove();
             }

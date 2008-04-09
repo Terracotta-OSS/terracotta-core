@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.core;
 
@@ -56,7 +57,7 @@ public class TestTCConnection implements TCConnection {
   }
 
   public TCSocketAddress getLocalAddress() {
-    throw new ImplementMe();
+    return new TCSocketAddress(42);
   }
 
   public TCSocketAddress getRemoteAddress() {

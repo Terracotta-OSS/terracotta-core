@@ -5,6 +5,9 @@
 package com.tc.net.protocol.transport;
 
 public interface TransportHandshakeMessage extends WireProtocolMessage {
+
+  public static final int NO_CALLBACK_PORT = -1;
+
   public ConnectionID getConnectionId();
 
   public boolean isMaxConnectionsExceeded();

@@ -61,8 +61,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
       final Stage oooStage = stageManager.createStage("OOONetStage", new OOOEventHandler(), 1, 5000);
       networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
                                                                      new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
-                                                                     oooStage.getSink(),
-                                                                     new L1ReconnectConfigImpl());
+                                                                     oooStage.getSink(), new L1ReconnectConfigImpl());
     } else {
       networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
     }
@@ -124,7 +123,8 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
         .createClientChannel(new NullSessionManager(), -1 /* Unlimited Tries */, serverLsnr.getBindAddress()
             .getHostAddress(), proxyPort, 1000,
                              new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo(serverLsnr
-                                 .getBindAddress().getHostAddress(), proxyPort) }));
+                                 .getBindAddress().getHostAddress(), proxyPort) }),
+                                 TransportHandshakeMessage.NO_CALLBACK_PORT);
 
     clientMsgCh.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     clientMsgCh.routeMessageType(TCMessageType.PING_MESSAGE, new TCMessageSink() {

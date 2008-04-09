@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.transport;
 
@@ -19,7 +20,7 @@ public class MockMessageTransport implements MessageTransport {
   public ConnectionID connectionId;
   public NetworkLayer receiveLayer;
 
-  public List listeners = new ArrayList();
+  public List         listeners = new ArrayList();
 
   public ConnectionID getConnectionId() {
     return this.connectionId;
@@ -67,12 +68,10 @@ public class MockMessageTransport implements MessageTransport {
 
   public void attachNewConnection(TCConnection connection) {
     throw new ImplementMe();
-
   }
 
   public void receiveTransportMessage(WireProtocolMessage message) {
     throw new ImplementMe();
-
   }
 
   public final NoExceptionLinkedQueue sendToConnectionCalls = new NoExceptionLinkedQueue();
@@ -91,12 +90,10 @@ public class MockMessageTransport implements MessageTransport {
 
   public void setAllowConnectionReplace(boolean b) {
     throw new ImplementMe();
-
   }
 
   public short getStackLayerFlag() {
     throw new ImplementMe();
-    
   }
 
   public String getStackLayerName() {
@@ -112,6 +109,14 @@ public class MockMessageTransport implements MessageTransport {
   }
 
   public String getCommunicationStackNames(NetworkLayer parentLayer) {
+    throw new ImplementMe();
+  }
+
+  public void setRemoteCallbackPort(int callbackPort) {
+    //
+  }
+
+  public int getRemoteCallbackPort() {
     throw new ImplementMe();
   }
 }

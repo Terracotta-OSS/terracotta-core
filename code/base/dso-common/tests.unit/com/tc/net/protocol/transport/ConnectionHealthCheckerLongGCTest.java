@@ -115,15 +115,16 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
   }
 
   ClientMessageChannel createClientMsgCh() {
-    return createClientMsgChProxied(null);
+    return createClientMsgChProxied(clientComms);
   }
 
   ClientMessageChannel createClientMsgChProxied(CommunicationsManager clientCommsMgr) {
 
-    ClientMessageChannel clientMsgCh = (clientCommsMgr == null ? clientComms : clientCommsMgr)
+    ClientMessageChannel clientMsgCh = clientCommsMgr
         .createClientChannel(new NullSessionManager(), 0, serverLsnr.getBindAddress().getHostAddress(), proxyPort,
                              1000, new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo(serverLsnr
-                                 .getBindAddress().getHostAddress(), proxyPort) }));
+                                 .getBindAddress().getHostAddress(), proxyPort) }),
+                                 TransportHandshakeMessage.NO_CALLBACK_PORT);
 
     clientMsgCh.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     clientMsgCh.routeMessageType(TCMessageType.PING_MESSAGE, new TCMessageSink() {
@@ -173,7 +174,10 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
   }
 
   public void testL2ExtraCheckL1() throws Exception {
-    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(5000, 2000, 1, "ServerCommsHC-Test31", true /* EXTRA CHECK ON */);
+    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(5000, 2000, 1, "ServerCommsHC-Test31", true /*
+                                                                                                             * EXTRA
+                                                                                                             * CHECK ON
+                                                                                                             */);
     this.setUp(hcConfig, null);
     ((CommunicationsManagerImpl) clientComms).setConnHealthChecker(new ConnectionHealthCheckerDummyImpl());
     ClientMessageChannel clientMsgCh = createClientMsgCh();
@@ -204,13 +208,16 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
      */
     ThreadUtil.reallySleep(getMinScoketConnectResultTime(hcConfig));
 
-    /* By Now, the client should have been chuked out */
+    /* By Now, the client should have been chucked out */
     assertEquals(0, connHC.getTotalConnsUnderMonitor());
 
   }
 
   public void testL1ExtraCheckL2() throws Exception {
-    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(5000, 2000, 2, "ServerCommsHC-Test32", true /* EXTRA CHECK ON */);
+    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(5000, 2000, 2, "ServerCommsHC-Test32", true /*
+                                                                                                             * EXTRA
+                                                                                                             * CHECK ON
+                                                                                                             */);
     this.setUp(null, hcConfig);
     ((CommunicationsManagerImpl) serverComms).setConnHealthChecker(new ConnectionHealthCheckerDummyImpl());
     ClientMessageChannel clientMsgCh = createClientMsgCh();
@@ -251,7 +258,10 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
   }
 
   public void testL2ExtraCheckL1WithProxyDelay() throws Exception {
-    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(5000, 2000, 2, "ServerCommsHC-Test33", true /* EXTRA CHECK ON */);
+    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(5000, 2000, 2, "ServerCommsHC-Test33", true /*
+                                                                                                             * EXTRA
+                                                                                                             * CHECK ON
+                                                                                                             */);
     this.setUp(hcConfig, null);
 
     ClientMessageChannel clientMsgCh = createClientMsgCh();

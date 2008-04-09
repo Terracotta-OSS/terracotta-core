@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.transport;
 
@@ -9,13 +10,11 @@ import junit.framework.TestCase;
 
 public class TransportHandshakeMessageTest extends TestCase {
 
-  private TransportHandshakeMessage            message;
+  private TransportHandshakeMessage   message;
   private TransportMessageFactoryImpl factory;
 
   public void setUp() throws Exception {
-
     factory = new TransportMessageFactoryImpl();
-
   }
 
   public void testSendAndReceive() throws Exception {
@@ -23,7 +22,7 @@ public class TransportHandshakeMessageTest extends TestCase {
     int maxConnections = 13;
     DefaultConnectionIdFactory connectionIDProvider = new DefaultConnectionIdFactory();
     ConnectionID connectionId = connectionIDProvider.nextConnectionId();
-    message = factory.createSynAck(connectionId, null, isMaxConnectionsExceeded, maxConnections);
+    message = factory.createSynAck(connectionId, null, isMaxConnectionsExceeded, maxConnections, 43);
     TCByteBuffer payload[] = message.getPayload();
 
     WireProtocolHeader header = new WireProtocolHeader();

@@ -8,6 +8,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.event.TCConnectionErrorEvent;
@@ -21,7 +22,7 @@ import com.tc.util.State;
  * A HealthChecker Context takes care of sending and receiving probe signals, book-keeping, sending additional probes
  * and all the logic to monitor peers health. One Context per Transport is assigned as soon as a TC Connection is
  * Established.
- * 
+ *
  * @author Manoj
  */
 
@@ -66,7 +67,8 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     this.logger = TCLogging.getLogger(ConnectionHealthCheckerImpl.class.getName() + ". "
                                       + config.getHealthCheckerName());
     this.nodeID = "NodeID[" + mtb.getConnectionId().getChannelID() + "]";
-    logger.info("Health monitoring agent started for " + nodeID);
+    logger.info("Health monitoring agent started for " + nodeID + ", remoteAddr="
+                + mtb.getConnection().getRemoteAddress());
   }
 
   /* all callers of this method are already synchronized */
@@ -90,14 +92,20 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
   }
 
   private boolean initSocketConnectProbe() {
+    int callbackPort = transport.getRemoteCallbackPort();
+    if (TransportHandshakeMessage.NO_CALLBACK_PORT == callbackPort) { return false; }
 
     // trigger the socket connect
     conn = connectionManager.createConnection(new NullProtocolAdaptor());
     conn.addListener(this);
-    sockectConnect = new HealthCheckerSocketConnectImpl(transport.getRemoteAddress(), conn,
-                                                        new NodeIDImpl(""
-                                                                       + this.transport.getConnectionId()
-                                                                           .getChannelID(), new byte[0]), logger);
+
+    // TODO: do we need to exchange the address as well? (since it might be different than the remote IP on this conn)
+    TCSocketAddress sa = new TCSocketAddress(transport.getRemoteAddress().getAddress(), callbackPort);
+
+    sockectConnect = new HealthCheckerSocketConnectImpl(sa, conn, new NodeIDImpl(""
+                                                                                 + this.transport.getConnectionId()
+                                                                                     .getChannelID(), new byte[0]),
+                                                        logger);
 
     if (sockectConnect.start()) {
       return true;
@@ -120,7 +128,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     } else if (currentState.equals(SOCKET_CONNECT)) {
 
       /* Socket Connect is in progress; wait for one more interval or move to next state */
-      if (!sockectConnect.porobeConnectStatus()) {
+      if (!sockectConnect.probeConnectStatus()) {
         changeState(DEAD);
       }
 

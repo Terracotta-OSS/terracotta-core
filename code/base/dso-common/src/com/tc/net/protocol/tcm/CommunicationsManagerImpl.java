@@ -52,7 +52,7 @@ import java.util.Set;
 
 /**
  * Communications manager for setting up listners and creating client connections
- * 
+ *
  * @author teck
  */
 public class CommunicationsManagerImpl implements CommunicationsManager {
@@ -100,7 +100,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   /**
    * Create a comms manager with the given connection manager. This cstr is mostly for testing, or in the event that you
    * actually want to use an explicit connection manager
-   * 
+   *
    * @param connMgr the connection manager to use
    * @param serverDescriptors
    */
@@ -157,6 +157,13 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   public ClientMessageChannel createClientChannel(final SessionProvider sessionProvider, final int maxReconnectTries,
                                                   String hostname, int port, final int timeout,
                                                   ConnectionAddressProvider addressProvider) {
+    return createClientChannel(sessionProvider, maxReconnectTries, hostname, port, timeout, addressProvider,
+                               TransportHandshakeMessage.NO_CALLBACK_PORT);
+  }
+
+  public ClientMessageChannel createClientChannel(final SessionProvider sessionProvider, final int maxReconnectTries,
+                                                  String hostname, int port, final int timeout,
+                                                  ConnectionAddressProvider addressProvider, final int callbackPort) {
     final ConnectionAddressProvider provider = addressProvider;
     MessageTransportFactory transportFactory = new MessageTransportFactory() {
       public MessageTransport createNewTransport() {
@@ -194,7 +201,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                                                                                   timeout);
         ClientMessageTransport cmt = new ClientMessageTransport(clientConnectionEstablisher, handshakeErrorHandler,
                                                                 transportMessageFactory,
-                                                                new WireProtocolAdaptorFactoryImpl());
+                                                                new WireProtocolAdaptorFactoryImpl(), callbackPort);
         cmt.addTransportListener(connectionHealthChecker);
         return cmt;
       }
@@ -213,7 +220,8 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
       }
     };
 
-    return createClientChannel(sessionProvider, maxReconnectTries, hostname, port, timeout, addressProvider, transportFactory);
+    return createClientChannel(sessionProvider, maxReconnectTries, hostname, port, timeout, addressProvider,
+                               transportFactory);
   }
 
   public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, final int maxReconnectTries,

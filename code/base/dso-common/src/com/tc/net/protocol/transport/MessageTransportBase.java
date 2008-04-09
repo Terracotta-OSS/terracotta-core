@@ -47,6 +47,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   private int                                      destinationPort;
   private boolean                                  allowConnectionReplace = false;
   private ConnectionHealthCheckerContext           healthCheckerContext   = null;
+  private int                                      remoteCallbackPort     = TransportHandshakeMessage.NO_CALLBACK_PORT;
 
   protected MessageTransportBase(MessageTransportState initialState,
                                  TransportHandshakeErrorHandler handshakeErrorHandler,
@@ -79,10 +80,10 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     this.receiveLayer = layer;
   }
 
-  public final NetworkLayer getReceiveLayer(){
+  public final NetworkLayer getReceiveLayer() {
     return receiveLayer;
   }
-  
+
   public final void setSendLayer(NetworkLayer layer) {
     throw new UnsupportedOperationException("Transport layer has no send layer.");
   }
@@ -104,7 +105,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   protected final void receiveToReceiveLayer(WireProtocolMessage message) {
     Assert.assertNotNull(receiveLayer);
     if (message.getMessageProtocol() == WireProtocolHeader.PROTOCOL_TRANSPORT_HANDSHAKE) {
-      //message is printed for debugging
+      // message is printed for debugging
       logger.info(message.toString());
       throw new AssertionError("Wrong handshake message from: " + message.getSource());
     } else if (message.getMessageProtocol() == WireProtocolHeader.PROTOCOL_HEALTHCHECK_PROBES) {
@@ -361,8 +362,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   }
 
   /**
-   * this function gets the stackLayerFlag added to 
-   * build the communication stack information
+   * this function gets the stackLayerFlag added to build the communication stack information
    */
   public short getStackLayerFlag() {
     // this is the transport layer
@@ -370,11 +370,19 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   }
 
   /**
-   * This function gets the stack layer name of the present layer
-   * added to build the communication stack information
+   * This function gets the stack layer name of the present layer added to build the communication stack information
    */
   public String getStackLayerName() {
     // this is the transport layer
     return NAME_TRANSPORT_LAYER;
   }
+
+  public synchronized int getRemoteCallbackPort() {
+    return this.remoteCallbackPort;
+  }
+
+  public synchronized void setRemoteCallbackPort(int remoteCallbackPort) {
+    this.remoteCallbackPort = remoteCallbackPort;
+  }
+
 }

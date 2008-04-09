@@ -35,27 +35,29 @@ public class ClientMessageTransport extends MessageTransportBase {
   private TCFuture                          waitForSynAckResult;
   private final WireProtocolAdaptorFactory  wireProtocolAdaptorFactory;
   private final SynchronizedBoolean         isOpening                          = new SynchronizedBoolean(false);
+  private final int                         callbackPort;
 
   /**
    * Constructor for when you want a transport that isn't connected yet (e.g., in a client). This constructor will
    * create an unopened MessageTransport.
-   * 
+   *
    * @param commsManager CommmunicationsManager
    */
   public ClientMessageTransport(ClientConnectionEstablisher clientConnectionEstablisher,
                                 TransportHandshakeErrorHandler handshakeErrorHandler,
                                 TransportHandshakeMessageFactory messageFactory,
-                                WireProtocolAdaptorFactory wireProtocolAdaptorFactory) {
+                                WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int callbackPort) {
 
     super(MessageTransportState.STATE_START, handshakeErrorHandler, messageFactory, false, TCLogging
         .getLogger(ClientMessageTransport.class));
     this.wireProtocolAdaptorFactory = wireProtocolAdaptorFactory;
     this.connectionEstablisher = clientConnectionEstablisher;
+    this.callbackPort = callbackPort;
   }
 
   /**
    * Blocking open. Causes a connection to be made. Will throw exceptions if the connect fails.
-   * 
+   *
    * @throws TCTimeoutException
    * @throws IOException
    * @throws TCTimeoutException
@@ -187,6 +189,8 @@ public class ClientMessageTransport extends MessageTransportBase {
         Assert.assertNotNull(this.waitForSynAckResult);
       }
       this.waitForSynAckResult.set(synAck);
+
+      setRemoteCallbackPort(synAck.getCallbackPort());
     }
 
     return;
@@ -199,7 +203,7 @@ public class ClientMessageTransport extends MessageTransportBase {
 
   /**
    * Builds a protocol stack and tries to make a connection. This is a blocking call.
-   * 
+   *
    * @throws TCTimeoutException
    * @throws MaxConnectionsExceededException
    * @throws IOException
@@ -227,8 +231,8 @@ public class ClientMessageTransport extends MessageTransportBase {
       waitForSynAckResult = new TCFuture(status);
       // get the stack layer list and pass it in
       short stackLayerFlags = getCommunicationStackFlags(this);
-      TransportHandshakeMessage syn = this.messageFactory
-          .createSyn(this.connectionId, getConnection(), stackLayerFlags);
+      TransportHandshakeMessage syn = this.messageFactory.createSyn(this.connectionId, getConnection(),
+                                                                    stackLayerFlags, callbackPort);
       // send syn message
       this.sendToConnection(syn);
       this.status.synSent();

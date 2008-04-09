@@ -23,12 +23,14 @@ public interface HealthCheckerConfig {
   /* HC probes a idle connection for ping_probes times before tagging it as dead */
   int getPingProbes();
 
-  /*
+  /**
    * When HC detected the peer has died by above probes, it can do additional checks to see any traces of life left out
-   *  1. chk whether the peer is in Long GC
-   *  2. more similar checks
-   *
-   *  If the peer is un-responsive and not died, a grace period is given before deciding it as dead.
+   * <ol>
+   * <li>check whether the peer is in Long GC
+   * <li>more similar checks
+   * </ol>
+   * <br>
+   * If the peer is unresponsive and not died, a grace * period is given before deciding it as dead.
    */
   boolean isSocketConnectOnPingFail();
 
