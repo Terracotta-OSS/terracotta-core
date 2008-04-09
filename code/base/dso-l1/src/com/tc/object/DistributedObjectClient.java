@@ -323,7 +323,8 @@ public class DistributedObjectClient extends SEDA {
 
     RemoteObjectIDBatchSequenceProvider remoteIDProvider = new RemoteObjectIDBatchSequenceProvider(channel
         .getObjectIDBatchRequestMessageFactory());
-    BatchSequence sequence = new BatchSequence(remoteIDProvider, 50000);
+    BatchSequence sequence = new BatchSequence(remoteIDProvider, l1Properties
+        .getInt("objectmanager.objectid.request.size"));
     ObjectIDProvider idProvider = new ObjectIDProviderImpl(sequence);
     remoteIDProvider.setBatchSequenceReceiver(sequence);
 
