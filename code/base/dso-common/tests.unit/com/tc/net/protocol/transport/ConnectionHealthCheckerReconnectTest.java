@@ -35,6 +35,7 @@ import com.tc.object.session.NullSessionManager;
 import com.tc.test.TCTestCase;
 import com.tc.util.PortChooser;
 import com.tc.util.SequenceGenerator;
+import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.HashSet;
@@ -57,7 +58,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
 
     if (true /* TCPropertiesImpl.getProperties().getBoolean(L1ReconnectProperties.L1_RECONNECT_ENABLED) */) {
       StageManagerImpl stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(TCLogging
-          .getLogger(StageManagerImpl.class))));
+          .getLogger(StageManagerImpl.class))), new QueueFactory());
       final Stage oooStage = stageManager.createStage("OOONetStage", new OOOEventHandler(), 1, 5000);
       networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
                                                                      new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),

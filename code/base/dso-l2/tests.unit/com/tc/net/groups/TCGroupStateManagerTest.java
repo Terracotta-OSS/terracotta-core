@@ -27,6 +27,7 @@ import com.tc.test.TCTestCase;
 import com.tc.util.PortChooser;
 import com.tc.util.State;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
+import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
@@ -383,7 +384,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
   private StateManager createStateManageNode(int localIndex, Node[] nodes, ChangeSink[] sinks,
                                              TCGroupManagerImpl[] groupMgr, L2StateMessageStage[] messageStage)
       throws Exception {
-    StageManager stageManager = new StageManagerImpl(threadGroup);
+    StageManager stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
     TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), nodes[localIndex].getHost(),
                                                    nodes[localIndex].getPort(), stageManager);
     ConfigurationContext context = new ConfigurationContextImpl(stageManager);

@@ -6,12 +6,15 @@ package com.tc.util.concurrent;
 
 import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
 
-public class TCBoundedLinkedQueue implements FastQueue {
+public class TCBoundedLinkedQueue implements TCQueue {
   private BoundedLinkedQueue queue;
 
   public TCBoundedLinkedQueue() {
-    System.out.println("Bounded Linked Queue, JDK 1.4");
     queue = new BoundedLinkedQueue();
+  }
+  
+  public TCBoundedLinkedQueue(int capacity){
+    queue = new BoundedLinkedQueue(capacity);
   }
 
   public boolean offer(Object obj, long timeout) throws InterruptedException {
@@ -40,6 +43,10 @@ public class TCBoundedLinkedQueue implements FastQueue {
   
   public void setCapacity(int capacity){
     queue.setCapacity(capacity);
+  }
+
+  public boolean isEmpty() {
+    return queue.isEmpty();
   }
 
 }

@@ -4,10 +4,6 @@
  */
 package com.tc.async.impl;
 
-import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
-import EDU.oswego.cs.dl.util.concurrent.Channel;
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
-
 import com.tc.async.api.AddPredicate;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
@@ -19,6 +15,7 @@ import com.tc.logging.TCLoggerProvider;
 import com.tc.stats.Stats;
 import com.tc.util.Assert;
 import com.tc.util.State;
+import com.tc.util.concurrent.TCQueue;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -35,14 +32,14 @@ public class StageQueueImpl implements Sink, Source {
   private static final State                RUNNING   = new State("RUNNING");
   private static final State                PAUSED    = new State("PAUSED");
 
-  private final Channel                     queue;
+  private final TCQueue                     queue;
   private final String                      stage;
   private final TCLogger                    logger;
   private AddPredicate                      predicate = DefaultAddPredicate.getInstance();
   private volatile State                    state     = RUNNING;
   private volatile StageQueueStatsCollector statsCollector;
 
-  public StageQueueImpl(TCLoggerProvider loggerProvider, String stage, Channel queue) {
+  public StageQueueImpl(TCLoggerProvider loggerProvider, String stage, TCQueue queue) {
     this.queue = queue;
     this.logger = loggerProvider.getLogger(Sink.class.getName() + ": " + stage);
     this.stage = stage;
@@ -65,13 +62,7 @@ public class StageQueueImpl implements Sink, Source {
 
   // XXX::Ugly hack since this method doesnt exist on the Channel interface
   private boolean isEmpty() {
-    if (queue instanceof BoundedLinkedQueue) {
-      return ((BoundedLinkedQueue) queue).isEmpty();
-    } else if (queue instanceof LinkedQueue) {
-      return ((LinkedQueue) queue).isEmpty();
-    } else {
-      throw new AssertionError("Unsupported channel " + queue.getClass().getName() + " in " + getClass().getName());
-    }
+    return queue.isEmpty();
   }
 
   public void addMany(Collection contexts) {
@@ -116,11 +107,7 @@ public class StageQueueImpl implements Sink, Source {
 
   // Used for testing
   public int size() {
-    if (queue instanceof BoundedLinkedQueue) {
-      return ((BoundedLinkedQueue) queue).size();
-    } else {
-      return 0;
-    }
+    return queue.size();
   }
 
   public Collection getAll() throws InterruptedException {

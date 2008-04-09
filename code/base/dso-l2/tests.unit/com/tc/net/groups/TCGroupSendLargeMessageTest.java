@@ -20,6 +20,7 @@ import com.tc.test.TCTestCase;
 import com.tc.util.ObjectIDSet2;
 import com.tc.util.PortChooser;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
+import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
 
 public class TCGroupSendLargeMessageTest extends TCTestCase {
@@ -38,7 +39,7 @@ public class TCGroupSendLargeMessageTest extends TCTestCase {
     final Node[] allNodes = new Node[] { new Node(LOCALHOST, p1, TCSocketAddress.WILDCARD_IP),
         new Node(LOCALHOST, p2, TCSocketAddress.WILDCARD_IP) };
 
-    StageManager stageManager1 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(null)));
+    StageManager stageManager1 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(null)), new QueueFactory());
     TCGroupManagerImpl gm1 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p1, stageManager1);
     ConfigurationContext context1 = new ConfigurationContextImpl(stageManager1);
     stageManager1.startAll(context1);
@@ -46,7 +47,7 @@ public class TCGroupSendLargeMessageTest extends TCTestCase {
     MyListener l1 = new MyListener();
     gm1.registerForMessages(GCResultMessage.class, l1);
 
-    StageManager stageManager2 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(null)));
+    StageManager stageManager2 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(null)), new QueueFactory());
     TCGroupManagerImpl gm2 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p2, stageManager2);
     ConfigurationContext context2 = new ConfigurationContextImpl(stageManager2);
     stageManager2.startAll(context2);

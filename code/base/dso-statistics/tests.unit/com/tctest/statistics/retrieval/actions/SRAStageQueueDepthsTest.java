@@ -17,6 +17,7 @@ import com.tc.logging.TCLogging;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.retrieval.actions.SRAStageQueueDepths;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.QueueFactory;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -30,7 +31,7 @@ public class SRAStageQueueDepthsTest extends TestCase {
 
   protected void setUp() throws Exception {
     stageManager = new StageManagerImpl(new TCThreadGroup(
-      new ThrowableHandler(TCLogging.getLogger(StageManagerImpl.class))));
+      new ThrowableHandler(TCLogging.getLogger(StageManagerImpl.class))), new QueueFactory());
 
     for (int i = 0; i < STAGE_NAMES.length; i++) {
       createStage(STAGE_NAMES[i]);

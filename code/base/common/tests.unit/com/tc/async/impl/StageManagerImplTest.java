@@ -9,6 +9,7 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
 
 import junit.framework.TestCase;
@@ -46,7 +47,7 @@ public class StageManagerImplTest extends TestCase {
     super.setUp();
     try {
     stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(TCLogging
-        .getLogger(StageManagerImpl.class))));
+        .getLogger(StageManagerImpl.class))), new QueueFactory());
     testEventHandler = new TestEventHandler();
     } catch(Throwable t) {
       t.printStackTrace();

@@ -178,7 +178,7 @@ public class DistributedObjectClient extends SEDA {
   public DistributedObjectClient(DSOClientConfigHelper config, TCThreadGroup threadGroup, ClassProvider classProvider,
                                  PreparedComponentsFromL2Connection connectionComponents, Manager manager,
                                  Cluster cluster) {
-    super(threadGroup);
+    super(threadGroup, true);
     Assert.assertNotNull(config);
     this.config = config;
     this.classProvider = classProvider;

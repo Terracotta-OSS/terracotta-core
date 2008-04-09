@@ -1,11 +1,8 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.async.impl;
-
-import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
-import EDU.oswego.cs.dl.util.concurrent.Channel;
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandler;
@@ -19,6 +16,8 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.Stats;
 import com.tc.text.StringFormatter;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.QueueFactory;
+import com.tc.util.concurrent.TCQueue;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Arrays;
@@ -45,10 +44,12 @@ public class StageManagerImpl implements StageManager {
   private TCLoggerProvider     loggerProvider;
   private final ThreadGroup    group;
   private String[]             stageNames          = new String[] {};
+  private QueueFactory         queueFactory        = null;
 
-  public StageManagerImpl(ThreadGroup threadGroup) {
+  public StageManagerImpl(ThreadGroup threadGroup, QueueFactory queueFactory) {
     this.loggerProvider = new DefaultLoggerProvider();
     this.group = threadGroup;
+    this.queueFactory = queueFactory;
 
     if (MONITOR) {
       startMonitor();
@@ -87,7 +88,8 @@ public class StageManagerImpl implements StageManager {
   }
 
   public synchronized Stage createStage(String name, EventHandler handler, int threads, int maxSize) {
-    Channel q = maxSize > 0 ? (Channel) new BoundedLinkedQueue(maxSize) : new LinkedQueue();
+    //Channel q = maxSize > 0 ? (Channel) new BoundedLinkedQueue(maxSize) : new LinkedQueue();
+    TCQueue q = this.queueFactory.createInstance(maxSize);
     Stage s = new StageImpl(loggerProvider, name, handler, new StageQueueImpl(loggerProvider, name, q), threads, group);
     addStage(name, s);
     return s;

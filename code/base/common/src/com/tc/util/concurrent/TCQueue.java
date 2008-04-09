@@ -3,7 +3,7 @@
  */
 package com.tc.util.concurrent;
 
-public interface FastQueue {
+public interface TCQueue {
   /**
    * Adds the object in the queue
    * @throws InterruptedException 
@@ -41,4 +41,9 @@ public interface FastQueue {
    * Sets the capacity of the queue
    */
   public void setCapacity(int capacity);
+  
+  /**
+   * Tells whether queue is empty or not
+   */
+  public boolean isEmpty();
 }

@@ -7,11 +7,10 @@ package com.tc.util.concurrent;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-public class TCLinkedQueue implements FastQueue {
+public class TCLinkedBlockingQueue implements TCQueue {
   private LinkedBlockingQueue queue = null;
 
-  public TCLinkedQueue(){
-    System.out.println("Linked Queue, JDK 1.5+");
+  public TCLinkedBlockingQueue(){
     queue = new LinkedBlockingQueue();
   }
 
@@ -27,12 +26,12 @@ public class TCLinkedQueue implements FastQueue {
     return queue.poll(timeout, TimeUnit.MILLISECONDS);
   }
 
-  public void put(Object obj) throws InterruptedException {
-    queue.put(obj);
+  public void put(Object obj) {
+    queue.add(obj);
   }
 
-  public Object take() throws InterruptedException {
-    return queue.take();
+  public Object take() {
+    return queue.remove();
   }
 
   public int size() {
@@ -41,6 +40,10 @@ public class TCLinkedQueue implements FastQueue {
 
   public void setCapacity(int capacity) {
     //do nothing
+  }
+
+  public boolean isEmpty() {
+    return queue.isEmpty();
   }
 
 }

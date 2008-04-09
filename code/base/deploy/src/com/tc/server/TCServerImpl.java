@@ -108,7 +108,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   public TCServerImpl(L2TVSConfigurationSetupManager manager, TCThreadGroup group, ConnectionPolicy connectionPolicy) {
-    super(group);
+    super(group, false);
     this.connectionPolicy = connectionPolicy;
     Assert.assertNotNull(manager);
     this.configurationSetupManager = manager;

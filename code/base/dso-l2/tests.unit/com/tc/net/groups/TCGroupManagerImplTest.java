@@ -35,6 +35,7 @@ import com.tc.util.ObjectIDSet2;
 import com.tc.util.PortChooser;
 import com.tc.util.UUID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
+import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.ThreadDump;
 
@@ -74,7 +75,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     }
     for (int i = 0; i < n; ++i) {
       StageManager stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(TCLogging
-          .getLogger(TCGroupManagerImplTest.class))));
+          .getLogger(TCGroupManagerImplTest.class))), new QueueFactory());
       groups[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, groupPorts[i], stageManager);
       ConfigurationContext context = new ConfigurationContextImpl(stageManager);
       stageManager.startAll(context);
