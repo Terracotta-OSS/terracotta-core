@@ -4,10 +4,13 @@
  */
 package com.tc.util.concurrent;
 
+import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
 import com.tc.util.Assert;
 import com.tc.util.runtime.Vm;
+
+import java.util.concurrent.LinkedBlockingQueue;
 
 import junit.framework.TestCase;
 
@@ -25,7 +28,7 @@ public class TCLinkedQueueJDK15Test extends TestCase {
     TCQueue linkedBlockingQueue = (new QueueFactory()).createInstance();
     Assert.assertTrue(linkedBlockingQueue instanceof TCLinkedBlockingQueue);
     
-    TCQueue boundedLinkedQueue = (new QueueFactory(true)).createInstance();
+    TCQueue boundedLinkedQueue = (new QueueFactory(BoundedLinkedQueue.class.getName())).createInstance();
     Assert.assertTrue(boundedLinkedQueue instanceof TCBoundedLinkedQueue);
   }
 
@@ -35,7 +38,7 @@ public class TCLinkedQueueJDK15Test extends TestCase {
       System.out.println("This test is supposed to run only for JDK 1.5 and above. Exiting the test...");
       return;
     }
-    TCQueue queue = (new QueueFactory(false)).createInstance(NUMBER_OF_TRANSACTIONS);
+    TCQueue queue = (new QueueFactory(LinkedBlockingQueue.class.getName())).createInstance(NUMBER_OF_TRANSACTIONS);
 
     Thread producer1 = new Producer("Producer TCLinkedBlockingQueue", queue);
     long startTime = System.currentTimeMillis();
@@ -85,7 +88,7 @@ public class TCLinkedQueueJDK15Test extends TestCase {
       System.out.println("This test is supposed to run only for JDK 1.5 and above. Exiting the test...");
       return;
     }
-    TCQueue queue = (new QueueFactory(false)).createInstance(NUMBER_OF_TRANSACTIONS);
+    TCQueue queue = (new QueueFactory(LinkedBlockingQueue.class.getName())).createInstance(NUMBER_OF_TRANSACTIONS);
     nodeId.set(0);
 
     Thread producer1 = new Producer("Producer1", queue);

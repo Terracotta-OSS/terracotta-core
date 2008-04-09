@@ -21,9 +21,9 @@ public class SEDA {
     this.stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
   }
 
-  public SEDA(TCThreadGroup threadGroup, boolean useBoundedLinkedQueue){
+  public SEDA(TCThreadGroup threadGroup, String className){
     this.threadGroup = threadGroup;
-    this.stageManager = new StageManagerImpl(threadGroup, new QueueFactory(useBoundedLinkedQueue));
+    this.stageManager = new StageManagerImpl(threadGroup, new QueueFactory(className));
   }
   
   public StageManager getStageManager() {

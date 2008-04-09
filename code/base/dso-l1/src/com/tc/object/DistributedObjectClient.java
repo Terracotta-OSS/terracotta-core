@@ -4,6 +4,8 @@
  */
 package com.tc.object;
 
+import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
+
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
@@ -178,7 +180,7 @@ public class DistributedObjectClient extends SEDA {
   public DistributedObjectClient(DSOClientConfigHelper config, TCThreadGroup threadGroup, ClassProvider classProvider,
                                  PreparedComponentsFromL2Connection connectionComponents, Manager manager,
                                  Cluster cluster) {
-    super(threadGroup, true);
+    super(threadGroup, BoundedLinkedQueue.class.getName());
     Assert.assertNotNull(config);
     this.config = config;
     this.classProvider = classProvider;
