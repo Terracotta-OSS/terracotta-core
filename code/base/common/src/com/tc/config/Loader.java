@@ -99,13 +99,17 @@ public final class Loader {
     return convert(url.openStream(), xmlOptions);
   }
 
-  public boolean testIsOld(File file) throws IOException, XmlException {
+  public boolean testIsOld(File file) {
     return !testIsCurrent(file);
   }
 
-  public boolean testIsCurrent(File file) throws IOException, XmlException {
-    com.terracottatech.config.TcConfigDocument.Factory.parse(new FileInputStream(file));
-    return true;
+  public boolean testIsCurrent(File file) {
+    try {
+      com.terracottatech.config.TcConfigDocument.Factory.parse(new FileInputStream(file));
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
   }
 
   public void updateToCurrent(File file) throws IOException, XmlException {
