@@ -46,5 +46,25 @@
       <artifactId>dependencies</artifactId>
       <version>${tcVersion}</version>
     </dependency>
-  </dependencies>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>tcconfig1</artifactId>
+      <version>1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>tcconfig2</artifactId>
+      <version>2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>tcconfig</artifactId>
+      <version>${tcVersion}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>tc-l1-prop-from-l2</artifactId>
+      <version>${tcVersion}</version>
+    </dependency>
+ </dependencies>
 </project>
