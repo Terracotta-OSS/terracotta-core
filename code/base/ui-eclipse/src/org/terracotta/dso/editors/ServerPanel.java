@@ -35,6 +35,7 @@ public class ServerPanel extends ConfigurationEditorPanel
 
   private LogsBrowseSelectionHandler m_logsBrowseSelectionHandler;
   private DataBrowseSelectionHandler m_dataBrowseSelectionHandler;
+  private StatisticsBrowseSelectionHandler m_statisticsBrowseSelectionHandler;
 
   public ServerPanel(Composite parent, int style) {
     super(parent, style);
@@ -42,6 +43,7 @@ public class ServerPanel extends ConfigurationEditorPanel
 
     m_logsBrowseSelectionHandler = new LogsBrowseSelectionHandler();
     m_dataBrowseSelectionHandler = new DataBrowseSelectionHandler();
+    m_statisticsBrowseSelectionHandler = new StatisticsBrowseSelectionHandler();
     
     SWTUtil.setBGColorRecurse(this.getDisplay().getSystemColor(SWT.COLOR_WHITE), this);
   }
@@ -59,6 +61,7 @@ public class ServerPanel extends ConfigurationEditorPanel
     return m_server != null &&
           (m_server.isSetData()    ||
            m_server.isSetLogs()    ||
+           m_server.isSetStatistics() ||
            m_server.isSetDsoPort() ||
            m_server.isSetDso()     ||
            m_server.isSetJmxPort() ||
@@ -75,8 +78,10 @@ public class ServerPanel extends ConfigurationEditorPanel
     ((XmlStringField)m_layout.m_jmxPortField.getData()).addXmlObjectStructureListener(this);
     ((XmlStringField)m_layout.m_dataLocation.getData()).addXmlObjectStructureListener(this);
     ((XmlStringField)m_layout.m_logsLocation.getData()).addXmlObjectStructureListener(this);
+    ((XmlStringField)m_layout.m_statisticsLocation.getData()).addXmlObjectStructureListener(this);
     m_layout.m_dataBrowse.addSelectionListener(m_dataBrowseSelectionHandler);
     m_layout.m_logsBrowse.addSelectionListener(m_logsBrowseSelectionHandler);
+    m_layout.m_statisticsBrowse.addSelectionListener(m_statisticsBrowseSelectionHandler);
     m_layout.m_dsoServerDataPanel.addXmlObjectStructureListener(this);
   }
 
@@ -87,8 +92,10 @@ public class ServerPanel extends ConfigurationEditorPanel
     ((XmlStringField)m_layout.m_jmxPortField.getData()).removeXmlObjectStructureListener(this);
     ((XmlStringField)m_layout.m_dataLocation.getData()).removeXmlObjectStructureListener(this);
     ((XmlStringField)m_layout.m_logsLocation.getData()).removeXmlObjectStructureListener(this);
+    ((XmlStringField)m_layout.m_statisticsLocation.getData()).removeXmlObjectStructureListener(this);
     m_layout.m_dataBrowse.removeSelectionListener(m_dataBrowseSelectionHandler);
     m_layout.m_logsBrowse.removeSelectionListener(m_logsBrowseSelectionHandler);
+    m_layout.m_statisticsBrowse.removeSelectionListener(m_statisticsBrowseSelectionHandler);
     m_layout.m_dsoServerDataPanel.removeXmlObjectStructureListener(this);
   }
 
@@ -116,14 +123,15 @@ public class ServerPanel extends ConfigurationEditorPanel
   }
 
   private class Layout implements SWTLayout {
-    private static final String BROWSE   = "Browse...";
-    private static final String NAME     = "Name";
-    private static final String HOST     = "Host";
-    private static final String DSO_PORT = "DSO Port";
-    private static final String JMX_PORT = "JMX Port";
-    private static final String SERVER   = "Server";
-    private static final String DATA     = "Data";
-    private static final String LOGS     = "Logs";
+    private static final String BROWSE     = "Browse...";
+    private static final String NAME       = "Name";
+    private static final String HOST       = "Host";
+    private static final String DSO_PORT   = "DSO Port";
+    private static final String JMX_PORT   = "JMX Port";
+    private static final String SERVER     = "Server";
+    private static final String DATA       = "Data";
+    private static final String LOGS       = "Logs";
+    private static final String STATISTICS = "Statistics";
 
     private Text                m_nameField;
     private Text                m_hostField;
@@ -131,8 +139,10 @@ public class ServerPanel extends ConfigurationEditorPanel
     private Text                m_jmxPortField;
     private Text                m_dataLocation;
     private Text                m_logsLocation;
+    private Text                m_statisticsLocation;
     private Button              m_logsBrowse;
     private Button              m_dataBrowse;
+    private Button              m_statisticsBrowse;
     private Group               m_serverGroup;
     private DsoServerDataPanel  m_dsoServerDataPanel;
     
@@ -147,6 +157,7 @@ public class ServerPanel extends ConfigurationEditorPanel
       ((XmlIntegerField)m_jmxPortField.getData()).tearDown();
       ((XmlStringField)m_dataLocation.getData()).tearDown();
       ((XmlStringField)m_logsLocation.getData()).tearDown();
+      ((XmlStringField)m_statisticsLocation.getData()).tearDown();
 
       m_dsoServerDataPanel.tearDown();
     }
@@ -158,6 +169,7 @@ public class ServerPanel extends ConfigurationEditorPanel
       ((XmlIntegerField)m_jmxPortField.getData()).setup(server);
       ((XmlStringField)m_dataLocation.getData()).setup(server);
       ((XmlStringField)m_logsLocation.getData()).setup(server);
+      ((XmlStringField)m_statisticsLocation.getData()).setup(server);
 
       m_dsoServerDataPanel.setup(server);
     }
@@ -165,18 +177,27 @@ public class ServerPanel extends ConfigurationEditorPanel
     private void resetServerFields(boolean enabled) {
       m_nameField.setText("");
       m_nameField.setEnabled(enabled);
+      
       m_hostField.setText("");
       m_hostField.setEnabled(enabled);
+      
       m_dsoPortField.setText("");
       m_dsoPortField.setEnabled(enabled);
+      
       m_jmxPortField.setText("");
       m_jmxPortField.setEnabled(enabled);
+      
       m_dataLocation.setText("");
       m_dataLocation.setEnabled(enabled);
+      m_dataBrowse.setEnabled(enabled);
+      
       m_logsLocation.setText("");
       m_logsLocation.setEnabled(enabled);
-      m_dataBrowse.setEnabled(enabled);
       m_logsBrowse.setEnabled(enabled);
+      
+      m_statisticsLocation.setText("");
+      m_statisticsLocation.setEnabled(enabled);
+      m_statisticsBrowse.setEnabled(enabled);
     }
 
     private Layout(Composite parent) {
@@ -268,12 +289,31 @@ public class ServerPanel extends ConfigurationEditorPanel
       m_logsBrowse.setText(BROWSE);
       SWTUtil.applyDefaultButtonSize(m_logsBrowse);
 
+      Label statisticsLabel = new Label(fieldGroup, SWT.NONE);
+      statisticsLabel.setText(STATISTICS);
+
+      Composite statisticsPanel = new Composite(fieldGroup, SWT.NONE);
+      gridLayout = new GridLayout(2, false);
+      gridLayout.marginWidth = gridLayout.marginHeight = 0;
+      statisticsPanel.setLayout(gridLayout);
+      gridData = new GridData(GridData.FILL_BOTH);
+      gridData.horizontalSpan = 4;
+      statisticsPanel.setLayoutData(gridData);
+
+      m_statisticsLocation = new Text(statisticsPanel, SWT.BORDER);
+      m_statisticsLocation.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+      initStringField(m_statisticsLocation, Server.class, "statistics");
+
+      m_statisticsBrowse = new Button(statisticsPanel, SWT.PUSH);
+      m_statisticsBrowse.setText(BROWSE);
+      SWTUtil.applyDefaultButtonSize(m_statisticsBrowse);
+
       m_dsoServerDataPanel = new DsoServerDataPanel(m_serverGroup, SWT.NONE);
       m_dsoServerDataPanel.setLayoutData(new GridData(SWT.FILL, SWT.BEGINNING, true, true));
     }
   }
   
-  class LogsBrowseSelectionHandler extends SelectionAdapter {
+  private class LogsBrowseSelectionHandler extends SelectionAdapter {
     public void widgetSelected(SelectionEvent e) {
       NavigatorBehavior behavior = new FolderBehavior();
       PackageNavigator dialog = new PackageNavigator(getShell(), behavior.getTitle(), getProject(), behavior);
@@ -287,13 +327,27 @@ public class ServerPanel extends ConfigurationEditorPanel
     }
   }
 
-  class DataBrowseSelectionHandler extends SelectionAdapter {
+  private class DataBrowseSelectionHandler extends SelectionAdapter {
     public void widgetSelected(SelectionEvent e) {
       NavigatorBehavior behavior = new FolderBehavior();
       PackageNavigator dialog = new PackageNavigator(getShell(), behavior.getTitle(), getProject(), behavior);
       dialog.addValueListener(new UpdateEventListener() {
         public void handleUpdate(UpdateEvent event) {
           m_server.setData((String)event.data);
+          fireChanged();
+        }
+      });
+      dialog.open();
+    }
+  }
+  
+  private class StatisticsBrowseSelectionHandler extends SelectionAdapter {
+    public void widgetSelected(SelectionEvent e) {
+      NavigatorBehavior behavior = new FolderBehavior();
+      PackageNavigator dialog = new PackageNavigator(getShell(), behavior.getTitle(), getProject(), behavior);
+      dialog.addValueListener(new UpdateEventListener() {
+        public void handleUpdate(UpdateEvent event) {
+          m_server.setStatistics((String)event.data);
           fireChanged();
         }
       });
