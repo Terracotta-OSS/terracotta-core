@@ -22,10 +22,14 @@ rem
 ::                  specific location under %TC_INSTALL_DIR%\lib\dso-boot.
 ::
 
-if not defined JAVA_HOME set JAVA_HOME="%TC_INSTALL_DIR%\jre"
-set JAVA_HOME="%JAVA_HOME:"=%"
+if not defined JAVA_HOME (
+   set TC_JAVA_HOME="%TC_INSTALL_DIR%\jre"
+) else (
+   set TC_JAVA_HOME=%JAVA_HOME%
+)
+set TC_JAVA_HOME="%TC_JAVA_HOME:"=%"
 
-set JAVACMD=%JAVA_HOME%\bin\java
+set TC_JAVACMD=%TC_JAVA_HOME%\bin\java
 set TC_JAR=%TC_INSTALL_DIR%\lib\tc.jar
 
 if defined DSO_BOOT_JAR goto tc_set_dso_boot_jar__1_1
@@ -33,7 +37,7 @@ goto tc_set_dso_boot_jar__1_0
 
  :tc_set_dso_boot_jar__1_0
    if not defined TMPFILE set TMPFILE=%TEMP%\var~
-   %JAVACMD% %JAVA_OPTS% -cp %TC_JAR% com.tc.object.tools.BootJarSignature >%TMPFILE%
+   %TC_JAVACMD% %JAVA_OPTS% -cp %TC_JAR% com.tc.object.tools.BootJarSignature >%TMPFILE%
    for /F %%i in (%TMPFILE%) do @set DSO_BOOT_JAR_NAME=%%i
    del %TMPFILE%
    set __BOOT_JAR_SIG_EXIT_CODE=%errorlevel%
@@ -43,7 +47,7 @@ goto tc_set_dso_boot_jar__1_0
    :tc_set_dso_boot_jar__1_0_1
      echo We were unable to determine the correct
      echo name of the DSO boot JAR using the following command:
-     echo %JAVACMD% -cp %TC_JAR% com.tc.object.tools.BootJarSignature
+     echo %TC_JAVACMD% -cp %TC_JAR% com.tc.object.tools.BootJarSignature
      echo ...but we got exit code %__BOOT_JAR_SIG_EXIT_CODE%. Stop.
      goto error
 
