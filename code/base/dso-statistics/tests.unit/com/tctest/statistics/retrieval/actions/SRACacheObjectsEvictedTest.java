@@ -3,10 +3,11 @@
  */
 package com.tctest.statistics.retrieval.actions;
 
+import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvicted;
-import com.tc.util.Assert;
 import com.tc.test.TCTestCase;
+import com.tc.util.Assert;
 
 public class SRACacheObjectsEvictedTest extends TCTestCase {
 
@@ -15,11 +16,6 @@ public class SRACacheObjectsEvictedTest extends TCTestCase {
     Assert.assertEquals(sra.getName(), SRACacheObjectsEvicted.ACTION_NAME);
     Assert.assertEquals(sra.getType(), StatisticType.TRIGGERED);
 
-    try {
-      sra.retrieveStatisticData();
-      fail("SRADistributedGC cannot be used to collect statistics data");
-    } catch (UnsupportedOperationException e) {
-      //ok
-    }
+    Assert.assertSame(StatisticRetrievalAction.EMPTY_STATISTIC_DATA, sra.retrieveStatisticData());
   }
 }
