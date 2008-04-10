@@ -143,6 +143,10 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
     StatisticData[] data = null;
     try {
       data = action.retrieveStatisticData();
+    } catch (ThreadDeath e) {
+      throw e;
+    } catch (VirtualMachineError e) {
+      throw e;
     } catch (Throwable e) {
       LOGGER.error("Unexpected exception while retrieving the statistic data for SRA '" + action.getName() + "'", e);
       return;

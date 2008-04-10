@@ -35,8 +35,9 @@ public class SRACacheObjectsEvicted implements StatisticRetrievalAction {
   public static final String ACTION_NAME = CacheManager.CACHE_OBJECTS_EVICTED;
 
   public StatisticData[] retrieveStatisticData() {
-    throw new UnsupportedOperationException("'" + ACTION_NAME + "' statistics cannot be retrieved using the action instance." +
-                                            " It will be collected automatically when triggered by the system.");
+    LOGGER.warn("Data for statistic '" + ACTION_NAME + " can't be retrieved using the action instance. " +
+                "It will be collected automatically when triggered by the system.");
+    return EMPTY_STATISTIC_DATA;
   }
 
   public String getName() {
