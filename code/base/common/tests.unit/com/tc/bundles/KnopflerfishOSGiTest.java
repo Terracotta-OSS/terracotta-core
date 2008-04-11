@@ -102,8 +102,15 @@ public class KnopflerfishOSGiTest extends TestCase {
   }
 
   private Collection jarFiles() throws IOException {
-    URL url = new URL(System.getProperty("com.tc.l1.modules.repositories"));
-    return FileUtils.listFiles(FileUtils.toFile(url), new String[] { "jar" }, true);
+    String repo = System.getProperty("com.tc.l1.modules.repositories");
+    File file = null;
+    if(repo.startsWith("file:")) {
+      file = FileUtils.toFile(new URL(repo));
+    } else {
+      file = new File(repo);
+    }
+    
+    return FileUtils.listFiles(file, new String[] { "jar" }, true);
   }
 
   /**
