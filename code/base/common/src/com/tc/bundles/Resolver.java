@@ -68,7 +68,12 @@ public class Resolver {
   public static String[] urlsToStrings(URL[] urls) {
     String[] strs = new String[urls.length];
     for(int i=0; i<urls.length; i++) {
-      strs[i] = FileUtils.toFile(urls[i]).getAbsolutePath();
+      File f = FileUtils.toFile(urls[i]);
+      if(f != null) {
+        strs[i] = f.getAbsolutePath();
+      } else {
+        strs[i] = urls[i].toExternalForm();
+      }
     }
     return strs;
   }
