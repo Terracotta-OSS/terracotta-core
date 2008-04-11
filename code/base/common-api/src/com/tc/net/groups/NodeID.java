@@ -19,14 +19,14 @@ public interface NodeID extends Externalizable, TCSerializable, Comparable {
 
   // /////////////////////////////////////////////////////////////////////////////////////////////////////
   // XXX:: NOTE::
-  // 1) Any new implemention of this interface should also implement the serialization methods
+  // 1) Any new implementation of this interface should also implement the serialization methods
   // in NodeIDSerializer.
   // 2) Also note that the Externalizable methods should assume that it is getting a TCObjectOutput
-  // stream as input and hence should not try to serialize any arbitorary objects, only literal objects are
+  // stream as input and hence should not try to serialize any arbitrary objects, only literal objects are
   // supported. This is done for faster processing and effective serialization plus today there are no complex
-  // types contained in NodeID implemenations.
+  // types contained in NodeID implementations.
   // 3) These classes should implement two different serialization methods since they are used in two different
-  // stack implementation. Someday when we move to one comms stack ,there is a huge clean up waiting here.
+  // stack implementations. Someday when we move to one comms stack, there is a huge clean up waiting here.
   //
   // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
