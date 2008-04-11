@@ -81,7 +81,7 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
     proxy.start();
 
     serverHC = new HealthCheckerConfigImpl(SERVER_PING_IDLE, SERVER_PING_INTERVAL, SERVER_PING_PROBES, "server-HC",
-                                           true, Integer.MAX_VALUE);
+                                           true, Integer.MAX_VALUE, 2);
     HealthCheckerConfig clientHC = new HealthCheckerConfigImpl(1000, 1000, Integer.MAX_VALUE, "client-HC");
 
     clientComms = new CommunicationsManagerImpl(new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),

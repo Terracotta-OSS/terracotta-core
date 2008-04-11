@@ -66,7 +66,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
   public void notifyTransportClosed(MessageTransport transport) {
     // HealthChecker Ping Thread can anyway determine this in the next probe interval thru mtb.isConnected and remove it
     // from its radar. still lets do it earlier
-    logger.info("Connection to NodeID[" + transport.getConnectionId().getChannelID()
+    logger.info("Connection to [" + transport.getRemoteAddress().getCanonicalStringForm()
                 + "] CLOSED. Health Monitoring for this node is now disabled.");
     monitorThreadEngine.removeConnection(transport);
   }
@@ -141,7 +141,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
           MessageTransportBase mtb = (MessageTransportBase) connectionIterator.next();
 
           if (!mtb.isConnected()) {
-            logger.info("NodeID[" + mtb.getConnectionId().getChannelID()
+            logger.info("[" + mtb.getConnection().getRemoteAddress().getCanonicalStringForm()
                         + "] is not connected. Disabling Health Monitoring for the same.");
             connectionIterator.remove();
             continue;

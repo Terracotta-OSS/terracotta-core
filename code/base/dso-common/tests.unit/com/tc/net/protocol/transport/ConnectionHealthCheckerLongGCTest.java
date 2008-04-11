@@ -125,7 +125,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
         .createClientChannel(new NullSessionManager(), 0, serverLsnr.getBindAddress().getHostAddress(), proxyPort,
                              1000, new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo(serverLsnr
                                  .getBindAddress().getHostAddress(), proxyPort) }),
-                                 TransportHandshakeMessage.NO_CALLBACK_PORT);
+                             TransportHandshakeMessage.NO_CALLBACK_PORT);
 
     clientMsgCh.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     clientMsgCh.routeMessageType(TCMessageType.PING_MESSAGE, new TCMessageSink() {
@@ -161,16 +161,14 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
   public long getMinScoketConnectResultTime(HealthCheckerConfig config) {
     assertNotNull(config);
     long extraTime = (config.getPingIntervalMillis() * config.getPingProbes())
-                     + (HealthCheckerSocketConnectImpl.SOCKETCONNECT_NOREPLY_MAXWAIT_CYCLE * config
-                         .getPingIntervalMillis());
+                     + (config.getSocketConnectTimeout() * config.getPingIntervalMillis());
     return extraTime;
   }
 
   public long getFullExtraCheckTime(HealthCheckerConfig config) {
     assertNotNull(config);
     long extraTime = config.getPingIntervalMillis()
-                     * ((HealthCheckerSocketConnectImpl.SOCKETCONNECT_NOREPLY_MAXWAIT_CYCLE * config.getPingProbes()) * config
-                         .getMaxSocketConnectCount());
+                     * ((config.getSocketConnectTimeout() * config.getPingProbes()) * config.getSocketConnectMaxCount());
     return extraTime;
   }
 

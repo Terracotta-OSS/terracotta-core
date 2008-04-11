@@ -34,5 +34,7 @@ public interface HealthCheckerConfig {
    */
   boolean isSocketConnectOnPingFail();
 
-  int getMaxSocketConnectCount();
+  int getSocketConnectMaxCount();
+
+  int getSocketConnectTimeout();
 }

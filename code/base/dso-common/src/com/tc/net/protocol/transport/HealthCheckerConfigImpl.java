@@ -9,7 +9,7 @@ import com.tc.properties.TCProperties;
 /**
  * Main implementation of the Health Checker Config. Health Checker related tc.properties are read and a config data
  * structure is built which is passed on to various health checker modules.
- *
+ * 
  * @author Manoj
  */
 public class HealthCheckerConfigImpl implements HealthCheckerConfig {
@@ -19,15 +19,16 @@ public class HealthCheckerConfigImpl implements HealthCheckerConfig {
   private final long       pingInterval;
   private final int        pingProbes;
   private final boolean    doSocketConnect;
-  private final int        maxSocketConnectCount;
+  private final int        socketConnectTimeout;
+  private final int        socketConnectMaxCount;
   private final String     name;
 
   // Default ping probe values in seconds
-  private final static int PING_IDLETIME             = 45;
-  private final static int PING_INTERVAL             = 15;
-  private final static int PING_PROBECNT             = 3;
-
-  private static final int DEFAULT_MAX_CONNECT_COUNT = 3;
+  private static final int DEFAULT_PING_IDLETIME          = 45;
+  private static final int DEFAULT_PING_INTERVAL          = 15;
+  private static final int DEFAULT_PING_PROBECNT          = 3;
+  private static final int DEFAULT_SCOKETCONNECT_MAXCOUNT = 3;
+  private static final int DEFAULT_SOCKETCONNECT_TIMEOUT  = 2;
 
   public HealthCheckerConfigImpl(TCProperties healthCheckerProperties, String hcName) {
     this.pingIdleTime = healthCheckerProperties.getLong("ping.idletime");
@@ -36,11 +37,12 @@ public class HealthCheckerConfigImpl implements HealthCheckerConfig {
     this.name = hcName;
     this.doSocketConnect = healthCheckerProperties.getBoolean("socketConnect");
     this.enable = healthCheckerProperties.getBoolean("ping.enabled");
-    this.maxSocketConnectCount = healthCheckerProperties.getInt("socketConnectCount");
+    this.socketConnectMaxCount = healthCheckerProperties.getInt("socketConnectCount");
+    this.socketConnectTimeout = healthCheckerProperties.getInt("socketConnectTimeout");
   }
 
   public HealthCheckerConfigImpl(String name) {
-    this(PING_IDLETIME, PING_INTERVAL, PING_PROBECNT, name, false);
+    this(DEFAULT_PING_IDLETIME, DEFAULT_PING_INTERVAL, DEFAULT_PING_PROBECNT, name, false);
   }
 
   public HealthCheckerConfigImpl(long idle, long interval, int probes, String name) {
@@ -48,18 +50,19 @@ public class HealthCheckerConfigImpl implements HealthCheckerConfig {
   }
 
   public HealthCheckerConfigImpl(long idle, long interval, int probes, String name, boolean extraCheck) {
-    this(idle, interval, probes, name, extraCheck, DEFAULT_MAX_CONNECT_COUNT);
+    this(idle, interval, probes, name, extraCheck, DEFAULT_SCOKETCONNECT_MAXCOUNT, DEFAULT_SOCKETCONNECT_TIMEOUT);
   }
 
   public HealthCheckerConfigImpl(long idle, long interval, int probes, String name, boolean extraCheck,
-                                 int maxConnectCount) {
+                                 int socketConnectMaxCount, int socketConnectTimeout) {
     this.pingIdleTime = idle;
     this.pingInterval = interval;
     this.pingProbes = probes;
     this.name = name;
     this.doSocketConnect = extraCheck;
     this.enable = true;
-    this.maxSocketConnectCount = maxConnectCount;
+    this.socketConnectMaxCount = socketConnectMaxCount;
+    this.socketConnectTimeout = socketConnectTimeout;
   }
 
   public boolean isSocketConnectOnPingFail() {
@@ -86,8 +89,12 @@ public class HealthCheckerConfigImpl implements HealthCheckerConfig {
     return this.name;
   }
 
-  public int getMaxSocketConnectCount() {
-    return this.maxSocketConnectCount;
+  public int getSocketConnectMaxCount() {
+    return this.socketConnectMaxCount;
+  }
+
+  public int getSocketConnectTimeout() {
+    return this.socketConnectTimeout;
   }
 
 }

@@ -6,7 +6,7 @@ package com.tc.net.protocol.transport;
 
 /**
  * Default Health Chcker config passed to the Communications Manager
- *
+ * 
  * @author Manoj
  */
 public class DisabledHealthCheckerConfigImpl implements HealthCheckerConfig {
@@ -35,7 +35,11 @@ public class DisabledHealthCheckerConfigImpl implements HealthCheckerConfig {
     throw new AssertionError("Disabled HealthChecker");
   }
 
-  public int getMaxSocketConnectCount() {
+  public int getSocketConnectMaxCount() {
+    throw new AssertionError("Disabled HealthChecker");
+  }
+
+  public int getSocketConnectTimeout() {
     throw new AssertionError("Disabled HealthChecker");
   }
 

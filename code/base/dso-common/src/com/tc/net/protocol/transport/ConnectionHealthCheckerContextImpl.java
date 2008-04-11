@@ -14,7 +14,6 @@ import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.event.TCConnectionErrorEvent;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.core.event.TCConnectionEventListener;
-import com.tc.net.groups.NodeIDImpl;
 import com.tc.net.protocol.NullProtocolAdaptor;
 import com.tc.util.State;
 
@@ -46,7 +45,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
 
   // Context info
   private final HealthCheckerConfig              config;
-  private final String                           nodeID;
+  private final String                           remoteNodeDesc;
 
   // Socket Connect probes
   private int                                    socketConnectSuccessCount  = 0;
@@ -66,15 +65,14 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     this.connectionManager = connMgr;
     this.logger = TCLogging.getLogger(ConnectionHealthCheckerImpl.class.getName() + ". "
                                       + config.getHealthCheckerName());
-    this.nodeID = "NodeID[" + mtb.getConnectionId().getChannelID() + "]";
-    logger.info("Health monitoring agent started for " + nodeID + ", remoteAddr="
-                + mtb.getConnection().getRemoteAddress());
+    this.remoteNodeDesc = mtb.getRemoteAddress().getCanonicalStringForm();
+    logger.info("Health monitoring agent started for " + remoteNodeDesc);
   }
 
   /* all callers of this method are already synchronized */
   private void changeState(State newState) {
     if (logger.isDebugEnabled() && currentState != newState) {
-      logger.debug("Context state change for " + nodeID + " : " + currentState.toString() + " ===> "
+      logger.debug("Context state change for " + remoteNodeDesc + " : " + currentState.toString() + " ===> "
                    + newState.toString());
     }
     currentState = newState;
@@ -82,8 +80,8 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
 
   private boolean canPingProbe() {
     if (logger.isDebugEnabled()) {
-      if (this.probeReplyNotRecievedCount.get() > 0) logger.debug("PING_REPLY not received from " + nodeID + " for "
-                                                                  + this.probeReplyNotRecievedCount
+      if (this.probeReplyNotRecievedCount.get() > 0) logger.debug("PING_REPLY not received from " + remoteNodeDesc
+                                                                  + " for " + this.probeReplyNotRecievedCount
                                                                   + " times (max allowed:"
                                                                   + this.maxProbeCountWithoutReply + ").");
     }
@@ -102,10 +100,8 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     // TODO: do we need to exchange the address as well? (since it might be different than the remote IP on this conn)
     TCSocketAddress sa = new TCSocketAddress(transport.getRemoteAddress().getAddress(), callbackPort);
 
-    sockectConnect = new HealthCheckerSocketConnectImpl(sa, conn, new NodeIDImpl(""
-                                                                                 + this.transport.getConnectionId()
-                                                                                     .getChannelID(), new byte[0]),
-                                                        logger);
+    sockectConnect = new HealthCheckerSocketConnectImpl(sa, conn, remoteNodeDesc, logger, config
+        .getSocketConnectTimeout());
 
     if (sockectConnect.start()) {
       return true;
@@ -121,7 +117,6 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
   }
 
   public synchronized boolean probeIfAlive() {
-
     if (currentState.equals(DEAD)) {
       // connection events might have moved us to DEAD state.
       // all return are done at the bottom
@@ -137,7 +132,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
       /* Send Probe again; if not possible move to next state */
       if (canPingProbe()) {
         if (logger.isDebugEnabled()) {
-          logger.debug("Sending PING Probe to IDLE " + nodeID);
+          logger.debug("Sending PING Probe to IDLE " + remoteNodeDesc);
         }
         sendProbeMessage(this.messageFactory.createPing(transport.getConnectionId(), transport.getConnection()));
         pingProbeSentCount.increment();
@@ -154,7 +149,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     }
 
     if (currentState.equals(DEAD)) {
-      logger.info(nodeID + " is DEAD");
+      logger.info(remoteNodeDesc + " is DEAD");
       return false;
     }
     return true;
@@ -208,25 +203,33 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
   }
 
   public synchronized void connectEvent(TCConnectionEvent event) {
-    // Async connect goes thru
-    socketConnectSuccessCount++;
-    if (socketConnectSuccessCount < config.getMaxSocketConnectCount()) {
-      logger.warn(nodeID + " might be in Long GC.");
-      initProbeCycle();
-    } else {
-      logger.error(nodeID + " might be in Long GC. But its too long. No more retries");
-      changeState(DEAD);
+    if (event.getSource() == conn) {
+      // Async connect goes thru
+      socketConnectSuccessCount++;
+      if (socketConnectSuccessCount < config.getSocketConnectMaxCount()) {
+        logger.warn(remoteNodeDesc + " might be in Long GC. GC count since last ping reply : "
+                    + socketConnectSuccessCount);
+        initProbeCycle();
+      } else {
+        logger.error(remoteNodeDesc + " might be in Long GC. GC count since last ping reply : "
+                     + socketConnectSuccessCount + ". But its too long. No more retries");
+        changeState(DEAD);
+      }
     }
   }
 
   public synchronized void endOfFileEvent(TCConnectionEvent event) {
-    logger.warn("Socket Connect EOF event:" + event.toString() + " on " + nodeID);
-    changeState(DEAD);
+    if (event.getSource() == conn) {
+      logger.warn("Socket Connect EOF event:" + event.toString() + " on " + remoteNodeDesc);
+      changeState(DEAD);
+    }
   }
 
   public synchronized void errorEvent(TCConnectionErrorEvent errorEvent) {
-    logger.error("Socket Connect Error Event:" + errorEvent.toString() + " on " + nodeID);
-    changeState(DEAD);
+    if (errorEvent.getSource() == conn) {
+      logger.error("Socket Connect Error Event:" + errorEvent.toString() + " on " + remoteNodeDesc);
+      changeState(DEAD);
+    }
   }
 
 }

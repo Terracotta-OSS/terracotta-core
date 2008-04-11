@@ -9,7 +9,6 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.event.TCConnectionErrorEvent;
 import com.tc.net.core.event.TCConnectionEvent;
-import com.tc.net.groups.NodeID;
 import com.tc.util.Assert;
 import com.tc.util.State;
 
@@ -26,29 +25,31 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
 
   private final TCSocketAddress peerNodeAddr;
   private final TCConnection    conn;
-  private final String          nodeID;
   private final TCLogger        logger;
+  private final int             timeoutInterval;
+  private final String          remoteNodeDesc;
   private State                 currentState;
+  private short                 socketConnectNoReplyWaitCount = 0;
 
   // Socket Connect probes
-  public static final int       SOCKETCONNECT_NOREPLY_MAXWAIT_CYCLE = 2;
-  private static final State    SOCKETCONNECT_IDLE                  = new State("SOCKETCONNECT_IDLE");
-  private static final State    SOCKETCONNECT_IN_PROGRESS           = new State("SOCKETCONNECT_IN_PROGRESS");
-  private static final State    SOCKETCONNECT_FAIL                  = new State("SOCKETCONNECT_FAIL");
-  private short                 socketConnectNoReplyWaitCount       = 0;
+  private static final State    SOCKETCONNECT_IDLE            = new State("SOCKETCONNECT_IDLE");
+  private static final State    SOCKETCONNECT_IN_PROGRESS     = new State("SOCKETCONNECT_IN_PROGRESS");
+  private static final State    SOCKETCONNECT_FAIL            = new State("SOCKETCONNECT_FAIL");
 
-  public HealthCheckerSocketConnectImpl(TCSocketAddress peerNode, TCConnection conn, NodeID nodeId, TCLogger logger) {
+  public HealthCheckerSocketConnectImpl(TCSocketAddress peerNode, TCConnection conn, String remoteNodeDesc,
+                                        TCLogger logger, int timeoutInterval) {
     this.conn = conn;
     this.peerNodeAddr = peerNode;
-    this.nodeID = nodeId.toString();
+    this.remoteNodeDesc = remoteNodeDesc;
     this.logger = logger;
-    currentState = SOCKETCONNECT_IDLE;
+    this.timeoutInterval = timeoutInterval;
+    this.currentState = SOCKETCONNECT_IDLE;
   }
 
   /* the callers of this method are synchronized */
   private void changeState(State newState) {
     if (logger.isDebugEnabled()) {
-      if (currentState != newState) logger.debug("Socket Connect Context state change for " + nodeID + " : "
+      if (currentState != newState) logger.debug("Socket Connect Context state change for " + remoteNodeDesc + " : "
                                                  + currentState.toString() + " ===> " + newState.toString());
     }
     currentState = newState;
@@ -61,13 +62,13 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
       conn.addListener(this);
       conn.asynchConnect(peerNodeAddr);
     } catch (IOException e) {
-      if (conn != null) conn.removeListener(this);
+      conn.removeListener(this);
       changeState(SOCKETCONNECT_FAIL);
       return false;
     }
 
     if (logger.isDebugEnabled()) {
-      logger.debug("Detecting Long GC for " + nodeID + ". Socket Connect triggered");
+      logger.debug("Detecting Long GC for " + remoteNodeDesc + ". Socket Connect triggered");
     }
     changeState(SOCKETCONNECT_IN_PROGRESS);
     return true;
@@ -77,24 +78,22 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
    * Returns true if connection is still in progress.
    */
   public synchronized boolean probeConnectStatus() {
-
     if (currentState == SOCKETCONNECT_FAIL) {
       // prev async connect failed
-      if (logger.isDebugEnabled()) logger
-          .info("Socket Connect to " + nodeID + " listener port failed. Probably DEAD");
+      logger.info("Socket Connect to " + remoteNodeDesc + " listener port failed. Probably DEAD");
       return false;
     }
 
     socketConnectNoReplyWaitCount++;
 
-    if (socketConnectNoReplyWaitCount > SOCKETCONNECT_NOREPLY_MAXWAIT_CYCLE) {
-      if (logger.isDebugEnabled()) logger.debug("Socket Connect to " + nodeID + " taking long time. probably DEAD");
-      if (conn != null) conn.removeListener(this);
+    if (socketConnectNoReplyWaitCount > this.timeoutInterval) {
+      logger.info("Socket Connect to " + remoteNodeDesc + " taking long time. probably DEAD");
+      conn.removeListener(this);
       changeState(SOCKETCONNECT_FAIL);
       return false;
     }
 
-    if (logger.isDebugEnabled()) logger.debug("Socket Connect to " + nodeID + " listener port in progress.");
+    if (logger.isDebugEnabled()) logger.debug("Socket Connect to " + remoteNodeDesc + " listener port in progress.");
     return true;
   }
 
@@ -116,14 +115,14 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
 
   public synchronized void endOfFileEvent(TCConnectionEvent event) {
     if (logger.isDebugEnabled()) {
-      logger.debug("Socket Connect EOF event:" + event.toString() + " on " + nodeID);
+      logger.debug("Socket Connect EOF event:" + event.toString() + " on " + remoteNodeDesc);
     }
     changeState(SOCKETCONNECT_FAIL);
   }
 
   public synchronized void errorEvent(TCConnectionErrorEvent errorEvent) {
     if (logger.isDebugEnabled()) {
-      logger.debug("Socket Connect Error Event:" + errorEvent.toString() + " on " + nodeID);
+      logger.debug("Socket Connect Error Event:" + errorEvent.toString() + " on " + remoteNodeDesc);
     }
     changeState(SOCKETCONNECT_FAIL);
   }
