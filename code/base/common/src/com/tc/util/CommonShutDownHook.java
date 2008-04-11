@@ -1,5 +1,6 @@
 /**
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
@@ -16,8 +17,7 @@ public class CommonShutDownHook implements Runnable {
       runnables.add(r);
 
       if (hooker == null) {
-        hooker = new Thread(new CommonShutDownHook());
-        hooker.setName("CommonShutDownHook");
+        hooker = new Thread(new CommonShutDownHook(), "CommonShutDownHook");
         hooker.setDaemon(true);
         Runtime.getRuntime().addShutdownHook(hooker);
       }
@@ -33,8 +33,6 @@ public class CommonShutDownHook implements Runnable {
 
     for (int i = 0; i < hooks.length; i++) {
       Runnable r = hooks[i];
-      Thread.currentThread().setName("CommonShutDownHook - " + r);
-
       try {
         r.run();
       } catch (Throwable t) {
