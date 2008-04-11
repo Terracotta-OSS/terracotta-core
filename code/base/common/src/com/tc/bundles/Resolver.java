@@ -68,7 +68,7 @@ public class Resolver {
   public static String[] urlsToStrings(URL[] urls) {
     String[] strs = new String[urls.length];
     for(int i=0; i<urls.length; i++) {
-      strs[i] = urls[i].toString();
+      strs[i] = FileUtils.toFile(urls[i]).getAbsolutePath();
     }
     return strs;
   }
@@ -83,7 +83,7 @@ public class Resolver {
 
     final TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor(TC_PROPERTIES_SECTION);
     final String reposProp = props != null ? props.getProperty("repositories", true) : null;
-    if (reposProp != null) {
+    if (reposProp != null && reposProp.length() > 0) {
       final String[] entries = reposProp.split(",");
       if (entries != null) {
         for (int i = 0; i < entries.length; i++) {
@@ -162,7 +162,7 @@ public class Resolver {
       fatal(msg);
       throw new MissingBundleException(msg);
     }
-    logger.info("Resolved TIM location " + groupId + ":" + name + ":" + version + " (filename: " +  name + "-" + version + ".jar) from " + location);
+    logger.info("Resolved TIM " + groupId + ":" + name + ":" + version + " from " + location);
     resolveDependencies(location);
     return location;
   }
