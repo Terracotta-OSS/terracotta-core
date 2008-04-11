@@ -25,12 +25,13 @@ import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.exceptions.AgentStatisticsManagerException;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet2;
 import com.tc.util.State;
-import com.tc.util.Assert;
 import com.tc.util.concurrent.LifeCycleState;
 import com.tc.util.concurrent.NullLifeCycleState;
 import com.tc.util.concurrent.StoppableThread;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,51 +45,54 @@ import java.util.Set;
  */
 public class MarkAndSweepGarbageCollector implements GarbageCollector {
 
-  private static final TCLogger        logger                = TCLogging.getLogger(MarkAndSweepGarbageCollector.class);
-  private final GCLogger               gcLogger;
+  private static final TCLogger          logger                    = TCLogging
+                                                                       .getLogger(MarkAndSweepGarbageCollector.class);
+  private final GCLogger                 gcLogger;
 
-  private final List                   eventListeners        = new CopyOnWriteArrayList();
-  private static final ChangeCollector NULL_CHANGE_COLLECTOR = new ChangeCollector() {
-                                                               public void changed(ObjectID changedObject,
-                                                                                   ObjectID oldReference,
-                                                                                   ObjectID newReference) {
-                                                                 return;
-                                                               }
+  private final List                     eventListeners            = new CopyOnWriteArrayList();
+  private static final ChangeCollector   NULL_CHANGE_COLLECTOR     = new ChangeCollector() {
+                                                                     public void changed(ObjectID changedObject,
+                                                                                         ObjectID oldReference,
+                                                                                         ObjectID newReference) {
+                                                                       return;
+                                                                     }
 
-                                                               public void addNewReferencesTo(Set set) {
-                                                                 return;
-                                                               }
+                                                                     public void addNewReferencesTo(Set set) {
+                                                                       return;
+                                                                     }
 
-                                                               public PrettyPrinter prettyPrint(PrettyPrinter out) {
-                                                                 return out.println("NULL CHANGE COLLECTOR");
-                                                               }
-                                                             };
-  private static final Filter          NULL_FILTER           = new Filter() {
-                                                               public boolean shouldVisit(ObjectID referencedObject) {
-                                                                 return true;
-                                                               }
-                                                             };
-  private final static LifeCycleState  NULL_LIFECYCLE_STATE  = new NullLifeCycleState();
+                                                                     public PrettyPrinter prettyPrint(PrettyPrinter out) {
+                                                                       return out.println("NULL CHANGE COLLECTOR");
+                                                                     }
+                                                                   };
+  private static final Filter            NULL_FILTER               = new Filter() {
+                                                                     public boolean shouldVisit(
+                                                                                                ObjectID referencedObject) {
+                                                                       return true;
+                                                                     }
+                                                                   };
+  private final static LifeCycleState    NULL_LIFECYCLE_STATE      = new NullLifeCycleState();
 
-  private static final State           GC_DISABLED           = new State("GC_DISABLED");
-  private static final State           GC_RUNNING            = new State("GC_RUNNING");
-  private static final State           GC_SLEEP              = new State("GC_SLEEP");
-  private static final State           GC_PAUSING            = new State("GC_PAUSING");
-  private static final State           GC_PAUSED             = new State("GC_PAUSED");
-  private static final State           GC_DELETE             = new State("GC_DELETE");
+  private static final State             GC_DISABLED               = new State("GC_DISABLED");
+  private static final State             GC_RUNNING                = new State("GC_RUNNING");
+  private static final State             GC_SLEEP                  = new State("GC_SLEEP");
+  private static final State             GC_PAUSING                = new State("GC_PAUSING");
+  private static final State             GC_PAUSED                 = new State("GC_PAUSED");
+  private static final State             GC_DELETE                 = new State("GC_DELETE");
 
-  private State                        state                 = GC_SLEEP;
-  private LifeCycleState               lifeCycleState;
-  private int                          gcIteration           = 0;
-  private volatile ChangeCollector     referenceCollector    = NULL_CHANGE_COLLECTOR;
-  private final ObjectManager          objectManager;
-  private final ClientStateManager     stateManager;
-  private LifeCycleState               gcState               = new NullLifeCycleState();
-  private volatile boolean             started               = false;
+  private State                          state                     = GC_SLEEP;
+  private LifeCycleState                 lifeCycleState;
+  private int                            gcIteration               = 0;
+  private volatile ChangeCollector       referenceCollector        = NULL_CHANGE_COLLECTOR;
+  private final ObjectManager            objectManager;
+  private final ClientStateManager       stateManager;
+  private LifeCycleState                 gcState                   = new NullLifeCycleState();
+  private volatile boolean               started                   = false;
   private final StatisticsAgentSubSystem statisticsAgentSubSystem;
-  public static final String           DISTRIBUTED_GC_STATISTICS = "distributed gc";
+  public static final String             DISTRIBUTED_GC_STATISTICS = "distributed gc";
 
-  public MarkAndSweepGarbageCollector(ObjectManager objectManager, ClientStateManager stateManager, boolean verboseGC, StatisticsAgentSubSystem agentSubSystem) {
+  public MarkAndSweepGarbageCollector(ObjectManager objectManager, ClientStateManager stateManager, boolean verboseGC,
+                                      StatisticsAgentSubSystem agentSubSystem) {
     this.gcLogger = new GCLogger(logger, verboseGC);
     this.objectManager = objectManager;
     this.stateManager = stateManager;
@@ -122,10 +126,13 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
   }
 
   public void gc() {
-    if (!requestGCStart()) {
+    
+    while (!requestGCStart()) {
       gcLogger.log_GCDisabled();
-      return;
+      logger.info("GC is Disabled. Waiting for 1 min before checking again ...");
+      ThreadUtil.reallySleep(60000);
     }
+
     GCStatsImpl gcStats = new GCStatsImpl(gcIteration);
 
     gcLogger.log_GCStart(gcIteration);
@@ -213,11 +220,12 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
 
   private StatisticData[] getGCStatisticsData(GCStats gcStats) {
     List<StatisticData> datas = new ArrayList<StatisticData>();
-    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "iteration", (long)gcStats.getIteration()));
+    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "iteration", (long) gcStats.getIteration()));
     datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "start time", gcStats.getStartTime()));
     datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "elapsed time", gcStats.getElapsedTime()));
     datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "begin object count", gcStats.getBeginObjectCount()));
-    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "candidate garbage count", gcStats.getCandidateGarbageCount()));
+    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "candidate garbage count", gcStats
+        .getCandidateGarbageCount()));
     datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "actual garbage count", gcStats.getActualGarbageCount()));
     return datas.toArray(new StatisticData[datas.size()]);
   }
@@ -225,7 +233,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
   private synchronized void storeStatisticsDatas(Date moment, Collection sessions, StatisticData[] datas) {
     try {
       for (Iterator sessionsIterator = sessions.iterator(); sessionsIterator.hasNext();) {
-        String session = (String)sessionsIterator.next();
+        String session = (String) sessionsIterator.next();
         for (int i = 0; i < datas.length; i++) {
           StatisticData data = datas[i];
           statisticsAgentSubSystem.getStatisticsManager().injectStatisticData(session, data.moment(moment));
@@ -277,7 +285,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
           logger.warn("Looked up a new Object before its initialized, skipping : " + id);
           continue;
         }
-        
+
         for (Iterator r = obj.getObjectReferences().iterator(); r.hasNext();) {
           ObjectID mid = (ObjectID) r.next();
           if (mid.isNull() || !managedObjectIds.contains(mid)) continue;
