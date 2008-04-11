@@ -21,7 +21,7 @@ public class DistributedMethodCallGCTest extends GCTestBase {
 
   public void doSetUp(TransparentTestIface t) throws Exception {
     super.doSetUp(t);
-    t.getTransparentAppConfig().setAttribute("gc-interval-ms", new Long(getGCIntervalInSeconds() * 1000));
+    t.getTransparentAppConfig().setAttribute("gc-interval-ms", new Long(getGarbageCollectionInterval() * 1000));
   }
 
   protected Class getApplicationClass() {

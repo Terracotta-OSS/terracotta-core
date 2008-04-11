@@ -96,7 +96,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
         }
       }
       if (!nodeID2ObjectIDs.isEmpty()) {
-        gcMonitor.disableAndAdd2L2StateManager(nodeID2ObjectIDs);
+        gcMonitor.add2L2StateManagerWhenGCDisabled(nodeID2ObjectIDs);
       }
     } catch (GroupException e) {
       logger.error(e);
@@ -288,11 +288,24 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     private void disableGCIfNecessary() {
       if (!disabled) {
         disabled = objectManager.getGarbageCollector().disableGC();
+        logger.info((disabled ? "GC is disabled." : "GC is is not disabled."));
       }
     }
 
     private void assertGCDisabled() {
       if (!disabled) { throw new AssertionError("Cant disable GC"); }
+    }
+
+    public void add2L2StateManagerWhenGCDisabled(Map nodeID2ObjectIDs) {
+      if (nodeID2ObjectIDs.size() > 0 && !disabled) {
+        logger.info("Disabling GC since " + nodeID2ObjectIDs.size() + " passive(s) [ " + nodeID2ObjectIDs.keySet()
+                    + " ] needs to be synced up");
+      }
+      for (Iterator i = nodeID2ObjectIDs.entrySet().iterator(); i.hasNext();) {
+        Entry e = (Entry) i.next();
+        NodeID nodeID = (NodeID) e.getKey();
+        add2L2StateManagerWhenGCDisabled(nodeID, (Set) e.getValue());
+      }
     }
 
     public void add2L2StateManagerWhenGCDisabled(NodeID nodeID, Set oids) {
@@ -344,31 +357,6 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
         Assert.assertTrue(disabled);
         enableGCIfNecessary();
       }
-    }
-
-    public synchronized void disableAndAdd2L2StateManager(Map nodeID2ObjectIDs) {
-      synchronized (this) {
-        if (nodeID2ObjectIDs.size() > 0 && !disabled) {
-          logger.info("Disabling GC since " + nodeID2ObjectIDs.size() + " passives [" + nodeID2ObjectIDs.keySet()
-                      + "] needs to sync up");
-          disableGCIfNecessary();
-          // Shouldnt happen as GC should be running yet. We havent started yet.
-          assertGCDisabled();
-        }
-        for (Iterator i = nodeID2ObjectIDs.entrySet().iterator(); i.hasNext();) {
-          Entry e = (Entry) i.next();
-          NodeID nodeID = (NodeID) e.getKey();
-          if (!syncingPassives.containsKey(nodeID)) {
-            syncingPassives.put(nodeID, ADDED);
-          } else {
-            logger.info("Removing " + e
-                        + " from the list to add to L2ObjectStateManager since its present in syncingPassives : "
-                        + syncingPassives.keySet());
-            i.remove();
-          }
-        }
-      }
-      add2L2StateManager(nodeID2ObjectIDs);
     }
 
   }

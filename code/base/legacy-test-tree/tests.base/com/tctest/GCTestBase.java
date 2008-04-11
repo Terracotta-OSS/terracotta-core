@@ -36,10 +36,6 @@ public abstract class GCTestBase extends TransparentTestBase implements TestConf
     return GC_ENABLED;
   }
 
-  public int getGCIntervalInSeconds() {
-    return GARBAGE_COLLECTION_INTERVAL;
-  }
-
   protected boolean getGCVerbose() {
     return GC_VERBOSE;
   }
