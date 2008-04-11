@@ -30,7 +30,7 @@ public class CreateLotsOfGarbageGCTest extends GCTestBase implements TestConfigu
   }
 
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
-    setupManager.setServerCount(3);
+    setupManager.setServerCount(1);
     setupManager.setServerCrashMode(ActivePassiveCrashMode.CONTINUOUS_ACTIVE_CRASH);
     setupManager.setServerCrashWaitTimeInSec(120);
     setupManager.setServerShareDataMode(ActivePassiveSharedDataMode.NETWORK);
@@ -43,7 +43,7 @@ public class CreateLotsOfGarbageGCTest extends GCTestBase implements TestConfigu
   public static class CreateLotsOfGarbageGCTestApp extends AbstractTransparentApp {
 
     private static final int SIZE       = 100;
-    private static final int LOOP_COUNT = 8000;
+    private static final int LOOP_COUNT = 5000;
 
     private Object[]         array      = new Object[SIZE];
 
