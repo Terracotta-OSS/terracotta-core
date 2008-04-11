@@ -34,7 +34,7 @@ public class ClientConnectionEstablisher {
   static {
     TCLogger logger = TCLogging.getLogger(ClientConnectionEstablisher.class);
 
-    long value = TCPropertiesImpl.getProperties().getLong("l1.reconnect.waitInterval");
+    long value = TCPropertiesImpl.getProperties().getLong("l1.socket.reconnect.waitInterval");
     if (value < MIN_RETRY_INTERVAL) {
       logger.warn("Forcing reconnect wait interval to " + MIN_RETRY_INTERVAL + " (configured value was " + value + ")");
       value = MIN_RETRY_INTERVAL;
