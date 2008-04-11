@@ -13,6 +13,10 @@ import com.tc.test.proxyconnect.ProxyConnectManager;
 public class TreeMapL2ReconnectActivePassiveTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 3;
+  
+  public TreeMapL2ReconnectActivePassiveTest() {
+    //
+  }
 
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT).setIntensity(1);
