@@ -57,7 +57,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
   private final Map                   pendingLockRequests      = new LinkedHashMap();
   private final Map                   waitTimers               = new HashMap();
   private final RemoteLockManager     remoteLockManager;
-  private final TCLockTimer             lockTimer;
+  private final TCLockTimer           lockTimer;
 
   private final Greediness            greediness               = new Greediness();
   private int                         useCount                 = 0;
@@ -185,7 +185,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
           // debug("lock - calling RECALL ", requesterID, LockLevel.toString(type));
           greediness.recall(lockType);
         }
-        if (canProceedWithRecallOnLease(ThreadID.NULL_ID)) {
+        if (canProceedWithRecallOnLease(requesterID, ThreadID.NULL_ID)) {
           greediness.startRecallCommit();
           action.addAction(Action.RECALL_COMMIT);
         }
@@ -278,7 +278,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
     boolean remote = isRemoteUnlockRequired(threadID);
     if (greediness.isNotGreedy() && remote) {
       action.addAction(Action.REMOTE_LOCK_REQUEST);
-    } else if (remote && canProceedWithRecallOnLease(threadID)) {
+    } else if (remote && canProceedWithRecallOnLease(threadID, threadID)) {
       // This is the last outstanding unlock, so sync with server.
       action.addAction(Action.RECALL_COMMIT);
     } else if (greediness.isGreedy()) {
@@ -357,7 +357,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
     final Action action = new Action();
     if (greediness.isNotGreedy()) {
       action.addAction(Action.REMOTE_LOCK_REQUEST);
-    } else if (canProceedWithRecallOnLease(threadID)) {
+    } else if (canProceedWithRecallOnLease(threadID, threadID)) {
       action.addAction(Action.RECALL_COMMIT);
     } else if (greediness.isGreedy()) {
       action.addAction(Action.AWARD_GREEDY_LOCKS);
@@ -444,7 +444,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
   public synchronized void recall(int interestedLevel, LockFlushCallback callback, int leaseTimeInMs) {
     // debug("recall() - BEGIN - ", LockLevel.toString(interestedLevel));
     if (greediness.isGreedy()) {
-      if (!shouldProceedToLease()) {
+      if (!shouldProceedToLease(ThreadID.NULL_ID)) {
         recall(interestedLevel, callback);
       } else {
         greediness.recall(interestedLevel);
@@ -492,7 +492,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
     TimerSpec leaseWait = new TimerSpec(leaseTimeInMs);
     recallTimerTask = lockTimer.scheduleTimer(this, leaseWait, callback);
   }
-  
+
   private void lockLeaseTimeout(LockFlushCallback callback) {
     if (greediness.isRecalled()) {
       greediness.leaseTimeout();
@@ -839,9 +839,25 @@ class ClientLock implements TimerCallback, LockFlushCallback {
     }
   }
 
-  private boolean shouldProceedToLease() {
-    if (greediness.isRecalled()) { return pendingLockRequests.size() > 0; }
+  private boolean shouldProceedToLease(ThreadID threadID) {
+    boolean canOnlyLeaseRead = greediness.isReadOnly();
+    
+    for (Iterator i = pendingLockRequests.values().iterator(); i.hasNext();) {
+      Object o = i.next();
+      if (isOnlyWaitLockRequest(o)) {
+        continue;
+      }
+      if (o instanceof LockRequest) {
+        LockRequest lr = (LockRequest) o;
+        if (lr.threadID() == threadID) {
+          continue;
+        } else if (canOnlyLeaseRead && LockLevel.isRead(lr.lockLevel())) {
+          return true;
+        } else if (!canOnlyLeaseRead) { return true; }
+      }
+    }
     return false;
+
   }
 
   private boolean canProceedWithRecall() {
@@ -874,11 +890,11 @@ class ClientLock implements TimerCallback, LockFlushCallback {
     return false;
   }
 
-  private boolean canProceedWithRecallOnLease(ThreadID threadID) {
+  private boolean canProceedWithRecallOnLease(ThreadID onLeaseThreadID, ThreadID recallThreadID) {
     if (greediness.isGreedyLease()) {
-      return !shouldProceedToLease() && canProceedWithRecall(threadID);
+      return !shouldProceedToLease(onLeaseThreadID) && canProceedWithRecall(recallThreadID);
     } else {
-      return canProceedWithRecall(threadID);
+      return canProceedWithRecall(recallThreadID);
     }
   }
 
@@ -989,10 +1005,10 @@ class ClientLock implements TimerCallback, LockFlushCallback {
     waitUntillRunning();
     // debug("waitTimeout() - BEGIN - ", callbackObject);
     if (callbackObject instanceof LockFlushCallback) {
-      lockLeaseTimeout((LockFlushCallback)callbackObject);
+      lockLeaseTimeout((LockFlushCallback) callbackObject);
       return;
     }
-    
+
     if (isTryLockRequest(callbackObject)) {
       // If the callbackObject is a tryLock request, reject the tryLock request.
       TryLockRequest wlr = (TryLockRequest) callbackObject;
@@ -1429,13 +1445,17 @@ class ClientLock implements TimerCallback, LockFlushCallback {
     }
 
     void recall(int rlevel) {
-      Assert.assertTrue(state == GREEDY);
+      if (state != GREEDY && state != ON_GREEDY_LEASE) {
+        throw new AssertionError("Performing recall in state " + state);
+      }
       this.recallLevel |= rlevel;
       state = RECALLED;
     }
 
     void leaseTimeout() {
-      Assert.assertTrue(state == ON_GREEDY_LEASE);
+      if (state != ON_GREEDY_LEASE) {
+        throw new AssertionError("Lease time out in state " + state);
+      }
       state = RECALLED;
     }
 
@@ -1478,7 +1498,9 @@ class ClientLock implements TimerCallback, LockFlushCallback {
     }
 
     void greedyLease() {
-      Assert.assertTrue(state == RECALLED);
+      if (state != RECALLED) {
+        throw new AssertionError("Greedy lease in state " + state);
+      }
       state = ON_GREEDY_LEASE;
     }
 
@@ -1487,12 +1509,16 @@ class ClientLock implements TimerCallback, LockFlushCallback {
     }
 
     void startRecallCommit() {
-      Assert.assertTrue(state == RECALLED || state == ON_GREEDY_LEASE);
+      if (state != RECALLED && state != ON_GREEDY_LEASE) {
+        throw new AssertionError("Starting recall commit in state " + state);
+      }
       state = RECALL_IN_PROGRESS;
     }
 
     void recallComplete() {
-      Assert.assertTrue(state == RECALL_IN_PROGRESS);
+      if (state != RECALL_IN_PROGRESS) {
+        throw new AssertionError("Recall complete in state " + state);
+      }
       this.state = NOT_GREEDY;
       this.recallLevel = LockLevel.NIL_LOCK_LEVEL;
       this.level = LockLevel.NIL_LOCK_LEVEL;
