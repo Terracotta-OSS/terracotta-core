@@ -36,6 +36,8 @@ import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.Module;
 import com.terracottatech.config.Modules;
 
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -298,7 +300,7 @@ public class ModulesLoader {
         if (application != null) {
           final ConfigLoader loader = new ConfigLoader(configHelper, logger);
           loader.loadDsoConfig(application);
-          logger.info("Module configuration loaded for " + bundle.getSymbolicName() + " (" + configPath + ")");
+          logConfig(application, bundle, configPath);
           // loader.loadSpringConfig(application.getSpring());
         }
         is.close();
@@ -320,6 +322,20 @@ public class ModulesLoader {
       } finally {
         IOUtils.closeQuietly(is);
       }
+    }
+  }
+  
+  private static void logConfig(DsoApplication application, Bundle bundle, String configPath) {
+    logger.info("Config loaded from module: " + bundle.getSymbolicName() + " (" + configPath + ")");
+    ByteArrayOutputStream bas = new ByteArrayOutputStream();
+    BufferedOutputStream buf = new BufferedOutputStream(bas);
+    try {
+      application.save(buf);
+      buf.flush();
+      buf.close();
+      logger.info("Here's the config from the module:\n\n" + bas.toString());
+    } catch (IOException e) {
+      logger.warn("Unable to generate a log entry to for the module's config info.");
     }
   }
 }
