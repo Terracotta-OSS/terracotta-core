@@ -43,6 +43,10 @@ public abstract class ServerCrashingTestBase extends TransparentTestBase {
     if (enableL1Reconnect()) {
       setJvmArgsL1Reconnect((ArrayList)jvmArgs);
     }
+    
+    if (enableL2Reconnect()) {
+      setJvmArgsL2Reconnect((ArrayList)jvmArgs);
+    }
 
     // XXX: ERR! HACK! Will collide eventually
     PortChooser pc = new PortChooser();

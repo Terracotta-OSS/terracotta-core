@@ -11,7 +11,7 @@ import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
 import com.tc.config.schema.test.InstrumentedClassConfigBuilderImpl;
 import com.tc.config.schema.test.L2ConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
-import com.tc.l1propertiesfroml2.L1ReconnectConfig;
+import com.tc.l1propertiesfroml2.L1ReconnectConfigImpl;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
@@ -44,13 +44,13 @@ public class L1ReconnectDisabledTest extends TransparentTestBase {
   }
 
   protected void setJvmArgsL1Reconnect(final ArrayList jvmArgs) {
-    System.setProperty("com.tc." + L1ReconnectConfig.L2_L1RECONNECT_ENABLED, "false");
-    TCPropertiesImpl.setProperty(L1ReconnectConfig.L2_L1RECONNECT_ENABLED, "false");
-    jvmArgs.add("-Dcom.tc." + L1ReconnectConfig.L2_L1RECONNECT_ENABLED + "=false");
+    System.setProperty("com.tc." + L1ReconnectConfigImpl.L2_L1RECONNECT_ENABLED, "false");
+    TCPropertiesImpl.setProperty(L1ReconnectConfigImpl.L2_L1RECONNECT_ENABLED, "false");
+    jvmArgs.add("-Dcom.tc." + L1ReconnectConfigImpl.L2_L1RECONNECT_ENABLED + "=false");
     
-    System.setProperty("com.tc." + L1ReconnectConfig.L2_L1RECONNECT_TIMEOUT, "" + L1_RECONNECT_TIMEOUT);
-    TCPropertiesImpl.setProperty(L1ReconnectConfig.L2_L1RECONNECT_TIMEOUT, "" + L1_RECONNECT_TIMEOUT);
-    jvmArgs.add("-Dcom.tc." + L1ReconnectConfig.L2_L1RECONNECT_TIMEOUT + "=" + L1_RECONNECT_TIMEOUT);
+    System.setProperty("com.tc." + L1ReconnectConfigImpl.L2_L1RECONNECT_TIMEOUT, "" + L1_RECONNECT_TIMEOUT);
+    TCPropertiesImpl.setProperty(L1ReconnectConfigImpl.L2_L1RECONNECT_TIMEOUT, "" + L1_RECONNECT_TIMEOUT);
+    jvmArgs.add("-Dcom.tc." + L1ReconnectConfigImpl.L2_L1RECONNECT_TIMEOUT + "=" + L1_RECONNECT_TIMEOUT);
   }
 
   public void setUp() throws Exception {

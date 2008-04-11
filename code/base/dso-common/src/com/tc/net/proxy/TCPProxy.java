@@ -1,6 +1,7 @@
 package com.tc.net.proxy;
 
 import com.tc.util.StringUtil;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -101,7 +102,11 @@ public class TCPProxy {
   }
 
   public synchronized void start() throws IOException {
-    stop();
+    
+    if (acceptThread != null) {
+      log("Stop previous accept thread before start a new one");
+      fastStop();
+    }
 
     log("Starting listener on port " + listenPort + ", proxying to " + StringUtil.toString(endpoints, ", ", "[", "]")
         + " with " + getDelay() + "ms delay");
@@ -112,10 +117,10 @@ public class TCPProxy {
       serverSocket = new ServerSocket();
       serverSocket.setReuseAddress(true);
       try {
-        serverSocket.bind(new InetSocketAddress((InetAddress) null, listenPort), 50);
+        serverSocket.bind(new InetSocketAddress((InetAddress) null, listenPort), 500);
       } catch (IOException e) {
         serverSocket.close();
-        throw e;
+        throw new RuntimeException("Failed to bind port " + listenPort + " is bad: " + e);
       }
     }
 
@@ -127,6 +132,36 @@ public class TCPProxy {
         ME.run();
       }
     }, "Accept thread (port " + listenPort + ")");
+    
+    // verify
+    int count = 0;
+    while (true) {
+      try {
+        Socket sk = new Socket("localhost", listenPort);
+        sk.close();
+        break;
+      } catch (Exception e) {
+        if(++count > 10) {
+          throw new RuntimeException("Listen socket at " + listenPort + " is bad: " + e);
+        }
+        log("Listen socket at " + listenPort + " is bad: " + e);
+
+        serverSocket.close();
+        ThreadUtil.reallySleep(100);
+        
+        log("Rebind listen socket at " + listenPort);
+        serverSocket = new ServerSocket();
+        serverSocket.setReuseAddress(true);
+        try {
+          serverSocket.bind(new InetSocketAddress((InetAddress) null, listenPort), 500);
+        } catch (IOException ee) {
+          serverSocket.close();
+          throw new RuntimeException("Failed to bind port " + listenPort + " is bad: " + ee);
+        }
+
+      }
+    }
+    acceptThread.setDaemon(true);
     acceptThread.start();
   }
 
@@ -145,32 +180,25 @@ public class TCPProxy {
   synchronized void subStop(boolean waitDeadThread) {
     stop = true;
 
-    try {
-      if (serverSocket != null) {
-        serverSocket.close();
-      }
-    } catch (Exception e) {
-      log("Error closing serverSocket", e);
-    } finally {
-      serverSocket = null;
-    }
-
+    if (acceptThread != null) acceptThread.interrupt();
+    
     /*
      * Observed on windows-xp. The ServerSocket is still hanging around after "close()", until someone makes a new
      * connection. To make sure the old ServerSocket and accept thread go away for good, fake a connection to the old
      * socket.
      */
-    try {
-      Socket sk = new Socket("localhost", listenPort);
-      sk.close();
-    } catch (Exception x) {
-      // that's fine for fake connection.
+    while (true) {
+      try {
+        Socket sk = new Socket("localhost", listenPort);
+        sk.close();
+      } catch (Exception x) {
+        // that's fine for fake connection.
+        break;
+      }
     }
 
     try {
       if (acceptThread != null) {
-        acceptThread.interrupt();
-
         try {
           acceptThread.join(10000);
         } catch (InterruptedException e) {
@@ -180,7 +208,7 @@ public class TCPProxy {
     } finally {
       acceptThread = null;
     }
-
+    
     closeAllConnections(waitDeadThread);
   }
 
@@ -244,6 +272,7 @@ public class TCPProxy {
       try {
         socket = serverSocket.accept();
       } catch (IOException ioe) {
+        log("Accept error " + ioe);
         continue;
       }
 
@@ -266,6 +295,13 @@ public class TCPProxy {
           }
         }
       }
+    }
+    try {
+      serverSocket.close();
+      serverSocket = null;
+    } catch (IOException e) {
+      //throw e;
+      throw new RuntimeException("Unable to close client socket " + e);
     }
   }
 

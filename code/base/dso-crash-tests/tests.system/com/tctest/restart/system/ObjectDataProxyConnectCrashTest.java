@@ -27,7 +27,7 @@ public class ObjectDataProxyConnectCrashTest extends TransparentTestBase impleme
     t.initializeTestRunner();
   }
 
-  protected boolean canRunProxyConnect() {
+  protected boolean canRunL1ProxyConnect() {
     return true;
   }
 
@@ -39,7 +39,7 @@ public class ObjectDataProxyConnectCrashTest extends TransparentTestBase impleme
     return true;
   }
 
-  protected void setupProxyConnectTest(ProxyConnectManager mgr) {
+  protected void setupL1ProxyConnectTest(ProxyConnectManager mgr) {
     mgr.setProxyWaitTime(30 * 1000);
     mgr.setProxyDownTime(100);
   }

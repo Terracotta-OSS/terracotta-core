@@ -12,7 +12,7 @@ import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.config.schema.NewCommonL1Config;
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
 import com.tc.exception.ImplementMe;
-import com.tc.l1propertiesfroml2.L1ReconnectConfig;
+import com.tc.l1propertiesfroml2.ReconnectConfig;
 import com.tc.object.Portability;
 import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.TransparencyClassAdapter;
@@ -421,7 +421,7 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     //      
   }
 
-  public L1ReconnectConfig getL1ReconnectProperties() {
+  public ReconnectConfig getL1ReconnectProperties() {
     throw new ImplementMe();
   }
 

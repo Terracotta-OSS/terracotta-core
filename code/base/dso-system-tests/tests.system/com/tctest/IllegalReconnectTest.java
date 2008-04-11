@@ -31,7 +31,7 @@ public class IllegalReconnectTest extends TransparentTestBase {
     return App.class;
   }
 
-  protected boolean canRunProxyConnect() {
+  protected boolean canRunL1ProxyConnect() {
     return true;
   }
 

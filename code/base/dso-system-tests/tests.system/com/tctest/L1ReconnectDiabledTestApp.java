@@ -3,7 +3,7 @@ package com.tctest;
 import com.tc.config.schema.SettableConfigItem;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
-import com.tc.l1propertiesfroml2.L1ReconnectConfig;
+import com.tc.l1propertiesfroml2.ReconnectConfig;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
@@ -50,11 +50,11 @@ public class L1ReconnectDiabledTestApp extends AbstractTransparentApp {
     try {
       DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelperImpl(factory
           .createL1TVSConfigurationSetupManager());
-      L1ReconnectConfig l1ReconnectConfig = configHelper.getL1ReconnectProperties();
+      ReconnectConfig l1ReconnectConfig = configHelper.getL1ReconnectProperties();
 
       // verify
       Assert.eval(l1ReconnectConfig.getReconnectEnabled() == false);
-      Assert.eval(l1ReconnectConfig.getL1ReconnectTimeout() == L1ReconnectDisabledTest.L1_RECONNECT_TIMEOUT);
+      Assert.eval(l1ReconnectConfig.getReconnectTimeout() == L1ReconnectDisabledTest.L1_RECONNECT_TIMEOUT);
     } catch (Exception e) {
       throw new AssertionError(e);
     }

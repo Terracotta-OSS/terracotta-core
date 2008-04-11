@@ -27,7 +27,7 @@ public class LinkedBlockingQueueProxyCrashTest extends TransparentTestBase {
     return true;
   }
 
-  protected boolean canRunProxyConnect() {
+  protected boolean canRunL1ProxyConnect() {
     return true;
   }
 
@@ -35,7 +35,7 @@ public class LinkedBlockingQueueProxyCrashTest extends TransparentTestBase {
     return true;
   }
 
-  protected void setupProxyConnectTest(ProxyConnectManager mgr) {
+  protected void setupL1ProxyConnectTest(ProxyConnectManager mgr) {
     mgr.setProxyWaitTime(30 * 1000);
     mgr.setProxyDownTime(100);
   }

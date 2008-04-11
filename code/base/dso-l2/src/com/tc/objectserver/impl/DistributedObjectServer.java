@@ -4,6 +4,9 @@
  */
 package com.tc.objectserver.impl;
 
+import bsh.EvalError;
+import bsh.Interpreter;
+
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
@@ -15,7 +18,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.io.TCFile;
 import com.tc.io.TCFileImpl;
 import com.tc.io.TCRandomFileAccessImpl;
-import com.tc.l1propertiesfroml2.L1ReconnectConfig;
+import com.tc.l1propertiesfroml2.ReconnectConfig;
 import com.tc.l1propertiesfroml2.L1ReconnectConfigImpl;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.L2HACoordinator;
@@ -219,9 +222,6 @@ import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 import javax.management.remote.JMXConnectorServer;
 
-import bsh.EvalError;
-import bsh.Interpreter;
-
 /**
  * Startup and shutdown point. Builds and starts the server
  * 
@@ -273,7 +273,7 @@ public class DistributedObjectServer implements TCDumper {
 
   private final SEDA                           seda;
 
-  private L1ReconnectConfig                    l1ReconnectConfig;
+  private ReconnectConfig                      l1ReconnectConfig;
 
   // used by a test
   public DistributedObjectServer(L2TVSConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
@@ -378,8 +378,8 @@ public class DistributedObjectServer implements TCDumper {
 
     l2Properties = TCPropertiesImpl.getProperties().getPropertiesFor("l2");
     l1ReconnectConfig = new L1ReconnectConfigImpl(TCPropertiesImpl.getProperties()
-        .getBoolean(L1ReconnectConfig.L2_L1RECONNECT_ENABLED), TCPropertiesImpl.getProperties()
-        .getInt(L1ReconnectConfig.L2_L1RECONNECT_TIMEOUT));
+        .getBoolean(L1ReconnectConfigImpl.L2_L1RECONNECT_ENABLED), TCPropertiesImpl.getProperties()
+        .getInt(L1ReconnectConfigImpl.L2_L1RECONNECT_TIMEOUT));
 
     final boolean swapEnabled = true; // 2006-01-31 andrew -- no longer possible to use in-memory only; DSO folks say
     // it's broken
@@ -836,7 +836,8 @@ public class DistributedObjectServer implements TCDumper {
                                                    final StageManager stageManager,
                                                    final MessageMonitor messageMonitor,
                                                    final ManagedObjectFaultHandler managedObjectFaultHandler,
-                                                   final ServerTransactionManagerImpl txnManager, final ServerTransactionSequencerStats serverTransactionSequencerStats) {
+                                                   final ServerTransactionManagerImpl txnManager,
+                                                   final ServerTransactionSequencerStats serverTransactionSequencerStats) {
     if (statisticsAgentSubSystem.isActive()) {
       StatisticsRetrievalRegistry registry = statisticsAgentSubSystem.getStatisticsRetrievalRegistry();
       registry.registerActionInstance(new SRAL2ToL1FaultRate(serverStats));
@@ -1117,7 +1118,7 @@ public class DistributedObjectServer implements TCDumper {
     }
   }
 
-  public L1ReconnectConfig getL1ReconnectProperties() {
+  public ReconnectConfig getL1ReconnectProperties() {
     return l1ReconnectConfig;
   }
 }
