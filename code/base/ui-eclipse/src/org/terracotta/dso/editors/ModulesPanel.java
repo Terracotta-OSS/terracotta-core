@@ -36,7 +36,7 @@ import com.terracottatech.config.Client;
 import com.terracottatech.config.Module;
 import com.terracottatech.config.Modules;
 
-import java.net.URL;
+import java.io.File;
 
 public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectStructureListener {
   private Client                 m_dsoClient;
@@ -53,7 +53,7 @@ public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectS
   private RemoveRepoHandler      m_removeRepoHandler;
 
   private static final String    MODULE_DECLARATION    = "Module Declaration";
-  private static final String    MODULE_REPO_LOCATION  = "Repository Location (URL)";
+  private static final String    MODULE_REPO_LOCATION  = "Repository Location";
   private static final String    REPO_DECLARATION      = "Repository Declaration";
 
   private static final int       MODULE_NAME_INDEX     = 0;
@@ -406,9 +406,9 @@ public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectS
             if (error != null) {
               tip = error.getMessage();
             } else {
-              URL loc = moduleInfo.getLocation();
+              File loc = moduleInfo.getLocation();
               if(loc != null) {
-                tip = loc.toString();
+                tip = loc.getAbsolutePath();
               }
             }
           }

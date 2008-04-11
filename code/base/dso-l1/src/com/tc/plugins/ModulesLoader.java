@@ -36,6 +36,7 @@ import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.Module;
 import com.terracottatech.config.Modules;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
@@ -141,11 +142,22 @@ public class ModulesLoader {
     moduleList.addAll(Arrays.asList(modules));
 
     final Module[] allModules = (Module[]) moduleList.toArray(new Module[moduleList.size()]);
-    final Resolver resolver = new Resolver(osgiRuntime.getRepositories());
-    final URL[] locations = resolver.resolve(allModules);
+    
+    final URL[] osgiRepositories = osgiRuntime.getRepositories();
+    final Resolver resolver = new Resolver(Resolver.urlsToStrings(osgiRepositories));
+    final File[] locations = resolver.resolve(allModules);
 
-    osgiRuntime.installBundles(locations);
-    osgiRuntime.startBundles(locations, handler);
+    final URL[] bundleURLs = new URL[locations.length];
+    for(int i=0; i<locations.length; i++) {
+      try {
+        bundleURLs[i] = locations[i].toURL();
+      } catch(MalformedURLException e) {
+        throw new RuntimeException("Malformed file URL for bundle: " + locations[i].getAbsolutePath(), e);
+      }
+    }
+    
+    osgiRuntime.installBundles(bundleURLs);
+    osgiRuntime.startBundles(bundleURLs, handler);
   }
 
   private static List getAdditionalModules() {

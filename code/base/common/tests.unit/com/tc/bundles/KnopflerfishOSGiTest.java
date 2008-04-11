@@ -46,16 +46,16 @@ public class KnopflerfishOSGiTest extends TestCase {
       String version = PRODUCT_VERSION_DASH_QUALIFIER;
       String name = jar.getName().replaceAll("-" + version + ".jar", "");
 
-      URL[] repos = { new URL(System.getProperty("com.tc.l1.modules.repositories")) };
+      String[] repos = { System.getProperty("com.tc.l1.modules.repositories") };
       Resolver resolver = new Resolver(repos);
       Module module = Module.Factory.newInstance();
       module.setName(name);
       module.setVersion(version);
       module.setGroupId("org.terracotta.modules");
-      URL url = resolver.resolve(module);
-      assertEquals(url.getPath().endsWith(name + "-" + version + ".jar"), true);
+      File file = resolver.resolve(module);
+      assertEquals(file.getAbsolutePath().endsWith(name + "-" + version + ".jar"), true);
 
-      final JarFile bundle = new JarFile(FileUtils.toFile(url));
+      final JarFile bundle = new JarFile(file);
       final Manifest manifest = bundle.getManifest();
       final String requireversion = manifest.getMainAttributes().getValue("Terracotta-RequireVersion");
       final String symbolicName = manifest.getMainAttributes().getValue("Bundle-SymbolicName");

@@ -4,7 +4,7 @@
  */
 package com.tc;
 
-import org.apache.xmlbeans.XmlAnyURI;
+import org.apache.xmlbeans.XmlString;
 import org.dijon.Button;
 import org.dijon.ContainerResource;
 
@@ -191,7 +191,7 @@ public class ModulesPanel extends XContainer implements TableModelListener {
   }
 
   private void internalAddRepositoryLocation(String repoLocation) {
-    XmlAnyURI elem = ensureModulesElement().addNewRepository();
+    XmlString elem = ensureModulesElement().addNewRepository();
     elem.setStringValue(repoLocation);
     m_repositoriesTableModel.addRepoLocation(elem);
     int row = m_repositoriesTableModel.getRowCount() - 1;
@@ -224,12 +224,12 @@ public class ModulesPanel extends XContainer implements TableModelListener {
 
   class RepositoriesTableModel extends XObjectTableModel {
     RepositoriesTableModel() {
-      super(XmlAnyURI.class,
+      super(XmlString.class,
             new String[] {"StringValue"},
             new String[] {"Location"});
     }
 
-    void addRepoLocation(XmlAnyURI repoLocation) {
+    void addRepoLocation(XmlString repoLocation) {
       add(repoLocation);
       int row = getRowCount();
       fireTableRowsInserted(row, row);

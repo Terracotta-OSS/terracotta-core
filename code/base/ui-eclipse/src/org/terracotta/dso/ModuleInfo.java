@@ -9,11 +9,11 @@ import org.osgi.framework.BundleException;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.Module;
 
-import java.net.URL;
+import java.io.File;
 
 public class ModuleInfo {
   private Module fModule;
-  private URL fLocation;
+  private File fLocation;
   private Bundle fBundle;
   private BundleException fBundleException;
   private DsoApplication fApplication;
@@ -26,11 +26,11 @@ public class ModuleInfo {
     return fModule;
   }
   
-  public void setLocation(URL location) {
+  public void setLocation(File location) {
     fLocation = location;
   }
   
-  public URL getLocation() {
+  public File getLocation() {
     return fLocation;
   }
   

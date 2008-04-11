@@ -160,11 +160,8 @@ public class NewAddModuleDialog extends MessageDialog {
         String path = directoryDialog.open();
         if (path != null) {
           File dir = new File(path);
-          try {
-            fModules.addRepository(dir.toURL().toString());
-            populateTable();
-          } catch (MalformedURLException mure) {/**/
-          }
+          fModules.addRepository(dir.toString());
+          populateTable();
         }
       }
     });
@@ -179,12 +176,18 @@ public class NewAddModuleDialog extends MessageDialog {
     String[] repos = fModules.getRepositoryArray();
     if (repos != null) {
       for (String repo : repos) {
-        try {
-          File repoDir = new File(new URL(repo).getFile());
-          if (repoDir.exists() && repoDir.isDirectory()) {
-            populateTable(repoDir, null);
+        File repoDir = null;
+        if(repo.startsWith("file:")) {
+          try {
+            repoDir = new File(new URL(repo).getFile());
+          } catch (MalformedURLException e) {/**/
           }
-        } catch (MalformedURLException e) {/**/
+        } else {
+          repoDir = new File(repo);
+        }
+        
+        if(repoDir != null && repoDir.exists() && repoDir.isDirectory()) {
+          populateTable(repoDir, null);
         }
       }
     }

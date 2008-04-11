@@ -341,7 +341,7 @@
 
   <xs:complexType name="modules">
     <xs:sequence maxOccurs="unbounded">
-      <xs:element name="repository" type="xs:anyURI" minOccurs="0" />
+      <xs:element name="repository" type="xs:string" minOccurs="0" />
       <xs:element name="module" type="module" minOccurs="0" />
     </xs:sequence>
   </xs:complexType>

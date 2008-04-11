@@ -669,7 +669,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
         Modules tmpModules = (Modules) modulesCopy.copy();
         tmpModules.setModuleArray(new Module[] { origModule });
         osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(tmpModules);
-        final Resolver resolver = new Resolver(osgiRuntime.getRepositories());
+        final Resolver resolver = new Resolver(Resolver.urlsToStrings(osgiRuntime.getRepositories()));
         Module[] allModules = tmpModules.getModuleArray();
         ModuleInfo origModuleInfo = modulesConfig.getOrAdd(origModule);
 
@@ -677,9 +677,9 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
           ModuleInfo moduleInfo = modulesConfig.getOrAdd(module);
           try {
             moduleInfo.setLocation(resolver.resolve(module));
-            final URL[] locations = resolver.getResolvedUrls();
-            for (URL location : locations) {
-              osgiRuntime.installBundle(location);
+            final File[] locations = resolver.getResolvedFiles();
+            for (File location : locations) {
+              osgiRuntime.installBundle(location.toURL());
             }
           } catch (BundleException be) {
             if (be instanceof MissingBundleException) {
@@ -695,7 +695,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       }
 
       osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modulesCopy);
-      final Resolver resolver = new Resolver(osgiRuntime.getRepositories());
+      final Resolver resolver = new Resolver(Resolver.urlsToStrings(osgiRuntime.getRepositories()));
       Module[] allModules = modulesCopy.getModuleArray();
 
       for (Module module : allModules) {
@@ -706,10 +706,10 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
         }
       }
 
-      final URL[] locations = resolver.getResolvedUrls();
-      for (URL location : locations) {
+      final File[] locations = resolver.getResolvedFiles();
+      for (File location : locations) {
         try {
-          osgiRuntime.installBundle(location);
+          osgiRuntime.installBundle(location.toURL());
         } catch (BundleException be) {
           be.printStackTrace();
         }
@@ -718,7 +718,11 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       osgiRuntime.registerService("com.tc.object.config.StandardDSOClientConfigHelper",
                                   new FakeDSOClientConfigHelper(), new Properties());
 
-      osgiRuntime.startBundles(locations, new EmbeddedOSGiEventHandler() {
+      URL[] urls = new URL[locations.length];
+      for(int i=0; i<locations.length; i++) {
+        urls[i] = locations[i].toURL();
+      }
+      osgiRuntime.startBundles(urls, new EmbeddedOSGiEventHandler() {
         public void callback(final Object payload) throws BundleException {
           Assert.assertTrue(payload instanceof Bundle);
           Bundle bundle = (Bundle) payload;
