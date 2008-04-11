@@ -28,9 +28,14 @@ public class CreateLotsOfGarbageGCTest extends GCTestBase implements TestConfigu
   public int getGarbageCollectionInterval() {
     return 100;
   }
+  
+  // start only 1 L1
+  protected int getNodeCount() {
+    return 1;
+  }
 
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
-    setupManager.setServerCount(1);
+    setupManager.setServerCount(3);
     setupManager.setServerCrashMode(ActivePassiveCrashMode.CONTINUOUS_ACTIVE_CRASH);
     setupManager.setServerCrashWaitTimeInSec(120);
     setupManager.setServerShareDataMode(ActivePassiveSharedDataMode.NETWORK);
