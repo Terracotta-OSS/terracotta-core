@@ -5,7 +5,6 @@
 package com.tc.net.protocol.delivery;
 
 import com.tc.async.api.Sink;
-import com.tc.l1propertiesfroml2.ReconnectConfig;
 import com.tc.net.protocol.AbstractNetworkStackHarness;
 import com.tc.net.protocol.tcm.MessageChannelInternal;
 import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
@@ -13,6 +12,7 @@ import com.tc.net.protocol.transport.ClientConnectionEstablisher;
 import com.tc.net.protocol.transport.ClientMessageTransport;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.MessageTransportFactory;
+import com.tc.properties.ReconnectConfig;
 
 public class OOONetworkStackHarness extends AbstractNetworkStackHarness {
 

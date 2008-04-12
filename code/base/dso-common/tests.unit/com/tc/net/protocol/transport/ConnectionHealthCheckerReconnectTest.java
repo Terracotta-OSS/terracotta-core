@@ -8,7 +8,6 @@ import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
 
 import com.tc.async.api.Stage;
 import com.tc.async.impl.StageManagerImpl;
-import com.tc.l1propertiesfroml2.L1ReconnectConfigImpl;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.logging.LogLevel;
@@ -34,6 +33,7 @@ import com.tc.net.protocol.tcm.UnsupportedMessageTypeException;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.session.NullSessionManager;
+import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.PortChooser;
 import com.tc.util.SequenceGenerator;
