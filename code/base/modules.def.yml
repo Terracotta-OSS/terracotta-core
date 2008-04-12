@@ -75,7 +75,7 @@ modules:
         - dso-statistics-api
   - dso-common-jdk16:
       options:
-        jdk: JAVASE-16
+        jdk: JavaSE-1.6
       dependencies:
         - common
         - common-api

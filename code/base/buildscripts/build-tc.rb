@@ -1009,9 +1009,9 @@ END
             'jvmargs'  => config_source['jvmargs'],
 
             'tests-jdk' => @jvm_set['tests-jdk'].short_description,
-            'JAVA_HOME_14' => @jvm_set['J2SE-1.4'].short_description,
-            'JAVA_HOME_15' => @jvm_set['J2SE-1.5'].short_description
-
+            'JAVA_HOME_14' => @jvm_set['1.4'].short_description,
+            'JAVA_HOME_15' => @jvm_set['1.5'].short_description,
+            'JAVA_HOME_16' => @jvm_set['1.6'].short_description
       }
 
 
@@ -1032,7 +1032,7 @@ END
         next if key =~ /appserver/
         test_config_data[key] = config_source[key] if key =~ /^tc\.tests\.configuration\..*/i
       end
-
+      puts @build_results.build_information_file.to_s
       File.open(@build_results.build_information_file.to_s, "w") do |file|
         file << "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n\n"
         file << "<configinfo>\n"
