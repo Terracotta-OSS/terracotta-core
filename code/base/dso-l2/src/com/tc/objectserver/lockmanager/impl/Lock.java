@@ -31,6 +31,7 @@ import com.tc.objectserver.lockmanager.api.NotifiedWaiters;
 import com.tc.objectserver.lockmanager.api.ServerLockRequest;
 import com.tc.objectserver.lockmanager.api.TCIllegalMonitorStateException;
 import com.tc.objectserver.lockmanager.api.Waiter;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 
@@ -46,9 +47,9 @@ import java.util.TimerTask;
 public class Lock {
   private static final TCLogger            logger              = TCLogging.getLogger(Lock.class);
   private final static boolean             LOCK_LEASE_ENABLE   = TCPropertiesImpl.getProperties()
-                                                                   .getBoolean("l2.lockmanager.greedy.lease.enabled");
+                                                                   .getBoolean(TCPropertiesConsts.L2_LOCKMANAGER_GREEDY_LEASE_ENABLED);
   private final static int                 LOCK_LEASE_TIME     = TCPropertiesImpl.getProperties()
-                                                                   .getInt("l2.lockmanager.greedy.lease.leaseTimeInMillis");
+                                                                   .getInt(TCPropertiesConsts.L2_LOCKMANAGER_GREEDY_LEASE_LEASETIME_INMILLS);
   public final static Lock                 NULL_LOCK           = new Lock(LockID.NULL_ID, 0,
                                                                           new LockEventListener[] {}, true,
                                                                           LockManagerImpl.ALTRUISTIC_LOCK_POLICY,

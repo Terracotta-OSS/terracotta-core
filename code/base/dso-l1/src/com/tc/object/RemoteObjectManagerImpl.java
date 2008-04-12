@@ -15,6 +15,7 @@ import com.tc.object.msg.RequestRootMessageFactory;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.util.Assert;
 import com.tc.util.State;
 import com.tc.util.Util;
@@ -56,11 +57,11 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
   private final static int                         MAX_LRU                   = TCPropertiesImpl
                                                                                  .getProperties()
                                                                                  .getInt(
-                                                                                         "l1.objectmanager.remote.maxDNALRUSize");
+                                                                                         TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_MAX_DNALRU_SIZE);
   private final static boolean                     ENABLE_LOGGING            = TCPropertiesImpl
                                                                                  .getProperties()
                                                                                  .getBoolean(
-                                                                                             "l1.objectmanager.remote.logging.enabled");
+                                                                                             TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_LOGGING_ENABLED);
   private final int                                defaultDepth;
   private State                                    state                     = RUNNING;
   private Set                                      removeObjects             = new HashSet(256);

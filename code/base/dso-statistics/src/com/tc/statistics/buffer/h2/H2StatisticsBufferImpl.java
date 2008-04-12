@@ -8,6 +8,7 @@ import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArraySet;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.buffer.StatisticsBuffer;
 import com.tc.statistics.buffer.StatisticsBufferListener;
@@ -92,7 +93,7 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
   public H2StatisticsBufferImpl(final StatisticsConfig config, final File dbDir) throws StatisticsBufferException {
     Assert.assertNotNull("config", config);
     final String suffix;
-    if (TCPropertiesImpl.getProperties().getBoolean(BUFFER_RANDOMSUFFIX_ENABLED_PROPERTY_NAME, false)) {
+    if (TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.CVT_BUFFER_RANDOM_SUFFIX_ENABLED, false)) {
       synchronized (rand) {
         suffix = H2_URL_SUFFIX + "-" + rand.nextInt() + "." + System.currentTimeMillis();
       }

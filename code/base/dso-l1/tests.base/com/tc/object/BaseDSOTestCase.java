@@ -15,8 +15,7 @@ import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.statistics.buffer.StatisticsBuffer;
-import com.tc.statistics.store.StatisticsStore;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.test.TCTestCase;
 import com.terracottatech.config.AdditionalBootJarClasses;
 
@@ -30,8 +29,8 @@ public class BaseDSOTestCase extends TCTestCase {
   static {
     // ensure that the databases that are created for the CVT are unique for
     // each test run and for all the nodes that are started within a test
-    TCPropertiesImpl.setProperty(StatisticsBuffer.BUFFER_RANDOMSUFFIX_ENABLED_PROPERTY_NAME, "true");
-    TCPropertiesImpl.setProperty(StatisticsStore.STORE_RANDOMSUFFIX_ENABLED_PROPERTY_NAME, "true");
+    TCPropertiesImpl.setProperty(TCPropertiesConsts.CVT_BUFFER_RANDOM_SUFFIX_ENABLED, "true");
+    TCPropertiesImpl.setProperty(TCPropertiesConsts.CVT_STORE_RANDOM_SUFFIX_ENABLED, "true");
   }
   
   private Exception failTestException;

@@ -8,6 +8,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
 
 import com.tc.logging.TCLogger;
 import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.text.StringFormatter;
 import com.tc.util.TCTimerImpl;
 
@@ -19,9 +20,6 @@ import java.util.TreeMap;
 
 public class MessageMonitorImpl implements MessageMonitor {
 
-  private static final String    ENABLED_PROP = "tcm.monitor.enabled";
-  private static final String    DELAY_PROP   = "tcm.monitor.delay";
-
   private final Map             counters     = new TreeMap(new TCMessageTypeComparator());
   private final StringFormatter formatter    = new StringFormatter();
   private final TCTimerImpl     timer;
@@ -29,9 +27,9 @@ public class MessageMonitorImpl implements MessageMonitor {
 
   public static MessageMonitor createMonitor(TCProperties tcProps, TCLogger logger) {
     final MessageMonitor mm;
-    if (tcProps.getBoolean(MessageMonitorImpl.ENABLED_PROP, false)) {
+    if (tcProps.getBoolean(TCPropertiesConsts.TCM_MONITOR_ENABLED, false)) {
       mm = new MessageMonitorImpl();
-      ((MessageMonitorImpl) mm).startLogging(logger, tcProps.getInt(MessageMonitorImpl.DELAY_PROP));
+      ((MessageMonitorImpl) mm).startLogging(logger, tcProps.getInt(TCPropertiesConsts.TCM_MONITOR_DELAY));
     } else {
       mm = new NullMessageMonitor();
     }

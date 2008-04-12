@@ -6,6 +6,7 @@ package com.tc.objectserver.tx;
 
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
@@ -22,9 +23,9 @@ import java.util.Map.Entry;
 
 public final class TxnObjectGrouping implements PrettyPrintable {
   private static final int          MAX_OBJECTS    = TCPropertiesImpl.getProperties()
-                                                       .getInt("l2.objectmanager.maxObjectsInTxnObjGrouping");
+                                                       .getInt(TCPropertiesConsts.L2_OBJECTMANAGER_MAXOBJECTS_INTXNOBJ_GROUPING);
   private static final int          MAX_TXNS       = TCPropertiesImpl.getProperties()
-                                                       .getInt("l2.objectmanager.maxTxnsInTxnObjectGrouping");
+                                                       .getInt(TCPropertiesConsts.L2_OBJECTMANAGER_MAXTXNS_INTXNOBJECT_GROUPING);
 
   private static final State        APPLY_PENDING  = new State("APPLY_PENDING");
   private static final State        COMMIT_PENDING = new State("COMMIT_PENDING");

@@ -16,14 +16,14 @@ import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 
 import java.util.concurrent.atomic.AtomicLong;
 
 public class ManagedObjectFaultHandler extends AbstractEventHandler {
 
   private static final TCLogger logger           = TCLogging.getLogger(ManagedObjectFaultHandler.class);
-  public static final String    L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED = "l2.objectmanager.fault.logging.enabled";
-  private static final boolean  LOG_OBJECT_FAULT = TCPropertiesImpl.getProperties().getBoolean(L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED);
+  private static final boolean  LOG_OBJECT_FAULT = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED);
 
   private ObjectManager         objectManager;
   private ManagedObjectStore    objectStore;

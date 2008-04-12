@@ -7,6 +7,7 @@ package com.tc.bundles;
 import org.apache.commons.io.FileUtils;
 import org.osgi.framework.BundleException;
 
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.terracottatech.config.Module;
 
@@ -130,7 +131,7 @@ public class KnopflerfishOSGiTest extends TestCase {
   }
 
   private void useGoodRequireVersion(String mode, int expected) {
-    setProperty("l1.modules.tc-version-check", mode);
+    setProperty(TCPropertiesConsts.L1_MODULES_TC_VERSION_CHECK, mode);
     int actual = osgiRuntime.versionCheck(mode, "1.0.0.SNAPSHOT", "1.0.0.SNAPSHOT");
     assertEquals(expected, actual);
 
@@ -148,7 +149,7 @@ public class KnopflerfishOSGiTest extends TestCase {
   }
 
   private void useBadRequireVersion(String mode, int expected) {
-    setProperty("l1.modules.tc-version-check", mode);
+    setProperty(TCPropertiesConsts.L1_MODULES_TC_VERSION_CHECK, mode);
 
     int actual = osgiRuntime.versionCheck(mode, "A.B.C-SNAPSHOT", "A.B.C-SNAPSHOT");
     assertEquals(expected, actual);
@@ -176,7 +177,7 @@ public class KnopflerfishOSGiTest extends TestCase {
   }
 
   private void useNullOrEmptyRequireVersion(String mode, String version, int expected) {
-    setProperty("l1.modules.tc-version-check", mode);
+    setProperty(TCPropertiesConsts.L1_MODULES_TC_VERSION_CHECK, mode);
     int actual = osgiRuntime.versionCheck(mode, version, "1.0.0");
     assertEquals(expected, actual);
   }
@@ -199,7 +200,7 @@ public class KnopflerfishOSGiTest extends TestCase {
   }
 
   private void compareVersion(String mode, String version, String tcversion, int expected) {
-    setProperty("l1.modules.tc-version-check", mode);
+    setProperty(TCPropertiesConsts.L1_MODULES_TC_VERSION_CHECK, mode);
     int actual = osgiRuntime.versionCheck(mode, version, tcversion);
     assertEquals(expected, actual);
   }
@@ -209,19 +210,19 @@ public class KnopflerfishOSGiTest extends TestCase {
    */
   public void testSetVersionCheckMode() {
     try {
-      setProperty("l1.modules.tc-version-check", "off");
+      setProperty(TCPropertiesConsts.L1_MODULES_TC_VERSION_CHECK, "off");
       String mode = osgiRuntime.versionCheckMode();
       assertEquals(IVersionCheck.OFF, mode);
 
-      setProperty("l1.modules.tc-version-check", "warn");
+      setProperty(TCPropertiesConsts.L1_MODULES_TC_VERSION_CHECK, "warn");
       mode = osgiRuntime.versionCheckMode();
       assertEquals(IVersionCheck.WARN, mode);
 
-      setProperty("l1.modules.tc-version-check", "enforce");
+      setProperty(TCPropertiesConsts.L1_MODULES_TC_VERSION_CHECK, "enforce");
       mode = osgiRuntime.versionCheckMode();
       assertEquals(IVersionCheck.ENFORCE, mode);
 
-      setProperty("l1.modules.tc-version-check", "strict");
+      setProperty(TCPropertiesConsts.L1_MODULES_TC_VERSION_CHECK, "strict");
       mode = osgiRuntime.versionCheckMode();
       assertEquals(IVersionCheck.STRICT, mode);
     } catch (BundleException ex) {
@@ -234,7 +235,7 @@ public class KnopflerfishOSGiTest extends TestCase {
    */
   public void testDefaultVersionCheckMode() {
     try {
-      setProperty("l1.modules.tc-version-check", "");
+      setProperty(TCPropertiesConsts.L1_MODULES_TC_VERSION_CHECK, "");
       String mode = osgiRuntime.versionCheckMode();
       assertEquals(IVersionCheck.OFF, mode);
     } catch (BundleException ex) {
@@ -248,25 +249,25 @@ public class KnopflerfishOSGiTest extends TestCase {
   public void testBadVersionCheckMode() {
     String mode = null;
     try {
-      setProperty("l1.modules.tc-version-check", "foobar");
+      setProperty(TCPropertiesConsts.L1_MODULES_TC_VERSION_CHECK, "foobar");
       mode = osgiRuntime.versionCheckMode();
 
-      setProperty("l1.modules.tc-version-check", "OFF");
+      setProperty(TCPropertiesConsts.L1_MODULES_TC_VERSION_CHECK, "OFF");
       mode = osgiRuntime.versionCheckMode();
 
-      setProperty("l1.modules.tc-version-check", "WARN");
+      setProperty(TCPropertiesConsts.L1_MODULES_TC_VERSION_CHECK, "WARN");
       mode = osgiRuntime.versionCheckMode();
 
-      setProperty("l1.modules.tc-version-check", "ENFORCE");
+      setProperty(TCPropertiesConsts.L1_MODULES_TC_VERSION_CHECK, "ENFORCE");
       mode = osgiRuntime.versionCheckMode();
 
-      setProperty("l1.modules.tc-version-check", "STRICT");
+      setProperty(TCPropertiesConsts.L1_MODULES_TC_VERSION_CHECK, "STRICT");
       mode = osgiRuntime.versionCheckMode();
     } catch (BundleException ex) {
       assertNull(mode);
       return;
     }
-    fail("Invalid mode value set for property l1.modules.tc-version-check: " + mode);
+    fail("Invalid mode value set for property " + TCPropertiesConsts.L1_MODULES_TC_VERSION_CHECK + mode);
   }
 
   private void setProperty(String key, String value) {

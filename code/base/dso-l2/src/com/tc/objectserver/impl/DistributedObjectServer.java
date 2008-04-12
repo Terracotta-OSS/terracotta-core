@@ -18,8 +18,8 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.io.TCFile;
 import com.tc.io.TCFileImpl;
 import com.tc.io.TCRandomFileAccessImpl;
-import com.tc.l1propertiesfroml2.ReconnectConfig;
 import com.tc.l1propertiesfroml2.L1ReconnectConfigImpl;
+import com.tc.l1propertiesfroml2.ReconnectConfig;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.L2HACoordinator;
 import com.tc.l2.ha.L2HADisabledCooridinator;
@@ -170,6 +170,7 @@ import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
 import com.tc.objectserver.tx.TransactionalStagesCoordinatorImpl;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
@@ -378,8 +379,8 @@ public class DistributedObjectServer implements TCDumper {
 
     l2Properties = TCPropertiesImpl.getProperties().getPropertiesFor("l2");
     l1ReconnectConfig = new L1ReconnectConfigImpl(TCPropertiesImpl.getProperties()
-        .getBoolean(L1ReconnectConfigImpl.L2_L1RECONNECT_ENABLED), TCPropertiesImpl.getProperties()
-        .getInt(L1ReconnectConfigImpl.L2_L1RECONNECT_TIMEOUT));
+        .getBoolean(TCPropertiesConsts.L2_L1RECONNECT_ENABLED), TCPropertiesImpl.getProperties()
+        .getInt(TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS));
 
     final boolean swapEnabled = true; // 2006-01-31 andrew -- no longer possible to use in-memory only; DSO folks say
     // it's broken

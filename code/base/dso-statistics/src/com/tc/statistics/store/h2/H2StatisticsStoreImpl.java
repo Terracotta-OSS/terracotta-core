@@ -10,6 +10,7 @@ import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArraySet;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.database.StatisticsDatabase;
 import com.tc.statistics.database.exceptions.StatisticsDatabaseException;
@@ -87,7 +88,7 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
 
   public H2StatisticsStoreImpl(final File dbDir) {
     final String suffix;
-    if (TCPropertiesImpl.getProperties().getBoolean(STORE_RANDOMSUFFIX_ENABLED_PROPERTY_NAME, false)) {
+    if (TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.CVT_STORE_RANDOM_SUFFIX_ENABLED, false)) {
       synchronized (rand) {
         suffix = H2_URL_SUFFIX + "-" + rand.nextInt() + "." + System.currentTimeMillis();
       }

@@ -15,6 +15,7 @@ import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 
@@ -91,7 +92,7 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
   }
 
   final String versionCheckMode() throws BundleException {
-    String mode = TCPropertiesImpl.getProperties().getProperty("l1.modules.tc-version-check", true);
+    String mode = TCPropertiesImpl.getProperties().getProperty(TCPropertiesConsts.L1_MODULES_TC_VERSION_CHECK, true);
     if ((mode == null) || (mode.length() == 0)) mode = IVersionCheck.OFF;
     ArrayList modes = new ArrayList();
     modes.add(IVersionCheck.OFF);

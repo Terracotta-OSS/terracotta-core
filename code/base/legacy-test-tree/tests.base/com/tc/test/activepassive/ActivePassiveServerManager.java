@@ -9,9 +9,9 @@ import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
-import com.tc.net.protocol.delivery.L2ReconnectConfigImpl;
 import com.tc.objectserver.control.ExtraProcessServerControl;
 import com.tc.objectserver.control.ServerControl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.test.proxyconnect.ProxyConnectManager;
 import com.tc.test.proxyconnect.ProxyConnectManagerImpl;
 import com.tc.util.PortChooser;
@@ -19,7 +19,6 @@ import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.TestState;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -164,7 +163,7 @@ public class ActivePassiveServerManager {
     lastCrashedIndex = NULL_VAL;
   }
 
-  private void createServers() throws FileNotFoundException {
+  private void createServers() {
     int startIndex = 0;
 
     if (DEBUG) {
@@ -199,7 +198,7 @@ public class ActivePassiveServerManager {
       if (isProxyL2groupPorts) {
         // hidden tc.properties only used by L2 proxy testing purpose
         perServerJvmArgs = new ArrayList(jvmArgs);
-        perServerJvmArgs.add("-Dcom.tc." + L2ReconnectConfigImpl.L2_RECONNECT_PROXY_TO_PORT + "=" + l2GroupPorts[i]);
+        perServerJvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT + "=" + l2GroupPorts[i]);
       } else {
         perServerJvmArgs = jvmArgs;
       }

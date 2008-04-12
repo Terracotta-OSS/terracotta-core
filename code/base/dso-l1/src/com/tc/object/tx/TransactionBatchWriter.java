@@ -27,6 +27,7 @@ import com.tc.object.msg.CommitTransactionMessage;
 import com.tc.object.msg.CommitTransactionMessageFactory;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
 import com.tc.util.SequenceGenerator;
@@ -46,13 +47,8 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 public class TransactionBatchWriter implements ClientTransactionBatch {
-  public static final String                    FOLDING_DEBUG_PROP        = "l1.transactionmanager.folding.debug";
-  public static final String                    FOLDING_ENABLED_PROP      = "l1.transactionmanager.folding.enabled";
-  public static final String                    FOLDING_OBJECT_LIMIT_PROP = "l1.transactionmanager.folding.object.limit";
-  public static final String                    FOLDING_LOCK_LIMIT_PROP   = "l1.transactionmanager.folding.lock.limit";
-
   private static final boolean                  DEBUG                     = TCPropertiesImpl.getProperties()
-                                                                              .getBoolean(FOLDING_DEBUG_PROP);
+                                                                              .getBoolean(TCPropertiesConsts.L1_TRANSACTIONMANAGER_FOLDING_DEBUG);
 
   private static final TCLogger                 logger                    = TCLogging
                                                                               .getLogger(TransactionBatchWriter.class);
@@ -650,8 +646,8 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     }
 
     public static FoldingConfig createFromProperties(TCProperties props) {
-      return new FoldingConfig(props.getBoolean(FOLDING_ENABLED_PROP), props.getInt(FOLDING_OBJECT_LIMIT_PROP), props
-          .getInt(FOLDING_LOCK_LIMIT_PROP));
+      return new FoldingConfig(props.getBoolean(TCPropertiesConsts.L1_TRANSACTIONMANAGER_FOLDING_ENABLED), props.getInt(TCPropertiesConsts.L1_TRANSACTIONMANAGER_FOLDING_OBJECT_LIMIT), props
+          .getInt(TCPropertiesConsts.L1_TRANSACTIONMANAGER_FOLDING_LOCK_LIMIT));
     }
   }
 

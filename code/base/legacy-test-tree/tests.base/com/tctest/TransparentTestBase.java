@@ -10,20 +10,17 @@ import org.apache.commons.lang.ClassUtils;
 import com.tc.config.schema.SettableConfigItem;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
-import com.tc.l1propertiesfroml2.L1ReconnectConfigImpl;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
-import com.tc.net.protocol.delivery.L2ReconnectConfigImpl;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.objectserver.control.ExtraProcessServerControl;
 import com.tc.objectserver.control.ServerControl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.simulator.app.ApplicationConfigBuilder;
 import com.tc.simulator.app.ErrorContext;
-import com.tc.statistics.buffer.StatisticsBuffer;
-import com.tc.statistics.store.StatisticsStore;
 import com.tc.test.ProcessInfo;
 import com.tc.test.TestConfigObject;
 import com.tc.test.activepassive.ActivePassiveServerConfigCreator;
@@ -108,28 +105,26 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   }
 
   protected void setJvmArgsL1Reconnect(final ArrayList jvmArgs) {
-    System.setProperty("com.tc." + L1ReconnectConfigImpl.L2_L1RECONNECT_ENABLED, "true");
-    TCPropertiesImpl.setProperty(L1ReconnectConfigImpl.L2_L1RECONNECT_ENABLED, "true");
-
-    jvmArgs.add("-Dcom.tc." + L1ReconnectConfigImpl.L2_L1RECONNECT_ENABLED + "=true");
+    System.setProperty("com.tc." + TCPropertiesConsts.L2_L1RECONNECT_ENABLED, "true");
+    TCPropertiesImpl.setProperty(TCPropertiesConsts.L2_L1RECONNECT_ENABLED, "true");
+    
+    jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_L1RECONNECT_ENABLED + "=true");
   }
 
   protected void setJvmArgsL2Reconnect(final ArrayList jvmArgs) {
-    System.setProperty("com.tc." + L2ReconnectConfigImpl.L2_RECONNECT_ENABLE, "true");
-    TCPropertiesImpl.setProperty(L2ReconnectConfigImpl.L2_RECONNECT_ENABLE, "true");
+    System.setProperty("com.tc." + TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "true");
+    TCPropertiesImpl.setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "true");
 
-    jvmArgs.add("-Dcom.tc." + L2ReconnectConfigImpl.L2_RECONNECT_ENABLE + "=true");
+    jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED + "=true");
   }
 
   protected void setJvmArgsCvtIsolation(final ArrayList jvmArgs) {
-    final String buffer_randomsuffix_sysprop = TCPropertiesImpl
-        .tcSysProp(StatisticsBuffer.BUFFER_RANDOMSUFFIX_ENABLED_PROPERTY_NAME);
-    final String store_randomsuffix_sysprop = TCPropertiesImpl
-        .tcSysProp(StatisticsStore.STORE_RANDOMSUFFIX_ENABLED_PROPERTY_NAME);
+    final String buffer_randomsuffix_sysprop = TCPropertiesImpl.tcSysProp(TCPropertiesConsts.CVT_BUFFER_RANDOM_SUFFIX_ENABLED);
+    final String store_randomsuffix_sysprop = TCPropertiesImpl.tcSysProp(TCPropertiesConsts.CVT_STORE_RANDOM_SUFFIX_ENABLED);
     System.setProperty(buffer_randomsuffix_sysprop, "true");
-    TCPropertiesImpl.setProperty(StatisticsBuffer.BUFFER_RANDOMSUFFIX_ENABLED_PROPERTY_NAME, "true");
+    TCPropertiesImpl.setProperty(TCPropertiesConsts.CVT_BUFFER_RANDOM_SUFFIX_ENABLED, "true");
     System.setProperty(store_randomsuffix_sysprop, "true");
-    TCPropertiesImpl.setProperty(StatisticsStore.STORE_RANDOMSUFFIX_ENABLED_PROPERTY_NAME, "true");
+    TCPropertiesImpl.setProperty(TCPropertiesConsts.CVT_STORE_RANDOM_SUFFIX_ENABLED, "true");
 
     jvmArgs.add("-D" + buffer_randomsuffix_sysprop + "=true");
     jvmArgs.add("-D" + store_randomsuffix_sysprop + "=true");

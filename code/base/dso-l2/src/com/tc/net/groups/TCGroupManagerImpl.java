@@ -47,6 +47,7 @@ import com.tc.objectserver.handler.TCGroupHandshakeMessageHandler;
 import com.tc.objectserver.handler.TCGroupMemberDiscoveryHandler;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
@@ -130,7 +131,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
       // proxy group port. use a different group port from tc.properties (if exist) than the one on tc-config
       // currently used by L2Reconnect proxy test.
-      groupConnectPort = TCPropertiesImpl.getProperties().getInt(L2ReconnectConfigImpl.L2_RECONNECT_PROXY_TO_PORT,
+      groupConnectPort = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT,
                                                                  groupPort);
 
       socketAddress = new TCSocketAddress(l2DSOConfig.bind().getString(), groupConnectPort);
@@ -760,10 +761,9 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     private final HandshakeState     STATE_SUCCESS                     = new SuccessState();
     private final HandshakeState     STATE_FAILURE                     = new FailureState();
 
-    public static final String       NHA_TCGROUPCOMM_HANDSHAKE_TIMEOUT = "l2.nha.tcgroupcomm.handshake.timeout";
     private final static long        HANDSHAKE_TIMEOUT;
     static {
-      HANDSHAKE_TIMEOUT = TCPropertiesImpl.getProperties().getLong(NHA_TCGROUPCOMM_HANDSHAKE_TIMEOUT);
+      HANDSHAKE_TIMEOUT = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_HANDSHAKE_TIMEOUT);
     }
 
     private final TCGroupManagerImpl manager;

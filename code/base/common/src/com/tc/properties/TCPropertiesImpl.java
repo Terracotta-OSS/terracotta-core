@@ -4,6 +4,7 @@
  */
 package com.tc.properties;
 
+import com.tc.logging.LogLevel;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 
@@ -66,16 +67,33 @@ public class TCPropertiesImpl implements TCProperties {
     processSystemProperties();
 
     trimWhiteSpace();
+
+    warnForOldProperties();
   }
 
   public static String tcSysProp(final String prop) {
-    return SYSTEM_PROP_PREFIX+prop;
+    return SYSTEM_PROP_PREFIX + prop;
+  }
+
+  private void warnForOldProperties() {
+    String[] oldProperties = TCPropertiesConsts.OLD_PROPERTIES;
+    int len = oldProperties.length;
+    for (int i = 0; i < len; i++) {
+      if (props.containsKey(oldProperties[i])) {
+        LOG_BUFFER
+            .addLog(
+                    "The property \""
+                        + oldProperties[i]
+                        + "\" has been removed/renamed in the latest relases. Please update the tc.properties file or some of your settings might not work",
+                    LogLevel.WARN);
+      }
+    }
   }
 
   private void trimWhiteSpace() {
-    for (Iterator i = props.entrySet().iterator(); i.hasNext(); ) {
+    for (Iterator i = props.entrySet().iterator(); i.hasNext();) {
       Map.Entry entry = (Entry) i.next();
-      entry.setValue(((String)entry.getValue()).trim());
+      entry.setValue(((String) entry.getValue()).trim());
     }
   }
 
@@ -226,33 +244,61 @@ public class TCPropertiesImpl implements TCProperties {
       logs.add(new Entry(msg));
     }
 
+    void addLog(String msg, LogLevel logLevel) {
+      logs.add((new Entry(msg, logLevel)));
+    }
+
     void addLog(String msg, Throwable t) {
-      logs.add(new Entry(msg, t));
+      logs.add(new Entry(msg, t, LogLevel.INFO));
     }
 
     void logTo(TCLogger logger) {
       for (Iterator iter = logs.iterator(); iter.hasNext();) {
         Entry e = (Entry) iter.next();
+        log(logger, e);
+      }
+      logs.clear();
+    }
+
+    void log(TCLogger logger, Entry e) {
+      if (e.logLevel == LogLevel.WARN) {
+        if (e.t != null) {
+          logger.warn(e.msg, e.t);
+        } else {
+          logger.warn(e.msg);
+        }
+      } else if (e.logLevel == LogLevel.ERROR) {
+        if (e.t != null) {
+          logger.error(e.msg, e.t);
+        } else {
+          logger.error(e.msg);
+        }
+      } else {
         if (e.t != null) {
           logger.info(e.msg, e.t);
         } else {
           logger.info(e.msg);
         }
       }
-      logs.clear();
     }
 
     static class Entry {
       final String    msg;
       final Throwable t;
+      final LogLevel  logLevel;
 
       Entry(String msg) {
-        this(msg, null);
+        this(msg, null, LogLevel.INFO);
       }
 
-      Entry(String msg, Throwable t) {
+      Entry(String msg, LogLevel logLevel) {
+        this(msg, null, logLevel);
+      }
+
+      Entry(String msg, Throwable t, LogLevel loglevel) {
         this.msg = msg;
         this.t = t;
+        logLevel = loglevel;
       }
     }
   }
@@ -264,11 +310,13 @@ public class TCPropertiesImpl implements TCProperties {
       logger.info("Loaded TCProperties : " + INSTANCE);
     }
 
+    /**
+     * the only reason this method is here is to trigger the static initializer of this inner class one (and only once)
+     */
     static void doLog() {
-    // the only reason this method is here is to trigger the static initilizer of this inner class one (and only once)
+      //
     }
 
   }
-
 
 }

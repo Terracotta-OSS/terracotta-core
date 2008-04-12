@@ -7,6 +7,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.MessageMonitorImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
@@ -33,7 +34,6 @@ import java.util.List;
 public class SRAMessages implements StatisticRetrievalAction {
 
   public static final String ACTION_NAME = "message monitor";
-  private static final String ENABLED_PROP = "tcm.monitor.enabled";
 
   private static final TCLogger logger = TCLogging.getLogger(SRAMessages.class);
 
@@ -69,7 +69,7 @@ public class SRAMessages implements StatisticRetrievalAction {
       this.monitor = (MessageMonitorImpl)monitor;
     } else {
       this.monitor = null;
-      logger.info("\"" + ACTION_NAME + "\" statistic is not enabled. Please enable the property \"" + ENABLED_PROP +
+      logger.info("\"" + ACTION_NAME + "\" statistic is not enabled. Please enable the property \"" + TCPropertiesConsts.TCM_MONITOR_DELAY +
                   "\" to collect this statistics.");
     }
   }

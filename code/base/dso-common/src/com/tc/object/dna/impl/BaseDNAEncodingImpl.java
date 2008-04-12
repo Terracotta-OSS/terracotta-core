@@ -16,6 +16,7 @@ import com.tc.object.compression.StringCompressionUtil;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.util.Assert;
 import com.tc.util.StringTCUtil;
 
@@ -95,15 +96,15 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
   private static final boolean       STRING_COMPRESSION_ENABLED           = TCPropertiesImpl
                                                                               .getProperties()
                                                                               .getBoolean(
-                                                                                          "l1.transactionmanager.strings.compress.enabled");
+                                                                                          TCPropertiesConsts.L1_TRANSACTIONMANAGER_STRINGS_COMPRESS_ENABLED);
   protected static final boolean     STRING_COMPRESSION_LOGGING_ENABLED   = TCPropertiesImpl
                                                                               .getProperties()
                                                                               .getBoolean(
-                                                                                          "l1.transactionmanager.strings.compress.logging.enabled");
+                                                                                          TCPropertiesConsts.L1_TRANSACTIONMANAGER_STRINGS_COMPRESS_LOGGING_ENABLED);
   private static final int           STRING_COMPRESSION_MIN_SIZE          = TCPropertiesImpl
                                                                               .getProperties()
                                                                               .getInt(
-                                                                                      "l1.transactionmanager.strings.compress.minSize");
+                                                                                      TCPropertiesConsts.L1_TRANSACTIONMANAGER_STRINGS_COMPRESS_MINSIZE);
 
   protected final ClassProvider      classProvider;
 

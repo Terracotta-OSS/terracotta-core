@@ -58,6 +58,7 @@ import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.persistence.api.PersistentMapStore;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.util.sequence.SequenceGenerator;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorException;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorListener;
@@ -68,7 +69,6 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     SequenceGeneratorListener {
 
   private static final TCLogger                logger                  = TCLogging.getLogger(L2HACoordinator.class);
-  public static final String                   NHA_COMM_LAYER_PROPERTY = "l2.nha.groupcomm.type";
   public static final String                   TC_GROUP_COMM           = "tc-group-comm";
   public static final String                   TRIBES_COMM             = "tribes";
 
@@ -122,13 +122,13 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     final Sink stateChangeSink = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE,
                                                           new L2StateChangeHandler(), 1, Integer.MAX_VALUE).getSink();
     // choose a group comm layer
-    final String commLayer = TCPropertiesImpl.getProperties().getProperty(NHA_COMM_LAYER_PROPERTY);
+    final String commLayer = TCPropertiesImpl.getProperties().getProperty(TCPropertiesConsts.L2_NHA_GROUPCOMM_TYPE);
     if (commLayer.equals(TC_GROUP_COMM)) {
       this.groupManager = new TCGroupManagerImpl(configSetupManager, stageManager);
     } else if (commLayer.equals(TRIBES_COMM)) {
       this.groupManager = new TribesGroupManager();
     } else {
-      throw new GroupException("wrong property " + NHA_COMM_LAYER_PROPERTY + " can be " + TC_GROUP_COMM + " or "
+      throw new GroupException("wrong property " + TCPropertiesConsts.L2_NHA_GROUPCOMM_TYPE + " can be " + TC_GROUP_COMM + " or "
                                + TRIBES_COMM);
     }
 

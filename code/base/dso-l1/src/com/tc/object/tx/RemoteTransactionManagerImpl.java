@@ -13,6 +13,7 @@ import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.Assert;
 import com.tc.util.DebugUtil;
@@ -50,11 +51,11 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   private static final int                 MAX_OUTSTANDING_BATCHES     = TCPropertiesImpl
                                                                            .getProperties()
                                                                            .getInt(
-                                                                                   "l1.transactionmanager.maxOutstandingBatchSize");
+                                                                                   TCPropertiesConsts.L1_TRANSACTIONMANAGER_MAXOUTSTANDING_BATCHSIZE);
   private static final long                COMPLETED_ACK_FLUSH_TIMEOUT = TCPropertiesImpl
                                                                            .getProperties()
                                                                            .getLong(
-                                                                                    "l1.transactionmanager.completedAckFlushTimeout");
+                                                                                    TCPropertiesConsts.L1_TRANSACTIONMANAGER_COMPLETED_ACK_FLUSH_TIMEOUT);
 
   private static final State               STARTING                    = new State("STARTING");
   private static final State               RUNNING                     = new State("RUNNING");

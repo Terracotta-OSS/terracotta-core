@@ -25,6 +25,7 @@ import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.api.PersistentCollectionsUtil;
 import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor.SleepycatPersistorBase;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
@@ -76,7 +77,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   private static final boolean                 STATS_LOGGING_ENABLED = TCPropertiesImpl
                                                                          .getProperties()
                                                                          .getBoolean(
-                                                                                     "l2.objectmanager.persistor.logging.enabled");
+                                                                                     TCPropertiesConsts.L2_OBJECTMANAGER_PERSISTOR_LOGGING_ENABLED);
 
   private final Database                       objectDB;
   private final SerializationAdapterFactory    saf;
@@ -89,7 +90,6 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   private final ClassCatalog                   classCatalog;
   private SerializationAdapter                 serializationAdapter;
   private final SleepycatCollectionsPersistor  collectionsPersistor;
-  public final static String                   OID_FAST_LOAD         = "l2.objectmanager.loadObjectID.fastLoad";
   private final ObjectIDManager                objectIDManager;
   private final ConcurrentHashMap              statsRecords          = new ConcurrentHashMap();
 
@@ -109,7 +109,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
     this.ptp = ptp;
     this.collectionsPersistor = collectionsPersistor;
 
-    boolean oidFastLoad = TCPropertiesImpl.getProperties().getBoolean(OID_FAST_LOAD);
+    boolean oidFastLoad = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_LOADOBJECTID_FASTLOAD);
     if (!paranoid) {
       this.objectIDManager = new NullObjectIDManager();
     } else if (oidFastLoad) {

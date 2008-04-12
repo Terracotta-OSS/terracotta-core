@@ -32,6 +32,7 @@ import com.tc.object.tx.TxnType;
 import com.tc.object.tx.TransactionBatchWriter.FoldingConfig;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.util.Assert;
 import com.tc.util.SequenceGenerator;
 
@@ -571,7 +572,7 @@ public class TransactionBatchTest extends TestCase {
     }
 
     public boolean getBoolean(String key, boolean defaultValue) {
-      if (TransactionBatchWriter.FOLDING_ENABLED_PROP.equals(key)) { return foldEnabled; }
+      if (TCPropertiesConsts.L1_TRANSACTIONMANAGER_FOLDING_ENABLED.equals(key)) { return foldEnabled; }
 
       throw new AssertionError("key: " + key);
     }
@@ -585,8 +586,8 @@ public class TransactionBatchTest extends TestCase {
     }
 
     public int getInt(String key, int defaultValue) {
-      if (TransactionBatchWriter.FOLDING_LOCK_LIMIT_PROP.equals(key)) { return lockLimit; }
-      if (TransactionBatchWriter.FOLDING_OBJECT_LIMIT_PROP.equals(key)) { return objectLimit; }
+      if (TCPropertiesConsts.L1_TRANSACTIONMANAGER_FOLDING_LOCK_LIMIT.equals(key)) { return lockLimit; }
+      if (TCPropertiesConsts.L1_TRANSACTIONMANAGER_FOLDING_OBJECT_LIMIT.equals(key)) { return objectLimit; }
       throw new AssertionError("key: " + key);
     }
 

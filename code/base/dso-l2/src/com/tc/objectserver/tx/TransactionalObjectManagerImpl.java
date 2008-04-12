@@ -19,6 +19,7 @@ import com.tc.objectserver.context.RecallObjectsContext;
 import com.tc.objectserver.context.TransactionLookupContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
@@ -49,7 +50,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   private static final int                     MAX_COMMIT_SIZE         = TCPropertiesImpl
                                                                            .getProperties()
                                                                            .getInt(
-                                                                                   "l2.objectmanager.maxObjectsToCommit");
+                                                                                   TCPropertiesConsts.L2_OBJECTMANAGER_MAXOBJECTS_TO_COMMIT);
   private final ObjectManager                  objectManager;
   private final ServerTransactionSequencer     sequencer;
   private final ServerGlobalTransactionManager gtxm;

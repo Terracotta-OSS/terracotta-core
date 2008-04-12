@@ -5,6 +5,7 @@ package com.tc.runtime;
 
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.util.Assert;
 import com.tc.util.runtime.Vm;
 
@@ -27,7 +28,7 @@ public class TCRuntime {
     TCProperties props = TCPropertiesImpl.getProperties();
 
     if (Vm.isJDK15Compliant()) {
-      if (props.getBoolean("memory.monitor.forcebasic")) {
+      if (props.getBoolean(TCPropertiesConsts.MEMORY_MONITOR_FORCEBASIC)) {
         memoryManager = getMemoryManagerJdk15Basic();
       } else {
         memoryManager = getMemoryManagerJdk15PoolMonitor();

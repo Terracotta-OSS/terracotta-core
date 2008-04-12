@@ -12,6 +12,7 @@ import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ChannelEventType;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.ThreadUtil;
@@ -27,9 +28,8 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
   private static final TCLogger                    logger                          = TCLogging
                                                                                        .getLogger(TCGroupMemberDiscoveryStatic.class);
   private final static long                        DISCOVERY_INTERVAL_MS;
-  public static final String                       NHA_TCGPCOMM_DISCOVERY_INTERVAL = "l2.nha.tcgroupcomm.discovery.interval";
   static {
-    DISCOVERY_INTERVAL_MS = TCPropertiesImpl.getProperties().getLong(NHA_TCGPCOMM_DISCOVERY_INTERVAL);
+    DISCOVERY_INTERVAL_MS = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_DISCOVERY_INTERVAL);
   }
 
   private final AtomicBoolean                      running                         = new AtomicBoolean(false);

@@ -44,6 +44,7 @@ import com.tc.net.protocol.transport.ConnectionPolicyImpl;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.servlets.L1PropertiesFromL2Servlet;
 import com.tc.statistics.StatisticsGathererSubSystem;
 import com.tc.statistics.beans.StatisticsMBeanNames;
@@ -65,10 +66,6 @@ import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 
 public class TCServerImpl extends SEDA implements TCServer {
-
-  private static final String                  HTTP_DEFAULTSERVLET_ENABLED                  = "http.defaultservlet.enabled";
-  private static final String                  HTTP_DEFAULTSERVLET_ATTRIBUTE_DIRALLOWED     = "http.defaultservlet.attribute.dirallowed";
-  private static final String                  HTTP_DEFAULTSERVLET_ATTRIBUTE_ALIASES        = "http.defaultservlet.attribute.aliases";
 
   private static final String                  VERSION_SERVLET_PATH                         = "/version";
   private static final String                  CONFIG_SERVLET_PATH                          = "/config";
@@ -410,15 +407,15 @@ public class TCServerImpl extends SEDA implements TCServer {
     createAndAddServlet(servletHandler, L1PropertiesFromL2Servlet.class.getName(),
                         L1_RECONNECT_PROPERTIES_FROML2_SERVELET_PATH);
 
-    if (TCPropertiesImpl.getProperties().getBoolean(HTTP_DEFAULTSERVLET_ENABLED, false)) {
+    if (TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.HTTP_DEFAULT_SERVLET_ENABLED, false)) {
       if (!tcInstallDirValid) {
         String msg = "Default HTTP servlet with file serving NOT enabled because the '"
                      + Directories.TC_INSTALL_ROOT_PROPERTY_NAME + "' system property is invalid.";
         consoleLogger.warn(msg);
         logger.warn(msg);
       } else {
-        boolean aliases = TCPropertiesImpl.getProperties().getBoolean(HTTP_DEFAULTSERVLET_ATTRIBUTE_ALIASES, false);
-        boolean dirallowed = TCPropertiesImpl.getProperties().getBoolean(HTTP_DEFAULTSERVLET_ATTRIBUTE_DIRALLOWED,
+        boolean aliases = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.HTTP_DEFAULT_SERVLET_ATTRIBUTE_ALIASES, false);
+        boolean dirallowed = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.HTTP_DEFAULT_SERVLET_ATTRIBUTE_DIR_ALLOWED,
                                                                          false);
         context.setAttribute("aliases", aliases);
         context.setAttribute("dirAllowed", dirallowed);

@@ -10,6 +10,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 
 import java.util.Iterator;
 import java.util.List;
@@ -33,7 +34,7 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
                                                                 .getLogger(TerracottaMBean.class));
 
   private static final boolean        ENABLED               = TCPropertiesImpl.getProperties().getBoolean(
-                                                                "tc.management.mbeans.enabled");
+                                                                TCPropertiesConsts.TC_MANAGEMENT_MBEANS_ENABLED);
 
   private final TCLogger              logger;
   private final ResourceBundle        beanBundle;

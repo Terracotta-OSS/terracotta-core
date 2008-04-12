@@ -6,9 +6,9 @@ package com.tc.servlets;
 
 import org.apache.commons.io.IOUtils;
 
-import com.tc.l1propertiesfroml2.L1ReconnectConfigImpl;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.terracottatech.config.L1ReconnectPropertiesFromL2Document;
 import com.terracottatech.config.L1ReconnectPropertiesFromL2Document.L1ReconnectPropertiesFromL2;
 
@@ -29,8 +29,8 @@ public class L1PropertiesFromL2Servlet extends HttpServlet {
       l1ReconnectPropFromL2Doc = L1ReconnectPropertiesFromL2Document.Factory.newInstance();
       TCProperties l2Properties = TCPropertiesImpl.getProperties();
       L1ReconnectPropertiesFromL2 l1ReconnectPropFromL2 = l1ReconnectPropFromL2Doc.addNewL1ReconnectPropertiesFromL2();
-      l1ReconnectPropFromL2.setL1ReconnectEnabled(l2Properties.getBoolean(L1ReconnectConfigImpl.L2_L1RECONNECT_ENABLED));
-      l1ReconnectPropFromL2.setL1ReconnectTimeout( new BigInteger(l2Properties.getProperty(L1ReconnectConfigImpl.L2_L1RECONNECT_TIMEOUT)));
+      l1ReconnectPropFromL2.setL1ReconnectEnabled(l2Properties.getBoolean(TCPropertiesConsts.L2_L1RECONNECT_ENABLED));
+      l1ReconnectPropFromL2.setL1ReconnectTimeout( new BigInteger(l2Properties.getProperty(TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS)));
     }
   }
 

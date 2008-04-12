@@ -11,6 +11,7 @@ import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
 import com.tc.process.LinkedJavaProcess;
 import com.tc.process.StreamCopier;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.test.TestConfigObject;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.Vm;
@@ -129,7 +130,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     jvmArgs.add("-D" + Directories.TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME + "=true");
     jvmArgs.add("-Djava.net.preferIPv4Stack=true");
     debugParams.addDebugParamsTo(jvmArgs);
-    jvmArgs.add("-D" + TCPropertiesImpl.SYSTEM_PROP_PREFIX + "tc.management.test.mbeans.enabled=true");
+    jvmArgs.add("-D" + TCPropertiesImpl.SYSTEM_PROP_PREFIX + TCPropertiesConsts.TC_MANAGEMENT_TEST_MBEANS_ENABLED + "=true");
     addClasspath(jvmArgs);
     addLibPath(jvmArgs);
     addEnvVarsForWindows(jvmArgs);

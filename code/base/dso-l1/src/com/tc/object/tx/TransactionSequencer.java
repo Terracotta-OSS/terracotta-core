@@ -10,6 +10,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.SequenceID;
@@ -26,11 +27,14 @@ public class TransactionSequencer {
 
   static {
     // Set the values from the properties here.
-    LOGGING_ENABLED = TCPropertiesImpl.getProperties().getBoolean("l1.transactionmanager.logging.enabled");
-    MAX_BYTE_SIZE_FOR_BATCH = TCPropertiesImpl.getProperties().getInt("l1.transactionmanager.maxBatchSizeInKiloBytes") * 1024;
-    MAX_PENDING_BATCHES = TCPropertiesImpl.getProperties().getInt("l1.transactionmanager.maxPendingBatches");
+    LOGGING_ENABLED = TCPropertiesImpl.getProperties()
+        .getBoolean(TCPropertiesConsts.L1_TRANSACTIONMANAGER_LOGGING_ENABLED);
+    MAX_BYTE_SIZE_FOR_BATCH = TCPropertiesImpl.getProperties()
+        .getInt(TCPropertiesConsts.L1_TRANSACTIONMANAGER_MAXBATCHSIZE_INKILOBYTES) * 1024;
+    MAX_PENDING_BATCHES = TCPropertiesImpl.getProperties()
+        .getInt(TCPropertiesConsts.L1_TRANSACTIONMANAGER_MAXPENDING_BATCHES);
     MAX_SLEEP_TIME_BEFORE_HALT = TCPropertiesImpl.getProperties()
-        .getLong("l1.transactionmanager.maxSleepTimeBeforeHalt");
+        .getLong(TCPropertiesConsts.L1_TRANSACTIONMANAGER_MAXSLEEPTIME_BEFOREHALT);
   }
 
   private final SequenceGenerator       sequence       = new SequenceGenerator(1);
@@ -46,13 +50,14 @@ public class TransactionSequencer {
   private boolean                       shutdown       = false;
 
   private final LockAccounting          lockAccounting;
-  private final SampledCounter                numTransactionsCounter;
-  private final SampledCounter                numBatchesCounter;
-  private final SampledCounter                batchSizeCounter;
-  private final SampledCounter                pendingTransactionsSize;
+  private final SampledCounter          numTransactionsCounter;
+  private final SampledCounter          numBatchesCounter;
+  private final SampledCounter          batchSizeCounter;
+  private final SampledCounter          pendingTransactionsSize;
 
-  public TransactionSequencer(TransactionBatchFactory batchFactory, LockAccounting lockAccounting, SampledCounter numTransactionCounter,
-                              SampledCounter numBatchesCounter, SampledCounter batchSizeCounter, SampledCounter pendingTransactionsSize) {
+  public TransactionSequencer(TransactionBatchFactory batchFactory, LockAccounting lockAccounting,
+                              SampledCounter numTransactionCounter, SampledCounter numBatchesCounter,
+                              SampledCounter batchSizeCounter, SampledCounter pendingTransactionsSize) {
     this.batchFactory = batchFactory;
     this.lockAccounting = lockAccounting;
     this.currentBatch = createNewBatch();
@@ -122,7 +127,8 @@ public class TransactionSequencer {
       if (LOGGING_ENABLED) log_stats();
       currentBatch = createNewBatch();
       txnsPerBatch = 0;
-      //do not set the value of numTransactionsCounter to zero here, as it will be sampled every second (the frequency of the SampledCounter)
+      // do not set the value of numTransactionsCounter to zero here, as it will be sampled every second (the frequency
+      // of the SampledCounter)
       numBatchesCounter.increment();
     }
     throttle();

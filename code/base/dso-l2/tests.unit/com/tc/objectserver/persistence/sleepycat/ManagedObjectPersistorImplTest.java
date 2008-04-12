@@ -16,6 +16,7 @@ import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
 import com.tc.objectserver.persistence.sleepycat.FastObjectIDManagerImpl.OidBitsArrayMap;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.test.TCTestCase;
 import com.tc.util.SyncObjectIdSet;
 
@@ -40,8 +41,8 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     // test only with Oid fastLoad enabled
-    TCPropertiesImpl.setProperty(ManagedObjectPersistorImpl.OID_FAST_LOAD, "true");
-    assertTrue(TCPropertiesImpl.getProperties().getBoolean(ManagedObjectPersistorImpl.OID_FAST_LOAD));
+    TCPropertiesImpl.setProperty(TCPropertiesConsts.L2_OBJECTMANAGER_LOADOBJECTID_FASTLOAD, "true");
+    assertTrue(TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_LOADOBJECTID_FASTLOAD));
     boolean paranoid = true;
     env = newDBEnvironment(paranoid);
     env.open();

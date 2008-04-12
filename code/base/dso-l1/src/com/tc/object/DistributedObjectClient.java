@@ -113,6 +113,7 @@ import com.tc.object.tx.TransactionBatchFactory;
 import com.tc.object.tx.TransactionBatchWriterFactory;
 import com.tc.object.tx.TransactionBatchWriter.FoldingConfig;
 import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
@@ -272,7 +273,7 @@ public class DistributedObjectClient extends SEDA {
     String serverHost = connectionInfo[0].getHostname();
     int serverPort = connectionInfo[0].getPort();
 
-    int timeout = tcProperties.getInt("l1.socket.connect.timeout");
+    int timeout = tcProperties.getInt(TCPropertiesConsts.L1_SOCKET_CONNECT_TIMEOUT);
     if (timeout < 0) { throw new IllegalArgumentException("invalid socket time value: " + timeout); }
 
     channel = new DSOClientMessageChannelImpl(communicationsManager

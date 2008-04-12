@@ -40,6 +40,7 @@ import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.tx.NullTransactionalObjectManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
@@ -71,7 +72,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private static final int                     MAX_COMMIT_SIZE          = TCPropertiesImpl
                                                                             .getProperties()
                                                                             .getInt(
-                                                                                    "l2.objectmanager.maxObjectsToCommit");
+                                                                                    TCPropertiesConsts.L2_OBJECTMANAGER_MAXOBJECTS_TO_COMMIT);
   // XXX:: Should go to property file
   private static final int                     INITIAL_SET_SIZE         = 16;
   private static final float                   LOAD_FACTOR              = 0.75f;

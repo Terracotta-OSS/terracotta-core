@@ -31,6 +31,7 @@ import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.session.SessionManager;
 import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.util.State;
 import com.tc.util.Util;
 import com.tc.util.sequence.BatchSequenceReceiver;
@@ -191,7 +192,7 @@ public class ClientHandshakeManager implements ChannelEventListener {
     }
 
     final boolean checkVersionMatches = TCPropertiesImpl.getProperties()
-        .getBoolean("l1.connect.versionMatchCheck.enabled");
+        .getBoolean(TCPropertiesConsts.L1_CONNECT_VERSION_MATCH_CHECK);
     if (checkVersionMatches) {
       checkClientServerVersionMatch(logger, clientVersion, serverVersion);
     }

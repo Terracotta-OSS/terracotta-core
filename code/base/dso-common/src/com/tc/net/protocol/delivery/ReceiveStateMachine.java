@@ -8,6 +8,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
 
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.util.Assert;
 import com.tc.util.DebugUtil;
 
@@ -29,7 +30,7 @@ public class ReceiveStateMachine extends AbstractStateMachine {
 
   public ReceiveStateMachine(OOOProtocolMessageDelivery delivery) {
     // set MaxDelayedAcks from tc.properties if exist. 0 to disable ack delay.
-    maxDelayedAcks = TCPropertiesImpl.getProperties().getInt("l2.nha.ooo.maxDelayedAcks", 16);
+    maxDelayedAcks = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_NHA_OOO_MAX_DELAYEDACKS);
     this.delivery = delivery;
   }
 

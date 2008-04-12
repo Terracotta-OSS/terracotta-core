@@ -9,6 +9,7 @@ import com.tc.management.beans.sessions.SessionMonitorMBean;
 import com.tc.management.beans.sessions.SessionMonitorMBean.SessionsComptroller;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
+import com.tc.properties.TCPropertiesConsts;
 import com.terracotta.session.util.Assert;
 import com.terracotta.session.util.ConfigProperties;
 import com.terracotta.session.util.ContextMgr;
@@ -112,7 +113,7 @@ public class TerracottaSessionManager implements SessionManager {
   }
 
   private static Set loadExcludedVHosts() {
-    String list = ManagerUtil.getTCProperties().getProperty("session.vhosts.excluded", true);
+    String list = ManagerUtil.getTCProperties().getProperty(TCPropertiesConsts.SESSION_VHOSTS_EXCLUDED, true);
     list = (list == null) ? "" : list.replaceAll("\\s", "");
 
     Set set = new TreeSet();

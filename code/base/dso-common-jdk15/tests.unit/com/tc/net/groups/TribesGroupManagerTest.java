@@ -10,6 +10,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.TCSocketAddress;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.test.TCTestCase;
 import com.tc.util.PortChooser;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
@@ -42,7 +43,7 @@ public class TribesGroupManagerTest extends TCTestCase {
       portnum = (short) (r.nextInt(Short.MAX_VALUE - 1025) + 1024);
     }
 
-    TCPropertiesImpl.setProperty("l2.nha.tribes.mcast.mcastPort", String.valueOf(portnum));
+    TCPropertiesImpl.setProperty(TCPropertiesConsts.L2_NHA_TRIBES_MCAST_MCASTPORT, String.valueOf(portnum));
     logger.info("McastService uses random mcast port: " + portnum);
   }
 

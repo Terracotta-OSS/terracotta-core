@@ -5,6 +5,7 @@ package com.tcclient.cache;
 
 import com.tc.object.bytecode.Manager;
 import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesConsts;
 
 /**
  * Cache configuration.  This is a shared object so only one should exist.  This config is shared 
@@ -105,23 +106,13 @@ public class CacheConfig {
     this.globalEvictionEnabled = ehcacheProperties.getBoolean("global.eviction.enable");
     this.globalEvictionFrequency = ehcacheProperties.getInt("global.eviction.frequency");
 
-    TCProperties loggingProperties = props.getPropertiesFor("ehcache.logging");
-    if (loggingProperties != null) {
-      this.isLoggingEnabled = loggingProperties.getBoolean("enabled");
-    } else {
-      this.isLoggingEnabled = false;
-    }
+    this.isLoggingEnabled = props.getBoolean(TCPropertiesConsts.EHCAHCE_LOGGING_ENABLED, false);
 
     TCProperties ehcacheProperies = props.getPropertiesFor("ehcache.global.eviction");
     this.numOfChunks = ehcacheProperies.getInt("segments");
     this.restMillis = ehcacheProperies.getLong("rest.timeMillis");
     
-    TCProperties loggingProperty = props.getPropertiesFor("ehcache.evictor.logging");
-    if (loggingProperty != null) {
-      this.isEvictorLoggingEnabled = loggingProperty.getBoolean("enabled");
-    } else {
-      this.isEvictorLoggingEnabled = false;
-    }
+    this.isEvictorLoggingEnabled = props.getBoolean(TCPropertiesConsts.EHCAHCE_EVICTOR_LOGGING_ENABLED, false);
   }
 
   public int getConcurrency() {

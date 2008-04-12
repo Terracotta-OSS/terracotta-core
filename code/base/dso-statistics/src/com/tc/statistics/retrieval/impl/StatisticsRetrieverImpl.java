@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.statistics.retrieval.impl;
 
@@ -8,6 +9,7 @@ import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
@@ -31,23 +33,23 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsBufferListener {
-  public final static int DEFAULT_NOTIFICATION_INTERVAL = 60;
+  public final static int           DEFAULT_NOTIFICATION_INTERVAL = 60;
 
-  private final static TCLogger LOGGER = TCLogging.getLogger(StatisticsRetrieverImpl.class);
+  private final static TCLogger     LOGGER                        = TCLogging.getLogger(StatisticsRetrieverImpl.class);
 
-  private final Timer timer = new TCTimerImpl("Statistics Retriever Timer", true);
+  private final Timer               timer                         = new TCTimerImpl("Statistics Retriever Timer", true);
 
-  private final StatisticsConfig config;
-  private final StatisticsBuffer buffer;
-  private final String sessionId;
+  private final StatisticsConfig    config;
+  private final StatisticsBuffer    buffer;
+  private final String              sessionId;
 
   // the structure of this map is created in a synchronized fashion in the createEmptyActionsMap
   // method, outside of that method the map is only read and the values (which are lists) are being
   // modified (not replaced)
-  private volatile Map actionsMap;
+  private volatile Map              actionsMap;
 
-  private LogRetrievalInProcessTask infoTask = null;
-  private RetrieveStatsTask statsTask = null;
+  private LogRetrievalInProcessTask infoTask                      = null;
+  private RetrieveStatsTask         statsTask                     = null;
 
   public StatisticsRetrieverImpl(final StatisticsConfig config, final StatisticsBuffer buffer, final String sessionId) {
     Assert.assertNotNull("config", config);
@@ -69,7 +71,7 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
     // to their type
     Map actions_map_construction = new HashMap();
     for (Iterator types_it = StatisticType.getAllTypes().iterator(); types_it.hasNext();) {
-      StatisticType type = (StatisticType)types_it.next();
+      StatisticType type = (StatisticType) types_it.next();
       actions_map_construction.put(type, new CopyOnWriteArrayList());
     }
     actionsMap = Collections.unmodifiableMap(actions_map_construction);
@@ -91,7 +93,7 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
     if (null == action) return;
     if (null == action.getType()) Assert.fail("Can't register an action with a null type.");
 
-    List action_list = (List)actionsMap.get(action.getType());
+    List action_list = (List) actionsMap.get(action.getType());
     if (null == action_list) {
       Assert.fail("the actionsMap doesn't contain an entry for the statistic type '" + action.getType() + "'");
       return;
@@ -115,10 +117,8 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
     if (null == action) return false;
     if (null == action.getType()) return false;
 
-    List action_list = (List)actionsMap.get(action.getType());
-    if (null == action_list) {
-      return false;
-    }
+    List action_list = (List) actionsMap.get(action.getType());
+    if (null == action_list) { return false; }
     return action_list.contains(action);
   }
 
@@ -127,15 +127,15 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
   }
 
   private void retrieveShutdownMarker(final Date moment) {
-      retrieveAction(moment, new SRAShutdownTimestamp());
-    }
+    retrieveAction(moment, new SRAShutdownTimestamp());
+  }
 
   private void retrieveStartupStatistics() {
-    List action_list = (List)actionsMap.get(StatisticType.STARTUP);
+    List action_list = (List) actionsMap.get(StatisticType.STARTUP);
     Assert.assertNotNull("list of startup actions", action_list);
     final Date moment = new Date();
     for (Iterator actions_it = action_list.iterator(); actions_it.hasNext();) {
-      retrieveAction(moment, (StatisticRetrievalAction)actions_it.next());
+      retrieveAction(moment, (StatisticRetrievalAction) actions_it.next());
     }
   }
 
@@ -169,13 +169,13 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
   }
 
   private synchronized void enableTimerTasks() {
-    if (statsTask != null ||
-        infoTask != null) {
+    if (statsTask != null || infoTask != null) {
       disableTimerTasks();
     }
 
     infoTask = new LogRetrievalInProcessTask();
-    timer.scheduleAtFixedRate(infoTask, 0, TCPropertiesImpl.getProperties().getInt("cvt.retriever.notification.interval", DEFAULT_NOTIFICATION_INTERVAL) * 1000);
+    timer.scheduleAtFixedRate(infoTask, 0, TCPropertiesImpl.getProperties()
+        .getInt(TCPropertiesConsts.CVT_RETRIEVER_NOTIFICATION_INTERVAL, DEFAULT_NOTIFICATION_INTERVAL) * 1000);
 
     statsTask = new RetrieveStatsTask();
     timer.scheduleAtFixedRate(statsTask, 0, config.getParamLong(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
@@ -189,8 +189,10 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
       final long shutdown_wait_expiration = config.getParamLong(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL) * 3;
       boolean interrupted = false;
       try {
-        while (!statsTask.isShutdown() ||
-               (System.currentTimeMillis() - before_shutdown_wait) > shutdown_wait_expiration) { // only wait for a limited amount of time
+        while (!statsTask.isShutdown()
+               || (System.currentTimeMillis() - before_shutdown_wait) > shutdown_wait_expiration) { // only wait for a
+                                                                                                    // limited amount of
+                                                                                                    // time
           try {
             this.wait(shutdown_wait_expiration); // wait for twice the retriever schedule interval
           } catch (InterruptedException e) {
@@ -239,7 +241,7 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
 
   private class RetrieveStatsTask extends TimerTask {
     private volatile boolean performTaskShutdown = false;
-    private volatile boolean isShutdown = false;
+    private volatile boolean isShutdown          = false;
 
     public void shutdown() {
       performTaskShutdown = true;
@@ -250,19 +252,19 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
     }
 
     public void run() {
-      List action_list = (List)actionsMap.get(StatisticType.SNAPSHOT);
+      List action_list = (List) actionsMap.get(StatisticType.SNAPSHOT);
       Assert.assertNotNull("list of snapshot actions", action_list);
       final Date moment = new Date();
       for (Iterator actions_it = action_list.iterator(); actions_it.hasNext();) {
-        retrieveAction(moment, (StatisticRetrievalAction)actions_it.next());
+        retrieveAction(moment, (StatisticRetrievalAction) actions_it.next());
       }
 
       if (performTaskShutdown) {
         synchronized (StatisticsRetrieverImpl.this) {
           cancel();
-          retrieveShutdownMarker(new Date(moment.getTime()+1));
+          retrieveShutdownMarker(new Date(moment.getTime() + 1));
           isShutdown = true;
-        
+
           StatisticsRetrieverImpl.this.notifyAll();
         }
       }
@@ -270,24 +272,29 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
   }
 
   private class LogRetrievalInProcessTask extends TimerTask {
-    private final long start;
+    private final long       start;
 
     private volatile boolean shutdown = false;
 
     private LogRetrievalInProcessTask() {
       start = System.currentTimeMillis();
-      LOGGER.info("Statistics retrieval is STARTING for session ID '" + sessionId + "' on node '" + buffer.getDefaultNodeName() + "'.");
+      LOGGER.info("Statistics retrieval is STARTING for session ID '" + sessionId + "' on node '"
+                  + buffer.getDefaultNodeName() + "'.");
     }
 
     public void shutdown() {
       shutdown = true;
-      LOGGER.info("Statistics retrieval has STOPPED for session ID '" + sessionId + "' on node '" + buffer.getDefaultNodeName() + "' after running for " + ((System.currentTimeMillis() - start) / 1000) + " seconds.");
+      LOGGER.info("Statistics retrieval has STOPPED for session ID '" + sessionId + "' on node '"
+                  + buffer.getDefaultNodeName() + "' after running for "
+                  + ((System.currentTimeMillis() - start) / 1000) + " seconds.");
       this.cancel();
     }
 
     public void run() {
       if (!shutdown) {
-        LOGGER.info("Statistics retrieval in PROCESS for session ID '" + sessionId + "' on node '" + buffer.getDefaultNodeName() + "' for " + ((System.currentTimeMillis() - start) / 1000) + " seconds.");
+        LOGGER.info("Statistics retrieval in PROCESS for session ID '" + sessionId + "' on node '"
+                    + buffer.getDefaultNodeName() + "' for " + ((System.currentTimeMillis() - start) / 1000)
+                    + " seconds.");
       }
     }
   }

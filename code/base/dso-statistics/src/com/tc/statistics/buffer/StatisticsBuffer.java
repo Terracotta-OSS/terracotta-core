@@ -8,7 +8,6 @@ import com.tc.statistics.buffer.exceptions.StatisticsBufferException;
 import com.tc.statistics.retrieval.StatisticsRetriever;
 
 public interface StatisticsBuffer {
-  public final static String BUFFER_RANDOMSUFFIX_ENABLED_PROPERTY_NAME = "cvt.buffer.randomsuffix.enabled";
 
   public void open() throws StatisticsBufferException;
 

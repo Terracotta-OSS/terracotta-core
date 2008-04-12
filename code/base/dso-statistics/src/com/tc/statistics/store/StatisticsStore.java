@@ -11,7 +11,6 @@ import java.io.Reader;
 import java.io.Writer;
 
 public interface StatisticsStore {
-  public final static String STORE_RANDOMSUFFIX_ENABLED_PROPERTY_NAME = "cvt.store.randomsuffix.enabled";
 
   public void open() throws StatisticsStoreException;
 

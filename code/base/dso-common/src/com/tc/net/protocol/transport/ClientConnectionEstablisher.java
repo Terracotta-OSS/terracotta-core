@@ -15,6 +15,7 @@ import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
@@ -34,7 +35,7 @@ public class ClientConnectionEstablisher {
   static {
     TCLogger logger = TCLogging.getLogger(ClientConnectionEstablisher.class);
 
-    long value = TCPropertiesImpl.getProperties().getLong("l1.socket.reconnect.waitInterval");
+    long value = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L1_SOCKET_RECONNECT_WAIT_INTERVAL);
     if (value < MIN_RETRY_INTERVAL) {
       logger.warn("Forcing reconnect wait interval to " + MIN_RETRY_INTERVAL + " (configured value was " + value + ")");
       value = MIN_RETRY_INTERVAL;

@@ -23,6 +23,7 @@ import com.tc.net.groups.GroupManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 
 public class L2ObjectSyncSendHandler extends AbstractEventHandler {
 
@@ -32,15 +33,15 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
   private static final boolean       TXN_ACK_THROTTLING_ENABLED           = TCPropertiesImpl
                                                                               .getProperties()
                                                                               .getBoolean(
-                                                                                          "l2.transactionmanager.passive.throttle.enabled");
+                                                                                          TCPropertiesConsts.L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_ENABLED);
   private static final int           TOTAL_PENDING_TRANSACTIONS_THRESHOLD = TCPropertiesImpl
                                                                               .getProperties()
                                                                               .getInt(
-                                                                                      "l2.transactionmanager.passive.throttle.threshold");
+                                                                                      TCPropertiesConsts.L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_THRESHOLD);
   private static final int           MAX_SLEEP_SECS                       = TCPropertiesImpl
                                                                               .getProperties()
                                                                               .getInt(
-                                                                                      "l2.transactionmanager.passive.throttle.maxSleepSeconds");
+                                                                                      TCPropertiesConsts.L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_MAXSLEEPSECONDS);
 
   private final L2ObjectStateManager objectStateManager;
   private GroupManager               groupManager;

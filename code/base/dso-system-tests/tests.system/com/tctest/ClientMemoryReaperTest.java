@@ -4,6 +4,7 @@
 package com.tctest;
 
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.TCPropertiesConsts;
 
 public class ClientMemoryReaperTest extends TransparentTestBase implements TestConfigurator {
 
@@ -15,10 +16,10 @@ public class ClientMemoryReaperTest extends TransparentTestBase implements TestC
     //disableAllUntil("2007-11-20");
    
     //workaround for MNK-405 : disabling cache manager and other logging for this test alone
-    TCPropertiesImpl.setProperty("l2.cachemanager.logging.enabled", "false");
-    TCPropertiesImpl.setProperty("l2.objectmanager.fault.logging.enabled", "false");
-    TCPropertiesImpl.setProperty("l1.cachemanager.logging.enabled", "false");
-    TCPropertiesImpl.setProperty("l1.transactionmanager.logging.enabled", "false");
+    TCPropertiesImpl.setProperty(TCPropertiesConsts.L2_CACHEMANAGER_LOGGING_ENABLED, "false");
+    TCPropertiesImpl.setProperty(TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED, "false");
+    TCPropertiesImpl.setProperty(TCPropertiesConsts.L1_CACHEMANAGER_LOGGING_ENABLED, "false");
+    TCPropertiesImpl.setProperty(TCPropertiesConsts.L1_TRANSACTIONMANAGER_LOGGING_ENABLED, "false");
   }
   
   protected Class getApplicationClass() {
@@ -32,10 +33,10 @@ public class ClientMemoryReaperTest extends TransparentTestBase implements TestC
   
   protected void tearDown() throws Exception {
     //workaround for MNK-405 : re-enabling cache manager logging
-    TCPropertiesImpl.setProperty("l2.cachemanager.logging.enabled", "true");
-    TCPropertiesImpl.setProperty("l2.objectmanager.fault.logging.enabled", "true");
-    TCPropertiesImpl.setProperty("l1.cachemanager.logging.enabled", "true");
-    TCPropertiesImpl.setProperty("l1.transactionmanager.logging.enabled", "true");
+    TCPropertiesImpl.setProperty(TCPropertiesConsts.L2_CACHEMANAGER_LOGGING_ENABLED, "true");
+    TCPropertiesImpl.setProperty(TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED, "true");
+    TCPropertiesImpl.setProperty(TCPropertiesConsts.L1_CACHEMANAGER_LOGGING_ENABLED, "true");
+    TCPropertiesImpl.setProperty(TCPropertiesConsts.L1_TRANSACTIONMANAGER_LOGGING_ENABLED, "true");
     super.tearDown();
   }
 
