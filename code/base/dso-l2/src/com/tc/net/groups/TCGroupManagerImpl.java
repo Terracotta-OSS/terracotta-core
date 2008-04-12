@@ -241,30 +241,28 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
   private void membersClear() {
     members.clear();
-    if (isUseOOOLayer) nodenameToMembers.clear();
+    nodenameToMembers.clear();
   }
 
   private void membersAdd(TCGroupMember member) {
     NodeIDImpl nodeID = member.getPeerNodeID();
     members.put(nodeID, member);
-    if (isUseOOOLayer) nodenameToMembers.put(nodeID.getName(), member);
+    nodenameToMembers.put(nodeID.getName(), member);
   }
 
   private void membersRemove(TCGroupMember member) {
     NodeIDImpl nodeID = member.getPeerNodeID();
     members.remove(nodeID);
-    if (isUseOOOLayer) nodenameToMembers.remove(nodeID.getName());
+    nodenameToMembers.remove(nodeID.getName());
   }
 
   private void removeIfMemberReconnecting(NodeIDImpl newNodeID) {
-    if (isUseOOOLayer) {
-      TCGroupMember oldMember = nodenameToMembers.get(newNodeID.getName());
-      if ((oldMember != null) && (oldMember.getPeerNodeID() != newNodeID)) {
-        MessageChannel channel = oldMember.getChannel();
-        if (!channel.isConnected()) { // channel is reconnecting
-          channel.close();
-          logger.warn("Closed L2 reconnecting from " + oldMember);
-        }
+    TCGroupMember oldMember = nodenameToMembers.get(newNodeID.getName());
+    if ((oldMember != null) && (oldMember.getPeerNodeID() != newNodeID)) {
+      MessageChannel channel = oldMember.getChannel();
+      if (!channel.isConnected()) { // channel may be reconnecting
+        channel.close();
+        logger.warn("Remove not connected member " + oldMember);
       }
     }
   }
@@ -441,8 +439,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
   public void openChannel(String hostname, int port, ChannelEventListener listener) throws TCTimeoutException,
       UnknownHostException, MaxConnectionsExceededException, IOException {
-    openChannel(new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo(hostname, port) }),
-                listener);
+    openChannel(new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo(hostname, port) }), listener);
   }
 
   /*
