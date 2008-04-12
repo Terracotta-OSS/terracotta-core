@@ -142,7 +142,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
 
           if (!mtb.isConnected()) {
             logger.info("[" + mtb.getConnection().getRemoteAddress().getCanonicalStringForm()
-                        + "] is not connected. Disabling Health Monitoring for the same.");
+                        + "] is not connected. Health Monitoring for this node is now disabled.");
             connectionIterator.remove();
             continue;
           }
