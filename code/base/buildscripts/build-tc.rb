@@ -1032,7 +1032,7 @@ END
         next if key =~ /appserver/
         test_config_data[key] = config_source[key] if key =~ /^tc\.tests\.configuration\..*/i
       end
-      puts @build_results.build_information_file.to_s
+
       File.open(@build_results.build_information_file.to_s, "w") do |file|
         file << "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n\n"
         file << "<configinfo>\n"
