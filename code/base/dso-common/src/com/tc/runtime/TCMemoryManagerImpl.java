@@ -7,7 +7,6 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.util.DebugUtil;
 import com.tc.util.runtime.Os;
 
 import java.util.ArrayList;
@@ -131,9 +130,6 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
         try {
           Thread.sleep(sleepTime);
           MemoryUsage mu = (_oldGen ? manager.getOldGenUsage() : manager.getMemoryUsage());
-          if (DebugUtil.DEBUG) {
-            logger.info("Memory Usage is : " + mu);
-          }
           reportUsage(mu);
           adjust(mu);
         } catch (Throwable t) {

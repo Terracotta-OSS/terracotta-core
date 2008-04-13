@@ -687,12 +687,14 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     }
 
     public synchronized void waitForResponses(NodeIDImpl sender) throws GroupException {
-      int count = 0;
+      long start = System.currentTimeMillis();
       while (!waitFor.isEmpty() && !manager.isStopped()) {
         try {
           this.wait(5000);
-          if (++count > 1) {
-            logger.warn(sender + " Still waiting for response from " + waitFor + ". Count = " + count);
+          long end = System.currentTimeMillis();
+          if (!waitFor.isEmpty() && (end - start) > 5000) {
+            logger.warn(sender + " Still waiting for response from " + waitFor + ". Waited for " + (end - start)
+                        + " ms");
           }
         } catch (InterruptedException e) {
           throw new GroupException(e);
@@ -753,14 +755,15 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
    * TCGroupHandshakeStateMachine -- State machine for group handshaking
    */
   private static class TCGroupHandshakeStateMachine {
-    private final HandshakeState     STATE_NODEID                      = new NodeIDState();
-    private final HandshakeState     STATE_TRY_ADD_MEMBER              = new TryAddMemberState();
-    private final HandshakeState     STATE_SUCCESS                     = new SuccessState();
-    private final HandshakeState     STATE_FAILURE                     = new FailureState();
+    private final HandshakeState     STATE_NODEID         = new NodeIDState();
+    private final HandshakeState     STATE_TRY_ADD_MEMBER = new TryAddMemberState();
+    private final HandshakeState     STATE_SUCCESS        = new SuccessState();
+    private final HandshakeState     STATE_FAILURE        = new FailureState();
 
     private final static long        HANDSHAKE_TIMEOUT;
     static {
-      HANDSHAKE_TIMEOUT = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_HANDSHAKE_TIMEOUT);
+      HANDSHAKE_TIMEOUT = TCPropertiesImpl.getProperties()
+          .getLong(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_HANDSHAKE_TIMEOUT);
     }
 
     private final TCGroupManagerImpl manager;
