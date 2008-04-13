@@ -167,13 +167,13 @@ public class ServerClientHandshakeManager {
   private void sendAckMessageFor(ClientID clientID) {
     logger.debug("Sending handshake acknowledgement to " + clientID);
 
-    if (clientsRequestingObjectIDSequence.remove(clientID)) {
-      oidRequestSink.add(new ObjectIDBatchRequestImpl(clientID, BATCH_SEQUENCE_SIZE));
-    }
-
     // NOTE: handshake ack message initialize()/send() must be done atomically with making the channel active
     // and is thus done inside this channel manager call
     channelManager.makeChannelActive(clientID, persistent);
+    
+    if (clientsRequestingObjectIDSequence.remove(clientID)) {
+      oidRequestSink.add(new ObjectIDBatchRequestImpl(clientID, BATCH_SEQUENCE_SIZE));
+    }
   }
 
   public synchronized void notifyTimeout() {
