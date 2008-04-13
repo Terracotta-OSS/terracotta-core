@@ -378,29 +378,29 @@ public interface TCPropertiesConsts {
   /*********************************************************************************************************************
    * Section : HealthChecker { server->client, server->server (HA), client->server }
    ********************************************************************************************************************/
-  public static final String L2_HEALTHCHECK_L1_PING_ENABLED                         = "l2.healthCheck.l1.ping.enabled";
-  public static final String L2_HEALTHCHECK_L1_PING_IDLETIME                        = "l2.healthCheck.l1.ping.idletime";
-  public static final String L2_HEALTHCHECK_L1_PING_INTERVAL                        = "l2.healthCheck.l1.ping.interval";
-  public static final String L2_HEALTHCHECK_L1_PING_PROBES                          = "l2.healthCheck.l1.ping.probes";
-  public static final String L2_HEALTHCHECK_L1_SOCKECT_CONNECT                      = "l2.healthCheck.l1.socketConnect";
-  public static final String L2_HEALTHCHECK_L1_SOCKECT_CONNECT_TIMEOUT              = "l2.healthCheck.l1.socketConnectTimeout";
-  public static final String L2_HEALTHCHECK_L1_SOCKECT_CONNECT_COUNT                = "l2.healthCheck.l1.socketConnectCount";
+  public static final String L2_HEALTHCHECK_L1_PING_ENABLED                         = "l2.healthcheck.l1.ping.enabled";
+  public static final String L2_HEALTHCHECK_L1_PING_IDLETIME                        = "l2.healthcheck.l1.ping.idletime";
+  public static final String L2_HEALTHCHECK_L1_PING_INTERVAL                        = "l2.healthcheck.l1.ping.interval";
+  public static final String L2_HEALTHCHECK_L1_PING_PROBES                          = "l2.healthcheck.l1.ping.probes";
+  public static final String L2_HEALTHCHECK_L1_SOCKECT_CONNECT                      = "l2.healthcheck.l1.socketConnect";
+  public static final String L2_HEALTHCHECK_L1_SOCKECT_CONNECT_TIMEOUT              = "l2.healthcheck.l1.socketConnectTimeout";
+  public static final String L2_HEALTHCHECK_L1_SOCKECT_CONNECT_COUNT                = "l2.healthcheck.l1.socketConnectCount";
 
-  public static final String L2_HEALTHCHECK_L2_PING_ENABLED                         = "l2.healthCheck.l2.ping.enabled";
-  public static final String L2_HEALTHCHECK_L2_PING_IDLETIME                        = "l2.healthCheck.l2.ping.idletime";
-  public static final String L2_HEALTHCHECK_L2_PING_INTERVAL                        = "l2.healthCheck.l2.ping.interval";
-  public static final String L2_HEALTHCHECK_L2_PING_PROBES                          = "l2.healthCheck.l2.ping.probes";
-  public static final String L2_HEALTHCHECK_L2_SOCKECT_CONNECT                      = "l2.healthCheck.l2.socketConnect";
-  public static final String L2_HEALTHCHECK_L2_SOCKECT_CONNECT_TIMEOUT              = "l2.healthCheck.l2.socketConnectTimeout";
-  public static final String L2_HEALTHCHECK_L2_SOCKECT_CONNECT_COUNT                = "l2.healthCheck.l2.socketConnectCount";
+  public static final String L2_HEALTHCHECK_L2_PING_ENABLED                         = "l2.healthcheck.l2.ping.enabled";
+  public static final String L2_HEALTHCHECK_L2_PING_IDLETIME                        = "l2.healthcheck.l2.ping.idletime";
+  public static final String L2_HEALTHCHECK_L2_PING_INTERVAL                        = "l2.healthcheck.l2.ping.interval";
+  public static final String L2_HEALTHCHECK_L2_PING_PROBES                          = "l2.healthcheck.l2.ping.probes";
+  public static final String L2_HEALTHCHECK_L2_SOCKECT_CONNECT                      = "l2.healthcheck.l2.socketConnect";
+  public static final String L2_HEALTHCHECK_L2_SOCKECT_CONNECT_TIMEOUT              = "l2.healthcheck.l2.socketConnectTimeout";
+  public static final String L2_HEALTHCHECK_L2_SOCKECT_CONNECT_COUNT                = "l2.healthcheck.l2.socketConnectCount";
 
-  public static final String L1_HEALTHCHECK_L2_PING_ENABLED                         = "l1.healthCheck.l2.ping.enabled";
-  public static final String L1_HEALTHCHECK_L2_PING_IDLETIME                        = "l1.healthCheck.l2.ping.idletime";
-  public static final String L1_HEALTHCHECK_L2_PING_INTERVAL                        = "l1.healthCheck.l2.ping.interval";
-  public static final String L1_HEALTHCHECK_L2_PING_PROBES                          = "l1.healthCheck.l2.ping.probes";
-  public static final String L1_HEALTHCHECK_L2_SOCKECT_CONNECT                      = "l1.healthCheck.l2.socketConnect";
-  public static final String L1_HEALTHCHECK_L2_SOCKECT_CONNECT_TIMEOUT              = "l1.healthCheck.l2.socketConnectTimeout";
-  public static final String L1_HEALTHCHECK_L2_SOCKECT_CONNECT_COUNT                = "l1.healthCheck.l2.socketConnectCount";
+  public static final String L1_HEALTHCHECK_L2_PING_ENABLED                         = "l1.healthcheck.l2.ping.enabled";
+  public static final String L1_HEALTHCHECK_L2_PING_IDLETIME                        = "l1.healthcheck.l2.ping.idletime";
+  public static final String L1_HEALTHCHECK_L2_PING_INTERVAL                        = "l1.healthcheck.l2.ping.interval";
+  public static final String L1_HEALTHCHECK_L2_PING_PROBES                          = "l1.healthcheck.l2.ping.probes";
+  public static final String L1_HEALTHCHECK_L2_SOCKECT_CONNECT                      = "l1.healthcheck.l2.socketConnect";
+  public static final String L1_HEALTHCHECK_L2_SOCKECT_CONNECT_TIMEOUT              = "l1.healthcheck.l2.socketConnectTimeout";
+  public static final String L1_HEALTHCHECK_L2_SOCKECT_CONNECT_COUNT                = "l1.healthcheck.l2.socketConnectCount";
 
   /*********************************************************************************************************************
    * Section : TCMessage debug monitoring 

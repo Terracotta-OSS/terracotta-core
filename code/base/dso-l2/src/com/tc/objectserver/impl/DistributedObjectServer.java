@@ -495,7 +495,7 @@ public class DistributedObjectServer implements TCDumper {
 
     communicationsManager = new CommunicationsManagerImpl(mm, networkStackHarnessFactory, connectionPolicy,
                                                           numCommWorkers, new HealthCheckerConfigImpl(l2Properties
-                                                              .getPropertiesFor("healthCheck.l1"), "DSO Server"));
+                                                              .getPropertiesFor("healthcheck.l1"), "DSO Server"));
 
     final DSOApplicationEvents appEvents;
     try {

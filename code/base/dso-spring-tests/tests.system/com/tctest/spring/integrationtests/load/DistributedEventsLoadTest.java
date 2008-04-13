@@ -5,7 +5,6 @@
 package com.tctest.spring.integrationtests.load;
 
 import com.tc.test.server.appserver.deployment.Deployment;
-import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tc.test.server.appserver.deployment.TestCallback;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tctest.spring.bean.EventManager;
@@ -15,8 +14,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-
-import junit.framework.Test;
 
 public class DistributedEventsLoadTest extends SpringDeploymentTest {
   private static final boolean DEBUG                         = true;
@@ -29,15 +26,6 @@ public class DistributedEventsLoadTest extends SpringDeploymentTest {
   private static final String  BEAN_NAME                     = "eventManager";
 
   private Deployment           deployment;
-
-  public static Test suite() {
-    // this test has been failing with Websphere and Weblogic 9.2
-    // due to health checker zapping L1 while they're in long GC
-    // Increase the probes count to be more lenient
-    List jvmArgs = new ArrayList();
-    jvmArgs.add("-Dcom.tc.l2.healthCheck.l1.ping.probes=10");
-    return new ServerTestSetup(DistributedEventsLoadTest.class, false, jvmArgs);
-  }
 
   public DistributedEventsLoadTest() {
     // this.disableAllUntil("2010-01-01", new String[]{"solaris"});

@@ -262,7 +262,7 @@ public class DistributedObjectClient extends SEDA {
 
     communicationsManager = new CommunicationsManagerImpl(mm, networkStackHarnessFactory, new NullConnectionPolicy(),
                                                           new HealthCheckerConfigImpl(l1Properties
-                                                              .getPropertiesFor("healthCheck.l2"), "DSO Client"));
+                                                              .getPropertiesFor("healthcheck.l2"), "DSO Client"));
 
     logger.debug("Created CommunicationsManager.");
 

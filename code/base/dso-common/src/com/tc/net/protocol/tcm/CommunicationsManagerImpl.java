@@ -51,7 +51,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Communications manager for setting up listners and creating client connections
+ * Communications manager for setting up listeners and creating client connections
  *
  * @author teck
  */

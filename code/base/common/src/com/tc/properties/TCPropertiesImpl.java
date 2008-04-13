@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -200,7 +201,20 @@ public class TCPropertiesImpl implements TCProperties {
   }
 
   public String toString() {
-    return "TCProperties=" + props.toString();
+    return "TCProperties = { " + sortedPropertiesToString() + " }";
+  }
+
+  private String sortedPropertiesToString() {
+    Object properties[] = props.keySet().toArray();
+    Arrays.sort(properties);
+    StringBuffer sb = new StringBuffer();
+    for (int i = 0; i < properties.length; i++) {
+      sb.append(properties[i]).append(" = ").append(props.get(properties[i]));
+      if (i != properties.length - 1) {
+        sb.append(", ");
+      }
+    }
+    return sb.toString();
   }
 
   public boolean getBoolean(String key) {
