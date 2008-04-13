@@ -3,7 +3,7 @@
   <container tag="AboutPanel">
     <children>
       <label name="TitleLabel" font="Trebuchet MS-plain-17" text="Terracotta Welcome"/>
-      <label image-uri="/com/tc/admin/icons/logo.gif"/>
+      <label image-uri="/com/tc/admin/icons/logo.png"/>
       <label name="CopyrightLabel" text="Copyright"/>
     </children>
     <connections>

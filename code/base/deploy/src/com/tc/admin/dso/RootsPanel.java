@@ -15,6 +15,8 @@ import java.awt.event.MouseEvent;
 import javax.swing.JScrollPane;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
 public class RootsPanel extends XContainer {
@@ -24,7 +26,6 @@ public class RootsPanel extends XContainer {
   public RootsPanel(ConnectionContext cc, DSORoot[] roots) {
     super(new BorderLayout());
 
-    m_cc   = cc;
     m_tree = new XTree();
     m_tree.setShowsRootHandles(true);
     m_tree.addMouseListener(new MouseAdapter() {
@@ -57,15 +58,27 @@ public class RootsPanel extends XContainer {
       }
     });
     add(new JScrollPane(m_tree), BorderLayout.CENTER);
-    setRoots(roots);
+    
+    setup(cc, roots);
   }
 
+  public void setup(ConnectionContext cc, DSORoot[] roots) {
+    m_cc = cc;
+    setRoots(roots);
+  }
+  
   public void setRoots(DSORoot[] roots) {
     m_tree.setModel(new RootTreeModel(m_cc, roots));
     m_tree.revalidate();
     m_tree.repaint();
   }
 
+  public void clearModel() {
+    m_tree.setModel(new DefaultTreeModel(new DefaultMutableTreeNode()));
+    m_tree.revalidate();
+    m_tree.repaint();
+  }
+  
   public void refresh() {
     ((RootTreeModel)m_tree.getModel()).refresh();
   }

@@ -11,18 +11,17 @@ import org.dijon.DialogResource;
 import org.dijon.Label;
 import org.dijon.TextField;
 
-import com.tc.util.event.UpdateEvent;
-import com.tc.util.event.UpdateEventListener;
-
 import java.awt.BorderLayout;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
-import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.management.remote.JMXConnector;
 import javax.swing.JPasswordField;
@@ -31,57 +30,46 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 public final class ConnectDialog extends Dialog {
-  private static final long DEFAULT_CONNECT_TIMEOUT_MILLIS = 8000;
-  public static final long  CONNECT_TIMEOUT_MILLIS         = Long.getLong("com.tc.admin.connect-timeout",
-                                                                          DEFAULT_CONNECT_TIMEOUT_MILLIS).longValue();
+  private static final long          DEFAULT_CONNECT_TIMEOUT_MILLIS = 8000;
+  public static final long           CONNECT_TIMEOUT_MILLIS         = Long.getLong("com.tc.admin.connect-timeout",
+                                                                                   DEFAULT_CONNECT_TIMEOUT_MILLIS)
+                                                                        .longValue();
 
-  private ServerConnectionManager m_connectManager;
-  private long                    m_timeout;
-  private ConnectionListener      m_listener;
-  private JMXConnector            m_jmxc;
-  private Thread                  m_mainThread;
-  private Thread                  m_connectThread;
-  private Timer                   m_timer;
-  private Exception               m_error;
-  private Label                   m_label;
-  private Button                  m_cancelButton;
-  private final JTextField        m_usernameField;
-  private final JPasswordField    m_passwordField;
-  private final Button            m_okButton;
-  private final Button            m_authCancelButton;
-  private final Container         m_emptyPanel;
-  private final Container         m_authPanel;
+  private AdminClientContext         m_acc;
+  private ServerConnectionManager    m_connectManager;
+  private long                       m_timeout;
+  private ConnectionListener         m_listener;
+  private AuthenticatingJMXConnector m_jmxc;
+  private Future                     m_connectInitiator;
+  private Timer                      m_hideTimer;
+  private boolean                    m_isAuthenticating;
+  private Exception                  m_error;
+  private Label                      m_label;
+  private Button                     m_cancelButton;
+  private final JTextField           m_usernameField;
+  private final JPasswordField       m_passwordField;
+  private final Button               m_okButton;
+  private final Button               m_authCancelButton;
+  private final Container            m_emptyPanel;
+  private final Container            m_authPanel;
 
   public ConnectDialog(Frame parent, ServerConnectionManager scm, ConnectionListener listener) {
     super(parent, true);
 
+    m_acc = AdminClient.getContext();
     m_connectManager = scm;
+    m_jmxc = new AuthenticatingJMXConnector(m_connectManager);
     m_timeout = CONNECT_TIMEOUT_MILLIS;
     m_listener = listener;
 
-    AdminClientContext acc = AdminClient.getContext();
-    load((DialogResource) acc.topRes.child("ConnectDialog"));
-    m_label = (Label)findComponent("ConnectLabel");
-    m_label.setText("Connecting to "+scm+". Please wait...");
+    load((DialogResource) m_acc.topRes.child("ConnectDialog"));
+    m_label = (Label) findComponent("ConnectLabel");
+    m_label.setText("Connecting to " + scm + ". Please wait...");
     pack();
 
     m_cancelButton = (Button) findComponent("CancelButton");
-    m_cancelButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        m_cancelButton.setEnabled(false);
-        m_mainThread.interrupt();
-        m_jmxc = null;
-        ConnectDialog.this.setVisible(false);
-      }
-    });
-    getContentPane().addHierarchyListener(new HL());
-
-    int delay = 1000;
-    ActionListener taskPerformer = new ActionListener() {
-      public void actionPerformed(ActionEvent evt) {
-        setVisible(false);
-      }
-    };
+    m_cancelButton.addActionListener(new CancelButtonHandler());
+    getContentPane().addHierarchyListener(new ShowingChangeListener());
 
     m_emptyPanel = (Container) findComponent("EmptyPanel");
     m_emptyPanel.setLayout(new BorderLayout());
@@ -101,26 +89,46 @@ public final class ConnectDialog extends Dialog {
     passwdHolder.add(m_passwordField = new JPasswordField());
     credentialsPanel.replaceChild(passwordField, passwdHolder);
 
-    m_okButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        final String username = m_usernameField.getText().trim();
-        final String password = new String(m_passwordField.getPassword()).trim();
-        SwingUtilities.invokeLater(new Thread() {
-          public void run() {
-            m_connectManager.setCredentials(username, password);
-            ((AuthenticatingJMXConnector) m_jmxc).handleOkClick(username, password);
-          }
-        });
-      }
-    });
+    m_okButton.addActionListener(new OKButtonHandler());
     m_authCancelButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent ae) {
         m_cancelButton.doClick();
       }
     });
 
-    m_timer = new Timer(delay, taskPerformer);
-    m_timer.setRepeats(false);
+    m_hideTimer = new Timer(100, new DialogCloserTask());
+    m_hideTimer.setRepeats(false);
+  }
+
+  class CancelButtonHandler implements ActionListener {
+    public void actionPerformed(ActionEvent ae) {
+      m_cancelButton.setEnabled(false);
+      m_connectInitiator.cancel(true);
+      m_error = new RuntimeException("Canceled");
+      ConnectDialog.this.setVisible(false);
+    }
+  }
+
+  class OKButtonHandler implements ActionListener {
+    public void actionPerformed(ActionEvent ae) {
+      String username = m_usernameField.getText().trim();
+      String password = new String(m_passwordField.getPassword()).trim();
+      m_connectManager.setCredentials(username, password);
+      disableAuthenticationDialog();
+      initiateConnectAction();
+    }
+  }
+
+  private void initiateConnectAction() {
+    m_cancelButton.setEnabled(true);
+    m_connectInitiator = m_acc.executorService.submit(new ConnectInitiator());
+  }
+
+  class DialogCloserTask implements ActionListener {
+    public void actionPerformed(ActionEvent evt) {
+      disableAuthenticationDialog();
+      setVisible(false);
+    }
   }
 
   private void disableAuthenticationDialog() {
@@ -151,7 +159,8 @@ public final class ConnectDialog extends Dialog {
 
   public void setServerConnectionManager(ServerConnectionManager scm) {
     m_connectManager = scm;
-    m_label.setText("Connecting to "+scm+". Please wait...");
+    m_jmxc = new AuthenticatingJMXConnector(m_connectManager);
+    m_label.setText("Connecting to " + scm + ". Please wait...");
     pack();
   }
 
@@ -183,15 +192,13 @@ public final class ConnectDialog extends Dialog {
     return m_error;
   }
 
-  class HL implements HierarchyListener {
+  private class ShowingChangeListener implements HierarchyListener {
     public void hierarchyChanged(HierarchyEvent e) {
       long flags = e.getChangeFlags();
 
       if ((flags & HierarchyEvent.SHOWING_CHANGED) != 0) {
         if (isShowing()) {
-          m_cancelButton.setEnabled(true);
-          m_mainThread = new MainThread();
-          m_mainThread.start();
+          initiateConnectAction();
         } else {
           fireHandleConnect();
         }
@@ -211,160 +218,44 @@ public final class ConnectDialog extends Dialog {
         rte.printStackTrace();
       }
     }
+    m_isAuthenticating = false;
   }
 
-  // --------------------------------------------------------------------------------
-
-  class MainThread extends Thread {
-
-    private boolean               m_isConnecting    = true;
-    private boolean               m_join;
-    private final ConnectionTimer m_connectionTimer = new ConnectionTimer();
-
+  private class ConnectInitiator implements Runnable {
     public void run() {
-      m_connectThread = new ConnectThread();
-      try {
-        m_error = null;
-        m_jmxc = new AuthenticatingJMXConnector(m_connectManager);
-        ((AuthenticatingJMXConnector) m_jmxc).addAuthenticationListener(new UpdateEventListener() {
-          public void handleUpdate(UpdateEvent obj) {
-            m_connectionTimer.stopTimer();
-            m_connectionTimer.interrupt();
-            enableAuthenticationDialog();
-          }
-        });
-        ((AuthenticatingJMXConnector) m_jmxc).addCollapseListener(new UpdateEventListener() {
-          public void handleUpdate(UpdateEvent obj) {
-            m_connectionTimer.setTimer();
-            disableAuthenticationDialog();
-          }
-        });
-        ((AuthenticatingJMXConnector) m_jmxc).addExceptionListener(new UpdateEventListener() {
-          public void handleUpdate(UpdateEvent obj) {
-            m_connectionTimer.setTimer();
-            m_connectionTimer.interrupt();
-            disableAuthenticationDialog();
-          }
-        });
+      Future f = m_acc.executorService.submit(new ConnectAction());
 
-        if (m_jmxc != null && m_error == null) {
-          m_connectThread.start();
-          m_connectionTimer.start();
-          synchronized (this) {
-            while (m_isConnecting)
-              wait();
-            if (m_join) m_connectThread.join(m_timeout);
-          }
-        }
-      } catch (IOException e) {
-        m_error = e;
-      } catch (InterruptedException e) {
-        m_connectThread.interrupt();
-        m_connectionTimer.interrupt();
-        disableAuthenticationDialog();
-        m_error = new InterruptedIOException("Interrupted");
+      m_error = null;
+      try {
+        f.get(m_timeout, TimeUnit.MILLISECONDS);
+        m_hideTimer.start();
         return;
-      }
-
-      if (m_error == null && m_connectThread.isAlive()) {
-        m_connectThread.interrupt();
-        m_error = new InterruptedIOException("Connection timed out");
-      }
-
-      if (m_error != null) {
-        m_connectThread.interrupt();
-      }
-
-      m_timer.start();
-    }
-
-    private synchronized void connectionJoin() {
-      if(m_connectionTimer.isAlive()) {
-        m_connectionTimer.stopTimer();
-        m_connectionTimer.interrupt();
-      }
-
-      m_join = true;
-      m_isConnecting = false;
-      notifyAll();
-    }
-
-    private synchronized void connectionTimeout() {
-      m_isConnecting = false;
-      notifyAll();
-    }
-  }
-
-  // --------------------------------------------------------------------------------
-
-  class ConnectThread extends Thread {
-
-    public ConnectThread() {
-      setDaemon(true);
-    }
-
-    public void run() {
-      try {
-        m_jmxc.connect(m_connectManager.getConnectionEnvironment());
-        ((MainThread) m_mainThread).connectionJoin();
-      } catch (IOException e) {
-        m_error = e;
-      } catch (RuntimeException e) {
-        if (e instanceof AuthenticatingJMXConnector.AuthenticationException) { return; }
-        m_error = e;
-      }
-    }
-  }
-
-  // --------------------------------------------------------------------------------
-
-  private class ConnectionTimer extends Thread {
-
-    private boolean isSet;
-
-    private ConnectionTimer() {
-      setDaemon(true);
-    }
-
-    public void run() {
-      try {
-        startTimer();
-      } catch (InterruptedException e) {
-        // do nothing
-      }
-    }
-
-    private void startTimer() throws InterruptedException {
-      isSet = true;
-      try {
-        Thread.sleep(m_timeout);
-      } catch (InterruptedException e) {
-        // do nothing
-      }
-      if (isSet) {
-        ((MainThread) m_mainThread).connectionTimeout();
+      } catch (TimeoutException te) {
+        m_hideTimer.start();
         return;
-      }
-      while (!isSet) {
-        synchronized (this) {
-          wait();
+      } catch (Exception e) {
+        Throwable cause = e.getCause();
+        if (!m_isAuthenticating && cause instanceof SecurityException) {
+          m_isAuthenticating = true;
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              enableAuthenticationDialog();
+            }
+          });
+        } else {
+          m_error = e;
+          m_hideTimer.start();
         }
       }
-      ((MainThread) m_mainThread).connectionJoin();
-    }
-
-    private synchronized void setTimer() {
-      isSet = true;
-      notifyAll();
-    }
-
-    private synchronized void stopTimer() {
-      isSet = false;
-      notifyAll();
     }
   }
 
-  // --------------------------------------------------------------------------------
+  class ConnectAction implements Callable<Void> {
+    public Void call() throws Exception {
+      m_jmxc.connect();
+      return null;
+    }
+  }
 
   void tearDown() {
     Map env = m_connectManager.getConnectionEnvironment();
@@ -372,13 +263,13 @@ public final class ConnectDialog extends Dialog {
       env.clear();
     }
 
+    m_acc = null;
     m_connectManager = null;
     m_listener = null;
     m_jmxc = null;
-    m_mainThread = null;
-    m_connectThread = null;
+    m_connectInitiator = null;
     m_cancelButton = null;
-    m_timer = null;
+    m_hideTimer = null;
     m_error = null;
   }
 }

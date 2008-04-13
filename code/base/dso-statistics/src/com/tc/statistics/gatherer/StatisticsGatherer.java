@@ -29,6 +29,8 @@ public interface StatisticsGatherer {
 
   public void stopCapturing() throws StatisticsGathererException;
 
+  public boolean isCapturing();
+  
   public void setGlobalParam(String key, Object value) throws StatisticsGathererException;
 
   public Object getGlobalParam(String key) throws StatisticsGathererException;

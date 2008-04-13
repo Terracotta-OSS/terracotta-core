@@ -26,20 +26,21 @@ import javax.swing.border.EmptyBorder;
 public class Splash extends Dialog {
   public Splash(String title) {
     super(title);
-    
+
     Label label = new Label(title);
     label.setFont(UIManager.getFont("InternalFrame.titleFont"));
     label.setVerticalTextPosition(SwingConstants.TOP);
     label.setHorizontalTextPosition(SwingConstants.CENTER);
-    label.setIcon(new ImageIcon(getClass().getResource("/com/tc/admin/icons/logo.gif")));
-    Container contentPane = (Container)getContentPane(); 
+    label.setIcon(new ImageIcon(getClass().getResource("/com/tc/admin/icons/logo.png")));
+    label.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    Container contentPane = (Container) getContentPane();
     contentPane.setBorder(BorderFactory.createEtchedBorder());
     contentPane.setLayout(new BorderLayout());
     contentPane.add(label, BorderLayout.CENTER);
     JProgressBar progressBar = new JProgressBar();
     progressBar.setIndeterminate(true);
     JPanel progressPanel = new JPanel(new BorderLayout());
-    progressPanel.setBorder(new EmptyBorder(2,2,2,2));
+    progressPanel.setBorder(new EmptyBorder(2, 2, 2, 2));
     progressPanel.add(progressBar);
     contentPane.add(progressPanel, BorderLayout.SOUTH);
     setUndecorated(true);
@@ -53,42 +54,36 @@ public class Splash extends Dialog {
   }
 
   public static Process start(final String title, final Runnable callback) throws IOException {
-    String[] cmdarray = {
-      getJavaCmd().getAbsolutePath(),
-      "-cp", System.getProperty("java.class.path"),
-      Splash.class.getName(),
-      title
-    };
+    String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-cp", System.getProperty("java.class.path"),
+        Splash.class.getName(), title };
 
     final Process p = Runtime.getRuntime().exec(cmdarray);
     InputStreamDrainer errDrainer = new InputStreamDrainer(p.getErrorStream());
-    StreamReader outReader = new StreamReader(
-      p.getInputStream(),
-      new OutputStreamListener() {
-        public void triggerEncountered() {
-          Thread shutdownHook = new Thread() {
-            public void run() {
-              p.destroy();
-            }
-          };
-          Runtime.getRuntime().addShutdownHook(shutdownHook);
-          callback.run();
-          Runtime.getRuntime().removeShutdownHook(shutdownHook);
-        }
-      },
-      "GO");
+    StreamReader outReader = new StreamReader(p.getInputStream(), new OutputStreamListener() {
+      public void triggerEncountered() {
+        Thread shutdownHook = new Thread() {
+          public void run() {
+            p.destroy();
+          }
+        };
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
+        callback.run();
+        Runtime.getRuntime().removeShutdownHook(shutdownHook);
+      }
+    }, "GO");
 
     errDrainer.start();
     outReader.start();
-    
+
     return p;
   }
-  
+
   public static void main(String[] args) {
     try {
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-    } catch(Exception e) {/**/}
-    
+    } catch (Exception e) {/**/
+    }
+
     Splash splash = new Splash(args[0]);
     splash.addComponentListener(new ComponentAdapter() {
       public void componentShown(ComponentEvent e) {

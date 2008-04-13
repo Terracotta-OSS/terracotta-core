@@ -8,10 +8,10 @@ import org.apache.commons.lang.StringUtils;
 
 import com.tc.config.schema.L2Info;
 import com.tc.management.JMXConnectorProxy;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
 import java.rmi.ConnectException;
-import java.util.EventListener;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
@@ -43,7 +43,6 @@ public class ServerConnectionManager implements NotificationListener {
   private ConnectThread                      m_connectThread;
   private ConnectionMonitorAction            m_connectMonitorAction;
   private Timer                              m_connectMonitorTimer;
-  private AutoConnectListener                m_autoConnectListener;
   
   private static final Map<String, String[]> m_credentialsMap       = new HashMap<String, String[]>();
 
@@ -122,10 +121,14 @@ public class ServerConnectionManager implements NotificationListener {
   }
 
   public void setCredentials(String username, String password) {
-    Map<String, Object> connEnv = getConnectionEnvironment();
-    connEnv.put("jmx.remote.credentials", new String[] { username, password });
+    setCredentials(new String[] { username, password });
   }
 
+  public void setCredentials(String[] creds) {
+    Map<String, Object> connEnv = getConnectionEnvironment();
+    connEnv.put("jmx.remote.credentials", creds);
+  }
+  
   public String[] getCredentials() {
     Map<String, Object> connEnv = getConnectionEnvironment();
     return (String[]) connEnv.get("jmx.remote.credentials");
@@ -310,10 +313,7 @@ public class ServerConnectionManager implements NotificationListener {
     }
 
     public void run() {
-      try {
-        sleep(500);
-      } catch (InterruptedException ie) {/**/
-      }
+      ThreadUtil.reallySleep(500);
 
       while (!m_cancel && !m_connected) {
         try {
@@ -328,19 +328,19 @@ public class ServerConnectionManager implements NotificationListener {
           } else {
             m_connectException = e;
             if (m_connectListener != null) {
-              if (e instanceof SecurityException) {
-                setAutoConnect(false);
-                fireToggleAutoConnectEvent();
-                m_connectListener.handleException();
-                return;
-              }
+//              if (e instanceof SecurityException) {
+//                setAutoConnect(false);
+//                fireToggleAutoConnectEvent();
+//                m_connectListener.handleException();
+//                return;
+//              }
               m_connectListener.handleException();
             }
           }
         }
 
         try {
-          sleep(2000);
+          sleep(1000);
         } catch (InterruptedException ie) {
           // We may interrupt the connect thread when a new host or port comes in
           // because we have to recreate the connection context, JMX service URL,
@@ -353,14 +353,6 @@ public class ServerConnectionManager implements NotificationListener {
     void cancel() {
       m_cancel = true;
     }
-  }
-
-  void addToggleAutoConnectListener(AutoConnectListener listener) {
-    m_autoConnectListener = listener;
-  }
-
-  private void fireToggleAutoConnectEvent() {
-    if (m_autoConnectListener != null) m_autoConnectListener.handleEvent();
   }
 
   JMXServiceURL getJMXServiceURL() {
@@ -583,11 +575,5 @@ public class ServerConnectionManager implements NotificationListener {
     int jmxPort = getJMXPortNumber();
     
     return otherJMXPort == jmxPort && StringUtils.equals(otherHostname, hostname);
-  }
-  
-  // --------------------------------------------------------------------------------
-
-  public static interface AutoConnectListener extends EventListener {
-    void handleEvent();
   }
 }

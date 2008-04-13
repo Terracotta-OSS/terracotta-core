@@ -47,6 +47,8 @@ public interface StatisticsLocalGathererMBean extends TerracottaMBean {
 
   public void stopCapturing();
 
+  public boolean isCapturing();
+  
   public void setGlobalParam(String key, Object value);
 
   public Object getGlobalParam(String key);

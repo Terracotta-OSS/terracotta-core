@@ -24,6 +24,8 @@ import javax.swing.JTextField;
 public class ClusterPanel extends XContainer {
   private AdminClientContext           m_acc;
   private ClusterNode                  m_clusterNode;
+  private String                       m_originalHost;
+  private int                          m_originalPort;
   private JTextField                   m_hostField;
   private JTextField                   m_portField;
   private JButton                      m_connectButton;
@@ -58,8 +60,8 @@ public class ClusterPanel extends XContainer {
     m_portField.addActionListener(new PortFieldHandler());
     m_connectButton.addActionListener(new ConnectionButtonHandler());
 
-    m_hostField.setText(m_clusterNode.getHost());
-    m_portField.setText(Integer.toString(m_clusterNode.getPort()));
+    m_hostField.setText(m_originalHost = m_clusterNode.getHost());
+    m_portField.setText(Integer.toString(m_originalPort = m_clusterNode.getPort()));
 
     setupConnectButton();
   }
@@ -73,7 +75,7 @@ public class ClusterPanel extends XContainer {
     public void actionPerformed(ActionEvent ae) {
       String host = m_hostField.getText().trim();
 
-      m_clusterNode.setHost(host);
+      m_clusterNode.setHost(m_originalHost = host);
       m_acc.controller.nodeChanged(m_clusterNode);
       m_acc.controller.updateServerPrefs();
     }
@@ -84,7 +86,7 @@ public class ClusterPanel extends XContainer {
       String port = m_portField.getText().trim();
 
       try {
-        m_clusterNode.setPort(Integer.parseInt(port));
+        m_clusterNode.setPort(m_originalPort = Integer.parseInt(port));
         m_acc.controller.nodeChanged(m_clusterNode);
         m_acc.controller.updateServerPrefs();
       } catch (Exception e) {
@@ -229,10 +231,14 @@ public class ClusterPanel extends XContainer {
 
   void disconnected() {
     m_hostField.setEditable(true);
+    m_hostField.setText(m_originalHost);
+    m_clusterNode.setHost(m_originalHost);
+    
     m_portField.setEditable(true);
-
+    m_portField.setText(Integer.toString(m_originalPort));
+    m_clusterNode.setPort(m_originalPort);
+    
     String startTime = new Date().toString();
-
     setupConnectButton();
     setStatusLabel(m_acc.format("server.disconnected.label", new Object[] { startTime }));
     hideProductInfo();

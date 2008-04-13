@@ -9,6 +9,8 @@ import org.apache.commons.httpclient.auth.AuthScope;
 import com.tc.admin.common.ComponentNode;
 import com.tc.statistics.beans.StatisticsLocalGathererMBean;
 
+import java.util.Map;
+
 public class StatsRecorderNode extends ComponentNode {
   private ClusterNode        m_clusterNode;
   private StatsRecorderPanel m_statsRecorderPanel;
@@ -38,6 +40,20 @@ public class StatsRecorderNode extends ComponentNode {
     return m_clusterNode.getConnectionContext();
   }
 
+  String[] getConnectionCredentials() {
+    return m_clusterNode.getConnectionCredentials();
+  }
+  
+  Map<String, Object> getConnectionEnvironment() {
+    return m_clusterNode.getConnectionEnvironment();
+  }
+  
+  void newConnectionContext() {
+    if(m_statsRecorderPanel != null) {
+      m_statsRecorderPanel.newConnectionContext();
+    }
+  }
+  
   StatisticsLocalGathererMBean getStatisticsGathererMBean() {
     return m_clusterNode.getStatisticsGathererMBean();
   }

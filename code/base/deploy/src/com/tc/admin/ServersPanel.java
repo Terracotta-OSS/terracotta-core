@@ -9,6 +9,7 @@ import org.dijon.ContainerResource;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XObjectTable;
 
+import javax.swing.SwingUtilities;
 import javax.swing.table.TableColumnModel;
 
 public class ServersPanel extends XContainer {
@@ -40,8 +41,18 @@ public class ServersPanel extends XContainer {
     }
   }
 
-  void serverStateChanged(ServerNode serverNode) {
-    m_clusterMemberTable.repaint();
+  void serverStateChanged(final ServerNode serverNode) {
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        ServerConnectionManager scm = serverNode.getServerConnectionManager();
+        if(scm != null) {
+          int row = m_clusterMemberTableModel.getObjectIndex(scm);
+          m_clusterMemberTableModel.fireTableCellUpdated(row, 0);
+        } else {
+          m_clusterMemberTableModel.fireTableDataChanged();
+        }
+      }
+    });
   }
 
   public void tearDown() {

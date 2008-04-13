@@ -51,8 +51,12 @@ public class RootsNode extends ComponentNode implements NotificationListener {
   }
 
   private void init() {
+    m_roots = new DSORoot[0];
     for (int i = getChildCount() - 1; i >= 0; i--) {
       m_acc.controller.remove((XTreeNode) getChildAt(i));
+    }
+    if(m_rootsPanel != null) {
+      m_rootsPanel.clearModel();
     }
     m_acc.executorService.execute(new InitWorker());
   }
@@ -80,7 +84,10 @@ public class RootsNode extends ComponentNode implements NotificationListener {
         for (int i = 0; i < m_roots.length; i++) {
           insert(new RootNode(m_cc, m_roots[i]), i);
         }
-        m_acc.controller.nodeChanged(RootsNode.this);
+        m_acc.controller.nodeStructureChanged(RootsNode.this);
+        if(m_rootsPanel != null) {
+          m_rootsPanel.setup(m_cc, m_roots);
+        }
       }
     }
   }
@@ -158,9 +165,9 @@ public class RootsNode extends ComponentNode implements NotificationListener {
         if (isExpanded) {
           m_acc.controller.expand(RootsNode.this);
         }
-        m_acc.controller.unblock();
-        m_acc.controller.clearStatus();
       }
+      m_acc.controller.unblock();
+      m_acc.controller.clearStatus();
     }
   }
 
@@ -202,17 +209,15 @@ public class RootsNode extends ComponentNode implements NotificationListener {
 
     if (DSOMBean.ROOT_ADDED.equals(type)) {
       final ObjectName rootObjectName = (ObjectName) notice.getSource();
-      if (haveRoot(rootObjectName)) return;
 
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          AdminClientContext acc = AdminClient.getContext();
+          if (haveRoot(rootObjectName)) return;
 
-          acc.setStatus(acc.getMessage("dso.root.retrieving"));
+          m_acc.setStatus(m_acc.getMessage("dso.root.retrieving"));
 
           DSORoot root = new DSORoot(m_cc, rootObjectName);
           ArrayList<DSORoot> list = new ArrayList<DSORoot>(Arrays.asList(m_roots));
-
           list.add(root);
           m_roots = list.toArray(new DSORoot[] {});
 
@@ -223,10 +228,9 @@ public class RootsNode extends ComponentNode implements NotificationListener {
           } else {
             RootsNode.this.add(rn);
           }
-
           ((RootsPanel) getComponent()).add(root);
 
-          acc.setStatus(acc.getMessage("dso.root.new") + root);
+          m_acc.setStatus(m_acc.getMessage("dso.root.new") + root);
         }
       });
     }

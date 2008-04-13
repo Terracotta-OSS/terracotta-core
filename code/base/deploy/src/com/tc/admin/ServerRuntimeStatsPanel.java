@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin;
 
@@ -13,7 +14,6 @@ import org.jfree.data.time.TimeSeries;
 
 import com.tc.admin.common.BasicWorker;
 import com.tc.admin.dso.RuntimeStatsPanel;
-import com.tc.management.RuntimeStatisticConstants;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.statistics.StatisticData;
 import com.tc.stats.DSOMBean;
@@ -158,7 +158,6 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
     protected void finished() {
       Exception e = getException();
       if (e != null) {
-        AdminClient.getContext().log(e);
         setupInstructions();
       } else {
         String[] cpuNames = getResult();
@@ -195,16 +194,22 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
     }
 
     protected void finished() {
-      Exception e = getException();
-      if (e == null) {
-        Map statMap = getResult();
-        if (statMap != null) {
-          handleTCInfoStats(statMap);
+      try {
+        Exception e = getException();
+        if (e == null) {
+          Map statMap = getResult();
+          if (statMap != null) {
+            handleTCInfoStats(statMap);
+          }
+        } else {
+          if (m_acc != null) {
+            m_acc.log(e.getMessage());
+          }
         }
-      }
-
-      if (m_acc != null) {
-        m_acc.executorService.submit(new DSOServerStatGetter());
+      } finally {
+        if (m_acc != null) {
+          m_acc.executorService.submit(new DSOServerStatGetter());
+        }
       }
     }
   }
@@ -214,13 +219,11 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
 
     Second now = new Second();
 
-    m_memoryMaxTimeSeries
-        .addOrUpdate(now, ((Number) statMap.get(RuntimeStatisticConstants.MEMORY_MAX)).longValue() / 1024000d);
-    m_memoryUsedTimeSeries
-        .addOrUpdate(now, ((Number) statMap.get(RuntimeStatisticConstants.MEMORY_USED)).longValue() / 1024000d);
+    m_memoryMaxTimeSeries.addOrUpdate(now, ((Number) statMap.get(MEMORY_MAX)).longValue() / 1024000d);
+    m_memoryUsedTimeSeries.addOrUpdate(now, ((Number) statMap.get(MEMORY_USED)).longValue() / 1024000d);
 
     if (m_cpuTimeSeries != null) {
-      StatisticData[] cpuUsageData = (StatisticData[]) statMap.get(RuntimeStatisticConstants.CPU_USAGE);
+      StatisticData[] cpuUsageData = (StatisticData[]) statMap.get(CPU_USAGE);
       if (cpuUsageData != null) {
         for (int i = 0; i < cpuUsageData.length; i++) {
           StatisticData cpuData = cpuUsageData[i];
@@ -248,15 +251,22 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
     }
 
     protected void finished() {
-      Exception e = getException();
-      if (e == null) {
-        Statistic[] stats = getResult();
-        if (stats != null) {
-          handleDSOServerStats(stats);
+      try {
+        Exception e = getException();
+        if (e == null) {
+          Statistic[] stats = getResult();
+          if (stats != null) {
+            handleDSOServerStats(stats);
+          }
+        } else {
+          if (m_acc != null) {
+            m_acc.log(e.getMessage());
+          }
         }
-      }
-      if (m_statsGathererTimer != null) {
-        m_statsGathererTimer.start();
+      } finally {
+        if (m_statsGathererTimer != null) {
+          m_statsGathererTimer.start();
+        }
       }
     }
   }

@@ -25,7 +25,7 @@ public class ClusterMemberTable extends XObjectTable {
       Exception               e     = scm.getConnectionException();
       
       if(e != null) {
-        tip = ServerNode.getConnectionExceptionString(e, scm);
+        tip = ClusterNode.getConnectionExceptionString(e, scm.getConnectionContext());
       }
     }
     

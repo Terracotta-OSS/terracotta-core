@@ -244,6 +244,10 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
     statGateway.setTopologyChangeHandler(topologyChangeHandler);
   }
 
+  public boolean isCapturing() {
+    return topologyChangeHandler.isCapturingStarted();
+  }
+  
   public void stopCapturing() throws StatisticsGathererException {
     if (null == sessionId) throw new StatisticsGathererSessionRequiredException();
     statGateway.stopCapturing(sessionId);

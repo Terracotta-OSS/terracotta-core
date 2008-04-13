@@ -73,10 +73,10 @@ public class ServersNode extends ComponentNode {
   }
   
   void newConnectionContext() {
-    /**
-     * what if the new active has a different config with a different set of cluster members? if so, we need to
-     * reconstruct the serversPanel and child nodes. This would be bad.
-     */
+    int serverCount = getChildCount();
+    for(int i = 0; i < serverCount; i++) {
+      ((ServerNode)getChildAt(i)).newConnectionContext();
+    }
   }
 
   void serverStateChanged(ServerNode serverNode) {

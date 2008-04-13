@@ -25,6 +25,7 @@ import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.DemoChartFactory;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XTextPane;
+import com.tc.management.RuntimeStatisticConstants;
 import com.tc.stats.statistics.CountStatistic;
 
 import java.awt.BorderLayout;
@@ -54,7 +55,7 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.Element;
 import javax.swing.text.html.HTML;
 
-public class RuntimeStatsPanel extends XContainer {
+public class RuntimeStatsPanel extends XContainer implements RuntimeStatisticConstants {
   protected AdminClientContext  m_acc;
   protected Timer               m_statsGathererTimer;
   protected Container           m_chartsPanel;

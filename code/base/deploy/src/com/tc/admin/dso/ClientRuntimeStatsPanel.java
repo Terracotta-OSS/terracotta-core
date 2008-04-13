@@ -13,7 +13,6 @@ import org.jfree.data.time.Second;
 import org.jfree.data.time.TimeSeries;
 
 import com.tc.admin.common.BasicWorker;
-import com.tc.management.RuntimeStatisticConstants;
 import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.statistics.StatisticData;
 import com.tc.stats.statistics.CountStatistic;
@@ -212,13 +211,11 @@ public class ClientRuntimeStatsPanel extends RuntimeStatsPanel {
 
     Second now = new Second();
 
-    m_memoryMaxTimeSeries
-        .addOrUpdate(now, ((Number) statMap.get(RuntimeStatisticConstants.MEMORY_MAX)).longValue() / 1024000d);
-    m_memoryUsedTimeSeries
-        .addOrUpdate(now, ((Number) statMap.get(RuntimeStatisticConstants.MEMORY_USED)).longValue() / 1024000d);
+    m_memoryMaxTimeSeries.addOrUpdate(now, ((Number) statMap.get(MEMORY_MAX)).longValue() / 1024000d);
+    m_memoryUsedTimeSeries.addOrUpdate(now, ((Number) statMap.get(MEMORY_USED)).longValue() / 1024000d);
 
     if (m_cpuTimeSeries != null) {
-      StatisticData[] cpuUsageData = (StatisticData[]) statMap.get(RuntimeStatisticConstants.CPU_USAGE);
+      StatisticData[] cpuUsageData = (StatisticData[]) statMap.get(CPU_USAGE);
       if (cpuUsageData != null) {
         for (int i = 0; i < cpuUsageData.length; i++) {
           StatisticData cpuData = cpuUsageData[i];

@@ -94,7 +94,7 @@
     <children>
       <container>
         <children>
-          <label image-uri="/com/tc/admin/icons/logo.gif" name="ImageLabel" />
+          <label image-uri="/com/tc/admin/icons/logo.png" name="ImageLabel" />
           <container>
             <border>
               <etched-border type="lowered" />
@@ -127,7 +127,7 @@
         <connections>
           <item bottom="1,top:n" height="n" left="-1,left:sn" right="-1,right:sn" top="-1,top:sn" width="n" />
           <item bottom="2,top:n" height="n" left="-1,left:sn" right="-1,right:sn" top="0,bottom:n" width="sn" />
-          <item bottom="3,top:sn" height="n" left="1,left:0" right="1,right:ns" top="1,bottom:n" width="n" />
+          <item bottom="-1,bottom:sn" height="n" left="1,left:0" right="1,right:ns" top="1,bottom:n" width="n" />
           <item bottom="-1,bottom:n" height="sn" left="-1,left:sn" right="-1,right:sn" top="2,bottom:sn" width="sn" />
         </connections>
       </container>
@@ -340,7 +340,7 @@
 		<content-pane>
 			<children>
 				<label font="Trebuchet MS-plain-17" text="Terrracotta Administrator Console" name="MonikerLabel"/>
-				<label image-uri="/com/tc/admin/icons/logo.gif"/>
+				<label image-uri="/com/tc/admin/icons/logo.png"/>
 				<container class="com.tc.admin.AdminClientInfoPanel" name="AdminClientInfoPanel">
 					<children>
 						<container>
@@ -365,7 +365,7 @@
 			</children>
 			<connections>
 				<item bottom="1,top:sn" height="n" left="-1,left:s" right="-1,right:s" top="-1,top:n" width="n"/>
-				<item bottom="2,top:sn" height="sn" left="-1,left:s" right="-1,right:s" top="0,bottom:n" width="sn"/>
+				<item bottom="2,top:sn" height="sn" left="-1,left:sn" right="-1,right:sn" top="0,bottom:n" width="sn"/>
 				<item bottom="3,top:n" height="sn" left="-1,left:n" right="-1,right:n" top="1,bottom:n" width="sn"/>
 				<item bottom="-1,bottom:n" height="n" left="-1,left:s" right="-1,right:s" top="2,bottom:n" width="n"/>
 			</connections>
