@@ -170,7 +170,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
 
     // make sure RuntimeException is thrown iff client/server versions don't match and version checking is enabled
     try {
-      mgr.acknowledgeHandshake(false, "1", new String[] {}, clientVersion + "a.b.c");
+      mgr.acknowledgeHandshake(cip.getClientID(), false, "1", new String[] {}, clientVersion + "a.b.c");
       if (checkVersionMatchEnabled()) {
         fail();
       }
@@ -181,7 +181,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     }
 
     // now ack for real
-    mgr.acknowledgeHandshake(false, "1", new String[] {}, clientVersion);
+    mgr.acknowledgeHandshake(cip.getClientID(), false, "1", new String[] {}, clientVersion);
 
     // make sure the remote object manager was told to requestOutstanding()
     remoteObjectManager.requestOutstandingContexts.take();

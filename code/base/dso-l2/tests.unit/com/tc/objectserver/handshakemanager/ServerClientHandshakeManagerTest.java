@@ -462,6 +462,10 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       return serverVersion;
     }
 
+    public ClientID getClientID() {
+      return this.clientID;
+    }
+
   }
 
 }
