@@ -8,6 +8,7 @@ import EDU.oswego.cs.dl.util.concurrent.ConcurrentHashMap;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
@@ -18,7 +19,7 @@ import java.util.Iterator;
 /**
  * The Engine which does the peer health checking work. Based on the config passed, it probes the peer once in specified
  * interval. When it doesn't get a reply from the peer, it disconnects the transport.
- *
+ * 
  * @author Manoj
  */
 public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
@@ -66,8 +67,13 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
   public void notifyTransportClosed(MessageTransport transport) {
     // HealthChecker Ping Thread can anyway determine this in the next probe interval thru mtb.isConnected and remove it
     // from its radar. still lets do it earlier
-    logger.info("Connection to [" + transport.getRemoteAddress().getCanonicalStringForm()
-                + "] CLOSED. Health Monitoring for this node is now disabled.");
+    TCSocketAddress remoteAddress = transport.getRemoteAddress();
+    if (remoteAddress != null) {
+      logger.info("Connection to [" + remoteAddress.getCanonicalStringForm()
+                  + "] CLOSED. Health Monitoring for this node is now disabled.");
+    } else {
+      logger.info("Connection CLOSED. Health Monitor for this node is disabled.");
+    }
     monitorThreadEngine.removeConnection(transport);
   }
 
