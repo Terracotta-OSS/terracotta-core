@@ -20,7 +20,6 @@ import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tc.util.DebugUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -39,24 +38,22 @@ public abstract class EhcacheGlobalEvictionTestApp extends ServerCrashingAppBase
   }
 
   private void basicGlobalEvictionTest() throws Exception {
-    DebugUtil.DEBUG = true;
-
     final List jvmArgs = new ArrayList();
     final List errorList = Collections.synchronizedList(new ArrayList());
     final L1ClientWrapper l1Wrapper = new L1ClientWrapper(getHostName(), getPort(), new File(getConfigFilePath()));
 
     addTestTcPropertiesFile(jvmArgs);
-    
+
     Thread t1 = new Thread(new Runnable() {
       public void run() {
-        try {          
+        try {
           l1Wrapper.spawn("0", L1Client.class, new String[] { "0" }, jvmArgs);
         } catch (Exception e) {
           errorList.add(e);
         }
       }
     });
-    
+
     Thread t2 = new Thread(new Runnable() {
       public void run() {
         try {
@@ -69,18 +66,13 @@ public abstract class EhcacheGlobalEvictionTestApp extends ServerCrashingAppBase
 
     t1.start();
     t2.start();
-    
+
     Thread.sleep(60000L);
-    
+
     t1.join();
     t2.join();
 
-    if (errorList.size() > 0) {
-      throw (Exception)errorList.get(0);
-    }
-    
-
-    DebugUtil.DEBUG = false;
+    if (errorList.size() > 0) { throw (Exception) errorList.get(0); }
   }
 
   public static class L1Client {
@@ -98,18 +90,12 @@ public abstract class EhcacheGlobalEvictionTestApp extends ServerCrashingAppBase
     public static void main(String args[]) throws Exception {
       Logger rootLogger = Logger.getRootLogger();
       if (!rootLogger.getAllAppenders().hasMoreElements()) {
-          rootLogger.setLevel(org.apache.log4j.Level.DEBUG);
-          rootLogger.addAppender(new ConsoleAppender(
-                 new PatternLayout("%-5p [%t]: %m%n")));
+        rootLogger.setLevel(org.apache.log4j.Level.DEBUG);
+        rootLogger.addAppender(new ConsoleAppender(new PatternLayout("%-5p [%t]: %m%n")));
       }
-      
-      DebugUtil.DEBUG = true;
-
       int index = Integer.parseInt(args[0]);
       L1Client l1 = new L1Client(index);
       l1.execute();
-
-      DebugUtil.DEBUG = false;
     }
 
     public void execute() throws Exception {
@@ -139,7 +125,7 @@ public abstract class EhcacheGlobalEvictionTestApp extends ServerCrashingAppBase
 
       populateCache(cache, index, 4);
       barrier.barrier();
-      
+
       Assert.assertEquals("Client " + ManagerUtil.getClientID(), new Element("key04", "val04"), cache.get("key04"));
       Assert.assertEquals("Client " + ManagerUtil.getClientID(), new Element("key05", "val05"), cache.get("key05"));
       Assert.assertEquals("Client " + ManagerUtil.getClientID(), new Element("key06", "val06"), cache.get("key06"));
@@ -149,7 +135,7 @@ public abstract class EhcacheGlobalEvictionTestApp extends ServerCrashingAppBase
       Assert.assertEquals("Client " + ManagerUtil.getClientID(), 6, cache.getSize());
 
       barrier.barrier();
-      
+
       if (index == 0) {
         Thread.sleep(80000);
 
@@ -159,9 +145,9 @@ public abstract class EhcacheGlobalEvictionTestApp extends ServerCrashingAppBase
         Assert.assertTrue(cache.isExpired(new Element("key14", "val14")));
         Assert.assertTrue(cache.isExpired(new Element("key15", "val15")));
         Assert.assertTrue(cache.isExpired(new Element("key16", "val16")));
-        
+
         System.out.println("Cache content: " + cache);
-        
+
         Assert.assertEquals(0, cache.getSize());
       }
     }

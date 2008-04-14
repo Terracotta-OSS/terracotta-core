@@ -8,7 +8,6 @@ import org.apache.commons.io.FileUtils;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
-import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -16,7 +15,6 @@ import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tc.util.DebugUtil;
 import com.tc.util.TIMUtil;
 import com.tcclient.ehcache.TimeExpiryMap;
 
@@ -37,8 +35,6 @@ public class TimeExpiryMapGlobalEvictionTestApp extends ServerCrashingAppBase {
   }
 
   private void basicGlobalEvictionTest() throws Exception {
-    DebugUtil.DEBUG = true;
-
     Thread t1 = new Thread(new Runnable() {
       public void run() {
         try {
@@ -64,8 +60,6 @@ public class TimeExpiryMapGlobalEvictionTestApp extends ServerCrashingAppBase {
     t2.start();
 
     Thread.sleep(60000);
-
-    DebugUtil.DEBUG = false;
   }
 
   protected ExtraL1ProcessControl spawnNewClient(String clientId, Class clientClass, String[] mainArgs)
@@ -105,8 +99,8 @@ public class TimeExpiryMapGlobalEvictionTestApp extends ServerCrashingAppBase {
     spec.addRoot("dataRoot", "dataRoot");
 
     config.addModule(TIMUtil.EHCACHE_1_2_4, TIMUtil.getVersion(TIMUtil.EHCACHE_1_2_4)); // this is just a quick way
-                                                                                            // to add TimeExpiryMap to
-                                                                                            // the
+    // to add TimeExpiryMap to
+    // the
     // instrumentation list
   }
 
@@ -124,13 +118,9 @@ public class TimeExpiryMapGlobalEvictionTestApp extends ServerCrashingAppBase {
     }
 
     public static void main(String args[]) throws Exception {
-      DebugUtil.DEBUG = true;
-
       int index = Integer.parseInt(args[0]);
       L1Client l1 = new L1Client(index);
       l1.execute();
-
-      DebugUtil.DEBUG = false;
     }
 
     public void execute() throws Exception {
@@ -233,10 +223,6 @@ public class TimeExpiryMapGlobalEvictionTestApp extends ServerCrashingAppBase {
 
     protected final synchronized void processExpired(Object key) {
       numOfEvicted++;
-      if (DebugUtil.DEBUG) {
-        System.err.println("Client " + ManagerUtil.getClientID() + " expiring ... key: " + key + ", numOfExpired: "
-                           + numOfEvicted);
-      }
     }
 
     public synchronized int getNumOfEvicted() {

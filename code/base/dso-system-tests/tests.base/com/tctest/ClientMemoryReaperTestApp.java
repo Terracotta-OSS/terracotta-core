@@ -10,7 +10,6 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tc.util.DebugUtil;
 import com.tctest.restart.system.ObjectDataTestApp;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
@@ -48,8 +47,6 @@ public class ClientMemoryReaperTestApp extends AbstractErrorCatchingTransparentA
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config, Map optionalAttributes) {
-    DebugUtil.DEBUG = true;
-
     boolean isSynchronousWrite = false;
     if (optionalAttributes.size() > 0) {
       isSynchronousWrite = Boolean.valueOf((String) optionalAttributes.get(ObjectDataTestApp.SYNCHRONOUS_WRITE))
@@ -69,22 +66,13 @@ public class ClientMemoryReaperTestApp extends AbstractErrorCatchingTransparentA
     testClass = ClientMemoryReaperTestApp.Node.class.getName();
     spec = config.getOrCreateSpec(testClass);
     config.addTransient(testClass, "transientBytes");
-
-    DebugUtil.DEBUG = false;
   }
 
   private static void addWriteAutolock(DSOClientConfigHelper config, boolean isSynchronousWrite, String methodPattern) {
     if (isSynchronousWrite) {
       config.addSynchronousWriteAutolock(methodPattern);
-      debugPrintln("***** doing a synchronous write");
     } else {
       config.addWriteAutolock(methodPattern);
-    }
-  }
-
-  private static void debugPrintln(String s) {
-    if (DebugUtil.DEBUG) {
-      System.err.println(s);
     }
   }
 

@@ -4,28 +4,24 @@
  */
 package com.tcclient.cache;
 
-import com.tc.object.bytecode.ManagerUtil;
-import com.tc.util.DebugUtil;
-
 import java.io.Serializable;
 
 /**
- * Wrapper for a data value in the cache data store.  This wrapper knows 
- * additional information about when the item was created, when it was last 
- * used, when it expires, and whether it is still valid.
+ * Wrapper for a data value in the cache data store. This wrapper knows additional information about when the item was
+ * created, when it was last used, when it expires, and whether it is still valid.
  */
 public class CacheData implements Serializable {
   // Config
-  private final CacheConfig    config;
-  
+  private final CacheConfig config;
+
   // State (not modified)
-  private final Object         value;
-  private final Timestamp      timestamp;  // timestamp contains the time when the CacheData will be expired
-  private final long           createTime;  // saved at creation time
+  private final Object      value;
+  private final Timestamp   timestamp;               // timestamp contains the time when the CacheData will be expired
+  private final long        createTime;              // saved at creation time
 
   // State (modifiable) - guarded by synchronized methods on "this"
-  private transient long lastAccessedTimeInMillis;
-  private boolean        invalidated;
+  private transient long    lastAccessedTimeInMillis;
+  private boolean           invalidated;
 
   /**
    * @param value Data value, should never null (checked by caller)
@@ -44,20 +40,16 @@ public class CacheData implements Serializable {
   }
 
   synchronized boolean isValid() {
-    logDebug("Client " + ManagerUtil.getClientID() + " value: " + value + " isValid -- invalidated: " + invalidated);
     if (invalidated) { return false; }
     return hasNotExpired() && isStillAlive();
   }
 
   private boolean hasNotExpired() {
-    logDebug("Client " + ManagerUtil.getClientID() + " hasNotExpired -- maxIdleTimeout: " + config.getMaxIdleTimeoutMillis() + " idleMillis: " + getIdleMillis());
     if (config.getMaxIdleTimeoutMillis() <= 0) { return true; }
     return getIdleMillis() < config.getMaxIdleTimeoutMillis();
   }
 
   private boolean isStillAlive() {
-    logDebug("Client " + ManagerUtil.getClientID() + " isStillAlive -- maxTTL: " + config.getMaxTTLMillis() + " currentMillis: " + System.currentTimeMillis() + " timeToDie: " + getTimeToDieMillis());
-
     if (config.getMaxTTLMillis() <= 0) { return true; }
     return System.currentTimeMillis() <= getTimeToDieMillis();
   }
@@ -101,9 +93,4 @@ public class CacheData implements Serializable {
     return this.value.equals(cd.value);
   }
 
-  private void logDebug(String msg) {
-    if (DebugUtil.DEBUG) {
-      System.err.println(msg);
-    }
-  }
 }

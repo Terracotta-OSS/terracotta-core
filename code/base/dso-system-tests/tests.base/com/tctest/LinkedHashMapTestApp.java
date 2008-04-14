@@ -13,7 +13,6 @@ import com.tc.object.util.ReadOnlyException;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tc.util.DebugUtil;
 import com.tctest.restart.system.ObjectDataTestApp;
 import com.tctest.runner.AbstractTransparentApp;
 
@@ -165,8 +164,6 @@ public class LinkedHashMapTestApp extends AbstractTransparentApp {
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config, Map optionalAttributes) {
-    DebugUtil.DEBUG = true;
-
     boolean isSynchronousWrite = false;
     if (optionalAttributes.size() > 0) {
       isSynchronousWrite = Boolean.valueOf((String) optionalAttributes.get(ObjectDataTestApp.SYNCHRONOUS_WRITE))
@@ -188,22 +185,13 @@ public class LinkedHashMapTestApp extends AbstractTransparentApp {
 
     spec.addRoot("root", "root");
     spec.addRoot("barrier", "barrier");
-
-    DebugUtil.DEBUG = false;
   }
 
   private static void addWriteAutolock(DSOClientConfigHelper config, boolean isSynchronousWrite, String methodPattern) {
     if (isSynchronousWrite) {
       config.addSynchronousWriteAutolock(methodPattern);
-      debugPrintln("***** doing a synchronous write");
     } else {
       config.addWriteAutolock(methodPattern);
-    }
-  }
-
-  private static void debugPrintln(String s) {
-    if (DebugUtil.DEBUG) {
-      System.err.println(s);
     }
   }
 

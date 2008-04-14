@@ -18,7 +18,6 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.simulator.listener.OutputListener;
 import com.tc.util.Assert;
-import com.tc.util.DebugUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.ArrayList;
@@ -126,8 +125,6 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config, Map optionalAttributes) {
-    DebugUtil.DEBUG = true;
-
     boolean isSynchronousWrite = false;
     if (optionalAttributes.size() > 0) {
       isSynchronousWrite = Boolean.valueOf((String) optionalAttributes.get(ObjectDataTestApp.SYNCHRONOUS_WRITE))
@@ -210,22 +207,13 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
     // IDProvider config
     String nextIDExpression = "* " + idProviderClassname + ".nextID(..)";
     addWriteAutolock(config, isSynchronousWrite, nextIDExpression);
-
-    DebugUtil.DEBUG = false;
   }
 
   private static void addWriteAutolock(DSOClientConfigHelper config, boolean isSynchronousWrite, String methodPattern) {
     if (isSynchronousWrite) {
       config.addSynchronousWriteAutolock(methodPattern);
-      debugPrintln("***** doing a synchronous write");
     } else {
       config.addWriteAutolock(methodPattern);
-    }
-  }
-
-  private static void debugPrintln(String s) {
-    if (DebugUtil.DEBUG) {
-      System.err.println(s);
     }
   }
 

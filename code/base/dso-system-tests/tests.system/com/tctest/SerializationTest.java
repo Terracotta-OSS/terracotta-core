@@ -17,7 +17,6 @@ import com.tc.object.tools.BootJar;
 import com.tc.object.tx.MockTransactionManager;
 import com.tc.process.LinkedJavaProcess;
 import com.tc.process.StreamCollector;
-import com.tc.util.DebugUtil;
 import com.tc.util.runtime.Vm;
 
 import java.io.ByteArrayInputStream;
@@ -73,7 +72,6 @@ public class SerializationTest extends BaseDSOTestCase {
   }
 
   public void testSerialization() throws Exception {
-    DebugUtil.DEBUG = true;
     BootJar bj = BootJar.getDefaultBootJarForReading();
 
     Set specs = bj.getAllPreInstrumentedClasses();
@@ -81,7 +79,6 @@ public class SerializationTest extends BaseDSOTestCase {
       String className = (String) iter.next();
       checkSerialization(className);
     }
-    DebugUtil.DEBUG = false;
   }
 
   public void testCollectionInnerClasses() throws Exception {

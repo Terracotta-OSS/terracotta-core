@@ -14,7 +14,6 @@ import com.tc.object.util.ReadOnlyException;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tc.util.DebugUtil;
 import com.tc.util.runtime.Vm;
 import com.tctest.runner.AbstractTransparentApp;
 
@@ -77,9 +76,6 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   public void run() {
     try {
       int index = barrier.await();
-      if (index == 0) {
-        DebugUtil.DEBUG = true;
-      }
       barrier.await();
 
       unsharedToSharedTest(index, new ReentrantReadWriteLock());
@@ -96,9 +92,6 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       localLock = new ReentrantReadWriteLock(true);
       singleNodeConditionVariableTesting(index, localLock.writeLock(), localLock.writeLock().newCondition());
 
-      if (index == 0) {
-        DebugUtil.DEBUG = false;
-      }
       barrier.await();
 
     } catch (Throwable t) {
@@ -718,8 +711,6 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     }
     barrier.await();
 
-    logDebug("Client id: " + ManagerUtil.getClientID() + ", index: " + index);
-
     if (index == 0) {
       writeLock.lock();
       try {
@@ -770,7 +761,6 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       boolean isLocked = readLock.tryLock(1, TimeUnit.SECONDS);
       assertTryLockResult(!isLocked);
       unLockIfLocked(readLock, isLocked);
-      logDebug("Client " + ManagerUtil.getClientID() + " in tryReadLockMultiNodeTest last test, isLocked: " + isLocked);
     }
     barrier.await();
   }
@@ -876,10 +866,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
         Q.add(new WorkItem(String.valueOf(i)));
         if (i % 2 == 0) {
           condition.signalAll();
-          logDebug("PUTTER-" + id + " signalAll");
         } else {
           condition.signal();
-          logDebug("PUTTER-" + id + " signal");
         }
       } finally {
         lock.unlock();
@@ -891,7 +879,6 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       try {
         Q.add(WorkItem.STOP);
         condition.signalAll();
-        logDebug("PUTTER-" + id + " putting STOP in queue");
       } finally {
         lock.unlock();
       }
@@ -907,24 +894,19 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       lock.lock();
       try {
         while (Q.size() == 0) {
-          logDebug("GETTER- " + id + " " + ManagerUtil.getClientID() + " Q size: " + Q.size());
           int choice = i % 4;
           switch (choice) {
             case 0:
-              logDebug("GETTER- " + id + " " + ManagerUtil.getClientID() + " await");
               condition.await();
               break;
             case 1:
-              logDebug("GETTER- " + id + ManagerUtil.getClientID() + " awaitUninterruptibly");
               condition.awaitUninterruptibly();
               break;
             case 2:
-              logDebug("GETTER- " + id + ManagerUtil.getClientID() + " await millis");
               long millis = random.nextInt(10000);
               condition.await(millis, TimeUnit.MILLISECONDS);
               break;
             case 3:
-              logDebug("GETTER- " + id + ManagerUtil.getClientID() + " await nanos");
               long nanos = random.nextInt(10000);
               condition.awaitNanos(nanos);
               break;
@@ -1349,12 +1331,6 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
 
   private void printTimeStamp(String methodName) throws Exception {
     System.err.println("Running " + methodName + " -- time: " + (new Date()));
-  }
-
-  private void logDebug(String msg) {
-    if (DebugUtil.DEBUG) {
-      System.err.println(msg);
-    }
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {

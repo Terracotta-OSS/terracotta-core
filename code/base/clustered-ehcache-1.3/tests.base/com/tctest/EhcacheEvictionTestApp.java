@@ -15,7 +15,6 @@ import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tc.util.DebugUtil;
 import com.tc.util.TIMUtil;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
@@ -118,8 +117,6 @@ public class EhcacheEvictionTestApp extends AbstractErrorCatchingTransparentApp 
   }
 
   private void runSimplePutTimeToLiveTimeout(int index) throws Throwable {
-    DebugUtil.DEBUG = true;
-    
     if (index == 1) {
       doPut();
     }
@@ -141,8 +138,7 @@ public class EhcacheEvictionTestApp extends AbstractErrorCatchingTransparentApp 
     doGetNull(index);
 
     barrier.barrier();
-    
-    DebugUtil.DEBUG = false;
+
   }
 
   private void runSimplePutSimpleGet(int index) throws Throwable {

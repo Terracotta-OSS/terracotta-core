@@ -1,17 +1,16 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
 import com.tc.object.bytecode.Manageable;
-import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tc.util.DebugUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.HashMap;
@@ -338,26 +337,15 @@ public class ConcurrentHashMapLoadTestApp extends AbstractTransparentApp {
     }
 
     barrier.await();
-    
-    if (DebugUtil.DEBUG) {
-      System.err.println("Index: " + index + ", map size: " + mapRoot.size());
-      System.err.println("Index: " + index + ", map: " + mapRoot);
-    }
 
     for (int i = 0; i < NUM_OF_PUT; i++) {
       Assert.assertEquals(new HashValue(i), mapRoot.get(new HashKey(i)));
-    }
-    
-    if (DebugUtil.DEBUG) {
-      System.err.println("Index: " + index + ", map size: " + mapRoot.size());
-      System.err.println("Index: " + index + " exiting last barrier in testPutMany.");
     }
 
     barrier.await();
   }
 
   private void testPutAndRemoveMany(int index) throws Exception {
-    DebugUtil.DEBUG = true;
     clearMapRoot(index);
 
     if (index == 0) {
@@ -371,7 +359,7 @@ public class ConcurrentHashMapLoadTestApp extends AbstractTransparentApp {
         while (o == null) {
           o = mapRoot.remove(new HashKey(i));
         }
-          
+
         Assert.assertEquals(o, new HashValue(i));
         System.out.println("Remove: " + i);
       }
@@ -379,20 +367,15 @@ public class ConcurrentHashMapLoadTestApp extends AbstractTransparentApp {
 
     barrier.await();
 
-    if (DebugUtil.DEBUG) {
-      System.err.println("Node id: " + ManagerUtil.getClientID() + " -- " + index + ", size of concurrentHashMap: " + mapRoot.size());
-    }
     Assert.assertTrue(mapRoot.isEmpty());
 
     barrier.await();
-    
-    DebugUtil.DEBUG = false;
   }
 
   private void clearMapRoot(int index) throws Exception {
     if (index == 0) {
       System.err.println("In clearMapRoot");
-      
+
       mapRoot.clear();
     }
     barrier.await();
@@ -442,7 +425,7 @@ public class ConcurrentHashMapLoadTestApp extends AbstractTransparentApp {
     public int getInt() {
       return this.i;
     }
-    
+
     public String toString() {
       return super.toString() + ", i: " + i;
     }
@@ -459,7 +442,7 @@ public class ConcurrentHashMapLoadTestApp extends AbstractTransparentApp {
     public int getInt() {
       return this.i;
     }
-    
+
     public String toString() {
       return super.toString() + ", i: " + i;
     }
@@ -486,7 +469,7 @@ public class ConcurrentHashMapLoadTestApp extends AbstractTransparentApp {
       if (!(obj instanceof HashKey)) return false;
       return ((HashKey) obj).i == i;
     }
-    
+
     public String toString() {
       return super.toString() + ", i: " + i;
     }

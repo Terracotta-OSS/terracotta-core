@@ -5,14 +5,12 @@
 package com.tctest;
 
 import com.tc.exception.TCRuntimeException;
-import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tc.util.DebugUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.ArrayList;
@@ -201,8 +199,6 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
   }
 
   private void basicSet(int index, MyFutureTask task) throws Exception {
-    DebugUtil.DEBUG = true;
-    debugLog(ManagerUtil.getClientID() + " running basicSet -- index: " + index);
     if (index == 0) {
       root.setTask(task);
     }
@@ -222,7 +218,6 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
     Assert.assertTrue(root.getTask().isDone());
 
     barrier.await();
-    DebugUtil.DEBUG = false;
   }
 
   private void basicRunAndResetException(int index, MyFutureTask task) throws Exception {
@@ -379,32 +374,17 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
   }
 
   private void basicRunTask(int index, FutureTask task) throws Exception {
-    DebugUtil.DEBUG = true;
-    debugLog("Client " + ManagerUtil.getClientID() + " running basicRunTask");
     if (index == 0) {
       root.setTask(task);
     }
-
     barrier.await();
 
     if (index == 1) {
-
       root.getTask().run();
     }
-
-    debugLog("Client " + ManagerUtil.getClientID() + " trying task.get()");
     Assert.assertEquals(root, root.getTask().get());
-
     Assert.assertTrue(root.getTask().isDone());
-
     barrier.await();
-    DebugUtil.DEBUG = false;
-  }
-
-  private void debugLog(String msg) {
-    if (DebugUtil.DEBUG) {
-      System.err.println(msg);
-    }
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {

@@ -13,7 +13,6 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tc.util.DebugUtil;
 import com.tc.util.TIMUtil;
 import com.tcclient.ehcache.TimeExpiryMap;
 import com.tctest.runner.AbstractTransparentApp;
@@ -41,7 +40,6 @@ public class TimeExpiryMapTestApp extends AbstractTransparentApp {
   }
 
   private void basicMapTTLTest(int index) throws Exception {
-    DebugUtil.DEBUG = true;
     if (index == 0) {
       dataRoot = new DataRoot();
       dataRoot.setMap(new MockTimeExpiryMap(3, 50, 8));
@@ -49,7 +47,6 @@ public class TimeExpiryMapTestApp extends AbstractTransparentApp {
 
     barrier.barrier();
 
-    long st = System.currentTimeMillis();
     if (index == 0) {
       dataRoot.put("key1", "val1");
       dataRoot.put("key2", "val2");
@@ -58,10 +55,6 @@ public class TimeExpiryMapTestApp extends AbstractTransparentApp {
 
     barrier.barrier();
 
-    long en = System.currentTimeMillis();
-    if (DebugUtil.DEBUG) {
-      System.err.println("Client " + ManagerUtil.getClientID() + ", index: " + index + " time spent: " + (en - st));
-    }
     Assert.assertEquals(3, dataRoot.size());
     Assert.assertFalse("Client " + ManagerUtil.getClientID(), dataRoot.isExpired("key1"));
     Assert.assertFalse("Client " + ManagerUtil.getClientID(), dataRoot.isExpired("key2"));
@@ -83,12 +76,9 @@ public class TimeExpiryMapTestApp extends AbstractTransparentApp {
     Assert.assertEquals("Client " + ManagerUtil.getClientID(), 3, dataRoot.getNumOfExpired());
 
     barrier.barrier();
-    DebugUtil.DEBUG = false;
   }
 
   private void basicMapTest(int index) throws Exception {
-    DebugUtil.DEBUG = true;
-
     if (index == 0) {
       dataRoot.setMap(new MockTimeExpiryMap(1, 5, 10));
     }
@@ -121,12 +111,9 @@ public class TimeExpiryMapTestApp extends AbstractTransparentApp {
     Assert.assertEquals(3, dataRoot.getNumOfExpired());
 
     barrier.barrier();
-
-    DebugUtil.DEBUG = false;
   }
 
   private void expiredItemsTest(int index) throws Exception {
-    DebugUtil.DEBUG = true;
     if (index == 0) {
       dataRoot.setMap(new MockTimeExpiryMap(1, 5, 10));
     }
@@ -165,7 +152,6 @@ public class TimeExpiryMapTestApp extends AbstractTransparentApp {
     }
 
     barrier.barrier();
-    DebugUtil.DEBUG = false;
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
@@ -183,8 +169,8 @@ public class TimeExpiryMapTestApp extends AbstractTransparentApp {
     spec.addRoot("dataRoot", "dataRoot");
 
     config.addModule(TIMUtil.EHCACHE_1_2_4, TIMUtil.getVersion(TIMUtil.EHCACHE_1_2_4)); // this is just a quick way
-                                                                                            // to add TimeExpiryMap to
-                                                                                            // the instrumentation list
+    // to add TimeExpiryMap to
+    // the instrumentation list
   }
 
   private static class DataRoot {
@@ -232,10 +218,6 @@ public class TimeExpiryMapTestApp extends AbstractTransparentApp {
 
     protected final synchronized void processExpired(Object key) {
       numOfExpired++;
-      if (DebugUtil.DEBUG) {
-        System.err.println("Client " + ManagerUtil.getClientID() + " expiring ... key: " + key + ", numOfExpired: "
-                           + numOfExpired);
-      }
     }
 
     public synchronized int getNumOfExpired() {
