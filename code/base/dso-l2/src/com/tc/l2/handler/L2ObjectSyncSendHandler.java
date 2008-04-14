@@ -42,6 +42,10 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
                                                                               .getProperties()
                                                                               .getInt(
                                                                                       TCPropertiesConsts.L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_MAXSLEEPSECONDS);
+  private static final long          TIME_TO_THROTTLE_ON_OBJECT_SEND      = TCPropertiesImpl
+                                                                              .getProperties()
+                                                                              .getLong(
+                                                                                       TCPropertiesConsts.L2_OBJECTMANAGER_PASSIVE_SYNC_THROTTLE_TIME);
 
   private final L2ObjectStateManager objectStateManager;
   private GroupManager               groupManager;
@@ -59,6 +63,7 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
       ManagedObjectSyncContext mosc = (ManagedObjectSyncContext) context;
       if (sendObjects(mosc)) {
         if (mosc.hasMore()) {
+          throttleOnObjectSync();
           syncRequestSink.add(new SyncObjectsRequest(mosc.getNodeID()));
         }
       }
@@ -70,8 +75,18 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
     }
   }
 
+  private synchronized void throttleOnObjectSync() {
+    if (TIME_TO_THROTTLE_ON_OBJECT_SEND > 0) {
+      try {
+        this.wait(TIME_TO_THROTTLE_ON_OBJECT_SEND);
+      } catch (InterruptedException e) {
+        throw new AssertionError(e);
+      }
+    }
+  }
+
   private void sendAcks(ServerTxnAckMessage ackMsg) {
-    if (TXN_ACK_THROTTLING_ENABLED) throttle();
+    if (TXN_ACK_THROTTLING_ENABLED) throttleOnTxnAck();
     try {
       this.groupManager.sendTo(ackMsg.getDestinationID(), ackMsg);
     } catch (GroupException e) {
@@ -85,7 +100,7 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
   }
 
   // A Simple way to throttle Active from Passive when the number of pending txns reaches the threshold
-  private synchronized void throttle() {
+  private synchronized void throttleOnTxnAck() {
     int totalPendingTxns = serverTxnMgr.getTotalPendingTransactionsCount();
     int factor = totalPendingTxns / TOTAL_PENDING_TRANSACTIONS_THRESHOLD;
     if (factor < 1) {
