@@ -137,7 +137,10 @@ public class ConfigLoader {
             // DEV-458: if the class being added to the boot jar defines locks/distributed methods/etc. it creates a
             // spec but does not pre-instrument it. This makes sure that the adapted code gets into the boot jar in
             // this case.
-            spec.markPreInstrumented();
+            // DEV-1110: ignore java.lang.Object 
+            if(!"java.lang.Object".equals(className)) {
+              spec.markPreInstrumented();
+            }
           }
         }
       }
