@@ -12,7 +12,7 @@ public class Jdk {
 
   public static final Jdk               JDK_14      = new Jdk("1.4", "J2SE-1.4", "J2SE-1.4");
   public static final Jdk               JDK_15      = new Jdk("1.5", "J2SE-1.5", "J2SE-1.5");
-  public static final Jdk               JDK_16      = new Jdk("1.6", "JavaSE-1.6", "J2SE-1.6");
+  public static final Jdk               JDK_16      = new Jdk("1.6", "JavaSE-1.6", "JavaSE-1.6");
 
   private final String                  raw;
   private final String                  eclipse;

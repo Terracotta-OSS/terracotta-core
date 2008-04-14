@@ -6,5 +6,5 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-common"/>
-	<classpathentry kind="output" path="bin"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-statistics-api"/>
 </classpath>
