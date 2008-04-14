@@ -12,6 +12,8 @@ public interface TCProperties {
   int getInt(String key, int defaultValue);
 
   long getLong(String key);
+  
+  long getLong(String key, long defaultValue);
 
   boolean getBoolean(String key);
 

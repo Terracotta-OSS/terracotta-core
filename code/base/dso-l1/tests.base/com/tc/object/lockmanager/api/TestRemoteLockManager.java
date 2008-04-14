@@ -45,6 +45,10 @@ public class TestRemoteLockManager implements RemoteLockManager {
   public void setClientLockManager(ClientLockManager lockManager) {
     this.lockManager = lockManager;
   }
+  
+  public ClientLockManager getClientLockManager() {
+    return lockManager;
+  }
 
   public synchronized int getLockRequestCount() {
     return this.lockRequests;

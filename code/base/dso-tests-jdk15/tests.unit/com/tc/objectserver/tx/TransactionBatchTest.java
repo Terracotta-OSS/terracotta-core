@@ -611,6 +611,10 @@ public class TransactionBatchTest extends TestCase {
       throw new AssertionError();
     }
 
+    public long getLong(String key, long defaultValue) {
+      throw new AssertionError();
+   }
+
   }
 
 }

@@ -13,6 +13,7 @@ import com.tc.management.L2LockStatsManager;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.LockRequest;
+import com.tc.object.lockmanager.api.NullClientLockManagerConfig;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.lockmanager.api.WaitListener;
 import com.tc.object.session.TestSessionManager;
@@ -40,7 +41,8 @@ public class ClientServerLockManagerTest extends TestCase {
     super.setUp();
     sessionManager = new TestSessionManager();
     glue = new ClientServerLockManagerGlue(sessionManager);
-    clientLockManager = new ClientLockManagerImpl(new NullTCLogger(), glue, sessionManager, ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER);
+    clientLockManager = new ClientLockManagerImpl(new NullTCLogger(), glue, sessionManager, ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER, 
+                                                  new NullClientLockManagerConfig());
 
     serverLockManager = new LockManagerImpl(new NullChannelManager(), L2LockStatsManager.NULL_LOCK_STATS_MANAGER);
     serverLockManager.setLockPolicy(LockManagerImpl.ALTRUISTIC_LOCK_POLICY);

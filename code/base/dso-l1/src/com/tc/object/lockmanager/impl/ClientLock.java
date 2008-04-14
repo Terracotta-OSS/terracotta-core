@@ -1043,11 +1043,11 @@ class ClientLock implements TimerCallback, LockFlushCallback {
 
   // This method is synchronized such that we can quickly inspect for potential timeouts and only on possible
   // timeouts we grab the lock.
-  public boolean timedout() {
+  public boolean timedout(long timeoutInterval) {
     if (useCount != 0) { return false; }
     synchronized (this) {
       return (holders.isEmpty() && greediness.isGreedy() && (pendingLockRequests.size() == 0) && (useCount == 0) && ((System
-          .currentTimeMillis() - timeUsed) > ClientLockManagerImpl.TIMEOUT));
+          .currentTimeMillis() - timeUsed) > timeoutInterval));
     }
   }
 

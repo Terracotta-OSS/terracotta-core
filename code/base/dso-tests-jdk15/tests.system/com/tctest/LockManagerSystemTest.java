@@ -29,6 +29,7 @@ import com.tc.object.gtx.TestClientGlobalTransactionManager;
 import com.tc.object.handler.LockResponseHandler;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
+import com.tc.object.lockmanager.api.NullClientLockManagerConfig;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.lockmanager.impl.ClientLockManagerImpl;
 import com.tc.object.lockmanager.impl.RemoteLockManagerImpl;
@@ -70,8 +71,10 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     TestRemoteLockManagerImpl rmtLockManager = new TestRemoteLockManagerImpl(new TestLockRequestMessageFactory(),
                                                                              new TestClientGlobalTransactionManager(),
                                                                              clientLockRequestQueue);
+
     clientLockManager = new ClientLockManagerImpl(logger, rmtLockManager, new NullSessionManager(),
-                                                  ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER);
+                                                  ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
+                                                   new NullClientLockManagerConfig());
 
     LockManager serverLockManager = new LockManagerImpl(new MockChannelManager(), new MockL2LockStatsManager());
 

@@ -243,6 +243,12 @@ public class TCPropertiesImpl implements TCProperties {
     String val = getProperty(key);
     return Long.valueOf(val).longValue();
   }
+  
+  public long getLong(String key, long defValue) {
+    String val = getProperty(key, true);
+    if (val == null) return defValue;
+    else return Long.parseLong(val);
+  }
 
   public float getFloat(String key) {
     String val = getProperty(key);

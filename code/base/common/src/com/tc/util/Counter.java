@@ -39,6 +39,15 @@ public class Counter {
   public synchronized int get() {
     return count;
   }
+  
+  public synchronized void reset() {
+    reset(0);
+  }
+  
+  public synchronized void reset(int initialValue) {
+    this.count = initialValue;
+    notifyAll();
+  }
 
   public synchronized void waitUntil(int value) {
     while (this.count != value) {

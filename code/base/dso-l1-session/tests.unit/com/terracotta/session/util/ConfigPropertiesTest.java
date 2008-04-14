@@ -272,6 +272,10 @@ public class ConfigPropertiesTest extends TestCase {
     public int getInt(String key, int defaultValue) {
       return 0;
     }
+    
+    public long getLong(String key, long defaultValue) {
+      return 0;
+    }
 
     public boolean getBoolean(String key, boolean defaultValue) {
       return getBoolean(key);

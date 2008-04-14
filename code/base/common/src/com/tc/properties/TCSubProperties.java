@@ -51,6 +51,10 @@ class TCSubProperties implements TCProperties {
   public long getLong(String key) {
     return properties.getLong(getActualKey(key));
   }
+  
+  public long getLong(String key, long defaultValue) {
+    return properties.getLong(getActualKey(key), defaultValue);
+  }
 
   public String getProperty(String key, boolean missingOkay) {
     return properties.getProperty(getActualKey(key), missingOkay);

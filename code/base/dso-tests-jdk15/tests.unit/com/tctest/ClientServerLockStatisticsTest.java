@@ -34,6 +34,7 @@ import com.tc.net.protocol.tcm.TCMessageSink;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
+import com.tc.object.lockmanager.api.NullClientLockManagerConfig;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.lockmanager.impl.ClientLockManagerImpl;
 import com.tc.object.lockmanager.impl.ClientServerLockStatManagerGlue;
@@ -87,7 +88,7 @@ public class ClientServerLockStatisticsTest extends TCTestCase {
     clientServerGlue = new ClientServerLockStatManagerGlue(sessionManager, sink);
     clientLockStatManager = new ClientLockStatisticsManagerImpl();
     clientLockManager = new ClientLockManagerImpl(new NullTCLogger(), clientServerGlue, sessionManager,
-                                                  clientLockStatManager);
+                                                  clientLockStatManager, new NullClientLockManagerConfig());
 
     DSOChannelManager nullChannelManager = new NullChannelManager();
     serverLockStatManager = new L2LockStatisticsManagerImpl();
