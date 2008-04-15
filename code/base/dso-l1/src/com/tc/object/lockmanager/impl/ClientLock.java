@@ -1419,6 +1419,16 @@ class ClientLock implements TimerCallback, LockFlushCallback {
   }
 
   private static class Greediness {
+    /**
+     * The class Greediness models state transition among various states a client lock could be in. A client lock could be in
+     * one of the several states:
+     * 
+     * NOT_GREEDY -> GREEDY -> RECALLED -------------------------------
+     *                            |                                   |
+     *                            |                                   V
+     *                            |-------> GREEDY LEASE  ---> RECALL IN PROGRESS
+     *  
+     */
     private static final State NOT_GREEDY         = new State("NOT GREEDY");
     private static final State GREEDY             = new State("GREEDY");
     private static final State RECALLED           = new State("RECALLED");
@@ -1449,7 +1459,17 @@ class ClientLock implements TimerCallback, LockFlushCallback {
         throw new AssertionError("Performing recall in state " + state);
       }
       this.recallLevel |= rlevel;
-      state = RECALLED;
+      // It is possible that one thread in a VM requests a READ lock, the server grants the lock
+      // greedily with a read level, followed by a recall with a lease time. The state of the lock thus
+      // moves to GREEDY LEASE. The other thread comes in and tries to request a WRITE lock. Since the
+      // lock is granted greedily READ, a recall needs to be issued. Since the lock is already in
+      // GREEDY LEASE, we do not need to move the state to RECALLED again because a GREEDY LEASE state
+      // implies the lock has already been recalled. Hence, if the lock is in GREEDY LEASE state, it
+      // does not need to move the state to the RECALLED state.
+      // When the GREEDY LEASE timer expires, a recall commit will be issued.
+      if (state == GREEDY) {
+        state = RECALLED;
+      }
     }
 
     void leaseTimeout() {
