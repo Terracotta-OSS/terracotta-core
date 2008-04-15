@@ -16,8 +16,8 @@ import com.tc.statistics.store.h2.H2StatisticsStoreImpl;
 import java.io.File;
 
 public class StatisticsGathererSubSystem {
-  private final static TCLogger logger        = CustomerLogging.getDSOGenericLogger();
-  private final static TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
+  private final static TCLogger DSO_LOGGER = CustomerLogging.getDSOGenericLogger();
+  private final static TCLogger CONSOLE_LOGGER = CustomerLogging.getConsoleLogger();
 
   private volatile StatisticsStore statisticsStore;
   private volatile StatisticsGatherer statisticsGatherer;
@@ -40,8 +40,8 @@ public class StatisticsGathererSubSystem {
         + "Unable to create the directory '" + stat_path.getAbsolutePath() + "' for the statistics store.\n"
         + "The CVT gathering system will not be active on this node.\n"
         + "**************************************************************************************\n";
-      consoleLogger.error(msg);
-      logger.error(msg, e);
+      CONSOLE_LOGGER.error(msg);
+      DSO_LOGGER.error(msg, e);
       return false;
     }
     try {
@@ -59,8 +59,8 @@ public class StatisticsGathererSubSystem {
         + "A simple solution is to delete the directory in which the statistics are stored so\n"
         + "that a new version of the database can be installed.\n"
         + "**************************************************************************************\n";
-      consoleLogger.error(msg);
-      logger.error(msg, e);
+      CONSOLE_LOGGER.error(msg);
+      DSO_LOGGER.error(msg, e);
       return false;
     } catch (StatisticsStoreException e) {
       // TODO: needs to be properly written and put in a properties file
@@ -84,13 +84,13 @@ public class StatisticsGathererSubSystem {
         + "up when the statistics directory is configured by using %(tc.node-name) in the\n"
         + "statistics path.\n"
         + "**************************************************************************************\n";
-      consoleLogger.error(msg);
-      logger.error(msg, e);
+      CONSOLE_LOGGER.error(msg);
+      DSO_LOGGER.error(msg, e);
       return false;
     }
     String info_msg = "Statistics store: '" + stat_path.getAbsolutePath() + "'.";
-    consoleLogger.info(info_msg);
-    logger.info(info_msg);
+    CONSOLE_LOGGER.info(info_msg);
+    DSO_LOGGER.info(info_msg);
 
     statisticsGatherer = new StatisticsGathererImpl(statisticsStore);
 

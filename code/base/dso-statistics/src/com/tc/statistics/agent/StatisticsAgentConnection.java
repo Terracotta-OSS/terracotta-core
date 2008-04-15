@@ -3,14 +3,15 @@
  */
 package com.tc.statistics.agent;
 
-import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticsManager;
 import com.tc.statistics.agent.exceptions.StatisticsAgentConnectionAlreadyConnectedException;
 import com.tc.statistics.agent.exceptions.StatisticsAgentConnectionConnectErrorException;
 import com.tc.statistics.agent.exceptions.StatisticsAgentConnectionDisconnectErrorException;
 import com.tc.statistics.agent.exceptions.StatisticsAgentConnectionException;
+import com.tc.statistics.agent.exceptions.StatisticsAgentConnectionNotConnectedException;
 import com.tc.statistics.agent.exceptions.StatisticsAgentConnectionToNonAgentException;
 import com.tc.statistics.beans.StatisticsEmitterMBean;
 import com.tc.statistics.beans.StatisticsMBeanNames;
@@ -29,8 +30,7 @@ import javax.management.ObjectName;
 import javax.management.RuntimeMBeanException;
 
 public class StatisticsAgentConnection implements StatisticsManager {
-  private final static TCLogger logger = CustomerLogging.getDSOGenericLogger();
-  private final static TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
+  private final static TCLogger LOGGER = TCLogging.getLogger(StatisticsAgentConnection.class);
 
   private boolean isServerAgent = false;
   private MBeanServerConnection serverConnection = null;
@@ -78,8 +78,7 @@ public class StatisticsAgentConnection implements StatisticsManager {
     if (e.getCause() instanceof UnknownStatisticsSessionIdException) {
       UnknownStatisticsSessionIdException ussie = (UnknownStatisticsSessionIdException)e.getCause();
       String msg_full = msg + " for session '" + ussie.getSessionId() + "' on node '" + ussie.getNodeName() + "'";
-      logger.warn(msg_full);
-      consoleLogger.warn(msg_full);
+      LOGGER.warn(msg_full);
     } else {
       throw e;
     }
@@ -230,7 +229,7 @@ public class StatisticsAgentConnection implements StatisticsManager {
   }
 
   public void disconnect() throws StatisticsAgentConnectionException {
-    if (null == statManager) throw new AssertionError("the agent is not connected");
+    if (null == statManager) throw new StatisticsAgentConnectionNotConnectedException();
 
     try {
       serverConnection.removeNotificationListener(StatisticsMBeanNames.STATISTICS_EMITTER, listener);

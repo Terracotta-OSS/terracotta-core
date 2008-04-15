@@ -6,6 +6,7 @@ package com.tc.statistics.retrieval.impl;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.util.Assert;
@@ -16,7 +17,7 @@ import java.util.Collections;
 import java.util.Map;
 
 public class StatisticsRetrievalRegistryImpl implements StatisticsRetrievalRegistry {
-  private final static TCLogger logger = CustomerLogging.getDSOGenericLogger();
+  private final static TCLogger LOGGER = TCLogging.getLogger(StatisticsRetrievalRegistryImpl.class);
 
   private final Map instanceMap = new CopyOnWriteArrayMap();
 
@@ -54,13 +55,13 @@ public class StatisticsRetrievalRegistryImpl implements StatisticsRetrievalRegis
       StatisticRetrievalAction sra_cpu_action = (StatisticRetrievalAction)sra_cpu_class.newInstance();
       registerActionInstance(sra_cpu_action);
     } catch (NoClassDefFoundError e) {
-      logger.warn("Statistic retrieval action " + sraClassName + " wasn't activated since its definition couldn't be found.");
+      LOGGER.warn("Statistic retrieval action " + sraClassName + " wasn't activated since its definition couldn't be found.");
     } catch (ClassNotFoundException e) {
-      logger.warn("Statistic retrieval action " + sraClassName + " wasn't activated since it couldn't be found in the classpath.");
+      LOGGER.warn("Statistic retrieval action " + sraClassName + " wasn't activated since it couldn't be found in the classpath.");
     } catch (UnsupportedClassVersionError e) {
-      logger.warn("Statistic retrieval action " + sraClassName + " wasn't activated since it is was compiled for a later JVM : " + e.getMessage() + ".");
+      LOGGER.warn("Statistic retrieval action " + sraClassName + " wasn't activated since it is was compiled for a later JVM : " + e.getMessage() + ".");
     } catch (Exception e) {
-      throw new TCRuntimeException("Unexpected error while instantiating statistic retrieval action " + sraClassName, e);
+      LOGGER.warn("Unexpected error while instantiating statistic retrieval action " + sraClassName, e);
     }
   }
 }

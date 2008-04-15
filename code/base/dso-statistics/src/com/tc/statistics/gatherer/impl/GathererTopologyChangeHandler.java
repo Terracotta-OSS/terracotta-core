@@ -11,6 +11,8 @@ import java.util.Iterator;
 import java.util.Map;
 
 public class GathererTopologyChangeHandler implements TopologyChangeHandler {
+  private static final long serialVersionUID = 3359131234179021690L;
+
   private volatile boolean enabled = false;
   private volatile String sessionId = null;
   private volatile String[] enabledStatistics = null;
@@ -31,7 +33,7 @@ public class GathererTopologyChangeHandler implements TopologyChangeHandler {
     return sessionId;
   }
 
-  public void setSessionId(String sessionId) {
+  public void setSessionId(final String sessionId) {
     if (this.sessionId != null &&
         !this.sessionId.equals(sessionId)) {
       synchronized (sessionConfigParams) {
@@ -45,7 +47,7 @@ public class GathererTopologyChangeHandler implements TopologyChangeHandler {
     return enabledStatistics;
   }
 
-  public void setEnabledStatistics(String[] enabledStatistics) {
+  public void setEnabledStatistics(final String[] enabledStatistics) {
     this.enabledStatistics = enabledStatistics;
   }
 
@@ -73,7 +75,7 @@ public class GathererTopologyChangeHandler implements TopologyChangeHandler {
     }
   }
 
-  public void agentAdded(StatisticsManager agent) {
+  public void agentAdded(final StatisticsManager agent) {
     if (enabled) {
       agent.enable();
     } else {

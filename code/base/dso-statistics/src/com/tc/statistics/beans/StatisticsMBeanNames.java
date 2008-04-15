@@ -3,6 +3,7 @@
  */
 package com.tc.statistics.beans;
 
+import com.tc.exception.TCRuntimeException;
 import com.tc.management.TerracottaManagement;
 
 import javax.management.MalformedObjectNameException;
@@ -21,9 +22,9 @@ public class StatisticsMBeanNames {
       STATISTICS_GATEWAY = TerracottaManagement.createObjectName(TerracottaManagement.Type.Server, TerracottaManagement.Subsystem.Statistics, null, "Terracotta Statistics Gateway", false);
       STATISTICS_GATHERER = TerracottaManagement.createObjectName(TerracottaManagement.Type.Server, TerracottaManagement.Subsystem.Statistics, null, "Terracotta Statistics Gatherer", true);
     } catch (MalformedObjectNameException mone) {
-      throw new RuntimeException(mone);
+      throw new TCRuntimeException(mone);
     } catch (NullPointerException npe) {
-      throw new RuntimeException(npe);
+      throw new TCRuntimeException(npe);
     }
   }
 }

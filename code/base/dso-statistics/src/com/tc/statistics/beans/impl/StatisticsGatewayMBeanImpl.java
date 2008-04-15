@@ -32,7 +32,7 @@ import javax.management.NotificationListener;
 
 public class StatisticsGatewayMBeanImpl extends AbstractTerracottaMBean implements StatisticsGatewayMBean, StatisticsGateway, NotificationListener {
 
-  private final static TCLogger logger = TCLogging.getLogger(StatisticsGatewayMBeanImpl.class);
+  private final static TCLogger LOGGER = TCLogging.getLogger(StatisticsGatewayMBeanImpl.class);
 
   private final SynchronizedLong sequenceNumber = new SynchronizedLong(0L);
 
@@ -66,13 +66,18 @@ public class StatisticsGatewayMBeanImpl extends AbstractTerracottaMBean implemen
     try {
       agent.connect(mbeanServerConnection, this);
     } catch (StatisticsAgentConnectionException e) {
-      logger.warn("Unable to add statistics agent to the gateway.", e);
+      LOGGER.warn("Unable to add statistics agent for channel ID '" + channelId + "' to the gateway.", e);
       return;
     }
     
     agents.put(channelId, agent);
+
     if (topologyChangeHandler != null) {
-      topologyChangeHandler.agentAdded(agent);
+      try {
+        topologyChangeHandler.agentAdded(agent);
+      } catch (Exception e) {
+        LOGGER.warn("Unexpected error while configuring the statistics agent for channel ID '" + channelId + "' after it was added to the gateway.", e);
+      }
     }
   }
 
@@ -88,7 +93,7 @@ public class StatisticsGatewayMBeanImpl extends AbstractTerracottaMBean implemen
       try {
         ((StatisticsAgentConnection)it.next()).disconnect();
       } catch (StatisticsAgentConnectionException e) {
-        logger.warn("Unable to disconnect statistics agent from the gateway.", e);
+        LOGGER.warn("Unable to disconnect statistics agent from the gateway.", e);
       }
     }
   }
@@ -208,7 +213,7 @@ public class StatisticsGatewayMBeanImpl extends AbstractTerracottaMBean implemen
       }
     }
 
-    logger.warn("Unable to find the L2 server agent, this means that there's no authoritative agent to retrieve the global parameter '" + key + "' from.");
+    LOGGER.warn("Unable to find the L2 server agent, this means that there's no authoritative agent to retrieve the global parameter '" + key + "' from.");
     StatisticsAgentConnection agent = (StatisticsAgentConnection)agents.values().iterator().next();
     return agent.getGlobalParam(key);
   }
@@ -232,7 +237,7 @@ public class StatisticsGatewayMBeanImpl extends AbstractTerracottaMBean implemen
       }
     }
 
-    logger.warn("Unable to find the L2 server agent, this means that there's no authoritative agent to retrieve the parameter '" + key + "' from for session '" + sessionId + "'.");
+    LOGGER.warn("Unable to find the L2 server agent, this means that there's no authoritative agent to retrieve the parameter '" + key + "' from for session '" + sessionId + "'.");
     StatisticsAgentConnection agent = (StatisticsAgentConnection)agents.values().iterator().next();
     return agent.getSessionParam(sessionId, key);
   }

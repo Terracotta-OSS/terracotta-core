@@ -7,7 +7,7 @@ public class StatisticsBufferStartCapturingSessionNotFoundException extends Stat
   private final String sessionId;
 
   public StatisticsBufferStartCapturingSessionNotFoundException(final String sessionId) {
-    super("The capture session with the cluster-wide ID '" + sessionId + "' could not be started since the session couldn't be found..", null);
+    super("The capture session with the cluster-wide ID '" + sessionId + "' could not be started since the session couldn't be found.", null);
     this.sessionId = sessionId;
   }
 

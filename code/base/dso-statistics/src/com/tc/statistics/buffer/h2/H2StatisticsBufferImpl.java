@@ -3,12 +3,14 @@
  */
 package com.tc.statistics.buffer.h2;
 
+import org.h2.constant.ErrorCode;
+
 import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArraySet;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.buffer.StatisticsBuffer;
 import com.tc.statistics.buffer.StatisticsBufferListener;
@@ -61,7 +63,7 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
 
   public final static String H2_URL_SUFFIX = "statistics-buffer";
 
-  private final static TCLogger logger = TCLogging.getLogger(H2StatisticsBufferImpl.class);
+  private final static TCLogger LOGGER = TCLogging.getLogger(H2StatisticsBufferImpl.class);
 
   private final static String SQL_NEXT_LOCALSESSIONID = "SELECT nextval('seq_localsession')";
   private final static String SQL_NEXT_STATISTICLOGID = "SELECT nextval('seq_statisticlog')";
@@ -71,7 +73,7 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
   private final static String SQL_RETRIEVE_CAPTURESESSION = "SELECT * FROM capturesession WHERE clustersessionid = ?";
   private final static String SQL_STOP_CAPTURESESSION = "UPDATE capturesession SET stop = ? WHERE clustersessionid = ? AND start IS NOT NULL AND stop IS NULL";
   private final static String SQL_CREATE_CAPTURESESSION = "INSERT INTO capturesession (localsessionid, clustersessionid) VALUES (?, ?)";
-  private final static String SQL_START_CAPTURESESSION = "UPDATE capturesession SET start = ? WHERE clustersessionid = ? AND start IS NULL";
+  private final static String SQL_START_CAPTURESESSION = "UPDATE capturesession SET start = ? WHERE clustersessionid = ? AND stop IS NULL";
   private final static String SQL_INSERT_STATISTICSDATA = "INSERT INTO statisticlog (id, localsessionid, agentip, agentdifferentiator, moment, statname, statelement, datanumber, datatext, datatimestamp, datadecimal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
   private final static String SQL_MARK_FOR_CONSUMPTION_LIMIT = "MERGE INTO statisticlog(id, consumptionid) KEY(id) SELECT id, ? FROM statisticlog WHERE consumptionid IS NULL AND localsessionid = ? ORDER BY moment LIMIT ?";
   private final static String SQL_MARK_FOR_CONSUMPTION = "UPDATE statisticlog SET consumptionid = ? WHERE consumptionid IS NULL AND localsessionid = ?";
@@ -132,10 +134,10 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
 
   private void checkDefaultAgentInfo() {
     if (null == defaultAgentIp) {
-      logger.warn("Running without a default agent IP in the statistics buffer, this is probably due to not calling setDefaultAgentIp after creating a new buffer instance.");
+      LOGGER.warn("Running without a default agent IP in the statistics buffer, this is probably due to not calling setDefaultAgentIp after creating a new buffer instance.");
     }
     if (null == defaultAgentDifferentiator) {
-      logger.warn("Running without a default agent differentiator in the statistics buffer, this is probably due to not calling getDefaultAgentDifferentiator after creating a new buffer instance.");
+      LOGGER.warn("Running without a default agent differentiator in the statistics buffer, this is probably due to not calling getDefaultAgentDifferentiator after creating a new buffer instance.");
     }
   }
 
@@ -299,24 +301,32 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
     Assert.assertNotNull("sessionId", sessionId);
 
     final long local_sessionid;
-    final int row_count;
+    int row_count;
     try {
       database.ensureExistingConnection();
 
       local_sessionid = JdbcHelper.fetchNextSequenceValue(database.getPreparedStatement(SQL_NEXT_LOCALSESSIONID));
+    } catch (Exception e) {
+      throw new StatisticsBufferCaptureSessionCreationErrorException(sessionId, e);
+    }
 
+    try {
       row_count = JdbcHelper.executeUpdate(database.getConnection(), SQL_CREATE_CAPTURESESSION, new PreparedStatementHandler() {
         public void setParameters(PreparedStatement statement) throws SQLException {
           statement.setLong(1, local_sessionid);
           statement.setString(2, sessionId);
         }
       });
-    } catch (Exception e) {
-      throw new StatisticsBufferCaptureSessionCreationErrorException(sessionId, e);
-    }
 
-    if (row_count != 1) {
-      throw new StatisticsBufferCaptureSessionCreationErrorException(sessionId, local_sessionid);
+      if (row_count != 1) {
+        throw new StatisticsBufferCaptureSessionCreationErrorException(sessionId, local_sessionid);
+      }
+    } catch (SQLException e) {
+      if (ErrorCode.DUPLICATE_KEY_1 == e.getErrorCode()) {
+        LOGGER.warn("The capture session with ID '" + sessionId + "' already exists, not creating it again.");
+      } else {
+        throw new StatisticsBufferCaptureSessionCreationErrorException(sessionId, local_sessionid);
+      }
     }
 
     return new StatisticsRetrieverImpl(config.createChild(), this, sessionId);

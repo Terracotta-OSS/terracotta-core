@@ -7,7 +7,6 @@ import com.tc.statistics.StatisticData;
 import com.tc.statistics.buffer.StatisticsBuffer;
 import com.tc.statistics.buffer.StatisticsBufferListener;
 import com.tc.statistics.buffer.StatisticsConsumer;
-import com.tc.statistics.buffer.exceptions.StatisticsBufferCaptureSessionCreationErrorException;
 import com.tc.statistics.buffer.exceptions.StatisticsBufferException;
 import com.tc.statistics.buffer.h2.H2StatisticsBufferImpl;
 import com.tc.statistics.config.impl.StatisticsConfigImpl;
@@ -181,12 +180,7 @@ public class H2StatisticsBufferTest extends TestCase {
 
   public void testCreateCaptureSessionNotUnique() throws Exception {
     buffer.createCaptureSession("theid1");
-    try {
-      buffer.createCaptureSession("theid1");
-      fail("expected exception");
-    } catch (StatisticsBufferCaptureSessionCreationErrorException e) {
-      // sessionId can't be null
-    }
+    buffer.createCaptureSession("theid1");
   }
 
   public void testStoreStatisticsDataNullSessionId() throws Exception {
@@ -657,6 +651,8 @@ public class H2StatisticsBufferTest extends TestCase {
   public void testStartCapturingException() throws Exception {
     buffer.createCaptureSession("sessionid");
     buffer.startCapturing("sessionid");
+    buffer.startCapturing("sessionid");
+    buffer.stopCapturing("sessionid");
     try {
       buffer.startCapturing("sessionid");
       fail();

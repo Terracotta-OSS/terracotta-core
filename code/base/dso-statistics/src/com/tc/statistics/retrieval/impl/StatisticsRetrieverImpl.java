@@ -8,8 +8,8 @@ import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
@@ -35,9 +35,9 @@ import java.util.TimerTask;
 public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsBufferListener {
   public final static int           DEFAULT_NOTIFICATION_INTERVAL = 60;
 
-  private final static TCLogger     LOGGER                        = TCLogging.getLogger(StatisticsRetrieverImpl.class);
+  private final static TCLogger     LOGGER = TCLogging.getLogger(StatisticsRetrieverImpl.class);
 
-  private final Timer               timer                         = new TCTimerImpl("Statistics Retriever Timer", true);
+  private final Timer               timer = new TCTimerImpl("Statistics Retriever Timer", true);
 
   private final StatisticsConfig    config;
   private final StatisticsBuffer    buffer;

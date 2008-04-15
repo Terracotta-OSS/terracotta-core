@@ -35,8 +35,6 @@ public class SRAMessages implements StatisticRetrievalAction {
 
   public static final String ACTION_NAME = "message monitor";
 
-  private static final TCLogger logger = TCLogging.getLogger(SRAMessages.class);
-
   private final MessageMonitorImpl monitor;
 
   /**
@@ -69,7 +67,7 @@ public class SRAMessages implements StatisticRetrievalAction {
       this.monitor = (MessageMonitorImpl)monitor;
     } else {
       this.monitor = null;
-      logger.info("\"" + ACTION_NAME + "\" statistic is not enabled. Please enable the property \"" + TCPropertiesConsts.TCM_MONITOR_DELAY +
+      LOGGER.info("\"" + ACTION_NAME + "\" statistic is not enabled. Please enable the property \"" + TCPropertiesConsts.TCM_MONITOR_DELAY +
                   "\" to collect this statistics.");
     }
   }

@@ -37,7 +37,7 @@ public class StatisticsEmitterMBeanImpl extends AbstractTerracottaMBean implemen
 
   public final static MBeanNotificationInfo[] NOTIFICATION_INFO;
 
-  private final static TCLogger logger = TCLogging.getLogger(StatisticsEmitterMBeanImpl.class);
+  private final static TCLogger LOGGER = TCLogging.getLogger(StatisticsEmitterMBeanImpl.class);
 
   static {
     final String[] notifTypes = new String[] { STATISTICS_EMITTER_DATA_TYPE };
@@ -170,7 +170,7 @@ public class StatisticsEmitterMBeanImpl extends AbstractTerracottaMBean implemen
             notification.setUserData(notification_data);
             sendNotification(notification);
           } catch (StatisticsBufferException e) {
-            logger.error("Unexpected error while emitting buffered statistics.", e);
+            LOGGER.error("Unexpected error while emitting buffered statistics.", e);
           }
         }
       }

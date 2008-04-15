@@ -7,10 +7,11 @@ import org.apache.commons.lang.StringEscapeUtils;
 
 import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArraySet;
 
-import com.tc.logging.CustomerLogging;
+import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
-import com.tc.properties.TCPropertiesImpl;
+import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.database.StatisticsDatabase;
 import com.tc.statistics.database.exceptions.StatisticsDatabaseException;
@@ -66,7 +67,7 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
   
   public final static String H2_URL_SUFFIX = "statistics-store";
 
-  private final static TCLogger logger = CustomerLogging.getDSOGenericLogger();
+  private final static TCLogger LOGGER = TCLogging.getLogger(H2StatisticsStoreImpl.class);
 
   private final static long DATABASE_STRUCTURE_CHECKSUM = 2820643252L;
 
@@ -418,7 +419,7 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
                   database.getConnection().commit();
                 }
               } else {
-                logger.warn("CSV line couldn't be parsed: " + line);
+                LOGGER.warn("CSV line couldn't be parsed: " + line);
               }
             }
 
@@ -448,7 +449,7 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
         try {
           createStatisticLogIndexes();
         } catch (SQLException e) {
-          logger.warn("Couldn't re-create the statistic log indexes.", e);
+          LOGGER.warn("Couldn't re-create the statistic log indexes.", e);
         }
       }
 
@@ -460,7 +461,7 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
           ps_insert.close();
         }
       } catch (SQLException e) {
-        logger.warn("Couldn't close the prepared statement for SQL '" + SQL_INSERT_STATISTICSDATA + "'.", e);
+        LOGGER.warn("Couldn't close the prepared statement for SQL '" + SQL_INSERT_STATISTICSDATA + "'.", e);
       }
 
       recreateCaches();
@@ -659,7 +660,7 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
                }
             }
           } catch (IOException e) {
-            logger.warn("Unexpected error while writing aggregated statistic data.", e);
+            LOGGER.warn("Unexpected error while writing aggregated statistic data.", e);
             return false;
           }
 
@@ -673,7 +674,7 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
         writer.write("\n</data>");
       }
     } catch (IOException e) {
-      logger.warn("Unexpected error while writing aggregated statistic data.", e);
+      LOGGER.warn("Unexpected error while writing aggregated statistic data.", e);
     }
   }
 
@@ -708,7 +709,7 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
                   out.write(data.toCsv().getBytes("UTF-8"));
                 } catch (IOException e) {
                   // should never happen
-                  throw new RuntimeException(e);
+                  throw new TCRuntimeException(e);
                 }
                 return true;
               }
@@ -743,8 +744,6 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
           }
         }
       });
-    } catch (RuntimeException e) {
-      throw e;
     } catch (Exception e) {
       throw new StatisticsStoreSessionIdsRetrievalErrorException(e);
     }
@@ -768,8 +767,6 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
           }
         }
       });
-    } catch (RuntimeException e) {
-      throw e;
     } catch (Exception e) {
       throw new StatisticsStoreException("getAvailableNodes", e);
     }

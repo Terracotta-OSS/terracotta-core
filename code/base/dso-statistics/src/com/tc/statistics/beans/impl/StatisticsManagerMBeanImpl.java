@@ -6,6 +6,8 @@ package com.tc.statistics.beans.impl;
 
 import EDU.oswego.cs.dl.util.concurrent.ConcurrentHashMap;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.statistics.AgentStatisticsManager;
 import com.tc.statistics.DynamicSRA;
@@ -36,6 +38,8 @@ import java.util.Set;
 import javax.management.NotCompliantMBeanException;
 
 public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implements StatisticsManagerMBean, AgentStatisticsManager {
+  private final static TCLogger LOGGER = TCLogging.getLogger(StatisticsManagerMBeanImpl.class);
+
   private final StatisticsConfig config;
   private final StatisticsRetrievalRegistry registry;
   private final StatisticsBuffer buffer;
@@ -85,6 +89,10 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
 
   public synchronized void createSession(final String sessionId) {
     try {
+      if (retrieverMap.containsKey(sessionId)) {
+        LOGGER.warn("The capture session with ID '" + sessionId + "' already exists, not creating it again.");
+      }
+      
       StatisticsRetriever retriever = buffer.createCaptureSession(sessionId);
       retrieverMap.put(sessionId, retriever);
     } catch (StatisticsBufferException e) {

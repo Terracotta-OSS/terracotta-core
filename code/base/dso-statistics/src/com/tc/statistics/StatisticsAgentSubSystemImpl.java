@@ -29,8 +29,8 @@ import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 
 public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
-  private final static TCLogger logger        = CustomerLogging.getDSOGenericLogger();
-  private final static TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
+  private final static TCLogger DSO_LOGGER = CustomerLogging.getDSOGenericLogger();
+  private final static TCLogger CONSOLE_LOGGER = CustomerLogging.getConsoleLogger();
 
   private volatile StatisticsBuffer            statisticsBuffer;
   private volatile StatisticsEmitterMBean      statisticsEmitterMBean;
@@ -67,8 +67,8 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
         + "Unable to create the directory '" + stat_path.getAbsolutePath() + "' for the statistics buffer.\n"
         + "The CVT system will not be active for this node.\n"
         + "**************************************************************************************\n";
-      consoleLogger.warn(msg);
-      logger.warn(msg, e);
+      CONSOLE_LOGGER.warn(msg);
+      DSO_LOGGER.warn(msg, e);
       return false;
     }
     try {
@@ -86,8 +86,8 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
         + "A simple solution is to delete the directory in which the statistics are stored so\n"
         + "that a new version of the database can be installed.\n"
         + "**************************************************************************************\n";
-      consoleLogger.warn(msg);
-      logger.warn(msg, e);
+      CONSOLE_LOGGER.warn(msg);
+      DSO_LOGGER.warn(msg, e);
       return false;
     } catch (StatisticsBufferException e) {
       // TODO: needs to be properly written and put in a properties file
@@ -111,13 +111,13 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
         + "up when the statistics directory is configured by using %(tc.node-name) in the\n"
         + "statistics path.\n"
         + "**************************************************************************************\n";
-      consoleLogger.warn(msg);
-      logger.warn(msg, e);
+      CONSOLE_LOGGER.warn(msg);
+      DSO_LOGGER.warn(msg, e);
       return false;
     }
     String infoMsg = "Statistics buffer: '" + stat_path.getAbsolutePath() + "'.";
-    consoleLogger.info(infoMsg);
-    logger.info(infoMsg);
+    CONSOLE_LOGGER.info(infoMsg);
+    DSO_LOGGER.info(infoMsg);
 
     // create the statistics emitter mbean
     try {
@@ -149,12 +149,12 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
     try {
       server.unregisterMBean(StatisticsMBeanNames.STATISTICS_EMITTER);
     } catch (InstanceNotFoundException e) {
-      logger.warn("Unexpected error while unregistering mbean '" + StatisticsMBeanNames.STATISTICS_EMITTER + "'", e);
+      DSO_LOGGER.warn("Unexpected error while unregistering mbean '" + StatisticsMBeanNames.STATISTICS_EMITTER + "'", e);
     }
     try {
       server.unregisterMBean(StatisticsMBeanNames.STATISTICS_MANAGER);
     } catch (Exception e) {
-      logger.warn("Unexpected error while unregistering mbean '" + StatisticsMBeanNames.STATISTICS_MANAGER + "'", e);
+      DSO_LOGGER.warn("Unexpected error while unregistering mbean '" + StatisticsMBeanNames.STATISTICS_MANAGER + "'", e);
     }
   }
 
