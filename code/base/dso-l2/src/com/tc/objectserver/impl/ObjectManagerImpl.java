@@ -282,7 +282,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       FaultingManagedObjectReference fmr = (FaultingManagedObjectReference) rv;
       if (!fmr.isFaultingInProgress()) {
         references.remove(id);
-        logger.warn("Request for non-exisitent object : " + id + " context = " + context);
+        logger.warn("Request for non-existent object : " + id + " context = " + context);
         context.missingObject(id);
         return null;
       }
