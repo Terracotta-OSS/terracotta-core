@@ -3,8 +3,6 @@
  */
 package com.tc.statistics.retrieval.actions;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.MessageMonitorImpl;
 import com.tc.properties.TCPropertiesConsts;

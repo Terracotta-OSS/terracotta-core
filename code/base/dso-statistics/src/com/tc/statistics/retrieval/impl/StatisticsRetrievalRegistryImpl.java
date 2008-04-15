@@ -3,8 +3,6 @@
  */
 package com.tc.statistics.retrieval.impl;
 
-import com.tc.exception.TCRuntimeException;
-import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.statistics.StatisticRetrievalAction;
