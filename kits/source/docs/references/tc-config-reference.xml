@@ -381,14 +381,14 @@
         The 'modules' directory in the Terracotta installation directory is implied
         as the first reposository, however if you have other places to look for modules
         you can optionally specify as many of them as you wish here; they can be any
-        valid URL.  Repositories are searched in the order defined here (after the
-        implicit repository) for modules by appending
-        "/<module-name>-<module-version>.jar" to each URL.  The first match succeeds.
+        valid file path, absolute or relative.  Repositories are searched in the order 
+        defined here (after the implicit repository) for modules by appending
+        "/<module-name>-<module-version>.jar" to each path.  The first match succeeds.
 
         The <repository> element(s) is optional.
       -->
-      <repository>file:///my/modules/directory</repository>
-      <repository>http://webserver/my/modules</repository>
+      <repository>/my/modules/directory</repository>
+      <repository>../repository</repository>
 
       <!--
         If you choose to use a module, define it here.  Distributed modules have the
