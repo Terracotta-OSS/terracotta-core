@@ -22,6 +22,7 @@ import com.tc.util.State;
 import com.tc.util.runtime.ThreadDumpUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -238,6 +239,11 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
       }
     }
 
+    String[] props = l.toArray(new String[0]);
+    Arrays.sort(props);
+    l.clear();
+    l.addAll(Arrays.asList(props));
+    
     int maxKeyLen = 0;
     for (String key : l) {
       maxKeyLen = Math.max(key.length(), maxKeyLen);

@@ -15,6 +15,7 @@ import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.util.runtime.ThreadDumpUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -64,7 +65,12 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
         l.add(key);
       }
     }
-
+    
+    String[] props = (String[]) l.toArray(new String[0]);
+    Arrays.sort(props);
+    l.clear();
+    l.addAll(Arrays.asList(props));
+    
     int maxKeyLen = 0;
     Iterator iter = l.iterator();
     while (iter.hasNext()) {
