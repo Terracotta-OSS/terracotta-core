@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="common" />
     <orderEntry type="module" module-name="common-api" />
     <orderEntry type="module" module-name="deploy" />
+    <orderEntry type="module" module-name="deploy-api" />
     <orderEntry type="module" module-name="dso-common" />
     <orderEntry type="module" module-name="dso-common-jdk15" />
     <orderEntry type="module" module-name="dso-l1" />
@@ -27,6 +28,7 @@
     <orderEntry type="module" module-name="legacy-test-tree" />
     <orderEntry type="module" module-name="linked-child-process" />
     <orderEntry type="module" module-name="management" />
+    <orderEntry type="module" module-name="management-api" />
     <orderEntry type="module" module-name="simulator" />
     <orderEntry type="module" module-name="thirdparty" />
     <orderEntry type="module" module-name="thirdparty-api" />

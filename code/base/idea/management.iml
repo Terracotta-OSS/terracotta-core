@@ -33,6 +33,7 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="management-api" exported="" />
     <orderEntryProperties />
   </component>
 </module>

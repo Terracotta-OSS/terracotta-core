@@ -19,6 +19,7 @@
     <orderEntry type="module" module-name="dso-statistics" />
     <orderEntry type="module" module-name="dso-statistics-api" />
     <orderEntry type="module" module-name="management" />
+    <orderEntry type="module" module-name="management-api" />
     <orderEntry type="module" module-name="thirdparty" />
     <orderEntry type="module" module-name="thirdparty-api" />
     <orderEntryProperties />

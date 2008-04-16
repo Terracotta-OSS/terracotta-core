@@ -419,6 +419,7 @@
       <module fileurl="file://$PROJECT_DIR$/common-api.iml" filepath="$PROJECT_DIR$/common-api.iml" />
       <module fileurl="file://$PROJECT_DIR$/dependencies.iml" filepath="$PROJECT_DIR$/dependencies.iml" />
       <module fileurl="file://$PROJECT_DIR$/deploy.iml" filepath="$PROJECT_DIR$/deploy.iml" />
+      <module fileurl="file://$PROJECT_DIR$/deploy-api.iml" filepath="$PROJECT_DIR$/deploy-api.iml" />
       <module fileurl="file://$PROJECT_DIR$/dso-alt-boot-jar-tests.iml" filepath="$PROJECT_DIR$/dso-alt-boot-jar-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/dso-common.iml" filepath="$PROJECT_DIR$/dso-common.iml" />
       <module fileurl="file://$PROJECT_DIR$/dso-common-jdk15.iml" filepath="$PROJECT_DIR$/dso-common-jdk15.iml" />
@@ -455,6 +456,7 @@
       <module fileurl="file://$PROJECT_DIR$/legacy-test-tree.iml" filepath="$PROJECT_DIR$/legacy-test-tree.iml" />
       <module fileurl="file://$PROJECT_DIR$/linked-child-process.iml" filepath="$PROJECT_DIR$/linked-child-process.iml" />
       <module fileurl="file://$PROJECT_DIR$/management.iml" filepath="$PROJECT_DIR$/management.iml" />
+      <module fileurl="file://$PROJECT_DIR$/management-api.iml" filepath="$PROJECT_DIR$/management-api.iml" />
       <module fileurl="file://$PROJECT_DIR$/modules-common.iml" filepath="$PROJECT_DIR$/modules-common.iml" />
       <module fileurl="file://$PROJECT_DIR$/reflector-test.iml" filepath="$PROJECT_DIR$/reflector-test.iml" />
       <module fileurl="file://$PROJECT_DIR$/sigarstats.iml" filepath="$PROJECT_DIR$/sigarstats.iml" />

@@ -2,22 +2,17 @@
 <module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$MODULE_DIR$/../dso-l2-common">
-      <sourceFolder url="file://$MODULE_DIR$/../dso-l2-common/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/../dso-l2-common/src.resources" isTestSource="false" />
+    <content url="file://$MODULE_DIR$/../management-api">
+      <sourceFolder url="file://$MODULE_DIR$/../management-api/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../management/src.resources" isTestSource="false" />
     </content>
-    <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="jdk" jdkName="J2SE-1.4" jdkType="JavaSDK" />
+    <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="common" />
     <orderEntry type="module" module-name="common-api" />
     <orderEntry type="module" module-name="dso-common" />
-    <orderEntry type="module" module-name="dso-common-jdk15" />
     <orderEntry type="module" module-name="dso-l1-api" />
-    <orderEntry type="module" module-name="dso-memory-datastore" />
     <orderEntry type="module" module-name="dso-statistics-api" />
-    <orderEntry type="module" module-name="management" />
-    <orderEntry type="module" module-name="thirdparty" />
-    <orderEntry type="module" module-name="thirdparty-api" />
     <orderEntryProperties />
   </component>
 </module>

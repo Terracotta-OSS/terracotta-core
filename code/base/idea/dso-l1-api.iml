@@ -11,6 +11,7 @@
     <orderEntry type="module" module-name="aspectwerkz" />
     <orderEntry type="module" module-name="common" />
     <orderEntry type="module" module-name="common-api" />
+    <orderEntry type="module" module-name="dso-statistics-api" />
     <orderEntry type="module" module-name="thirdparty-api" />
     <orderEntry type="module-library" exported="">
       <library>

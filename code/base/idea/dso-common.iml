@@ -14,7 +14,7 @@
     <orderEntry type="module" module-name="dso-l1-api" />
     <orderEntry type="module" module-name="thirdparty-api" />
     <orderEntry type="module" module-name="dso-statistics-api" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../dso-common/lib/tc-l1-prop-from-l2-xmlbeans-generated.jar!/" />

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module relativePaths="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_5" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../deploy-api">
+      <sourceFolder url="file://$MODULE_DIR$/../deploy-api/src" isTestSource="false" />
+    </content>
+    <orderEntry type="jdk" jdkName="J2SE-1.5" jdkType="JavaSDK" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="common-api" />
+    <orderEntry type="module" module-name="dso-l1-api" />
+    <orderEntry type="module" module-name="dso-l2-common" />
+    <orderEntry type="module" module-name="dso-statistics-api" />
+    <orderEntry type="module" module-name="thirdparty-api" />
+    <orderEntryProperties />
+  </component>
+</module>
+
