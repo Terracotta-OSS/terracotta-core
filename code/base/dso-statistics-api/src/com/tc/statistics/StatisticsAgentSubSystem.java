@@ -33,4 +33,9 @@ public interface StatisticsAgentSubSystem {
    * @return the requested manager
    */
   public AgentStatisticsManager getStatisticsManager();
+
+  /**
+   * Cleans up the resources allocated by this agent.
+   */
+  public void cleanup() throws Exception;
 }

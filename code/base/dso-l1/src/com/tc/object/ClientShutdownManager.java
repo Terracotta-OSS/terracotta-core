@@ -14,6 +14,7 @@ import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.tx.RemoteTransactionManager;
+import com.tc.statistics.StatisticsAgentSubSystem;
 
 public class ClientShutdownManager {
   private static final TCLogger                    logger = TCLogging.getLogger(ClientShutdownManager.class);
@@ -23,11 +24,13 @@ public class ClientShutdownManager {
   private final DSOClientMessageChannel            channel;
   private final CommunicationsManager              commsManager;
   private final ClientHandshakeManager             handshakeManager;
+  private final StatisticsAgentSubSystem           statisticsAgentSubSystem;
   private final PreparedComponentsFromL2Connection connectionComponents;
 
   public ClientShutdownManager(ClientObjectManager objectManager, RemoteTransactionManager rtxManager,
                                StageManager stageManager, CommunicationsManager commsManager,
                                DSOClientMessageChannel channel, ClientHandshakeManager handshakeManager,
+                               StatisticsAgentSubSystem statisticsAgent,
                                PreparedComponentsFromL2Connection connectionComponents) {
     this.objectManager = objectManager;
     this.rtxManager = rtxManager;
@@ -35,6 +38,7 @@ public class ClientShutdownManager {
     this.commsManager = commsManager;
     this.channel = channel;
     this.handshakeManager = handshakeManager;
+    this.statisticsAgentSubSystem = statisticsAgent;
     this.connectionComponents = connectionComponents;
   }
 
@@ -92,6 +96,15 @@ public class ClientShutdownManager {
         objectManager.shutdown();
       } catch (Throwable t) {
         logger.error("Error shutting down client object manager", t);
+      }
+    }
+
+    if (statisticsAgentSubSystem != null &&
+        statisticsAgentSubSystem.isActive()) {
+      try {
+        statisticsAgentSubSystem.cleanup();
+      } catch (Throwable t) {
+        logger.error("Error cleaning up the statistics agent", t);
       }
     }
 

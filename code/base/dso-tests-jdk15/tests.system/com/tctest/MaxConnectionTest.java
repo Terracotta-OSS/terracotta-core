@@ -99,7 +99,7 @@ public class MaxConnectionTest extends BaseDSOTestCase {
     }
 
     public void run() {
-      myClient.stop();
+      myClient.stopForTests();
       try {
         queue.put(new Object());
       } catch (InterruptedException e) {

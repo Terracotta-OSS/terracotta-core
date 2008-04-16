@@ -110,8 +110,8 @@ import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.object.tx.RemoteTransactionManagerImpl;
 import com.tc.object.tx.TransactionBatchAccounting;
 import com.tc.object.tx.TransactionBatchFactory;
-import com.tc.object.tx.TransactionBatchWriterFactory;
 import com.tc.object.tx.TransactionBatchWriter.FoldingConfig;
+import com.tc.object.tx.TransactionBatchWriterFactory;
 import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
@@ -527,13 +527,15 @@ public class DistributedObjectClient extends SEDA {
     });
   }
 
-  public synchronized void stop() {
-    try {
-      statisticsAgentSubSystem.cleanup();
-    } catch (Throwable e) {
-      logger.warn(e);
-    }
-
+  /**
+   * Note that this method shuts down the manager that is associated with this
+   * client, this is only used in tests.
+   *
+   * To properly shut down resources of this client for production, the
+   * code should be added to {@link ClientShutdownManager} and not to this
+   * method.
+   */
+  public synchronized void stopForTests() {
     manager.stop();
   }
 

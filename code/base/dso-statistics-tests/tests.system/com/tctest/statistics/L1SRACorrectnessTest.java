@@ -28,7 +28,7 @@ public class L1SRACorrectnessTest extends AbstractAgentSRACorrectnessTestCase {
         checkSRAsInRegistry(agent);
       } finally {
         client.getCommunicationsManager().shutdown();
-        client.stop();
+        client.stopForTests();
       }
     } finally {
       server.stop();

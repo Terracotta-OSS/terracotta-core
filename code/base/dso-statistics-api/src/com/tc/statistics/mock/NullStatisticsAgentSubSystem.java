@@ -21,4 +21,7 @@ public class NullStatisticsAgentSubSystem implements StatisticsAgentSubSystem {
   public AgentStatisticsManager getStatisticsManager() {
     return NullAgentStatisticsManager.INSTANCE;
   }
+
+  public void cleanup() throws Exception {
+  }
 }

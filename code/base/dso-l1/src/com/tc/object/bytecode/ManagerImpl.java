@@ -12,9 +12,9 @@ import com.tc.cluster.Cluster;
 import com.tc.cluster.ClusterEventListener;
 import com.tc.config.lock.LockContextInfo;
 import com.tc.lang.StartupHelper;
+import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
-import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.sessions.SessionMonitorMBean;
@@ -185,9 +185,9 @@ public class ManagerImpl implements Manager {
 
         methodCallManager = dso.getDmiManager();
 
-        shutdownManager = new ClientShutdownManager(objectManager, dso.getRemoteTransactionManager(), dso
-            .getStageManager(), dso.getCommunicationsManager(), dso.getChannel(), dso.getClientHandshakeManager(),
-                                                    connectionComponents);
+        shutdownManager = new ClientShutdownManager(objectManager, dso.getRemoteTransactionManager(),
+          dso.getStageManager(), dso.getCommunicationsManager(), dso.getChannel(),
+          dso.getClientHandshakeManager(), dso.getStatisticsAgentSubSystem(), connectionComponents);
       }
     };
 

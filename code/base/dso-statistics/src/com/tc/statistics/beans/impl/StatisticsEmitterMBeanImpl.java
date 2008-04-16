@@ -128,16 +128,20 @@ public class StatisticsEmitterMBeanImpl extends AbstractTerracottaMBean implemen
   }
 
   private class SendStatsTask extends TimerTask {
-    private volatile boolean shutdown = false;
+    private boolean shutdown = false;
 
     public void shutdown() {
-      shutdown = true;
+      synchronized(StatisticsEmitterMBeanImpl.this) {
+        shutdown = true;
+      }
     }
 
     public void run() {
-      if (shutdown) {
-        cancel();
-        return;
+      synchronized(StatisticsEmitterMBeanImpl.this) {
+        if (shutdown) {
+          cancel();
+          return;
+        }
       }
 
       boolean has_listeners = hasListeners();
