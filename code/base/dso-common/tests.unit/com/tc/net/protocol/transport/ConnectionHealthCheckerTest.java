@@ -35,11 +35,6 @@ public class ConnectionHealthCheckerTest extends TCTestCase {
   CommunicationsManager clientComms;
   NetworkListener       serverLsnr;
   TCLogger              logger = TCLogging.getLogger(ConnectionHealthCheckerImpl.class);
-  
-  public ConnectionHealthCheckerTest() {
-    // MNK-489
-    disableTestUntil("testL2ProbingL1AndClientClose", "2008-04-30");
-  }
 
   protected void setUp(HealthCheckerConfig serverHCConf, HealthCheckerConfig clientHCConf) throws Exception {
     super.setUp();

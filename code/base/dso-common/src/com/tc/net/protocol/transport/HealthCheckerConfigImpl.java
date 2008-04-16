@@ -9,7 +9,7 @@ import com.tc.properties.TCProperties;
 /**
  * Main implementation of the Health Checker Config. Health Checker related tc.properties are read and a config data
  * structure is built which is passed on to various health checker modules.
- * 
+ *
  * @author Manoj
  */
 public class HealthCheckerConfigImpl implements HealthCheckerConfig {
@@ -23,9 +23,9 @@ public class HealthCheckerConfigImpl implements HealthCheckerConfig {
   private final int        socketConnectMaxCount;
   private final String     name;
 
-  // Default ping probe values in seconds
-  private static final int DEFAULT_PING_IDLETIME          = 45;
-  private static final int DEFAULT_PING_INTERVAL          = 15;
+  // Default ping probe values in milliseconds
+  private static final int DEFAULT_PING_IDLETIME          = 45000;
+  private static final int DEFAULT_PING_INTERVAL          = 15000;
   private static final int DEFAULT_PING_PROBECNT          = 3;
   private static final int DEFAULT_SCOKETCONNECT_MAXCOUNT = 3;
   private static final int DEFAULT_SOCKETCONNECT_TIMEOUT  = 2;
