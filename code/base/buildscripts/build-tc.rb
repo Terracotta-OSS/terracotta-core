@@ -290,6 +290,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   def check_compile
     begin
       @no_compile = false # override this if it's turned on
+      check_maven_version
       check_short
       raise "There's failure in tests." if @script_results.failed?
       mark_this_revision_as_good(@build_environment.current_revision)
@@ -501,6 +502,18 @@ END
   def check_nogroup
     groupless = @module_set.find_all { |mod| mod.groups.empty? }.map { |mod| mod.name }
     run_tests(FixedModuleTypeTestSet.new(groupless, %w(all)))
+  end
+  
+  def check_maven_version
+    maven_version = @config_source['maven.version']
+    printf("%-50s: %s\n",  "maven.version defined in build-config.global", maven_version)
+    poms = Dir.glob('poms/*.xml')
+    poms << 'parent14/pom.xml'
+    poms << 'parent15/pom.xml'
+    poms.each do |pom|
+      compare_maven_version(maven_version, pom, '/project/parent/version')
+    end
+    compare_maven_version(maven_version, 'pom.xml', '/project/properties/tcVersion')
   end
 
   # Runs a class, as specified on the command line. Takes one argument, which is the name of the test;

@@ -3,6 +3,8 @@
 # except as may otherwise be noted in a separate copyright notice.
 # All rights reserved
 #
+require 'rexml/document'
+require 'rexml/xpath'
 
 unless defined?(JavaSystem)
   include_class('java.lang.System') { |p, name| "Java" + name }
@@ -34,6 +36,24 @@ def time
   start = Time.now
   yield
   Time.now - start
+end
+
+def get_version(file, xpath)
+  version = nil
+  File.open(file) do |f|
+    doc = REXML::Document.new(f)
+    version = REXML::XPath.first(doc, xpath).text 
+  end
+  version
+end
+
+def compare_maven_version(maven_version, pom, xpath)
+  version = get_version(pom, xpath)
+  printf("%-50s: %s\n", pom, version)
+  if version != maven_version
+    raise "version #{version} in #{pom} " +
+          "doesn't match maven.version #{maven_version}"
+  end
 end
 
 class Hash
