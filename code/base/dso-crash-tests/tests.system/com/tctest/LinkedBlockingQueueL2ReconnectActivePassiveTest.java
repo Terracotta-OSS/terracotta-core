@@ -9,13 +9,17 @@ import com.tc.test.activepassive.ActivePassivePersistenceMode;
 import com.tc.test.activepassive.ActivePassiveSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.tc.test.proxyconnect.ProxyConnectManager;
+import com.tc.util.runtime.Os;
 
 public class LinkedBlockingQueueL2ReconnectActivePassiveTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 4;
   
   public LinkedBlockingQueueL2ReconnectActivePassiveTest() {
-    //disableAllUntil("2007-06-30");
+    if (Os.isWindows()) {
+      System.err.println("Disabling it for windows only for now");
+      disableAllUntil("2008-04-21");
+    }
   }
 
   public void doSetUp(TransparentTestIface t) throws Exception {

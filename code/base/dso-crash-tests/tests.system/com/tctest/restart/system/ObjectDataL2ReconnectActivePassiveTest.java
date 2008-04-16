@@ -9,6 +9,7 @@ import com.tc.test.activepassive.ActivePassivePersistenceMode;
 import com.tc.test.activepassive.ActivePassiveSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.tc.test.proxyconnect.ProxyConnectManager;
+import com.tc.util.runtime.Os;
 import com.tctest.TestConfigurator;
 import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
@@ -19,6 +20,13 @@ import java.util.Map;
 public class ObjectDataL2ReconnectActivePassiveTest extends TransparentTestBase implements TestConfigurator {
 
   private int clientCount = 2;
+
+  public ObjectDataL2ReconnectActivePassiveTest() {
+    if (Os.isWindows()) {
+      System.err.println("Disabling it for windows only for now");
+      disableAllUntil("2008-04-21");
+    }
+  }
 
   protected Class getApplicationClass() {
     return ObjectDataTestApp.class;
@@ -38,7 +46,7 @@ public class ObjectDataL2ReconnectActivePassiveTest extends TransparentTestBase 
   protected boolean enableL2Reconnect() {
     return true;
   }
-  
+
   protected boolean canRunL2ProxyConnect() {
     return true;
   }
@@ -46,7 +54,7 @@ public class ObjectDataL2ReconnectActivePassiveTest extends TransparentTestBase 
   protected boolean canRunActivePassive() {
     return true;
   }
-  
+
   protected void setupL2ProxyConnectTest(ProxyConnectManager[] managers) {
     /*
      * subclass can overwrite to change the test parameters.
@@ -56,12 +64,12 @@ public class ObjectDataL2ReconnectActivePassiveTest extends TransparentTestBase 
       managers[i].setProxyDownTime(100);
     }
   }
-  
+
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
     setupManager.setServerCrashMode(ActivePassiveCrashMode.CONTINUOUS_ACTIVE_CRASH);
     setupManager.setServerCrashWaitTimeInSec(30);
-    
+
     setupManager.setServerShareDataMode(ActivePassiveSharedDataMode.NETWORK);
     setupManager.setServerPersistenceMode(ActivePassivePersistenceMode.TEMPORARY_SWAP_ONLY);
   }

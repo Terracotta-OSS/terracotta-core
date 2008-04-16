@@ -9,13 +9,17 @@ import com.tc.test.activepassive.ActivePassivePersistenceMode;
 import com.tc.test.activepassive.ActivePassiveSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.tc.test.proxyconnect.ProxyConnectManager;
+import com.tc.util.runtime.Os;
 
 public class TreeMapL2ReconnectActivePassiveTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 3;
-  
+
   public TreeMapL2ReconnectActivePassiveTest() {
-    //
+    if (Os.isWindows()) {
+      System.err.println("Disabling it for windows only for now");
+      disableAllUntil("2008-04-21");
+    }
   }
 
   public void doSetUp(TransparentTestIface t) throws Exception {
@@ -30,11 +34,11 @@ public class TreeMapL2ReconnectActivePassiveTest extends TransparentTestBase {
   protected boolean canRunActivePassive() {
     return true;
   }
-  
+
   protected boolean enableL2Reconnect() {
     return true;
   }
-  
+
   protected boolean canRunL2ProxyConnect() {
     return true;
   }
@@ -48,7 +52,7 @@ public class TreeMapL2ReconnectActivePassiveTest extends TransparentTestBase {
       managers[i].setProxyDownTime(100);
     }
   }
-  
+
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
     setupManager.setServerCrashMode(ActivePassiveCrashMode.CONTINUOUS_ACTIVE_CRASH);
