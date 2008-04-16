@@ -50,7 +50,7 @@ public class H2StatisticsDatabase extends AbstractStatisticsDatabase {
   protected void openConnection() throws StatisticsDatabaseException {
     String url = H2_URL_PREFIX + new File(dbDir, urlSuffix).getAbsolutePath();
     try {
-      connection = DriverManager.getConnection(url+";LOG=0", H2_USER, H2_PASSWORD);
+      connection = DriverManager.getConnection(url+";LOG=0;DB_CLOSE_ON_EXIT=FALSE", H2_USER, H2_PASSWORD);
       connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
       connection.setAutoCommit(true);
     } catch (SQLException e) {

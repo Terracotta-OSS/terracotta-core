@@ -30,9 +30,9 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.l2.state.StateManager;
 import com.tc.lang.StartupHelper;
+import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
-import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -43,8 +43,8 @@ import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.impl.DistributedObjectServer;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.servlets.L1PropertiesFromL2Servlet;
 import com.tc.statistics.StatisticsGathererSubSystem;
 import com.tc.statistics.beans.StatisticsMBeanNames;
@@ -85,14 +85,13 @@ public class TCServerImpl extends SEDA implements TCServer {
   private DistributedObjectServer              dsoServer;
   private Server                               httpServer;
   private TerracottaConnector                  terracottaConnector;
+  private StatisticsGathererSubSystem    statisticsGathererSubSystem;
 
   private final Object                         stateLock                                    = new Object();
   private final L2State                        state                                        = new L2State();
 
   private final L2TVSConfigurationSetupManager configurationSetupManager;
   private final ConnectionPolicy               connectionPolicy;
-
-  private final StatisticsGathererSubSystem    statisticsGathererSubSystem;
 
   /**
    * This should only be used for tests.
@@ -251,6 +250,16 @@ public class TCServerImpl extends SEDA implements TCServer {
 
     if (logger.isDebugEnabled()) {
       consoleLogger.debug("Stopping TC server...");
+    }
+
+    if (statisticsGathererSubSystem != null) {
+      try {
+        statisticsGathererSubSystem.cleanup();
+      } catch (Exception e) {
+        logger.error("Error shutting down statistics gatherer", e);
+      } finally {
+        statisticsGathererSubSystem = null;
+      }
     }
 
     if (terracottaConnector != null) {

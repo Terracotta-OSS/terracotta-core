@@ -104,11 +104,16 @@ public class StatisticsGathererSubSystem {
   }
 
   public synchronized void cleanup() throws Exception {
-    if (statisticsGatherer != null) {
-      statisticsGatherer.disconnect();
-    }
-    if (statisticsStore != null) {
-      statisticsStore.close();
+    try {
+      if (statisticsGatherer != null) {
+        statisticsGatherer.disconnect();
+        statisticsGatherer = null;
+      }
+    } finally {
+      if (statisticsStore != null) {
+        statisticsStore.close();
+        statisticsStore = null;
+      }
     }
   }
 

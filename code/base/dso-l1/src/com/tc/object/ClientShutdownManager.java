@@ -43,10 +43,23 @@ public class ClientShutdownManager {
   }
 
   public void execute(boolean fromShutdownHook) {
+    closeStatisticsAgent();
+    
     closeLocalWork();
 
     if (!fromShutdownHook) {
       shutdown();
+    }
+  }
+
+  private void closeStatisticsAgent() {
+    if (statisticsAgentSubSystem != null &&
+        statisticsAgentSubSystem.isActive()) {
+      try {
+        statisticsAgentSubSystem.cleanup();
+      } catch (Throwable t) {
+        logger.error("Error cleaning up the statistics agent", t);
+      }
     }
   }
 
@@ -96,15 +109,6 @@ public class ClientShutdownManager {
         objectManager.shutdown();
       } catch (Throwable t) {
         logger.error("Error shutting down client object manager", t);
-      }
-    }
-
-    if (statisticsAgentSubSystem != null &&
-        statisticsAgentSubSystem.isActive()) {
-      try {
-        statisticsAgentSubSystem.cleanup();
-      } catch (Throwable t) {
-        logger.error("Error cleaning up the statistics agent", t);
       }
     }
 

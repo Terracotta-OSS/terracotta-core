@@ -167,6 +167,7 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
   public synchronized void cleanup() throws Exception {
     if (statisticsBuffer != null) {
       statisticsBuffer.close();
+      statisticsBuffer = null;
     }
   }
 
