@@ -13,6 +13,7 @@ import com.tc.test.activepassive.ActivePassiveCrashMode;
 import com.tc.test.activepassive.ActivePassivePersistenceMode;
 import com.tc.test.activepassive.ActivePassiveSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
 public class CreateLotsOfGarbageGCTest extends GCTestBase implements TestConfigurator {
@@ -48,7 +49,7 @@ public class CreateLotsOfGarbageGCTest extends GCTestBase implements TestConfigu
   public static class CreateLotsOfGarbageGCTestApp extends AbstractTransparentApp {
 
     private static final int SIZE       = 100;
-    private static final int LOOP_COUNT = 5000;
+    private static final int LOOP_COUNT = 4000;
 
     private Object[]         array      = new Object[SIZE];
 
@@ -75,6 +76,7 @@ public class CreateLotsOfGarbageGCTest extends GCTestBase implements TestConfigu
         }
         if (i != 0 && i % 100 == 0) {
           System.out.println("Loop count : " + i);
+          ThreadUtil.reallySleep(1000);
         }
       }
     }
