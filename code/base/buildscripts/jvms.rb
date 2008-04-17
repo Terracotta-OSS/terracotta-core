@@ -366,7 +366,8 @@ class JVMSet
       path = criteria[:path]
       version_like = criteria[:version_like]
 
-      @jvms.each do |key, jvm|
+      @jvms.keys.sort.each do |key|
+        jvm = @jvms[key]
         next unless jvm && jvm.valid?
 
         meets_criteria = false
