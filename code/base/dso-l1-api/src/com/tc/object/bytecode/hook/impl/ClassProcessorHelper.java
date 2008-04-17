@@ -39,6 +39,9 @@ import java.util.logging.LogManager;
  */
 public class ClassProcessorHelper {
 
+  /** Name reserved for apps running as root web app in a container */
+  public static final String ROOT_WEB_APP_NAME = "ROOT";
+
   // XXX: remove this!
   public static volatile boolean             IBM_DEBUG               = false;
 
@@ -479,7 +482,7 @@ public class ClassProcessorHelper {
    * @return True if DSO sessions enabled
    */
   public static boolean isDSOSessions(String appName) {
-    appName = ("/".equals(appName)) ? "ROOT" : appName;
+    appName = ("/".equals(appName)) ? ROOT_WEB_APP_NAME : appName;
     try {
       Method m = getContextMethod("isDSOSessions", new Class[] { String.class });
       boolean rv = ((Boolean) m.invoke(null, new Object[] { appName })).booleanValue();

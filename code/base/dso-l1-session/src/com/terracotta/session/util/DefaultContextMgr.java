@@ -3,6 +3,8 @@
  */
 package com.terracotta.session.util;
 
+import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
+
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSessionContext;
@@ -50,7 +52,7 @@ public class DefaultContextMgr implements ContextMgr {
     // deal with possible app strings: null, "", "/", "/xyz", "xyz/", "/xyz/"
     if (app == null) app = "";
     else app = app.trim();
-    if (app.length() == 0 || "/".equals(app)) return "ROOT";
+    if (app.length() == 0 || "/".equals(app)) return ClassProcessorHelper.ROOT_WEB_APP_NAME;
     if (app.startsWith("/")) app = app.substring(1);
     if (app.endsWith("/")) app = app.substring(0, app.length() - 2);
     Assert.post(app != null);

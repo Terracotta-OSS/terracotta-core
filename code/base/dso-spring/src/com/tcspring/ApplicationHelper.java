@@ -11,6 +11,7 @@ import com.tc.object.bytecode.hook.DSOContext;
 import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.config.DSOSpringConfigHelper;
 import com.tc.object.loaders.NamedClassLoader;
+import com.tc.object.loaders.Namespace;
 
 import java.util.Iterator;
 
@@ -24,10 +25,10 @@ public class ApplicationHelper {
 
   private static final String STANDALONE_APP  = "";
 
-  // Those prefixes defined in com.tc.object.loaders.Namespace which is not visible from this class
-  private static final String TOMCAT_PREFIX   = "Tomcat.";
-  private static final String WEBLOGIC_PREFIX = "Weblogic.";
-  private static final String JETTY_PREFIX    = "Jetty.";
+  static final String TOMCAT_PREFIX = Namespace.TOMCAT_NAMESPACE;
+  static final String WEBLOGIC_PREFIX = Namespace.WEBLOGIC_NAMESPACE;
+  static final String JETTY_PREFIX    = Namespace.JETTY_NAMESPACE;
+  static final String ROOT_APP_NAME = ClassProcessorHelper.ROOT_WEB_APP_NAME;
 
   private String              appName;
   private DSOContext          dsoContext;
@@ -35,35 +36,40 @@ public class ApplicationHelper {
   public ApplicationHelper(Class c) {
     ClassLoader cl = c.getClassLoader();
 
-    try {
-      this.dsoContext = ClassProcessorHelper.getContext(cl);
+    this.dsoContext = ClassProcessorHelper.getContext(cl);
 
-      if (cl instanceof NamedClassLoader) {
-        String name = ((NamedClassLoader) cl).__tc_getClassLoaderName();
-        logger.info("Application name " + name);
-        if (name != null) {
-          if (name.startsWith(TOMCAT_PREFIX) || name.startsWith(JETTY_PREFIX)) {
-            name = name.substring(name.lastIndexOf('/') + 1);
-          } else if (name.startsWith(WEBLOGIC_PREFIX)) {
-            int n = name.lastIndexOf('@');
-            if (n > -1) {
-              name = name.substring(n + 1);
-            }
-
-            // for weblogic 9.2
-            if (name.endsWith(".war")) {
-              name = name.substring(0, name.length() - 4);
-            }
-          }
-        }
-        this.appName = name;
-      } else {
-        this.appName = STANDALONE_APP;
-      }
-
-    } catch (Exception e) {
-      // TODO find a better way
+    if (cl instanceof NamedClassLoader) {
+      this.appName = getAppNameFrom((NamedClassLoader)cl);
+    } else {
+      this.appName = STANDALONE_APP;
     }
+  }
+
+  private String getAppNameFrom(NamedClassLoader cl) {
+    String name = cl.__tc_getClassLoaderName();
+    logger.info("Application name " + name);
+    if (name != null) {
+      if (name.startsWith(TOMCAT_PREFIX) || name.startsWith(JETTY_PREFIX)) {
+        name = parseAppNameFromContextPath(name, '/', ROOT_APP_NAME);
+        
+      } else if (name.startsWith(WEBLOGIC_PREFIX)) {
+        name = parseAppNameFromContextPath(name, '@', name);
+        
+        // for weblogic 9.2
+        if (name.endsWith(".war")) {
+          name = name.substring(0, name.length() - 4);
+        }
+      }
+    }
+    return name;
+  }
+  
+  private String parseAppNameFromContextPath(String fullPath, char delim, String defaultTo){
+    int index = fullPath.lastIndexOf(delim);
+    if (index > -1) {
+      return fullPath.substring(index + 1);
+    }
+    return defaultTo;
   }
 
   public boolean isDSOApplication() {
