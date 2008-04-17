@@ -40,6 +40,7 @@ JavaSE-1.6:
     max_version: 1.6.999_999
     env:
       - JAVASE_16
+      - JAVASE_6
       - JAVA_HOME_16
     alias:
       - tests-1.6
