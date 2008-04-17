@@ -17,7 +17,7 @@
   <servers>
     <server host="%i" name="sample">
       <data>terracotta/demo-server/server-data</data>
-      <logs>erracotta/demo-server/server-logs</logs>
+      <logs>terracotta/demo-server/server-logs</logs>
       <statistics>terracotta/demo-server/server-statistics</statistics>
     </server>
     <update-check>
