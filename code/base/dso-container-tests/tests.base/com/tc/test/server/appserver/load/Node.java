@@ -107,6 +107,7 @@ public class Node implements Runnable {
         throw e;
       }
     }
+    logger.info("<!><!><!><!>test time elapsed after testing session #: " + session);
   }
 
   private String getSessionID(WebConversation wc) {
