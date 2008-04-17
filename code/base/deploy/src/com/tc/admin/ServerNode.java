@@ -181,7 +181,15 @@ public class ServerNode extends ComponentNode implements ConnectionListener, Not
   public String getHost() {
     return m_l2Info.host();
   }
+  
+  public String getCanonicalHostName() {
+    return m_connectManager.safeGetHostName();
+  }
 
+  public String getHostAddress() {
+    return m_connectManager.safeGetHostAddress();
+  }
+  
   public int getPort() {
     return m_l2Info.jmxPort();
   }

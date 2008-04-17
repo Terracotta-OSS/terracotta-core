@@ -11,6 +11,8 @@ import com.tc.management.JMXConnectorProxy;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.rmi.ConnectException;
 import java.util.HashMap;
 import java.util.Map;
@@ -136,13 +138,13 @@ public class ServerConnectionManager implements NotificationListener {
 
   static void cacheCredentials(ServerConnectionManager scm, String[] credentials) {
     m_credentialsMap.put(scm.toString(), credentials);
-    m_credentialsMap.put(scm.getHostname(), credentials);
+    m_credentialsMap.put(scm.safeGetHostName(), credentials);
   }
 
   public static String[] getCachedCredentials(ServerConnectionManager scm) {
     String[] result = m_credentialsMap.get(scm.toString());
     if (result == null) {
-      result = m_credentialsMap.get(scm.getHostname());
+      result = m_credentialsMap.get(scm.safeGetHostName());
     }
     return result;
   }
@@ -242,7 +244,7 @@ public class ServerConnectionManager implements NotificationListener {
       } catch (Exception e) {/**/
       }
     }
-    m_jmxConnector = new JMXConnectorProxy(getHostname(), getJMXPortNumber(), getConnectionEnvironment());
+    m_jmxConnector = new JMXConnectorProxy(safeGetHostName(), getJMXPortNumber(), getConnectionEnvironment());
   }
 
   public JMXConnector getJmxConnector() {
@@ -367,6 +369,18 @@ public class ServerConnectionManager implements NotificationListener {
     return m_l2Info.host();
   }
 
+  public InetAddress getInetAddress() throws UnknownHostException {
+    return m_l2Info.getInetAddress();
+  }
+  
+  public String getCanonicalHostName() throws UnknownHostException {
+    return getInetAddress().getCanonicalHostName();
+  }
+  
+  public String getHostAddress() throws UnknownHostException {
+    return m_l2Info.getHostAddress();
+  }
+  
   public int getJMXPortNumber() {
     return m_l2Info.jmxPort();
   }
@@ -518,8 +532,26 @@ public class ServerConnectionManager implements NotificationListener {
     }
   }
 
+  public String safeGetHostName() {
+    try {
+      String s = getCanonicalHostName();
+      return s;
+    } catch(UnknownHostException uhe) {
+      return getHostname();
+    }
+  }
+  
+  public String safeGetHostAddress() {
+    try {
+      String s = getHostAddress();
+      return s;
+    } catch(UnknownHostException uhe) {
+      return "<unknown>";
+    }
+  }
+  
   public String toString() {
-    return getHostname() + ":" + getJMXPortNumber();
+    return safeGetHostName() + ":" + getJMXPortNumber();
   }
 
   public String getStatusString() {
@@ -569,9 +601,9 @@ public class ServerConnectionManager implements NotificationListener {
     if(!(o instanceof ServerConnectionManager)) return false;
     
     ServerConnectionManager other = (ServerConnectionManager)o;
-    String otherHostname = other.getHostname();
+    String otherHostname = other.safeGetHostName();
     int otherJMXPort = other.getJMXPortNumber();
-    String hostname = getHostname();
+    String hostname = safeGetHostName();
     int jmxPort = getJMXPortNumber();
     
     return otherJMXPort == jmxPort && StringUtils.equals(otherHostname, hostname);

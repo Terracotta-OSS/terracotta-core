@@ -5,15 +5,20 @@ package com.tc.config.schema;
 
 import com.tc.util.Assert;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 /**
  * Data used by the admin tool about each L2.
  */
 public class L2Info implements java.io.Serializable {
-
-  public static final String IMPLICIT_L2_NAME = "(implicit)";
+  static final long serialVersionUID = 7607194631717518924L;
+  
+  public static final String IMPLICIT_L2_NAME = "localhost";
 
   private final String       name;
   private final String       host;
+  private InetAddress        hostAddress;
   private final int          jmxPort;
 
   public L2Info(String name, String host, int jmxPort) {
@@ -38,6 +43,24 @@ public class L2Info implements java.io.Serializable {
     return this.host;
   }
 
+  public InetAddress getInetAddress() throws UnknownHostException {
+    if(hostAddress != null) return hostAddress;
+    if("localhost".equals(host) || "127.0.0.1".equals(host)) {
+      hostAddress = InetAddress.getLocalHost();
+    } else {
+      hostAddress = InetAddress.getByName(host);
+    }
+    return hostAddress;
+  }
+  
+  public String getCanonicalHostName() throws UnknownHostException {
+    return getInetAddress().getCanonicalHostName();
+  }
+  
+  public String getHostAddress() throws UnknownHostException {
+    return getInetAddress().getHostAddress();
+  }
+  
   public int jmxPort() {
     return this.jmxPort;
   }

@@ -241,8 +241,8 @@ public class ServerPanel extends XContainer {
    * TODO: i18n
    */
   private void showProductInfo(ProductInfo productInfo) {
-    String[] fields = { "Host", "Port", "DSOListenPort", "ProductVersion", "ProductBuildID", "ProductLicense" };
-    String[] headings = { "Host", "JMX port", "DSO port", "Version", "Build", "License" };
+    String[] fields = { "CanonicalHostName", "HostAddress", "Port", "DSOListenPort", "ProductVersion", "ProductBuildID", "ProductLicense" };
+    String[] headings = { "Host", "Address", "JMX port", "DSO port", "Version", "Build", "License" };
     m_propertyTable.setModel(new PropertyTableModel(m_serverNode, fields, headings));
     m_propertyTable.getAncestorOfClass(ScrollPane.class).setVisible(true);
 

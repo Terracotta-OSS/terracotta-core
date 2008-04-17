@@ -280,10 +280,6 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     return AdminClient.getContext().format(key, args);
   }
 
-  private String formatBundleString(String key, Object arg) {
-    return formatBundleString(key, new Object[] { arg });
-  }
-
   public void initMenubar(XMenuBar menuBar) {
     XMenu menu = new XMenu(getBundleString("file.menu.label"));
 
@@ -325,8 +321,8 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     HelpAction() {
       super("AdminConsole Help");
       String kitID = com.tc.util.ProductInfo.getInstance().kitID();
-      if(kitID == null || "[unknown]".equals(kitID)) {
-        if((kitID = System.getProperty("com.tc.kitID")) == null) {
+      if (kitID == null || "[unknown]".equals(kitID)) {
+        if ((kitID = System.getProperty("com.tc.kitID")) == null) {
           kitID = "42.0";
         }
       }
@@ -916,6 +912,8 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       textArea.setRows(8);
       textArea.setColumns(80);
       textArea.setEditable(false);
+      textArea.setLineWrap(true);
+      textArea.setWrapStyleWord(true);
       ScrollPane scrollPane = new ScrollPane(textArea);
       JOptionPane.showMessageDialog(AdminClientPanel.this, scrollPane, getBundleString("update-checker.action.title"),
                                     JOptionPane.INFORMATION_MESSAGE);
@@ -948,6 +946,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
           try {
             StringBuffer sb = new StringBuffer();
             String version = getProductInfo().getVersion();
+
             if (version.indexOf('.') != -1) {
               URL url = constructCheckURL();
               HttpClient httpClient = new HttpClient();

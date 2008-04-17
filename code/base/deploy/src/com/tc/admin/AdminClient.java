@@ -43,18 +43,7 @@ public class AdminClient extends ApplicationManager {
     Logger.getLogger("javax.management.remote.rmi").setLevel(Level.OFF);
 
     // Silence httpclient
-    Logger.getLogger("org.apache.commons.httpclient").setLevel(Level.OFF);
-    Logger.getLogger("org.apache.commons.httpclient.HttpClient").setLevel(Level.OFF);
-    Logger.getLogger("org.apache.commons.httpclient.params.DefaultHttpParams").setLevel(Level.OFF);
-    Logger.getLogger("org.apache.commons.httpclient.methods.GetMethod").setLevel(Level.OFF);
-    Logger.getLogger("org.apache.commons.httpclient.HttpMethodDirector").setLevel(Level.OFF);
-    Logger.getLogger("org.apache.commons.httpclient.HttpConnection").setLevel(Level.OFF);
-    Logger.getLogger("org.apache.commons.httpclient.HttpMethodBase").setLevel(Level.OFF);
-    Logger.getLogger("org.apache.commons.httpclient.HttpState").setLevel(Level.OFF);
-    Logger.getLogger("org.apache.commons.httpclient.HttpParser").setLevel(Level.OFF);
-    Logger.getLogger("org.apache.commons.httpclient.cookie.CookieSpec").setLevel(Level.OFF);
-    Logger.getLogger("httpclient.wire.header").setLevel(Level.OFF);
-    Logger.getLogger("httpclient.wire.content").setLevel(Level.OFF);
+    System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
   }
   
   protected AdminClient() {
@@ -63,7 +52,6 @@ public class AdminClient extends ApplicationManager {
     if(Os.isMac()) {
       System.setProperty("com.apple.macos.useScreenMenuBar", "true");
       System.setProperty("apple.laf.useScreenMenuBar", "true");
-
       System.setProperty("apple.awt.showGrowBox", "true");
       System.setProperty("com.apple.mrj.application.growbox.intrudes", "false");
     }
