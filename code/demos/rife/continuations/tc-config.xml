@@ -26,8 +26,8 @@
     <!-- Tell DSO where to put the generated client logs
          See the Terracotta Configuration Guide and Reference for additional
          information.-->
-    <logs>%(user.home)/terracotta/client-logs/rife/continuations/%D</logs>
-    <statistics>%(user.home)/terracotta/client-statistics/rife/continuations/%D</statistics>
+    <logs>terracotta/client-logs/rife/continuations/%D</logs>
+    <statistics>terracotta/client-statistics/rife/continuations/%D</statistics>
     
     <!-- Tell DSO to load the RIFE 1.6.0 module. -->
     <modules>

@@ -22,8 +22,8 @@
        See the Terracotta Configuration Guide and Reference for additional
        information. -->
   <clients>
-    <logs>%(user.home)/terracotta/client-logs/spring/webflow/%D</logs>
-    <statistics>%(user.home)/terracotta/client-statistics/spring/webflow/%D</statistics>
+    <logs>terracotta/client-logs/spring/webflow/%D</logs>
+    <statistics>terracotta/client-statistics/spring/webflow/%D</statistics>
   </clients>
 
   <application>
