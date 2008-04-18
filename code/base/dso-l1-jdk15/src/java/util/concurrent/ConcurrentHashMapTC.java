@@ -207,6 +207,11 @@ public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements T
       __tc_fullyWriteUnlock();
     }
   }
+  
+  // TODO: ImplementMe XXX
+  public void __tc_put_logical(Object key, Object value) {
+    throw new UnsupportedOperationException();
+  }
 
   public boolean isEvictionEnabled() {
     return evictionEnabled;

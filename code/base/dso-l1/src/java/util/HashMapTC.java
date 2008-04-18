@@ -230,6 +230,33 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
       super.remove(key);
     }
   }
+  
+  /**
+   * This method is to be invoked when one needs a put to get broadcast, but do not want to fault in the value of a
+   * map entry.
+   */
+  public void __tc_put_logical(Object key, Object value) {
+    if (__tc_isManaged()) {
+      synchronized (__tc_managed().getResolveLock()) {
+        ManagerUtil.checkWriteAccess(this);
+        // It sucks todo two lookups
+        HashMap.Entry e = getEntry(key);
+        if (e == null) {
+          // New mapping
+          ManagerUtil.logicalInvoke(this, SerializationUtil.PUT_SIGNATURE, new Object[] { key, value });
+          super.put(key, value);
+        } else {
+          // without this, LinkedHashMap will not function properly
+          e.recordAccess(this);
+
+          ManagerUtil.logicalInvoke(this, SerializationUtil.PUT_SIGNATURE, new Object[] { e.getKey(), value });
+          e.setValue(value);
+        }
+      }
+    } else {
+      super.put(key, value);
+    }
+  }
 
   public Collection __tc_getAllEntriesSnapshot() {
     if (__tc_isManaged()) {

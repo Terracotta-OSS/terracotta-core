@@ -16,6 +16,8 @@ public interface TCMap {
   
   public void __tc_remove_logical(Object key);
   
+  public void __tc_put_logical(Object key, Object value);
+  
   public Collection __tc_getAllLocalEntriesSnapshot();
   
   public Collection __tc_getAllEntriesSnapshot();
