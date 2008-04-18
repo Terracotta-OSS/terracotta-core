@@ -251,7 +251,9 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     errorMsg.append("\n");
     errorMsg.append("3) The object being waited/notified on is a Terracotta distributed object, but no Terracotta auto-lock has been specified.");
     errorMsg.append("\n\n");
-    errorMsg.append("For more information on this issue, please visit our Troubleshooting Guide at:http://terracotta.org/kit/troubleshooting");
+    errorMsg.append("For more information on this issue, please visit our Troubleshooting Guide at:");
+    errorMsg.append("\n");
+    errorMsg.append("http://terracotta.org/kit/troubleshooting");
 
     return Util.getFormattedMessage(errorMsg.toString());
   }
