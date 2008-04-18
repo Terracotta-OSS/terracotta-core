@@ -64,6 +64,31 @@ public class DSOContextImpl implements DSOContext {
     return new DSOContextImpl(configHelper, globalProvider, manager);
   }
 
+  public static DSOContext createContext(String configSpec, ClassProvider globalProvider)
+      throws ConfigurationSetupException {
+    StandardTVSConfigurationSetupManagerFactory factory = new StandardTVSConfigurationSetupManagerFactory(
+                                                                                                          (String[]) null,
+                                                                                                          false,
+                                                                                                          new FatalIllegalConfigurationChangeHandler(),
+                                                                                                          configSpec);
+
+    L1TVSConfigurationSetupManager config = factory.createL1TVSConfigurationSetupManager();
+    config.setupLogging();
+    PreparedComponentsFromL2Connection l2Connection;
+    try {
+      l2Connection = validateMakeL2Connection(config);
+    } catch (Exception e) {
+      throw new ConfigurationSetupException(e.getLocalizedMessage(), e);
+    }
+
+    DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelperImpl(config);
+    // StandardClassProvider classProvider = new StandardClassProvider();
+    Manager manager = new ManagerImpl(configHelper, globalProvider, l2Connection);
+    manager.init();
+    return createContext(configHelper, globalProvider, manager);
+
+  }
+
   /**
    * For tests
    */

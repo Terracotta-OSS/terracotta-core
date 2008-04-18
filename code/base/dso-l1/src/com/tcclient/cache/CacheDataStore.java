@@ -92,10 +92,18 @@ public class CacheDataStore implements Serializable {
     }
   }
 
+  /** this method is added for backward compatibility with non partitioned clustered-ehcache
+   * that initializes CacheDataStore using this method as onload function. In partitioned ehcache
+   * in forge, this method is not required as CacheDataStore is initialized explicitly whenever CacheTC
+   * is accessed first time in a cluster node.
+   */
+  public void initialize() {
+	  this.initialize(0);
+  }
   /**
    * Called onload to initialize transient per-node state
    */
-  public void initialize() {
+  public void initialize(int partitionId) {
     logDebug("Initializing CacheDataStore");
 
     int startEvictionIndex = 0;
@@ -106,7 +114,7 @@ public class CacheDataStore implements Serializable {
                                                              config.getCacheName() + " invalidation thread" + i);
 
       cacheInvalidationTimer[i].start(new CacheEntryInvalidator(globalKeySet[i], startEvictionIndex, lastEvictionIndex,
-                                                                config, ManagerUtil.getManager(), this));
+                                                                config, ManagerUtil.getManager(), this),partitionId);
       startEvictionIndex = lastEvictionIndex;
     }
   }

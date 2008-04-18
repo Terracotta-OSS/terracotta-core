@@ -205,7 +205,7 @@ public class TimeExpiryMapGlobalEvictionTestApp extends ServerCrashingAppBase {
 
     public synchronized void setMap(MockTimeExpiryMap map) {
       this.map = map;
-      this.map.initialize();
+      this.map.initialize(0);
     }
 
     public synchronized boolean isExpired(Object key) {

@@ -60,8 +60,8 @@ public class TimeExpiryMap implements Map, Expirable, Cloneable, Serializable {
     timeExpiryDataStore = new CacheDataStore(config);
   }
 
-  public void initialize() {
-    timeExpiryDataStore.initialize();
+  public void initialize(int partitionId) {
+    timeExpiryDataStore.initialize(partitionId);
   }
   
   public Object put(Object key, Object value) {
