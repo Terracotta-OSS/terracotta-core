@@ -300,11 +300,11 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   }
 
   public TCSocketAddress getRemoteAddress() {
-    return this.connection.getRemoteAddress();
+    return (connection != null ? this.connection.getRemoteAddress() : null);
   }
 
   public TCSocketAddress getLocalAddress() {
-    return this.connection.getLocalAddress();
+    return (connection != null ? this.connection.getLocalAddress() : null);
   }
 
   protected void setConnection(TCConnection conn) {
