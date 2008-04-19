@@ -14,10 +14,19 @@ import com.tc.test.activepassive.ActivePassivePersistenceMode;
 import com.tc.test.activepassive.ActivePassiveSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tc.util.runtime.Os;
 import com.tctest.runner.AbstractTransparentApp;
+
+import java.util.Date;
 
 public class CreateLotsOfGarbageGCTest extends GCTestBase implements TestConfigurator {
 
+  public CreateLotsOfGarbageGCTest() {
+    if (Os.isSolaris()) {
+      disableAllUntil(new Date(Long.MAX_VALUE));
+    }
+  }
+  
   protected Class getApplicationClass() {
     return CreateLotsOfGarbageGCTestApp.class;
   }
