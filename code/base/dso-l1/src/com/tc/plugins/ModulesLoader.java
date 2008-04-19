@@ -171,9 +171,7 @@ public class ModulesLoader {
       final String[] additionalModules = additionalModuleList.split(";");
       Pattern pattern = Pattern.compile("(.+?)-([0-9\\.]+)-([0-9\\.\\-]+)");
       for (int i = 0; i < additionalModules.length; i++) {
-        if (additionalModules[i].length() == 0) {
-          continue;
-        }
+        if (additionalModules[i].length() == 0) continue;
 
         final Matcher matcher = pattern.matcher(additionalModules[i]);
         if (!matcher.find() || matcher.groupCount() < 3) {
@@ -331,7 +329,6 @@ public class ModulesLoader {
     BufferedOutputStream buf = new BufferedOutputStream(bas);
     try {
       application.save(buf);
-      buf.flush();
       buf.close();
       logger.info("Here's the config from the module:\n\n" + bas.toString());
     } catch (IOException e) {
