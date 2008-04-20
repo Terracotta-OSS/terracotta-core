@@ -219,7 +219,11 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
   }
 
   public synchronized void queryLock(LockID lockID, NodeID cid, ThreadID threadID, Sink lockResponseSink) {
-    assertNotStarting();
+    if (isStarting()) {
+      logger.warn("QueryLock message received during lock manager is starting -- ignoring the message.\n" +
+                  "Message Context: [LockID="+lockID+", NodeID="+cid+", ThreadID="+threadID+"]");
+      return;
+    }
     if (!isStarted()) return;
 
     Lock lock = getLockFor(lockID);
@@ -228,7 +232,11 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
   }
 
   public synchronized void interrupt(LockID lockID, NodeID cid, ThreadID threadID) {
-    assertNotStarting();
+    if (isStarting()) {
+      logger.warn("Interrupt message received during lock manager is starting -- ignoring the message.\n" +
+                  "Message Context: [LockID="+lockID+", NodeID="+cid+", ThreadID="+threadID+"]");
+      return;
+    }
     if (!isStarted()) return;
 
     Lock lock = getLockFor(lockID);
@@ -237,7 +245,11 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
   }
 
   public synchronized void unlock(LockID id, NodeID channelID, ThreadID threadID) {
-    assertNotStarting();
+    if (isStarting()) {
+      logger.warn("Unlock message received during lock manager is starting -- ignoring the message.\n" +
+                  "Message Context: [LockID="+id+", NodeID="+channelID+", ThreadID="+threadID+"]");
+      return;
+    }
     if (!isStarted()) return;
 
     Lock l = getLockFor(id);
@@ -284,7 +296,11 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
   public synchronized void recallCommit(LockID lid, NodeID cid, Collection lockContexts, Collection waitContexts,
                                         Collection pendingLockContexts, Collection pendingTryLockContexts,
                                         Sink lockResponseSink) {
-    assertNotStarting();
+    if (isStarting()) {
+      logger.warn("RecallCommit message received during lock manager is starting -- ignoring the message.\n" +
+                  "Message Context: [LockID="+lid+", NodeID="+cid+"]");
+      return;
+    }
     if (!channelManager.isActiveID(cid)) {
       logger.warn("Ignoring Recall Commit message from disconnected client : " + cid + " : Lock ID : " + lid);
       return;
@@ -531,10 +547,6 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
   private void assertStarted() {
     if (!isStarted()) throw new LockManagerError(NOT_STARTED_ERROR, "LockManager is not started ("
                                                                     + this.status.getName() + ")");
-  }
-
-  private void assertNotStarting() {
-    if (isStarting()) throw new LockManagerError(IS_STARTING_ERROR, "LockManager is starting");
   }
 
   private void assertNotStopped() {
