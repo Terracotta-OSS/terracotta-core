@@ -376,7 +376,12 @@ public class Resolver {
     for (int i = 0; i < requirements.length; i++) {
       final BundleSpec spec = requirements[i];
       stack.push(spec.getSymbolicName() + "-" + spec.getVersion());
-      ensureBundle(spec, stack);
+      try {
+        ensureBundle(spec, stack);
+      } catch (MissingBundleException e) {
+        throw new MissingBundleException(e.getMessage(), spec.getGroupId(), spec.getName(), spec.getVersion(),
+                                         repositories, dependencyStack);
+      }
     }
     addToRegistry(location, manifest);
   }
@@ -394,8 +399,7 @@ public class Resolver {
       if (required == null) {
         String msg = formatMessage(Message.ERROR_BUNDLE_DEPENDENCY_UNRESOLVED, new Object[] { spec.getName(),
             spec.getVersion(), spec.getGroupId() });
-        throw new MissingBundleException(msg, spec.getGroupId(), spec.getName(), spec.getVersion(), repositories,
-                                         dependencyStack);
+        throw new MissingBundleException(msg);
       }
       addToRegistry(required, getManifest(required));
       resolveDependencies(required, dependencyStack);

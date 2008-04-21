@@ -6,6 +6,7 @@ package com.tc.bundles.exception;
 
 import org.osgi.framework.BundleException;
 
+import com.tc.bundles.OSGiToMaven;
 import com.tc.bundles.MavenToOSGi;
 
 import java.io.BufferedOutputStream;
@@ -43,30 +44,23 @@ public class MissingBundleException extends BundleException implements Hints {
     this.dependencyStack = dependencyStack;
   }
 
-  private String expectedJarFilename() {
-    return name + "-" + MavenToOSGi.projectVersionToBundleVersion(version) + ".jar";
-  }
-
-  private String expectedRepositories() {
-    return repositoriesToString("\n\t");
-  }
+  private static String INDENT = "   ";
 
   private String expectedLocations() {
-    return repositoriesToString(File.separatorChar + groupId.replace('.', File.separatorChar) + File.separatorChar
-                                + name + File.separatorChar + version + File.separatorChar + expectedJarFilename()
-                                + "\n\t")
-           + repositoriesToString(File.separatorChar + expectedJarFilename() + "\n\t");
+    return repositoriesToString(OSGiToMaven.makeBundlePathname("/", groupId, name, version) + "\n" + INDENT + INDENT)
+           + repositoriesToString(OSGiToMaven.makeFlatBundlePathname("/", groupId, name, version) + "\n" + INDENT
+                                  + INDENT);
   }
 
   private String expectedAttributes() {
-    return "Bundle-SymbolicName: " + MavenToOSGi.artifactIdToSymbolicName(groupId, name) + "\n\t" + "Bundle-Version: "
-           + version.replace('-', '.');
+    return "Bundle-SymbolicName: " + MavenToOSGi.artifactIdToSymbolicName(groupId, name) + "\n" + INDENT + INDENT
+           + "Bundle-Version: " + MavenToOSGi.projectVersionToBundleVersion(version);
   }
 
   private String repositoriesToString(String sep) {
     final StringBuffer repos = new StringBuffer();
     for (int j = 0; j < repositories.size(); j++)
-      repos.append(canonicalPath(repositories.get(j).toString())).append(sep);
+      repos.append("+ ").append(canonicalPath(repositories.get(j).toString())).append(sep);
     return repos.toString();
   }
 
@@ -80,11 +74,14 @@ public class MissingBundleException extends BundleException implements Hints {
 
   public String getHints() {
     String msg = getMessage();
-    msg += "\n\nRepositories searched:\n\n\t" + expectedRepositories();
-    msg += "\n\nExpected jar filename:\n\n\t" + expectedJarFilename();
-    msg += "\n\nExpected locations for jar file:\n\n\t" + expectedLocations();
-    msg += "\n\nExpected manifest attributes:\n\n\t" + expectedAttributes();
-    if (dependencyStack != null) msg += "\n\nTIM dependency stack:\n\n" + dependencyStackAsString(dependencyStack);
+    msg += "\n\n" + INDENT + "Repositories searched:\n\n" + INDENT + INDENT
+           + repositoriesToString("\n" + INDENT + INDENT);
+    msg += "\n\n" + INDENT + "Expected jar filename:\n\n" + INDENT + INDENT
+           + OSGiToMaven.makeBundleFilename(name, version);
+    msg += "\n\n" + INDENT + "Expected paths to jar file:\n\n" + INDENT + INDENT + expectedLocations();
+    msg += "\n\n" + INDENT + "Expected manifest attributes:\n\n" + INDENT + INDENT + expectedAttributes();
+    if (dependencyStack != null) msg += "\n\n" + INDENT + "TIM dependency stack:\n\n"
+                                        + dependencyStackAsString(dependencyStack);
     return msg;
   }
 
@@ -104,9 +101,10 @@ public class MissingBundleException extends BundleException implements Hints {
           continue;
         }
         if (depth == 0) {
-          out.write((entry.toString() + "\n").getBytes());
+          out.write((INDENT + INDENT + entry.toString() + "\n").getBytes());
           continue;
         }
+        out.write((INDENT + INDENT).getBytes());
         for (int j = 0; j < (depth - 1) * indent; j++)
           out.write(" ".getBytes());
         out.write((" +- " + entry.toString() + "\n").getBytes());
