@@ -13,6 +13,9 @@
     <url name="tc-repo-eclipse">
       <artifact pattern="http://download.terracotta.org/buildjars/eclipse-api/[artifact]-[revision].[ext]"/>
     </url>
+    <url name="terracotta-maven2" m2compatible="true">
+      <artifact pattern="http://download.terracotta.org/maven2/[organisation]/[artifact]/[revision]/[artifact]-[revision].[ext]"/>
+    </url>
     <chain name="ibiblio-chain" returnFirst="true">
       <ibiblio name="ibiblio" />
       <url name="tc-mirror">
@@ -21,6 +24,7 @@
     </chain>
   </resolvers>
   <modules>
+    <module organisation="org.terracotta.*" name=".*" resolver="terracotta-maven2"/>
     <module organisation="testing" name=".*" resolver="tc-dev"/>
     <module organisation="terracotta" name=".*" resolver="tc-repo"/>
     <module organisation="terracotta-internal" name=".*" resolver="tc-repo-internal"/>
