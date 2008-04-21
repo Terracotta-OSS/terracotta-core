@@ -30,7 +30,7 @@ if $cygwin; then
   [ -n "$TC_INSTALL_DIR" ] && TC_INSTALL_DIR=`cygpath --windows "$TC_INSTALL_DIR"`
 fi
 
-exec "${JAVA_HOME}/bin/java" \
+exec "${JAVA_HOME}/bin/java -Xmx128m" \
   -Dtc.install-root="${TC_INSTALL_DIR}" \
   ${JAVA_OPTS} \
   -cp "${TC_INSTALL_DIR}/lib/tc.jar" \
