@@ -201,7 +201,7 @@ public class TimeExpiryMapTestApp extends AbstractTransparentApp {
         this.map.stopTimeMonitoring();
       }
       this.map = map;
-      this.map.initialize(0);
+      this.map.initialize(ManagerUtil.getManager());
     }
 
     public synchronized boolean isExpired(Object key) {

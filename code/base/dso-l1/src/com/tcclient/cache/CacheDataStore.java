@@ -6,6 +6,7 @@ package com.tcclient.cache;
 
 import com.tc.logging.TCLogger;
 import com.tc.object.bytecode.Clearable;
+import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.TCMap;
 import com.tc.object.lockmanager.api.LockLevel;
@@ -35,17 +36,17 @@ public class CacheDataStore implements Serializable {
 
   // Cache state, changes during lifetime
   private final Map[]                        store;                                                        // <Object,
-                                                                                                            // CacheData>,
-                                                                                                            // values
-                                                                                                            // may be
-                                                                                                            // faulted
-                                                                                                            // out
+  // CacheData>,
+  // values
+  // may be
+  // faulted
+  // out
   private final Map[]                        dtmStore;                                                     // <Object,
-                                                                                                            // Timestamp>,
-                                                                                                            // values
-                                                                                                            // never
-                                                                                                            // faulted
-                                                                                                            // out
+  // Timestamp>,
+  // values
+  // never
+  // faulted
+  // out
   private final GlobalKeySet[]               globalKeySet;
 
   // Local cache stats
@@ -92,18 +93,19 @@ public class CacheDataStore implements Serializable {
     }
   }
 
-  /** this method is added for backward compatibility with non partitioned clustered-ehcache
-   * that initializes CacheDataStore using this method as onload function. In partitioned ehcache
-   * in forge, this method is not required as CacheDataStore is initialized explicitly whenever CacheTC
-   * is accessed first time in a cluster node.
+  /**
+   * this method is added for backward compatibility with non partitioned clustered-ehcache that initializes
+   * CacheDataStore using this method as onload function. In partitioned ehcache in forge, this method is not required
+   * as CacheDataStore is initialized explicitly whenever CacheTC is accessed first time in a cluster node.
    */
   public void initialize() {
-	  this.initialize(0);
+    this.initialize(ManagerUtil.getManager());
   }
+
   /**
    * Called onload to initialize transient per-node state
    */
-  public void initialize(int partitionId) {
+  public void initialize(Manager manager) {
     logDebug("Initializing CacheDataStore");
 
     int startEvictionIndex = 0;
@@ -114,7 +116,7 @@ public class CacheDataStore implements Serializable {
                                                              config.getCacheName() + " invalidation thread" + i);
 
       cacheInvalidationTimer[i].start(new CacheEntryInvalidator(globalKeySet[i], startEvictionIndex, lastEvictionIndex,
-                                                                config, ManagerUtil.getManager(), this),partitionId);
+                                                                config, manager, this), manager);
       startEvictionIndex = lastEvictionIndex;
     }
   }
@@ -153,13 +155,13 @@ public class CacheDataStore implements Serializable {
     }
     return rcd;
   }
-  
+
   public Object put(final Object key, final Object value) {
     CacheData rcd = putInternal(key, value);
 
     return ((rcd == null) ? null : rcd.getValue());
   }
-  
+
   public void putData(final Object key, final Object value) {
     putInternal(key, value);
   }

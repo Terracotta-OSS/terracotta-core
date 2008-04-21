@@ -30,11 +30,11 @@ public class TimeExpiryMap implements Map, Expirable, Cloneable, Serializable {
 
   public TimeExpiryMap(long invalidatorSleepSeconds, long maxIdleTimeoutSeconds, long maxTTLSeconds, String cacheName) {
     Manager manager = ManagerUtil.getManager();
-    CacheConfig config = new CacheConfig("CacheInvalidator - " + cacheName, 
-                                         maxIdleTimeoutSeconds, 
+    CacheConfig config = new CacheConfig("CacheInvalidator - " + cacheName,
+                                         maxIdleTimeoutSeconds,
                                          maxTTLSeconds,
-                                         invalidatorSleepSeconds, 
-                                         this, 
+                                         invalidatorSleepSeconds,
+                                         this,
                                          manager);
     timeExpiryDataStore = new CacheDataStore(config);
   }
@@ -44,30 +44,30 @@ public class TimeExpiryMap implements Map, Expirable, Cloneable, Serializable {
                        boolean globalEvictionEnabled, int globalEvictionDuration, int concurrency, int evictorPoolSize,
                        boolean isLoggingEnabled, boolean isEvictorLoggingEnabled, int numOfChunks, long restMillis) {
 
-    CacheConfig config = new CacheConfig("CacheInvalidator - " + cacheName, 
-                                         maxIdleTimeoutSeconds, 
+    CacheConfig config = new CacheConfig("CacheInvalidator - " + cacheName,
+                                         maxIdleTimeoutSeconds,
                                          maxTTLSeconds,
-                                         invalidatorSleepSeconds, 
-                                         this, 
+                                         invalidatorSleepSeconds,
+                                         this,
                                          concurrency,
                                          evictorPoolSize,
                                          globalEvictionEnabled,
                                          globalEvictionDuration,
-                                         isLoggingEnabled, 
+                                         isLoggingEnabled,
                                          isEvictorLoggingEnabled,
-                                         numOfChunks, 
+                                         numOfChunks,
                                          restMillis);
     timeExpiryDataStore = new CacheDataStore(config);
   }
 
-  public void initialize(int partitionId) {
-    timeExpiryDataStore.initialize(partitionId);
+  public void initialize(Manager manager) {
+    timeExpiryDataStore.initialize(manager);
   }
-  
+
   public Object put(Object key, Object value) {
     return timeExpiryDataStore.put(key, value);
   }
-  
+
   public void putData(Object key, Object value) {
     timeExpiryDataStore.putData(key, value);
   }
@@ -324,7 +324,7 @@ public class TimeExpiryMap implements Map, Expirable, Cloneable, Serializable {
       return keySet.size();
     }
   }
-  
+
   private class KeysIterator extends EntriesIterator {
 
     public KeysIterator(Iterator iterator) {

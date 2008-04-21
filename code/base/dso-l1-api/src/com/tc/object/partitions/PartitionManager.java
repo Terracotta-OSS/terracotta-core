@@ -7,24 +7,18 @@ public class PartitionManager {
 
   private static final ThreadLocal partitionedClusterLocal = new ThreadLocal();
 
-  public static int setPartition(int partitionNumber) {
-    if (!ClassProcessorHelper.USE_PARTITIONED_CONTEXT) return -1;
-    String oldPartition = (String) partitionedClusterLocal.get();
-    partitionedClusterLocal.set("Partition" + partitionNumber);
-    if (oldPartition != null) { return new Integer(oldPartition.substring(9)).intValue(); }
-    return -1;
+  public static Manager setPartition(Manager manager) {
+    Manager prev = getPartitionManager();
+    partitionedClusterLocal.set(manager);
+    return prev;
   }
 
   public static int getNumPartitions() {
-    int partitions = ClassProcessorHelper.getNumPartitions();
-    if(partitions == 0)
-    	partitions = 1;
-    return partitions;
+    return ClassProcessorHelper.getNumPartitions();
   }
 
   public static Manager getPartitionManager() {
-    String clusterId = (String) partitionedClusterLocal.get();
-    return ClassProcessorHelper.getParitionedManager(clusterId);
+    return (Manager) partitionedClusterLocal.get();
   }
 
   public static void init() {

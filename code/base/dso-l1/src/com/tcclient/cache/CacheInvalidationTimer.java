@@ -4,6 +4,7 @@
  */
 package com.tcclient.cache;
 
+import com.tc.object.bytecode.Manager;
 import com.tc.object.partitions.PartitionManager;
 
 public class CacheInvalidationTimer {
@@ -18,10 +19,10 @@ public class CacheInvalidationTimer {
     this.timerName = timerName;
   }
 
-  public void start(CacheEntryInvalidator evictor, int partitionId) {
+  public void start(CacheEntryInvalidator evictor, Manager manager) {
     if (delayInSecs <= 0) { return; }
 
-    this.runner = new EvictionRunner(delayInSecs, evictor, partitionId);
+    this.runner = new EvictionRunner(delayInSecs, evictor, manager);
     Thread t = new Thread(runner, timerName);
     t.setDaemon(true);
     t.start();
@@ -37,12 +38,12 @@ public class CacheInvalidationTimer {
     private final long                            delayMillis;
     private volatile boolean                      running = true;
     private final transient CacheEntryInvalidator evictor;
-    private final int                             partitionId;
+    private final Manager                         manager;
 
-    public EvictionRunner(final long delayInSecs, final CacheEntryInvalidator evictor, int partitionId) {
+    public EvictionRunner(final long delayInSecs, final CacheEntryInvalidator evictor, Manager manager) {
       this.evictor = evictor;
+      this.manager = manager;
       this.delayMillis = delayInSecs * 1000;
-      this.partitionId = partitionId;
     }
 
     public void cancel() {
@@ -50,7 +51,7 @@ public class CacheInvalidationTimer {
     }
 
     public void run() {
-      PartitionManager.setPartition(partitionId);
+      PartitionManager.setPartition(manager);
       long nextDelay = delayMillis;
       try {
         do {

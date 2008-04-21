@@ -8,6 +8,7 @@ import org.apache.commons.io.FileUtils;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
+import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -205,7 +206,7 @@ public class TimeExpiryMapGlobalEvictionTestApp extends ServerCrashingAppBase {
 
     public synchronized void setMap(MockTimeExpiryMap map) {
       this.map = map;
-      this.map.initialize(0);
+      this.map.initialize(ManagerUtil.getManager());
     }
 
     public synchronized boolean isExpired(Object key) {

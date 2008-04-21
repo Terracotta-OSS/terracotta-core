@@ -455,9 +455,13 @@ public class ClassProcessorHelper {
   }
 
   public static int getNumPartitions() {
-    synchronized (partitionedContextMap) {
-      return partitionedContextMap.size();
+    if (USE_PARTITIONED_CONTEXT) {
+      synchronized (partitionedContextMap) {
+        return partitionedContextMap.size();
+      }
     }
+
+    return 1;
   }
 
   private static void registerStandardLoaders() {
@@ -581,14 +585,20 @@ public class ClassProcessorHelper {
     return context.getManager();
   }
 
-  public static Manager getParitionedManager(String serverId) {
-    if (!USE_PARTITIONED_CONTEXT) { throw new IllegalStateException("DSO Context is not set to partitioned in this VM"); }
-    DSOContext context;
-//    synchronized (partitionedContextMap) {
-      context = (DSOContext) partitionedContextMap.get(serverId);
-//    }
-    if (context == null) { return null; }
-    return context.getManager();
+  public static Manager[] getParitionedManagers() {
+    if (!USE_PARTITIONED_CONTEXT) { return new Manager[] { ManagerUtil.getManager() }; }
+
+    final DSOContext[] contexts;
+    synchronized (partitionedContextMap) {
+      contexts = (DSOContext[]) partitionedContextMap.values().toArray(new DSOContext[partitionedContextMap.size()]);
+    }
+
+    Manager[] managers = new Manager[contexts.length];
+    for (int i = 0; i < contexts.length; i++) {
+      managers[i] = contexts[i].getManager();
+    }
+
+    return managers;
   }
 
   /**

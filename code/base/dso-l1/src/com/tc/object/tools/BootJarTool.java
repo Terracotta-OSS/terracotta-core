@@ -135,6 +135,7 @@ import com.tc.object.loaders.StandardClassProvider;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.InstrumentationLoggerImpl;
 import com.tc.object.logging.NullInstrumentationLogger;
+import com.tc.object.partitions.PartitionManager;
 import com.tc.object.util.OverrideCheck;
 import com.tc.object.util.ToggleableStrongReference;
 import com.tc.plugins.ModulesLoader;
@@ -509,9 +510,7 @@ public class BootJarTool {
 
       loadTerracottaClass(ReflectiveProxy.class.getName());
       loadTerracottaClass(ReflectiveProxy.Handler.class.getName());
-      loadTerracottaClass(com.tc.object.partitions.PartitionManager.class.getName());
-      loadTerracottaClass(com.tc.object.partitions.TCNoPartitionError.class.getName());
-      loadTerracottaClass(com.tc.exception.TCError.class.getName());
+      loadTerracottaClass(PartitionManager.class.getName());
 
       addManagementClasses();
 
