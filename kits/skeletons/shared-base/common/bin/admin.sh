@@ -37,8 +37,8 @@ if $cygwin; then
   [ -n "$CP" ] && CP=`cygpath -w -p $CP`
 fi
 
-exec "${JAVA_HOME}/bin/java -Xmx128m" \
-  -Dtc.install-root="${TC_INSTALL_DIR}" \
+JAVA_OPTS="-Xmx128m -Dtc.install-root=${TC_INSTALL_DIR}"
+exec "${JAVA_HOME}/bin/java" \
   ${JAVA_OPTS} \
   -cp "$CP" \
   com.tc.admin.AdminClient "$@"
