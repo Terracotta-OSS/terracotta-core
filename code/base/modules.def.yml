@@ -13,9 +13,6 @@ modules:
         jdk: J2SE-1.5
       dependencies:
         - common
-  - linked-child-process:
-      options:
-        jdk: J2SE-1.4
   - thirdparty-api:
       options:
         jdk: J2SE-1.4
@@ -32,7 +29,6 @@ modules:
         jdk: J2SE-1.4
       dependencies:
         - common-api
-        - linked-child-process        
   - aspectwerkz:
       options:
         jdk: J2SE-1.4
@@ -314,7 +310,6 @@ modules:
         - dso-l2-common
         - dso-statistics
         - dso-statistics-api
-        - linked-child-process
         - management-api
         - sigarstats
         - thirdparty
@@ -405,7 +400,6 @@ modules:
         - dso-l2-common
         - dso-statistics
         - dso-statistics-api
-        - linked-child-process
         - management
         - management-api
         - simulator
@@ -429,7 +423,6 @@ modules:
         - dso-statistics
         - dso-statistics-api
         - legacy-test-tree
-        - linked-child-process
         - management
         - management-api
         - simulator
@@ -454,7 +447,6 @@ modules:
         - dso-statistics
         - dso-statistics-api
         - legacy-test-tree
-        - linked-child-process
         - management
         - management-api
         - simulator
@@ -482,7 +474,6 @@ modules:
         - dso-statistics
         - dso-statistics-api
         - legacy-test-tree
-        - linked-child-process
         - management
         - management-api
         - simulator
@@ -507,7 +498,6 @@ modules:
         - dso-statistics
         - dso-statistics-api
         - legacy-test-tree
-        - linked-child-process
         - management
         - management-api
         - simulator
@@ -532,7 +522,6 @@ modules:
         - dso-statistics
         - dso-statistics-api
         - legacy-test-tree
-        - linked-child-process
         - management
         - management-api
         - simulator
@@ -562,7 +551,6 @@ modules:
         - dso-system-tests
         - dso-tests-jdk15
         - legacy-test-tree
-        - linked-child-process
         - management
         - management-api
         - simulator
@@ -590,7 +578,6 @@ modules:
         - dso-statistics-api
         - dso-system-tests
         - legacy-test-tree
-        - linked-child-process
         - management
         - management-api
         - simulator
@@ -614,7 +601,6 @@ modules:
         - dso-statistics
         - dso-statistics-api
         - legacy-test-tree
-        - linked-child-process
         - management
         - management-api
         - modules-common
@@ -641,7 +627,6 @@ modules:
         - dso-statistics
         - dso-statistics-api
         - legacy-test-tree
-        - linked-child-process
         - management
         - management-api
         - modules-common
@@ -668,7 +653,6 @@ modules:
         - dso-statistics
         - dso-statistics-api
         - legacy-test-tree
-        - linked-child-process
         - management
         - management-api
         - simulator
@@ -694,7 +678,6 @@ modules:
         - dso-statistics
         - dso-statistics-api
         - legacy-test-tree
-        - linked-child-process
         - management
         - management-api
         - modules-common
@@ -723,7 +706,6 @@ modules:
         - dso-statistics
         - dso-statistics-api
         - legacy-test-tree
-        - linked-child-process
         - management
         - management-api
         - modules-common
@@ -771,7 +753,6 @@ modules:
         - dso-statistics-api
         - dso-system-tests
         - legacy-test-tree
-        - linked-child-process
         - management
         - management-api
         - modules-common
@@ -800,7 +781,6 @@ modules:
         - dso-statistics-api
         - dso-system-tests
         - legacy-test-tree
-        - linked-child-process
         - management
         - management-api
         - modules-common
@@ -822,7 +802,6 @@ modules:
         - dso-l2
         - dso-memory-datastore
         - legacy-test-tree
-        - linked-child-process
         - management
         - management-api
         - modules-common
@@ -858,7 +837,6 @@ modules:
         - dso-statistics
         - dso-statistics-api
         - legacy-test-tree
-        - linked-child-process
         - management
         - management-api
         - modules-common
@@ -887,7 +865,6 @@ modules:
         - dso-statistics
         - dso-statistics-api
         - legacy-test-tree
-        - linked-child-process
         - management
         - management-api
         - modules-common
@@ -916,7 +893,6 @@ modules:
         - dso-statistics
         - dso-statistics-api
         - legacy-test-tree
-        - linked-child-process
         - management
         - management-api
         - modules-common
@@ -946,7 +922,6 @@ modules:
         - dso-statistics-api
         - legacy-test-tree
         - legacy-test-tree
-        - linked-child-process
         - management
         - management-api
         - modules-common
@@ -975,7 +950,6 @@ modules:
         - dso-statistics
         - dso-statistics-api
         - legacy-test-tree
-        - linked-child-process
         - management
         - management-api
         - modules-common
@@ -1004,7 +978,6 @@ modules:
         - dso-statistics
         - dso-statistics-api
         - legacy-test-tree
-        - linked-child-process
         - management
         - management-api
         - simulator
@@ -1034,7 +1007,6 @@ modules:
         - dso-statistics
         - dso-statistics-api
         - legacy-test-tree
-        - linked-child-process
         - management
         - management-api
         - modules-common
@@ -1058,7 +1030,6 @@ module-groups:
     - dso-spring-tests
     - dso-spring-crash-tests
   dso:
-    - linked-child-process
     - common
     - thirdparty
     - aspectwerkz

@@ -107,7 +107,6 @@ bundled_components:
         - dso-statistics
         - dso-statistics-api
         - sigarstats
-        - linked-child-process
         - management
         - management-api
         - modules-common

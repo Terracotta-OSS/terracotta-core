@@ -34,7 +34,6 @@ bundled_components:
         - dso-statistics-api
         - sigarstats
         - dso-statistics            
-        - linked-child-process
         - management
         - modules-common
         - thirdparty

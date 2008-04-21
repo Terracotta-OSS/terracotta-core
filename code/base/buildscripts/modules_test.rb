@@ -62,7 +62,14 @@ class BuildSubtree
             # is why that class is pretty much in its own module), as it's in the CLASSPATH used to run application
             # servers -- and they typically don't like it if you put random stuff in their CLASSPATH that isn't
             # their own classes.
-            write_dynamic_property(file, "linked-child-process-classpath", build_module.module_set['linked-child-process'].subtree('src').classpath(build_results, :full, :runtime))
+            common_classpath = build_module.module_set['common'].subtree('src').classpath(build_results, :module_only, :runtime)
+            linked_child_process_jars = common_classpath.grep(/linked-child-process.*\.jar$/)
+            if linked_child_process_jars.empty?
+              fail("Could not find linked-child-process JAR")
+            elsif linked_child_process_jars.size > 1
+              fail("ERROR: There is more than one linked-child-processs JAR in the CLASSPATH for module common")
+            end
+            write_dynamic_property(file, "linked-child-process-classpath", linked_child_process_jars.first)
 
             if container_home
                 write_dynamic_property(file, "appserver.home", container_home)

@@ -23,7 +23,6 @@
 
   <modules>
     <module>../schemas</module>
-    <module>../linked-child-process</module>
     <module>../thirdparty</module>
     <module>../common</module>
     <module>../legacy-test-tree</module>
@@ -719,7 +718,7 @@
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>linked-child-process</artifactId>
-        <version>${tcVersion}</version>
+        <version>1.0.0</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>

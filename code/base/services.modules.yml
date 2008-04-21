@@ -12,7 +12,6 @@ modules:
         - aspectwerkz
         - common
         - dso-common
-        - linked-child-process
         - dso-l1
         - simulator
         - deploy

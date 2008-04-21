@@ -454,7 +454,6 @@
       <module fileurl="file://$PROJECT_DIR$/installer.iml" filepath="$PROJECT_DIR$/installer.iml" />
       <module fileurl="file://$PROJECT_DIR$/jdk15-preinst-config.iml" filepath="$PROJECT_DIR$/jdk15-preinst-config.iml" />
       <module fileurl="file://$PROJECT_DIR$/legacy-test-tree.iml" filepath="$PROJECT_DIR$/legacy-test-tree.iml" />
-      <module fileurl="file://$PROJECT_DIR$/linked-child-process.iml" filepath="$PROJECT_DIR$/linked-child-process.iml" />
       <module fileurl="file://$PROJECT_DIR$/management.iml" filepath="$PROJECT_DIR$/management.iml" />
       <module fileurl="file://$PROJECT_DIR$/management-api.iml" filepath="$PROJECT_DIR$/management-api.iml" />
       <module fileurl="file://$PROJECT_DIR$/modules-common.iml" filepath="$PROJECT_DIR$/modules-common.iml" />

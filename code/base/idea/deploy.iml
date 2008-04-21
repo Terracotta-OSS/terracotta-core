@@ -22,7 +22,6 @@
     <orderEntry type="module" module-name="dso-l2-common" />
     <orderEntry type="module" module-name="dso-statistics-api" />
     <orderEntry type="module" module-name="dso-statistics" />
-    <orderEntry type="module" module-name="linked-child-process" />
     <orderEntry type="module" module-name="management" />
     <orderEntry type="module" module-name="thirdparty" />
     <orderEntry type="module" module-name="thirdparty-api" />

@@ -35,7 +35,6 @@
     <orderEntry type="module" module-name="dso-l2-common" />
     <orderEntry type="module" module-name="dso-system-tests" />
     <orderEntry type="module" module-name="legacy-test-tree" />
-    <orderEntry type="module" module-name="linked-child-process" />
     <orderEntry type="module" module-name="management" />
     <orderEntry type="module" module-name="modules-common" />
     <orderEntry type="module" module-name="simulator" />

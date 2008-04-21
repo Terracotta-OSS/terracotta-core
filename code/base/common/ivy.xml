@@ -2,6 +2,7 @@
 <ivy-module version="2.0">
   <info organisation="ibiblio" module="common"/>
   <dependencies>
+    <dependency name="linked-child-process" rev="1.0.0" org="org.terracotta"/>
 	<dependency name="antlr" rev="2.7.3" org="terracotta"/>
 	<dependency name="bsh" rev="2.0b4" org="terracotta"/>
 	<dependency name="commons-cli" rev="1.0"/>

@@ -14,7 +14,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l2"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-memory-datastore"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/legacy-test-tree"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/linked-child-process"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/management"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/management-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/modules-common"/>
