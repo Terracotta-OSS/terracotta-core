@@ -15,7 +15,16 @@ import java.io.IOException;
 
 class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage, SynAckMessage, AckMessage,
     HealthCheckerProbeMessage {
+  
+  /**
+   * VERSION_1: Transport Handshake Message Version for Terracotta <= 2.5
+   * VERSION_2: Transport Handshake Message Version for Terracotta = 2.6
+   * VERSION: Current Version for Transport Handshake Messages
+   */
   static final byte          VERSION_1  = 1;
+  static final byte          VERSION_2  = 2;
+  static final byte          VERSION    = VERSION_2;
+
 
   static final byte          SYN        = 1;
   static final byte          ACK        = 2;
@@ -41,7 +50,7 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
       TCByteBufferInputStream in = new TCByteBufferInputStream(payload);
       this.version = in.readByte();
 
-      if (version != VERSION_1) { throw new TCProtocolException("Bad Version: " + version + " != " + VERSION_1); }
+      if (version != VERSION) { throw new TCProtocolException("Version Mismatch for Transport Message Handshake: " + version + " != " + VERSION); }
 
       this.type = in.readByte();
 

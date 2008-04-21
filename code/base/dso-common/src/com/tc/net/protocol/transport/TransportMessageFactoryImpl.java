@@ -71,7 +71,7 @@ public class TransportMessageFactoryImpl implements TransportHandshakeMessageFac
                                                 short stackLayerFlags, int callbackPort) {
     TCByteBufferOutputStream bbos = new TCByteBufferOutputStream();
 
-    bbos.write(TransportMessageImpl.VERSION_1);
+    bbos.write(TransportMessageImpl.VERSION);
     bbos.write(type);
     bbos.writeString(connectionId.getID());
     bbos.writeBoolean(isMaxConnectionsExceeded);
