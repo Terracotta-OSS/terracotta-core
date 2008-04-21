@@ -426,14 +426,14 @@ public class ActivePassiveServerManager {
         }
 
         if (i == activeIndex) {
-          if(isProxyL2groupPorts) proxyL2Managers[i].proxyDown();
           sc.shutdown();
+          if(isProxyL2groupPorts) proxyL2Managers[i].proxyDown();
           continue;
         }
 
         try {
-          if(isProxyL2groupPorts) proxyL2Managers[i].proxyDown();
           sc.crash();
+          if(isProxyL2groupPorts) proxyL2Managers[i].proxyDown();
         } catch (Exception e) {
           if (DEBUG) {
             e.printStackTrace();
@@ -515,10 +515,10 @@ public class ActivePassiveServerManager {
     verifyActiveServerState();
 
     ServerControl server = servers[activeIndex].getServerControl();
-    if(isProxyL2groupPorts) proxyL2Managers[activeIndex].proxyDown();
     server.crash();
     debugPrintln("***** Sleeping after crashing active server ");
     waitForServerCrash(server);
+    if(isProxyL2groupPorts) proxyL2Managers[activeIndex].proxyDown();
     debugPrintln("***** Done sleeping after crashing active server ");
 
     lastCrashedIndex = activeIndex;
@@ -574,10 +574,10 @@ public class ActivePassiveServerManager {
     ServerControl server = servers[passiveToCrash].getServerControl();
     if (!server.isRunning()) { throw new AssertionError("Server[" + servers[passiveToCrash].getDsoPort()
                                                         + "] is not running as expected!"); }
-    if(isProxyL2groupPorts) proxyL2Managers[passiveToCrash].proxyDown();
     server.crash();
     debugPrintln("***** Sleeping after crashing passive server ");
     waitForServerCrash(server);
+    if(isProxyL2groupPorts) proxyL2Managers[passiveToCrash].proxyDown();
     debugPrintln("***** Done sleeping after crashing passive server ");
 
     lastCrashedIndex = passiveToCrash;
