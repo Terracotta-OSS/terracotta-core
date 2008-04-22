@@ -55,6 +55,7 @@ public class ServerManager {
     factory = AppServerFactory.createFactoryFromProperties();
     installDir = config.appserverServerInstallDir();
     tempDir = new File(TempDirectoryUtil.getTempDirectory(testClass), "dso-server-" + serverCounter);
+    tempDir.mkdirs();
     tcConfigFile = new File(tempDir, "tc-config.xml");
     serverCounter ++;
     sandbox = AppServerUtil.createSandbox(tempDir);
