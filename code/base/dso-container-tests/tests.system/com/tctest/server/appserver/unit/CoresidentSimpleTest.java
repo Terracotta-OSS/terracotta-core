@@ -23,6 +23,10 @@ public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentT
 
   private static final String CONTEXT = "simple";
 
+  public CoresidentSimpleTest() {
+    disableAllUntil("2008-05-15");
+  }
+
   public static Test suite() {
     return new CoresidentSimpleTestSetup();
   }
@@ -40,20 +44,20 @@ public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentT
 
     System.err.println("Inserting...");
 
-    //change map0 in partition-0 from server0
+    // change map0 in partition-0 from server0
     insert(server0, 0, 0);
     insert(server0, 0, 0);
 
-    //change map1 in partition-1 from server1
+    // change map1 in partition-1 from server1
     insert(server1, 1, 1);
     insert(server1, 1, 1);
     insert(server1, 1, 1);
 
     System.err.println("Asserting...");
 
-    //assert change in partition-0 in map0 by server0 in server1
+    // assert change in partition-0 in map0 by server0 in server1
     assertSize(server1, 0, 0, 2);
-    //assert change in partition-1 in map1 by server1 in server0
+    // assert change in partition-1 in map1 by server1 in server0
     assertSize(server0, 1, 1, 3);
     System.err.println("Done");
   }
@@ -86,7 +90,8 @@ public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentT
     final WebConversation conversation = new WebConversation();
     final WebResponse webResponse;
     final String response;
-    webResponse = request(server, "cmd=" + "assertSize" + "&partition=" + partition + "&map=" + map + "&size=" + size, conversation);
+    webResponse = request(server, "cmd=" + "assertSize" + "&partition=" + partition + "&map=" + map + "&size=" + size,
+                          conversation);
     response = webResponse.getText().trim();
     System.out.println("Response from server" + (server == server1 ? "1" : "0") + ": " + response);
     assertOk(response);
@@ -108,8 +113,7 @@ public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentT
     String response;
     webResponse = request(server, "cmd=" + "print&partition=" + partition + "&map=" + map, conversation);
     response = webResponse.getText().trim();
-    System.out
-      .println("Response from server" + (server == server1 ? "1" : "0") + ": " + response);
+    System.out.println("Response from server" + (server == server1 ? "1" : "0") + ": " + response);
     assertOk(response);
   }
 
@@ -127,8 +131,9 @@ public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentT
     }
 
     protected void configureWar(DeploymentBuilder builder) {
-      builder.addServlet("CoresidentSimpleTestServlet", "/" + CONTEXT + "/*", CoresidentSimpleTestServlet.class, null, false);
-//      builder.addDirectoryOrJARContainingClass(SynchronizedInt.class);
+      builder.addServlet("CoresidentSimpleTestServlet", "/" + CONTEXT + "/*", CoresidentSimpleTestServlet.class, null,
+                         false);
+      // builder.addDirectoryOrJARContainingClass(SynchronizedInt.class);
     }
 
     protected void configureTcConfig(TcConfigBuilder tcConfigBuilder) {
@@ -140,10 +145,9 @@ public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentT
       fieldName = CoresidentSimpleTestServlet.class.getName() + ".sharedMap1";
       tcConfigBuilder.addRoot(fieldName, rootName);
 
-
-//      rootName = "count";
-//      fieldName = CoresidentSimpleTestServlet.class.getName() + ".count";
-//      tcConfigBuilder.addRoot(fieldName, rootName);
+      // rootName = "count";
+      // fieldName = CoresidentSimpleTestServlet.class.getName() + ".count";
+      // tcConfigBuilder.addRoot(fieldName, rootName);
 
       String methodExpression = "* " + CoresidentSimpleTestServlet.class.getName() + ".*(..)";
       tcConfigBuilder.addAutoLock(methodExpression, "write");
@@ -151,9 +155,7 @@ public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentT
     }
 
     protected boolean enableContainerDebug(final int serverId) {
-      if (serverId == 0) {
-        return false;
-      }
+      if (serverId == 0) { return false; }
       return false;
     }
   }
