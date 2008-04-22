@@ -25,8 +25,7 @@ fi
 TC_INSTALL_DIR=`dirname "$0"`/..
 CP=$TC_INSTALL_DIR/lib/tc.jar
 SVT_JAR=`find $TC_INSTALL_DIR/lib -name "svt*.jar" | tail -1`
-if [ -f "$SVT_JAR" ]; then
-  echo "Found SVT library $SVT_JAR"
+if [ -f "$SVT_JAR" ]; then  
   CP=$CP:$SVT_JAR  
 fi
 
