@@ -47,14 +47,16 @@ public class ServerManager {
   private final File                  tcConfigFile;
   private final TcConfigBuilder       serverTcConfig = new TcConfigBuilder();
   private final Collection            jvmArgs;
+  private static int                  serverCounter = 0;
 
   public ServerManager(final Class testClass, Collection extraJvmArgs) throws Exception {
     PropertiesHackForRunningInEclipse.initializePropertiesWhenRunningInEclipse();
     config = TestConfigObject.getInstance();
     factory = AppServerFactory.createFactoryFromProperties();
     installDir = config.appserverServerInstallDir();
-    tempDir = TempDirectoryUtil.getTempDirectory(testClass);
+    tempDir = new File(TempDirectoryUtil.getTempDirectory(testClass), "dso-server-" + serverCounter);
     tcConfigFile = new File(tempDir, "tc-config.xml");
+    serverCounter ++;
     sandbox = AppServerUtil.createSandbox(tempDir);
     warDir = new File(sandbox, "war");
     jvmArgs = extraJvmArgs;
@@ -143,6 +145,15 @@ public class ServerManager {
     return appServer;
   }
 
+  public WebApplicationServer makeCoresidentWebApplicationServer(TcConfigBuilder config0, TcConfigBuilder config1, final boolean enableDebug) throws Exception {
+    int i = ServerManager.appServerIndex++;
+    WebApplicationServer appServer = new GenericServer(config, factory, installation,
+                                                       config0.getTcConfigFile(), config1.getTcConfigFile(), i,
+                                                       tempDir, true, enableDebug);
+    addServerToStop(appServer);
+    return appServer;
+  }
+
   public FileSystemPath getTcConfigFile(String tcConfigPath) {
     URL url = getClass().getResource(tcConfigPath);
     Assert.assertNotNull("could not find: " + tcConfigPath, url);
@@ -226,5 +237,15 @@ public class ServerManager {
 
   public File getTcConfigFile() {
     return tcConfigFile;
+  }
+
+
+  public String toString() {
+    return "ServerManager{" +
+           "dsoServer=" + dsoServer.toString() +
+           ", sandbox=" + sandbox.getAbsolutePath() +
+           ", warDir=" + warDir.getAbsolutePath() +
+           ", jvmArgs=" + jvmArgs +
+           '}';
   }
 }

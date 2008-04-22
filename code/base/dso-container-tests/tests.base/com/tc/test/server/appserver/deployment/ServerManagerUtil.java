@@ -13,12 +13,14 @@ public class ServerManagerUtil {
 
   protected static Log logger = LogFactory.getLog(ServerManagerUtil.class);
 
-  private static ServerManager start(Class testClass, boolean withPersistentStore, Collection extraJvmArgs)
+  private static ServerManager start(Class testClass, boolean withPersistentStore, Collection extraJvmArgs, final boolean coresident)
       throws Exception {
-    ServerManager existingServerManager = getExistingServerManager();
-    if (existingServerManager != null) {
-      logger.debug("Using existing ServerManager");
-      return existingServerManager;
+    if (!coresident) {
+      ServerManager existingServerManager = getExistingServerManager();
+      if (existingServerManager != null) {
+        logger.debug("Using existing ServerManager");
+        return existingServerManager;
+      }
     }
     logger.debug("Creating server manager");
     ServerManager serverManager = new ServerManager(testClass, extraJvmArgs);
@@ -26,11 +28,13 @@ public class ServerManagerUtil {
     return serverManager;
   }
 
-  public static void stop(ServerManager serverManager) {
-    ServerManager existingServerManager = getExistingServerManager();
-    if (existingServerManager != null) {
-      logger.debug("Not stopping existing ServerManager");
-      return;
+  private static void stop(ServerManager serverManager, final boolean coresident) {
+    if (!coresident) {
+      ServerManager existingServerManager = getExistingServerManager();
+      if (existingServerManager != null) {
+        logger.debug("Not stopping existing ServerManager");
+        return;
+      }
     }
     logger.debug("Stopping ServerManager");
     serverManager.stop();
@@ -44,18 +48,32 @@ public class ServerManagerUtil {
 
   public static ServerManager startAndBind(Class testClass, boolean withPersistentStore, Collection extraJvmArgs)
       throws Exception {
-    ServerManager sm = start(testClass, withPersistentStore, extraJvmArgs);
-    serverManagerHolder.set(sm);
+    return startAndBind(testClass, withPersistentStore, extraJvmArgs, false);
+  }
+
+  public static ServerManager startAndBind(Class testClass, boolean withPersistentStore, Collection extraJvmArgs, final boolean coresident)
+      throws Exception {
+    ServerManager sm = start(testClass, withPersistentStore, extraJvmArgs, coresident);
+    if (!coresident) serverManagerHolder.set(sm);
     return sm;
   }
 
   public static void stopAndRelease(ServerManager sm) {
-    serverManagerHolder.set(null);
-    stop(sm);
+    stopAndRelease(sm, false);
+  }
+
+  public static void stopAndRelease(ServerManager sm, final boolean coresident) {
+    if (!coresident) serverManagerHolder.set(null);
+    stop(sm, coresident);
   }
 
   public static void stopAllWebServers(ServerManager serverManager) {
-    getExistingServerManager().stopAllWebServers();
+    stopAllWebServers(serverManager, false);
+  }
+
+  public static void stopAllWebServers(ServerManager serverManager, final boolean coresident) {
+    if (!coresident) getExistingServerManager().stopAllWebServers();
+    else serverManager.stopAllWebServers();
   }
 
 }
