@@ -5,6 +5,8 @@ package com.tc.bundles.exception;
 
 public interface BundleExceptionSummary {
 
+  static String INDENT = "   ";
+
   public String getSummary();
   
 }

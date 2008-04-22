@@ -172,8 +172,8 @@ public class Resolver {
         throw new MissingBundleException(msg, groupId, name, version, repositories, null);
       }
       logger.info("Resolved TIM " + groupId + ":" + name + ":" + version + " from " + location);
-      Stack dependencyStack = new Stack();
-      dependencyStack.push(module.getGroupId() + "." + module.getName() + "-" + module.getVersion());
+      DependencyStack dependencyStack = new DependencyStack();
+      dependencyStack.push(module.getGroupId(), module.getName(), module.getVersion());
       resolveDependencies(location, dependencyStack);
       // printDependencyStack(dependencyStack, 0, 4, System.out);
       return location;
@@ -204,33 +204,17 @@ public class Resolver {
   }
 
   private Collection findJars(File rootLocation, String groupId, String name, String version) {
-    // sample input:
-    // rootLocation = file://repo
-    // groupId = org.foo.bar
-    // name = tim_foobar != tim-foobar (names are taken as-is, no normalization occurs)
-    // version = 1.0.0.SNAPSHOT == 1.0.0-SNAPSHOT (will be normalized to use x.x.x-q format if needed)
-    String _version = version;
-    if (version.matches("^\\p{Digit}+\\.\\p{Digit}+\\.\\p{Digit}+\\.\\p{Alnum}+$")) {
-      String[] _v = version.split("\\.");
-      _version = _v[0] + "." + _v[1] + "." + _v[2] + "-" + _v[3];
-    }
-
-    String jarName = name + "-" + _version + ".jar"; // tim_foobar-1.0.0-SNAPSHOT.jar
-    File groupLocation = new File(rootLocation, groupId.replace('.', File.separatorChar)); // file://repo/org/foo/bar
-    File nameLocation = new File(groupLocation, name); // file://repo/org/foo/bar/tim_foobar
-    File versionLocation = new File(nameLocation, _version); // file://repo/org/foo/bar/tim_foobar/1.0.0-SNAPSHOT
-    File mavenLocation = new File(versionLocation, jarName); // file://repo/org/foo/bar/tim_foobar/1.0.0-SNAPSHOT/tim_foobar-1.0.0-SNAPSHOT.jar
-    File flatLocation = new File(rootLocation, jarName); // file://repo/tim_foobar-1.0.0-SNAPSHOT.jar
     final Collection jars = new ArrayList();
+    String root = rootLocation.toString();
+    File mavenLocation = new File(OSGiToMaven.makeBundlePathname(root, groupId, name, version));
+    File flatLocation = new File(OSGiToMaven.makeFlatBundlePathname(root, name, version, false));
 
     // expect to find TIM jar file in a Maven-like organized directory
     // using the TIM name as-is and a (possibly) massaged the version number...
-    if (mavenLocation.isFile()) // find file in file://repo/../1.0.0-SNAPSHOT/
-    jars.add(mavenLocation);
+    if (mavenLocation.isFile()) jars.add(mavenLocation); // find file in file://repo/../1.0.0-SNAPSHOT/
 
     // also collect the TIM jar file found at the top of the repository
-    if (flatLocation.isFile()) // find file in file://repo/
-    jars.add(flatLocation);
+    if (flatLocation.isFile()) jars.add(flatLocation); // find file in file://repo/
 
     // and return the list of jars
     return jars;
@@ -317,8 +301,8 @@ public class Resolver {
     if (defaultModulesSpec.length > 0) {
       for (int i = 0; i < defaultModulesSpec.length; i++) {
         BundleSpec spec = BundleSpec.newInstance(defaultModulesSpec[i]);
-        Stack dependencyStack = new Stack();
-        dependencyStack.push(spec.getSymbolicName() + "-" + spec.getVersion());
+        DependencyStack dependencyStack = new DependencyStack();
+        dependencyStack.push(spec.getSymbolicName(), spec.getVersion());
         ensureBundle(spec, dependencyStack);
         // printDependencyStack(dependencyStack, 0, 4, System.out);
       }
@@ -348,8 +332,8 @@ public class Resolver {
     String[] additionalModulesSpec = BundleSpec.getRequirements(additionalModulesProp);
     for (int i = 0; i < additionalModulesSpec.length; i++) {
       BundleSpec spec = BundleSpec.newInstance(additionalModulesSpec[i]);
-      Stack dependencyStack = new Stack();
-      dependencyStack.push(spec.getSymbolicName() + "-" + spec.getVersion());
+      DependencyStack dependencyStack = new DependencyStack();
+      dependencyStack.push(spec.getSymbolicName(), spec.getVersion());
       ensureBundle(spec, dependencyStack);
       // printDependencyStack(dependencyStack, 0, 4, System.out);
     }
@@ -372,10 +356,10 @@ public class Resolver {
       throw new UnreadableBundleException(msg, location);
     }
     final BundleSpec[] requirements = getRequirements(manifest);
-    Stack stack = (Stack) dependencyStack.push(new Stack());
+    DependencyStack stack = (DependencyStack) dependencyStack.push(new DependencyStack());
     for (int i = 0; i < requirements.length; i++) {
       final BundleSpec spec = requirements[i];
-      stack.push(spec.getSymbolicName() + "-" + spec.getVersion());
+      stack.push(spec.getSymbolicName(), spec.getVersion());
       try {
         ensureBundle(spec, stack);
       } catch (MissingBundleException e) {
@@ -507,6 +491,23 @@ public class Resolver {
         result = hash(result, object);
       }
       return result;
+    }
+  }
+
+  private final class DependencyStack extends Stack {
+
+    public void push(String groupId, String artifactId, String version) {
+      StringBuffer buf = new StringBuffer(artifactId);
+      buf.append(" version ");
+      buf.append(OSGiToMaven.bundleVersionToProjectVersion(version)).append(" (");
+      if (groupId.length() > 0) buf.append("group-id: ").append(groupId).append(", ");
+      buf.append("file: ").append(OSGiToMaven.makeBundleFilename(artifactId, version, false)).append(")");
+      push(buf.toString());
+    }
+
+    public void push(String symbolicName, String version) {
+      push(OSGiToMaven.groupIdFromSymbolicName(symbolicName), OSGiToMaven.artifactIdFromSymbolicName(symbolicName),
+           version);
     }
   }
 

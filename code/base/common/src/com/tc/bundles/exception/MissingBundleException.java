@@ -44,17 +44,22 @@ public class MissingBundleException extends BundleException implements BundleExc
     this.dependencyStack = dependencyStack;
   }
 
-  private static String INDENT = "   ";
+  private String expectedPaths() {
+    String mavenStyle = repositoriesToString(OSGiToMaven.makeBundlePathname("", groupId, name, version) + "\n" + INDENT
+                                             + INDENT);
+    String flatStyle = repositoriesToString(OSGiToMaven.makeFlatBundlePathname("", name, version, false) + "\n"
+                                            + INDENT + INDENT);
+    return mavenStyle + flatStyle;
+  }
 
-  private String expectedLocations() {
-    return repositoriesToString(OSGiToMaven.makeBundlePathname("/", groupId, name, version) + "\n" + INDENT + INDENT)
-           + repositoriesToString(OSGiToMaven.makeFlatBundlePathname("/", groupId, name, version) + "\n" + INDENT
-                                  + INDENT);
+  private String searchAttributes() {
+    return "groupId: " + groupId + "\n" + INDENT + INDENT + "name   : " + name + "\n" + INDENT + INDENT + "Version: "
+           + version;
   }
 
   private String expectedAttributes() {
     return "Bundle-SymbolicName: " + MavenToOSGi.artifactIdToSymbolicName(groupId, name) + "\n" + INDENT + INDENT
-           + "Bundle-Version: " + MavenToOSGi.projectVersionToBundleVersion(version);
+           + "Bundle-Version     : " + MavenToOSGi.projectVersionToBundleVersion(version);
   }
 
   private String repositoriesToString(String sep) {
@@ -73,16 +78,32 @@ public class MissingBundleException extends BundleException implements BundleExc
   }
 
   public String getSummary() {
-    String msg = getMessage();
-    msg += "\n\n" + INDENT + "Repositories searched:\n\n" + INDENT + INDENT
-           + repositoriesToString("\n" + INDENT + INDENT);
-    msg += "\n\n" + INDENT + "Expected jar filename:\n\n" + INDENT + INDENT
-           + OSGiToMaven.makeBundleFilename(name, version);
-    msg += "\n\n" + INDENT + "Expected paths to jar file:\n\n" + INDENT + INDENT + expectedLocations();
-    msg += "\n\n" + INDENT + "Expected manifest attributes:\n\n" + INDENT + INDENT + expectedAttributes();
-    if (dependencyStack != null) msg += "\n\n" + INDENT + "TIM dependency stack:\n\n"
-                                        + dependencyStackAsString(dependencyStack);
-    return msg;
+    StringBuffer buf = new StringBuffer(getMessage());
+    buf.append("\n\n").append(INDENT).append("Attempted to resolve the TIM using the following descriptors:\n\n");
+    buf.append(INDENT + INDENT).append(searchAttributes());
+    buf.append("\n\n").append(INDENT).append("Expected the TIM's filename to be:\n\n");
+    buf.append(INDENT + INDENT).append(OSGiToMaven.makeBundleFilename(name, version));
+    buf.append("\n\n").append(INDENT).append("Expected these attributes to be in the manifest:\n\n");
+    buf.append(INDENT + INDENT).append(expectedAttributes());
+    buf.append("\n\n").append(INDENT).append("Searched using the following repositories:\n\n");
+    buf.append(INDENT + INDENT).append(repositoriesToString("\n" + INDENT + INDENT));
+    buf.append("\n").append(INDENT).append("Tried to resolve the jar file using the following paths:\n\n");
+    buf.append(INDENT + INDENT).append(expectedPaths());
+    if (dependencyStack != null) {
+      buf
+          .append("\n")
+          .append(INDENT)
+          .append(
+                  "The following shows the dependencies path the resolver took and why it needed to locate the missing TIM:\n\n");
+      buf.append(dependencyStackAsString(dependencyStack));
+    }
+    buf.append("\n").append(INDENT);
+    buf
+        .append(
+                "If the jar file exists and is in one of the paths listed above, make sure that the Bundle-SymbolicName\n")
+        .append(INDENT);
+    buf.append("and Bundle-Version attribute in its manifest matches the ones that the resolver expects.");
+    return buf.toString();
   }
 
   private String dependencyStackAsString(Stack dependencyStack) {
@@ -107,7 +128,7 @@ public class MissingBundleException extends BundleException implements BundleExc
         out.write((INDENT + INDENT).getBytes());
         for (int j = 0; j < (depth - 1) * indent; j++)
           out.write(" ".getBytes());
-        out.write((" +- " + entry.toString() + "\n").getBytes());
+        out.write(("+- " + entry.toString() + "\n").getBytes());
       }
       out.flush();
     } catch (IOException e) {

@@ -25,10 +25,6 @@ public class UnreadableBundleException extends BundleException implements Bundle
     this.bundle = bundle;
   }
 
-  private String expectedJarFilename() {
-    return bundle.getName();
-  }
-
   private String expectedLocation() {
     try {
       return bundle.getParentFile().getCanonicalPath();
@@ -39,8 +35,8 @@ public class UnreadableBundleException extends BundleException implements Bundle
 
   public String getSummary() {
     String msg = getMessage();
-    msg += "\n\nTIM jar filename: " + expectedJarFilename();
-    msg += "\n\nJar file location: " + expectedLocation();
+    msg += "\n\n" + INDENT + "TIM jar filename: " + bundle.getName();
+    msg += "\n\n" + INDENT + "Path to jar file: " + expectedLocation();
     return msg;
   }
   

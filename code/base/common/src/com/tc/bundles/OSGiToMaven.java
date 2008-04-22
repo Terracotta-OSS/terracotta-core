@@ -8,14 +8,11 @@ import java.io.File;
 
 public class OSGiToMaven {
 
-  private static String NAME  = "\\w([0-9a-zA-Z\\-_])+\\w";
-  private static String GROUP = NAME + "\\.";
-
   public static String artifactIdFromSymbolicName(final String symbolicName) {
     String name = symbolicName;
     while (true) {
       String last = name;
-      name = name.replaceFirst(GROUP, "");
+      name = name.replaceFirst("^[a-zA-Z][0-9a-zA-Z\\-_]*\\.", "");
       if ((name.equals(last)) || name.matches("[0-9\\-_].*")) {
         name = last;
         break;
@@ -31,15 +28,19 @@ public class OSGiToMaven {
   }
 
   public static String bundleVersionToProjectVersion(final String bundleVersion) {
-    String qualifier = bundleVersion.replaceAll("\\d(\\.|-)?", "");
-    int i = bundleVersion.lastIndexOf(qualifier) - 1;
-    String version = qualifier.length() > 0 ? bundleVersion.substring(0, i) : bundleVersion;
-    qualifier = qualifier.length() > 0 ? "-" + qualifier : qualifier;
+    String version = bundleVersion.replaceAll("(\\.|-)[a-zA-Z][0-9a-zA-Z\\-_\\.]*$", "");
+    String qualifier = bundleVersion.substring(version.length());
+    qualifier = qualifier.length() > 0 ? "-" + qualifier.substring(1) : qualifier;
     return version + qualifier;
   }
 
   public static String makeBundleFilename(final String symbolicName, final String version) {
-    return artifactIdFromSymbolicName(symbolicName) + "-" + bundleVersionToProjectVersion(version) + ".jar";
+    return makeBundleFilename(symbolicName, version, true);
+  }
+
+  public static String makeBundleFilename(final String name, final String version, boolean isSymbolicName) {
+    return (isSymbolicName ? artifactIdFromSymbolicName(name) : name) + "-" + bundleVersionToProjectVersion(version)
+           + ".jar";
   }
 
   public static String makeBundlePathname(final String root, final String symbolicName, final String version) {
@@ -50,14 +51,24 @@ public class OSGiToMaven {
 
   public static String makeBundlePathname(final String root, final String groupId, final String artifactId,
                                           final String version) {
-    return root + File.separatorChar + groupId.replace('.', File.separatorChar) + File.separatorChar + artifactId
-           + File.separatorChar + bundleVersionToProjectVersion(version) + File.separatorChar
-           + makeBundleFilename(groupId + "." + artifactId, version);
+    StringBuffer buf = new StringBuffer();
+    if (root.length() > 0) buf.append(root).append(File.separatorChar);
+    if (groupId.length() > 0) buf.append(groupId.replace('.', File.separatorChar)).append(File.separatorChar);
+    buf.append(artifactId).append(File.separatorChar);
+    buf.append(bundleVersionToProjectVersion(version)).append(File.separatorChar);
+    buf.append(makeBundleFilename(artifactId, version, false));
+    return buf.toString();
   }
 
-  public static String makeFlatBundlePathname(final String root, final String groupId, final String artifactId,
-                                              final String version) {
-    return root + File.separatorChar + makeBundleFilename(groupId + "." + artifactId, version);
+  public static String makeFlatBundlePathname(final String root, final String symbolicName, final String version) {
+    return makeFlatBundlePathname(root, symbolicName, version, true);
+  }
+
+  public static String makeFlatBundlePathname(final String root, final String name, final String version, final boolean isSymbolicName) {
+    String artifactId = isSymbolicName ? artifactIdFromSymbolicName(name) : name;
+    StringBuffer buf = new StringBuffer(root).append(File.separatorChar);
+    buf.append(makeBundleFilename(artifactId, version, isSymbolicName));
+    return buf.toString();
   }
 
 }
