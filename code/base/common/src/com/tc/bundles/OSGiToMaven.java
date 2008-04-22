@@ -51,8 +51,7 @@ public class OSGiToMaven {
 
   public static String makeBundlePathname(final String root, final String groupId, final String artifactId,
                                           final String version) {
-    StringBuffer buf = new StringBuffer();
-    if (root.length() > 0) buf.append(root).append(File.separatorChar);
+    StringBuffer buf = new StringBuffer(root).append(File.separatorChar);
     if (groupId.length() > 0) buf.append(groupId.replace('.', File.separatorChar)).append(File.separatorChar);
     buf.append(artifactId).append(File.separatorChar);
     buf.append(bundleVersionToProjectVersion(version)).append(File.separatorChar);

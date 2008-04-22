@@ -205,7 +205,7 @@ public class Resolver {
 
   private Collection findJars(File rootLocation, String groupId, String name, String version) {
     final Collection jars = new ArrayList();
-    String root = rootLocation.toString();
+    String root = rootLocation.getPath();
     File mavenLocation = new File(OSGiToMaven.makeBundlePathname(root, groupId, name, version));
     File flatLocation = new File(OSGiToMaven.makeFlatBundlePathname(root, name, version, false));
 
