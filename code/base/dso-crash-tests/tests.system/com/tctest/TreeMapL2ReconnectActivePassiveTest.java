@@ -18,7 +18,7 @@ public class TreeMapL2ReconnectActivePassiveTest extends TransparentTestBase {
   public TreeMapL2ReconnectActivePassiveTest() {
     if (Os.isWindows()) {
       System.err.println("Disabling it for windows only for now");
-      disableAllUntil("2008-04-21");
+      disableAllUntil("2008-05-21");
     }
   }
 
