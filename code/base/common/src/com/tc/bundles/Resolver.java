@@ -8,7 +8,7 @@ import org.apache.commons.io.FileUtils;
 import org.osgi.framework.BundleException;
 
 import com.tc.bundles.exception.BundleSpecException;
-import com.tc.bundles.exception.Hints;
+import com.tc.bundles.exception.BundleExceptionSummary;
 import com.tc.bundles.exception.UnreadableBundleException;
 import com.tc.bundles.exception.MissingBundleException;
 import com.tc.logging.CustomerLogging;
@@ -178,7 +178,7 @@ public class Resolver {
       // printDependencyStack(dependencyStack, 0, 4, System.out);
       return location;
     } catch (BundleException e) {
-      if (e instanceof Hints) fatal(((Hints) e).getHints());
+      if (e instanceof BundleExceptionSummary) fatal(((BundleExceptionSummary) e).getSummary());
       throw e;
     }
   }

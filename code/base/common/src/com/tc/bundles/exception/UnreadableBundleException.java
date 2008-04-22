@@ -8,7 +8,7 @@ import org.osgi.framework.BundleException;
 import java.io.File;
 import java.io.IOException;
 
-public class UnreadableBundleException extends BundleException implements Hints {
+public class UnreadableBundleException extends BundleException implements BundleExceptionSummary {
 
   private File bundle;
   
@@ -37,7 +37,7 @@ public class UnreadableBundleException extends BundleException implements Hints 
     }
   }
 
-  public String getHints() {
+  public String getSummary() {
     String msg = getMessage();
     msg += "\n\nTIM jar filename: " + expectedJarFilename();
     msg += "\n\nJar file location: " + expectedLocation();

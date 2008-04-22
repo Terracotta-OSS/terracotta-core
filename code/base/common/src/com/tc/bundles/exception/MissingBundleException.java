@@ -18,7 +18,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 
-public class MissingBundleException extends BundleException implements Hints {
+public class MissingBundleException extends BundleException implements BundleExceptionSummary {
 
   private String groupId;
   private String name;
@@ -72,7 +72,7 @@ public class MissingBundleException extends BundleException implements Hints {
     }
   }
 
-  public String getHints() {
+  public String getSummary() {
     String msg = getMessage();
     msg += "\n\n" + INDENT + "Repositories searched:\n\n" + INDENT + INDENT
            + repositoriesToString("\n" + INDENT + INDENT);
