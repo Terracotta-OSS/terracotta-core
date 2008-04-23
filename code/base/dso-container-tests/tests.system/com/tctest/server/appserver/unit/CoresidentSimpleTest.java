@@ -24,7 +24,7 @@ public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentT
   private static final String CONTEXT = "simple";
 
   public CoresidentSimpleTest() {
-    disableAllUntil("2008-05-15");
+//    disableAllUntil("2008-05-15");
   }
 
   public static Test suite() {
@@ -46,12 +46,17 @@ public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentT
 
     // change map0 in partition-0 from server0
     insert(server0, 0, 0);
+    Thread.sleep(1000);
     insert(server0, 0, 0);
+    Thread.sleep(1000);
 
     // change map1 in partition-1 from server1
     insert(server1, 1, 1);
+    Thread.sleep(1000);
     insert(server1, 1, 1);
+    Thread.sleep(1000);
     insert(server1, 1, 1);
+    Thread.sleep(1000);
 
     System.err.println("Asserting...");
 
@@ -82,7 +87,7 @@ public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentT
     final String response;
     webResponse = request(server, "cmd=" + "initialize" + "&partition=" + partition + "&map=" + map, conversation);
     response = webResponse.getText().trim();
-    System.out.println("Response from server" + (server == server1 ? "1" : "0") + ": " + response);
+    System.err.println("Response from server" + (server == server1 ? "1" : "0") + ": " + response);
     assertOk(response);
   }
 
@@ -93,7 +98,7 @@ public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentT
     webResponse = request(server, "cmd=" + "assertSize" + "&partition=" + partition + "&map=" + map + "&size=" + size,
                           conversation);
     response = webResponse.getText().trim();
-    System.out.println("Response from server" + (server == server1 ? "1" : "0") + ": " + response);
+    System.err.println("Response from server" + (server == server1 ? "1" : "0") + ": " + response);
     assertOk(response);
   }
 
@@ -103,7 +108,7 @@ public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentT
     final String response;
     webResponse = request(server, "cmd=" + "insert" + "&partition=" + partition + "&map=" + map, conversation);
     response = webResponse.getText().trim();
-    System.out.println("Response from server" + (server == server1 ? "1" : "0") + ": " + response);
+    System.err.println("Response from server" + (server == server1 ? "1" : "0") + ": " + response);
     assertOk(response);
   }
 
@@ -113,7 +118,7 @@ public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentT
     String response;
     webResponse = request(server, "cmd=" + "print&partition=" + partition + "&map=" + map, conversation);
     response = webResponse.getText().trim();
-    System.out.println("Response from server" + (server == server1 ? "1" : "0") + ": " + response);
+    System.err.println("Response from server" + (server == server1 ? "1" : "0") + ": " + response);
     assertOk(response);
   }
 

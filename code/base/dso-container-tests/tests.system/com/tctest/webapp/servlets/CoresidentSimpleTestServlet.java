@@ -46,7 +46,6 @@ public class CoresidentSimpleTestServlet extends HttpServlet {
       out.println("ServletClass: " + System.identityHashCode(this.getClass()));
       out.println("Setting partition number to: " + partition);
       PartitionManager.setPartition(managers[partition]);
-      out.println("Using map: " + mapNum);
       Map map = null;
       switch (mapNum) {
         case 0:
@@ -57,6 +56,8 @@ public class CoresidentSimpleTestServlet extends HttpServlet {
           break;
       }
 
+      out.println("Using map: " + mapNum + " hashCode: " + System.identityHashCode(map));
+      
       if ("print".equals(cmd)) {
         out.println("partition: " + partition + " sharedMap:"
                     + (map == null ? "NULL" : "map:" + System.identityHashCode(map)
@@ -67,25 +68,30 @@ public class CoresidentSimpleTestServlet extends HttpServlet {
         switch (mapNum) {
           case 0:
             sharedMap0 = new HashMap();
+            map = sharedMap0;
             break;
           case 1:
             sharedMap1 = new HashMap();
+            map = sharedMap1;
             break;
         }
+        out.println("Initialized map hashCode: " + System.identityHashCode(map));
         out.println("OK");
       }
       if ("insert".equals(cmd)) {
         synchronized (map) {
-          map.put("" + System.currentTimeMillis(), "value");
+          final long key = System.currentTimeMillis();
+          map.put("" + key, "value");
+          out.println("Inserted key: " + key);
         }
+        out.println("Map Elements: " + map);
         out.println("OK");
       }
       if ("assertSize".equals(cmd)) {
-        out.println("Going to find out size now");
         int size = -1;
         try {
           final String sizePar = req.getParameter("size");
-          out.println("SizePar: " + (sizePar == null ? "NULL" : sizePar));
+          out.println("SizeParameter: " + (sizePar == null ? "NULL" : sizePar));
           size = Integer.parseInt(sizePar);
         } catch (Exception e) {
           Assert.fail("Request should have a valid \"size\" parameter for \"assertSize\" command");
