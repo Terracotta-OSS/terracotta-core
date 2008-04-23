@@ -148,6 +148,9 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     newSocket.configureBlocking(false);
     Assert.eval(commNIOServiceThread != null);
     commNIOServiceThread.requestReadInterest(this, newSocket);
+    if (!channel.isConnected()) {
+      throw new IOException("Channel closed at " + addr);
+    }
   }
 
   private SocketChannel createChannel() throws IOException, SocketException {

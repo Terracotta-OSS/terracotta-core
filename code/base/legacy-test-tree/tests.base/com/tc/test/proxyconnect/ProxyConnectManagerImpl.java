@@ -63,7 +63,7 @@ public class ProxyConnectManagerImpl implements ProxyConnectManager {
       } catch (Exception e) {
         //
       }
-      if (i++ > 600) { throw new RuntimeException("L2 is not ready!"); }
+      if (i++ > 1200) { throw new RuntimeException("L2 is not ready!"); }
     }
 
     try {

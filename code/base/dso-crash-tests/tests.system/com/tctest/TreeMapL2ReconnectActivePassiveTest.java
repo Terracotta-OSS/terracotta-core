@@ -13,7 +13,7 @@ import com.tc.util.runtime.Os;
 
 public class TreeMapL2ReconnectActivePassiveTest extends TransparentTestBase {
 
-  private static final int NODE_COUNT = 3;
+  private static final int NODE_COUNT = 2;
 
   public TreeMapL2ReconnectActivePassiveTest() {
     if (Os.isWindows()) {
