@@ -174,7 +174,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
 
     destdir = release_dir || archive_dir              ||
       FilePath.new(config_source['build-archive-dir'] ||
-      ".", @build_environment.current_branch, "rev#{@build_environment.current_revision}", @build_environment.os_family.downcase).ensure_directory
+      ".", @build_environment.current_branch, "rev#{@build_environment.current_revision}", @flavor).ensure_directory
 
     incomplete_tag = "__incomplete__"
     Dir.glob("#{@distribution_results.build_dir.to_s}/*").each do | entry |
