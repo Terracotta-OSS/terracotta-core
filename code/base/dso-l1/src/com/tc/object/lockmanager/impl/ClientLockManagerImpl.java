@@ -124,9 +124,9 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
 
     long runGCStartTime = System.currentTimeMillis();
     int locksMapSize = locksByID.size();
-   
+
     if (logger.isDebugEnabled()) {
-       logger.debug("Lock GC: Recalled ( " + recallCounter.get() + " ) Locks .. out of " + locksMapSize
+      logger.debug("Lock GC: Recalled ( " + recallCounter.get() + " ) Locks .. out of " + locksMapSize
                    + " since last ClientLockManagerImpl.runGC occurred");
     }
 
@@ -136,11 +136,11 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     long findLocksToGC = System.currentTimeMillis();
     boolean continueGC = true;
     int totalGCCount = 0;
-    
+
     while (continueGC) {
-      
+
       ArrayList toGC = new ArrayList(1000);
-    
+
       int k = 0;
       Iterator iter;
       for (iter = locksByID.values().iterator(); iter.hasNext() && k < 1000; k++) {
@@ -152,15 +152,14 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
           break;
         }
       }
-      
-      //they maybe more timeout elements, if 1000 elements were collected
-      if( k < 1000 || !iter.hasNext()) {
+
+      // they maybe more timeout elements, if 1000 elements were collected
+      if (k < 1000 || !iter.hasNext()) {
         continueGC = false;
       }
 
       if (logger.isDebugEnabled()) {
-        logger.debug(" finding locks to GC took : ( "
-                     + (System.currentTimeMillis() - findLocksToGC) + " )  ms ");
+        logger.debug(" finding locks to GC took : ( " + (System.currentTimeMillis() - findLocksToGC) + " )  ms ");
       }
 
       if (toGC.size() > 0) {
@@ -169,32 +168,32 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
           logger.debug("GCing "
                        + (toGC.size() < 11 ? toGC.toString() : toGC.size() + " Locks ... out of " + locksMapSize));
         }
-        
+
         for (Iterator recallIter = toGC.iterator(); recallIter.hasNext();) {
           LockID lockID = (LockID) recallIter.next();
           recall(lockID, ThreadID.VM_ID, LockLevel.WRITE);
         }
-        
         totalGCCount += toGC.size();
 
         if (logger.isDebugEnabled()) {
-          logger.debug(" recalling " + toGC + " locks took : ( "
-                       + (System.currentTimeMillis() - recallingLocks) + " )  ms ");
+          logger.debug(" recalling " + toGC + " locks took : ( " + (System.currentTimeMillis() - recallingLocks)
+                       + " )  ms ");
         }
-        // sleep every 1000th recall
-        try {
+        if (continueGC) {
+          // sleep every 1000th recall
           if (logger.isDebugEnabled()) {
             logger.debug("sleeping every 1000th recall in runGC()");
           }
-          wait(1000);
-        } catch (InterruptedException e) {
-          throw new AssertionError(e);
+          try {
+            wait(1000);
+          } catch (InterruptedException e) {
+            throw new AssertionError(e);
+          }
         }
-
       }
-
     }
-    logger.info("running lock GC took " + (System.currentTimeMillis() - runGCStartTime) + " ms for GCing and removing " + totalGCCount + " objects to run.");
+    logger.info("running lock GC took " + (System.currentTimeMillis() - runGCStartTime) + " ms for GCing and removing "
+                + totalGCCount + " objects to run.");
 
   }
 
