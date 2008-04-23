@@ -180,6 +180,8 @@ public class OSGiToMavenTest extends TestCase {
 
   private void makeBundlePathname(String root, String symbolicName, String version, String expected) {
     String actual = OSGiToMaven.makeBundlePathname(root, symbolicName, version);
+    System.out.println("xxx - expected: " + expected.replace('/', File.separatorChar));
+    System.out.println("xxx - actual  : " + actual);
     assertEquals(expected.replace('/', File.separatorChar), actual);
   }
 
@@ -230,6 +232,8 @@ public class OSGiToMavenTest extends TestCase {
 
   private void makeFlatBundlePathname(String root, String symbolicName, String version, String expected) {
     String actual = OSGiToMaven.makeFlatBundlePathname(root, symbolicName, version);
+    System.out.println("xxx - expected: " + expected.replace('/', File.separatorChar));
+    System.out.println("xxx - actual  : " + actual);
     assertEquals(expected.replace('/', File.separatorChar), actual);
   }
 
