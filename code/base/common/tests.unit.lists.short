@@ -1,4 +1,5 @@
 BundleSpecTest
+OSGiToMavenTest
 MavenToOSGiTest
 ResolverTest
 TCByteBufferInputStreamTest

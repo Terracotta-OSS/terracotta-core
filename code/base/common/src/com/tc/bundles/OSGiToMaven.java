@@ -51,12 +51,12 @@ public class OSGiToMaven {
 
   public static String makeBundlePathname(final String root, final String groupId, final String artifactId,
                                           final String version) {
-    StringBuffer buf = new StringBuffer(root).append(File.separatorChar);
-    if (groupId.length() > 0) buf.append(groupId.replace('.', File.separatorChar)).append(File.separatorChar);
-    buf.append(artifactId).append(File.separatorChar);
-    buf.append(bundleVersionToProjectVersion(version)).append(File.separatorChar);
+    StringBuffer buf = new StringBuffer(root).append('/');
+    if (groupId.length() > 0) buf.append(groupId.replace('.', '/')).append('/');
+    buf.append(artifactId).append('/');
+    buf.append(bundleVersionToProjectVersion(version)).append('/');
     buf.append(makeBundleFilename(artifactId, version, false));
-    return buf.toString();
+    return buf.toString().replace('/', File.separatorChar);
   }
 
   public static String makeFlatBundlePathname(final String root, final String symbolicName, final String version) {
@@ -65,9 +65,9 @@ public class OSGiToMaven {
 
   public static String makeFlatBundlePathname(final String root, final String name, final String version, final boolean isSymbolicName) {
     String artifactId = isSymbolicName ? artifactIdFromSymbolicName(name) : name;
-    StringBuffer buf = new StringBuffer(root).append(File.separatorChar);
+    StringBuffer buf = new StringBuffer(root).append('/');
     buf.append(makeBundleFilename(artifactId, version, isSymbolicName));
-    return buf.toString();
+    return buf.toString().replace('/', File.separatorChar);
   }
 
 }
