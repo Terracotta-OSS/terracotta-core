@@ -1983,10 +1983,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
         l1PropFromL2Stream = connection.getInputStream();
         if (l1PropFromL2Stream != null) return l1PropFromL2Stream;
       } catch (IOException e) {
-        String text = "We couldn't load l1 reconnect properties from the " + theURL.toString();
-        text += "; this error is permanent, so this source will not be retried.";
+        String text = "We couldn't load l1 reconnect properties from the URL :" + theURL.toString();
         boolean tryAgain = i < connectInfo.length;
-        if (tryAgain) text += " Skipping this source and going to the next one.";
+        if (tryAgain) text += " \n Skipping this source and going to the next one.";
         logger.warn(text);
       }
     }
