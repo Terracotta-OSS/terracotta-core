@@ -117,7 +117,7 @@ public class TCPProxy {
       serverSocket = new ServerSocket();
       serverSocket.setReuseAddress(true);
       try {
-        serverSocket.bind(new InetSocketAddress((InetAddress) null, listenPort), 500);
+        serverSocket.bind(new InetSocketAddress(listenPort), 500);
       } catch (IOException e) {
         serverSocket.close();
         throw new RuntimeException("Failed to bind port " + listenPort + " is bad: " + e);
@@ -153,7 +153,7 @@ public class TCPProxy {
         serverSocket = new ServerSocket();
         serverSocket.setReuseAddress(true);
         try {
-          serverSocket.bind(new InetSocketAddress((InetAddress) null, listenPort), 500);
+          serverSocket.bind(new InetSocketAddress(listenPort), 500);
         } catch (IOException ee) {
           serverSocket.close();
           throw new RuntimeException("Failed to bind port " + listenPort + " is bad: " + ee);
@@ -195,8 +195,9 @@ public class TCPProxy {
         // that's fine for fake connection.
         break;
       }
+      ThreadUtil.reallySleep(100);
     }
-
+    
     try {
       if (acceptThread != null) {
         try {

@@ -23,8 +23,8 @@ public class ObjectDataL2ReconnectActivePassiveTest extends TransparentTestBase 
 
   public ObjectDataL2ReconnectActivePassiveTest() {
     if (Os.isWindows()) {
-      System.err.println("Disabling it for windows only for now");
-      disableAllUntil("2008-05-21");
+//      System.err.println("Disabling it for windows only for now");
+//      disableAllUntil("2008-05-21");
     }
   }
 

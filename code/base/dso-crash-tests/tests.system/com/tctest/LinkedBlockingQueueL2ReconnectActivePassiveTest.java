@@ -17,8 +17,8 @@ public class LinkedBlockingQueueL2ReconnectActivePassiveTest extends Transparent
   
   public LinkedBlockingQueueL2ReconnectActivePassiveTest() {
     if (Os.isWindows()) {
-      System.err.println("Disabling it for windows only for now");
-      disableAllUntil("2008-05-15");
+//      System.err.println("Disabling it for windows only for now");
+//      disableAllUntil("2008-05-15");
     }
   }
 
