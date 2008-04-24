@@ -20,6 +20,7 @@ import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.TCExceptionResultException;
 import com.tc.util.concurrent.TCFuture;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
@@ -64,7 +65,7 @@ final class TCListenerJDK14 implements TCListener {
     commNIOServiceThread.stopListener(ssc, callback);
   }
 
-  TCConnectionJDK14 createConnection(SocketChannel ch, CoreNIOServices nioServiceThread, SocketParams socketParams) {
+  TCConnectionJDK14 createConnection(SocketChannel ch, CoreNIOServices nioServiceThread, SocketParams socketParams) throws IOException {
     TCProtocolAdaptor adaptor = getProtocolAdaptorFactory().getInstance();
     TCConnectionJDK14 rv = new TCConnectionJDK14(listener, adaptor, ch, parent, nioServiceThread, socketParams);
     rv.finishConnect();

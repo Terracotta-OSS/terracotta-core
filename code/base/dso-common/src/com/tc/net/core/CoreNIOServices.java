@@ -436,6 +436,12 @@ class CoreNIOServices extends Thread implements TCListenerEventListener {
 
         return;
       }
+      
+      // Multi threaded server model
+      final CoreNIOServices workerCommThread = workerCommMgr.getNextWorkerComm();
+      final TCConnectionJDK14 conn = lsnr.createConnection(sc, workerCommThread, socketParams);
+      
+      workerCommThread.requestReadWriteInterest(conn, sc);
     } catch (IOException ioe) {
       if (logger.isInfoEnabled()) {
         logger.info("IO Exception accepting new connection", ioe);
@@ -444,12 +450,6 @@ class CoreNIOServices extends Thread implements TCListenerEventListener {
       cleanupChannel(sc, null);
       return;
     }
-
-    // Multi threaded server model
-    final CoreNIOServices workerCommThread = workerCommMgr.getNextWorkerComm();
-    final TCConnectionJDK14 conn = lsnr.createConnection(sc, workerCommThread, socketParams);
-
-    workerCommThread.requestReadWriteInterest(conn, sc);
   }
 
   private void doConnect(SelectionKey key) {
