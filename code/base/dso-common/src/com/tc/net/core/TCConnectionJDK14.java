@@ -556,11 +556,9 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
       // remote address can be null if the socket isn't connected at the time it is asked for
       if (remoteAddress != null) {
         remoteSocketAddress.set(new TCSocketAddress(cloneInetAddress(remoteAddress), socket.getPort()));
-      }
-      
-      // abort if socket is not connected
-      if (!socket.isConnected()) {
-        throw new IOException("socket is not open");
+      } else {
+        // abort if socket is not connected
+        throw new IOException("socket is not connected");
       }
     }
   }
