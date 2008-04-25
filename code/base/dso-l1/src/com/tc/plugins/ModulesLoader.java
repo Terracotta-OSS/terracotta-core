@@ -100,7 +100,7 @@ public class ModulesLoader {
           getModulesCustomApplicatorSpecs(osgiRuntime, configHelper);
         }
       } catch (Exception e) {
-        logger.error(e); // at least log this exception, it's very frustrating if it is completely swallowed
+        consoleLogger.error(e); // at least log this exception, it's very frustrating if it is completely swallowed
         System.exit(-9);
       } finally {
         if (forBootJar) {
@@ -144,7 +144,7 @@ public class ModulesLoader {
     moduleList.addAll(Arrays.asList(modules));
 
     final Module[] allModules = (Module[]) moduleList.toArray(new Module[moduleList.size()]);
-    
+
     final URL[] osgiRepositories = osgiRuntime.getRepositories();
     final Resolver resolver = new Resolver(Resolver.urlsToStrings(osgiRepositories));
     final File[] locations = resolver.resolve(allModules);
@@ -157,7 +157,7 @@ public class ModulesLoader {
         throw new RuntimeException("Malformed file URL for bundle: " + locations[i].getAbsolutePath(), e);
       }
     }
-    
+
     osgiRuntime.installBundles(bundleURLs);
     osgiRuntime.startBundles(bundleURLs, handler);
   }
@@ -261,7 +261,7 @@ public class ModulesLoader {
         path = "terracotta.xml";
       }
     }
-    
+
     final String[] paths = path.split(",");
     for (int i = 0; i < paths.length; i++) {
       paths[i] = paths[i].trim();
@@ -322,7 +322,7 @@ public class ModulesLoader {
       }
     }
   }
-  
+
   private static void logConfig(DsoApplication application, Bundle bundle, String configPath) {
     logger.info("Config loaded from module: " + bundle.getSymbolicName() + " (" + configPath + ")");
     ByteArrayOutputStream bas = new ByteArrayOutputStream();
