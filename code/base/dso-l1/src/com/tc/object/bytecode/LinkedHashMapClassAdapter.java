@@ -23,7 +23,7 @@ public class LinkedHashMapClassAdapter extends ChangeClassNameHierarchyAdapter i
   }
 
   public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
-    return new ClassAdapter(visitor);
+    return new LinkedHashMapClassAdapter(visitor);
   }
 
   public final void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
