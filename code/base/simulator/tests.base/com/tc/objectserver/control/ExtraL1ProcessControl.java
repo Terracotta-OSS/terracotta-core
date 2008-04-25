@@ -12,6 +12,7 @@ import com.tc.util.Assert;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.Iterator;
 import java.util.List;
 
 public class ExtraL1ProcessControl extends ExtraProcessServerControl {
@@ -38,6 +39,20 @@ public class ExtraL1ProcessControl extends ExtraProcessServerControl {
     this.directory = directory;
 
     setJVMArgs();
+  }
+
+  public void setCoresidentMode(String coresidentConfigFileLoc) {
+    for (Iterator it = this.jvmArgs.iterator(); it.hasNext(); ) {
+      String arg = (String) it.next();
+      if (arg.startsWith("-Dtc.config=")) {
+        it.remove();
+        System.err.println("Removed original arg: " + arg);
+      }
+    }
+    final String newArg = "-Dtc.config=" + super.configFileLoc + "#" + coresidentConfigFileLoc;
+    this.jvmArgs.add(newArg);
+    System.err.println("Added new arg: " + newArg);
+    this.jvmArgs.add("-Dtc.dso.globalmode=false");
   }
 
   public File getJavaHome() {

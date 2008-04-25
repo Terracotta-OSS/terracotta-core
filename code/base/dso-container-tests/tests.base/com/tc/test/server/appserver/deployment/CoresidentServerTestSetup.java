@@ -47,7 +47,7 @@ public class CoresidentServerTestSetup extends TestSetup {
     }
   }
 
-  protected ServerManager[] getServerManagers() {
+  public ServerManager[] getServerManagers() {
     if (managers == null) {
         try {
           managers = new ServerManager[2];

@@ -36,4 +36,5 @@ public interface WebApplicationServer extends Server {
   
   public File getTcConfigFile();
 
+  public File getCoresidentConfigFile();
 }

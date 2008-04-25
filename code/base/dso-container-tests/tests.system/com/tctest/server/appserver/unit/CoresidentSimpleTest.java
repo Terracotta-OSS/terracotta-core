@@ -6,23 +6,31 @@ package com.tctest.server.appserver.unit;
 
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
+import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.test.AppServerInfo;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerCoresidentDeploymentTest;
+import com.tc.test.server.appserver.deployment.CoresidentServerTestSetup;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tc.test.server.util.TcConfigBuilder;
 import com.tc.util.Assert;
+import com.tctest.externall1.PartitionManagerTestApp;
 import com.tctest.webapp.servlets.CoresidentSimpleTestServlet;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import junit.framework.Test;
 
 public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentTest {
 
   private static final String CONTEXT = "simple";
+  private static CoresidentServerTestSetup testSetup = new CoresidentSimpleTestSetup();
 
   public CoresidentSimpleTest() {
     //  MNK-499
@@ -32,7 +40,33 @@ public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentT
   }
 
   public static Test suite() {
-    return new CoresidentSimpleTestSetup();
+    return testSetup;
+  }
+
+  private int spawnExtraCoresidentL1(final OutputStream outputStream, final String cmd, final int partition,
+                                     final int map, String extraArgs) throws Exception {
+    List vmArgs = new ArrayList();
+    vmArgs.add("-Dpartition.num=" + partition);
+    vmArgs.add("-Dmap.num=" + map);
+    vmArgs.add("-Dcmd=" + cmd);
+    if (extraArgs != null) vmArgs.add(extraArgs);
+
+    ExtraL1ProcessControl client = new ExtraL1ProcessControl(
+      testSetup.getServerManagers()[0].getServerTcConfig().getDsoHost(),
+      testSetup.getServerManagers()[0].getServerTcConfig().getDsoPort(),
+      PartitionManagerTestApp.class,
+      server0.getTcConfigFile().getAbsolutePath(),
+      new String[] { },
+      server0.getWorkingDirectory(),
+      vmArgs,
+      false
+    );
+    client.setCoresidentMode(server0.getCoresidentConfigFile().getAbsolutePath());
+    client.writeOutputTo(outputStream);
+    client.start();
+
+    final int exitCode = client.waitFor();
+    return exitCode;
   }
 
   public void testSimple() throws Exception {
@@ -69,11 +103,41 @@ public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentT
     // assert change in partition-1 in map1 by server1 in server0
     assertSize(server0, 1, 1, 3);
     System.err.println("Done");
+
+    int exitCode = -1;
+
+    //assert size of map0 in partition-0
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    exitCode = spawnExtraCoresidentL1(bos, "assertSize", 0, 0, "-Dsize=2");
+    System.err.println("Client extra l1 output: " + bos.toString());
+    assertL1Output(exitCode, bos);
+
+    //assert map1 is null in partition-0
+    bos = new ByteArrayOutputStream();
+    exitCode = spawnExtraCoresidentL1(bos, "assertNull", 0, 1, null);
+    System.err.println("Client extra l1 output: " + bos.toString());
+    assertL1Output(exitCode, bos);
+
+    //assert map0 is null in partition-1
+    bos = new ByteArrayOutputStream();
+    exitCode = spawnExtraCoresidentL1(bos, "assertNull", 1, 0, null);
+    System.err.println("Client extra l1 output: " + bos.toString());
+    assertL1Output(exitCode, bos);
+
+    //assert size of map1 in partition -1
+    bos = new ByteArrayOutputStream();
+    exitCode = spawnExtraCoresidentL1(bos, "assertSize", 1, 1, "-Dsize=3");
+    System.err.println("Client extra l1 output: " + bos.toString());
+    assertL1Output(exitCode, bos);
+  }
+
+  private void assertL1Output(final int exitCode, final ByteArrayOutputStream bos) throws Exception {
+    Assert.assertEquals("OK", getLastLine(bos.toString()));
+    Assert.assertEquals(0, exitCode);
   }
 
   private void assertOk(final String response) throws Exception {
-    String ok = getLastLine(response);
-    Assert.assertEquals("OK", ok);
+    Assert.assertEquals("OK", getLastLine(response));
   }
 
   private String getLastLine(final String response) throws Exception {
@@ -100,7 +164,7 @@ public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentT
     final WebResponse webResponse;
     final String response;
     webResponse = request(server, "cmd=" + "assertSize" + "&partition=" + partition + "&map=" + map + "&size=" + size,
-                          conversation);
+      conversation);
     response = webResponse.getText().trim();
     System.err.println("Response from server" + (server == server1 ? "1" : "0") + ": " + response);
     assertOk(response);
@@ -141,25 +205,25 @@ public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentT
 
     protected void configureWar(DeploymentBuilder builder) {
       builder.addServlet("CoresidentSimpleTestServlet", "/" + CONTEXT + "/*", CoresidentSimpleTestServlet.class, null,
-                         false);
-      // builder.addDirectoryOrJARContainingClass(SynchronizedInt.class);
+        false);
     }
 
     protected void configureTcConfig(TcConfigBuilder tcConfigBuilder) {
       String rootName = "sharedMap0";
       String fieldName = CoresidentSimpleTestServlet.class.getName() + ".sharedMap0";
       tcConfigBuilder.addRoot(fieldName, rootName);
+      fieldName = PartitionManagerTestApp.class.getName() + ".sharedMap0";
+      tcConfigBuilder.addRoot(fieldName, rootName);
 
       rootName = "sharedMap1";
       fieldName = CoresidentSimpleTestServlet.class.getName() + ".sharedMap1";
       tcConfigBuilder.addRoot(fieldName, rootName);
-
-      // rootName = "count";
-      // fieldName = CoresidentSimpleTestServlet.class.getName() + ".count";
-      // tcConfigBuilder.addRoot(fieldName, rootName);
+      fieldName = PartitionManagerTestApp.class.getName() + ".sharedMap1";
+      tcConfigBuilder.addRoot(fieldName, rootName);
 
       String methodExpression = "* " + CoresidentSimpleTestServlet.class.getName() + ".*(..)";
       tcConfigBuilder.addAutoLock(methodExpression, "write");
+      tcConfigBuilder.addInstrumentedClass(PartitionManagerTestApp.class.getName(), false);
 
     }
 

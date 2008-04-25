@@ -413,4 +413,8 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
   public File getTcConfigFile() {
     return tcConfigFile;
   }
+
+  public File getCoresidentConfigFile() {
+    return coresidentConfigFile;
+  }
 }
