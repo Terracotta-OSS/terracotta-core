@@ -6,6 +6,7 @@ package com.tctest.server.appserver.unit;
 
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
+import com.tc.test.AppServerInfo;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerCoresidentDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
@@ -14,8 +15,8 @@ import com.tc.util.Assert;
 import com.tctest.webapp.servlets.CoresidentSimpleTestServlet;
 
 import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.io.ByteArrayInputStream;
+import java.io.InputStreamReader;
 
 import junit.framework.Test;
 
@@ -24,7 +25,10 @@ public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentT
   private static final String CONTEXT = "simple";
 
   public CoresidentSimpleTest() {
-//    disableAllUntil("2008-05-15");
+    //  MNK-499
+    if (appServerInfo().getId() == AppServerInfo.WEBLOGIC || appServerInfo().getId() == AppServerInfo.WASCE) {
+      disableAllUntil("2008-05-15");
+    }
   }
 
   public static Test suite() {
