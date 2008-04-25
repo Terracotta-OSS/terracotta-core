@@ -102,10 +102,13 @@ public abstract class AbstractTwoServerCoresidentDeploymentTest extends Abstract
     }
 
     private WebApplicationServer createServer(Deployment deployment, boolean enableDebug) throws Exception {
+      File sandBox = getServerManagers()[0].getSandbox();
       TcConfigBuilder config0 = tcConfigBuilder.copy();
-      prepareClientConfig(config0, getServerManagers()[0].getServerTcConfig());
       TcConfigBuilder config1 = tcConfigBuilder.copy();
-      prepareClientConfig(config1, getServerManagers()[1].getServerTcConfig());
+      
+      prepareClientConfig(new File(sandBox, "tc-config0.xml"), config0, getServerManagers()[0].getServerTcConfig());      
+      prepareClientConfig(new File(sandBox, "tc-config1.xml"), config1, getServerManagers()[1].getServerTcConfig());
+      
       //use server_0's sandbox
       WebApplicationServer server = getServerManagers()[0].makeCoresidentWebApplicationServer(config0, config1, enableDebug);
       configureServerParamers(server.getServerParameters());
@@ -116,10 +119,10 @@ public abstract class AbstractTwoServerCoresidentDeploymentTest extends Abstract
       return server;
     }
 
-    private void prepareClientConfig(final TcConfigBuilder clientConfig, final TcConfigBuilder serverTcConfig) throws IOException {
+    private void prepareClientConfig(File configFile, final TcConfigBuilder clientConfig, final TcConfigBuilder serverTcConfig) throws IOException {
       clientConfig.setDsoPort(serverTcConfig.getDsoPort());
       clientConfig.setJmxPort(serverTcConfig.getJmxPort());
-      clientConfig.setTcConfigFile(new File(serverTcConfig.getTcConfigFile().getParentFile(), "tc-client-config.xml"));
+      clientConfig.setTcConfigFile(configFile);
       clientConfig.saveToFile();
     }
 

@@ -54,8 +54,7 @@ public class ServerManager {
     config = TestConfigObject.getInstance();
     factory = AppServerFactory.createFactoryFromProperties();
     installDir = config.appserverServerInstallDir();
-    tempDir = new File(TempDirectoryUtil.getTempDirectory(testClass), "dso-server-" + serverCounter);
-    tempDir.mkdirs();
+    tempDir = TempDirectoryUtil.getTempDirectory(testClass);
     tcConfigFile = new File(tempDir, "tc-config.xml");
     serverCounter ++;
     sandbox = AppServerUtil.createSandbox(tempDir);
@@ -108,7 +107,9 @@ public class ServerManager {
   }
 
   private void startDSO(boolean withPersistentStore) throws Exception {
-    dsoServer = new DSOServer(withPersistentStore, tempDir, serverTcConfig);
+    File workDir = new File(tempDir, "dso-server-" + serverCounter);
+    workDir.mkdirs();
+    dsoServer = new DSOServer(withPersistentStore, workDir, serverTcConfig);
     if (!Vm.isIBM() && !(Os.isMac() && Vm.isJDK14())) {
       dsoServer.getJvmArgs().add("-XX:+HeapDumpOnOutOfMemoryError");
     }

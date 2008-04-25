@@ -70,8 +70,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
   private File                              workingDir;
   private String                            serverInstanceName;
   private final File                        tcConfigFile;
-  private final File                        tcConfigFile1;
-
+  private final File                        coresidentConfigFile;
 
   public GenericServer(TestConfigObject config, AppServerFactory factory, AppServerInstallation installation,
                        File tcConfigFile, int serverId, File tempDir) throws Exception {
@@ -79,7 +78,8 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
   }
 
   public GenericServer(TestConfigObject config, AppServerFactory factory, AppServerInstallation installation,
-                       File tcConfigFile, File tcConfigFile1, int serverId, File tempDir, boolean coresident, boolean enableDebug) throws Exception {
+                       File tcConfigFile, File coresidentConfigFile, int serverId, File tempDir, boolean coresident,
+                       boolean enableDebug) throws Exception {
     this.factory = factory;
     this.installation = installation;
     this.rmiRegistryPort = AppServerUtil.getPort();
@@ -88,8 +88,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     this.parameters = (StandardAppServerParameters) factory.createParameters(serverInstanceName);
     this.workingDir = new File(installation.sandboxDirectory(), serverInstanceName);
     this.tcConfigFile = tcConfigFile;
-    if (!coresident) this.tcConfigFile1 = null;
-    else this.tcConfigFile1 = tcConfigFile1;
+    this.coresidentConfigFile = coresidentConfigFile;
 
     File bootJarFile = new File(config.normalBootJar());
 
@@ -97,10 +96,12 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
       parameters.appendSysProp("tc.base-dir", System.getProperty(TestConfigObject.TC_BASE_DIR));
       parameters.appendSysProp("com.tc.l1.modules.repositories", System.getProperty("com.tc.l1.modules.repositories"));
 
-      if (!coresident) parameters.appendSysProp("tc.config", this.tcConfigFile.getAbsolutePath());
-      else {
-        parameters.appendSysProp("tc.config", this.tcConfigFile.getAbsolutePath() + "#" + this.tcConfigFile1.getAbsolutePath());
+      if (coresident) {
+        parameters.appendSysProp("tc.config", this.tcConfigFile.getAbsolutePath() + "#"
+                                              + this.coresidentConfigFile.getAbsolutePath());
         parameters.appendSysProp("tc.dso.globalmode", false);
+      } else {
+        parameters.appendSysProp("tc.config", this.tcConfigFile.getAbsolutePath());
       }
 
       parameters.appendJvmArgs("-Xbootclasspath/p:" + bootJarFile.getAbsolutePath());
@@ -363,7 +364,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     FileOutputStream fos = null;
 
     try {
-      File tempFile = new File(installation.sandboxDirectory(), "tc-classpath." + parameters.instanceName());      
+      File tempFile = new File(installation.sandboxDirectory(), "tc-classpath." + parameters.instanceName());
       fos = new FileOutputStream(tempFile);
 
       // XXX: total hack to make RequestCountTest pass on 1.4 VMs
