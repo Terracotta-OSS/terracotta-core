@@ -2262,9 +2262,13 @@ public class BootJarTool {
       InnerClassNode innerClass = (InnerClassNode) i.next();
       if (innerClass.outerName.equals(tcClassNameDots.replace(ChangeClassNameHierarchyAdapter.DOT_DELIMITER,
                                                               ChangeClassNameHierarchyAdapter.SLASH_DELIMITER))) {
-        changeClassName(innerClass.name, tcClassNameDots, jClassNameDots, instrumentedContext, false);
+        changeClassName(innerClass.name, tcClassNameDots, jClassNameDots, instrumentedContext, mergedInnerClassesNeedInstrumentation(jClassNameDots));
       }
     }
+  }
+
+  private boolean mergedInnerClassesNeedInstrumentation(String classNameDots) {
+    return classNameDots.equals("java.util.Hashtable");
   }
 
   private void changeClassName(String fullClassNameDots, String classNameDotsToBeChanged, String classNameDotsReplaced,
