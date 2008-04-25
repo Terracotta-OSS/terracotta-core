@@ -63,6 +63,7 @@ Bundle-ClassPath: ../dependencies/lib/antlr-2.7.3.jar,
  ../dependencies/lib/treemap-tc-1.0.jar,
  ../dependencies/lib/knopflerfish-2.0.1-tc-20080108.jar,
  ../deploy/build.eclipse/src.classes,
+ ../deploy-api/build.eclipse/src.classes,
  ../dso-statistics/build.eclipse/src.classes,
  ../dso-statistics-api/build.eclipse/src.classes,
  ../common/build.eclipse/src.classes,
@@ -75,6 +76,7 @@ Bundle-ClassPath: ../dependencies/lib/antlr-2.7.3.jar,
  ../dso-l2-common/build.eclipse/src.classes,
  ../thirdparty/build.eclipse/src.classes,
  ../thirdparty-api/build.eclipse/src.classes,
- ../management/build.eclipse/src.classes
+ ../management/build.eclipse/src.classes,
+ ../management-api/build.eclipse/src.classes
 Bundle-Activator: org.terracotta.dso.TcPlugin
 Bundle-RequiredExecutionEnvironment: J2SE-1.5

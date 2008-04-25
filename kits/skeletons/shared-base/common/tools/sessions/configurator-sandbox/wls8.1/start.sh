@@ -37,9 +37,8 @@ if test "$2" != "nodso"; then
   set -- -q "${TC_CONFIG_PATH}"
   . "${TC_INSTALL_DIR}/bin/dso-env.sh"
 
-  OPTS="${TC_JAVA_OPTS} -Dwebserver.log.name=${PORT}"
+  OPTS="${TC_JAVA_OPTS} -Dwebserver.log.name=weblogic-${PORT}"
   OPTS="${OPTS} -Dcom.sun.management.jmxremote"
-  OPTS="${OPTS} -Dtc.node-name=weblogic-${PORT}"
   OPTS="${OPTS} -Dproject.name=Configurator"
   JAVA_OPTIONS="${OPTS} ${JAVA_OPTS}"
   export JAVA_OPTIONS

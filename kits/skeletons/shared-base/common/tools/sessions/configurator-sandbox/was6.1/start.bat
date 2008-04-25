@@ -48,9 +48,9 @@ if ""%2"" == ""nodso"" (
 
 set NODSO=false
 
-set OPTS=%TC_JAVA_OPTS% -Dwebserver.log.name=%PORT%
+set OPTS=%TC_JAVA_OPTS% -Dwebserver.log.name=was-%PORT%
 set OPTS=%OPTS% -Dcom.sun.management.jmxremote
-set OPTS=%OPTS% -Dtc.node-name=was-%PORT%
+set OPTS=%OPTS% -Dproject.name=Configurator
 set JAVA_OPTIONS=%OPTS% %JAVA_OPTS%
 
 
