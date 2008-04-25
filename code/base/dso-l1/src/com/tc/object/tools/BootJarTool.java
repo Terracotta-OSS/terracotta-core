@@ -2078,13 +2078,15 @@ public class BootJarTool {
     String jMapClassNameDots = "java.util.Hashtable";
     String tcMapClassNameDots = "java.util.HashtableTC";
     Map instrumentedContext = new HashMap();
-    mergeClass(tcMapClassNameDots, jMapClassNameDots, instrumentedContext, HashtableClassAdapter.getMethods());
+    mergeClass(tcMapClassNameDots, jMapClassNameDots, instrumentedContext, HashtableClassAdapter.getMethods(), null);
   }
 
   private final void addInstrumentedLinkedHashMap(Map instrumentedContext) {
     String jMapClassNameDots = "java.util.LinkedHashMap";
     String tcMapClassNameDots = "java.util.LinkedHashMapTC";
-    mergeClass(tcMapClassNameDots, jMapClassNameDots, instrumentedContext);
+
+    mergeClass(tcMapClassNameDots, jMapClassNameDots, instrumentedContext, null,
+               new ClassAdapterFactory[] { new LinkedHashMapClassAdapter() });
   }
 
   private void addInstrumentedReentrantReadWriteLock() {
@@ -2109,6 +2111,7 @@ public class BootJarTool {
     instrumentedContext = new HashMap();
     mergeReadWriteLockInnerClass(tcInnerClassNameDots, jInnerClassNameDots, tcClassNameDots, jClassNameDots,
                                  "WriteLock", "WriteLock", instrumentedContext, methodPrefix);
+
   }
 
   private void mergeReadWriteLockInnerClass(String tcInnerClassNameDots, String jInnerClassNameDots,
@@ -2192,11 +2195,11 @@ public class BootJarTool {
   }
 
   private final void mergeClass(String tcClassNameDots, String jClassNameDots, Map instrumentedContext) {
-    mergeClass(tcClassNameDots, jClassNameDots, instrumentedContext, null);
+    mergeClass(tcClassNameDots, jClassNameDots, instrumentedContext, null, null);
   }
 
   private final void mergeClass(String tcClassNameDots, String jClassNameDots, Map instrumentedContext,
-                                final MethodNode[] replacedMethods) {
+                                final MethodNode[] replacedMethods, ClassAdapterFactory[] addlAdapters) {
     byte[] tcData = getSystemBytes(tcClassNameDots);
 
     ClassReader tcCR = new ClassReader(tcData);
@@ -2217,15 +2220,20 @@ public class BootJarTool {
     tcCR.accept(tcCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
     byte[] jData = getSystemBytes(jClassNameDots);
+
+    if (addlAdapters != null) {
+      for (int i = 0; i < addlAdapters.length; i++) {
+        ClassReader cr = new ClassReader(jData);
+        ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+
+        ClassVisitor cv = addlAdapters[i].create(cw, null);
+        cr.accept(cv, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+        jData = cw.toByteArray();
+      }
+    }
+
     ClassReader jCR = new ClassReader(jData);
     ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
-
-    ClassVisitor cv1 = new LinkedHashMapClassAdapter(cw);
-    jCR.accept(cv1, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-    jData = cw.toByteArray();
-
-    jCR = new ClassReader(jData);
-    cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
     ClassNode jCN = new ClassNode();
     jCR.accept(jCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
@@ -2260,21 +2268,18 @@ public class BootJarTool {
   }
 
   private void changeClassName(String fullClassNameDots, String classNameDotsToBeChanged, String classNameDotsReplaced,
-                               Map instrumentedContext, boolean honorTransient) {
+                               Map instrumentedContext, boolean doDSOTransform) {
     byte[] data = changeClassNameAndGetBytes(fullClassNameDots, classNameDotsToBeChanged, classNameDotsReplaced,
                                              instrumentedContext);
 
     String replacedClassName = ChangeClassNameRootAdapter.replaceClassName(fullClassNameDots, classNameDotsToBeChanged,
                                                                            classNameDotsReplaced, null, null);
-    ClassInfo replacedClassInfo = AsmClassInfo.getClassInfo(replacedClassName, systemLoader);
 
-    ClassReader cr = new ClassReader(data);
-    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    ClassVisitor dsoAdapter = configHelper.createDsoClassAdapterFor(cw, replacedClassInfo, instrumentationLogger, //
-                                                                    getClass().getClassLoader(), true, honorTransient);
-    cr.accept(dsoAdapter, ClassReader.SKIP_FRAMES);
+    if (doDSOTransform) {
+      data = doDSOTransform(replacedClassName, data);
+    }
 
-    loadClassIntoJar(replacedClassName, cw.toByteArray(), true);
+    loadClassIntoJar(replacedClassName, data, true);
   }
 
   private final byte[] changeClassNameAndGetBytes(String fullClassNameDots, String classNameDotsToBeChanged,
