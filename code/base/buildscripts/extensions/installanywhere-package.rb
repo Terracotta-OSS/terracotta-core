@@ -6,12 +6,20 @@
 
 class BaseCodeTerracottaBuilder <  TerracottaBuilder
   require 'tmpdir'
+  
   IA_LOCATION = "C:\\Program Files\\Macrovision\\InstallAnywhere 8.0 Enterprise"
+  
+  private
+  def create_project_directory
+    timestamp = Time.now.strftime("%Y%m%dT%H%M%S")
+    dir = FilePath.new("c:/tmp/IA-#{timestamp}").ensure_directory
+    dir
+  end
   
   protected
   def make_package(srcdir, destdir, filename, install_name, internal_name)
     installer_directory  = @static_resources.ia_project_directory(@flavor)
-    ia_project_directory = FilePath.new('c:/tmp/tc').ensure_directory 
+    ia_project_directory = create_project_directory()
     
     ant.copy(:todir => ia_project_directory.to_s) do
       ant.fileset(:dir => "#{installer_directory.to_s}/#{internal_name.to_s}")
@@ -56,5 +64,9 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     installer_output_file  = FilePath.new(ia_output_directory, 'Web_Installers', 'InstData', @build_environment.os_type(:nice).capitalize, 'VM', "install-terracotta.exe")
     installer_package_name = FilePath.new(File.dirname(srcdir.to_s), "#{filename}.exe")
     ant.move(:tofile => installer_package_name, :file => installer_output_file)
+    
+    # clean up
+    puts "cleaning up #{ia_project_directory.to_s}"
+    ia_project_directory.delete
   end
 end
