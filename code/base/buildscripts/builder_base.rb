@@ -156,7 +156,7 @@ class TerracottaBuilder
         # Print out the duration and the results at the end.
         puts ""
         puts "[%8.2f seconds] %s" % [ (end_time - @start_time), @script_results.to_s ]
-
+        puts "Exit code from script_results #{@script_results.result_code}"
         ExitCodeHelper.exit(@script_results.result_code)
     end
 
