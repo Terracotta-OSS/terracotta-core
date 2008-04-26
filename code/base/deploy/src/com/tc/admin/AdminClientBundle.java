@@ -122,6 +122,8 @@ public class AdminClientBundle extends ListResourceBundle {
 
       { "dso.root.new", "Added new DSO root: " },
 
+      { "cluster.thread.dumps", "Cluster thread dumps" },
+      
       { "clients", "Clients" },
 
       { "servers", "Servers" },

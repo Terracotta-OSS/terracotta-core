@@ -24,6 +24,7 @@ import com.tc.admin.common.InputStreamDrainer;
 import com.tc.util.runtime.Os;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 
 public class ShowAdminConsoleAction extends Action
@@ -60,15 +61,51 @@ public class ShowAdminConsoleAction extends Action
     IOUtils.closeQuietly(p.getOutputStream());
   }
 
+  private String locateSvtJar() {
+    File tcLibDir = null;
+    IPath tcLibPath = TcPlugin.getDefault().getLibDirPath();
+    IPath tcJarPath = tcLibPath.append("tc.jar");
+    
+    if(tcJarPath.toFile().exists()){
+      tcLibDir = tcLibPath.toFile();
+    } else {
+      String installRoot = System.getProperty("tc.install-root"); 
+      if(installRoot != null) {
+        tcLibDir = new File(installRoot, "lib");
+      }
+    }
+
+    if(tcLibDir == null) return null;
+    
+    String[] files = tcLibDir.list(new FilenameFilter() {
+      public boolean accept(File dir, String name) {
+        return name.startsWith("svt");
+      }
+    });
+    if(files != null && files.length > 0) {
+      File svtJar = new File(tcLibDir, files[files.length-1]);
+      return svtJar.getAbsolutePath();
+    }
+    return null;
+  }
+  
   private String getClasspath() {
+    String result = null;
     TcPlugin plugin = TcPlugin.getDefault();
     IPath tcJarPath = plugin.getLibDirPath().append("tc.jar");
-
+    
     if(tcJarPath.toFile().exists()){
-      return tcJarPath.toOSString();
+      result = tcJarPath.toOSString();
     } else {
-      return ClasspathProvider.makeDevClasspath();
+      result = ClasspathProvider.makeDevClasspath();
     }
+    
+    String svtJar = locateSvtJar();
+    if(svtJar != null) {
+      result = result + System.getProperty("path.separator") + svtJar;
+    }
+    
+    return result;
   }
   
   private File getJavaCmd() {

@@ -12,7 +12,8 @@ public class ClusterThreadDumpsNode extends ComponentNode {
   protected ClusterThreadDumpsPanel m_clusterThreadDumpsPanel;
   
   public ClusterThreadDumpsNode(ClusterNode clusterNode) {
-    super("Thread dumps");
+    super();
+    setLabel(AdminClient.getContext().getString("cluster.thread.dumps"));
     m_clusterNode = clusterNode;
     setIcon(ServerHelper.getHelper().getThreadDumpsIcon());
   }

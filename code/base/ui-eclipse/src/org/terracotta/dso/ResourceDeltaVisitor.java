@@ -22,6 +22,7 @@ import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationType;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.model.IProcess;
+import org.eclipse.debug.ui.DebugUITools;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
@@ -241,12 +242,7 @@ public class ResourceDeltaVisitor implements IResourceDeltaVisitor {
                 }
               }
               for (ILaunch launch : launches) {
-                ILaunchConfiguration launchConfig = launch.getLaunchConfiguration();
-                try {
-                  launchConfig.launch(launch.getLaunchMode(), monitor);
-                } catch (CoreException ce) {
-                  ce.printStackTrace();
-                }
+                DebugUITools.launch(launch.getLaunchConfiguration(), launch.getLaunchMode());
               }
               return Status.OK_STATUS;
             }

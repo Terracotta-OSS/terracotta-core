@@ -127,6 +127,7 @@ public abstract class DSOObject {
       case 'F': return "float";
       case 'C': return "char";
       case 'D': return "double";
+      case 'B': return "byte";
     }
     return String.valueOf(c);
   }

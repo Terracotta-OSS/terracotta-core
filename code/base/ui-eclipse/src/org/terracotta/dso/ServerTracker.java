@@ -23,7 +23,6 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
-import org.terracotta.dso.actions.ActionUtil;
 import org.terracotta.dso.decorator.ServerRunningDecorator;
 import org.terracotta.dso.dialogs.AbstractApplicationEventDialog;
 import org.terracotta.dso.dialogs.NonPortableObjectDialog;
@@ -294,7 +293,8 @@ public class ServerTracker implements IDebugEventSetListener {
   }
 
   private void handleApplicationEvent(AbstractApplicationEvent event) {
-    Shell shell = ActionUtil.findSelectedEditorPart().getSite().getShell();
+    Display display = Display.getCurrent(); 
+    Shell shell = display != null ? display.getActiveShell() : null;
     AbstractApplicationEventDialog dialog = null;
 
     if (event instanceof NonPortableObjectEvent) {
@@ -312,7 +312,9 @@ public class ServerTracker implements IDebugEventSetListener {
 
   private void waitForMBean(final IJavaProject javaProject, final String name, final Server server) {
     L2ConnectListener connectListener = new L2ConnectListener(javaProject, name);
-    ServerConnectionManager connectManager = new ServerConnectionManager(server.getHost(), server.getJmxPort(), false,
+    int jmxPort = server.getJmxPort();
+    if(jmxPort == 0) jmxPort = 9520;
+    ServerConnectionManager connectManager = new ServerConnectionManager(server.getHost(), jmxPort, false,
         connectListener);
     connectListener.setServerConnectionManager(connectManager);
     connectManager.setAutoConnect(true);

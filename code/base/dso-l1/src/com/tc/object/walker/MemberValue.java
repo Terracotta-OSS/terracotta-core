@@ -100,4 +100,15 @@ public class MemberValue {
     this.isRepeated = b;
   }
 
+  public String toString() {
+    StringBuffer sb = new StringBuffer();
+    sb.append(", id="+id);
+    if(value != null) sb.append(", value="+value);
+    if(isMapKey()) sb.append(", mapKey");
+    if(isMapValue()) sb.append(", mapValue");
+    if(isRepeated()) sb.append(", repeated");
+    if(isElement()) sb.append(", isElement");
+    if(fd != null) sb.append(", field="+fd.getField());
+    return sb.toString();
+  }
 }

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.management;
 
@@ -77,10 +78,11 @@ public abstract class TerracottaManagement {
   }
 
   public static interface MBeanKeys {
-    public static final String TYPE      = "type";
-    public static final String NODE      = "node";
-    public static final String SUBSYSTEM = "subsystem";
-    public static final String NAME      = "name";
+    public static final String TYPE            = "type";
+    public static final String MBEAN_NODE      = "node";
+    public static final String MBEAN_NODE_NAME = "node-name";
+    public static final String SUBSYSTEM       = "subsystem";
+    public static final String NAME            = "name";
   }
 
   public static final String  PUBLIC_DOMAIN   = MANAGEMENT_RESOURCES.getPublicMBeanDomain();
@@ -91,21 +93,25 @@ public abstract class TerracottaManagement {
   private static final String EQUALS          = "=";
   private static final String SLASH           = "/";
 
-  private static final String NODE_PREFIX     = "clients" + EQUALS + "Clients";
+  private static final String NODE_PREFIX_KEY = "clients";
+  private static final String NODE_PREFIX     = NODE_PREFIX_KEY + EQUALS + "Clients";
 
-  private static final String NODE            = System.getProperty(MANAGEMENT_RESOURCES.getNodeNameSystemProperty());
+  private static final String NODE_NAME       = System.getProperty(MANAGEMENT_RESOURCES.getNodeNameSystemProperty());
 
   public static ObjectName createObjectName(final Type type, final Subsystem subsystem,
-      final TCSocketAddress remoteBeanHome, final String uiFriendlyName, final boolean isPublic)
-      throws MalformedObjectNameException {
+                                            final TCSocketAddress remoteBeanHome, final String uiFriendlyName,
+                                            final boolean isPublic) throws MalformedObjectNameException {
     final StringBuffer objName = new StringBuffer(isPublic ? PUBLIC_DOMAIN : INTERNAL_DOMAIN);
     objName.append(COLON);
-    if (NODE != null) {
-      objName.append(NODE_PREFIX).append(COMMA).append(MBeanKeys.NODE).append(EQUALS).append(NODE).append(COMMA);
-    } else if (remoteBeanHome != null) {
-      objName.append(NODE_PREFIX).append(COMMA).append(MBeanKeys.NODE).append(EQUALS).append(
-          remoteBeanHome.getAddress().getCanonicalHostName()).append(SLASH).append(remoteBeanHome.getPort()).append(
-          COMMA);
+    if (NODE_NAME != null || remoteBeanHome != null) {
+      objName.append(NODE_PREFIX);
+      if (NODE_NAME != null) {
+        objName.append(COMMA).append(MBeanKeys.MBEAN_NODE_NAME).append(EQUALS).append(NODE_NAME);
+      }
+      if (remoteBeanHome != null) {
+        addNodeInfo(objName, remoteBeanHome);
+      }
+      objName.append(COMMA);
     }
     objName.append(MBeanKeys.TYPE).append(EQUALS).append(type);
     if (subsystem != Subsystem.None) {
@@ -115,23 +121,31 @@ public abstract class TerracottaManagement {
     return new ObjectName(objName.toString());
   }
 
-  public static ObjectName addNodeInfo(ObjectName objName, TCSocketAddress addr) throws MalformedObjectNameException {
-    if (objName.getKeyProperty(MBeanKeys.NODE) != null) { return objName; }
+  private static void addNodeInfo(StringBuffer objName, TCSocketAddress addr) {
+    String remoteHost = addr.getAddress().getCanonicalHostName();
+    int remotePort = addr.getPort();
+    objName.append(COMMA).append(MBeanKeys.MBEAN_NODE).append(EQUALS).append(remoteHost).append(SLASH)
+        .append(remotePort);
+  }
 
-    String keyProperty = objName.getKeyProperty(MBeanKeys.SUBSYSTEM);
-    Subsystem subsystem = keyProperty != null ? Subsystem.getSubsystem(keyProperty) : Subsystem.None;
-    return createObjectName(Type.getType(objName.getKeyProperty(MBeanKeys.TYPE)), (subsystem != null ? subsystem
-        : Subsystem.None), addr, objName.getKeyProperty(MBeanKeys.NAME), objName.getDomain().equals(PUBLIC_DOMAIN));
+  public static ObjectName addNodeInfo(ObjectName objName, TCSocketAddress addr) throws MalformedObjectNameException {
+    if (objName.getKeyProperty(MBeanKeys.MBEAN_NODE) != null) { return objName; }
+    StringBuffer sb = new StringBuffer(objName.getCanonicalName());
+    if(objName.getKeyProperty(NODE_PREFIX_KEY) == null) {
+      sb.append(COMMA).append(NODE_PREFIX);
+    }
+    addNodeInfo(sb, addr);
+    return new ObjectName(sb.toString());
   }
 
   public abstract Object findMBean(final ObjectName objectName, final Class mBeanInterface) throws Exception;
 
   public static final Object findMBean(final ObjectName objectName, final Class mBeanInterface,
-      MBeanServerConnection mBeanServer) throws IOException {
+                                       MBeanServerConnection mBeanServer) throws IOException {
     final Set matchingBeans = mBeanServer.queryMBeans(objectName, null);
     final Iterator beanPos = matchingBeans.iterator();
     if (beanPos.hasNext()) { return MBeanServerInvocationHandler.newProxyInstance(mBeanServer, objectName,
-        mBeanInterface, false); }
+                                                                                  mBeanInterface, false); }
     return null;
   }
 
@@ -154,10 +168,11 @@ public abstract class TerracottaManagement {
   }
 
   public static final SessionMonitorMBean getClientSessionMonitorMBean(MBeanServerConnection mbs,
-      Set sessionMonitorMBeans, String nodeName) throws IOException {
+                                                                       Set sessionMonitorMBeans, String nodeName)
+      throws IOException {
     for (Iterator iter = sessionMonitorMBeans.iterator(); iter.hasNext();) {
       ObjectName smObjectName = (ObjectName) iter.next();
-      if (nodeName.equals(smObjectName.getKeyProperty(MBeanKeys.NODE))) { return (SessionMonitorMBean) TerracottaManagement
+      if (nodeName.equals(smObjectName.getKeyProperty(MBeanKeys.MBEAN_NODE_NAME))) { return (SessionMonitorMBean) TerracottaManagement
           .findMBean(smObjectName, SessionMonitorMBean.class, mbs); }
     }
     throw new AssertionError("No SessionMonitorMBean found for " + nodeName);

@@ -31,18 +31,23 @@ public class WalkVisitor implements Visitor, WalkTest {
   private final DSOClientConfigHelper   config;
   private final ApplicationEventContext context;
   private final DefaultTreeModel        treeModel;
+  private boolean                       skipTCTypes            = true;
 
   private static final String           MAX_WALK_DEPTH_PROP    = "org.terracotta.non-portable.max-walk-depth";
   private static final int              DEFAULT_MAX_WALK_DEPTH = -1;
   private static final Integer          maxWalkDepth           = Integer.getInteger(MAX_WALK_DEPTH_PROP,
                                                                                     DEFAULT_MAX_WALK_DEPTH);
 
-  public WalkVisitor(ClientObjectManager objMgr, DSOClientConfigHelper config, Object root,
-                     ApplicationEventContext context) {
+  public WalkVisitor(ClientObjectManager objMgr, DSOClientConfigHelper config, ApplicationEventContext context) {
     this.objMgr = objMgr;
     this.config = config;
     this.context = context;
     this.treeModel = new DefaultTreeModel(new DefaultMutableTreeNode());
+  }
+
+  // this is for testing purposes; default=true
+  public void setSkipTCTypes(boolean skipTCTypes) {
+    this.skipTCTypes = skipTCTypes;
   }
 
   public DefaultTreeModel getTreeModel() {
@@ -140,7 +145,7 @@ public class WalkVisitor implements Visitor, WalkTest {
 
       if (fieldName.equals(cntx.getFieldName())) {
         Object fieldValue = cntx.getFieldValue();
-        WalkVisitor wv = new WalkVisitor(objMgr, config, fieldValue, null);
+        WalkVisitor wv = new WalkVisitor(objMgr, config, null);
         ObjectGraphWalker walker = new ObjectGraphWalker(fieldValue, wv, wv);
         walker.setMaxDepth(maxWalkDepth.intValue());
         walker.walk();
@@ -313,13 +318,12 @@ public class WalkVisitor implements Visitor, WalkTest {
 
   private boolean skipVisit(MemberValue value) {
     Field field = value.getSourceField();
-    if (field != null) { return (field.getType().getName().startsWith("com.tc.")); }
+    if (skipTCTypes && field != null) { return (field.getType().getName().startsWith("com.tc.")); }
     return false;
   }
 
   private boolean isPortable(MemberValue value) {
     Object valueObject = value.getValueObject();
-
     if (valueObject != null) return objMgr.isPortableInstance(valueObject);
     return true;
   }

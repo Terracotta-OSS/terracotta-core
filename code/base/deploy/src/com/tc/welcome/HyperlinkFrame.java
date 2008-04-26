@@ -60,7 +60,7 @@ public abstract class HyperlinkFrame extends Frame implements HyperlinkListener 
     menu.add(new AboutAction());
     
     URL    url;
-    String iconPath = "/com/tc/admin/icons/logo_small.gif";
+    String iconPath = "/com/tc/admin/icons/logo_small.png";
     
     if((url = getClass().getResource(iconPath)) != null) {
       setIconImage(new Image(url));

@@ -64,9 +64,7 @@ public class AdminClient extends ApplicationManager {
     m_cntx.nodeFactory = AbstractNodeFactory.getFactory();
     m_cntx.executorService = Executors.newCachedThreadPool();
 
-    if(!Boolean.getBoolean("com.tc.ui.java-icon")) {
-      setIconImage(new Image(getBytes("/com/tc/admin/icons/logo_small.gif")));
-    }
+    setIconImage(new Image(getClass().getResource("/com/tc/admin/icons/logo_small.png")));
   }
 
   static byte[] getBytes(String path) {
@@ -164,8 +162,10 @@ public class AdminClient extends ApplicationManager {
   }
 
   public void start() {
-    m_cntx.controller = new AdminClientFrame();
-    Timer t = new Timer(2000, new ActionListener() {
+    AdminClientFrame frame = new AdminClientFrame();
+    frame.setIconImage(getIconImage());
+    m_cntx.controller = frame;
+    Timer t = new Timer(250, new ActionListener() {
       public void actionPerformed(ActionEvent ae) {
         ((AdminClientFrame)m_cntx.controller).setVisible(true);
         splashProc.destroy();

@@ -1004,8 +1004,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
 
   public void storeObjectHierarchy(Object root, ApplicationEventContext context) {
     try {
-      WalkVisitor wv = new WalkVisitor(this, this.clientConfiguration, root, context);
-      ObjectGraphWalker walker = new ObjectGraphWalker(context.getPojo(), wv, wv);
+      WalkVisitor wv = new WalkVisitor(this, this.clientConfiguration, context);
+      ObjectGraphWalker walker = new ObjectGraphWalker(root, wv, wv);
       walker.walk();
       context.setTreeModel(wv.getTreeModel());
     } catch (Throwable t) {

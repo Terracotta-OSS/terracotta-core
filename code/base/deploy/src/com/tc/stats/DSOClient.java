@@ -19,14 +19,15 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.ChannelStats;
 import com.tc.statistics.StatisticData;
-import com.tc.stats.DSOClientMBean;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.statistics.CountStatistic;
 import com.tc.stats.statistics.Statistic;
 
 import java.lang.reflect.Method;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import javax.management.MBeanNotificationInfo;
 import javax.management.MBeanServer;
@@ -44,13 +45,13 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
 
   private final MBeanServer                    mbeanServer;
   private boolean                              isListeningForTunneledBeans;
-  private final ObjectName                     l1InfoBeanName;
+  private ObjectName                           l1InfoBeanName;
   private L1InfoMBean                          l1InfoBean;
-  private final ObjectName                     instrumentationLoggingBeanName;
+  private ObjectName                           instrumentationLoggingBeanName;
   private InstrumentationLoggingMBean          instrumentationLoggingBean;
-  private final ObjectName                     runtimeLoggingBeanName;
+  private ObjectName                           runtimeLoggingBeanName;
   private RuntimeLoggingMBean                  runtimeLoggingBean;
-  private final ObjectName                     runtimeOutputOptionsBeanName;
+  private ObjectName                           runtimeOutputOptionsBeanName;
   private RuntimeOutputOptionsMBean            runtimeOutputOptionsBean;
   private final MessageChannel                 channel;
   private final SampledCounter                 txnRate;
@@ -88,19 +89,44 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     testSetupTunneledBeans();
   }
 
+  /**
+   * The tunneled client bean names must be queried-for using a wildcard pattern since they can have attributes
+   * (tc.node-name, others may come later) in addition to those expected. Each of the prototype names created match a
+   * single tunneled bean, uniquely identified by its node attribute. The initial tunneled bean names are not patterns.
+   */
+  private ObjectName queryClientBean(ObjectName o) {
+    try {
+      ObjectName pattern = new ObjectName(o.getCanonicalName() + ",*");
+      Set result = mbeanServer.queryNames(pattern, null);
+      Iterator iter = result.iterator();
+      return iter.hasNext() ? (ObjectName) iter.next() : null;
+    } catch (MalformedObjectNameException moe) {
+      throw new RuntimeException(moe);
+    }
+  }
+
   private void testSetupTunneledBeans() {
     startListeningForTunneledBeans();
 
-    if (mbeanServer.isRegistered(l1InfoBeanName)) {
+    ObjectName beanName;
+
+    if ((beanName = queryClientBean(l1InfoBeanName)) != null) {
+      l1InfoBeanName = beanName;
       setupL1InfoBean();
     }
-    if (mbeanServer.isRegistered(instrumentationLoggingBeanName)) {
+
+    if ((beanName = queryClientBean(instrumentationLoggingBeanName)) != null) {
+      instrumentationLoggingBeanName = beanName;
       setupInstrumentationLoggingBean();
     }
-    if (mbeanServer.isRegistered(runtimeLoggingBeanName)) {
+
+    if ((beanName = queryClientBean(runtimeLoggingBeanName)) != null) {
+      runtimeLoggingBeanName = beanName;
       setupRuntimeLoggingBean();
     }
-    if (mbeanServer.isRegistered(runtimeOutputOptionsBeanName)) {
+
+    if ((beanName = queryClientBean(runtimeOutputOptionsBeanName)) != null) {
+      runtimeOutputOptionsBeanName = beanName;
       setupRuntimeOutputOptionsBean();
     }
 
@@ -255,17 +281,38 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
            && runtimeOutputOptionsBean != null;
   }
 
+  /**
+   * Since ObjectNames can have arbitrary attribute pairs, we need to match against a wildcard pattern that we expect.
+   * Each tunneled client bean is uniquely identified by its node attribute, which is constructed from the remote host
+   * and port of the DSO client.
+   */
+  private boolean matchesClientBeanName(ObjectName clientBeanName, ObjectName beanName) {
+    try {
+      ObjectName wildcard = new ObjectName(clientBeanName.getCanonicalName() + ",*");
+      return wildcard.apply(beanName);
+    } catch (MalformedObjectNameException moe) {
+      throw new RuntimeException(moe);
+    }
+  }
+
   private void beanRegistered(ObjectName beanName) {
-    if (l1InfoBean == null && beanName.equals(l1InfoBeanName)) {
+    if (l1InfoBean == null && matchesClientBeanName(l1InfoBeanName, beanName)) {
+      l1InfoBeanName = beanName;
       setupL1InfoBean();
     }
-    if (instrumentationLoggingBean == null && beanName.equals(instrumentationLoggingBeanName)) {
+
+    if (instrumentationLoggingBean == null && matchesClientBeanName(instrumentationLoggingBeanName, beanName)) {
+      instrumentationLoggingBeanName = beanName;
       setupInstrumentationLoggingBean();
     }
-    if (runtimeLoggingBean == null && beanName.equals(runtimeLoggingBeanName)) {
+
+    if (runtimeLoggingBean == null && matchesClientBeanName(runtimeLoggingBeanName, beanName)) {
+      runtimeLoggingBeanName = beanName;
       setupRuntimeLoggingBean();
     }
-    if (runtimeOutputOptionsBean == null && beanName.equals(runtimeOutputOptionsBeanName)) {
+
+    if (runtimeOutputOptionsBean == null && matchesClientBeanName(runtimeOutputOptionsBeanName, beanName)) {
+      runtimeOutputOptionsBeanName = beanName;
       setupRuntimeOutputOptionsBean();
     }
 
@@ -319,7 +366,7 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     if (l1InfoBean == null) return null;
     return l1InfoBean.takeThreadDump(requestMillis);
   }
-  
+
   public MBeanNotificationInfo[] getNotificationInfo() {
     return NOTIFICATION_INFO;
   }

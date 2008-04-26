@@ -6,6 +6,7 @@ package org.terracotta.dso;
 
 import org.apache.commons.io.CopyUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.xmlbeans.XmlError;
@@ -499,18 +500,18 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     Server server = Server.Factory.newInstance();
     server.setName(name);
     server.setHost(host);
-    server.setJmxPort(jmxPort);
-    server.setDsoPort(dsoPort);
+    if(jmxPort > 0) server.setJmxPort(jmxPort);
+    if(dsoPort > 0) server.setDsoPort(dsoPort);
     
     return server;
   }
   
   public boolean areEquivalentServers(Server server1, Server server2) {
     if (server1 != null && server2 != null) {
-      if (server1.isSetName() && server2.isSetName() && server1.getName().equals(server2.getName())
-          && server1.isSetHost() && server2.isSetHost() && server1.getHost().equals(server2.getHost())
-          && server1.isSetJmxPort() && server2.isSetJmxPort() && server1.getJmxPort() == server2.getJmxPort()
-          && server1.isSetDsoPort() && server2.isSetDsoPort() && server1.getDsoPort() == server2.getDsoPort()) { return true; }
+      if (StringUtils.equals(server1.getName(), server2.getName())
+          && StringUtils.equals(server1.getHost(), server2.getHost())
+          && server1.getJmxPort() == server2.getJmxPort()
+          && server1.getDsoPort() == server2.getDsoPort()) { return true; }
     }
     return false;
   }
@@ -527,9 +528,9 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
 
         for (int i = 0; i < serverArr.length; i++) {
           Server server = serverArr[i];
-          replacePatterns(server);
-          if(areEquivalentServers(launchServer, server)) {
-            System.err.println("Found launched server: "+server);
+          Server serverCopy = (Server) server.copy();
+          replacePatterns(serverCopy);
+          if(areEquivalentServers(launchServer, serverCopy)) {
             return server;
           }
         }

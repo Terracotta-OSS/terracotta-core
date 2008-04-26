@@ -212,20 +212,20 @@ public class CompilationUnitVisitor extends ASTVisitor {
     ITypeBinding binding = node.resolveBinding();
     if(binding != null) {
       IType type = typeFromTypeBinding(binding);
-      ClassInfo classInfo = PatternHelper.getHelper().getClassInfo(type);
-      if(classInfo instanceof JavaModelClassInfo) {
-        JavaModelClassInfo jmci = (JavaModelClassInfo)classInfo;
-        jmci.clearAnnotations();
-        for(Object o : node.modifiers()) {
-          if (o instanceof Annotation) {
-            jmci.addAnnotation((Annotation)o);
-          }
-        }
-      }
       
       if(type != null) {
-        String fullName = PatternHelper.getFullyQualifiedName(type);
+        ClassInfo classInfo = PatternHelper.getHelper().getClassInfo(type);
+        if(classInfo instanceof JavaModelClassInfo) {
+          JavaModelClassInfo jmci = (JavaModelClassInfo)classInfo;
+          jmci.clearAnnotations();
+          for(Object o : node.modifiers()) {
+            if (o instanceof Annotation) {
+              jmci.addAnnotation((Annotation)o);
+            }
+          }
+        }
 
+        String fullName = PatternHelper.getFullyQualifiedName(type);
         if(m_configHelper.isAdaptable(fullName)) {
           addMarker("adaptedTypeMarker", "DSO Adapted Type", node.getName());
         } else if(m_configHelper.isExcluded(fullName)) {

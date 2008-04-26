@@ -108,6 +108,9 @@ public class ClassesPanel extends XContainer {
               case 'D':
                 className = "double";
                 break;
+              case 'B':
+                className = "byte";
+                break;
             }
           }
           StringBuffer sb = new StringBuffer(className);

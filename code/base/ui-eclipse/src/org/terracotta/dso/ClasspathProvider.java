@@ -83,9 +83,11 @@ public class ClasspathProvider extends StandardClasspathProvider {
 
     String[] dirs = {
       "deploy",
+      "deploy-api",
       "common",
       "common-api",
       "management",
+      "management-api",
       "aspectwerkz",
       "thirdparty",
       "thirdparty-api",
