@@ -292,10 +292,10 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
       @no_compile = false # override this if it's turned on
       check_maven_version
       check_short
-      raise "There's failure in tests." if @script_results.failed?
+      raise "check_short failed." if @script_results.failed?
       mark_this_revision_as_good(@build_environment.current_revision)
-    rescue
-      mark_this_revision_as_bad(@build_environment.current_revision)
+    rescue 
+      mark_this_revision_as_bad(@build_environment.current_revision, $!)
       raise
     end
   end
@@ -797,12 +797,9 @@ END
     FileUtils.rm(sinnerList) if File.exist?(sinnerList)
   end
 
-  def mark_this_revision_as_bad(revision)
-    if @script_results.failed?
-      STDERR.puts("Revision #{revision} is bad, mm'kay! check_short fails.")
-    else
-      STDERR.puts("Revision #{revision} is bad, mm'kay! It doesn't compile.")
-    end
+  def mark_this_revision_as_bad(revision, exception)
+    STDERR.puts("Revision #{revision} is bad, mm'kay!")
+    STDERR.puts(exception)
     
     # get the original sinner who broke the build
     sinnerList = File.join(ENV['HOME'], ".tc", "sinner.txt")
