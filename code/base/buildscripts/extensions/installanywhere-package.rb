@@ -34,8 +34,8 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     end
     srcfile = FilePath.new(destdir, "#{filename}.tar").to_s
     ant.tar(:destfile => srcfile, :longfile => 'gnu') do
-      ant.tarfileset(:dir => srcdir.to_s, :prefix => "terracotta", :excludes => "**/*.sh **/*.bat **/*.exe **/bin/** **/libexec/**") 
-      ant.tarfileset(:dir => srcdir.to_s, :prefix => "terracotta", :includes => "**/*.sh **/*.bat **/*.exe **/bin/** **/libexec/**", :mode => 755) 
+      ant.tarfileset(:dir => srcdir.to_s, :prefix => "terracotta", :excludes => "**/*.dll **/*.sh **/*.bat **/*.exe **/bin/** **/libexec/**") 
+      ant.tarfileset(:dir => srcdir.to_s, :prefix => "terracotta", :includes => "**/*.dll **/*.sh **/*.bat **/*.exe **/bin/** **/libexec/**", :mode => 755) 
     end
     ant.untar(:src => srcfile, :dest => ia_contents_directory.to_s, :overwrite => true)
     ant.delete(:file => srcfile)
