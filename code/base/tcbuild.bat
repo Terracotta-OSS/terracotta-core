@@ -38,7 +38,7 @@ GOTO run_jruby
 
 :run_jruby
 
-%JRUBY_HOME%\bin\jruby.bat -Ibuildscripts buildscripts/build-tc.rb %*
+call %JRUBY_HOME%\bin\jruby.bat -Ibuildscripts buildscripts/build-tc.rb %*
 set TCBUILD_ERR=%ERRORLEVEL%
 GOTO end
 
