@@ -11,7 +11,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   protected
   def make_package(srcdir, destdir, filename, install_name, internal_name)
     installer_directory  = @static_resources.ia_project_directory(@flavor)
-    ia_project_directory = FilePath.new(File.dirname(srcdir.to_s), 'tmp').ensure_directory 
+    ia_project_directory = FilePath.new('c:/tmp/tc').ensure_directory 
     
     ant.copy(:todir => ia_project_directory.to_s) do
       ant.fileset(:dir => "#{installer_directory.to_s}/#{internal_name.to_s}")
