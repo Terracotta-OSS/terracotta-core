@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.config;
 
@@ -11,13 +12,14 @@ import java.util.Set;
 
 public class TransparencyCodeSpecImpl implements TransparencyCodeSpec {
   private final static Set MONITOR_INSTRUMENTATION_REQ_LOGICAL_CLASS = new HashSet();
-  
-  private boolean arrayOperatorInstrumentationReq;
-  private boolean arraycopyInstrumentationReq;
-  private boolean fieldInstrumentationReq;
-  private boolean waitNotifyInstrumentationReq;
-  private boolean monitorInstrumentationReq;
-  
+
+  private boolean          arrayOperatorInstrumentationReq;
+  private boolean          arraycopyInstrumentationReq;
+  private boolean          fieldInstrumentationReq;
+  private boolean          waitNotifyInstrumentationReq;
+  private boolean          monitorInstrumentationReq;
+  private boolean          forceUncheckedFieldAccess                 = false;
+
   static {
     MONITOR_INSTRUMENTATION_REQ_LOGICAL_CLASS.add(Hashtable.class.getName());
   }
@@ -95,6 +97,14 @@ public class TransparencyCodeSpecImpl implements TransparencyCodeSpec {
 
   public void setMonitorInstrumentationReq(boolean monitorInstrumentationReq) {
     this.monitorInstrumentationReq = monitorInstrumentationReq;
+  }
+
+  public void setForceRawFieldAccess() {
+    this.forceUncheckedFieldAccess = true;
+  }
+
+  public boolean isForceRawFieldAccess() {
+    return forceUncheckedFieldAccess;
   }
 
 }

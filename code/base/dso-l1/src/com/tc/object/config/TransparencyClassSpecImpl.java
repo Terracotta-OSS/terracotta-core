@@ -61,8 +61,10 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   private String                      preCreateMethod            = null;
   private String                      logicalExtendingClassName  = null;
   private ClassAdapterFactory         customClassAdapter         = null;
+  private TransparencyCodeSpec        defaultCodeSpec            = null;
 
-  public TransparencyClassSpecImpl(String className, DSOClientConfigHelper configuration, String changeApplicatorClassName) {
+  public TransparencyClassSpecImpl(String className, DSOClientConfigHelper configuration,
+                                   String changeApplicatorClassName) {
     this.configuration = configuration;
     this.className = className;
     this.changeApplicatorClassName = changeApplicatorClassName;
@@ -113,16 +115,16 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     preInstrumented = true;
     return this;
   }
- 
+
   public TransparencyClassSpec markForeign() {
     foreign = true;
     return this;
   }
-  
+
   public boolean isForeign() {
     return foreign;
   }
-  
+
   public boolean isPreInstrumented() {
     return preInstrumented;
   }
@@ -437,9 +439,10 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   }
 
   public TransparencyCodeSpec getCodeSpec(String methodName, String description, boolean isAutolock) {
-    Object o = codeSpecs.get(methodName + description);
-    if (o == null) { return TransparencyCodeSpecImpl.getDefaultCodeSpec(className, isLogical, isAutolock); }
-    return (TransparencyCodeSpec) o;
+    TransparencyCodeSpec spec = (TransparencyCodeSpec) codeSpecs.get(methodName + description);
+    if (spec != null) { return spec; }
+    if (defaultCodeSpec != null) { return defaultCodeSpec; }
+    return TransparencyCodeSpecImpl.getDefaultCodeSpec(className, isLogical, isAutolock);
   }
 
   public boolean isExecuteScriptOnLoadSet() {
@@ -508,6 +511,10 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
 
   public String getChangeApplicatorClassName() {
     return this.changeApplicatorClassName;
+  }
+
+  public void setDefaultCodeSpec(TransparencyCodeSpec codeSpec) {
+    this.defaultCodeSpec = codeSpec;
   }
 
 }

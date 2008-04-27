@@ -180,7 +180,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   private volatile boolean                       allowCGLIBInstrumentation          = false;
 
-  private ReconnectConfig                      l1ReconnectConfig                  = null;
+  private ReconnectConfig                        l1ReconnectConfig                  = null;
 
   public StandardDSOClientConfigHelperImpl(L1TVSConfigurationSetupManager configSetupManager)
       throws ConfigurationSetupException {
@@ -1034,17 +1034,20 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
                                                  "com.tc.object.applicator.ConcurrentHashMapApplicator");
     spec.setHonorTransient(true);
     spec.setPostCreateMethod("__tc_rehash");
+    // The "segments" array is itself not a shared object and doesn't need array instrumentation
+    TransparencyCodeSpec defaultCodeSpec = TransparencyCodeSpecImpl.getDefaultLogicalCodeSpec();
+    defaultCodeSpec.setArrayOperatorInstrumentationReq(false);
+    spec.setDefaultCodeSpec(defaultCodeSpec);
 
     spec = getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$Segment");
+    // The "table" array is itself not a shared object and doesn't need array instrumentation
+    defaultCodeSpec = TransparencyCodeSpecImpl.getDefaultPhysicalCodeSpec();
+    defaultCodeSpec.setArrayOperatorInstrumentationReq(false);
+    defaultCodeSpec.setForceRawFieldAccess(); // field reads of HashEntry instances do not need to be instrumented
+    spec.setDefaultCodeSpec(defaultCodeSpec);
     spec.setCallConstructorOnLoad(true);
     spec.setHonorTransient(true);
 
-    spec = getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$HashEntry");
-    spec = getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$ValueIterator");
-    spec = getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$EntryIterator");
-    spec = getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$Values");
-    spec = getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$KeySet");
-    spec = getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$HashIterator");
     if (Vm.isJDK16Compliant()) {
       spec = getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$WriteThroughEntry");
       spec = getOrCreateSpec("java.util.AbstractMap$SimpleEntry");

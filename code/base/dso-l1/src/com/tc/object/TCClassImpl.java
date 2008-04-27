@@ -67,7 +67,7 @@ public class TCClassImpl implements TCClass {
   private final Field                    parentField;
   private final static SerializationUtil SERIALIZATION_UTIL     = new SerializationUtil();
   private final boolean                  useNonDefaultConstructor;
-  private Map                            offsetToFieldNames;
+  private final Map                      offsetToFieldNames;
   private final ClientObjectManager      objectManager;
   private final boolean                  isProxyClass;
   private final boolean                  isEnum;
@@ -106,6 +106,7 @@ public class TCClassImpl implements TCClass {
     this.useNonDefaultConstructor = isProxyClass || ClassUtils.isPortableReflectionClass(peer)
                                     || useNonDefaultConstructor;
     this.logicalSuperClass = logicalSuperClass;
+    this.offsetToFieldNames = getFieldOffsets(peer);
   }
 
   public Field getParentField() {
@@ -344,10 +345,8 @@ public class TCClassImpl implements TCClass {
     return o;
   }
 
-  private synchronized void setupFieldOffsetIfNecessary() {
-    if (offsetToFieldNames != null) { return; }
-
-    offsetToFieldNames = new HashMap();
+  private static Map getFieldOffsets(Class peer) {
+    Map rv = new HashMap();
     if (unsafe != null) {
       try {
         Field[] fields = peer.equals(Object.class) ? new Field[0] : peer.getDeclaredFields();
@@ -357,7 +356,7 @@ public class TCClassImpl implements TCClass {
           try {
             if (!Modifier.isStatic(fields[i].getModifiers())) {
               fields[i].setAccessible(true);
-              offsetToFieldNames.put(new Long(unsafe.objectFieldOffset(fields[i])), makeFieldName(fields[i]));
+              rv.put(new Long(unsafe.objectFieldOffset(fields[i])), makeFieldName(fields[i]));
               // System.err.println("Thread " + Thread.currentThread().getName() + ", class: " + getName() + ", field: "
               // + fields[i].getName() + ", offset: " + unsafe.objectFieldOffset(fields[i]));
             }
@@ -369,9 +368,11 @@ public class TCClassImpl implements TCClass {
         throw new TCRuntimeException(e);
       }
     }
+
+    return rv;
   }
 
-  private String makeFieldName(Field field) {
+  private static String makeFieldName(Field field) {
     StringBuffer sb = new StringBuffer(field.getDeclaringClass().getName());
     sb.append(".");
     sb.append(field.getName());
@@ -380,7 +381,6 @@ public class TCClassImpl implements TCClass {
 
   public String getFieldNameByOffset(long fieldOffset) {
     Long fieldOffsetObj = new Long(fieldOffset);
-    setupFieldOffsetIfNecessary();
 
     String field = (String) this.offsetToFieldNames.get(fieldOffsetObj);
     if (field == null) {

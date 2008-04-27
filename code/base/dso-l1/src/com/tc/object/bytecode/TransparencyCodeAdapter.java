@@ -164,7 +164,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
    * ;-) This adaption is needed for both PORTABLE and ADAPTABLE classes as we can have instance where Logical subclass
    * of ADAPTABLE class calls clone() to make a copy of itself. The resolveLock needs to be held for the duration of the
    * clone() call if the reference is to a shared object
-   * 
+   *
    * <pre>
    * Object refToBeCloned;
    * Object rv;
@@ -178,7 +178,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
    *   rv = refToBeCloned.clone();
    * }
    * </pre>
-   * 
+   *
    * @see AbstractMap and HashMap
    */
   private boolean handleJavaLangObjectCloneCall(int opcode, String classname, String theMethodName, String desc) {
@@ -518,9 +518,9 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     boolean inClassHierarchy = spec.isInClassHierarchy(classname);
     if ((spec.isClassPortable() && inClassHierarchy) || isRoot(classname, fieldName)) {
       // If the field is a root, we assume that the class is instrumented automatically.
-      // If it is not then bad things are gonna happen anyway.
+      // If it is not then bad things are going to happen anyway.
       visitUncheckedSetFieldInsn(classname, fieldName, desc);
-    } else if (spec.isClassAdaptable() && inClassHierarchy) {
+    } else if (codeSpec.isForceRawFieldAccess() || (spec.isClassAdaptable() && inClassHierarchy)) {
       visitSetFieldInsnOriginal(classname, fieldName, desc);
     } else {
       visitCheckedSetFieldInsn(classname, fieldName, desc);
@@ -571,9 +571,9 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     boolean inClassHierarchy = spec.isInClassHierarchy(classname);
     if ((spec.isClassPortable() && inClassHierarchy) || isRoot(classname, fieldName)) {
       // If the field is a root, we assume that the class is instrumented automatically.
-      // If it is not then bad things are gonna happen anyway.
+      // If it is not then bad things are going to happen anyway.
       visitUncheckedGetFieldInsn(classname, fieldName, desc);
-    } else if (spec.isClassAdaptable() && inClassHierarchy) {
+    } else if (codeSpec.isForceRawFieldAccess() || (spec.isClassAdaptable() && inClassHierarchy)) {
       visitGetFieldInsnOriginal(classname, fieldName, desc);
     } else {
       visitCheckedGetFieldInsn(classname, fieldName, desc);

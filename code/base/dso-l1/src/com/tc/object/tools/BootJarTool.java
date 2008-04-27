@@ -101,7 +101,6 @@ import com.tc.object.bytecode.SetRemoveMethodAdapter;
 import com.tc.object.bytecode.StringBufferAdapter;
 import com.tc.object.bytecode.StringGetCharsAdapter;
 import com.tc.object.bytecode.TCMap;
-import com.tc.object.bytecode.TCMapEntry;
 import com.tc.object.bytecode.TransparencyClassAdapter;
 import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.bytecode.VectorAdapter;
@@ -1740,112 +1739,100 @@ public class BootJarTool {
     loadTerracottaClass("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$IteratorWrapper");
 
     // java.util.concurrent.ConcurrentHashMap
-    String jClassNameDots = "java.util.concurrent.ConcurrentHashMap";
-    String tcClassNameDots = "java.util.concurrent.ConcurrentHashMapTC";
+    {
+      String jClassNameDots = "java.util.concurrent.ConcurrentHashMap";
+      String tcClassNameDots = "java.util.concurrent.ConcurrentHashMapTC";
 
-    byte[] tcData = getSystemBytes(tcClassNameDots);
-    ClassReader tcCR = new ClassReader(tcData);
-    ClassNode tcCN = new ClassNode();
-    tcCR.accept(tcCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+      byte[] tcData = getSystemBytes(tcClassNameDots);
+      ClassReader tcCR = new ClassReader(tcData);
+      ClassNode tcCN = new ClassNode();
+      tcCR.accept(tcCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
-    byte[] jData = getSystemBytes(jClassNameDots);
-    ClassReader jCR = new ClassReader(jData);
-    ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
-    ClassVisitor cv1 = new JavaUtilConcurrentHashMapAdapter(cw);
+      byte[] jData = getSystemBytes(jClassNameDots);
+      ClassReader jCR = new ClassReader(jData);
+      ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
+      ClassVisitor cv1 = new JavaUtilConcurrentHashMapAdapter(cw);
 
-    jCR.accept(cv1, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-    jData = cw.toByteArray();
+      jCR.accept(cv1, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+      jData = cw.toByteArray();
 
-    jCR = new ClassReader(jData);
-    cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
+      jCR = new ClassReader(jData);
+      cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
 
-    ClassInfo jClassInfo = AsmClassInfo.getClassInfo(jClassNameDots, systemLoader);
-    TransparencyClassAdapter dsoAdapter = configHelper
-        .createDsoClassAdapterFor(cw, jClassInfo, instrumentationLogger, getClass().getClassLoader(), true, true);
-    Map instrumentedContext = new HashMap();
-    ClassVisitor cv = new SerialVersionUIDAdder(new MergeTCToJavaClassAdapter(cw, dsoAdapter, jClassNameDots,
-                                                                              tcClassNameDots, tcCN,
-                                                                              instrumentedContext));
-    jCR.accept(cv, ClassReader.SKIP_FRAMES);
-    jData = cw.toByteArray();
-    jData = doDSOTransform(jClassNameDots, jData);
-    loadClassIntoJar(jClassNameDots, jData, true);
+      ClassInfo jClassInfo = AsmClassInfo.getClassInfo(jClassNameDots, systemLoader);
+      TransparencyClassAdapter dsoAdapter = configHelper.createDsoClassAdapterFor(cw, jClassInfo,
+                                                                                  instrumentationLogger, getClass()
+                                                                                      .getClassLoader(), true, true);
+      Map instrumentedContext = new HashMap();
+      ClassVisitor cv = new SerialVersionUIDAdder(new MergeTCToJavaClassAdapter(cw, dsoAdapter, jClassNameDots,
+                                                                                tcClassNameDots, tcCN,
+                                                                                instrumentedContext));
+      jCR.accept(cv, ClassReader.SKIP_FRAMES);
+      jData = cw.toByteArray();
+      jData = doDSOTransform(jClassNameDots, jData);
+      loadClassIntoJar(jClassNameDots, jData, true);
+    }
 
     // java.util.concurrent.ConcurrentHashMap$HashEntry
-    byte[] bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$HashEntry");
-    ClassReader cr = new ClassReader(bytes);
-    cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    cv = new JavaUtilConcurrentHashMapHashEntryAdapter(cw);
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-
-    bytes = cw.toByteArray();
-
-    TransparencyClassSpec spec = configHelper.getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$HashEntry");
-    spec.addDoNotInstrument(TCMapEntry.TC_RAWSETVALUE_METHOD_NAME);
-    spec.addDoNotInstrument(TCMapEntry.TC_ISVALUEFAULTEDIN_METHOD_NAME);
-    spec.setHonorTransient(true);
-    spec.markPreInstrumented();
-    spec.setCallConstructorOnLoad(true);
-    bytes = doDSOTransform(spec.getClassName(), bytes);
-    loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$HashEntry", bytes, spec.isPreInstrumented());
+    {
+      byte[] bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$HashEntry");
+      ClassReader cr = new ClassReader(bytes);
+      ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+      ClassVisitor cv = new JavaUtilConcurrentHashMapHashEntryAdapter(cw);
+      cr.accept(cv, ClassReader.SKIP_FRAMES);
+      bytes = cw.toByteArray();
+      loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$HashEntry", bytes, false);
+    }
 
     // java.util.concurrent.ConcurrentHashMap$Segment
-    bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$Segment");
-    cr = new ClassReader(bytes);
-    cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    cv = new JavaUtilConcurrentHashMapSegmentAdapter(cw);
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-
-    bytes = cw.toByteArray();
-
-    spec = configHelper.getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$Segment");
-    spec.setHonorTransient(true);
-    spec.markPreInstrumented();
-    spec.setCallConstructorOnLoad(true);
-    bytes = doDSOTransform(spec.getClassName(), bytes);
-    loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$Segment", bytes, spec.isPreInstrumented());
-
-    // java.util.concurrent.ConcurrentHashMap$ValueIterator
-    bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$ValueIterator");
-    cr = new ClassReader(bytes);
-    cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    cv = new JavaUtilConcurrentHashMapValueIteratorAdapter(cw);
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-
-    bytes = cw.toByteArray();
-
-    spec = configHelper.getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$ValueIterator");
-    spec.setHonorTransient(true);
-    spec.markPreInstrumented();
-    bytes = doDSOTransform(spec.getClassName(), bytes);
-    loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$ValueIterator", bytes, spec.isPreInstrumented());
-
-    // java.util.concurrent.ConcurrentHashMap$EntryIterator
-    bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$EntryIterator");
-    cr = new ClassReader(bytes);
-    cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    cv = new JavaUtilConcurrentHashMapEntryIteratorAdapter(cw);
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-
-    bytes = cw.toByteArray();
-
-    spec = configHelper.getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$EntryIterator");
-    spec.setHonorTransient(true);
-    spec.markPreInstrumented();
-    bytes = doDSOTransform(spec.getClassName(), bytes);
-    loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$EntryIterator", bytes, spec.isPreInstrumented());
-
-    if (Vm.isJDK16Compliant()) {
-      // java.util.concurrent.ConcurrentHashMap$EntryIterator
-      bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$WriteThroughEntry");
-      cr = new ClassReader(bytes);
-      cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-      cv = new JavaUtilConcurrentHashMapWriteThroughEntryAdapter(cw);
+    {
+      byte[] bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$Segment");
+      ClassReader cr = new ClassReader(bytes);
+      ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+      ClassVisitor cv = new JavaUtilConcurrentHashMapSegmentAdapter(cw);
       cr.accept(cv, ClassReader.SKIP_FRAMES);
 
       bytes = cw.toByteArray();
 
-      spec = configHelper.getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$WriteThroughEntry");
+      TransparencyClassSpec spec = configHelper.getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$Segment");
+      bytes = doDSOTransform(spec.getClassName(), bytes);
+      loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$Segment", bytes, spec.isPreInstrumented());
+    }
+
+    // java.util.concurrent.ConcurrentHashMap$ValueIterator
+    {
+      byte[] bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$ValueIterator");
+      ClassReader cr = new ClassReader(bytes);
+      ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+      ClassVisitor cv = new JavaUtilConcurrentHashMapValueIteratorAdapter(cw);
+      cr.accept(cv, ClassReader.SKIP_FRAMES);
+      bytes = cw.toByteArray();
+      loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$ValueIterator", bytes, false);
+    }
+
+    // java.util.concurrent.ConcurrentHashMap$EntryIterator
+    {
+      byte[] bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$EntryIterator");
+      ClassReader cr = new ClassReader(bytes);
+      ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+      ClassVisitor cv = new JavaUtilConcurrentHashMapEntryIteratorAdapter(cw);
+      cr.accept(cv, ClassReader.SKIP_FRAMES);
+      bytes = cw.toByteArray();
+      loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$EntryIterator", bytes, false);
+    }
+
+    if (Vm.isJDK16Compliant()) {
+      // java.util.concurrent.ConcurrentHashMap$EntryIterator
+      byte[] bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$WriteThroughEntry");
+      ClassReader cr = new ClassReader(bytes);
+      ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+      ClassVisitor cv = new JavaUtilConcurrentHashMapWriteThroughEntryAdapter(cw);
+      cr.accept(cv, ClassReader.SKIP_FRAMES);
+
+      bytes = cw.toByteArray();
+
+      TransparencyClassSpec spec = configHelper
+          .getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$WriteThroughEntry");
       spec.setHonorTransient(true);
       spec.markPreInstrumented();
       bytes = doDSOTransform(spec.getClassName(), bytes);
@@ -1859,35 +1846,15 @@ public class BootJarTool {
     }
 
     // com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper
-    bytes = getTerracottaBytes("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper");
-    spec = configHelper.getOrCreateSpec("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper");
-    spec.markPreInstrumented();
-    bytes = doDSOTransform(spec.getClassName(), bytes);
-    loadClassIntoJar("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper", bytes, spec.isPreInstrumented());
-
-    // java.util.concurrent.ConcurrentHashMap$Values
-    bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$Values");
-    spec = configHelper.getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$Values");
-    spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
-    spec.markPreInstrumented();
-    bytes = doDSOTransform(spec.getClassName(), bytes);
-    loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$Values", bytes, spec.isPreInstrumented());
-
-    // java.util.concurrent.ConcurrentHashMap$KeySet
-    bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$KeySet");
-    spec = configHelper.getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$KeySet");
-    spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
-    spec.markPreInstrumented();
-    bytes = doDSOTransform(spec.getClassName(), bytes);
-    loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$KeySet", bytes, spec.isPreInstrumented());
-
-    // java.util.concurrent.ConcurrentHashMap$HashIterator
-    bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$HashIterator");
-    spec = configHelper.getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$HashIterator");
-    spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
-    spec.markPreInstrumented();
-    bytes = doDSOTransform(spec.getClassName(), bytes);
-    loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$HashIterator", bytes, spec.isPreInstrumented());
+    {
+      byte[] bytes = getTerracottaBytes("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper");
+      TransparencyClassSpec spec = configHelper
+          .getOrCreateSpec("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper");
+      spec.markPreInstrumented();
+      bytes = doDSOTransform(spec.getClassName(), bytes);
+      loadClassIntoJar("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper", bytes, spec
+          .isPreInstrumented());
+    }
   }
 
   private final void addInstrumentedJavaUtilConcurrentLinkedBlockingQueue() {

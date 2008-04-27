@@ -1,9 +1,13 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
+import com.tc.object.bytecode.Manageable;
+import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.TCMap;
+import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -11,6 +15,7 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -24,11 +29,13 @@ import java.util.concurrent.ConcurrentHashMap;
 @SuppressWarnings("unchecked")
 public class ConcurrentHashMapTestApp extends GenericTestApp {
 
-  private final DataKey[]           keyRoots   = new DataKey[]{ new DataKey(1), new DataKey(2), new DataKey(3), new DataKey(4)};
-  private final DataValue[]         valueRoots = new DataValue[]{ new DataValue(10), new DataValue(20), new DataValue(30), new DataValue(40) };
-  
-  private final HashKey[]           hashKeys   = new HashKey[]{ new HashKey(1), new HashKey(2), new HashKey(3), new HashKey(4)};
-  private final HashValue[]         hashValues = new HashValue[]{ new HashValue(10), new HashValue(20), new HashValue(30), new HashValue(40) };
+  private final DataKey[]   keyRoots   = new DataKey[] { new DataKey(1), new DataKey(2), new DataKey(3), new DataKey(4) };
+  private final DataValue[] valueRoots = new DataValue[] { new DataValue(10), new DataValue(20), new DataValue(30),
+      new DataValue(40)               };
+
+  private final HashKey[]   hashKeys   = new HashKey[] { new HashKey(1), new HashKey(2), new HashKey(3), new HashKey(4) };
+  private final HashValue[] hashValues = new HashValue[] { new HashValue(10), new HashValue(20), new HashValue(30),
+      new HashValue(40)               };
 
   public ConcurrentHashMapTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider, ConcurrentHashMap.class);
@@ -46,7 +53,40 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
     sharedMap.put("arrayforConcurrentHashMap", new Object[4]);
     sharedMap.put("arrayforConcurrentHashMapWithHashKeys", new Object[4]);
   }
-  
+
+  void testAssumptions(ConcurrentHashMap map, boolean validate) throws Exception {
+    if (validate) {
+      Assert.assertFalse(map.isEmpty());
+      Assert.assertEquals(1, map.size());
+
+      // HashEntry class is not instrumented
+      Class c = Class.forName("java.util.concurrent.ConcurrentHashMap$HashEntry");
+      Class[] interfaces = c.getInterfaces();
+      Assert.assertDoesNotContainsElement(interfaces, Manageable.class);
+      Assert.assertDoesNotContainsElement(interfaces, TransparentAccess.class);
+
+      // The segments array is not a shared object
+      Assert.assertTrue(ManagerUtil.isManaged(map));
+      Field segmentsField = map.getClass().getDeclaredField("segments");
+      segmentsField.setAccessible(true);
+      Object[] segmentsArray = (Object[]) segmentsField.get(map);
+      Assert.assertFalse(ManagerUtil.isManaged(segmentsArray));
+
+      // The table array in Segment is not a shared object
+      for (int i = 0; i < segmentsArray.length; i++) {
+        Object segment = segmentsArray[i];
+        Assert.assertTrue(ManagerUtil.isManaged(segment));
+        Field f = segment.getClass().getDeclaredField("table");
+        f.setAccessible(true);
+        Object tableArray = f.get(segment);
+        Assert.assertFalse(ManagerUtil.isManaged(tableArray));
+      }
+
+    } else {
+      map.put("timmy", "eck");
+    }
+  }
+
   void testPut1(ConcurrentHashMap map, boolean validate) throws Exception {
     if (validate) {
       Assert.assertFalse(map.isEmpty());
@@ -62,7 +102,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       Assert.assertTrue(o == value1);
     }
   }
-  
+
   void testPut2(ConcurrentHashMap map, boolean validate) throws Exception {
     if (validate) {
       Assert.assertFalse(map.isEmpty());
@@ -76,7 +116,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       Assert.assertTrue(o == hashValues[0]);
     }
   }
-  
+
   void testPutWithClassKey(ConcurrentHashMap map, boolean validate) throws Exception {
     if (validate) {
       Assert.assertFalse(map.isEmpty());
@@ -115,7 +155,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       Assert.assertTrue(o == hashValues[0]);
     }
   }
-  
+
   void testPutAll1(ConcurrentHashMap map, boolean validate) throws Exception {
     Map toPut = new HashMap();
     toPut.put(keyRoots[0], valueRoots[0]);
@@ -129,7 +169,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.putAll(toPut);
     }
   }
-  
+
   void testPutAll2(ConcurrentHashMap map, boolean validate) throws Exception {
     Map toPut = new HashMap();
     toPut.put(hashKeys[0], hashValues[0]);
@@ -168,11 +208,11 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
     toPut.put(keyRoots[3], valueRoots[3]);
 
     if (validate) {
-      ((TCMap)toPut).__tc_remove_logical(keyRoots[1]);
+      ((TCMap) toPut).__tc_remove_logical(keyRoots[1]);
       assertMappingsEqual(toPut, map);
     } else {
       map.putAll(toPut);
-      ((TCMap)map).__tc_remove_logical(keyRoots[1]);
+      ((TCMap) map).__tc_remove_logical(keyRoots[1]);
     }
   }
 
@@ -206,7 +246,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.remove(keyRoots[1], new DataValue(30));
     }
   }
-  
+
   void testHashRemove2(ConcurrentHashMap map, boolean validate) throws Exception {
     Map toPut = new HashMap();
     toPut.put(hashKeys[0], hashValues[0]);
@@ -221,7 +261,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.remove(hashKeys[1], new HashValue(30));
     }
   }
-  
+
   void testRemove3(ConcurrentHashMap map, boolean validate) throws Exception {
     Map toPut = new HashMap();
     toPut.put(keyRoots[0], valueRoots[0]);
@@ -237,7 +277,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.remove(keyRoots[3], valueRoots[3]);
     }
   }
-  
+
   void testHashRemove3(ConcurrentHashMap map, boolean validate) throws Exception {
     Map toPut = new HashMap();
     toPut.put(hashKeys[0], hashValues[0]);
@@ -250,11 +290,11 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       assertMappingsHashEqual(toPut, map);
     } else {
       map.putAll(toPut);
-      //map.remove(hashKeys[3], new HashValue(40));
+      // map.remove(hashKeys[3], new HashValue(40));
       map.remove(hashKeys[3], hashValues[3]);
     }
   }
-  
+
   void testReplace1(ConcurrentHashMap map, boolean validate) throws Exception {
     if (validate) {
       Assert.assertEquals(10, ((DataValue) map.get(keyRoots[0])).getInt());
@@ -266,7 +306,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       Assert.assertNull(o);
     }
   }
-  
+
   void testHashReplace1(ConcurrentHashMap map, boolean validate) throws Exception {
     if (validate) {
       assertSingleHashMapping(hashKeys[0], hashValues[0], map);
@@ -288,7 +328,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       o = map.replace(keyRoots[0], new DataValue(20));
       Assert.assertEquals(10, ((DataValue) o).getInt());
     }
-  } 
+  }
 
   void testHashReplace2(ConcurrentHashMap map, boolean validate) throws Exception {
     if (validate) {
@@ -301,7 +341,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       Assert.assertEquals(o, hashValues[0]);
     }
   }
-  
+
   void testReplaceIfValueEqual1(ConcurrentHashMap map, boolean validate) throws Exception {
     if (validate) {
       Assert.assertEquals(valueRoots[0], map.get(keyRoots[0]));
@@ -312,7 +352,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       Assert.assertFalse(returnValue);
     }
   }
-  
+
   void testHashReplaceIfValueEqual1(ConcurrentHashMap map, boolean validate) throws Exception {
     if (validate) {
       Assert.assertEquals(hashValues[0], map.get(hashKeys[0]));
@@ -323,7 +363,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       Assert.assertFalse(returnValue);
     }
   }
-  
+
   void testReplaceIfValueEqual2(ConcurrentHashMap map, boolean validate) throws Exception {
     if (validate) {
       Assert.assertEquals(20, ((DataValue) map.get(keyRoots[0])).getInt());
@@ -334,7 +374,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       Assert.assertTrue(returnValue);
     }
   }
-  
+
   void testHashReplaceIfValueEqual2(ConcurrentHashMap map, boolean validate) throws Exception {
     if (validate) {
       Assert.assertEquals(hashValues[1], map.get(hashKeys[0]));
@@ -360,7 +400,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.put(keyRoots[0], valueRoots[0]);
     }
   }
-  
+
   void testContains2(ConcurrentHashMap map, boolean validate) throws Exception {
     if (validate) {
       Assert.assertTrue(map.containsKey(hashKeys[0]));
@@ -375,7 +415,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.put(hashKeys[0], hashValues[0]);
     }
   }
-  
+
   void testEntrySetClear(ConcurrentHashMap map, boolean validate) throws Exception {
     Map toPut = new HashMap();
     DataKey key1 = new DataKey(1);
@@ -392,36 +432,36 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       Assert.assertEquals(0, map.size());
     } else {
       map.putAll(toPut);
-      
+
       map.entrySet().clear();
     }
   }
-  
+
   void testEntrySetContains1(ConcurrentHashMap map, boolean validate) throws Exception {
-    SimpleEntry entry = new SimpleEntry(keyRoots[0], valueRoots[0]); 
+    SimpleEntry entry = new SimpleEntry(keyRoots[0], valueRoots[0]);
     if (validate) {
       Assert.assertTrue(map.entrySet().contains(entry));
     } else {
       map.put(keyRoots[0], valueRoots[0]);
     }
   }
-  
+
   void testEntrySetContains2(ConcurrentHashMap map, boolean validate) throws Exception {
-    SimpleEntry entry = new SimpleEntry(new HashKey(1), new HashValue(10)); 
+    SimpleEntry entry = new SimpleEntry(new HashKey(1), new HashValue(10));
     if (validate) {
       Assert.assertTrue(map.entrySet().contains(entry));
     } else {
       map.put(hashKeys[0], hashValues[0]);
     }
   }
-  
+
   void testEntrySetContainsAll1(ConcurrentHashMap map, boolean validate) throws Exception {
     Map toPut = new HashMap();
     toPut.put(keyRoots[0], valueRoots[0]);
     toPut.put(keyRoots[1], valueRoots[1]);
     toPut.put(keyRoots[2], valueRoots[2]);
     toPut.put(keyRoots[3], valueRoots[3]);
- 
+
     if (validate) {
       SimpleEntry entry1 = new SimpleEntry(keyRoots[1], valueRoots[1]);
       SimpleEntry entry2 = new SimpleEntry(keyRoots[2], valueRoots[2]);
@@ -433,14 +473,14 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.putAll(toPut);
     }
   }
-  
+
   void testEntrySetContainsAll2(ConcurrentHashMap map, boolean validate) throws Exception {
     Map toPut = new HashMap();
     toPut.put(hashKeys[0], hashValues[0]);
     toPut.put(hashKeys[1], hashValues[1]);
     toPut.put(hashKeys[2], hashValues[2]);
     toPut.put(hashKeys[3], hashValues[3]);
- 
+
     if (validate) {
       SimpleEntry entry1 = new SimpleEntry(hashKeys[1], hashValues[1]);
       SimpleEntry entry2 = new SimpleEntry(new HashKey(3), new HashValue(30));
@@ -452,7 +492,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.putAll(toPut);
     }
   }
-  
+
   void testEntrySetRetainAll1(ConcurrentHashMap map, boolean validate) throws Exception {
     Map toPut = new HashMap();
     toPut.put(keyRoots[0], valueRoots[0]);
@@ -473,14 +513,14 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.entrySet().retainAll(containsList);
     }
   }
-  
+
   void testEntrySetRetainAll2(ConcurrentHashMap map, boolean validate) throws Exception {
     Map toPut = new HashMap();
     toPut.put(hashKeys[0], hashValues[0]);
     toPut.put(hashKeys[1], hashValues[1]);
     toPut.put(hashKeys[2], hashValues[2]);
     toPut.put(hashKeys[3], hashValues[3]);
-    
+
     if (validate) {
       toPut.remove(hashKeys[0]);
       toPut.remove(hashKeys[3]);
@@ -495,7 +535,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.entrySet().retainAll(containsList);
     }
   }
-  
+
   void testEntrySetRemove1(ConcurrentHashMap map, boolean validate) throws Exception {
     if (validate) {
       Assert.assertEquals(0, map.size());
@@ -505,7 +545,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.entrySet().remove(entry);
     }
   }
-  
+
   void testEntrySetRemove2(ConcurrentHashMap map, boolean validate) throws Exception {
     if (validate) {
       Assert.assertEquals(0, map.size());
@@ -515,7 +555,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.entrySet().remove(entry);
     }
   }
-  
+
   void testEntrySetRemoveAll1(ConcurrentHashMap map, boolean validate) throws Exception {
     Map toPut = new HashMap();
     toPut.put(keyRoots[0], valueRoots[0]);
@@ -528,8 +568,8 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       assertMappingsEqual(toPut, map);
     } else {
       map.putAll(toPut);
-      
-      SimpleEntry entry1 = new SimpleEntry(keyRoots[1], valueRoots[1]); 
+
+      SimpleEntry entry1 = new SimpleEntry(keyRoots[1], valueRoots[1]);
       SimpleEntry entry2 = new SimpleEntry(keyRoots[2], valueRoots[2]);
       List toRemove = new ArrayList(2);
       toRemove.add(entry1);
@@ -537,7 +577,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.entrySet().removeAll(toRemove);
     }
   }
-  
+
   void testEntrySetRemoveAll2(ConcurrentHashMap map, boolean validate) throws Exception {
     Map toPut = new HashMap();
     toPut.put(hashKeys[0], hashValues[0]);
@@ -550,8 +590,8 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       assertMappingsHashEqual(toPut, map);
     } else {
       map.putAll(toPut);
-      
-      SimpleEntry entry1 = new SimpleEntry(hashKeys[1], hashValues[1]); 
+
+      SimpleEntry entry1 = new SimpleEntry(hashKeys[1], hashValues[1]);
       SimpleEntry entry2 = new SimpleEntry(new HashKey(3), new HashValue(30));
       List toRemove = new ArrayList(2);
       toRemove.add(entry1);
@@ -559,7 +599,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.entrySet().removeAll(toRemove);
     }
   }
-  
+
   void testEntrySetSize1(ConcurrentHashMap map, boolean validate) throws Exception {
     if (validate) {
       Assert.assertEquals(1, map.entrySet().size());
@@ -567,7 +607,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.put(keyRoots[0], valueRoots[0]);
     }
   }
-  
+
   void testEntrySetSize2(ConcurrentHashMap map, boolean validate) throws Exception {
     if (validate) {
       Assert.assertEquals(1, map.entrySet().size());
@@ -575,7 +615,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.put(hashKeys[0], hashValues[0]);
     }
   }
-  
+
   void testEntrySetSetValue1(ConcurrentHashMap map, boolean validate) throws Exception {
     Map toPut = new HashMap();
     toPut.put(keyRoots[0], valueRoots[0]);
@@ -583,18 +623,18 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
     toPut.put(keyRoots[2], valueRoots[2]);
     toPut.put(keyRoots[3], valueRoots[3]);
     if (validate) {
-      Assert.assertEquals(15, ((DataValue)map.get(keyRoots[1])).getInt());
+      Assert.assertEquals(15, ((DataValue) map.get(keyRoots[1])).getInt());
     } else {
       map.putAll(toPut);
-      for (Iterator i=map.entrySet().iterator(); i.hasNext(); ) {
-        Map.Entry entry = (Map.Entry)i.next();
-        if (((DataKey)entry.getKey()).getInt() == 2) {
+      for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
+        Map.Entry entry = (Map.Entry) i.next();
+        if (((DataKey) entry.getKey()).getInt() == 2) {
           entry.setValue(new DataValue(15));
         }
       }
     }
   }
-  
+
   void testEntrySetSetValue2(ConcurrentHashMap map, boolean validate) throws Exception {
     Map toPut = new HashMap();
     toPut.put(hashKeys[0], hashValues[0]);
@@ -605,15 +645,15 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       Assert.assertEquals(new HashValue(15), map.get(hashKeys[1]));
     } else {
       map.putAll(toPut);
-      for (Iterator i=map.entrySet().iterator(); i.hasNext(); ) {
-        Map.Entry entry = (Map.Entry)i.next();
-        if (((HashKey)entry.getKey()).getInt() == 2) {
+      for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
+        Map.Entry entry = (Map.Entry) i.next();
+        if (((HashKey) entry.getKey()).getInt() == 2) {
           entry.setValue(new HashValue(15));
         }
       }
     }
   }
-  
+
   void testEntrySetIteratorRemove1(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(keyRoots[0], valueRoots[0]);
@@ -626,8 +666,8 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
     } else {
       map.putAll(toPut);
       assertMappingsEqual(toPut, map);
-      
-      for (Iterator i = map.entrySet().iterator(); i.hasNext(); ) {
+
+      for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
         Map.Entry e = (Map.Entry) i.next();
         if (e.getKey().equals(keyRoots[1])) {
           i.remove();
@@ -636,7 +676,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       }
     }
   }
-  
+
   void testEntrySetIteratorRemove2(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(hashKeys[0], hashValues[0]);
@@ -649,8 +689,8 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
     } else {
       map.putAll(toPut);
       assertMappingsHashEqual(toPut, map);
-      
-      for (Iterator i = map.entrySet().iterator(); i.hasNext(); ) {
+
+      for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
         Map.Entry e = (Map.Entry) i.next();
         if (e.getKey().equals(hashKeys[1])) {
           i.remove();
@@ -659,7 +699,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       }
     }
   }
-  
+
   void testEntrySetToArray1(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(keyRoots[0], valueRoots[0]);
@@ -678,7 +718,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       }
     }
   }
-  
+
   void testEntrySetToArray2(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(hashKeys[0], hashValues[0]);
@@ -697,11 +737,11 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       }
     }
   }
-  
+
   void testAllEntriesSnapshot(ConcurrentHashMap map, boolean validate) throws Exception {
     if (validate) {
       Collection set1 = map.entrySet();
-      Collection set2 = ((TCMap)map).__tc_getAllEntriesSnapshot();
+      Collection set2 = ((TCMap) map).__tc_getAllEntriesSnapshot();
       Assert.assertTrue(set1 != set2);
       assertCollectionsEqual(set1, set2);
     } else {
@@ -713,42 +753,42 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.putAll(toPut);
     }
   }
-  
+
   void testAllLocalEntriesSnapshot(ConcurrentHashMap map, boolean validate) throws Exception {
     if (validate) {
       if (isMutator()) {
         // if this is the mutator app, all the values are local
         Collection set1 = map.entrySet();
-        Collection set2 = ((TCMap)map).__tc_getAllLocalEntriesSnapshot();
+        Collection set2 = ((TCMap) map).__tc_getAllLocalEntriesSnapshot();
 
         Assert.assertTrue(set1 != set2);
         assertCollectionsEqual(set2, set1);
       } else {
         // fault in one root locally
         map.get(keyRoots[0]);
-        
+
         Collection set1a = map.entrySet();
-        Collection set1b = ((TCMap)map).__tc_getAllLocalEntriesSnapshot();
+        Collection set1b = ((TCMap) map).__tc_getAllLocalEntriesSnapshot();
 
         Assert.assertTrue(set1a != set1b);
         Assert.assertTrue(set1a.size() != set1b.size());
         Assert.assertEquals(1, set1b.size());
-      
+
         // fault in a second root locally
         map.get(keyRoots[3]);
-        
+
         Collection set2a = map.entrySet();
-        Collection set2b = ((TCMap)map).__tc_getAllLocalEntriesSnapshot();
+        Collection set2b = ((TCMap) map).__tc_getAllLocalEntriesSnapshot();
 
         Assert.assertTrue(set2a != set2b);
         Assert.assertTrue(set2a.size() != set2b.size());
         Assert.assertEquals(2, set2b.size());
-        
+
         // fault in a third root locally
         map.get(keyRoots[2]);
-        
+
         Collection set3a = map.entrySet();
-        Collection set3b = ((TCMap)map).__tc_getAllLocalEntriesSnapshot();
+        Collection set3b = ((TCMap) map).__tc_getAllLocalEntriesSnapshot();
 
         Assert.assertTrue(set3a != set3b);
         Assert.assertTrue(set3a.size() != set3b.size());
@@ -763,45 +803,45 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.putAll(toPut);
     }
   }
-  
+
   // This test doesn't work yet, since I need to figure out a way to reset
   // the recently accessed count of the map entry values. This is normally
   // done by the evictor, but in this test I'd like to enforce it.
-//  void testClearable(ConcurrentHashMap map, boolean validate) throws Exception {
-//    // make sure that all the clients are run in sequential fashion
-//    // this ensures that the entry values are not cleared by another client
-//    // after they have been faulted in and before they have been cleared
-//    if (validate) {
-//      if (isMutator()) {
-//        // in the mutator, all the map entries are local
-//        int result = ((Clearable)map).__tc_clearReferences(100);
-//        Assert.assertEquals(4, result);
-//      } else {
-//        // fault in two values
-//        map.get(keyRoots[0]);
-//        map.get(keyRoots[2]);
-//        // check that two have been cleared
-//        Assert.assertEquals(2, ((Clearable)map).__tc_clearReferences(100));
-//        
-//        // fault in three values
-//        map.get(keyRoots[0]);
-//        map.get(keyRoots[3]);
-//        map.get(keyRoots[2]);
-//        // check that one has been cleared
-//        Assert.assertEquals(1, ((Clearable)map).__tc_clearReferences(1));
-//        // check that two have been cleared
-//        Assert.assertEquals(2, ((Clearable)map).__tc_clearReferences(100));
-//      }
-//    } else {
-//      Map toPut = new HashMap();
-//      toPut.put(keyRoots[0], valueRoots[0]);
-//      toPut.put(keyRoots[1], valueRoots[1]);
-//      toPut.put(keyRoots[2], valueRoots[2]);
-//      toPut.put(keyRoots[3], valueRoots[3]);
-//      map.putAll(toPut);
-//    }
-//  }
-  
+  // void testClearable(ConcurrentHashMap map, boolean validate) throws Exception {
+  // // make sure that all the clients are run in sequential fashion
+  // // this ensures that the entry values are not cleared by another client
+  // // after they have been faulted in and before they have been cleared
+  // if (validate) {
+  // if (isMutator()) {
+  // // in the mutator, all the map entries are local
+  // int result = ((Clearable)map).__tc_clearReferences(100);
+  // Assert.assertEquals(4, result);
+  // } else {
+  // // fault in two values
+  // map.get(keyRoots[0]);
+  // map.get(keyRoots[2]);
+  // // check that two have been cleared
+  // Assert.assertEquals(2, ((Clearable)map).__tc_clearReferences(100));
+  //
+  // // fault in three values
+  // map.get(keyRoots[0]);
+  // map.get(keyRoots[3]);
+  // map.get(keyRoots[2]);
+  // // check that one has been cleared
+  // Assert.assertEquals(1, ((Clearable)map).__tc_clearReferences(1));
+  // // check that two have been cleared
+  // Assert.assertEquals(2, ((Clearable)map).__tc_clearReferences(100));
+  // }
+  // } else {
+  // Map toPut = new HashMap();
+  // toPut.put(keyRoots[0], valueRoots[0]);
+  // toPut.put(keyRoots[1], valueRoots[1]);
+  // toPut.put(keyRoots[2], valueRoots[2]);
+  // toPut.put(keyRoots[3], valueRoots[3]);
+  // map.putAll(toPut);
+  // }
+  // }
+
   void testValuesClear1(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(keyRoots[0], valueRoots[0]);
@@ -816,7 +856,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.values().clear();
     }
   }
-  
+
   void testValuesClear2(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(hashKeys[0], hashValues[0]);
@@ -831,7 +871,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.values().clear();
     }
   }
-  
+
   void testValuesContains1(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(keyRoots[0], valueRoots[0]);
@@ -845,7 +885,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.putAll(toPut);
     }
   }
-  
+
   void testValuesContains2(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(hashKeys[0], hashValues[0]);
@@ -859,7 +899,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.putAll(toPut);
     }
   }
-  
+
   void testValuesContainsAll1(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(keyRoots[0], valueRoots[0]);
@@ -873,7 +913,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.putAll(toPut);
     }
   }
-  
+
   void testValuesContainsAll2(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(hashKeys[0], hashValues[0]);
@@ -887,7 +927,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.putAll(toPut);
     }
   }
-  
+
   void testValuesRemove1(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(keyRoots[0], valueRoots[0]);
@@ -903,7 +943,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.values().remove(valueRoots[1]);
     }
   }
-  
+
   void testValuesRemove2(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(hashKeys[0], hashValues[0]);
@@ -919,7 +959,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.values().remove(new HashValue(20));
     }
   }
-  
+
   void testValuesRemoveAll1(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(keyRoots[0], valueRoots[0]);
@@ -940,7 +980,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.values().removeAll(toRemove);
     }
   }
-  
+
   void testValuesRemoveAll2(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(hashKeys[0], hashValues[0]);
@@ -961,7 +1001,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.values().removeAll(toRemove);
     }
   }
-  
+
   void testValuesRetainAll1(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(keyRoots[0], valueRoots[0]);
@@ -982,7 +1022,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.values().retainAll(toRetain);
     }
   }
-  
+
   void testValuesRetainAll2(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(hashKeys[0], hashValues[0]);
@@ -1003,7 +1043,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.values().retainAll(toRetain);
     }
   }
-  
+
   void testValuesToArray1(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(keyRoots[0], valueRoots[0]);
@@ -1022,7 +1062,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       }
     }
   }
-  
+
   void testValuesToArray2(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(hashKeys[0], hashValues[0]);
@@ -1041,7 +1081,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       }
     }
   }
-  
+
   void testValuesIteratorRemove1(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(keyRoots[0], valueRoots[0]);
@@ -1057,15 +1097,15 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       assertCollectionsEqual(expect, map.values());
     } else {
       map.putAll(toPut);
-      for (Iterator i=map.values().iterator(); i.hasNext(); ) {
-        DataValue value = (DataValue)i.next();
+      for (Iterator i = map.values().iterator(); i.hasNext();) {
+        DataValue value = (DataValue) i.next();
         if (value.getInt() == 20) {
           i.remove();
         }
       }
     }
   }
-  
+
   void testValuesIteratorRemove2(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(hashKeys[0], hashValues[0]);
@@ -1081,7 +1121,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       assertCollectionsEqual(expect, map.values());
     } else {
       map.putAll(toPut);
-      for (Iterator i=map.values().iterator(); i.hasNext(); ) {
+      for (Iterator i = map.values().iterator(); i.hasNext();) {
         Object value = i.next();
         if (value.equals(new HashValue(20))) {
           i.remove();
@@ -1089,7 +1129,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       }
     }
   }
-  
+
   void testKeySetClear1(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(keyRoots[0], valueRoots[0]);
@@ -1104,7 +1144,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.keySet().clear();
     }
   }
-  
+
   void testKeySetClear2(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(hashKeys[0], hashValues[0]);
@@ -1119,7 +1159,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.keySet().clear();
     }
   }
-  
+
   void testKeySetContains1(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(keyRoots[0], valueRoots[0]);
@@ -1133,7 +1173,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.putAll(toPut);
     }
   }
-  
+
   void testKeySetContains2(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(hashKeys[0], hashValues[0]);
@@ -1147,7 +1187,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.putAll(toPut);
     }
   }
-  
+
   void testKeySetContainsAll1(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(keyRoots[0], valueRoots[0]);
@@ -1161,7 +1201,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.putAll(toPut);
     }
   }
-  
+
   void testKeySetContainsAll2(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(hashKeys[0], hashValues[0]);
@@ -1175,7 +1215,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.putAll(toPut);
     }
   }
-  
+
   void testKeySetRemove1(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(keyRoots[0], valueRoots[0]);
@@ -1191,7 +1231,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.keySet().remove(keyRoots[1]);
     }
   }
-  
+
   void testKeySetRemove2(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(hashKeys[0], hashValues[0]);
@@ -1207,7 +1247,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.keySet().remove(new HashKey(2));
     }
   }
-  
+
   void testKeySetRemoveAll1(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(keyRoots[0], valueRoots[0]);
@@ -1228,7 +1268,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.keySet().removeAll(toRemove);
     }
   }
-  
+
   void testKeySetRemoveAll2(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(hashKeys[0], hashValues[0]);
@@ -1249,7 +1289,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.keySet().removeAll(toRemove);
     }
   }
-  
+
   void testKeySetRetainAll1(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(keyRoots[0], valueRoots[0]);
@@ -1270,7 +1310,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.keySet().retainAll(toRetain);
     }
   }
-  
+
   void testKeySetRetainAll2(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(hashKeys[0], hashValues[0]);
@@ -1291,7 +1331,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       map.keySet().retainAll(toRetain);
     }
   }
-  
+
   void testKeySetToArray1(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(keyRoots[0], valueRoots[0]);
@@ -1310,7 +1350,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       }
     }
   }
-  
+
   void testKeySetToArray2(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(hashKeys[0], hashValues[0]);
@@ -1329,7 +1369,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       }
     }
   }
-  
+
   void testKeySetIteratorRemove1(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(keyRoots[0], valueRoots[0]);
@@ -1345,15 +1385,15 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       assertCollectionsEqual(expect, map.keySet());
     } else {
       map.putAll(toPut);
-      for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
-        DataKey key = (DataKey)i.next();
+      for (Iterator i = map.keySet().iterator(); i.hasNext();) {
+        DataKey key = (DataKey) i.next();
         if (key.getInt() == 2) {
           i.remove();
         }
       }
     }
   }
-  
+
   void testKeySetIteratorRemove2(ConcurrentHashMap map, boolean validate) {
     Map toPut = new HashMap();
     toPut.put(hashKeys[0], hashValues[0]);
@@ -1369,7 +1409,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       assertCollectionsEqual(expect, map.keySet());
     } else {
       map.putAll(toPut);
-      for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
+      for (Iterator i = map.keySet().iterator(); i.hasNext();) {
         Object key = i.next();
         if (key.equals(new HashKey(2))) {
           i.remove();
@@ -1382,31 +1422,31 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
     Assert.assertEquals(1, map.size());
     Assert.assertEquals(expectedValue, map.get(expectedKey));
   }
-  
+
   void assertMappingsEqual(Object[] expect, Map map) {
     Assert.assertEquals(expect.length, map.size());
     for (int i = 0; i < expect.length; i++) {
-      Entry entry = (Entry)expect[i];
+      Entry entry = (Entry) expect[i];
       Object val = map.get(entry.getKey());
       Assert.assertEquals(entry.getValue(), val);
     }
   }
-  
+
   void assertCollectionsEqual(Object[] expect, Collection collection) {
     Assert.assertEquals(expect.length, collection.size());
     for (int i = 0; i < expect.length; i++) {
       Assert.assertTrue(collection.contains(expect[i]));
     }
   }
-  
+
   void assertCollectionsEqual(Collection expect, Collection collection) {
     Assert.assertEquals(expect.size(), collection.size());
-    for (Iterator i=expect.iterator(); i.hasNext(); ) {
+    for (Iterator i = expect.iterator(); i.hasNext();) {
       Object next = i.next();
       Assert.assertTrue(collection.contains(next));
     }
   }
-  
+
   void assertMappingsHashEqual(Map expect, Map actual) {
     Assert.assertEquals(expect.size(), actual.size());
 
@@ -1423,7 +1463,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       Assert.assertEquals(entry.getValue(), expect.get(entry.getKey()));
     }
   }
-  
+
   void assertMappingsEqual(Map expect, Map actual) {
     Assert.assertEquals(expect.size(), actual.size());
 
@@ -1432,15 +1472,15 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
 
     for (Iterator i = expectEntries.iterator(); i.hasNext();) {
       Entry entry = (Entry) i.next();
-      Assert.assertEquals(((DataValue)entry.getValue()).getInt(), ((DataValue)actual.get(entry.getKey())).getInt());
+      Assert.assertEquals(((DataValue) entry.getValue()).getInt(), ((DataValue) actual.get(entry.getKey())).getInt());
     }
 
     for (Iterator i = actualEntries.iterator(); i.hasNext();) {
       Entry entry = (Entry) i.next();
-      Assert.assertEquals(((DataValue)entry.getValue()).getInt(), ((DataValue)expect.get(entry.getKey())).getInt());
+      Assert.assertEquals(((DataValue) entry.getValue()).getInt(), ((DataValue) expect.get(entry.getKey())).getInt());
     }
   }
-  
+
   private Object[] getArray(Map map, boolean hashKey) {
     if (!hashKey) {
       return (Object[]) sharedMap.get("arrayforConcurrentHashMap");
@@ -1460,7 +1500,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
     spec.addRoot("hashKeys", "hashKeys");
     spec.addRoot("hashValues", "hashValues");
   }
-  
+
   private static class SimpleEntry implements Map.Entry {
 
     private final Object key;
@@ -1534,7 +1574,7 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       return this.i;
     }
   }
-  
+
   private static class HashKey {
     private int i;
 
@@ -1546,15 +1586,15 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
     public int getInt() {
       return this.i;
     }
-    
+
     public int hashCode() {
       return i;
     }
-    
+
     public boolean equals(Object obj) {
       if (obj == null) return false;
-      if (! (obj instanceof HashKey)) return false;
-      return ((HashKey)obj).i == i;
+      if (!(obj instanceof HashKey)) return false;
+      return ((HashKey) obj).i == i;
     }
   }
 
@@ -1569,17 +1609,17 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
     public int getInt() {
       return this.i;
     }
-    
+
     public int hashCode() {
       return i;
     }
-    
+
     public boolean equals(Object obj) {
       if (obj == null) return false;
-      if (! (obj instanceof HashValue)) return false;
-      return ((HashValue)obj).i == i;
+      if (!(obj instanceof HashValue)) return false;
+      return ((HashValue) obj).i == i;
     }
-    
+
     public String toString() {
       return super.toString() + ", i: " + i;
     }
