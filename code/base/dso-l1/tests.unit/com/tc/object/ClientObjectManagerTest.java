@@ -47,7 +47,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
   private String                  rootName;
   private Object                  object;
   private ObjectID                objectID;
-  private TCObject                tcObject;
+  private MockTCObject            tcObject;
   private CyclicBarrier           mutualRefBarrier;
 
   public void setUp() throws Exception {
@@ -92,11 +92,13 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
 
     // re-init manager
     TestMutualReferenceObjectFactory testMutualReferenceObjectFactory = new TestMutualReferenceObjectFactory();
-    ClientObjectManagerImpl clientObjectManager = new ClientObjectManagerImpl(remoteObjectManager, clientConfiguration, idProvider,
-                                                               cache, runtimeLogger, new TestChannelIDProvider(),
-                                                               classProvider, classFactory,
-                                                               testMutualReferenceObjectFactory,
-                                                               new PortabilityImpl(clientConfiguration), null, null);
+    ClientObjectManagerImpl clientObjectManager = new ClientObjectManagerImpl(remoteObjectManager, clientConfiguration,
+                                                                              idProvider, cache, runtimeLogger,
+                                                                              new TestChannelIDProvider(),
+                                                                              classProvider, classFactory,
+                                                                              testMutualReferenceObjectFactory,
+                                                                              new PortabilityImpl(clientConfiguration),
+                                                                              null, null);
     mgr = clientObjectManager;
     MockTransactionManager mockTransactionManager = new MockTransactionManager();
     mgr.setTransactionManager(mockTransactionManager);
@@ -107,7 +109,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     ObjectID objectID2 = new ObjectID(2);
     ExceptionHolder exceptionHolder1 = new ExceptionHolder();
     ExceptionHolder exceptionHolder2 = new ExceptionHolder();
-    
+
     LookupThread lookupThread1 = new LookupThread(objectID1, mgr, mockTransactionManager, exceptionHolder1);
     LookupThread lookupThread2 = new LookupThread(objectID2, mgr, mockTransactionManager, exceptionHolder2);
     //
@@ -122,15 +124,11 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     } catch (InterruptedException e) {
       throw new AssertionError(e);
     }
-    
-    if(exceptionHolder1.getExceptionOccurred().get()) {
-      throw new AssertionError(exceptionHolder1.getThreadException());
-    }
-    
-    if(exceptionHolder2.getExceptionOccurred().get()) {
-      throw new AssertionError(exceptionHolder2.getThreadException());
-    }
-    
+
+    if (exceptionHolder1.getExceptionOccurred().get()) { throw new AssertionError(exceptionHolder1.getThreadException()); }
+
+    if (exceptionHolder2.getExceptionOccurred().get()) { throw new AssertionError(exceptionHolder2.getThreadException()); }
+
     assertEquals(mockTransactionManager.getLoggingCounter().get(), 0);
     assertEquals(clientObjectManager.getObjectLatchStateMap().size(), 0);
 
@@ -167,23 +165,53 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
       }
     }
   }
-  
+
   private static final class ExceptionHolder {
     private final SynchronizedBoolean exceptionOccurred = new SynchronizedBoolean(false);
-    private Exception threadException;
-  
+    private Exception                 threadException;
+
     public Exception getThreadException() {
       return threadException;
     }
-  
+
     public void setThreadException(Exception threadException) {
       this.threadException = threadException;
     }
-    
+
     public SynchronizedBoolean getExceptionOccurred() {
       return exceptionOccurred;
-    }   
-      
+    }
+
+  }
+
+  public void testExceptionDuringHydrateClearsState() throws Exception {
+    RuntimeException expect = new RuntimeException();
+    this.tcObject.setHydrateException(expect);
+
+
+    TestDNA dna = newEmptyDNA();
+    prepareObjectLookupResults(dna);
+
+    try {
+      mgr.lookup(objectID);
+      fail("no exception");
+    } catch (Exception e) {
+      if (! (e == expect || e.getCause() == expect)) {
+        fail(e);
+      }
+    }
+
+    dna = newEmptyDNA();
+    prepareObjectLookupResults(dna);
+
+    try {
+      mgr.lookup(objectID);
+      fail("no exception");
+    } catch (Exception e) {
+      if (! (e == expect || e.getCause() == expect)) {
+        fail(e);
+      }
+    }
   }
 
   /**

@@ -564,6 +564,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
       // retrieving object required, first looking up the DNA from the remote server, and creating
       // a pre-init TCObject, then hydrating the object
       if (retrieveNeeded) {
+        boolean createInProgressSet = false;
         try {
           DNA dna = noDepth ? remoteObjectManager.retrieve(id, NO_DEPTH) : (parentContext == null ? remoteObjectManager
               .retrieve(id) : remoteObjectManager.retrieveWithParentContext(id, parentContext));
@@ -572,15 +573,17 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
 
           // object is retrieved, now you want to make this as Creation in progress
           markCreateInProgress(ols, obj, lookupContext);
+          createInProgressSet = true;
 
           Assert.assertFalse(dna.isDelta());
           // now hydrate the object, this could call resolveReferences which would call this method recursively
           obj.hydrate(dna, false);
-        } catch (ClassNotFoundException e) {
+        } catch (Exception e) {
           // remove the object creating in progress from the list.
-          removeCreateInProgress(id);
+          if (createInProgressSet) removeCreateInProgress(id);
           logger.warn("Exception: ", e);
-          throw e;
+          if (e instanceof ClassNotFoundException) { throw (ClassNotFoundException) e; }
+          throw new RuntimeException(e);
         }
         basicAddLocal(obj, true);
       }

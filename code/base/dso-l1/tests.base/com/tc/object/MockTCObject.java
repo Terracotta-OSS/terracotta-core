@@ -19,14 +19,15 @@ import java.util.List;
  * Mock implementation of TCObject for testing.
  */
 public class MockTCObject implements TCObject {
-  private ObjectID     id;
-  private Object       peer;
-  private List         history     = new LinkedList();
-  private final Object resolveLock = new Object();
-  private long         version     = 0;
-  private TCClass      tcClazz;
-  private boolean      accessed    = false;
-  private boolean      isNew       = false;
+  private ObjectID         id;
+  private Object           peer;
+  private List             history          = new LinkedList();
+  private final Object     resolveLock      = new Object();
+  private long             version          = 0;
+  private TCClass          tcClazz;
+  private boolean          accessed         = false;
+  private boolean          isNew            = false;
+  private RuntimeException hydrateException = null;
 
   public MockTCObject(final ObjectID id, final Object obj) {
     this(id, obj, false, false);
@@ -93,8 +94,13 @@ public class MockTCObject implements TCObject {
     throw new ImplementMe();
   }
 
+  public void setHydrateException(RuntimeException hydrateException) {
+    this.hydrateException = hydrateException;
+  }
+
   public void hydrate(DNA from, boolean force) throws DNAException {
-    // do nothing
+    if (hydrateException != null) { throw hydrateException; }
+    // nothing
   }
 
   public void resolveReference(String fieldName) {
