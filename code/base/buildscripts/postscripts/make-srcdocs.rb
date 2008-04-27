@@ -75,7 +75,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
 
         # package listing
         @frontpage = nil
-        File.open(FilePath.new(destdir, entry, "package.html").to_s, File::CREAT) do |file|
+        File.open(FilePath.new(destdir, entry, "package.html").to_s, "w") do |file|
           file.write(<<-"EOT")
             <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
             <HTML>
@@ -106,7 +106,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
         # frameset
         @frontpage = 'client-tc-config.xml.html' if File.exists?(FilePath.new(destdir, entry, "client-tc-config.xml.html").to_s)
         @frontpage = 'server-tc-config.xml.html' if File.exists?(FilePath.new(destdir, entry, "server-tc-config.xml.html").to_s)
-        File.open(FilePath.new(destdir, entry, "source.html").to_s, File::CREAT) do |file|
+        File.open(FilePath.new(destdir, entry, "source.html").to_s, "w") do |file|
           file.write(<<-"EOT")
             <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN" "http://www.w3.org/TR/html4/frameset.dtd">
             <HTML>
