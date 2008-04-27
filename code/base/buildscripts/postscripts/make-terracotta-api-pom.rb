@@ -9,7 +9,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   protected
   def postscript(ant, build_environment, product_dir, *args)
     require 'builder'
-    File.open(FilePath.new(product_dir, "pom.xml").to_s, File::CREAT) do |out|
+    File.open(FilePath.new(product_dir, "pom.xml").to_s, "w") do |out|
       xml = Builder::XmlMarkup.new(:target => out, :indent => 3)
       xml.project do
         xml.modelVersion "4.0.0"
