@@ -1,5 +1,5 @@
 <project name="buildsystems" xmlns:ivy="antlib:org.apache.ivy.ant">
-  <property name="jruby.jar" value="jruby-1.0-20070622a.jar"/>
+  <property name="jruby.jar" value="jruby-1.1.1.jar"/>
   <!-- ================================= 
   target: resolve              
   ================================= -->
