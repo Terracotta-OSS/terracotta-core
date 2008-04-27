@@ -32,7 +32,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
         }
         configs.each_pair do |id, config|
           if File.exists?(config)
-            File.open(FilePath.new(destdir, entry, "#{id.to_s.downcase}-tc-config.xml.html").to_s, File::CREAT) do |file|
+            File.open(FilePath.new(destdir, entry, "#{id.to_s.downcase}-tc-config.xml.html").to_s, "w") do |file|
               file.write(<<-"EOT")
                 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
                 <HTML>
