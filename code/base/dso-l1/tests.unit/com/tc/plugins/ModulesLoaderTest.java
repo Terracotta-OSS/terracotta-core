@@ -17,7 +17,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -179,10 +178,10 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
   }
   
   /**
-   * Test that using a bad file URL throws an exception
+   * Test that using a windows file path with spaces does not throw an exception
    */
-  public void testBadRepositoryURL() throws Exception {
-    String repo = "this is the worst url ever";
+  public void testWindowsFilePathRepository() throws Exception {
+    String repo = "c:\\evil windows\\path";
 
     DSOClientConfigHelper configHelper = configHelper();
     ClassProvider classProvider = new MockClassProvider();
@@ -193,16 +192,11 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
       Modules modules = configHelper.getModulesForInitialization();
       osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
       ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false);
-      fail("Expected exception on bogus repository URL: " + repo);
-
-    } catch(MalformedURLException e) {
-      checkErrorMessageContainsText(e, repo);            
     } finally {
       shutdownAndCleanUpJars(osgiRuntime, null);
     }
   }
 
-  
   /**
    * CDV-553 - when a module with a bad terracotta.xml is loaded, throw an error
    * and identify the module

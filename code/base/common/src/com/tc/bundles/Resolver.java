@@ -113,7 +113,7 @@ public class Resolver {
    * 
    * @param repository Repository file path or URL
    */
-  File resolveRepositoryLocation(String repository) throws BundleException {
+  static File resolveRepositoryLocation(String repository) throws BundleException {
     if (repository == null) throw new BundleException("Cannot process null repository location");
 
     // Try as file
@@ -311,13 +311,13 @@ public class Resolver {
     consoleLogger.debug("No implicit modules were loaded because the l1.modules.default property is empty.");
   }
 
-  private String canonicalPath(URL url) {
+  private static String canonicalPath(URL url) {
     File path = FileUtils.toFile(url);
     if (path == null) return url.toString();
     return canonicalPath(path);
   }
 
-  private String canonicalPath(File path) {
+  private static String canonicalPath(File path) {
     try {
       return path.getCanonicalPath();
     } catch (IOException e) {
