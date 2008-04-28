@@ -107,7 +107,7 @@ class BootJar
 
       sysproperties = {
         PropertyNames::TC_BASE_DIR => @static_resources.root_dir.to_s,
-        PropertyNames::MODULES_URL => @build_results.modules_home.to_url
+        PropertyNames::MODULES_URL => @build_results.modules_home.to_s
       }
 
       begin
