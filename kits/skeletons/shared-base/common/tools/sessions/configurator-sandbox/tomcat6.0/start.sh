@@ -19,10 +19,10 @@ if test "$2" != "nodso"; then
   set -- -q "${TC_CONFIG_PATH}"
   . "${TC_INSTALL_DIR}/bin/dso-env.sh"
 
-  JAVA_OPTS="${TC_JAVA_OPTS} ${JAVA_OPTS}"
-  JAVA_OPTS="${JAVA_OPTS} -Dwebserver.log.name=${PORT}"
-  JAVA_OPTS="${JAVA_OPTS} -Dproject.name=Configurator"
-  JAVA_OPTS="${JAVA_OPTS} -Dcom.sun.management.jmxremote"
+  OPTS="${TC_JAVA_OPTS} -Dwebserver.log.name=${PORT}"
+  OPTS="${OPTS} -Dcom.sun.management.jmxremote"
+  OPTS="${OPTS} -Dproject.name=Configurator"
+  JAVA_OPTS="${OPTS} ${JAVA_OPTS}"
   export JAVA_OPTS
 fi
 
