@@ -144,7 +144,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.println(getClass().getName());
-    out.indent().print("roots: ").println(getRoots());
     out.indent().print("collector: ").visit(collector).println();
     out.indent().print("references: ").visit(references).println();
 
@@ -153,6 +152,11 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
     out.indent().print("objectStore: ").duplicateAndIndent().visit(objectStore).println();
     out.indent().print("stateManager: ").duplicateAndIndent().visit(stateManager).println();
+    try {
+      out.indent().print("roots: ").println(getRoots());
+    } catch (Throwable t) {
+      logger.error("exception printing roots in ObjectManagerImpl", t);
+    }
     return out;
   }
 

@@ -92,21 +92,34 @@ public class ThrowableHandler {
 
     // We need to make SURE that our stacktrace gets printed, when using just the logger sometimes the VM exits
     // before the stacktrace prints
-    throwable.printStackTrace(System.err);
-    System.err.flush();
-    logger.error("Thread:" + thread + " got an uncaught exception.  About to sleep then exit.", throwable);
-
-    for (Iterator iter = callbackOnExitHandlers.iterator(); iter.hasNext();) {
-      CallbackOnExitHandler callbackOnExitHandler = (CallbackOnExitHandler) iter.next();
-      callbackOnExitHandler.callbackOnExit();
-    }
     try {
-      // Give our logger a chance to print the stacktrace before the VM exits
-      Thread.sleep(3000);
-    } catch (InterruptedException ie) {
-      // When you suck you just suck and nothing will help you
+      throwable.printStackTrace(System.err);
+      System.err.flush();
+
+      logger.error("Thread:" + thread + " got an uncaught exception. calling CallbackOnExitHandlers.", throwable);
+
+      try {
+      for (Iterator iter = callbackOnExitHandlers.iterator(); iter.hasNext();) {
+        CallbackOnExitHandler callbackOnExitHandler = (CallbackOnExitHandler) iter.next();
+        callbackOnExitHandler.callbackOnExit();
+      }
+      } catch (Throwable t) {
+        logger.error("Exception thrown in callbackOnExitHanders ", t);
+      }
+
+      logger.error("Thread:" + thread + " got an uncaught exception.  About to sleep then exit.", throwable);
+
+      try {
+        // Give our logger a chance to print the stacktrace before the VM exits
+        Thread.sleep(3000);
+      } catch (InterruptedException ie) {
+        // When you suck you just suck and nothing will help you
+      }
+    } catch (Throwable t) {
+      logger.error(t);
+    } finally {
+      exit(1);
     }
-    exit(1);
   }
 
   private void handleStartupException(Exception e) {
