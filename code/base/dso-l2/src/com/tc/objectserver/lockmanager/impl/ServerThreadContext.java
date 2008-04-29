@@ -79,10 +79,10 @@ class ServerThreadContext {
   }
 
   synchronized void setWaitingOn(Lock lock) {
-    if (!(this.waitingOn == null || !this.waitingOn.equals(lock))) { throw new AssertionError("Assert Failed : "
-                                                                                              + toString()
-                                                                                              + " : old = " + waitingOn
-                                                                                              + " : new = " + lock); }
+    if (this.waitingOn != null && !this.waitingOn.equals(lock)) { throw new AssertionError("Assert Failed : "
+                                                                                           + toString()
+                                                                                           + " : old = " + waitingOn
+                                                                                           + " : new = " + lock); }
     this.waitingOn = lock;
   }
 

@@ -489,6 +489,7 @@ public class Lock {
       Sink lockResponseSink = context.getLockResponseSink();
       int lockLevel = context.lockLevel();
       cannotAwardAndRespond(txn, lockLevel, lockResponseSink);
+      clearWaitingOn(txn);
     }
   }
 
