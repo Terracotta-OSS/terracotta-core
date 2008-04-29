@@ -134,6 +134,9 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
         System.err.println("Running GC in client 1");
         lockManager.enableGC();
         lockManager.runGC();
+        System.err.println("Waiting 5000ms in client 1 for server to process the lock recalls");
+        // wait for the lock recalls to be processed by the server
+        Thread.sleep(5000);
         barrier2.await();
 
       } else if (index == 1) {
@@ -149,7 +152,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
         Assert.assertEquals(100, count);
         barrier2.await();
 
-        System.err.println("Waiting for lock timeouts from other client in client 2");
+        System.err.println("Waiting for lock timeouts from other node in client 2");
         barrier2.await();
 
         System.err.println("Testing try lock successes in client 2");
