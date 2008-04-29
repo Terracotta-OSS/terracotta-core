@@ -16,12 +16,22 @@ bundled_components:
         compiler_versions:
           - 1.4
           - 1.5
+      module_packages:
+        - tc-session:
+            install_directory: lib/session
+            modules:
+              - dso-l1-session
+              - dso-l1-weblogic
+              - dso-l1-tomcat
+              - dso-l1-tomcat50
+              - dso-l1-tomcat55
       modules:
         - aspectwerkz:
             exclude-runtime-libraries: true
         - common
         - common-api
         - deploy
+        - deploy-api
         - dso-common
         - dso-common-jdk15
         - dso-l1
@@ -31,10 +41,11 @@ bundled_components:
         - dso-l2-common
         - dso-spring:
             exclude-runtime-libraries: true
+        - dso-statistics
         - dso-statistics-api
         - sigarstats
-        - dso-statistics            
         - management
+        - management-api
         - modules-common
         - thirdparty
         - thirdparty-api
