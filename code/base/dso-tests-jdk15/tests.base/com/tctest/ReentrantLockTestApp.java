@@ -7,13 +7,11 @@ package com.tctest;
 import com.tc.exception.TCNotSupportedMethodException;
 import com.tc.exception.TCObjectNotSharableException;
 import com.tc.exception.TCRuntimeException;
-import com.tc.object.bytecode.ManagerImpl;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.lockmanager.api.LockLevel;
-import com.tc.object.lockmanager.impl.ClientLockManagerImpl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
@@ -114,61 +112,46 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
   private void tryLockTest(final ReentrantLock lock) throws Exception {
     int index = barrier.await();
 
-    final ClientLockManagerImpl lockManager = (ClientLockManagerImpl)((ManagerImpl)ManagerUtil.getManager()).getDistributedObjectClient().getLockManager();
-    try {
-      lockManager.disableGC();
-
-      if (index == 0) {
-        System.err.println("Locking in client 1");
-        lock.lock();
-        try {
-          barrier2.await();
-          barrier2.await();
-        } finally {
-          System.err.println("Unlocking in client 1");
-          lock.unlock();
-        }
-        final long timeoutPeriod = lockManager.getConfig().getTimeoutInterval() + 1000;
-        System.err.println("Waiting for "+timeoutPeriod+"ms in client 1 for lock timeout");
-        Thread.sleep(timeoutPeriod);
-        System.err.println("Running GC in client 1");
-        lockManager.enableGC();
-        lockManager.runGC();
-        System.err.println("Waiting 5000ms in client 1 for server to process the lock recalls");
-        // wait for the lock recalls to be processed by the server
-        Thread.sleep(5000);
+    if (index == 0) {
+      System.err.println("Locking in client 1");
+      lock.lock();
+      try {
         barrier2.await();
-
-      } else if (index == 1) {
         barrier2.await();
-
-        System.err.println("Testing try lock failures in client 2");
-        int count = 0;
-        for (int i=0; i<100; i++) {
-          if (!lock.tryLock()) {
-            if (lock.isLocked()) count++;
-          }
-        }
-        Assert.assertEquals(100, count);
-        barrier2.await();
-
-        System.err.println("Waiting for lock timeouts from other node in client 2");
-        barrier2.await();
-
-        System.err.println("Testing try lock successes in client 2");
-        count = 0;
-        for (int i=0; i<100; i++) {
-          if (!lock.tryLock()) {
-            count++;
-          }
-        }
-        Assert.assertEquals(0, count);
+      } finally {
+        System.err.println("Unlocking in client 1");
+        lock.unlock();
       }
-      
-      barrier.await();
-    } finally {
-      lockManager.enableGC();
+
+    } else if (index == 1) {
+      barrier2.await();
+
+      System.err.println("Testing try lock failures in client 2");
+      int count = 0;
+      for (int i=0; i<100; i++) {
+        if (!lock.tryLock()) {
+          if (lock.isLocked()) count++;
+        }
+      }
+      Assert.assertEquals(100, count);
+      barrier2.await();
+
+      System.err.println("Locking in client 2");
+      lock.lock();
+      System.err.println("Unlocking in client 2");
+      lock.unlock();
+
+      System.err.println("Testing try lock successes in client 2");
+      count = 0;
+      for (int i=0; i<100; i++) {
+        if (!lock.tryLock()) {
+          count++;
+        }
+      }
+      Assert.assertEquals(0, count);
     }
+
+    barrier.await();
   }
 
   private void sharedUnSharedTesting() throws Exception {

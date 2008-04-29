@@ -28,8 +28,6 @@ public interface ClientLockManager extends DumpHandler, PrettyPrintable {
 
   /**
    * obtain a lock
-   *
-   * @param obj
    */
   public void lock(LockID id, ThreadID threadID, int lockType, String lockObjectType, String contextInfo);
 
@@ -37,8 +35,6 @@ public interface ClientLockManager extends DumpHandler, PrettyPrintable {
 
   /**
    * releases the lock so that others can have at it
-   *
-   * @param obj
    */
   public void unlock(LockID id, ThreadID threadID);
 
@@ -75,8 +71,6 @@ public interface ClientLockManager extends DumpHandler, PrettyPrintable {
   
   /**
    * Adds all lock waits to the given collection and returns that collection.
-   *
-   * @param c
    */
   public Collection addAllWaitersTo(Collection c);
 
@@ -109,6 +103,4 @@ public interface ClientLockManager extends DumpHandler, PrettyPrintable {
   public void setLockStatisticsEnabled(boolean statEnable);
   
   public void requestLockSpecs();
-
-  public ClientLockManagerConfig getConfig();
 }

@@ -421,10 +421,6 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     public PrettyPrinter prettyPrint(PrettyPrinter out) {
       return null;
     }
-
-    public ClientLockManagerConfig getConfig() {
-      throw new ImplementMe();
-    }
   }
 
   public class TestSequenceProvider implements BatchSequenceProvider {

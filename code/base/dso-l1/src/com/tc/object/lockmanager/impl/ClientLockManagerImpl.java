@@ -71,7 +71,6 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   private final SessionManager          sessionManager;
   private final ClientLockStatManager   lockStatManager;
   private final ClientLockManagerConfig clientLockManagerConfig;
-  private volatile boolean              performGC = true;
 
   public ClientLockManagerImpl(TCLogger logger, RemoteLockManager remoteLockManager, SessionManager sessionManager,
                                ClientLockStatManager lockStatManager, ClientLockManagerConfig clientLockManagerConfig) {
@@ -89,21 +88,6 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   // for testing
   public int getLocksByIDSize() {
     return locksByID.size();
-  }
-
-  // for testing
-  public ClientLockManagerConfig getConfig() {
-    return clientLockManagerConfig;
-  }
-
-  // for testing
-  public void disableGC() {
-    performGC = false;
-  }
-
-  // for testing
-  public void enableGC() {
-    performGC = true;
   }
 
   public synchronized void pause() {
@@ -136,8 +120,6 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   }
 
   public synchronized void runGC() {
-    if (!performGC) return;
-
     waitUntilRunning();
 
     long runGCStartTime = System.currentTimeMillis();

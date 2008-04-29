@@ -30,10 +30,6 @@ public class TestLockManager implements ClientLockManager {
     unlockCalls.add(new Object[] {id, threadID });
   }
 
-  public ClientLockManagerConfig getConfig() {
-    throw new ImplementMe();
-  }
-
   public LockID lockIDFor(String id) {
     lockIDForCalls.add(id);
     return new LockID(id);
