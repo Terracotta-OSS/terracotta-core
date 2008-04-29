@@ -18,6 +18,7 @@ import com.tc.object.TestClientObjectManager;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.gtx.TestClientGlobalTransactionManager;
 import com.tc.object.lockmanager.api.ClientLockManager;
+import com.tc.object.lockmanager.api.ClientLockManagerConfig;
 import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
@@ -34,10 +35,10 @@ import com.tc.object.msg.TestClientHandshakeMessage;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TestRemoteTransactionManager;
-import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TimerSpec;
-import com.tc.properties.TCPropertiesImpl;
+import com.tc.object.tx.TransactionID;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.SequenceID;
@@ -419,6 +420,10 @@ public class ClientHandshakeManagerTest extends TCTestCase {
 
     public PrettyPrinter prettyPrint(PrettyPrinter out) {
       return null;
+    }
+
+    public ClientLockManagerConfig getConfig() {
+      throw new ImplementMe();
     }
   }
 

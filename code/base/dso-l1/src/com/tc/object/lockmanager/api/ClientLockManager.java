@@ -109,4 +109,6 @@ public interface ClientLockManager extends DumpHandler, PrettyPrintable {
   public void setLockStatisticsEnabled(boolean statEnable);
   
   public void requestLockSpecs();
+
+  public ClientLockManagerConfig getConfig();
 }

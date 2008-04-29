@@ -17,9 +17,9 @@ import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.Notify;
 import com.tc.object.lockmanager.api.QueryLockRequest;
 import com.tc.object.lockmanager.api.RemoteLockManager;
+import com.tc.object.lockmanager.api.TCLockTimer;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.lockmanager.api.WaitListener;
-import com.tc.object.lockmanager.api.TCLockTimer;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
 import com.tc.object.tx.TimerSpec;
@@ -45,7 +45,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TimerTask;
-import java.util.Map.Entry;
 
 /**
  * @author steve
@@ -71,6 +70,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   private final SessionManager          sessionManager;
   private final ClientLockStatManager   lockStatManager;
   private final ClientLockManagerConfig clientLockManagerConfig;
+  private volatile boolean              performGC = true;
 
   public ClientLockManagerImpl(TCLogger logger, RemoteLockManager remoteLockManager, SessionManager sessionManager,
                                ClientLockStatManager lockStatManager, ClientLockManagerConfig clientLockManagerConfig) {
@@ -88,6 +88,21 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   // for testing
   public int getLocksByIDSize() {
     return locksByID.size();
+  }
+
+  // for testing
+  public ClientLockManagerConfig getConfig() {
+    return clientLockManagerConfig;
+  }
+
+  // for testing
+  public void disableGC() {
+    performGC = false;
+  }
+
+  // for testing
+  public void enableGC() {
+    performGC = true;
   }
 
   public synchronized void pause() {
@@ -120,6 +135,8 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   }
 
   public synchronized void runGC() {
+    if (!performGC) return;
+
     waitUntilRunning();
 
     long runGCStartTime = System.currentTimeMillis();

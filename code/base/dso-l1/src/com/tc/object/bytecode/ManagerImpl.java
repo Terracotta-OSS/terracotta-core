@@ -199,6 +199,10 @@ public class ManagerImpl implements Manager {
     shutdown(false);
   }
 
+  public DistributedObjectClient getDistributedObjectClient() {
+    return dso;
+  }
+
   private void shutdown(boolean fromShutdownHook) {
     if (shutdownManager != null) {
       try {

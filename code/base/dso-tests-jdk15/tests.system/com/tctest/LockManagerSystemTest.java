@@ -40,6 +40,7 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.MockChannelManager;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionID;
+import com.tc.object.tx.TimerSpec;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.TestServerConfigurationContext;
 import com.tc.objectserver.handler.RequestLockUnLockHandler;
@@ -50,8 +51,8 @@ import com.tc.objectserver.lockmanager.impl.LockManagerImpl;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.ThreadUtil;
 
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class LockManagerSystemTest extends BaseDSOTestCase {
@@ -348,6 +349,63 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     assertTrue(done[1]);
     clientLockManager.unlock(l3, tid1);
     clientLockManager.unlock(l3, tid2);
+  }
+
+  public void testTryLock() throws Throwable {
+    final LockID l1 = new LockID("1");
+
+    final ThreadID tid1 = new ThreadID(1);
+    final ThreadID tid2 = new ThreadID(2);
+
+    // Get the first lock
+    System.out.println("Asked for first lock");
+    clientLockManager.lock(l1, tid1, LockLevel.WRITE, String.class.getName(), LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    System.out.println("Got first lock");
+
+    final int[] count1 = new int[1];
+
+    // Try the lock 100 times while it's being locked by the first thread, this will
+    // thus fail 100 times
+    final Thread t1 = new Thread() {
+      public void run() {
+        System.out.println("Trying second lock 100 times");
+        for (int i = 0; i < 100; i++) {
+          if (!clientLockManager.tryLock(l1, tid2, new TimerSpec(0), LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE)) {
+            count1[0]++;
+          }
+        }
+      }
+    };
+
+    t1.start();
+    System.out.println("Waiting for 2nd thread to finish");
+    t1.join();
+
+    assertEquals(100, count1[0]);
+
+    System.out.println("Releasing first lock");
+    clientLockManager.unlock(l1, tid1);
+
+    final int[] count2 = new int[1];
+
+    // Try the lock 100 times while it's not being locked by the first thread, this will
+    // thus never fail
+    final Thread t2 = new Thread() {
+      public void run() {
+        System.out.println("Trying second lock once more 100 times");
+        for (int i = 0; i < 100; i++) {
+          if (!clientLockManager.tryLock(l1, tid2, new TimerSpec(0), LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE)) {
+            count2[0]++;
+          }
+        }
+      }
+    };
+
+    t2.start();
+    System.out.println("Waiting for 2nd thread to finish");
+    t2.join();
+
+    assertEquals(0, count2[0]);
   }
 
   private static class TestRemoteLockManagerImpl extends RemoteLockManagerImpl {

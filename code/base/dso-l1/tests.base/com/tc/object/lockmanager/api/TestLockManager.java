@@ -6,10 +6,9 @@ package com.tc.object.lockmanager.api;
 import com.tc.exception.ImplementMe;
 import com.tc.object.lockmanager.impl.GlobalLockInfo;
 import com.tc.object.session.SessionID;
-import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TimerSpec;
+import com.tc.object.tx.TransactionID;
 import com.tc.text.PrettyPrinter;
-
 
 import java.io.Writer;
 import java.util.ArrayList;
@@ -29,6 +28,10 @@ public class TestLockManager implements ClientLockManager {
 
   public void unlock(LockID id, ThreadID threadID) {
     unlockCalls.add(new Object[] {id, threadID });
+  }
+
+  public ClientLockManagerConfig getConfig() {
+    throw new ImplementMe();
   }
 
   public LockID lockIDFor(String id) {

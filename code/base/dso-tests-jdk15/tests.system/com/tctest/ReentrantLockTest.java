@@ -15,5 +15,4 @@ public class ReentrantLockTest extends TransparentTestBase {
   protected Class getApplicationClass() {
     return ReentrantLockTestApp.class;
   }
-
 }
