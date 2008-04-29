@@ -524,7 +524,7 @@ public class ClassProcessorHelper {
    */
   public static void shutdown() {
     if (USE_PARTITIONED_CONTEXT) {
-      Manager[] managers = getParitionedManagers();
+      Manager[] managers = getPartitionedManagers();
       for (int i = 0; i < managers.length; i++) {
         try {
           managers[i].stop();
@@ -596,7 +596,7 @@ public class ClassProcessorHelper {
     return context.getManager();
   }
 
-  public static Manager[] getParitionedManagers() {
+  public static Manager[] getPartitionedManagers() {
     if (!USE_PARTITIONED_CONTEXT) { return new Manager[] { ManagerUtil.getManager() }; }
 
     final DSOContext[] contexts;
