@@ -15,7 +15,7 @@ public class PartitionManagerTestApp {
 
   private Map sharedMap0;
   private Map sharedMap1;
-  private static Manager[] managers = ClassProcessorHelper.getParitionedManagers();
+  private static Manager[] managers = ClassProcessorHelper.getPartitionedManagers();
 
   public static void main(String[] args) {
     try {

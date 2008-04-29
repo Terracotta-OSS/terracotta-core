@@ -23,7 +23,7 @@ public class CoresidentSimpleTestServlet extends HttpServlet {
 
   private Map sharedMap0;
   private Map sharedMap1;
-  private  static Manager[] managers = ClassProcessorHelper.getParitionedManagers();
+  private  static Manager[] managers = ClassProcessorHelper.getPartitionedManagers();
 
   protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     final ByteArrayOutputStream bos = new ByteArrayOutputStream();
