@@ -28,7 +28,7 @@ public class ResolverTest extends TestCase {
   public void testResolveBundle() throws IOException {
     resolveBundles(new String[] { System.getProperty("com.tc.l1.modules.repositories") }, jarFiles(), PASS);
   }
-  
+
   public void testResolveBundleInFlatRepo() throws IOException {
     String flatRepoUrl = makeFlatRepo("modules.1");
     resolveBundles(new String[] { flatRepoUrl }, jarFiles(), PASS);
@@ -42,7 +42,7 @@ public class ResolverTest extends TestCase {
   public void testResolveBundleWithFlatAndMavenLikeRepos() throws IOException {
     resolveBundles(splitRepo("modules.2", "modules.3"), jarFiles(), PASS);
   }
-  
+
   public void testFindJar() {
     resolveJars(new String[] { System.getProperty("com.tc.l1.modules.repositories") }, jarFiles(), PASS);
   }
@@ -51,7 +51,7 @@ public class ResolverTest extends TestCase {
     String flatRepoUrl = makeFlatRepo("modules.1");
     resolveJars(new String[] { flatRepoUrl }, jarFiles(), PASS);
   }
-  
+
   public void testNotFindJar() {
     String[] repos = { System.getProperty("com.tc.l1.modules.repositories") };
     resolve(repos, "foobar", "0.0.0-SNAPSHOT", FAIL);
@@ -60,19 +60,19 @@ public class ResolverTest extends TestCase {
   public void testFindJarWithFlatAndMavenLikeRepos() throws IOException {
     resolveJars(splitRepo("modules.2", "modules.3"), jarFiles(), PASS);
   }
- 
+  
   // CDV-691
   public void testModuleWithNoVersion() throws Exception {
-    resolve(new String[] {}, "foo", null, false);
+    resolve(new String[] { System.getProperty("com.tc.l1.modules.repositories") }, "foo", null, false);
   }
 
   public void testModuleWithNoName() throws Exception {
-    resolve(new String[] {}, null, "1.0.0", false);
+    resolve(new String[] { System.getProperty("com.tc.l1.modules.repositories") }, null, "1.0.0", false);
   }
-
+  
   private String makeRepoDir(String repoName) {
-    String flatRepoUrl = System.getProperty(TestConfigObject.TC_BASE_DIR) + File.separator + "build"
-                              + File.separator + repoName;
+    String flatRepoUrl = System.getProperty(TestConfigObject.TC_BASE_DIR) + File.separator + "build" + File.separator
+                         + repoName;
     File repoDir = new File(flatRepoUrl);
     repoDir.mkdir();
     repoDir.deleteOnExit();
@@ -81,31 +81,29 @@ public class ResolverTest extends TestCase {
 
   private String repoPropToFile() {
     String prop = System.getProperty("com.tc.l1.modules.repositories");
-    if(prop.startsWith("file:")) {
+    if (prop.startsWith("file:")) {
       try {
         return FileUtils.toFile(new URL(prop)).getAbsolutePath();
-      } catch(MalformedURLException e) {
+      } catch (MalformedURLException e) {
         throw new RuntimeException(e);
       }
     } else {
       return prop;
     }
   }
-  
+
   private String[] splitRepo(String name1, String name2) throws IOException {
     String repoUrl = repoPropToFile();
     String repoUrl1 = makeRepoDir(name1);
     String repoUrl2 = makeRepoDir(name2);
     FileUtils.copyDirectory(new File(repoUrl), new File(repoUrl2));
     Object[] jars = jarFiles(new File(repoUrl2)).toArray();
-    for (int i = 0; i < jars.length; i++) {
+    for (int i = 0; i < jars.length / 2; i++) {
       File srcfile = (File) jars[i];
-      if (i % 2 != 0) FileUtils.copyFileToDirectory(srcfile, new File(repoUrl1));
-      else {
-        srcfile.delete();
-        srcfile.getParentFile().delete();
-        srcfile.getParentFile().getParentFile().delete();
-      }
+      FileUtils.copyFileToDirectory(srcfile, new File(repoUrl1));
+      srcfile.delete();
+      srcfile.getParentFile().delete();
+      srcfile.getParentFile().getParentFile().delete();
     }
     return new String[] { repoUrl1, repoUrl2 };
   }
@@ -123,7 +121,7 @@ public class ResolverTest extends TestCase {
     String jarFileDir = repoPropToFile();
     return jarFiles(new File(jarFileDir));
   }
-  
+
   private Collection jarFiles(File directory) {
     return FileUtils.listFiles(directory, new String[] { "jar" }, true);
   }
@@ -151,10 +149,11 @@ public class ResolverTest extends TestCase {
 
   private void resolveBundle(String[] repos, BundleSpec spec, boolean expected) throws IOException {
     try {
-      Resolver resolver = new Resolver(repos);
+      Resolver resolver = new Resolver(repos, false);
       File file = resolver.resolveBundle(spec);
-      
-      if(expected) {
+
+      if (expected) {
+        assertNotNull(spec.getSymbolicName(), file);
         assertEquals(file.getAbsolutePath().endsWith(".jar"), expected);
         JarFile jar = new JarFile(file);
         Manifest manifest = jar.getManifest();
@@ -170,10 +169,10 @@ public class ResolverTest extends TestCase {
       else assertTrue(FAIL == expected);
     }
   }
-  
+
   private void resolve(String[] repos, String name, String version, boolean expected) {
     try {
-      Resolver resolver = new Resolver(repos);
+      Resolver resolver = new Resolver(repos, false);
       Module module = Module.Factory.newInstance();
       module.setName(name);
       module.setVersion(version);

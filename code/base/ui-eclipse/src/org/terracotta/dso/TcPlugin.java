@@ -103,6 +103,7 @@ import org.terracotta.dso.wizards.ProjectWizard;
 import com.tc.bundles.EmbeddedOSGiEventHandler;
 import com.tc.bundles.EmbeddedOSGiRuntime;
 import com.tc.bundles.Resolver;
+import com.tc.bundles.ResolverUtils;
 import com.tc.bundles.exception.MissingBundleException;
 import com.tc.config.Loader;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
@@ -670,7 +671,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
         Modules tmpModules = (Modules) modulesCopy.copy();
         tmpModules.setModuleArray(new Module[] { origModule });
         osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(tmpModules);
-        final Resolver resolver = new Resolver(Resolver.urlsToStrings(osgiRuntime.getRepositories()));
+        final Resolver resolver = new Resolver(ResolverUtils.urlsToStrings(osgiRuntime.getRepositories()));
         Module[] allModules = tmpModules.getModuleArray();
         ModuleInfo origModuleInfo = modulesConfig.getOrAdd(origModule);
 
@@ -696,7 +697,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       }
 
       osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modulesCopy);
-      final Resolver resolver = new Resolver(Resolver.urlsToStrings(osgiRuntime.getRepositories()));
+      final Resolver resolver = new Resolver(ResolverUtils.urlsToStrings(osgiRuntime.getRepositories()));
       Module[] allModules = modulesCopy.getModuleArray();
 
       for (Module module : allModules) {

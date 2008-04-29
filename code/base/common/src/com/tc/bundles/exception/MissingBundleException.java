@@ -8,6 +8,7 @@ import org.osgi.framework.BundleException;
 
 import com.tc.bundles.OSGiToMaven;
 import com.tc.bundles.MavenToOSGi;
+import com.tc.bundles.ResolverUtils;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -46,14 +47,19 @@ public class MissingBundleException extends BundleException implements BundleExc
 
   private String expectedPaths() {
     final StringBuffer repos = new StringBuffer();
-    for (int j = 0; j < repositories.size(); j++) {
-      String root = canonicalPath(repositories.get(j).toString());
-      String mavenStyle = OSGiToMaven.makeBundlePathname(root, groupId, name, version);
-      String flatStyle  = OSGiToMaven.makeFlatBundlePathname(root, name, version, false);
-      repos.append("+ ").append(mavenStyle).append("\n").append(INDENT + INDENT);
-      repos.append("+ ").append(flatStyle).append("\n").append(INDENT + INDENT);
+    final List paths = ResolverUtils.searchPathnames(repositories, groupId, name, version);
+    for (Iterator i = paths.iterator(); i.hasNext();) {
+      repos.append("+ ").append((String) i.next()).append("\n").append(INDENT + INDENT);
     }
     return repos.toString();
+    // for (int j = 0; j < repositories.size(); j++) {
+    // String root = canonicalPath(repositories.get(j).toString());
+    // String mavenStyle = OSGiToMaven.makeBundlePathname(root, groupId, name, version);
+    // String flatStyle = OSGiToMaven.makeFlatBundlePathname(root, name, version, false);
+    // repos.append("+ ").append(mavenStyle).append("\n").append(INDENT + INDENT);
+    // repos.append("+ ").append(flatStyle).append("\n").append(INDENT + INDENT);
+    // }
+    // return repos.toString();
   }
 
   private String searchAttributes() {
@@ -73,7 +79,7 @@ public class MissingBundleException extends BundleException implements BundleExc
       return path;
     }
   }
-  
+
   private String searchedRepositories() {
     final StringBuffer repos = new StringBuffer();
     for (int j = 0; j < repositories.size(); j++) {

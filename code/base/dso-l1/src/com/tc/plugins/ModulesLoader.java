@@ -15,6 +15,8 @@ import org.osgi.framework.ServiceReference;
 import com.tc.bundles.EmbeddedOSGiEventHandler;
 import com.tc.bundles.EmbeddedOSGiRuntime;
 import com.tc.bundles.Resolver;
+import com.tc.bundles.ResolverUtils;
+import com.tc.bundles.exception.BundleExceptionSummary;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
@@ -99,6 +101,10 @@ public class ModulesLoader {
         if (!forBootJar) {
           getModulesCustomApplicatorSpecs(osgiRuntime, configHelper);
         }
+      } catch (BundleException e) {
+        final String msg = (e instanceof BundleExceptionSummary) ? ((BundleExceptionSummary)e).getSummary() : e.getMessage();
+        consoleLogger.fatal(msg);
+        System.exit(1);
       } catch (Exception e) {
         consoleLogger.error(e); // at least log this exception, it's very frustrating if it is completely swallowed
         System.exit(-9);
@@ -146,7 +152,7 @@ public class ModulesLoader {
     final Module[] allModules = (Module[]) moduleList.toArray(new Module[moduleList.size()]);
 
     final URL[] osgiRepositories = osgiRuntime.getRepositories();
-    final Resolver resolver = new Resolver(Resolver.urlsToStrings(osgiRepositories));
+    final Resolver resolver = new Resolver(ResolverUtils.urlsToStrings(osgiRepositories));
     final File[] locations = resolver.resolve(allModules);
 
     final URL[] bundleURLs = new URL[locations.length];
