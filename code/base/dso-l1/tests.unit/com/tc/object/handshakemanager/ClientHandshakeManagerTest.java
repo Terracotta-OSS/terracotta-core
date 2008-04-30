@@ -18,7 +18,6 @@ import com.tc.object.TestClientObjectManager;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.gtx.TestClientGlobalTransactionManager;
 import com.tc.object.lockmanager.api.ClientLockManager;
-import com.tc.object.lockmanager.api.ClientLockManagerConfig;
 import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
