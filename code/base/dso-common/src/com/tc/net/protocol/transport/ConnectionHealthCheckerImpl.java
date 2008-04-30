@@ -67,14 +67,15 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
   public void notifyTransportClosed(MessageTransport transport) {
     // HealthChecker Ping Thread can anyway determine this in the next probe interval thru mtb.isConnected and remove it
     // from its radar. still lets do it earlier
-    TCSocketAddress remoteAddress = transport.getRemoteAddress();
-    if (remoteAddress != null) {
-      logger.info("Connection to [" + remoteAddress.getCanonicalStringForm()
-                  + "] CLOSED. Health Monitoring for this node is now disabled.");
-    } else {
-      logger.info("Connection CLOSED. Health Monitor for this node is disabled.");
+    if (monitorThreadEngine.removeConnection(transport)) {
+      TCSocketAddress remoteAddress = transport.getRemoteAddress();
+      if (remoteAddress != null) {
+        logger.info("Connection to [" + remoteAddress.getCanonicalStringForm()
+                    + "] CLOSED. Health Monitoring for this node is now disabled.");
+      } else {
+        logger.info("Connection " + transport.getConnectionId() + " CLOSED. Health Monitor for this node is disabled.");
+      }
     }
-    monitorThreadEngine.removeConnection(transport);
   }
 
   public void notifyTransportConnectAttempt(MessageTransport transport) {
@@ -86,7 +87,18 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
   }
 
   public void notifyTransportDisconnected(MessageTransport transport) {
-    //
+    // HealthChecker Ping Thread can anyway determine thru ping probe cycle and remove it
+    // from its radar. still lets do it earlier
+    if (monitorThreadEngine.removeConnection(transport)) {
+      TCSocketAddress remoteAddress = transport.getRemoteAddress();
+      if (remoteAddress != null) {
+        logger.info("Connection to [" + remoteAddress.getCanonicalStringForm()
+                    + "] DISCONNECTED. Health Monitoring for this node is now disabled.");
+      } else {
+        logger.info("Connection " + transport.getConnectionId()
+                    + " DISCONNECTED. Health Monitor for this node is disabled.");
+      }
+    }
   }
 
   private static class HealthCheckerMonitorThreadEngine implements Runnable {
@@ -126,8 +138,9 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
       connectionMap.put(transport.getConnectionId(), transport);
     }
 
-    public void removeConnection(MessageTransport transport) {
-      connectionMap.remove(transport.getConnectionId());
+    public boolean removeConnection(MessageTransport transport) {
+      if ((connectionMap.remove(transport.getConnectionId())) != null) { return true; }
+      return false;
     }
 
     public void stop() {
