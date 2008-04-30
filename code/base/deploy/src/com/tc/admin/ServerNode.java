@@ -100,6 +100,7 @@ public class ServerNode extends ComponentNode implements ConnectionListener, Not
   }
 
   void newConnectionContext() {
+    resetBeanProxies();
     String[] creds = ServerConnectionManager.getCachedCredentials(m_connectManager);
     if (creds != null) {
       m_connectManager.setCredentials(creds);
@@ -659,6 +660,7 @@ public class ServerNode extends ComponentNode implements ConnectionListener, Not
   }
 
   private void resetBeanProxies() {
+    m_dsoBean = null;
     m_serverInfoBean = null;
     m_productInfo = null;
   }

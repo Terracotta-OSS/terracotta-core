@@ -250,6 +250,8 @@ public class RootsNode extends ComponentNode implements NotificationListener {
       m_rootsPanel = null;
     }
     
+    m_acc = null;
+    m_clusterNode = null;
     m_cc = null;
     m_roots = null;
     m_popupMenu = null;

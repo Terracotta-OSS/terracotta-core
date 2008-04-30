@@ -13,6 +13,7 @@ import org.jfree.data.time.Second;
 import org.jfree.data.time.TimeSeries;
 
 import com.tc.admin.common.BasicWorker;
+import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.dso.RuntimeStatsPanel;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.statistics.StatisticData;
@@ -21,14 +22,17 @@ import com.tc.stats.statistics.CountStatistic;
 import com.tc.stats.statistics.Statistic;
 
 import java.awt.GridLayout;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.swing.border.TitledBorder;
 
@@ -203,7 +207,12 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
           }
         } else {
           if (m_acc != null) {
-            m_acc.log(e.getMessage());
+            Throwable rootCause = ExceptionHelper.getRootCause(e);
+            if(rootCause instanceof IOException) {
+              return;
+            } else if (!(rootCause instanceof TimeoutException)) {
+              m_acc.log(new Date() + ": Unable to retrieve server system stats: " + rootCause.getMessage());
+            }
           }
         }
       } finally {
@@ -260,7 +269,12 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
           }
         } else {
           if (m_acc != null) {
-            m_acc.log(e.getMessage());
+            Throwable rootCause = ExceptionHelper.getRootCause(e);
+            if(rootCause instanceof IOException) {
+              return;
+            } else if (!(rootCause instanceof TimeoutException)) {
+              m_acc.log(new Date() + ": Unable to retrieve server DSO stats: " + rootCause.getMessage());
+            }
           }
         }
       } finally {

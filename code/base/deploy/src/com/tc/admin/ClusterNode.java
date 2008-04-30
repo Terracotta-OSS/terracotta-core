@@ -163,17 +163,19 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
     }
 
     m_clusterPanel.reinitialize();
-    if (m_rootsNode != null) {
-      m_rootsNode.newConnectionContext();
-      m_locksNode.newConnectionContext();
-      m_gcStatsNode.newConnectionContext();
-      if(m_statsRecorderNode != null) {
-        m_statsRecorderNode.newConnectionContext();
+    synchronized(this) {
+      if (m_rootsNode != null) {
+        m_rootsNode.newConnectionContext();
+        m_locksNode.newConnectionContext();
+        m_gcStatsNode.newConnectionContext();
+        if(m_statsRecorderNode != null) {
+          m_statsRecorderNode.newConnectionContext();
+        }
+        m_serversNode.newConnectionContext();
+        m_clientsNode.newConnectionContext();
       }
-      m_serversNode.newConnectionContext();
-      m_clientsNode.newConnectionContext();
     }
-
+    
     m_acc.controller.nodeChanged(ClusterNode.this);
     m_connectManager.setAutoConnect(autoConnect);
   }
@@ -1070,19 +1072,16 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
     reallyHandleDisconnect();
   }
 
-  public void tearDownChildren() {
-    super.tearDownChildren();
+  private synchronized void reallyHandleDisconnect() {
+    m_clusterMembers = null;
+    m_acc.controller.select(this);
+
     m_rootsNode = null;
     m_locksNode = null;
     m_serversNode = null;
     m_clientsNode = null;
     m_gcStatsNode = null;
-    m_threadDumpsNode = null;
-  }
-  
-  private void reallyHandleDisconnect() {
-    m_clusterMembers = null;
-    m_acc.controller.select(this);
+    
     tearDownChildren();
     removeAllChildren();
     m_acc.controller.nodeStructureChanged(this);

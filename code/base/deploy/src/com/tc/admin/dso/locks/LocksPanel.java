@@ -15,6 +15,7 @@ import com.tc.admin.AdminClient;
 import com.tc.admin.AdminClientContext;
 import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.BasicWorker;
+import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XObjectTable;
@@ -29,10 +30,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.Notification;
@@ -82,6 +87,9 @@ public class LocksPanel extends XContainer implements NotificationListener {
   private TextArea                    fConfigText;
 
   private static Collection<LockSpec> EMPTY_LOCK_SPEC_COLLECTION = new HashSet<LockSpec>();
+
+  private static final int            STATUS_TIMEOUT_SECONDS     = 3;
+  private static final int            REFRESH_TIMEOUT_SECONDS    = 5;
 
   public LocksPanel(LocksNode locksNode) {
     super();
@@ -221,13 +229,24 @@ public class LocksPanel extends XContainer implements NotificationListener {
         public Boolean call() throws Exception {
           return fLockStats.isLockStatisticsEnabled();
         }
-      });
+      }, STATUS_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
     public void finished() {
       Exception e = getException();
       if (e != null) {
-        fAdminClientContext.log(e);
+        String msg;
+        Throwable rootCause = ExceptionHelper.getRootCause(e);
+        if (rootCause instanceof IOException) {
+          return;
+        } else if (rootCause instanceof TimeoutException) {
+          msg = "timed-out after '" + STATUS_TIMEOUT_SECONDS + "' seconds";
+        } else {
+          msg = rootCause.getMessage();
+        }
+        fAdminClientContext
+            .log(new Date() + ": Lock profiler: unable to determine statistics subsystem status: " + msg);
+        setLocksPanelEnabled(false);
       } else {
         setLocksPanelEnabled(getResult());
       }
@@ -246,13 +265,24 @@ public class LocksPanel extends XContainer implements NotificationListener {
           fConnectionContext.addNotificationListener(L2MBeanNames.LOCK_STATISTICS, LocksPanel.this);
           return fLockStats.isLockStatisticsEnabled();
         }
-      });
+      }, STATUS_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
     protected void finished() {
       Exception e = getException();
       if (e != null) {
-        fAdminClientContext.log(e);
+        String msg;
+        Throwable rootCause = ExceptionHelper.getRootCause(e);
+        if (rootCause instanceof IOException) {
+          return;
+        } else if (rootCause instanceof TimeoutException) {
+          msg = "timed-out after '" + STATUS_TIMEOUT_SECONDS + "' seconds";
+        } else {
+          msg = rootCause.getMessage();
+        }
+        fAdminClientContext
+            .log(new Date() + ": Lock profiler: unable to determine statistics subsystem status: " + msg);
+        setLocksPanelEnabled(false);
       } else {
         ((SpinnerNumberModel) fTraceDepthSpinner.getModel()).setValue(Integer.valueOf(fLastTraceDepth));
         setLocksPanelEnabled(getResult());
@@ -370,7 +400,7 @@ public class LocksPanel extends XContainer implements NotificationListener {
 
     fEnableButton.setSelected(enabled);
     fEnableButton.setEnabled(!enabled);
-    
+
     fDisableButton.setSelected(!enabled);
     fDisableButton.setEnabled(enabled);
 
@@ -392,14 +422,23 @@ public class LocksPanel extends XContainer implements NotificationListener {
         public Collection<LockSpec> call() throws Exception {
           return fLockStats.getLockSpecs();
         }
-      });
+      }, REFRESH_TIMEOUT_SECONDS, TimeUnit.SECONDS);
       fRefreshButtonLabel = refreshButtonLabel;
     }
 
     protected void finished() {
       Exception e = getException();
       if (e != null) {
-        AdminClient.getContext().log(e);
+        String msg;
+        Throwable rootCause = ExceptionHelper.getRootCause(e);
+        if (rootCause instanceof IOException) {
+          return;
+        } else if (rootCause instanceof TimeoutException) {
+          msg = "timed-out after '" + REFRESH_TIMEOUT_SECONDS + "' seconds";
+        } else {
+          msg = rootCause.getMessage();
+        }
+        AdminClient.getContext().log(new Date() + ": Lock profiler: failed to refresh: " + msg);
       } else {
         Collection<LockSpec> lockSpecs = getResult();
 
@@ -408,10 +447,10 @@ public class LocksPanel extends XContainer implements NotificationListener {
 
         fServerLocksTable.setModel(fServerLockTableModel = new ServerLockTableModel(lockSpecs));
         fServerLocksTable.sort();
-
-        fRefreshButton.setText(fRefreshButtonLabel);
-        fRefreshButton.setEnabled(true);
       }
+
+      fRefreshButton.setText(fRefreshButtonLabel);
+      fRefreshButton.setEnabled(true);
     }
   }
 
