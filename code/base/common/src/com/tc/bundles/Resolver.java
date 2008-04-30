@@ -132,10 +132,10 @@ public class Resolver {
                            + "'.  This usage is deprecated and will be removed in the future.");
         return file;
       } else {
-        consoleLogger.debug("Repository URL does not exist or is not a directory: '" + repository + "'...skipping.");
+        consoleLogger.warn("Repository URL does not exist or is not a directory: '" + repository + "'...skipping.");
       }
     } else {
-      consoleLogger.debug("Repository location does not exist or is not a directory: '" + repository + "'...skipping.");
+      consoleLogger.warn("Repository location does not exist or is not a directory: '" + repository + "'...skipping.");
     }
     return null;
   }
