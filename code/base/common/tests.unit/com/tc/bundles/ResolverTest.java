@@ -60,7 +60,7 @@ public class ResolverTest extends TestCase {
   public void testFindJarWithFlatAndMavenLikeRepos() throws IOException {
     resolveJars(splitRepo("modules.2", "modules.3"), jarFiles(), PASS);
   }
-  
+
   // CDV-691
   public void testModuleWithNoVersion() throws Exception {
     resolve(new String[] { System.getProperty("com.tc.l1.modules.repositories") }, "foo", null, false);
@@ -70,13 +70,67 @@ public class ResolverTest extends TestCase {
     resolve(new String[] { System.getProperty("com.tc.l1.modules.repositories") }, null, "1.0.0", false);
   }
   
+  public void testAcceptGoodRepositories() {
+    String[] repo = { "modules", "modules-repo", "modules-repo.1", "modules repo with space" };
+    for (int i = 0; i < repo.length; i++)
+      repo[i] = makeRepoDir(repo[i]);
+
+    for (int i = 0; i < repo.length; i++)
+      assertNotNull("repository location '" + repo[i] + "' ignored.", Resolver.resolveRepositoryLocation(repo[i]));
+
+    for (int i = 0; i < repo.length; i++) {
+      repo[i] = "file://" + repo[i];
+      assertNotNull("repository URL '" + repo[i] + "' ignored.", Resolver.resolveRepositoryLocation(repo[i]));
+    }
+  }
+
+  public void testIgnoreBadRepositories() {
+    String[] repo = { "modules-repo", "modules-repo.1", "modules repo with space" };
+
+    for (int i = 0; i < repo.length; i++)
+      repo[i] = deleteRepoDir(repo[i]);
+
+    for (int i = 0; i < repo.length; i++) {
+      File repoDir = new File(repo[i]);
+      assertFalse("repository location '" + repo[i] + "' should've been deleted.", repoDir.exists());
+      assertNull("non-existent repository location '" + repo[i] + "' was not ignored.", Resolver
+          .resolveRepositoryLocation(repo[i]));
+    }
+
+    for (int i = 0; i < repo.length; i++) {
+      repo[i] = "file://" + repo[i];
+      File repoDir = new File(repo[i]);
+      assertFalse("repository URL '" + repo[i] + "' should've been deleted.", repoDir.exists());
+      assertNull("non-existent repository URL '" + repo[i] + "' was not ignored.", Resolver
+          .resolveRepositoryLocation(repo[i]));
+    }
+
+    for (int i = 0; i < repo.length; i++) {
+      repo[i] = "http://" + repo[i];
+      assertNull("bad protocol used to specify repository URL '" + repo[i] + "' but was not ignored.", Resolver
+          .resolveRepositoryLocation(repo[i]));
+    }
+  }
+
   private String makeRepoDir(String repoName) {
-    String flatRepoUrl = System.getProperty(TestConfigObject.TC_BASE_DIR) + File.separator + "build" + File.separator
-                         + repoName;
-    File repoDir = new File(flatRepoUrl);
+    String repoUrl = System.getProperty(TestConfigObject.TC_BASE_DIR) + File.separator + "build" + File.separator
+                     + repoName;
+    File repoDir = new File(repoUrl);
     repoDir.mkdir();
     repoDir.deleteOnExit();
-    return flatRepoUrl;
+    return repoUrl;
+  }
+
+  private String deleteRepoDir(String repoName) {
+    String repoUrl = System.getProperty(TestConfigObject.TC_BASE_DIR) + File.separator + "build" + File.separator
+                     + repoName;
+    File repoDir = new File(repoUrl);
+    if (repoDir.exists()) try {
+      FileUtils.deleteDirectory(repoDir);
+    } catch (IOException e) {
+      // 
+    }
+    return repoUrl;
   }
 
   private String repoPropToFile() {
