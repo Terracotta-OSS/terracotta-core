@@ -154,28 +154,28 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
     stream.close();
   }
   
-  /**
-   * Test that using a non-file repository will throw an exception, alerting the user. 
-   * See DEV-1176.
-   */
-  public void testNonFileRepository() throws Exception {
-    String repo = "http://terracotta.org";
-    
-    DSOClientConfigHelper configHelper = configHelper();
-    ClassProvider classProvider = new MockClassProvider();
-   
-    try {
-      configHelper.addRepository(repo);
-      Modules modules = configHelper.getModulesForInitialization();
-      EmbeddedOSGiRuntime osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
-      ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false);
-      Assert.fail("Should get exception on non-file repository");
-
-    } catch(BundleException e) {
-      checkErrorMessageContainsText(e, repo);
-      checkErrorMessageContainsText(e, "file");
-    }
-  }
+//  /**
+//   * Test that using a non-file repository will throw an exception, alerting the user.
+//   * See DEV-1176.
+//   */
+//  public void testNonFileRepository() throws Exception {
+//    String repo = "http://terracotta.org";
+//    
+//    DSOClientConfigHelper configHelper = configHelper();
+//    ClassProvider classProvider = new MockClassProvider();
+//   
+//    try {
+//      configHelper.addRepository(repo);
+//      Modules modules = configHelper.getModulesForInitialization();
+//      EmbeddedOSGiRuntime osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
+//      ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false);
+//      Assert.fail("Should get exception on non-file repository");
+//
+//    } catch(BundleException e) {
+//      checkErrorMessageContainsText(e, repo);
+//      checkErrorMessageContainsText(e, "file");
+//    }
+//  }
   
   /**
    * Test that using a windows file path with spaces does not throw an exception
