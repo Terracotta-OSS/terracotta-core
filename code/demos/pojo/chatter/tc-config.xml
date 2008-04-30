@@ -26,8 +26,8 @@
        See the Terracotta Configuration Guide and Reference for additional
        information.-->
   <clients>
-    <logs>%(user.home)/terracotta/client-logs/pojo/chatter/%D</logs>
-    <statistics>%(user.home)/terracotta/client-statistics/pojo/chatter/%D</statistics>
+    <logs>terracotta/client-logs/pojo/chatter/%D</logs>
+    <statistics>terracotta/client-statistics/pojo/chatter/%D</statistics>
   </clients>
   <application>
     <dso>
