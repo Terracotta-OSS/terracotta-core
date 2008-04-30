@@ -103,14 +103,14 @@ public class Resolver {
    * 
    * @param repository Repository file path or URL
    */
-  static File resolveRepositoryLocation(String repository) throws BundleException {
-    if (repository == null) throw new BundleException("Cannot process null repository location");
+  static File resolveRepositoryLocation(String repository) {
+    Assert.assertNotNull(repository);
 
-    // Try as file
+    // try as file
     File file = new File(repository);
-    if (file.exists() && file.isDirectory()) { return file; }
+    if (file.isDirectory()) return file;
 
-    // Try as URL
+    // try as URL
     URL url = null;
     try {
       url = new URL(repository);
@@ -118,26 +118,29 @@ public class Resolver {
       // handle later
     }
 
-    if (url != null) {
-      if (!url.getProtocol().equalsIgnoreCase("file")) {
-        final String msg = formatMessage(Message.WARN_REPOSITORY_PROTOCOL_UNSUPPORTED, new Object[] { ResolverUtils
-            .canonicalPath(url) });
-        throw new BundleException(msg);
-      }
-
-      // Deprecated but allowed file URL
-      file = FileUtils.toFile(url);
-      if (file.exists() && file.isDirectory()) {
-        consoleLogger.warn("Repository location defined as a URL: '" + repository
-                           + "'.  This usage is deprecated and will be removed in the future.");
-        return file;
-      } else {
-        consoleLogger.warn("Repository URL does not exist or is not a directory: '" + repository + "'...skipping.");
-      }
-    } else {
-      consoleLogger.warn("Repository location does not exist or is not a directory: '" + repository + "'...skipping.");
+    if (url == null) {
+      consoleLogger.warn("Skipping repository location: '" + repository
+                         + "', it either does not exist or is not a directory; make sure that the directory path '"
+                         + ResolverUtils.canonicalize(repository) + "' exists.");
+      return null;
     }
-    return null;
+
+    // if URL format, then make sure it's using the file: protocol
+    if (!url.getProtocol().equalsIgnoreCase("file")) {
+      consoleLogger.warn("Skipping repository URL: '" + repository + "', only the 'file:' protocol is supported.");
+      return null;
+    }
+
+    // deprecated but allowed file URL
+    file = FileUtils.toFile(url);
+    if (!file.isDirectory()) {
+      consoleLogger.warn("Skipping repository URL: '" + repository + "', it either does not exist nor resolve to a directory.");
+      return null;
+    }
+
+    consoleLogger.warn("Repository location: '" + repository
+                       + "' defined as URL, this usage is deprecated and will be removed in the future.");
+    return file;
   }
 
   public final File resolve(Module module) throws BundleException {
@@ -247,7 +250,7 @@ public class Resolver {
     try {
       return BundleSpec.isMatchingSymbolicName(symname, bundlesymname) && version.equals(Version.parse(bundleversion));
     } catch (NumberFormatException e) { // thrown by parseVersion()
-      consoleLogger.warn("Bad version attribute in TIM manifest from jar file: '" + ResolverUtils.canonicalPath(bundle)
+      consoleLogger.warn("Bad version attribute in TIM manifest from jar file: '" + ResolverUtils.canonicalize(bundle)
                          + "', version='" + bundleversion + "'.  Skipping...", e);
       return false;
     }
@@ -303,7 +306,7 @@ public class Resolver {
     final Manifest manifest = getManifest(location);
     if (manifest == null) {
       String msg = formatMessage(Message.ERROR_BUNDLE_UNREADABLE, new Object[] { location.getName(),
-          ResolverUtils.canonicalPath(location.getParentFile()) });
+          ResolverUtils.canonicalize(location.getParentFile()) });
       throw new UnreadableBundleException(msg, location);
     }
     final BundleSpec[] requirements = getRequirements(manifest);

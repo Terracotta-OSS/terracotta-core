@@ -17,7 +17,7 @@ public final class ResolverUtils {
   public static List searchPathnames(List repositories, String groupId, String name, String version) {
     List paths = new ArrayList();
     for (Iterator i = repositories.iterator(); i.hasNext();) {
-      String root = canonicalPath((File) i.next());
+      String root = canonicalize((File) i.next());
       paths.add(OSGiToMaven.makeBundlePathname(root, groupId, name, version));
       paths.add(OSGiToMaven.makeFlatBundlePathname(root, name, version, false));
     }
@@ -37,18 +37,22 @@ public final class ResolverUtils {
     return strs;
   }
 
-  public static String canonicalPath(URL url) {
+  public static String canonicalize(URL url) {
     File path = FileUtils.toFile(url);
     if (path == null) return url.toString();
-    return canonicalPath(path);
+    return canonicalize(path);
   }
 
-  public static String canonicalPath(File path) {
+  public static String canonicalize(File path) {
     try {
       return path.getCanonicalPath();
     } catch (IOException e) {
       return path.toString();
     }
+  }
+  
+  public static String canonicalize(String path) {
+    return canonicalize(new File(path));
   }
 
 }
