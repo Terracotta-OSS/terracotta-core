@@ -34,6 +34,8 @@
              id="launch.configurationDelegate"
              modes="run,debug"
              name="Terracotta DSO Application"
+             sourceLocatorId="org.eclipse.jdt.launching.sourceLocator.JavaSourceLookupDirector"
+             sourcePathComputerId="org.eclipse.jdt.launching.sourceLookup.javaSourcePathComputer"
              public="true">
       </launchConfigurationType>
       <launchConfigurationType
@@ -41,13 +43,17 @@
              id="launch.eclipseAppConfigurationDelegate"
              modes="run,debug"
              name="Terracotta DSO Eclipse Application"
-             public="true">
+             public="true"
+             sourceLocatorId="org.eclipse.pde.ui.launcher.PDESourceLookupDirector"
+             sourcePathComputerId="org.eclipse.jdt.launching.sourceLookup.javaSourcePathComputer">
       </launchConfigurationType>
       <launchConfigurationType
              delegate="org.terracotta.dso.launch.DSOJUnitLaunchConfiguration"
              id="launch.junitTestConfigurationDelegate"
              modes="run,debug"
              name="Terracotta DSO JUnit Test"
+             sourceLocatorId="org.eclipse.jdt.launching.sourceLocator.JavaSourceLookupDirector"
+             sourcePathComputerId="org.eclipse.jdt.launching.sourceLookup.javaSourcePathComputer"
              public="true">
       </launchConfigurationType>
    </extension>

@@ -59,7 +59,7 @@ public class ManageServerAction extends BaseAction implements IRunnableWithProgr
   public ManageServerAction(IJavaProject javaProject) {
     this(javaProject, TcPlugin.DEFAULT_SERVER_INSTANCE);
   }
-  
+
   public ManageServerAction(IJavaProject javaProject, Server server) {
     super(null);
 
@@ -84,28 +84,32 @@ public class ManageServerAction extends BaseAction implements IRunnableWithProgr
     if (!workbench.saveAllEditors(true)) { return; }
 
     TcPlugin plugin = TcPlugin.getDefault();
-    IProject project = ((IJavaProject) getJavaElement()).getProject();
+    IJavaProject javaProject = (IJavaProject) getJavaElement();
+    ServerTracker tracker = ServerTracker.getDefault();
+    boolean isRunning = tracker.isRunning(javaProject, m_name);
+    IProject project = javaProject.getProject();
 
     try {
       if (!plugin.continueWithConfigProblems(project)) { return; }
     } catch (CoreException ce) {
-      Shell shell = new Shell();
-
-      MessageDialog.openInformation(shell, "Terracotta", "Error starting Terracotta Server:\n"
-                                                         + ActionUtil.getStatusMessages(ce));
+      reportError(isRunning, ce);
     }
 
     try {
       IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
       window.run(true, false, this);
     } catch (Exception e) {
-      Shell shell = new Shell();
-
-      MessageDialog.openInformation(shell, "Terracotta", "Error starting Terracotta Server:\n"
-                                                         + ActionUtil.getStatusMessages(e));
+      reportError(isRunning, e);
     }
   }
 
+  private static void reportError(boolean isRunning, Exception e) {
+    e.printStackTrace();
+    Shell shell = new Shell();
+    String msg = isRunning ? "Error stopping Terracotta Server:\n" : "Error starting Terracotta Server:\n";
+    MessageDialog.openInformation(shell, "Terracotta", msg + ActionUtil.getStatusMessages(e));
+  }
+  
   public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
     if (monitor != null && monitor.isCanceled()) throw new InterruptedException("Cancelled server '" + m_name + "'");
 

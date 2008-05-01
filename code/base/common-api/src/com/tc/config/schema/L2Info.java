@@ -33,6 +33,8 @@ public class L2Info implements java.io.Serializable {
     this.name = name;
     this.host = host;
     this.jmxPort = jmxPort;
+    
+    safeGetHostAddress();
   }
 
   public L2Info(L2Info other) {

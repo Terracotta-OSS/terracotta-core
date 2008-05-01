@@ -692,7 +692,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
         while (true) {
           if (stop) return;
           for (L2Info l2Info : l2Infos) {
-            if (l2Info.equals(m_connectManager.getL2Info())) {
+            if (l2Info.matches(m_connectManager.getL2Info())) {
               continue;
             }
             ThreadUtil.reallySleep(1000);

@@ -253,6 +253,7 @@ public class ServerConnectionManager implements NotificationListener {
   }
 
   private void startConnect() {
+    if(m_serverHelper == null) return;
     try {
       cancelConnectThread();
       initConnector();

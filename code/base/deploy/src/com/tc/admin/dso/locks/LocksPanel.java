@@ -115,7 +115,9 @@ public class LocksPanel extends XContainer implements NotificationListener {
     fDisableButton.addActionListener(new EnablementButtonHandler());
 
     fTraceDepthSpinner = (Spinner) findComponent("TraceDepthSpinner");
-    ((SpinnerNumberModel) fTraceDepthSpinner.getModel()).setValue(Integer.valueOf(fLastTraceDepth));
+    fLastTraceDepth = Math.max(0, fLastTraceDepth);
+    fTraceDepthSpinner.setModel(new SpinnerNumberModel(Integer.valueOf(fLastTraceDepth), Integer.valueOf(0), null,
+                                                       Integer.valueOf(1)));
     fTraceDepthSpinner.addFocusListener(new TraceDepthSpinnerFocusListener());
     fTraceDepthChangeTimer = new Timer(1000, new TraceDepthChangeTimerHandler());
     fTraceDepthChangeTimer.setRepeats(false);
