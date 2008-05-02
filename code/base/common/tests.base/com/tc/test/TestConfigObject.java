@@ -104,6 +104,7 @@ public class TestConfigObject {
 
   private final Properties        properties;
   private final AppServerInfo     appServerInfo;
+  private String                  extraClassPathForAppServer;
 
   private TestConfigObject() throws IOException {
     this.properties = new Properties();
@@ -149,18 +150,17 @@ public class TestConfigObject {
     this.properties.putAll(System.getProperties());
 
     this.appServerInfo = createAppServerInfo();
+    extraClassPathForAppServer = linkedChildProcessPath();
 
     logger.info("Loaded test configuration from " + loadedFrom.toString());
   }
 
   private AppServerInfo createAppServerInfo() {
-    if (properties.containsKey(APP_SERVER_SPECIFICATION)) {
-      return AppServerInfo.parse(properties.getProperty(APP_SERVER_SPECIFICATION));
-    }
+    if (properties.containsKey(APP_SERVER_SPECIFICATION)) { return AppServerInfo.parse(properties
+        .getProperty(APP_SERVER_SPECIFICATION)); }
 
-    return new AppServerInfo(properties.getProperty(APP_SERVER_FACTORY_NAME, "unknown"),
-                             properties.getProperty(APP_SERVER_MAJOR_VERSION, "unknown"),
-                             properties.getProperty(APP_SERVER_MINOR_VERSION, "unknown"));
+    return new AppServerInfo(properties.getProperty(APP_SERVER_FACTORY_NAME, "unknown"), properties
+        .getProperty(APP_SERVER_MAJOR_VERSION, "unknown"), properties.getProperty(APP_SERVER_MINOR_VERSION, "unknown"));
   }
 
   public static synchronized TestConfigObject getInstance() {
@@ -337,7 +337,7 @@ public class TestConfigObject {
   public String executableSearchPath() {
     String nativeLibDirPath = this.properties.getProperty(EXECUTABLE_SEARCH_PATH);
     if (nativeLibDirPath == null) return null;
-    
+
     if (nativeLibDirPath.endsWith(NATIVE_LIB_LINUX_32) || nativeLibDirPath.endsWith(NATIVE_LIB_LINUX_64)) {
       int lastSeparator = nativeLibDirPath.lastIndexOf(File.separator);
       String vmType = System.getProperty("sun.arch.data.model");
@@ -375,7 +375,15 @@ public class TestConfigObject {
     return out;
   }
 
-  public String linkedChildProcessClasspath() {
+  public String extraClassPathForAppServer() {
+    return extraClassPathForAppServer;
+  }
+
+  public void addToAppServerClassPath(String cp) {
+    extraClassPathForAppServer += File.pathSeparator + cp;
+  }
+  
+  public String linkedChildProcessPath() {
     String out = this.properties.getProperty(LINKED_CHILD_PROCESS_CLASSPATH);
     Assert.assertNotBlank(out);
     assertValidClasspath(out);

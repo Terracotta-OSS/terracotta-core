@@ -9,17 +9,20 @@ import com.meterware.httpunit.WebResponse;
 import com.tc.object.tools.BootJarTool;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.test.AppServerInfo;
+import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.deployment.AbstractOneServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
+import com.tc.test.server.appserver.deployment.JARBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tc.test.server.util.TcConfigBuilder;
+import com.tctest.externall1.StandardClasspathDummyClass;
 import com.tctest.externall1.StandardLoaderApp;
-import com.tctest.webapp.StandardClasspathDummyClass;
 import com.tctest.webapp.servlets.StandardLoaderServlet;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -41,7 +44,22 @@ public class RenameStandardLoaderTest extends AbstractOneServerDeploymentTest {
     return new RenameStandardLoaderSetup();
   }
 
-  public void testSession() throws Exception {
+  private File buildTestJar() throws Exception {
+    File jarFile = getTempFile("myclass.jar");
+    JARBuilder jar = new JARBuilder(jarFile.getName(), jarFile.getParentFile());
+    jar.addResource("/com/tctest/externall1", "StandardClasspathDummyClass.class", "com/tctest/externall1");
+    jar.finish();
+    return jarFile;
+  }
+
+  protected void setUp() throws Exception {
+    super.setUp();
+    TestConfigObject.getInstance().addToAppServerClassPath(buildTestJar().getAbsolutePath());
+    server0.start();
+  }
+
+  public void testClassLoader() throws Exception {
+
     WebConversation conversation = new WebConversation();
     WebResponse response1 = request(server0, "cmd=" + StandardLoaderServlet.GET_CLASS_LOADER_NAME, conversation);
     String classLoaderName = response1.getText().trim();
@@ -110,6 +128,7 @@ public class RenameStandardLoaderTest extends AbstractOneServerDeploymentTest {
 
     public RenameStandardLoaderSetup() {
       super(RenameStandardLoaderTest.class, CONTEXT);
+      setStart(false);
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -134,7 +153,6 @@ public class RenameStandardLoaderTest extends AbstractOneServerDeploymentTest {
 
       tcConfigBuilder.addInstrumentedClass(StandardLoaderApp.class.getName() + "$AppInnerClass", false);
     }
-
   }
 
 }

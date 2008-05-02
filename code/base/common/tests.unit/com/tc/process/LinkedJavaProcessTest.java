@@ -4,6 +4,8 @@
  */
 package com.tc.process;
 
+import com.tc.lcp.HeartBeatServer;
+import com.tc.lcp.LinkedJavaProcess;
 import com.tc.test.TCTestCase;
 
 import java.io.File;

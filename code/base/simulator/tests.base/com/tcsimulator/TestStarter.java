@@ -3,9 +3,9 @@
  */
 package com.tcsimulator;
 
+import com.tc.lcp.LinkedJavaProcess;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOApplicationConfig;
-import com.tc.process.LinkedJavaProcess;
 import com.tc.simulator.distrunner.ArgParser;
 import com.tcsimulator.distrunner.ServerSpec;
 

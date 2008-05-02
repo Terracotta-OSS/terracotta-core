@@ -6,7 +6,7 @@ package com.tc.objectserver.control;
 
 import org.apache.commons.io.IOUtils;
 
-import com.tc.process.LinkedJavaProcess;
+import com.tc.lcp.LinkedJavaProcess;
 import com.tc.test.TestConfigObject;
 import com.tc.util.Assert;
 

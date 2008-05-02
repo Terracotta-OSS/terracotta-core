@@ -13,4 +13,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l2-common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-statistics"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-statistics-api"/>
+	<classpathentry kind="lib" path="/dependencies/lib/linked-child-process-1.0.1-SNAPSHOT.jar"/>
+	<classpathentry kind="output" path="bin"/>
 </classpath>

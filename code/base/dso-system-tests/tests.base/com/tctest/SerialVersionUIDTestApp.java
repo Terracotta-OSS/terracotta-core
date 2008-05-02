@@ -1,14 +1,15 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
 import org.apache.commons.io.IOUtils;
 
+import com.tc.lcp.LinkedJavaProcess;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
-import com.tc.process.LinkedJavaProcess;
 import com.tc.process.StreamCollector;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -36,8 +37,8 @@ public class SerialVersionUIDTestApp extends AbstractTransparentApp {
 
   public static final String TEMP_FILE_KEY = "tempFile";
 
-  private final Map           map = new HashMap();
-  private final String        fileName;
+  private final Map          map           = new HashMap();
+  private final String       fileName;
 
   public SerialVersionUIDTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -174,9 +175,9 @@ public class SerialVersionUIDTestApp extends AbstractTransparentApp {
 
     String methodExpression = "* " + testClass + ".*(..)";
     config.addWriteAutolock(methodExpression);
-    
+
     config.addIncludePattern(testClass + "$*");
-    
+
     config.getOrCreateSpec(WithoutUID.class.getName());
   }
 

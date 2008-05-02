@@ -2,6 +2,7 @@
 <ivy-module version="2.0">
   <info organisation="ibiblio" module="legacy-test-tree-tests-unit"/>
   <dependencies>
+    <dependency name="linked-child-process" rev="1.0.1-SNAPSHOT" org="org.terracotta"/> 
   	<dependency name="spring-hibernate3-2.0" rev="m4" org="terracotta"/>
   	<dependency name="spring-hibernate3" rev="2.0-m5" org="terracotta"/>
   	<dependency name="xstream" rev="1.0.2"/>

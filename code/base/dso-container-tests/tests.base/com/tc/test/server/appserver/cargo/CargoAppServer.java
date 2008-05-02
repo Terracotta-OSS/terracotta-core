@@ -16,8 +16,7 @@ import org.codehaus.cargo.container.property.ServletPropertySet;
 import org.codehaus.cargo.generic.configuration.ConfigurationFactory;
 import org.codehaus.cargo.generic.configuration.DefaultConfigurationFactory;
 
-import com.tc.process.HeartBeatService;
-import com.tc.process.LinkedJavaProcessPollingAgent;
+import com.tc.lcp.HeartBeatService;
 import com.tc.test.server.ServerParameters;
 import com.tc.test.server.ServerResult;
 import com.tc.test.server.appserver.AbstractAppServer;
@@ -129,7 +128,7 @@ public abstract class CargoAppServer extends AbstractAppServer {
 
   /**
    * Create a linked java process {@link LinkedJavaProcessPollingAgent}
-   *
+   * 
    * @throws InterruptedException
    */
   private void linkJavaProcess(File instance) throws InterruptedException {

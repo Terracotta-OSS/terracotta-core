@@ -2,8 +2,9 @@ package com.tc.test.server.appserver.jetty6x;
 
 import org.apache.commons.io.IOUtils;
 
+import com.tc.lcp.CargoLinkedChildProcess;
+import com.tc.lcp.HeartBeatService;
 import com.tc.process.Exec;
-import com.tc.process.HeartBeatService;
 import com.tc.process.Exec.Result;
 import com.tc.test.TestConfigObject;
 import com.tc.test.server.ServerParameters;
@@ -11,7 +12,6 @@ import com.tc.test.server.ServerResult;
 import com.tc.test.server.appserver.AbstractAppServer;
 import com.tc.test.server.appserver.AppServerParameters;
 import com.tc.test.server.appserver.AppServerResult;
-import com.tc.test.server.appserver.cargo.CargoLinkedChildProcess;
 import com.tc.test.server.util.AppServerUtil;
 import com.tc.util.PortChooser;
 
@@ -52,7 +52,7 @@ public class Jetty6xAppServer extends AbstractAppServer {
   public ServerResult start(ServerParameters parameters) throws Exception {
     AppServerParameters params = (AppServerParameters) parameters;
     return startJetty(params);
-  } 
+  }
 
   public void stop() throws Exception {
     final String[] cmd = new String[] { JAVA_CMD, "-DSTOP.PORT=" + stop_port, "-DSTOP.KEY=" + STOP_KEY, "-jar",
@@ -84,7 +84,7 @@ public class Jetty6xAppServer extends AbstractAppServer {
     cmd.add(0, JAVA_CMD);
     cmd.add("-cp");
     cmd.add(this.serverInstallDirectory() + File.separator + "start.jar" + File.pathSeparator
-            + TestConfigObject.getInstance().linkedChildProcessClasspath());
+            + TestConfigObject.getInstance().extraClassPathForAppServer());
     cmd.add("-Djetty.home=" + this.serverInstallDirectory());
     cmd.add("-Djetty.port=" + jetty_port);
     cmd.add("-DSTOP.PORT=" + stop_port);
@@ -123,16 +123,16 @@ public class Jetty6xAppServer extends AbstractAppServer {
     Map wars = params.wars();
     if (wars != null && wars.size() > 0) {
       File wars_dir = getWarsDirectory();
-      
+
       Set war_entries = wars.entrySet();
       Iterator war_entries_it = war_entries.iterator();
       while (war_entries_it.hasNext()) {
-        Map.Entry war_entry = (Map.Entry)war_entries_it.next();
-        File war_file = (File)war_entry.getValue();
+        Map.Entry war_entry = (Map.Entry) war_entries_it.next();
+        File war_file = (File) war_entry.getValue();
         war_file.renameTo(new File(wars_dir, war_file.getName()));
       }
     }
-    
+
     // setup deployment config
     PortChooser portChooser = new PortChooser();
     jetty_port = portChooser.chooseRandomPort();
@@ -142,7 +142,7 @@ public class Jetty6xAppServer extends AbstractAppServer {
     instanceDir = new File(sandboxDirectory(), instanceName);
     workDir = new File(sandboxDirectory(), "work");
     workDir.mkdirs();
-    
+
     File logsDir = new File(instanceDir, "logs");
     if (!logsDir.exists() && logsDir.mkdirs() == false) { throw new Exception("Can't create logs directory ("
                                                                               + logsDir.getAbsolutePath()
@@ -150,7 +150,7 @@ public class Jetty6xAppServer extends AbstractAppServer {
     setProperties(params, jetty_port, instanceDir);
     createConfigFile();
   }
-  
+
   protected File getWarsDirectory() {
     return new File(this.sandboxDirectory(), "war");
   }

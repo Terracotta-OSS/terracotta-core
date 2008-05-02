@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test.server.appserver.wasce1x;
 
@@ -8,7 +9,8 @@ import org.apache.commons.io.IOUtils;
 import org.codehaus.cargo.container.geronimo.internal.GeronimoUtils;
 import org.codehaus.cargo.util.log.Logger;
 
-import com.tc.process.HeartBeatService;
+import com.tc.lcp.CargoLinkedChildProcess;
+import com.tc.lcp.HeartBeatService;
 import com.tc.process.StreamAppender;
 import com.tc.test.TestConfigObject;
 import com.tc.test.server.ServerParameters;
@@ -16,7 +18,6 @@ import com.tc.test.server.ServerResult;
 import com.tc.test.server.appserver.AbstractAppServer;
 import com.tc.test.server.appserver.AppServerParameters;
 import com.tc.test.server.appserver.AppServerResult;
-import com.tc.test.server.appserver.cargo.CargoLinkedChildProcess;
 import com.tc.test.server.util.AppServerUtil;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
@@ -79,7 +80,7 @@ public final class Wasce1xAppServer extends AbstractAppServer {
   private int                 rmiPort;
   private ConsoleLogger       consoleLogger;
   private static final String LOG_CAT              = "WASCE 1.0 STARTUP";
-  private String instanceName;
+  private String              instanceName;
 
   public Wasce1xAppServer(Wasce1xAppServerInstallation installation) {
     super(installation);
@@ -116,7 +117,7 @@ public final class Wasce1xAppServer extends AbstractAppServer {
     // cl.add("-Xmx128m");
     // cl.add("-verbose:gc");
     cl.add("-classpath");
-    cl.add(classpath + File.pathSeparatorChar + config.linkedChildProcessClasspath());
+    cl.add(classpath + File.pathSeparatorChar + config.extraClassPathForAppServer());
     cl.add(CargoLinkedChildProcess.class.getName());
     cl.add(className);
     cl.add(String.valueOf(HeartBeatService.listenPort()));

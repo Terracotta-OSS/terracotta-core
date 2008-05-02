@@ -7,8 +7,8 @@ package com.tctest.webapp.servlets;
 import com.tc.object.loaders.NamedClassLoader;
 import com.tc.util.Assert;
 import com.tc.util.StringUtil;
+import com.tctest.externall1.StandardClasspathDummyClass;
 import com.tctest.externall1.StandardLoaderApp;
-import com.tctest.webapp.StandardClasspathDummyClass;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -21,16 +21,16 @@ import javax.servlet.http.HttpServletResponse;
 
 public class StandardLoaderServlet extends HttpServlet {
 
-  private final Map sharedMap = new HashMap();
-  public static final String GET_CLASS_LOADER_NAME = "getClassLoaderName";
-  public static final String PUT_INNER_INSTANCE = "putInnerInstance";
-  public static final String CHECK_APP_INNER_INSTANCE = "checkAppInnerInstance";
+  private final Map          sharedMap                           = new HashMap();
+  public static final String GET_CLASS_LOADER_NAME               = "getClassLoaderName";
+  public static final String PUT_INNER_INSTANCE                  = "putInnerInstance";
+  public static final String CHECK_APP_INNER_INSTANCE            = "checkAppInnerInstance";
   public static final String PUT_STANDARD_LOADER_OBJECT_INSTANCE = "putStandardLoaderObjectInstance";
 
   protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     String cmd = req.getParameter("cmd");
     if (GET_CLASS_LOADER_NAME.equals(cmd)) {
-      NamedClassLoader loader = (NamedClassLoader)this.getClass().getClassLoader();
+      NamedClassLoader loader = (NamedClassLoader) this.getClass().getClassLoader();
       resp.getWriter().print(loader.__tc_getClassLoaderName());
     } else if (PUT_INNER_INSTANCE.equals(cmd)) {
       synchronized (sharedMap) {
@@ -42,16 +42,16 @@ public class StandardLoaderServlet extends HttpServlet {
       if (obj instanceof StandardLoaderApp.AppInnerClass) {
         resp.getWriter().print("OK");
       }
-      NamedClassLoader loader = (NamedClassLoader)this.getClass().getClassLoader();
-      NamedClassLoader objClassLoader = (NamedClassLoader)obj.getClass().getClassLoader();
+      NamedClassLoader loader = (NamedClassLoader) this.getClass().getClassLoader();
+      NamedClassLoader objClassLoader = (NamedClassLoader) obj.getClass().getClassLoader();
 
       Assert.assertEquals(loader, objClassLoader);
 
     } else if (PUT_STANDARD_LOADER_OBJECT_INSTANCE.equals(cmd)) {
       synchronized (sharedMap) {
         final StandardClasspathDummyClass dummyObj = new StandardClasspathDummyClass();
-        Assert.assertEquals("Object must be in standard class path",
-          ClassLoader.getSystemClassLoader(), dummyObj.getClass().getClassLoader());
+        Assert.assertEquals("Object must be in standard class path", ClassLoader.getSystemClassLoader(), dummyObj
+            .getClass().getClassLoader());
         sharedMap.put("3", dummyObj);
         resp.getWriter().print("OK");
       }
@@ -67,7 +67,7 @@ public class StandardLoaderServlet extends HttpServlet {
     while (classLoader != null) {
       pw.print(classLoader.getClass().getName());
       if (classLoader instanceof NamedClassLoader) {
-        pw.println(" / " + ((NamedClassLoader)classLoader).__tc_getClassLoaderName());
+        pw.println(" / " + ((NamedClassLoader) classLoader).__tc_getClassLoaderName());
       } else {
         pw.println(" / Not NamedClassLoader");
       }

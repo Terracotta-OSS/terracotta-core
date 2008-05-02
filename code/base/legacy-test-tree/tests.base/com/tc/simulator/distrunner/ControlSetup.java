@@ -4,10 +4,10 @@
  */
 package com.tc.simulator.distrunner;
 
+import com.tc.lcp.LinkedJavaProcess;
 import com.tc.objectserver.control.ExtraProcessServerControl;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.objectserver.control.ExtraProcessServerControl.DebugParams;
-import com.tc.process.LinkedJavaProcess;
 import com.tcsimulator.ConfigWriter;
 import com.tcsimulator.ProcessFactory;
 import com.tcsimulator.Sandbox;

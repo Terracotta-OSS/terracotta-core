@@ -3,6 +3,7 @@
   <info organisation="ibiblio" module="common-tests-base"/>
   
   <dependencies>
+   <dependency name="linked-child-process" rev="1.0.1-SNAPSHOT" org="org.terracotta"/>    
     <dependency name="ant" rev="1.6.5"/>
     <dependency name="ant" rev="junit-1.6.5"/>
     <dependency name="junit" rev="3.8.1"/>

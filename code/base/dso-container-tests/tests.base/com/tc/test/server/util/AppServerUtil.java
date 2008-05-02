@@ -6,7 +6,7 @@ package com.tc.test.server.util;
 
 import org.apache.commons.io.FileUtils;
 
-import com.tc.process.HeartBeatService;
+import com.tc.lcp.HeartBeatService;
 import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.AppServerFactory;
 import com.tc.test.server.appserver.AppServerInstallation;

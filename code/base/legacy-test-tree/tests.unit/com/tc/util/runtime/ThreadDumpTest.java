@@ -4,7 +4,7 @@
  */
 package com.tc.util.runtime;
 
-import com.tc.process.LinkedJavaProcess;
+import com.tc.lcp.LinkedJavaProcess;
 import com.tc.process.StreamCollector;
 import com.tc.test.TCTestCase;
 import com.tc.test.TestConfigObject;

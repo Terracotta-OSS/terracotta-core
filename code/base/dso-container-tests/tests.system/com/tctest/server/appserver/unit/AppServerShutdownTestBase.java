@@ -5,7 +5,7 @@
 package com.tctest.server.appserver.unit;
 
 import com.meterware.httpunit.WebConversation;
-import com.tc.process.HeartBeatService;
+import com.tc.lcp.HeartBeatService;
 import com.tc.test.ProcessInfo;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;

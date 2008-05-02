@@ -8,10 +8,10 @@ import org.apache.commons.lang.ArrayUtils;
 
 import com.tc.config.Directories;
 import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
-import com.tc.process.LinkedJavaProcess;
+import com.tc.lcp.LinkedJavaProcess;
 import com.tc.process.StreamCopier;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TestConfigObject;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.Vm;

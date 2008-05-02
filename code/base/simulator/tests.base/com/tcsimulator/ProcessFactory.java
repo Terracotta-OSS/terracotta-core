@@ -3,7 +3,7 @@
  */
 package com.tcsimulator;
 
-import com.tc.process.LinkedJavaProcess;
+import com.tc.lcp.LinkedJavaProcess;
 import com.tcsimulator.distrunner.ServerSpec;
 
 import java.io.File;

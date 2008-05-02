@@ -17,6 +17,7 @@ import org.apache.tools.ant.types.Reference;
 import org.apache.tools.ant.types.Commandline.Argument;
 import org.apache.tools.ant.types.Environment.Variable;
 
+import com.tc.lcp.CargoLinkedChildProcess;
 import com.tc.test.TestConfigObject;
 
 import java.io.File;
@@ -74,7 +75,7 @@ public final class CargoJava extends Java {
 
     assignWrappedArgs(linkArgs);
     TestConfigObject config = TestConfigObject.getInstance();
-    classpath.setPath(classpath.toString() + File.pathSeparatorChar + config.linkedChildProcessClasspath());
+    classpath.setPath(classpath.toString() + File.pathSeparatorChar + config.extraClassPathForAppServer());
     java.setClassname(CargoLinkedChildProcess.class.getName());
     // java.setMaxmemory("128m");
     Environment.Variable envVar = new Environment.Variable();
