@@ -86,7 +86,7 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
   private void setupFlushRatePanel(Container parent) {
     m_flushRateSeries = createTimeSeries("");
     m_flushRateChart = createChart(m_flushRateSeries);
-    m_flushRatePanel = new ChartPanel(m_flushRateChart, false);
+    m_flushRatePanel = createChartPanel(m_flushRateChart);
     parent.add(m_flushRatePanel);
     m_flushRatePanel.setPreferredSize(fDefaultGraphSize);
     m_flushRatePanel.setBorder(new TitledBorder("Object Flush Rate"));
@@ -95,7 +95,7 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
   private void setupFaultRatePanel(Container parent) {
     m_faultRateSeries = createTimeSeries("");
     m_faultRateChart = createChart(m_faultRateSeries);
-    m_faultRatePanel = new ChartPanel(m_faultRateChart, false);
+    m_faultRatePanel = createChartPanel(m_faultRateChart);
     parent.add(m_faultRatePanel);
     m_faultRatePanel.setPreferredSize(fDefaultGraphSize);
     m_faultRatePanel.setBorder(new TitledBorder("Object Fault Rate"));
@@ -104,7 +104,7 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
   private void setupTxnRatePanel(Container parent) {
     m_txnRateSeries = createTimeSeries("");
     m_txnRateChart = createChart(m_txnRateSeries);
-    m_txnRatePanel = new ChartPanel(m_txnRateChart, false);
+    m_txnRatePanel = createChartPanel(m_txnRateChart);
     parent.add(m_txnRatePanel);
     m_txnRatePanel.setPreferredSize(fDefaultGraphSize);
     m_txnRatePanel.setBorder(new TitledBorder("Transaction Rate"));
@@ -113,7 +113,7 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
   private void setupCacheMissRatePanel(Container parent) {
     m_cacheMissRateSeries = createTimeSeries("");
     m_cacheMissRateChart = createChart(m_cacheMissRateSeries);
-    m_cacheMissRatePanel = new ChartPanel(m_cacheMissRateChart, false);
+    m_cacheMissRatePanel = createChartPanel(m_cacheMissRateChart);
     parent.add(m_cacheMissRatePanel);
     m_cacheMissRatePanel.setPreferredSize(fDefaultGraphSize);
     m_cacheMissRatePanel.setBorder(new TitledBorder("Cache Miss Rate"));
@@ -128,7 +128,7 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
     numberAxis.setAutoRangeIncludesZero(true);
     DecimalFormat formatter = new DecimalFormat("0M");
     numberAxis.setNumberFormatOverride(formatter);
-    m_memoryPanel = new ChartPanel(m_memoryChart, false);
+    m_memoryPanel = createChartPanel(m_memoryChart);
     parent.add(m_memoryPanel);
     m_memoryPanel.setPreferredSize(fDefaultGraphSize);
     m_memoryPanel.setBorder(new TitledBorder("Heap Usage"));
@@ -146,6 +146,8 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
     numberAxis.setRange(0.0, 1.0);
     m_cpuPanel.setChart(m_cpuChart);
+    m_cpuPanel.setDomainZoomable(false);
+    m_cpuPanel.setRangeZoomable(false);
   }
 
   private class CpuPanelWorker extends BasicWorker<String[]> {
@@ -180,7 +182,7 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
   }
 
   private void setupCpuPanel(Container parent) {
-    m_cpuPanel = new ChartPanel(null, false);
+    m_cpuPanel = createChartPanel(null);
     parent.add(m_cpuPanel);
     m_cpuPanel.setPreferredSize(fDefaultGraphSize);
     m_cpuPanel.setBorder(new TitledBorder("CPU Usage"));
@@ -208,7 +210,7 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
         } else {
           if (m_acc != null) {
             Throwable rootCause = ExceptionHelper.getRootCause(e);
-            if(rootCause instanceof IOException) {
+            if (rootCause instanceof IOException) {
               return;
             } else if (!(rootCause instanceof TimeoutException)) {
               m_acc.log(new Date() + ": Unable to retrieve server system stats: " + rootCause.getMessage());
@@ -270,7 +272,7 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
         } else {
           if (m_acc != null) {
             Throwable rootCause = ExceptionHelper.getRootCause(e);
-            if(rootCause instanceof IOException) {
+            if (rootCause instanceof IOException) {
               return;
             } else if (!(rootCause instanceof TimeoutException)) {
               m_acc.log(new Date() + ": Unable to retrieve server DSO stats: " + rootCause.getMessage());
