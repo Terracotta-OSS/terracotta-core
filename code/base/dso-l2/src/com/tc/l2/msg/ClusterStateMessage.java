@@ -167,10 +167,10 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         state.setNextAvailableGlobalTransactionID(nextAvailableGID);
         break;
       case COMPLETE_STATE:
+        state.setClusterID(clusterID);
         state.setNextAvailableObjectID(nextAvailableObjectID);
         state.setNextAvailableGlobalTransactionID(nextAvailableGID);
         state.setNextAvailableChannelID(nextAvailableChannelID);
-        state.setClusterID(clusterID);
         for (Iterator i = connectionIDs.iterator(); i.hasNext();) {
           ConnectionID conn = (ConnectionID) i.next();
           state.addNewConnection(conn);

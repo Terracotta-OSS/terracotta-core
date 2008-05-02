@@ -16,12 +16,15 @@ import java.io.ObjectOutput;
 public class L2StateMessage extends AbstractGroupMessage implements EventContext {
 
   public static final int START_ELECTION          = 0; // Sent during the start of an election by the initiator
-  public static final int ELECTION_RESULT         = 1; // Sen at the end of an election by the initiator
-  public static final int RESULT_AGREED           = 2; // Sent in response to ELECTION_WON if no conflict
-  public static final int RESULT_CONFLICT         = 3; // Sent in response to ELECTION_WON on conflict
+  public static final int ELECTION_RESULT         = 1; // Sent at the end of an election by the initiator
+  public static final int RESULT_AGREED           = 2; // Sent in response to ELECTION_RESULT/WON_ALREADY if no
+                                                        // conflict
+  public static final int RESULT_CONFLICT         = 3; // Sent in response to ELECTION_RESULT/WON_ALREADY on conflict
   public static final int ABORT_ELECTION          = 4; // Sent in response to START_ELECTION by already elected ACTIVE
   public static final int ELECTION_WON            = 5; // Sent by the node that wins an election
-  public static final int MOVE_TO_PASSIVE_STANDBY = 6; // Sent by active to notify passive can become PASSIVE_STANDBY
+  public static final int ELECTION_WON_ALREADY    = 6; // Sent to new nodes joining after the node wins an election and
+  // turns ACTIVE
+  public static final int MOVE_TO_PASSIVE_STANDBY = 7; // Sent by active to notify passive can become PASSIVE_STANDBY
 
   private Enrollment      enrollment;
 
@@ -70,6 +73,8 @@ public class L2StateMessage extends AbstractGroupMessage implements EventContext
         return "ABORT_ELECTION";
       case ELECTION_WON:
         return "ELECTION_WON";
+      case ELECTION_WON_ALREADY:
+        return "ELECTION_WON_ALREADY";
       case MOVE_TO_PASSIVE_STANDBY:
         return "MOVE_TO_PASSIVE_STANDBY";
       default:

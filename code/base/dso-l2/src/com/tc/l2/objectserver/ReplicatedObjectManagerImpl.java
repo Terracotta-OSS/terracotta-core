@@ -145,7 +145,9 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
         case ObjectListSyncMessage.RESPONSE:
           handleObjectListResponse(nodeID, clusterMsg);
           break;
-
+        case ObjectListSyncMessage.FAILED_RESPONSE:
+          handleObjectListFailedResponse(nodeID, clusterMsg);
+          break;
         default:
           throw new AssertionError("This message shouldn't have been routed here : " + clusterMsg);
       }
@@ -153,6 +155,14 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       logger.error("Error handling message : " + clusterMsg, e);
       throw new AssertionError(e);
     }
+  }
+
+  private void handleObjectListFailedResponse(NodeID nodeID, ObjectListSyncMessage clusterMsg) {
+    String error = "Received wrong response from " + nodeID + " for Object List Query : " + clusterMsg;
+    logger.error(error + " Forcing node to Quit !!");
+    groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.PROGRAM_ERROR, error
+                                                                            + L2HAZapNodeRequestProcessor
+                                                                                .getErrorString(new Throwable()));
   }
 
   private void handleObjectListResponse(NodeID nodeID, ObjectListSyncMessage clusterMsg) {

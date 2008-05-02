@@ -176,6 +176,7 @@ public class StateManagerImpl implements StateManager {
           handleElectionResultMessage(clusterMsg);
           break;
         case L2StateMessage.ELECTION_WON:
+        case L2StateMessage.ELECTION_WON_ALREADY:
           handleElectionWonMessage(clusterMsg);
           break;
         case L2StateMessage.MOVE_TO_PASSIVE_STANDBY:
@@ -198,13 +199,29 @@ public class StateManagerImpl implements StateManager {
   private synchronized void handleElectionWonMessage(L2StateMessage clusterMsg) {
     Enrollment winningEnrollment = clusterMsg.getEnrollment();
     if (state == ACTIVE_COORDINATOR) {
-      // Cant get Election Won from another node : Split brain
+      // Can't get Election Won from another node : Split brain
       String error = state + " Received Election Won Msg : " + clusterMsg + ". Possible split brain detected";
       logger.error(error);
+      if (clusterMsg.getType() == L2StateMessage.ELECTION_WON_ALREADY) {
+        sendNGResponse(clusterMsg.messageFrom(), clusterMsg);
+      }
       groupManager.zapNode(winningEnrollment.getNodeID(), L2HAZapNodeRequestProcessor.SPLIT_BRAIN, error);
-    } else {
+    } else if (activeNode.isNull() || clusterMsg.getType() == L2StateMessage.ELECTION_WON) {
+      // There is no active server for this node or the other node just detected a failure of ACTIVE server and ran an
+      // election and is sending the results. This can happen if this node for some reason is not able to detect that
+      // the active is down but the other node did. Go with the new active.
       this.activeNode = winningEnrollment.getNodeID();
       moveToPassiveState(winningEnrollment);
+      if (clusterMsg.getType() == L2StateMessage.ELECTION_WON_ALREADY) {
+        sendOKResponse(clusterMsg.messageFrom(), clusterMsg);
+      }
+    } else {
+      // This is done to solve DEV-1532. Node sent ELECTION_WON_ALREADY message but our ACTIVE is intact.
+      logger.warn("Conflicting Election Won  Msg : " + clusterMsg + " since I already have a ACTIVE Node : "
+                  + activeNode + ". Sending NG response");
+      // The reason we send a response for ELECTION_WON_ALREADY message is that if we don't agree we don't want the
+      // other server to send us cluster state messages.
+      sendNGResponse(clusterMsg.messageFrom(), clusterMsg);
     }
   }
 
@@ -255,7 +272,7 @@ public class StateManagerImpl implements StateManager {
       info("Forcing Abort Election for " + msg + " with " + abortMsg);
       groupManager.sendTo(msg.messageFrom(), abortMsg);
     } else if (!electionMgr.handleStartElectionRequest(msg)) {
-      // TODO::FIXME:: Commenting so that stage thread is not held up doind election.
+      // TODO::FIXME:: Commenting so that stage thread is not held up doing election.
       // startElectionIfNecessary(NodeID.NULL_ID);
       logger.warn("Not starting election as it was commented out");
     }
@@ -264,9 +281,19 @@ public class StateManagerImpl implements StateManager {
   // notify new node
   public void publishActiveState(NodeID nodeID) throws GroupException {
     Assert.assertTrue(isActiveCoordinator());
-    GroupMessage msg = L2StateMessageFactory.createElectionWonMessage(EnrollmentFactory
+    GroupMessage msg = L2StateMessageFactory.createElectionWonAlreadyMessage(EnrollmentFactory
         .createTrumpEnrollment(getLocalNodeID(), weightsFactory));
-    groupManager.sendTo(nodeID, msg);
+    L2StateMessage response = (L2StateMessage) groupManager.sendToAndWaitForResponse(nodeID, msg);
+    validateResponse(nodeID, response);
+  }
+
+  private void validateResponse(NodeID nodeID, L2StateMessage response) throws GroupException {
+    if (response == null || response.getType() != L2StateMessage.RESULT_AGREED) {
+      String error = "Recd wrong response from : " + nodeID + " : msg = " + response + " while publishing Active State";
+      logger.error(error);
+      // throwing this exception will initiate a zap elsewhere
+      throw new GroupException(error);
+    }
   }
 
   public void startElectionIfNecessary(NodeID disconnectedNode) {
@@ -284,6 +311,22 @@ public class StateManagerImpl implements StateManager {
     if (elect) {
       info("Starting Election to determine cluser wide ACTIVE L2");
       startElection();
+    }
+  }
+
+  private void sendOKResponse(NodeID fromNode, L2StateMessage msg) {
+    try {
+      groupManager.sendTo(fromNode, L2StateMessageFactory.createResultAgreedMessage(msg, msg.getEnrollment()));
+    } catch (GroupException e) {
+      logger.error("Error handling message : " + msg, e);
+    }
+  }
+
+  private void sendNGResponse(NodeID fromNode, L2StateMessage msg) {
+    try {
+      groupManager.sendTo(fromNode, L2StateMessageFactory.createResultConflictMessage(msg, msg.getEnrollment()));
+    } catch (GroupException e) {
+      logger.error("Error handling message : " + msg, e);
     }
   }
 

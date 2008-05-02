@@ -37,8 +37,11 @@ public class L2StateMessageFactory {
     return new L2StateMessage(L2StateMessage.ELECTION_WON, e);
   }
 
+  public static GroupMessage createElectionWonAlreadyMessage(Enrollment e) {
+    return new L2StateMessage(L2StateMessage.ELECTION_WON_ALREADY, e);
+  }
+
   public static GroupMessage createMoveToPassiveStandbyMessage(Enrollment e) {
     return new L2StateMessage(L2StateMessage.MOVE_TO_PASSIVE_STANDBY, e);
   }
-
 }
