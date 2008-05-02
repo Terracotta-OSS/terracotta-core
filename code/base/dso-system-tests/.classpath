@@ -4,6 +4,7 @@
 	<classpathentry kind="src" output="build.eclipse/tests.system.classes" path="tests.system"/>
 	<classpathentry kind="src" output="build.eclipse/tests.system.classes" path="tests.system.resources"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/linked-child-process-1.0.1-SNAPSHOT.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/aspectwerkz"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
@@ -26,6 +27,4 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/simulator"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty-api"/>
-	<classpathentry kind="lib" path="/dependencies/lib/linked-child-process-1.0.1-SNAPSHOT.jar"/>
-	<classpathentry kind="output" path="bin"/>
 </classpath>
