@@ -150,17 +150,16 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     out.indent().println("checkedOutCount: " + checkedOutCount);
     out.indent().print("pending: ").visit(pending).println();
 
+    out.indent().print("objectStore: ").duplicateAndIndent().visit(objectStore).println();
     out.indent().print("stateManager: ").duplicateAndIndent().visit(stateManager).println();
     try {
-      StringBuffer allObjectsBuff = new StringBuffer();
-      for (Iterator objectsIter = getAllObjectIDs().iterator(); objectsIter.hasNext();) {
-        allObjectsBuff.append(objectsIter.next()).append(",");
-      }
-      out.indent().print("objects: " + allObjectsBuff.toString()).println();
 
       StringBuffer rootBuff = new StringBuffer();
       for (Iterator rootIter = getRootNames(); rootIter.hasNext();) {
-        rootBuff.append(rootIter.next()).append(",");
+        rootBuff.append(rootIter.next());
+        if(rootIter.hasNext()) {
+          rootBuff.append(",");
+        }
       }
       out.indent().print("roots: " + rootBuff.toString()).println();
     } catch (Throwable t) {
