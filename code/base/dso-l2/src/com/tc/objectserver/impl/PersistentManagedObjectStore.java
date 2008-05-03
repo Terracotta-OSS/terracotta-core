@@ -119,7 +119,6 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
     PrettyPrinter rv = out;
     out = out.println(getClass().getName()).duplicateAndIndent();
     out.indent().print("extantObjectIDs: ").visit(extantObjectIDs).println();
-    out.indent().print("objectPersistor: ").duplicateAndIndent().visit(objectPersistor).println();
     return rv;
   }
 
