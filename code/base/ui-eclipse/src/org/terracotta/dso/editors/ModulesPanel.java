@@ -424,6 +424,7 @@ public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectS
 
   class AddModuleHandler extends SelectionAdapter {
     public void widgetSelected(SelectionEvent e) {
+      m_layout.m_moduleTable.forceFocus();
       NewAddModuleDialog dialog = new NewAddModuleDialog(getShell(), MODULE_DECLARATION, MODULE_DECLARATION, m_modules);
       dialog.addValueListener(new NewAddModuleDialog.ValueListener() {
         public void setValue(Modules modules) {
@@ -438,6 +439,7 @@ public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectS
 
   class RemoveModuleHandler extends SelectionAdapter {
     public void widgetSelected(SelectionEvent e) {
+      m_layout.m_moduleTable.forceFocus();
       int[] selection = m_layout.m_moduleTable.getSelectionIndices();
       Modules modules = ensureModules();
       for (int i = selection.length - 1; i >= 0; i--) {
@@ -452,6 +454,7 @@ public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectS
 
   class AddRepoHandler extends SelectionAdapter {
     public void widgetSelected(SelectionEvent e) {
+      m_layout.m_moduleRepoTable.forceFocus();
       RepoLocationDialog dialog = new RepoLocationDialog(getShell(), REPO_DECLARATION, MODULE_REPO_LOCATION);
       dialog.addValueListener(new RepoLocationDialog.ValueListener() {
         public void setValues(String repoLocation) {
@@ -468,6 +471,7 @@ public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectS
 
   class RemoveRepoHandler extends SelectionAdapter {
     public void widgetSelected(SelectionEvent e) {
+      m_layout.m_moduleRepoTable.forceFocus();
       int[] selection = m_layout.m_moduleRepoTable.getSelectionIndices();
       Modules modules = ensureModules();
       for (int i = selection.length - 1; i >= 0; i--) {

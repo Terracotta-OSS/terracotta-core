@@ -6,6 +6,7 @@ package com.tc.admin.dso;
 
 import org.dijon.Component;
 
+import com.tc.admin.AdminClient;
 import com.tc.admin.common.ComponentNode;
 import com.tc.management.beans.l1.L1InfoMBean;
 
@@ -14,7 +15,7 @@ public class ClientThreadDumpsNode extends ComponentNode {
   protected ClientThreadDumpsPanel m_threadDumpsPanel;
 
   public ClientThreadDumpsNode(ClientNode serverNode) {
-    super("Thread dumps");
+    super(AdminClient.getContext().getString("client.thread.dumps"));
     m_clientNode = serverNode;
     setIcon(ClientsHelper.getHelper().getThreadDumpsIcon());
   }

@@ -145,6 +145,9 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
     XYPlot plot = (XYPlot) m_cpuChart.getPlot();
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
     numberAxis.setRange(0.0, 1.0);
+    if(m_rangeAxisSpace != null) {
+      plot.setFixedRangeAxisSpace(m_rangeAxisSpace);
+    }
     m_cpuPanel.setChart(m_cpuChart);
     m_cpuPanel.setDomainZoomable(false);
     m_cpuPanel.setRangeZoomable(false);

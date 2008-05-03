@@ -112,7 +112,7 @@ public class DemoChartFactory {
     ValueAxis axis = plot.getDomainAxis();
     axis.setFixedAutoRange(30000.0);
     if(axis instanceof DateAxis) {
-      ((DateAxis)axis).setDateFormatOverride(new SimpleDateFormat("kk:mm:ss"));
+      ((DateAxis)axis).setDateFormatOverride(new SimpleDateFormat("h:mm:ss"));
     }
 
     NumberAxis numberAxis = (NumberAxis)plot.getRangeAxis();
@@ -164,7 +164,7 @@ public class DemoChartFactory {
     ValueAxis axis = plot.getDomainAxis();
     axis.setFixedAutoRange(30000.0);
     if(axis instanceof DateAxis) {
-      ((DateAxis)axis).setDateFormatOverride(new SimpleDateFormat("kk:mm:ss"));
+      ((DateAxis)axis).setDateFormatOverride(new SimpleDateFormat("h:mm:ss"));
     }
 
     NumberAxis numberAxis = (NumberAxis)plot.getRangeAxis();

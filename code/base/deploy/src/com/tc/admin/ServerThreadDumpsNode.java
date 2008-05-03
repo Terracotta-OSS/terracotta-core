@@ -13,7 +13,7 @@ public class ServerThreadDumpsNode extends ComponentNode {
   protected ServerThreadDumpsPanel m_threadDumpsPanel;
 
   public ServerThreadDumpsNode(ServerNode serverNode) {
-    super("Thread dumps");
+    super(AdminClient.getContext().getString("server.thread.dumps"));
     m_serverNode = serverNode;
     setIcon(ServerHelper.getHelper().getThreadDumpsIcon());
   }

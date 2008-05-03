@@ -124,6 +124,10 @@ public class AdminClientBundle extends ListResourceBundle {
 
       { "cluster.thread.dumps", "Cluster thread dumps" },
       
+      { "server.thread.dumps", "Server thread dumps" },
+      
+      { "client.thread.dumps", "Client thread dumps" },
+      
       { "clients", "Clients" },
 
       { "servers", "Servers" },
