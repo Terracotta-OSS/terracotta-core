@@ -49,6 +49,9 @@ public class WebAppContext_Test extends TransparentTestBase {
   private static final int NODE_COUNT      = 4;
 
   public WebAppContext_Test() {
+    // MNK-500
+    disableAllUntil("2008-05-30");
+    
     if (Vm.isIBM()) {
       disableAllUntil(new Date(Long.MAX_VALUE));
     }
