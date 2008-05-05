@@ -120,7 +120,10 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
   private final TCLogger                       logger;
   private final RuntimeLogger                  runtimeLogger;
   private final NonPortableEventContextFactory appEventContextFactory;
-  private final Set                            pendingCreateTCObjects = new HashSet();
+
+  private final Collection                     pendingCreateTCObjects = new ArrayList();
+  private final Collection                     pendingCreatePojos     = new ArrayList();
+
   private final Portability                    portability;
   private final DSOClientMessageChannel        channel;
   private final ToggleableReferenceManager     referenceManager;
@@ -1087,6 +1090,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     if ((obj = basicLookup(pojo)) == null) {
       obj = factory.getNewInstance(nextObjectID(), pojo, pojo.getClass(), true);
       pendingCreateTCObjects.add(obj);
+      pendingCreatePojos.add(pojo);
       basicAddLocal(obj, false);
     }
     return obj;
@@ -1107,6 +1111,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
       txManager.createObject(tcObject);
     }
     pendingCreateTCObjects.clear();
+    pendingCreatePojos.clear();
   }
 
   public synchronized boolean hasPendingCreateObjects() {
