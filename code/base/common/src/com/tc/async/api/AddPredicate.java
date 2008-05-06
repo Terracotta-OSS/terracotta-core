@@ -1,7 +1,7 @@
 package com.tc.async.api;
 
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
 /**
  * @author steve Used to filter events. Note, these are evaluted in the context of the sender so they should be fast.

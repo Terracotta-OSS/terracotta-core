@@ -6,7 +6,7 @@ import com.tc.stats.Stats;
 import java.util.Collection;
 
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
 /**
  * @author steve This is the interface for an early version of our custom seda implementation take it with a grain of

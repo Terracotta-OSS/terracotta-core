@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2007 Terracotta, Inc. All rights reserved.
+ * Copyright (c) 2006-2008 Terracotta, Inc. All rights reserved.
  */
 
 package com.tc.admin;
