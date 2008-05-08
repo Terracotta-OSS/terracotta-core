@@ -39,6 +39,7 @@ public final class ProductInfo {
   private static final String               BUILD_DATA_HOST_KEY          = "host";
   private static final String               BUILD_DATA_USER_KEY          = "user";
   private static final String               BUILD_DATA_REVISION_KEY      = "revision";
+  private static final String               BUILD_DATA_EE_REVISION_KEY   = "ee.revision";
   private static final String               BUILD_DATA_BRANCH_KEY        = "branch";
   private static final String               UNKNOWN_VALUE                = "[unknown]";
 
@@ -51,6 +52,7 @@ public final class ProductInfo {
   private final String                      branch;
   private final String                      edition;
   private final String                      revision;
+  private final String                      ee_revision;
   private final String                      kitID;
 
   private ProductInfo(InputStream in, String fromWhere) {
@@ -76,6 +78,7 @@ public final class ProductInfo {
     this.user = getProperty(properties, BUILD_DATA_USER_KEY, UNKNOWN_VALUE);
     this.branch = getProperty(properties, BUILD_DATA_BRANCH_KEY, UNKNOWN_VALUE);
     this.revision = getProperty(properties, BUILD_DATA_REVISION_KEY, UNKNOWN_VALUE);
+    this.ee_revision = getProperty(properties, BUILD_DATA_EE_REVISION_KEY, UNKNOWN_VALUE);
 
     Date realTimestamp = null;
     if (timestampString != null) {
@@ -169,6 +172,10 @@ public final class ProductInfo {
 
   public String buildRevision() {
     return this.revision;
+  }
+  
+  public String buildRevisionFromEE() {
+    return this.ee_revision;
   }
 
   public String toShortString() {
