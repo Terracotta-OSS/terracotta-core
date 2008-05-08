@@ -126,6 +126,11 @@ class BuildSubtree
         file.puts("terracotta.build.revision=#{build_environment.current_revision}")
         file.puts("terracotta.build.branch=#{build_environment.current_branch}")
         file.puts("terracotta.build.edition=#{build_environment.edition}")
+        
+        # extra info if built under EE branch
+        if build_environment.ee_svninfo
+          file.puts("terracotta.build.ee.revision=#{build_environment.ee_svninfo.current_revision}")
+        end
       end
     end
 end

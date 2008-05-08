@@ -43,7 +43,8 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
 
     # Some more objects we need.
     root_dir = FilePath.new(@basedir.to_s, "..", "..").canonicalize.to_s
-    @build_environment = BuildEnvironment.new(platform, config_source, root_dir)
+    ee_root_dir =  root_dir =~ /community/ ? FilePath.new(root_dir.to_s, "..").canonicalize.to_s : nil
+    @build_environment = BuildEnvironment.new(platform, config_source, root_dir, ee_root_dir)
     @static_resources = StaticResources.new(basedir)
     @archive_tag = ArchiveTag.new(@build_environment)
 
@@ -137,7 +138,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
         puts "--------------------------------------------------------------------------------"
         puts "Resolving dependencies."
         build_file = FilePath.new(@static_resources.build_config_directory,
-                                    'resolve-dependencies', 'build.xml')
+          'resolve-dependencies', 'build.xml')
         ant_command = FilePath.new(ant_home, 'bin', 'ant').batch_extension.to_s
         args = ['-buildfile', "#{build_file.to_s}"]
         @ant.exec(:executable => ant_command) do
@@ -157,8 +158,8 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
 
   # Show all of the modules that the named module depends on.
   def show_module_dependencies(module_name)
-      puts("Module #{module_name} depends on:")
-      @module_set[module_name].dependencies.each do |dep| puts("\t#{dep}") end
+    puts("Module #{module_name} depends on:")
+    @module_set[module_name].dependencies.each do |dep| puts("\t#{dep}") end
   end
 
   # Show all of the modules that are dependent on the named module.
@@ -271,8 +272,8 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     args << 'javahome=%s' % jvm.home.to_s unless args.find { |arg| arg.starts_with?('javahome=') }
     # do_run_class(jvm, classname, arguments, jvmargs, subtree)
     do_run_class(jvm, 'com.tc.simulator.distrunner.ControlSetup', args,
-    config_source.as_array('jvmargs') || [ ],
-    @module_set['dso-performance-tests'].subtree('tests.base'))
+      config_source.as_array('jvmargs') || [ ],
+      @module_set['dso-performance-tests'].subtree('tests.base'))
   end
 
   # Runs the 'short' test list. (For a quick 'sanity check' of our software.)
@@ -346,7 +347,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     test_set = FixedModuleTypeTestSet.new([ module_name ], [ test_type ])
     if test_set.validate(@module_set, @script_results)
       prepare_and_run_block_on_tests(test_set,
-                                     TestRunResults.next_results(@build_results), Proc.new { |testrun| puts testrun.dump })
+        TestRunResults.next_results(@build_results), Proc.new { |testrun| puts testrun.dump })
     end
   end
 
@@ -371,11 +372,11 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
           test_set = FixedModuleTypeTestSet.new([module_name], [test_type])
           if test_set.validate(@module_set, @script_results)
             results_dir = FilePath.new(@build_results.build_dir,
-                                      "externally-run-tests")
+              "externally-run-tests")
             results_dir = results_dir.ensure_directory
             test_proc = Proc.new { |testrun| testrun.prepare_for_external_run }
             prepare_and_run_block_on_tests(test_set,
-                TestRunResults.new(results_dir), test_proc)
+              TestRunResults.new(results_dir), test_proc)
           end
         end
       end
@@ -421,9 +422,9 @@ END
     # fix XMLBeans (I'm assuming it's their error), we should put this back
     # so we make sure we compile with the right JVM.
     ant.xmlbean(:destfile => dest_jar.to_s,
-                :executable => @jvm_set['J2SE-1.4'].javac.to_s,
-    :debug => true, :classpath => @module_set['common'].subtree('src').classpath(@build_results, :full, :runtime).to_s,
-    :srcgendir => generated_source_dir.to_s) {
+      :executable => @jvm_set['J2SE-1.4'].javac.to_s,
+      :debug => true, :classpath => @module_set['common'].subtree('src').classpath(@build_results, :full, :runtime).to_s,
+      :srcgendir => generated_source_dir.to_s) {
       ant.fileset(:dir => schema_dir.to_s, :includes => '*.xsd')
       ant.fileset(:dir => schema_config_dir.to_s, :includes => '*.xsdconfig')
     }
@@ -459,9 +460,9 @@ END
     generated_source_dir.delete
 
     ant.xmlbean(:destfile => dest_jar.to_s,
-                :executable => @jvm_set['J2SE-1.4'].javac.to_s,
-    :debug => true, :classpath => @module_set['dso-common'].subtree('src').classpath(@build_results, :full, :runtime).to_s,
-    :srcgendir => generated_source_dir.to_s) {
+      :executable => @jvm_set['J2SE-1.4'].javac.to_s,
+      :debug => true, :classpath => @module_set['dso-common'].subtree('src').classpath(@build_results, :full, :runtime).to_s,
+      :srcgendir => generated_source_dir.to_s) {
       ant.fileset(:dir => schema_dir.to_s, :includes => '*.xsd')
       ant.fileset(:dir => schema_config_dir.to_s, :includes => '*.xsdconfig')
     }
@@ -476,9 +477,9 @@ END
     generated_source_dir.delete
 
     ant.xmlbean(:destfile => dest_jar.to_s,
-                :executable => @jvm_set['J2SE-1.4'].javac.to_s,
-    :debug => true, :classpath => @module_set['dso-statistics'].subtree('src').classpath(@build_results, :full, :runtime).to_s,
-    :srcgendir => generated_source_dir.to_s) {
+      :executable => @jvm_set['J2SE-1.4'].javac.to_s,
+      :debug => true, :classpath => @module_set['dso-statistics'].subtree('src').classpath(@build_results, :full, :runtime).to_s,
+      :srcgendir => generated_source_dir.to_s) {
       ant.fileset(:dir => schema_dir.to_s, :includes => '*.xsd')
       ant.fileset(:dir => schema_config_dir.to_s, :includes => '*.xsdconfig')
     }
@@ -591,10 +592,10 @@ END
     end
 
     subtree.run_java(ant, 'com.tc.server.TCServerMain', home.dir.to_s,
-    jvm, config_source.as_array('jvmargs'),
-    all_remaining_arguments,
-    { 'tc.base-dir' => home.dir.to_s },
-    @build_results, @build_environment)
+      jvm, config_source.as_array('jvmargs'),
+      all_remaining_arguments,
+      { 'tc.base-dir' => home.dir.to_s },
+      @build_results, @build_environment)
   end
 
   # Re-runs only those tests that failed on the last test run (or on the one specified by
@@ -814,7 +815,7 @@ END
     sinners << @build_environment.last_changed_author
 
     File.open(sinnerList, "w") do |f|
-       Marshal.dump(sinners, f)
+      Marshal.dump(sinners, f)
     end      
 
     STDERR.puts("Please let #{sinners.to_a.join(', ')} know.")
@@ -886,196 +887,196 @@ END
 
     begin
       prepare_and_run_block_on_tests(test_set, testrun_results, Proc.new do |testrun|
-        have_started_at_least_one_test = true
-        testrun.run(@script_results)
+          have_started_at_least_one_test = true
+          testrun.run(@script_results)
         end, testrun_record)
-      ensure
-        testrun_record.tearDown
-        # copy failed-tests.txt file to the aggreation directory
-        if monkey?
-          FileUtils.cp(testrun_record.failed_test_classnames_file.to_s, tests_aggregation_directory.to_s)
-        end
-        puts "\n\n"
-        puts "========================================================================"
-        puts "Test Results:\n\n"
-        puts testrun_record.dump
-
-        puts "\n\n"
-        puts "========================================================================"
-        if testrun_record.failed?
-          puts "     Tests FAILED. See results above."
-        elsif testrun_record.total_suites == 0
-          loud_message "No tests ran."
-        else
-          puts "     Tests passed."
-        end
-        puts "  Testrun directory: #{testrun_results.root_dir}"
-        puts ""
+    ensure
+      testrun_record.tearDown
+      # copy failed-tests.txt file to the aggreation directory
+      if monkey?
+        FileUtils.cp(testrun_record.failed_test_classnames_file.to_s, tests_aggregation_directory.to_s)
       end
+      puts "\n\n"
+      puts "========================================================================"
+      puts "Test Results:\n\n"
+      puts testrun_record.dump
+
+      puts "\n\n"
+      puts "========================================================================"
+      if testrun_record.failed?
+        puts "     Tests FAILED. See results above."
+      elsif testrun_record.total_suites == 0
+        loud_message "No tests ran."
+      else
+        puts "     Tests passed."
+      end
+      puts "  Testrun directory: #{testrun_results.root_dir}"
+      puts ""
     end
+  end
 
-    # Creates a SubtreeTestRun object for each subtree we're going to run tests on, sets it up, runs it,
-    # and tears it down -- making sure this all happens correctly even in the face of exceptions.
-    #
-    # DO NOT make this last object ('proc') an actual block. Although this is, in fact, the right way to
-    # do it, it seems to trigger a weird interation between JRuby and leafcutter that results in some very
-    # odd/nonsensical leafcutter error messages. (On the other hand, if you can manage to make it work,
-    # and you're sure it works in all cases, by all means, go ahead and change it. It certainly is gross
-    # the way it is right now.)
-    def prepare_and_run_block_on_tests(test_set, testrun_results, testrun_proc, testrun_record = nil)
-      test_runs = { }
+  # Creates a SubtreeTestRun object for each subtree we're going to run tests on, sets it up, runs it,
+  # and tears it down -- making sure this all happens correctly even in the face of exceptions.
+  #
+  # DO NOT make this last object ('proc') an actual block. Although this is, in fact, the right way to
+  # do it, it seems to trigger a weird interation between JRuby and leafcutter that results in some very
+  # odd/nonsensical leafcutter error messages. (On the other hand, if you can manage to make it work,
+  # and you're sure it works in all cases, by all means, go ahead and change it. It certainly is gross
+  # the way it is right now.)
+  def prepare_and_run_block_on_tests(test_set, testrun_results, testrun_proc, testrun_record = nil)
+    test_runs = { }
 
-      test_set.run_on_subtrees(@module_set) do |subtree, test_patterns|
-        test_runs[subtree] =
+    test_set.run_on_subtrees(@module_set) do |subtree, test_patterns|
+      test_runs[subtree] =
         subtree.test_run(testrun_results, test_patterns, tests_aggregation_directory)
 
-        begin
-          test_runs[subtree].setUp
-          testrun_proc.call(test_runs[subtree])
-        rescue JvmVersionMismatchException => e
-          if monkey?
-            puts("#{e.message}\n...skipping subtree #{subtree}")
-          else
-            raise e
-          end
-        ensure
-          test_runs[subtree].tearDown
+      begin
+        test_runs[subtree].setUp
+        testrun_proc.call(test_runs[subtree])
+      rescue JvmVersionMismatchException => e
+        if monkey?
+          puts("#{e.message}\n...skipping subtree #{subtree}")
+        else
+          raise e
         end
-      end
-    end
-
-    # Finds the JVMs that we need to use -- one each for compiling and testing, for 1.4 and 1.5.
-    # This is where the 'run-1.4-tests-with-1.5' property comes into play; we assign the
-    # 'tests-1.4' JVM to a 1.4 or 1.5 JVM, based on how this property is set.
-    def find_jvms
-
-      return @jvm_set if @jvm_set
-
-      @jvm_set = JVMSet.new(YAML.load_file('jdk.def.yml'))
-
-      @jvm_set.add_config_jvm('tests-jdk')
-      @jvm_set.add_config_jvm('jdk')
-
-      appserver_compatibility = YAML::load_file("appservers.yml")
-      Registry[:appserver_compatibility] = appserver_compatibility
-      factory, major, minor = %w(factory.name major-version minor-version).map { |key|
-        @internal_config_source["tc.tests.configuration.appserver.#{key}"]
-      }
-      Registry[:appserver_generic] = "#{factory}-#{major}"
-      Registry[:appserver] = "#{Registry[:appserver_generic]}.#{minor}"
-      Registry[:jvm_set] = @jvm_set
-    end
-
-    # Writes out the given set of keys, and corresponding values, from the given hash to the given
-    # file, as XML property elements (as is required by the XML build-information file we generate
-    # that CruiseControl reads).
-    def write_keys(file, hash, keys)
-      keys.sort.each do |key|
-        value = hash[key]
-        file << "      <property name=\"%s\" value=\"%s\" />\n" % [ key.to_s.xml_escape, value.to_s.xml_escape ]
-      end
-    end
-
-    # Takes the JVM specified in the JVM set by the given key, and returns a hash
-    # with a single key, prop, which maps to a short description of that JVM (something
-    # a human can read, but which is also usable as, e.g., a database key representing
-    # that JVM).
-    def jvm_data(prop, key)
-      out = { }
-
-      if @jvm_set.has?(key)
-        out[prop] = @jvm_set[key].short_description
-      else
-        out[prop] = '<none>'
-      end
-
-      out
-    end
-
-    # Writes out our "build information file". This is a file that gets integrated into the master
-    # XML log file that CruiseControl creates at the end of every build; it contains properties
-    # that the resulting HTML email and, even more importantly, the monkey database.
-    #
-    # This is divided into three sections: configuration, parameters, and extra.
-    #
-    # * *Configuration* data is that which can reasonably be expected to affect the results of tests. For example, branch, platform (including OS type and processor architecture), and JVMs used to run the tests are included here.
-    # * *Parameters* is that data which should not affect the results of tests, but which may well be common to many test runs. This is put in the database in a manner that allows us to share it between many monkey runs. (Note that this includes, among other things, hostname -- if two hosts have the same JVM, the same OS, architecture, etc., they really, truly should produce the same results.)
-    # * *Extra* data is that data which likely differs between every run of the monkey, and so which is simply stored directly associated with the monkey run. This is things like build date and time, revision number, etc.
-    def write_build_info_file
-
-      # Configuration data.
-      configuration_data = {
-            'build-target' => config_source['tc.build-control.build.target'],
-
-            'monkey-host' => @build_environment.build_hostname,
-            'monkey-name' => config_source['monkey-name'],
-            'monkey-platform' => @build_environment.platform,
-
-            'branch' => @build_environment.current_branch,
-            'revision' => @build_environment.current_revision,
-
-            'appserver' => config_source['tc.tests.configuration.appserver.factory.name'] + "-"  +
-        config_source['tc.tests.configuration.appserver.major-version'] + "." +
-        config_source['tc.tests.configuration.appserver.minor-version'],
-            'jvmargs'  => config_source['jvmargs'],
-
-            'tests-jdk' => @jvm_set['tests-jdk'].short_description,
-            'JAVA_HOME_14' => @jvm_set['1.4'].short_description,
-            'JAVA_HOME_15' => @jvm_set['1.5'].short_description,
-            'JAVA_HOME_16' => @jvm_set['1.6'].short_description
-      }
-
-
-
-      # Parameters data.
-      parameters_data = {
-        # nothing right now
-      }
-
-      # Extra data.
-      extra_environment_data = {
-            'tc.build-archive.path.pattern' => build_archive_path_pattern.to_s
-      }
-
-      # Test configuration data, which goes in the configuration section.
-      test_config_data = { }
-      config_source.keys.each do |key|
-        next if key =~ /appserver/
-        test_config_data[key] = config_source[key] if key =~ /^tc\.tests\.configuration\..*/i
-      end
-
-      File.open(@build_results.build_information_file.to_s, "w") do |file|
-        file << "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n\n"
-        file << "<configinfo>\n"
-
-        file << "  <monkeydb>\n"
-        file << "    <configuration>\n"
-
-        write_keys(file, configuration_data, configuration_data.keys)
-
-
-        file << "    </configuration>\n"
-        file << "    <parameters>\n"
-
-        write_keys(file, parameters_data, parameters_data.keys)
-        write_keys(file, test_config_data, test_config_data.keys)
-
-        file << "    </parameters>\n"
-        file << "    <extra>\n"
-
-        write_keys(file, extra_environment_data, extra_environment_data.keys)
-
-        file << "    </extra>\n"
-        file << "  </monkeydb>\n"
-        file << "\n"
-
-        file << "</configinfo>\n"
+      ensure
+        test_runs[subtree].tearDown
       end
     end
   end
 
-  # Terracotta software package making extension for BaseTerracottaBuilder
-  require 'buildscripts/extensions/distribution'
+  # Finds the JVMs that we need to use -- one each for compiling and testing, for 1.4 and 1.5.
+  # This is where the 'run-1.4-tests-with-1.5' property comes into play; we assign the
+  # 'tests-1.4' JVM to a 1.4 or 1.5 JVM, based on how this property is set.
+  def find_jvms
 
-  builder = BaseCodeTerracottaBuilder.new(ARGV)
-  builder.run
+    return @jvm_set if @jvm_set
+
+    @jvm_set = JVMSet.new(YAML.load_file('jdk.def.yml'))
+
+    @jvm_set.add_config_jvm('tests-jdk')
+    @jvm_set.add_config_jvm('jdk')
+
+    appserver_compatibility = YAML::load_file("appservers.yml")
+    Registry[:appserver_compatibility] = appserver_compatibility
+    factory, major, minor = %w(factory.name major-version minor-version).map { |key|
+      @internal_config_source["tc.tests.configuration.appserver.#{key}"]
+    }
+    Registry[:appserver_generic] = "#{factory}-#{major}"
+    Registry[:appserver] = "#{Registry[:appserver_generic]}.#{minor}"
+    Registry[:jvm_set] = @jvm_set
+  end
+
+  # Writes out the given set of keys, and corresponding values, from the given hash to the given
+  # file, as XML property elements (as is required by the XML build-information file we generate
+  # that CruiseControl reads).
+  def write_keys(file, hash, keys)
+    keys.sort.each do |key|
+      value = hash[key]
+      file << "      <property name=\"%s\" value=\"%s\" />\n" % [ key.to_s.xml_escape, value.to_s.xml_escape ]
+    end
+  end
+
+  # Takes the JVM specified in the JVM set by the given key, and returns a hash
+  # with a single key, prop, which maps to a short description of that JVM (something
+  # a human can read, but which is also usable as, e.g., a database key representing
+  # that JVM).
+  def jvm_data(prop, key)
+    out = { }
+
+    if @jvm_set.has?(key)
+      out[prop] = @jvm_set[key].short_description
+    else
+      out[prop] = '<none>'
+    end
+
+    out
+  end
+
+  # Writes out our "build information file". This is a file that gets integrated into the master
+  # XML log file that CruiseControl creates at the end of every build; it contains properties
+  # that the resulting HTML email and, even more importantly, the monkey database.
+  #
+  # This is divided into three sections: configuration, parameters, and extra.
+  #
+  # * *Configuration* data is that which can reasonably be expected to affect the results of tests. For example, branch, platform (including OS type and processor architecture), and JVMs used to run the tests are included here.
+  # * *Parameters* is that data which should not affect the results of tests, but which may well be common to many test runs. This is put in the database in a manner that allows us to share it between many monkey runs. (Note that this includes, among other things, hostname -- if two hosts have the same JVM, the same OS, architecture, etc., they really, truly should produce the same results.)
+  # * *Extra* data is that data which likely differs between every run of the monkey, and so which is simply stored directly associated with the monkey run. This is things like build date and time, revision number, etc.
+  def write_build_info_file
+
+    # Configuration data.
+    configuration_data = {
+      'build-target' => config_source['tc.build-control.build.target'],
+
+      'monkey-host' => @build_environment.build_hostname,
+      'monkey-name' => config_source['monkey-name'],
+      'monkey-platform' => @build_environment.platform,
+
+      'branch' => @build_environment.current_branch,
+      'revision' => @build_environment.current_revision,
+
+      'appserver' => config_source['tc.tests.configuration.appserver.factory.name'] + "-"  +
+        config_source['tc.tests.configuration.appserver.major-version'] + "." +
+        config_source['tc.tests.configuration.appserver.minor-version'],
+      'jvmargs'  => config_source['jvmargs'],
+
+      'tests-jdk' => @jvm_set['tests-jdk'].short_description,
+      'JAVA_HOME_14' => @jvm_set['1.4'].short_description,
+      'JAVA_HOME_15' => @jvm_set['1.5'].short_description,
+      'JAVA_HOME_16' => @jvm_set['1.6'].short_description
+    }
+
+
+
+    # Parameters data.
+    parameters_data = {
+      # nothing right now
+    }
+
+    # Extra data.
+    extra_environment_data = {
+      'tc.build-archive.path.pattern' => build_archive_path_pattern.to_s
+    }
+
+    # Test configuration data, which goes in the configuration section.
+    test_config_data = { }
+    config_source.keys.each do |key|
+      next if key =~ /appserver/
+      test_config_data[key] = config_source[key] if key =~ /^tc\.tests\.configuration\..*/i
+    end
+
+    File.open(@build_results.build_information_file.to_s, "w") do |file|
+      file << "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n\n"
+      file << "<configinfo>\n"
+
+      file << "  <monkeydb>\n"
+      file << "    <configuration>\n"
+
+      write_keys(file, configuration_data, configuration_data.keys)
+
+
+      file << "    </configuration>\n"
+      file << "    <parameters>\n"
+
+      write_keys(file, parameters_data, parameters_data.keys)
+      write_keys(file, test_config_data, test_config_data.keys)
+
+      file << "    </parameters>\n"
+      file << "    <extra>\n"
+
+      write_keys(file, extra_environment_data, extra_environment_data.keys)
+
+      file << "    </extra>\n"
+      file << "  </monkeydb>\n"
+      file << "\n"
+
+      file << "</configinfo>\n"
+    end
+  end
+end
+
+# Terracotta software package making extension for BaseTerracottaBuilder
+require 'buildscripts/extensions/distribution'
+
+builder = BaseCodeTerracottaBuilder.new(ARGV)
+builder.run

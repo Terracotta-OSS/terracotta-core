@@ -17,12 +17,14 @@ end
 # out of our source environment, as opposed to a more general Ruby or JRuby
 # environment.
 class BuildEnvironment < Environment
+  attr_reader :ee_svninfo
   # Creates a new instance, given a Platform object and a configuration source.
-  def initialize(platform, config_source, root_dir)
+  def initialize(platform, config_source, root_dir, ee_root_dir=nil)
     super(platform)
     @config_source = config_source
     @build_timestamp = Time.now
     @svninfo = SvnInfo.new(root_dir)
+    @ee_svninfo = ee_root_dir ? SvnInfo.new(ee_root_dir) : nil
   end
 
   # What's the latest revision on the local source base?
