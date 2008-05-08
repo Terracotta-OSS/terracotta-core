@@ -124,7 +124,6 @@ class BuildSubtree
         file.puts("terracotta.build.user=#{build_environment.build_username}")
         file.puts("terracotta.build.timestamp=#{build_environment.build_timestamp.strftime('%Y%m%d-%H%m%S')}")
         file.puts("terracotta.build.revision=#{build_environment.current_revision}")
-        file.puts("terracotta.build.change-tag=#{build_environment.current_revision_tag}")
         file.puts("terracotta.build.branch=#{build_environment.current_branch}")
         file.puts("terracotta.build.edition=#{build_environment.edition}")
       end

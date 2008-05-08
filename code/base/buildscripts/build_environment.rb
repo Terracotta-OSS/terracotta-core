@@ -19,58 +19,38 @@ end
 class BuildEnvironment < Environment
   # Creates a new instance, given a Platform object and a configuration source.
   def initialize(platform, config_source, root_dir)
-      super(platform)
-      @config_source = config_source
-      @build_timestamp = Time.now
-      @svninfo = {}
-      @svninfo["Last Changed Rev"] = "00"
-      @svninfo["Last Changed Author"] = "unknown-author"
-      @svninfo["Last Changed Date"] = "unknown-date"
-      @svninfo["URL"] = "unknown-url"            
-      svn_info = `svn info '#{root_dir}'`
-      if $? == 0 && !svn_info.blank?        
-        begin
-          @svninfo.merge!(YAML::load(svn_info))
-        rescue
-          # ignore
-        end
-      end      
+    super(platform)
+    @config_source = config_source
+    @build_timestamp = Time.now
+    @svninfo = SvnInfo.new(root_dir)
   end
 
   # What's the latest revision on the local source base?
   def current_revision
-      @svninfo["Last Changed Rev"]      
+    @svninfo.current_revision
   end
   
   def last_changed_author
-    @svninfo["Last Changed Author"]
+    @svninfo.last_changed_author
   end
   
   def last_changed_date
-    @svninfo["Last Changed Date"]
-  end
-
-  # If the latest revision on the local source base is tagged, return it;
-  # otherwise, return '[none]'.
-  def current_revision_tag
-      ""
+    @svninfo.last_changed_date
   end
 
   # What branch are we building from? 
   # read from tc.build-control.branch in build-config.global
   # if not, try to parse from "svn info" command
   def current_branch
-      return @branch unless @branch.blank?
-      if @branch.nil? && !@svninfo["URL"].nil?
-          case @svninfo["URL"]
-              when /trunk/: @branch="trunk"
-              when /branches\/private\/([^\/]+)/: @branch = $1
-              when /branches\/([^\/]+)/: @branch = $1
-              when /tags\/([^\/]+)/: @branch = $1
-              else @branch = @config_source["branch"]
-          end              
-      end      
-      @branch || "branch-unkown"
+    return @branch unless @branch.blank?
+    @branch = case @svninfo.url
+    when /trunk/ then "trunk"
+    when /branches\/private\/([^\/]+)/ then $1
+    when /branches\/([^\/]+)/ then $1
+    when /tags\/([^\/]+)/ then $1
+    else @config_source["branch"]
+    end                    
+    @branch || "unkown"
   end
 
   
@@ -90,7 +70,7 @@ class BuildEnvironment < Environment
 
   # Just calls #username.
   def build_username
-     username
+    username
   end
 
   # What version are we building? This returns '[none]' if no 'version'
