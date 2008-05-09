@@ -9,6 +9,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
@@ -117,6 +118,11 @@ public final class ProductInfo {
     return PRODUCTINFO;
   }
 
+  public static void printRawData() throws IOException {
+    InputStream in = ProductInfo.class.getResourceAsStream(BUILD_DATA_RESOURCE_NAME);
+    IOUtils.copy(in, System.out);
+  }
+
   public boolean isDevMode() {
     return this.version.endsWith(UNKNOWN_VALUE);
   }
@@ -173,7 +179,7 @@ public final class ProductInfo {
   public String buildRevision() {
     return this.revision;
   }
-  
+
   public String buildRevisionFromEE() {
     return this.ee_revision;
   }
@@ -183,7 +189,11 @@ public final class ProductInfo {
   }
 
   public String toLongString() {
-    return toShortString() + ", as of " + buildTimestampAsString() + " (Revision " + buildRevision() + " by "
+    String rev = this.revision;
+    if (edition.indexOf("Enterprise") >= 0) {
+      rev = this.ee_revision + "-" + this.revision;
+    }
+    return toShortString() + ", as of " + buildTimestampAsString() + " (Revision " + rev + " by "
            + buildUser() + "@" + buildHost() + " from " + buildBranch() + ")";
   }
 
@@ -194,6 +204,7 @@ public final class ProductInfo {
   public static void main(String[] args) throws Exception {
     Options options = new Options();
     options.addOption("v", "verbose", false, bundleHelper.getString("option.verbose"));
+    options.addOption("r", "raw", false, bundleHelper.getString("option.raw"));
     options.addOption("h", "help", false, bundleHelper.getString("option.help"));
 
     CommandLineParser parser = new GnuParser();
@@ -205,6 +216,8 @@ public final class ProductInfo {
 
     if (cli.hasOption("v")) {
       System.out.println(getInstance().toLongString());
+    } else if (cli.hasOption("r")) {
+      printRawData();
     } else {
       System.out.println(getInstance().toShortString());
     }
