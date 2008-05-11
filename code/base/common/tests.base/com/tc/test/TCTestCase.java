@@ -54,11 +54,6 @@ import junit.framework.TestCase;
 public class TCTestCase extends TestCase {
 
   private static final long                DEFAULT_TIMEOUT_THRESHOLD = 60000;
-  private static final DateFormat          DATE_FORMAT               = new SimpleDateFormat("yyyy-MM-dd");
-
-  static {
-    DATE_FORMAT.setLenient(false);
-  }
 
   private final SynchronizedRef            beforeTimeoutException    = new SynchronizedRef(null);
 
@@ -458,7 +453,9 @@ public class TCTestCase extends TestCase {
 
   private Date parseDate(String date) {
     try {
-      return DATE_FORMAT.parse(date);
+      DateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+      format.setLenient(false);
+      return format.parse(date);
     } catch (ParseException e) {
       // throwing runtime exception should cause each test case to fail
       // (provided you're disabling from the constructor

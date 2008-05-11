@@ -95,7 +95,7 @@ public class VendorVmSignature {
 
     if (lowerCaseOS.startsWith("windows")) { return OS_WINDOWS; }
     if (lowerCaseOS.startsWith("linux")) { return OS_LINUX; }
-    if (lowerCaseOS.startsWith("mac") | lowerCaseOS.startsWith("darwin")) { return OS_MAC_OSX; }
+    if (lowerCaseOS.startsWith("mac") || lowerCaseOS.startsWith("darwin")) { return OS_MAC_OSX; }
     if (lowerCaseOS.startsWith("sunos")) {
       final String arch = source.getProperty("os.arch");
       if (arch != null) {

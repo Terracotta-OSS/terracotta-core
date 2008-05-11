@@ -8,10 +8,10 @@ package com.tc.exception;
  */
 public class ExceptionWrapperImpl implements ExceptionWrapper {
 
-  private final int MAX_STAR_COUNT = 79;
+  private static final int MAX_STAR_COUNT = 79;
 
   public String wrap(String message) {
-    message = (message == null) ? String.valueOf(message) : message;
+    message = String.valueOf(message);
     int starCount = longestLineCharCount(message);
     if(starCount > MAX_STAR_COUNT) {
       starCount = MAX_STAR_COUNT;

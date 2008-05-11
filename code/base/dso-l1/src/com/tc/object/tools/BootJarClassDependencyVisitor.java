@@ -20,8 +20,8 @@ public class BootJarClassDependencyVisitor implements ClassVisitor {
   private Set bootJarClassNames;
   private Map offendingClasses;
   private String currentClassName = "";
-  private String currentMethodName = "";
-  private int currentLineNumber = 0;
+//  private String currentMethodName = "";
+//  private int currentLineNumber = 0;
 
   private static final String classSlashNameToDotName(final String name) {
     return name.replace('/', '.');
@@ -84,7 +84,7 @@ public class BootJarClassDependencyVisitor implements ClassVisitor {
   }
 
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-    this.currentMethodName = name;
+//    this.currentMethodName = name;
     if (exceptions != null) {
       for (int i=0; i<exceptions.length; i++) {
         check(exceptions[i], "reference to a declared exception");
@@ -160,7 +160,7 @@ public class BootJarClassDependencyVisitor implements ClassVisitor {
     }
 
     public void visitLineNumber(int line, Label start) {
-      currentLineNumber = line;
+//      currentLineNumber = line;
     }
 
     public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {

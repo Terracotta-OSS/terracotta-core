@@ -568,6 +568,7 @@ public class ClientLockManagerTest extends TestCase {
     final ThreadID txID = new ThreadID(1);
     final int lockType = LockLevel.WRITE;
 
+    final List lockerException = new ArrayList();
     Thread locker = new Thread("LOCKER") {
       public void run() {
         try {
@@ -588,7 +589,7 @@ public class ClientLockManagerTest extends TestCase {
 
         } catch (Throwable e) {
           e.printStackTrace();
-          fail();
+          lockerException.add(e);
         }
       }
     };
@@ -621,16 +622,20 @@ public class ClientLockManagerTest extends TestCase {
     lockManager.unpause();
     unlockComplete.take();
     System.out.println("Done testing unlock(..)");
-
+    
     // TODO: test awardLock() and the other public methods I didn't have
-    // time to
-    // test...
+    // time to test...
+    
+    // assert locker thread never threw an exception
+    assertTrue("Locker thread threw an exception: " + lockerException, lockerException.isEmpty());
   }
 
   public void testResendBasics() throws Exception {
     final List requests = new ArrayList();
     final LinkedQueue flowControl = new LinkedQueue();
     final SynchronizedBoolean respond = new SynchronizedBoolean(true);
+    final List lockerException = new ArrayList();
+
     rmtLockManager.lockResponder = new LockResponder() {
       public void respondToLockRequest(final LockRequest request) {
         new Thread() {
@@ -644,7 +649,7 @@ public class ClientLockManagerTest extends TestCase {
               flowControl.put("responder: respondToLockRequest complete.  Lock awarded: " + respond.get());
             } catch (InterruptedException e) {
               e.printStackTrace();
-              fail();
+              lockerException.add(e);
             }
           }
         }.start();
@@ -693,6 +698,8 @@ public class ClientLockManagerTest extends TestCase {
     requests.clear();
     rmtLockManager.lockResponder = rmtLockManager.LOOPBACK_LOCK_RESPONDER;
 
+    // assert locker thread never threw an exception
+    assertTrue("Locker thread threw an exception: " + lockerException, lockerException.isEmpty());
   }
 
   public void testAwardWhenNotPending() throws Exception {

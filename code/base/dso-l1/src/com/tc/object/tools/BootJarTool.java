@@ -542,7 +542,7 @@ public class BootJarTool {
       // in the <additiona-boot-jar-classes/> section of your tc-config
       adaptClassIfNotAlreadyIncluded(BufferedWriter.class.getName(), BufferedWriterAdapter.class);
       adaptClassIfNotAlreadyIncluded(DataOutputStream.class.getName(), DataOutputStreamAdapter.class);
-    } catch (Exception e) {
+    } catch (Throwable e) {
       exit(bootJarHandler.getCreationErrorMessage(), e);
     }
 

@@ -25,7 +25,6 @@ public class ClientTransactionManagerTest extends TestCase {
   TestClientObjectManager      objMgr;
   TestLockManager              lockMgr;
   ClientTransactionManagerImpl clientTxnMgr;
-  MyObject                     pojo;
   SynchronizedRef              error = new SynchronizedRef(null);
 
   public void setUp() throws Exception {
@@ -36,8 +35,6 @@ public class ClientTransactionManagerTest extends TestCase {
     clientTxnMgr = new ClientTransactionManagerImpl(new TestChannelIDProvider(), objMgr,
                                                     new ThreadLockManagerImpl(lockMgr), clientTxnFactory, rmtTxnMgr,
                                                     new NullRuntimeLogger(), new MockClientTxMonitor());
-
-    pojo = new MyObject();
   }
 
   public void tearDown() throws Exception {

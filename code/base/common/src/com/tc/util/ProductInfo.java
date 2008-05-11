@@ -14,7 +14,6 @@ import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -28,7 +27,7 @@ import java.util.regex.Pattern;
 public final class ProductInfo {
   private static final ResourceBundleHelper bundleHelper                 = new ResourceBundleHelper(ProductInfo.class);
 
-  private static final DateFormat           DATE_FORMAT                  = new SimpleDateFormat("yyyyMMdd-HHmmss");
+  private static final String               DATE_FORMAT                  = "yyyyMMdd-HHmmss";
   private static final Pattern              KITIDPATTERN                 = Pattern.compile("(\\d+\\.\\d+).*");
   private static final String               BUILD_DATA_RESOURCE_NAME     = "/build-data.txt";
 
@@ -84,7 +83,7 @@ public final class ProductInfo {
     Date realTimestamp = null;
     if (timestampString != null) {
       try {
-        realTimestamp = DATE_FORMAT.parse(timestampString);
+        realTimestamp = new SimpleDateFormat(DATE_FORMAT).parse(timestampString);
       } catch (ParseException pe) {
         pe.printStackTrace();
         System.exit(1);
@@ -157,7 +156,7 @@ public final class ProductInfo {
 
   public String buildTimestampAsString() {
     if (this.timestamp == null) return UNKNOWN_VALUE;
-    else return DATE_FORMAT.format(this.timestamp);
+    else return new SimpleDateFormat(DATE_FORMAT).format(this.timestamp);
   }
 
   public String buildHost() {

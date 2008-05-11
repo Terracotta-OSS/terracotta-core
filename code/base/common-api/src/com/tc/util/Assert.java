@@ -314,7 +314,7 @@ public class Assert {
    */
   public static void assertEquals(byte[] expected, byte[] actual) {
     boolean expr = (expected == null) ? actual == null : Arrays.equals(expected, actual);
-    if (!expr && isEnabled()) { throw new TCAssertionError("Expected <" + expected + "> but got <" + actual + ">"); }
+    if (!expr && isEnabled()) { throw new TCAssertionError("Got differing byte[]s"); }
   }
 
   /**
