@@ -4,7 +4,6 @@
  */
 package org.terracotta.dso.views;
 
-import org.eclipse.jdt.internal.ui.util.SelectionUtil;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.ActionContributionItem;
 import org.eclipse.jface.action.IMenuCreator;
@@ -22,6 +21,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.actions.ActionContext;
 import org.terracotta.dso.actions.ActionUtil;
+import org.terracotta.ui.util.SelectionUtil;
 
 import com.terracottatech.config.OnLoad;
 

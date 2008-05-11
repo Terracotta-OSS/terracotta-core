@@ -4,9 +4,16 @@
  */
 package org.terracotta.ui.util;
 
+import org.eclipse.core.resources.IFolder;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.LayoutConstants;
 import org.eclipse.jface.util.Geometry;
+import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ViewerFilter;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CCombo;
 import org.eclipse.swt.custom.TableEditor;
@@ -29,11 +36,15 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.dialogs.ISelectionStatusValidator;
+import org.eclipse.ui.model.WorkbenchContentProvider;
+import org.eclipse.ui.model.WorkbenchLabelProvider;
+import org.terracotta.dso.TcPlugin;
 
 public final class SWTUtil {
 
   private SWTUtil() {
-  // cannot instantiate
+    // cannot instantiate
   }
 
   public static void makeIntField(final Text text) {
@@ -152,7 +163,7 @@ public final class SWTUtil {
         Rectangle area = tablePanel.getClientArea();
         Point preferredSize = table.computeSize(SWT.DEFAULT, SWT.DEFAULT);
         int width = area.width - 2 * table.getBorderWidth();
-        if ((preferredSize.y  + table.getHeaderHeight()) > area.height) {
+        if ((preferredSize.y + table.getHeaderHeight()) > area.height) {
           Point vBarSize = table.getVerticalBar().getSize();
           width -= vBarSize.x + 1; // don't know why +1 is needed, but it is
         }
@@ -333,5 +344,48 @@ public final class SWTUtil {
         }
       }
     });
+  }
+
+  private static class FolderSelectionContentProvider extends WorkbenchContentProvider {
+    public boolean hasChildren(Object element) {
+      Object[] children = getChildren(element);
+      for (int i = 0; i < children.length; i++)
+        if (children[i] instanceof IFolder) return true;
+      return false;
+    }
+  }
+
+  public static IFolder openSelectFolderDialog(final IProject project, String title, String message) {
+    FolderSelectionDialog dialog = new FolderSelectionDialog(TcPlugin.getActiveWorkbenchShell(),
+                                                             new WorkbenchLabelProvider(),
+                                                             new FolderSelectionContentProvider());
+
+    dialog.setInput(project.getWorkspace());
+    dialog.addFilter(new ViewerFilter() {
+      public boolean select(Viewer viewer, Object parentElement, Object element) {
+        if (element instanceof IProject) return ((IProject) element).equals(project);
+        return element instanceof IFolder;
+      }
+    });
+    dialog.setAllowMultiple(false);
+    dialog.setTitle(title);
+    dialog.setMessage(message);
+
+    dialog.setValidator(new ISelectionStatusValidator() {
+      public IStatus validate(Object[] selection) {
+        String id = TcPlugin.getPluginId();
+        if (selection == null || selection.length != 1 || !(selection[0] instanceof IFolder)) { return new Status(
+                                                                                                                  IStatus.ERROR,
+                                                                                                                  id,
+                                                                                                                  IStatus.ERROR,
+                                                                                                                  "",
+                                                                                                                  null); }
+        return new Status(IStatus.OK, id, IStatus.OK, "", null);
+      }
+    });
+
+    if (dialog.open() == Window.OK) { return (IFolder) dialog.getFirstResult(); }
+
+    return null;
   }
 }

@@ -3,11 +3,11 @@
  */
 package org.terracotta.dso.views;
 
-import org.eclipse.jdt.internal.ui.util.SelectionUtil;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.ui.actions.ActionContext;
+import org.terracotta.ui.util.SelectionUtil;
 
 public class HonorTransientAction extends Action {
   ConfigViewPart fPart;

@@ -202,7 +202,7 @@ public class ResourceDeltaVisitor implements IResourceDeltaVisitor {
       final Display display = Display.getDefault();
       display.syncExec(new Runnable() {
         public void run() {
-          final Shell shell = Display.getCurrent().getActiveShell();
+          final Shell shell = TcPlugin.getActiveWorkbenchShell();
           RelaunchDialog relaunchDialog = new RelaunchDialog(shell, project, serverLaunches, launches);
           final int returnCode = relaunchDialog.open();
           if (returnCode == RelaunchDialog.CONTINUE_ID) { return; }

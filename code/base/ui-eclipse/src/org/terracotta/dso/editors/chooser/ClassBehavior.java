@@ -4,28 +4,26 @@
  */
 package org.terracotta.dso.editors.chooser;
 
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFolder;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
-import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.internal.core.BinaryType;
-import org.eclipse.jdt.internal.core.SourceType;
-import org.eclipse.jdt.internal.ui.packageview.ClassPathContainer;
-import org.eclipse.jface.viewers.ISelectionChangedListener;
-import org.eclipse.jface.viewers.SelectionChangedEvent;
-import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.swt.SWT;
+import org.eclipse.ui.dialogs.ISelectionStatusValidator;
+import org.terracotta.dso.TcPlugin;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
-public final class ClassBehavior implements NavigatorBehavior {
+public final class ClassBehavior extends AbstractNavigatorBehavior {
 
   public static final String  ADD_MSG      = "Enter Fully Qualified Class Name";
   private static final String SELECT_CLASS = "Select Class";
@@ -47,8 +45,17 @@ public final class ClassBehavior implements NavigatorBehavior {
     return new ViewerFilter() {
       public boolean select(Viewer viewer, Object parentElement, Object element) {
         if (element instanceof IJavaProject) return true;
-        if (element instanceof ClassPathContainer || element instanceof ICompilationUnit || element instanceof IType
-            || element instanceof IPackageFragmentRoot || element instanceof IClassFile) { return true; }
+        if (parentElement instanceof IJavaProject) {
+          if (element instanceof IFile || element instanceof IFolder) return false;
+          if (element instanceof IPackageFragment) {
+            try {
+              return ((IPackageFragment) element).containsJavaResources();
+            } catch (JavaModelException jme) {/**/
+            }
+          }
+          return true;
+        }
+        if (element instanceof ICompilationUnit || element instanceof IType || element instanceof IClassFile) { return true; }
         if (element instanceof IPackageFragment) {
           try {
             return ((IPackageFragment) element).containsJavaResources();
@@ -60,30 +67,29 @@ public final class ClassBehavior implements NavigatorBehavior {
     };
   }
 
-  public ISelectionChangedListener getSelectionChangedListener(final PackageNavigator nav) {
-    return new ISelectionChangedListener() {
-      public void selectionChanged(SelectionChangedEvent event) {
-        m_selectedValues.removeAll(m_selectedValues);
-        StructuredSelection selection = (StructuredSelection) event.getSelection();
-        List selectedClasses = new ArrayList();
-        if (!selection.isEmpty()) {
-          Object element;
-          for (Iterator i = selection.iterator(); i.hasNext();) {
-            element = i.next();
-            if (element instanceof SourceType || element instanceof BinaryType) {
-              IType clazz = (IType) element;
-              m_selectedValues.add(clazz.getFullyQualifiedName());
-              selectedClasses.add(element);
-            }
+  public ISelectionStatusValidator getValidator() {
+    return new ISelectionStatusValidator() {
+      public IStatus validate(Object[] selection) {
+        m_selectedValues.clear();
+        for (Object element : selection) {
+          if (element instanceof IType) {
+            IType clazz = (IType) element;
+            m_selectedValues.add(clazz.getFullyQualifiedName());
           }
         }
-        if (selectedClasses.size() > 0) nav.okButtonEnabled(true);
-        else nav.okButtonEnabled(false);
+        String id = TcPlugin.getPluginId();
+        if (m_selectedValues.size() == 0) { return new Status(IStatus.ERROR, id, IStatus.ERROR, "", null); }
+        return new Status(IStatus.OK, id, IStatus.OK, "", null);
       }
     };
   }
 
   public Object getValues() {
     return m_selectedValues.toArray(new String[0]);
+  }
+
+  @Override
+  public String getMessage() {
+    return ADD_MSG;
   }
 }

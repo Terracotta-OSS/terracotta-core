@@ -36,6 +36,7 @@ import org.eclipse.ui.texteditor.ITextEditor;
 import org.terracotta.dso.JdtUtils;
 import org.terracotta.dso.TcPlugin;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Iterator;
 
 /**
@@ -351,20 +352,24 @@ public class ActionUtil {
     return null;
   }
 
-  public static String getStatusMessages(Exception e) {
-    String msg = e.getMessage();
+  public static String getStatusMessages(Throwable throwable) {
+    if(throwable instanceof InvocationTargetException) {
+      throwable = ((InvocationTargetException)throwable).getCause();
+    }
 
-    if(e instanceof CoreException) {
-      CoreException ce       = (CoreException)e;	
+    String msg = throwable.getMessage();
+
+    if(throwable instanceof CoreException) {
+      CoreException ce       = (CoreException)throwable;	
       IStatus       status   = ce.getStatus();
       IStatus[]     children = status.getChildren();
 
-      for(int i = 0; i < children.length; i++) {
-        msg += "\n" + children[i].getMessage();
+      if(children.length > 0) {
+        msg += "\n";
+        for(int i = 0; i < children.length; i++) {
+          msg += "\n" + children[i].getMessage();
+        }
       }
-
-      System.err.println(msg);
-      ce.printStackTrace(System.err);
     }
 
     return msg;

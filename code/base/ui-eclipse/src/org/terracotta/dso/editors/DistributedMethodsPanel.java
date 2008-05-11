@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.terracotta.dso.editors;
 
@@ -84,9 +85,9 @@ public class DistributedMethodsPanel extends ConfigurationEditorPanel {
   }
 
   private void testDisableRemoveButton() {
-    m_layout.m_removeButton.setEnabled(m_layout.m_table.getSelectionCount()>0);
+    m_layout.m_removeButton.setEnabled(m_layout.m_table.getSelectionCount() > 0);
   }
-  
+
   private void addListeners() {
     m_layout.m_addButton.addSelectionListener(m_addHandler);
     m_layout.m_removeButton.addSelectionListener(m_removeHandler);
@@ -228,12 +229,12 @@ public class DistributedMethodsPanel extends ConfigurationEditorPanel {
     }
   }
 
-  class AddHandler extends SelectionAdapter {
+  private class AddHandler extends SelectionAdapter {
     public void widgetSelected(SelectionEvent e) {
       m_layout.m_table.forceFocus();
       NavigatorBehavior behavior = new MethodBehavior();
       ExpressionChooser chooser = new ExpressionChooser(getShell(), behavior.getTitle(), MethodBehavior.ADD_MSG,
-          m_project, behavior);
+                                                        m_project, behavior);
       chooser.addValueListener(new UpdateEventListener() {
         public void handleUpdate(UpdateEvent updateEvent) {
           String[] items = (String[]) updateEvent.data;
@@ -247,7 +248,7 @@ public class DistributedMethodsPanel extends ConfigurationEditorPanel {
     }
   }
 
-  class RemoveHandler extends SelectionAdapter {
+  private class RemoveHandler extends SelectionAdapter {
     public void widgetSelected(SelectionEvent e) {
       m_layout.m_table.forceFocus();
       int[] selection = m_layout.m_table.getSelectionIndices();
@@ -260,13 +261,13 @@ public class DistributedMethodsPanel extends ConfigurationEditorPanel {
     }
   }
 
-  class TableSelectionListener extends SelectionAdapter {
+  private class TableSelectionListener extends SelectionAdapter {
     public void widgetSelected(SelectionEvent e) {
       m_layout.m_removeButton.setEnabled(true);
     }
   }
 
-  class TableDataListener implements Listener {
+  private class TableDataListener implements Listener {
     public void handleEvent(Event e) {
       TableItem item = (TableItem) e.item;
       MethodExpression expr = (MethodExpression) item.getData();

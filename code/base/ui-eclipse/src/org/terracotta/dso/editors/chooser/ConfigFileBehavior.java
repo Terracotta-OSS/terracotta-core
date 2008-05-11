@@ -5,10 +5,11 @@
 package org.terracotta.dso.editors.chooser;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.jface.viewers.ISelectionChangedListener;
-import org.eclipse.jface.viewers.SelectionChangedEvent;
-import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.ui.dialogs.ISelectionStatusValidator;
+import org.terracotta.dso.TcPlugin;
 
 public class ConfigFileBehavior extends FileBehavior {
   private static final String SELECT_CONFIG_FILE_LOCATION = "Select Config File Location";
@@ -25,14 +26,11 @@ public class ConfigFileBehavior extends FileBehavior {
     return result;
   }
 
-  public ISelectionChangedListener getSelectionChangedListener(final PackageNavigator nav) {
-    return new ISelectionChangedListener() {
-      public void selectionChanged(SelectionChangedEvent event) {
+  public ISelectionStatusValidator getValidator() {
+    return new ISelectionStatusValidator() {
+      public IStatus validate(Object[] selection) {
         m_selectedValue = null;
-        nav.okButtonEnabled(true);
-        StructuredSelection selection = (StructuredSelection) event.getSelection();
-        if (!selection.isEmpty()) {
-          Object element = selection.getFirstElement();
+        for (Object element : selection) {
           if (element instanceof IFile) {
             IFile file = (IFile) element;
             if ("xml".equals(file.getFileExtension())) {
@@ -40,7 +38,9 @@ public class ConfigFileBehavior extends FileBehavior {
             }
           }
         }
-        nav.okButtonEnabled(m_selectedValue != null);
+        String id = TcPlugin.getPluginId();
+        if (m_selectedValue == null) { return new Status(IStatus.ERROR, id, IStatus.ERROR, "", null); }
+        return new Status(IStatus.OK, id, IStatus.OK, "", null);
       }
     };
   }

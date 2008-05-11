@@ -187,17 +187,15 @@ public class ConfigurationEditor extends MultiPageEditorPart
   }
   
   private void setTimer(boolean start) {
-    if (start) m_display.timerExec(2000, m_parseTimer);
+    if (start) m_display.timerExec(1000, m_parseTimer);
     else m_display.timerExec(-1, m_parseTimer);
   }
 
   private class ParseTimer implements Runnable {
     public void run() {
-      if (getActivePage() == XML_EDITOR_PAGE_INDEX) {
-        m_syncXmlText = true;
-        syncXmlModel();
-        m_syncXmlText = false;
-      }
+      m_syncXmlText = true;
+      syncXmlModel();
+      m_syncXmlText = false;
     }
   }
 
@@ -241,7 +239,12 @@ public class ConfigurationEditor extends MultiPageEditorPart
     try {
       IEditorInput input = getEditorInput();
 
-      addPage(m_xmlEditorPageIndex = pageIndex, m_xmlEditor = new XMLEditor(), input);
+      m_xmlEditor = new XMLEditor() {
+        public void doSave(IProgressMonitor progressMonitor) {
+          ConfigurationEditor.this.doSave(progressMonitor);
+        }
+      };
+      addPage(m_xmlEditorPageIndex = pageIndex, m_xmlEditor, input);
       setPageText(m_xmlEditorPageIndex, m_xmlEditor.getTitle());
 
       m_xmlEditor.addTextInputListener(m_textInputListener);
@@ -296,7 +299,7 @@ public class ConfigurationEditor extends MultiPageEditorPart
   public void doSave(IProgressMonitor monitor) {
     if (haveActiveConfig()) setTimer(false);
     TcPlugin.getDefault().ignoreNextConfigChange();
-    m_xmlEditor.doSave(monitor);
+    m_xmlEditor.doSaveWork(monitor);
     m_syncXmlText = true;
     syncXmlModel();
     m_syncXmlText = false;

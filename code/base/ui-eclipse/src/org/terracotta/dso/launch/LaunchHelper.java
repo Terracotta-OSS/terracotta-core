@@ -167,10 +167,9 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
       wc.setAttribute(ATTR_VM_ARGUMENTS,
         cpProp + configProp + bootProp + " " + projectNameProp + " " + vmArgs);
 
-      plugin.ensureRuntimeDirectory(project, monitor);
-
       return wc;
     } catch(Throwable t) {
+      t.printStackTrace();
       String msg = "Unable to launch '"+config.getName()+"': "+t.getLocalizedMessage();
       Status status = new Status(IStatus.ERROR, TcPlugin.getPluginId(), 1, msg, t);
       throw new CoreException(status);

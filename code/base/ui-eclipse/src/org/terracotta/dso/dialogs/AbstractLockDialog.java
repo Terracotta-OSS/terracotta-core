@@ -13,7 +13,6 @@ import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
@@ -249,7 +248,7 @@ public abstract class AbstractLockDialog extends AbstractApplicationEventDialog 
             try {
               region = document.getLineInformation(lineNumber);
             } catch (BadLocationException e) {
-              JavaPlugin.log(e);
+              TcPlugin.getDefault().openError("Type ("+type+") lineNumber("+lineNumber+")", e);
             }
           } else if (method != null) {
             ISourceRange srcRange = method.getNameRange();
@@ -289,7 +288,7 @@ public abstract class AbstractLockDialog extends AbstractApplicationEventDialog 
           }
         }
       } catch (JavaModelException jme) {
-        JavaPlugin.log(jme);
+        TcPlugin.getDefault().openError("stackElementInfo("+stackElemInfo+")", jme);
       }
 
       item.setImage(image);
@@ -330,7 +329,7 @@ public abstract class AbstractLockDialog extends AbstractApplicationEventDialog 
         buffer = openable.getBuffer();
       }
     } catch (JavaModelException e) {
-      JavaPlugin.log(e);
+      TcPlugin.getDefault().openError("member("+member+")", e);
     }
     return buffer;
   }

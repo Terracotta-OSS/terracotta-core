@@ -4,7 +4,6 @@
  */
 package org.terracotta.dso.views;
 
-import org.eclipse.jdt.internal.ui.util.SelectionUtil;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.ActionContributionItem;
 import org.eclipse.jface.action.IMenuCreator;
@@ -13,6 +12,7 @@ import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.ui.actions.ActionContext;
+import org.terracotta.ui.util.SelectionUtil;
 
 import com.terracottatech.config.LockLevel;
 

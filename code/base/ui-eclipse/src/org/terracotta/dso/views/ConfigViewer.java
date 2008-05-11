@@ -2,7 +2,6 @@ package org.terracotta.dso.views;
 
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.MenuManager;
-import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyListener;
@@ -16,7 +15,7 @@ import org.terracotta.dso.TcPlugin;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 class ConfigViewer extends TreeViewer {
-  private ConfigViewPart fPart;
+  private ConfigViewPart        fPart;
   private ConfigContentProvider fContentProvider;
 
   ConfigViewer(Composite parent, ConfigViewPart part) {
@@ -35,8 +34,8 @@ class ConfigViewer extends TreeViewer {
   }
 
   void setConfig(TcConfig config) {
-    if(fContentProvider == null) return;
-    if(config != null && config != TcPlugin.BAD_CONFIG) {
+    if (fContentProvider == null) return;
+    if (config != null && config != TcPlugin.BAD_CONFIG) {
       setInput(getTreeRoot(config));
     } else {
       clearViewer();
@@ -63,13 +62,13 @@ class ConfigViewer extends TreeViewer {
     return new TreeRoot(root);
   }
 
-  void initContextMenu(IMenuListener menuListener, IWorkbenchPartSite viewSite, ISelectionProvider selectionProvider) {
-    MenuManager menuMgr= new MenuManager();
+  void initContextMenu(IMenuListener menuListener, IWorkbenchPartSite viewSite) {
+    MenuManager menuMgr = new MenuManager();
     menuMgr.setRemoveAllWhenShown(true);
     menuMgr.addMenuListener(menuListener);
-    Menu menu= menuMgr.createContextMenu(getTree());
+    Menu menu = menuMgr.createContextMenu(getTree());
     getTree().setMenu(menu);
-    viewSite.registerContextMenu(menuMgr, selectionProvider);
+    viewSite.registerContextMenu(menuMgr, this);
   }
 
   void refreshRoots() {
@@ -78,9 +77,9 @@ class ConfigViewer extends TreeViewer {
   }
 
   void refreshRoot(int index) {
-    if(fContentProvider.rootsWrapper != null) {
+    if (fContentProvider.rootsWrapper != null) {
       RootWrapper wrapper = fContentProvider.rootsWrapper.getChildAt(index);
-      if(wrapper != null) {
+      if (wrapper != null) {
         refresh(wrapper);
       }
     }
@@ -92,9 +91,9 @@ class ConfigViewer extends TreeViewer {
   }
 
   void refreshDistributedMethod(int index) {
-    if(fContentProvider.distributedMethodsWrapper != null) {
+    if (fContentProvider.distributedMethodsWrapper != null) {
       DistributedMethodWrapper wrapper = fContentProvider.distributedMethodsWrapper.getChildAt(index);
-      if(wrapper != null) {
+      if (wrapper != null) {
         refresh(wrapper);
       }
     }
@@ -106,9 +105,9 @@ class ConfigViewer extends TreeViewer {
   }
 
   void refreshBootClass(int index) {
-    if(fContentProvider.additionalBootJarClassesWrapper != null) {
+    if (fContentProvider.additionalBootJarClassesWrapper != null) {
       BootClassWrapper wrapper = fContentProvider.additionalBootJarClassesWrapper.getChildAt(index);
-      if(wrapper != null) {
+      if (wrapper != null) {
         refresh(wrapper);
       }
     }
@@ -120,73 +119,73 @@ class ConfigViewer extends TreeViewer {
   }
 
   void refreshTransientField(int index) {
-    if(fContentProvider.transientFieldsWrapper != null) {
+    if (fContentProvider.transientFieldsWrapper != null) {
       TransientFieldWrapper wrapper = fContentProvider.transientFieldsWrapper.getChildAt(index);
-      if(wrapper != null) {
+      if (wrapper != null) {
         refresh(wrapper);
       }
     }
   }
 
   void refreshNamedLock(int index) {
-    if(fContentProvider.namedLocksWrapper != null) {
+    if (fContentProvider.namedLocksWrapper != null) {
       NamedLockWrapper wrapper = fContentProvider.namedLocksWrapper.getChildAt(index);
-      if(wrapper != null) {
+      if (wrapper != null) {
         refresh(wrapper);
       }
     }
   }
-  
+
   void refreshNamedLocks() {
-    if(fContentProvider.namedLocksWrapper != null) {
+    if (fContentProvider.namedLocksWrapper != null) {
       refresh(fContentProvider.namedLocksWrapper);
       expandToLevel(fContentProvider.namedLocksWrapper, ALL_LEVELS);
     }
   }
 
   void refreshAutolock(int index) {
-    if(fContentProvider.autolocksWrapper != null) {
+    if (fContentProvider.autolocksWrapper != null) {
       AutolockWrapper wrapper = fContentProvider.autolocksWrapper.getChildAt(index);
-      if(wrapper != null) {
+      if (wrapper != null) {
         refresh(wrapper);
       }
     }
   }
 
   void refreshAutolocks() {
-    if(fContentProvider.autolocksWrapper != null) {
+    if (fContentProvider.autolocksWrapper != null) {
       refresh(fContentProvider.locksWrapper);
       expandToLevel(fContentProvider.locksWrapper, ALL_LEVELS);
     }
   }
 
   void refreshIncludeRule(int index) {
-    if(fContentProvider.includesWrapper != null) {
+    if (fContentProvider.includesWrapper != null) {
       IncludeWrapper wrapper = fContentProvider.includesWrapper.getChildAt(index);
-      if(wrapper != null) {
+      if (wrapper != null) {
         refresh(wrapper);
       }
     }
   }
 
   void refreshIncludeRules() {
-    if(fContentProvider.includesWrapper != null) {
+    if (fContentProvider.includesWrapper != null) {
       refresh(fContentProvider.includesWrapper);
       expandToLevel(fContentProvider.includesWrapper, ALL_LEVELS);
     }
   }
 
   void refreshExcludeRule(int index) {
-    if(fContentProvider.excludesWrapper != null) {
+    if (fContentProvider.excludesWrapper != null) {
       ExcludeWrapper wrapper = fContentProvider.excludesWrapper.getChildAt(index);
-      if(wrapper != null) {
+      if (wrapper != null) {
         refresh(wrapper);
       }
     }
   }
-  
+
   void refreshExcludeRules() {
-    if(fContentProvider.excludesWrapper != null) {
+    if (fContentProvider.excludesWrapper != null) {
       refresh(fContentProvider.excludesWrapper);
       expandToLevel(fContentProvider.excludesWrapper, ALL_LEVELS);
     }
@@ -198,7 +197,7 @@ class ConfigViewer extends TreeViewer {
   }
 
   void clearViewer() {
-    if(fContentProvider == null) return;
+    if (fContentProvider == null) return;
     setInput(TreeRoot.EMPTY_ROOT);
   }
 }

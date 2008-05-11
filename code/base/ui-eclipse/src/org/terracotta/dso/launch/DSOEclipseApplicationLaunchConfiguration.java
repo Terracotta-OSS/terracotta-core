@@ -19,9 +19,7 @@ import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.IVMInstallType;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.pde.core.plugin.IPluginModelBase;
-import org.eclipse.pde.internal.core.PDECore;
-import org.eclipse.pde.internal.core.PluginModelManager;
-import org.eclipse.pde.internal.core.WorkspaceModelManager;
+import org.eclipse.pde.core.plugin.PluginRegistry;
 import org.eclipse.pde.ui.launcher.EclipseApplicationLaunchConfiguration;
 import org.eclipse.pde.ui.launcher.IPDELauncherConstants;
 import org.terracotta.dso.TcPlugin;
@@ -29,7 +27,7 @@ import org.terracotta.dso.TcPlugin;
 import java.util.ArrayList;
 
 /**
- * Launcher for DSO Eclipse applications. 
+ * Launcher for DSO Eclipse applications.
  */
 
 public class DSOEclipseApplicationLaunchConfiguration extends EclipseApplicationLaunchConfiguration implements
@@ -40,7 +38,7 @@ public class DSOEclipseApplicationLaunchConfiguration extends EclipseApplication
   public void launch(ILaunchConfiguration config, String mode, ILaunch launch, IProgressMonitor monitor)
       throws CoreException {
     ILaunchConfigurationWorkingCopy wc = fLaunchHelper.setup(config, mode, launch, monitor);
-    if(wc != null) {
+    if (wc != null) {
       super.launch(wc, mode, launch, monitor);
     }
   }
@@ -71,14 +69,10 @@ public class DSOEclipseApplicationLaunchConfiguration extends EclipseApplication
       Status status = new Status(IStatus.ERROR, TcPlugin.getPluginId(), 1, msg, null);
       throw new CoreException(status);
     }
-    PluginModelManager manager = PDECore.getDefault().getModelManager();
     IProject[] projs = ResourcesPlugin.getWorkspace().getRoot().getProjects();
     for (int i = 0; i < projs.length; i++) {
-      if (!WorkspaceModelManager.isPluginProject(projs[i])) {
-        continue;
-      }
-      IPluginModelBase base = manager.findModel(projs[i]);
-      if (appNameRoot.equals(base.getPluginBase().getId())) { return projs[i].getName(); }
+      IPluginModelBase base = PluginRegistry.findModel(projs[i]);
+      if (base != null && appNameRoot.equals(base.getPluginBase().getId())) { return projs[i].getName(); }
     }
     String msg = "Unable to determine project for pluginId '" + appNameRoot + "'";
     Status status = new Status(IStatus.ERROR, TcPlugin.getPluginId(), 1, msg, null);
@@ -89,19 +83,18 @@ public class DSOEclipseApplicationLaunchConfiguration extends EclipseApplication
     String vm = configuration.getAttribute(IPDELauncherConstants.VMINSTALL, (String) null);
     IVMInstall launcher = getVMInstall(vm);
     if (launcher == null) {
-      String msg = "Cannot locate VMInstall for '"+vm+"'";
+      String msg = "Cannot locate VMInstall for '" + vm + "'";
       Status status = new Status(IStatus.ERROR, TcPlugin.getPluginId(), 1, msg, null);
       throw new CoreException(status);
     }
     return launcher;
   }
-  
+
   public static IVMInstall getVMInstall(String name) {
     if (name != null) {
       IVMInstall[] installs = getAllVMInstances();
       for (int i = 0; i < installs.length; i++) {
-        if (installs[i].getName().equals(name))
-          return installs[i];
+        if (installs[i].getName().equals(name)) return installs[i];
       }
     }
     return JavaRuntime.getDefaultVMInstall();

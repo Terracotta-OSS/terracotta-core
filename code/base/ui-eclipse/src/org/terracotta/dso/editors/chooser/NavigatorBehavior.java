@@ -5,18 +5,26 @@
 package org.terracotta.dso.editors.chooser;
 
 import org.eclipse.jdt.core.IJavaProject;
-import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.ILabelProvider;
+import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.ViewerFilter;
+import org.eclipse.ui.dialogs.ISelectionStatusValidator;
 
 public interface NavigatorBehavior {
 
+  ILabelProvider getLabelProvider();
+  
+  ITreeContentProvider getContentProvider();
+  
   ViewerFilter getFilter(IJavaProject javaProject);
 
-  ISelectionChangedListener getSelectionChangedListener(PackageNavigator navigator);
-
+  ISelectionStatusValidator getValidator();
+  
   Object getValues();
   
   int style();
+  
+  String getMessage();
   
   String getTitle();
 }

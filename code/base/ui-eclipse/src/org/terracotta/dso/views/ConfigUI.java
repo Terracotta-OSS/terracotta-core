@@ -8,8 +8,6 @@ import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMember;
-import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.javaeditor.EditorUtility;
 import org.eclipse.jdt.ui.JavaUI;
 import org.eclipse.jface.text.IRegion;
@@ -17,7 +15,6 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.PartInitException;
 import org.terracotta.dso.ConfigurationHelper;
 import org.terracotta.dso.TcPlugin;
 import org.terracotta.dso.actions.ActionUtil;
@@ -67,10 +64,8 @@ public class ConfigUI {
         IEditorPart editor = EditorUtility.openInEditor(element, false);
         JavaUI.revealInEditor(editor, element);
         return editor;
-      } catch (JavaModelException e) {
-        JavaPlugin.log(e);
-      } catch (PartInitException e) {
-        JavaPlugin.log(e);
+      } catch (Exception e) {
+        TcPlugin.getDefault().openError("Java element("+element+")", e);
       }
     }
     return null;
@@ -82,10 +77,8 @@ public class ConfigUI {
         IEditorPart editor = EditorUtility.openInEditor(element, false);
         EditorUtility.revealInEditor(editor, region);
         return editor;
-      } catch (JavaModelException e) {
-        JavaPlugin.log(e);
-      } catch (PartInitException e) {
-        JavaPlugin.log(e);
+      } catch (Exception e) {
+        TcPlugin.getDefault().openError("Java element("+element+")", e);
       }
     }
     return null;

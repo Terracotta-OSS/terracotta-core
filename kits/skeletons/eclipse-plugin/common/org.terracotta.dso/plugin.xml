@@ -232,6 +232,7 @@
             <separator name="group3"/>
             <separator name="group4"/>
             <separator name="group5"/>
+            <separator name="group6"/>
          </menu>
          <action
                label="Add Terracotta nature"
@@ -286,12 +287,19 @@
                </enablement>
          </action>
          <action
+               label="About Terracotta"
+               class="org.terracotta.dso.actions.AboutAction"
+               menubarPath="org.terracotta.dso.workbenchActionSetMenu/group6"
+               enablesFor="*"
+               id="aboutAction">
+         </action>
+         <action
                label="Help"
                style="pulldown"
                class="org.terracotta.dso.actions.HelpHandler"
                menubarPath="org.terracotta.dso.workbenchActionSetMenu/group5"
                enablesFor="*"
-               id="workbenchHelperHandlerAction">
+               id="helpAction">
          </action>
          <action
                id="reportDefectAction"

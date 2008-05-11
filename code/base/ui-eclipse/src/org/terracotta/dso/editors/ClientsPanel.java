@@ -4,6 +4,7 @@
  */
 package org.terracotta.dso.editors;
 
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -15,16 +16,11 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 import org.terracotta.dso.TcPlugin;
-import org.terracotta.dso.editors.chooser.FolderBehavior;
-import org.terracotta.dso.editors.chooser.NavigatorBehavior;
-import org.terracotta.dso.editors.chooser.PackageNavigator;
 import org.terracotta.dso.editors.xmlbeans.XmlObjectStructureChangeEvent;
 import org.terracotta.dso.editors.xmlbeans.XmlObjectStructureListener;
 import org.terracotta.dso.editors.xmlbeans.XmlStringField;
 import org.terracotta.ui.util.SWTUtil;
 
-import com.tc.util.event.UpdateEvent;
-import com.tc.util.event.UpdateEventListener;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
@@ -217,31 +213,24 @@ public class ClientsPanel extends ConfigurationEditorPanel implements Configurat
 
   private class LogsBrowseSelectionHandler extends SelectionAdapter {
     public void widgetSelected(SelectionEvent e) {
-      NavigatorBehavior behavior = new FolderBehavior();
-      PackageNavigator dialog = new PackageNavigator(getShell(), behavior.getTitle(), m_project, behavior);
-      dialog.addValueListener(new UpdateEventListener() {
-        public void handleUpdate(UpdateEvent event) {
-          ensureXmlObject();
-          m_client.setLogs((String) event.data);
-          fireClientChanged();
-        }
-      });
-      dialog.open();
+      IFolder folder = SWTUtil.openSelectFolderDialog(m_project, "Select logs folder", "Choose a folder for the log area");
+      if(folder != null) {
+        m_layout.m_logsLocation.setText(folder.getProjectRelativePath().toString());
+        m_layout.m_logsLocation.selectAll();
+        m_layout.m_logsLocation.forceFocus();
+      }
     }
   }
 
   private class StatisticsBrowseSelectionHandler extends SelectionAdapter {
     public void widgetSelected(SelectionEvent e) {
-      NavigatorBehavior behavior = new FolderBehavior();
-      PackageNavigator dialog = new PackageNavigator(getShell(), behavior.getTitle(), m_project, behavior);
-      dialog.addValueListener(new UpdateEventListener() {
-        public void handleUpdate(UpdateEvent event) {
-          ensureXmlObject();
-          m_client.setStatistics((String) event.data);
-          fireClientChanged();
-        }
-      });
-      dialog.open();
+      IFolder folder = SWTUtil.openSelectFolderDialog(m_project, "Select statistics folder", "Choose a folder for the statistics database area");
+      if(folder != null) {
+        m_layout.m_statisticsLocation.setText(folder.getProjectRelativePath().toString());
+        m_layout.m_statisticsLocation.selectAll();
+        m_layout.m_statisticsLocation.forceFocus();
+      }
     }
   }
+  
 }

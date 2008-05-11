@@ -6,24 +6,25 @@ package org.terracotta.dso.editors.chooser;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
-import org.eclipse.jdt.core.IClasspathEntry;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaModel;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.internal.ui.packageview.ClassPathContainer;
-import org.eclipse.jface.viewers.ISelectionChangedListener;
-import org.eclipse.jface.viewers.SelectionChangedEvent;
-import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.swt.SWT;
+import org.eclipse.ui.dialogs.ISelectionStatusValidator;
+import org.terracotta.dso.TcPlugin;
 
-public class FileBehavior implements NavigatorBehavior {
+public class FileBehavior extends AbstractNavigatorBehavior {
 
-  private static final String SELECT_FILE = "Select File";
+  private static final String SELECT_FILE     = "Select File";
+  private static final String SELECT_FILE_MSG = "Select a file";
   protected String            m_selectedValue;
 
   public int style() {
@@ -59,6 +60,7 @@ public class FileBehavior implements NavigatorBehavior {
   }
 
   protected boolean filterSelect(Viewer viewer, Object parentElement, Object element) {
+    if(parentElement instanceof ICompilationUnit || parentElement instanceof IClassFile) return false;
     if (element instanceof IJavaModel) return true;
     if (element instanceof IJavaProject) return true;
     if (element instanceof IFolder) return true;
@@ -67,40 +69,45 @@ public class FileBehavior implements NavigatorBehavior {
       IPackageFragment packageFragment = (IPackageFragment) element;
       if (isPackageFragmentBinaryKind(packageFragment)
           || (packageFragment.isDefaultPackage() && !packageFragmentContainsJavaResources(packageFragment))) { return false; }
+      try {
+        return ((IPackageFragment) element).containsJavaResources();
+      } catch (JavaModelException jme) {/**/
+      }
       return true;
     }
     if (element instanceof IPackageFragmentRoot) return true;
-    if (element instanceof ClassPathContainer) {
-      ClassPathContainer container = (ClassPathContainer) element;
-      IClasspathEntry cpe = container.getClasspathEntry();
-      return (cpe.getEntryKind() == IClasspathEntry.CPE_SOURCE);
-    }
+//    if (element instanceof ClassPathContainer) {
+//      ClassPathContainer container = (ClassPathContainer) element;
+//      IClasspathEntry cpe = container.getClasspathEntry();
+//      return (cpe.getEntryKind() == IClasspathEntry.CPE_SOURCE);
+//    }
     if (element instanceof ICompilationUnit) return true;
     return false;
   }
 
-  public ISelectionChangedListener getSelectionChangedListener(final PackageNavigator nav) {
-    return new ISelectionChangedListener() {
-      public void selectionChanged(SelectionChangedEvent event) {
-        nav.okButtonEnabled(true);
-        StructuredSelection selection = (StructuredSelection) event.getSelection();
-        if (!selection.isEmpty()) {
-          Object element = selection.getFirstElement();
-          if (element != null) {
-            if (element instanceof IJavaProject || element instanceof IFolder) {
-              nav.okButtonEnabled(false);
-            } else if (element instanceof IFile) {
-              IFile file = (IFile) element;
-              m_selectedValue = file.getProjectRelativePath().toString();
-              nav.okButtonEnabled(true);
-            }
+  public ISelectionStatusValidator getValidator() {
+    return new ISelectionStatusValidator() {
+      public IStatus validate(Object[] selection) {
+        m_selectedValue = null;
+        for (Object element : selection) {
+          if (element instanceof IFile) {
+            IFile file = (IFile) element;
+            m_selectedValue = file.getProjectRelativePath().toString();
           }
         }
+        String id = TcPlugin.getPluginId();
+        if (m_selectedValue == null) { return new Status(IStatus.ERROR, id, IStatus.ERROR, "", null); }
+        return new Status(IStatus.OK, id, IStatus.OK, "", null);
       }
     };
   }
 
   public Object getValues() {
     return m_selectedValue;
+  }
+
+  @Override
+  public String getMessage() {
+    return SELECT_FILE_MSG;
   }
 }

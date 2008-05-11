@@ -42,6 +42,12 @@ public class XMLEditor extends TextEditor implements IGotoMarker {
   }
   
   public void doSave(IProgressMonitor progressMonitor) {
+//    updateState(getEditorInput());
+//    validateState(getEditorInput());
+//    performSave(true, progressMonitor);
+  }
+
+  public void doSaveWork(IProgressMonitor progressMonitor) {
     updateState(getEditorInput());
     validateState(getEditorInput());
     performSave(true, progressMonitor);

@@ -30,7 +30,7 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IActionDelegate;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
@@ -79,20 +79,19 @@ public class BuildBootJarAction extends Action implements IActionDelegate, IWork
   public void setJREContainerPath(String path) {
     m_jreContainerPath = path;
   }
-
+ 
   public void run(IAction action) {
     try {
       IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
       window.run(true, true, this);
     } catch (Exception e) {
-      e.printStackTrace();
-      Throwable t = e.getCause();
-      if (Display.getCurrent() != null) {
-        ExceptionDialog dialog = new ExceptionDialog(TcPlugin.getStandardDisplay().getActiveShell(), EXCEPTION_TITLE,
-                                                     EXCEPTION_MESSAGE, t.getMessage());
+      Throwable cause = e.getCause();
+      Shell activeShell = TcPlugin.getActiveWorkbenchShell();
+      if (activeShell != null) {
+        ExceptionDialog dialog = new ExceptionDialog(activeShell, EXCEPTION_TITLE, EXCEPTION_MESSAGE, cause);
         dialog.open();
       } else {
-        TcPlugin.getDefault().openError("Building bootjar", t);
+        TcPlugin.getDefault().openError("Building bootjar", cause);
       }
     }
   }
@@ -199,7 +198,7 @@ public class BuildBootJarAction extends Action implements IActionDelegate, IWork
       throw new RuntimeException(errMonitor.getContents());
     } else {
       project.refreshLocal(IResource.DEPTH_INFINITE, null);
-      
+
       File outFile = outPath.toFile();
       if (outFile.exists()) { // it better exist, the process didn't return an error code
         BootClassHelper.cacheBootTypes(outFile);

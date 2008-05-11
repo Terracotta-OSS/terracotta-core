@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.terracotta.dso.launch;
 
@@ -15,6 +16,11 @@ import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 import org.terracotta.dso.TcPlugin;
+
+/**
+ * TODO: in 3.4 JavaApplicationLaunchShortcut moves to the public package org.eclipse.jdt.debug.ui. So, we this is going
+ * to break unless it's just removed all together.
+ */
 
 public class LaunchShortcut extends org.eclipse.jdt.internal.debug.ui.launcher.JavaApplicationLaunchShortcut implements
     IDSOLaunchConfigurationConstants {

@@ -13,7 +13,6 @@ import org.eclipse.core.variables.VariablesPlugin;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.internal.junit.ui.JUnitPlugin;
 import org.eclipse.jdt.junit.launcher.JUnitLaunchShortcut;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 import org.terracotta.dso.TcPlugin;
@@ -38,7 +37,7 @@ public class DSOJUnitLaunchShortcut extends JUnitLaunchShortcut implements IDSOL
       }
       config = wc;
     } catch (CoreException exception) {
-      JUnitPlugin.log(exception);
+      TcPlugin.getDefault().openError("JavaElement("+element+")", exception);
     }
     return config;
   }

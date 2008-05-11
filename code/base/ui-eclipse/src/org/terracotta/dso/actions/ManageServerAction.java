@@ -22,6 +22,7 @@ import org.terracotta.dso.TcPlugin;
 import com.terracottatech.config.Server;
 
 import java.lang.reflect.InvocationTargetException;
+import java.text.MessageFormat;
 
 /**
  * Manage the named server.
@@ -104,9 +105,8 @@ public class ManageServerAction extends BaseAction implements IRunnableWithProgr
   }
 
   private static void reportError(boolean isRunning, Exception e) {
-    e.printStackTrace();
     Shell shell = new Shell();
-    String msg = isRunning ? "Error stopping Terracotta Server:\n" : "Error starting Terracotta Server:\n";
+    String msg = MessageFormat.format("Error {0} Terracotta Server:\n\n", isRunning ? "stopping" : "starting");
     MessageDialog.openInformation(shell, "Terracotta", msg + ActionUtil.getStatusMessages(e));
   }
   

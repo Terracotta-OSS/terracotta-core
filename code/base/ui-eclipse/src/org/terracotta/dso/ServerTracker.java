@@ -293,8 +293,7 @@ public class ServerTracker implements IDebugEventSetListener {
   }
 
   private void handleApplicationEvent(AbstractApplicationEvent event) {
-    Display display = Display.getCurrent();
-    Shell shell = display != null ? display.getActiveShell() : null;
+    Shell shell = TcPlugin.getActiveWorkbenchShell();
     AbstractApplicationEventDialog dialog = null;
 
     if (event instanceof NonPortableObjectEvent) {

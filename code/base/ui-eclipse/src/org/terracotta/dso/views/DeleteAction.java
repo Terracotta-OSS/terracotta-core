@@ -4,11 +4,11 @@
  */
 package org.terracotta.dso.views;
 
-import org.eclipse.jdt.internal.ui.util.SelectionUtil;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.terracotta.dso.TcPlugin;
+import org.terracotta.ui.util.SelectionUtil;
 
 import java.util.List;
 

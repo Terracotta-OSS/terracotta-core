@@ -22,18 +22,14 @@ import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.internal.ui.JavaPlugin;
-import org.eclipse.jdt.internal.ui.dnd.DelegatingDropAdapter;
-import org.eclipse.jdt.internal.ui.util.SelectionUtil;
-import org.eclipse.jdt.internal.ui.viewsupport.SelectionProviderMediator;
-import org.eclipse.jdt.internal.ui.viewsupport.StatusBarUpdater;
 import org.eclipse.jdt.ui.IContextMenuConstants;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.GroupMarker;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IStatusLineManager;
 import org.eclipse.jface.action.IToolBarManager;
-import org.eclipse.jface.util.TransferDropTargetListener;
+import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.ISelection;
@@ -43,7 +39,6 @@ import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.DND;
-import org.eclipse.swt.dnd.DropTarget;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
@@ -65,6 +60,7 @@ import org.terracotta.dso.JdtUtils;
 import org.terracotta.dso.MultiChangeSignaller;
 import org.terracotta.dso.TcPlugin;
 import org.terracotta.dso.actions.ActionUtil;
+import org.terracotta.ui.util.SelectionUtil;
 
 import com.terracottatech.config.QualifiedClassName;
 import com.terracottatech.config.QualifiedFieldName;
@@ -85,7 +81,6 @@ public class ConfigViewPart extends ViewPart
   DeleteAction fDeleteAction;
   IncludeActionGroup fIncludeActionGroup;
   LockActionGroup fLockActionGroup;
-  private ConfigSelectionProvider fSelectionProviderMediator;
   IJavaProject m_javaProject;
   private ConfigAdapter m_configAdapter;
 
@@ -100,12 +95,11 @@ public class ConfigViewPart extends ViewPart
     createViewer(parent);
     initDragAndDrop(parent);
 
-    fSelectionProviderMediator = new ConfigSelectionProvider(new StructuredViewer[] {fConfigViewer});
     IStatusLineManager slManager = getViewSite().getActionBars().getStatusLineManager();
-    fSelectionProviderMediator.addSelectionChangedListener(new StatusBarUpdater(slManager));
-    getSite().setSelectionProvider(fSelectionProviderMediator);
+    fConfigViewer.addSelectionChangedListener(new ConfigViewStatusBarUpdater(this, slManager));
+    getSite().setSelectionProvider(fConfigViewer);
 
-    fConfigViewer.initContextMenu(this, getSite(), fSelectionProviderMediator);
+    fConfigViewer.initContextMenu(this, getSite());
     fConfigViewer.addDoubleClickListener(this);
 
     makeActions();
@@ -129,23 +123,36 @@ public class ConfigViewPart extends ViewPart
   private void initDragAndDrop(Composite parent) {
     addDropAdapters(fConfigViewer);
 
-    DropTarget dropTarget = new DropTarget(parent, DND.DROP_LINK | DND.DROP_DEFAULT);
-    dropTarget.setTransfer(new Transfer[] {LocalSelectionTransfer.getInstance()});
-    dropTarget.addDropListener(new ConfigTransferDropAdapter(this, fConfigViewer));
+//    DropTarget dropTarget = new DropTarget(parent, DND.DROP_LINK | DND.DROP_DEFAULT);
+//    dropTarget.setTransfer(new Transfer[] {LocalSelectionTransfer.getInstance()});
+//    dropTarget.addDropListener(new ConfigTransferDropAdapter(this, fConfigViewer));
   }
     
   private void addDropAdapters(StructuredViewer viewer) {
     Transfer[] transfers = new Transfer[] {LocalSelectionTransfer.getInstance()};
-    int ops = DND.DROP_LINK | DND.DROP_DEFAULT;
-    
-    TransferDropTargetListener[] dropListeners = new TransferDropTargetListener[] {
-      new ConfigTransferDropAdapter(this, viewer)
-    };
-    viewer.addDropSupport(ops, transfers, new DelegatingDropAdapter(dropListeners));
+    int ops = DND.DROP_LINK | DND.DROP_DEFAULT | DND.DROP_COPY | DND.DROP_MOVE;
+    viewer.addDropSupport(ops, transfers, new ConfigTransferDropAdapter(this, viewer));
   }
 
+  public static void createStandardGroups(IMenuManager menu) {
+    if (!menu.isEmpty())
+      return;
+      
+    menu.add(new Separator(IContextMenuConstants.GROUP_NEW));
+    menu.add(new GroupMarker(IContextMenuConstants.GROUP_GOTO));
+    menu.add(new Separator(IContextMenuConstants.GROUP_OPEN));
+    menu.add(new GroupMarker(IContextMenuConstants.GROUP_SHOW));
+    menu.add(new Separator(IContextMenuConstants.GROUP_REORGANIZE));
+    menu.add(new Separator(IContextMenuConstants.GROUP_GENERATE));
+    menu.add(new Separator(IContextMenuConstants.GROUP_SEARCH));
+    menu.add(new Separator(IContextMenuConstants.GROUP_BUILD));
+    menu.add(new Separator(IContextMenuConstants.GROUP_ADDITIONS));
+    menu.add(new Separator(IContextMenuConstants.GROUP_VIEWER_SETUP));
+    menu.add(new Separator(IContextMenuConstants.GROUP_PROPERTIES));
+  }
+  
   protected void fillConfigViewerContextMenu(IMenuManager menu) {
-    JavaPlugin.createStandardGroups(menu);
+    createStandardGroups(menu);
 
     menu.appendToGroup(IContextMenuConstants.GROUP_SHOW, fRefreshAction);
     if(fDeleteAction.canActionBeAdded()) {
@@ -624,25 +631,7 @@ public class ConfigViewPart extends ViewPart
   }
 
   protected ISelection getSelection() {
-    StructuredViewer viewerInFocus= fSelectionProviderMediator.getViewerInFocus();
-    if(viewerInFocus != null) {
-      return viewerInFocus.getSelection();
-    }
-    return StructuredSelection.EMPTY;
-  }
-  
-  private static class ConfigSelectionProvider extends SelectionProviderMediator {
-    public ConfigSelectionProvider(StructuredViewer[] viewers) {
-      super(viewers, null);
-    }
-
-    public ISelection getSelection() {
-      ISelection selection = super.getSelection();
-      if(false && !selection.isEmpty()) {
-        return ConfigUI.convertSelection(selection);
-      }
-      return selection;
-    }
+    return fConfigViewer.getSelection();
   }
   
   private void initFromJavaProject(IJavaProject javaProject) {

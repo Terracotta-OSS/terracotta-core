@@ -15,11 +15,26 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.terracotta.ui.util.SWTUtil;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 public class ExceptionDialog extends MessageDialog {
 
   private final Shell  m_parentShell;
   private final String m_stackTrace;
 
+  private static String throwable2StackTrace(Throwable throwable) {
+    if(throwable == null) return "";
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
+    throwable.printStackTrace(pw);
+    return sw.toString();
+  }
+  
+  public ExceptionDialog(Shell shell, String title, String message, Throwable throwable) {
+    this(shell, title, message, throwable2StackTrace(throwable));
+  }
+  
   public ExceptionDialog(Shell shell, String title, String message, String stackTrace) {
     super(shell, title, null, "  " + message, MessageDialog.ERROR, new String[] { IDialogConstants.OK_LABEL }, 0);
     setShellStyle(getShellStyle() | SWT.RESIZE);

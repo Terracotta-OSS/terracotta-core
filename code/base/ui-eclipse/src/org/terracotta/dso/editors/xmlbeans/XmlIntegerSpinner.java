@@ -10,6 +10,8 @@ import org.eclipse.swt.events.FocusAdapter;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.widgets.Spinner;
 import org.terracotta.dso.editors.ConfigurationEditorPanel;
 import org.terracotta.ui.util.SWTUtil;
@@ -29,14 +31,17 @@ public class XmlIntegerSpinner implements XmlObjectHolder {
         }
       }
     });
+    spinner.addSelectionListener(new SelectionAdapter() {
+      public void widgetSelected(SelectionEvent se) {
+        if(m_listening) {
+          set();
+        }
+      }
+    });
     spinner.addKeyListener(new KeyAdapter() {
       public void keyPressed(KeyEvent e) {
         if(!m_listening) return;
         switch(e.keyCode) {
-          case SWT.Selection: {
-            set();
-            break;
-          }
           case SWT.F5: {
             unset();
             break;
@@ -96,7 +101,6 @@ public class XmlIntegerSpinner implements XmlObjectHolder {
     } else {
       ensureXmlObject();
       m_helper.set(Integer.toString(iVal));
-      setSelection(iVal);
     }
     m_listening = true;
   }

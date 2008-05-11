@@ -12,16 +12,13 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
-import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.ui.JavaUIStatus;
 import org.eclipse.jface.action.IAction;
@@ -35,12 +32,10 @@ import org.terracotta.dso.BootClassHelper;
 import org.terracotta.dso.ProjectNature;
 import org.terracotta.dso.TcPlugin;
 import org.terracotta.dso.actions.BuildBootJarAction;
+import org.terracotta.ui.util.TcUIStatus;
 
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class ProjectWizard extends Wizard {
   private SetupWizardPage m_page;
@@ -49,131 +44,121 @@ public class ProjectWizard extends Wizard {
 
   public ProjectWizard(IJavaProject javaProject) {
     super();
-    
+
     m_javaProject = javaProject;
-    m_cancelled   = false;
-    
+    m_cancelled = false;
+
     setNeedsProgressMonitor(true);
   }
-  
+
   public boolean performCancel() {
     m_cancelled = true;
     return super.performCancel();
   }
-  
+
   public void addPages() {
     addPage(m_page = new SetupWizardPage(m_javaProject));
   }
 
   public IRunnableWithProgress getWorker() {
     IRunnableWithProgress op = new IRunnableWithProgress() {
-      public void run(IProgressMonitor monitor)
-        throws InvocationTargetException
-      {
+      public void run(IProgressMonitor monitor) throws InvocationTargetException {
         try {
           doFinish(monitor);
-        } catch(CoreException e) {
+        } catch (CoreException e) {
           throw new InvocationTargetException(e);
         } finally {
           monitor.done();
         }
       }
     };
-    
+
     return op;
- }
-  
+  }
+
   public boolean performFinish() {
-    if(m_cancelled) {
-      return true;
-    }
-    
+    if (m_cancelled) { return true; }
+
     try {
       getContainer().run(false, true, getWorker());
-    } catch(InterruptedException e) {
+    } catch (InterruptedException e) {
       return false;
-    } catch(InvocationTargetException e) {
+    } catch (InvocationTargetException e) {
       Throwable cause = e.getTargetException();
       TcPlugin.getDefault().openError("Problem setting up project", cause);
       return false;
     }
-    
+
     return true;
   }
-  
-  private void handleProblem(String msg, Throwable t, IProgressMonitor monitor)
-    throws CoreException
-  {
+
+  private void handleProblem(String msg, Throwable t, IProgressMonitor monitor) throws CoreException {
     t.printStackTrace();
     monitor.setCanceled(true);
-    if(!(t instanceof CoreException)) {
-      t = new CoreException(JavaUIStatus.createError(-1, msg, t));
+    if (!(t instanceof CoreException)) {
+      t = new CoreException(TcUIStatus.createError(-1, msg, t));
     }
-    throw (CoreException)t;    
+    throw (CoreException) t;
   }
-  
-  public void doFinish(IProgressMonitor monitor)
-    throws CoreException
-  {
+
+  public void doFinish(IProgressMonitor monitor) throws CoreException {
     int stepIndex = 1;
     String step = "Adding Terracotta nature";
-    
+
     monitor.beginTask(step, IProgressMonitor.UNKNOWN);
     try {
       addTerracottaNature(monitor);
-    } catch(Throwable t) {
-      handleProblem(step, t, monitor);
-    }
-    monitor.worked(stepIndex++);
-    
-    monitor.subTask(step = "Creating Terracotta folder");
-    try {
-      createTerracottaFolder(monitor);
-    } catch(Throwable t) {
+    } catch (Throwable t) {
       handleProblem(step, t, monitor);
     }
     monitor.worked(stepIndex++);
 
-    if(!BootClassHelper.canGetBootTypes(m_javaProject)) {
+    monitor.subTask(step = "Creating Terracotta folder");
+    try {
+      ensureConfigExists(monitor);
+    } catch (Throwable t) {
+      handleProblem(step, t, monitor);
+    }
+    monitor.worked(stepIndex++);
+
+    if (!BootClassHelper.canGetBootTypes(m_javaProject)) {
       monitor.subTask(step = "Building BootJar");
       try {
         buildBootJar(monitor);
-      } catch(Throwable t) {
+      } catch (Throwable t) {
         handleProblem(step, t, monitor);
       }
       monitor.worked(stepIndex++);
     }
-    
-//    monitor.subTask(step = "Inspecting classes");
-//    try {
-//      inspectProject(monitor);
-//    } catch(Throwable t) {
-//      handleProblem(step, t, monitor);
-//    }
-//    monitor.worked(stepIndex++);
+
+    //    monitor.subTask(step = "Inspecting classes");
+    //    try {
+    //      inspectProject(monitor);
+    //    } catch(Throwable t) {
+    //      handleProblem(step, t, monitor);
+    //    }
+    //    monitor.worked(stepIndex++);
 
     TcPlugin.getDefault().updateDecorators();
     TcPlugin.getDefault().notifyProjectActions(m_javaProject.getProject());
-    
-    final IWorkbench       workbench = PlatformUI.getWorkbench();
-    final IWorkbenchWindow window    = workbench.getActiveWorkbenchWindow();
-    
-    if(window instanceof ApplicationWindow) {
-      ApplicationWindow appWin = (ApplicationWindow)window;
-      String            msg    = "Finished adding Terracotta Nature.";
-      
+
+    final IWorkbench workbench = PlatformUI.getWorkbench();
+    final IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
+
+    if (window instanceof ApplicationWindow) {
+      ApplicationWindow appWin = (ApplicationWindow) window;
+      String msg = "Finished adding Terracotta Nature.";
+
       appWin.setStatus(msg);
     }
   }
 
-  private void addTerracottaNature(IProgressMonitor monitor)
-    throws CoreException
-  {
-    IProject            proj        = m_javaProject.getProject();
+  private void addTerracottaNature(IProgressMonitor monitor) throws CoreException {
+    IProject proj = m_javaProject.getProject();
     IProjectDescription description = proj.getDescription();
-    String[]            natures     = description.getNatureIds();
-    String[]            newNatures  = new String[natures.length + 1];
-    
+    String[] natures = description.getNatureIds();
+    String[] newNatures = new String[natures.length + 1];
+
     java.lang.System.arraycopy(natures, 0, newNatures, 0, natures.length);
 
     newNatures[natures.length] = ProjectNature.NATURE_ID;
@@ -181,137 +166,92 @@ public class ProjectWizard extends Wizard {
     proj.refreshLocal(IResource.DEPTH_ZERO, monitor);
     proj.setDescription(description, monitor);
   }
-  
+
   private String getDomainConfigurationPath() {
-    if(m_page == null) {
+    if (m_page == null) {
       return TcPlugin.DEFAULT_CONFIG_FILENAME;
     } else {
       return m_page.getDomainConfigurationPath();
     }
   }
-  
+
   private String getServerOptions() {
-    if(m_page == null) {
+    if (m_page == null) {
       return TcPlugin.DEFAULT_SERVER_OPTIONS;
     } else {
       return m_page.getServerOptions();
     }
- }
-  
-  private void createTerracottaFolder(IProgressMonitor monitor)
-    throws CoreException
-  {
-    TcPlugin plugin     = TcPlugin.getDefault();
-    IProject project    = m_javaProject.getProject();
-    String   configPath = getDomainConfigurationPath();
-    String   serverOpts = getServerOptions();
-    IFolder  folder     = plugin.ensureRuntimeDirectory(project, monitor);
-    
-    /**
-     * Make sure the terracotta artifact directory isn't considered
-     * a package fragment.
-     */
-    IPath                      relPath   = folder.getProjectRelativePath();
-    IPath                      exclusion = relPath.addTrailingSeparator();
-    ArrayList<IClasspathEntry> list      = new ArrayList<IClasspathEntry>();
-    IClasspathEntry[]          entries   = m_javaProject.getRawClasspath();
-    IClasspathEntry            entry;
-    
-    for(int i = 0; i < entries.length; i++) {
-      entry = entries[i];
-      
-      if(entry.getEntryKind() == IClasspathEntry.CPE_SOURCE &&
-         entry.getPath().equals(m_javaProject.getPath()))
-      {
-        List<IPath> exclusions = new ArrayList<IPath>(Arrays.asList(entry.getExclusionPatterns()));
+  }
 
-        exclusions.add(exclusion);
-        entry = JavaCore.newSourceEntry(entry.getPath(),
-                                        entry.getInclusionPatterns(),
-                                        exclusions.toArray(new IPath[0]),
-                                        entry.getOutputLocation(),
-                                        entry.getExtraAttributes());
-      }
-      list.add(entry);
-    }
-    
-    entries = list.toArray(new IClasspathEntry[0]);
-    m_javaProject.setRawClasspath(entries, monitor);
+  private void ensureConfigExists(IProgressMonitor monitor) throws CoreException {
+    TcPlugin plugin = TcPlugin.getDefault();
+    IProject project = m_javaProject.getProject();
+    String configPath = getDomainConfigurationPath();
+    String serverOpts = getServerOptions();
 
-    /**
-     * Ensure a config file exists.
-     */
-    if(configPath == null || configPath.length() == 0) {
+    if (configPath == null || configPath.length() == 0) {
       configPath = TcPlugin.DEFAULT_CONFIG_FILENAME;
     }
-    if(!configPath.endsWith(".xml")) {
+    if (!configPath.endsWith(".xml")) {
       configPath = configPath.concat(".xml");
     }
     final IFile configFile = project.getFile(new Path(configPath));
-    if(!configFile.exists()) {
+    if (!configFile.exists()) {
       InputStream is = null;
-      
+
       ensureParent(configFile);
       try {
         XmlOptions xmlOpts = plugin.getXmlOptions();
-        
-        is = TcPlugin.createTemplateConfigDoc().newInputStream(xmlOpts);                
+        is = TcPlugin.createTemplateConfigDoc().newInputStream(xmlOpts);
         configFile.create(is, true, monitor);
-      } catch(CoreException ce) {
-        String  step   = "Creating default Terracotta config file";
+      } catch (CoreException ce) {
+        String step = "Creating default Terracotta config file";
         IStatus status = JavaUIStatus.createError(-1, step, ce);
-        
         IOUtils.closeQuietly(is);
         throw new CoreException(status);
       } finally {
         IOUtils.closeQuietly(is);
       }
     }
-    
+
     m_javaProject.getProject().refreshLocal(IResource.DEPTH_INFINITE, monitor);
     plugin.setup(project, configPath, serverOpts);
   }
 
   private static void ensureParent(IFile file) throws CoreException {
-    if(!file.exists()) {
+    if (!file.exists()) {
       IContainer parent = file.getParent();
-    
-      if(!parent.exists()) {
+      if (!parent.exists()) {
         ensureParent(parent);
       }
     }
   }
-  
-  private static void ensureParent(IContainer container) throws CoreException {
-    if(!container.exists()) {
-      IContainer parent = container.getParent();
-    
-      if(!parent.exists()) {
-        ensureParent(parent);
-      }
 
-      if(container instanceof IFolder) {
-        ((IFolder)container).create(true, true, null);
+  private static void ensureParent(IContainer container) throws CoreException {
+    if (!container.exists()) {
+      IContainer parent = container.getParent();
+      if (!parent.exists()) {
+        ensureParent(parent);
+      }
+      if (container instanceof IFolder) {
+        ((IFolder) container).create(true, true, null);
       }
     }
   }
-  
-  private void inspectProject(IProgressMonitor monitor)
-    throws JavaModelException,
-           CoreException
-  {
-    TcPlugin           plugin    = TcPlugin.getDefault();
+
+  private void inspectProject(IProgressMonitor monitor) throws JavaModelException, CoreException {
+    TcPlugin plugin = TcPlugin.getDefault();
     IPackageFragment[] fragments = m_javaProject.getPackageFragments();
-    IPackageFragment   fragment;
+    IPackageFragment fragment;
     ICompilationUnit[] cus;
-    
-    for(int i = 0; i < fragments.length; i++) {
+
+    for (int i = 0; i < fragments.length; i++) {
       fragment = fragments[i];
-      
-      if(fragment.getKind() == IPackageFragmentRoot.K_SOURCE) {
+
+      if (fragment.getKind() == IPackageFragmentRoot.K_SOURCE) {
         cus = fragment.getCompilationUnits();
-        
-        for(int j = 0; j < cus.length; j++) {
+
+        for (int j = 0; j < cus.length; j++) {
           monitor.subTask(cus[j].getResource().getLocation().toString());
           plugin.inspect(cus[j]);
         }
@@ -321,7 +261,7 @@ public class ProjectWizard extends Wizard {
 
   private void buildBootJar(IProgressMonitor monitor) {
     BuildBootJarAction bbja = new BuildBootJarAction(m_javaProject);
-    bbja.run((IAction)null);
+    bbja.run((IAction) null);
   }
 
   public boolean canFinish() {

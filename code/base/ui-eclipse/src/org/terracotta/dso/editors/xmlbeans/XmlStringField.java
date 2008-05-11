@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.terracotta.dso.editors.xmlbeans;
 
@@ -23,15 +24,15 @@ public class XmlStringField implements XmlObjectHolder {
     m_field = field;
     field.addFocusListener(new FocusAdapter() {
       public void focusLost(FocusEvent e) {
-        if(m_listening) {
+        if (m_listening) {
           set();
         }
       }
     });
     field.addKeyListener(new KeyAdapter() {
       public void keyPressed(KeyEvent e) {
-        if(!m_listening) return;
-        switch(e.keyCode) {
+        if (!m_listening) return;
+        switch (e.keyCode) {
           case SWT.Selection: {
             set();
             break;
@@ -43,34 +44,34 @@ public class XmlStringField implements XmlObjectHolder {
         }
       }
     });
-  }
+  } 
 
   protected void ensureXmlObject() {
-    ConfigurationEditorPanel parent = (ConfigurationEditorPanel)
-      SWTUtil.getAncestorOfClass(ConfigurationEditorPanel.class, m_field);
-    
-    if(parent != null) {
+    ConfigurationEditorPanel parent = (ConfigurationEditorPanel) SWTUtil
+        .getAncestorOfClass(ConfigurationEditorPanel.class, m_field);
+
+    if (parent != null) {
       parent.ensureXmlObject();
     }
   }
-  
+
   public void init(Class parentType, String elementName) {
     m_helper.init(parentType, elementName);
   }
-  
+
   public void setup(XmlObject parent) {
     setListening(false);
     m_helper.setup(parent);
     setText(stringValue());
     setListening(true);
   }
-  
+
   public void tearDown() {
     m_helper.tearDown();
     setListening(false);
     setText("");
   }
-  
+
   public String stringValue() {
     return isSet() ? m_helper.getStringValue() : m_helper.defaultStringValue();
   }
@@ -78,7 +79,7 @@ public class XmlStringField implements XmlObjectHolder {
   public boolean isRequired() {
     return m_helper.isRequired();
   }
-  
+
   public boolean isSet() {
     return m_helper.isSet();
   }
@@ -87,9 +88,9 @@ public class XmlStringField implements XmlObjectHolder {
     setListening(false);
     try {
       String s = getText();
-      if(m_helper.hasDefault() && m_helper.defaultStringValue().equals(s)) {
+      if (m_helper.hasDefault() && m_helper.defaultStringValue().equals(s)) {
         unset();
-      } else if(!s.equals(m_helper.getStringValue())){
+      } else if (!s.equals(m_helper.getStringValue())) {
         ensureXmlObject();
         m_helper.set(s);
         m_field.setText(s);
@@ -98,9 +99,9 @@ public class XmlStringField implements XmlObjectHolder {
       setListening(true);
     }
   }
-  
+
   public void unset() {
-    if(!isRequired()) {
+    if (!isRequired()) {
       setListening(false);
       try {
         m_helper.unset();
@@ -110,7 +111,7 @@ public class XmlStringField implements XmlObjectHolder {
       }
     }
   }
-  
+
   public synchronized void addXmlObjectStructureListener(XmlObjectStructureListener listener) {
     m_helper.addXmlObjectStructureListener(listener);
   }
@@ -118,19 +119,18 @@ public class XmlStringField implements XmlObjectHolder {
   public synchronized void removeXmlObjectStructureListener(XmlObjectStructureListener listener) {
     m_helper.removeXmlObjectStructureListener(listener);
   }
-  
+
   public String getText() {
     return m_field.getText();
   }
-  
+
   public void setText(String text) {
     m_field.setText(text != null ? text : "");
   }
-  
+
   private void setListening(boolean listening) {
-    if(m_listening != listening) {
+    if (m_listening != listening) {
       m_listening = listening;
     }
   }
 }
-

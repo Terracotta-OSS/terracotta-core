@@ -12,7 +12,6 @@ import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.internal.ui.JavaPluginImages;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -105,38 +104,39 @@ public abstract class AbstractApplicationEventDialog extends MessageDialog {
   private static final int[]                  DEFAULT_BOTTOM_SASH_WEIGHTS  = new int[] { 100, 100 };
 
   private static final String                 DIALOG_TOP_SASH_WEIGHTS_1    = TcPlugin.PLUGIN_ID
-                                                                               + ".DIALOG_TOP_SASH_WEIGHTS_1";               //$NON-NLS-1$
+                                                                             + ".DIALOG_TOP_SASH_WEIGHTS_1";
   private static final String                 DIALOG_TOP_SASH_WEIGHTS_2    = TcPlugin.PLUGIN_ID
-                                                                               + ".DIALOG_TOP_SASH_WEIGHTS_2";               //$NON-NLS-1$
+                                                                             + ".DIALOG_TOP_SASH_WEIGHTS_2";
 
   private static final String                 DIALOG_BOTTOM_SASH_WEIGHTS_1 = TcPlugin.PLUGIN_ID
-                                                                               + ".DIALOG_BOTTOM_SASH_WEIGHTS_1";            //$NON-NLS-1$
+                                                                             + ".DIALOG_BOTTOM_SASH_WEIGHTS_1";
   private static final String                 DIALOG_BOTTOM_SASH_WEIGHTS_2 = TcPlugin.PLUGIN_ID
-                                                                               + ".DIALOG_BOTTOM_SASH_WEIGHTS_2";            //$NON-NLS-1$
+                                                                             + ".DIALOG_BOTTOM_SASH_WEIGHTS_2";
 
-  protected static final Image                NOT_PORTABLE_ICON            = JavaPluginImages
-                                                                               .get(JavaPluginImages.IMG_FIELD_PRIVATE);
-  protected static final Image                NEVER_PORTABLE_ICON          = JavaPluginImages
-                                                                               .get(JavaPluginImages.IMG_FIELD_PRIVATE);
-  protected static final Image                TRANSIENT_ICON               = JavaPluginImages
-                                                                               .get(JavaPluginImages.IMG_FIELD_PUBLIC);
-  protected static final Image                PORTABLE_ICON                = JavaPluginImages
-                                                                               .get(JavaPluginImages.IMG_FIELD_DEFAULT);
-  protected static final Image                PRE_INSTRUMENTED_ICON        = JavaPluginImages
-                                                                               .get(JavaPluginImages.IMG_FIELD_PROTECTED);
+  protected static final Image                NOT_PORTABLE_ICON            = TcPlugin
+                                                                               .createImage(AbstractApplicationEventDialog.class.getResource("/com/tc/admin/icons/field_private_obj.gif"));
+  protected static final Image                NEVER_PORTABLE_ICON          = TcPlugin
+                                                                               .createImage(AbstractApplicationEventDialog.class.getResource("/com/tc/admin/icons/field_private_obj.gif"));
+  protected static final Image                TRANSIENT_ICON               = TcPlugin
+                                                                               .createImage(AbstractApplicationEventDialog.class.getResource("/com/tc/admin/icons/field_public_obj.gif"));
+  protected static final Image                PORTABLE_ICON                = TcPlugin
+                                                                               .createImage(AbstractApplicationEventDialog.class.getResource("/com/tc/admin/icons/field_default_obj.gif"));
+  protected static final Image                PRE_INSTRUMENTED_ICON        = TcPlugin
+                                                                               .createImage(AbstractApplicationEventDialog.class.getResource("/com/tc/admin/icons/field_protected_obj.gif"));
   protected static final Image                OBJ_CYCLE_ICON               = TcPlugin
-                                                                               .createImage("/images/eclipse/obj_cycle.gif"); //$NON-NLS-1$
+                                                                               .createImage("/images/eclipse/obj_cycle.gif");
   protected static final Image                RESOLVED_ICON                = TcPlugin
-                                                                               .createImage("/images/eclipse/nature.gif");   //$NON-NLS-1$
+                                                                               .createImage("/images/eclipse/nature.gif");
   protected static final Image                HELP_ICON                    = TcPlugin
-                                                                               .createImage("/images/eclipse/help.gif");     //$NON-NLS-1$
-  
-  protected static final String               EMPTY_STRING                 = "";                                             //$NON-NLS-1$
+                                                                               .createImage("/images/eclipse/help.gif");
+
+  protected static final String               EMPTY_STRING                 = "";
 
   protected static final Iterator             EMPTY_ITERATOR               = new EmptyIterator();
 
   protected static final MultiChangeSignaller NULL_SIGNALLER               = new MultiChangeSignaller() {
-                                                                             public void signal(IProject project) {/**/}
+                                                                             public void signal(IProject project) {/**/
+                                                                             }
                                                                            };
 
   /*
@@ -174,10 +174,9 @@ public abstract class AbstractApplicationEventDialog extends MessageDialog {
   protected FormToolkit getFormToolkit() {
     return fFormToolkit;
   }
-  
+
   /*
    * (non-Javadoc)
-   * 
    * @see org.eclipse.jface.window.Window#initializeBounds()
    */
   protected void initializeBounds() {
@@ -556,7 +555,7 @@ public abstract class AbstractApplicationEventDialog extends MessageDialog {
   }
 
   protected void updateButtons() {
-  /**/
+    /**/
   }
 
   protected void hideActionPanel() {
@@ -584,7 +583,8 @@ public abstract class AbstractApplicationEventDialog extends MessageDialog {
     }
   }
 
-  public void widgetDefaultSelected(SelectionEvent e) {/**/}
+  public void widgetDefaultSelected(SelectionEvent e) {/**/
+  }
 
   protected static final Object NO_ACTION_ITEM = new Object();
 
@@ -631,7 +631,8 @@ public abstract class AbstractApplicationEventDialog extends MessageDialog {
       return new Object[] { NO_ACTION_ITEM };
     }
 
-    public void dispose() {/**/}
+    public void dispose() {/**/
+    }
   }
 
   private static class ActionLabelProvider implements ILabelProvider {
@@ -644,15 +645,18 @@ public abstract class AbstractApplicationEventDialog extends MessageDialog {
       return null;
     }
 
-    public void addListener(ILabelProviderListener listener) {/**/}
+    public void addListener(ILabelProviderListener listener) {/**/
+    }
 
-    public void dispose() {/**/}
+    public void dispose() {/**/
+    }
 
     public boolean isLabelProperty(Object element, String property) {
       return false;
     }
 
-    public void removeListener(ILabelProviderListener listener) {/**/}
+    public void removeListener(ILabelProviderListener listener) {/**/
+    }
   }
 
   protected Include ensureIncludeRuleFor(String classExpr) {
@@ -717,10 +721,10 @@ public abstract class AbstractApplicationEventDialog extends MessageDialog {
       executeCodeText.setLayoutData(gridData);
       executeCodeText.addModifyListener(new ModifyListener() {
         public void modifyText(ModifyEvent e) {
-          if(include == null) return;
+          if (include == null) return;
           OnLoad onLoad = include.getOnLoad();
-          if(onLoad == null) return;
-          String executeText = executeCodeText.getText(); 
+          if (onLoad == null) return;
+          String executeText = executeCodeText.getText();
           onLoad.setExecute(executeText);
         }
       });
@@ -797,7 +801,8 @@ public abstract class AbstractApplicationEventDialog extends MessageDialog {
       }
     }
 
-    public void widgetDefaultSelected(SelectionEvent e) {/**/}
+    public void widgetDefaultSelected(SelectionEvent e) {/**/
+    }
 
     public void widgetSelected(SelectionEvent e) {
       OnLoad onLoad = include.getOnLoad();
