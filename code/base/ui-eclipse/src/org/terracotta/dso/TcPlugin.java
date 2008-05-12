@@ -618,10 +618,6 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       LineLengths lineLengths = new LineLengths(configFile);
       setSessionProperty(project, CONFIGURATION_LINE_LENGTHS, lineLengths);
 
-      if (m_configLoader.testIsOld(file)) {
-        m_configLoader.updateToCurrent(file);
-      }
-
       clearSAXMarkers(configFile);
 
       // The following line may throw XmlException if the doc is not well-formed.
