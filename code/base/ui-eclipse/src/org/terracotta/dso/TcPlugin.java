@@ -289,7 +289,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     manager.registerAdapters(factory, IField.class);
     manager.registerAdapters(factory, IType.class);
     manager.registerAdapters(factory, IMethod.class);
-    manager.registerAdapters(factory, IClassFile.class); 
+    manager.registerAdapters(factory, IClassFile.class);
 
     // TODO: REMOVE the following when 3.1 is no longer supported
     // SourceMethod and BinaryMember are internal types
@@ -330,24 +330,20 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
 
   public static IWorkbenchWindow getActiveWorkbenchWindow() {
     return PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-  } 
+  }
 
   public static Shell getActiveWorkbenchShell() {
     IWorkbenchWindow window = getActiveWorkbenchWindow();
-    if (window != null) {
-      return window.getShell();
-    }
+    if (window != null) { return window.getShell(); }
     return null;
-  } 
+  }
 
   public static IWorkbenchPage getActivePage() {
     IWorkbenchWindow w = getActiveWorkbenchWindow();
-    if (w != null) {
-      return w.getActivePage();
-    }
+    if (w != null) { return w.getActivePage(); }
     return null;
   }
-  
+
   public void addTerracottaNature(IJavaProject currentProject) {
     Shell shell = getActiveWorkbenchShell();
 
@@ -506,26 +502,25 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     } catch (CoreException ce) {
       // this can't happen because server launch configurations are never persisted
     }
-    
+
     Server server = Server.Factory.newInstance();
     server.setName(name);
     server.setHost(host);
-    if(jmxPort > 0) server.setJmxPort(jmxPort);
-    if(dsoPort > 0) server.setDsoPort(dsoPort);
-    
+    if (jmxPort > 0) server.setJmxPort(jmxPort);
+    if (dsoPort > 0) server.setDsoPort(dsoPort);
+
     return server;
   }
-  
+
   public boolean areEquivalentServers(Server server1, Server server2) {
     if (server1 != null && server2 != null) {
       if (StringUtils.equals(server1.getName(), server2.getName())
-          && StringUtils.equals(server1.getHost(), server2.getHost())
-          && server1.getJmxPort() == server2.getJmxPort()
+          && StringUtils.equals(server1.getHost(), server2.getHost()) && server1.getJmxPort() == server2.getJmxPort()
           && server1.getDsoPort() == server2.getDsoPort()) { return true; }
     }
     return false;
   }
-  
+
   public Server getLaunchedServer(IProject project, ILaunch launch) {
     TcConfig config = getConfiguration(project);
 
@@ -540,30 +535,27 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
           Server server = serverArr[i];
           Server serverCopy = (Server) server.copy();
           replacePatterns(serverCopy);
-          if(areEquivalentServers(launchServer, serverCopy)) {
-            return server;
-          }
+          if (areEquivalentServers(launchServer, serverCopy)) { return server; }
         }
       }
     }
 
     return null;
   }
-  
+
   public void replacePatterns(Server server) {
-    if(server != null) {
-      if(server.isSetName()) {
+    if (server != null) {
+      if (server.isSetName()) {
         server.setName(ParameterSubstituter.substitute(server.getName()));
       }
-      if(server.isSetHost()) {
+      if (server.isSetHost()) {
         server.setHost(ParameterSubstituter.substitute(server.getHost()));
       }
-      if(server.isSetBind()) {
+      if (server.isSetBind()) {
         server.setBind(ParameterSubstituter.substitute(server.getBind()));
       }
     }
   }
-  
 
   public Server getAnyServer(IProject project) {
     TcConfig config = getConfiguration(project);
@@ -585,7 +577,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
   }
 
   public static String getServerName(Server server) {
-    if(server == null) return null;
+    if (server == null) return null;
     String name;
     if (server.isSetName()) {
       name = server.getName();
@@ -595,7 +587,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     }
     return name;
   }
-  
+
   /**
    * Instantiate the config information, either from the serialized form, or directly from the config document.
    */
@@ -676,7 +668,8 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
         Modules tmpModules = (Modules) modulesCopy.copy();
         tmpModules.setModuleArray(new Module[] { origModule });
         osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(tmpModules);
-        final Resolver resolver = new Resolver(ResolverUtils.urlsToStrings(osgiRuntime.getRepositories()));
+        String[] repositories = ResolverUtils.urlsToStrings(osgiRuntime.getRepositories());
+        final Resolver resolver = new Resolver(repositories);
         Module[] allModules = tmpModules.getModuleArray();
         ModuleInfo origModuleInfo = modulesConfig.getOrAdd(origModule);
 
@@ -721,7 +714,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
                                   new FakeDSOClientConfigHelper(), new Properties());
 
       URL[] urls = new URL[locations.length];
-      for(int i=0; i<locations.length; i++) {
+      for (int i = 0; i < locations.length; i++) {
         urls[i] = locations[i].toURL();
       }
       osgiRuntime.startBundles(urls, new EmbeddedOSGiEventHandler() {
@@ -948,7 +941,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
 
     try {
       loadConfiguration(project, xmlText);
-     } catch (XmlException xmle) {
+    } catch (XmlException xmle) {
       LineLengths lineLengths = getConfigurationLineLengths(project);
       handleXmlException(getConfigurationFile(project), lineLengths, xmle);
     } catch (Exception e) {
@@ -999,7 +992,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     Client clients = config.addNewClients();
     clients.setLogs("terracotta/client-logs");
     clients.setStatistics("terracotta/client-statistics/%D");
-    
+
     servers.addNewUpdateCheck().setEnabled(true);
 
     return doc;
@@ -1785,7 +1778,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
   public static Image createImage(URL path) {
     return new JavaElementImageDescriptor(ImageDescriptor.createFromURL(path), 0, new Point(16, 16)).createImage(false);
   }
-  
+
   public String configDocumentAsString(TcConfigDocument configDoc) {
     InputStream is = configDoc.newInputStream(getXmlOptions());
     StringWriter writer = new StringWriter();

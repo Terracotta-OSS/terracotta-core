@@ -4,16 +4,19 @@
  */
 package com.tc.bundles.exception;
 
+import org.apache.commons.lang.StringUtils;
 import org.osgi.framework.BundleException;
 
-import com.tc.bundles.OSGiToMaven;
 import com.tc.bundles.MavenToOSGi;
+import com.tc.bundles.OSGiToMaven;
 import com.tc.bundles.ResolverUtils;
+import com.tc.util.Assert;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
@@ -26,22 +29,25 @@ public class MissingBundleException extends BundleException implements BundleExc
   private List   repositories;
   private Stack  dependencyStack;
 
-  public MissingBundleException(final String msg) {
+  MissingBundleException(final String msg) {
     super(msg);
   }
 
-  public MissingBundleException(final String msg, final Throwable cause) {
+  MissingBundleException(final String msg, final Throwable cause) {
     super(msg, cause);
   }
 
   public MissingBundleException(final String msg, final String groupId, final String name, final String version,
                                 final List repositories, final Stack dependencyStack) {
     super(msg);
+    Assert.assertNotNull(groupId);
+    Assert.assertNotNull(name);
+    Assert.assertNotNull(version);
     this.groupId = groupId;
     this.name = name;
     this.version = version;
-    this.repositories = repositories;
-    this.dependencyStack = dependencyStack;
+    this.repositories = (repositories == null) ? new ArrayList() : repositories;
+    this.dependencyStack = (dependencyStack == null) ? new Stack() : dependencyStack;
   }
 
   private String expectedPaths() {
@@ -80,32 +86,39 @@ public class MissingBundleException extends BundleException implements BundleExc
     buf.append(OSGiToMaven.makeBundleFilename(name, version)).append("\n\n").append(INDENT);
     buf.append("Expected these attributes to be in the manifest:\n\n").append(INDENT + INDENT);
     buf.append(expectedAttributes()).append("\n\n").append(INDENT);
-    buf.append("Searched using the following repositories:\n\n").append(INDENT + INDENT);
-    buf.append(searchedRepositories()).append("\n").append(INDENT);
-    buf.append("Tried to resolve the jar file using the following paths:\n\n").append(INDENT + INDENT);
-    buf.append(expectedPaths()).append("\n").append(INDENT);
-    if (dependencyStack != null) {
+
+    if (repositories.size() == 0) {
+      buf.append("There were no repositories declared where the TIM might have been installed.\n\n");
+    } else {
+      buf.append("Searched using the following repositories:\n\n").append(INDENT + INDENT);
+      buf.append(searchedRepositories()).append("\n").append(INDENT);
+      buf.append("Tried to resolve the jar file using the following paths:\n\n").append(INDENT + INDENT);
+      buf.append(expectedPaths()).append("\n").append(INDENT);
+    }
+
+    if (dependencyStack.size() > 0) {
       buf.append("The following shows the dependencies path the resolver took and why it ");
       buf.append("needed to locate the missing TIM:\n\n");
       buf.append(dependencyStackAsString(dependencyStack)).append("\n").append(INDENT);
     }
-    buf.append("If the jar file exists and is in one of the paths listed\n").append(INDENT);
+
+    buf.append("If the jar file exists and is in one of the paths listed ");
     buf.append("above, make sure that the Bundle-SymbolicName and\n").append(INDENT);
-    buf.append("Bundle-Version attribute in its manifest matches the ones\n").append(INDENT);
+    buf.append("Bundle-Version attribute in its manifest matches the ones ");
     buf.append("that the resolver expects.");
-    return buf.toString();
+    return StringUtils.replace(buf.toString(), "\n", System.getProperty("line.separator")) ;
   }
 
-  private String dependencyStackAsString(Stack dependencyStack) {
+  private String dependencyStackAsString(Stack dependencies) {
     ByteArrayOutputStream bas = new ByteArrayOutputStream();
     BufferedOutputStream buf = new BufferedOutputStream(bas);
-    printDependencyStack(dependencyStack, 0, 4, buf);
+    printDependencyStack(dependencies, 0, 4, buf);
     return bas.toString();
   }
 
-  private void printDependencyStack(Stack dependencyStack, int depth, int indent, OutputStream out) {
+  private void printDependencyStack(Stack dependencies, int depth, int indent, OutputStream out) {
     try {
-      for (Iterator i = dependencyStack.iterator(); i.hasNext();) {
+      for (Iterator i = dependencies.iterator(); i.hasNext();) {
         Object entry = i.next();
         if (entry instanceof Stack) {
           printDependencyStack((Stack) entry, depth + 1, indent, out);

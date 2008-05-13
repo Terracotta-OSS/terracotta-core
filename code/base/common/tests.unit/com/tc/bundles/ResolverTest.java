@@ -69,7 +69,7 @@ public class ResolverTest extends TestCase {
   public void testModuleWithNoName() throws Exception {
     resolve(new String[] { System.getProperty("com.tc.l1.modules.repositories") }, null, "1.0.0", false);
   }
-  
+
   public void testAcceptGoodRepositories() {
     String[] repo = { "modules", "modules-repo", "modules-repo.1", "modules repo with space" };
     for (int i = 0; i < repo.length; i++)
@@ -202,26 +202,26 @@ public class ResolverTest extends TestCase {
   }
 
   private void resolveBundle(String[] repos, BundleSpec spec, boolean expected) throws IOException {
-    try {
-      Resolver resolver = new Resolver(repos, false);
-      File file = resolver.resolveBundle(spec);
+    //try {
+    Resolver resolver = new Resolver(repos, false);
+    File file = resolver.resolveBundle(spec);
 
-      if (expected) {
-        assertNotNull(spec.getSymbolicName(), file);
-        assertEquals(file.getAbsolutePath().endsWith(".jar"), expected);
-        JarFile jar = new JarFile(file);
-        Manifest manifest = jar.getManifest();
-        String symbolicName = BundleSpec.getSymbolicName(manifest);
-        String version = BundleSpec.getVersion(manifest);
-        assertEquals(symbolicName, spec.getSymbolicName());
-        assertEquals(version, spec.getVersion());
-      } else {
-        assertNull(file);
-      }
-    } catch (BundleException e) {
-      if (PASS == expected) fail(e.getMessage());
-      else assertTrue(FAIL == expected);
+    if (expected) {
+      assertNotNull(spec.getSymbolicName(), file);
+      assertEquals(file.getAbsolutePath().endsWith(".jar"), expected);
+      JarFile jar = new JarFile(file);
+      Manifest manifest = jar.getManifest();
+      String symbolicName = BundleSpec.getSymbolicName(manifest);
+      String version = BundleSpec.getVersion(manifest);
+      assertEquals(symbolicName, spec.getSymbolicName());
+      assertEquals(version, spec.getVersion());
+    } else {
+      assertNull(file);
     }
+    //} catch (BundleException e) {
+    //  if (PASS == expected) fail(e.getMessage());
+    //  else assertTrue(FAIL == expected);
+    //}
   }
 
   private void resolve(String[] repos, String name, String version, boolean expected) {

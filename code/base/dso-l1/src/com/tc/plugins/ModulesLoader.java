@@ -102,7 +102,8 @@ public class ModulesLoader {
           getModulesCustomApplicatorSpecs(osgiRuntime, configHelper);
         }
       } catch (BundleException e) {
-        final String msg = (e instanceof BundleExceptionSummary) ? ((BundleExceptionSummary)e).getSummary() : e.getMessage();
+        final String msg = (e instanceof BundleExceptionSummary) ? ((BundleExceptionSummary) e).getSummary() : e
+            .getMessage();
         consoleLogger.fatal(msg);
         System.exit(1);
       } catch (Exception e) {
@@ -123,7 +124,7 @@ public class ModulesLoader {
   }
 
   static void initModules(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper,
-                                  final ClassProvider classProvider, final Module[] modules, final boolean forBootJar)
+                          final ClassProvider classProvider, final Module[] modules, final boolean forBootJar)
       throws BundleException {
 
     if (configHelper instanceof StandardDSOClientConfigHelper) {
@@ -156,10 +157,10 @@ public class ModulesLoader {
     final File[] locations = resolver.resolve(allModules);
 
     final URL[] bundleURLs = new URL[locations.length];
-    for(int i=0; i<locations.length; i++) {
+    for (int i = 0; i < locations.length; i++) {
       try {
         bundleURLs[i] = locations[i].toURL();
-      } catch(MalformedURLException e) {
+      } catch (MalformedURLException e) {
         throw new RuntimeException("Malformed file URL for bundle: " + locations[i].getAbsolutePath(), e);
       }
     }
@@ -255,7 +256,6 @@ public class ModulesLoader {
     } catch (VendorVmSignatureException e) {
       throw new BundleException(e.getMessage());
     }
-
     final String TERRACOTTA_CONFIGURATION = "Terracotta-Configuration";
     final String TERRACOTTA_CONFIGURATION_FOR_VM = TERRACOTTA_CONFIGURATION + VendorVmSignature.SIGNATURE_SEPARATOR
                                                    + vmsig.getSignature();
@@ -263,17 +263,14 @@ public class ModulesLoader {
     String path = (String) bundle.getHeaders().get(TERRACOTTA_CONFIGURATION_FOR_VM);
     if (path == null) {
       path = (String) bundle.getHeaders().get(TERRACOTTA_CONFIGURATION);
-      if (path == null) {
-        path = "terracotta.xml";
-      }
+      if (path == null) path = "terracotta.xml";
     }
 
+    final String EXTENSION = ".xml";
     final String[] paths = path.split(",");
     for (int i = 0; i < paths.length; i++) {
       paths[i] = paths[i].trim();
-      if (!paths[i].endsWith(".xml")) {
-        paths[i] = paths[i].concat(".xml");
-      }
+      if (!paths[i].endsWith(EXTENSION)) paths[i] = paths[i].concat(EXTENSION);
     }
 
     return paths;
@@ -309,17 +306,20 @@ public class ModulesLoader {
         }
         is.close();
       } catch (IOException ioe) {
-        String msg = "Error reading configuration from bundle: " + bundle.getSymbolicName() + " located at " + bundle.getLocation();
+        String msg = "Error reading configuration from bundle: " + bundle.getSymbolicName() + " located at "
+                     + bundle.getLocation();
         consoleLogger.warn(msg, ioe);
         logger.warn(msg, ioe);
         throw new BundleException(msg, ioe);
       } catch (XmlException xmle) {
-        String msg = "Error parsing configuration from bundle: " + bundle.getSymbolicName() + " located at " + bundle.getLocation();
+        String msg = "Error parsing configuration from bundle: " + bundle.getSymbolicName() + " located at "
+                     + bundle.getLocation();
         consoleLogger.warn(msg, xmle);
         logger.warn(msg, xmle);
         throw new BundleException(msg, xmle);
       } catch (ConfigurationSetupException cse) {
-        String msg = "Invalid configuration in bundle: " + bundle.getSymbolicName() + " located at " + bundle.getLocation() + ": " + cse.getMessage();
+        String msg = "Invalid configuration in bundle: " + bundle.getSymbolicName() + " located at "
+                     + bundle.getLocation() + ": " + cse.getMessage();
         consoleLogger.warn(msg, cse);
         logger.warn(msg, cse);
         throw new BundleException(msg, cse);
