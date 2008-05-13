@@ -206,7 +206,8 @@ public class StateManagerImpl implements StateManager {
         sendNGResponse(clusterMsg.messageFrom(), clusterMsg);
       }
       groupManager.zapNode(winningEnrollment.getNodeID(), L2HAZapNodeRequestProcessor.SPLIT_BRAIN, error);
-    } else if (activeNode.isNull() || clusterMsg.getType() == L2StateMessage.ELECTION_WON) {
+    } else if (activeNode.isNull() || activeNode.equals(winningEnrollment.getNodeID())
+               || clusterMsg.getType() == L2StateMessage.ELECTION_WON) {
       // There is no active server for this node or the other node just detected a failure of ACTIVE server and ran an
       // election and is sending the results. This can happen if this node for some reason is not able to detect that
       // the active is down but the other node did. Go with the new active.
