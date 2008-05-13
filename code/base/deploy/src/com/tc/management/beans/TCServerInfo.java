@@ -65,7 +65,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     this.l2State = l2State;
     this.l2State.registerStateChangeListener(this);
     productInfo = ProductInfo.getInstance();
-    buildID = makeBuildID(productInfo);
+    buildID = productInfo.buildID();
     nextSequenceNumber = 1;
     stateChangeNotificationInfo = new StateChangeNotificationInfo();
     manager = TCRuntime.getJVMMemoryManager();
@@ -77,10 +77,9 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
       }
     } catch (LinkageError e) {
       /**
-       * it's ok not output any errors or warnings here since when the
-       * CVT is initialized, it will notify about the incapacity of leading
-       * Sigar-based SRAs.
-       **/
+       * it's ok not output any errors or warnings here since when the CVT is initialized, it will notify about the
+       * incapacity of leading Sigar-based SRAs.
+       */
     } catch (Exception e) {
       /**/
     }
@@ -184,7 +183,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   public String[] getCpuStatNames() {
     if (cpuNames != null) return cpuNames;
     if (cpuSRA == null) return cpuNames = new String[0];
-    
+
     List list = new ArrayList();
     StatisticData[] statsData = cpuSRA.retrieveStatisticData();
     if (statsData != null) {
@@ -194,7 +193,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     }
     return cpuNames = (String[]) list.toArray(new String[0]);
   }
-  
+
   public Map getStatistics() {
     HashMap<String, Object> map = new HashMap<String, Object>();
     MemoryUsage usage = manager.getMemoryUsage();
@@ -202,23 +201,21 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     map.put(MEMORY_USED, new Long(usage.getUsedMemory()));
     map.put(MEMORY_MAX, new Long(usage.getMaxMemory()));
 
-    if(cpuSRA != null) {
+    if (cpuSRA != null) {
       StatisticData[] statsData = getCpuUsage();
       if (statsData != null) {
         map.put(CPU_USAGE, statsData);
       }
     }
-    
+
     return map;
   }
 
   public StatisticData[] getCpuUsage() {
-    if (cpuSRA != null) {
-      return cpuSRA.retrieveStatisticData();
-    }
+    if (cpuSRA != null) { return cpuSRA.retrieveStatisticData(); }
     return null;
   }
-  
+
   public String takeThreadDump(long requestMillis) {
     String text = ThreadDumpUtil.getThreadDump();
     logger.info(text);
@@ -243,7 +240,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     Arrays.sort(props);
     l.clear();
     l.addAll(Arrays.asList(props));
-    
+
     int maxKeyLen = 0;
     for (String key : l) {
       maxKeyLen = Math.max(key.length(), maxKeyLen);
@@ -265,15 +262,6 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
 
   public String getConfig() {
     return server.getConfig();
-  }
-  
-  private static String makeBuildID(final ProductInfo productInfo) {
-    String timeStamp = productInfo.buildTimestampAsString();
-    String revision = productInfo.buildRevision();
-    String user = productInfo.buildUser();
-    String host = productInfo.buildHost();
-    String branch = productInfo.buildBranch();
-    return timeStamp + " (" + revision + " by " + user + "@" + host + " from " + branch + ")";
   }
 
   public String getHealthStatus() {

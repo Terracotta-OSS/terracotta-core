@@ -19,7 +19,7 @@ public class ProductInfo {
     com.tc.util.ProductInfo productInfo = com.tc.util.ProductInfo.getInstance();
 
     m_version = productInfo.rawVersion();
-    m_buildID = productInfo.toLongString();
+    m_buildID = productInfo.buildID();
     m_license = DEFAULT_LICENSE; // FIXME 2005-12-15 andrew
     m_copyright = productInfo.copyright();
   }

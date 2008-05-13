@@ -188,12 +188,16 @@ public final class ProductInfo {
   }
 
   public String toLongString() {
+    return toShortString() + ", as of " + buildID();
+  }
+
+  public String buildID() {
     String rev = this.revision;
     if (edition.indexOf("Enterprise") >= 0) {
       rev = this.ee_revision + "-" + this.revision;
     }
-    return toShortString() + ", as of " + buildTimestampAsString() + " (Revision " + rev + " by "
-           + buildUser() + "@" + buildHost() + " from " + buildBranch() + ")";
+    return buildTimestampAsString() + " (Revision " + rev + " by " + buildUser() + "@" + buildHost() + " from "
+           + buildBranch() + ")";
   }
 
   public String toString() {
