@@ -26,7 +26,7 @@ public class ThreadUtil {
         nanos = 0 ; // Not using System.nanoTime() since it is 1.5 specific
       }
     } catch (InterruptedException ie) {
-      Assert.eval(false);
+      Assert.fail("Interrupted while attempting to sleep for " + millis + " millis and " + nanos + " nanos.");
     }
   }
 
