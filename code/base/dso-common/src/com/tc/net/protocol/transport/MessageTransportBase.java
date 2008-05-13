@@ -352,7 +352,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
 
   private int getDestinationPort() {
     if (destinationPort == -1) { return this.destinationPort = connection.getRemoteAddress().getPort(); }
-    return sourcePort;
+    return destinationPort;
   }
 
   protected void wireNewConnection(TCConnection conn) {
