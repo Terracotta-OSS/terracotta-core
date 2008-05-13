@@ -14,6 +14,7 @@ appserver=tomcat-5.5.26
 
 #appserver=tomcat-6.0.16
 #appserver=tomcat-5.0.28
+#appserver=weblogic-9.2.mp3
 #appserver=weblogic-9.2.mp2
 #appserver=weblogic-8.1.sp6
 #appserver=jboss-4.0.5
