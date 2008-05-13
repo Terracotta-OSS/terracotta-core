@@ -100,7 +100,6 @@ import com.tc.bundles.EmbeddedOSGiEventHandler;
 import com.tc.bundles.EmbeddedOSGiRuntime;
 import com.tc.bundles.Resolver;
 import com.tc.bundles.ResolverUtils;
-import com.tc.bundles.exception.MissingBundleException;
 import com.tc.config.Loader;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.logging.CustomerLogging;
@@ -690,11 +689,6 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
               osgiRuntime.installBundle(location.toURL());
             }
           } catch (BundleException be) {
-            if (be instanceof MissingBundleException) {
-              String msg = be.getMessage();
-              msg = msg.substring(0, msg.indexOf(';'));
-              be = new MissingBundleException(msg);
-            }
             moduleInfo.setError(be);
             origModuleInfo.setError(be);
           }
