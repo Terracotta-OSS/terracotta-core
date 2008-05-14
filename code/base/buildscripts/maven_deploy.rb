@@ -20,7 +20,11 @@ class MavenDeploy
     command << FilePath.new('mvn').batch_extension.to_s << '-B' << '-N'
 
     if @snapshot
-      version.sub!(/.SNAPSHOT$/, '-SNAPSHOT') || version += '-SNAPSHOT'
+      #version.sub!(/.SNAPSHOT$/, '-SNAPSHOT') || version += '-SNAPSHOT'
+      if version !~ /.SNAPSHOT$/
+        loud_message("SKIPPING NON-SNAPSHOT ARTIFACT: #{@group_id}.#{artifact_id}-#{version}")
+        return
+      end
     end
 
     command_args = {
