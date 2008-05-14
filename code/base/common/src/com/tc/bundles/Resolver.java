@@ -61,7 +61,8 @@ public class Resolver {
     if (injectDefault) injectDefaultRepositories();
 
     for (int i = 0; i < repositoryStrings.length; i++) {
-      String repository = repositoryStrings[i];
+      String repository = repositoryStrings[i].trim();
+      if (repository.length() == 0) continue;
       File repoFile = resolveRepositoryLocation(repository);
       if (repoFile != null) repositories.add(repoFile);
     }
@@ -94,6 +95,7 @@ public class Resolver {
     final String[] entries = reposProp.split(",");
     for (int i = 0; i < entries.length; i++) {
       final String entry = entries[i].trim();
+      if (entry.length() == 0) continue;
       final File repoFile = resolveRepositoryLocation(entry);
       if (repoFile == null) {
         consoleLogger.warn("Ignored non-existent TIM repository: '" + ResolverUtils.canonicalize(entry) + "'");
@@ -126,8 +128,8 @@ public class Resolver {
 
     if (url == null) {
       consoleLogger.warn("Skipping repository location: '" + repository
-                         + "', it either does not exist or is not a directory; make sure that the directory path '"
-                         + ResolverUtils.canonicalize(repository) + "' exists.");
+                         + "', it either does not exist or is not a directory; make sure that the path '"
+                         + ResolverUtils.canonicalize(repository) + "' actually exists.");
       return null;
     }
 
