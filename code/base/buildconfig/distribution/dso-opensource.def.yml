@@ -167,6 +167,9 @@ postscripts:
         - artifact: tc-l1-prop-from-l2
           file: lib/tc-l1-prop-from-l2-xmlbeans-generated.jar
           pom: poms/tc-l1-prop-from-l2-pom.xml
+        - artifact: tcstats
+          file: lib/tcstats-xmlbeans-generated.jar
+          pom: poms/tcstats-pom.xml
         - artifact: tc-session
           file: lib/session/tc-session.jar
           pom: poms/tc-session-pom.xml

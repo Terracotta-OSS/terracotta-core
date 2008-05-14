@@ -66,5 +66,10 @@
       <artifactId>tc-l1-prop-from-l2</artifactId>
       <version>${tcVersion}</version>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>tcstats</artifactId>
+      <version>${tcVersion}</version>
+    </dependency>
  </dependencies>
 </project>
