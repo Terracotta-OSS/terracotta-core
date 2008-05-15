@@ -266,6 +266,18 @@ public class StatisticData implements Serializable {
            + "]";
   }
 
+   public String toLog() {
+     String data_formatted;
+     if (data != null &&
+         data instanceof Date) {
+       DateFormat format = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss SSS");
+       data_formatted = format.format(data);
+     } else {
+       data_formatted = String.valueOf(data);
+     }
+     return name + (null == element ? "": " - " + element) + " : " + data_formatted;
+   }
+
   public static String escapeForCsv(final String value) {
     char[] chars = value.toCharArray();
     StringBuffer buffer = null;

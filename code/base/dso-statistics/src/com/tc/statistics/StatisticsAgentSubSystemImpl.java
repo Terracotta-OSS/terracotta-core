@@ -17,7 +17,10 @@ import com.tc.statistics.buffer.h2.H2StatisticsBufferImpl;
 import com.tc.statistics.config.StatisticsConfig;
 import com.tc.statistics.config.impl.StatisticsConfigImpl;
 import com.tc.statistics.database.exceptions.StatisticsDatabaseStructureMismatchError;
+import com.tc.statistics.logging.StatisticsLogger;
+import com.tc.statistics.logging.impl.StatisticsLoggerImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
+import com.tc.statistics.retrieval.actions.SRAMemoryUsage;
 import com.tc.statistics.retrieval.impl.StatisticsRetrievalRegistryImpl;
 
 import java.io.File;
@@ -36,6 +39,7 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
   private volatile StatisticsEmitterMBean      statisticsEmitterMBean;
   private volatile StatisticsManagerMBeanImpl  statisticsManagerMBean;
   private volatile StatisticsRetrievalRegistry statisticsRetrievalRegistry;
+  private volatile StatisticsLogger            statisticsLogger;
 
   private volatile boolean active = false;
 
@@ -55,7 +59,12 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
 
   public synchronized boolean setup(final NewStatisticsConfig config) {
     StatisticsConfig statistics_config = new StatisticsConfigImpl();
-    
+
+    // setup the statistics logger
+    statisticsLogger = new StatisticsLoggerImpl(statistics_config);
+    statisticsLogger.registerAction(new SRAMemoryUsage());
+    statisticsLogger.startup();
+
     // create the statistics buffer
     File stat_path = config.statisticsPath().getFile();
     try {
@@ -165,6 +174,11 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
   }
 
   public synchronized void cleanup() throws Exception {
+    if (statisticsLogger != null) {
+      statisticsLogger.shutdown();
+      statisticsLogger = null;
+    }
+
     if (statisticsBuffer != null) {
       statisticsBuffer.close();
       statisticsBuffer = null;
@@ -177,5 +191,9 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
 
   public AgentStatisticsManager getStatisticsManager() {
     return statisticsManagerMBean;
+  }
+
+  public StatisticsLogger getStatisticsLogger() {
+    return statisticsLogger;
   }
 }

@@ -34,6 +34,11 @@ public class StatisticDataTest extends TestCase {
     assertEquals(",,,,,,,,,\n", data.toCsv());
   }
 
+  public void testDefaultToLog() throws Exception {
+    StatisticData data = new StatisticData();
+    assertEquals("null : null", data.toLog());
+  }
+
   public void testFluentInterface() throws Exception {
     Date moment = new Date();
     StatisticData data = new StatisticData()
@@ -150,6 +155,25 @@ public class StatisticDataTest extends TestCase {
       .element("first")
       .data(new BigDecimal("268.75862"));
     assertEquals("\"3984693\",\"192.168.1.18\",\"7826\",\""+moment.getTime().getTime()+"\",\"statname\",\"first\",,,,\"268.75862\"\n", data4.toCsv());
+  }
+
+  public void testToLog() throws Exception {
+    Calendar moment = Calendar.getInstance();
+    moment.set(2008, 0, 9, 16, 25, 52);
+    moment.set(Calendar.MILLISECOND, 0);
+    StatisticData data = new StatisticData()
+      .sessionId("3984693")
+      .agentIp("192.168.1.18")
+      .agentDifferentiator("7826")
+      .moment(moment.getTime())
+      .name("statname")
+      .element("first")
+      .data(new Long(987983343L));
+    assertEquals("statname - first : 987983343", data.toLog());
+    data.element(null);
+    assertEquals("statname : 987983343", data.toLog());
+    data.data(moment.getTime());
+    assertEquals("statname : 01/09/2008 16:25:52 000", data.toLog());
   }
 
   public void testFromCsvUnsupportedVersion() throws Exception {

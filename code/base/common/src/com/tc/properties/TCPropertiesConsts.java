@@ -370,11 +370,13 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * Section : CVT 
-   * cvt.retriever.notification.interval   - Interval between log file messages when the CVT retriever is running (in seconds) 
+   * cvt.retriever.notification.interval   - Interval between log file messages when the CVT retriever is running (in seconds)
+   * cvt.statistics.logging.interval       - Interval between logging of statistics data (in seconds).
    * cvt.buffer.randomsuffix.enabled       - If true, add a random suffix when a buffer is created
    * cvt.store.randomsuffix.enabled        - If true, add a random suffix when a store is created
    ********************************************************************************************************************/
   public static final String CVT_RETRIEVER_NOTIFICATION_INTERVAL                    = "cvt.retriever.notification.interval";
+  public static final String CVT_STATISTICS_LOGGING_INTERVAL                        = "cvt.statistics.logging.interval";
   public static final String CVT_BUFFER_RANDOM_SUFFIX_ENABLED                       = "cvt.buffer.randomsuffix.enabled";
   public static final String CVT_STORE_RANDOM_SUFFIX_ENABLED                        = "cvt.store.randomsuffix.enabled";
 

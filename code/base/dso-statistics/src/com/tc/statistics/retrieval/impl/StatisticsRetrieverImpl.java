@@ -37,7 +37,7 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
 
   private final static TCLogger     LOGGER = TCLogging.getLogger(StatisticsRetrieverImpl.class);
 
-  private final Timer               timer = new TCTimerImpl("Statistics Retriever Timer", true);
+  private final Timer               timer = new TCTimerImpl("Statistics Retriever", true);
 
   private final StatisticsConfig    config;
   private final StatisticsBuffer    buffer;
@@ -113,7 +113,7 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
     disableTimerTasks();
   }
 
-  public boolean containsAction(StatisticRetrievalAction action) {
+  public boolean containsAction(final StatisticRetrievalAction action) {
     if (null == action) return false;
     if (null == action.getType()) return false;
 
