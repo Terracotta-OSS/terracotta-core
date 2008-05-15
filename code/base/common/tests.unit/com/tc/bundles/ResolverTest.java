@@ -7,6 +7,7 @@ package com.tc.bundles;
 import org.apache.commons.io.FileUtils;
 import org.osgi.framework.BundleException;
 
+import com.tc.bundles.exception.MissingDefaultRepositoryException;
 import com.tc.test.TestConfigObject;
 import com.terracottatech.config.Module;
 
@@ -202,26 +203,28 @@ public class ResolverTest extends TestCase {
   }
 
   private void resolveBundle(String[] repos, BundleSpec spec, boolean expected) throws IOException {
-    //try {
-    Resolver resolver = new Resolver(repos, false);
-    File file = resolver.resolveBundle(spec);
-
-    if (expected) {
-      assertNotNull(spec.getSymbolicName(), file);
-      assertEquals(file.getAbsolutePath().endsWith(".jar"), expected);
-      JarFile jar = new JarFile(file);
-      Manifest manifest = jar.getManifest();
-      String symbolicName = BundleSpec.getSymbolicName(manifest);
-      String version = BundleSpec.getVersion(manifest);
-      assertEquals(symbolicName, spec.getSymbolicName());
-      assertEquals(version, spec.getVersion());
-    } else {
-      assertNull(file);
+    try {
+      Resolver resolver = new Resolver(repos, false);
+      File file = resolver.resolveBundle(spec);
+      if (expected) {
+        assertNotNull(spec.getSymbolicName(), file);
+        assertEquals(file.getAbsolutePath().endsWith(".jar"), expected);
+        JarFile jar = new JarFile(file);
+        Manifest manifest = jar.getManifest();
+        String symbolicName = BundleSpec.getSymbolicName(manifest);
+        String version = BundleSpec.getVersion(manifest);
+        assertEquals(symbolicName, spec.getSymbolicName());
+        assertEquals(version, spec.getVersion());
+      } else {
+        assertNull(file);
+      }
+    } catch (MissingDefaultRepositoryException e) {
+      fail(e.getMessage());
     }
-    //} catch (BundleException e) {
-    //  if (PASS == expected) fail(e.getMessage());
-    //  else assertTrue(FAIL == expected);
-    //}
+    // } catch (BundleException e) {
+    // if (PASS == expected) fail(e.getMessage());
+    // else assertTrue(FAIL == expected);
+    // }
   }
 
   private void resolve(String[] repos, String name, String version, boolean expected) {
