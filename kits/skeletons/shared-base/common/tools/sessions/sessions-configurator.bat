@@ -19,6 +19,8 @@ set CLASSPATH=%TC_INSTALL_DIR%\lib\tc.jar
 for %%i in (%TC_INSTALL_DIR%\lib\svt*.jar) do set SVT_JAR=%%i
 if exist "%SVT_JAR%"  set CLASSPATH=%CLASSPATH%;%SVT_JAR%
 
+set CLASSPATH="%CLASSPATH:"=%"
+
 set JAVA_OPTS=-Dtc.install-root=%TC_INSTALL_DIR% %JAVA_OPTS%
 start "session configurator" /B %JAVA_HOME%\bin\java %JAVA_OPTS% -cp %CLASSPATH% com.tc.SessionIntegrator %*
 endlocal
