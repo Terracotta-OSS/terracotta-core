@@ -5,10 +5,7 @@ package com.tc.util;
 
 import com.tc.exception.ImplementMe;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
 
 /**
  * Implements an AA-tree. AA tree provides all the advantages of a Red Black Tree while keeping the implementation
@@ -27,7 +24,7 @@ public class AATree {
   private Comparable          deletedElement;
   private boolean             inserted;
 
-  private static final AANode nullNode;
+  public static final AANode nullNode;
 
   static // static initializer for nullNode
   {
@@ -41,6 +38,14 @@ public class AATree {
    */
   public AATree() {
     root = nullNode;
+  }
+  
+  /**
+   * returns the root
+   * use only for test purposes
+   */
+  public AANode getRoot(){
+    return root;
   }
 
   /**
@@ -265,7 +270,7 @@ public class AATree {
     return "AATree = { " + root.dump() + " }";
   }
 
-  private static class AANode {
+  public static class AANode {
     // Constructors
     AANode(Comparable theElement) {
       element = theElement;
@@ -297,38 +302,41 @@ public class AATree {
 
   /*
    * This class is slightly inefficient in that it uses a stack internally to store state. But it is needed so that we
-   * dont have to store parent references. Also it does not give the objects in sorted order (as it is just
+   * dont have to store parent references. 
    */
   private class AATreeIterator implements Iterator {
 
-    // contains elements that needs to be travelled.
-    List   s    = new ArrayList();
     AANode next = root;
+    //conatins elements while traversing
+    Stack s = new Stack();
+    boolean done = false;
 
     public boolean hasNext() {
-      return (next != nullNode);
+      if(next == nullNode && s.size() == 0)
+        return false;
+      return true;
     }
 
-    public Object next() {
-      if (next == nullNode) { throw new NoSuchElementException(); }
-      Object element = next.element;
-      boolean leftNotNull = next.left != nullNode;
-      boolean rightNotNull = next.right != nullNode;
-      if (leftNotNull && rightNotNull) {
-        s.add(next.right);
-        next = next.left;
-      } else if (leftNotNull) {
-        next = next.left;
-      } else if (rightNotNull) {
-        next = next.right;
-      } else if (s.size() > 0) {
-        next = ((AANode) s.remove(s.size() - 1));
-      } else {
-        next = nullNode;
+    public Object next(){
+      Object obj = null;
+      
+      while (obj == null && !done) {
+        if (next != nullNode) {
+          s.push(next);
+          next = next.left;
+        } else {
+          if(s.empty() == false){
+            next = (AANode)s.pop();
+            obj = next;
+            next = next.right;
+          } else{
+            done = true;
+          }
+        }
       }
-      return element;
+      return obj;
     }
-
+    
     // This is a little tricky, the tree might rebalance itself.
     public void remove() {
       throw new ImplementMe();
