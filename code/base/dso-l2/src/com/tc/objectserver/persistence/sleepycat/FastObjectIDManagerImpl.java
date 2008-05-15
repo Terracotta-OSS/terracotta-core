@@ -56,7 +56,6 @@ public final class FastObjectIDManagerImpl extends SleepycatPersistorBase implem
   private final Database                       oidLogDB;
   private final PersistenceTransactionProvider ptp;
   private final CursorConfig                   oidDBCursorConfig;
-  private final int                            bitsPerLong              = OidLongArray.BitsPerLong;
   private final AtomicInteger                  changesCount             = new AtomicInteger(0);
   private final CheckpointRunner               checkpointThread;
   private final Object                         checkpointSyncObj        = new Object();
@@ -133,14 +132,14 @@ public final class FastObjectIDManagerImpl extends SleepycatPersistorBase implem
    * Log key to make log records ordered in time sequenece
    */
   private byte[] makeLogKey(boolean isAdd) {
-    byte[] rv = new byte[OidLongArray.BytesPerLong  + 1];
+    byte[] rv = new byte[OidLongArray.BYTES_PER_LONG  + 1];
     Conversion.writeLong(nextSeqID(), rv, 0);
-    rv[OidLongArray.BytesPerLong] = (byte) (isAdd ? 0 : 1);
+    rv[OidLongArray.BYTES_PER_LONG] = (byte) (isAdd ? 0 : 1);
     return rv;
   }
 
   private boolean isAddOper(byte[] logKey) {
-    return (logKey[OidLongArray.BytesPerLong] == 0);
+    return (logKey[OidLongArray.BYTES_PER_LONG] == 0);
   }
 
   /*
@@ -198,7 +197,7 @@ public final class FastObjectIDManagerImpl extends SleepycatPersistorBase implem
                 oidBitsArrayMap.getAndClr(objectID);
               }
               sortedOnDiskIndexSet.add(new Long(oidBitsArrayMap.oidIndex(oidValue)));
-              offset += OidLongArray.BytesPerLong;
+              offset += OidLongArray.BYTES_PER_LONG;
               ++changes;
             }
             cursor.delete();
@@ -358,17 +357,15 @@ public final class FastObjectIDManagerImpl extends SleepycatPersistorBase implem
       for (int j = 0; j < ary.length; ++j) {
         long bit = 1L;
         long bits = ary[j];
-        for (int i = 0; i < bitsPerLong; ++i) {
+        for (int i = 0; i < OidLongArray.BITS_PER_LONG; ++i) {
           if ((bits & bit) != 0) {
             tmp.add(new ObjectID(oid));
-
             if (isMeasurePerf && ((++counter % 1000) == 0)) {
               long elapse_time = System.currentTimeMillis() - startTime;
               long avg_time = elapse_time / (counter / 1000);
               logger.info("MeasurePerf: reading " + counter + " OIDs took " + elapse_time + "ms avg(1000 objs):"
                           + avg_time + " ms");
             }
-
           }
           bit <<= 1;
           ++oid;
@@ -411,11 +408,11 @@ public final class FastObjectIDManagerImpl extends SleepycatPersistorBase implem
     int size = oidSet.size();
     if (size == 0) return (status);
 
-    byte[] oids = new byte[size * OidLongArray.BytesPerLong];
+    byte[] oids = new byte[size * OidLongArray.BYTES_PER_LONG];
     int offset = 0;
     for (ObjectID objectID : oidSet) {
       Conversion.writeLong(objectID.toLong(), oids, offset);
-      offset += OidLongArray.BytesPerLong;
+      offset += OidLongArray.BYTES_PER_LONG;
     }
     try {
       status = logObjectID(tx, oids, isAdd);
@@ -443,7 +440,7 @@ public final class FastObjectIDManagerImpl extends SleepycatPersistorBase implem
     OidBitsArrayMap(int longsPerDiskUnit, Database oidDB) {
       this.oidDB = oidDB;
       this.longsPerDiskUnit = longsPerDiskUnit;
-      this.bitsLength = longsPerDiskUnit * OidLongArray.BitsPerLong;
+      this.bitsLength = longsPerDiskUnit * OidLongArray.BITS_PER_LONG;
       map = new HashMap();
     }
 
