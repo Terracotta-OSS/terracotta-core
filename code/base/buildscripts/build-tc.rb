@@ -509,8 +509,6 @@ END
     maven_version = @config_source['maven.version']
     printf("%-50s: %s\n",  "maven.version defined in build-config.global", maven_version)
     poms = Dir.glob('poms/*.xml')
-    poms << 'parent14/pom.xml'
-    poms << 'parent15/pom.xml'
     poms << 'dependencies/pom.xml'
     poms.each do |pom|
       compare_maven_version(maven_version, pom, '/project/parent/version')
