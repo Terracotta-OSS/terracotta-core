@@ -40,6 +40,10 @@ public class GathererConnection {
     this.host = host;
   }
 
+  public int getPort() {
+    return port;
+  }
+
   public void setPort(final int port) {
     this.port = port;
   }

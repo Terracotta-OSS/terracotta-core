@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.management.RuntimeMBeanException;
+import javax.naming.ServiceUnavailableException;
 
 public class CliCommands {
   private GathererConnection connection = new GathererConnection();
@@ -83,7 +84,18 @@ public class CliCommands {
         0 == commands.size()) {
       return false;
     } else {
-      connection.connect();
+      try {
+        connection.connect();
+      } catch (IOException e) {
+        if (e.getCause() != null &&
+            e.getCause() instanceof ServiceUnavailableException) {
+          System.out.println("Unable to connect to host '" + connection.getHost() + "' and port '" + connection.getPort() + "'.");
+          System.out.println("Are you sure there is a Terracotta server running there?");
+          return false;
+        } else {
+          throw e;
+        }
+      }
 
       // create the commands that have to be executed together with their arguments
       final Map commands_to_execute = new LinkedHashMap();
