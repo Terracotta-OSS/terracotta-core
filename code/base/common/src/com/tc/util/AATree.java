@@ -1,11 +1,11 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
-import com.tc.exception.ImplementMe;
-
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * Implements an AA-tree. AA tree provides all the advantages of a Red Black Tree while keeping the implementation
@@ -16,6 +16,7 @@ import java.util.Iterator;
  * 
  * @author Mark Allen Weiss
  */
+//TODO::FIXME :: The class behaves like a set, rename it
 public class AATree {
 
   private AANode              root;
@@ -23,8 +24,9 @@ public class AATree {
   private AANode              lastNode;
   private Comparable          deletedElement;
   private boolean             inserted;
+  private int                 size = 0;
 
-  public static final AANode nullNode;
+  private static final AANode nullNode;
 
   static // static initializer for nullNode
   {
@@ -39,13 +41,9 @@ public class AATree {
   public AATree() {
     root = nullNode;
   }
-  
-  /**
-  * returns the root
-  * use only for test purposes
-  */
-  public AANode getRoot(){
-    return root;
+
+  public int size() {
+    return size;
   }
 
   /**
@@ -58,6 +56,7 @@ public class AATree {
   public boolean insert(Comparable x) {
     inserted = true;
     root = insert(x, root);
+    if (inserted) size++;
     return inserted;
   }
 
@@ -74,6 +73,7 @@ public class AATree {
     // deletedElement is set to null to free the reference,
     // deletedNode is not freed as it will endup pointing to a valid node.
     deletedElement = null;
+    if (d != null) size--;
     return d;
   }
 
@@ -133,6 +133,7 @@ public class AATree {
    */
   public void clear() {
     root = nullNode;
+    size = 0;
   }
 
   /**
@@ -181,7 +182,6 @@ public class AATree {
    * @param x the item to remove.
    * @param t the node that roots the tree.
    * @return the new root.
-   * @throws ItemNotFoundException if x is not found.
    */
   private AANode remove(Comparable x, AANode t) {
     if (t != nullNode) {
@@ -198,7 +198,7 @@ public class AATree {
       // x is present, we remove it
       if (t == lastNode) {
         if (deletedNode == nullNode || x.compareTo(deletedNode.element) != 0) {
-          // XXX:: Modified to no throw ItemNotFoundException as we want to be able to remove elements without doing a
+          // XXX:: Modified to not throw ItemNotFoundException as we want to be able to remove elements without doing a
           // lookup.
           // throw new RuntimeException("ItemNotFoundException : " + x.toString());
         } else {
@@ -208,7 +208,7 @@ public class AATree {
         }
       }
 
-      // Step 3: Otherwise, we are not at the bottom; rebalance
+      // Step 3: Otherwise, we are not at the bottom; re-balance
       else if (t.left.level < t.level - 1 || t.right.level < t.level - 1) {
         if (t.right.level > --t.level) t.right.level = t.level;
         t = skew(t);
@@ -270,7 +270,7 @@ public class AATree {
     return "AATree = { " + root.dump() + " }";
   }
 
-  public static class AANode {
+  private static class AANode {
     // Constructors
     AANode(Comparable theElement) {
       element = theElement;
@@ -302,155 +302,37 @@ public class AATree {
 
   /*
    * This class is slightly inefficient in that it uses a stack internally to store state. But it is needed so that we
-   * dont have to store parent references. Also it does not give the objects in sorted order (as it is just
+   * don't have to store parent references.
    */
   private class AATreeIterator implements Iterator {
 
     AANode next = root;
-    //conatins elements while traversing
-    Stack s = new Stack();
-    boolean done = false;
+    // Contains elements while traversing
+    Stack  s    = new Stack();
 
     public boolean hasNext() {
-      if(next == nullNode && s.size() == 0)
-        return false;
+      if (next == nullNode && s.size() == 0) return false;
       return true;
     }
 
-    public Object next(){
-      Object obj = null;
-      
-      while (obj == null && !done) {
+    public Object next() {
+      if (next == nullNode && s.size() == 0) throw new NoSuchElementException();
+
+      while (true) {
         if (next != nullNode) {
           s.push(next);
           next = next.left;
         } else {
-          if(s.empty() == false){
-            next = (AANode)s.pop();
-            obj = next.element;
-            next = next.right;
-          } else{
-            done = true;
-          }
+          AANode current = (AANode) s.pop();
+          next = current.right;
+          return current.element;
         }
       }
-      return obj;
     }
 
-    // This is a little tricky, the tree might rebalance itself.
+    // This is a little tricky, the tree might re-balance itself.
     public void remove() {
-      throw new ImplementMe();
+      throw new UnsupportedOperationException();
     }
-
-  }
-
-  // Test program; should print min and max and nothing else
-  // public static void main(String[] args) {
-  // AATree t = new AATree();
-  // final int NUMS = 400000;
-  // final int GAP = 307;
-  //
-  // System.out.println("Checking... (no bad output means success)");
-  //
-  // t.insert(new Integer(NUMS * 2));
-  // t.insert(new Integer(NUMS * 3));
-  // for (int i = GAP; i != 0; i = (i + GAP) % NUMS)
-  // t.insert(new Integer(i));
-  // System.out.println("Inserts complete");
-  //
-  // t.remove(t.findMax());
-  // for (int i = 1; i < NUMS; i += 2)
-  // t.remove(new Integer(i));
-  // t.remove(t.findMax());
-  // System.out.println("Removes complete");
-  //
-  // if (((Integer) (t.findMin())).intValue() != 2 || ((Integer) (t.findMax())).intValue() != NUMS - 2) System.out
-  // .println("FindMin or FindMax error!");
-  //
-  // for (int i = 2; i < NUMS; i += 2)
-  // if (((Integer) t.find(new Integer(i))).intValue() != i) System.out.println("Error: find fails for " + i);
-  //
-  // for (int i = 1; i < NUMS; i += 2)
-  // if (t.find(new Integer(i)) != null) System.out.println("Error: Found deleted item " + i);
-  // }
-
-  public static void main(String[] args) {
-    AATree t = new AATree();
-    System.out.println("Inserted = " + t.insert(new Integer(8)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Inserted = " + t.insert(new Integer(4)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Inserted = " + t.insert(new Integer(10)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Inserted = " + t.insert(new Integer(2)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Inserted = " + t.insert(new Integer(6)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Inserted = " + t.insert(new Integer(9)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Inserted = " + t.insert(new Integer(11)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Inserted = " + t.insert(new Integer(1)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Inserted = " + t.insert(new Integer(3)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Inserted = " + t.insert(new Integer(5)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Inserted = " + t.insert(new Integer(7)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Inserted = " + t.insert(new Integer(12)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Inserted = " + t.insert(new Integer(1)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Inserted = " + t.insert(new Integer(3)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-
-    System.out.println("Deleted = " + t.remove(new Integer(6)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Deleted = " + t.remove(new Integer(8)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Deleted = " + t.remove(new Integer(10)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Deleted = " + t.remove(new Integer(12)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Deleted = " + t.remove(new Integer(6)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Deleted = " + t.remove(new Integer(8)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Deleted = " + t.remove(new Integer(1)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-
-  }
-
-  private static String dumpUsingIterator(AATree t) {
-    StringBuffer sb = new StringBuffer();
-    for (Iterator i = t.iterator(); i.hasNext();) {
-      sb.append(i.next());
-      if (i.hasNext()) {
-        sb.append(',');
-      }
-    }
-    return sb.toString();
   }
 }

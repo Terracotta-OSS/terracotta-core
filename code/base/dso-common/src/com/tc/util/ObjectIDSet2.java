@@ -127,11 +127,27 @@ public class ObjectIDSet2 extends AbstractSet implements Externalizable {
   }
 
   public String toString() {
-    StringBuffer sb = new StringBuffer("ObjectIDSet2 [");
+    StringBuffer sb = new StringBuffer("ObjectIDSet2 " + getCompressionDetails() + "[");
     for (Iterator i = ranges.iterator(); i.hasNext();) {
       sb.append(' ').append(i.next());
     }
     return sb.append(']').toString();
+  }
+  
+  public String dump() {
+    StringBuffer sb = new StringBuffer("ObjectIDSet2 " + getCompressionDetails() + "[");
+    sb.append( " size  = ").append(size);
+    return sb.append(']').toString();
+  }
+
+  private String getCompressionDetails() {
+    return "{ (oids:ranges) = " + size + ":" + ranges.size() + " | % =  " + getCompressionPercentage()
+           + " } ";
+  }
+
+  // Range contains two longs instead of 1 long in ObjectID
+  private float getCompressionPercentage() {
+    return ((ranges.size() * 2) / size) * 100;
   }
 
   /**
