@@ -13,6 +13,7 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerEventListener;
 import com.tc.objectserver.api.ObjectManagerStatsListener;
+import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.core.api.GarbageCollector;
 import com.tc.objectserver.core.api.ManagedObject;
@@ -183,7 +184,7 @@ public class TestObjectManager implements ObjectManager {
     throw new ImplementMe();
   }
 
-  public void notifyGCComplete(Set toDelete) {
+  public void notifyGCComplete(GCResultContext resultContext) {
     throw new ImplementMe();
   }
 
@@ -214,7 +215,7 @@ public class TestObjectManager implements ObjectManager {
   }
 
   public void preFetchObjectsAndCreate(Set oids, Set newOids) {
-    //Nop
+    // Nop
   }
 
   public void createNewObjects(Set ids) {

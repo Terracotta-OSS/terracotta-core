@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 
 public class TestManagedObjectPersistor implements ManagedObjectPersistor {
 
@@ -81,7 +82,7 @@ public class TestManagedObjectPersistor implements ManagedObjectPersistor {
     return allObjectIDs;
   }
 
-  public void deleteAllObjectsByID(PersistenceTransaction tx, Collection ids) {
+  public void deleteAllObjectsByID(PersistenceTransaction tx, SortedSet<ObjectID> ids) {
     for (Iterator i = ids.iterator(); i.hasNext();) {
       deleteObjectByID(tx, (ObjectID) i.next());
     }
@@ -90,5 +91,4 @@ public class TestManagedObjectPersistor implements ManagedObjectPersistor {
   public Map loadRootNamesToIDs() {
     return null;
   }
-
 }

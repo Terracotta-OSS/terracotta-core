@@ -25,9 +25,11 @@ import com.tc.net.groups.NodeID;
 import com.tc.objectserver.api.GCStats;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerEventListener;
+import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TxnsInSystemCompletionLister;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.sequence.SequenceGenerator;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorException;
 
@@ -76,7 +78,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
 
   /**
    * This method is used to sync up all ObjectIDs from the remote ObjectManagers. It is synchronous and after when it
-   * returns nobody is allowed to join the cluster with exisiting objects.
+   * returns nobody is allowed to join the cluster with existing objects.
    */
   public void sync() {
     try {
@@ -96,7 +98,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
         }
       }
       if (!nodeID2ObjectIDs.isEmpty()) {
-        gcMonitor.add2L2StateManagerWhenGCDisabled(nodeID2ObjectIDs);
+        gcMonitor.disableAndAdd2L2StateManager(nodeID2ObjectIDs);
       }
     } catch (GroupException e) {
       logger.error(e);
@@ -121,7 +123,6 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     } else {
       throw new AssertionError("ReplicatedObjectManagerImpl : Received wrong message type :" + msg.getClass().getName()
                                + " : " + msg);
-
     }
   }
 
@@ -129,11 +130,17 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     Set gcedOids = gcMsg.getGCedObjectIDs();
     if (stateManager.isActiveCoordinator()) {
       logger.warn("Received GC Result from " + gcMsg.messageFrom() + " While this node is ACTIVE. Ignoring result : "
-                  + gcedOids.size());
+                  + gcMsg);
       return;
     }
-    objectManager.notifyGCComplete(gcedOids);
-    logger.info("Removed " + gcedOids.size() + " objects from passive ObjectManager from last GC from Active");
+
+    boolean deleted = objectManager.getGarbageCollector()
+        .deleteGarbage(new GCResultContext(gcMsg.getGCIterationCount(), gcedOids));
+    if (deleted) {
+      logger.info("Removed " + gcedOids.size() + " objects from passive ObjectManager from last GC from Active");
+    } else {
+      logger.info("Skipped removing garbage since gc is either running or disabled. garbage : " + gcMsg);
+    }
   }
 
   private void handleClusterObjectMessage(NodeID nodeID, ObjectListSyncMessage clusterMsg) {
@@ -244,7 +251,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
 
     public void garbageCollectionComplete(GCStats stats, Set deleted) {
       Map toAdd = null;
-      notifyGCResultToPassives(deleted);
+      notifyGCResultToPassives(stats, deleted);
       synchronized (this) {
         if (syncingPassives.isEmpty()) return;
         toAdd = new LinkedHashMap();
@@ -253,7 +260,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
           if (e.getValue() != ADDED) {
             NodeID nodeID = (NodeID) e.getKey();
             logger.info("GC Completed : Starting scheduled passive sync for " + nodeID);
-            disableGCIfNecessary();
+            disableGCIfPossible();
             // Shouldn't happen as this is in GC call back after GC completion
             assertGCDisabled();
             toAdd.put(nodeID, e.getValue());
@@ -264,9 +271,9 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       add2L2StateManager(toAdd);
     }
 
-    private void notifyGCResultToPassives(final Set deleted) {
+    private void notifyGCResultToPassives(GCStats stats, final Set deleted) {
       if (deleted.isEmpty()) return;
-      final GCResultMessage msg = GCResultMessageFactory.createGCResultMessage(deleted);
+      final GCResultMessage msg = GCResultMessageFactory.createGCResultMessage(stats.getIteration(), deleted);
       final long id = gcIdGenerator.incrementAndGet();
       transactionManager.callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionLister() {
         public void onCompletion() {
@@ -295,33 +302,32 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       }
     }
 
-    private void disableGCIfNecessary() {
+    private void disableGCIfPossible() {
       if (!disabled) {
         disabled = objectManager.getGarbageCollector().disableGC();
         logger.info((disabled ? "GC is disabled." : "GC is is not disabled."));
       }
     }
-
-    private void assertGCDisabled() {
-      if (!disabled) { throw new AssertionError("Cant disable GC"); }
+    
+    private void disableGC() {
+      while(!disabled) {
+        disabled = objectManager.getGarbageCollector().disableGC();
+        if(!disabled) {
+          logger.warn("GC is running. Waiting for it to complete before disabling it...");
+          ThreadUtil.reallySleep(3000); // FIXME:: use wait notify instead
+        }
+      }
     }
 
-    public void add2L2StateManagerWhenGCDisabled(Map nodeID2ObjectIDs) {
-      if (nodeID2ObjectIDs.size() > 0 && !disabled) {
-        logger.info("Disabling GC since " + nodeID2ObjectIDs.size() + " passive(s) [ " + nodeID2ObjectIDs.keySet()
-                    + " ] needs to be synced up");
-      }
-      for (Iterator i = nodeID2ObjectIDs.entrySet().iterator(); i.hasNext();) {
-        Entry e = (Entry) i.next();
-        NodeID nodeID = (NodeID) e.getKey();
-        add2L2StateManagerWhenGCDisabled(nodeID, (Set) e.getValue());
-      }
+
+    private void assertGCDisabled() {
+      if (!disabled) { throw new AssertionError("GC is not disabled"); }
     }
 
     public void add2L2StateManagerWhenGCDisabled(NodeID nodeID, Set oids) {
       boolean toAdd = false;
       synchronized (this) {
-        disableGCIfNecessary();
+        disableGCIfPossible();
         if (syncingPassives.containsKey(nodeID)) {
           logger.warn("Not adding " + nodeID + " since it is already present in syncingPassives : "
                       + syncingPassives.keySet());
@@ -361,13 +367,36 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
 
     public synchronized void syncCompleteFor(NodeID nodeID) {
       Object val = syncingPassives.remove(nodeID);
-      // val could be null if the node disconnects before fully synching up.
+      // value could be null if the node disconnects before fully synching up.
       Assert.assertTrue(val == ADDED || val == null);
       if (val != null) {
         Assert.assertTrue(disabled);
         enableGCIfNecessary();
       }
     }
-
+    
+    public void disableAndAdd2L2StateManager(Map nodeID2ObjectIDs) {
+      synchronized (this) {
+        if (nodeID2ObjectIDs.size() > 0 && !disabled) {
+          logger.info("Disabling GC since " + nodeID2ObjectIDs.size() + " passives [" + nodeID2ObjectIDs.keySet()
+                      + "] needs to sync up");
+          disableGC();
+          assertGCDisabled();
+        }
+        for (Iterator i = nodeID2ObjectIDs.entrySet().iterator(); i.hasNext();) {
+          Entry e = (Entry) i.next();
+          NodeID nodeID = (NodeID) e.getKey();
+          if (!syncingPassives.containsKey(nodeID)) {
+            syncingPassives.put(nodeID, ADDED);
+          } else {
+            logger.info("Removing " + e
+                        + " from the list to add to L2ObjectStateManager since its present in syncingPassives : "
+                        + syncingPassives.keySet());
+            i.remove();
+          }
+        }
+      }
+      add2L2StateManager(nodeID2ObjectIDs);
+    }
   }
 }

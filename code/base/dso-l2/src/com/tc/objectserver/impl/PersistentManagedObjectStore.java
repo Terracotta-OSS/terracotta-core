@@ -4,8 +4,12 @@
  */
 package com.tc.objectserver.impl;
 
+import com.tc.async.api.Sink;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ShutdownError;
+import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
@@ -18,15 +22,20 @@ import com.tc.util.SyncObjectIdSet;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 
 public class PersistentManagedObjectStore implements ManagedObjectStore {
 
+  private final static TCLogger        logger = TCLogging.getLogger(PersistentManagedObjectStore.class);
+
   private final SyncObjectIdSet        extantObjectIDs;
   private final ManagedObjectPersistor objectPersistor;
+  private final Sink                   gcDisposerSink;
   private boolean                      inShutdown;
 
-  public PersistentManagedObjectStore(ManagedObjectPersistor persistor) {
+  public PersistentManagedObjectStore(ManagedObjectPersistor persistor, Sink gcDisposerSink) {
     this.objectPersistor = persistor;
+    this.gcDisposerSink = gcDisposerSink;
     this.extantObjectIDs = objectPersistor.getAllObjectIDs();
   }
 
@@ -54,7 +63,6 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
   public ObjectID getRootID(String name) {
     return objectPersistor.loadRootID(name);
   }
-  
 
   public Map getRootNamesToIDsMap() {
     return objectPersistor.loadRootNamesToIDs();
@@ -81,14 +89,20 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
     objectPersistor.saveAllObjects(tx, managed);
   }
 
-  public void removeAllObjectsByIDNow(PersistenceTransaction tx, Collection ids) {
+  public void removeAllObjectsByIDNow(PersistenceTransaction tx, SortedSet<ObjectID> ids) {
     assertNotInShutdown();
     this.objectPersistor.deleteAllObjectsByID(tx, ids);
-    basicRemoveAll(ids);
+    this.extantObjectIDs.removeAll(ids);
   }
 
-  private void basicRemoveAll(Collection ids) {
-    this.extantObjectIDs.removeAll(ids);
+  /**
+   * This method is used by the GC to trigger removing Garbage.
+   */
+  public void removeAllObjectsByID(GCResultContext gcResult) {
+    assertNotInShutdown();
+    this.extantObjectIDs.removeAll(gcResult.getGCedObjectIDs());
+    logger.info("Scheduling gc results " + gcResult + " to be deleted in the background");
+    gcDisposerSink.add(gcResult);
   }
 
   public ObjectIDSet2 getAllObjectIDs() {

@@ -9,6 +9,7 @@ import com.tc.net.groups.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerStatsListener;
+import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.core.api.GarbageCollector;
@@ -34,9 +35,6 @@ import java.util.Set;
 
 import junit.framework.TestCase;
 
-/**
- * @author steve
- */
 public class MarkAndSweepGarbageCollectorTest extends TestCase implements ObjectManager {
   private long                           objectIDCounter     = 0;
   private TestManagedObject              root1;
@@ -309,10 +307,6 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
     throw new ImplementMe();
   }
 
-  public void notifyGCComplete(Set toDelete) {
-    throw new ImplementMe();
-  }
-
   public void flushAndEvict(List objects2Flush) {
     throw new ImplementMe();
   }
@@ -349,6 +343,10 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
       return null;
     }
     return mo;
+  }
+
+  public void notifyGCComplete(GCResultContext resultContext) {
+    throw new ImplementMe();
   }
 
 }

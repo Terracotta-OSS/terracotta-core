@@ -23,6 +23,7 @@ import com.tc.objectserver.api.ObjectManagerLookupResults;
 import com.tc.objectserver.api.ObjectManagerMBean;
 import com.tc.objectserver.api.ObjectManagerStatsListener;
 import com.tc.objectserver.api.ShutdownError;
+import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.context.ManagedObjectFaultingContext;
 import com.tc.objectserver.context.ManagedObjectFlushingContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
@@ -77,7 +78,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private static final int                     INITIAL_SET_SIZE         = 16;
   private static final float                   LOAD_FACTOR              = 0.75f;
   private static final int                     MAX_LOOKUP_OBJECTS_COUNT = 5000;
-  private static final long                    REMOVE_THRESHOLD         = 300;
 
   private final ManagedObjectStore             objectStore;
   private final Map                            references;
@@ -670,44 +670,15 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
   }
 
-  public void notifyGCComplete(Set toDelete) {
+  public void notifyGCComplete(GCResultContext gcResult) {
+    Set toDelete = gcResult.getGCedObjectIDs();
     synchronized (this) {
-      collector.notifyGCDeleteStarted();
       removeAllObjectsByID(toDelete);
       // Process pending, since we disabled process pending while GC pause was initiate.
       processPendingLookups();
       notifyAll();
     }
-
-    if (toDelete.size() <= config.getDeleteBatchSize()) {
-      removeFromStore(toDelete);
-    } else {
-      Set split = new HashSet();
-      for (Iterator i = toDelete.iterator(); i.hasNext();) {
-        split.add(i.next());
-        if (split.size() >= config.getDeleteBatchSize()) {
-          removeFromStore(split);
-          split = new HashSet();
-        }
-      }
-      if (split.size() > 0) {
-        removeFromStore(split);
-      }
-    }
-    collector.notifyGCComplete();
-  }
-
-  private void removeFromStore(Set toDelete) {
-    long start = System.currentTimeMillis();
-
-    PersistenceTransaction tx = newTransaction();
-    objectStore.removeAllObjectsByIDNow(tx, toDelete);
-    tx.commit();
-
-    long elapsed = System.currentTimeMillis() - start;
-    if (elapsed > REMOVE_THRESHOLD) {
-      logger.info("Removed " + toDelete.size() + " objects in " + elapsed + "ms.");
-    }
+    objectStore.removeAllObjectsByID(gcResult);
   }
 
   private void flushAndCommit(PersistenceTransaction persistenceTransaction, ManagedObject managedObject) {

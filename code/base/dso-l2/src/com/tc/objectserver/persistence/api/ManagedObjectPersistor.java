@@ -10,6 +10,7 @@ import com.tc.util.SyncObjectIdSet;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 
 public interface ManagedObjectPersistor {
 
@@ -33,7 +34,7 @@ public interface ManagedObjectPersistor {
 
   public void saveAllObjects(PersistenceTransaction tx, Collection managed);
 
-  public void deleteAllObjectsByID(PersistenceTransaction tx, Collection ids);
+  public void deleteAllObjectsByID(PersistenceTransaction tx, SortedSet<ObjectID> ids);
   
   public Map loadRootNamesToIDs();
 

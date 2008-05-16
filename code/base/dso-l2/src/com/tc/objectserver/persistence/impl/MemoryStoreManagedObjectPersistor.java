@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 
 public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPersistor {
   private final MemoryDataStoreClient           objectDB;
@@ -215,7 +216,7 @@ public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPer
     }
   }
 
-  public void deleteAllObjectsByID(PersistenceTransaction tx, Collection objectIDs) {
+  public void deleteAllObjectsByID(PersistenceTransaction tx, SortedSet<ObjectID> objectIDs) {
     for (Iterator i = objectIDs.iterator(); i.hasNext();) {
       deleteObjectByID(tx, (ObjectID) i.next());
     }
@@ -269,4 +270,5 @@ public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPer
     }
 
   }
+
 }

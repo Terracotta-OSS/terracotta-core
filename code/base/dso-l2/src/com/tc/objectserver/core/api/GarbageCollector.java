@@ -1,11 +1,13 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.core.api;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.GCStats;
 import com.tc.objectserver.api.ObjectManagerEventListener;
+import com.tc.objectserver.context.GCResultContext;
 import com.tc.text.PrettyPrintable;
 import com.tc.util.concurrent.LifeCycleState;
 import com.tc.util.concurrent.StoppableThread;
@@ -16,11 +18,11 @@ import java.util.Set;
 public interface GarbageCollector extends PrettyPrintable {
 
   public void enableGC();
-  
+
   public boolean disableGC();
-  
+
   public boolean isDisabled();
-  
+
   public boolean isPausingOrPaused();
 
   public boolean isPaused();
@@ -34,11 +36,6 @@ public interface GarbageCollector extends PrettyPrintable {
    * Request to pause when the system state stabalizes
    */
   public void requestGCPause();
-
-  /**
-   * Called by the GC thread. Notifies the garbage collector has started deleting Garbage
-   */
-  public void notifyGCDeleteStarted();
 
   /**
    * Called by the GC thread. Notifies the garbage collector that GC is complete.
@@ -64,7 +61,7 @@ public interface GarbageCollector extends PrettyPrintable {
   public void start();
 
   public void stop();
-  
+
   public boolean isStarted();
 
   public void setState(StoppableThread st);
@@ -72,4 +69,6 @@ public interface GarbageCollector extends PrettyPrintable {
   public void addListener(ObjectManagerEventListener listener);
 
   public GCStats[] getGarbageCollectorStats();
+
+  public boolean deleteGarbage(GCResultContext resultContext);
 }

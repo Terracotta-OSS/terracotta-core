@@ -95,23 +95,25 @@ public class TCGroupSendLargeMessageTest extends TCTestCase {
     for (long i = 1; i <= oidsCount; ++i) {
       oidSet.add(new ObjectID(i));
     }
-    final GCResultMessage msg1 = GCResultMessageFactory.createGCResultMessage(oidSet);
+    final GCResultMessage msg1 = GCResultMessageFactory.createGCResultMessage(1, oidSet);
     gm1.sendAll(msg1);
 
     GCResultMessage msg2 = (GCResultMessage) l2.take();
 
     assertEquals(msg1.getGCedObjectIDs(), msg2.getGCedObjectIDs());
+    assertEquals(msg1.getGCIterationCount(), msg2.getGCIterationCount());
 
     oidSet = new ObjectIDSet2();
     for (long i = (oidsCount + 1); i <= (oidsCount * 2); ++i) {
       oidSet.add(new ObjectID(i));
     }
-    final GCResultMessage msg3 = GCResultMessageFactory.createGCResultMessage(oidSet);
+    final GCResultMessage msg3 = GCResultMessageFactory.createGCResultMessage(2, oidSet);
     gm2.sendAll(msg3);
 
     GCResultMessage msg4 = (GCResultMessage) l1.take();
 
     assertEquals(msg3.getGCedObjectIDs(), msg4.getGCedObjectIDs());
+    assertEquals(msg3.getGCIterationCount(), msg4.getGCIterationCount());
 
   }
 

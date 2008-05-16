@@ -5,6 +5,7 @@
 package com.tc.objectserver.persistence.sleepycat;
 
 import com.sleepycat.je.CursorConfig;
+import com.tc.async.impl.MockSink;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
@@ -25,6 +26,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Random;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 public class ManagedObjectPersistorImplTest extends TCTestCase {
   private static final TCLogger          logger = TCLogging.getTestingLogger(ManagedObjectPersistorImplTest.class);
@@ -60,7 +63,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
                                                                 .getRootDatabase(), rootDBCursorConfig,
                                                             persistenceTransactionProvider,
                                                             sleepycatCollectionsPersistor, env.isParanoidMode());
-    objectStore = new PersistentManagedObjectStore(managedObjectPersistor);
+    objectStore = new PersistentManagedObjectStore(managedObjectPersistor, new MockSink());
     oidManager = (FastObjectIDManagerImpl) managedObjectPersistor.getOibjectIDManager();
   }
 
@@ -159,7 +162,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
     oidManager.runCheckpoint();
 
     int total = objects.size();
-    HashSet toDelete = new HashSet();
+    SortedSet<ObjectID> toDelete = new TreeSet<ObjectID>();
     int count = 0;
     for (Iterator i = objects.iterator(); (count < total / 2) && i.hasNext();) {
       ManagedObject mo = (ManagedObject) i.next();
@@ -188,7 +191,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
 
     oidManager.runCheckpoint();
 
-    HashSet objectIds = new HashSet();
+    TreeSet<ObjectID> objectIds = new TreeSet<ObjectID>();
     for (Iterator i = objects.iterator(); i.hasNext();) {
       ManagedObject mo = (ManagedObject) i.next();
       objectIds.add(mo.getID());

@@ -6,6 +6,7 @@ package com.tc.objectserver.impl;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ShutdownError;
+import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
@@ -20,6 +21,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 public class InMemoryManagedObjectStore implements ManagedObjectStore {
 
@@ -66,16 +69,18 @@ public class InMemoryManagedObjectStore implements ManagedObjectStore {
     this.managed.remove(id);
   }
 
-  public synchronized void removeAllObjectsByID(PersistenceTransaction tx, Collection ids) {
+  public synchronized void removeAllObjectsByIDNow(PersistenceTransaction tx, SortedSet<ObjectID> objectIds) {
     assertNotInShutdown();
-    for (Iterator i = ids.iterator(); i.hasNext();) {
+    for (Iterator i = objectIds.iterator(); i.hasNext();) {
       removeObjectByID(tx, (ObjectID) i.next());
     }
   }
-
-  public void removeAllObjectsByIDNow(PersistenceTransaction tx, Collection objectIds) {
-    removeAllObjectsByID(tx, objectIds);
+  
+  public void removeAllObjectsByID(GCResultContext gcResult) {
+    removeAllObjectsByIDNow(null, new TreeSet(gcResult.getGCedObjectIDs()));
   }
+
+
 
   public synchronized ObjectIDSet2 getAllObjectIDs() {
     assertNotInShutdown();
@@ -148,5 +153,6 @@ public class InMemoryManagedObjectStore implements ManagedObjectStore {
   public Map getRootNamesToIDsMap() {
     return roots;
   }
+
 
 }

@@ -6,6 +6,7 @@ package com.tc.objectserver.api;
 
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
+import com.tc.async.impl.MockSink;
 import com.tc.exception.ImplementMe;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
@@ -38,6 +39,7 @@ import com.tc.object.tx.TxnType;
 import com.tc.objectserver.context.ApplyCompleteEventContext;
 import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.context.CommitTransactionContext;
+import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.context.LookupEventContext;
 import com.tc.objectserver.context.ManagedObjectFaultingContext;
 import com.tc.objectserver.context.ManagedObjectFlushingContext;
@@ -132,7 +134,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
   /**
    * Constructor for ObjectManagerTest.
-   *
+   * 
    * @param arg0
    */
   public ObjectManagerTest(String arg0) {
@@ -725,7 +727,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
   private void testLookupInPersistentContext(Persistor persistor, boolean paranoid, PersistenceTransactionProvider ptp)
       throws Exception {
     ManagedObjectPersistor mop = persistor.getManagedObjectPersistor();
-    PersistentManagedObjectStore store = new PersistentManagedObjectStore(mop);
+    PersistentManagedObjectStore store = new PersistentManagedObjectStore(mop, new MockSink());
     TestSink faultSink = new TestSink();
     TestSink flushSink = new TestSink();
     config.paranoid = paranoid;
@@ -904,7 +906,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     Persistor persistor = newPersistor(dbEnv, saf);
     PersistenceTransactionProvider ptp = persistor.getPersistenceTransactionProvider();
     PersistentManagedObjectStore persistantMOStore = new PersistentManagedObjectStore(persistor
-        .getManagedObjectPersistor());
+        .getManagedObjectPersistor(), new MockSink());
     this.objectStore = persistantMOStore;
     this.config.paranoid = paranoid;
     initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))), new NullCache(),
@@ -1134,7 +1136,8 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     // objMgr.gc() happens
     this.config.myGCThreadSleepTime = -1;
 
-    GarbageCollector gc = new MarkAndSweepGarbageCollector(objectManager, clientStateManager, true, new NullStatisticsAgentSubSystem());
+    GarbageCollector gc = new MarkAndSweepGarbageCollector(objectManager, clientStateManager, true,
+                                                           new NullStatisticsAgentSubSystem());
     objectManager.setGarbageCollector(gc);
     objectManager.start();
 
@@ -1275,7 +1278,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     Persistor persistor = newPersistor(dbEnv, saf);
     PersistenceTransactionProvider ptp = persistor.getPersistenceTransactionProvider();
     PersistentManagedObjectStore persistentMOStore = new PersistentManagedObjectStore(persistor
-        .getManagedObjectPersistor());
+        .getManagedObjectPersistor(), new MockSink());
     this.objectStore = persistentMOStore;
     this.config.paranoid = true;
     initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))), new NullCache(),
@@ -1477,9 +1480,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     assertTrue(gc.isPaused());
 
     // Complete gc
-    objectManager.notifyGCComplete(Collections.EMPTY_SET);
-    assertFalse(gc.isPausingOrPaused());
-    assertFalse(gc.isPaused());
+    gc.deleteGarbage(new GCResultContext(1, Collections.EMPTY_SET));
 
     // Lookup context should have been fired
     loc = (LookupEventContext) coordinator.lookupSink.queue.take();
@@ -2203,7 +2204,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
       return;
     }
 
-    public void notifyGCDeleteStarted() {
+    public void requestGCDeleteStart() {
       return;
     }
 
@@ -2273,6 +2274,10 @@ public class ObjectManagerTest extends BaseDSOTestCase {
       return false;
     }
 
+    public boolean deleteGarbage(GCResultContext resultContext) {
+      return true;
+    }
+
   }
 
   private class TestThreadGroup extends ThreadGroup {
@@ -2314,11 +2319,11 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     public boolean paranoid;
 
     public TestObjectManagerConfig() {
-      super(10000, true, true, true, 1000);
+      super(10000, true, true, true);
     }
 
     TestObjectManagerConfig(long gcThreadSleepTime, boolean doGC) {
-      super(gcThreadSleepTime, doGC, true, true, 1000);
+      super(gcThreadSleepTime, doGC, true, true);
       throw new RuntimeException("Don't use me.");
     }
 

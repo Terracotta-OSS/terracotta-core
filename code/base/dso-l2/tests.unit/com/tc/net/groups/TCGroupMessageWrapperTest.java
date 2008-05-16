@@ -170,7 +170,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
     for (long i = 1; i <= 100; ++i) {
       oidSet.add(new ObjectID(i));
     }
-    GroupMessage sendMesg = new GCResultMessage(GCResultMessage.GC_RESULT, oidSet);
+    GroupMessage sendMesg = new GCResultMessage(GCResultMessage.GC_RESULT, 1, oidSet);
     sendGroupMessage(sendMesg);
   }
 

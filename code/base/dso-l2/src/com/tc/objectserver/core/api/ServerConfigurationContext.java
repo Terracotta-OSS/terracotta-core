@@ -60,7 +60,8 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public static final String RECEIVE_GROUP_MESSAGE_STAGE                        = "receive_group_message_stage";
   public static final String GROUP_HANDSHAKE_MESSAGE_STAGE                      = "group_handshake_message_stage";
   public static final String GROUP_DISCOVERY_STAGE                              = "group_discovery_stage";
-  public final static String GROUP_HYDRATE_MESSAGE_SINK                         = "group_hydrate_message_stage";
+  public final static String GROUP_HYDRATE_MESSAGE_STAGE                        = "group_hydrate_message_stage";
+  public static final String GC_DELETE_FROM_DISK_STAGE                           = "gc_delete_from_disk_stage";
 
   public L2Coordinator getL2Coordinator();
 

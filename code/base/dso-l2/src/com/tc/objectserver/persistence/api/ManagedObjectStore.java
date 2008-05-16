@@ -1,10 +1,12 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.persistence.api;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ManagedObjectProvider;
+import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.text.PrettyPrintable;
 import com.tc.util.ObjectIDSet2;
@@ -13,6 +15,7 @@ import com.tc.util.sequence.ObjectIDSequence;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 
 public interface ManagedObjectStore extends ManagedObjectProvider, ObjectIDSequence, PrettyPrintable {
 
@@ -25,7 +28,7 @@ public interface ManagedObjectStore extends ManagedObjectProvider, ObjectIDSeque
   /**
    * synchronous
    */
-  public void removeAllObjectsByIDNow(PersistenceTransaction tx, Collection objectIds);
+  public void removeAllObjectsByIDNow(PersistenceTransaction tx, SortedSet<ObjectID> objectIds);
 
   /**
    * Returns the set of object ids.
@@ -48,4 +51,8 @@ public interface ManagedObjectStore extends ManagedObjectProvider, ObjectIDSeque
 
   public Map getRootNamesToIDsMap();
 
+  /**
+   * This method is used by the GC to trigger removing Garbage.
+   */
+  public void removeAllObjectsByID(GCResultContext gcResult);
 }

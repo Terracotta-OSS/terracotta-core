@@ -9,14 +9,12 @@ public class ObjectManagerConfig {
   private boolean doGC;
   private final boolean verboseGC;
   private final boolean paranoid;
-  private final int deleteBatchSize;
 
-  public ObjectManagerConfig(long gcThreadSleepTime, boolean doGC, boolean verboseGC, boolean paranoid, int deleteBatchSize) {
+  public ObjectManagerConfig(long gcThreadSleepTime, boolean doGC, boolean verboseGC, boolean paranoid) {
     this.gcThreadSleepTime = gcThreadSleepTime;
     this.doGC = doGC;
     this.verboseGC = verboseGC;
     this.paranoid = paranoid;
-    this.deleteBatchSize = deleteBatchSize;
   }
 
   public boolean paranoid() {
@@ -33,10 +31,6 @@ public class ObjectManagerConfig {
 
   public boolean verboseGC() {
     return verboseGC;
-  }
-
-  public int getDeleteBatchSize() {
-    return deleteBatchSize;
   }
 
 }

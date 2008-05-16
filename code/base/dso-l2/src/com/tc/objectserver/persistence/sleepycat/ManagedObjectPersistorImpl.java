@@ -445,16 +445,6 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
     return sorted;
   }
 
-  /**
-   * ObjectIDs extend AbstractIdentifiers which are Sortable
-   */
-  private SortedSet getSortedObjectIDs(Collection objectIDs) {
-    TreeSet sorted = new TreeSet();
-    sorted.addAll(objectIDs);
-    Assert.assertEquals(objectIDs.size(), sorted.size());
-    return sorted;
-  }
-
   private long saveAllCount       = 0;
   private long saveAllObjectCount = 0;
   private long saveAllElapsed     = 0;
@@ -476,9 +466,12 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
     }
   }
 
-  public void deleteAllObjectsByID(PersistenceTransaction tx, Collection objectIDs) {
-    // Sorting to maintain lock ordering - check saveAllObjects
-    SortedSet sortedOids = getSortedObjectIDs(objectIDs);
+  /*
+   *  This method takes a SortedSet of Object ID to delete for two reasons.
+   *  1) to maintain lock ordering - check saveAllObjects
+   *  2) for performance reason
+   */
+  public void deleteAllObjectsByID(PersistenceTransaction tx, SortedSet<ObjectID> sortedOids) {
     for (Iterator i = sortedOids.iterator(); i.hasNext();) {
       ObjectID objectId = (ObjectID) i.next();
       deleteObjectByID(tx, objectId);

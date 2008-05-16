@@ -8,6 +8,7 @@ import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
 import com.tc.exception.ImplementMe;
 import com.tc.object.ObjectID;
+import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.core.api.GarbageCollector;
 import com.tc.text.PrettyPrinter;
@@ -190,10 +191,6 @@ public class TestGarbageCollector implements GarbageCollector {
     return blockUntilReadyToGCCalls.peek() != null;
   }
 
-  public void notifyGCDeleteStarted() {
-    return;
-  }
-
   public void notifyGCComplete() {
     try {
       isPausing = false;
@@ -250,7 +247,7 @@ public class TestGarbageCollector implements GarbageCollector {
     collect(null, objectProvider.getRootIDs(), objectProvider.getAllObjectIDs(), new NullLifeCycleState());
     this.requestGCPause();
     this.blockUntilReadyToGC();
-    this.notifyGCComplete();
+    this.deleteGarbage(new GCResultContext(1, Collections.EMPTY_SET));
   }
 
   public void addNewReferencesTo(Set rescueIds) {
@@ -296,5 +293,11 @@ public class TestGarbageCollector implements GarbageCollector {
 
   public boolean isStarted() {
     return false;
+  }
+
+  public boolean deleteGarbage(GCResultContext resultContext) {
+    this.objectProvider.notifyGCComplete(resultContext);
+    this.notifyGCComplete();
+    return true;
   }
 }

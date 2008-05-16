@@ -6,6 +6,7 @@ package com.tc.objectserver.impl;
 
 import com.tc.exception.ImplementMe;
 import com.tc.object.ObjectID;
+import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
@@ -15,6 +16,8 @@ import com.tc.util.ObjectIDSet2;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 public class TestManagedObjectStore implements ManagedObjectStore {
 
@@ -57,9 +60,13 @@ public class TestManagedObjectStore implements ManagedObjectStore {
     return out.print(getClass().getName());
   }
 
-  public void removeAllObjectsByIDNow(PersistenceTransaction tx, Collection objectIds) {
+  public void removeAllObjectsByIDNow(PersistenceTransaction tx, SortedSet<ObjectID> objectIds) {
     count -= objectIds.size();
     return;
+  }
+
+  public void removeAllObjectsByID(GCResultContext gcResult) {
+    removeAllObjectsByIDNow(null, new TreeSet(gcResult.getGCedObjectIDs()));
   }
 
   public void shutdown() {

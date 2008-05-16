@@ -166,7 +166,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     logger.info("Creating group node: " + aNodeID);
 
     int maxStageSize = 5000;
-    hydrateStage = stageManager.createStage(ServerConfigurationContext.GROUP_HYDRATE_MESSAGE_SINK,
+    hydrateStage = stageManager.createStage(ServerConfigurationContext.GROUP_HYDRATE_MESSAGE_STAGE,
                                             new HydrateHandler(), 1, maxStageSize);
     receiveGroupMessageStage = stageManager.createStage(ServerConfigurationContext.RECEIVE_GROUP_MESSAGE_STAGE,
                                                         new ReceiveGroupMessageHandler(this), 1, maxStageSize);

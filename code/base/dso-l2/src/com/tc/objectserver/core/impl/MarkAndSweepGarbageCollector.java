@@ -12,6 +12,7 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.api.GCStats;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerEventListener;
+import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.core.api.GarbageCollector;
 import com.tc.objectserver.core.api.ManagedObject;
@@ -40,6 +41,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  */
@@ -47,9 +49,6 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
 
   private static final TCLogger          logger                    = TCLogging
                                                                        .getLogger(MarkAndSweepGarbageCollector.class);
-  private final GCLogger                 gcLogger;
-
-  private final List                     eventListeners            = new CopyOnWriteArrayList();
   private static final ChangeCollector   NULL_CHANGE_COLLECTOR     = new ChangeCollector() {
                                                                      public void changed(ObjectID changedObject,
                                                                                          ObjectID oldReference,
@@ -71,7 +70,8 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
                                                                        return true;
                                                                      }
                                                                    };
-  private final static LifeCycleState    NULL_LIFECYCLE_STATE      = new NullLifeCycleState();
+  private static final LifeCycleState    NULL_LIFECYCLE_STATE      = new NullLifeCycleState();
+  public static final String             DISTRIBUTED_GC_STATISTICS = "distributed gc";
 
   private static final State             GC_DISABLED               = new State("GC_DISABLED");
   private static final State             GC_RUNNING                = new State("GC_RUNNING");
@@ -80,16 +80,18 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
   private static final State             GC_PAUSED                 = new State("GC_PAUSED");
   private static final State             GC_DELETE                 = new State("GC_DELETE");
 
-  private State                          state                     = GC_SLEEP;
-  private LifeCycleState                 lifeCycleState;
-  private int                            gcIteration               = 0;
-  private volatile ChangeCollector       referenceCollector        = NULL_CHANGE_COLLECTOR;
+  private final GCLogger                 gcLogger;
+  private final List                     eventListeners            = new CopyOnWriteArrayList();
+  private final AtomicInteger            gcIterationCounter        = new AtomicInteger(0);
   private final ObjectManager            objectManager;
   private final ClientStateManager       stateManager;
+  private final StatisticsAgentSubSystem statisticsAgentSubSystem;
+
+  private State                          state                     = GC_SLEEP;
+  private LifeCycleState                 lifeCycleState;
+  private volatile ChangeCollector       referenceCollector        = NULL_CHANGE_COLLECTOR;
   private LifeCycleState                 gcState                   = new NullLifeCycleState();
   private volatile boolean               started                   = false;
-  private final StatisticsAgentSubSystem statisticsAgentSubSystem;
-  public static final String             DISTRIBUTED_GC_STATISTICS = "distributed gc";
 
   public MarkAndSweepGarbageCollector(ObjectManager objectManager, ClientStateManager stateManager, boolean verboseGC,
                                       StatisticsAgentSubSystem agentSubSystem) {
@@ -126,13 +128,14 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
   }
 
   public void gc() {
-    
+
     while (!requestGCStart()) {
       gcLogger.log_GCDisabled();
       logger.info("GC is Disabled. Waiting for 1 min before checking again ...");
       ThreadUtil.reallySleep(60000);
     }
 
+    int gcIteration = gcIterationCounter.incrementAndGet();
     GCStatsImpl gcStats = new GCStatsImpl(gcIteration);
 
     gcLogger.log_GCStart(gcIteration);
@@ -191,7 +194,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
 
     long deleteStartMillis = System.currentTimeMillis();
     // Delete Garbage
-    objectManager.notifyGCComplete(toDelete);
+    deleteGarbage(new GCResultContext(gcIteration, toDelete));
 
     gcStats.setActualGarbageCount(toDelete.size());
     long endMillis = System.currentTimeMillis();
@@ -204,8 +207,15 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     if (statisticsAgentSubSystem.isActive()) {
       storeGCStats(gcStats);
     }
+  }
 
-    gcIteration++;
+  public boolean deleteGarbage(GCResultContext gcResult) {
+    if (requestGCDeleteStart()) {
+      objectManager.notifyGCComplete(gcResult);
+      notifyGCComplete();
+      return true;
+    }
+    return false;
   }
 
   private void storeGCStats(GCStats gcStats) {
@@ -319,7 +329,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
       state = GC_DISABLED;
       return true;
     }
-    // GC is already running, cant be disabled
+    // GC is already running, can't be disabled
     return false;
   }
 
@@ -345,8 +355,16 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     }
   }
 
-  public synchronized void notifyGCDeleteStarted() {
-    state = GC_DELETE;
+  /**
+   * In Active server, state transitions from GC_PAUSED to GC_DELETE and in the passive server,
+   * state transitions from GC_SLEEP to GC_DELETE.
+   */
+  private synchronized boolean requestGCDeleteStart() {
+    if (state == GC_SLEEP || state == GC_PAUSED) {
+      state = GC_DELETE;
+      return true;
+    }
+    return false;
   }
 
   public synchronized void notifyGCComplete() {

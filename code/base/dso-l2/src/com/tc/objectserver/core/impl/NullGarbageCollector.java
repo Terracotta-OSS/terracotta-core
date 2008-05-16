@@ -6,6 +6,7 @@ package com.tc.objectserver.core.impl;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.GCStats;
 import com.tc.objectserver.api.ObjectManagerEventListener;
+import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.core.api.GarbageCollector;
 import com.tc.text.PrettyPrinter;
@@ -46,7 +47,7 @@ public class NullGarbageCollector implements GarbageCollector {
     return;
   }
 
-  public void notifyGCDeleteStarted() {
+  public void requestGCDeleteStart() {
     return;
   }
 
@@ -104,5 +105,9 @@ public class NullGarbageCollector implements GarbageCollector {
 
   public boolean isStarted() {
     return false;
+  }
+
+  public boolean deleteGarbage(GCResultContext resultContext) {
+    return true;
   }
 }

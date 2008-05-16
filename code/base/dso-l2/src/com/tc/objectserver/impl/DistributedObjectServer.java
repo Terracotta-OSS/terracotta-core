@@ -113,6 +113,7 @@ import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.handler.ClientHandshakeHandler;
 import com.tc.objectserver.handler.ClientLockStatisticsHandler;
 import com.tc.objectserver.handler.CommitTransactionChangeHandler;
+import com.tc.objectserver.handler.GarbageDisposeHandler;
 import com.tc.objectserver.handler.GlobalTransactionIDBatchRequestHandler;
 import com.tc.objectserver.handler.JMXEventsHandler;
 import com.tc.objectserver.handler.ManagedObjectFaultHandler;
@@ -378,6 +379,8 @@ public class DistributedObjectServer implements TCDumper {
     PersistenceMode persistenceMode = (PersistenceMode) l2DSOConfig.persistenceMode().getObject();
 
     l2Properties = TCPropertiesImpl.getProperties().getPropertiesFor("l2");
+    TCProperties objManagerProperties = l2Properties.getPropertiesFor("objectmanager");
+
     l1ReconnectConfig = new L1ReconnectConfigImpl(TCPropertiesImpl.getProperties()
         .getBoolean(TCPropertiesConsts.L2_L1RECONNECT_ENABLED), TCPropertiesImpl.getProperties()
         .getInt(TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS));
@@ -428,13 +431,17 @@ public class DistributedObjectServer implements TCDumper {
       SerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
       persistor = new SleepycatPersistor(TCLogging.getLogger(SleepycatPersistor.class), dbenv,
                                          serializationAdapterFactory);
-      /*
-       * This commented code is for replacing SleepyCat with MemoryDataStore as an in-memory DB for testing purpose. You
-       * need to include MemoryDataStore in tc.jar and enable with tc.properties l2.memorystore.enabled=true. boolean
-       * useMemoryStore = false; if (l2Properties.getProperty("memorystore.enabled", false) != null) { useMemoryStore =
-       * l2Properties.getBoolean("memorystore.enabled"); } if (useMemoryStore) { persistor = new
-       * MemoryStorePersistor(TCLogging.getLogger(MemoryStorePersistor.class)); }
-       */
+
+      // DONT DELETE ::This commented code is for replacing SleepyCat with MemoryDataStore as an in-memory DB for
+      // testing purpose. You need to include MemoryDataStore in tc.jar and enable with tc.properties
+      // l2.memorystore.enabled=true.
+      // boolean useMemoryStore = false;
+      // if (l2Properties.getProperty("memorystore.enabled", false) != null) {
+      // useMemoryStore = l2Properties.getBoolean("memorystore.enabled");
+      // }
+      // if (useMemoryStore) {
+      // persistor = new MemoryStorePersistor(TCLogging.getLogger(MemoryStorePersistor.class));
+      // }
 
       String cachePolicy = l2Properties.getProperty("objectmanager.cachePolicy").toUpperCase();
       if (cachePolicy.equals("LRU")) {
@@ -445,7 +452,14 @@ public class DistributedObjectServer implements TCDumper {
         throw new AssertionError("Unknown Cache Policy : " + cachePolicy
                                  + " Accepted Values are : <LRU>/<LFU> Please check tc.properties");
       }
-      objectStore = new PersistentManagedObjectStore(persistor.getManagedObjectPersistor());
+      Sink gcDisposerSink = stageManager
+          .createStage(
+                       ServerConfigurationContext.GC_DELETE_FROM_DISK_STAGE,
+                       new GarbageDisposeHandler(persistor.getManagedObjectPersistor(), persistor
+                           .getPersistenceTransactionProvider(), objManagerProperties.getInt("deleteBatchSize")), 1,
+                       maxStageSize).getSink();
+
+      objectStore = new PersistentManagedObjectStore(persistor.getManagedObjectPersistor(), gcDisposerSink);
     } else {
       persistor = new InMemoryPersistor();
       swapCache = new NullCache();
@@ -536,11 +550,8 @@ public class DistributedObjectServer implements TCDumper {
                                                              managedObjectFlushHandler, (persistent ? 1 : l2Properties
                                                                  .getInt("seda.flushstage.threads")), -1);
 
-    TCProperties objManagerProperties = l2Properties.getPropertiesFor("objectmanager");
-
     ObjectManagerConfig objectManagerConfig = new ObjectManagerConfig(gcInterval * 1000, gcEnabled, verboseGC,
-                                                                      persistent, objManagerProperties
-                                                                          .getInt("deleteBatchSize"));
+                                                                      persistent);
     objectManager = new ObjectManagerImpl(objectManagerConfig, threadGroup, clientStateManager, objectStore, swapCache,
                                           persistenceTransactionProvider, faultManagedObjectStage.getSink(),
                                           flushManagedObjectStage.getSink());
