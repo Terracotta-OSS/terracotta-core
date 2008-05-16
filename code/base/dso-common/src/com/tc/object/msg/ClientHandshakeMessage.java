@@ -8,6 +8,7 @@ import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ObjectID;
 import com.tc.object.lockmanager.api.LockContext;
+import com.tc.object.lockmanager.api.TryLockContext;
 import com.tc.object.lockmanager.api.WaitContext;
 
 import java.util.Collection;
@@ -31,7 +32,7 @@ public interface ClientHandshakeMessage {
 
   public void addPendingLockContext(LockContext ctxt);
 
-  public void addPendingTryLockContext(LockContext ctxt);
+  public void addPendingTryLockContext(TryLockContext ctxt);
 
   public void setClientVersion(String v);
 

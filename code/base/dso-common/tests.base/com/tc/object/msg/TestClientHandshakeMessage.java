@@ -11,6 +11,7 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.TestMessageChannel;
 import com.tc.object.ObjectID;
 import com.tc.object.lockmanager.api.LockContext;
+import com.tc.object.lockmanager.api.TryLockContext;
 import com.tc.object.lockmanager.api.WaitContext;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
@@ -145,7 +146,7 @@ public class TestClientHandshakeMessage implements ClientHandshakeMessage {
     return requestedObjectIDs;
   }
 
-  public void addPendingTryLockContext(LockContext ctxt) {
+  public void addPendingTryLockContext(TryLockContext ctxt) {
     throw new ImplementMe();
 
   }

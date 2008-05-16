@@ -17,7 +17,6 @@ import com.tc.object.lockmanager.api.TryLockContext;
 import com.tc.object.lockmanager.api.WaitContext;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
-import com.tc.util.Assert;
 import com.tc.util.SequenceID;
 
 import java.io.IOException;
@@ -82,8 +81,7 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
     }
   }
 
-  public void addPendingTryLockContext(LockContext ctxt) {
-    Assert.eval(ctxt instanceof TryLockContext);
+  public void addPendingTryLockContext(TryLockContext ctxt) {
     synchronized (pendingTryLockContexts) {
       pendingTryLockContexts.add(ctxt);
     }

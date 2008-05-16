@@ -9,7 +9,6 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
-import com.tc.net.groups.ClientID;
 import com.tc.net.groups.NodeID;
 import com.tc.net.groups.NodeIDSerializer;
 import com.tc.util.Assert;
@@ -17,7 +16,7 @@ import com.tc.util.Assert;
 import java.io.IOException;
 
 /**
- * Client/Server intermediate fromat for holding the context of a lock request/award. This class bridges the types used
+ * Client/Server intermediate format for holding the context of a lock request/award. This class bridges the types used
  * internally by the ClientLockManager and the server LockManager so they can be sent in messages back and forth to each
  * other.
  */
@@ -35,14 +34,13 @@ public class LockContext implements TCSerializable {
   }
 
   public LockContext(LockID lockID, NodeID nodeID, ThreadID threadID, int lockLevel, String lockType) {
+    Assert.assertFalse(LockLevel.isSynchronous(lockLevel));
     this.lockID = lockID;
     this.nodeID = nodeID;
     this.threadID = threadID;
-    Assert.assertFalse(LockLevel.isSynchronous(lockLevel));
     this.lockLevel = lockLevel;
     this.lockType = lockType;
-    this.hashCode = new HashCodeBuilder(5503, 6737).append(lockID).append(nodeID).append(threadID).append(lockLevel)
-        .toHashCode();
+    this.hashCode = calculateHash();
   }
 
   public String toString() {
@@ -65,7 +63,7 @@ public class LockContext implements TCSerializable {
   public ThreadID getThreadID() {
     return threadID;
   }
-  
+
   public String getLockType() {
     return lockType;
   }
@@ -95,11 +93,17 @@ public class LockContext implements TCSerializable {
     lockID = new LockID(input.readString());
     NodeIDSerializer ns = new NodeIDSerializer();
     ns.deserializeFrom(input);
-    nodeID = (ClientID) ns.getNodeID();
+    nodeID = ns.getNodeID();
     threadID = new ThreadID(input.readLong());
     lockLevel = input.readInt();
     lockType = input.readString();
+    hashCode = calculateHash();
     return this;
+  }
+
+  private int calculateHash() {
+    return new HashCodeBuilder(5503, 6737).append(lockID).append(nodeID).append(threadID).append(lockLevel)
+        .toHashCode();
   }
 
 }

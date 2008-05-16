@@ -127,7 +127,7 @@ public class ClientHandshakeManager implements ChannelEventListener {
 
     for (Iterator i = lockManager.addAllPendingTryLockRequestsTo(new HashSet()).iterator(); i.hasNext();) {
       TryLockRequest request = (TryLockRequest) i.next();
-      LockContext ctxt = new TryLockContext(request.lockID(), cidp.getClientID(), request.threadID(), request
+      TryLockContext ctxt = new TryLockContext(request.lockID(), cidp.getClientID(), request.threadID(), request
           .lockLevel(), request.lockType(), request.getTimerSpec());
       handshakeMessage.addPendingTryLockContext(ctxt);
     }
