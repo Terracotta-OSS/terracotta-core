@@ -7,7 +7,6 @@ package com.tctest.server.appserver.unit;
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
-import com.tc.test.AppServerInfo;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerCoresidentDeploymentTest;
 import com.tc.test.server.appserver.deployment.CoresidentServerTestSetup;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
@@ -29,14 +28,11 @@ import junit.framework.Test;
 
 public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentTest {
 
-  private static final String CONTEXT = "simple";
+  private static final String              CONTEXT   = "simple";
   private static CoresidentServerTestSetup testSetup = new CoresidentSimpleTestSetup();
 
   public CoresidentSimpleTest() {
-    //  MNK-499
-    if (appServerInfo().getId() == AppServerInfo.WEBLOGIC || appServerInfo().getId() == AppServerInfo.WASCE) {
-      disableAllUntil("2008-05-15");
-    }
+    //
   }
 
   public static Test suite() {
@@ -51,16 +47,11 @@ public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentT
     vmArgs.add("-Dcmd=" + cmd);
     if (extraArgs != null) vmArgs.add(extraArgs);
 
-    ExtraL1ProcessControl client = new ExtraL1ProcessControl(
-      testSetup.getServerManagers()[0].getServerTcConfig().getDsoHost(),
-      testSetup.getServerManagers()[0].getServerTcConfig().getDsoPort(),
-      PartitionManagerTestApp.class,
-      server0.getTcConfigFile().getAbsolutePath(),
-      new String[] { },
-      server0.getWorkingDirectory(),
-      vmArgs,
-      false
-    );
+    ExtraL1ProcessControl client = new ExtraL1ProcessControl(testSetup.getServerManagers()[0].getServerTcConfig()
+        .getDsoHost(), testSetup.getServerManagers()[0].getServerTcConfig().getDsoPort(),
+                                                             PartitionManagerTestApp.class, server0.getTcConfigFile()
+                                                                 .getAbsolutePath(), new String[] {}, server0
+                                                                 .getWorkingDirectory(), vmArgs, false);
     client.setCoresidentMode(server0.getCoresidentConfigFile().getAbsolutePath());
     client.writeOutputTo(outputStream);
     client.start();
@@ -106,25 +97,25 @@ public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentT
 
     int exitCode = -1;
 
-    //assert size of map0 in partition-0
+    // assert size of map0 in partition-0
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     exitCode = spawnExtraCoresidentL1(bos, "assertSize", 0, 0, "-Dsize=2");
     System.err.println("Client extra l1 output: " + bos.toString());
     assertL1Output(exitCode, bos);
 
-    //assert map1 is null in partition-0
+    // assert map1 is null in partition-0
     bos = new ByteArrayOutputStream();
     exitCode = spawnExtraCoresidentL1(bos, "assertNull", 0, 1, null);
     System.err.println("Client extra l1 output: " + bos.toString());
     assertL1Output(exitCode, bos);
 
-    //assert map0 is null in partition-1
+    // assert map0 is null in partition-1
     bos = new ByteArrayOutputStream();
     exitCode = spawnExtraCoresidentL1(bos, "assertNull", 1, 0, null);
     System.err.println("Client extra l1 output: " + bos.toString());
     assertL1Output(exitCode, bos);
 
-    //assert size of map1 in partition -1
+    // assert size of map1 in partition -1
     bos = new ByteArrayOutputStream();
     exitCode = spawnExtraCoresidentL1(bos, "assertSize", 1, 1, "-Dsize=3");
     System.err.println("Client extra l1 output: " + bos.toString());
@@ -164,7 +155,7 @@ public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentT
     final WebResponse webResponse;
     final String response;
     webResponse = request(server, "cmd=" + "assertSize" + "&partition=" + partition + "&map=" + map + "&size=" + size,
-      conversation);
+                          conversation);
     response = webResponse.getText().trim();
     System.err.println("Response from server" + (server == server1 ? "1" : "0") + ": " + response);
     assertOk(response);
@@ -205,7 +196,7 @@ public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentT
 
     protected void configureWar(DeploymentBuilder builder) {
       builder.addServlet("CoresidentSimpleTestServlet", "/" + CONTEXT + "/*", CoresidentSimpleTestServlet.class, null,
-        false);
+                         false);
     }
 
     protected void configureTcConfig(TcConfigBuilder tcConfigBuilder) {

@@ -45,10 +45,10 @@ import java.util.logging.LogManager;
 public class ClassProcessorHelper {
 
   /** Name reserved for apps running as root web app in a container */
-  public static final String ROOT_WEB_APP_NAME = "ROOT";
+  public static final String                 ROOT_WEB_APP_NAME         = "ROOT";
 
   // XXX: remove this!
-  public static volatile boolean             IBM_DEBUG               = false;
+  public static volatile boolean             IBM_DEBUG                 = false;
 
   // Setting this system property will delay the timing of when the DSO client is initialized. With the default
   // behavior, the debug subsystem of the VM will not be started until after the DSO client starts up. This means it is
@@ -551,6 +551,8 @@ public class ClassProcessorHelper {
    * @return True if DSO sessions enabled
    */
   public static boolean isDSOSessions(String appName) {
+    if (USE_PARTITIONED_CONTEXT) return false;
+
     appName = ("/".equals(appName)) ? ROOT_WEB_APP_NAME : appName;
     try {
       Method m = getContextMethod("isDSOSessions", new Class[] { String.class });
@@ -689,7 +691,6 @@ public class ClassProcessorHelper {
     if (TRACE) traceLookup(caller, name);
 
     if (isAWDependency(name)) { return b; }
-    if (isDSODependency(name)) { return b; }
 
     if (DELAY_BOOT) {
       init();
@@ -776,21 +777,6 @@ public class ClassProcessorHelper {
            || className.startsWith("com.tc.jrexx.") || className.startsWith("org.dom4j.")
            || className.startsWith("org.xml.sax.") || className.startsWith("javax.xml.parsers.")
            || className.startsWith("sun.reflect.Generated"); // issue on J2SE 5 reflection - AW-245
-  }
-
-  /**
-   * Check whether this is a DSO dependency
-   *
-   * @param className Class name
-   * @return True if DSO dependency
-   */
-  public static boolean isDSODependency(final String className) {
-    return false;
-    // return (className == null) || className.startsWith("DO_NOT_USE.") || className.startsWith("com.tc.")
-    // || className.startsWith("org.w3c.dom.") || className.startsWith("org.apache.log4j.")
-    // || className.startsWith("org.apache.commons.io.") || className.startsWith("org.apache.commons.lang.")
-    // || className.startsWith("org.apache.commons.logging.") || className.startsWith("javax.xml.")
-    // || className.startsWith("org.apache.xmlbeans.") || className.startsWith("org.apache.xerces.");
   }
 
   /**
