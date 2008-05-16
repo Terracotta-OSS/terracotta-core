@@ -11,7 +11,13 @@ if [ $# -eq 0 ]; then
   exit 0
 fi
 
-ARGS=$*
+ARGS=($*)
+for ((i=0; i<${#ARGS[@]}; i++)); do 
+  case "${ARGS[$i]}" in 
+  -D*) export JAVA_OPTS="${JAVA_OPTS} ${ARGS[$i]}" ;;
+    *) class="${class} ${ARGS[$i]}" ;;
+  esac 
+done
 
 # OS specific support.  $var _must_ be set to either true or false.
 cygwin=false
@@ -28,4 +34,4 @@ if $cygwin; then
   [ -n "$JAVA_HOME" ] && JAVA_HOME=`cygpath --windows "$JAVA_HOME"`
 fi
 
-exec "${JAVA_HOME}/bin/java" ${TC_JAVA_OPTS} ${JAVA_OPTS} $ARGS
+exec "${JAVA_HOME}/bin/java" ${TC_JAVA_OPTS} ${JAVA_OPTS} ${class}
