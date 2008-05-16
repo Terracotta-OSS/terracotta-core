@@ -11,13 +11,16 @@ import java.util.NoSuchElementException;
  * Implements an AA-tree. AA tree provides all the advantages of a Red Black Tree while keeping the implementation
  * simple. For more details on AA tree, check out http://user.it.uu.se/~arnea/abs/simp.html and
  * http://en.wikipedia.org/wiki/AA_tree This source code is taken from
- * http://www.cs.fiu.edu/~weiss/dsaa_java/Code/DataStructures/ and modified slightly. Note:: "matching" is based on the
- * compareTo method. This class is *NOT* thread safe. Synchronize externally if you want it to be thread safe.
+ * http://www.cs.fiu.edu/~weiss/dsaa_java/Code/DataStructures/ and modified slightly.
+ * <p>
+ * This tree implementation behaves like a set, it doesn't allow duplicate nodes.
+ * <p>
+ * Note:: "matching" is based on the compareTo method. This class is *NOT* thread safe. Synchronize externally if you
+ * want it to be thread safe.
  * 
  * @author Mark Allen Weiss
  */
-//TODO::FIXME :: The class behaves like a set, rename it
-public class AATree {
+public class AATreeSet {
 
   private AANode              root;
   private AANode              deletedNode;
@@ -38,7 +41,7 @@ public class AATree {
   /**
    * Construct the tree.
    */
-  public AATree() {
+  public AATreeSet() {
     root = nullNode;
   }
 
@@ -146,7 +149,7 @@ public class AATree {
   }
 
   public Iterator iterator() {
-    return new AATreeIterator();
+    return new AATreeSetIterator();
   }
 
   /**
@@ -304,7 +307,7 @@ public class AATree {
    * This class is slightly inefficient in that it uses a stack internally to store state. But it is needed so that we
    * don't have to store parent references.
    */
-  private class AATreeIterator implements Iterator {
+  private class AATreeSetIterator implements Iterator {
 
     AANode next = root;
     // Contains elements while traversing

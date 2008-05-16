@@ -23,11 +23,11 @@ import java.util.NoSuchElementException;
  */
 public class ObjectIDSet2 extends AbstractSet implements Externalizable {
 
-  private final AATree ranges;
+  private final AATreeSet ranges;
   private int          size = 0;
 
   public ObjectIDSet2() {
-    ranges = new AATree();
+    ranges = new AATreeSet();
   }
 
   public ObjectIDSet2(Collection c) {

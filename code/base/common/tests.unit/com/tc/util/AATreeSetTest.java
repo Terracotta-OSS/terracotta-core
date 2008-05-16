@@ -13,13 +13,13 @@ import java.util.List;
 import java.util.Random;
 import java.util.TreeSet;
 
-public class AATreeTest extends TCTestCase {
+public class AATreeSetTest extends TCTestCase {
 
   public void testRandom() {
     List longs = populateRandomLongs(new ArrayList(), 1000);
 
     TreeSet treeSet = new TreeSet();
-    AATree aatree = new AATree();
+    AATreeSet aatree = new AATreeSet();
 
     for (Iterator i = longs.iterator(); i.hasNext();) {
       Long l = (Long) i.next();
@@ -44,7 +44,7 @@ public class AATreeTest extends TCTestCase {
 
   public void testBasic() {
 
-    AATree t = new AATree();
+    AATreeSet t = new AATreeSet();
     t.insert(new Integer(25));
     t.insert(new Integer(10));
     t.insert(new Integer(1));
@@ -75,7 +75,7 @@ public class AATreeTest extends TCTestCase {
   }
 
   public void testVeryBasic() {
-    AATree aaTree = new AATree();
+    AATreeSet aaTree = new AATreeSet();
     boolean inserted = aaTree.insert(new Integer(10));
     assertTrue(inserted);
     assertEquals(1, aaTree.size());
@@ -107,7 +107,7 @@ public class AATreeTest extends TCTestCase {
 
   // Test program; should print min and max and nothing else
   public void testMinMax() {
-    AATree t = new AATree();
+    AATreeSet t = new AATreeSet();
     final int NUMS = 400000;
     final int GAP = 307;
 
@@ -147,7 +147,7 @@ public class AATreeTest extends TCTestCase {
   
   /* Not really testing anything, what ever */
   public void testDump() {
-    AATree t = new AATree();
+    AATreeSet t = new AATreeSet();
     System.out.println("Inserted = " + t.insert(new Integer(8)));
     System.out.println("Tree is       : " + t.dump());
     System.out.println("From Iterator : " + dumpUsingIterator(t));
@@ -214,7 +214,7 @@ public class AATreeTest extends TCTestCase {
     System.out.println("From Iterator : " + dumpUsingIterator(t));
   }
   
-  private static String dumpUsingIterator(AATree t) {
+  private static String dumpUsingIterator(AATreeSet t) {
     StringBuffer sb = new StringBuffer();
     for (Iterator i = t.iterator(); i.hasNext();) {
       sb.append(i.next());
