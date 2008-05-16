@@ -6,7 +6,6 @@ package com.tc.object.msg;
 
 import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
-import com.tc.object.ObjectID;
 import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.TryLockContext;
 import com.tc.object.lockmanager.api.WaitContext;
@@ -17,8 +16,6 @@ import java.util.Set;
 public interface ClientHandshakeMessage {
 
   public Collection getTransactionSequenceIDs();
-
-  public void addObjectID(ObjectID object);
 
   public Set getObjectIDs();
 
@@ -46,9 +43,9 @@ public interface ClientHandshakeMessage {
 
   public void send();
 
-  public void setTransactionSequenceIDs(Collection transactionSequenceIDs);
+  public void addTransactionSequenceIDs(Collection transactionSequenceIDs);
 
-  public void setResentTransactionIDs(Collection resentTransactionIDs);
+  public void addResentTransactionIDs(Collection resentTransactionIDs);
 
   public Collection getResentTransactionIDs();
 

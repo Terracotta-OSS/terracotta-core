@@ -9,7 +9,6 @@ import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.TestMessageChannel;
-import com.tc.object.ObjectID;
 import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.TryLockContext;
 import com.tc.object.lockmanager.api.WaitContext;
@@ -37,10 +36,6 @@ public class TestClientHandshakeMessage implements ClientHandshakeMessage {
   public Collection             transactionIDs                 = new ArrayList();
   private TestMessageChannel    channel;
   private String                clientVersion;
-
-  public void addObjectID(ObjectID id) {
-    clientObjectIds.add(id);
-  }
 
   public void send() {
     sendCalls.put(new Object());
@@ -123,12 +118,12 @@ public class TestClientHandshakeMessage implements ClientHandshakeMessage {
     return this.transactionSequenceIDs;
   }
 
-  public void setTransactionSequenceIDs(Collection transactionSequenceIDs) {
-    this.transactionSequenceIDs = transactionSequenceIDs;
+  public void addTransactionSequenceIDs(Collection ids) {
+    this.transactionSequenceIDs = ids;
     this.setTransactionSequenceIDsCalls.put(transactionSequenceIDs);
   }
 
-  public void setResentTransactionIDs(Collection resentTransactionIDs) {
+  public void addResentTransactionIDs(Collection resentTransactionIDs) {
     this.transactionIDs = resentTransactionIDs;
     this.setTransactionIDsCalls.put(resentTransactionIDs);
 

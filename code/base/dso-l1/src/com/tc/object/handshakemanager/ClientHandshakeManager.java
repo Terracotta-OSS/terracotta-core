@@ -14,7 +14,6 @@ import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ChannelEventType;
 import com.tc.object.ClientIDProvider;
 import com.tc.object.ClientObjectManager;
-import com.tc.object.ObjectID;
 import com.tc.object.PauseListener;
 import com.tc.object.RemoteObjectManager;
 import com.tc.object.context.PauseContext;
@@ -31,8 +30,8 @@ import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.session.SessionManager;
 import com.tc.object.tx.RemoteTransactionManager;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.State;
 import com.tc.util.Util;
 import com.tc.util.sequence.BatchSequenceReceiver;
@@ -97,12 +96,10 @@ public class ClientHandshakeManager implements ChannelEventListener {
 
     handshakeMessage.setClientVersion(clientVersion);
 
-    handshakeMessage.setTransactionSequenceIDs(gtxManager.getTransactionSequenceIDs());
-    handshakeMessage.setResentTransactionIDs(gtxManager.getResentTransactionIDs());
+    handshakeMessage.addTransactionSequenceIDs(gtxManager.getTransactionSequenceIDs());
+    handshakeMessage.addResentTransactionIDs(gtxManager.getResentTransactionIDs());
 
-    for (Iterator i = objectManager.getAllObjectIDsAndClear(new HashSet()).iterator(); i.hasNext();) {
-      handshakeMessage.addObjectID((ObjectID) i.next());
-    }
+    objectManager.getAllObjectIDsAndClear(handshakeMessage.getObjectIDs());
 
     for (Iterator i = lockManager.addAllHeldLocksTo(new HashSet()).iterator(); i.hasNext();) {
       LockRequest request = (LockRequest) i.next();

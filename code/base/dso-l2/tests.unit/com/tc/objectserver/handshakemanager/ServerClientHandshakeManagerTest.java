@@ -329,7 +329,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     handshake.clientID = clientID;
     ArrayList sequenceIDs = new ArrayList();
     sequenceIDs.add(new SequenceID(1));
-    handshake.setTransactionSequenceIDs(sequenceIDs);
+    handshake.addTransactionSequenceIDs(sequenceIDs);
     return handshake;
   }
 
