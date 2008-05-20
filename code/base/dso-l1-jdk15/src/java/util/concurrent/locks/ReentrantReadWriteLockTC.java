@@ -102,11 +102,9 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
       try {
         dsoLock.lock();
         super.lockInterruptibly();
-      } finally {
-        if (Thread.interrupted()) {
-          unlock();
-          throw new InterruptedException();
-        }
+      } catch (InterruptedException e) {
+        dsoLock.unlock();
+        throw e;
       }
     }
 
@@ -186,11 +184,9 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
       try {
         dsoLock.lock();
         super.lockInterruptibly();
-      } finally {
-        if (Thread.interrupted()) {
-          unlock();
-          throw new InterruptedException();
-        }
+      } catch (InterruptedException e) {
+        dsoLock.unlock();
+        throw e;
       }
     }
 

@@ -15,7 +15,6 @@ import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 public class ReentrantLockTC extends ReentrantLock implements TCLock {
-
   public void lock() {
     ManagerUtil.monitorEnter(this, LockLevel.WRITE);
     super.lock();
@@ -27,11 +26,9 @@ public class ReentrantLockTC extends ReentrantLock implements TCLock {
     try {
       ManagerUtil.monitorEnter(this, LockLevel.WRITE);
       super.lockInterruptibly();
-    } finally {
-      if (Thread.interrupted()) {
-        unlock();
-        throw new InterruptedException();
-      }
+    } catch (InterruptedException e) {
+      ManagerUtil.monitorExit(this);
+      throw e;
     }
   }
 
@@ -95,7 +92,7 @@ public class ReentrantLockTC extends ReentrantLock implements TCLock {
   }
 
   private String getLockState() {
-    return (isLocked() ? (isHeldByCurrentThread() ? "[Locally locked]" : "[Remotelly locked]") : "[Unlocked]");
+    return (isLocked() ? (isHeldByCurrentThread() ? "[Locked by current thread "+getOwner().getName()+"]" : "[Locked by other thread "+getOwner().getName()+"]") : "[Unlocked]");
   }
 
   public String toString() {
