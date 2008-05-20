@@ -53,7 +53,6 @@ public class LockStatManagerTest extends TestCase {
 
   protected void tearDown() throws Exception {
     assertEquals(0, lockManager.getLockCount());
-    assertEquals(0, lockManager.getThreadContextCount());
     super.tearDown();
   }
 

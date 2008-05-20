@@ -49,7 +49,7 @@ import java.util.Map;
 /**
  * Server representation of lock management. We will need to keep track of what locks are checkedout, who has the lock
  * and who wants the lock
- * 
+ *
  * @author steve
  */
 public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCallback {
@@ -129,10 +129,6 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
 
   public synchronized int getLockCount() {
     return this.locks.size();
-  }
-
-  public synchronized int getThreadContextCount() {
-    return this.threadContextFactory.getCount();
   }
 
   public synchronized void verify(NodeID nodeID, LockID[] lockIDs) {
@@ -338,7 +334,6 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
       ServerThreadContext threadContext = threadContextFactory.getOrCreate(cid, ThreadID.VM_ID);
       if (lock.recallCommit(threadContext)) {
         locks.remove(lid);
-        threadContextFactory.removeIfClear(threadContext);
       }
     }
   }
@@ -388,7 +383,6 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
         locks.remove(lock.getLockID());
       }
     }
-    threadContextFactory.removeIfClear(threadContext);
     notifyAll();
   }
 
@@ -413,7 +407,6 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
         basicUnlock(lock, ServerThreadContext.NULL_CONTEXT);
       }
     }
-    threadContextFactory.clear(nid);
     lockStatsManager.clearAllStatsFor(nid);
   }
 
@@ -427,8 +420,8 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
     return lock;
   }
 
-  public synchronized void scanForDeadlocks(DeadlockResults output) {
-    new DeadlockDetector(output).detect(threadContextFactory.getView().iterator());
+  public void scanForDeadlocks(DeadlockResults output) {
+    throw new UnsupportedOperationException();
   }
 
   public DeadlockChain[] scanForDeadlocks() {
@@ -493,7 +486,6 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
     changeState(STOPPING);
 
     locks.clear();
-    threadContextFactory.clear();
 
     if (waitTimer != null) {
       waitTimer.shutdown();
