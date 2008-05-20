@@ -53,6 +53,7 @@ public class CalendarTest extends TransparentTestBase {
           root.put("default", getDefault(base.time));
           root.put("buddhist", getBuddhist(base.time));
           root.put("zoneinfo", getCustomTimeZone(base.time));
+          root.put("uncompleted", getUncompleted());
         }
       }
 
@@ -81,11 +82,28 @@ public class CalendarTest extends TransparentTestBase {
         Assert.assertEquals(mutate(getBuddhist(base.time)), root.get("buddhist"));
         Assert.assertEquals(mutate(getCustomTimeZone(base.time)), root.get("zoneinfo"));
       }
+      
+      /*******************************************************************************
+       *  UNCOMMENT TO REPRODUCE CDV 606
+
+      barrier.await();
+      
+      // JIRA issues CDV-606 UnlockedSharedObjectException
+      // It should be safe to call unguarded read-only methods on safely published clustered object, as long
+      // as no threads modify it after publication.  But get() method can modify internal state of Calendar instance
+      // if .complete() hasn't been called on that instance...
+      if (index != 0) {
+        Calendar cal =  root.get("uncompleted");
+        cal.get(Calendar.YEAR);
+      }
+      
+      ********************************************************************************/
     }
 
     private static Calendar mutate(Calendar calendar) {
       synchronized (calendar) {
         calendar.set(2003, 12, 11, 9, 15, 43);
+        calendar.get(Calendar.YEAR);//cause .complete() to be called internally
       }
       return calendar;
     }
@@ -108,6 +126,12 @@ public class CalendarTest extends TransparentTestBase {
     private static Calendar getDefault(long time) {
       Calendar cal = Calendar.getInstance();
       cal.setTimeInMillis(time);
+      Assert.eval(cal.getClass().getName(), cal instanceof GregorianCalendar);
+      return cal;
+    }
+    
+    private static Calendar getUncompleted(){
+      Calendar cal = Calendar.getInstance();
       Assert.eval(cal.getClass().getName(), cal instanceof GregorianCalendar);
       return cal;
     }
