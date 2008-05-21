@@ -174,8 +174,8 @@ public class TCGroupManagerImplTest extends TCTestCase {
   public void testSendTo() throws Exception {
     setupGroups(2);
 
-    TestGroupMessageListener listener1 = new TestGroupMessageListener(100);
-    TestGroupMessageListener listener2 = new TestGroupMessageListener(100);
+    TestGroupMessageListener listener1 = new TestGroupMessageListener(2000);
+    TestGroupMessageListener listener2 = new TestGroupMessageListener(2000);
     groups[0].registerForMessages(ObjectSyncMessage.class, listener1);
     groups[1].registerForMessages(ObjectSyncMessage.class, listener2);
 
