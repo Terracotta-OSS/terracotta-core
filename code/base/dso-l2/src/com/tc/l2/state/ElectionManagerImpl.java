@@ -237,9 +237,9 @@ public class ElectionManagerImpl implements ElectionManager {
   }
 
   private synchronized void waitTillElectionComplete() {
-    long start = System.currentTimeMillis();
     long diff = electionTime;
     while (state == ELECTION_IN_PROGRESS && diff > 0) {
+      long start = System.currentTimeMillis();
       try {
         wait(diff);
       } catch (InterruptedException e) {
@@ -264,6 +264,10 @@ public class ElectionManagerImpl implements ElectionManager {
 
   private GroupMessage createElectionStartedMessage(L2StateMessage msg, Enrollment e) {
     return L2StateMessageFactory.createElectionStartedMessage(msg, e);
+  }
+
+  public long getElectionTime() {
+    return electionTime;
   }
 
 }

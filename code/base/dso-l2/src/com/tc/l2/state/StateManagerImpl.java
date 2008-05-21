@@ -76,12 +76,43 @@ public class StateManagerImpl implements StateManager {
 
   private void runElection(boolean isNew) {
     NodeID myNodeID = getLocalNodeID();
-    NodeID winner = electionMgr.runElection(myNodeID, isNew, weightsFactory);
-    if (winner == myNodeID) {
-      moveToActiveState();
-    } else {
-      electionMgr.reset(null);
+    NodeID winner = NodeIDImpl.NULL_ID;
+    int count = 0;
+    while (getActiveNodeID().isNull()) {
+      if (++count > 1) {
+        logger.info("Rerunning election since node " + winner + " never declared itself as ACTIVE !");
+      }
+      winner = electionMgr.runElection(myNodeID, isNew, weightsFactory);
+      if (winner == myNodeID) {
+        moveToActiveState();
+      } else {
+        electionMgr.reset(null);
+        // Election is lost, but we wait for the active node to declare itself as winner. If this doesn't happen in a
+        // finite time we restart the election. This is to prevent some weird cases where two nodes might end up
+        // thinking the other one is the winner.
+        // @see MNK-518
+        waitUntilActiveNodeIDNotNull(electionMgr.getElectionTime());
+      }
     }
+  }
+
+  private synchronized void waitUntilActiveNodeIDNotNull(long timeout) {
+    while (activeNode.isNull() && timeout > 0) {
+      long start = System.currentTimeMillis();
+      try {
+        wait(timeout);
+      } catch (InterruptedException e) {
+        logger.warn("Interrupted while waiting for ACTIVE to declare WON message ! ", e);
+        break;
+      }
+      timeout = timeout - (System.currentTimeMillis() - start);
+    }
+  }
+  
+  // should be called from synchronized code
+  private void setActiveNodeID(NodeID nodeID) {
+      this.activeNode = nodeID;
+      notifyAll();
   }
 
   private NodeID getLocalNodeID() {
@@ -134,7 +165,7 @@ public class StateManagerImpl implements StateManager {
       // TODO :: If state == START_STATE publish cluster ID
       StateChangedEvent event = new StateChangedEvent(state, ACTIVE_COORDINATOR);
       state = ACTIVE_COORDINATOR;
-      this.activeNode = getLocalNodeID();
+      setActiveNodeID(getLocalNodeID());
       info("Becoming " + state, true);
       electionMgr.declareWinner(this.activeNode);
       stateChangeSink.add(event);
@@ -211,7 +242,7 @@ public class StateManagerImpl implements StateManager {
       // There is no active server for this node or the other node just detected a failure of ACTIVE server and ran an
       // election and is sending the results. This can happen if this node for some reason is not able to detect that
       // the active is down but the other node did. Go with the new active.
-      this.activeNode = winningEnrollment.getNodeID();
+      setActiveNodeID(winningEnrollment.getNodeID());
       moveToPassiveState(winningEnrollment);
       if (clusterMsg.getType() == L2StateMessage.ELECTION_WON_ALREADY) {
         sendOKResponse(clusterMsg.messageFrom(), clusterMsg);
@@ -229,7 +260,7 @@ public class StateManagerImpl implements StateManager {
   private synchronized void handleElectionResultMessage(L2StateMessage msg) throws GroupException {
     if (activeNode.equals(msg.getEnrollment().getNodeID())) {
       Assert.assertFalse(NodeIDImpl.NULL_ID.equals(activeNode));
-      // This wouldnt normally happen, but we agree - so ack
+      // This wouldn't normally happen, but we agree - so ack
       GroupMessage resultAgreed = L2StateMessageFactory.createResultAgreedMessage(msg, msg.getEnrollment());
       logger.info("Agreed with Election Result from " + msg.messageFrom() + " : " + resultAgreed);
       groupManager.sendTo(msg.messageFrom(), resultAgreed);
@@ -242,7 +273,7 @@ public class StateManagerImpl implements StateManager {
       // B sees A/C and C sees B and A is active and C is trying to run election
       // Force other node to rerun election so that we can abort
       // Condition 3 :
-      // We dont want new L2s to win an election when there are old L2s in PASSIVE states.
+      // We don't want new L2s to win an election when there are old L2s in PASSIVE states.
       GroupMessage resultConflict = L2StateMessageFactory.createResultConflictMessage(msg, EnrollmentFactory
           .createTrumpEnrollment(getLocalNodeID(), weightsFactory));
       warn("WARNING :: Active Node = " + activeNode + " , " + state
@@ -303,7 +334,7 @@ public class StateManagerImpl implements StateManager {
     synchronized (this) {
       if (activeNode.equals(disconnectedNode)) {
         // ACTIVE Node is gone
-        activeNode = NodeIDImpl.NULL_ID;
+        setActiveNodeID(NodeIDImpl.NULL_ID);
       }
       if (state != PASSIVE_UNINTIALIZED && state != ACTIVE_COORDINATOR && activeNode.isNull()) {
         elect = true;
