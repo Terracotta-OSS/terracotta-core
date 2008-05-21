@@ -117,7 +117,9 @@ public class LinkedBlockingQueueInterruptTakeTestApp extends AbstractTransparent
           queue.put(o);
           System.out.println("Node "+node+" : "+queue.size()+" - put : "+o);
           if (0 == queue.size()) {
-            thread1.interrupt();
+            synchronized (queue) {
+              thread1.interrupt();
+            }
           }
         } catch (InterruptedException e) {
           System.out.println("Node "+node+" : thread 2 InterruptedException");
