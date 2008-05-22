@@ -75,7 +75,7 @@ public final class GlassfishV1AppServer extends AbstractAppServer {
       passwdFile = File.createTempFile("passwd", "");
       passwdFile.deleteOnExit();
 
-      FileOutputStream fos = new FileOutputStream(passwdFile);
+      FileOutputStream fos = null;
       try {
         fos = new FileOutputStream(passwdFile);
         fos.write(("AS_ADMIN_ADMINPASSWORD=" + PASSWD).getBytes());
