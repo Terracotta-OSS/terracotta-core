@@ -34,7 +34,7 @@ public class DefaultConnectionIdFactory implements ConnectionIDFactory {
   }
 
   public void restoreConnectionId(ConnectionID rv) {
-    throw new ImplementMe();
+    //
   }
 
 }
