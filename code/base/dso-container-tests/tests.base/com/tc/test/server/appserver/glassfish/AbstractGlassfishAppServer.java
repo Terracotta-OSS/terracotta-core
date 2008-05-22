@@ -236,7 +236,7 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
   private String[] getStartupCommand(AppServerParameters params) throws Exception {
     File startScript = getInstanceFile("bin/" + getPlatformScript("startserv"));
 
-    Result result = Exec.execute(new String[] { startScript.getAbsolutePath(), "display" }, null, null, startScript
+    Result result = Exec.execute(getDisplayCommand(startScript.getAbsolutePath()), null, null, startScript
         .getParentFile());
     if (result.getExitCode() != 0) { throw new RuntimeException("error executing startserv script: " + result); }
 
@@ -252,7 +252,6 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
     List cmd = new ArrayList(Arrays.asList(output.split("\\|")));
 
     modifyStartupCommand(cmd);
-
 
     // add the linked java process stuff to classpath
     for (int i = 0; i < cmd.size(); i++) {
