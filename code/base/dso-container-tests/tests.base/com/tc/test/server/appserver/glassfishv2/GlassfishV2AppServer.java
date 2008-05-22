@@ -2,22 +2,25 @@
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tc.test.server.appserver.glassfishv1;
+package com.tc.test.server.appserver.glassfishv2;
 
 import com.tc.test.server.appserver.glassfish.AbstractGlassfishAppServer;
 import com.tc.test.server.appserver.glassfish.GlassfishAppServerInstallation;
 
-/**
- * Glassfish AppServer implementation
- */
-public final class GlassfishV1AppServer extends AbstractGlassfishAppServer {
+import java.util.List;
 
-  public GlassfishV1AppServer(GlassfishAppServerInstallation installation) {
+public class GlassfishV2AppServer extends AbstractGlassfishAppServer {
+
+  public GlassfishV2AppServer(GlassfishAppServerInstallation installation) {
     super(installation);
   }
 
   protected String[] getDisplayCommand(String script) {
-    return new String[] { script, "display" };
+    return new String[] { script, "cli", "display" };
+  }
+
+  protected void modifyStartupCommand(List cmd) {
+    cmd.add(0, "-Dcom.sun.aas.promptForIdentity=true");
   }
 
 }
