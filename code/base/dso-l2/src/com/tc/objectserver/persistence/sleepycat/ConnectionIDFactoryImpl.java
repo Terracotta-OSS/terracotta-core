@@ -44,6 +44,10 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
     fireCreationEvent(rv);
     return rv;
   }
+  
+  public void restoreConnectionId(ConnectionID rv) {
+    fireCreationEvent(rv);
+  }
 
   private void fireCreationEvent(ConnectionID rv) {
     for (Iterator i = listeners.iterator(); i.hasNext();) {

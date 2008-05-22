@@ -10,6 +10,8 @@ public interface ConnectionIDFactory {
 
   public ConnectionID nextConnectionId();
   
+  public void restoreConnectionId(ConnectionID rv);
+  
   public Set loadConnectionIDs();
   
   public void registerForConnectionIDEvents(ConnectionIDFactoryListener listener);

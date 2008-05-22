@@ -100,6 +100,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
         throw new StackNotFoundException(connectionId);
       } else {
         rv = harness.attachNewConnection(connection);
+        connectionIdFactory.restoreConnectionId(connectionId);
       }
     }
 
