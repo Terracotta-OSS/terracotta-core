@@ -4,7 +4,6 @@
  */
 package com.tc.test.server.appserver.deployment;
 
-import com.tc.bundles.BundleSpec;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.test.AppServerInfo;
@@ -172,9 +171,6 @@ public class ServerManager {
 
     int appId = config.appServerId();
     switch (appId) {
-      case AppServerInfo.JETTY:
-        prepareClientTcConfigForJetty(aCopy);
-        break;
       case AppServerInfo.WEBSPHERE:
         aCopy.addModule(TIMUtil.WEBSPHERE_6_1_0_7, TIMUtil.getVersion(TIMUtil.WEBSPHERE_6_1_0_7));
         break;
@@ -183,15 +179,6 @@ public class ServerManager {
     }
     aCopy.saveToFile();
     return aCopy;
-  }
-
-  private void prepareClientTcConfigForJetty(TcConfigBuilder clientConfig) {
-    // assume tim-jetty-6.1.4 locates under $HOME/.m2/repository
-    File m2File = new File(System.getProperty("user.home") + File.separatorChar + ".m2" + File.separatorChar
-                           + "repository");
-    BundleSpec spec = TIMUtil.getBundleSpec(TIMUtil.JETTY_6_1);
-    clientConfig.addRepository(m2File.toURI().toString());
-    clientConfig.addModule(spec.getName(), spec.getGroupId(), spec.getVersion());
   }
 
   void setServersToStop(List serversToStop) {
