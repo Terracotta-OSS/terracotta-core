@@ -1,5 +1,5 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
 package com.tc.tomcat.session;
@@ -10,37 +10,38 @@ import org.apache.catalina.Valve;
 import org.apache.catalina.util.ServerInfo;
 
 import java.lang.reflect.Constructor;
-import java.util.HashMap;
-import java.util.Map;
 
 public class VersionHelper {
   private static final Object[] NO_ARGS           = new Object[] {};
   private static final Class[]  NO_ARGS_SIGNATURE = new Class[] {};
 
-  private static final Version  TOMCAT_50         = new Version("50");
-  private static final Version  TOMCAT_55         = new Version("55");
+  private static final Version  TOMCAT_50         = new Version("tomcat", "50");
+  private static final Version  TOMCAT_55         = new Version("tomcat", "55");
+  private static final Version  GLASSFISH         = new Version("glassfish", "");
   private static final Version  CURRENT;
-
-  Map                           m                 = new HashMap();
 
   static {
     String serverInfo = ServerInfo.getServerInfo();
     serverInfo = (serverInfo == null) ? "null" : serverInfo;
 
-    int lastSlash = serverInfo.lastIndexOf("/");
-    if (lastSlash < 0 || serverInfo.endsWith("/")) { throw new AssertionError("Cannot determine tomcat version from "
-                                                                              + serverInfo); }
-
-    String ver = serverInfo.substring(lastSlash + 1);
-
-    if (ver.startsWith("5.0")) {
-      CURRENT = TOMCAT_50;
-    } else if (ver.startsWith("5.5")) {
-      CURRENT = TOMCAT_55;
-    } else if (ver.startsWith("6.0")) {
-      CURRENT = TOMCAT_55;      
+    if (serverInfo.startsWith("Sun Java System Application Server Platform Edition 9")) {
+      CURRENT = GLASSFISH;
     } else {
-      throw new AssertionError("Cannot determine tomcat version from " + serverInfo);
+      int lastSlash = serverInfo.lastIndexOf("/");
+      if (lastSlash < 0 || serverInfo.endsWith("/")) { throw new AssertionError("Cannot determine tomcat version from "
+                                                                                + serverInfo); }
+
+      String ver = serverInfo.substring(lastSlash + 1);
+
+      if (ver.startsWith("5.0")) {
+        CURRENT = TOMCAT_50;
+      } else if (ver.startsWith("5.5")) {
+        CURRENT = TOMCAT_55;
+      } else if (ver.startsWith("6.0")) {
+        CURRENT = TOMCAT_55;
+      } else {
+        throw new AssertionError("Cannot determine tomcat version from " + serverInfo);
+      }
     }
   }
 
@@ -77,13 +78,15 @@ public class VersionHelper {
 
   private static class Version {
     private final String version;
+    private final String prefix;
 
-    Version(String version) {
+    Version(String prefix, String version) {
+      this.prefix = prefix;
       this.version = version;
     }
 
     public String getPackageName() {
-      return "tomcat" + version;
+      return prefix + version;
     }
 
     public String getVersion() {

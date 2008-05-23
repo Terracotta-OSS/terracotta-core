@@ -21,6 +21,7 @@ public class TIMUtil {
   public static final String      COMMONS_COLLECTIONS_3_1;
   public static final String      EHCACHE_1_2_4;
   public static final String      EHCACHE_1_3;
+  public static final String      GLASSFISH_1_0;
   public static final String      HIBERNATE_3_1_2;
   public static final String      HIBERNATE_3_2_5;
   public static final String      IBATIS_2_2_0;
@@ -45,6 +46,7 @@ public class TIMUtil {
     COMMONS_COLLECTIONS_3_1 = lookup(".*commons-collections-3.1");
     EHCACHE_1_2_4 = lookup(".*ehcache-1.2.4");
     EHCACHE_1_3 = lookup(".*ehcache-1.3");
+    GLASSFISH_1_0 = lookup(".*glassfish-1.0");
     HIBERNATE_3_1_2 = lookup(".*hibernate-3.1.2");
     HIBERNATE_3_2_5 = lookup(".*hibernate-3.2.5");
     IBATIS_2_2_0 = lookup(".*iBatis-2.2.0");

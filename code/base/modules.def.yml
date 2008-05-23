@@ -633,6 +633,21 @@ modules:
         - simulator
         - thirdparty
         - thirdparty-api
+  - clustered-glassfish-1.0:
+      options:
+        jdk: J2SE-1.5
+        module: true
+      dependencies:
+        - aspectwerkz
+        - common-api
+        - deploy-api
+        - dso-common
+        - dso-l1-api
+        - modules-common
+        - dso-statistics-api
+        - management-api
+        - thirdparty
+        - thirdparty-api
   - clustered-commons-collections-3.1:
       options:
         jdk: J2SE-1.5

@@ -2,7 +2,7 @@
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tc.object.glassfish.transform;
+package org.terracotta.modules.glassfish_1_0_0;
 
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
