@@ -102,12 +102,15 @@ public class ModulesLoader {
           getModulesCustomApplicatorSpecs(osgiRuntime, configHelper);
         }
       } catch (BundleException e) {
-        final String msg = (e instanceof BundleExceptionSummary) ? ((BundleExceptionSummary) e).getSummary() : e
-            .getMessage();
-        consoleLogger.fatal(msg);
+        if (e instanceof BundleExceptionSummary) {
+          final String msg = ((BundleExceptionSummary) e).getSummary();
+          consoleLogger.fatal(msg);
+        } else {
+          consoleLogger.fatal(e);
+        }
         System.exit(1);
-      } catch (Exception e) {
-        consoleLogger.error(e); // at least log this exception, it's very frustrating if it is completely swallowed
+      } catch (Throwable t) {
+        consoleLogger.error(t); // at least log this exception, it's very frustrating if it is completely swallowed
         System.exit(-9);
       } finally {
         if (forBootJar) {
