@@ -72,6 +72,11 @@ public class LinkedBlockingQueueInterruptTakeTestApp extends AbstractTransparent
 
       if (0 == node) {
         synchronized (queue) {
+          // wait a while to allow all pending transactions in an interrupted thread
+          // to be applied in next iterations
+          Thread.sleep(3000);
+
+          // check how many items have been taken from the queue
           int expected = numOfLoops * getParticipantCount();
           System.out.println("Took "+count+" from queue, expected "+expected);
           Assert.assertEquals(count, expected);
