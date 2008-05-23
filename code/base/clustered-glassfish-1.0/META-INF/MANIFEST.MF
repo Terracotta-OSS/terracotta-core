@@ -10,5 +10,5 @@ Bundle-SymbolicName: org.terracotta.modules.clustered-glassfish-1.0
 Bundle-Vendor: Terracotta, Inc.
 Bundle-Version: 2.7.0.SNAPSHOT
 Bundle-Activator: org.terracotta.modules.glassfish_1_0_0.GlassfishTerracottaConfigurator
-Require-Bundle: org.terracotta.modules.modules-common;bundle-version:=2.6.1.SNAPSHOT
+Require-Bundle: org.terracotta.modules.modules-common;bundle-version:=2.7.0.SNAPSHOT
 Terracotta-RequireVersion: 2.7.0.SNAPSHOT
