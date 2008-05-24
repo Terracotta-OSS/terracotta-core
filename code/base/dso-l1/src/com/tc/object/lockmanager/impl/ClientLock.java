@@ -60,7 +60,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
   private final TCLockTimer           lockTimer;
 
   private final Greediness            greediness               = new Greediness();
-  private int                         useCount                 = 0;
+  private volatile int                useCount                 = 0;
   private volatile State              state                    = RUNNING;
   private long                        timeUsed                 = System.currentTimeMillis();
   private final ClientLockStatManager lockStatManager;
@@ -801,19 +801,21 @@ class ClientLock implements TimerCallback, LockFlushCallback {
     return c;
   }
 
-  public synchronized void incUseCount() {
+  public synchronized int incUseCount() {
     if (useCount == Integer.MAX_VALUE) { throw new AssertionError("Lock use count cannot exceed integer max value"); }
     useCount++;
     timeUsed = System.currentTimeMillis();
+    return useCount;
   }
 
-  public synchronized void decUseCount() {
+  public synchronized int decUseCount() {
     if (useCount == 0) { throw new AssertionError("Lock use count is zero"); }
     useCount--;
     timeUsed = System.currentTimeMillis();
+    return useCount;
   }
 
-  public synchronized int getUseCount() {
+  public int getUseCount() {
     return useCount;
   }
 
@@ -841,7 +843,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
 
   private boolean shouldProceedToLease(ThreadID threadID) {
     boolean canOnlyLeaseRead = greediness.isReadOnly();
-    
+
     for (Iterator i = pendingLockRequests.values().iterator(); i.hasNext();) {
       Object o = i.next();
       if (isOnlyWaitLockRequest(o)) {
@@ -1042,7 +1044,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
   }
 
   // This method is synchronized such that we can quickly inspect for potential timeouts and only on possible
-  // timeouts we grab the lock.
+  // timeouts we grab the lock. Note useCount is volatile.
   public boolean timedout(long timeoutInterval) {
     if (useCount != 0) { return false; }
     synchronized (this) {
@@ -1420,14 +1422,9 @@ class ClientLock implements TimerCallback, LockFlushCallback {
 
   private static class Greediness {
     /**
-     * The class Greediness models state transition among various states a client lock could be in. A client lock could be in
-     * one of the several states:
-     * 
-     * NOT_GREEDY -> GREEDY -> RECALLED -------------------------------
-     *                            |                                   |
-     *                            |                                   V
-     *                            |-------> GREEDY LEASE  ---> RECALL IN PROGRESS
-     *  
+     * The class Greediness models state transition among various states a client lock could be in. A client lock could
+     * be in one of the several states: NOT_GREEDY -> GREEDY -> RECALLED ------------------------------- | | | V
+     * |-------> GREEDY LEASE ---> RECALL IN PROGRESS
      */
     private static final State NOT_GREEDY         = new State("NOT GREEDY");
     private static final State GREEDY             = new State("GREEDY");
@@ -1455,9 +1452,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
     }
 
     void recall(int rlevel) {
-      if (state != GREEDY && state != ON_GREEDY_LEASE) {
-        throw new AssertionError("Performing recall in state " + state);
-      }
+      if (state != GREEDY && state != ON_GREEDY_LEASE) { throw new AssertionError("Performing recall in state " + state); }
       this.recallLevel |= rlevel;
       // It is possible that one thread in a VM requests a READ lock, the server grants the lock
       // greedily with a read level, followed by a recall with a lease time. The state of the lock thus
@@ -1473,9 +1468,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
     }
 
     void leaseTimeout() {
-      if (state != ON_GREEDY_LEASE) {
-        throw new AssertionError("Lease time out in state " + state);
-      }
+      if (state != ON_GREEDY_LEASE) { throw new AssertionError("Lease time out in state " + state); }
       state = RECALLED;
     }
 
@@ -1522,9 +1515,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
     }
 
     void greedyLease() {
-      if (state != RECALLED) {
-        throw new AssertionError("Greedy lease in state " + state);
-      }
+      if (state != RECALLED) { throw new AssertionError("Greedy lease in state " + state); }
       state = ON_GREEDY_LEASE;
     }
 
@@ -1533,16 +1524,13 @@ class ClientLock implements TimerCallback, LockFlushCallback {
     }
 
     void startRecallCommit() {
-      if (state != RECALLED && state != ON_GREEDY_LEASE) {
-        throw new AssertionError("Starting recall commit in state " + state);
-      }
+      if (state != RECALLED && state != ON_GREEDY_LEASE) { throw new AssertionError("Starting recall commit in state "
+                                                                                    + state); }
       state = RECALL_IN_PROGRESS;
     }
 
     void recallComplete() {
-      if (state != RECALL_IN_PROGRESS) {
-        throw new AssertionError("Recall complete in state " + state);
-      }
+      if (state != RECALL_IN_PROGRESS) { throw new AssertionError("Recall complete in state " + state); }
       this.state = NOT_GREEDY;
       this.recallLevel = LockLevel.NIL_LOCK_LEVEL;
       this.level = LockLevel.NIL_LOCK_LEVEL;

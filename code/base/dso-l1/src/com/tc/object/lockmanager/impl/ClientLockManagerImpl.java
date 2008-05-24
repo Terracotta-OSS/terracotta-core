@@ -29,7 +29,6 @@ import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.text.StringFormatter;
 import com.tc.util.Assert;
-import com.tc.util.Counter;
 import com.tc.util.State;
 import com.tc.util.Util;
 
@@ -42,13 +41,13 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TimerTask;
 
 /**
- * @author steve
+ * The Top level lock manager and entry point into the lock manager subsystem in the L1.
  */
 public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallback {
 
@@ -65,8 +64,10 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   private final Map                     lockInfoByID                 = new HashMap();
   private final RemoteLockManager       remoteLockManager;
   private final TCLockTimer             waitTimer                    = new TCLockTimerImpl();
-  private final ClientLockMap           locksByID;
-  private final Counter                 recallCounter                = new Counter();
+  private final Map                     locksByID                    = new HashMap(INIT_LOCK_MAP_SIZE);
+
+  // This is specifically insertion ordered so that locks that are likely to be garbage are in the front, added first
+  private final LinkedHashSet           gcCandidates                 = new LinkedHashSet();
   private final TCLogger                logger;
   private final SessionManager          sessionManager;
   private final ClientLockStatManager   lockStatManager;
@@ -79,8 +80,6 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     this.sessionManager = sessionManager;
     this.lockStatManager = lockStatManager;
     this.clientLockManagerConfig = clientLockManagerConfig;
-    this.locksByID = new ClientLockMap(INIT_LOCK_MAP_SIZE, this, recallCounter, clientLockManagerConfig
-        .getTimeoutInterval());
     waitTimer.getTimer().schedule(new LockGCTask(this), clientLockManagerConfig.getTimeoutInterval(),
                                   clientLockManagerConfig.getTimeoutInterval());
   }
@@ -123,55 +122,50 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     waitUntilRunning();
 
     long runGCStartTime = System.currentTimeMillis();
-    int locksMapSize = locksByID.size();
-
     if (logger.isDebugEnabled()) {
-      logger.debug("Lock GC: Recalled ( " + recallCounter.get() + " ) Locks .. out of " + locksMapSize
-                   + " since last ClientLockManagerImpl.runGC occurred");
+      logger.debug("Running Lock GC:  Total Locks  = " + locksByID.size() + " GC Candidates = " + gcCandidates.size());
     }
-
-    // reset counter
-    recallCounter.reset();
 
     long findLocksToGC = System.currentTimeMillis();
     boolean continueGC = true;
-    int totalGCCount = 0;
+    int totalGCCount = 0, iterationCount = 0;
+    long timeOutMillis = clientLockManagerConfig.getTimeoutInterval();
 
     while (continueGC) {
-
+      iterationCount++;
       ArrayList toGC = new ArrayList(1000);
 
       int k = 0;
       Iterator iter;
-      for (iter = locksByID.values().iterator(); iter.hasNext() && k < 1000; k++) {
-        ClientLock lock = (ClientLock) iter.next();
-        if (lock.timedout(clientLockManagerConfig.getTimeoutInterval())) {
-          toGC.add(lock.getLockID());
+      for (iter = gcCandidates.iterator(); iter.hasNext() && k < 1000; k++) {
+        LockID lockID = (LockID) iter.next();
+        ClientLock lock = (ClientLock) locksByID.get(lockID);
+        if (lock.timedout(timeOutMillis)) {
+          toGC.add(lockID);
         } else {
-          // timed out not left..
+          // since this lock is not timed out other locks that we haven't processed yet couldn't possibly be timed out.
+          continueGC = false;
           break;
         }
       }
-
-      // they maybe more timeout elements, if 1000 elements were collected
-      if (k < 1000 || !iter.hasNext()) {
+      if (!iter.hasNext()) {
         continueGC = false;
       }
 
       if (logger.isDebugEnabled()) {
-        logger.debug(" finding locks to GC took : ( " + (System.currentTimeMillis() - findLocksToGC) + " )  ms ");
+        logger.debug(" finding locks to GC took : ( " + (System.currentTimeMillis() - findLocksToGC)
+                     + " )  ms : gcCandidates = " + gcCandidates.size() + " toGC = " + toGC.size());
       }
 
       if (toGC.size() > 0) {
         long recallingLocks = System.currentTimeMillis();
         if (logger.isDebugEnabled()) {
-          logger.debug("GCing "
-                       + (toGC.size() < 11 ? toGC.toString() : toGC.size() + " Locks ... out of " + locksMapSize));
+          logger.debug("GCing " + toGC.size() + " Locks ... out of " + locksByID.size());
         }
 
         for (Iterator recallIter = toGC.iterator(); recallIter.hasNext();) {
           LockID lockID = (LockID) recallIter.next();
-          recall(lockID, ThreadID.VM_ID, LockLevel.WRITE);
+          recall(lockID, ThreadID.VM_ID, LockLevel.WRITE, -1);
         }
         totalGCCount += toGC.size();
 
@@ -192,9 +186,9 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
         }
       }
     }
-    logger.info("running lock GC took " + (System.currentTimeMillis() - runGCStartTime) + " ms for GCing and removing "
-                + totalGCCount + " objects to run.");
-
+    logger.info("Running lock GC took " + (System.currentTimeMillis() - runGCStartTime) + " ms " + iterationCount
+                + "iterations for GCing " + totalGCCount + " locks. gcCandidates remaining = " + gcCandidates
+                + " total locks remaining = " + locksByID.size());
   }
 
   private GlobalLockInfo getLockInfo(LockID lockID, ThreadID threadID) {
@@ -300,9 +294,23 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     synchronized (this) {
       waitUntilRunning();
       lock = getOrCreateLock(lockID, lockObjectType);
-      lock.incUseCount();
+      incrementUseCount(lock);
     }
     lock.lock(threadID, lockType, contextInfo);
+  }
+
+  private void incrementUseCount(ClientLock lock) {
+    int useCount = lock.incUseCount();
+    if (useCount == 1) {
+      gcCandidates.remove(lock.getLockID());
+    }
+  }
+
+  private void decrementUseCount(ClientLock lock) {
+    int useCount = lock.decUseCount();
+    if (useCount == 0) {
+      gcCandidates.add(lock.getLockID());
+    }
   }
 
   public boolean tryLock(LockID lockID, ThreadID threadID, TimerSpec timeout, int lockType, String lockObjectType) {
@@ -312,30 +320,31 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     synchronized (this) {
       waitUntilRunning();
       lock = getOrCreateLock(lockID, lockObjectType);
-      lock.incUseCount();
+      incrementUseCount(lock);
     }
     boolean isLocked = lock.tryLock(threadID, timeout, lockType);
     if (!isLocked) {
       synchronized (this) {
-        lock.decUseCount();
+        decrementUseCount(lock);
+        // cleanup is anyway synchronized on this.
+        cleanUp(lock);
       }
-      cleanUp(lock);
     }
     return isLocked;
   }
 
   public void unlock(LockID lockID, ThreadID threadID) {
-    final ClientLock myLock;
+    final ClientLock lock;
 
     synchronized (this) {
       waitUntilRunning();
-      myLock = (ClientLock) locksByID.get(lockID);
-      if (myLock == null) { throw missingLockException(lockID); }
-      myLock.decUseCount();
+      lock = (ClientLock) locksByID.get(lockID);
+      if (lock == null) { throw missingLockException(lockID); }
+      decrementUseCount(lock);
     }
 
-    myLock.unlock(threadID);
-    cleanUp(myLock);
+    lock.unlock(threadID);
+    cleanUp(lock);
   }
 
   private AssertionError missingLockException(LockID lockID) {
@@ -364,22 +373,8 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   }
 
   /*
-   * The level represents the reason why server wanted a recall and will determite when a recall commit will happen.
+   * The level represents the reason why server wanted a recall and will determine when a recall commit will happen.
    */
-  public synchronized void recall(LockID lockID, ThreadID threadID, int interestedLevel) {
-    Assert.assertEquals(ThreadID.VM_ID, threadID);
-    if (isPaused()) {
-      logger.warn("Ignoring recall request from dead server : " + lockID + ", " + threadID + " interestedLevel : "
-                  + LockLevel.toString(interestedLevel));
-      return;
-    }
-    final ClientLock myLock = (ClientLock) locksByID.get(lockID);
-    if (myLock != null) {
-      myLock.recall(interestedLevel, this);
-      cleanUp(myLock);
-    }
-  }
-
   public synchronized void recall(LockID lockID, ThreadID threadID, int interestedLevel, int leaseTimeInMs) {
     Assert.assertEquals(ThreadID.VM_ID, threadID);
     if (isPaused()) {
@@ -389,7 +384,11 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     }
     final ClientLock myLock = (ClientLock) locksByID.get(lockID);
     if (myLock != null) {
-      myLock.recall(interestedLevel, this, leaseTimeInMs);
+      if (leaseTimeInMs > 0) {
+        myLock.recall(interestedLevel, this, leaseTimeInMs);
+      } else {
+        myLock.recall(interestedLevel, this);
+      }
       cleanUp(myLock);
     }
   }
@@ -435,6 +434,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
         // from the map and a new lock could be in the map from a new lock request. We dont want to
         // remove that
         locksByID.remove(lock.getLockID());
+        gcCandidates.remove(lock.getLockID());
       }
     }
   }
@@ -658,34 +658,5 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     out.println(getClass().getName());
     out.indent().print("locks: ").visit(locksByID).println();
     return out;
-  }
-
-  private static class ClientLockMap extends LinkedHashMap {
-
-    private ClientLockManager  clientLockManager;
-
-    private Counter            recallCounter;
-
-    private long               timeoutInterval;
-
-    private static final float DEFAULT_LOAD_FACTOR = 0.75f;
-
-    public ClientLockMap(int capacity, ClientLockManager clientLockManager, Counter recallCounter, long timeoutInterval) {
-      super(capacity, DEFAULT_LOAD_FACTOR, true);
-      this.clientLockManager = clientLockManager;
-      this.recallCounter = recallCounter;
-      this.timeoutInterval = timeoutInterval;
-    }
-
-    protected boolean removeEldestEntry(Entry eldest) {
-      ClientLock lock = (ClientLock) eldest.getValue();
-      if (lock.timedout(timeoutInterval)) {
-        clientLockManager.recall(lock.getLockID(), ThreadID.VM_ID, LockLevel.WRITE);
-        recallCounter.increment();
-        return true;
-      }
-      return false;
-    }
-
   }
 }

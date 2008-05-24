@@ -19,7 +19,6 @@ import com.tc.object.session.SessionID;
 import java.io.IOException;
 
 public class LockResponseMessage extends DSOMessageBase {
-  private static final int  AWARD_NOT_ON_LEASE    = 0;
 
   private static final byte TYPE              = 1;
   private static final byte THREAD_ID         = 2;
@@ -39,7 +38,7 @@ public class LockResponseMessage extends DSOMessageBase {
   private LockID            lockID;
   private int               lockLevel;
   private GlobalLockInfo    globalLockInfo;
-  private int               leaseTimeInMs     = AWARD_NOT_ON_LEASE;
+  private int               leaseTimeInMs;
 
   public LockResponseMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                              MessageChannel channel, TCMessageType type) {
@@ -59,9 +58,7 @@ public class LockResponseMessage extends DSOMessageBase {
     if (globalLockInfo != null) {
       putNVPair(GLOBAL_LOCK_INFO, globalLockInfo);
     }
-    if (isAwardOnLease()) {
-      putNVPair(LOCK_LEASE_MILLIS, leaseTimeInMs);
-    }
+    putNVPair(LOCK_LEASE_MILLIS, leaseTimeInMs);
   }
 
   protected String describePayload() {
@@ -138,10 +135,6 @@ public class LockResponseMessage extends DSOMessageBase {
     return (this.type == LOCK_NOT_AWARDED);
   }
 
-  public boolean isAwardOnLease() {
-    return this.leaseTimeInMs > AWARD_NOT_ON_LEASE;
-  }
-
   public int getAwardLeaseTime() {
     return this.leaseTimeInMs;
   }
@@ -197,7 +190,7 @@ public class LockResponseMessage extends DSOMessageBase {
   }
 
   private void initialize(LockID lid, ThreadID sid, int level, GlobalLockInfo info) {
-    initialize(lid, sid, level, info, AWARD_NOT_ON_LEASE);
+    initialize(lid, sid, level, info, -1);
   }
 
   private void initialize(LockID lid, ThreadID sid, int level, GlobalLockInfo info, int leaseTimeInMills) {

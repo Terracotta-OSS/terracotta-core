@@ -103,6 +103,51 @@ public class ClientLockManagerTest extends TestCase {
 
   }
   
+  public void testRunGCWithAHeldLock() {
+    NullClientLockManagerConfig testClientLockManagerConfig = new NullClientLockManagerConfig(100);
+
+    final ClientLockManagerImpl clientLockManagerImpl = new ClientLockManagerImpl(new NullTCLogger(), rmtLockManager, sessionManager,
+                                                      ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
+                                                      testClientLockManagerConfig);
+    rmtLockManager.setClientLockManager(clientLockManagerImpl);
+
+    final LockID lockID1 = new LockID("1");
+    final LockID lockID2 = new LockID("1");
+    final ThreadID threadID1 = new ThreadID(1);
+  
+    rmtLockManager.lockResponder = new LockResponder() {
+
+      public void respondToLockRequest(LockRequest request) {
+
+        clientLockManagerImpl.awardLock(sessionManager.getSessionID(), request.lockID(), ThreadID.VM_ID, LockLevel
+            .makeGreedy(request.lockLevel()));
+      }
+    };
+
+    //Hold lock 1
+    clientLockManagerImpl.lock(lockID1, threadID1, LockLevel.WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    
+    //Grab and release lock 2
+    clientLockManagerImpl.lock(lockID2, threadID1, LockLevel.WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    clientLockManagerImpl.unlock(lockID2, threadID1);
+
+    ThreadUtil.reallySleep(200);
+    clientLockManagerImpl.runGC();
+   
+    // One lock should be GCed
+    assertEquals(clientLockManagerImpl.getLocksByIDSize(), 1);
+
+    // now unlock lock 1
+    clientLockManagerImpl.unlock(lockID1, threadID1);
+
+    ThreadUtil.reallySleep(200);
+    clientLockManagerImpl.runGC();
+    
+    // Both should be GCed
+    assertEquals(clientLockManagerImpl.getLocksByIDSize(), 0);
+
+  }
+  
   /**
    * testing accessOrder for LinkedHashMap which ClientHashMap extends
    */

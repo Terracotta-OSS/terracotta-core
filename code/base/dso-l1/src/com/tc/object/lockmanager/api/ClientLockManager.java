@@ -63,10 +63,8 @@ public interface ClientLockManager extends DumpHandler, PrettyPrintable {
   public void notified(LockID lockID, ThreadID threadID);
 
   /**
-   * Recalls a greedy Lock that was awarded earlier
+   * Recalls a greedy Lock that was awarded earlier. If leaseTimeInMs is zero, then there is no lease
    */
-  public void recall(LockID lockID, ThreadID threadID, int level);
-  
   public void recall(LockID lockID, ThreadID threadID, int level, int leaseTimeInMs);
   
   /**
