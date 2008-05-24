@@ -61,14 +61,17 @@ public class ClientLockManagerTest extends TestCase {
   public void testRunGC() {
     NullClientLockManagerConfig testClientLockManagerConfig = new NullClientLockManagerConfig(100);
 
-    final ClientLockManagerImpl clientLockManagerImpl = new ClientLockManagerImpl(new NullTCLogger(), rmtLockManager, sessionManager,
-                                                      ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
-                                                      testClientLockManagerConfig);
+    final ClientLockManagerImpl clientLockManagerImpl = new ClientLockManagerImpl(
+                                                                                  new NullTCLogger(),
+                                                                                  rmtLockManager,
+                                                                                  sessionManager,
+                                                                                  ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
+                                                                                  testClientLockManagerConfig);
     rmtLockManager.setClientLockManager(clientLockManagerImpl);
 
     final LockID lockID1 = new LockID("1");
     final ThreadID threadID1 = new ThreadID(1);
-  
+
     rmtLockManager.lockResponder = new LockResponder() {
 
       public void respondToLockRequest(LockRequest request) {
@@ -82,14 +85,10 @@ public class ClientLockManagerTest extends TestCase {
 
     clientLockManagerImpl.unlock(lockID1, threadID1);
 
-    try {
-      Thread.sleep(200);
-    } catch (InterruptedException e) {
-      throw new AssertionError(e);
-    }
+    ThreadUtil.reallySleep(200);
     clientLockManagerImpl.runGC();
-   
-    assertEquals(clientLockManagerImpl.getLocksByIDSize(), 0);
+
+    assertEquals(0, clientLockManagerImpl.getLocksByIDSize());
 
     // now change the timeout to a much higher number
     testClientLockManagerConfig.setTimeoutInterval(Long.MAX_VALUE);
@@ -99,22 +98,25 @@ public class ClientLockManagerTest extends TestCase {
     clientLockManagerImpl.unlock(lockID1, threadID1);
 
     clientLockManagerImpl.runGC();
-    assertEquals(clientLockManagerImpl.getLocksByIDSize(), 1);
+    assertEquals(1, clientLockManagerImpl.getLocksByIDSize());
 
   }
-  
+
   public void testRunGCWithAHeldLock() {
     NullClientLockManagerConfig testClientLockManagerConfig = new NullClientLockManagerConfig(100);
 
-    final ClientLockManagerImpl clientLockManagerImpl = new ClientLockManagerImpl(new NullTCLogger(), rmtLockManager, sessionManager,
-                                                      ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
-                                                      testClientLockManagerConfig);
+    final ClientLockManagerImpl clientLockManagerImpl = new ClientLockManagerImpl(
+                                                                                  new NullTCLogger(),
+                                                                                  rmtLockManager,
+                                                                                  sessionManager,
+                                                                                  ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
+                                                                                  testClientLockManagerConfig);
     rmtLockManager.setClientLockManager(clientLockManagerImpl);
 
     final LockID lockID1 = new LockID("1");
-    final LockID lockID2 = new LockID("1");
+    final LockID lockID2 = new LockID("2");
     final ThreadID threadID1 = new ThreadID(1);
-  
+
     rmtLockManager.lockResponder = new LockResponder() {
 
       public void respondToLockRequest(LockRequest request) {
@@ -124,67 +126,67 @@ public class ClientLockManagerTest extends TestCase {
       }
     };
 
-    //Hold lock 1
+    // Hold lock 1
     clientLockManagerImpl.lock(lockID1, threadID1, LockLevel.WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
-    
-    //Grab and release lock 2
+
+    // Grab and release lock 2
     clientLockManagerImpl.lock(lockID2, threadID1, LockLevel.WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     clientLockManagerImpl.unlock(lockID2, threadID1);
 
     ThreadUtil.reallySleep(200);
     clientLockManagerImpl.runGC();
-   
+
     // One lock should be GCed
-    assertEquals(clientLockManagerImpl.getLocksByIDSize(), 1);
+    assertEquals(1, clientLockManagerImpl.getLocksByIDSize());
 
     // now unlock lock 1
     clientLockManagerImpl.unlock(lockID1, threadID1);
 
     ThreadUtil.reallySleep(200);
     clientLockManagerImpl.runGC();
-    
+
     // Both should be GCed
-    assertEquals(clientLockManagerImpl.getLocksByIDSize(), 0);
+    assertEquals(0, clientLockManagerImpl.getLocksByIDSize());
 
   }
-  
+
   /**
    * testing accessOrder for LinkedHashMap which ClientHashMap extends
    */
   public void testClientHashMap() {
     LinkedHashMap linkedHashMap = new LinkedHashMap(4, 0.75f, true);
-   
+
     linkedHashMap.put("key1", "value1");
     linkedHashMap.put("key2", "value2");
     linkedHashMap.put("key3", "value3");
     linkedHashMap.put("key4", "value4");
-    
-    //do two reads
+
+    // do two reads
     linkedHashMap.get("key1");
     linkedHashMap.get("key2");
-    
+
     Iterator iter = linkedHashMap.values().iterator();
-    assertEquals((String)iter.next(), "value3");
-    assertEquals((String)iter.next(), "value4");
-    assertEquals((String)iter.next(), "value1");
-    assertEquals((String)iter.next(), "value2");
-      
+    assertEquals((String) iter.next(), "value3");
+    assertEquals((String) iter.next(), "value4");
+    assertEquals((String) iter.next(), "value1");
+    assertEquals((String) iter.next(), "value2");
+
     linkedHashMap = new LinkedHashMap(4, 0.75f, false);
     linkedHashMap.put("key1", "value1");
     linkedHashMap.put("key2", "value2");
     linkedHashMap.put("key3", "value3");
     linkedHashMap.put("key4", "value4");
-    
-    //do two reads
+
+    // do two reads
     linkedHashMap.get("key1");
     linkedHashMap.get("key2");
-    
-    iter = linkedHashMap.values().iterator();   
-    assertEquals((String)iter.next(), "value1");
-    assertEquals((String)iter.next(), "value2");
-    assertEquals((String)iter.next(), "value3");
-    assertEquals((String)iter.next(), "value4");
-  
+
+    iter = linkedHashMap.values().iterator();
+    assertEquals((String) iter.next(), "value1");
+    assertEquals((String) iter.next(), "value2");
+    assertEquals((String) iter.next(), "value3");
+    assertEquals((String) iter.next(), "value4");
+
   }
 
   public void testNestedSynchronousWrite() {
@@ -670,7 +672,7 @@ public class ClientLockManagerTest extends TestCase {
     
     // TODO: test awardLock() and the other public methods I didn't have
     // time to test...
-    
+
     // assert locker thread never threw an exception
     assertTrue("Locker thread threw an exception: " + lockerException, lockerException.isEmpty());
   }
