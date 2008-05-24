@@ -281,6 +281,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     logger.debug("distributed-methods: " + this.distributedMethods);
 
     rewriteHashtableAutoLockSpecIfNecessary();
+    removeTomcatAdapters();
   }
 
   public String rawConfigText() {
@@ -1067,6 +1068,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
                      new DelegateMethodAdapter("org.apache.catalina.connector.Request", "valveReq"));
     addCustomAdapter("org.apache.catalina.connector.SessionResponse55",
                      new DelegateMethodAdapter("org.apache.catalina.connector.Response", "valveRes"));
+  }
+
+  private void removeTomcatAdapters() {
+    // XXX: hack to avoid problems with coresident L1 (this can be removed when session support becomes a 1st class
+    // module)
+    if (applicationNames.isEmpty()) {
+      removeCustomAdapter("org.apache.catalina.core.ContainerBase");
+    }
   }
 
   public boolean removeCustomAdapter(String name) {
