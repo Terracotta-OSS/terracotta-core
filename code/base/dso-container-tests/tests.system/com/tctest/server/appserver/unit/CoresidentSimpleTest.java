@@ -32,7 +32,8 @@ public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentT
   private static CoresidentServerTestSetup testSetup = new CoresidentSimpleTestSetup();
 
   public CoresidentSimpleTest() {
-    //
+    // MNK-530
+    disableAllUntil("2008-07-15");
   }
 
   public static Test suite() {
