@@ -26,12 +26,14 @@ public class LinkedBlockingQueueInterruptTakeTestApp extends AbstractTransparent
 
   private final int           numOfLoops;
 
-  private LinkedBlockingQueue queue                = new LinkedBlockingQueue(CAPACITY);
-  private int                 count;
-  private final CyclicBarrier barrier;
-  private final Map           nodes;
+  private final LinkedBlockingQueue   queue = new LinkedBlockingQueue(CAPACITY);
+  private int                         count;
+  private final CyclicBarrier         barrier;
+  private final Map<Integer, String>  nodes;
 
-  private final transient Thread1 thread1          = new Thread1();
+  private int                 localCount;
+
+  private final transient Thread1 thread1 = new Thread1();
 
   private volatile int node = -1;
 
@@ -39,15 +41,15 @@ public class LinkedBlockingQueueInterruptTakeTestApp extends AbstractTransparent
     super(appId, cfg, listenerProvider);
     numOfLoops = DEFAULT_NUM_OF_LOOPS;
     barrier = new CyclicBarrier(getParticipantCount());
-    nodes = new ConcurrentHashMap();
+    nodes = new ConcurrentHashMap<Integer, String>();
   }
 
   public void run() {
     try {
       node = barrier.await();
 
-      Integer node_integer = new Integer(node);
-      nodes.put(node_integer, this);
+      Integer node_integer = node;
+      nodes.put(node_integer, String.valueOf(node));
 
       thread1.start();
       Thread2 thread2 = new Thread2();
@@ -70,11 +72,11 @@ public class LinkedBlockingQueueInterruptTakeTestApp extends AbstractTransparent
       nodes.remove(node_integer);
       node = barrier.await();
 
+      System.out.println(">>> Node "+node+" : Local count : "+localCount);
+
       if (0 == node) {
         synchronized (queue) {
-          // wait a while to allow all pending transactions in an interrupted thread
-          // to be applied in next iterations
-          Thread.sleep(3000);
+          System.out.println(">>> Total count : "+count);
 
           // check how many items have been taken from the queue
           int expected = numOfLoops * getParticipantCount();
@@ -96,13 +98,19 @@ public class LinkedBlockingQueueInterruptTakeTestApp extends AbstractTransparent
 
     public void run() {
       while (!stop) {
+        Object taken = null;
         try {
-          System.out.println("Node "+node+" : "+queue.size()+" - took : " + queue.take());
-          synchronized (queue) {
-            count++;
-          }
+          taken = queue.take();
+          System.out.println("Node "+node+" : "+queue.size()+" - took : " + taken);
         } catch (InterruptedException e) {
           System.out.println("Node "+node+" : thread 1 InterruptedException");
+        } finally {
+          if (taken != null) {
+            synchronized (queue) {
+              localCount++;
+              count++;
+            }
+          }
         }
       }
       System.out.println("Node "+node+" : thread 1 finished");
@@ -121,8 +129,8 @@ public class LinkedBlockingQueueInterruptTakeTestApp extends AbstractTransparent
           Object o = new Date();
           queue.put(o);
           System.out.println("Node "+node+" : "+queue.size()+" - put : "+o);
-          if (0 == queue.size()) {
-            synchronized (queue) {
+          synchronized (queue) {
+            if (0 == queue.size()) {
               thread1.interrupt();
             }
           }
@@ -146,17 +154,5 @@ public class LinkedBlockingQueueInterruptTakeTestApp extends AbstractTransparent
     spec.addRoot("queue", "queue");
     spec.addRoot("barrier", "barrier");
     spec.addRoot("count", "count");
-  }
-
-  private static class WorkItem {
-    private final int i;
-
-    public WorkItem(int i) {
-      this.i = i;
-    }
-
-    public int getI() {
-      return this.i;
-    }
   }
 }
