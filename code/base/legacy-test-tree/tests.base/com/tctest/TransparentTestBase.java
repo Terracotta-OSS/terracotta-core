@@ -107,7 +107,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   protected void setJvmArgsL1Reconnect(final ArrayList jvmArgs) {
     System.setProperty("com.tc." + TCPropertiesConsts.L2_L1RECONNECT_ENABLED, "true");
     TCPropertiesImpl.setProperty(TCPropertiesConsts.L2_L1RECONNECT_ENABLED, "true");
-    
+
     jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_L1RECONNECT_ENABLED + "=true");
   }
 
@@ -119,8 +119,10 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   }
 
   protected void setJvmArgsCvtIsolation(final ArrayList jvmArgs) {
-    final String buffer_randomsuffix_sysprop = TCPropertiesImpl.tcSysProp(TCPropertiesConsts.CVT_BUFFER_RANDOM_SUFFIX_ENABLED);
-    final String store_randomsuffix_sysprop = TCPropertiesImpl.tcSysProp(TCPropertiesConsts.CVT_STORE_RANDOM_SUFFIX_ENABLED);
+    final String buffer_randomsuffix_sysprop = TCPropertiesImpl
+        .tcSysProp(TCPropertiesConsts.CVT_BUFFER_RANDOM_SUFFIX_ENABLED);
+    final String store_randomsuffix_sysprop = TCPropertiesImpl
+        .tcSysProp(TCPropertiesConsts.CVT_STORE_RANDOM_SUFFIX_ENABLED);
     System.setProperty(buffer_randomsuffix_sysprop, "true");
     TCPropertiesImpl.setProperty(TCPropertiesConsts.CVT_BUFFER_RANDOM_SUFFIX_ENABLED, "true");
     System.setProperty(store_randomsuffix_sysprop, "true");
@@ -499,14 +501,43 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     }
   }
 
-  // protected void duringRunningCluster() throws Exception {
-  // }
+  /*
+   * Can be overwritten for customerizing active passive test
+   */
+  protected void customerizeActivePassiveTest() throws Exception {
+    apServerManager.startActivePassiveServers();
+  }
+
+  protected void apStartServer(int index) throws Exception {
+    apServerManager.startServer(index);
+  }
+
+  protected void apStopServer(int index) throws Exception {
+    apServerManager.stopServer(index);
+  }
+  
+  protected void apCleanupServerDB(int index) throws Exception {
+    apServerManager.cleanupServerDB(index);
+  }
+  
+  protected void apCrashActiveserver() throws Exception {
+    apServerManager.crashActive();
+  }
+
+  protected int apGetActiveIndex() throws Exception {
+    return apServerManager.getAndUpdateActiveIndex();
+  }
+  
+  protected void waitServerIsPassiveStandby(int index, int waitSeconds) throws Exception {
+    boolean isStandby = apServerManager.waitServerIsPassiveStandby(index, waitSeconds);
+    Assert.assertTrue(isStandby);
+  }
 
   public void test() throws Exception {
     if (canRun()) {
       if (controlledCrashMode && isActivePassive() && apServerManager != null) {
         // active passive tests
-        apServerManager.startServers();
+        customerizeActivePassiveTest();
       } else if (controlledCrashMode && serverControls != null && proxies != null) {
         // ResolveTwoActiveServersTest that use proxies between l2s
         startServerControlsAndProxies();
@@ -525,7 +556,6 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
         }
       }
       this.runner.run();
-      // duringRunningCluster();
 
       if (this.runner.executionTimedOut() || this.runner.startTimedOut()) {
         try {
