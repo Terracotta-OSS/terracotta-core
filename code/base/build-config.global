@@ -22,6 +22,7 @@ appserver=tomcat-5.5.26
 #appserver=jetty-6.1.5
 #appserver=websphere-6.1.0.7
 #appserver=glassfish-v1.ur1-p01-b02
+#appserver=glassfish-v2.ur2-b04
 #appserver=wasce-1.0.1.2
 #appserver=resin-3.0.25
 
