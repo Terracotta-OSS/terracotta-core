@@ -182,141 +182,120 @@
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
         <version>3.8.1</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.ant</groupId>
         <artifactId>ant</artifactId>
         <version>1.7.0</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>commons-codec</groupId>
         <artifactId>commons-codec</artifactId>
         <version>1.3</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <!-- dso-spring-tests -->
         <groupId>commons-pool</groupId>
         <artifactId>commons-pool</artifactId>
         <version>1.2</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <!-- dso-spring-tests -->
         <groupId>commons-dbcp</groupId>
         <artifactId>commons-dbcp</artifactId>
         <version>1.2.1</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring</artifactId>
         <version>2.0.1</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <!-- dso-spring-tests -->
         <groupId>org.springframework</groupId>
         <artifactId>spring-hibernate3</artifactId>
         <version>2.0.1</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <!-- dso-container-tests -->
         <groupId>antlr</groupId>
         <artifactId>antlr</artifactId>
         <version>2.7.7</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <!-- dso-spring-tests, common -->
         <groupId>hsqldb</groupId>
         <artifactId>hsqldb</artifactId>
         <version>1.7.2.2</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <!-- dso-spring -->
         <groupId>jmock</groupId>
         <artifactId>jmock</artifactId>
         <version>1.0.1</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <!-- dso-spring-tests -->
         <groupId>ognl</groupId>
         <artifactId>ognl</artifactId>
         <version>2.7</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <!-- dso-spring-tests -->
         <groupId>org.springframework</groupId>
         <artifactId>spring-binding</artifactId>
         <version>1.0</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <!-- dso-spring-tests -->
         <groupId>javax.servlet</groupId>
         <artifactId>jstl</artifactId>
         <version>1.0</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.hibernate</groupId>
         <artifactId>hibernate</artifactId>
         <version>3.1.2</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>ehcache</groupId>
         <artifactId>ehcache</artifactId>
         <version>1.1</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <!-- dso-container-tests -->
         <groupId>org.terracotta</groupId>
         <artifactId>tc-cargo-core-uberjar</artifactId>
         <version>0.9-20080103</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <!-- dso-spring-tests -->
         <groupId>taglibs</groupId>
         <artifactId>standard</artifactId>
         <version>1.0.6</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>httpunit</groupId>
         <artifactId>httpunit</artifactId>
         <version>1.6</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <!-- dso-spring-aj/tests.system -->
         <groupId>aspectj</groupId>
         <artifactId>aspectjrt</artifactId>
         <version>1.5.0</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <!-- aspectwerkz, dso-container-tests, dso-spring-tests, dso-l1-api -->
         <groupId>dom4j</groupId>
         <artifactId>dom4j</artifactId>
         <version>1.6.1</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <!-- dso-l1, dso-container-tests, dso-spring-tests -->
         <groupId>cglib</groupId>
         <artifactId>cglib-nodep</artifactId>
         <version>2.1_3</version>
-        <scope>test</scope>
       </dependency>
 
       <!-- Dependencies for core Terracotta artifacts (terracotta, terracotta-api) -->

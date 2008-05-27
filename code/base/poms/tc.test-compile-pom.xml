@@ -202,6 +202,10 @@
       <artifactId>ehcache</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.ant</groupId>
+      <artifactId>ant</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>tc-cargo-core-uberjar</artifactId>
     </dependency>
