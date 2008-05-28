@@ -99,6 +99,10 @@ public class SleepycatPersistor implements Persistor {
     this.classPersistor = new ClassPersistorImpl(this.persistenceTransactionProvider, logger, env.getClassDatabase());
     this.clusterStateStore = new SleepycatMapStore(this.persistenceTransactionProvider, logger, env
         .getClusterStateStoreDatabase());
+    
+    //check for DBversion mismatch
+    DBVersionChecker dbVersionChecker = new DBVersionChecker(this.clusterStateStore);
+    dbVersionChecker.versionCheck();
   }
 
   public StringIndex getStringIndex() {
