@@ -25,6 +25,7 @@ public class DBVersionChecker {
         clusterStore.put(DBVersionChecker.VERSION, DBVersionChecker.VERSION);
         logger.info("Sleepy Cat DB version is " + DBVersionChecker.VERSION);
       } else {
+        logger.info("Sleepy Cat DB version is " + dbVersion);
         if (!dbVersion.equals(DBVersionChecker.VERSION)) { 
           throw new AssertionError("There is a mismatch in Terracotta and DB data format. " +
           		                      "Please ensure that both Terracotta Server and DB are upgraded to the same version"); 
