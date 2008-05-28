@@ -6,6 +6,8 @@ package com.tc.management.lock.stats;
 
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
+import EDU.oswego.cs.dl.util.concurrent.ConcurrentHashMap;
+
 import com.tc.exception.TCRuntimeException;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
@@ -33,9 +35,9 @@ public class LockStatElement implements TCSerializable, Serializable, LockTraceE
   private LockID                         lockID;
   private LockStats                      lockStat;
   private int                            hashCode;
-  private Map                            nextStat          = new HashMap();         // Map<LockStatElement, LockStatElement>
-  public final transient LockHolderStats holderStats       = new LockHolderStats(); // TCSerializable and Serializable
-                                                                                    // transient
+  private Map                            nextStat          = new ConcurrentHashMap(); // Map<LockStatElement, LockStatElement>
+  public final transient LockHolderStats holderStats       = new LockHolderStats();   // TCSerializable and Serializable
+                                                                                      // transient
 
   private StackTraceElement              stackTraceElement;
   private String                         lockConfigElement = "";
@@ -273,8 +275,9 @@ public class LockStatElement implements TCSerializable, Serializable, LockTraceE
   public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     this.lockID = new LockID(serialInput.readString());
     this.lockConfigElement = serialInput.readString();
-    this.lockStat = new LockStats();
-    lockStat.deserializeFrom(serialInput);
+    LockStats newLockStat = new LockStats();
+    newLockStat.deserializeFrom(serialInput);
+    this.lockStat = newLockStat;
     int numBytes = serialInput.readInt();
     byte[] bytes = new byte[numBytes];
     serialInput.read(bytes);
@@ -285,13 +288,14 @@ public class LockStatElement implements TCSerializable, Serializable, LockTraceE
     } catch (ClassNotFoundException e) {
       throw new TCRuntimeException(e);
     }
-    this.nextStat = new HashMap();
+    Map newNextStat = new HashMap();
     int numOfLockStatElement = serialInput.readInt();
     for (int i = 0; i < numOfLockStatElement; i++) {
       LockStatElement ls = new LockStatElement();
       ls.deserializeFrom(serialInput);
-      nextStat.put(ls, ls);
+      newNextStat.put(ls, ls);
     }
+    this.nextStat = newNextStat;
 
     computeHashCode();
 
