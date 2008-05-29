@@ -168,8 +168,13 @@ public class SpringAspectModule implements AspectModule {
     AspectDefinitionBuilder builder = deployer.newAspectBuilder("com.tcspring.ApplicationContextEventProtocol",
                                                                 DeploymentModel.PER_JVM, null);
 
+    /* 
+     * Spring 2.0.x up to 2.0.5 calls publishEvent(..) from within refresh() method
+     * spring 2.0.8 calls publishEvent from within finishRefresh() method
+     */
     builder.addAdvice("before",
-        "withincode(* org.springframework.context.support.AbstractApplicationContext+.refresh()) "
+        "(withincode(* org.springframework.context.support.AbstractApplicationContext+.refresh()) "
+            + "OR withincode(* org.springframework.context.support.AbstractApplicationContext+.finishRefresh())) "
             + "AND call(* org.springframework.context.support.AbstractApplicationContext+.publishEvent(..)) "
             + "AND target(ctx)",
         "registerContext(StaticJoinPoint jp, org.springframework.context.support.AbstractApplicationContext ctx)");
@@ -180,6 +185,7 @@ public class SpringAspectModule implements AspectModule {
         "interceptEvent(StaticJoinPoint jp, " 
             + "org.springframework.context.ApplicationEvent event, "
             + "org.springframework.context.support.AbstractApplicationContext ctx)");
+
   }
 
   private void buildDefinitionForAopProxyFactoryProtocol(final AspectModuleDeployer deployer) {

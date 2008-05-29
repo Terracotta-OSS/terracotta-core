@@ -13,7 +13,7 @@
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jmock-1.0.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jmock-cglib-1.0.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/ognl-2.7.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/spring-2.0.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/spring-2.0.8.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/spring-binding-1.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/spring-webflow-1.0.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/aspectwerkz"/>
@@ -36,4 +36,5 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/simulator"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty-api"/>
+	<classpathentry kind="output" path="bin"/>
 </classpath>
