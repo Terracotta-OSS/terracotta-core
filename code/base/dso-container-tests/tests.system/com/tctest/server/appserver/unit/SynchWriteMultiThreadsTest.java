@@ -115,7 +115,7 @@ public class SynchWriteMultiThreadsTest extends AbstractTwoServerDeploymentTest 
     }
 
     protected void configureTcConfig(TcConfigBuilder clientConfig) {
-      clientConfig.addWebApplication(CONTEXT, false);
+      clientConfig.addWebApplication(CONTEXT, true);
     }
   }
 }
