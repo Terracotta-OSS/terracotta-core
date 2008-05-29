@@ -83,19 +83,25 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     setProperty("interval", data);
   }
 
+  public void setReconnectWindowForPrevConnectedClients(int secs) {
+    setProperty("client-reconnect-window", secs);
+  }
+
   public void setGCInterval(String data) {
     setProperty("interval", data);
   }
 
-  private static final String[] L2              = new String[] { "data", "logs", "dso-port", "jmx-port",
-      "l2-group-port"                          };
+  private static final String[] L2                  = new String[] { "data", "logs", "dso-port", "jmx-port",
+      "l2-group-port"                              };
 
-  private static final String[] DSO_PERSISTENCE = new String[] { "mode" };
-  private static final String[] DSO_GC          = new String[] { "enabled", "verbose", "interval" };
-  private static final String[] AUTHENTICATION  = new String[] { "password-file", "access-file" };
-  private static final String[] DSO             = concat(new Object[] { DSO_PERSISTENCE, DSO_GC });
+  private static final String[] DSO_PERSISTENCE     = new String[] { "mode" };
+  private static final String[] DSO_RECONNECTWINDOW = new String[] { "client-reconnect-window" };
+  private static final String[] DSO_GC              = new String[] { "enabled", "verbose", "interval" };
+  private static final String[] AUTHENTICATION      = new String[] { "password-file", "access-file" };
+  private static final String[] DSO                 = concat(new Object[] { DSO_RECONNECTWINDOW, DSO_PERSISTENCE,
+      DSO_GC                                       });
 
-  private static final String[] ALL_PROPERTIES  = concat(new Object[] { L2, AUTHENTICATION, DSO });
+  private static final String[] ALL_PROPERTIES      = concat(new Object[] { L2, AUTHENTICATION, DSO });
 
   public String toString() {
     String out = "";
@@ -103,8 +109,8 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     out += indent() + "<server" + (this.name != null ? " name=\"" + this.name + "\"" : "") + ">\n";
 
     out += elements(L2) + elementGroup("authentication", AUTHENTICATION) + openElement("dso", DSO)
-           + elementGroup("persistence", DSO_PERSISTENCE) + elementGroup("garbage-collection", DSO_GC)
-           + closeElement("dso", DSO);
+           + elements(DSO_RECONNECTWINDOW) + elementGroup("persistence", DSO_PERSISTENCE)
+           + elementGroup("garbage-collection", DSO_GC) + closeElement("dso", DSO);
 
     out += closeElement("server");
 
