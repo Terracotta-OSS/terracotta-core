@@ -127,13 +127,27 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       barrier2.await();
 
       System.err.println("Testing try lock failures in client 2");
-      int count = 0;
+      int countTryLockSucceeded = 0;
+      int countTryLockFailed = 0;
+      int countLocked = 0;
+      int countUnLocked = 0;
       for (int i=0; i<100; i++) {
         if (!lock.tryLock()) {
-          if (lock.isLocked()) count++;
+          countTryLockFailed++;
+          if (lock.isLocked()) {
+            countLocked++;
+          } else {
+            countUnLocked++;
+          }
+        } else {
+          countTryLockSucceeded++;
         }
       }
-      Assert.assertEquals(100, count);
+      System.out.println("tryLock succeeded: "+countTryLockSucceeded);
+      System.out.println("tryLock failed: "+countTryLockFailed);
+      System.out.println("unlocked: "+countUnLocked);
+      System.out.println("locked: "+countLocked);
+      Assert.assertEquals(100, countLocked);
       barrier2.await();
 
       System.err.println("Locking in client 2");
@@ -142,7 +156,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       lock.unlock();
 
       System.err.println("Testing try lock successes in client 2");
-      count = 0;
+      int count = 0;
       for (int i=0; i<100; i++) {
         if (!lock.tryLock()) {
           count++;
@@ -555,8 +569,13 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
     }
     barrier.await();
     if (index == 0) {
-      thread.interrupt();
-      lock.unlock();
+      synchronized (thread) {
+        thread.interrupt();
+        lock.unlock();
+        if (thread.isAlive()) {
+          thread.wait();
+        }
+      }
     }
     barrier.await();
   }
@@ -1221,8 +1240,10 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
         }
       } finally {
         lock.unlock();
+        synchronized (this) {
+          this.notifyAll();
+        }
       }
-
     }
   }
 
