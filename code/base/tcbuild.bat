@@ -1,7 +1,7 @@
 @ECHO OFF
 IF NOT EXIST buildscripts/build-tc.rb GOTO no_build_tc
 
-set JRUBY_HOME=%~dp0..\..\buildsystems\jruby-1.1.1
+set JRUBY_HOME=%~dp0..\..\buildsystems\jruby-1.1.2
 
 call %ANT_HOME%\bin\ant.bat -buildfile %~p0buildconfig\build.xml install-ivy
 
