@@ -32,8 +32,12 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
 
   public AbstractDeploymentTest() {
     if (isSessionTest() && (appServerInfo().getId() == AppServerInfo.GLASSFISH)) {
-      disableAllUntil(new Date(Long.MAX_VALUE));
+      disableAllTests();
     }
+  }
+
+  public boolean shouldDisable() {
+    return isAllDisabled() || shouldDisableForJavaVersion() || shouldDisableForVariants();
   }
 
   protected void beforeTimeout() throws Throwable {
@@ -154,10 +158,6 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
 
   void disableAllTests() {
     this.disableAllUntil(new Date(Long.MAX_VALUE));
-  }
-
-  public boolean shouldDisable() {
-    return isAllDisabled() || shouldDisableForJavaVersion() || shouldDisableForVariants();
   }
 
   private boolean shouldDisableForVariants() {
