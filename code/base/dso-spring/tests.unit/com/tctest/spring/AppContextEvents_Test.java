@@ -4,6 +4,7 @@
  */
 package com.tctest.spring;
 
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
@@ -36,6 +37,22 @@ public class AppContextEvents_Test extends TransparentTestBase {
 
   protected void setUp() throws Exception {
     super.setUp();
+
+    // ============================================================================
+    try {
+      
+      Class springClass = ApplicationContext.class;
+      System.out.println("<!><!><!><!>-------------------------------------------------------------------");
+      System.out.println("<!><!><!><!>Spring jar used: " +       springClass.getProtectionDomain().getCodeSource().getLocation() );
+      System.out.println("<!><!><!><!>-------------------------------------------------------------------");
+      
+    } catch (Throwable e) {
+      System.out.println("<!><!><!><!>-------------------------------------------------------------------");
+      System.out.println("<!><!><!><!>Could not determine Spring jar used: " +       e.getMessage() );
+      System.out.println("<!><!><!><!>-------------------------------------------------------------------");
+    }
+    // ============================================================================
+    
     getTransparentAppConfig().setClientCount(NODE_COUNT).setApplicationInstancePerClientCount(EXECUTION_COUNT)
         .setIntensity(LOOP_ITERATIONS);
     initializeTestRunner();
