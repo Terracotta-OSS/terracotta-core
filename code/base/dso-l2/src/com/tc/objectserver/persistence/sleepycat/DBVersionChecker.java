@@ -28,7 +28,8 @@ public class DBVersionChecker {
         logger.info("Sleepy Cat DB version is " + dbVersion);
         if (!dbVersion.equals(DBVersionChecker.VERSION)) { 
           throw new AssertionError("There is a mismatch in Terracotta and DB data format. " +
-          		                      "Please ensure that both Terracotta Server and DB are upgraded to the same version"); 
+          		                      "Please ensure that both Terracotta Server and DB are upgraded to the same version" + 
+          		                      " Expected : " + DBVersionChecker.VERSION + " Actual: " + dbVersion); 
         }
       }
     } catch (DBException e) {
