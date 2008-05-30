@@ -1024,6 +1024,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
         int timeoutLockLevel = wlr.lockLevel();
         ThreadID timeoutThreadID = wlr.threadID();
         cannotAwardLock(timeoutThreadID, timeoutLockLevel);
+        return;
       }
     } else if (isOnlyWaitLockRequest(callbackObject)) {
       WaitLockRequest wlr = (WaitLockRequest) callbackObject;
@@ -1345,7 +1346,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
       /*
        * server_level is not changed to NIL_LOCK_LEVEL even though the server will release the lock as we need to know
        * what state we were holding before wait on certain scenarios like server crash etc.
-       * 
+       *
        * @see ClientLockManager.notified
        */
       return this.server_level;
@@ -1491,7 +1492,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
     boolean isGreedy() {
       return (state == GREEDY) || (state == ON_GREEDY_LEASE);
     }
-    
+
     boolean isGreedyState() {
       return (state == GREEDY);
     }
