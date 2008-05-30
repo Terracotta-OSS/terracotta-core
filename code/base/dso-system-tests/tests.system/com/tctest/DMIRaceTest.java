@@ -21,6 +21,13 @@ import com.terracottatech.config.PersistenceMode;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * DEV-1645 has some info relating to this test. The basic idea bug was that there was a race in server between a lookup
+ * of an object and the apply of the transaction that creates that object. It is easily triggered by sharing an object
+ * (in a discreet txn) and then immediately using the same object as parameter in a DMI. The transaction containing the
+ * new object might go pending in the server, while the transaction containing the DMI is broadcast to other nodes who
+ * will in turn try to resolve/lookup the object since it is a parameter to the DMI.
+ */
 public class DMIRaceTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 6;
@@ -89,6 +96,7 @@ public class DMIRaceTest extends TransparentTestBase {
 
             dmiTarget.dmi(obj);
           } else {
+            // This locking isn't sane really, but it will help cause the problematic pending transaction in the server
             synchronized (getApplicationId()) {
               root.clear();
             }
