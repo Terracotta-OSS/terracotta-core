@@ -279,8 +279,10 @@ public class TCTestCase extends TestCase {
    */
   protected final void disableAllUntil(Date theDate) {
     Assert.eval(theDate != null);
-    this.allDisabledUntil = theDate;
-    Banner.warnBanner(this.getClass().getName() + " disabled until " + theDate);
+    if (allDisabledUntil == null || allDisabledUntil.before(theDate)) {
+      allDisabledUntil = theDate;
+    }
+    Banner.warnBanner(this.getClass().getName() + " disabled until " + allDisabledUntil);
   }
 
   /**
