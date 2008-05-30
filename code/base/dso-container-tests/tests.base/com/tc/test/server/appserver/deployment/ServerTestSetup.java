@@ -34,6 +34,7 @@ public class ServerTestSetup extends TestSetup {
   }
 
   protected void setUp() throws Exception {
+    if (shouldDisable()) return;
     super.setUp();
     getServerManager();
   }
