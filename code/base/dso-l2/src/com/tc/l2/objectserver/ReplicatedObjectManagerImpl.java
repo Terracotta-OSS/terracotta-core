@@ -308,17 +308,16 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
         logger.info((disabled ? "GC is disabled." : "GC is is not disabled."));
       }
     }
-    
+
     private void disableGC() {
-      while(!disabled) {
+      while (!disabled) {
         disabled = objectManager.getGarbageCollector().disableGC();
-        if(!disabled) {
+        if (!disabled) {
           logger.warn("GC is running. Waiting for it to complete before disabling it...");
           ThreadUtil.reallySleep(3000); // FIXME:: use wait notify instead
         }
       }
     }
-
 
     private void assertGCDisabled() {
       if (!disabled) { throw new AssertionError("GC is not disabled"); }
@@ -374,7 +373,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
         enableGCIfNecessary();
       }
     }
-    
+
     public void disableAndAdd2L2StateManager(Map nodeID2ObjectIDs) {
       synchronized (this) {
         if (nodeID2ObjectIDs.size() > 0 && !disabled) {
@@ -389,7 +388,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
           if (!syncingPassives.containsKey(nodeID)) {
             syncingPassives.put(nodeID, ADDED);
           } else {
-            logger.info("Removing " + e
+            logger.info("Removing " + nodeID
                         + " from the list to add to L2ObjectStateManager since its present in syncingPassives : "
                         + syncingPassives.keySet());
             i.remove();

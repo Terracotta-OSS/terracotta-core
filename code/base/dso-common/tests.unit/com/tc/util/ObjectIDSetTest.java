@@ -198,6 +198,23 @@ public class ObjectIDSetTest extends TCTestCase {
     basicTest(creator);
   }
 
+  public void testObjectIDSet2Dump() {
+    ObjectIDSet2 s = new ObjectIDSet2();
+    System.err.println(" toString() : " + s);
+    
+    for (int i = 0; i < 100; i++) {
+      s.add(new ObjectID(i));
+    }
+    System.err.println(" toString() : " + s);
+    
+    for (int i = 0; i < 100; i+=2) {
+      s.remove(new ObjectID(i));
+    }
+    System.err.println(" toString() : " + s);
+    
+  }
+  
+  
   public void iteratorRemoveTest(SetCreator creator) {
     SecureRandom sr = new SecureRandom();
     long seed = sr.nextLong();

@@ -147,7 +147,7 @@ public class ObjectIDSet2 extends AbstractSet implements Externalizable {
 
   // Range contains two longs instead of 1 long in ObjectID
   private float getCompressionPercentage() {
-    return ((ranges.size() * 2) / size) * 100;
+    return (size == 0 ? 0.0f : (((ranges.size() * 2) / size) * 100));
   }
 
   /**
