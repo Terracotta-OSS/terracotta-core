@@ -25,8 +25,8 @@ import com.tc.util.Assert;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -65,9 +65,9 @@ public class LockRequestMessage extends DSOMessageBase implements LockRequestMes
 
   private final static String                UNINITIALED_LOCK_TYPE           = "";
 
-  private final Set                          lockContexts                    = new HashSet();
-  private final Set                          waitContexts                    = new HashSet();
-  private final Set                          pendingLockContexts             = new HashSet();
+  private final Set                          lockContexts                    = new LinkedHashSet();
+  private final Set                          waitContexts                    = new LinkedHashSet();
+  private final Set                          pendingLockContexts             = new LinkedHashSet();
   private final List                         pendingTryLockContexts          = new ArrayList();
 
   private LockID                             lockID                          = LockID.NULL_ID;
@@ -251,37 +251,37 @@ public class LockRequestMessage extends DSOMessageBase implements LockRequestMes
 
   public void addLockContext(LockContext ctxt) {
     synchronized (lockContexts) {
-      lockContexts.add(ctxt);
+      Assert.assertTrue(lockContexts.add(ctxt));
     }
   }
 
   public Collection getLockContexts() {
     synchronized (lockContexts) {
-      return new HashSet(lockContexts);
+      return new LinkedHashSet(lockContexts);
     }
   }
 
   public void addWaitContext(WaitContext ctxt) {
     synchronized (waitContexts) {
-      waitContexts.add(ctxt);
+      Assert.assertTrue(waitContexts.add(ctxt));
     }
   }
 
   public Collection getWaitContexts() {
     synchronized (waitContexts) {
-      return new HashSet(waitContexts);
+      return new LinkedHashSet(waitContexts);
     }
   }
 
   public void addPendingLockContext(LockContext ctxt) {
     synchronized (pendingLockContexts) {
-      pendingLockContexts.add(ctxt);
+      Assert.assertTrue(pendingLockContexts.add(ctxt));
     }
   }
 
   public Collection getPendingLockContexts() {
     synchronized (pendingLockContexts) {
-      return new HashSet(pendingLockContexts);
+      return new LinkedHashSet(pendingLockContexts);
     }
   }
 
