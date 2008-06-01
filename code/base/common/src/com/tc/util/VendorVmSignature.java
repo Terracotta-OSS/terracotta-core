@@ -18,6 +18,7 @@ public class VendorVmSignature {
   private static final String OS_SOLARIS_SPARC    = "solaris";
   private static final String OS_MAC_OSX          = "osx";
   private static final String OS_SOLARIS_X86      = "solaris-x86";
+  private static final String OS_AIX              = "aix";
 
   private static final String VM_VENDOR_SUN       = "hotspot";
   private static final String VM_VENDOR_IBM       = "ibm";
@@ -95,6 +96,7 @@ public class VendorVmSignature {
 
     if (lowerCaseOS.startsWith("windows")) { return OS_WINDOWS; }
     if (lowerCaseOS.startsWith("linux")) { return OS_LINUX; }
+    if (lowerCaseOS.startsWith("aix")) { return OS_AIX; }
     if (lowerCaseOS.startsWith("mac") || lowerCaseOS.startsWith("darwin")) { return OS_MAC_OSX; }
     if (lowerCaseOS.startsWith("sunos")) {
       final String arch = source.getProperty("os.arch");
