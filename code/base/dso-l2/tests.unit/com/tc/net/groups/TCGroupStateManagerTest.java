@@ -202,7 +202,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
       elections[i].join();
     }
 
-    ThreadUtil.reallySleep(1000);
+    ThreadUtil.reallySleep(1000 * nodes);
     // verification
     int activeCount = 0;
     for (int i = 0; i < nodes; ++i) {
@@ -267,7 +267,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
       elections[i].join();
     }
 
-    ThreadUtil.reallySleep(1000);
+    ThreadUtil.reallySleep(1000 * nodes);
     // verification
     int activeCount = 0;
     for (int i = 0; i < nodes; ++i) {
