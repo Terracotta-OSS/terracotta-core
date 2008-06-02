@@ -14,6 +14,7 @@ import com.tc.util.Assert;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.Date;
+import java.util.Random;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -30,9 +31,11 @@ public class LinkedBlockingQueueInterruptTakeTestApp extends AbstractTransparent
 
   private int                 localCount;
 
-  private final transient Thread1 thread1 = new Thread1();
+  private transient Thread1 thread1;
 
   private volatile int node = -1;
+
+  private final Random random = new Random();
 
   public LinkedBlockingQueueInterruptTakeTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -44,8 +47,9 @@ public class LinkedBlockingQueueInterruptTakeTestApp extends AbstractTransparent
     try {
       node = barrier.await();
 
+      thread1 = new Thread1("Node "+node+" thread 1");
       thread1.start();
-      Thread2 thread2 = new Thread2();
+      Thread2 thread2 = new Thread2("Node "+node+" thread 2");
       thread2.start();
 
       System.out.println("Node "+node+" : waiting for thread 2");
@@ -90,6 +94,10 @@ public class LinkedBlockingQueueInterruptTakeTestApp extends AbstractTransparent
   public class Thread1 extends Thread {
     private boolean stop = false;
 
+    public Thread1(final String name) {
+      super(name);
+    }
+
     public void stopLoop() {
       this.stop = true;
     }
@@ -107,9 +115,7 @@ public class LinkedBlockingQueueInterruptTakeTestApp extends AbstractTransparent
           System.out.println("Node "+node+" - thread 1 : checking taken state");
           if (taken != null) {
             synchronized (queue) {
-              System.out.println("Node "+node+" - thread 1 : updating counts");
-              localCount++;
-              count++;
+              System.out.println("Node "+node+" - thread 1 : updating counts - "+(++localCount)+", "+(++count));
             }
           }
         }
@@ -119,13 +125,25 @@ public class LinkedBlockingQueueInterruptTakeTestApp extends AbstractTransparent
   }
 
   public class Thread2 extends Thread {
+    public Thread2(final String name) {
+      super(name);
+    }
+
     public void run() {
       for (int i = 0; i < numOfLoops; i++) {
         try {
           Thread.sleep(10);
-
+        } catch (InterruptedException e) {
+          continue;
+        }
+        
+        try {
           if (queue.size() >= 20) {
-            Thread.sleep(500);
+            try {
+              Thread.sleep(500);
+            } catch (InterruptedException e) {
+              // do nothing
+            }
           }
           Object o = new Date();
           System.out.println("Node "+node+" - thread 2 : "+queue.size()+" - putting : "+o);
