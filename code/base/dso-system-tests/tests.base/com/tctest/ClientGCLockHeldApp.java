@@ -24,7 +24,7 @@ import java.util.List;
 
 public class ClientGCLockHeldApp extends AbstractTransparentApp {
 
-  private static final int MINUTES_TEST_RUN = 1;
+  private static final int MINUTES_TEST_RUN = 10;
 
   final List               lockList         = new ArrayList();
   final List               lockObj          = new ArrayList();
