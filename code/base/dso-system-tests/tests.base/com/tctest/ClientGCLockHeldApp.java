@@ -4,7 +4,6 @@
  */
 package com.tctest;
 
-import EDU.oswego.cs.dl.util.concurrent.BrokenBarrierException;
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
@@ -15,7 +14,7 @@ import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.object.config.spec.SynchronizedIntSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
-import com.tctest.runner.AbstractErrorCatchingTransparentApp;
+import com.tctest.runner.AbstractTransparentApp;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -23,9 +22,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class ClientGCLockHeldApp extends AbstractErrorCatchingTransparentApp {
+public class ClientGCLockHeldApp extends AbstractTransparentApp {
 
-  private static final int MINUTES_TEST_RUN = 10;
+  private static final int MINUTES_TEST_RUN = 1;
 
   final List               lockList         = new ArrayList();
   final List               lockObj          = new ArrayList();
@@ -47,9 +46,27 @@ public class ClientGCLockHeldApp extends AbstractErrorCatchingTransparentApp {
     new CyclicBarrierSpec().visit(visitor, config);
   }
 
-  public void runTest() throws BrokenBarrierException, InterruptedException {
+  public void run() {
     setCyclicBarrier();
-    runGCTest();
+    try {
+      barrier.barrier();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
+    // start a thread that holds a lock forever.
+    RunForeverThread thread = new RunForeverThread();
+    thread.start();
+
+    Stopwatch stopwatch = new Stopwatch().start();
+
+    for (int i = 0; stopwatch.getElapsedTime() < (1000 * 60 * MINUTES_TEST_RUN); i++) {
+      SynchronizedInt counter = new SynchronizedInt(0);
+      synchronized (lockList) {
+        lockList.add(counter);
+      }
+      counter.increment();
+    }
   }
 
   private void setCyclicBarrier() {
@@ -65,46 +82,24 @@ public class ClientGCLockHeldApp extends AbstractErrorCatchingTransparentApp {
                        + formatter.format(new Date(System.currentTimeMillis())) + " : " + message);
   }
 
-  public void runGCTest() throws BrokenBarrierException, InterruptedException {
-
-    barrier.barrier();
-
-    // start a thread that holds a lock forever.
-
-    // add to list to make shared;
-    RunForeverThread thread = new RunForeverThread();
-    thread.start();
-
-    Stopwatch stopwatch = new Stopwatch().start();
-
-    for (int i = 0; stopwatch.getElapsedTime() < (1000 * 60 * MINUTES_TEST_RUN); i++) {
-      SynchronizedInt counter = new SynchronizedInt(0);
-      synchronized (lockList) {
-        lockList.add(counter);
-      }
-      counter.increment();
-    }
-
-  }
-  
   public void holdLock() {
     synchronized (lockObj) {
       try {
         Thread.currentThread().join();
         log("should not reach here, this thread should hold the lock forever");
-        throw new AssertionError("should not reach here, this thread should hold the lock forever");
+        notifyError("should not reach here, this thread should hold the lock forever");
       } catch (InterruptedException e) {
         log("error occurred holding lock");
-        throw new AssertionError(e);
+        notifyError(e);
       }
     }
   }
 
-  private class RunForeverThread extends Thread { 
-    
+  private class RunForeverThread extends Thread {
+
     public void run() {
       holdLock();
-    } 
+    }
 
   }
 
