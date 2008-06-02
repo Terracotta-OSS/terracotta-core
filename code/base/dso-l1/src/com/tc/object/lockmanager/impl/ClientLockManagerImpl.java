@@ -169,7 +169,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
         totalGCCount += toGC.size();
 
         if (logger.isDebugEnabled()) {
-          logger.debug(" recalling " + toGC + " locks took : ( " + (System.currentTimeMillis() - recallingLocks)
+          logger.debug(" recalling " + toGC.size() + " locks took : ( " + (System.currentTimeMillis() - recallingLocks)
                        + " )  ms ");
         }
         if (continueGC) {
@@ -186,7 +186,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
       }
     }
     logger.info("Running lock GC took " + (System.currentTimeMillis() - runGCStartTime) + " ms " + iterationCount
-                + "iterations for GCing " + totalGCCount + " locks. gcCandidates remaining = " + gcCandidates
+                + "iterations for GCing " + totalGCCount + " locks. gcCandidates remaining = " + gcCandidates.size()
                 + " total locks remaining = " + locksByID.size());
   }
 
