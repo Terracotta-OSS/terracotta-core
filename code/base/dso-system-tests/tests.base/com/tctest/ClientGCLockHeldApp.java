@@ -91,9 +91,11 @@ public class ClientGCLockHeldApp extends AbstractErrorCatchingTransparentApp {
     synchronized (lockObj) {
       try {
         Thread.currentThread().join();
-        System.out.println("should not reach here");
+        log("should not reach here, this thread should hold the lock forever");
+        throw new AssertionError("should not reach here, this thread should hold the lock forever");
       } catch (InterruptedException e) {
-        e.printStackTrace();
+        log("error occurred holding lock");
+        throw new AssertionError(e);
       }
     }
   }
