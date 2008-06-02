@@ -34,6 +34,9 @@ public class Os {
     else if (osname.startsWith("mac") || osname.startsWith("darwin")) {
       return "mac";
     }
+    else if (osname.startsWith("aix")) {
+      return "aix";
+    }
     else return "generic";
   }
 
@@ -64,6 +67,10 @@ public class Os {
   public static boolean isSolaris() {
     final String os = getOsName().toLowerCase();
     return os.indexOf("sunos") >= 0;
+  }
+
+  public static boolean isAix() {
+    return getOsName().toLowerCase().indexOf("aix") >= 0;
   }
 
   public static String findWindowsSystemRoot() {

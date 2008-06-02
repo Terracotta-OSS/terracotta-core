@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net;
 
@@ -35,6 +36,7 @@ public class EphemeralPorts {
     if (Os.isSolaris()) { return new Solaris().getRange(); }
     if (Os.isMac()) { return new Mac().getRange(); }
     if (Os.isWindows()) { return new Windows().getRange(); }
+    if (Os.isAix()) { return new Aix().getRange(); }
 
     throw new AssertionError("No support for this OS: " + Os.getOsName());
   }
@@ -179,6 +181,30 @@ public class EphemeralPorts {
           }
         }
       }
+    }
+  }
+
+  private static class Aix implements RangeGetter {
+    public Range getRange() {
+      Exec exec = new Exec(new String[] { "/usr/sbin/no", "-a" });
+      final String output;
+      try {
+        output = exec.execute(Exec.STDOUT);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+
+      Properties props = new Properties();
+      try {
+        props.load(new StringBufferInputStream(output));
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+
+      int low = Integer.parseInt(props.getProperty("tcp_ephemeral_low"));
+      int high = Integer.parseInt(props.getProperty("tcp_ephemeral_high"));
+
+      return new Range(low, high);
     }
   }
 
