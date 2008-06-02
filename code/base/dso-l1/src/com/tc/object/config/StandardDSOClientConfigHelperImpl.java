@@ -102,7 +102,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -118,7 +117,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   private static final TCLogger                  consoleLogger                      = CustomerLogging
                                                                                         .getConsoleLogger();
 
-  private static final InstrumentationDescriptor DEAFULT_INSTRUMENTATION_DESCRIPTOR = new NullInstrumentationDescriptor();
+  private static final InstrumentationDescriptor DEFAULT_INSTRUMENTATION_DESCRIPTOR = new NullInstrumentationDescriptor();
 
   private final ManagerHelperFactory             mgrHelperFactory                   = new ManagerHelperFactory();
   private final DSOClientConfigHelperLogger      helperLogger;
@@ -147,7 +146,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   /**
    * A list of InstrumentationDescriptor representing include/exclude patterns
    */
-  private final LinkedList                       instrumentationDescriptors         = new LinkedList();
+  private final List                             instrumentationDescriptors         = new CopyOnWriteArrayList();
 
   /**
    * A map of class names to TransparencyClassSpec for individual classes
@@ -406,19 +405,15 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   public void addInstrumentationDescriptor(InstrumentedClass classDesc) {
-    synchronized (this.instrumentationDescriptors) {
-      this.instrumentationDescriptors.addFirst(newInstrumentationDescriptor(classDesc));
-    }
+    this.instrumentationDescriptors.add(0, newInstrumentationDescriptor(classDesc));
   }
 
   public boolean hasIncludeExcludePatterns() {
-    synchronized (this.instrumentationDescriptors) {
-      return !this.instrumentationDescriptors.isEmpty();
-    }
+    return !this.instrumentationDescriptors.isEmpty();
   }
 
   public boolean hasIncludeExcludePattern(ClassInfo classInfo) {
-    return getInstrumentationDescriptorFor(classInfo) != DEAFULT_INSTRUMENTATION_DESCRIPTOR;
+    return getInstrumentationDescriptorFor(classInfo) != DEFAULT_INSTRUMENTATION_DESCRIPTOR;
   }
 
   public DSORuntimeLoggingOptions runtimeLoggingOptions() {
@@ -1455,9 +1450,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   public void addLock(String methodPattern, LockDefinition lockDefinition) {
     // keep the list in reverse order of add
-    synchronized (locks) {
-      locks.add(0, new Lock(methodPattern, lockDefinition));
-    }
+    locks.add(0, new Lock(methodPattern, lockDefinition));
   }
 
   public boolean shouldBeAdapted(ClassInfo classInfo) {
@@ -1509,13 +1502,11 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   private InstrumentationDescriptor getInstrumentationDescriptorFor(ClassInfo classInfo) {
-    synchronized (this.instrumentationDescriptors) {
-      for (Iterator i = this.instrumentationDescriptors.iterator(); i.hasNext();) {
-        InstrumentationDescriptor rv = (InstrumentationDescriptor) i.next();
-        if (rv.matches(classInfo)) { return rv; }
-      }
+    for (Iterator i = this.instrumentationDescriptors.iterator(); i.hasNext();) {
+      InstrumentationDescriptor rv = (InstrumentationDescriptor) i.next();
+      if (rv.matches(classInfo)) { return rv; }
     }
-    return DEAFULT_INSTRUMENTATION_DESCRIPTOR;
+    return DEFAULT_INSTRUMENTATION_DESCRIPTOR;
   }
 
   private String outerClassnameWithoutInner(String fullName) {
