@@ -27,8 +27,8 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
 
   private ServerManager serverManager;
 
-  Map                   disabledVariants    = new HashMap();
-  List                  disabledJavaVersion = new ArrayList();
+  private final Map     disabledVariants    = new HashMap();
+  private final List    disabledJavaVersion = new ArrayList();
 
   public AbstractDeploymentTest() {
     if (isSessionTest() && (appServerInfo().getId() == AppServerInfo.GLASSFISH)) {
