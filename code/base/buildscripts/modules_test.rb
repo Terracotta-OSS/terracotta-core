@@ -525,7 +525,8 @@ class SubtreeTestRun
         appserver_zip_path = appserver_home + ".zip"
         @ant.get(:src => url, :dest => appserver_zip_path)
         # we don't use @ant.unzip because it doesn't preserve executable bit of .sh files
-        @ant.exec(:executable => "unzip", :dir => cache_location) do
+        @ant.exec(:executable => "jar", :dir => cache_location) do
+          @ant.arg(:value => "xvf")
           @ant.arg(:value => appserver_zip_path)
         end
         @ant.delete(:file => appserver_zip_path)
