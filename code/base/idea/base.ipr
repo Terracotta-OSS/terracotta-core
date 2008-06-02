@@ -209,6 +209,20 @@
           </module>
         </modules>
       </facet-type>
+      <facet-type id="javaeeApplication">
+        <modules>
+          <module name="glassfish" />
+        </modules>
+      </facet-type>
+      <facet-type id="web">
+        <modules>
+          <module name="glassfish">
+            <files>
+              <file url="file://$PROJECT_DIR$/../../../../glassfish/glassfish/appserv-core/src/java/com/sun/enterprise/admin/server/core/servlet/web.xml" />
+            </files>
+          </module>
+        </modules>
+      </facet-type>
     </autodetection-disabled>
   </component>
   <component name="IdProvider" IDEtalkID="FBFCF740AE577FD8DFFFAD08F3415502" />
@@ -407,6 +421,7 @@
       <module fileurl="file://$PROJECT_DIR$/clustered-ehcache-1.2.4.iml" filepath="$PROJECT_DIR$/clustered-ehcache-1.2.4.iml" />
       <module fileurl="file://$PROJECT_DIR$/clustered-ehcache-1.3.iml" filepath="$PROJECT_DIR$/clustered-ehcache-1.3.iml" />
       <module fileurl="file://$PROJECT_DIR$/clustered-ehcache-commons-1.0.iml" filepath="$PROJECT_DIR$/clustered-ehcache-commons-1.0.iml" />
+      <module fileurl="file://$PROJECT_DIR$//clustered-glassfish-1.0.iml" filepath="$PROJECT_DIR$//clustered-glassfish-1.0.iml" />
       <module fileurl="file://$PROJECT_DIR$/clustered-hibernate-3.1.2.iml" filepath="$PROJECT_DIR$/clustered-hibernate-3.1.2.iml" />
       <module fileurl="file://$PROJECT_DIR$/clustered-hibernate-3.2.5.iml" filepath="$PROJECT_DIR$/clustered-hibernate-3.2.5.iml" />
       <module fileurl="file://$PROJECT_DIR$/clustered-iBatis-2.2.0.iml" filepath="$PROJECT_DIR$/clustered-iBatis-2.2.0.iml" />

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module relativePaths="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../clustered-glassfish-1.0">
+      <sourceFolder url="file://$MODULE_DIR$/../clustered-glassfish-1.0/src" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="aspectwerkz" />
+    <orderEntry type="module" module-name="common-api" />
+    <orderEntry type="module" module-name="deploy-api" />
+    <orderEntry type="module" module-name="dso-common" />
+    <orderEntry type="module" module-name="dso-l1-api" />
+    <orderEntry type="module" module-name="modules-common" />
+    <orderEntry type="module" module-name="dso-statistics-api" />
+    <orderEntry type="module" module-name="management-api" />
+    <orderEntry type="module" module-name="thirdparty" />
+    <orderEntry type="module" module-name="thirdparty-api" />
+    <orderEntryProperties />
+  </component>
+</module>
+

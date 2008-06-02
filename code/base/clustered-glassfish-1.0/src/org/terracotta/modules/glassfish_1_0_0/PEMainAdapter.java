@@ -10,11 +10,12 @@ import com.tc.asm.Label;
 import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
+import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.ClassAdapterFactory;
 
 import java.lang.reflect.Modifier;
 
-public class PEMainAdapter extends ClassAdapter implements ClassAdapterFactory {
+public class PEMainAdapter extends ClassAdapter implements ClassAdapterFactory, Opcodes {
 
   public PEMainAdapter(ClassVisitor cv) {
     super(cv);
@@ -32,6 +33,9 @@ public class PEMainAdapter extends ClassAdapter implements ClassAdapterFactory {
     MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
     if ("main".equals(name) && Modifier.isStatic(access) && "([Ljava/lang/String;)V".equals(desc)) {
       mv = new MainAdapter(mv);
+    }
+    if ("<init>".equals(name)) {
+      mv = new CstrAdapter(mv);
     }
     return mv;
   }
@@ -66,6 +70,36 @@ public class PEMainAdapter extends ClassAdapter implements ClassAdapterFactory {
       mv.visitMethodInsn(INVOKESPECIAL, "java/lang/RuntimeException", "<init>", "(Ljava/lang/Throwable;)V");
       mv.visitInsn(ATHROW);
       mv.visitLabel(l3);
+    }
+
+  }
+
+  private static class CstrAdapter extends MethodAdapter {
+    
+    public CstrAdapter(MethodVisitor mv) {
+      super(mv);
+    }
+
+    public void visitInsn(int opcode) {
+      if (opcode == RETURN) {
+        nameAndRegisterLoader("_loader", "sharedLoader");
+      }
+      super.visitInsn(opcode);
+    }
+
+    private void nameAndRegisterLoader(String fieldName, String loaderName) {
+      mv.visitVarInsn(ALOAD, 0);
+      mv.visitFieldInsn(GETFIELD, "com/sun/enterprise/server/PEMain", fieldName, "Ljava/lang/ClassLoader;");
+      mv.visitTypeInsn(CHECKCAST, ByteCodeUtil.NAMEDCLASSLOADER_CLASS);
+      mv.visitInsn(DUP);
+      mv.visitFieldInsn(GETSTATIC, "com/tc/object/loaders/Namespace", "GLASSFISH_NAMESPACE", "Ljava/lang/String;");
+      mv.visitLdcInsn(loaderName);
+      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/loaders/Namespace", "createLoaderName",
+                         "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
+      mv.visitMethodInsn(INVOKEINTERFACE, ByteCodeUtil.NAMEDCLASSLOADER_CLASS, "__tc_setClassLoaderName",
+                         "(Ljava/lang/String;)V");
+      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/ClassProcessorHelper", "registerGlobalLoader",
+                         "(" + ByteCodeUtil.NAMEDCLASSLOADER_TYPE + ")V");
     }
 
   }

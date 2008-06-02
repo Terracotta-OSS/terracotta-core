@@ -61,6 +61,9 @@ public class SessionIDIntegrityTest extends AbstractTwoServerDeploymentTest {
       case AppServerInfo.WEBSPHERE:
         assertTrue(Pattern.matches("0000\\S+:\\S+", sessionId));
         break;
+      case AppServerInfo.GLASSFISH:
+        assertTrue(Pattern.matches("[A-F0-9]+.\\d", sessionId));
+        break;
       default:
         throw new RuntimeException("Appserver id [" + appId + "] is missing in this test");
     }
