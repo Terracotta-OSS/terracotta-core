@@ -5,6 +5,8 @@
 package com.tctest.server.appserver.unit;
 
 import com.meterware.httpunit.WebConversation;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
@@ -30,11 +32,14 @@ public class SynchronousWriteTest extends AbstractTwoServerDeploymentTest {
     WebConversation wc = new WebConversation();
     createTransactions(server0, wc);
     assertEquals("99", request(server1, "server=1&data=99", wc));
+    System.out.println("created final request to server 1");
+    
   }
 
   private void createTransactions(WebApplicationServer server, WebConversation wc) throws Exception {
     for (int i = 0; i < INTENSITY; i++) {
       assertEquals("OK", request(server, "server=0&data=" + i, wc));
+      System.out.println("created " + i + "-th request to server 0");
     }
   }
 
