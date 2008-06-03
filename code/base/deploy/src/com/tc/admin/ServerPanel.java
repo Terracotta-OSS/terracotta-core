@@ -14,6 +14,7 @@ import com.tc.admin.common.PropertyTableModel;
 import com.tc.admin.common.StatusView;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XTextArea;
+import com.tc.util.ProductInfo;
 
 import java.util.Date;
 import java.util.concurrent.Callable;

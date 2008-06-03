@@ -8,6 +8,7 @@ import org.mortbay.jetty.servlet.Context;
 import org.mortbay.jetty.servlet.ServletHolder;
 
 import com.tc.test.TCTestCase;
+import com.tc.util.ProductInfo;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -21,8 +22,8 @@ import javax.servlet.http.HttpServletResponse;
 
 public class UpdateCheckRequestTest extends TCTestCase {
   private Server fServer;
-  private int fPort;
-  
+  private int    fPort;
+
   protected void setUp() throws Exception {
     super.setUp();
 
@@ -68,8 +69,8 @@ public class UpdateCheckRequestTest extends TCTestCase {
   }
 
   private URL getURL() throws MalformedURLException {
-    URL url = AdminClientPanel.constructCheckURL(new ProductInfo(), 0);
-    return new URL("http://localhost:"+fPort+"/test?" + url.getQuery());
+    URL url = AdminClientPanel.constructCheckURL(ProductInfo.getInstance(), 0);
+    return new URL("http://localhost:" + fPort + "/test?" + url.getQuery());
   }
 }
 

@@ -7,8 +7,8 @@ package com.tc.object.tools;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.NotInBootJar;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 
@@ -95,15 +95,14 @@ public class BootJar {
 
     // verify VM signature (iff l1.jvm.check.compatibility == true, see: tc.properties)
     BootJarSignature signatureFromJar = new BootJarSignature(metaData.getVMSignature());
-    final boolean checkJvmCompatibility = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L1_JVM_CHECK_COMPATIBILITY);
-    if (checkJvmCompatibility && !expectedSignature.isCompatibleWith(signatureFromJar)) {
-      throw new InvalidJVMVersionException(
-                                           "Incompatible boot jar JVM version; expected '"
-                                               + expectedSignature
-                                               + "' but was (in boot jar) '"
-                                               + signatureFromJar
-                                               + "'; Please regenerate the DSO boot jar to match this VM, or switch to a VM compatible with this boot jar");
-    }
+    final boolean checkJvmCompatibility = TCPropertiesImpl.getProperties()
+        .getBoolean(TCPropertiesConsts.L1_JVM_CHECK_COMPATIBILITY);
+    if (checkJvmCompatibility && !expectedSignature.isCompatibleWith(signatureFromJar)) { throw new InvalidJVMVersionException(
+                                                                                                                               "Incompatible boot jar JVM version; expected '"
+                                                                                                                                   + expectedSignature
+                                                                                                                                   + "' but was (in boot jar) '"
+                                                                                                                                   + signatureFromJar
+                                                                                                                                   + "'; Please regenerate the DSO boot jar to match this VM, or switch to a VM compatible with this boot jar"); }
     return new BootJar(bootJar, false, metaData, jarFile);
   }
 
@@ -371,7 +370,7 @@ public class BootJar {
       if (tcmoniker == null) { throw new InvalidBootJarMetaDataException("Missing metadata: tcmoniker."); }
 
       ProductInfo productInfo = ProductInfo.getInstance();
-      String expect_tcversion = productInfo.buildVersion();
+      String expect_tcversion = productInfo.version();
 
       if (productInfo.isDevMode()) {
         logger
@@ -392,7 +391,7 @@ public class BootJar {
         ProductInfo productInfo = ProductInfo.getInstance();
         Attributes attributes = new Attributes();
         attributes.put(new Attributes.Name(TC_MONIKER), productInfo.moniker());
-        attributes.put(new Attributes.Name(TC_VERSION), productInfo.buildVersion());
+        attributes.put(new Attributes.Name(TC_VERSION), productInfo.version());
         attributes.put(new Attributes.Name(VERSION), getVersion());
         attributes.put(new Attributes.Name(VM_SIGNATURE), getVMSignature());
         Object prev = manifest.getEntries().put(META_DATA_ATTRIBUTE_NAME, attributes);

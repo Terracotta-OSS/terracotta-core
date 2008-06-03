@@ -110,8 +110,8 @@ import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.object.tx.RemoteTransactionManagerImpl;
 import com.tc.object.tx.TransactionBatchAccounting;
 import com.tc.object.tx.TransactionBatchFactory;
-import com.tc.object.tx.TransactionBatchWriter.FoldingConfig;
 import com.tc.object.tx.TransactionBatchWriterFactory;
+import com.tc.object.tx.TransactionBatchWriter.FoldingConfig;
 import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
@@ -318,9 +318,9 @@ public class DistributedObjectClient extends SEDA {
 
     lockManager = new ClientLockManagerImpl(new ChannelIDLogger(channel.getChannelIDProvider(), TCLogging
         .getLogger(ClientLockManager.class)), new RemoteLockManagerImpl(channel.getLockRequestMessageFactory(),
-                                                                        gtxManager), sessionManager, lockStatManager, 
-                                                                        new ClientLockManagerConfigImpl(l1Properties
-                                                                                                        .getPropertiesFor("lockmanager")));
+                                                                        gtxManager), sessionManager, lockStatManager,
+                                            new ClientLockManagerConfigImpl(l1Properties
+                                                .getPropertiesFor("lockmanager")));
     threadGroup.addCallbackOnExitHandler(new CallbackDumpAdapter(lockManager));
     RemoteObjectManager remoteObjectManager = new RemoteObjectManagerImpl(new ChannelIDLogger(channel
         .getChannelIDProvider(), TCLogging.getLogger(RemoteObjectManager.class)), clientIDProvider, channel
@@ -424,7 +424,7 @@ public class DistributedObjectClient extends SEDA {
                                                         objectManager, remoteObjectManager, lockManager, rtxManager,
                                                         gtxManager, stagesToPauseOnDisconnect, pauseStage.getSink(),
                                                         sessionManager, pauseListener, sequence, cluster, pInfo
-                                                            .buildVersion());
+                                                            .version());
     channel.addListener(clientHandshakeManager);
 
     ClientConfigurationContext cc = new ClientConfigurationContext(stageManager, lockManager, remoteObjectManager,
@@ -528,12 +528,9 @@ public class DistributedObjectClient extends SEDA {
   }
 
   /**
-   * Note that this method shuts down the manager that is associated with this
-   * client, this is only used in tests.
-   *
-   * To properly shut down resources of this client for production, the
-   * code should be added to {@link ClientShutdownManager} and not to this
-   * method.
+   * Note that this method shuts down the manager that is associated with this client, this is only used in tests. To
+   * properly shut down resources of this client for production, the code should be added to
+   * {@link ClientShutdownManager} and not to this method.
    */
   public synchronized void stopForTests() {
     manager.stop();

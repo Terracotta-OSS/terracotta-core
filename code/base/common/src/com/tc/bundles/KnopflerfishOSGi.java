@@ -14,8 +14,8 @@ import org.osgi.framework.ServiceReference;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 
@@ -107,9 +107,10 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
   final int versionCheck(String mode, String requireversion, String tcversion) {
     if (mode.equals(IVersionCheck.OFF)) return IVersionCheck.IGNORED;
 
-    String actual = tcversion.replace('-', '.'); 
-    String expected = (requireversion == null) || (requireversion.length() == 0) ? "" : requireversion.replace('-', '.');
-    
+    String actual = tcversion.replace('-', '.');
+    String expected = (requireversion == null) || (requireversion.length() == 0) ? "" : requireversion
+        .replace('-', '.');
+
     if ((expected.length() > 0) && (!Pattern.matches(IConstants.OSGI_VERSION_PATTERN.pattern(), expected))) return IVersionCheck.ERROR_BAD_REQUIRE_ATTRIBUTE;
 
     if (mode.equals(IVersionCheck.WARN)) {
@@ -133,7 +134,7 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
   final void versionCheck(Bundle bundle) throws BundleException {
     final String mode = versionCheckMode();
     final String version = (String) bundle.getHeaders().get("Terracotta-RequireVersion");
-    final String tcversion = ProductInfo.getInstance().buildVersion();
+    final String tcversion = ProductInfo.getInstance().version();
 
     final String BAD_REQUIRE_ATTRIBUTE = "The Terracotta-RequireVersion attribute defined in "
                                          + bundle.getSymbolicName()

@@ -29,6 +29,7 @@ import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.statistics.beans.StatisticsLocalGathererMBean;
 import com.tc.statistics.beans.StatisticsMBeanNames;
+import com.tc.util.ProductInfo;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.awt.Color;
@@ -112,7 +113,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
 
     setLabel(m_baseLabel = "Terracotta cluster");
     m_recordingStatsLabel = m_baseLabel + " (recording stats)";
-    
+
     m_acc = AdminClient.getContext();
     AutoConnectionListener acl = new AutoConnectionListener();
     m_connectManager = new ServerConnectionManager(host, jmxPort, autoConnect, acl);
@@ -163,19 +164,19 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
     }
 
     m_clusterPanel.reinitialize();
-    synchronized(this) {
+    synchronized (this) {
       if (m_rootsNode != null) {
         m_rootsNode.newConnectionContext();
         m_locksNode.newConnectionContext();
         m_gcStatsNode.newConnectionContext();
-        if(m_statsRecorderNode != null) {
+        if (m_statsRecorderNode != null) {
           m_statsRecorderNode.newConnectionContext();
         }
         m_serversNode.newConnectionContext();
         m_clientsNode.newConnectionContext();
       }
     }
-    
+
     m_acc.controller.nodeChanged(ClusterNode.this);
     m_connectManager.setAutoConnect(autoConnect);
   }
@@ -251,11 +252,11 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
   String[] getConnectionCredentials() {
     return m_connectManager.getCredentials();
   }
-  
+
   Map<String, Object> getConnectionEnvironment() {
     return m_connectManager.getConnectionEnvironment();
   }
-  
+
   public ConnectionContext getConnectionContext() {
     return m_connectManager.getConnectionContext();
   }
@@ -459,7 +460,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
     AdminClientContext acc = AdminClient.getContext();
     String msg = null;
     Throwable cause = ExceptionHelper.getRootCause(e);
-    
+
     if (cause instanceof ServiceUnavailableException) {
       String tmpl = acc.getMessage("service.unavailable");
       MessageFormat form = new MessageFormat(tmpl);
@@ -493,7 +494,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
     m_connectException = e;
     if (msg != null && m_clusterPanel != null) {
       boolean autoConnect = isAutoConnect();
-      if(autoConnect && e instanceof SecurityException) {
+      if (autoConnect && e instanceof SecurityException) {
         m_connectManager.setAutoConnect(autoConnect = false);
         m_autoConnectMenuItem.setSelected(false);
         m_acc.controller.updateServerPrefs();
@@ -596,9 +597,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
         String msg = "There is an active statistic recording sessions.  Quit anyway?";
         Frame frame = (Frame) m_clusterPanel.getAncestorOfClass(Frame.class);
         int answer = JOptionPane.showConfirmDialog(m_clusterPanel, msg, frame.getTitle(), JOptionPane.OK_CANCEL_OPTION);
-        if (answer != JOptionPane.OK_OPTION) {
-          return;
-        }
+        if (answer != JOptionPane.OK_OPTION) { return; }
       }
       m_userDisconnecting = true;
       disconnect();
@@ -782,7 +781,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
 
   protected RootsNode createRootsNode() throws Exception {
     return new RootsNode(this);
-  } 
+  }
 
   protected ClusterThreadDumpsNode createThreadDumpsNode() {
     return new ClusterThreadDumpsNode(this);
@@ -821,12 +820,12 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
   }
 
   private void testStartActiveLocator() {
-    if(m_activeLocator == null) {
+    if (m_activeLocator == null) {
       m_activeLocator = new ActiveLocator();
       m_activeLocator.start();
     }
   }
-  
+
   void handleStarting() {
     if (m_activeLocator != null) {
       // The ActiveLocator tries to not consider the bootstrap server but the L2Info
@@ -857,7 +856,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
     try {
       tryAddChildren();
       m_clusterPanel.passiveStandby();
-      testStartActiveLocator();      
+      testStartActiveLocator();
     } catch (Exception e) {
       // just wait for disconnect message to come in
     }
@@ -896,22 +895,22 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
       m_productInfo = new ProductInfo(version, buildID, license, copyright);
     } catch (Exception e) {
       m_acc.log(e);
-      m_productInfo = new ProductInfo();
+      m_productInfo = ProductInfo.getInstance();
     }
 
     return m_productInfo;
   }
 
   public String getProductVersion() {
-    return getProductInfo().getVersion();
+    return getProductInfo().version();
   }
 
   public String getProductBuildID() {
-    return getProductInfo().getBuildID();
+    return getProductInfo().buildID();
   }
 
   public String getProductLicense() {
-    return getProductInfo().getLicense();
+    return getProductInfo().license();
   }
 
   String getEnvironment() {
@@ -1081,7 +1080,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
     m_serversNode = null;
     m_clientsNode = null;
     m_gcStatsNode = null;
-    
+
     tearDownChildren();
     removeAllChildren();
     m_acc.controller.nodeStructureChanged(this);

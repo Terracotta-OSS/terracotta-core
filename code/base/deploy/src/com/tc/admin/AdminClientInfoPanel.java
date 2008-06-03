@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin;
 
@@ -8,6 +9,7 @@ import org.dijon.Label;
 
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XTextArea;
+import com.tc.util.ProductInfo;
 
 /**
  * This is shown in the AboutDialog.
@@ -20,30 +22,23 @@ public class AdminClientInfoPanel extends XContainer {
   public void load(ContainerResource containerRes) {
     super.load(containerRes);
 
-    m_systemInformationTextArea = (XTextArea)findComponent("SystemInformationTextArea");
-    m_copyrightLabel            = (Label)findComponent("CopyrightLabel");
+    m_systemInformationTextArea = (XTextArea) findComponent("SystemInformationTextArea");
+    m_copyrightLabel = (Label) findComponent("CopyrightLabel");
   }
-  
+
   public void init(String title, ProductInfo productInfo) {
-    String version = productInfo.getVersion();
+    String version = productInfo.version();
     String newLine = System.getProperty("line.separator");
-    String osInfo  = System.getProperty("os.name") + " (" +
-                     System.getProperty("os.version") + "/" +
-                     System.getProperty("os.arch") + ")";
-    String javaVersion = "Java " + System.getProperty("java.version") + ", " +
-                                   System.getProperty("java.vendor");
+    String osInfo = System.getProperty("os.name") + " (" + System.getProperty("os.version") + "/"
+                    + System.getProperty("os.arch") + ")";
+    String javaVersion = "Java " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor");
     String javaHomeDir = System.getProperty("java.home");
-    String javaVMInfo =  System.getProperty("java.vm.name") + ", " +
-                         System.getProperty("java.vm.version") + " [" +
-                         Runtime.getRuntime().maxMemory()/(1024*1024) + " MB]";
+    String javaVMInfo = System.getProperty("java.vm.name") + ", " + System.getProperty("java.vm.version") + " ["
+                        + Runtime.getRuntime().maxMemory() / (1024 * 1024) + " MB]";
 
-    m_systemInformationTextArea.setText(
-      title + " " + version + newLine +
-      osInfo + newLine +
-      javaVersion + newLine +
-      javaHomeDir + newLine +
-      javaVMInfo);
+    m_systemInformationTextArea.setText(title + " " + version + newLine + osInfo + newLine + javaVersion + newLine
+                                        + javaHomeDir + newLine + javaVMInfo);
 
-    m_copyrightLabel.setText(productInfo.getCopyright());
+    m_copyrightLabel.setText(productInfo.copyright());
   }
 }

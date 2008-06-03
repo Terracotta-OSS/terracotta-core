@@ -85,7 +85,7 @@ class UpdateCheckAction extends TimerTask {
     sb.append("&platform=");
     sb.append(URLEncoder.encode(System.getProperty("os.arch")));
     sb.append("&tc-version=");
-    sb.append(URLEncoder.encode(productInfo.rawVersion()));
+    sb.append(URLEncoder.encode(productInfo.version()));
     sb.append("&tc-product=");
     sb.append(productInfo.edition().equals("opensource") ? "oss" : "ee");
     sb.append("&uptime-secs=");
@@ -131,7 +131,7 @@ class UpdateCheckAction extends TimerTask {
     InputStream is = null;
     try {
       StringBuffer sb = new StringBuffer();
-      String version = productInfo.rawVersion();
+      String version = productInfo.version();
       if (version.indexOf('.') != -1) {
         URL url = constructCheckURL();
         HttpClient httpClient = new HttpClient();

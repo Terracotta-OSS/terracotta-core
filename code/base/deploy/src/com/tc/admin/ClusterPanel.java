@@ -9,6 +9,7 @@ import org.dijon.ContainerResource;
 import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.StatusView;
 import com.tc.admin.common.XContainer;
+import com.tc.util.ProductInfo;
 
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -22,17 +23,17 @@ import javax.swing.JButton;
 import javax.swing.JTextField;
 
 public class ClusterPanel extends XContainer {
-  private AdminClientContext           m_acc;
-  private ClusterNode                  m_clusterNode;
-  private String                       m_originalHost;
-  private int                          m_originalPort;
-  private JTextField                   m_hostField;
-  private JTextField                   m_portField;
-  private JButton                      m_connectButton;
-  static private ImageIcon             m_connectIcon;
-  static private ImageIcon             m_disconnectIcon;
-  private StatusView                   m_statusView;
-  private ProductInfoPanel             m_productInfoPanel;
+  private AdminClientContext m_acc;
+  private ClusterNode        m_clusterNode;
+  private String             m_originalHost;
+  private int                m_originalPort;
+  private JTextField         m_hostField;
+  private JTextField         m_portField;
+  private JButton            m_connectButton;
+  static private ImageIcon   m_connectIcon;
+  static private ImageIcon   m_disconnectIcon;
+  private StatusView         m_statusView;
+  private ProductInfoPanel   m_productInfoPanel;
 
   static {
     m_connectIcon = new ImageIcon(ServerPanel.class.getResource("/com/tc/admin/icons/disconnect_co.gif"));
@@ -108,7 +109,7 @@ public class ClusterPanel extends XContainer {
     }
   }
 
- void setupConnectButton() {
+  void setupConnectButton() {
     String label;
     Icon icon;
     boolean enabled;
@@ -149,10 +150,10 @@ public class ClusterPanel extends XContainer {
         }
       });
     }
-    
+
     protected void finished() {
       Exception e = getException();
-      if(e != null) {
+      if (e != null) {
         m_acc.log(e);
       } else {
         m_hostField.setEditable(false);
@@ -167,7 +168,7 @@ public class ClusterPanel extends XContainer {
       }
     }
   }
-  
+
   /**
    * The only differences between activated() and started() is the status message and the serverlog is only added in
    * activated() under the presumption that a non-active server won't be saying anything.
@@ -184,10 +185,10 @@ public class ClusterPanel extends XContainer {
         }
       });
     }
-    
+
     protected void finished() {
       Exception e = getException();
-      if(e != null) {
+      if (e != null) {
         m_acc.log(e);
       } else {
         m_hostField.setEditable(false);
@@ -202,14 +203,14 @@ public class ClusterPanel extends XContainer {
       }
     }
   }
-  
+
   void passiveUninitialized() {
     m_hostField.setEditable(false);
     m_portField.setEditable(false);
     setupConnectButton();
 
-     String startTime = new Date().toString();
-     setStatusLabel(m_acc.format("server.initializing.label", new Object[] { startTime }));
+    String startTime = new Date().toString();
+    setStatusLabel(m_acc.format("server.initializing.label", new Object[] { startTime }));
 
     testShowProductInfo();
   }
@@ -219,8 +220,8 @@ public class ClusterPanel extends XContainer {
     m_portField.setEditable(false);
     setupConnectButton();
 
-     String startTime = new Date().toString();
-     setStatusLabel(m_acc.format("server.standingby.label", new Object[] { startTime }));
+    String startTime = new Date().toString();
+    setStatusLabel(m_acc.format("server.standingby.label", new Object[] { startTime }));
 
     testShowProductInfo();
   }
@@ -233,11 +234,11 @@ public class ClusterPanel extends XContainer {
     m_hostField.setEditable(true);
     m_hostField.setText(m_originalHost);
     m_clusterNode.setHost(m_originalHost);
-    
+
     m_portField.setEditable(true);
     m_portField.setText(Integer.toString(m_originalPort));
     m_clusterNode.setPort(m_originalPort);
-    
+
     String startTime = new Date().toString();
     setupConnectButton();
     setStatusLabel(m_acc.format("server.disconnected.label", new Object[] { startTime }));

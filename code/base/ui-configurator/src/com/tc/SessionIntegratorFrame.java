@@ -25,7 +25,6 @@ import org.dijon.TabbedPane;
 
 import com.tc.admin.ConnectionContext;
 import com.tc.admin.ConnectionListener;
-import com.tc.admin.ProductInfo;
 import com.tc.admin.ServerConnectionManager;
 import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.ContactTerracottaAction;
@@ -37,6 +36,7 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.object.appevent.NonPortableObjectEvent;
 import com.tc.servers.ServerSelection;
 import com.tc.servers.ServersDialog;
+import com.tc.util.ProductInfo;
 import com.tc.util.runtime.Os;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
@@ -398,7 +398,7 @@ public class SessionIntegratorFrame extends Frame {
     m_webServer1ShutdownListener = new WebServer1ShutdownListener();
 
     Preferences prefs = getPreferences();
-    
+
     m_webServer1Enabled = prefs.getBoolean(WEBSERVER1_ENABLED_PREF_KEY, true);
     m_webServer1EnabledToggle.setSelected(m_webServer1Enabled);
     m_webServer1EnabledToggle.addActionListener(new ActionListener() {
@@ -470,7 +470,7 @@ public class SessionIntegratorFrame extends Frame {
     testShutdownL2();
     testShutdownWebServer1();
     testShutdownWebServer2();
-    
+
     setDsoEnabled(m_dsoEnabled = prefs.getBoolean(DSO_ENABLED_PREF_KEY, false));
   }
 
@@ -660,7 +660,7 @@ public class SessionIntegratorFrame extends Frame {
         ConfiguratorInfoPanel info;
         String title = SessionIntegratorFrame.this.getTitle();
         info = (ConfiguratorInfoPanel) m_aboutDialog.findComponent("ConfiguratorInfoPanel");
-        info.init(title, new ProductInfo());
+        info.init(title, ProductInfo.getInstance());
         Label monikerLabel = (Label) m_aboutDialog.findComponent("MonikerLabel");
         monikerLabel.setText(title);
         Button okButton = (Button) m_aboutDialog.findComponent("OKButton");
@@ -1227,7 +1227,7 @@ public class SessionIntegratorFrame extends Frame {
     storePreferences();
 
     m_dsoEnabledToggle.setSelected(enabled);
-    
+
     m_l2Label.setIcon(null);
     m_l2Label.setText(L2_LABEL + (enabled ? "" : DISABLED_LABEL));
     m_l2Label.setEnabled(m_dsoEnabled);

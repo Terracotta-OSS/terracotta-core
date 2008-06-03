@@ -170,8 +170,8 @@ import com.tc.objectserver.tx.TransactionalStagesCoordinatorImpl;
 import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
@@ -587,7 +587,7 @@ public class DistributedObjectServer implements TCDumper {
     ClientTunnelingEventHandler cteh = new ClientTunnelingEventHandler();
 
     ProductInfo pInfo = ProductInfo.getInstance();
-    DSOChannelManager channelManager = new DSOChannelManagerImpl(l1Listener.getChannelManager(), pInfo.buildVersion());
+    DSOChannelManager channelManager = new DSOChannelManagerImpl(l1Listener.getChannelManager(), pInfo.version());
     channelManager.addEventListener(cteh);
     channelManager.addEventListener(connectionIdFactory);
 
