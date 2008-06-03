@@ -454,7 +454,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
       if (remoteSocketAddress.isSet()) {
         buf.append(((TCSocketAddress) remoteSocketAddress.get()).getStringForm());
       } else {
-        buf.append("[unknown");
+        buf.append("[unknown]");
       }
     }
 
