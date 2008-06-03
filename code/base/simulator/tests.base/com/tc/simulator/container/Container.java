@@ -6,7 +6,6 @@ package com.tc.simulator.container;
 
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
-import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.simulator.app.Application;
 import com.tc.simulator.app.ApplicationBuilder;
 import com.tc.simulator.app.ApplicationInstantiationException;
@@ -19,7 +18,6 @@ import com.tc.simulator.listener.OutputListener;
 import com.tc.simulator.listener.ResultsListener;
 import com.tc.simulator.listener.StatsListenerFactory;
 import com.tc.util.Assert;
-import com.tc.util.runtime.Vm;
 import com.tcsimulator.ControlImpl;
 import com.tcsimulator.listener.ApplicationListenerProvider;
 
@@ -73,10 +71,6 @@ public final class Container implements Runnable {
    * Make applications go.
    */
   public synchronized void run() {
-    // XXX: remove me
-    if (Vm.isIBM()) {
-      ClassProcessorHelper.IBM_DEBUG = true;
-    }
     debugPrintln("isMutateValidateTest=[" + isMutateValidateTest + "]");
 
     Thread.currentThread().setContextClassLoader(applicationBuilder.getContextClassLoader());

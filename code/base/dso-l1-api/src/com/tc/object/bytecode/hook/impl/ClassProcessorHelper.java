@@ -47,9 +47,6 @@ public class ClassProcessorHelper {
   /** Name reserved for apps running as root web app in a container */
   public static final String                 ROOT_WEB_APP_NAME         = "ROOT";
 
-  // XXX: remove this!
-  public static volatile boolean             IBM_DEBUG                 = false;
-
   // Setting this system property will delay the timing of when the DSO client is initialized. With the default
   // behavior, the debug subsystem of the VM will not be started until after the DSO client starts up. This means it is
   // impossible to use the debugger during dso client startup. Setting this flag to true will allow debugging, but at
@@ -642,30 +639,6 @@ public class ClassProcessorHelper {
     }
   }
 
-  // XXX: remove this!
-  public static byte[] defineClass0Pre(ClassLoader caller, String name, byte[] b, int off, int len, ProtectionDomain pd) {
-    byte[] rv = _defineClass0Pre(caller, name, b, off, len, pd);
-
-    if (IBM_DEBUG) {
-      StringBuffer msg = new StringBuffer();
-      msg.append("[" + Thread.currentThread().getName() + "] " + name + ": byte[] " + ((rv == b) ? "are" : "are not")
-                 + " equal\n");
-      msg.append("offset: " + off + ", len: " + len + "\n");
-
-      // uncomment this to get the class bytes (provided there is a consistent class name that is crashing the IBM JDK
-
-      // for (int i = 0, n = rv.length; i < n; i++) {
-      // msg.append(rv[i]).append(", ");
-      // }
-      // msg.append("\n");
-
-      System.err.println(msg);
-      System.err.flush();
-    }
-
-    return rv;
-  }
-
   /**
    * byte code instrumentation of class loaded <br>
    * XXX::NOTE:: Do NOT optimize to return same input byte array if the class was instrumented (I can't imagine why we
@@ -681,7 +654,7 @@ public class ClassProcessorHelper {
    * @return Modified class array
    * @see ClassLoaderPreProcessorImpl
    */
-  private static byte[] _defineClass0Pre(ClassLoader caller, String name, byte[] b, int off, int len,
+  public static byte[] defineClass0Pre(ClassLoader caller, String name, byte[] b, int off, int len,
                                          ProtectionDomain pd) {
     if (skipClass(caller)) { return b; }
 
@@ -716,13 +689,6 @@ public class ClassProcessorHelper {
    * @param caller Classloader doing definition
    */
   public static void defineClass0Post(Class clazz, ClassLoader caller) {
-    if (IBM_DEBUG) {
-      StringBuffer msg = new StringBuffer();
-      msg.append("[" + Thread.currentThread().getName() + "] " + clazz.getName() + " has been defined\n");
-      System.err.println(msg);
-      System.err.flush();
-    }
-
     ClassPostProcessor postProcessor = getPostProcessor(caller);
     if (!initState.isInitialized()) { return; }
 
