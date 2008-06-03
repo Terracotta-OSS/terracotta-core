@@ -42,9 +42,9 @@ public final class ProductInfo {
   private static final String               BUILD_DATA_EE_REVISION_KEY   = "ee.revision";
   private static final String               BUILD_DATA_BRANCH_KEY        = "branch";
   public static final String                UNKNOWN_VALUE                = "[unknown]";
+  private static final String               DEFAULT_LICENSE              = "Unlimited development";
 
   private final String                      moniker;
-  private final String                      version;
   private final String                      maven_version;
   private final Date                        timestamp;
   private final String                      host;
@@ -54,6 +54,11 @@ public final class ProductInfo {
   private final String                      revision;
   private final String                      ee_revision;
   private final String                      kitID;
+
+  private String                            version;
+  private String                            buildID;
+  private String                            copyright;
+  private String                            license                      = DEFAULT_LICENSE;
 
   private ProductInfo(InputStream in, String fromWhere) {
     Properties properties = new Properties();
@@ -147,11 +152,11 @@ public final class ProductInfo {
   }
 
   public String kitID() {
-    return this.kitID;
+    return kitID;
   }
 
   public Date buildTimestamp() {
-    return this.timestamp;
+    return timestamp;
   }
 
   public String buildTimestampAsString() {
@@ -160,31 +165,38 @@ public final class ProductInfo {
   }
 
   public String buildHost() {
-    return this.host;
+    return host;
   }
 
   public String buildUser() {
-    return this.user;
+    return user;
   }
 
   public String buildBranch() {
-    return this.branch;
+    return branch;
   }
 
   public String copyright() {
-    return bundleHelper.getString("copyright");
+    if (copyright == null) {
+      copyright = bundleHelper.getString("copyright");
+    }
+    return copyright;
+  }
+
+  public String license() {
+    return license;
   }
 
   public String buildRevision() {
-    return this.revision;
+    return revision;
   }
 
   public String buildRevisionFromEE() {
-    return this.ee_revision;
+    return ee_revision;
   }
 
   public String toShortString() {
-    return this.moniker + " " + ("opensource".equals(edition) ? "" : (edition + " ")) + buildVersion();
+    return moniker + " " + ("opensource".equals(edition) ? "" : (edition + " ")) + buildVersion();
   }
 
   public String toLongString() {
@@ -192,12 +204,15 @@ public final class ProductInfo {
   }
 
   public String buildID() {
-    String rev = this.revision;
-    if (edition.indexOf("Enterprise") >= 0) {
-      rev = this.ee_revision + "-" + this.revision;
+    if (buildID == null) {
+      String rev = revision;
+      if (edition.indexOf("Enterprise") >= 0) {
+        rev = ee_revision + "-" + revision;
+      }
+      buildID = buildTimestampAsString() + " (Revision " + rev + " by " + buildUser() + "@" + buildHost() + " from "
+                + buildBranch() + ")";
     }
-    return buildTimestampAsString() + " (Revision " + rev + " by " + buildUser() + "@" + buildHost() + " from "
-           + buildBranch() + ")";
+    return buildID;
   }
 
   public String toString() {
