@@ -41,7 +41,7 @@ public final class ProductInfo {
   private static final String               BUILD_DATA_REVISION_KEY      = "revision";
   private static final String               BUILD_DATA_EE_REVISION_KEY   = "ee.revision";
   private static final String               BUILD_DATA_BRANCH_KEY        = "branch";
-  private static final String               UNKNOWN_VALUE                = "[unknown]";
+  public static final String                UNKNOWN_VALUE                = "[unknown]";
 
   private final String                      moniker;
   private final String                      version;

@@ -321,7 +321,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     HelpAction() {
       super("AdminConsole Help");
       String kitID = com.tc.util.ProductInfo.getInstance().kitID();
-      if (kitID == null || "[unknown]".equals(kitID)) {
+      if (kitID == null || com.tc.util.ProductInfo.UNKNOWN_VALUE.equals(kitID)) {
         if ((kitID = System.getProperty("com.tc.kitID")) == null) {
           kitID = "42.0";
         }
