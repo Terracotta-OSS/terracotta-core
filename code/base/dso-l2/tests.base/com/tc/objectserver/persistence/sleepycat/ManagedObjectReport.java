@@ -13,7 +13,6 @@ import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider
 import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Counter;
-import com.tc.util.SyncObjectIdSet;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -31,40 +30,34 @@ public class ManagedObjectReport {
   private SleepycatPersistor    persistor;
 
   public ManagedObjectReport(File dir) throws Exception {
-
     DBEnvironment env = new DBEnvironment(true, dir);
-
     SerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
-
     final NullManagedObjectChangeListenerProvider managedObjectChangeListenerProvider = new NullManagedObjectChangeListenerProvider();
-
     persistor = new SleepycatPersistor(logger, env, serializationAdapterFactory);
-
     ManagedObjectStateFactory.createInstance(managedObjectChangeListenerProvider, persistor);
-
   }
 
   public void report() {
+
     Map classMap = new HashMap();
     Set nullObjectIDSet = new HashSet();
-    Integer nullObjectIDCounter = new Integer(0);
-    Integer total = new Integer(0);
-    Integer counter = new Integer(0);
-    SyncObjectIdSet objectIDSet = persistor.getManagedObjectPersistor().getAllObjectIDs();
+    Counter objectIDIsNullCounter = new Counter(0);
+    Set doesNotExitInSet = new HashSet();
+    Counter totalCounter = new Counter(0);
+
+    Set objectIDSet = persistor.getManagedObjectPersistor().getAllObjectIDs();
     for (Iterator iter = objectIDSet.iterator(); iter.hasNext();) {
       ObjectID objectID = (ObjectID) iter.next();
-      total++;
+      totalCounter.increment();
       ManagedObject managedObject = persistor.getManagedObjectPersistor().loadObjectByID(objectID);
-      boolean existInSet = objectIDSet.contains(objectID);
       if (managedObject == null) {
-        log("managed object is null : " + objectID + " and exists in set is: " + existInSet);
-        nullObjectIDSet.add(new NullObjectData(objectID, existInSet));
+        log("managed object is null : " + objectID);
+        nullObjectIDSet.add(new NullObjectData(objectID));
       } else {
-        // class stats
         String className = managedObject.getManagedObjectState().getClassName();
         Counter classCounter = (Counter) classMap.get(className);
         if (classCounter == null) {
-          classCounter = new Counter(0);
+          classCounter = new Counter(1);
           classMap.put(className, classCounter);
         } else {
           classCounter.increment();
@@ -73,43 +66,31 @@ public class ManagedObjectReport {
 
       for (Iterator r = managedObject.getObjectReferences().iterator(); r.hasNext();) {
         ObjectID mid = (ObjectID) r.next();
-        total++;
-        if (mid == null || mid.isNull()) {
+        totalCounter.increment();
+        if (mid == null) {
           log("reference objectID is null and parent: ");
           log(managedObject.toString());
-          nullObjectIDCounter++;
-          continue;
-        }
-        ManagedObject mo = persistor.getManagedObjectPersistor().loadObjectByID(mid);
-        existInSet = objectIDSet.contains(mid);
-        if (mo == null) {
-          log("reference Managed object is null : " + mid + " and exists in set is: " + existInSet + " and parent");
-          log(managedObject.toString());
-          nullObjectIDSet.add(new NullObjectData(managedObject, mid, existInSet));
+          nullObjectIDSet.add(new NullObjectData(managedObject, null));
         } else {
-          // class stats
-          String className = managedObject.getManagedObjectState().getClassName();
-          Counter classCounter = (Counter) classMap.get(className);
-          if (classCounter == null) {
-            classCounter = new Counter(0);
-            classMap.put(className, classCounter);
+          if (mid.isNull()) {
+            objectIDIsNullCounter.increment();
           } else {
-            classCounter.increment();
+            boolean exitInSet = objectIDSet.contains(mid);
+            if (!exitInSet) {
+              doesNotExitInSet.add(mid);
+            }
           }
         }
 
       }
 
-      if (counter < 2) {
-        counter++;
-        nullObjectIDSet.add(new NullObjectData(managedObject, null, existInSet));
-      }
-
     }
 
     log("---------------------------------- Managed Object Report ----------------------------------------------------");
-    log("\t Total number of objects read: " + total);
-    log("\t Total number getObjectReferences that yielded null references: " + nullObjectIDCounter);
+    log("\t Total number of objects read: " + totalCounter.get());
+    log("\t Total number getObjectReferences that yielded isNull references: " + objectIDIsNullCounter.get());
+    log("\t Total number of references that does not exist in allObjectIDs set: " + doesNotExitInSet.size());
+    log("\t does not exist in allObjectIDs set: " + doesNotExitInSet + " \n");
     log("\t Total number of references without ManagedObjects: " + nullObjectIDSet.size());
     log("\n\t Begin references with null ManagedObject summary --> \n");
     for (Iterator iter = nullObjectIDSet.iterator(); iter.hasNext();) {
@@ -132,13 +113,11 @@ public class ManagedObjectReport {
 
     private ObjectID      objectID;
 
-    private boolean       exitInSet = false;
-
-    public NullObjectData(ObjectID objectID, boolean existInSet) {
-      this.objectID = objectID;
+    public NullObjectData(ObjectID objectID) {
+      this(null, objectID);
     }
 
-    public NullObjectData(ManagedObject parent, ObjectID objectID, boolean existInSet) {
+    public NullObjectData(ManagedObject parent, ObjectID objectID) {
       this.parent = parent;
       this.objectID = objectID;
     }
@@ -159,7 +138,6 @@ public class ManagedObjectReport {
       out.print("Summary of reference with null ManagedObject").duplicateAndIndent().println();
       out.indent().print("identityHashCode: " + System.identityHashCode(this)).println();
       out.indent().print("objectID: " + objectID).println();
-      out.indent().print("exist in getAllObjectsIDs set: " + exitInSet).println();
       out.indent().print("parent:" + parent).println();
 
       return writer.getBuffer().toString();
