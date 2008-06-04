@@ -60,7 +60,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   private static final State                            PASSIVE_MODE             = new State("PASSIVE-MODE");
   private static final State                            ACTIVE_MODE              = new State("ACTIVE-MODE");
 
-  // TODO::FIXME::Change this to concurrent hashmap with top level txn accounting
+  // TODO::FIXME::Change this to concurrent HashMap
   private final Map                                     transactionAccounts      = Collections
                                                                                      .synchronizedMap(new HashMap());
   private final ClientStateManager                      stateManager;
@@ -252,6 +252,14 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
   }
 
+  // This method is called when objects are sent to sync, this is done to maintain correct booking since things like DGC
+  // relies on this to decide when to send the results
+  public void objectsSynched(NodeID to, ServerTransactionID stid) {
+    TransactionAccount ci = getOrCreateObjectSyncTransactionAccount(stid.getSourceID()); // Local Node ID
+    totalPendingTransactions.incrementAndGet();
+    ci.addWaitee(to, stid.getClientTransactionID());
+  }
+
   // For testing
   public boolean isWaiting(NodeID waiter, TransactionID txnID) {
     TransactionAccount c = getTransactionAccount(waiter);
@@ -262,7 +270,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     final ServerTransactionID serverTxnID = new ServerTransactionID(waiter, txnID);
     totalPendingTransactions.decrementAndGet();
     fireTransactionCompleteEvent(serverTxnID);
-    if (isActive()) {
+    if (isActive() && waiter.getType() == NodeID.L1_NODE_TYPE) {
       action.acknowledgeTransaction(serverTxnID);
     }
   }
@@ -283,7 +291,6 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
       logger.warn("Waiter not found in the states map: " + waiter);
       return;
     }
-
     if (transactionAccount.removeWaitee(waitee, txnID)) {
       acknowledge(waiter, txnID);
     }
@@ -455,9 +462,23 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
   }
 
+  private TransactionAccount getOrCreateObjectSyncTransactionAccount(NodeID localID) {
+    synchronized (transactionAccounts) {
+      assert state == ACTIVE_MODE;
+      TransactionAccount ta = (TransactionAccount) transactionAccounts.get(localID);
+      if (ta == null) {
+        transactionAccounts.put(localID, (ta = new ObjectSynchTransactionAccount(localID)));
+      }
+      return ta;
+    }
+  }
+
   private TransactionAccount getOrCreateTransactionAccount(NodeID source) {
     synchronized (transactionAccounts) {
       TransactionAccount ta = (TransactionAccount) transactionAccounts.get(source);
+      if(ta != null && ta instanceof ObjectSynchTransactionAccount) {
+        throw new AssertionError("Transaction Account is of type ObjectSyncTransactionAccount : " + ta + " source Id  : " + source);
+      }
       if (state == ACTIVE_MODE) {
         if ((ta == null) || (ta instanceof PassiveTransactionAccount)) {
           Object old = transactionAccounts.put(source, (ta = new TransactionAccountImpl(source)));

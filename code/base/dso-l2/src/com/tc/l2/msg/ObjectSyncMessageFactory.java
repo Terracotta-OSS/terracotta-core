@@ -5,12 +5,13 @@
 package com.tc.l2.msg;
 
 import com.tc.l2.context.ManagedObjectSyncContext;
+import com.tc.object.tx.ServerTransactionID;
 
 public class ObjectSyncMessageFactory {
 
-  public static ObjectSyncMessage createObjectSyncMessageFrom(ManagedObjectSyncContext mosc) {
+  public static ObjectSyncMessage createObjectSyncMessageFrom(ManagedObjectSyncContext mosc, ServerTransactionID sid) {
     ObjectSyncMessage msg = new ObjectSyncMessage(ObjectSyncMessage.MANAGED_OBJECT_SYNC_TYPE);
-    msg.initialize(mosc.getLookupIDs(), mosc.getDNACount(), mosc.getSerializedDNAs(), mosc.getObjectSerializer(), mosc
+    msg.initialize(sid, mosc.getLookupIDs(), mosc.getDNACount(), mosc.getSerializedDNAs(), mosc.getObjectSerializer(), mosc
         .getRootsMap(), mosc.getSequenceID());
     return msg;
   }

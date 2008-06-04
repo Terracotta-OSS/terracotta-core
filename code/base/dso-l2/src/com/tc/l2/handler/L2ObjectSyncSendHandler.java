@@ -16,10 +16,12 @@ import com.tc.l2.msg.ObjectSyncMessage;
 import com.tc.l2.msg.ObjectSyncMessageFactory;
 import com.tc.l2.msg.ServerTxnAckMessage;
 import com.tc.l2.objectserver.L2ObjectStateManager;
+import com.tc.l2.objectserver.ServerTransactionFactory;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
+import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.properties.TCPropertiesImpl;
@@ -27,32 +29,32 @@ import com.tc.properties.TCPropertiesConsts;
 
 public class L2ObjectSyncSendHandler extends AbstractEventHandler {
 
-  private static final TCLogger      logger                               = TCLogging
-                                                                              .getLogger(L2ObjectSyncSendHandler.class);
+  private static final TCLogger          logger                               = TCLogging
+                                                                                  .getLogger(L2ObjectSyncSendHandler.class);
 
-  private static final boolean       TXN_ACK_THROTTLING_ENABLED           = TCPropertiesImpl
-                                                                              .getProperties()
-                                                                              .getBoolean(
-                                                                                          TCPropertiesConsts.L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_ENABLED);
-  private static final int           TOTAL_PENDING_TRANSACTIONS_THRESHOLD = TCPropertiesImpl
-                                                                              .getProperties()
-                                                                              .getInt(
-                                                                                      TCPropertiesConsts.L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_THRESHOLD);
-  private static final int           MAX_SLEEP_SECS                       = TCPropertiesImpl
-                                                                              .getProperties()
-                                                                              .getInt(
-                                                                                      TCPropertiesConsts.L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_MAXSLEEPSECONDS);
-  private static final long          TIME_TO_THROTTLE_ON_OBJECT_SEND      = TCPropertiesImpl
-                                                                              .getProperties()
-                                                                              .getLong(
-                                                                                       TCPropertiesConsts.L2_OBJECTMANAGER_PASSIVE_SYNC_THROTTLE_TIME);
+  private static final boolean           TXN_ACK_THROTTLING_ENABLED           = TCPropertiesImpl
+                                                                                  .getProperties()
+                                                                                  .getBoolean(
+                                                                                              TCPropertiesConsts.L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_ENABLED);
+  private static final int               TOTAL_PENDING_TRANSACTIONS_THRESHOLD = TCPropertiesImpl
+                                                                                  .getProperties()
+                                                                                  .getInt(
+                                                                                          TCPropertiesConsts.L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_THRESHOLD);
+  private static final int               MAX_SLEEP_SECS                       = TCPropertiesImpl
+                                                                                  .getProperties()
+                                                                                  .getInt(
+                                                                                          TCPropertiesConsts.L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_MAXSLEEPSECONDS);
+  private static final long              TIME_TO_THROTTLE_ON_OBJECT_SEND      = TCPropertiesImpl
+                                                                                  .getProperties()
+                                                                                  .getLong(
+                                                                                           TCPropertiesConsts.L2_OBJECTMANAGER_PASSIVE_SYNC_THROTTLE_TIME);
 
-  private final L2ObjectStateManager objectStateManager;
-  private GroupManager               groupManager;
+  private final ServerTransactionFactory serverTransactionFactory             = new ServerTransactionFactory();
+  private final L2ObjectStateManager     objectStateManager;
 
-  private Sink                       syncRequestSink;
-
-  private ServerTransactionManager   serverTxnMgr;
+  private GroupManager                   groupManager;
+  private Sink                           syncRequestSink;
+  private ServerTransactionManager       serverTxnMgr;
 
   public L2ObjectSyncSendHandler(L2ObjectStateManager objectStateManager) {
     this.objectStateManager = objectStateManager;
@@ -148,14 +150,19 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
   }
 
   private boolean sendObjects(ManagedObjectSyncContext mosc) {
-    ObjectSyncMessage msg = ObjectSyncMessageFactory.createObjectSyncMessageFrom(mosc);
+
+    ServerTransactionID sid = ServerTransactionID.NULL_ID;
     try {
+      sid = serverTransactionFactory.getNextServerTransactionID(groupManager.getLocalNodeID());
+      ObjectSyncMessage msg = ObjectSyncMessageFactory.createObjectSyncMessageFrom(mosc, sid);
+      serverTxnMgr.objectsSynched(mosc.getNodeID(), sid);
       this.groupManager.sendTo(mosc.getNodeID(), msg);
       logger.info("Sent " + mosc.getTotalObjectsSynced() + " objects out of " + mosc.getTotalObjectsToSync() + " to "
                   + mosc.getNodeID() + (mosc.getRootsMap().size() == 0 ? "" : " roots = " + mosc.getRootsMap().size()));
       objectStateManager.close(mosc);
       return true;
     } catch (GroupException e) {
+      serverTxnMgr.acknowledgement(sid.getSourceID(), sid.getClientTransactionID(), mosc.getNodeID());
       logger.error("Removing " + mosc.getNodeID() + " from group because of Exception :", e);
       groupManager.zapNode(mosc.getNodeID(), L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
                            "Error sending objects." + L2HAZapNodeRequestProcessor.getErrorString(e));

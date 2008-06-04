@@ -8,7 +8,6 @@ import com.tc.io.serializer.TCObjectInputStream;
 import com.tc.io.serializer.TCObjectOutputStream;
 import com.tc.net.groups.ClientID;
 import com.tc.net.groups.NodeID;
-import com.tc.net.groups.NodeIDImpl;
 import com.tc.net.groups.NodeIDSerializer;
 
 import java.io.ByteArrayInputStream;
@@ -45,8 +44,7 @@ public class ServerTransactionID implements Comparable {
   }
 
   public boolean isServerGeneratedTransaction() {
-    // TODO::Move this logic away from here
-    return (sourceID instanceof NodeIDImpl);
+    return (sourceID.getType() == NodeID.L2_NODE_TYPE);
   }
 
   public boolean isNull() {

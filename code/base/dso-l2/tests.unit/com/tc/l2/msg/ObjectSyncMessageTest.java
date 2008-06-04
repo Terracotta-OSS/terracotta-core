@@ -14,6 +14,8 @@ import com.tc.net.groups.NodeID;
 import com.tc.net.groups.NodeIDImpl;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.tx.ServerTransactionID;
+import com.tc.object.tx.TransactionID;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -60,6 +62,7 @@ public class ObjectSyncMessageTest extends TestCase {
 
     assertEquals(osm.getRootsMap(), osm1.getRootsMap());
     assertEquals(osm.getDnaCount(), osm1.getDnaCount());
+    assertEquals(osm.getServerTransactionID(), osm1.getServerTransactionID());
 
     Set oids = osm.getOids();
     Set oids1 = osm1.getOids();
@@ -91,7 +94,11 @@ public class ObjectSyncMessageTest extends TestCase {
   }
 
   public void testBasicSerialization() throws Exception {
-    ObjectSyncMessage osm = ObjectSyncMessageFactory.createObjectSyncMessageFrom(managedObjectSyncContext);
+    ObjectSyncMessage osm = ObjectSyncMessageFactory
+        .createObjectSyncMessageFrom(managedObjectSyncContext, new ServerTransactionID(new NodeIDImpl("xyz",
+                                                                                                      new byte[] { 3,
+                                                                                                          4, 5 }),
+                                                                                       new TransactionID(99)));
     ObjectSyncMessage osm1 = writeAndRead(osm);
     validate(osm, osm1);
   }

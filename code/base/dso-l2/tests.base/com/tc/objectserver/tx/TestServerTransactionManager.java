@@ -6,6 +6,7 @@ package com.tc.objectserver.tx;
 
 import com.tc.exception.ImplementMe;
 import com.tc.net.groups.NodeID;
+import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.managedobject.BackReferences;
@@ -109,12 +110,10 @@ public class TestServerTransactionManager implements ServerTransactionManager {
 
   public void dump(Writer writer) {
     throw new ImplementMe();
-    
   }
 
   public void dumpToLogger() {
     throw new ImplementMe();
-    
   }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
@@ -122,6 +121,10 @@ public class TestServerTransactionManager implements ServerTransactionManager {
   }
 
   public int getTotalPendingTransactionsCount() {
+    throw new ImplementMe();
+  }
+
+  public void objectsSynched(NodeID node, ServerTransactionID tid) {
     throw new ImplementMe();
   }
 }

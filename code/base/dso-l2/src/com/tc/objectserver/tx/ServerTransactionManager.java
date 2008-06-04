@@ -6,6 +6,7 @@ package com.tc.objectserver.tx;
 
 import com.tc.logging.DumpHandler;
 import com.tc.net.groups.NodeID;
+import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.managedobject.BackReferences;
@@ -90,6 +91,8 @@ public interface ServerTransactionManager extends DumpHandler, PrettyPrintable {
   public void incomingTransactions(NodeID nodeID, Set txnIDs, Collection txns, boolean relayed);
 
   public void transactionsRelayed(NodeID node, Set serverTxnIDs);
+  
+  public void objectsSynched(NodeID node, ServerTransactionID tid);
 
   public void setResentTransactionIDs(NodeID source, Collection transactionIDs);
 

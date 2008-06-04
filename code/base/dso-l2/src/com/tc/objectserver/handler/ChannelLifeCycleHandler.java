@@ -46,11 +46,11 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSO
 
     switch (event.getType()) {
       case NodeStateEventContext.CREATE: {
-        channelCreated(event.getNodeID());
+        nodeConnected(event.getNodeID());
         break;
       }
       case NodeStateEventContext.REMOVE: {
-        channelRemoved(event.getNodeID());
+        nodeDisconnected(event.getNodeID());
         break;
       }
       default: {
@@ -59,18 +59,22 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSO
     }
   }
 
-  private void channelRemoved(NodeID nodeID) {
+  /**
+   * These methods are called for both L1 and L2 when this server is in active mode. For L1s we go thru the cleanup of
+   * sinks (@see below), for L2s group events will trigger this eventually.
+   */
+  private void nodeDisconnected(NodeID nodeID) {
     broadcastClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_DISCONNECTED, nodeID);
     if (commsManager.isInShutdown()) {
       logger.info("Ignoring transport disconnect for " + nodeID + " while shutting down.");
     } else {
-      logger.info("Received transport disconnect.  Shutting down client " + nodeID);
+      logger.info(": Received transport disconnect.  Shutting down client " + nodeID);
       transactionManager.shutdownNode(nodeID);
       transactionBatchManager.shutdownNode(nodeID);
     }
   }
 
-  private void channelCreated(NodeID nodeID) {
+  private void nodeConnected(NodeID nodeID) {
     broadcastClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_CONNECTED, nodeID);
     transactionManager.nodeConnected(nodeID);
   }

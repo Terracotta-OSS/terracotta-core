@@ -32,14 +32,15 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
   private final Map                 rootsMap;
   private final NodeID              serverID;
 
-  public ObjectSyncServerTransaction(TransactionID txnID, Set oids, int dnaCount, List changes, Map rootsMap,
-                                     NodeID serverID) {
-    this.txnID = txnID;
+  public ObjectSyncServerTransaction(ServerTransactionID serverTransactionID, Set oids, int dnaCount, List changes,
+                                     Map rootsMap, NodeID serverID) {
     this.oids = oids;
     this.changes = changes;
     this.rootsMap = rootsMap;
     this.serverID = serverID;
-    this.serverTxnID = new ServerTransactionID(serverID, txnID);
+    this.serverTxnID = serverTransactionID;
+    this.txnID = serverTransactionID.getClientTransactionID();
+    Assert.assertEquals(serverID, serverTransactionID.getSourceID());
     Assert.assertEquals(dnaCount, oids.size());
     Assert.assertEquals(dnaCount, changes.size());
   }

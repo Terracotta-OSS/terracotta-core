@@ -42,6 +42,8 @@ import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.session.NullSessionManager;
+import com.tc.object.tx.ServerTransactionID;
+import com.tc.object.tx.TransactionID;
 import com.tc.util.ObjectIDSet2;
 import com.tc.util.UUID;
 
@@ -209,7 +211,9 @@ public class TCGroupMessageWrapperTest extends TestCase {
     Map roots = new HashMap();
     long sID = 10;
     ObjectSyncMessage message = new ObjectSyncMessage(ObjectSyncMessage.MANAGED_OBJECT_SYNC_TYPE);
-    message.initialize(dnaOids, count, serializedDNAs, objectSerializer, roots, sID);
+    message.initialize(new ServerTransactionID(new NodeIDImpl("hello", new byte[] { 34, 33, (byte) 234 }),
+                                               new TransactionID(342)), dnaOids, count, serializedDNAs,
+                       objectSerializer, roots, sID);
     sendGroupMessage(message);
   }
 

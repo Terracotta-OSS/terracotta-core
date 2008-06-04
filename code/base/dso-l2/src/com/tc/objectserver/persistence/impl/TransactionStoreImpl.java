@@ -52,7 +52,7 @@ public class TransactionStoreImpl implements TransactionStore {
       ServerTransactionID stxnID = (ServerTransactionID) i.next();
       GlobalTransactionDescriptor gtx = this.sids.get(stxnID);
       if (stxnID.isServerGeneratedTransaction()) {
-        // XXX:: Since server Generated Transactions dont get completed acks, we dont persist these
+        // XXX:: Since server Generated Transactions don't get completed ACKs, we don't persist these
         this.sids.remove(stxnID);
         this.ids.remove(gtx.getGlobalTransactionID());
       } else {

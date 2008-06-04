@@ -18,6 +18,7 @@ import com.tc.l2.objectserver.ServerTransactionFactory;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.tx.ServerTransaction;
@@ -25,6 +26,7 @@ import com.tc.objectserver.tx.TransactionBatchReader;
 import com.tc.objectserver.tx.TransactionBatchReaderFactory;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -63,8 +65,8 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
     rTxnManager.clearTransactionsBelowLowWaterMark(lowGlobalTransactionIDWatermark);
   }
 
-  private void ackTransactions(RelayedCommitTransactionMessage commitMessage, Set serverTxnIDs) {
-    ServerTxnAckMessage msg = ServerTxnAckMessageFactory.createServerTxnAckMessage(commitMessage, serverTxnIDs);
+  private void ackTransactions(AbstractGroupMessage messageFrom, Set serverTxnIDs) {
+    ServerTxnAckMessage msg = ServerTxnAckMessageFactory.createServerTxnAckMessage(messageFrom, serverTxnIDs);
     sendSink.add(msg);
   }
 
@@ -87,6 +89,9 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
   private void doSyncObjectsResponse(ObjectSyncMessage syncMsg) {
     ServerTransaction txn = ServerTransactionFactory.createTxnFrom(syncMsg);
     rTxnManager.addObjectSyncTransaction(txn);
+    HashSet serverTxnIDs = new HashSet(2);
+    serverTxnIDs.add(txn.getServerTransactionID());
+    ackTransactions(syncMsg, serverTxnIDs);
   }
 
   public void initialize(ConfigurationContext context) {
