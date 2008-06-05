@@ -2,6 +2,6 @@
 <ivy-module version="2.0">
   <info organisation="ibiblio" module="simulator-tests-base"/>
   <dependencies>
-    <dependency name="linked-child-process" rev="1.0.2-SNAPSHOT" org="org.terracotta"/>    
+    <dependency name="linked-child-process" rev="1.0.3-SNAPSHOT" org="org.terracotta"/>    
   </dependencies>
 </ivy-module>

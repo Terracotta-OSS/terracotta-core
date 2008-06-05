@@ -24,7 +24,7 @@
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/junit-3.8.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/junit-addons-1.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/knopflerfish-2.0.1-tc-20080108.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/linked-child-process-1.0.2-SNAPSHOT.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/linked-child-process-1.0.3-SNAPSHOT.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/log4j-1.2.9.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/servlet-api-2.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/slf4j-nop-1.0.2.jar"/>
