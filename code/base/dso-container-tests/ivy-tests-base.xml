@@ -8,7 +8,7 @@
     <dependency name="commons-httpclient" rev="3.0.1"/>
     <dependency name="tc-cargo-core-uberjar" rev="0.9-20080103" org="terracotta"/>
     <dependency name="httpunit" rev="1.6.2"/>
-    <dependency name="spring" rev="2.0.1" org="terracotta"/>
+    <dependency name="spring" rev="2.0.8" org="terracotta"/>
     <dependency name="dom4j" rev="1.6.1"/>
     <dependency name="cglib-nodep" rev="2.1_3" org="terracotta"/>
     <dependency name="jta" rev="1.0.1b" org="terracotta"/>
