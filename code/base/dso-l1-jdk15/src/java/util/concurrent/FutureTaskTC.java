@@ -3,9 +3,6 @@
  */
 package java.util.concurrent;
 
-import com.tc.object.bytecode.ManagerUtil;
-import com.tc.util.DebugUtil;
-
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -106,9 +103,6 @@ public class FutureTaskTC implements Future, Runnable {
       runner = null;
       proxyRunner = null;
       ran.signalAll();
-      if (DebugUtil.DEBUG) {
-        System.err.println(ManagerUtil.getClientID() + " managedTryReleaseShared signalled");
-      }
       return true;
     }
 
@@ -147,10 +141,6 @@ public class FutureTaskTC implements Future, Runnable {
       lock.lock();
       try {
         boolean ranOrCancelled = ranOrCancelled(state);
-        if (DebugUtil.DEBUG) {
-          System.err.println("Client " + ManagerUtil.getClientID() + " innerIsDone -- ranOrCancelled(state): " + ranOrCancelled);
-          System.err.println("Client " + ManagerUtil.getClientID() + " innerIsDone -- proxyRunner: " + proxyRunner);
-        }
         return ranOrCancelled && proxyRunner == null;
       } finally {
         lock.unlock();
@@ -158,23 +148,10 @@ public class FutureTaskTC implements Future, Runnable {
     }
 
     Object innerGet() throws InterruptedException, ExecutionException {
-      if (DebugUtil.DEBUG) {
-        System.err.println(ManagerUtil.getClientID() + " attempting to lock in innerGet");
-      }
-
       lock.lock();
-      if (DebugUtil.DEBUG) {
-        System.err.println(ManagerUtil.getClientID() + " locked in innerGet");
-      }
       try {
         while (tryAcquireShared() < 0) {
-          if (DebugUtil.DEBUG) {
-            System.err.println(ManagerUtil.getClientID() + " tryAcquireShared < 0 - going to wait.");
-          }
           ran.await();
-        }
-        if (DebugUtil.DEBUG) {
-          System.err.println(ManagerUtil.getClientID() + " innerGet finished waiting");
         }
       } finally {
         lock.unlock();
@@ -236,7 +213,7 @@ public class FutureTaskTC implements Future, Runnable {
         lock.unlock();
       }
     }
-    
+
     private void managedInnerCancel() {
       Thread r = null;
       lock.lock();
@@ -293,26 +270,14 @@ public class FutureTaskTC implements Future, Runnable {
           try {
             managedInnerSet(o);
           } finally {
-            if (DebugUtil.DEBUG) {
-              System.err.println(ManagerUtil.getClientID() + " going to unlock after managedInnerSet");
-            }
             lock.unlock();
-            if (DebugUtil.DEBUG) {
-              System.err.println(ManagerUtil.getClientID() + " innerRun unlock after managedInnerSet.");
-            }
           }
         } else {
           lock.lock();
           try {
             managedTryReleaseShared();
           } finally {
-            if (DebugUtil.DEBUG) {
-              System.err.println(ManagerUtil.getClientID() + " returned from managedTryReleaseShared.");
-            }
             lock.unlock();
-            if (DebugUtil.DEBUG) {
-              System.err.println(ManagerUtil.getClientID() + " innerRun unlock.");
-            }
           }
         }
       } catch (Throwable ex) {

@@ -5,18 +5,16 @@
 package com.tc.object.tx;
 
 import com.tc.logging.TCLogger;
-import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.lockmanager.api.LockFlushCallback;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
 import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.Assert;
-import com.tc.util.DebugUtil;
 import com.tc.util.SequenceID;
 import com.tc.util.State;
 import com.tc.util.TCAssertionError;
@@ -32,14 +30,14 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Map.Entry;
 
 /**
  * Sends off committed transactions
- * 
+ *
  * @author steve
  */
 public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
@@ -186,9 +184,6 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     synchronized (lock) {
       while ((!(c = lockAccounting.getTransactionsFor(lockID)).isEmpty())) {
         try {
-          if (DebugUtil.DEBUG) {
-            System.err.println(ManagerUtil.getClientID() + " flushing for lock " + lockID);
-          }
           lock.wait(FLUSH_WAIT_INTERVAL);
           long now = System.currentTimeMillis();
           if ((now - start) > FLUSH_WAIT_INTERVAL) {
@@ -226,10 +221,6 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
   public void commit(ClientTransaction txn) {
     if (!txn.hasChangesOrNotifies()) throw new AssertionError("Attempt to commit an empty transaction.");
-
-    if (DebugUtil.DEBUG) {
-      System.err.println(ManagerUtil.getClientID() + " commiting " + txn.getTransactionID());
-    }
 
     long start = System.currentTimeMillis();
 
@@ -382,10 +373,6 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
       }
 
       Set completedLocks = lockAccounting.acknowledge(txID);
-      if (DebugUtil.DEBUG) {
-        System.err.println(ManagerUtil.getClientID() + " receive ack " + txID.toString() + " completedLocks: "
-                           + completedLocks);
-      }
 
       TxnBatchID container = batchAccounting.getBatchByTransactionID(txID);
       if (!container.isNull()) {

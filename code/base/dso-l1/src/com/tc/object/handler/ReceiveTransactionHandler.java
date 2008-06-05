@@ -26,7 +26,6 @@ import com.tc.object.msg.BroadcastTransactionMessageImpl;
 import com.tc.object.session.SessionManager;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.util.Assert;
-import com.tc.util.DebugUtil;
 import com.tcclient.object.DistributedMethodCall;
 
 import java.util.Collection;
@@ -63,7 +62,7 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
   public void handleEvent(EventContext context) {
     final BroadcastTransactionMessageImpl btm = (BroadcastTransactionMessageImpl) context;
 
-    if (DebugUtil.DEBUG) System.err.println(cidProvider.getChannelID() + ": ReceiveTransactionHandler: committer="
+    if (false) System.err.println(cidProvider.getChannelID() + ": ReceiveTransactionHandler: committer="
                                   + btm.getCommitterID() + ", " + btm.getTransactionID() + btm.getGlobalTransactionID()
                                   + ", notified: " + btm.addNotifiesTo(new LinkedList()) + ", lookup ObjectIDs: "
                                   + btm.getLookupObjectIDs());

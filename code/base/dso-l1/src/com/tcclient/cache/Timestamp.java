@@ -4,9 +4,6 @@
  */
 package com.tcclient.cache;
 
-import com.tc.object.bytecode.ManagerUtil;
-import com.tc.util.DebugUtil;
-
 import java.util.Date;
 
 /**
@@ -25,23 +22,16 @@ public class Timestamp {
     } else {
       this.timeToExpireMillis = createTime + maxIdleMillis;
     }
-    
-    if (DebugUtil.DEBUG) {
-      System.err.println("Client " + ManagerUtil.getClientID() + " creating timestamp -- maxIdleMillis: " + maxIdleMillis + ", maxTTLMillis: " + maxTTLMillis + ", createTime: " + createTime);
-    }
   }
 
   /**
    * Get the time at which this timestamp will become invalid
    */
   public synchronized long getInvalidatedTimeMillis() {
-    if (DebugUtil.DEBUG) {
-      System.err.println("Client " + ManagerUtil.getClientID() + " getInvalidatedTimeMillis -- timeToExpireMillis: " + timeToExpireMillis + ", timeToDieMillis: " + timeToDieMillis + ", current time: " + System.currentTimeMillis());
+    if (timeToDieMillis <= 0) {
+      return timeToExpireMillis;
     }
-    if (timeToDieMillis <= 0) { 
-      return timeToExpireMillis; 
-    }
-    
+
     return (timeToExpireMillis < timeToDieMillis)? timeToExpireMillis : timeToDieMillis;
   }
 

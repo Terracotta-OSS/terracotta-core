@@ -16,7 +16,7 @@ public class DebugUtil {
     nodeId = v + ".[" + String.valueOf(System.identityHashCode(DebugUtil.class)) + "]";
   }
 
-  public static String nodeId() {
+  private static String nodeId() {
     return nodeId;
   }
 

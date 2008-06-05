@@ -12,9 +12,9 @@ import com.tc.cluster.Cluster;
 import com.tc.cluster.ClusterEventListener;
 import com.tc.config.lock.LockContextInfo;
 import com.tc.lang.StartupHelper;
-import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
+import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.sessions.SessionMonitorMBean;
@@ -42,7 +42,6 @@ import com.tc.object.tx.optimistic.OptimisticTransactionManagerImpl;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
-import com.tc.util.DebugUtil;
 import com.tc.util.Util;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.runtime.Vm;
@@ -524,9 +523,6 @@ public class ManagerImpl implements Manager {
         if (tco.autoLockingDisabled()) { return; }
 
         // don't call this.commit() here, the error handling would happen twice in that case
-        if (DebugUtil.DEBUG) {
-          System.err.println(ManagerUtil.getClientID() + " MEx - " + obj.getClass().getName() + " OID: " + tco.getObjectID());
-        }
         this.txManager.commit(generateAutolockName(tco));
       } else if (isLiteralAutolock(obj)) {
         this.txManager.commit(generateLiteralLockName(obj));

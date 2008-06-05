@@ -10,7 +10,6 @@ import com.tc.object.TCClass;
 import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
 import com.tc.object.bytecode.Manageable;
-import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
@@ -21,7 +20,6 @@ import com.tc.object.field.TCField;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.object.tx.optimistic.TCObjectClone;
 import com.tc.util.Assert;
-import com.tc.util.DebugUtil;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -98,9 +96,6 @@ public class PhysicalApplicator extends BaseApplicator {
       fieldName = a.getFieldName();
       fieldValue = a.getObject();
       tcObject.setValue(fieldName, fieldValue);
-      if (DebugUtil.DEBUG) {
-        System.err.println("Client " + ManagerUtil.getClientID() + " applying " + fieldName + ", " + fieldValue);
-      }
     }
   }
 

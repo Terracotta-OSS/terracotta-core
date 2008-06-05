@@ -8,10 +8,8 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.object.bytecode.Manager;
 import com.tc.util.Assert;
-import com.tc.util.DebugUtil;
 
 import java.util.Collection;
-import java.util.Date;
 
 /**
  * The invalidator watches a portion of the CacheDataStore (a range of the submaps) and is run in a loop, periodically
@@ -171,9 +169,6 @@ class CacheEntryInvalidator {
   private void log(String msg) {
     if (config.isEvictorLoggingEnabled()) {
       logger.debug(msg);
-      if (DebugUtil.DEBUG) {
-        System.err.println((new Date(System.currentTimeMillis())).toString() + msg);
-      }
     }
   }
 

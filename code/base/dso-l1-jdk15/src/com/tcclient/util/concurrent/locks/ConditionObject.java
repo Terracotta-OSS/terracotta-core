@@ -7,7 +7,6 @@ package com.tcclient.util.concurrent.locks;
 import com.tc.exception.TCRuntimeException;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.lockmanager.api.LockLevel;
-import com.tc.util.DebugUtil;
 import com.tc.util.UnsafeUtil;
 import com.tc.util.concurrent.locks.TCLock;
 
@@ -77,12 +76,6 @@ public class ConditionObject implements Condition, java.io.Serializable {
   private boolean isLockRealConditionInUnshared() {
     if (!ManagerUtil.isManaged(realCondition) || !ManagerUtil.isHeldByCurrentThread(realCondition, LockLevel.WRITE)) { return true; }
     return false;
-  }
-
-  private void logDebug(String message) {
-    if (DebugUtil.DEBUG) {
-      System.err.println(message);
-    }
   }
 
   public void await() throws InterruptedException {
