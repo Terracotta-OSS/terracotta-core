@@ -33,7 +33,6 @@ public class SetMapPerformanceTest extends TCTestCase {
     println("Warmup runs....");
     testResult = new TestResults(); // null
     Collection c = createSequencialData(2000);
-    performTest(new ObjectIDSet(), c);
     performTest(new ObjectIDSet2(), c);
     performTest(new HashSet(), c);
     performTest(new ObjectIDSet2(), c);
@@ -43,7 +42,7 @@ public class SetMapPerformanceTest extends TCTestCase {
 
     testResult = new TestResults();
 
-    // real test begins - sequencial
+    // real test begins - sequential
     c = createSequencialData(ADD_LENGTH);
     println();
     println("---------------------------------------------------------------------------------------");

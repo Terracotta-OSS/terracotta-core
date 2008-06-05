@@ -34,7 +34,7 @@ public class SleepycatPersistor implements Persistor {
   private final ManagedObjectPersistorImpl     managedObjectPersistor;
   private final ClientStatePersistor           clientStatePersistor;
   private final TransactionPersistor           transactionPerisistor;
-  private final MutableSequence             globalTransactionIDSequence;
+  private final MutableSequence                globalTransactionIDSequence;
   private final ClassPersistor                 classPersistor;
   private final PersistenceTransactionProvider persistenceTransactionProvider;
   private final DBEnvironment                  env;
@@ -85,8 +85,8 @@ public class SleepycatPersistor implements Persistor {
                                                                                            .getObjectIDDB()), env
                                                                      .getRootDatabase(), rootDBCursorConfig,
                                                                  this.persistenceTransactionProvider,
-                                                                 this.sleepycatCollectionsPersistor,
-                                                                 env.isParanoidMode());
+                                                                 this.sleepycatCollectionsPersistor, env
+                                                                     .isParanoidMode());
     this.clientStatePersistor = new ClientStatePersistorImpl(logger, this.persistenceTransactionProvider,
                                                              new SleepycatSequence(this.persistenceTransactionProvider,
                                                                                    logger, 1, 0, env
@@ -99,8 +99,8 @@ public class SleepycatPersistor implements Persistor {
     this.classPersistor = new ClassPersistorImpl(this.persistenceTransactionProvider, logger, env.getClassDatabase());
     this.clusterStateStore = new SleepycatMapStore(this.persistenceTransactionProvider, logger, env
         .getClusterStateStoreDatabase());
-    
-    //check for DBversion mismatch
+
+    // check for DBversion mismatch
     DBVersionChecker dbVersionChecker = new DBVersionChecker(this.clusterStateStore);
     dbVersionChecker.versionCheck();
   }

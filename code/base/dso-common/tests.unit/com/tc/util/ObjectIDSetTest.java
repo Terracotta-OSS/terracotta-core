@@ -31,24 +31,6 @@ public class ObjectIDSetTest extends TCTestCase {
     public Set create(Collection c);
   }
 
-  /**
-   * This test is disabled since it is too slow and times out in slow boxes.
-   */
-  public void DISABLEDtestObjectIDSet() {
-    SetCreator creator = new SetCreator() {
-      public Set create() {
-        return new ObjectIDSet();
-      }
-
-      public Set create(Collection c) {
-        return new ObjectIDSet(c);
-      }
-
-    };
-    basicTest(creator);
-    iteratorRemoveTest(creator);
-  }
-
   public void basicTest(SetCreator creator) {
     basicTest(creator, 100000, 100000);
     basicTest(creator, 500000, 100000);
@@ -245,22 +227,4 @@ public class ObjectIDSetTest extends TCTestCase {
     }
     Assert.eval(oidSet.size() == 0);
   }
-
-  // See the comment above
-  public void DISABLEDtestFailedCase() {
-    System.err.println("\nRunning testFailedCase()... ");
-    SetCreator creator = new SetCreator() {
-      public Set create() {
-        return new ObjectIDSet();
-      }
-
-      public Set create(Collection c) {
-        return new ObjectIDSet(c);
-      }
-
-    };
-    long seed = 1576555335886137186L;
-    iteratorRemoveTest(creator, seed);
-  }
-
 }
