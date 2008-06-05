@@ -131,7 +131,6 @@ public class ExtraProcessServerControl extends ServerControlBase {
     jvmArgs.add("-Djava.net.preferIPv4Stack=true");
     debugParams.addDebugParamsTo(jvmArgs);
     jvmArgs.add("-D" + TCPropertiesImpl.SYSTEM_PROP_PREFIX + TCPropertiesConsts.TC_MANAGEMENT_TEST_MBEANS_ENABLED + "=true");
-    addClasspath(jvmArgs);
     addLibPath(jvmArgs);
     addEnvVarsForWindows(jvmArgs);
 

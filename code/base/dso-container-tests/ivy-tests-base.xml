@@ -2,7 +2,7 @@
 <ivy-module version="2.0">
   <info organisation="ibiblio" module="dso-container-tests-tests-base"/>
   <dependencies>
-    <dependency name="linked-child-process" rev="1.0.3-SNAPSHOT" org="org.terracotta"/>    
+    <dependency name="linked-child-process" rev="1.0.2-SNAPSHOT" org="org.terracotta"/>    
     <dependency name="ant" rev="launcher-1.6.5"/>
     <dependency name="commons-codec" rev="1.3"/>
     <dependency name="commons-httpclient" rev="3.0.1"/>
