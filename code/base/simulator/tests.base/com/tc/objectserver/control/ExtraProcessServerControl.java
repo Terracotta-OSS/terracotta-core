@@ -154,12 +154,6 @@ public class ExtraProcessServerControl extends ServerControlBase {
     args.add("-Djava.library.path=" + libPath);
   }
 
-  private void addClasspath(List args) {
-    String classpath = System.getProperty("java.class.path");
-    if (classpath == null || classpath.equals("")) { throw new AssertionError("java.class.path is not set!"); }
-    args.add("-Djava.class.path=" + classpath);
-  }
-
   private void addEnvVarsForWindows(List args) {
     String tcBaseDir = System.getProperty("tc.base-dir");
     if (tcBaseDir == null || tcBaseDir.equals("")) { throw new AssertionError("tc.base-dir is not set!"); }
