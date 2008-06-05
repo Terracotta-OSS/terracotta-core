@@ -1423,9 +1423,14 @@ class ClientLock implements TimerCallback, LockFlushCallback {
 
   private static class Greediness {
     /**
-     * The class Greediness models state transition among various states a client lock could be in. A client lock could
-     * be in one of the several states: NOT_GREEDY -> GREEDY -> RECALLED ------------------------------- | | | V
-     * |-------> GREEDY LEASE ---> RECALL IN PROGRESS
+     * The class Greediness models state transition among various states a client lock could be in. A client lock could be in
+     * one of the several states:
+     *
+     * NOT_GREEDY -> GREEDY -> RECALLED -------------------------------
+     *                            |                                   |
+     *                            |                                   V
+     *                            |-------> GREEDY LEASE  ---> RECALL IN PROGRESS
+     *
      */
     private static final State NOT_GREEDY         = new State("NOT GREEDY");
     private static final State GREEDY             = new State("GREEDY");
