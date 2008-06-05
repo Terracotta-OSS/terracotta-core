@@ -19,7 +19,7 @@ import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor.SleepycatPer
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Conversion;
-import com.tc.util.ObjectIDSet2;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.SyncObjectIdSet;
 
 import java.util.Set;
@@ -76,7 +76,7 @@ public class PlainObjectIDManagerImpl extends SleepycatPersistorBase implements 
     public void run() {
       if (isMeasurePerf) startTime = System.currentTimeMillis();
       int counter = 0;
-      ObjectIDSet2 tmp = new ObjectIDSet2();
+      ObjectIDSet tmp = new ObjectIDSet();
       PersistenceTransaction tx = null;
       Cursor cursor = null;
       try {

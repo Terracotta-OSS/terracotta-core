@@ -11,7 +11,7 @@ import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.core.api.GarbageCollector;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
-import com.tc.util.ObjectIDSet2;
+import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -113,7 +113,7 @@ public interface ObjectManager extends ManagedObjectProvider {
 
   public Set getRootIDs();
 
-  public ObjectIDSet2 getAllObjectIDs();
+  public ObjectIDSet getAllObjectIDs();
 
   public void addFaultedObject(ObjectID oid, ManagedObject mo, boolean removeOnRelease);
 

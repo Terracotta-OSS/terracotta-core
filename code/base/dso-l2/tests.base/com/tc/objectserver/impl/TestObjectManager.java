@@ -21,7 +21,7 @@ import com.tc.objectserver.core.impl.TestManagedObject;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.text.PrettyPrinterImpl;
-import com.tc.util.ObjectIDSet2;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.io.Writer;
@@ -168,8 +168,8 @@ public class TestObjectManager implements ObjectManager {
     return new HashSet();
   }
 
-  public ObjectIDSet2 getAllObjectIDs() {
-    return new ObjectIDSet2();
+  public ObjectIDSet getAllObjectIDs() {
+    return new ObjectIDSet();
   }
 
   public Object getLock() {

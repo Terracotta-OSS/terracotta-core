@@ -12,7 +12,7 @@ import java.util.Set;
 public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet {
 
   private final Object lock       = new Object();
-  private ObjectIDSet2 set        = new ObjectIDSet2();
+  private ObjectIDSet set        = new ObjectIDSet();
   private boolean      isBlocking = false;
 
   public void startPopulating() {
@@ -21,10 +21,10 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
     }
   }
 
-  public void stopPopulating(ObjectIDSet2 fullSet) {
+  public void stopPopulating(ObjectIDSet fullSet) {
     synchronized (lock) {
-      ObjectIDSet2 large = (fullSet.size() > set.size()) ? fullSet : set;
-      ObjectIDSet2 small = (set == large) ? fullSet : set;
+      ObjectIDSet large = (fullSet.size() > set.size()) ? fullSet : set;
+      ObjectIDSet small = (set == large) ? fullSet : set;
       large.addAll(small);
       set = large;
       isBlocking = false;
@@ -92,10 +92,10 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
     return rv;
   }
 
-  public ObjectIDSet2 snapshot() {
+  public ObjectIDSet snapshot() {
     synchronized (lock) {
       waitWhileBlocked();
-      return new ObjectIDSet2(set);
+      return new ObjectIDSet(set);
     }
   }
 

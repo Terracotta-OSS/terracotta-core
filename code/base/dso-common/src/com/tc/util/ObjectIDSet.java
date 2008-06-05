@@ -18,22 +18,23 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
- * This class is a an attempt to meet the shortcomings of ObjectIDSet. Mainly the performance of adds and removes when
- * the ObjectIDs are non-contiguous. It uses a balanced tree internally to store ranges instead of an arraylist
+ * This class is a an attempt to meet the shortcomings of the older implementation of ObjectIDSet. Mainly the performance
+ * of adds and removes when the ObjectIDs are non-contiguous. It uses a balanced tree internally to store ranges instead
+ * of an ArrayList
  */
-public class ObjectIDSet2 extends AbstractSet implements Externalizable {
+public class ObjectIDSet extends AbstractSet implements Externalizable {
 
   private final AATreeSet ranges;
-  private int          size = 0;
+  private int             size = 0;
 
-  public ObjectIDSet2() {
+  public ObjectIDSet() {
     ranges = new AATreeSet();
   }
 
-  public ObjectIDSet2(Collection c) {
+  public ObjectIDSet(Collection c) {
     this();
-    if (c instanceof ObjectIDSet2) {
-      ObjectIDSet2 other = (ObjectIDSet2) c;
+    if (c instanceof ObjectIDSet) {
+      ObjectIDSet other = (ObjectIDSet) c;
       // fast way to clone
       this.size = other.size();
       for (Iterator i = other.ranges.iterator(); i.hasNext();) {
@@ -133,16 +134,15 @@ public class ObjectIDSet2 extends AbstractSet implements Externalizable {
     }
     return sb.append(']').toString();
   }
-  
+
   public String dump() {
     StringBuffer sb = new StringBuffer("ObjectIDSet2 " + getCompressionDetails() + "[");
-    sb.append( " size  = ").append(size);
+    sb.append(" size  = ").append(size);
     return sb.append(']').toString();
   }
 
   private String getCompressionDetails() {
-    return "{ (oids:ranges) = " + size + ":" + ranges.size() + " | % =  " + getCompressionPercentage()
-           + " } ";
+    return "{ (oids:ranges) = " + size + ":" + ranges.size() + " | % =  " + getCompressionPercentage() + " } ";
   }
 
   // Range contains two longs instead of 1 long in ObjectID
@@ -333,7 +333,7 @@ public class ObjectIDSet2 extends AbstractSet implements Externalizable {
    */
   public boolean retainAll(Collection c) {
     boolean modified = false;
-    ObjectIDSet2 toRemove = new ObjectIDSet2();
+    ObjectIDSet toRemove = new ObjectIDSet();
     Iterator e = iterator();
     while (e.hasNext()) {
       Object o = e.next();

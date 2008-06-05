@@ -9,7 +9,7 @@ import com.tc.objectserver.api.ManagedObjectProvider;
 import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.text.PrettyPrintable;
-import com.tc.util.ObjectIDSet2;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.sequence.ObjectIDSequence;
 
 import java.util.Collection;
@@ -33,7 +33,7 @@ public interface ManagedObjectStore extends ManagedObjectProvider, ObjectIDSeque
   /**
    * Returns the set of object ids.
    */
-  public ObjectIDSet2 getAllObjectIDs();
+  public ObjectIDSet getAllObjectIDs();
 
   public boolean containsObject(ObjectID id);
 

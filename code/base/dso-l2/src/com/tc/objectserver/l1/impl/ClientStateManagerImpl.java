@@ -13,7 +13,7 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.managedobject.BackReferences;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
-import com.tc.util.ObjectIDSet2;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.State;
 
 import java.util.Collection;
@@ -210,7 +210,7 @@ public class ClientStateManagerImpl implements ClientStateManager {
 
   private static class ClientStateImpl implements PrettyPrintable, ClientState {
     private final NodeID nodeID;
-    private final Set    managed = new ObjectIDSet2();
+    private final Set    managed = new ObjectIDSet();
 
     public ClientStateImpl(NodeID nodeID) {
       this.nodeID = nodeID;

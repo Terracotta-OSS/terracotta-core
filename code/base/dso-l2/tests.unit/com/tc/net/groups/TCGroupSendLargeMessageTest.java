@@ -17,7 +17,7 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.ObjectID;
 import com.tc.test.TCTestCase;
-import com.tc.util.ObjectIDSet2;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.PortChooser;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.concurrent.QueueFactory;
@@ -91,7 +91,7 @@ public class TCGroupSendLargeMessageTest extends TCTestCase {
                                              MyListener l2, long oidsCount) throws GroupException {
     ThreadUtil.reallySleep(5 * 1000);
 
-    ObjectIDSet2 oidSet = new ObjectIDSet2();
+    ObjectIDSet oidSet = new ObjectIDSet();
     for (long i = 1; i <= oidsCount; ++i) {
       oidSet.add(new ObjectID(i));
     }
@@ -103,7 +103,7 @@ public class TCGroupSendLargeMessageTest extends TCTestCase {
     assertEquals(msg1.getGCedObjectIDs(), msg2.getGCedObjectIDs());
     assertEquals(msg1.getGCIterationCount(), msg2.getGCIterationCount());
 
-    oidSet = new ObjectIDSet2();
+    oidSet = new ObjectIDSet();
     for (long i = (oidsCount + 1); i <= (oidsCount * 2); ++i) {
       oidSet.add(new ObjectID(i));
     }

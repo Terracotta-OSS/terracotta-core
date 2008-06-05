@@ -16,7 +16,7 @@ import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
-import com.tc.util.ObjectIDSet2;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.SyncObjectIdSet;
 
 import java.util.Collection;
@@ -105,7 +105,7 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
     gcDisposerSink.add(gcResult);
   }
 
-  public ObjectIDSet2 getAllObjectIDs() {
+  public ObjectIDSet getAllObjectIDs() {
     assertNotInShutdown();
     return this.extantObjectIDs.snapshot();
   }

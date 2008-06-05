@@ -7,7 +7,7 @@ package com.tc.objectserver.persistence.sleepycat;
 import com.sleepycat.je.OperationStatus;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
-import com.tc.util.ObjectIDSet2;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.SyncObjectIdSet;
 
 import java.util.Set;
@@ -18,7 +18,7 @@ public class NullObjectIDManager implements ObjectIDManager {
     // a dummy one, just stop populating and return
     return new Runnable() {
       public void run() {
-        rv.stopPopulating(new ObjectIDSet2());
+        rv.stopPopulating(new ObjectIDSet());
         return;
       }
     };

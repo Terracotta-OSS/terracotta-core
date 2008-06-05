@@ -133,22 +133,22 @@ public class ObjectIDSetTest extends TCTestCase {
   }
 
   private void serializeAndVerify(Set s) throws Exception {
-    ObjectIDSet2 org = new ObjectIDSet2(s);
+    ObjectIDSet org = new ObjectIDSet(s);
     assertEquals(s, org);
 
-    ObjectIDSet2 ser = serializeAndRead(org);
+    ObjectIDSet ser = serializeAndRead(org);
     assertEquals(s, ser);
     assertEquals(org, ser);
   }
 
-  private ObjectIDSet2 serializeAndRead(ObjectIDSet2 org) throws Exception {
+  private ObjectIDSet serializeAndRead(ObjectIDSet org) throws Exception {
     ByteArrayOutputStream bo = new ByteArrayOutputStream();
     ObjectOutput oo = new ObjectOutputStream(bo);
     oo.writeObject(org);
     System.err.println("Written ObjectIDSet2 size : " + org.size());
     ByteArrayInputStream bi = new ByteArrayInputStream(bo.toByteArray());
     ObjectInput oi = new ObjectInputStream(bi);
-    ObjectIDSet2 oids = (ObjectIDSet2) oi.readObject();
+    ObjectIDSet oids = (ObjectIDSet) oi.readObject();
     System.err.println("Read  ObjectIDSet2 size : " + oids.size());
     return oids;
   }
@@ -169,11 +169,11 @@ public class ObjectIDSetTest extends TCTestCase {
   public void testObjectIDSet2() {
     SetCreator creator = new SetCreator() {
       public Set create() {
-        return new ObjectIDSet2();
+        return new ObjectIDSet();
       }
 
       public Set create(Collection c) {
-        return new ObjectIDSet2(c);
+        return new ObjectIDSet(c);
       }
 
     };
@@ -181,7 +181,7 @@ public class ObjectIDSetTest extends TCTestCase {
   }
 
   public void testObjectIDSet2Dump() {
-    ObjectIDSet2 s = new ObjectIDSet2();
+    ObjectIDSet s = new ObjectIDSet();
     System.err.println(" toString() : " + s);
     
     for (int i = 0; i < 100; i++) {

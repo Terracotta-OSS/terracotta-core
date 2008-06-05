@@ -9,7 +9,7 @@ import java.util.Set;
 public interface SyncObjectIdSet extends Set {
   public void startPopulating();
 
-  public void stopPopulating(ObjectIDSet2 fullSet);
+  public void stopPopulating(ObjectIDSet fullSet);
 
-  public ObjectIDSet2 snapshot();
+  public ObjectIDSet snapshot();
 }

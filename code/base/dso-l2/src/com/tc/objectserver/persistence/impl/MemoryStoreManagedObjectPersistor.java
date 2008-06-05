@@ -18,7 +18,7 @@ import com.tc.objectserver.persistence.api.PersistentCollectionsUtil;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
-import com.tc.util.ObjectIDSet2;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.SyncObjectIdSet;
 import com.tc.util.SyncObjectIdSetImpl;
 import com.tc.util.sequence.MutableSequence;
@@ -265,7 +265,7 @@ public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPer
     }
 
     public void run() {
-      ObjectIDSet2 tmp = new ObjectIDSet2(objectDB.getAll());
+      ObjectIDSet tmp = new ObjectIDSet(objectDB.getAll());
       set.stopPopulating(tmp);
     }
 

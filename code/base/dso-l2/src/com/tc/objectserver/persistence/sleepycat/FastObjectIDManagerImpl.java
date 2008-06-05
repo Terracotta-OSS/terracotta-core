@@ -21,7 +21,7 @@ import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
-import com.tc.util.ObjectIDSet2;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.OidLongArray;
 import com.tc.util.SyncObjectIdSet;
 import com.tc.util.sequence.MutableSequence;
@@ -326,7 +326,7 @@ public final class FastObjectIDManagerImpl extends SleepycatPersistorBase implem
       // process left over from previous run
       processPreviousRunOidLog();
 
-      ObjectIDSet2 tmp = new ObjectIDSet2();
+      ObjectIDSet tmp = new ObjectIDSet();
       PersistenceTransaction tx = null;
       Cursor cursor = null;
       try {
@@ -351,7 +351,7 @@ public final class FastObjectIDManagerImpl extends SleepycatPersistorBase implem
       }
     }
 
-    private void makeObjectIDFromBitsArray(OidLongArray entry, ObjectIDSet2 tmp) {
+    private void makeObjectIDFromBitsArray(OidLongArray entry, ObjectIDSet tmp) {
       long oid = entry.getKey();
       long[] ary = entry.getArray();
       for (int j = 0; j < ary.length; ++j) {

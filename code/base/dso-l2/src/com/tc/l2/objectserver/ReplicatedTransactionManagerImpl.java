@@ -30,7 +30,7 @@ import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.util.Assert;
-import com.tc.util.ObjectIDSet2;
+import com.tc.util.ObjectIDSet;
 
 import gnu.trove.TLinkable;
 import gnu.trove.TLinkedList;
@@ -192,7 +192,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
 
   private final class PassiveUninitializedTransactionManager implements PassiveTransactionManager {
 
-    ObjectIDSet2          existingOIDs = new ObjectIDSet2();
+    ObjectIDSet          existingOIDs = new ObjectIDSet();
     PendingChangesAccount pca          = new PendingChangesAccount();
 
     // NOTE::XXX:: MEssages are not REcylced in Passive Uninitialized state because of complicated pruning
@@ -255,14 +255,14 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     }
 
     public void clear() {
-      existingOIDs = new ObjectIDSet2();
+      existingOIDs = new ObjectIDSet();
       pca.clear();
     }
 
     public void addKnownObjectIDs(Set knownObjectIDs) {
       if (existingOIDs.size() < knownObjectIDs.size()) {
-        ObjectIDSet2 old = existingOIDs;
-        existingOIDs = new ObjectIDSet2(knownObjectIDs); // This is optimizeded for ObjectIDSet2
+        ObjectIDSet old = existingOIDs;
+        existingOIDs = new ObjectIDSet(knownObjectIDs); // This is optimizeded for ObjectIDSet2
         existingOIDs.addAll(old);
       } else {
         existingOIDs.addAll(knownObjectIDs);

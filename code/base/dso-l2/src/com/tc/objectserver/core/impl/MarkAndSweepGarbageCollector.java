@@ -27,7 +27,7 @@ import com.tc.statistics.exceptions.AgentStatisticsManagerException;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
-import com.tc.util.ObjectIDSet2;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.State;
 import com.tc.util.concurrent.LifeCycleState;
 import com.tc.util.concurrent.NullLifeCycleState;
@@ -104,7 +104,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
 
   private Set rescue(final Set gcResults, final List rescueTimes) {
     long start = System.currentTimeMillis();
-    Set rescueIds = new ObjectIDSet2();
+    Set rescueIds = new ObjectIDSet();
     stateManager.addAllReferencedIdsTo(rescueIds);
     int stateManagerIds = rescueIds.size();
 
@@ -143,7 +143,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     gcStats.setStartTime(startMillis);
 
     Set rootIDs = null;
-    ObjectIDSet2 managedIDs = null;
+    ObjectIDSet managedIDs = null;
 
     this.referenceCollector = new NewReferenceCollector();
 
@@ -183,7 +183,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     gcLogger.log_rescue(2, gcResults);
 
     gcStats.setCandidateGarbageCount(gcResults.size());
-    Set toDelete = Collections.unmodifiableSet(rescue(new ObjectIDSet2(gcResults), rescueTimes));
+    Set toDelete = Collections.unmodifiableSet(rescue(new ObjectIDSet(gcResults), rescueTimes));
 
     if (gcState.isStopRequested()) { return; }
     gcLogger.log_sweep(toDelete);
@@ -281,12 +281,12 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
   }
 
   private void collectRoot(Filter filter, ObjectID rootId, Set managedObjectIds) {
-    Set toBeVisited = new ObjectIDSet2();
+    Set toBeVisited = new ObjectIDSet();
     toBeVisited.add(rootId);
 
     while (!toBeVisited.isEmpty()) {
 
-      for (Iterator i = new ObjectIDSet2(toBeVisited).iterator(); i.hasNext();) {
+      for (Iterator i = new ObjectIDSet(toBeVisited).iterator(); i.hasNext();) {
         ObjectID id = (ObjectID) i.next();
         if (lifeCycleState.isStopRequested()) return;
         ManagedObject obj = objectManager.getObjectByIDOrNull(id);
@@ -386,7 +386,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
 
   private static class NewReferenceCollector implements ChangeCollector {
 
-    Set newReferences = new ObjectIDSet2();
+    Set newReferences = new ObjectIDSet();
 
     public void changed(ObjectID changedObject, ObjectID oldReference, ObjectID newReference) {
       synchronized (newReferences) {

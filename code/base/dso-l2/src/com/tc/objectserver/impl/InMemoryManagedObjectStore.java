@@ -13,7 +13,7 @@ import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
-import com.tc.util.ObjectIDSet2;
+import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -82,9 +82,9 @@ public class InMemoryManagedObjectStore implements ManagedObjectStore {
 
 
 
-  public synchronized ObjectIDSet2 getAllObjectIDs() {
+  public synchronized ObjectIDSet getAllObjectIDs() {
     assertNotInShutdown();
-    return new ObjectIDSet2(managed.keySet());
+    return new ObjectIDSet(managed.keySet());
   }
 
   public synchronized int getObjectCount() {

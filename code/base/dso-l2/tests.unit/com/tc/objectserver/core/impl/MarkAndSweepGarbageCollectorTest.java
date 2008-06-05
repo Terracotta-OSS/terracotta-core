@@ -21,7 +21,7 @@ import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.impl.NullPersistenceTransactionProvider;
 import com.tc.statistics.mock.NullStatisticsAgentSubSystem;
 import com.tc.text.PrettyPrinterImpl;
-import com.tc.util.ObjectIDSet2;
+import com.tc.util.ObjectIDSet;
 
 import java.io.Writer;
 import java.util.Arrays;
@@ -295,8 +295,8 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
     return roots;
   }
 
-  public ObjectIDSet2 getAllObjectIDs() {
-    return new ObjectIDSet2(managed.keySet());
+  public ObjectIDSet getAllObjectIDs() {
+    return new ObjectIDSet(managed.keySet());
   }
 
   public void addFaultedObject(ObjectID oid, ManagedObject mo, boolean removeOnRelease) {

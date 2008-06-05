@@ -11,7 +11,7 @@ import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.text.PrettyPrinter;
-import com.tc.util.ObjectIDSet2;
+import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
 import java.util.Map;
@@ -23,7 +23,7 @@ public class TestManagedObjectStore implements ManagedObjectStore {
 
   public boolean       addNewWasCalled = false;
   public boolean       containsKey;
-  public ObjectIDSet2  keySet;
+  public ObjectIDSet  keySet;
   public ManagedObject managedObject;
   private int          count;
 
@@ -36,7 +36,7 @@ public class TestManagedObjectStore implements ManagedObjectStore {
     count++;
   }
 
-  public ObjectIDSet2 getAllObjectIDs() {
+  public ObjectIDSet getAllObjectIDs() {
     return keySet;
   }
 

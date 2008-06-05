@@ -33,7 +33,7 @@ import com.tc.object.session.NullSessionManager;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.test.TCTestCase;
-import com.tc.util.ObjectIDSet2;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.PortChooser;
 import com.tc.util.UUID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
@@ -205,7 +205,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
   }
 
   private ObjectSyncMessage createTestObjectSyncMessage() {
-    Set dnaOids = new ObjectIDSet2();
+    Set dnaOids = new ObjectIDSet();
     for (long i = 1; i <= 100; ++i) {
       dnaOids.add(new ObjectID(i));
     }
@@ -261,7 +261,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
   }
 
   private GCResultMessage createGCResultMessage() {
-    ObjectIDSet2 oidSet = new ObjectIDSet2();
+    ObjectIDSet oidSet = new ObjectIDSet();
     for (long i = 1; i <= 100; ++i) {
       oidSet.add(new ObjectID(i));
     }

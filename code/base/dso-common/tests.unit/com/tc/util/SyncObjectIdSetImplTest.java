@@ -88,7 +88,7 @@ public class SyncObjectIdSetImplTest extends TestCase {
     assertEquals(threadCnt, postMon.currentCount());
 
     // now release all client threads
-    set.stopPopulating(new ObjectIDSet2());
+    set.stopPopulating(new ObjectIDSet());
     // if all threads don't come out of the method we'll hang forever on the next line..
     postMon.acquire();
 

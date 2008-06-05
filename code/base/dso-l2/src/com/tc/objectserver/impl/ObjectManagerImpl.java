@@ -47,7 +47,7 @@ import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
 import com.tc.util.Counter;
-import com.tc.util.ObjectIDSet2;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.concurrent.StoppableThread;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -600,7 +600,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return objectStore.getRootNamesToIDsMap();
   }
 
-  public ObjectIDSet2 getAllObjectIDs() {
+  public ObjectIDSet getAllObjectIDs() {
     return objectStore.getAllObjectIDs();
   }
 
