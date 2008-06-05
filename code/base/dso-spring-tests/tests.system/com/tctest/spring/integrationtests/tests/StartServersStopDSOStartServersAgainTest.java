@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 
 package com.tctest.spring.integrationtests.tests;
@@ -14,27 +15,26 @@ import java.util.Collections;
 
 import junit.framework.Test;
 
-
 public class StartServersStopDSOStartServersAgainTest extends SpringDeploymentTest {
-  private static final String  REMOTE_SERVICE_NAME           = "Singleton";
-  private static final String  BEAN_DEFINITION_FILE_FOR_TEST = "classpath:/com/tctest/spring/beanfactory.xml";
-  private static final String  CONFIG_FILE_FOR_TEST          = "/tc-config-files/singleton-tc-config.xml";
+  private static final String REMOTE_SERVICE_NAME           = "Singleton";
+  private static final String BEAN_DEFINITION_FILE_FOR_TEST = "classpath:/com/tctest/spring/beanfactory.xml";
+  private static final String CONFIG_FILE_FOR_TEST          = "/tc-config-files/singleton-tc-config.xml";
 
   public static Test suite() {
     return new ServerTestSetup(StartServersStopDSOStartServersAgainTest.class, true, Collections.EMPTY_LIST);
   }
 
   public StartServersStopDSOStartServersAgainTest() {
-    //disableAllUntil("2010-03-01");
+    // MNK-561
+    disableAllUntil("2008-06-30");
   }
 
   public void testStartServersStopDSOStartServersAgain() throws Exception {
 
     Deployment warPath = makeDeploymentBuilder("test-singleton.war")
-        .addBeanDefinitionFile(BEAN_DEFINITION_FILE_FOR_TEST)
-        .addRemoteService(REMOTE_SERVICE_NAME, "singleton", ISingleton.class)
-        .addDirectoryOrJARContainingClass(ISingleton.class)
-        .addDirectoryContainingResource(CONFIG_FILE_FOR_TEST)
+        .addBeanDefinitionFile(BEAN_DEFINITION_FILE_FOR_TEST).addRemoteService(REMOTE_SERVICE_NAME, "singleton",
+                                                                               ISingleton.class)
+        .addDirectoryOrJARContainingClass(ISingleton.class).addDirectoryContainingResource(CONFIG_FILE_FOR_TEST)
         .makeDeployment();
 
     Server server1 = makeWebApplicationServer(CONFIG_FILE_FOR_TEST).addWarDeployment(warPath, "test-singleton");
@@ -84,4 +84,3 @@ public class StartServersStopDSOStartServersAgainTest extends SpringDeploymentTe
   }
 
 }
-
