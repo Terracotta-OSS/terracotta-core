@@ -4,11 +4,11 @@
  */
 package com.tc.l2.msg;
 
-import java.util.Set;
+import java.util.SortedSet;
 
 public class GCResultMessageFactory {
 
-  public static GCResultMessage createGCResultMessage(int gcIterationCount, Set deleted) {
+  public static GCResultMessage createGCResultMessage(int gcIterationCount, SortedSet deleted) {
     return new GCResultMessage(GCResultMessage.GC_RESULT, gcIterationCount, deleted);
   }
 

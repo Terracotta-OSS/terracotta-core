@@ -13,6 +13,8 @@ import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.core.api.GarbageCollector;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
+import com.tc.util.ObjectIDSet;
+import com.tc.util.TCCollections;
 import com.tc.util.concurrent.LifeCycleState;
 import com.tc.util.concurrent.NullLifeCycleState;
 import com.tc.util.concurrent.StoppableThread;
@@ -20,12 +22,11 @@ import com.tc.util.concurrent.StoppableThread;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class TestGarbageCollector implements GarbageCollector {
-  public Set            collectedObjects = new HashSet();
+  public ObjectIDSet    collectedObjects = new ObjectIDSet();
   private boolean       collected        = false;
   private boolean       isPausing        = false;
   private boolean       isPaused         = false;
@@ -71,7 +72,7 @@ public class TestGarbageCollector implements GarbageCollector {
     initQueues();
   }
 
-  public Set collect(Filter filter, Collection rootIds, Set managedObjectIds) {
+  public ObjectIDSet collect(Filter filter, Collection rootIds, ObjectIDSet managedObjectIds) {
     try {
       collectCalls.put(new CollectCallContext(filter, rootIds, managedObjectIds, objectProvider));
     } catch (InterruptedException e) {
@@ -233,7 +234,7 @@ public class TestGarbageCollector implements GarbageCollector {
     return out.print(getClass().getName());
   }
 
-  public Set collect(Filter traverser, Collection roots, Set managedObjectIds, LifeCycleState state) {
+  public ObjectIDSet collect(Filter traverser, Collection roots, ObjectIDSet managedObjectIds, LifeCycleState state) {
     return collect(traverser, roots, managedObjectIds);
   }
 
@@ -242,12 +243,11 @@ public class TestGarbageCollector implements GarbageCollector {
 
   }
 
-  // This test is kind of messed up now that I refactored. Needs evaluating.
   public void gc() {
     collect(null, objectProvider.getRootIDs(), objectProvider.getAllObjectIDs(), new NullLifeCycleState());
     this.requestGCPause();
     this.blockUntilReadyToGC();
-    this.deleteGarbage(new GCResultContext(1, Collections.EMPTY_SET));
+    this.deleteGarbage(new GCResultContext(1, TCCollections.EMPTY_OBJECT_ID_SET));
   }
 
   public void addNewReferencesTo(Set rescueIds) {
@@ -300,4 +300,5 @@ public class TestGarbageCollector implements GarbageCollector {
     this.notifyGCComplete();
     return true;
   }
+
 }

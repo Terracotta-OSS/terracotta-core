@@ -11,11 +11,11 @@ import com.tc.util.Assert;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Set;
+import java.util.SortedSet;
 
 public class GCResultMessage extends AbstractGroupMessage implements EventContext {
   public static final int GC_RESULT = 0;
-  private Set             gcedOids;
+  private SortedSet       gcedOids;
   private int             gcIterationCount;
 
   // To make serialization happy
@@ -23,7 +23,7 @@ public class GCResultMessage extends AbstractGroupMessage implements EventContex
     super(-1);
   }
 
-  public GCResultMessage(int type, int gcIterationCount, Set deleted) {
+  public GCResultMessage(int type, int gcIterationCount, SortedSet deleted) {
     super(type);
     this.gcIterationCount = gcIterationCount;
     this.gcedOids = deleted;
@@ -32,7 +32,7 @@ public class GCResultMessage extends AbstractGroupMessage implements EventContex
   protected void basicReadExternal(int msgType, ObjectInput in) throws IOException, ClassNotFoundException {
     Assert.assertEquals(GC_RESULT, msgType);
     gcIterationCount = in.readInt();
-    gcedOids = (Set) in.readObject();
+    gcedOids = (SortedSet) in.readObject();
   }
 
   protected void basicWriteExternal(int msgType, ObjectOutput out) throws IOException {
@@ -43,7 +43,7 @@ public class GCResultMessage extends AbstractGroupMessage implements EventContex
     out.writeObject(gcedOids);
   }
 
-  public Set getGCedObjectIDs() {
+  public SortedSet getGCedObjectIDs() {
     return gcedOids;
   }
 

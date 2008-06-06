@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeSet;
 
 public class ObjectIDSetTest extends TCTestCase {
 
@@ -35,6 +36,31 @@ public class ObjectIDSetTest extends TCTestCase {
     basicTest(creator, 100000, 100000);
     basicTest(creator, 500000, 100000);
     basicTest(creator, 100000, 1000000);
+  }
+  
+  public void testSortedSetObjectIDSet() throws Exception {
+    SecureRandom sr = new SecureRandom();
+    long seed = sr.nextLong();
+    System.err.println("SORTED TEST : Seed for Random is " + seed);
+    Random r = new Random(seed);
+    TreeSet ts = new TreeSet();
+    ObjectIDSet oids = new ObjectIDSet();
+    for (int i = 0; i < 100000; i++) {
+      long l = r.nextLong();
+      ObjectID id = new ObjectID(l);
+      boolean b1 = ts.add(id);
+      boolean b2 = oids.add(id);
+      assertEquals(b1, b2);
+      assertEquals(ts.size(), oids.size());
+    }
+    
+    //verify sorted
+    Iterator i = ts.iterator();
+    for (Iterator j = oids.iterator(); j.hasNext();) {
+      ObjectID oid1 = (ObjectID) i.next();
+      ObjectID oid2 = (ObjectID) j.next();
+      assertEquals(oid1, oid2);
+    }
   }
 
   public void basicTest(SetCreator creator, int distRange, int iterationCount) {
@@ -166,7 +192,7 @@ public class ObjectIDSetTest extends TCTestCase {
     return s;
   }
 
-  public void testObjectIDSet2() {
+  public void testObjectIDSet() {
     SetCreator creator = new SetCreator() {
       public Set create() {
         return new ObjectIDSet();
@@ -180,7 +206,7 @@ public class ObjectIDSetTest extends TCTestCase {
     basicTest(creator);
   }
 
-  public void testObjectIDSet2Dump() {
+  public void testObjectIDSetDump() {
     ObjectIDSet s = new ObjectIDSet();
     System.err.println(" toString() : " + s);
     

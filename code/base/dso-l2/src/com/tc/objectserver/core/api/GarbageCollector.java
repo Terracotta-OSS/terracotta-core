@@ -9,6 +9,7 @@ import com.tc.objectserver.api.GCStats;
 import com.tc.objectserver.api.ObjectManagerEventListener;
 import com.tc.objectserver.context.GCResultContext;
 import com.tc.text.PrettyPrintable;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.concurrent.LifeCycleState;
 import com.tc.util.concurrent.StoppableThread;
 
@@ -33,7 +34,7 @@ public interface GarbageCollector extends PrettyPrintable {
   public void notifyReadyToGC();
 
   /**
-   * Request to pause when the system state stabalizes
+   * Request to pause when the system state stabilizes
    */
   public void requestGCPause();
 
@@ -48,9 +49,9 @@ public interface GarbageCollector extends PrettyPrintable {
    * @param managedObjects
    * @return An set on the objects that can be deleted
    */
-  public Set collect(Filter traverser, Collection roots, Set managedObjectIds);
+  public ObjectIDSet collect(Filter traverser, Collection roots, ObjectIDSet managedObjectIds);
 
-  public Set collect(Filter traverser, Collection roots, Set managedObjectIds, LifeCycleState state);
+  public ObjectIDSet collect(Filter traverser, Collection roots, ObjectIDSet managedObjectIds, LifeCycleState state);
 
   public void changed(ObjectID changedObject, ObjectID oldReference, ObjectID newReference);
 

@@ -90,7 +90,9 @@ import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.stats.counter.sampled.SampledCounterImpl;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Counter;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
+import com.tc.util.TCCollections;
 import com.tc.util.concurrent.LifeCycleState;
 import com.tc.util.concurrent.StoppableThread;
 import com.tc.util.concurrent.ThreadUtil;
@@ -108,6 +110,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.concurrent.CyclicBarrier;
 
 /**
@@ -1480,7 +1483,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     assertTrue(gc.isPaused());
 
     // Complete gc
-    gc.deleteGarbage(new GCResultContext(1, Collections.EMPTY_SET));
+    gc.deleteGarbage(new GCResultContext(1, TCCollections.EMPTY_OBJECT_ID_SET));
 
     // Lookup context should have been fired
     loc = (LookupEventContext) coordinator.lookupSink.queue.take();
@@ -2169,10 +2172,9 @@ public class ObjectManagerTest extends BaseDSOTestCase {
   private static class Listener implements ObjectManagerEventListener {
     final List gcEvents = new ArrayList();
 
-    public void garbageCollectionComplete(GCStats stats, Set deleted) {
+    public void garbageCollectionComplete(GCStats stats, SortedSet deleted) {
       gcEvents.add(stats);
     }
-
   }
 
   private class ExplodingGarbageCollector implements GarbageCollector {
@@ -2212,7 +2214,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
       return;
     }
 
-    public Set collect(Filter traverser, Collection roots, Set managedObjectIds) {
+    public ObjectIDSet collect(Filter traverser, Collection roots, ObjectIDSet managedObjectIds) {
       throw toThrow;
     }
 
@@ -2220,7 +2222,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
       return out.print(getClass().getName());
     }
 
-    public Set collect(Filter traverser, Collection roots, Set managedObjectIds, LifeCycleState state) {
+    public ObjectIDSet collect(Filter traverser, Collection roots, ObjectIDSet managedObjectIds, LifeCycleState state) {
       return collect(traverser, roots, managedObjectIds);
     }
 

@@ -14,15 +14,21 @@ import java.io.ObjectOutput;
 import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.SortedSet;
 
 /**
- * This class is a an attempt to meet the shortcomings of the older implementation of ObjectIDSet. Mainly the performance
- * of adds and removes when the ObjectIDs are non-contiguous. It uses a balanced tree internally to store ranges instead
- * of an ArrayList
+ * This class was build in an attempt to store a large set of ObjectIDs compressed in memory while giving the same
+ * characteristic of HashSet in terms of performance.
+ * <p>
+ * This is version 2 of the class, the older one version 1 has several shortcomings. Mainly the performance of adds and
+ * removes when the ObjectIDs are non-contiguous.
+ * <p>
+ * This one uses a balanced tree internally to store ranges instead of an ArrayList
  */
-public class ObjectIDSet extends AbstractSet implements Externalizable {
+public class ObjectIDSet extends AbstractSet implements SortedSet, Externalizable {
 
   private final AATreeSet ranges;
   private int             size = 0;
@@ -128,21 +134,21 @@ public class ObjectIDSet extends AbstractSet implements Externalizable {
   }
 
   public String toString() {
-    StringBuffer sb = new StringBuffer("ObjectIDSet2 " + getCompressionDetails() + "[");
+    StringBuffer sb = new StringBuffer("ObjectIDSet " + getCompressionDetails() + "[");
     for (Iterator i = ranges.iterator(); i.hasNext();) {
       sb.append(' ').append(i.next());
     }
     return sb.append(']').toString();
   }
 
-  public String dump() {
-    StringBuffer sb = new StringBuffer("ObjectIDSet2 " + getCompressionDetails() + "[");
+  public String toShortString() {
+    StringBuffer sb = new StringBuffer("ObjectIDSet " + getCompressionDetails() + "[");
     sb.append(" size  = ").append(size);
     return sb.append(']').toString();
   }
 
   private String getCompressionDetails() {
-    return "{ (oids:ranges) = " + size + ":" + ranges.size() + " | % =  " + getCompressionPercentage() + " } ";
+    return "{ (oids:ranges) = " + ranges.size() + ":" + size + " , " + getCompressionPercentage() + " % } ";
   }
 
   // Range contains two longs instead of 1 long in ObjectID
@@ -373,4 +379,33 @@ public class ObjectIDSet extends AbstractSet implements Externalizable {
     ranges.clear();
   }
 
+  // =======================SortedSet Interface Methods==================================
+
+  public Comparator comparator() {
+    return null;
+  }
+
+  public Object first() {
+    if (size == 0) throw new NoSuchElementException();
+    Range min = (Range) ranges.findMin();
+    return new ObjectID(min.start);
+  }
+
+  public Object last() {
+    if (size == 0) throw new NoSuchElementException();
+    Range max = (Range) ranges.findMax();
+    return new ObjectID(max.end);
+  }
+
+  public SortedSet headSet(Object arg0) {
+    throw new UnsupportedOperationException();
+  }
+
+  public SortedSet subSet(Object arg0, Object arg1) {
+    throw new UnsupportedOperationException();
+  }
+
+  public SortedSet tailSet(Object arg0) {
+    throw new UnsupportedOperationException();
+  }
 }

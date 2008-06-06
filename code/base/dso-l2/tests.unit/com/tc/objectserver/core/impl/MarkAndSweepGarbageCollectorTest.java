@@ -70,7 +70,8 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
     super.setUp();
     this.managed = new HashMap();
 
-    this.collector = new MarkAndSweepGarbageCollector(this, new TestClientStateManager(), false, new NullStatisticsAgentSubSystem());
+    this.collector = new MarkAndSweepGarbageCollector(this, new TestClientStateManager(), false,
+                                                      new NullStatisticsAgentSubSystem());
     this.lookedUp = new HashSet();
     this.released = new HashSet();
     this.root1 = createObject(8);
@@ -95,7 +96,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
   public void testEmptyRoots() {
     // System.out.println("running: testEmptyRoots");
 
-    Set toDelete = collector.collect(filter, getRootIds(), new HashSet(managed.keySet()));
+    Set toDelete = collector.collect(filter, getRootIds(), new ObjectIDSet(managed.keySet()));
     // System.out.println(toDelete);
     assertTrue(toDelete.size() == 0);
   }
@@ -104,7 +105,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
     // System.out.println("running: testOneLevelNoGarbage");
     TestManagedObject tmo = createObject(3);
     root1.setReference(0, tmo.getID());
-    Set toDelete = collector.collect(filter, getRootIds(), new HashSet(managed.keySet()));
+    Set toDelete = collector.collect(filter, getRootIds(), new ObjectIDSet(managed.keySet()));
     // System.out.println(toDelete);
     assertTrue(toDelete.size() == 0);
   }
@@ -114,7 +115,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
     TestManagedObject tmo = createObject(3);
     root1.setReference(0, tmo.getID());
     root2.setReference(0, tmo.getID());
-    Set toDelete = collector.collect(filter, getRootIds(), new HashSet(managed.keySet()));
+    Set toDelete = collector.collect(filter, getRootIds(), new ObjectIDSet(managed.keySet()));
     // System.out.println(toDelete);
     // System.out.println(managed);
     assertTrue(toDelete.size() == 0);
@@ -128,7 +129,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
 
     root1.setReference(0, tmo1.getID());
 
-    Set toDelete = collector.collect(filter, getRootIds(), new HashSet(managed.keySet()));
+    Set toDelete = collector.collect(filter, getRootIds(), new ObjectIDSet(managed.keySet()));
     // System.out.println(toDelete);
     assertTrue(toDelete.size() == 0);
   }
@@ -143,7 +144,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
 
     root1.setReference(0, tmo1.getID());
 
-    Set toDelete = collector.collect(filter, getRootIds(), new HashSet(managed.keySet()));
+    Set toDelete = collector.collect(filter, getRootIds(), new ObjectIDSet(managed.keySet()));
     // System.out.println(toDelete);
     assertTrue(toDelete.size() == 1);
   }
@@ -167,13 +168,13 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
     };
 
     // make sure that the filter filters out the sub-graph starting at the reference to tmo2.
-    collector.collect(testFilter, getRootIds(), new HashSet(managed.keySet()));
+    collector.collect(testFilter, getRootIds(), new ObjectIDSet(managed.keySet()));
     assertTrue(this.lookedUp.contains(tmo1.getID()));
     assertFalse(this.lookedUp.contains(tmo2.getID()));
     assertFalse(this.lookedUp.contains(tmo3.getID()));
 
     // try it with the regular filter to make sure the behavior is actually different.
-    collector.collect(filter, getRootIds(), new HashSet(managed.keySet()));
+    collector.collect(filter, getRootIds(), new ObjectIDSet(managed.keySet()));
     assertTrue(this.lookedUp.contains(tmo1.getID()));
     assertTrue(this.lookedUp.contains(tmo2.getID()));
     assertTrue(this.lookedUp.contains(tmo3.getID()));
@@ -190,7 +191,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
 
     root1.setReference(0, tmo1.getID());
 
-    collector.collect(filter, getRootIds(), new HashSet(managed.keySet()));
+    collector.collect(filter, getRootIds(), new ObjectIDSet(managed.keySet()));
     assertTrue(lookedUp.equals(released));
   }
 
@@ -237,8 +238,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
     throw new ImplementMe();
   }
 
-  public boolean lookupObjectsAndSubObjectsFor(NodeID nodeID, ObjectManagerResultsContext responseContext,
-                                               int maxCount) {
+  public boolean lookupObjectsAndSubObjectsFor(NodeID nodeID, ObjectManagerResultsContext responseContext, int maxCount) {
     throw new ImplementMe();
   }
 
@@ -317,18 +317,18 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
 
   public void dump(Writer writer) {
     throw new ImplementMe();
-    
+
   }
 
   public void dumpToLogger() {
     throw new ImplementMe();
-    
+
   }
 
   public String dump() {
     throw new ImplementMe();
   }
-  
+
   public void preFetchObjectsAndCreate(Set oids, Set newOids) {
     throw new ImplementMe();
   }
@@ -339,9 +339,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
 
   public ManagedObject getObjectByIDOrNull(ObjectID id) {
     ManagedObject mo = getObjectByID(id);
-    if(mo != null && mo.isNew()) {
-      return null;
-    }
+    if (mo != null && mo.isNew()) { return null; }
     return mo;
   }
 

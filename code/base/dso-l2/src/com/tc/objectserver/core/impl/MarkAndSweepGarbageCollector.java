@@ -29,6 +29,7 @@ import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.State;
+import com.tc.util.TCCollections;
 import com.tc.util.concurrent.LifeCycleState;
 import com.tc.util.concurrent.NullLifeCycleState;
 import com.tc.util.concurrent.StoppableThread;
@@ -41,6 +42,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -102,7 +104,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     Assert.assertNotNull(statisticsAgentSubSystem);
   }
 
-  private Set rescue(final Set gcResults, final List rescueTimes) {
+  private ObjectIDSet rescue(final ObjectIDSet gcResults, final List rescueTimes) {
     long start = System.currentTimeMillis();
     Set rescueIds = new ObjectIDSet();
     stateManager.addAllReferencedIdsTo(rescueIds);
@@ -122,7 +124,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
       }
     };
 
-    Set rv = collect(rescueFilter, rescueIds, gcResults, gcState);
+    ObjectIDSet rv = collect(rescueFilter, rescueIds, gcResults, gcState);
     rescueTimes.add(new Long(System.currentTimeMillis() - start));
     return rv;
   }
@@ -155,7 +157,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     if (gcState.isStopRequested()) { return; }
 
     gcLogger.log_markStart(managedIDs);
-    Set gcResults = collect(NULL_FILTER, rootIDs, managedIDs, gcState);
+    ObjectIDSet gcResults = collect(NULL_FILTER, rootIDs, managedIDs, gcState);
     gcLogger.log_markResults(gcResults);
 
     if (gcState.isStopRequested()) { return; }
@@ -183,7 +185,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     gcLogger.log_rescue(2, gcResults);
 
     gcStats.setCandidateGarbageCount(gcResults.size());
-    Set toDelete = Collections.unmodifiableSet(rescue(new ObjectIDSet(gcResults), rescueTimes));
+    SortedSet toDelete = Collections.unmodifiableSortedSet(rescue(new ObjectIDSet(gcResults), rescueTimes));
 
     if (gcState.isStopRequested()) { return; }
     gcLogger.log_sweep(toDelete);
@@ -258,11 +260,11 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     referenceCollector.changed(changedObject, oldReference, newReference);
   }
 
-  public Set collect(Filter filter, Collection rootIds, Set managedObjectIds) {
+  public ObjectIDSet collect(Filter filter, Collection rootIds, ObjectIDSet managedObjectIds) {
     return collect(filter, rootIds, managedObjectIds, NULL_LIFECYCLE_STATE);
   }
 
-  public Set collect(Filter filter, Collection rootIds, Set managedObjectIds, LifeCycleState aLifeCycleState) {
+  public ObjectIDSet collect(Filter filter, Collection rootIds, ObjectIDSet managedObjectIds, LifeCycleState aLifeCycleState) {
     this.lifeCycleState = aLifeCycleState;
 
     long start = System.currentTimeMillis();
@@ -271,7 +273,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     for (Iterator i = rootIds.iterator(); i.hasNext();) {
       ObjectID rootId = (ObjectID) i.next();
       managedObjectIds.remove(rootId);
-      if (lifeCycleState.isStopRequested()) return Collections.EMPTY_SET;
+      if (lifeCycleState.isStopRequested()) return TCCollections.EMPTY_OBJECT_ID_SET;
       collectRoot(filter, rootId, managedObjectIds);
     }
 
@@ -445,7 +447,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     this.gcState = st;
   }
 
-  private void fireGCCompleteEvent(GCStats gcStats, Set deleted) {
+  private void fireGCCompleteEvent(GCStats gcStats, SortedSet deleted) {
     for (Iterator iter = eventListeners.iterator(); iter.hasNext();) {
       try {
         ObjectManagerEventListener listener = (ObjectManagerEventListener) iter.next();

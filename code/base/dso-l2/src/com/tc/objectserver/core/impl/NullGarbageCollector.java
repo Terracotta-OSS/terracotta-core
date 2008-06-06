@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.core.impl;
 
@@ -10,21 +11,22 @@ import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.core.api.GarbageCollector;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.ObjectIDSet;
+import com.tc.util.TCCollections;
 import com.tc.util.concurrent.LifeCycleState;
 import com.tc.util.concurrent.StoppableThread;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
 
 public class NullGarbageCollector implements GarbageCollector {
 
-  public Set collect(Filter filter, Collection roots, Set managedObjectIds) {
-    return Collections.EMPTY_SET;
+  public ObjectIDSet collect(Filter traverser, Collection roots, ObjectIDSet managedObjectIds) {
+    return TCCollections.EMPTY_OBJECT_ID_SET;
   }
 
-  public Set collect(Filter filter, Collection roots, Set managedObjectIds, LifeCycleState state) {
-    return Collections.EMPTY_SET;
+  public ObjectIDSet collect(Filter traverser, Collection roots, ObjectIDSet managedObjectIds, LifeCycleState state) {
+    return TCCollections.EMPTY_OBJECT_ID_SET;
   }
 
   public boolean isPausingOrPaused() {
@@ -110,4 +112,5 @@ public class NullGarbageCollector implements GarbageCollector {
   public boolean deleteGarbage(GCResultContext resultContext) {
     return true;
   }
+
 }

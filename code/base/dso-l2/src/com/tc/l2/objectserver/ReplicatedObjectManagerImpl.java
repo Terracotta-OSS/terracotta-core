@@ -38,6 +38,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -127,7 +128,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   }
 
   public void handleGCResult(GCResultMessage gcMsg) {
-    Set gcedOids = gcMsg.getGCedObjectIDs();
+    SortedSet gcedOids = gcMsg.getGCedObjectIDs();
     if (stateManager.isActiveCoordinator()) {
       logger.warn("Received GC Result from " + gcMsg.messageFrom() + " While this node is ACTIVE. Ignoring result : "
                   + gcMsg);
@@ -249,7 +250,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     boolean disabled        = false;
     Map     syncingPassives = new HashMap();
 
-    public void garbageCollectionComplete(GCStats stats, Set deleted) {
+    public void garbageCollectionComplete(GCStats stats, SortedSet deleted) {
       Map toAdd = null;
       notifyGCResultToPassives(stats, deleted);
       synchronized (this) {
@@ -271,7 +272,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       add2L2StateManager(toAdd);
     }
 
-    private void notifyGCResultToPassives(GCStats stats, final Set deleted) {
+    private void notifyGCResultToPassives(GCStats stats, final SortedSet deleted) {
       if (deleted.isEmpty()) return;
       final GCResultMessage msg = GCResultMessageFactory.createGCResultMessage(stats.getIteration(), deleted);
       final long id = gcIdGenerator.incrementAndGet();
