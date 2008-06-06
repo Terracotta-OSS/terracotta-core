@@ -1346,7 +1346,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
       /*
        * server_level is not changed to NIL_LOCK_LEVEL even though the server will release the lock as we need to know
        * what state we were holding before wait on certain scenarios like server crash etc.
-       *
+       * 
        * @see ClientLockManager.notified
        */
       return this.server_level;
@@ -1423,14 +1423,13 @@ class ClientLock implements TimerCallback, LockFlushCallback {
 
   private static class Greediness {
     /**
-     * The class Greediness models state transition among various states a client lock could be in. A client lock could be in
-     * one of the several states:
-     *
+     * The class Greediness models state transition among various states a client lock could be in. A client lock could
+     * be in one of the several states: <code>
      * NOT_GREEDY -> GREEDY -> RECALLED -------------------------------
      *                            |                                   |
      *                            |                                   V
      *                            |-------> GREEDY LEASE  ---> RECALL IN PROGRESS
-     *
+     * </code>
      */
     private static final State NOT_GREEDY         = new State("NOT GREEDY");
     private static final State GREEDY             = new State("GREEDY");
