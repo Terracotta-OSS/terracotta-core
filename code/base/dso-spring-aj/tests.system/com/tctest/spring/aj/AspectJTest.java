@@ -29,6 +29,9 @@ public class AspectJTest extends SpringDeploymentTest {
   }
 
   public AspectJTest() {
+    // MNK-561
+    disableAllUntil("2008-06-30");
+    
     this.disableVariant(TestConfigObject.SPRING_VARIANT, "128");
   }
 
