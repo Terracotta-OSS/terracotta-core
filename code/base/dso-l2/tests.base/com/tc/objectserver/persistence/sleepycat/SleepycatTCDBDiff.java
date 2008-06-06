@@ -39,7 +39,13 @@ public class SleepycatTCDBDiff {
   private final boolean                   moDiff;
   private final ManagedObjectStateFactory mosf1;
   private final ManagedObjectStateFactory mosf2;
+  protected boolean diffStringIndexer = false;
+  protected boolean diffGeneratedClasses = false;
+  protected boolean diffTransactions = false;
+  protected boolean diffClientStates = false;
+  protected boolean diffManagedObjects = false;
 
+  
   public SleepycatTCDBDiff(File d1, File d2, boolean moDiff) throws TCDatabaseException, IOException {
     this.d1 = d1;
     this.d2 = d2;
@@ -79,6 +85,7 @@ public class SleepycatTCDBDiff {
     Map m2 = cp2.retrieveAllClasses();
     if (!m1.keySet().equals(m2.keySet())) {
       log("*** [1] containing " + m1.size() + " generated classes differs from [2] containing " + m2.size());
+      diffGeneratedClasses = true;
     }
   }
 
@@ -89,6 +96,7 @@ public class SleepycatTCDBDiff {
     if (!txns1.equals(txns2)) {
       log("*** [1] containing " + txns1.size() + " Transactions differs from [2] containing " + txns2.size()
           + " Transactions");
+      diffTransactions = true;
     }
   }
 
@@ -99,6 +107,7 @@ public class SleepycatTCDBDiff {
     if (!cids1.equals(cids2)) {
       log("*** [1] containing " + cids1.size() + " ClientIDs differs from [2] containing " + cids2.size()
           + " ClientIDs");
+      diffClientStates = true;
     }
   }
 
@@ -109,6 +118,7 @@ public class SleepycatTCDBDiff {
     if (!oids1.equals(oids2)) {
       log("*** [1] containing " + oids1.size() + " ObjectIDs differs from [2] containing " + oids2.size()
           + " ObjectIDs");
+      diffManagedObjects = true;
     }
 
     if (!moDiff) return;
@@ -152,6 +162,7 @@ public class SleepycatTCDBDiff {
     TObjectLongHashMap map2 = stringIndex2.getString2LongMappings();
     if (!map1.equals(map2)) {
       log("*** [1] containing " + map1.size() + " mapping differs from [2] containing " + map2.size() + " mapping");
+      diffStringIndexer = true;
     }
   }
 

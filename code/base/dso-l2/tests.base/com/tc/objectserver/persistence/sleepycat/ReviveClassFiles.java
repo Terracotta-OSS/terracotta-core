@@ -10,8 +10,10 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.io.serializer.TCObjectInputStream;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
+import com.tc.objectserver.managedobject.ManagedObjectChangeListenerProvider;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
-import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
+import com.tc.objectserver.managedobject.NullManagedObjectChangeListener;
 import com.tc.objectserver.managedobject.bytecode.PhysicalStateClassLoader;
 import com.tc.objectserver.persistence.api.ClassPersistor;
 
@@ -22,37 +24,36 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.Map.Entry;
 
 public class ReviveClassFiles {
 
-  private static final TCLogger    logger     = TCLogging.getLogger(ReviveClassFiles.class);
+  private static final TCLogger    logger = TCLogging.getLogger(ReviveClassFiles.class);
+  private SleepycatPersistor       sleepycatPersistor;
   private ClassPersistor           persistor;
-  private int                      sequenceId = 0;
   private PhysicalStateClassLoader loader;
 
   public ReviveClassFiles(File sourceDir, File destDir) throws Exception {
     DBEnvironment env = new DBEnvironment(true, sourceDir);
     SerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
-    final NullManagedObjectChangeListenerProvider managedObjectChangeListenerProvider = new NullManagedObjectChangeListenerProvider();
-    SleepycatPersistor sleepyCatPersistor = new SleepycatPersistor(logger, env, serializationAdapterFactory);
-    ManagedObjectStateFactory.createInstance(managedObjectChangeListenerProvider, sleepyCatPersistor);
-    persistor = sleepyCatPersistor.getClassPersistor();
+    final TestManagedObjectChangeListenerProvider managedObjectChangeListenerProvider = new TestManagedObjectChangeListenerProvider();
+    sleepycatPersistor = new SleepycatPersistor(logger, env, serializationAdapterFactory);
+    ManagedObjectStateFactory.createInstance(managedObjectChangeListenerProvider, sleepycatPersistor);
+    persistor = sleepycatPersistor.getClassPersistor();
     loader = new PhysicalStateClassLoader();
   }
 
-  private void reviveClassesFiles(File destDir) {
-    SortedMap map = new TreeMap(persistor.retrieveAllClasses());
+  protected SleepycatPersistor getSleepycatPersistor() {
+    return sleepycatPersistor;
+  }
+
+  public void reviveClassesFiles(File destDir) {
+    Map map = persistor.retrieveAllClasses();
     for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
       Map.Entry e = (Entry) i.next();
       Integer clazzId = (Integer) e.getKey();
       byte clazzBytes[] = (byte[]) e.getValue();
       int cid = clazzId.intValue();
-      if (sequenceId < cid) {
-        sequenceId = cid;
-      }
       loadFromBytes(cid, clazzBytes, destDir);
     }
 
@@ -97,8 +98,9 @@ public class ReviveClassFiles {
     }
 
     Class clazz = loader.defineClassFromBytes(genClassName, classId, loadedClassBytes, loadedClassBytes.length
-                                                                                       - bai.available(), bai.available());
-    
+                                                                                       - bai.available(), bai
+        .available());
+
     if (clazz != null && genClassName.equals(clazz.getName())) {
       log("successfully loaded class [ " + genClassName + " ]  from generated class file");
     } else {
@@ -153,6 +155,14 @@ public class ReviveClassFiles {
 
   private static void log(String message) {
     System.out.println(message);
+  }
+
+  private static class TestManagedObjectChangeListenerProvider implements ManagedObjectChangeListenerProvider {
+
+    public ManagedObjectChangeListener getListener() {
+      return new NullManagedObjectChangeListener();
+
+    }
   }
 
 }

@@ -8,8 +8,10 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
+import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
+import com.tc.objectserver.managedobject.ManagedObjectChangeListenerProvider;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
-import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
+import com.tc.objectserver.managedobject.NullManagedObjectChangeListener;
 import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Counter;
@@ -28,23 +30,36 @@ public class ManagedObjectReport {
   private static final TCLogger logger = TCLogging.getLogger(ManagedObjectReport.class);
 
   private SleepycatPersistor    persistor;
+  
+  //stat structures
+  protected Map classMap = new HashMap();
+  
+  protected Set nullObjectIDSet = new HashSet();
+  
+  protected Counter objectIDIsNullCounter = new Counter(0);
+  
+  protected Set doesNotExistInSet = new HashSet();
+  
+  protected Counter totalCounter = new Counter(0);
+
+  
+  
 
   public ManagedObjectReport(File dir) throws Exception {
     DBEnvironment env = new DBEnvironment(true, dir);
     SerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
-    final NullManagedObjectChangeListenerProvider managedObjectChangeListenerProvider = new NullManagedObjectChangeListenerProvider();
+    final TestManagedObjectChangeListenerProvider managedObjectChangeListenerProvider = new TestManagedObjectChangeListenerProvider();
     persistor = new SleepycatPersistor(logger, env, serializationAdapterFactory);
     ManagedObjectStateFactory.createInstance(managedObjectChangeListenerProvider, persistor);
+  }
+  
+  protected SleepycatPersistor getSleepycatPersistor() {
+    return persistor;
   }
 
   public void report() {
 
-    Map classMap = new HashMap();
-    Set nullObjectIDSet = new HashSet();
-    Counter objectIDIsNullCounter = new Counter(0);
-    Set doesNotExitInSet = new HashSet();
-    Counter totalCounter = new Counter(0);
-
+  
     Set objectIDSet = persistor.getManagedObjectPersistor().getAllObjectIDs();
     for (Iterator iter = objectIDSet.iterator(); iter.hasNext();) {
       ObjectID objectID = (ObjectID) iter.next();
@@ -77,20 +92,21 @@ public class ManagedObjectReport {
           } else {
             boolean exitInSet = objectIDSet.contains(mid);
             if (!exitInSet) {
-              doesNotExitInSet.add(mid);
+              doesNotExistInSet.add(mid);
             }
           }
         }
 
       }
-
     }
+  }
 
+  public void printReport() {
     log("---------------------------------- Managed Object Report ----------------------------------------------------");
     log("\t Total number of objects read: " + totalCounter.get());
     log("\t Total number getObjectReferences that yielded isNull references: " + objectIDIsNullCounter.get());
-    log("\t Total number of references that does not exist in allObjectIDs set: " + doesNotExitInSet.size());
-    log("\t does not exist in allObjectIDs set: " + doesNotExitInSet + " \n");
+    log("\t Total number of references that does not exist in allObjectIDs set: " + doesNotExistInSet.size());
+    log("\t does not exist in allObjectIDs set: " + doesNotExistInSet + " \n");
     log("\t Total number of references without ManagedObjects: " + nullObjectIDSet.size());
     log("\n\t Begin references with null ManagedObject summary --> \n");
     for (Iterator iter = nullObjectIDSet.iterator(); iter.hasNext();) {
@@ -104,7 +120,6 @@ public class ManagedObjectReport {
       log("\t\t Class: --> " + key + " had --> " + ((Counter) classMap.get(key)).get() + " references");
     }
     log("------------------------------------------End-----------------------------------------------------------------");
-
   }
 
   private static class NullObjectData {
@@ -156,6 +171,7 @@ public class ManagedObjectReport {
       validateDir(dir);
       ManagedObjectReport reporter = new ManagedObjectReport(dir);
       reporter.report();
+      reporter.printReport();
     } catch (Exception e) {
       e.printStackTrace();
       System.exit(2);
@@ -172,6 +188,14 @@ public class ManagedObjectReport {
 
   private static void log(String message) {
     System.out.println(message);
+  }
+  
+  private static class TestManagedObjectChangeListenerProvider implements ManagedObjectChangeListenerProvider {
+
+    public ManagedObjectChangeListener getListener() {
+      return new NullManagedObjectChangeListener();
+
+    }
   }
 
 }

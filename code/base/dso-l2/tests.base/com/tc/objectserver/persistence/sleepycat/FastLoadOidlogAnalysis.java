@@ -18,18 +18,20 @@ import com.tc.util.Conversion;
 import com.tc.util.OidLongArray;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 public class FastLoadOidlogAnalysis {
 
-  private static final int  LEFT   = 1;
-  private static final int  RIGHT  = 2;
-  private static final int  CENTER = 3;
+  private static final int   LEFT   = 1;
+  private static final int   RIGHT  = 2;
+  private static final int   CENTER = 3;
 
-  private EnvironmentConfig enc;
-  private Environment       env;
-  private DatabaseConfig    dbc;
+  private EnvironmentConfig  enc;
+  private Environment        env;
+  private DatabaseConfig     dbc;
+  protected List oidlogsStatsList = new ArrayList();
 
   public FastLoadOidlogAnalysis(File dir) throws Exception {
     enc = new EnvironmentConfig();
@@ -71,6 +73,7 @@ public class FastLoadOidlogAnalysis {
       if (dbName.equals("oidLogs")) {
         Database db = env.openDatabase(null, dbName, dbc);
         OidlogsStats stats = analyzeOidLogs(dbName, db);
+        oidlogsStatsList.add(stats);
         db.close();
         reportOidlog(stats);
       }
@@ -135,7 +138,7 @@ public class FastLoadOidlogAnalysis {
     System.out.println(message);
   }
 
-  private static final class OidlogsStats {
+  protected static final class OidlogsStats {
     private long         addCount;
     private long         deleteCount;
     private long         startSequence;

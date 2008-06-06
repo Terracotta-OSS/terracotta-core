@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.persistence.sleepycat;
 
@@ -26,12 +27,12 @@ public class SleepycatDBUsage {
 
   private EnvironmentConfig enc;
   private Environment       env;
-  private long              grandTotal;
-  private long              totalCount;
   private DatabaseConfig    dbc;
   private boolean           header = true;
-  private long              keyTotal;
-  private long              valuesTotal;
+  protected long            keyTotal;
+  protected long            valuesTotal;
+  protected long            grandTotal;
+  protected long            totalCount;
 
   public SleepycatDBUsage(File dir) throws Exception {
     enc = new EnvironmentConfig();
@@ -50,6 +51,7 @@ public class SleepycatDBUsage {
       String dbNAme = (String) i.next();
       Database db = env.openDatabase(null, dbNAme, dbc);
       DBStats stats = calculate(db);
+
       db.close();
       report(stats);
     }
@@ -159,7 +161,7 @@ public class SleepycatDBUsage {
     System.out.println(message);
   }
 
-  private static final class DBStats {
+  protected static final class DBStats {
 
     private long         count;
     private long         keySize;
