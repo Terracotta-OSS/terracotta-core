@@ -6,7 +6,7 @@ package com.tc.objectserver.persistence.sleepycat;
 
 import java.io.File;
 
-public class SleepycatDBUsageTest extends AbstractDBUtilsTest {
+public class SleepycatDBUsageTest extends AbstractDBUtilsTestBase {
 
   public void testSleepycatDBUsageTest() throws Exception {
 

@@ -31,7 +31,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-public abstract class AbstractDBUtilsTest extends TCTestCase {
+public abstract class AbstractDBUtilsTestBase extends TCTestCase {
 
   private static final TCLogger logger  = TCLogging.getLogger(FastLoadOidLogAnalysisTest.class);
   private int                   transactionSequence;
@@ -296,11 +296,11 @@ public abstract class AbstractDBUtilsTest extends TCTestCase {
     }
   }
 
-  public AbstractDBUtilsTest() {
+  public AbstractDBUtilsTestBase() {
     super();
   }
 
-  public AbstractDBUtilsTest(String arg0) {
+  public AbstractDBUtilsTestBase(String arg0) {
     super(arg0);
   }
 

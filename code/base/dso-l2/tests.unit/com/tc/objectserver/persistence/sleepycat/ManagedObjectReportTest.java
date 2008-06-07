@@ -6,7 +6,7 @@ package com.tc.objectserver.persistence.sleepycat;
 
 import java.io.File;
 
-public class ManagedObjectReportTest extends AbstractDBUtilsTest {
+public class ManagedObjectReportTest extends AbstractDBUtilsTestBase {
  
 
   public void testManagedObjectReport() throws Exception {

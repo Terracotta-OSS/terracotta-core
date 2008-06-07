@@ -6,7 +6,7 @@ package com.tc.objectserver.persistence.sleepycat;
 
 import java.io.File;
 
-public class SleepycatTCDBDiffTest extends AbstractDBUtilsTest {
+public class SleepycatTCDBDiffTest extends AbstractDBUtilsTestBase {
 
   public void testSleepycatTCDBDiff() throws Exception {
 

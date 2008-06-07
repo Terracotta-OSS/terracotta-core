@@ -10,7 +10,7 @@ import com.tc.objectserver.persistence.sleepycat.FastLoadOidlogAnalysis.OidlogsS
 import java.io.File;
 import java.util.List;
 
-public class FastLoadOidLogAnalysisTest extends AbstractDBUtilsTest {
+public class FastLoadOidLogAnalysisTest extends AbstractDBUtilsTestBase {
   
   public void testFastLoadOidLogAnalysis() throws Exception {
 

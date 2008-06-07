@@ -7,7 +7,7 @@ package com.tc.objectserver.persistence.sleepycat;
 import java.io.File;
 import java.util.Arrays;
 
-public class ReviveClassFilesTest extends AbstractDBUtilsTest {
+public class ReviveClassFilesTest extends AbstractDBUtilsTestBase {
 
   public void testReviveFileClass() throws Exception {
 
