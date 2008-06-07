@@ -8,7 +8,7 @@ import java.io.File;
 
 public class SleepycatDBUsageTest extends AbstractDBUtilsTest {
 
-  public void testFastLoadOidLogAnalysis() throws Exception {
+  public void testSleepycatDBUsageTest() throws Exception {
 
     File databaseDir = new File(getTempDirectory().toString() + File.separator + "db-data");
     databaseDir.mkdirs();
@@ -20,8 +20,8 @@ public class SleepycatDBUsageTest extends AbstractDBUtilsTest {
     SleepycatDBUsage sleepycatDBUsage = new SleepycatDBUsage(databaseDir);
     sleepycatDBUsage.report();
     assertEquals(122, sleepycatDBUsage.totalCount);
-    assertEquals(991, sleepycatDBUsage.valuesTotal);
-    assertEquals(16282, sleepycatDBUsage.keyTotal);
+    assertEquals(991, sleepycatDBUsage.keyTotal);
+    assertEquals(16282, sleepycatDBUsage.valuesTotal);
     assertEquals(17273, sleepycatDBUsage.grandTotal);
 
   }

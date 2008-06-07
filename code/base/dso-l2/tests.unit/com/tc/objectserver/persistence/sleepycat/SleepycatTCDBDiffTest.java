@@ -8,7 +8,7 @@ import java.io.File;
 
 public class SleepycatTCDBDiffTest extends AbstractDBUtilsTest {
 
-  public void testFastLoadOidLogAnalysis() throws Exception {
+  public void testSleepycatTCDBDiff() throws Exception {
 
     File databaseDir1 = new File(getTempDirectory().toString() + File.separator + "db-data-1");
     databaseDir1.mkdirs();
