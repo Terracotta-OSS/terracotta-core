@@ -106,13 +106,13 @@ public class LinkedBlockingQueueInterruptTakeTestApp extends AbstractTransparent
       while (!stop) {
         Object taken = null;
         try {
-          System.out.println("Node "+node+" - thread 1 : "+queue.size()+" - taking");
+//          System.out.println("Node "+node+" - thread 1 : "+queue.size()+" - taking");
           taken = queue.take();
           System.out.println("Node "+node+" - thread 1 : "+queue.size()+" - took : " + taken);
         } catch (InterruptedException e) {
           System.out.println("Node "+node+" - thread 1 : InterruptedException");
         } finally {
-          System.out.println("Node "+node+" - thread 1 : checking taken state");
+//          System.out.println("Node "+node+" - thread 1 : checking taken state");
           if (taken != null) {
             synchronized (queue) {
               System.out.println("Node "+node+" - thread 1 : updating counts - "+(++localCount)+", "+(++count));
@@ -146,15 +146,15 @@ public class LinkedBlockingQueueInterruptTakeTestApp extends AbstractTransparent
             }
           }
           Object o = new Date();
-          System.out.println("Node "+node+" - thread 2 : "+queue.size()+" - putting : "+o);
+//          System.out.println("Node "+node+" - thread 2 : "+queue.size()+" - putting : "+o);
           queue.put(o);
           System.out.println("Node "+node+" - thread 2 : "+queue.size()+" - put : "+o);
           synchronized (queue) {
-            System.out.println("Node "+node+" - thread 2 : "+queue.size()+" - checking queue size");
+//            System.out.println("Node "+node+" - thread 2 : "+queue.size()+" - checking queue size");
             if (0 == queue.size()) {
               System.out.println("Node "+node+" - thread 2 : "+queue.size()+" - interrupting thread 1");
               thread1.interrupt();
-              System.out.println("Node "+node+" - thread 2 : "+queue.size()+" - interrupted thread 1");
+//              System.out.println("Node "+node+" - thread 2 : "+queue.size()+" - interrupted thread 1");
             }
           }
         } catch (InterruptedException e) {
