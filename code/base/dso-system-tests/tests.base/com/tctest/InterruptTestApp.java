@@ -21,6 +21,8 @@ public class InterruptTestApp extends AbstractTransparentApp {
 
   private final CyclicBarrier barrier;
 
+  private int count;
+
   public InterruptTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     barrier = new CyclicBarrier(getParticipantCount());
@@ -29,6 +31,7 @@ public class InterruptTestApp extends AbstractTransparentApp {
   public void run() {
     try {
       int index = barrier.barrier();
+      testCountInterrupt(index);
       testWaitInterrupt1(index);
       testWaitInterrupt2(index);
       testWaitInterrupt3(index);
@@ -38,6 +41,70 @@ public class InterruptTestApp extends AbstractTransparentApp {
     }
   }
 
+  private void testCountInterrupt(final int index) throws Exception {
+    final int iterations = 100;
+
+    final Thread t1 = new Thread(new Runnable() {
+      public void run() {
+        // make sure that both threads are started before the interruption begins
+        synchronized (lockObject) {
+          lockObject.notifyAll();
+
+          try {
+            lockObject.wait();
+          } catch (InterruptedException e) {
+            // do nothing
+          }
+        }
+
+        // iterate while the other thread is interrupting
+        for (int i = 0; i < iterations; i++) {
+          synchronized (lockObject) {
+            System.out.println(">> count node "+index+" : "+(++count));
+          }
+        }
+      }
+    });
+
+    final Thread t2 = new Thread(new Runnable() {
+      public void run() {
+        // make sure that both threads are started before the interruption begins
+        synchronized (lockObject) {
+          lockObject.notifyAll();
+        }
+
+        // interrupt the other thread in a tight loop
+        while (t1.isAlive()) {
+          synchronized (lockObject) {
+            t1.interrupt();
+          }
+          Thread.yield();
+        }
+      }
+    });
+
+    // start both threads, only starting the 2nd one after the 1st one is alive
+    synchronized (lockObject) {
+      t1.start();
+      while (!t1.isAlive()) {
+        Thread.sleep(50);
+      }
+      lockObject.wait();
+    }
+    t2.start();
+
+    // wait for both threads to finish
+    t1.join();
+    t2.join();
+
+    // wait for all the threads of all nodes to finish
+    barrier.barrier();
+
+    int expectedCount = getParticipantCount() * iterations;
+    Assert.assertEquals(expectedCount, count);
+    System.out.println(">> node "+index+" count is "+count);
+  }
+  
   private void testWaitInterrupt1(int index) throws Exception {
     if (index == 0) {
       final CyclicBarrier localBarrier = new CyclicBarrier(2);
@@ -240,6 +307,7 @@ public class InterruptTestApp extends AbstractTransparentApp {
     spec.addRoot("barrier", "barrier");
     spec.addRoot("lockObject", "lockObject");
     spec.addRoot("sharedData", "sharedData");
+    spec.addRoot("count", "count");
   }
   
   private static class SharedData {
