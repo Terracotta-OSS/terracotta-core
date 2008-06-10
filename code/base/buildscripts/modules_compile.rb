@@ -55,7 +55,7 @@ class BuildSubtree
                     ant.arg(:value => '1.5')
                     #~ ant.arg(:value => '-target')
                     #~ ant.arg(:value => build_module.jdk.release)
-                    ant.arg(:value => '-showWeaveInfo')
+                    #~ ant.arg(:value => '-showWeaveInfo')
                 end
             else
                 puts "Compiling #{build_module.name}/#{name}... with #{jdk.short_description}"
