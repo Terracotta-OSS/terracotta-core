@@ -4,7 +4,13 @@
  */
 package com.tc.objectserver.persistence.sleepycat;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+
+import com.tc.objectserver.managedobject.bytecode.PhysicalStateClassLoader;
+
 import java.io.File;
+import java.io.FileInputStream;
 import java.util.Arrays;
 
 public class ReviveClassFilesTest extends AbstractDBUtilsTestBase {
@@ -27,6 +33,25 @@ public class ReviveClassFilesTest extends AbstractDBUtilsTestBase {
       assert (files[j].contains("Sample" + j));
     }
 
-  }
+    PhysicalStateClassLoader loader = new PhysicalStateClassLoader();
 
+    File[] filesList = classOutputDir.listFiles();
+    for (int i = 0; i < filesList.length; i++) {
+      File file = filesList[i];
+      FileInputStream fis = new FileInputStream(file);
+      byte[] b = IOUtils.toByteArray(fis);
+      System.out.println("file: " + file.getName());
+      String genClassName = StringUtils.substringBefore(file.getName(), ".class");
+      System.out.println("genClassName: " + genClassName);
+      try {
+        Class clazz = loader.defineClassFromBytes(genClassName, 0, b, 0, b.length);
+        if(clazz == null) {
+          fail("could not load class");
+        }
+      } catch (Exception e) {
+        fail("exception loading class");
+      }
+    }
+
+  }
 }
