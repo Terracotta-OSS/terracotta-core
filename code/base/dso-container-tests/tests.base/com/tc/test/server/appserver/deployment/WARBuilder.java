@@ -505,7 +505,11 @@ public class WARBuilder implements DeploymentBuilder {
       String path = testConfig.variantLibraryClasspathFor(variantNames[i], selectedVariant);
       String[] paths = path.split(pathSeparator);
       for (int j = 0; j < paths.length; j++) {
-        addDirectoryOrJar(new FileSystemPath(new File(paths[j])));
+        File filePath = new File(paths[j]);
+        if (!filePath.exists()) {
+          throw new RuntimeException("Variant path doesn't exist: " + filePath);
+        }
+        addDirectoryOrJar(new FileSystemPath(filePath));
       }
     }
 
