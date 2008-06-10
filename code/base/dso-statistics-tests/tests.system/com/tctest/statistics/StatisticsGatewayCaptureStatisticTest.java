@@ -15,7 +15,10 @@ import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
@@ -70,14 +73,27 @@ public class StatisticsGatewayCaptureStatisticTest extends TransparentTestBase {
     stat_gateway.disable();
     mbsc.removeNotificationListener(StatisticsMBeanNames.STATISTICS_GATEWAY, listener);
 
-    // check the data
     assertEquals(total_node_count * 4, data.size());
-    for (int i = 0; i < total_node_count; i++) {
-      assertEquals(SRAStartupTimestamp.ACTION_NAME, data.get((total_node_count * 0) + i).getName());
-      assertEquals(SRASystemProperties.ACTION_NAME, data.get((total_node_count * 1) + i).getName());
-      assertEquals(SRASystemProperties.ACTION_NAME, data.get((total_node_count * 2) + i).getName());
-      assertEquals(SRAShutdownTimestamp.ACTION_NAME, data.get((total_node_count * 3) + i).getName());
+
+    // aggregate the data
+    Map dataMap = new HashMap();
+    for (Iterator it = data.iterator(); it.hasNext(); ) {
+      StatisticData dataEntry = (StatisticData)it.next();
+      List dataNameAggregation = (List)dataMap.get(dataEntry.getName());
+      if (null == dataNameAggregation) {
+        dataNameAggregation = new ArrayList();
+        dataMap.put(dataEntry.getName(), dataNameAggregation);
+      }
+      dataNameAggregation.add(dataEntry);
     }
+
+    // check the data
+    assertTrue(dataMap.containsKey(SRAStartupTimestamp.ACTION_NAME));
+    assertTrue(dataMap.containsKey(SRASystemProperties.ACTION_NAME));
+    assertTrue(dataMap.containsKey(SRAShutdownTimestamp.ACTION_NAME));
+    assertEquals(total_node_count, ((List)dataMap.get(SRAStartupTimestamp.ACTION_NAME)).size());
+    assertEquals(total_node_count * 2, ((List)dataMap.get(SRASystemProperties.ACTION_NAME)).size());
+    assertEquals(total_node_count, ((List)dataMap.get(SRAShutdownTimestamp.ACTION_NAME)).size());
   }
 
   protected Class getApplicationClass() {
