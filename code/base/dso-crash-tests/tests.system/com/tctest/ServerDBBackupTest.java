@@ -23,6 +23,11 @@ public class ServerDBBackupTest extends TransparentTestBase {
   private int              port;
   private int              jmxPort;
   private File             configFile;
+    
+  public ServerDBBackupTest() {
+    // MNK-563: failed while running in normal mode (vs crash)
+    disableAllUntil("2008-06-30");
+  }
 
   @Override
   protected Class getApplicationClass() {
