@@ -71,7 +71,7 @@ public class ReviveClassFiles {
 
       File file = new File(destDir.getPath() + File.separator + genClassName + ".class");
       file.createNewFile();
-      ByteArrayInputStream bais = new ByteArrayInputStream(clazzBytes);
+      ByteArrayInputStream bais = new ByteArrayInputStream(clazzBytes, clazzBytes.length - bai.available(), bai.available());
       FileOutputStream fos = new FileOutputStream(file);
       IOUtils.copy(bais, fos);
       IOUtils.closeQuietly(fos);
@@ -85,21 +85,8 @@ public class ReviveClassFiles {
 
   private void verify(String genClassName, int classId, File destDir) {
     byte[] loadedClassBytes = loadClassData(genClassName, destDir);
-    ByteArrayInputStream bai = new ByteArrayInputStream(loadedClassBytes);
-    TCObjectInputStream tci = new TCObjectInputStream(bai);
 
-    try {
-      @SuppressWarnings("unused")
-      String cl = tci.readString();
-      @SuppressWarnings("unused")
-      String g = tci.readString();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-
-    Class clazz = loader.defineClassFromBytes(genClassName, classId, loadedClassBytes, loadedClassBytes.length
-                                                                                       - bai.available(), bai
-        .available());
+    Class clazz = loader.defineClassFromBytes(genClassName, classId, loadedClassBytes, 0, loadedClassBytes.length);
 
     if (clazz != null && genClassName.equals(clazz.getName())) {
       log("successfully loaded class [ " + genClassName + " ]  from generated class file");
