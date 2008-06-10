@@ -71,6 +71,7 @@ public interface TCPropertiesConsts {
   public static final String L2_OBJECTMANAGER_LOADOBJECTID_CHECKPOINT_TIMEPERIOD    = "l2.objectmanager.loadObjectID.checkpoint.timeperiod";
   public static final String L2_OBJECTMANAGER_PASSIVE_SYNC_BATCH_SIZE               = "l2.objectmanager.passive.sync.batch.size";
   public static final String L2_OBJECTMANAGER_PASSIVE_SYNC_THROTTLE_TIME            = "l2.objectmanager.passive.sync.throttle.timeInMillis";
+  public static final String L2_DATA_BACKUP_THROTTLE_TIME                           = "l2.data.backup.throttle.timeInMillis";
 
 
   /*********************************************************************************************************************

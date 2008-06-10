@@ -14,6 +14,7 @@ import com.tc.management.beans.LockStatisticsMonitorMBean;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.object.ObjectManagementMonitor;
+import com.tc.management.beans.object.ServerDBBackup;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
@@ -64,6 +65,7 @@ public class L2Management extends TerracottaManagement {
   private static final Map                     rmiRegistryMap = new HashMap();
   private final int                            jmxPort;
   private final InetAddress                    bindAddress;
+  private final ServerDBBackup                 serverDbBackupBean;
 
   public L2Management(TCServerInfoMBean tcServerInfo, LockStatisticsMonitorMBean lockStatistics,
                       StatisticsAgentSubSystemImpl statisticsAgentSubSystem, StatisticsGatewayMBeanImpl statisticsGateway, L2TVSConfigurationSetupManager configurationSetupManager, TCDumper tcDumper,
@@ -84,7 +86,13 @@ public class L2Management extends TerracottaManagement {
                                    "Unable to construct one of the L2 MBeans: this is a programming error in one of those beans",
                                    ncmbe);
     }
-
+    try {
+      serverDbBackupBean = new ServerDBBackup(configurationSetupManager);
+    } catch (NotCompliantMBeanException ncmbe) {
+      throw new TCRuntimeException(
+                                   "Unable to construct one of the L2 MBeans: this is a programming error in one of those beans",
+                                   ncmbe);
+    }
     // LKC-2990 and LKC-3171: Remove the JMX generic optional logging
     java.util.logging.Logger jmxLogger = java.util.logging.Logger.getLogger("javax.management.remote.generic");
     jmxLogger.setLevel(java.util.logging.Level.OFF);
@@ -213,11 +221,16 @@ public class L2Management extends TerracottaManagement {
     return objectManagementBean;
   }
 
+  public ServerDBBackup findServerDbBackupMBean() {
+    return serverDbBackupBean;
+  }
+
   private void registerMBeans() throws MBeanRegistrationException, NotCompliantMBeanException,
       InstanceAlreadyExistsException {
     mBeanServer.registerMBean(tcServerInfo, L2MBeanNames.TC_SERVER_INFO);
     mBeanServer.registerMBean(TCLogging.getJMXAppender().getMBean(), L2MBeanNames.LOGGER);
     mBeanServer.registerMBean(objectManagementBean, L2MBeanNames.OBJECT_MANAGEMENT);
+    mBeanServer.registerMBean(serverDbBackupBean, L2MBeanNames.SERVER_DB_BACKUP);
     mBeanServer.registerMBean(lockStatistics, L2MBeanNames.LOCK_STATISTICS);
     if (statisticsAgentSubSystem.isActive()) {
       statisticsAgentSubSystem.registerMBeans(mBeanServer);

@@ -99,6 +99,14 @@
          directory you were in when you invoked 'start-tc-server'.
       -->
       <logs>/opt/terracotta/server-logs</logs>
+      
+      <!-- The directory where the database files will be stored when the 
+      	  server db backup is initiated.
+
+         Default: 'data-backup'; this places the 'data-backup' directory in the
+         directory you were in when you invoked 'start-tc-server'.
+      -->
+      <data-backup>/opt/terracotta/server-data-backup</data-backup>
 
       <!-- On what port should the DSO server listen for connections from DSO
          clients? This can be any port you like, but note that

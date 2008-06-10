@@ -27,6 +27,10 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
   public void setData(String data) {
     setProperty("data", data);
   }
+  
+  public void setServerDbBackup(String serverDbBackup) {
+    setProperty("data-backup", serverDbBackup);
+  }
 
   public void setLogs(String logs) {
     setProperty("logs", logs);
@@ -91,8 +95,8 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     setProperty("interval", data);
   }
 
-  private static final String[] L2                  = new String[] { "data", "logs", "dso-port", "jmx-port",
-      "l2-group-port"                              };
+  private static final String[] L2              = new String[] { "data", "logs", "data-backup", "dso-port", "jmx-port",
+      "l2-group-port"                          };
 
   private static final String[] DSO_PERSISTENCE     = new String[] { "mode" };
   private static final String[] DSO_RECONNECTWINDOW = new String[] { "client-reconnect-window" };

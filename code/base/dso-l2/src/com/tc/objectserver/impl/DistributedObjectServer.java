@@ -34,6 +34,7 @@ import com.tc.management.beans.LockStatisticsMonitor;
 import com.tc.management.beans.LockStatisticsMonitorMBean;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
+import com.tc.management.beans.object.ServerDBBackup;
 import com.tc.management.lock.stats.L2LockStatisticsManagerImpl;
 import com.tc.management.lock.stats.LockStatisticsMessage;
 import com.tc.management.lock.stats.LockStatisticsResponseMessage;
@@ -431,7 +432,11 @@ public class DistributedObjectServer implements TCDumper {
       SerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
       persistor = new SleepycatPersistor(TCLogging.getLogger(SleepycatPersistor.class), dbenv,
                                          serializationAdapterFactory);
-
+	  // Setting the DB environment for the bean which takes backup of the active server
+      if (persistent) {
+        ServerDBBackup mbean = l2Management.findServerDbBackupMBean();
+        mbean.setDbEnvironment(dbenv.getEnvironment(), dbenv.getEnvironmentHome());
+      }
       // DONT DELETE ::This commented code is for replacing SleepyCat with MemoryDataStore as an in-memory DB for
       // testing purpose. You need to include MemoryDataStore in tc.jar and enable with tc.properties
       // l2.memorystore.enabled=true.

@@ -40,5 +40,9 @@ public abstract class AbstractNotifyingMBean extends AbstractTerracottaMBean {
     sendNotification(new AttributeChangeNotification(this, nextSequenceNumber++, System.currentTimeMillis(), msg, attr,
                                                      type, oldVal, newVal));
   }
+  
+  protected synchronized void sendNotification(final String type, final Object source, String message) {
+    sendNotification(new Notification(type, source, nextSequenceNumber++, message));
+  }
 
 }

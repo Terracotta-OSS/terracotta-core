@@ -24,6 +24,7 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
 
   private final FileConfigItem   dataPath;
   private final FileConfigItem   logsPath;
+  private final FileConfigItem   serverDbBackupPath;
   private final FileConfigItem   statisticsPath;
   private final IntConfigItem    jmxPort;
   private final StringConfigItem host;
@@ -40,6 +41,9 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
 
     this.dataPath = context.configRelativeSubstitutedFileItem("data");
     this.logsPath = context.configRelativeSubstitutedFileItem("logs");
+
+    this.serverDbBackupPath = context.configRelativeSubstitutedFileItem("data-backup");
+
     this.statisticsPath = context.configRelativeSubstitutedFileItem("statistics");
     this.jmxPort = context.intItem("jmx-port");
     this.host = context.stringItem("@host");
@@ -95,6 +99,10 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
 
   public FileConfigItem statisticsPath() {
     return this.statisticsPath;
+  }
+
+  public FileConfigItem serverDbBackupPath() {
+    return this.serverDbBackupPath;
   }
 
   public IntConfigItem jmxPort() {

@@ -558,6 +558,13 @@
           </xs:documentation>
         </xs:annotation>
       </xs:element>
+      <xs:element name="data-backup" type="path" minOccurs="0" default="data-backup">
+        <xs:annotation>
+          <xs:documentation>
+            Where the data should be stored in case a backup call is initiated.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
       <xs:element name="statistics" type="path" minOccurs="0"
         default="statistics">
         <xs:annotation>
