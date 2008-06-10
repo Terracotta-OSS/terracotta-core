@@ -314,7 +314,10 @@ class BuildSubtree
         xml.selectNodes("/ivy-module/dependencies/dependency").each do |node|
           name = node.attribute('name').value
           rev = node.attribute('rev').value
-          result << "#{name}-#{rev}.jar"
+          scope = node.attribute('conf')
+          if !scope || scope.value.starts_with?(type.to_s)
+            result << "#{name}-#{rev}.jar"
+          end
         end
       end
 
