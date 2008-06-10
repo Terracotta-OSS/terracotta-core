@@ -20,6 +20,7 @@ import com.tc.objectserver.context.TransactionLookupContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
@@ -497,8 +498,8 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
 
   }
 
-  private static final class PendingList {
-    LinkedHashMap pending = new LinkedHashMap();
+  private static final class PendingList implements PrettyPrintable {
+    private final LinkedHashMap pending = new LinkedHashMap();
 
     public boolean add(ServerTransaction txn) {
       ServerTransactionID sTxID = txn.getServerTransactionID();
@@ -525,6 +526,11 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
 
     public int size() {
       return pending.size();
+    }
+
+    public PrettyPrinter prettyPrint(PrettyPrinter out) {
+      out.print(getClass().getName()).print(" : " ).print(pending.size());
+      return out;
     }
   }
 }
