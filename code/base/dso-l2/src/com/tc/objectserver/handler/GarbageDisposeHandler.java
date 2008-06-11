@@ -15,7 +15,6 @@ import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 
 import java.util.Iterator;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -40,9 +39,7 @@ public class GarbageDisposeHandler extends AbstractEventHandler {
     GCResultContext gcResult = (GCResultContext) context;
     logger.info("GC DELETE START : " + gcResult);
     long start = System.currentTimeMillis();
-    Set garbage = gcResult.getGCedObjectIDs();
-    // FIXME::TODO:: Use ObjectIDSet once it implement sorted set or something similar
-    SortedSet<ObjectID> sortedGarbage = new TreeSet<ObjectID>(garbage);
+    SortedSet sortedGarbage = gcResult.getGCedObjectIDs();
 
     if (sortedGarbage.size() <= deleteBatchSize) {
       removeFromStore(sortedGarbage);
