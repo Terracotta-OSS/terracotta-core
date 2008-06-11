@@ -72,7 +72,7 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
       case NODE_JOINED_WITH_DIRTY_DB:
         return "Newly Joined Node Contains dirty database. (Please clean up DB and restart node)";
       case SPLIT_BRAIN:
-        return "SPLIT BRAIN DETECTED";
+        return "Two or more Active servers detected in the cluster";
       default:
         throw new AssertionError("Unknown type : " + type);
     }
@@ -113,8 +113,8 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
 
   private void handleSplitBrainScenario(NodeID nodeID, int zapNodeType, String reason, long[] weights) {
     long myWeights[] = factory.generateWeightSequence();
-    logger.warn("Possible Split Brain scenario : My weights = " + toString(myWeights) + " Other servers weights = "
-                + toString(weights));
+    logger.warn("Possibly two or more Active servers detected in the cluster : My weights = " + toString(myWeights)
+                + " Other servers weights = " + toString(weights));
     Enrollment mine;
     try {
       mine = new Enrollment(groupManager.getLocalNodeID(), false, myWeights);

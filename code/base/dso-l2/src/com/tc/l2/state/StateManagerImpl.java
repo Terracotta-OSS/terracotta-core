@@ -108,11 +108,11 @@ public class StateManagerImpl implements StateManager {
       timeout = timeout - (System.currentTimeMillis() - start);
     }
   }
-  
+
   // should be called from synchronized code
   private void setActiveNodeID(NodeID nodeID) {
-      this.activeNode = nodeID;
-      notifyAll();
+    this.activeNode = nodeID;
+    notifyAll();
   }
 
   private NodeID getLocalNodeID() {
@@ -231,7 +231,8 @@ public class StateManagerImpl implements StateManager {
     Enrollment winningEnrollment = clusterMsg.getEnrollment();
     if (state == ACTIVE_COORDINATOR) {
       // Can't get Election Won from another node : Split brain
-      String error = state + " Received Election Won Msg : " + clusterMsg + ". Possible split brain detected";
+      String error = state + " Received Election Won Msg : " + clusterMsg
+                     + ". Possibly two or more Active servers detected in the cluster";
       logger.error(error);
       if (clusterMsg.getType() == L2StateMessage.ELECTION_WON_ALREADY) {
         sendNGResponse(clusterMsg.messageFrom(), clusterMsg);
