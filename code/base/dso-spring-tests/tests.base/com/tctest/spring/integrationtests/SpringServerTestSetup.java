@@ -17,6 +17,7 @@ public class SpringServerTestSetup extends ServerTestSetup {
 
   public SpringServerTestSetup(Class testClass) {
     super(testClass);
+    TestConfigObject.getInstance().setSpringTest(true);
   }
 
   public DeploymentBuilder makeDeploymentBuilder() throws IOException {

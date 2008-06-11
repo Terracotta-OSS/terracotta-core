@@ -135,19 +135,6 @@ class BuildSubtree
               end
             end
 
-            # Looks for selected variants, and writes out information about which variant is selected.
-            config_source.keys.sort.each do |key|
-              if key =~ /^variant\.([^\.]+)$/i
-                variant_name = $1
-                variant_value = config_source[key]
-
-                unless full_all_variants[variant_name].include?(variant_value)
-                  raise "There is no variant '#{variant_value}' for '#{variant_name}'!"
-                end
-                write_dynamic_property(file, "variants.selected.#{variant_name}", variant_value)
-              end
-            end
-
             # Writes out the 'short path temporary directory', which is used by the container code to put
             # app servers into a directory that has a shorter pathname prefix. This is so that Windows,
             # which sucks all kinds of ass, doesn't screw us with its limitations on pathname length.

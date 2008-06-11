@@ -6,6 +6,8 @@ package com.tc.test.server.appserver.deployment;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.codehaus.cargo.container.deployable.WAR;
 import org.codehaus.cargo.container.property.RemotePropertySet;
 import org.codehaus.cargo.container.tomcat.Tomcat5xRemoteContainer;
@@ -49,6 +51,7 @@ import javax.management.MBeanServerConnection;
 import junit.framework.Assert;
 
 public class GenericServer extends AbstractStoppable implements WebApplicationServer {
+  private static final Log                  LOG             = LogFactory.getLog(GenericServer.class);
   private static final String               SERVER          = "server_";
   private static final boolean              GC_LOGGGING     = true;
   private static final boolean              ENABLE_DEBUGGER = false;
@@ -151,8 +154,11 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
         break;
     }
 
-    proxyBuilderMap.put(RmiServiceExporter.class, new RMIProxyBuilder());
-    proxyBuilderMap.put(HttpInvokerServiceExporter.class, new HttpInvokerProxyBuilder());
+    if (TestConfigObject.getInstance().isSpringTest()) {
+      LOG.debug("Creating proxy for Spring test...");
+      proxyBuilderMap.put(RmiServiceExporter.class, new RMIProxyBuilder());
+      proxyBuilderMap.put(HttpInvokerServiceExporter.class, new HttpInvokerProxyBuilder());
+    }
   }
 
   private static boolean dsoEnabled() {
@@ -195,7 +201,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
   private class RMIProxyBuilder implements ProxyBuilder {
     public Object createProxy(Class serviceType, String url, Map initialContext) throws Exception {
       String rmiURL = "rmi://localhost:" + rmiRegistryPort + "/" + url;
-      logger.debug("Getting proxy for: " + rmiRegistryPort + " on " + result.serverPort());
+      LOG.debug("Getting proxy for: " + rmiRegistryPort + " on " + result.serverPort());
       Exception e = null;
       for (int i = 5; i > 0; i--) {
         try {
@@ -218,7 +224,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
 
     public Object createProxy(Class serviceType, String url, Map initialContext) throws Exception {
       String serviceURL = "http://localhost:" + result.serverPort() + "/" + url;
-      logger.debug("Getting proxy for: " + serviceURL);
+      LOG.debug("Getting proxy for: " + serviceURL);
       HttpInvokerProxyFactoryBean prfb = new HttpInvokerProxyFactoryBean();
       prfb.setServiceUrl(serviceURL);
       prfb.setServiceInterface(serviceType);
@@ -314,12 +320,12 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
    */
   public WebResponse ping(String url, WebConversation wc) throws MalformedURLException, IOException, SAXException {
     String fullURL = "http://localhost:" + result.serverPort() + url;
-    logger.debug("Getting page: " + fullURL);
+    LOG.debug("Getting page: " + fullURL);
 
     wc.setExceptionsThrownOnErrorStatus(false);
     WebResponse response = wc.getResponse(fullURL);
     Assert.assertEquals("Server error:\n" + response.getText(), 200, response.getResponseCode());
-    logger.debug("Got page: " + fullURL);
+    LOG.debug("Got page: " + fullURL);
     return response;
   }
 

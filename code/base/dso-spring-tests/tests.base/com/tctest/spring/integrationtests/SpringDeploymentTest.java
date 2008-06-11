@@ -13,6 +13,10 @@ import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 
 public class SpringDeploymentTest extends AbstractDeploymentTest {
+  
+  public SpringDeploymentTest() {
+    TestConfigObject.getInstance().setSpringTest(true);
+  }
 
   protected DeploymentBuilder makeDeploymentBuilder(String warFileName) {
     DeploymentBuilder builder = getServerManager().makeDeploymentBuilder(warFileName);

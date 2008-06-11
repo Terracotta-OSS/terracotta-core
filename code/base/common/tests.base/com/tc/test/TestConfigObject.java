@@ -105,6 +105,7 @@ public class TestConfigObject {
   private final Properties        properties;
   private final AppServerInfo     appServerInfo;
   private String                  extraClassPathForAppServer;
+  private boolean                 springTest                       = false;
 
   private TestConfigObject() throws IOException {
     this.properties = new Properties();
@@ -382,7 +383,7 @@ public class TestConfigObject {
   public void addToAppServerClassPath(String cp) {
     extraClassPathForAppServer += File.pathSeparator + cp;
   }
-  
+
   public String linkedChildProcessPath() {
     String out = this.properties.getProperty(LINKED_CHILD_PROCESS_CLASSPATH);
     Assert.assertNotBlank(out);
@@ -423,5 +424,13 @@ public class TestConfigObject {
   private void assertFileExists(String out) {
     File file = new File(out);
     Assert.assertTrue("not a file: " + out, file.isFile());
+  }
+
+  public boolean isSpringTest() {
+    return springTest;
+  }
+  
+  public void setSpringTest(boolean springTest) {
+    this.springTest = springTest;
   }
 }

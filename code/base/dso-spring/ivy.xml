@@ -6,7 +6,7 @@
   </configurations>
   <dependencies>
   	<dependency name="ognl" rev="2.7" org="terracotta"/>
-  	<dependency name="spring" rev="2.0.8" org="terracotta"/>
+  	<dependency name="spring" rev="2.0.8" org="terracotta" conf="compile->default"/>
   	<dependency name="spring-binding" rev="1.0" org="terracotta"/>
   	<dependency name="spring-webflow" rev="1.0" org="terracotta"/>
   </dependencies>

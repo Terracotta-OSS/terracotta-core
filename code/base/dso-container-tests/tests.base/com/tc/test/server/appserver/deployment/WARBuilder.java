@@ -37,48 +37,29 @@ import java.util.StringTokenizer;
 import junit.framework.Assert;
 
 /*
- <!ELEMENT web-app (icon?, display-name?, description?, distributable?,
- context-param*, filter*, filter-mapping*, listener*, servlet*, 
- servlet-mapping*, session-config?, mime-mapping*, welcome-file-list?,
- error-page*, taglib*, resource-env-ref*, resource-ref*, 
- security-constraint*, login-config?, security-role*, env-entry*, 
- ejb-ref*,  ejb-local-ref*)>
+ * <!ELEMENT web-app (icon?, display-name?, description?, distributable?, context-param*, filter*, filter-mapping*,
+ * listener*, servlet*, servlet-mapping*, session-config?, mime-mapping*, welcome-file-list?, error-page*, taglib*,
+ * resource-env-ref*, resource-ref*, security-constraint*, login-config?, security-role*, env-entry*, ejb-ref*,
+ * ejb-local-ref*)>
  */
 
 public class WARBuilder implements DeploymentBuilder {
-
   private static final TCLogger  logger                = TCLogging.getLogger(WARBuilder.class);
-
   private FileSystemPath         warDirectoryPath;
-
   private String                 warFileName;
-
   private Set                    classDirectories      = new HashSet();                        /* <FileSystemPath> */
-
   private Set                    libs                  = new HashSet();
-
   private List                   resources             = new ArrayList();
-
   private List                   remoteServices        = new ArrayList();
-
   private Set                    beanDefinitionFiles   = new HashSet();
-
   private Map                    contextParams         = new HashMap();
-
   private Map                    sessionConfig         = new HashMap();
-
   private List                   listeners             = new ArrayList();
-
   private List                   servlets              = new ArrayList();
-
   private List                   filters               = new ArrayList();
-
   private Map                    taglibs               = new HashMap();
-
   private StringBuffer           remoteSvcDefBlock     = new StringBuffer();
-
   private final FileSystemPath   tempDirPath;
-
   private String                 dispatcherServletName = null;
 
   private final TestConfigObject testConfig;
@@ -186,10 +167,10 @@ public class WARBuilder implements DeploymentBuilder {
     this.warDirectoryPath = tempDirPath.mkdir("tempwar");
     FileSystemPath webInfDir = warDirectoryPath.mkdir("WEB-INF");
     createWebXML(webInfDir);
-    if (this.dispatcherServletName == null) {
-      createRemotingContext(webInfDir);
-    } else {
+    if (dispatcherServletName != null) {
       createDispatcherServletContext(webInfDir);
+    } else if (testConfig.isSpringTest()) {
+      createRemotingContext(webInfDir);
     }
   }
 
@@ -506,9 +487,7 @@ public class WARBuilder implements DeploymentBuilder {
       String[] paths = path.split(pathSeparator);
       for (int j = 0; j < paths.length; j++) {
         File filePath = new File(paths[j]);
-        if (!filePath.exists()) {
-          throw new RuntimeException("Variant path doesn't exist: " + filePath);
-        }
+        if (!filePath.exists()) { throw new RuntimeException("Variant path doesn't exist: " + filePath); }
         addDirectoryOrJar(new FileSystemPath(filePath));
       }
     }
@@ -693,5 +672,4 @@ public class WARBuilder implements DeploymentBuilder {
       this.initParameters = initParameters;
     }
   }
-
 }

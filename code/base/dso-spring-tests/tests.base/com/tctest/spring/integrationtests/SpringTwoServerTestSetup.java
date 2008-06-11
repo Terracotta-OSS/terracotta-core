@@ -17,6 +17,7 @@ public abstract class SpringTwoServerTestSetup extends TwoServerTestSetup {
 
   protected SpringTwoServerTestSetup(Class testClass, String tcConfigFile, String context) {
     super(testClass, tcConfigFile, context);
+    TestConfigObject.getInstance().setSpringTest(true);
   }
 
   public DeploymentBuilder makeDeploymentBuilder() throws IOException {

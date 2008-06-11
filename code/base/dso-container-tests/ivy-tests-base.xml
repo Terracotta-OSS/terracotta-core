@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <ivy-module version="2.0">
   <info organisation="ibiblio" module="dso-container-tests-tests-base"/>
+  <configurations>
+    <conf name="compile" description="compile time"/>
+  </configurations>  
   <dependencies>
     <dependency name="linked-child-process" rev="1.0.2-SNAPSHOT" org="org.terracotta"/>    
     <dependency name="ant" rev="launcher-1.6.5"/>
@@ -8,7 +11,7 @@
     <dependency name="commons-httpclient" rev="3.0.1"/>
     <dependency name="tc-cargo-core-uberjar" rev="0.9-20080103" org="terracotta"/>
     <dependency name="httpunit" rev="1.6.2"/>
-    <dependency name="spring" rev="2.0.8" org="terracotta"/>
+    <dependency name="spring" rev="2.0.8" org="terracotta" conf="compile->default"/>
     <dependency name="dom4j" rev="1.6.1"/>
     <dependency name="cglib-nodep" rev="2.1_3" org="terracotta"/>
     <dependency name="jta" rev="1.0.1b" org="terracotta"/>
