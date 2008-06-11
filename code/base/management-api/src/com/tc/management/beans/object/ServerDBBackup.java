@@ -174,7 +174,7 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
    */
   public long readLastFileCopied(String path) throws IOException {
     File dir = new File(path);
-    if (!dir.exists()) {
+    if (!dir.exists()  || (dir.exists() && !dir.isDirectory())) {
       if (!dir.mkdirs()) { throw new IOException("Failed to create a directory at the following path:" + path); }
       return -1;
     }

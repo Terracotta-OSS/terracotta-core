@@ -173,10 +173,13 @@ public class ServerDBBackupTestApp extends AbstractTransparentApp {
   }
 
   private int testInValidDirectoies(int totalAdditions, int currentNoOfObjects) {
-    String dbBackupPath = "CCVC:\\totally-invalid";
+    String dbBackupPath = "xyz";
 
     if (waitOnBarrier() != 0) {
       try {
+        File file = new File(dbBackupPath);
+        file.createNewFile();
+        
         // create and add notifications
         final NotificationListener listener = new NotificationListenerImpl();
         final NotificationFilter filter = new NotificationFilterImpl();
