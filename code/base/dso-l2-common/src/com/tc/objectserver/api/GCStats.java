@@ -17,4 +17,8 @@ public interface GCStats {
 
   long getActualGarbageCount();
 
+  long getPausedTime();
+  
+  long getDeleteTime();
+
 }

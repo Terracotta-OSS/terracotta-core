@@ -21,6 +21,8 @@ public class GCStatsImpl implements GCStats, Serializable {
   private long                  beginObjectCount      = NOT_INITIALIZED;
   private long                  candidateGarbageCount = NOT_INITIALIZED;
   private long                  actualGarbageCount    = NOT_INITIALIZED;
+  private long                  pausedTime            = NOT_INITIALIZED;
+  private long                  deleteTime            = NOT_INITIALIZED;
 
   public GCStatsImpl(int number) {
     this.number = number;
@@ -65,6 +67,20 @@ public class GCStatsImpl implements GCStats, Serializable {
     return this.actualGarbageCount;
   }
 
+  public synchronized long getPausedTime() {
+    if (this.pausedTime == NOT_INITIALIZED) {
+      errorNotInitialized();
+    }
+    return this.pausedTime;
+  }
+
+  public synchronized long getDeleteTime() {
+    if (this.deleteTime == NOT_INITIALIZED) {
+      errorNotInitialized();
+    }
+    return this.deleteTime;
+  }
+
   public synchronized void setActualGarbageCount(long count) {
     validate(count);
     this.actualGarbageCount = count;
@@ -80,10 +96,25 @@ public class GCStatsImpl implements GCStats, Serializable {
     this.candidateGarbageCount = count;
   }
 
+  public synchronized void setPausedTime(long time) {
+    if (time < 0L) {
+      logger.warn("System timer moved backward, setting GC PausedTime to 0");
+      time = 0;
+    }
+    this.pausedTime = time;
+  }
+
+  public synchronized void setDeleteTime(long time) {
+    if (time < 0L) {
+      logger.warn("System timer moved backward, setting GC DeleteTime to 0");
+      time = 0;
+    }
+    this.deleteTime = time;
+  }
+
   public synchronized void setElapsedTime(long time) {
     if (time < 0L) {
-      // System timer moved backward.
-      logger.warn("Ssyetm timer moved backward, set GC ElapsedTime to 0");
+      logger.warn("System timer moved backward, setting GC ElapsedTime to 0");
       time = 0;
     }
     this.elapsedTime = time;
@@ -103,8 +134,9 @@ public class GCStatsImpl implements GCStats, Serializable {
   }
 
   public String toString() {
-    return "iteration=" + getIteration() + "; startTime=" + getStartTime() + "; elapsedTime=" + getElapsedTime()
-           + "; beginObjectCount=" + getBeginObjectCount() + "; candidateGarbageCount=" + getCandidateGarbageCount()
-           + "; actualGarbageCount=" + getActualGarbageCount();
+    return "GCStats[" + getIteration() + "] : startTime = " + getStartTime() + "; elapsedTime = " + getElapsedTime()
+           + "; pausedTime = " + getPausedTime() + "; deleteTime = " + getDeleteTime()
+           + "; beginObjectCount = " + getBeginObjectCount() + "; candidateGarbageCount = "
+           + getCandidateGarbageCount() + "; actualGarbageCount = " + getActualGarbageCount();
   }
 }

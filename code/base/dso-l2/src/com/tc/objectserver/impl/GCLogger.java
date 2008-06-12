@@ -13,7 +13,7 @@ import java.util.Set;
 
 public class GCLogger {
   private TCLogger         logger;
-  private final LossyStack gcHistory = new LossyStack(1000);
+  private final LossyStack gcHistory = new LossyStack(1500);
   private final boolean    verboseGC;
 
   public GCLogger(TCLogger logger, boolean verboseGC) {
@@ -65,19 +65,17 @@ public class GCLogger {
     if (verboseGC()) logGC("GC: Not running gc since its disabled...");
   }
 
-  public void log_GCComplete(long startMillis, long pauseStartMillis, long deleteStartMillis, List rescueTimes,
-                             long endMillis, long iteration) {
+  public void log_GCComplete(GCStats gcStats, List rescueTimes) {
     if (verboseGC()) {
-      long pausedMillis = deleteStartMillis - pauseStartMillis;
-      long deleteGarbageMillis = endMillis - deleteStartMillis;
-      long totalMillis = endMillis - startMillis;
       for (int i = 0; i < rescueTimes.size(); i++) {
         logGC("GC: rescue " + (i + 1) + " time   : " + rescueTimes.get(i) + " ms.");
       }
-      logGC("GC: paused gc time  : " + pausedMillis + " ms.");
-      logGC("GC: delete garbage time  : " + deleteGarbageMillis + " ms.");
-      logGC("GC: total gc time   : " + totalMillis + " ms.");
-      logGC("GC: STOP " + iteration);
+      logGC("GC: paused gc time  : " + gcStats.getPausedTime() + " ms.");
+      logGC("GC: delete in-memory garbage time  : " + gcStats.getDeleteTime() + " ms.");
+      logGC("GC: total gc time   : " + gcStats.getElapsedTime() + " ms.");
+      logGC("GC: STOP " + gcStats.getIteration());
+    } else {
+      logGC("GC: Complete : " + gcStats);
     }
   }
 
@@ -86,8 +84,6 @@ public class GCLogger {
   }
 
   private void logGC(Object o) {
-    if (verboseGC) {
-      logger.info(o);
-    }
+    logger.info(o);
   }
 }
