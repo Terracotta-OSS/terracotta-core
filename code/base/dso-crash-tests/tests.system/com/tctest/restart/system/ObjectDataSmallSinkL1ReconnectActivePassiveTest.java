@@ -20,6 +20,11 @@ public class ObjectDataSmallSinkL1ReconnectActivePassiveTest extends Transparent
 
   private int clientCount = 6;
   private String smallSink = "250";
+  
+  public ObjectDataSmallSinkL1ReconnectActivePassiveTest() {
+    // MNK-568
+    disableAllUntil("2008-07-15");
+  }
 
   protected Class getApplicationClass() {
     return ObjectDataTestApp.class;
