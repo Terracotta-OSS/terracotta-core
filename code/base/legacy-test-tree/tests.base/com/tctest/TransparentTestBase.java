@@ -131,6 +131,10 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     jvmArgs.add("-D" + buffer_randomsuffix_sysprop + "=true");
     jvmArgs.add("-D" + store_randomsuffix_sysprop + "=true");
   }
+  
+  protected void setExtraJvmArgs(final ArrayList jvmArgs) {
+    // to be overwritten
+  }
 
   protected void setUp() throws Exception {
     setUpTransparent(configFactory(), configHelper());
@@ -156,6 +160,8 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     if (enableL2Reconnect()) {
       setJvmArgsL2Reconnect(jvmArgs);
     }
+    
+    setExtraJvmArgs(jvmArgs);
 
     RestartTestHelper helper = null;
     PortChooser portChooser = new PortChooser();

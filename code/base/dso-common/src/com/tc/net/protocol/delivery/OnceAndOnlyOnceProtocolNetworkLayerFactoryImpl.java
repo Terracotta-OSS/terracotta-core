@@ -12,16 +12,16 @@ import com.tc.async.api.Sink;
  */
 public class OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl implements OnceAndOnlyOnceProtocolNetworkLayerFactory {
 
-  public OnceAndOnlyOnceProtocolNetworkLayer createNewClientInstance(Sink workSink) {
+  public OnceAndOnlyOnceProtocolNetworkLayer createNewClientInstance(Sink workSink, int sendQueueCap) {
     OOOProtocolMessageFactory messageFactory = new OOOProtocolMessageFactory();
     OOOProtocolMessageParser messageParser = new OOOProtocolMessageParser(messageFactory);
-    return new OnceAndOnlyOnceProtocolNetworkLayerImpl(messageFactory, messageParser, workSink, true);
+    return new OnceAndOnlyOnceProtocolNetworkLayerImpl(messageFactory, messageParser, workSink, sendQueueCap, true);
   }
 
-  public OnceAndOnlyOnceProtocolNetworkLayer createNewServerInstance(Sink workSink) {
+  public OnceAndOnlyOnceProtocolNetworkLayer createNewServerInstance(Sink workSink, int sendQueueCap) {
     OOOProtocolMessageFactory messageFactory = new OOOProtocolMessageFactory();
     OOOProtocolMessageParser messageParser = new OOOProtocolMessageParser(messageFactory);
-    return new OnceAndOnlyOnceProtocolNetworkLayerImpl(messageFactory, messageParser, workSink, false);
+    return new OnceAndOnlyOnceProtocolNetworkLayerImpl(messageFactory, messageParser, workSink, sendQueueCap, false);
   }
 
 }

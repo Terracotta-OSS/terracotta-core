@@ -12,11 +12,11 @@ public class MockOnceAndOnlyOnceProtocolNetworkLayerFactory implements OnceAndOn
 
   public OnceAndOnlyOnceProtocolNetworkLayer layer;
 
-  public OnceAndOnlyOnceProtocolNetworkLayer createNewClientInstance(Sink workSink) {
+  public OnceAndOnlyOnceProtocolNetworkLayer createNewClientInstance(Sink workSink, int sendQueueCap) {
     return layer;
   }
 
-  public OnceAndOnlyOnceProtocolNetworkLayer createNewServerInstance(Sink workSink) {
+  public OnceAndOnlyOnceProtocolNetworkLayer createNewServerInstance(Sink workSink, int sendQueueCap) {
     return layer;
   }
 }

@@ -2046,7 +2046,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     boolean l1ReconnectEnabled = l1PropFroL2.getL1ReconnectPropertiesFromL2().getL1ReconnectEnabled();
     int l1ReconnectTimeout = l1PropFroL2.getL1ReconnectPropertiesFromL2().getL1ReconnectTimeout().intValue();
-    this.l1ReconnectConfig = new L1ReconnectConfigImpl(l1ReconnectEnabled, l1ReconnectTimeout);
+    int l1ReconnectSendqueuecap = l1PropFroL2.getL1ReconnectPropertiesFromL2().getL1ReconnectSendqueuecap().intValue();
+    this.l1ReconnectConfig = new L1ReconnectConfigImpl(l1ReconnectEnabled, l1ReconnectTimeout, l1ReconnectSendqueuecap);
   }
 
   public synchronized ReconnectConfig getL1ReconnectProperties() {

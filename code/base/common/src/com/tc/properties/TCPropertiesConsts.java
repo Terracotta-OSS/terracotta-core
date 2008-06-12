@@ -81,6 +81,13 @@ public interface TCPropertiesConsts {
   public static final String L2_SEDA_COMMITSTAGE                                    = "l2.seda.commitstage.threads";
   public static final String L2_SEDA_FAULTSTAGE_THREADS                             = "l2.seda.faultstage.threads";
   public static final String L2_SEDA_FLUSHSTAGE_THREAD                              = "l2.seda.flushstage.threads";
+  public static final String L2_SEDA_STAGE_SINK_CAPACITY                            = "l2.seda.stage.sink.capacity";
+
+  /*********************************************************************************************************************
+   * Section : L1 Seda stage properties 
+   * Description : This section contains configuration for SEDA stages for L1
+   ********************************************************************************************************************/
+  public static final String L1_SEDA_STAGE_SINK_CAPACITY                            = "l1.seda.stage.sink.capacity";
 
   /*********************************************************************************************************************
    * Section : L2 Berkeley DB Persistence Layer Properties 
@@ -132,6 +139,7 @@ public interface TCPropertiesConsts {
   public static final String L2_NHA_TCGROUPCOMM_RESPONSE_TIMELIMIT                  = "l2.nha.tcgroupcomm.response.timelimit";
   public static final String L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED                   = "l2.nha.tcgroupcomm.reconnect.enabled";
   public static final String L2_NHA_TCGROUPCOMM_RECONNECT_TIMEOUT                   = "l2.nha.tcgroupcomm.reconnect.timeout";
+  public static final String L2_NHA_TCGROUPCOMM_RECONNECT_SENDQUEUE_CAP             = "l2.nha.tcgroupcomm.reconnect.sendqueue.cap";
   public static final String L2_NHA_TCGROUPCOMM_DISCOVERY_INTERVAL                  = "l2.nha.tcgroupcomm.discovery.interval";
   //a hidden tc.properties only used for l2 proxy testing purpose
   public static final String L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT             = "l2.nha.tcgroupcomm.l2proxytoport";
@@ -242,6 +250,7 @@ public interface TCPropertiesConsts {
    ********************************************************************************************************************/
   public static final String L2_L1RECONNECT_ENABLED                                 = "l2.l1reconnect.enabled";
   public static final String L2_L1RECONNECT_TIMEOUT_MILLS                           = "l2.l1reconnect.timeout.millis";
+  public static final String L2_L1RECONNECT_SENDQUEUE_CAP                           = "l2.l1reconnect.sendqueue.cap";
 
   /*********************************************************************************************************************
    * Section : L1 Object Manager Properties 

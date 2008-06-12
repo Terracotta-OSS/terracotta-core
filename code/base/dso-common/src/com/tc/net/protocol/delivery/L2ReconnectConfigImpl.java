@@ -11,12 +11,15 @@ import com.tc.properties.TCPropertiesImpl;
 public class L2ReconnectConfigImpl implements ReconnectConfig {
   private boolean l2ReconnectEnabled;
   private int     l2ReconnectTimeout;
+  private int     l2ReconnectSendQueueCap;
 
   public L2ReconnectConfigImpl() {
     l2ReconnectEnabled = TCPropertiesImpl.getProperties()
         .getBoolean(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED);
     l2ReconnectTimeout = TCPropertiesImpl.getProperties()
         .getInt(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_TIMEOUT);
+    l2ReconnectSendQueueCap = TCPropertiesImpl.getProperties()
+        .getInt(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_SENDQUEUE_CAP);
   }
 
   public int getReconnectTimeout() {
@@ -25,6 +28,10 @@ public class L2ReconnectConfigImpl implements ReconnectConfig {
 
   public boolean getReconnectEnabled() {
     return l2ReconnectEnabled;
+  }
+
+  public int getSendQueueCapacity() {
+    return l2ReconnectSendQueueCap;
   }
 
 }

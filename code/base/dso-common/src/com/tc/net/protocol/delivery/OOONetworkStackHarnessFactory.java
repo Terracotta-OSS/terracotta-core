@@ -19,24 +19,26 @@ public class OOONetworkStackHarnessFactory implements NetworkStackHarnessFactory
   private final Sink                                       sink;
   private final OnceAndOnlyOnceProtocolNetworkLayerFactory factory;
   private final ReconnectConfig                            reconnectConfig;
+  private final int                                        sendQueueCap;
 
   public OOONetworkStackHarnessFactory(OnceAndOnlyOnceProtocolNetworkLayerFactory factory, Sink sink,
-                                       ReconnectConfig reconnectConfig) {
+                                       ReconnectConfig reconnectConfig, int sendQueueCap) {
     this.factory = factory;
     this.sink = sink;
     this.reconnectConfig = reconnectConfig;
+    this.sendQueueCap = sendQueueCap;
   }
 
   public NetworkStackHarness createClientHarness(MessageTransportFactory transportFactory,
                                                  MessageChannelInternal channel,
                                                  MessageTransportListener[] transportListeners) {
-    return new OOONetworkStackHarness(transportFactory, channel, factory, sink, reconnectConfig);
+    return new OOONetworkStackHarness(transportFactory, channel, factory, sink, reconnectConfig, sendQueueCap);
   }
 
   public NetworkStackHarness createServerHarness(ServerMessageChannelFactory channelFactory,
                                                  MessageTransport transport,
                                                  MessageTransportListener[] transportListeners) {
-    return new OOONetworkStackHarness(channelFactory, transport, factory, sink, reconnectConfig);
+    return new OOONetworkStackHarness(channelFactory, transport, factory, sink, reconnectConfig, sendQueueCap);
   }
 
 }

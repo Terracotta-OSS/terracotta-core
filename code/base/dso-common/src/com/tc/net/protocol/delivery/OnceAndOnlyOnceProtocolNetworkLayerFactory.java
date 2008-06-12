@@ -6,6 +6,6 @@ package com.tc.net.protocol.delivery;
 import com.tc.async.api.Sink;
 
 public interface OnceAndOnlyOnceProtocolNetworkLayerFactory {
-  public OnceAndOnlyOnceProtocolNetworkLayer createNewClientInstance(Sink workSink);
-  public OnceAndOnlyOnceProtocolNetworkLayer createNewServerInstance(Sink workSink);
+  public OnceAndOnlyOnceProtocolNetworkLayer createNewClientInstance(Sink workSink, int sendQueueCap);
+  public OnceAndOnlyOnceProtocolNetworkLayer createNewServerInstance(Sink workSink, int sendQueueCap);
 }

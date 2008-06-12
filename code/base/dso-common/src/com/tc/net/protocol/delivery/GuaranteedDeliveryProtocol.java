@@ -18,8 +18,8 @@ class GuaranteedDeliveryProtocol {
   private final SendStateMachine    sender;
   private final ReceiveStateMachine receiver;
 
-  public GuaranteedDeliveryProtocol(OOOProtocolMessageDelivery delivery, Sink workSink, boolean isClient) {
-    this.sender = new SendStateMachine(delivery, isClient);
+  public GuaranteedDeliveryProtocol(OOOProtocolMessageDelivery delivery, Sink workSink, int sendQueueCap, boolean isClient) {
+    this.sender = new SendStateMachine(delivery, sendQueueCap, isClient);
     this.send = new StateMachineRunner(sender, workSink);
     this.receiver = new ReceiveStateMachine(delivery);
     this.receive = new StateMachineRunner(receiver, workSink);

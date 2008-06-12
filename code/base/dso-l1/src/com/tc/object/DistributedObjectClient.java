@@ -231,7 +231,7 @@ public class DistributedObjectClient extends SEDA {
   public synchronized void start() {
     TCProperties tcProperties = TCPropertiesImpl.getProperties();
     l1Properties = tcProperties.getPropertiesFor("l1");
-    int maxSize = 50000;
+    int maxSize = tcProperties.getInt(TCPropertiesConsts.L1_SEDA_STAGE_SINK_CAPACITY);
     int faultCount = config.getFaultCount();
 
     final Sequence sessionSequence = new SimpleSequence();
@@ -249,9 +249,11 @@ public class DistributedObjectClient extends SEDA {
     final NetworkStackHarnessFactory networkStackHarnessFactory;
     if (useOOOLayer) {
       final Stage oooStage = stageManager.createStage("OOONetStage", new OOOEventHandler(), 1, maxSize);
+      final int sendQueueCap = l1ReconnectConfig.getSendQueueCapacity();
       networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
                                                                      new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
-                                                                     oooStage.getSink(), l1ReconnectConfig);
+                                                                     oooStage.getSink(), l1ReconnectConfig,
+                                                                     sendQueueCap);
     } else {
       networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
     }
