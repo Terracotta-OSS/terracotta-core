@@ -26,6 +26,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.management.MBeanServerConnection;
@@ -160,21 +161,25 @@ public class ServerDBBackupTestApp extends AbstractTransparentApp {
   private int testInValidDirectoies(int totalAdditions, int currentNoOfObjects) {
     String dbBackupPath = "xyz";
 
-    NotificationListenerImpl listener = null;
     if (waitOnBarrier() != 0) {
-      try {
+      LinkedBlockingQueue<String> queue = new LinkedBlockingQueue<String>();
+
+      try {        
         File file = new File(dbBackupPath);
         file.createNewFile();
 
         // create and add notifications
-        listener = new NotificationListenerImpl();
+        NotificationListenerImpl listener = new NotificationListenerImpl(queue);
         NotificationFilter filter = new NotificationFilterImpl();
 
         serverDBBackupRunner.runBackup(dbBackupPath, listener, filter, filter);
         throw new AssertionError("Should throw an exception when invalid direcoties are passed in");
       } catch (IOException e) {
-        if (listener != null) {
-          Assert.assertNotNull(listener.getMessage());
+        try {
+          String notificationMsg = queue.take();
+          Assert.assertNotNull(notificationMsg);
+        } catch (InterruptedException e1) {
+          throw new RuntimeException(e1);
         }
       }
     }
@@ -343,14 +348,14 @@ public class ServerDBBackupTestApp extends AbstractTransparentApp {
 }
 
 class NotificationListenerImpl implements NotificationListener, Serializable {
-  private String notificationMsg;
-
-  public void handleNotification(Notification notification, Object handback) {
-    notificationMsg = notification.getMessage();
+  private LinkedBlockingQueue<String> queue;
+  
+  public NotificationListenerImpl(LinkedBlockingQueue<String> queue) {
+    this.queue = queue;
   }
 
-  public String getMessage() {
-    return notificationMsg;
+  public void handleNotification(Notification notification, Object handback) {
+    queue.add(notification.getMessage());
   }
 }
 
