@@ -177,9 +177,9 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
       FileUtils.rm_rf(build_folder)
       # in Windows, long filename can't be deleted
       # need to use our ad-hoc delete function
-      delete_deep_folder(build_folder) if File.exits?(build_folder)
+      delete_deep_folder(build_folder) if File.exists?(build_folder)
       
-      fail("Can't clean build folder") if File.exits?(build_folder)
+      fail("Can't clean build folder") if File.exists?(build_folder)
       FileUtils.rm(File.join(@basedir.to_s, "dependencies", "lib", "*"))
     rescue Errno::ENOENT => e       
       # ignore file not found error
