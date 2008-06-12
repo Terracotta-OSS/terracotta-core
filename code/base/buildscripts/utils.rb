@@ -52,8 +52,45 @@ def compare_maven_version(maven_version, pom, xpath)
   printf("%-50s: %s\n", pom, version)
   if version != maven_version
     raise "version #{version} in #{pom} " +
-          "doesn't match maven.version #{maven_version}"
+      "doesn't match maven.version #{maven_version}"
   end
+end
+
+def delete_deep_folder(folder)
+  target = File.expand_path(folder)
+
+  if File.file?(target)
+    File.delete(target)
+    return
+  end
+
+  queue = []
+  queue << target
+
+  while (! queue.empty?)  
+    dir = queue.delete_at(0)
+  
+    Dir.chdir(dir) do 
+      Dir.glob("*") do | f |
+        num = 0
+        next if (File.file?(f))
+      
+        begin
+          File.rename(f, num.to_s)				
+        rescue
+          num += 1				
+          retry                
+        end
+      
+        newDir = File.expand_path(num.to_s)
+        queue << newDir
+        num += 1  
+      end
+    end
+
+  end
+
+  FileUtils.rm_rf target
 end
 
 class Hash
@@ -78,19 +115,19 @@ class Hash
 end
 
 module CallWithVariableArguments
-    # A method to call a procedure that may take variable arguments, but
-    # which issues much nicer error messages when something fails than
-    # the default messages issued by JRuby.
-    def call_proc_variable(proc, args)
-        if proc.arity == 0
-            proc.call
-        elsif proc.arity > 0
-            raise RuntimeError, "Insufficient arguments: proc takes %d, but we only have %d." % [ proc.arity, args.length ] if proc.arity > args.length
-            proc.call(*(args[0..(proc.arity - 1)]))
-        else
-            required = proc.arity.abs - 1
-            raise RuntimeError, "Insufficient arguments: proc takes %d, but we only have %d." % [ required, args.length ] if required > args.length
-            proc.call(*args)
-        end
+  # A method to call a procedure that may take variable arguments, but
+  # which issues much nicer error messages when something fails than
+  # the default messages issued by JRuby.
+  def call_proc_variable(proc, args)
+    if proc.arity == 0
+      proc.call
+    elsif proc.arity > 0
+      raise RuntimeError, "Insufficient arguments: proc takes %d, but we only have %d." % [ proc.arity, args.length ] if proc.arity > args.length
+      proc.call(*(args[0..(proc.arity - 1)]))
+    else
+      required = proc.arity.abs - 1
+      raise RuntimeError, "Insufficient arguments: proc takes %d, but we only have %d." % [ required, args.length ] if required > args.length
+      proc.call(*args)
     end
+  end
 end

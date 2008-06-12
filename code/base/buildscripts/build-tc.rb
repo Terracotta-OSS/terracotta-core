@@ -173,7 +173,13 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   # clean all under build and depedencies/lib
   def clean
     begin
-      FileUtils.rm_rf(File.join(@basedir.to_s, "build"))
+      build_folder = File.join(@basedir.to_s, "build")
+      FileUtils.rm_rf(build_folder)
+      # in Windows, long filename can't be deleted
+      # need to use our ad-hoc delete function
+      delete_deep_folder(build_folder) if File.exits?(build_folder)
+      
+      fail("Can't clean build folder") if File.exits?(build_folder)
       FileUtils.rm(File.join(@basedir.to_s, "dependencies", "lib", "*"))
     rescue Errno::ENOENT => e       
       # ignore file not found error
