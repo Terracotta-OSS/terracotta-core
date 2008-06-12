@@ -37,11 +37,6 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
                                                 .getLogger(DistributedObjectServer.class)));
   private static final String[]   bindAddrs = { "0.0.0.0", "127.0.0.1", localAddr() };
   private DistributedObjectServer server;
-
-  public DSOServerBindAddressTest() {
-    // MNK-564
-    disableAllUntil("2008-06-30");
-  }
   
   static String localAddr() {
     try {

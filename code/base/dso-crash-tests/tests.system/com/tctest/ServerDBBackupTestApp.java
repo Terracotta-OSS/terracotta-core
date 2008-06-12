@@ -8,8 +8,6 @@ import org.apache.commons.io.FileUtils;
 
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
-import com.tc.admin.common.MBeanServerInvocationProxy;
-import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.object.ServerDBBackupMBean;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -68,13 +66,14 @@ public class ServerDBBackupTestApp extends AbstractTransparentApp {
 
     int totalAdditions = 5000;
     int currentNoOfObjects = 0;
+    int objectsAdded = 0;
 
     addToList(totalAdditions);
     currentNoOfObjects += 2 * totalAdditions;
-    
-    testServerDataBackupPath();
 
-    int objectsAdded = testIncrementalBackup(totalAdditions, currentNoOfObjects);
+    Assert.assertEquals(serverDbBackup, serverDBBackupRunner.getDefaultBackupPath());
+
+    objectsAdded = testIncrementalBackup(totalAdditions, currentNoOfObjects);
     currentNoOfObjects += objectsAdded;
 
     objectsAdded = testFullBackup(totalAdditions, currentNoOfObjects);
@@ -84,20 +83,6 @@ public class ServerDBBackupTestApp extends AbstractTransparentApp {
     currentNoOfObjects += objectsAdded;
 
     testConcurrentBackups(totalAdditions, currentNoOfObjects);
-  }
-  
-  private void testServerDataBackupPath() {
-    if (waitOnBarrier() != 0) {
-      final String dbBackupPath = serverDbBackup + File.separator + "serverDbBackupPathTestDbFiles";
-      try {
-        serverDBBackupRunner.runBackup(dbBackupPath);
-      } catch (IOException e) {
-        Assert.fail(e.getMessage());
-      }
-      Assert.assertEquals(dbBackupPath, serverDBBackupRunner.getBackupPath());
-    }
-    
-    waitOnBarrier();
   }
 
   private int testIncrementalBackup(final int totalAdditions, int currentNoOfObjects) {
@@ -175,22 +160,25 @@ public class ServerDBBackupTestApp extends AbstractTransparentApp {
   private int testInValidDirectoies(int totalAdditions, int currentNoOfObjects) {
     String dbBackupPath = "xyz";
 
+    NotificationListenerImpl listener = null;
     if (waitOnBarrier() != 0) {
       try {
         File file = new File(dbBackupPath);
         file.createNewFile();
-        
-        // create and add notifications
-        final NotificationListener listener = new NotificationListenerImpl();
-        final NotificationFilter filter = new NotificationFilterImpl();
 
-        serverDBBackupRunner.runBackupWithListener(dbBackupPath, listener, filter, filter, "testBackupFailed");
+        // create and add notifications
+        listener = new NotificationListenerImpl();
+        NotificationFilter filter = new NotificationFilterImpl();
+
+        serverDBBackupRunner.runBackup(dbBackupPath, listener, filter, filter);
         throw new AssertionError("Should throw an exception when invalid direcoties are passed in");
       } catch (IOException e) {
-        // do nothing
+        if (listener != null) {
+          Assert.assertNotNull(listener.getMessage());
+        }
       }
     }
-    
+
     waitOnBarrier();
     addToList(totalAdditions);
     currentNoOfObjects += 2 * totalAdditions;
@@ -284,19 +272,13 @@ public class ServerDBBackupTestApp extends AbstractTransparentApp {
   }
 
   private void setDbHome() {
-    ServerDBBackupMBean mbean = null;
     final JMXConnector jmxConnector = RunnerUtility.getJMXConnector(null, "localhost", jmxPort);
-    MBeanServerConnection mbs;
-    try {
-      mbs = jmxConnector.getMBeanServerConnection();
-    } catch (IOException e1) {
-      System.err.println("Unable to connect to host '" + "localhost" + "', port " + jmxPort
-                         + ". Are you sure there is a Terracotta server running there?");
-      return;
-    }
-    mbean = (ServerDBBackupMBean) MBeanServerInvocationProxy.newProxyInstance(mbs, L2MBeanNames.SERVER_DB_BACKUP,
-                                                                              ServerDBBackupMBean.class, false);
+    MBeanServerConnection mbs = ServerDBBackupRunner.getMBeanServerConnection(jmxConnector,"localhost", jmxPort);
+    if (mbs == null) return;
+    ServerDBBackupMBean mbean = ServerDBBackupRunner.getServerDBBackupMBean(mbs);
     dbHome = mbean.getDbHome();
+    ServerDBBackupRunner.removeListenerAndCloseJMX(null, jmxConnector, mbs);
+    
     if (dbHome == null) throw new RuntimeException(
                                                    "The DB home is still not set. Check if persistence mode is enabled.");
   }
@@ -361,15 +343,20 @@ public class ServerDBBackupTestApp extends AbstractTransparentApp {
 }
 
 class NotificationListenerImpl implements NotificationListener, Serializable {
+  private String notificationMsg;
+
   public void handleNotification(Notification notification, Object handback) {
-    System.out.println("Notified for invalid directories: " + notification.getMessage());
+    notificationMsg = notification.getMessage();
+  }
+
+  public String getMessage() {
+    return notificationMsg;
   }
 }
 
 class NotificationFilterImpl implements NotificationFilter, Serializable {
   public boolean isNotificationEnabled(Notification notification) {
-    if(notification.getType().equals(ServerDBBackupMBean.BACKUP_FAILED))
-      return true;
+    if (notification.getType().equals(ServerDBBackupMBean.BACKUP_FAILED)) return true;
     return false;
-  } 
+  }
 }

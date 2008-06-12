@@ -27,25 +27,19 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.DateFormat;
 import java.util.Date;
-import java.util.HashMap;
 
-import javax.management.ListenerNotFoundException;
 import javax.management.NotCompliantMBeanException;
-import javax.management.NotificationFilter;
-import javax.management.NotificationListener;
 
 public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBackupMBean {
 
   private final String              defaultPathForBackup;
-  private String                    currentPathForBackup;
   private final long                throttleTime;
   private final SynchronizedBoolean isBackupRunning;
   private String                    envHome;
   private Environment               env;
   private DbBackup                  backupHelper;
   private FileLoggerForBackup       backupFileLogger;
-  private HashMap                   mapOfListeners = new HashMap();
-  private static final TCLogger     logger         = TCLogging.getLogger(ServerDBBackup.class);
+  private static final TCLogger     logger = TCLogging.getLogger(ServerDBBackup.class);
 
   // Only used for Unit Test cases
   public ServerDBBackup(String destDir) throws NotCompliantMBeanException {
@@ -83,18 +77,16 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
 
   public boolean isBackUpRunning() {
     checkEnabled();
-
     return isBackupRunning.get();
   }
 
-  public String getAbsolutePathForBackup() {
+  public String getDefaultPathForBackup() {
     checkEnabled();
-    return currentPathForBackup;
+    return defaultPathForBackup;
   }
 
   public void runBackUp() throws IOException {
     checkEnabled();
-
     runBackUp(defaultPathForBackup);
   }
 
@@ -113,7 +105,6 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
     }
 
     if (destinationDir == null) destinationDir = defaultPathForBackup;
-    currentPathForBackup = destinationDir;
 
     logger.log(LogLevel.INFO, "The destination directory is:" + destinationDir);
 
@@ -174,7 +165,7 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
    */
   public long readLastFileCopied(String path) throws IOException {
     File dir = new File(path);
-    if (!dir.exists()  || (dir.exists() && !dir.isDirectory())) {
+    if (!dir.exists() || (dir.exists() && !dir.isDirectory())) {
       if (!dir.mkdirs()) { throw new IOException("Failed to create a directory at the following path:" + path); }
       return -1;
     }
@@ -247,7 +238,9 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
   }
 
   class FileLoggerForBackup {
-    private String logFilePath;
+    private String             logFilePath;
+    public final static String BACKUP_STARTED_MSG = "Backup Started at ";
+    public final static String BACKUP_STOPPED_MSG = "Backup Stopped at ";
 
     public FileLoggerForBackup(String backupPath) {
       logFilePath = backupPath + File.separator + "backup.log";
@@ -268,16 +261,20 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
     }
 
     public void logStartMessage() {
-      DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.FULL);
-      String date = dateFormat.format(new Date());
-      logMessage("Backup Started at " + date);
+      String date = getCurrentDateTime();
+      logMessage(BACKUP_STARTED_MSG + date);
     }
 
     public void logStopMessage() {
+      String date = getCurrentDateTime();
+      logMessage(BACKUP_STOPPED_MSG + date);
+      logMessage("");
+    }
+
+    private String getCurrentDateTime() {
       DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.FULL);
       String date = dateFormat.format(new Date());
-      logMessage("Backup Stopped at " + date);
-      logMessage("");
+      return date;
     }
 
     public void logExceptions(Exception e) {
@@ -285,27 +282,24 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
     }
 
     public void logMessage(String message) {
+      PrintWriter writer = null;
       try {
-        PrintWriter writer = null;
         writer = new PrintWriter(new FileOutputStream(logFilePath, true));
-
         writer.println(message);
         writer.flush();
-        writer.close();
       } catch (Exception e) {
         // do nothing
+      } finally {
+        closeWriter(writer);
       }
     }
-  }
 
-  public void addNotificationListener(NotificationListener listener, NotificationFilter filter, Object obj,
-                                      String listenerName) {
-    mapOfListeners.put(listenerName, listener);
-    super.addNotificationListener(listener, filter, obj);
-  }
-
-  public void removeNotificationListener(String listenerName) throws ListenerNotFoundException {
-    NotificationListener listener = (NotificationListener)mapOfListeners.get(listenerName);
-    super.removeNotificationListener(listener);
+    private void closeWriter(PrintWriter writer) {
+      try {
+        writer.close();
+      } catch (Exception e) {
+        // ignore
+      }
+    }
   }
 }

@@ -11,7 +11,6 @@ import com.tc.management.beans.object.ServerDBBackupMBean;
 
 import java.io.IOException;
 
-import javax.management.ListenerNotFoundException;
 import javax.management.MBeanServerConnection;
 import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
@@ -26,7 +25,6 @@ public class ServerDBBackupRunner {
   private String             m_host;
   private int                m_port;
   private String             m_userName;
-  private String             m_dbBackupPath;
   public static final String DEFAULT_HOST = "localhost";
   public static final int    DEFAULT_PORT = 9520;
 
@@ -98,29 +96,21 @@ public class ServerDBBackupRunner {
   }
 
   public void runBackup(String path) throws IOException {
-    runBackupWithListener(path, null, null, null, null);
+    runBackup(path, null, null, null);
   }
 
-  public void runBackupWithListener(String path, NotificationListener listener, NotificationFilter filter, Object obj,
-                                     String listenerName) throws IOException {
+  public void runBackup(String path, NotificationListener listener, NotificationFilter filter, Object obj)
+      throws IOException {
     final JMXConnector jmxConnector = RunnerUtility.getJMXConnector(m_userName, m_host, m_port);
-    MBeanServerConnection mbs;
-    try {
-      mbs = jmxConnector.getMBeanServerConnection();
-    } catch (IOException e1) {
-      System.err.println("Unable to connect to host '" + m_host + "', port " + m_port
-                         + ". Are you sure there is a Terracotta server running there?");
-      return;
-    }
-    ServerDBBackupMBean mbean = (ServerDBBackupMBean) MBeanServerInvocationProxy.newProxyInstance(mbs, L2MBeanNames.SERVER_DB_BACKUP,
-                                                                              ServerDBBackupMBean.class, false);
+    MBeanServerConnection mbs = getMBeanServerConnection(jmxConnector, m_host, m_port);
+    if (mbs == null) return;
+    ServerDBBackupMBean mbean = getServerDBBackupMBean(mbs);
+
     try {
       if (listener != null) {
-        mbean.addNotificationListener(listener, filter, obj, listenerName);
+        mbs.addNotificationListener(L2MBeanNames.SERVER_DB_BACKUP, listener, filter, obj);
       }
-
       mbean.runBackUp(path);
-      m_dbBackupPath = mbean.getAbsolutePathForBackup();
     } catch (IOException e) {
       System.err.println(e.getMessage());
       e.printStackTrace();
@@ -129,26 +119,62 @@ public class ServerDBBackupRunner {
       e.printStackTrace();
       throw new RuntimeException(e);
     } finally {
-      try {
-        removeListener(listener, listenerName, mbean);
-        jmxConnector.close();
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
+      removeListenerAndCloseJMX(listener, jmxConnector, mbs);
     }
   }
 
-  private void removeListener(NotificationListener listener, String listenerName, ServerDBBackupMBean mbean) {
-    if (listener != null) {
-      try {
-        mbean.removeNotificationListener(listenerName);
-      } catch (ListenerNotFoundException e) {
-        e.printStackTrace();
-      }
+  public static ServerDBBackupMBean getServerDBBackupMBean(MBeanServerConnection mbs) {
+    ServerDBBackupMBean mbean = (ServerDBBackupMBean) MBeanServerInvocationProxy
+        .newProxyInstance(mbs, L2MBeanNames.SERVER_DB_BACKUP, ServerDBBackupMBean.class, false);
+    return mbean;
+  }
+
+  public static MBeanServerConnection getMBeanServerConnection(final JMXConnector jmxConnector, String host, int port) {
+    MBeanServerConnection mbs;
+    try {
+      mbs = jmxConnector.getMBeanServerConnection();
+    } catch (IOException e1) {
+      System.err.println("Unable to connect to host '" + host + "', port " + port
+                         + ". Are you sure there is a Terracotta server running there?");
+      return null;
+    }
+    return mbs;
+  }
+
+  public static void removeListenerAndCloseJMX(NotificationListener listener, final JMXConnector jmxConnector,
+                                               MBeanServerConnection mbs) {
+    removeListener(listener, mbs);
+    closeJMXConnector(jmxConnector);
+  }
+
+  private static void closeJMXConnector(final JMXConnector jmxConnector) {
+    try {
+      jmxConnector.close();
+    } catch (IOException e) {
+      e.printStackTrace();
     }
   }
 
-  public String getBackupPath() {
-    return m_dbBackupPath;
+  private static void removeListener(NotificationListener listener, MBeanServerConnection mbs) {
+    try {
+      if (listener != null) mbs.removeNotificationListener(L2MBeanNames.SERVER_DB_BACKUP, listener);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  public String getDefaultBackupPath() {
+    final JMXConnector jmxConnector = RunnerUtility.getJMXConnector(m_userName, m_host, m_port);
+    MBeanServerConnection mbs = getMBeanServerConnection(jmxConnector, m_host, m_port);
+    if (mbs == null) return null;
+    ServerDBBackupMBean mbean = getServerDBBackupMBean(mbs);
+
+    String backupPath = null;
+    try {
+      backupPath = mbean.getDefaultPathForBackup();
+    } finally {
+      removeListenerAndCloseJMX(null, jmxConnector, mbs);
+    }
+    return backupPath;
   }
 }

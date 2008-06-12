@@ -247,6 +247,7 @@ public class L2Management extends TerracottaManagement {
     mBeanServer.unregisterMBean(L2MBeanNames.LOGGER);
     mBeanServer.unregisterMBean(L2MBeanNames.OBJECT_MANAGEMENT);
     mBeanServer.unregisterMBean(L2MBeanNames.LOCK_STATISTICS);
+    mBeanServer.unregisterMBean(L2MBeanNames.SERVER_DB_BACKUP);
     if (statisticsAgentSubSystem.isActive()) {
       statisticsAgentSubSystem.unregisterMBeans(mBeanServer);
     }
