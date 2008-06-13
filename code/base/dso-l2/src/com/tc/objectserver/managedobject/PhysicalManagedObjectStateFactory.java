@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.managedobject;
 
@@ -105,6 +106,8 @@ public class PhysicalManagedObjectStateFactory {
   public PhysicalManagedObjectState create(long strIdx, ObjectID parentID, String className, String loaderDesc,
                                            DNACursor cursor) {
     ClassSpec cs = new ClassSpec(className, loaderDesc, strIdx);
+    cs.setGenerateParentIdStorage(!parentID.isNull());
+
     String classIdentifier = cs.getClassIdentifier();
     String generatedClassName = (String) knownClasses.get(classIdentifier);
     if (generatedClassName == null) {
@@ -150,6 +153,7 @@ public class PhysicalManagedObjectStateFactory {
       } else {
         // This newly generated class subclasses the newState
         cs.setSuperClassName(newState.getClass().getName());
+        cs.setGenerateParentIdStorage(!HasParentIdStorage.class.isAssignableFrom(newState.getClass()));
         PhysicalManagedObjectState latestState = createNewClassAndInitializeObject(pid, cs, deltaFields);
         return initNewStateFromOld(latestState, oldState);
       }
@@ -225,7 +229,7 @@ public class PhysicalManagedObjectStateFactory {
     try {
       int clazzId = getNextSequenceID();
       cs.setGeneratedClassID(clazzId);
-      byte data[] = loader.createClassBytes(cs, parentID, fields);
+      byte data[] = loader.createClassBytes(cs, fields);
 
       String generatedClassName = cs.getGeneratedClassName();
       Class c = loader.defineClassFromBytes(generatedClassName, clazzId, data, 0, data.length);

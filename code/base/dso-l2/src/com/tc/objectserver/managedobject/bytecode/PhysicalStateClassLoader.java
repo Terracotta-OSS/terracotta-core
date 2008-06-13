@@ -11,7 +11,7 @@ import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.exception.TCRuntimeException;
 import com.tc.object.LiteralValues;
-import com.tc.object.ObjectID;
+import com.tc.objectserver.managedobject.HasParentIdStorage;
 import com.tc.util.AdaptedClassDumper;
 import com.tc.util.Assert;
 
@@ -44,10 +44,13 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
 
   }
 
-  private static final String PARENT_ID_FIELD       = "parentId";
+  private static final String[] HAS_PARENT_ID_INTERFACES = new String[] { HasParentIdStorage.class.getName()
+                                                             .replace('.', '/') };
 
-  private static final Map    OBJECT_OUTPUT_METHODS = Collections.synchronizedMap(new HashMap());
-  private static final Map    OBJECT_INPUT_METHODS  = Collections.synchronizedMap(new HashMap());
+  private static final String   PARENT_ID_FIELD          = "parentId";
+
+  private static final Map      OBJECT_OUTPUT_METHODS    = Collections.synchronizedMap(new HashMap());
+  private static final Map      OBJECT_INPUT_METHODS     = Collections.synchronizedMap(new HashMap());
 
   static {
     addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.INTEGER, "writeInt", "(I)V");
@@ -132,8 +135,8 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
     super();
   }
 
-  public byte[] createClassBytes(ClassSpec cs, ObjectID parentID, List fields) {
-    byte data[] = basicCreateClassBytes(cs, parentID, fields);
+  public byte[] createClassBytes(ClassSpec cs, List fields) {
+    byte data[] = basicCreateClassBytes(cs, fields);
     AdaptedClassDumper.INSTANCE.write(cs.getGeneratedClassName(), data);
     return data;
   }
@@ -143,15 +146,18 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
     return clazz;
   }
 
-  private byte[] basicCreateClassBytes(ClassSpec cs, ObjectID parentID, List fields) {
+  private byte[] basicCreateClassBytes(ClassSpec cs, List fields) {
     String classNameSlash = cs.getGeneratedClassName().replace('.', '/');
     String superClassNameSlash = cs.getSuperClassName().replace('.', '/');
     ClassWriter cw = new ClassWriter(0); // don't compute maxs
 
-    cw.visit(V1_2, ACC_PUBLIC | ACC_SUPER, classNameSlash, null, superClassNameSlash, null);
+    String[] interfaces = cs.generateParentIdStorage() ? HAS_PARENT_ID_INTERFACES : null;
+
+    cw.visit(V1_5, ACC_PUBLIC | ACC_SUPER, classNameSlash, null, superClassNameSlash, interfaces);
 
     createConstructor(cw, superClassNameSlash);
-    if (!parentID.isNull()) {
+
+    if (cs.generateParentIdStorage()) {
       createParentIDField(cw);
       createGetParentIDMethod(cw, classNameSlash);
       createSetParentIDMethod(cw, classNameSlash);
@@ -160,7 +166,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
     createFields(cw, fields);
     createGetClassNameMethod(cw, classNameSlash, cs);
     createGetLoaderDescriptionMethod(cw, classNameSlash, cs);
-    createGetObjectReferencesMethod(cw, classNameSlash, parentID, cs, superClassNameSlash, fields);
+    createGetObjectReferencesMethod(cw, classNameSlash, cs, superClassNameSlash, fields);
     createBasicSetMethod(cw, classNameSlash, cs, superClassNameSlash, fields);
     createBasicDehydrateMethod(cw, classNameSlash, cs, superClassNameSlash, fields);
     createAddValuesMethod(cw, classNameSlash, cs, superClassNameSlash, fields);
@@ -509,7 +515,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
   // return result;
   // }
   // *************************************************************************************
-  private void createGetObjectReferencesMethod(ClassWriter cw, String classNameSlash, ObjectID parentID, ClassSpec cs,
+  private void createGetObjectReferencesMethod(ClassWriter cw, String classNameSlash, ClassSpec cs,
                                                String superClassNameSlash, List fields) {
     List referenceFields = new ArrayList(fields.size());
     for (Iterator i = fields.iterator(); i.hasNext();) {
@@ -520,7 +526,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
     }
 
     // There is no references in this object and it is not a direct subclass of Physical Managed Object State
-    if (referenceFields.size() == 0 && parentID.isNull() && !cs.isDirectSubClassOfPhysicalMOState()) {
+    if (referenceFields.size() == 0 && !cs.generateParentIdStorage() && !cs.isDirectSubClassOfPhysicalMOState()) {
       // The parent object has the necessary implementations
       return;
     }
@@ -529,7 +535,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
     mv.visitCode();
 
     // There is no references in this object
-    if (referenceFields.size() == 0 && parentID.isNull()) {
+    if (referenceFields.size() == 0 && !cs.generateParentIdStorage()) {
       mv.visitFieldInsn(GETSTATIC, "java/util/Collections", "EMPTY_SET", "Ljava/util/Set;");
       mv.visitInsn(ARETURN);
       mv.visitMaxs(1, 1);
@@ -538,9 +544,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
     }
 
     int size = referenceFields.size();
-    if (!parentID.isNull() && cs.isDirectSubClassOfPhysicalMOState()) {
-      size++;
-    }
+    size += cs.generateParentIdStorage() ? 1 : 0;
 
     mv.visitTypeInsn(NEW, "gnu/trove/THashSet");
     mv.visitInsn(DUP);
@@ -577,7 +581,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
       mv.visitInsn(POP);
       mv.visitLabel(l2);
     }
-    if (!parentID.isNull() && cs.isDirectSubClassOfPhysicalMOState()) {
+    if (cs.generateParentIdStorage()) {
       // add parentID too
       mv.visitVarInsn(ALOAD, 1);
       mv.visitVarInsn(ALOAD, 0);
@@ -685,12 +689,13 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
   // The Code generated by this method looks (kind of) this.
   //
   // ObjectID parentId;
-  // public ObjectID getParentID() {
+  // public final ObjectID getParentID() {
   // return parentId;
   // }
   // *************************************************************************************
   private void createGetParentIDMethod(ClassWriter cw, String classNameSlash) {
-    MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "getParentID", "()Lcom/tc/object/ObjectID;", null, null);
+    // The method is "final" since the parentID storage should only exist at one level in the hierarchy
+    MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_FINAL, "getParentID", "()Lcom/tc/object/ObjectID;", null, null);
     mv.visitCode();
     mv.visitVarInsn(ALOAD, 0);
     mv.visitFieldInsn(GETFIELD, classNameSlash, PARENT_ID_FIELD, "Lcom/tc/object/ObjectID;");
@@ -703,12 +708,13 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
   // The Code generated by this method looks (kind of) this.
   //
   // ObjectID parentId;
-  // public void setParentID(ObjectID id) {
+  // public final void setParentID(ObjectID id) {
   // parentId = id;
   // }
   // *************************************************************************************
   private void createSetParentIDMethod(ClassWriter cw, String classNameSlash) {
-    MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "setParentID", "(Lcom/tc/object/ObjectID;)V", null, null);
+    // The method is "final" since the parentID storage should only exist at one level in the hierarchy
+    MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_FINAL, "setParentID", "(Lcom/tc/object/ObjectID;)V", null, null);
     mv.visitCode();
     mv.visitVarInsn(ALOAD, 0);
     mv.visitVarInsn(ALOAD, 1);

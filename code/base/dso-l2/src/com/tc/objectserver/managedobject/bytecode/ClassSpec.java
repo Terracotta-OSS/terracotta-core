@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.managedobject.bytecode;
 
@@ -13,6 +14,7 @@ public class ClassSpec {
   private final String        className;
   private final String        loaderDesc;
   private final String        classIdentifier;
+  private boolean             generateParentIdStorage;
   private int                 classID                      = Integer.MIN_VALUE;
   private String              generatedClassName;
   private String              superClassName               = PHYSICAL_MO_STATE_CLASS_NAME;
@@ -64,5 +66,13 @@ public class ClassSpec {
 
   public boolean isDirectSubClassOfPhysicalMOState() {
     return (PHYSICAL_MO_STATE_CLASS_NAME.equals(this.superClassName));
+  }
+
+  public void setGenerateParentIdStorage(boolean b) {
+    this.generateParentIdStorage = b;
+  }
+
+  public boolean generateParentIdStorage() {
+    return this.generateParentIdStorage;
   }
 }
