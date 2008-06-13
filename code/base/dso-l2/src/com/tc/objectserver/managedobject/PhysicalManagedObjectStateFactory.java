@@ -153,7 +153,7 @@ public class PhysicalManagedObjectStateFactory {
       } else {
         // This newly generated class subclasses the newState
         cs.setSuperClassName(newState.getClass().getName());
-        cs.setGenerateParentIdStorage(!HasParentIdStorage.class.isAssignableFrom(newState.getClass()));
+        cs.setGenerateParentIdStorage(!pid.isNull() && !HasParentIdStorage.class.isAssignableFrom(newState.getClass()));
         PhysicalManagedObjectState latestState = createNewClassAndInitializeObject(pid, cs, deltaFields);
         return initNewStateFromOld(latestState, oldState);
       }
