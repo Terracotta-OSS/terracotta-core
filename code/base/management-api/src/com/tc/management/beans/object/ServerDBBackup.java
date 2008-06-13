@@ -234,6 +234,8 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
   private void backupFailed(Exception e) {
     backupFileLogger.logExceptions(e);
     backupFileLogger.logStopMessage();
+    //for debugging purpose - to be removed
+    System.out.println(" Sending Notification for Backup failed ");
     sendNotification(BACKUP_FAILED, this, e.getMessage());
   }
 

@@ -163,23 +163,27 @@ public class ServerDBBackupTestApp extends AbstractTransparentApp {
 
     if (waitOnBarrier() != 0) {
       LinkedBlockingQueue<String> queue = new LinkedBlockingQueue<String>();
-
+      
+      NotificationListenerImpl listener = null;
       try {        
         File file = new File(dbBackupPath);
         file.createNewFile();
 
         // create and add notifications
-        NotificationListenerImpl listener = new NotificationListenerImpl(queue);
+        listener = new NotificationListenerImpl(queue);
         NotificationFilter filter = new NotificationFilterImpl();
 
         serverDBBackupRunner.runBackup(dbBackupPath, listener, filter, filter);
         throw new AssertionError("Should throw an exception when invalid direcoties are passed in");
       } catch (IOException e) {
-        try {
-          String notificationMsg = queue.take();
-          Assert.assertNotNull(notificationMsg);
-        } catch (InterruptedException e1) {
-          throw new RuntimeException(e1);
+        if (listener != null) {
+          try {
+            String notificationMsg = queue.take();
+            System.out.println("The Notification: \"" + notificationMsg + "\"");
+            Assert.assertNotNull(notificationMsg);
+          } catch (InterruptedException e1) {
+            throw new RuntimeException(e1);
+          }
         }
       }
     }
