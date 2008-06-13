@@ -57,10 +57,6 @@ public class CustomScopedBeanTest extends AbstractTwoServerDeploymentTest {
   private ITestFacade         beanN2C2;                         // node2 session1 conv2
 
   public CustomScopedBeanTest() {
-    // MNK-561: currently failed with spring 205 and 208
-    disableVariant(TestConfigObject.SPRING_VARIANT, "205");
-    disableVariant(TestConfigObject.SPRING_VARIANT, "208");
-
     disableVariant(TestConfigObject.SPRING_VARIANT, "128");
   }
 

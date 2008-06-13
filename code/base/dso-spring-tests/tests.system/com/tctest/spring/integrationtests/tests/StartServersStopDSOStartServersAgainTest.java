@@ -25,8 +25,6 @@ public class StartServersStopDSOStartServersAgainTest extends SpringDeploymentTe
   }
 
   public StartServersStopDSOStartServersAgainTest() {
-    // MNK-561
-    disableAllUntil("2008-06-30");
   }
 
   public void testStartServersStopDSOStartServersAgain() throws Exception {

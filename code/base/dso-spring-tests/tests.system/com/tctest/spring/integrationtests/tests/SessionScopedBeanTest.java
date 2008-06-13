@@ -39,9 +39,6 @@ public class SessionScopedBeanTest extends AbstractTwoServerDeploymentTest {
                                                                                                                                     // session2
 
   public SessionScopedBeanTest() {
-    // MNK-561
-    this.disableAllUntil("2008-06-30");
-
     this.disableVariant(TestConfigObject.SPRING_VARIANT, "128");
   }
 

@@ -3,6 +3,7 @@
  */
 package com.tcspring;
 
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionReader;
@@ -122,7 +123,16 @@ public class BeanDefinitionProtocol {
    * @see org.springframework.beans.factory.config.BeanDefinitionHolder
    */
   public void saveBeanDefinition(StaticJoinPoint jp, BeanDefinitionHolder holder) {
-    beanMap.put(holder.getBeanName(), holder.getBeanDefinition());
+    saveBeanDefinition(jp, holder.getBeanName(), holder.getBeanDefinition());
+  }  
+
+  /**
+   * Called after registering BeanDefinition in <code>BeanDefinitionRegistry</code>
+   * 
+   * @see org.springframework.beans.factory.config.BeanDefinitionHolder
+   */
+  public void saveBeanDefinition(StaticJoinPoint jp, String beanName, BeanDefinition beanDefinition) {
+    beanMap.put(beanName, beanDefinition);
   }  
 }
 

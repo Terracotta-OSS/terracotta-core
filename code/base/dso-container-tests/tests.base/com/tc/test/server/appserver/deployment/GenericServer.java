@@ -53,7 +53,7 @@ import junit.framework.Assert;
 public class GenericServer extends AbstractStoppable implements WebApplicationServer {
   private static final Log                  LOG             = LogFactory.getLog(GenericServer.class);
   private static final String               SERVER          = "server_";
-  private static final boolean              GC_LOGGGING     = true;
+  private static final boolean              GC_LOGGING      = true;
   private static final boolean              ENABLE_DEBUGGER = false;
   private static final ThreadLocal          dsoEnabled      = new ThreadLocal() {
                                                               protected Object initialValue() {
@@ -179,7 +179,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
   }
 
   private void enableDebug(int serverId, final boolean enableDebug) {
-    if (GC_LOGGGING && !Vm.isIBM()) {
+    if (GC_LOGGING && !Vm.isIBM()) {
       parameters.appendJvmArgs("-verbose:gc");
       parameters.appendJvmArgs("-XX:+PrintGCDetails");
       parameters.appendJvmArgs("-XX:+PrintGCTimeStamps");
