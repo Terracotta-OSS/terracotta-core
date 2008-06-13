@@ -8,6 +8,7 @@ import org.apache.catalina.Context;
 import org.apache.catalina.HttpResponse;
 import org.apache.catalina.Request;
 import org.apache.coyote.tomcat5.CoyoteResponse;
+import org.apache.coyote.tomcat5.CoyoteResponseFacade;
 
 import com.terracotta.session.SessionResponse;
 
@@ -17,6 +18,7 @@ import java.io.PrintWriter;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.ServletResponse;
+import javax.servlet.ServletResponseWrapper;
 import javax.servlet.http.Cookie;
 
 public class SessionResponse50 extends SessionResponse implements HttpResponse {
@@ -163,5 +165,38 @@ public class SessionResponse50 extends SessionResponse implements HttpResponse {
   public void setIncluded(boolean flag) {
     valveRes.setIncluded(flag);
   }
+
+  public static CoyoteResponse tcUnwrap(ServletResponse response) {
+    CoyoteResponse rv = null;
+    Object current = response;
+    while (current != null) {
+      if (current instanceof SessionResponse50) {
+        rv = ((SessionResponse50)current).valveRes;
+        break;
+      } else if (current instanceof ServletResponseWrapper) {
+        current = ((ServletResponseWrapper)current).getResponse();
+      } else {
+        break;
+      }
+    }
+    return rv;
+  }
+
+  public static CoyoteResponseFacade tcUnwrapCoyoteResponseFacade(ServletResponse response) {
+    CoyoteResponseFacade rv = null;
+    Object current = response;
+    while (current != null) {
+      if (current instanceof SessionResponse50) {
+        current = ((SessionResponse50)current).valveRes;
+      } else if (current instanceof ServletResponseWrapper) {
+        current = ((ServletResponseWrapper)current).getResponse();
+      } else {
+        rv = new CoyoteResponseFacade((CoyoteResponse)current);
+        break;
+      }
+    }
+    return rv;
+  }
+
 
 }

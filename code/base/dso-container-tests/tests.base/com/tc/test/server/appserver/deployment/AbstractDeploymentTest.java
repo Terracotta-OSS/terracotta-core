@@ -31,9 +31,9 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   private final List    disabledJavaVersion = new ArrayList();
 
   public AbstractDeploymentTest() {
-    if (isSessionTest() && (appServerInfo().getId() == AppServerInfo.GLASSFISH)) {
-      disableAllTests();
-    }
+//    if (isSessionTest() && (appServerInfo().getId() == AppServerInfo.GLASSFISH)) {
+//      disableAllTests();
+//    }
   }
 
   public boolean shouldDisable() {

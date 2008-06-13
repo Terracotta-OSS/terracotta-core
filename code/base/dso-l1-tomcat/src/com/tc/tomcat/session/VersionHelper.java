@@ -24,7 +24,8 @@ public class VersionHelper {
     String serverInfo = ServerInfo.getServerInfo();
     serverInfo = (serverInfo == null) ? "null" : serverInfo;
 
-    if (serverInfo.startsWith("Sun Java System Application Server Platform Edition 9")) {
+    if (serverInfo.startsWith("Sun Java System Application Server Platform Edition 9")
+      || serverInfo.startsWith("Sun Java System Application Server 9")) {
       CURRENT = GLASSFISH;
     } else {
       int lastSlash = serverInfo.lastIndexOf("/");

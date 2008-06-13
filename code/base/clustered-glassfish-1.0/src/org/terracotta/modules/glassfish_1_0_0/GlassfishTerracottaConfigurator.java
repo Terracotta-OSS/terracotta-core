@@ -8,6 +8,9 @@ public class GlassfishTerracottaConfigurator extends TerracottaConfiguratorModul
   protected final void addInstrumentation(final BundleContext context) {
     configHelper.addCustomAdapter("com.sun.jdo.api.persistence.model.RuntimeModel", new RuntimeModelAdapter());
     configHelper.addCustomAdapter("com.sun.enterprise.server.PEMain", new PEMainAdapter());
+    configHelper.addCustomAdapter("org.apache.catalina.core.ApplicationDispatcher", new ApplicationDispatcherAdapter());
+    configHelper.addCustomAdapter("org.apache.catalina.core.ApplicationDispatcherForward", new ApplicationDispatcherForwardAdapter());
+
   }
 
 }

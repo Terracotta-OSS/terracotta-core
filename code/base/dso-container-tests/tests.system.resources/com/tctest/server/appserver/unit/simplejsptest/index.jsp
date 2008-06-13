@@ -1,11 +1,7 @@
-<%@ page import="com.tc.object.bytecode.Manageable" %>
-
 <%
     String cmdParam = request.getParameter("cmd");
     if ("getClass".equals(cmdParam)) {
       out.println(getClass());
-    } else if ("isManagable".equals(cmdParam)) {
-      out.println(Manageable.class.isAssignableFrom(getClass()));
     } else if ("insert".equals(cmdParam)) {
       session.setAttribute("hung", "daman");
       out.println("OK");
