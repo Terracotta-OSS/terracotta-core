@@ -18,7 +18,7 @@ module DistributionUtils
     flavor = flavor.downcase
     check_if_type_supplied(product_code, flavor)
     filename = FilePath.new(@static_resources.distribution_config_directory(flavor),
-                            "#{product_code}-#{flavor}.def.yml").canonicalize.to_s
+      "#{product_code}-#{flavor}.def.yml").canonicalize.to_s
     if File.exist?(filename)
       YAML.load_file(filename)
     else

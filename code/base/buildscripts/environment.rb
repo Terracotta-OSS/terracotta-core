@@ -151,24 +151,24 @@ class Environment
       os_name = JavaSystem.getProperty('os.name');
       sun_os_patch_level = JavaSystem.getProperty('sun.os.patch.level');
       if @windows_version.nil?
-          @windows_version = case os_name 
-                              when /Windows 2003/i: "win2k3"
-                              when /Windows XP/i:   "winxp"
-                              else                  os_name.gsub(/ /, '_')
-                             end
-          unless sun_os_patch_level == "unknown"
-            patch = ''
-            sun_os_patch_level.split(/ /).each do |t|
-              patch = "#{patch}#{t[0..0]}"
-            end
-            @windows_version += '-' + patch
-          end                                
+        @windows_version = case os_name 
+        when /Windows 2003/i: "win2k3"
+        when /Windows XP/i:   "winxp"
+        else                  os_name.gsub(/ /, '_')
+        end
+        unless sun_os_patch_level == "unknown"
+          patch = ''
+          sun_os_patch_level.split(/ /).each do |t|
+            patch = "#{patch}#{t[0..0]}"
+          end
+          @windows_version += '-' + patch
+        end                                
       end
       
       type = @windows_version
     end
     
-        "%s-%s" % [ type.downcase, processor_type.downcase ]
+    "%s-%s" % [ type.downcase, processor_type.downcase ]
   end
   
   # What processor architecture are we running on? This is something like 'i686', 'powerpc', or
