@@ -24,6 +24,11 @@ public class ServerDBBackupTest extends TransparentTestBase {
   private int              jmxPort;
   private File             configFile;
   
+  public ServerDBBackupTest() {
+    // MNK-563
+    disableAllUntil("2008-06-30");
+  }
+  
   @Override
   protected Class getApplicationClass() {
     return ServerDBBackupTestApp.class;
