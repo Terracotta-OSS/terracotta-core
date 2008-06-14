@@ -70,7 +70,7 @@ public class OOONetworkStackHarness extends AbstractNetworkStackHarness {
   }
 
   protected void createIntermediateLayers() {
-    oooLayer = (isClient) ? factory.createNewClientInstance(sink, sendQueueCap) : factory
-        .createNewServerInstance(sink, sendQueueCap);
+    oooLayer = (isClient) ? factory.createNewClientInstance(sink, reconnectConfig) : factory
+        .createNewServerInstance(sink, reconnectConfig);
   }
 }

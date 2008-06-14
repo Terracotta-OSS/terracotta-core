@@ -140,14 +140,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   // private final ClassInfoFactory classInfoFactory;
   private final ExpressionHelper                 expressionHelper;
 
-  private final Map                              adaptableCache                     = Collections.synchronizedMap(new HashMap());
+  private final Map                              adaptableCache                     = Collections
+                                                                                        .synchronizedMap(new HashMap());
 
   /**
    * A list of InstrumentationDescriptor representing include/exclude patterns
    */
   private final List                             instrumentationDescriptors         = new CopyOnWriteArrayList();
 
-  
   // ======================================================================================================================
   /**
    * The lock for both {@link #userDefinedBootSpecs} and {@link #classSpecs} Maps
@@ -156,12 +156,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   /**
    * A map of class names to TransparencyClassSpec
+   * 
    * @GuardedBy {@link #specLock}
    */
   private final Map                              userDefinedBootSpecs               = new HashMap();
 
   /**
    * A map of class names to TransparencyClassSpec for individual classes
+   * 
    * @GuardedBy {@link #specLock}
    */
   private final Map                              classSpecs                         = new HashMap();
@@ -1141,7 +1143,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     // Technically, synchronization isn't needed here if this method is only called
     // during construction, in a 1.5 JVM, and if specLock is final, because the JMM guarantees
     // initialization safety w/o synchronization under those conditions
-    synchronized (specLock){
+    synchronized (specLock) {
       for (Iterator i = classSpecs.values().iterator(); i.hasNext();) {
         TransparencyClassSpec s = (TransparencyClassSpec) i.next();
         s.markPreInstrumented();
@@ -1155,7 +1157,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   public Iterator getAllUserDefinedBootSpecs() {
     Collection values = null;
-    synchronized (specLock){
+    synchronized (specLock) {
       values = new HashSet(userDefinedBootSpecs.values());
     }
     return values.iterator();
@@ -1775,18 +1777,18 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   public TransparencyClassSpec getSpec(String className) {
-    synchronized (specLock){
+    synchronized (specLock) {
       // NOTE: This method doesn't create a spec for you. If you want that use getOrCreateSpec()
       className = className.replace('/', '.');
       TransparencyClassSpec rv = (TransparencyClassSpec) classSpecs.get(className);
-      
+
       if (rv == null) {
         rv = (TransparencyClassSpec) userDefinedBootSpecs.get(className);
       } else {
         // shouldn't have a spec in both of the spec collections
         Assert.assertNull(userDefinedBootSpecs.get(className));
       }
-      
+
       return rv;
     }
   }
@@ -1796,8 +1798,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     int preInstrumentedCount = 0;
     Set preinstClasses = bootJar.getAllPreInstrumentedClasses();
     int bootJarPopulation = preinstClasses.size();
-    
-    synchronized (specLock){
+
+    synchronized (specLock) {
       TransparencyClassSpec[] allSpecs = getAllSpecs(true);
       for (int i = 0; i < allSpecs.length; i++) {
         TransparencyClassSpec classSpec = allSpecs[i];
@@ -1814,7 +1816,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
         }
       }
     }
-    
 
     if (missingCount > 0) {
       logger.info("Number of classes in the DSO boot jar:" + bootJarPopulation);
@@ -1847,9 +1848,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   private TransparencyClassSpec[] getAllSpecs(boolean includeBootJarSpecs) {
     List rv = null;
-    synchronized(specLock){
+    synchronized (specLock) {
       rv = new ArrayList(classSpecs.values());
-      
+
       if (includeBootJarSpecs) {
         for (Iterator i = getAllUserDefinedBootSpecs(); i.hasNext();) {
           rv.add(i.next());
@@ -1933,7 +1934,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   public void addUserDefinedBootSpec(String className, TransparencyClassSpec spec) {
-    synchronized (specLock){
+    synchronized (specLock) {
       userDefinedBootSpecs.put(className, spec);
     }
   }
@@ -2047,7 +2048,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     boolean l1ReconnectEnabled = l1PropFroL2.getL1ReconnectPropertiesFromL2().getL1ReconnectEnabled();
     int l1ReconnectTimeout = l1PropFroL2.getL1ReconnectPropertiesFromL2().getL1ReconnectTimeout().intValue();
     int l1ReconnectSendqueuecap = l1PropFroL2.getL1ReconnectPropertiesFromL2().getL1ReconnectSendqueuecap().intValue();
-    this.l1ReconnectConfig = new L1ReconnectConfigImpl(l1ReconnectEnabled, l1ReconnectTimeout, l1ReconnectSendqueuecap);
+    int l1ReconnectMaxdelayedacks = l1PropFroL2.getL1ReconnectPropertiesFromL2().getL1ReconnectMaxDelayedAcks().intValue();
+    int l1ReconnectSendwindow = l1PropFroL2.getL1ReconnectPropertiesFromL2().getL1ReconnectSendwindow().intValue();
+    this.l1ReconnectConfig = new L1ReconnectConfigImpl(l1ReconnectEnabled, l1ReconnectTimeout, l1ReconnectSendqueuecap,
+                                                       l1ReconnectMaxdelayedacks, l1ReconnectSendwindow);
   }
 
   public synchronized ReconnectConfig getL1ReconnectProperties() {

@@ -382,10 +382,7 @@ public class DistributedObjectServer implements TCDumper {
     l2Properties = TCPropertiesImpl.getProperties().getPropertiesFor("l2");
     TCProperties objManagerProperties = l2Properties.getPropertiesFor("objectmanager");
 
-    l1ReconnectConfig = new L1ReconnectConfigImpl(TCPropertiesImpl.getProperties()
-        .getBoolean(TCPropertiesConsts.L2_L1RECONNECT_ENABLED), TCPropertiesImpl.getProperties()
-        .getInt(TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS), TCPropertiesImpl.getProperties()
-        .getInt(TCPropertiesConsts.L2_L1RECONNECT_SENDQUEUE_CAP));
+    l1ReconnectConfig = new L1ReconnectConfigImpl();
 
     final boolean swapEnabled = true; // 2006-01-31 andrew -- no longer possible to use in-memory only; DSO folks say
     // it's broken
@@ -404,7 +401,7 @@ public class DistributedObjectServer implements TCDumper {
     }
 
     int maxStageSize = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
-    
+
     StageManager stageManager = seda.getStageManager();
     SessionManager sessionManager = new NullSessionManager();
     SessionProvider sessionProvider = (SessionProvider) sessionManager;
@@ -433,7 +430,7 @@ public class DistributedObjectServer implements TCDumper {
       SerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
       persistor = new SleepycatPersistor(TCLogging.getLogger(SleepycatPersistor.class), dbenv,
                                          serializationAdapterFactory);
-	  // Setting the DB environment for the bean which takes backup of the active server
+      // Setting the DB environment for the bean which takes backup of the active server
       if (persistent) {
         ServerDBBackup mbean = l2Management.findServerDbBackupMBean();
         mbean.setDbEnvironment(dbenv.getEnvironment(), dbenv.getEnvironmentHome());

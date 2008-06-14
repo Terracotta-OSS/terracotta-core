@@ -23,6 +23,7 @@ import com.tc.net.protocol.transport.AbstractMessageTransport;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.WireProtocolMessage;
+import com.tc.properties.ReconnectConfig;
 import com.tc.util.Assert;
 import com.tc.util.DebugUtil;
 import com.tc.util.TCTimeoutException;
@@ -55,12 +56,12 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
 
   public OnceAndOnlyOnceProtocolNetworkLayerImpl(OOOProtocolMessageFactory messageFactory,
                                                  OOOProtocolMessageParser messageParser, Sink workSink,
-                                                 int sendQueueCap, boolean isClient) {
+                                                 ReconnectConfig reconnectConfig, boolean isClient) {
     super(logger);
     this.messageFactory = messageFactory;
     this.messageParser = messageParser;
     this.isClient = isClient;
-    this.delivery = new GuaranteedDeliveryProtocol(this, workSink, sendQueueCap, isClient);
+    this.delivery = new GuaranteedDeliveryProtocol(this, workSink, reconnectConfig, isClient);
     this.delivery.start();
     this.delivery.pause();
     this.sessionId = (this.isClient) ? -1 : newRandomSessionId();

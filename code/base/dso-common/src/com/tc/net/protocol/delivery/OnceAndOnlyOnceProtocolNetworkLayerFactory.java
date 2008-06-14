@@ -4,8 +4,9 @@
 package com.tc.net.protocol.delivery;
 
 import com.tc.async.api.Sink;
+import com.tc.properties.ReconnectConfig;
 
 public interface OnceAndOnlyOnceProtocolNetworkLayerFactory {
-  public OnceAndOnlyOnceProtocolNetworkLayer createNewClientInstance(Sink workSink, int sendQueueCap);
-  public OnceAndOnlyOnceProtocolNetworkLayer createNewServerInstance(Sink workSink, int sendQueueCap);
+  public OnceAndOnlyOnceProtocolNetworkLayer createNewClientInstance(Sink workSink, ReconnectConfig reconnectConfig);
+  public OnceAndOnlyOnceProtocolNetworkLayer createNewServerInstance(Sink workSink, ReconnectConfig reconnectConfig);
 }

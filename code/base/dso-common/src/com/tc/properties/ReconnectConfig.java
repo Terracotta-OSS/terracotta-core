@@ -11,4 +11,9 @@ public interface ReconnectConfig {
   public int getReconnectTimeout();
   
   public int getSendQueueCapacity();
+  
+  public int getMaxDelayAcks();
+  
+  public int getSendWindow();
+  
 }

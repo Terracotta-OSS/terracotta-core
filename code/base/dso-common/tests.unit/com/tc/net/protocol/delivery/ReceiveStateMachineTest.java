@@ -7,6 +7,7 @@ import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
+import com.tc.properties.L1ReconnectConfigImpl;
 
 import junit.framework.TestCase;
 
@@ -18,7 +19,7 @@ public class ReceiveStateMachineTest extends TestCase {
   public void tests() throws Exception {
     LinkedQueue receiveQueue = new LinkedQueue();
     TestProtocolMessageDelivery delivery = new TestProtocolMessageDelivery(receiveQueue);
-    ReceiveStateMachine rsm = new ReceiveStateMachine(delivery);
+    ReceiveStateMachine rsm = new ReceiveStateMachine(delivery, new L1ReconnectConfigImpl());
     TestProtocolMessage tpm = new TestProtocolMessage();
     tpm.isHandshake = true;
 

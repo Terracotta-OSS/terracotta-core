@@ -10,8 +10,8 @@ import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.objectserver.api.TestSink;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.L1ReconnectConfigImpl;
+import com.tc.properties.ReconnectConfig;
 
 import junit.framework.TestCase;
 
@@ -25,8 +25,8 @@ public class GuaranteedDeliveryProtocolTest extends TestCase {
     TestSink workSink = new TestSink();
     final short sessionId = 124;
 
-    final int sendQueueCap = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_L1RECONNECT_SENDQUEUE_CAP);
-    GuaranteedDeliveryProtocol gdp = new GuaranteedDeliveryProtocol(delivery, workSink, sendQueueCap, true);
+    final ReconnectConfig reconnectConfig = new L1ReconnectConfigImpl();
+    GuaranteedDeliveryProtocol gdp = new GuaranteedDeliveryProtocol(delivery, workSink, reconnectConfig, true);
     gdp.start();
     gdp.resume();
 

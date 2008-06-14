@@ -12,6 +12,8 @@ public class L2ReconnectConfigImpl implements ReconnectConfig {
   private boolean l2ReconnectEnabled;
   private int     l2ReconnectTimeout;
   private int     l2ReconnectSendQueueCap;
+  private int     l2ReconnectMaxDelayedAcks;
+  private int     l2ReconnectSendWindow;
 
   public L2ReconnectConfigImpl() {
     l2ReconnectEnabled = TCPropertiesImpl.getProperties()
@@ -20,6 +22,10 @@ public class L2ReconnectConfigImpl implements ReconnectConfig {
         .getInt(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_TIMEOUT);
     l2ReconnectSendQueueCap = TCPropertiesImpl.getProperties()
         .getInt(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_SENDQUEUE_CAP);
+    l2ReconnectMaxDelayedAcks = TCPropertiesImpl.getProperties()
+        .getInt(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_MAX_DELAYEDACKS);
+    l2ReconnectSendWindow = TCPropertiesImpl.getProperties()
+        .getInt(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_SEND_WINDOW);
   }
 
   public int getReconnectTimeout() {
@@ -32,6 +38,14 @@ public class L2ReconnectConfigImpl implements ReconnectConfig {
 
   public int getSendQueueCapacity() {
     return l2ReconnectSendQueueCap;
+  }
+
+  public int getMaxDelayAcks() {
+    return l2ReconnectMaxDelayedAcks;
+  }
+
+  public int getSendWindow() {
+    return l2ReconnectSendWindow;
   }
 
 }

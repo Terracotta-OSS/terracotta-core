@@ -12,7 +12,9 @@ public interface TCPropertiesConsts {
    * If any of the property is renamed/deleted then make sure that u add that in this section
    ********************************************************************************************************************/
   public static final String [] OLD_PROPERTIES                                      = {"l1.reconnect.enabled",
-                                                                                       "l1.reconnect.timeout.millis"};
+                                                                                       "l1.reconnect.timeout.millis",
+                                                                                       "l2.nha.ooo.maxDelayedAcks",
+                                                                                       "l2.nha.ooo.sendWindow"};
   
   /*********************************************************************************************************************
    * Section : L2 Cache Manager Properties Description : This section contains the defaults for the cache manager for
@@ -129,10 +131,16 @@ public interface TCPropertiesConsts {
    * tcgroupcomm.handshake.timeout    - tc-group-comm handshake timeout milliseconds 
    * tcgroupcomm.response.timelimit   - tc-group-comm message response timelimit millisecon RuntimeException thrown after timelimit 
    * tcgroupcomm.discovery.interval   - tc-group-comm member discovery interval milliseconds 
+   * tcgroupcomm.reconnect.timeout    - L2-L2 reconnect windows in milliseconds
+   * tcgroupcomm.reconnect.sendqueue.cap - sendqueue capacity, 0 for Integer.MAX_VALUE
+   * tcgroupcomm.reconnect.maxDelayedAcks - at least one ack per maxDelayedAcks messages received
+   * tcgroupcomm.reconnect.sendWindow - max outstanding messages before ack received
    * send.timeout.millis              - number of milliseconds to retry sending a message 
    * tribes.failuredetector.millis    - number of milliseconds for a node to response a check otherwise will be removed from group. 
    * mcast.enabled                    - If true, uses Multicast instead of TCP for L2-L2 discovery 
    * l2.nha.tribes.mcast.*            - these properties are passed to tribes
+   * tcgroupcomm.reconnect.enabled  -  enable L2-L2 reconnect
+
    ********************************************************************************************************************/
   public static final String L2_NHA_GROUPCOMM_TYPE                                  = "l2.nha.groupcomm.type";
   public static final String L2_NHA_TCGROUPCOMM_HANDSHAKE_TIMEOUT                   = "l2.nha.tcgroupcomm.handshake.timeout";
@@ -140,6 +148,8 @@ public interface TCPropertiesConsts {
   public static final String L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED                   = "l2.nha.tcgroupcomm.reconnect.enabled";
   public static final String L2_NHA_TCGROUPCOMM_RECONNECT_TIMEOUT                   = "l2.nha.tcgroupcomm.reconnect.timeout";
   public static final String L2_NHA_TCGROUPCOMM_RECONNECT_SENDQUEUE_CAP             = "l2.nha.tcgroupcomm.reconnect.sendqueue.cap";
+  public static final String L2_NHA_TCGROUPCOMM_RECONNECT_MAX_DELAYEDACKS           = "l2.nha.tcgroupcomm.reconnect.maxDelayedAcks";
+  public static final String L2_NHA_TCGROUPCOMM_RECONNECT_SEND_WINDOW               = "l2.nha.tcgroupcomm.reconnect.sendWindow";
   public static final String L2_NHA_TCGROUPCOMM_DISCOVERY_INTERVAL                  = "l2.nha.tcgroupcomm.discovery.interval";
   //a hidden tc.properties only used for l2 proxy testing purpose
   public static final String L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT             = "l2.nha.tcgroupcomm.l2proxytoport";
@@ -153,8 +163,6 @@ public interface TCPropertiesConsts {
   public static final String L2_NHA_TRIBES_MCAST_MCASTFREQUENCY                     = "l2.nha.tribes.mcast.mcastFrequency";
   public static final String L2_NHA_TRIBES_MCAST_TCPLISTENPORT                      = "l2.nha.tribes.mcast.tcpListenPort";
   public static final String L2_NHA_TRIBES_MCAST_TCPLISTENHOST                      = "l2.nha.tribes.mcast.tcpListenHost";
-  public static final String L2_NHA_OOO_MAX_DELAYEDACKS                             = "l2.nha.ooo.maxDelayedAcks";
-  public static final String L2_NHA_OOO_SEND_WINDOW                                 = "l2.nha.ooo.sendWindow";
 
   /*********************************************************************************************************************
    * Section : Misc L2 Properties 
@@ -251,6 +259,8 @@ public interface TCPropertiesConsts {
   public static final String L2_L1RECONNECT_ENABLED                                 = "l2.l1reconnect.enabled";
   public static final String L2_L1RECONNECT_TIMEOUT_MILLS                           = "l2.l1reconnect.timeout.millis";
   public static final String L2_L1RECONNECT_SENDQUEUE_CAP                           = "l2.l1reconnect.sendqueue.cap";
+  public static final String L2_L1RECONNECT_MAX_DELAYEDACKS                         = "l2.l1reconnect.maxDelayedAcks";
+  public static final String L2_L1RECONNECT_SEND_WINDOW                             = "l2.l1reconnect.sendWindow";
 
   /*********************************************************************************************************************
    * Section : L1 Object Manager Properties 

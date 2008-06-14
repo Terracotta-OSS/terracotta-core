@@ -5,6 +5,7 @@
 package com.tc.net.protocol.delivery;
 
 import com.tc.async.api.Sink;
+import com.tc.properties.ReconnectConfig;
 
 /**
  * Creates new instances of OnceAndOnlyOnceProtocolNetworkLayers. This is used so that a mock one may be injected into
@@ -12,16 +13,16 @@ import com.tc.async.api.Sink;
  */
 public class OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl implements OnceAndOnlyOnceProtocolNetworkLayerFactory {
 
-  public OnceAndOnlyOnceProtocolNetworkLayer createNewClientInstance(Sink workSink, int sendQueueCap) {
+  public OnceAndOnlyOnceProtocolNetworkLayer createNewClientInstance(Sink workSink, ReconnectConfig reconnectConfig) {
     OOOProtocolMessageFactory messageFactory = new OOOProtocolMessageFactory();
     OOOProtocolMessageParser messageParser = new OOOProtocolMessageParser(messageFactory);
-    return new OnceAndOnlyOnceProtocolNetworkLayerImpl(messageFactory, messageParser, workSink, sendQueueCap, true);
+    return new OnceAndOnlyOnceProtocolNetworkLayerImpl(messageFactory, messageParser, workSink, reconnectConfig, true);
   }
 
-  public OnceAndOnlyOnceProtocolNetworkLayer createNewServerInstance(Sink workSink, int sendQueueCap) {
+  public OnceAndOnlyOnceProtocolNetworkLayer createNewServerInstance(Sink workSink, ReconnectConfig reconnectConfig) {
     OOOProtocolMessageFactory messageFactory = new OOOProtocolMessageFactory();
     OOOProtocolMessageParser messageParser = new OOOProtocolMessageParser(messageFactory);
-    return new OnceAndOnlyOnceProtocolNetworkLayerImpl(messageFactory, messageParser, workSink, sendQueueCap, false);
+    return new OnceAndOnlyOnceProtocolNetworkLayerImpl(messageFactory, messageParser, workSink, reconnectConfig, false);
   }
 
 }

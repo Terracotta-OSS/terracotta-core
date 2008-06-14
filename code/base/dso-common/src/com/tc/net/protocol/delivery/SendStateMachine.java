@@ -11,8 +11,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.protocol.TCNetworkMessage;
-import com.tc.properties.TCPropertiesImpl;
-import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.ReconnectConfig;
 import com.tc.util.Assert;
 import com.tc.util.DebugUtil;
 
@@ -41,13 +40,14 @@ public class SendStateMachine extends AbstractStateMachine {
 
   // changed by tc.properties
 
-  public SendStateMachine(OOOProtocolMessageDelivery delivery, int sendQueueCap, boolean isClient) {
+  public SendStateMachine(OOOProtocolMessageDelivery delivery, ReconnectConfig reconnectConfig, boolean isClient) {
     super();
 
-    // set sendWindow from tc.properties if exist. 0 to disable window send.
-    sendWindow = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_NHA_OOO_SEND_WINDOW);
     this.delivery = delivery;
-    this.sendQueueCap = (sendQueueCap == 0)? Integer.MAX_VALUE : sendQueueCap;
+    // set sendWindow from tc.properties if exist. 0 to disable window send.
+    sendWindow = reconnectConfig.getSendWindow();
+    int queueCap = reconnectConfig.getSendQueueCapacity();
+    this.sendQueueCap = (queueCap == 0)? Integer.MAX_VALUE : queueCap;
     this.sendQueue = new BoundedLinkedQueue(this.sendQueueCap);
     this.isClient = isClient;
     this.debugId = (this.isClient) ? "CLIENT" : "SERVER";

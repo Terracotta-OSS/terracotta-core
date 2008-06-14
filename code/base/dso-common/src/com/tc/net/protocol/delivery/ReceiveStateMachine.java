@@ -7,8 +7,7 @@ package com.tc.net.protocol.delivery;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
 
-import com.tc.properties.TCPropertiesImpl;
-import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.ReconnectConfig;
 import com.tc.util.Assert;
 import com.tc.util.DebugUtil;
 
@@ -28,9 +27,9 @@ public class ReceiveStateMachine extends AbstractStateMachine {
 
   private static final boolean             debug              = false;
 
-  public ReceiveStateMachine(OOOProtocolMessageDelivery delivery) {
+  public ReceiveStateMachine(OOOProtocolMessageDelivery delivery, ReconnectConfig reconnectConfig) {
     // set MaxDelayedAcks from tc.properties if exist. 0 to disable ack delay.
-    maxDelayedAcks = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_NHA_OOO_MAX_DELAYEDACKS);
+    maxDelayedAcks = reconnectConfig.getMaxDelayAcks();
     this.delivery = delivery;
   }
 

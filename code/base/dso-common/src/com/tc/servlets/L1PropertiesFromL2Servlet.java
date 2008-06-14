@@ -21,17 +21,25 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class L1PropertiesFromL2Servlet extends HttpServlet {
-  public static final String                  GATHER_L1_RECONNECT_PROP_FROM_L2 = L1PropertiesFromL2Servlet.class.getName() + ".l1reconnectpropfroml2";
-  private L1ReconnectPropertiesFromL2Document l1ReconnectPropFromL2Doc = null;
+  public static final String                  GATHER_L1_RECONNECT_PROP_FROM_L2 = L1PropertiesFromL2Servlet.class
+                                                                                   .getName()
+                                                                                 + ".l1reconnectpropfroml2";
+  private L1ReconnectPropertiesFromL2Document l1ReconnectPropFromL2Doc         = null;
 
   public void init() {
-    if(l1ReconnectPropFromL2Doc == null){
+    if (l1ReconnectPropFromL2Doc == null) {
       l1ReconnectPropFromL2Doc = L1ReconnectPropertiesFromL2Document.Factory.newInstance();
       TCProperties l2Properties = TCPropertiesImpl.getProperties();
       L1ReconnectPropertiesFromL2 l1ReconnectPropFromL2 = l1ReconnectPropFromL2Doc.addNewL1ReconnectPropertiesFromL2();
       l1ReconnectPropFromL2.setL1ReconnectEnabled(l2Properties.getBoolean(TCPropertiesConsts.L2_L1RECONNECT_ENABLED));
-      l1ReconnectPropFromL2.setL1ReconnectTimeout( new BigInteger(l2Properties.getProperty(TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS)));
-      l1ReconnectPropFromL2.setL1ReconnectSendqueuecap( new BigInteger(l2Properties.getProperty(TCPropertiesConsts.L2_L1RECONNECT_SENDQUEUE_CAP)));
+      l1ReconnectPropFromL2.setL1ReconnectTimeout(new BigInteger(l2Properties
+          .getProperty(TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS)));
+      l1ReconnectPropFromL2.setL1ReconnectSendqueuecap(new BigInteger(l2Properties
+          .getProperty(TCPropertiesConsts.L2_L1RECONNECT_SENDQUEUE_CAP)));
+      l1ReconnectPropFromL2.setL1ReconnectMaxDelayedAcks(new BigInteger(l2Properties
+          .getProperty(TCPropertiesConsts.L2_L1RECONNECT_MAX_DELAYEDACKS)));
+      l1ReconnectPropFromL2.setL1ReconnectSendwindow(new BigInteger(l2Properties
+          .getProperty(TCPropertiesConsts.L2_L1RECONNECT_SEND_WINDOW)));
     }
   }
 

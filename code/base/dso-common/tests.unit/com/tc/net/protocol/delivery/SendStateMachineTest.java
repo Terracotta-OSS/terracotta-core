@@ -9,8 +9,8 @@ import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
+import com.tc.properties.L1ReconnectConfigImpl;
+import com.tc.properties.ReconnectConfig;
 
 import junit.framework.TestCase;
 
@@ -21,8 +21,8 @@ public class SendStateMachineTest extends TestCase {
   public void tests() throws Exception {
     TestProtocolMessageDelivery delivery = new TestProtocolMessageDelivery(new LinkedQueue());
     final short sessionId = 134;
-    final int sendQueueCap = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_L1RECONNECT_SENDQUEUE_CAP);
-    SendStateMachine ssm = new SendStateMachine(delivery, sendQueueCap, true);
+    final ReconnectConfig reconnectConfig = new L1ReconnectConfigImpl();
+    SendStateMachine ssm = new SendStateMachine(delivery, reconnectConfig, true);
     ssm.start();
     ssm.resume();
 
