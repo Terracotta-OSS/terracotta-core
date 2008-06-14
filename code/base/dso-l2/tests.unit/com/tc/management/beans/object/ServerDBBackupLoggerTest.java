@@ -4,6 +4,8 @@
  */
 package com.tc.management.beans.object;
 
+import com.tc.management.beans.object.ServerDBBackup;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
