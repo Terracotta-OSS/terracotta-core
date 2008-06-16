@@ -65,7 +65,7 @@ public class ServerDBBackupTestApp extends AbstractTransparentApp {
     verify(0);
     waitOnBarrier();
 
-    int totalAdditions = 5000;
+    int totalAdditions = 3000;
     int currentNoOfObjects = 0;
     int objectsAdded = 0;
 
@@ -173,7 +173,7 @@ public class ServerDBBackupTestApp extends AbstractTransparentApp {
         listener = new NotificationListenerImpl(queue);
         NotificationFilter filter = new NotificationFilterImpl();
 
-        serverDBBackupRunner.runBackup(dbBackupPath, listener, filter, filter);
+        serverDBBackupRunner.runBackup(dbBackupPath, listener, filter, filter, false);
         throw new AssertionError("Should throw an exception when invalid direcoties are passed in");
       } catch (IOException e) {
         if (listener != null) {
@@ -181,6 +181,7 @@ public class ServerDBBackupTestApp extends AbstractTransparentApp {
             String notificationMsg = queue.take();
             System.out.println("The Notification: \"" + notificationMsg + "\"");
             Assert.assertNotNull(notificationMsg);
+            serverDBBackupRunner.removeListenerAndCloseJMX(listener);
           } catch (InterruptedException e1) {
             throw new RuntimeException(e1);
           }

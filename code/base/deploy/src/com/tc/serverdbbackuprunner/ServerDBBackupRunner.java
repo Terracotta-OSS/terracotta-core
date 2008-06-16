@@ -27,6 +27,7 @@ public class ServerDBBackupRunner {
   private String             m_userName;
   public static final String DEFAULT_HOST = "localhost";
   public static final int    DEFAULT_PORT = 9520;
+  private JMXConnector       jmxConnector;
 
   public static void main(String[] args) {
     RunnerUtility runnerUtility = new RunnerUtility(ServerDBBackupRunner.class.getName(), args);
@@ -96,12 +97,12 @@ public class ServerDBBackupRunner {
   }
 
   public void runBackup(String path) throws IOException {
-    runBackup(path, null, null, null);
+    runBackup(path, null, null, null, true);
   }
 
-  public void runBackup(String path, NotificationListener listener, NotificationFilter filter, Object obj)
-      throws IOException {
-    final JMXConnector jmxConnector = RunnerUtility.getJMXConnector(m_userName, m_host, m_port);
+  public void runBackup(String path, NotificationListener listener, NotificationFilter filter, Object obj,
+                        boolean closeJMXAndListener) throws IOException {
+    jmxConnector = RunnerUtility.getJMXConnector(m_userName, m_host, m_port);
     MBeanServerConnection mbs = getMBeanServerConnection(jmxConnector, m_host, m_port);
     if (mbs == null) return;
     ServerDBBackupMBean mbean = getServerDBBackupMBean(mbs);
@@ -119,7 +120,10 @@ public class ServerDBBackupRunner {
       e.printStackTrace();
       throw new RuntimeException(e);
     } finally {
-      removeListenerAndCloseJMX(listener, jmxConnector, mbs);
+      if (closeJMXAndListener) {
+        removeListenerAndCloseJMX(listener, jmxConnector, mbs);
+        jmxConnector = null;
+      }
     }
   }
 
@@ -139,6 +143,11 @@ public class ServerDBBackupRunner {
       return null;
     }
     return mbs;
+  }
+
+  public void removeListenerAndCloseJMX(NotificationListener listener) {
+    MBeanServerConnection mbs = getMBeanServerConnection(jmxConnector, m_host, m_port);
+    removeListenerAndCloseJMX(listener, jmxConnector, mbs);
   }
 
   public static void removeListenerAndCloseJMX(NotificationListener listener, final JMXConnector jmxConnector,
@@ -164,8 +173,8 @@ public class ServerDBBackupRunner {
   }
 
   public String getDefaultBackupPath() {
-    final JMXConnector jmxConnector = RunnerUtility.getJMXConnector(m_userName, m_host, m_port);
-    MBeanServerConnection mbs = getMBeanServerConnection(jmxConnector, m_host, m_port);
+    final JMXConnector jmxConn = RunnerUtility.getJMXConnector(m_userName, m_host, m_port);
+    MBeanServerConnection mbs = getMBeanServerConnection(jmxConn, m_host, m_port);
     if (mbs == null) return null;
     ServerDBBackupMBean mbean = getServerDBBackupMBean(mbs);
 
@@ -173,7 +182,7 @@ public class ServerDBBackupRunner {
     try {
       backupPath = mbean.getDefaultPathForBackup();
     } finally {
-      removeListenerAndCloseJMX(null, jmxConnector, mbs);
+      removeListenerAndCloseJMX(null, jmxConn, mbs);
     }
     return backupPath;
   }
