@@ -33,11 +33,6 @@ public class ContainerHibernate325Test extends AbstractTwoServerDeploymentTest {
   }
 
   public ContainerHibernate325Test() {
-    // MNK-572
-    boolean glassfishV1 = appServerInfo().getId() == AppServerInfo.GLASSFISH && "v1".equals(appServerInfo().getMajor());
-    if (glassfishV1) {
-      disableAllUntil("2008-06-30");
-    }
 
     if (shouldDisable()) {
       disableAllUntil(new Date(Long.MAX_VALUE));
