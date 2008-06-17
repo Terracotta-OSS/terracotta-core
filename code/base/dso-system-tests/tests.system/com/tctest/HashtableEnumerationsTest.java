@@ -6,6 +6,8 @@ package com.tctest;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
+import com.tc.object.bytecode.Clearable;
+import com.tc.object.bytecode.Manageable;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -14,8 +16,10 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.List;
 
 /**
  * Test case to make sure Hashtables Enumeration based views (ie. keys() and elements()) do not throw
@@ -36,7 +40,7 @@ public class HashtableEnumerationsTest extends TransparentTestBase {
 
   public static class App extends AbstractErrorCatchingTransparentApp {
 
-    private Hashtable           root;
+    private final List          root = new ArrayList();
     private final CyclicBarrier barrier;
 
     public App(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
@@ -47,22 +51,52 @@ public class HashtableEnumerationsTest extends TransparentTestBase {
 
     protected void runTest() throws Throwable {
       // test an unshared Hashtable
-      testEnumerations(newNonEmtpyHashtable());
+      testEnumerations(newNonEmptyHashtable());
 
       int index = barrier.barrier();
       if (index == 0) {
-        root = newNonEmtpyHashtable();
+        synchronized (root) {
+          root.add(newNonEmptyHashtable());
+        }
       }
 
       barrier.barrier();
 
       synchronized (root) {
         // shared Hashtables should work too. The values should be lazily faulted in the 2nd node
-        testEnumerations(root);
+        testEnumerations((Hashtable) root.get(0));
       }
+
+      barrier.barrier();
+
+      testViewsCreatedBeforeSharing();
     }
 
-    private static Hashtable newNonEmtpyHashtable() {
+    private void testViewsCreatedBeforeSharing() {
+      Hashtable ht = newNonEmptyHashtable();
+
+      // enumeration created *before* sharing
+      Enumeration elements = ht.elements();
+
+      // share it
+      synchronized (root) {
+        root.add(ht);
+      }
+
+      // simulate the memory manager
+      ValueType[] values = (ValueType[]) ht.values().toArray(new ValueType[] {});
+      for (int i = 0; i < values.length; i++) {
+        ((Manageable) values[i]).__tc_managed().clearAccessed();
+      }
+
+      int cleared = ((Clearable) ht).__tc_clearReferences(Integer.MAX_VALUE);
+      assertEquals(values.length, cleared);
+
+      // check that the enumeration still unwraps appropriately
+      traverseAndCheckEnumeration(elements, ValueType.class);
+    }
+
+    private static Hashtable newNonEmptyHashtable() {
       Hashtable rv = new Hashtable();
       addNonLiteralMapping(rv);
       addNonLiteralMapping(rv);
@@ -81,6 +115,10 @@ public class HashtableEnumerationsTest extends TransparentTestBase {
     private static void testEnumeration(Hashtable ht, Enumeration e, Class expectedType) {
       addNonLiteralMapping(ht);
 
+      traverseAndCheckEnumeration(e, expectedType);
+    }
+
+    private static void traverseAndCheckEnumeration(Enumeration e, Class expectedType) {
       // should NOT throw ConcurrentModificationException!
       while (e.hasMoreElements()) {
         Object o = e.nextElement();

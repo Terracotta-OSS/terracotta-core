@@ -23,15 +23,15 @@ import java.util.Map.Entry;
 /*
  * This class will be merged with java.lang.Hashtable in the bootjar. This hashtable can store ObjectIDs instead of
  * Objects to save memory and transparently fault Objects as needed. It can also clear references. For General rules
- * 
+ *
  * @see HashMapTC class
- * 
+ *
  *      The original implementation of HashtableTC methods does not contain synchronized (__tc_managed().getResolveLock()).
  *      This is because methods are already synchronized and thus could act as the common memory barrier between the application
  *      and the applicator thread. After we remove local jvm lock for read level autolock, when Hashtable is read autolocked,
  *      there is no longer a common barrier between application and the applicator thread. To establish a common barrier between
  *      the two, we need to add synchronized (__tc_managed().getResolveLock()).
- *      
+ *
  *      The locking order must be locking on Hashtable followed by __tc_managed().getResolveLock(); otherwise, it is possible that
  *      an application thread is holding a resolveLock, while waiting for a dso lock, thus, preventing the applicator
  *      thread from applying the transaction and ack. On the other hand, since the applicator thread is already synchronize
@@ -300,7 +300,7 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
       super.remove(key);
     }
   }
-  
+
   /**
    * This method is to be invoked when one needs a put to get broadcast, but do not want to fault in the value of a
    * map entry.
@@ -399,8 +399,9 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
   }
 
   public synchronized Enumeration elements() {
-    if (__tc_isManaged()) { return new ValueUnwrappingEnumeration(super.elements()); }
-    return super.elements();
+    // note: always returning a wrapper since this view can be created on a unshared Hashtable that can later become
+    // shared
+    return new ValueUnwrappingEnumeration(super.elements());
   }
 
   public Set entrySet() {
