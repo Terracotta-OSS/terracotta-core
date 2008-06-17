@@ -389,7 +389,8 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
   }
 
   public synchronized Enumeration keys() {
-    return new EnumerationWrapper(keySet().iterator());
+    // XXX: when/if partial keys are implemented this method will need to behave differently
+    return super.keys();
   }
 
   public Set keySet() {
@@ -398,7 +399,8 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
   }
 
   public synchronized Enumeration elements() {
-    return new EnumerationWrapper(values().iterator());
+    if (__tc_isManaged()) { return new ValueUnwrappingEnumeration(super.elements()); }
+    return super.elements();
   }
 
   public Set entrySet() {
@@ -909,20 +911,24 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
     }
   }
 
-  private class EnumerationWrapper implements Enumeration {
+  private class ValueUnwrappingEnumeration implements Enumeration {
 
-    private final Iterator enumeration;
+    private final Enumeration e;
 
-    public EnumerationWrapper(Iterator enumeration) {
-      this.enumeration = enumeration;
+    public ValueUnwrappingEnumeration(Enumeration e) {
+      this.e = e;
     }
 
     public boolean hasMoreElements() {
-      return enumeration.hasNext();
+      return e.hasMoreElements();
     }
 
     public Object nextElement() {
-      return enumeration.next();
+      Object rv = e.nextElement();
+      if (rv instanceof ValuesWrapper) {
+        rv = ((ValuesWrapper) rv).getValue();
+      }
+      return rv;
     }
   }
 }
