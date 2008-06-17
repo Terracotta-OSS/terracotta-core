@@ -4,6 +4,8 @@
  */
 package com.tc.util;
 
+import com.tc.text.PrettyPrinter;
+
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
@@ -12,7 +14,7 @@ import java.util.Set;
 public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet {
 
   private final Object lock       = new Object();
-  private ObjectIDSet set        = new ObjectIDSet();
+  private ObjectIDSet  set        = new ObjectIDSet();
   private boolean      isBlocking = false;
 
   public void startPopulating() {
@@ -107,5 +109,14 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
+  }
+
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    out.println(getClass().getName());
+    synchronized (lock) {
+      out.indent().print("blocking : ").print(new Boolean(isBlocking));
+      out.indent().print("id set   : ").visit(set);
+    }
+    return out;
   }
 }

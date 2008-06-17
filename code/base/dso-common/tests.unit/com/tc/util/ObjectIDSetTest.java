@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 public class ObjectIDSetTest extends TCTestCase {
@@ -44,7 +45,7 @@ public class ObjectIDSetTest extends TCTestCase {
     System.err.println("SORTED TEST : Seed for Random is " + seed);
     Random r = new Random(seed);
     TreeSet ts = new TreeSet();
-    ObjectIDSet oids = new ObjectIDSet();
+    SortedSet oids = new ObjectIDSet();
     for (int i = 0; i < 100000; i++) {
       long l = r.nextLong();
       ObjectID id = new ObjectID(l);

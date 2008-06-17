@@ -153,6 +153,13 @@ public class AATreeSet {
   }
 
   /**
+   * Returns an iterator for the tail set greater than or equal to comparable
+   */
+  public Iterator tailSetIterator(Comparable c) {
+    return new AATreeSetIterator(c);
+  }
+
+  /**
    * Internal method to insert into a subtree.
    * 
    * @param x the item to insert.
@@ -312,6 +319,29 @@ public class AATreeSet {
     AANode next = root;
     // Contains elements while traversing
     Stack  s    = new Stack();
+
+    public AATreeSetIterator() {
+      //
+    }
+
+    /**
+     * creates an iterator for the tail set greater than or equal to c
+     */
+    //TODO::FIXME::Wrong logic
+    public AATreeSetIterator(Comparable c) {
+      this();
+      while (next != nullNode) {
+        int res = c.compareTo(next.element);
+        if (res < 0) {
+          s.push(next);
+          next = next.left;
+        } else if (res > 0) {
+          next = next.right;
+        } else  {
+          break;
+        }
+      }
+    }
 
     public boolean hasNext() {
       if (next == nullNode && s.size() == 0) return false;

@@ -6,6 +6,8 @@ package com.tc.util;
 
 import com.tc.exception.ImplementMe;
 import com.tc.object.ObjectID;
+import com.tc.text.PrettyPrintable;
+import com.tc.text.PrettyPrinter;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -15,6 +17,7 @@ import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.SortedSet;
@@ -28,10 +31,17 @@ import java.util.SortedSet;
  * <p>
  * This one uses a balanced tree internally to store ranges instead of an ArrayList
  */
-public class ObjectIDSet extends AbstractSet implements SortedSet, Externalizable {
+public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintable, Externalizable {
 
-  private final AATreeSet ranges;
-  private int             size = 0;
+  /**
+   * The number of times this HashMap has been structurally modified Structural modifications are those that change the
+   * number of mappings in the HashMap or otherwise modify its internal structure (e.g., rehash). This field is used to
+   * make iterators on Collection-views of the HashMap fail-fast. (See ConcurrentModificationException).
+   */
+  private transient volatile int modCount;
+
+  private final AATreeSet        ranges;
+  private int                    size = 0;
 
   public ObjectIDSet() {
     ranges = new AATreeSet();
@@ -101,6 +111,7 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, Externalizabl
       ranges.remove(current);
     }
     size--;
+    modCount++;
     return true;
   }
 
@@ -115,6 +126,7 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, Externalizabl
         Range next = (Range) ranges.remove((new MyLong(lid + 1)));
         if (next != null) prev.merge(next);
         size++;
+        modCount++;
       }
       return isAdded;
     }
@@ -123,13 +135,19 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, Externalizabl
     Range next = (Range) ranges.find((new MyLong(lid + 1)));
     if (next != null) {
       boolean isAdded = next.add(lid);
-      if (isAdded) size++;
+      if (isAdded) {
+        size++;
+        modCount++;
+      }
       return isAdded;
     }
 
     // Step 3: Add a new range for just this number.
     boolean isAdded = ranges.insert(new Range(lid, lid));
-    if (isAdded) size++;
+    if (isAdded) {
+      size++;
+      modCount++;
+    }
     return isAdded;
   }
 
@@ -148,12 +166,18 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, Externalizabl
   }
 
   private String getCompressionDetails() {
-    return "{ (oids:ranges) = " + ranges.size() + ":" + size + " , " + getCompressionPercentage() + " % } ";
+    return "{ (oids:ranges) = " + size + ":" + ranges.size() + " , compression ratio = " + getCompressionRatio()
+           + " } ";
   }
 
   // Range contains two longs instead of 1 long in ObjectID
-  private float getCompressionPercentage() {
-    return (size == 0 ? 0.0f : (((ranges.size() * 2) / size) * 100));
+  private float getCompressionRatio() {
+    return (ranges.size() == 0 ? 1.0f : (size / (ranges.size() * 2)));
+  }
+
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    out.println(toShortString());
+    return out;
   }
 
   /**
@@ -276,10 +300,14 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, Externalizabl
 
     Iterator nodes;
     Range    current;
-    int      idx = 0;
+    ObjectID lastReturned;
+    int      idx;
+    int      expectedModCount;
 
     public ObjectIDSetIterator() {
       nodes = ranges.iterator();
+      expectedModCount = modCount;
+      idx = 0;
       if (nodes.hasNext()) current = (Range) nodes.next();
     }
 
@@ -289,6 +317,7 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, Externalizabl
 
     public Object next() {
       if (current == null) throw new NoSuchElementException();
+      if (expectedModCount != modCount) throw new ConcurrentModificationException();
       ObjectID oid = new ObjectID(current.start + idx);
       if (current.start + idx == current.end) {
         idx = 0;
@@ -300,17 +329,30 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, Externalizabl
       } else {
         idx++;
       }
-      return oid;
+      return (lastReturned = oid);
     }
 
-    // This is a little tricky as the tree might balance itself.
     public void remove() {
-      throw new ImplementMe();
+      // XXX::FIXME::This is broken still.
+      if (true) throw new ImplementMe();
+      if (lastReturned == null) throw new IllegalStateException();
+      if (expectedModCount != modCount) throw new ConcurrentModificationException();
+      ObjectIDSet.this.remove(lastReturned);
+      expectedModCount = modCount;
+      nodes = ranges.tailSetIterator(new MyLong(lastReturned.toLong()));
+      if (nodes.hasNext()) {
+        current = (Range) nodes.next();
+        idx = 0; // TODO:: verify ;; has to be
+      } else {
+        current = null;
+      }
+      lastReturned = null;
     }
   }
 
   /*
-   * Because of the short comings of the iterator (it cant perform remove), this method is overridden
+   * Because of the short comings of the iterator (it can't perform remove), this method is overridden FIXME::Once
+   * remove is fixed
    */
   public boolean removeAll(Collection c) {
     boolean modified = false;
@@ -335,7 +377,8 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, Externalizabl
   }
 
   /*
-   * Because of the short comings of the iterator (it cant perform remove), this method is overridden
+   * Because of the short comings of the iterator (it can't perform remove), this method is overridden FIXME::Once
+   * remove is fixed
    */
   public boolean retainAll(Collection c) {
     boolean modified = false;
@@ -376,6 +419,7 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, Externalizabl
 
   public void clear() {
     this.size = 0;
+    modCount++;
     ranges.clear();
   }
 
