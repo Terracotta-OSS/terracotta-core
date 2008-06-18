@@ -94,7 +94,7 @@ class TerracottaBuilder
     option_parser.on('--no-ivy') do @no_ivy = true end
     option_parser.on('--no-compile') do @no_compile = true end
     option_parser.on('--no-demo') do @no_demo = true end
-    option_parser.on('--use-emma') do Registry[:emma] = true end
+    option_parser.on('--emma') do Registry[:emma] = true end
     
     @start_time = Time.now
     @basedir = FilePath.new(File.dirname(File.expand_path(__FILE__)), "..").canonicalize
@@ -106,13 +106,6 @@ class TerracottaBuilder
     Registry[:ant] = @ant
     @platform = CrossPlatform.create_implementation(:ant => @ant)
     Registry[:platform] = @platform
-    
-    if Registry[:emma]
-      Registry[:emma_home] = FilePath.new(@basedir.to_s, "..", "..", "buildsystems", "emma-2.0.5312").canonicalize.to_s
-      fail("EMMA_HOME does not exist: #{Registry[:emma_home]}") unless File.exists?(Registry[:emma_home])
-      Registry[:emma_lib] = "#{Registry[:emma_home]}/lib/emma.jar"
-      puts "EMMA_HOME: #{Registry[:emma_home]}"
-    end
     
     # The CommandLineConfigSource actually parses its arguments, and returns only the ones
     # that aren't configuration property settings (e.g., of the form 'a=b').
@@ -126,6 +119,13 @@ class TerracottaBuilder
 
     @script_results = ScriptResults.new
 
+    if Registry[:emma]
+      Registry[:emma_home] = FilePath.new(@basedir.to_s, "..", "..", "buildsystems", "emma-2.0.5312").canonicalize.to_s
+      fail("EMMA_HOME does not exist: #{Registry[:emma_home]}") unless File.exists?(Registry[:emma_home])
+      Registry[:emma_lib] = "#{Registry[:emma_home]}/lib/emma.jar"
+      puts "EMMA_HOME: #{Registry[:emma_home]}"
+    end
+    
     reset
   end
 
