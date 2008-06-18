@@ -256,7 +256,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
       }
 
       try {
-        final DSOClient client = new DSOClient(mbeanServer, channel, channelStats);
+        final DSOClient client = new DSOClient(mbeanServer, channel, channelStats, channelMgr.getClientIDFor(channel.getChannelID()) );
         mbeanServer.registerMBean(client, clientName);
         clientObjectNames.add(clientName);
         sendNotification(CLIENT_ATTACHED, clientName);

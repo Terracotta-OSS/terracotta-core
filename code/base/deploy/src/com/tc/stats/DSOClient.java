@@ -15,6 +15,7 @@ import com.tc.management.beans.logging.InstrumentationLoggingMBean;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
 import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.ChannelStats;
@@ -58,6 +59,8 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
   private final SampledCounter                 flushRate;
   private final SampledCounter                 faultRate;
   private final Counter                        pendingTransactions;
+  private final SynchronizedLong               sequenceNumber = new SynchronizedLong(0L);
+  private final ClientID                       clientID;
 
   private static final MBeanNotificationInfo[] NOTIFICATION_INFO;
 
@@ -68,14 +71,13 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     NOTIFICATION_INFO = new MBeanNotificationInfo[] { new MBeanNotificationInfo(notifTypes, name, description) };
   }
 
-  private final SynchronizedLong               sequenceNumber = new SynchronizedLong(0L);
-
-  public DSOClient(final MBeanServer mbeanServer, final MessageChannel channel, final ChannelStats channelStats)
-      throws NotCompliantMBeanException {
+  public DSOClient(final MBeanServer mbeanServer, final MessageChannel channel, final ChannelStats channelStats,
+                   ClientID clientID) throws NotCompliantMBeanException {
     super(DSOClientMBean.class, true);
 
     this.mbeanServer = mbeanServer;
     this.channel = channel;
+    this.clientID = clientID;
     this.txnRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.TXN_RATE);
     this.flushRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.OBJECT_FLUSH_RATE);
     this.faultRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.OBJECT_REQUEST_RATE);
@@ -172,6 +174,13 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     } catch (MalformedObjectNameException mone) {
       throw new RuntimeException("Creating ObjectName", mone);
     }
+  }
+
+  /**
+   * This method returns the same String as the parameter to thisNodeConnected() call in cluster JMX event.
+   */
+  public String getNodeID() {
+    return clientID.toString();
   }
 
   public ObjectName getL1InfoBeanName() {

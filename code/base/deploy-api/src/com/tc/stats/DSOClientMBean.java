@@ -17,6 +17,8 @@ import javax.management.ObjectName;
 public interface DSOClientMBean extends TerracottaMBean {
   public static final String TUNNELED_BEANS_REGISTERED = "tunneled.beans.registered";
 
+  String getNodeID();
+  
   boolean isTunneledBeansRegistered();
 
   ObjectName getL1InfoBeanName();
