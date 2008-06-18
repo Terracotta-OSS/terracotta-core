@@ -90,12 +90,11 @@ class TerracottaBuilder
   # list of arguments passed on the command line; these will be parsed for targets, arguments to
   # targets, and configuration properties.
   def initialize(default_target, arguments)
-    @emma = false
     option_parser = OptionParser.new
     option_parser.on('--no-ivy') do @no_ivy = true end
     option_parser.on('--no-compile') do @no_compile = true end
     option_parser.on('--no-demo') do @no_demo = true end
-    option_parser.on('--emma') do @emma = true end
+    option_parser.on('--use-emma') do Registry[:emma] = true end
     
     @start_time = Time.now
     @basedir = FilePath.new(File.dirname(File.expand_path(__FILE__)), "..").canonicalize
@@ -108,10 +107,7 @@ class TerracottaBuilder
     @platform = CrossPlatform.create_implementation(:ant => @ant)
     Registry[:platform] = @platform
     
-    #@emma = true
-
-    if @emma
-      Registry[:emma] = true
+    if Registry[:emma]
       Registry[:emma_home] = FilePath.new(@basedir.to_s, "..", "..", "buildsystems", "emma-2.0.5312").canonicalize.to_s
       fail("EMMA_HOME does not exist: #{Registry[:emma_home]}") unless File.exists?(Registry[:emma_home])
       Registry[:emma_lib] = "#{Registry[:emma_home]}/lib/emma.jar"

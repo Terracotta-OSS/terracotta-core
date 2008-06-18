@@ -76,7 +76,6 @@ class BuildSubtree
         }
         
         if Registry[:emma]
-          loud_message Registry[:emma]
           prepare_emma_dir(build_results)
           
           unless %w(thirdparty thirdparty-api installer).include?(build_module.name) || 

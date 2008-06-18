@@ -444,7 +444,6 @@ class SubtreeTestRun
 
     if @use_dso_boot_jar
       bootclasspath = boot_jar.path.to_s.chop
-      puts "bootclasspath: #{bootclasspath}"
       @jvmargs << "-Xbootclasspath/p:#{bootclasspath}"
       @sysproperties.merge!({
           'tc.config' => @static_resources.dso_test_runtime_config_file,
