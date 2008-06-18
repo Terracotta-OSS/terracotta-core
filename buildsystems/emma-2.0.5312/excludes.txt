@@ -1,3 +1,13 @@
+# Excludes rules for EMMA
+-java.*
+-java.util.*
+-com.tctest.*
+-com.tc.test.*
+-*Test*
+
+# this class becomes too big to instrument
+-com.terracotta.session.SessionData
+
 # classes found in our bootjar
 # this list is used by emma to exclude
 # these classes from its coverage

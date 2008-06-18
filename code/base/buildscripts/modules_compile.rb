@@ -96,9 +96,7 @@ class BuildSubtree
               ant.arg(:value => "-merge")
               ant.arg(:value => "yes")
               ant.arg(:value => "-ix")
-              ant.arg(:value => "-java.*,-java.util.*,-com.tctest.*,-com.tc.test.*,-*Test*")
-              ant.arg(:value => "-ix")
-              ant.arg(:value => "@#{Registry[:emma_home]}/bootclasses.txt")
+              ant.arg(:value => "@#{Registry[:emma_home]}/excludes.txt")
             end
           end
         end

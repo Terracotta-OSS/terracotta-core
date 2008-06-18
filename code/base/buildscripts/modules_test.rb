@@ -122,6 +122,10 @@ class BuildSubtree
         write_dynamic_property(file, "l2.startup.mode", "internal")
       end
 
+      if Registry[:emma]
+        write_dynamic_property(file, "emma.lib", Registry[:emma_lib])
+      end
+      
       # Write out which variant values are available for each variant name, and write out which libraries
       # should be included if the given variant is set to each of the possible values. Right now, this is
       # *all* that variants do -- they do not *ever* actually change the CLASSPATH of what we spawn, because

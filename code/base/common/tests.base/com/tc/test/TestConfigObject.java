@@ -100,6 +100,8 @@ public class TestConfigObject {
   public static final String      L2_STARTUP_MODE                  = L2_STARTUP_PREFIX + "mode";
   public static final String      L2_STARTUP_JAVA_HOME             = L2_STARTUP_PREFIX + "jvm";
 
+  private static final String     EMMA_LIB                         = DYNAMIC_PROPERTIES_PREFIX + "emma.lib";
+
   private static TestConfigObject INSTANCE;
 
   private final Properties        properties;
@@ -148,10 +150,15 @@ public class TestConfigObject {
     if (filesRead > 0) loadedFrom.append(", ");
     loadedFrom.append("system properties");
 
-    this.properties.putAll(System.getProperties());
-
-    this.appServerInfo = createAppServerInfo();
+    properties.putAll(System.getProperties());
+    appServerInfo = createAppServerInfo();
     extraClassPathForAppServer = linkedChildProcessPath();
+    
+    // if Emma is enabled, add it to app server classpath
+    String emmaLib = properties.getProperty(EMMA_LIB);
+    if (emmaLib != null) {
+      extraClassPathForAppServer += File.pathSeparator + emmaLib;
+    }
 
     logger.info("Loaded test configuration from " + loadedFrom.toString());
   }
@@ -429,7 +436,7 @@ public class TestConfigObject {
   public boolean isSpringTest() {
     return springTest;
   }
-  
+
   public void setSpringTest(boolean springTest) {
     this.springTest = springTest;
   }
