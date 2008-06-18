@@ -226,9 +226,10 @@ public class RogueClientTestApp extends AbstractTransparentApp {
 
   private class RogueClientCoordinator implements ClusterEventListener {
 
-    int         participantCount                        = TOTAL_L1_PROCESS;
-    private int totalNoOfPendingTransactionsForClient[] = new int[participantCount];
-    private int totalNoOfDisconnectedClients            = 0;
+    int            participantCount                        = TOTAL_L1_PROCESS;
+    private int    totalNoOfPendingTransactionsForClient[] = new int[participantCount];
+    private int    totalNoOfDisconnectedClients            = 0;
+    private String coordinatorNodeId;
 
     public void startRogueClientCoordinator() {
       try {
@@ -268,10 +269,13 @@ public class RogueClientTestApp extends AbstractTransparentApp {
         throw new AssertionError(e);
       }
       Assert.eval(dsoMBean.getClients().length == TOTAL_L1_PROCESS);
-      clients[1].killClient();
-      clients[2].killClient();
-      clients[3].killClient();
-      clients[4].killClient();
+
+      for (int i = 0; i < TOTAL_L1_PROCESS; i++) {
+        if (!clients[i].getNodeID().equals(this.coordinatorNodeId)) {
+          clients[i].killClient();
+        }
+      }
+
       ThreadUtil.reallySleep(5000);
       Assert.eval(totalNoOfDisconnectedClients == 4);
       System.out.println("All clients killed and verified. Test passed");
@@ -301,7 +305,7 @@ public class RogueClientTestApp extends AbstractTransparentApp {
     }
 
     public void thisNodeConnected(String thisNodeId, String[] nodesCurrentlyInCluster) {
-      // do nothing
+      this.coordinatorNodeId = thisNodeId;
     }
 
     public void thisNodeDisconnected(String thisNodeId) {
