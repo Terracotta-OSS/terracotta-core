@@ -180,7 +180,8 @@ public class TCPProxy {
   synchronized void subStop(boolean waitDeadThread) {
     stop = true;
 
-    if (acceptThread != null) acceptThread.interrupt();
+    if (acceptThread == null) return;
+    acceptThread.interrupt();
     
     /*
      * Observed on windows-xp. The ServerSocket is still hanging around after "close()", until someone makes a new
@@ -199,12 +200,10 @@ public class TCPProxy {
     }
     
     try {
-      if (acceptThread != null) {
-        try {
-          acceptThread.join(10000);
-        } catch (InterruptedException e) {
-          log("Interrupted while join()'ing acceptor thread", e);
-        }
+      try {
+        acceptThread.join(10000);
+      } catch (InterruptedException e) {
+        log("Interrupted while join()'ing acceptor thread", e);
       }
     } finally {
       acceptThread = null;
