@@ -397,16 +397,22 @@ class SubtreeTestRun
             STDERR.puts(error_msg)
             raise(error_msg)
           end
-        end 
-        #        from = boot_jar.path.to_s.gsub(/\\/, "/")
-        #        to   = @testrun_results.boot_jar_directory(@subtree).ensure_directory.to_s.gsub(/\\/, "/")
-        #
-        #        if ENV['OS'] =~ /Windows/i 
-        #          from = `cygpath -u #{from}`.chomp
-        #          to = `cygpath -u #{to}`.chomp
-        #        end
-        #        `cp #{from} #{to}`
-        FileUtils.copy(boot_jar.path.to_s, @testrun_results.boot_jar_directory(@subtree).ensure_directory.to_s)
+        end
+
+        # there's a strange bug with FileUtils when Emma is enabled.
+        # it won't copy file correctly. We have to use shell cp cmd
+        if Registry[:emma]
+          from = boot_jar.path.to_s.gsub(/\\/, "/")
+          to   = @testrun_results.boot_jar_directory(@subtree).ensure_directory.to_s.gsub(/\\/, "/")
+        
+          if ENV['OS'] =~ /Windows/i 
+            from = `cygpath -u #{from}`.chomp
+            to = `cygpath -u #{to}`.chomp
+          end
+          `cp #{from} #{to}`
+        else
+          FileUtils.copy(boot_jar.path.to_s, @testrun_results.boot_jar_directory(@subtree).ensure_directory.to_s)
+        end
       end
     end
 
