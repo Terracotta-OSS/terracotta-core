@@ -37,7 +37,7 @@ public class RenameStandardLoaderTest extends AbstractOneServerDeploymentTest {
   public RenameStandardLoaderTest() {
     // MNK-483
     if (appServerInfo().getId() == AppServerInfo.WEBSPHERE) {
-      disableAllUntil("2008-06-15");
+      disableAllUntil("2008-08-15");
     }
   }
 
