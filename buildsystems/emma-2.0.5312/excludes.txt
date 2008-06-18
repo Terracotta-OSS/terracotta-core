@@ -5,8 +5,9 @@
 -com.tc.test.*
 -*Test*
 
-# this class becomes too big to instrument
+# classes that would become too big after instrumented
 -com.terracotta.session.SessionData
+-com.tcspring.DistributableBeanFactoryMixin
 
 # classes found in our bootjar
 # this list is used by emma to exclude
