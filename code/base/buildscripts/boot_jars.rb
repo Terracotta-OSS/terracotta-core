@@ -67,8 +67,10 @@ class BootJar
     # what this should be.
     unless @path
       outputproperty, errorproperty = @platform.next_output_properties
+      classpath = @module_set['dso-l1'].subtree('src').classpath(@build_results, :full, :runtime).to_s
+      classpath = PathSet.new(classpath, Registry[:emma_lib]).to_s if Registry[:emma]
       @ant.java(:classname   => 'com.tc.object.tools.BootJarSignature',
-        :classpath   => @module_set['dso-l1'].subtree('src').classpath(@build_results, :full, :runtime).to_s,
+        :classpath   => classpath,
         :jvm         => @jvm.java,
         :fork        => true,
         :failonerror => true,
@@ -103,6 +105,7 @@ class BootJar
     File.delete(path.to_s) if options[:delete_existing] && exist?
     unless exist?
       classpath = @module_set['dso-tests-jdk15'].subtree('src').classpath(@build_results, :full, :runtime)
+      classpath = PathSet.new(classpath, Registry[:emma_lib]).to_s if Registry[:emma]
       puts("Creating boot JAR with: #{@jvm} and config file: #{@config_file}")
 
       sysproperties = {

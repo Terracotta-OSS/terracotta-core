@@ -398,6 +398,14 @@ class SubtreeTestRun
             raise(error_msg)
           end
         end 
+        #        from = boot_jar.path.to_s.gsub(/\\/, "/")
+        #        to   = @testrun_results.boot_jar_directory(@subtree).ensure_directory.to_s.gsub(/\\/, "/")
+        #
+        #        if ENV['OS'] =~ /Windows/i 
+        #          from = `cygpath -u #{from}`.chomp
+        #          to = `cygpath -u #{to}`.chomp
+        #        end
+        #        `cp #{from} #{to}`
         FileUtils.copy(boot_jar.path.to_s, @testrun_results.boot_jar_directory(@subtree).ensure_directory.to_s)
       end
     end
@@ -435,7 +443,9 @@ class SubtreeTestRun
     @sysproperties['java.library.path'] = native_library_path.to_s unless native_library_path.to_s.blank?
 
     if @use_dso_boot_jar
-      @jvmargs << "-Xbootclasspath/p:#{boot_jar.path}"
+      bootclasspath = boot_jar.path.to_s.chop
+      puts "bootclasspath: #{bootclasspath}"
+      @jvmargs << "-Xbootclasspath/p:#{bootclasspath}"
       @sysproperties.merge!({
           'tc.config' => @static_resources.dso_test_runtime_config_file,
           'tc.dso.globalmode' => false
@@ -656,7 +666,7 @@ class SubtreeTestRun
     # Run the tests. Most of the real magic here comes in the 'splice_into_ant_junit'
     # method, which puts the necessary <jvmarg>, <sysproperty>, and so forth elements
     # into the junit task.
-
+    
     @ant.junit(
       :printsummary => "yes",
       :maxmemory => "512m",
@@ -666,8 +676,11 @@ class SubtreeTestRun
       :fork => true,
       :showoutput => true,
       :jvm => tests_jvm.java.to_s) {
+      @ant.classpath {
+        @ant.pathelement( :path => JavaSystem.getProperty("java.class.path"))
+      }
       splice_into_ant_junit
-
+      
       # formatter that outputs result to console
       @ant.formatter(:type => "xml")
       @ant.formatter(:classname => 'com.tc.test.TCJUnitFormatter', :usefile => false)
@@ -685,7 +698,6 @@ class SubtreeTestRun
         }
       end
     }
-
     # Check the failures by looking for the properies we set under failure_property_name, above.
     failure_properties.each { |property_name| failed = failed || (@ant.get_ant_property(property_name) != nil) }
     script_results.failed("Execution of tests in subtree '#{@subtree.module_subtree_name}' failed.") if failed
@@ -870,9 +882,15 @@ END
   # and so on) into Ant.
   def splice_into_ant_junit
     @ant.classpath {
+      @ant.pathelement(:location => Registry[:emma_lib]) if Registry[:emma]
       @ant.pathelement(:path => @classpath.to_s)
     }
 
+    if Registry[:emma]
+      @jvmargs << '-Demma.coverage.out.merge=true'
+      @jvmargs << "-Demma.coverage.out.file=#{Registry[:emma_coverage_dir]}/coverage.ce"
+    end
+    
     @jvmargs.each do |jvmarg|
       @ant.jvmarg(:value => jvmarg)
     end

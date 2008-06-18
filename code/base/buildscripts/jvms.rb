@@ -87,7 +87,7 @@ class JVM
   # you call #validate -- not at object-creation time.
   def initialize(java_home, data={ })
     @java_home = FilePath.new(java_home).canonicalize
-    @java_path = FilePath.new(@java_home, "bin", "java").executable_extension
+    @java_path = FilePath.new(@java_home, "jre", "bin", "java").executable_extension
     @javac_path = FilePath.new(@java_home, "bin", "javac").executable_extension
 
     @min_version = data[:minimum_version] || JavaVersion::JAVA_MIN_VERSION

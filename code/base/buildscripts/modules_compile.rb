@@ -74,17 +74,39 @@ class BuildSubtree
 
           ant.src(:path => source_root.to_s) { }
         }
+        
+        if Registry[:emma]
+          loud_message Registry[:emma]
+          prepare_emma_dir(build_results)
+          
+          unless %w(thirdparty thirdparty-api installer).include?(build_module.name) || 
+              build_module.name =~ /test/ ||
+              name =~ /test/
+            ant.java(
+              :jvm => jdk.java.to_s,
+              :fork => true,
+              :classpath => "#{Registry[:emma_lib]}",
+              :classname => "emma" ) do
+              ant.arg(:value => "instr")
+              ant.arg(:value => "-ip")
+              ant.arg(:value => build_results.classes_directory(self).to_s)
+              ant.arg(:value => "-out")
+              ant.arg(:value => "#{Registry[:emma_coverage_dir]}/coverage.em")
+              ant.arg(:value => "-m")
+              ant.arg(:value => "overwrite")
+              ant.arg(:value => "-merge")
+              ant.arg(:value => "yes")
+              ant.arg(:value => "-ix")
+              ant.arg(:value => "-java.*,-java.util.*,-com.tctest.*,-com.tc.test.*,-*Test*")
+              ant.arg(:value => "-ix")
+              ant.arg(:value => "@#{Registry[:emma_home]}/bootclasses.txt")
+            end
+          end
+        end
+        
       end
 
       create_build_data(config_source, build_results, build_environment)
-
-      if self.build_module.module?
-        build_src_dir = FilePath.new(
-          build_results.classes_directory(self), 'src')
-        ant.copy(:todir => build_src_dir.to_s) {
-          ant.fileset(:dir => source_root.to_s)
-        }
-      end
     end
 
     if @resources_exists
@@ -104,6 +126,13 @@ class BuildSubtree
 
   private
 
+  def prepare_emma_dir(build_results)      
+    unless Registry[:emma_coverage_dir]
+      Registry[:emma_coverage_dir] = File.join(build_results.build_dir.to_s, 'coverage')
+      FileUtils.mkdir_p Registry[:emma_coverage_dir]
+    end
+  end
+  
   # The JDK that should be used for compiling this subtree.
   def compile_jdk
     if name = Registry[:config_source]['jdk']
