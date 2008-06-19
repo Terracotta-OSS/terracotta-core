@@ -26,11 +26,11 @@ weblogic-8.1.*:
 
 weblogic-9.2.*: 
     min_version: 1.5.0_00
-    max_version: 999.999.999_999
+    max_version: 1.5.99_99
 
 weblogic-10.0.*: 
     min_version: 1.5.0_00
-    max_version: 999.999.999_999
+    max_version: 1.5.99_99
 
 glassfish-v1.*:
     min_version: 1.5.0
