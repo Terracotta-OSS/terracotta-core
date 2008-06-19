@@ -17,7 +17,7 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../dso-common/lib/tc-l1-prop-from-l2-xmlbeans-generated.jar!/" />
+          <root url="jar://$MODULE_DIR$/../dso-common/lib/tc-l1-reconnect-properties.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

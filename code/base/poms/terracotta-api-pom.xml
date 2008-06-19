@@ -33,7 +33,7 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>tc-l1-prop-from-l2</artifactId>
+      <artifactId>tc-l1-reconnect-properties</artifactId>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
