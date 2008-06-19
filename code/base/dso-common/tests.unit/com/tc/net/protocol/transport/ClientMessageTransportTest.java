@@ -42,9 +42,9 @@ public class ClientMessageTransportTest extends TCTestCase {
   private MockTCConnection                   connection;
   private TransportHandshakeMessageFactory   transportMessageFactory;
   private TestTransportHandshakeErrorHandler handshakeErrorHandler;
-  private final int                          maxRetries = 10;
+  private final int                          maxRetries   = 10;
   private MessageTransportFactory            transportFactory;
-  private final int                          timeout    = 3000;
+  private final int                          timeout      = 3000;
   private final int                          sendQueueCap = TCPropertiesImpl.getProperties()
                                                               .getInt(TCPropertiesConsts.L2_L1RECONNECT_SENDQUEUE_CAP);
 
@@ -148,7 +148,8 @@ public class ClientMessageTransportTest extends TCTestCase {
                                                                          new OOONetworkStackHarnessFactory(
                                                                                                            new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
                                                                                                            null,
-                                                                                                           new L1ReconnectConfigImpl(), sendQueueCap),
+                                                                                                           null,
+                                                                                                           new L1ReconnectConfigImpl()),
                                                                          new NullConnectionPolicy(), 0);
 
     CommunicationsManager clientCommsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
@@ -173,7 +174,8 @@ public class ClientMessageTransportTest extends TCTestCase {
                                                    new NullMessageMonitor(),
                                                    new OOONetworkStackHarnessFactory(
                                                                                      new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
-                                                                                     null, new L1ReconnectConfigImpl(), sendQueueCap),
+                                                                                     null, null,
+                                                                                     new L1ReconnectConfigImpl()),
                                                    new NullConnectionPolicy(), 0);
 
     try {

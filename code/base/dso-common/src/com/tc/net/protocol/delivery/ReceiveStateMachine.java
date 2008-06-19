@@ -4,9 +4,6 @@
  */
 package com.tc.net.protocol.delivery;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
-
 import com.tc.properties.ReconnectConfig;
 import com.tc.util.Assert;
 import com.tc.util.DebugUtil;
@@ -17,8 +14,8 @@ import com.tc.util.DebugUtil;
 public class ReceiveStateMachine extends AbstractStateMachine {
   private final State                      MESSAGE_WAIT_STATE = new MessageWaitState();
 
-  private final SynchronizedLong           received           = new SynchronizedLong(-1);
-  private final SynchronizedInt            delayedAcks        = new SynchronizedInt(0);
+  private long                             received           = -1;
+  private int                              delayedAcks        = 0;
   private final int                        maxDelayedAcks;
   private final OOOProtocolMessageDelivery delivery;
   private StateMachineRunner               runner;
@@ -33,7 +30,7 @@ public class ReceiveStateMachine extends AbstractStateMachine {
     this.delivery = delivery;
   }
 
-  public void execute(OOOProtocolMessage msg) {
+  public synchronized void execute(OOOProtocolMessage msg) {
     getCurrentState().execute(msg);
   }
 
@@ -63,23 +60,23 @@ public class ReceiveStateMachine extends AbstractStateMachine {
 
     private void handleSendMessage(OOOProtocolMessage msg) {
       final long r = msg.getSent();
-      final long curRecv = received.get();
+      final long curRecv = received;
       if (r <= curRecv) {
         // we already got message
-        debugLog("Received dup msg "+r);
+        debugLog("Received dup msg " + r);
         sendAck(curRecv);
-        delayedAcks.set(0);
+        delayedAcks = 0;
         return;
       } else if (r > (curRecv + 1)) {
         // message missed, resend ack, receive to resend message.
-        debugLog("Received out of order msg "+r);
+        debugLog("Received out of order msg " + r);
         sendAck(curRecv);
-        delayedAcks.set(0);
+        delayedAcks = 0;
         return;
       } else {
         Assert.inv(r == (curRecv + 1));
         putMessage(msg);
-        ackIfNeeded(received.increment());
+        ackIfNeeded(++received);
       }
     }
   }
@@ -89,19 +86,18 @@ public class ReceiveStateMachine extends AbstractStateMachine {
   }
 
   private void ackIfNeeded(long next) {
-    if ((delayedAcks.get() < maxDelayedAcks) && (getRunnerEventLength() > 0)) {
-      delayedAcks.increment();
+    if ((delayedAcks < maxDelayedAcks) && (getRunnerEventLength() > 0)) {
+      ++delayedAcks;
     } else {
-       /*
-       * saw IllegalStateException by AbstractTCNetworkMessage.checkSealed
-       * when message sent to non-established transport by MessageTransportBase.send.
-       * reset delayedAcks only ack can be sent.
+      /*
+       * saw IllegalStateException by AbstractTCNetworkMessage.checkSealed when message sent to non-established
+       * transport by MessageTransportBase.send. reset delayedAcks only ack can be sent.
        */
-        if (sendAck(next)) {
-          delayedAcks.set(0);
-        } else {
-          debugLog("Failed to send ack:"+next);
-        }
+      if (sendAck(next)) {
+        delayedAcks = 0;
+      } else {
+        debugLog("Failed to send ack:" + next);
+      }
     }
   }
 
@@ -111,9 +107,9 @@ public class ReceiveStateMachine extends AbstractStateMachine {
     return (delivery.sendMessage(opm));
   }
 
-  public void reset() {
-    received.set(-1);
-    delayedAcks.set(0);
+  public synchronized void reset() {
+    received = -1;
+    delayedAcks = 0;
   }
 
   private void debugLog(String msg) {
@@ -126,11 +122,17 @@ public class ReceiveStateMachine extends AbstractStateMachine {
     this.debugId = debugId;
   }
 
-  public SynchronizedLong getReceived() {
+  public synchronized long getReceived() {
     return received;
   }
 
   public void setRunner(StateMachineRunner receive) {
     this.runner = receive;
   }
+
+  // for testing purpose only
+  boolean isClean() {
+    return ((received == -1) && (delayedAcks == 0));
+  }
+
 }

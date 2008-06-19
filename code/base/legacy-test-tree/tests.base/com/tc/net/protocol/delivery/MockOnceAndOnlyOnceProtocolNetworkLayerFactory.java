@@ -13,11 +13,13 @@ public class MockOnceAndOnlyOnceProtocolNetworkLayerFactory implements OnceAndOn
 
   public OnceAndOnlyOnceProtocolNetworkLayer layer;
 
-  public OnceAndOnlyOnceProtocolNetworkLayer createNewClientInstance(Sink workSink, ReconnectConfig reconnectConfig) {
+  public OnceAndOnlyOnceProtocolNetworkLayer createNewClientInstance(Sink sendSink, Sink receiveSink,
+                                                                     ReconnectConfig reconnectConfig) {
     return layer;
   }
 
-  public OnceAndOnlyOnceProtocolNetworkLayer createNewServerInstance(Sink workSink, ReconnectConfig reconnectConfig) {
+  public OnceAndOnlyOnceProtocolNetworkLayer createNewServerInstance(Sink sendSink, Sink receiveSink,
+                                                                     ReconnectConfig reconnectConfig) {
     return layer;
   }
 }

@@ -131,8 +131,8 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
       // proxy group port. use a different group port from tc.properties (if exist) than the one on tc-config
       // currently used by L2Reconnect proxy test.
-      groupConnectPort = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT,
-                                                                 groupPort);
+      groupConnectPort = TCPropertiesImpl.getProperties()
+          .getInt(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT, groupPort);
 
       socketAddress = new TCSocketAddress(l2DSOConfig.bind().getString(), groupConnectPort);
     } catch (UnknownHostException e) {
@@ -177,11 +177,13 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
     final NetworkStackHarnessFactory networkStackHarnessFactory;
     if (isUseOOOLayer) {
-      final Stage oooStage = stageManager.createStage("OOONetStage", new OOOEventHandler(), 1, maxStageSize);
-      final int sendQueueCap = l2ReconnectConfig.getSendQueueCapacity();
+      final Stage oooSendStage = stageManager.createStage(ServerConfigurationContext.L2_OOO_NET_SEND_STAGE, new OOOEventHandler(), 1, maxStageSize);
+      final Stage oooReceiveStage = stageManager.createStage(ServerConfigurationContext.L2_OOO_NET_RECEIVE_STAGE, new OOOEventHandler(), 1,
+                                                             maxStageSize);
       networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
                                                                      new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
-                                                                     oooStage.getSink(), l2ReconnectConfig, sendQueueCap);
+                                                                     oooSendStage.getSink(), oooReceiveStage.getSink(),
+                                                                     l2ReconnectConfig);
     } else {
       networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
     }

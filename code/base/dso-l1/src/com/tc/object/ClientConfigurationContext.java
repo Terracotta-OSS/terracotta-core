@@ -27,6 +27,8 @@ public class ClientConfigurationContext extends ConfigurationContextImpl {
   public static final String             DMI_STAGE                            = "dmi_stage";
   public static final String             LOCK_STATISTICS_RESPONSE_STAGE       = "lock_statistics_response_stage";
   public static final String             LOCK_STATISTICS_ENABLE_DISABLE_STAGE = "lock_statistics_enable_disable_stage";
+  public static final String             OOO_NET_SEND_STAGE                   = "ooo_net_send_stage";
+  public static final String             OOO_NET_RECEIVE_STAGE                = "ooo_net_receive_stage";
 
   private final ClientLockManager        lockManager;
   private final RemoteObjectManager      remoteObjectManager;

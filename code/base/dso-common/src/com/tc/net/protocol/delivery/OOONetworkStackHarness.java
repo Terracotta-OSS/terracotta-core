@@ -17,32 +17,32 @@ import com.tc.properties.ReconnectConfig;
 public class OOONetworkStackHarness extends AbstractNetworkStackHarness {
 
   private final OnceAndOnlyOnceProtocolNetworkLayerFactory factory;
-  private Sink                                             sink;
+  private Sink                                             sendSink;
+  private Sink                                             receiveSink;
   private OnceAndOnlyOnceProtocolNetworkLayer              oooLayer;
   private final boolean                                    isClient;
   private final ReconnectConfig                            reconnectConfig;
-  private final int                                        sendQueueCap;
 
   OOONetworkStackHarness(ServerMessageChannelFactory channelFactory, MessageTransport transport,
-                         OnceAndOnlyOnceProtocolNetworkLayerFactory factory, Sink sink,
-                         ReconnectConfig reconnectConfig, int sendQueueCap) {
+                         OnceAndOnlyOnceProtocolNetworkLayerFactory factory, Sink sendSink, Sink receiveSink,
+                         ReconnectConfig reconnectConfig) {
     super(channelFactory, transport);
     this.isClient = false;
     this.factory = factory;
-    this.sink = sink;
+    this.sendSink = sendSink;
+    this.receiveSink = receiveSink;
     this.reconnectConfig = reconnectConfig;
-    this.sendQueueCap = sendQueueCap;
   }
 
   OOONetworkStackHarness(MessageTransportFactory transportFactory, MessageChannelInternal channel,
-                         OnceAndOnlyOnceProtocolNetworkLayerFactory factory, Sink sink,
-                         ReconnectConfig reconnectConfig, int sendQueueCap) {
+                         OnceAndOnlyOnceProtocolNetworkLayerFactory factory, Sink sendSink, Sink receiveSink,
+                         ReconnectConfig reconnectConfig) {
     super(transportFactory, channel);
     this.isClient = true;
     this.factory = factory;
-    this.sink = sink;
+    this.sendSink = sendSink;
+    this.receiveSink = receiveSink;
     this.reconnectConfig = reconnectConfig;
-    this.sendQueueCap = sendQueueCap;
   }
 
   protected void connectStack() {
@@ -70,7 +70,7 @@ public class OOONetworkStackHarness extends AbstractNetworkStackHarness {
   }
 
   protected void createIntermediateLayers() {
-    oooLayer = (isClient) ? factory.createNewClientInstance(sink, reconnectConfig) : factory
-        .createNewServerInstance(sink, reconnectConfig);
+    oooLayer = (isClient) ? factory.createNewClientInstance(sendSink, receiveSink, reconnectConfig) : factory
+        .createNewServerInstance(sendSink, receiveSink, reconnectConfig);
   }
 }

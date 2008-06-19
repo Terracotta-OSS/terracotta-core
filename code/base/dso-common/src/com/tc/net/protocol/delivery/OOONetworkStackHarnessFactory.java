@@ -16,29 +16,29 @@ import com.tc.properties.ReconnectConfig;
 
 public class OOONetworkStackHarnessFactory implements NetworkStackHarnessFactory {
 
-  private final Sink                                       sink;
+  private final Sink                                       sendSink;
+  private final Sink                                       receiveSink;
   private final OnceAndOnlyOnceProtocolNetworkLayerFactory factory;
   private final ReconnectConfig                            reconnectConfig;
-  private final int                                        sendQueueCap;
 
-  public OOONetworkStackHarnessFactory(OnceAndOnlyOnceProtocolNetworkLayerFactory factory, Sink sink,
-                                       ReconnectConfig reconnectConfig, int sendQueueCap) {
+  public OOONetworkStackHarnessFactory(OnceAndOnlyOnceProtocolNetworkLayerFactory factory, Sink sendSink,
+                                       Sink receiveSink, ReconnectConfig reconnectConfig) {
     this.factory = factory;
-    this.sink = sink;
+    this.sendSink = sendSink;
+    this.receiveSink = receiveSink;
     this.reconnectConfig = reconnectConfig;
-    this.sendQueueCap = sendQueueCap;
   }
 
   public NetworkStackHarness createClientHarness(MessageTransportFactory transportFactory,
                                                  MessageChannelInternal channel,
                                                  MessageTransportListener[] transportListeners) {
-    return new OOONetworkStackHarness(transportFactory, channel, factory, sink, reconnectConfig, sendQueueCap);
+    return new OOONetworkStackHarness(transportFactory, channel, factory, sendSink, receiveSink, reconnectConfig);
   }
 
   public NetworkStackHarness createServerHarness(ServerMessageChannelFactory channelFactory,
                                                  MessageTransport transport,
                                                  MessageTransportListener[] transportListeners) {
-    return new OOONetworkStackHarness(channelFactory, transport, factory, sink, reconnectConfig, sendQueueCap);
+    return new OOONetworkStackHarness(channelFactory, transport, factory, sendSink, receiveSink, reconnectConfig);
   }
 
 }

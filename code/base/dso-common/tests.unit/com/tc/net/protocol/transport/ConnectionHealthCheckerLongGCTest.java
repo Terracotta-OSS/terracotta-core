@@ -61,11 +61,13 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     if (false /* TCPropertiesImpl.getProperties().getBoolean(L1ReconnectProperties.L1_RECONNECT_ENABLED) */) {
       StageManagerImpl stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(TCLogging
           .getLogger(StageManagerImpl.class))), new QueueFactory());
-      final Stage oooStage = stageManager.createStage("OOONetStage", new OOOEventHandler(), 1, 5000);
+      final Stage oooSendStage = stageManager.createStage("OOONetSendStage", new OOOEventHandler(), 1, 5000);
+      final Stage oooReceiveStage = stageManager.createStage("OOONetReceiveStage", new OOOEventHandler(), 1, 5000);
       final int sendQueueCap = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_L1RECONNECT_SENDQUEUE_CAP);
       networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
                                                                      new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
-                                                                     oooStage.getSink(), new L1ReconnectConfigImpl(), sendQueueCap);
+                                                                     oooSendStage.getSink(), oooReceiveStage.getSink(),
+                                                                     new L1ReconnectConfigImpl());
     } else {
       networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
     }

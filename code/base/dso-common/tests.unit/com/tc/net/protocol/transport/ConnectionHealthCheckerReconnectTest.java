@@ -34,8 +34,6 @@ import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.session.NullSessionManager;
 import com.tc.properties.L1ReconnectConfigImpl;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.PortChooser;
 import com.tc.util.SequenceGenerator;
@@ -63,11 +61,12 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
     if (true /* TCPropertiesImpl.getProperties().getBoolean(L1ReconnectProperties.L1_RECONNECT_ENABLED) */) {
       StageManagerImpl stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(TCLogging
           .getLogger(StageManagerImpl.class))), new QueueFactory(BoundedLinkedQueue.class.getName()));
-      final Stage oooStage = stageManager.createStage("OOONetStage", new OOOEventHandler(), 1, 5000);
-      final int sendQueueCap = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_L1RECONNECT_SENDQUEUE_CAP);
+      final Stage oooSendStage = stageManager.createStage("OOONetSendStage", new OOOEventHandler(), 1, 5000);
+      final Stage oooReceiveStage = stageManager.createStage("OOONetReceiveStage", new OOOEventHandler(), 1, 5000);
       networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
                                                                      new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
-                                                                     oooStage.getSink(), new L1ReconnectConfigImpl(), sendQueueCap);
+                                                                     oooSendStage.getSink(), oooReceiveStage.getSink(),
+                                                                     new L1ReconnectConfigImpl());
     } else {
       networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
     }
@@ -130,7 +129,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
             .getHostAddress(), proxyPort, 1000,
                              new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo(serverLsnr
                                  .getBindAddress().getHostAddress(), proxyPort) }),
-                                 TransportHandshakeMessage.NO_CALLBACK_PORT);
+                             TransportHandshakeMessage.NO_CALLBACK_PORT);
 
     clientMsgCh.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     clientMsgCh.routeMessageType(TCMessageType.PING_MESSAGE, new TCMessageSink() {

@@ -495,20 +495,22 @@ public class DistributedObjectServer implements TCDumper {
 
     ManagedObjectStateFactory.createInstance(managedObjectChangeListenerProvider, persistor);
 
+    int numCommWorkers = getCommWorkerCount(l2Properties);
+
     final NetworkStackHarnessFactory networkStackHarnessFactory;
     final boolean useOOOLayer = l1ReconnectConfig.getReconnectEnabled();
     if (useOOOLayer) {
-      final Stage oooStage = stageManager.createStage("OOONetStage", new OOOEventHandler(), 1, maxStageSize);
-      final int sendQueueCap = l1ReconnectConfig.getSendQueueCapacity();
+      final Stage oooSendStage = stageManager.createStage(ServerConfigurationContext.OOO_NET_SEND_STAGE,
+                                                          new OOOEventHandler(), numCommWorkers, maxStageSize);
+      final Stage oooReceiveStage = stageManager.createStage(ServerConfigurationContext.OOO_NET_RECEIVE_STAGE,
+                                                             new OOOEventHandler(), numCommWorkers, maxStageSize);
       networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
                                                                      new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
-                                                                     oooStage.getSink(), l1ReconnectConfig,
-                                                                     sendQueueCap);
+                                                                     oooSendStage.getSink(), oooReceiveStage.getSink(),
+                                                                     l1ReconnectConfig);
     } else {
       networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
     }
-
-    int numCommWorkers = getCommWorkerCount(l2Properties);
 
     MessageMonitor mm = MessageMonitorImpl.createMonitor(TCPropertiesImpl.getProperties(), logger);
 

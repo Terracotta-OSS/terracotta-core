@@ -19,11 +19,11 @@ class GuaranteedDeliveryProtocol {
   private final SendStateMachine    sender;
   private final ReceiveStateMachine receiver;
 
-  public GuaranteedDeliveryProtocol(OOOProtocolMessageDelivery delivery, Sink workSink, ReconnectConfig reconnectConfig, boolean isClient) {
+  public GuaranteedDeliveryProtocol(OOOProtocolMessageDelivery delivery, Sink sendSink, Sink receiveSink, ReconnectConfig reconnectConfig, boolean isClient) {
     this.sender = new SendStateMachine(delivery, reconnectConfig, isClient);
-    this.send = new StateMachineRunner(sender, workSink);
+    this.send = new StateMachineRunner(sender, sendSink);
     this.receiver = new ReceiveStateMachine(delivery, reconnectConfig);
-    this.receive = new StateMachineRunner(receiver, workSink);
+    this.receive = new StateMachineRunner(receiver, receiveSink);
     receiver.setRunner(receive);
   }
 

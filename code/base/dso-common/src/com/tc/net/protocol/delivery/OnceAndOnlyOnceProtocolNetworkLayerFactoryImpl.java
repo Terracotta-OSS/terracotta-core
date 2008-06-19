@@ -13,16 +13,20 @@ import com.tc.properties.ReconnectConfig;
  */
 public class OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl implements OnceAndOnlyOnceProtocolNetworkLayerFactory {
 
-  public OnceAndOnlyOnceProtocolNetworkLayer createNewClientInstance(Sink workSink, ReconnectConfig reconnectConfig) {
+  public OnceAndOnlyOnceProtocolNetworkLayer createNewClientInstance(Sink sendSink, Sink receiveSink,
+                                                                     ReconnectConfig reconnectConfig) {
     OOOProtocolMessageFactory messageFactory = new OOOProtocolMessageFactory();
     OOOProtocolMessageParser messageParser = new OOOProtocolMessageParser(messageFactory);
-    return new OnceAndOnlyOnceProtocolNetworkLayerImpl(messageFactory, messageParser, workSink, reconnectConfig, true);
+    return new OnceAndOnlyOnceProtocolNetworkLayerImpl(messageFactory, messageParser, sendSink, receiveSink,
+                                                       reconnectConfig, true);
   }
 
-  public OnceAndOnlyOnceProtocolNetworkLayer createNewServerInstance(Sink workSink, ReconnectConfig reconnectConfig) {
+  public OnceAndOnlyOnceProtocolNetworkLayer createNewServerInstance(Sink sendSink, Sink receiveSink,
+                                                                     ReconnectConfig reconnectConfig) {
     OOOProtocolMessageFactory messageFactory = new OOOProtocolMessageFactory();
     OOOProtocolMessageParser messageParser = new OOOProtocolMessageParser(messageFactory);
-    return new OnceAndOnlyOnceProtocolNetworkLayerImpl(messageFactory, messageParser, workSink, reconnectConfig, false);
+    return new OnceAndOnlyOnceProtocolNetworkLayerImpl(messageFactory, messageParser, sendSink, receiveSink,
+                                                       reconnectConfig, false);
   }
 
 }
