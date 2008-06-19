@@ -17,6 +17,7 @@ import com.tc.object.BaseDSOTestCase;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.objectserver.control.ExtraProcessServerControl;
 import com.tc.objectserver.control.ServerControl;
+import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.simulator.app.ApplicationConfigBuilder;
@@ -105,15 +106,17 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   }
 
   protected void setJvmArgsL1Reconnect(final ArrayList jvmArgs) {
+    TCProperties tcProps = TCPropertiesImpl.getProperties();
+    tcProps.setProperty(TCPropertiesConsts.L2_L1RECONNECT_ENABLED, "true");
     System.setProperty("com.tc." + TCPropertiesConsts.L2_L1RECONNECT_ENABLED, "true");
-    TCPropertiesImpl.setProperty(TCPropertiesConsts.L2_L1RECONNECT_ENABLED, "true");
 
     jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_L1RECONNECT_ENABLED + "=true");
   }
 
   protected void setJvmArgsL2Reconnect(final ArrayList jvmArgs) {
+    TCProperties tcProps = TCPropertiesImpl.getProperties();
+    tcProps.setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "true");
     System.setProperty("com.tc." + TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "true");
-    TCPropertiesImpl.setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "true");
 
     jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED + "=true");
   }
@@ -123,10 +126,11 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
         .tcSysProp(TCPropertiesConsts.CVT_BUFFER_RANDOM_SUFFIX_ENABLED);
     final String store_randomsuffix_sysprop = TCPropertiesImpl
         .tcSysProp(TCPropertiesConsts.CVT_STORE_RANDOM_SUFFIX_ENABLED);
+    TCProperties tcProps = TCPropertiesImpl.getProperties();
+    tcProps.setProperty(TCPropertiesConsts.CVT_BUFFER_RANDOM_SUFFIX_ENABLED, "true");
+    tcProps.setProperty(TCPropertiesConsts.CVT_STORE_RANDOM_SUFFIX_ENABLED, "true");
     System.setProperty(buffer_randomsuffix_sysprop, "true");
-    TCPropertiesImpl.setProperty(TCPropertiesConsts.CVT_BUFFER_RANDOM_SUFFIX_ENABLED, "true");
     System.setProperty(store_randomsuffix_sysprop, "true");
-    TCPropertiesImpl.setProperty(TCPropertiesConsts.CVT_STORE_RANDOM_SUFFIX_ENABLED, "true");
 
     jvmArgs.add("-D" + buffer_randomsuffix_sysprop + "=true");
     jvmArgs.add("-D" + store_randomsuffix_sysprop + "=true");

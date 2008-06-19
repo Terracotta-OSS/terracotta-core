@@ -7,6 +7,27 @@
   <xs:element name="tc-config">
     <xs:complexType>
       <xs:all>
+      	<xs:element name="tc-properties" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation>
+              This section defines the tc-properties
+              which the user wants to set to all the L1s
+              Note that the local tc.properties has higher
+              preference than this section
+            </xs:documentation>
+          </xs:annotation>
+          <xs:complexType>
+            <xs:sequence minOccurs="1" maxOccurs="unbounded">
+              <xs:element name="property">
+                <xs:complexType>
+                  <xs:attribute name="name" use="required"/>
+                  <xs:attribute name="value" use="required"/>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        
         <xs:element name="system" type="system" minOccurs="0">
           <xs:annotation>
             <xs:documentation>

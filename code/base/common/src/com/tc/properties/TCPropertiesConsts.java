@@ -152,7 +152,7 @@ public interface TCPropertiesConsts {
   public static final String L2_NHA_TCGROUPCOMM_RECONNECT_SEND_WINDOW               = "l2.nha.tcgroupcomm.reconnect.sendWindow";
   public static final String L2_NHA_TCGROUPCOMM_DISCOVERY_INTERVAL                  = "l2.nha.tcgroupcomm.discovery.interval";
   //a hidden tc.properties only used for l2 proxy testing purpose
-  public static final String L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT             = "l2.nha.tcgroupcomm.l2proxytoport";
+  public static final String L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT           = "l2.nha.tcgroupcomm.l2proxytoport";
   public static final String L2_NHA_SEND_TIMEOUT_MILLS                              = "l2.nha.send.timeout.millis";
   public static final String L2_NHA_TRIBES_FAILURE_DETECTOR_MILLS                   = "l2.nha.tribes.failuredetector.millis";
   public static final String L2_NHA_MCAST_ENABLED                                   = "l2.nha.mcast.enabled";

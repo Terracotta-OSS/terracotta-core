@@ -4,6 +4,7 @@
  */
 package com.tctest.restart.system;
 
+import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.activepassive.ActivePassiveCrashMode;
@@ -36,12 +37,14 @@ public class ObjectDataSmallSinkL1ReconnectActivePassiveTest extends Transparent
   }
   
   protected void setExtraJvmArgs(final ArrayList jvmArgs) {
+    TCProperties tcProps = TCPropertiesImpl.getProperties();
+    
     System.setProperty("com.tc." + TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY, smallSink);
-    TCPropertiesImpl.setProperty(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY, smallSink);
+    tcProps.setProperty(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY, smallSink);
     jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY + "="+smallSink);
 
     System.setProperty("com.tc." + TCPropertiesConsts.L1_SEDA_STAGE_SINK_CAPACITY, smallSink);
-    TCPropertiesImpl.setProperty(TCPropertiesConsts.L1_SEDA_STAGE_SINK_CAPACITY, smallSink);
+    tcProps.setProperty(TCPropertiesConsts.L1_SEDA_STAGE_SINK_CAPACITY, smallSink);
     jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L1_SEDA_STAGE_SINK_CAPACITY + "="+smallSink);
   }
 

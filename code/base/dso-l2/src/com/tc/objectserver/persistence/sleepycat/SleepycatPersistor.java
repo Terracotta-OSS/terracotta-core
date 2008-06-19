@@ -47,7 +47,6 @@ public class SleepycatPersistor implements Persistor {
       throws TCDatabaseException {
     DatabaseOpenResult result = env.open();
     if (!result.isClean()) {
-      //
       throw new DatabaseDirtyException("Attempt to open a dirty database.  "
                                        + "This may be because a previous instance of the server didn't exit cleanly."
                                        + "  Since the integrity of the data cannot be assured, "

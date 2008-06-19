@@ -4,6 +4,8 @@
  */
 package com.tc.properties;
 
+import com.tc.config.TcProperty;
+
 import java.util.Properties;
 
 class TCSubProperties implements TCProperties {
@@ -67,4 +69,13 @@ class TCSubProperties implements TCProperties {
   public boolean getBoolean(String key, boolean defaultValue) {
     return properties.getBoolean(getActualKey(key), defaultValue);
   }
+
+  public void overwriteTcPropertiesFromConfig(TcProperty[] tcProperties) {
+    properties.overwriteTcPropertiesFromConfig(tcProperties);
+  }
+
+  public void setProperty(String key, String value) {
+    properties.setProperty(getActualKey(key), value);
+  }
+  
 }

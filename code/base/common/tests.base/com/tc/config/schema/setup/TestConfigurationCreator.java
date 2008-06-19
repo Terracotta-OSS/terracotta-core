@@ -45,6 +45,7 @@ public class TestConfigurationCreator implements ConfigurationCreator {
   public void createConfigurationIntoRepositories(MutableBeanRepository l1BeanRepository,
                                                   MutableBeanRepository l2sBeanRepository,
                                                   MutableBeanRepository systemBeanRepository,
+                                                  MutableBeanRepository tcPropertiesRepository,
                                                   ApplicationsRepository applicationsRepository)
       throws ConfigurationSetupException {
     try {
@@ -59,7 +60,7 @@ public class TestConfigurationCreator implements ConfigurationCreator {
       systemBeanRepository.setBean(this.beanSet.systemBean(), "from test config");
       addRepository(systemBeanRepository);
       systemBeanRepository.saveCopyOfBeanInAnticipationOfFutureMutation();
-
+      
       String[] allNames = this.beanSet.applicationNames();
       for (int i = 0; i < allNames.length; ++i) {
         MutableBeanRepository repository = applicationsRepository.repositoryFor(allNames[i]);

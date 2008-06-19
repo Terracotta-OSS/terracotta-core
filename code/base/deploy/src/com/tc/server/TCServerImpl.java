@@ -45,7 +45,7 @@ import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.servlets.L1PropertiesFromL2Servlet;
+import com.tc.servlets.L1ReconnectPropertiesServlet;
 import com.tc.statistics.StatisticsGathererSubSystem;
 import com.tc.statistics.beans.StatisticsMBeanNames;
 import com.tc.statistics.beans.impl.StatisticsLocalGathererMBeanImpl;
@@ -413,7 +413,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     createAndAddServlet(servletHandler, VersionServlet.class.getName(), VERSION_SERVLET_PATH);
     createAndAddServlet(servletHandler, ConfigServlet.class.getName(), CONFIG_SERVLET_PATH);
     createAndAddServlet(servletHandler, StatisticsGathererServlet.class.getName(), STATISTICS_GATHERER_SERVLET_PATH);
-    createAndAddServlet(servletHandler, L1PropertiesFromL2Servlet.class.getName(),
+    createAndAddServlet(servletHandler, L1ReconnectPropertiesServlet.class.getName(),
                         L1_RECONNECT_PROPERTIES_FROML2_SERVELET_PATH);
 
     if (TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.HTTP_DEFAULT_SERVLET_ENABLED, false)) {

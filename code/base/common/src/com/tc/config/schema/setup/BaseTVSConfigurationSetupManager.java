@@ -28,6 +28,7 @@ import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.SpringApplication;
 import com.terracottatech.config.System;
+import com.terracottatech.config.TcConfigDocument.TcConfig.TcProperties;
 
 import java.io.File;
 import java.util.HashMap;
@@ -43,6 +44,7 @@ public class BaseTVSConfigurationSetupManager {
   private final MutableBeanRepository             clientBeanRepository;
   private final MutableBeanRepository             serversBeanRepository;
   private final MutableBeanRepository             systemBeanRepository;
+  private final MutableBeanRepository             tcPropertiesRepository;
   private final ApplicationsRepository            applicationsRepository;
 
   private final DefaultValueProvider              defaultValueProvider;
@@ -62,6 +64,7 @@ public class BaseTVSConfigurationSetupManager {
     this.systemBeanRepository = new StandardBeanRepository(System.class);
     this.clientBeanRepository = new StandardBeanRepository(Client.class);
     this.serversBeanRepository = new StandardBeanRepository(Servers.class);
+    this.tcPropertiesRepository = new StandardBeanRepository(TcProperties.class);
     this.applicationsRepository = new StandardApplicationsRepository();
 
     this.defaultValueProvider = defaultValueProvider;
@@ -84,6 +87,10 @@ public class BaseTVSConfigurationSetupManager {
     return this.systemBeanRepository;
   }
 
+  protected final MutableBeanRepository tcPropertiesRepository() {
+    return this.tcPropertiesRepository;
+  }
+  
   protected final ApplicationsRepository applicationsRepository() {
     return this.applicationsRepository;
   }
@@ -98,6 +105,7 @@ public class BaseTVSConfigurationSetupManager {
     configurationCreator.createConfigurationIntoRepositories(clientBeanRepository,
                                                              serversBeanRepository,
                                                              systemBeanRepository,
+                                                             tcPropertiesRepository,
                                                              applicationsRepository);
   }
 

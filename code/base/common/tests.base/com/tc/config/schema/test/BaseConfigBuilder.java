@@ -202,7 +202,9 @@ public abstract class BaseConfigBuilder {
     Assert.assertNotBlank(tagName);
     Assert.assertNotBlank(propertyName);
 
-    if (isSet(propertyName)) return indent() + "<" + tagName + ">" + getProperty(propertyName) + "</" + tagName + ">";
+    if (isSet(propertyName)) {
+      return indent() + "<" + tagName + ">" + getProperty(propertyName) + "</" + tagName + ">";
+    }
     else return "";
   }
 

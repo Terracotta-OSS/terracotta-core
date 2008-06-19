@@ -3,6 +3,7 @@
  */
 package com.tctest;
 
+import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
 
@@ -16,10 +17,11 @@ public class ClientMemoryReaperTest extends TransparentTestBase implements TestC
     //disableAllUntil("2007-11-20");
    
     //workaround for MNK-405 : disabling cache manager and other logging for this test alone
-    TCPropertiesImpl.setProperty(TCPropertiesConsts.L2_CACHEMANAGER_LOGGING_ENABLED, "false");
-    TCPropertiesImpl.setProperty(TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED, "false");
-    TCPropertiesImpl.setProperty(TCPropertiesConsts.L1_CACHEMANAGER_LOGGING_ENABLED, "false");
-    TCPropertiesImpl.setProperty(TCPropertiesConsts.L1_TRANSACTIONMANAGER_LOGGING_ENABLED, "false");
+    TCProperties tcProps = TCPropertiesImpl.getProperties();
+    tcProps.setProperty(TCPropertiesConsts.L2_CACHEMANAGER_LOGGING_ENABLED, "false");
+    tcProps.setProperty(TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED, "false");
+    tcProps.setProperty(TCPropertiesConsts.L1_CACHEMANAGER_LOGGING_ENABLED, "false");
+    tcProps.setProperty(TCPropertiesConsts.L1_TRANSACTIONMANAGER_LOGGING_ENABLED, "false");
   }
   
   protected Class getApplicationClass() {
@@ -33,10 +35,11 @@ public class ClientMemoryReaperTest extends TransparentTestBase implements TestC
   
   protected void tearDown() throws Exception {
     //workaround for MNK-405 : re-enabling cache manager logging
-    TCPropertiesImpl.setProperty(TCPropertiesConsts.L2_CACHEMANAGER_LOGGING_ENABLED, "true");
-    TCPropertiesImpl.setProperty(TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED, "true");
-    TCPropertiesImpl.setProperty(TCPropertiesConsts.L1_CACHEMANAGER_LOGGING_ENABLED, "true");
-    TCPropertiesImpl.setProperty(TCPropertiesConsts.L1_TRANSACTIONMANAGER_LOGGING_ENABLED, "true");
+    TCProperties tcProps = TCPropertiesImpl.getProperties();
+    tcProps.setProperty(TCPropertiesConsts.L2_CACHEMANAGER_LOGGING_ENABLED, "true");
+    tcProps.setProperty(TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED, "true");
+    tcProps.setProperty(TCPropertiesConsts.L1_CACHEMANAGER_LOGGING_ENABLED, "true");
+    tcProps.setProperty(TCPropertiesConsts.L1_TRANSACTIONMANAGER_LOGGING_ENABLED, "true");
     super.tearDown();
   }
 

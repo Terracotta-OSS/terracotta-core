@@ -14,6 +14,7 @@ import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
+import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.test.TCTestCase;
@@ -29,8 +30,9 @@ public class BaseDSOTestCase extends TCTestCase {
   static {
     // ensure that the databases that are created for the CVT are unique for
     // each test run and for all the nodes that are started within a test
-    TCPropertiesImpl.setProperty(TCPropertiesConsts.CVT_BUFFER_RANDOM_SUFFIX_ENABLED, "true");
-    TCPropertiesImpl.setProperty(TCPropertiesConsts.CVT_STORE_RANDOM_SUFFIX_ENABLED, "true");
+    TCProperties tcProps = TCPropertiesImpl.getProperties();
+    tcProps.setProperty(TCPropertiesConsts.CVT_BUFFER_RANDOM_SUFFIX_ENABLED, "true");
+    tcProps.setProperty(TCPropertiesConsts.CVT_STORE_RANDOM_SUFFIX_ENABLED, "true");
   }
   
   private Exception failTestException;

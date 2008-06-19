@@ -10,6 +10,7 @@ import com.tc.objectserver.core.impl.TestServerConfigurationContext;
 import com.tc.objectserver.handler.ManagedObjectFaultHandler;
 import com.tc.objectserver.impl.TestManagedObjectStore;
 import com.tc.objectserver.impl.TestObjectManager;
+import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.statistics.StatisticData;
@@ -22,7 +23,8 @@ import java.util.Random;
 public class SRAL2FaultsFromDiskTest extends TCTestCase {
 
   static {
-    TCPropertiesImpl.setProperty(TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED, "true");
+    TCProperties tcProps = TCPropertiesImpl.getProperties();
+    tcProps.setProperty(TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED, "true");
     System.out.println("set to true");
   }
 

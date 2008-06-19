@@ -7,6 +7,7 @@ package com.tc.bundles;
 import org.apache.commons.io.FileUtils;
 import org.osgi.framework.BundleException;
 
+import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.terracottatech.config.Module;
@@ -271,7 +272,8 @@ public class KnopflerfishOSGiTest extends TestCase {
   }
 
   private void setProperty(String key, String value) {
-    TCPropertiesImpl.setProperty(key, value);
+    TCProperties tcProps = TCPropertiesImpl.getProperties();
+    tcProps.setProperty(key, value);
   }
 
 }

@@ -9,6 +9,8 @@ import org.apache.xmlbeans.XmlOptions;
 
 import com.tc.capabilities.AbstractCapabilitiesFactory;
 import com.tc.capabilities.Capabilities;
+import com.tc.config.schema.ConfigTCProperties;
+import com.tc.config.schema.ConfigTCPropertiesFromObject;
 import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.config.schema.NewCommonL2Config;
 import com.tc.config.schema.NewCommonL2ConfigObject;
@@ -27,6 +29,8 @@ import com.tc.logging.TCLogging;
 import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.object.config.schema.NewL2DSOConfigObject;
 import com.tc.object.config.schema.PersistenceMode;
+import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.terracottatech.config.Application;
 import com.terracottatech.config.Client;
@@ -36,6 +40,7 @@ import com.terracottatech.config.Servers;
 import com.terracottatech.config.System;
 import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.UpdateCheck;
+import com.terracottatech.config.TcConfigDocument.TcConfig.TcProperties;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -65,6 +70,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
   private final String               thisL2Identifier;
   private L2ConfigData               myConfigData;
+  private ConfigTCProperties         configTCProperties;
 
   public StandardL2TVSConfigurationSetupManager(ConfigurationCreator configurationCreator, String thisL2Identifier,
                                                 DefaultValueProvider defaultValueProvider,
@@ -89,6 +95,8 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
     runConfigurationCreator(this.configurationCreator);
 
+    this.configTCProperties = new ConfigTCPropertiesFromObject((TcProperties) tcPropertiesRepository().bean());
+    overwriteTcPropertiesFromConfig();
     selectL2((Servers) serversBeanRepository().bean(), "the set of L2s known to us");
     validateRestrictions();
   }
@@ -377,6 +385,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     TcConfigDocument doc = TcConfigDocument.Factory.newInstance();
     TcConfigDocument.TcConfig config = doc.addNewTcConfig();
 
+    TcProperties tcProperties = (TcProperties) this.tcPropertiesRepository().bean();
     System system = (System) this.systemBeanRepository().bean();
     Client client = (Client) this.clientBeanRepository().bean();
     Servers servers = (Servers) this.serversBeanRepository().bean();
@@ -386,6 +395,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     if (system != null) config.setSystem(system);
     if (client != null) config.setClients(client);
     if (servers != null) config.setServers(servers);
+    if (tcProperties != null) config.setTcProperties(tcProperties);
     if (application != null) config.setApplication(application);
 
     StringWriter sw = new StringWriter();
@@ -404,6 +414,11 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     } catch (UnsupportedEncodingException uee) {
       throw Assert.failure("This shouldn't be possible", uee);
     }
+  }
+
+  private void overwriteTcPropertiesFromConfig() {
+    TCProperties tcProps = TCPropertiesImpl.getProperties();
+    tcProps.overwriteTcPropertiesFromConfig(this.configTCProperties.getTcPropertiesArray());
   }
 
 }

@@ -3,6 +3,8 @@
  */
 package com.tc.properties;
 
+import com.tc.config.TcProperty;
+
 import java.util.Properties;
 
 public interface TCProperties {
@@ -29,4 +31,7 @@ public interface TCProperties {
 
   Properties addAllPropertiesTo(Properties properties);
 
+  public void overwriteTcPropertiesFromConfig(TcProperty[] tcProperties);
+  
+  public void setProperty(String key, String value);
 }

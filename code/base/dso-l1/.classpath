@@ -17,4 +17,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/management-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty-api"/>
+	<classpathentry kind="lib" path="/common/lib/tcconfig-xmlbeans-generated.jar"/>
+	<classpathentry kind="lib" path="/dso-common/lib/tc-l1-reconnect-properties.jar"/>
+	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -84,7 +84,7 @@ import com.tc.weblogic.transform.ServerAdapter;
 import com.tc.weblogic.transform.ServletResponseImplAdapter;
 import com.tc.weblogic.transform.WebAppServletContextAdapter;
 import com.terracottatech.config.DsoApplication;
-import com.terracottatech.config.L1ReconnectPropertiesFromL2Document;
+import com.terracottatech.config.L1ReconnectPropertiesDocument;
 import com.terracottatech.config.Module;
 import com.terracottatech.config.Modules;
 import com.terracottatech.config.SpringApplication;
@@ -2028,9 +2028,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
           String text = "We couldn't load l1 reconnect properties from any of the servers. Retrying.....";
           if (loggedInConsole == false) {
             loggedInConsole = true;
-            consoleLogger.error(text);
+            consoleLogger.warn(text);
           }
-          logger.error(text);
+          logger.warn(text);
           ThreadUtil.reallySleep(1000);
         }
       } catch (Exception e) {
@@ -2038,18 +2038,18 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       }
     }
 
-    L1ReconnectPropertiesFromL2Document l1PropFroL2;
+    L1ReconnectPropertiesDocument l1ReconnectPropFromL2;
     try {
-      l1PropFroL2 = L1ReconnectPropertiesFromL2Document.Factory.parse(in);
+      l1ReconnectPropFromL2 = L1ReconnectPropertiesDocument.Factory.parse(in);
     } catch (Exception e) {
       throw new AssertionError(e);
     }
 
-    boolean l1ReconnectEnabled = l1PropFroL2.getL1ReconnectPropertiesFromL2().getL1ReconnectEnabled();
-    int l1ReconnectTimeout = l1PropFroL2.getL1ReconnectPropertiesFromL2().getL1ReconnectTimeout().intValue();
-    int l1ReconnectSendqueuecap = l1PropFroL2.getL1ReconnectPropertiesFromL2().getL1ReconnectSendqueuecap().intValue();
-    int l1ReconnectMaxdelayedacks = l1PropFroL2.getL1ReconnectPropertiesFromL2().getL1ReconnectMaxDelayedAcks().intValue();
-    int l1ReconnectSendwindow = l1PropFroL2.getL1ReconnectPropertiesFromL2().getL1ReconnectSendwindow().intValue();
+    boolean l1ReconnectEnabled = l1ReconnectPropFromL2.getL1ReconnectProperties().getL1ReconnectEnabled();
+    int l1ReconnectTimeout = l1ReconnectPropFromL2.getL1ReconnectProperties().getL1ReconnectTimeout().intValue();
+    int l1ReconnectSendqueuecap = l1ReconnectPropFromL2.getL1ReconnectProperties().getL1ReconnectSendqueuecap().intValue();
+    int l1ReconnectMaxdelayedacks = l1ReconnectPropFromL2.getL1ReconnectProperties().getL1ReconnectMaxDelayedAcks().intValue();
+    int l1ReconnectSendwindow = l1ReconnectPropFromL2.getL1ReconnectProperties().getL1ReconnectSendwindow().intValue();
     this.l1ReconnectConfig = new L1ReconnectConfigImpl(l1ReconnectEnabled, l1ReconnectTimeout, l1ReconnectSendqueuecap,
                                                        l1ReconnectMaxdelayedacks, l1ReconnectSendwindow);
   }

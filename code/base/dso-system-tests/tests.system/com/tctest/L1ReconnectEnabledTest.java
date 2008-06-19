@@ -11,6 +11,7 @@ import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
 import com.tc.config.schema.test.InstrumentedClassConfigBuilderImpl;
 import com.tc.config.schema.test.L2ConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
+import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.util.Assert;
@@ -46,8 +47,9 @@ public class L1ReconnectEnabledTest extends TransparentTestBase {
   protected void setJvmArgsL1Reconnect(final ArrayList jvmArgs) {
     super.setJvmArgsL1Reconnect(jvmArgs);
 
+    TCProperties tcProps = TCPropertiesImpl.getProperties();
+    tcProps.setProperty(TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS, "" + L1_RECONNECT_TIMEOUT);
     System.setProperty("com.tc." + TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS, "" + L1_RECONNECT_TIMEOUT);
-    TCPropertiesImpl.setProperty(TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS, "" + L1_RECONNECT_TIMEOUT);
     jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS + "=" + L1_RECONNECT_TIMEOUT);
   }
 

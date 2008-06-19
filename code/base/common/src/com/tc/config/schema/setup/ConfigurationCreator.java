@@ -19,6 +19,7 @@ public interface ConfigurationCreator {
   void createConfigurationIntoRepositories(MutableBeanRepository l1BeanRepository,
                                            MutableBeanRepository l2sBeanRepository,
                                            MutableBeanRepository systemBeanRepository,
+                                           MutableBeanRepository tcPropertiesRepository,
                                            ApplicationsRepository applicationsRepository)
       throws ConfigurationSetupException;
 

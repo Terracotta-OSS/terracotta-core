@@ -437,12 +437,12 @@ END
   end
   
   # Generates the JAR containg the class files that represent the XML schema  
-  # for the l1 properties from l2 
-  def generate_l1_prop_from_l2_classes
-    schema_dir = @static_resources.l1_prop_from_l2_schema_source_directory(@module_set)
-    schema_config_dir = @static_resources.l1_prop_from_l2_schema_config_directory(@module_set)
-    dest_jar = @static_resources.compiled_l1_prop_from_l2_jar(@module_set)
-    generated_source_dir = @build_results.l1_prop_from_l2_schema_generation_directory
+  # for the l1 reconnect properties from l2 
+  def generate_l1_reconnect_properties_classes
+    schema_dir = @static_resources.l1_reconnect_properties_schema_source_directory(@module_set)
+    schema_config_dir = @static_resources.l1_reconnect_properteis_schema_config_directory(@module_set)
+    dest_jar = @static_resources.compiled_l1_reconnect_properties_jar(@module_set)
+    generated_source_dir = @build_results.l1_reconnect_properties_schema_generation_directory
 
     text = <<END
 BUILDING NEW L1 PROPERTIES FROMM L2 JAR.
@@ -469,11 +469,11 @@ END
       :executable => @jvm_set['J2SE-1.4'].javac.to_s,
       :debug => true, :classpath => @module_set['dso-common'].subtree('src').classpath(@build_results, :full, :runtime).to_s,
       :srcgendir => generated_source_dir.to_s) {
-      ant.fileset(:dir => schema_dir.to_s, :includes => '*.xsd')
-      ant.fileset(:dir => schema_config_dir.to_s, :includes => '*.xsdconfig')
+      ant.fileset(:dir => schema_dir.to_s, :includes => 'l1-reconnect-properties.xsd')
+      ant.fileset(:dir => schema_config_dir.to_s, :includes => 'l1-reconnect-properties.xsdconfig')
     }
   end
-
+  
   def generate_stats_config_classes
     schema_dir = @static_resources.stats_config_schema_source_directory(@module_set)
     schema_config_dir = @static_resources.stats_config_schema_config_directory(@module_set)

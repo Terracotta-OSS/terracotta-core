@@ -10,5 +10,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-statistics-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty-api"/>
-	<classpathentry exported="true" kind="lib" path="lib/tc-l1-prop-from-l2-xmlbeans-generated.jar"/>
+	<classpathentry kind="lib" path="lib/tc-l1-reconnect-properties.jar"/>
+	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -152,11 +152,13 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   public void createConfigurationIntoRepositories(MutableBeanRepository l1BeanRepository,
                                                   MutableBeanRepository l2sBeanRepository,
                                                   MutableBeanRepository systemBeanRepository,
+                                                  MutableBeanRepository tcPropertiesRepository,
                                                   ApplicationsRepository applicationsRepository)
       throws ConfigurationSetupException {
     Assert.assertNotNull(l1BeanRepository);
     Assert.assertNotNull(l2sBeanRepository);
     Assert.assertNotNull(systemBeanRepository);
+    Assert.assertNotNull(tcPropertiesRepository);
     Assert.assertNotNull(applicationsRepository);
 
     ConfigurationSource[] sources = createConfigurationSources();
@@ -201,8 +203,8 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
 
     if (out == null) configurationFetchFailed(sources, startTime);
 
-    loadConfigurationData(out, trustedSource, descrip, l1BeanRepository, l2sBeanRepository, systemBeanRepository,
-                          applicationsRepository);
+    loadConfigurationData(out, trustedSource, descrip, l1BeanRepository, l2sBeanRepository, 
+                          systemBeanRepository, tcPropertiesRepository, applicationsRepository);
     consoleLogger.info("Configuration loaded from the " + descrip + ".");
   }
 
@@ -293,6 +295,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
                                      MutableBeanRepository clientBeanRepository,
                                      MutableBeanRepository serversBeanRepository,
                                      MutableBeanRepository systemBeanRepository,
+                                     MutableBeanRepository tcPropertiesRepository,
                                      ApplicationsRepository applicationsRepository) throws ConfigurationSetupException {
     try {
       loadedFromTrustedSource = trustedSource;
@@ -361,6 +364,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
       clientBeanRepository.setBean(config.getClients(), descrip);
       serversBeanRepository.setBean(config.getServers(), descrip);
       systemBeanRepository.setBean(config.getSystem(), descrip);
+      tcPropertiesRepository.setBean(config.getTcProperties(), descrip);
 
       if (config.isSetApplication()) {
         applicationsRepository.repositoryFor(TVSConfigurationSetupManagerFactory.DEFAULT_APPLICATION_NAME)

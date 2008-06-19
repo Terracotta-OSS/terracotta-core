@@ -9,6 +9,8 @@ import org.apache.xmlbeans.XmlObject;
 import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.config.schema.L2ConfigForL1;
 import com.tc.config.schema.L2ConfigForL1Object;
+import com.tc.config.schema.ConfigTCProperties;
+import com.tc.config.schema.ConfigTCPropertiesFromObject;
 import com.tc.config.schema.NewCommonL1Config;
 import com.tc.config.schema.NewCommonL1ConfigObject;
 import com.tc.config.schema.defaults.DefaultValueProvider;
@@ -19,9 +21,12 @@ import com.tc.config.schema.utils.XmlObjectComparator;
 import com.tc.logging.TCLogging;
 import com.tc.object.config.schema.NewL1DSOConfig;
 import com.tc.object.config.schema.NewL1DSOConfigObject;
+import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.DsoClientData;
+import com.terracottatech.config.TcConfigDocument.TcConfig.TcProperties;
 
 /**
  * The standard implementation of {@link com.tc.config.schema.setup.L1TVSConfigurationSetupManager}.
@@ -32,6 +37,7 @@ public class StandardL1TVSConfigurationSetupManager extends BaseTVSConfiguration
   private final NewCommonL1Config    commonL1Config;
   private final L2ConfigForL1        l2ConfigForL1;
   private final NewL1DSOConfig       dsoL1Config;
+  private final ConfigTCProperties   configTCProperties;
   private boolean                    loadedFromTrustedSource;
 
   public StandardL1TVSConfigurationSetupManager(ConfigurationCreator configurationCreator,
@@ -50,6 +56,7 @@ public class StandardL1TVSConfigurationSetupManager extends BaseTVSConfiguration
     commonL1Config = new NewCommonL1ConfigObject(createContext(clientBeanRepository(), null));
     l2ConfigForL1 = new L2ConfigForL1Object(createContext(serversBeanRepository(), null),
                                             createContext(systemBeanRepository(), null));
+    configTCProperties = new ConfigTCPropertiesFromObject((TcProperties) tcPropertiesRepository().bean());
     dsoL1Config = new NewL1DSOConfigObject(createContext(new ChildBeanRepository(clientBeanRepository(),
                                                                                  DsoClientData.class,
                                                                                  new ChildBeanFetcher() {
@@ -59,6 +66,7 @@ public class StandardL1TVSConfigurationSetupManager extends BaseTVSConfiguration
                                                                                    }
                                                                                  }), null));
 
+    overwriteTcPropertiesFromConfig();
   }
 
   public void setupLogging() {
@@ -87,4 +95,8 @@ public class StandardL1TVSConfigurationSetupManager extends BaseTVSConfiguration
     return this.dsoL1Config;
   }
 
+  private void overwriteTcPropertiesFromConfig(){
+    TCProperties tcProps = TCPropertiesImpl.getProperties();
+    tcProps.overwriteTcPropertiesFromConfig(this.configTCProperties.getTcPropertiesArray());
+  }
 }
