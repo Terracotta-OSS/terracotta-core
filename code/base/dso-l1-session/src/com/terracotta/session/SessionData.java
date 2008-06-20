@@ -4,6 +4,7 @@
  */
 package com.terracotta.session;
 
+import com.tc.logging.TCLogger;
 import com.tc.session.SessionSupport;
 import com.tc.util.Assert;
 import com.terracotta.session.util.ContextMgr;
@@ -81,13 +82,40 @@ public class SessionData implements Session, SessionSupport {
     return contextMgr.getSessionContext();
   }
 
-  public synchronized boolean isValid() {
-    if (invalidating) { return true; }
-    if (invalidated) { return false; }
+  public boolean isValid() {
+    return isValid(false, null);
+  }
 
-    if (getMaxInactiveMillis() == NEVER_EXPIRE) { return true; }
+  public synchronized boolean isValid(boolean debug, TCLogger logger) {
+    if (invalidating) {
+      if (debug) {
+        logger.info(sessionId.getKey() + " is in the process of being invalidated");
+      }
+      return true;
+    }
+    if (invalidated) {
+      if (debug) {
+        logger.info(sessionId.getKey() + " is already invalidated");
+      }
+      return false;
+    }
 
-    final boolean isValid = getIdleMillis() < getMaxInactiveMillis();
+    if (getMaxInactiveMillis() == NEVER_EXPIRE) {
+      if (debug) {
+        logger.info(sessionId.getKey() + " is set to never expire");
+      }
+      return true;
+    }
+
+    final long idleMillis = getIdleMillis(debug, logger);
+    final long maxInactive = getMaxInactiveMillis();
+
+    final boolean isValid = idleMillis < maxInactive;
+
+    if (debug) {
+      logger.info(sessionId.getKey() + " isValid=" + isValid + " (" + idleMillis + " < " + maxInactive + ")");
+    }
+
     return isValid;
   }
 
@@ -151,11 +179,39 @@ public class SessionData implements Session, SessionSupport {
 
   /**
    * returns idle millis.
+   *
+   * @param logger
+   * @param debug
    */
-  synchronized long getIdleMillis() {
-    if (lastAccessedTime == 0) return 0;
-    if (requestStartMillis > lastAccessedTime) return requestStartMillis - lastAccessedTime;
-    return Math.max(System.currentTimeMillis() - lastAccessedTime, 0);
+  private long getIdleMillis(boolean debug, TCLogger logger) {
+    final long lastAccess = lastAccessedTime;
+
+    if (lastAccess == 0) {
+      if (debug) {
+        logger.info(sessionId.getKey() + " has no last access time");
+      }
+      return 0;
+    }
+
+    final long requestStart = requestStartMillis;
+
+    if (requestStart > lastAccess) {
+      final long rv = requestStart - lastAccess;
+      if (debug) {
+        logger.info(sessionId.getKey() + " has idleMillis=" + rv + " (lastAccess=" + lastAccess + ",requestStart="
+                    + requestStart + ")");
+      }
+      return rv;
+    }
+
+    final long diff = System.currentTimeMillis() - lastAccess;
+    final long rv = Math.max(diff, 0);
+
+    if (debug) {
+      logger.info(sessionId.getKey() + " has idleMillis=" + rv + " (diff=" + diff + ",lastAccess=" + lastAccess + ")");
+    }
+
+    return rv;
   }
 
   synchronized void finishRequest() {
