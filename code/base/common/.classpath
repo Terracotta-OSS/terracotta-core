@@ -40,5 +40,4 @@
 	<classpathentry exported="true" kind="lib" path="lib/tcconfig-xmlbeans-generated.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/tcconfigV1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/tcconfigV2.jar"/>
-	<classpathentry kind="output" path="bin"/>
 </classpath>
