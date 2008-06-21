@@ -92,21 +92,33 @@ public class SpringAspectModule implements AspectModule {
                           + "org.springframework.beans.factory.config.AutowireCapableBeanFactory beanFactory)");
 
     builder.addAdvice("around",
-                      "withincode(* org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(String, ..)) "
+                      "cflow(execution(* org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(String, ..))) "
                           + "AND call(* org.springframework.beans.BeanWrapper+.getWrappedInstance()) "
                           + "AND this(beanFactory)",
                       "virtualizeSingletonBean(StaticJoinPoint jp, "
                           + "org.springframework.beans.factory.config.AutowireCapableBeanFactory beanFactory)");
 
+    final String initializeSingletonBeanPointcut = "cflow(execution(* org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(String, ..))) "
+         + "AND call(* org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.populateBean(..)) "
+         + "AND this(beanFactory) AND args(beanName, mergedBeanDefinition, instanceWrapper)";
+    
+    //Spring 2.0.x
     builder.addAdvice(
-                   "after",
-                   "withincode(* org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(String, ..)) "
-                       + "AND call(* org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.populateBean(..)) "
-                       + "AND this(beanFactory) AND args(beanName, mergedBeanDefinition, instanceWrapper)",
-                   "initializeSingletonBean(String beanName, "
+                      "after",
+                      initializeSingletonBeanPointcut,
+                      "initializeSingletonBean(String beanName, "
                        + "org.springframework.beans.factory.support.RootBeanDefinition mergedBeanDefinition, "
                        + "org.springframework.beans.BeanWrapper instanceWrapper, "
                        + "org.springframework.beans.factory.config.AutowireCapableBeanFactory beanFactory)");
+
+    //Spring 2.5.x
+    builder.addAdvice(
+                      "after",
+                      initializeSingletonBeanPointcut,
+                      "initializeSingletonBean(String beanName, "
+                      + "org.springframework.beans.factory.support.AbstractBeanDefinition mergedBeanDefinition, " //<--- diff Bean class
+                      + "org.springframework.beans.BeanWrapper instanceWrapper, "
+                      + "org.springframework.beans.factory.config.AutowireCapableBeanFactory beanFactory)");
   }
 
   private void buildDefinitionForScopeProtocol(AspectModuleDeployer deployer) {
@@ -126,19 +138,18 @@ public class SpringAspectModule implements AspectModule {
                          + "org.springframework.beans.factory.support.AbstractBeanFactory beanFactory)");
 
       builder.addAdvice("around",
-                     "withincode(* org.springframework.beans.factory.support.AbstractBeanFactory.getBean(String, ..)) "
-                         + "AND call(* org.springframework.beans.factory.config.Scope+.get(String, ..)) "
-                         + "AND target(s) AND args(beanName, ..)",
-                     "virtualizeScopedBean(StaticJoinPoint jp, org.springframework.beans.factory.config.Scope s, String beanName)");
+                        "cflow(execution(* org.springframework.beans.factory.support.AbstractBeanFactory.getBean(String, ..))) "
+                            + "AND call(* org.springframework.beans.factory.config.Scope+.get(String, ..)) "
+                            + "AND target(s) AND args(beanName, ..)",
+                        "virtualizeScopedBean(StaticJoinPoint jp, org.springframework.beans.factory.config.Scope s, String beanName)");
 
       builder.addAdvice(
-                     "around",
-                     "withincode(* org.springframework.beans.factory.support.AbstractBeanFactory.registerDisposableBeanIfNecessary()) "
-                         + "AND call(* org.springframework.beans.factory.config.Scope+.registerDestructionCallback(..)) "
-                         + "AND target(scope) AND args(beanName, callback)",
-                     "wrapDestructionCallback(StaticJoinPoint jp, String beanName, java.lang.Runnable callback, "
-                         + "org.springframework.beans.factory.config.Scope scope)");
-
+                        "around",
+                        "call(* org.springframework.beans.factory.config.Scope+.registerDestructionCallback(..)) "
+                            + "AND target(scope) AND args(beanName, callback)",
+                        "wrapDestructionCallback(StaticJoinPoint jp, String beanName, java.lang.Runnable callback, "
+                            + "org.springframework.beans.factory.config.Scope scope)");
+      
       builder.addAdvice(
                      "around",
                      "withincode(* org.springframework.beans.factory.config.Scope+.get(..)) "
