@@ -4,6 +4,8 @@
  */
 package com.tc.l2.ha;
 
+import com.tc.exception.ZapDirtyDbServerNodeException;
+import com.tc.exception.ZapServerNodeException;
 import com.tc.l2.state.Enrollment;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
@@ -101,9 +103,12 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
       NodeID activeNode = stateManager.getActiveNodeID();
       if (activeNode.isNull() || activeNode.equals(nodeID)) {
         String message = "Terminating due to Zap request from " + getFormatedError(nodeID, zapNodeType, reason);
-        logger.warn(message);
-        consoleLogger.warn(message);
-        System.exit(zapNodeType);
+        logger.error(message);
+        if (zapNodeType == NODE_JOINED_WITH_DIRTY_DB) {
+          throw new ZapDirtyDbServerNodeException(message);
+        } else {
+          throw new ZapServerNodeException(message);
+        }
       } else {
         logger.warn("Ignoring Zap Node since it did not come from " + StateManager.ACTIVE_COORDINATOR + " "
                     + activeNode + " but from " + getFormatedError(nodeID, zapNodeType, reason));
@@ -125,9 +130,9 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
     if (hisOrHers.wins(mine)) {
       // The other node has more connected clients, so back off
       logger.warn(nodeID + " wins : Backing off : Exiting !!!");
-      consoleLogger.warn("Found that " + nodeID
-                         + " is active and has more clients connected to it than this server. Exiting ... !!");
-      System.exit(zapNodeType);
+      String message = "Found that " + nodeID
+                       + " is active and has more clients connected to it than this server. Exiting ... !!";
+      throw new ZapServerNodeException(message);
     } else {
       logger.warn("Not quiting since the other servers weight = " + toString(weights)
                   + " is not greater than my weight = " + toString(myWeights));

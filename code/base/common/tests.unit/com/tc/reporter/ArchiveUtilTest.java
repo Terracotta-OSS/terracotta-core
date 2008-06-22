@@ -9,6 +9,7 @@ import com.tc.config.schema.test.L2ConfigBuilder;
 import com.tc.config.schema.test.L2SConfigBuilder;
 import com.tc.config.schema.test.SystemConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
+import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.test.TCTestCase;
 import com.tc.util.ExternalProcessStreamWriter;
 
@@ -38,21 +39,21 @@ public final class ArchiveUtilTest extends TCTestCase {
   private static final String MK_SERVER_LOG0     = "terracotta-server.log";
   private static final String MK_SERVER_LOG1     = "terracotta-server.log.1";
   private static final String MK_SERVER_DATA_DIR = "server-data";
-  private static final String MK_SERVER_DATA0    = "objectdb";
+  private static final String MK_SERVER_DATA0    = NewL2DSOConfig.OBJECTDB_DIRNAME;
   private static final String MK_SERVER_DATA1    = "startup.lck";
 
   private File                mockDataDir;
   private File                archiveFile;
 
   public ArchiveUtilTest() {
-    //disableAllUntil("2007-02-28");
+    // disableAllUntil("2007-02-28");
   }
-  
+
   public void setUp() throws Exception {
     generateMockFiles(getTempDirectory());
     archiveFile = new File(mockDataDir + File.separator + ARCHIVE);
   }
-  
+
   public void tearDown() {
     clear();
   }
@@ -141,7 +142,7 @@ public final class ArchiveUtilTest extends TCTestCase {
   private void clear() {
     if (archiveFile.exists()) archiveFile.delete();
   }
-  
+
   private void log(String str) {
     System.out.println("--------------------------------------------------------------------------------");
     System.out.println("-- " + str);
@@ -159,7 +160,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     executeArchiveUtil(args);
     DateFormat df = new SimpleDateFormat("y-M-d");
     File defaultArchive = new File(mockDataDir + File.separator + "tc-archive" + "_"
-        + df.format(new Date(System.currentTimeMillis())) + ".zip");
+                                   + df.format(new Date(System.currentTimeMillis())) + ".zip");
     Set contents = listArchiveContents(defaultArchive);
     assertTrue(contents.contains(TC_CONFIG));
     assertTrue(contents.contains(MK_SERVER_LOG_DIR + "/"));
@@ -169,7 +170,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     assertFalse(contents.contains(MK_SERVER_DATA_DIR + "/" + MK_SERVER_DATA0));
     assertFalse(contents.contains(MK_SERVER_DATA_DIR + "/" + MK_SERVER_DATA1));
   }
-  
+
   public void testDirectoryArg() throws Exception {
     clear();
     log("<server> test directory argument contents");
@@ -177,13 +178,13 @@ public final class ArchiveUtilTest extends TCTestCase {
     executeArchiveUtil(args);
     DateFormat df = new SimpleDateFormat("y-M-d");
     File defaultArchive = new File(mockDataDir + File.separator + "tc-archive" + "_"
-        + df.format(new Date(System.currentTimeMillis())) + ".zip");
+                                   + df.format(new Date(System.currentTimeMillis())) + ".zip");
     Set contents = listArchiveContents(defaultArchive);
     assertTrue(contents.contains(MK_SERVER_LOG_DIR + "/"));
     assertTrue(contents.contains(MK_SERVER_LOG_DIR + "/" + MK_SERVER_LOG0));
     assertTrue(contents.contains(MK_SERVER_LOG_DIR + "/" + MK_SERVER_LOG1));
   }
-  
+
   public void testInvalidDirectoryArg() throws Exception {
     clear();
     log("<server> test invalid directory argument");
@@ -191,7 +192,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     executeArchiveUtil(args);
     DateFormat df = new SimpleDateFormat("y-M-d");
     File defaultArchive = new File(mockDataDir + File.separator + "tc-archive" + "_"
-        + df.format(new Date(System.currentTimeMillis())) + ".zip");
+                                   + df.format(new Date(System.currentTimeMillis())) + ".zip");
     assertFalse(defaultArchive.exists());
   }
 
@@ -353,6 +354,6 @@ public final class ArchiveUtilTest extends TCTestCase {
     executeArchiveUtil(new String[] { "-c", configFile.toString(), archiveFile.toString() });
     assertFalse(archiveFile.exists());
   }
-  
+
   // TODO: wildcards will not be tested CDV-93
 }

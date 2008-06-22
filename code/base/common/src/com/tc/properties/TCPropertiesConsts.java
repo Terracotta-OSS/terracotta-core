@@ -163,6 +163,9 @@ public interface TCPropertiesConsts {
   public static final String L2_NHA_TRIBES_MCAST_MCASTFREQUENCY                     = "l2.nha.tribes.mcast.mcastFrequency";
   public static final String L2_NHA_TRIBES_MCAST_TCPLISTENPORT                      = "l2.nha.tribes.mcast.tcpListenPort";
   public static final String L2_NHA_TRIBES_MCAST_TCPLISTENHOST                      = "l2.nha.tribes.mcast.tcpListenHost";
+  public static final String L2_NHA_DIRTYDB_AUTODELETE                              = "l2.nha.dirtydb.autoDelete";
+  public static final String L2_NHA_AUTORESTART                                     = "l2.nha.autoRestart";
+
 
   /*********************************************************************************************************************
    * Section : Misc L2 Properties 

@@ -28,8 +28,12 @@ public class TCThreadGroup extends ThreadGroup {
   public void uncaughtException(Thread thread, Throwable throwable) {
     throwableHandler.handleThrowable(thread, throwable);
   }
+
+  public void addCallbackOnExitDefaultHandler(CallbackOnExitHandler callbackOnExitHandler) {
+    throwableHandler.addCallbackOnExitDefaultHandler(callbackOnExitHandler);
+  }
   
-  public void addCallbackOnExitHandler( CallbackOnExitHandler callbackOnExitHandler ) {
-    throwableHandler.addCallbackOnExitHandler(callbackOnExitHandler);
+  public void addCallbackOnExitExceptionHandler(Class c, CallbackOnExitHandler callbackOnExitHandler) {
+    throwableHandler.addCallbackOnExitExceptionHandler(c, callbackOnExitHandler);
   }
 }

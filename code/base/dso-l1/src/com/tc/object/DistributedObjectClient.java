@@ -12,8 +12,8 @@ import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.cluster.Cluster;
 import com.tc.config.schema.dynamic.ConfigItem;
+import com.tc.handler.CallbackDumpAdapter;
 import com.tc.lang.TCThreadGroup;
-import com.tc.logging.CallbackDumpAdapter;
 import com.tc.logging.ChannelIDLogger;
 import com.tc.logging.ChannelIDLoggerProvider;
 import com.tc.logging.CustomerLogging;
@@ -323,7 +323,7 @@ public class DistributedObjectClient extends SEDA {
                                                                         gtxManager), sessionManager, lockStatManager,
                                             new ClientLockManagerConfigImpl(l1Properties
                                                 .getPropertiesFor("lockmanager")));
-    threadGroup.addCallbackOnExitHandler(new CallbackDumpAdapter(lockManager));
+    threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(lockManager));
     RemoteObjectManager remoteObjectManager = new RemoteObjectManagerImpl(new ChannelIDLogger(channel
         .getChannelIDProvider(), TCLogging.getLogger(RemoteObjectManager.class)), clientIDProvider, channel
         .getRequestRootMessageFactory(), channel.getRequestManagedObjectMessageFactory(),
@@ -354,7 +354,7 @@ public class DistributedObjectClient extends SEDA {
                                                 runtimeLogger, channel.getChannelIDProvider(), classProvider,
                                                 classFactory, objectFactory, config.getPortability(), channel,
                                                 toggleRefMgr);
-    threadGroup.addCallbackOnExitHandler(new CallbackDumpAdapter(objectManager));
+    threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(objectManager));
     TCProperties cacheManagerProperties = l1Properties.getPropertiesFor("cachemanager");
     if (cacheManagerProperties.getBoolean("enabled")) {
       this.cacheManager = new CacheManager(objectManager, new CacheConfigImpl(cacheManagerProperties),
@@ -376,7 +376,7 @@ public class DistributedObjectClient extends SEDA {
                                                  new ThreadLockManagerImpl(lockManager), txFactory, rtxManager,
                                                  runtimeLogger, l1Management.findClientTxMonitorMBean());
 
-    threadGroup.addCallbackOnExitHandler(new CallbackDumpAdapter(txManager));
+    threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(txManager));
     Stage lockResponse = stageManager.createStage(ClientConfigurationContext.LOCK_RESPONSE_STAGE,
                                                   new LockResponseHandler(sessionManager), 1, maxSize);
     Stage receiveRootID = stageManager.createStage(ClientConfigurationContext.RECEIVE_ROOT_ID_STAGE,

@@ -5,6 +5,7 @@
 package com.tc.lang;
 
 import com.tc.logging.CallbackOnExitHandler;
+import com.tc.logging.CallbackOnExitState;
 import com.tc.logging.TCLogging;
 
 import junit.framework.TestCase;
@@ -21,7 +22,7 @@ public class ThrowableHandlerTest extends TestCase {
       }
 
     };
-    throwableHandler.addCallbackOnExitHandler(new TestCallbackOnExitHandler());
+    throwableHandler.addCallbackOnExitDefaultHandler(new TestCallbackOnExitHandler());
     try {
       throw new Exception(" force thread dump ");
     } catch (Exception e) {
@@ -32,10 +33,9 @@ public class ThrowableHandlerTest extends TestCase {
 
   private class TestCallbackOnExitHandler implements CallbackOnExitHandler {
 
-    public void callbackOnExit() {
+    public void callbackOnExit(CallbackOnExitState state) {
       invokedCallback = true;
     }
-
   }
 
 }

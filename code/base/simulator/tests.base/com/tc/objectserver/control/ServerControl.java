@@ -31,6 +31,11 @@ public interface ServerControl {
   public void start() throws Exception;
 
   /**
+   * wait for the process termination
+   */
+  public int waitFor() throws Exception;
+
+  /**
    * Returns true if the server responds.
    */
   public boolean isRunning();

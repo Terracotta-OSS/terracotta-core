@@ -135,7 +135,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     jvmArgs.add("-D" + buffer_randomsuffix_sysprop + "=true");
     jvmArgs.add("-D" + store_randomsuffix_sysprop + "=true");
   }
-  
+
   protected void setExtraJvmArgs(final ArrayList jvmArgs) {
     // to be overwritten
   }
@@ -164,7 +164,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     if (enableL2Reconnect()) {
       setJvmArgsL2Reconnect(jvmArgs);
     }
-    
+
     setExtraJvmArgs(jvmArgs);
 
     RestartTestHelper helper = null;
@@ -323,7 +323,6 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     setUpControlledServer(factory, helper, serverPort, adminPort, configFile, null);
   }
 
-  // used by ResolveTwoActiveServersTest... only works with 2 servers !!
   protected final void setUpForMultipleExternalProcesses(TestTVSConfigurationSetupManagerFactory factory,
                                                          DSOClientConfigHelper helper, int[] dsoPorts, int[] jmxPorts,
                                                          int[] l2GroupPorts, int[] proxyPorts, String[] serverNames,
@@ -334,11 +333,17 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     setJavaHome();
     serverControls = new ServerControl[dsoPorts.length];
 
-    proxies = new TCPProxy[2];
+    if (proxyPorts != null) {
+      proxies = new TCPProxy[2];
+    }
 
     for (int i = 0; i < 2; i++) {
-      proxies[i] = new TCPProxy(proxyPorts[i], InetAddress.getLocalHost(), l2GroupPorts[i], 0L, false, new File("."));
-      proxies[i].setReuseAddress(true);
+      if (proxies != null) {
+        proxies[i] = new TCPProxy(proxyPorts[i], InetAddress.getLocalHost(), l2GroupPorts[i], 0L, false, new File("."));
+        proxies[i].setReuseAddress(true);
+      }
+      List al = new ArrayList();
+      al.add("-Dtc.node-name=" + serverNames[i]);
       serverControls[i] = new ExtraProcessServerControl("localhost", dsoPorts[i], jmxPorts[i], configFiles[i]
           .getAbsolutePath(), true, serverNames[i], null, javaHome, true);
     }
@@ -505,8 +510,10 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       if (i == 0) {
         Thread.sleep(10 * 1000);
       } else {
-        proxies[1].start();
-        proxies[0].start();
+        if (proxies != null) {
+          proxies[1].start();
+          proxies[0].start();
+        }
       }
     }
   }
@@ -525,11 +532,11 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   protected void apStopServer(int index) throws Exception {
     apServerManager.stopServer(index);
   }
-  
+
   protected void apCleanupServerDB(int index) throws Exception {
     apServerManager.cleanupServerDB(index);
   }
-  
+
   protected void apCrashActiveserver() throws Exception {
     apServerManager.crashActive();
   }
@@ -537,7 +544,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   protected int apGetActiveIndex() throws Exception {
     return apServerManager.getAndUpdateActiveIndex();
   }
-  
+
   protected void waitServerIsPassiveStandby(int index, int waitSeconds) throws Exception {
     boolean isStandby = apServerManager.waitServerIsPassiveStandby(index, waitSeconds);
     Assert.assertTrue(isStandby);
@@ -552,8 +559,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       if (controlledCrashMode && isActivePassive() && apServerManager != null) {
         // active passive tests
         customerizeActivePassiveTest();
-      } else if (controlledCrashMode && serverControls != null && proxies != null) {
-        // ResolveTwoActiveServersTest that use proxies between l2s
+      } else if (controlledCrashMode && serverControls != null) {
         startServerControlsAndProxies();
       } else if (serverControl != null && crasher == null) {
         // normal mode tests

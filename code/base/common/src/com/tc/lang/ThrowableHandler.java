@@ -11,14 +11,20 @@ import com.tc.exception.DatabaseException;
 import com.tc.exception.ExceptionHelperImpl;
 import com.tc.exception.MortbayMultiExceptionHelper;
 import com.tc.exception.RuntimeExceptionHelper;
+import com.tc.handler.CallbackStartupExceptionLoggingAdapter;
 import com.tc.logging.CallbackOnExitHandler;
+import com.tc.logging.CallbackOnExitState;
 import com.tc.logging.TCLogger;
 import com.tc.logging.ThreadDumpHandler;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.TCDataFileLockingException;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.startuplock.FileNotCreatedException;
 import com.tc.util.startuplock.LocationNotCreatedException;
 
 import java.net.BindException;
+import java.util.HashMap;
 import java.util.Iterator;
 
 /**
@@ -30,13 +36,16 @@ public class ThrowableHandler {
   // single
   // place first, then come up with fancy ways of dealing with them. --Orion 03/20/2006
 
+  public static final short         EXITCODE_RESTART_REQUEST        = 11;
+  public static final short         EXITCODE_STARTUP_ERROR          = 2;
   private final TCLogger            logger;
   private final ExceptionHelperImpl helper;
-  private CopyOnWriteArrayList      callbackOnExitHandlers = new CopyOnWriteArrayList();
+  private CopyOnWriteArrayList      callbackOnExitDefaultHandlers   = new CopyOnWriteArrayList();
+  private HashMap                   callbackOnExitExceptionHandlers = new HashMap();
 
   /**
    * Construct a new ThrowableHandler with a logger
-   *
+   * 
    * @param logger Logger
    */
   public ThrowableHandler(TCLogger logger) {
@@ -45,96 +54,82 @@ public class ThrowableHandler {
     helper.addHelper(new RuntimeExceptionHelper());
     helper.addHelper(new MortbayMultiExceptionHelper());
     registerDefaultCallbackHandlers();
-   }
-
-  public void addCallbackOnExitHandler(CallbackOnExitHandler callbackOnExitHandler) {
-    callbackOnExitHandlers.add(callbackOnExitHandler);
+    registerStartupExceptionCallbackHandlers();
   }
 
+  protected void registerDefaultCallbackHandlers() {
+    callbackOnExitDefaultHandlers.add(new ThreadDumpHandler());
+  }
+
+  protected void registerStartupExceptionCallbackHandlers() {
+    addCallbackOnExitExceptionHandler(ConfigurationSetupException.class, new CallbackStartupExceptionLoggingAdapter());
+    String bindExceptionExtraMessage = ".  Please make sure the server isn't already running or choose a different port.";
+    addCallbackOnExitExceptionHandler(BindException.class,
+                                      new CallbackStartupExceptionLoggingAdapter(bindExceptionExtraMessage));
+    addCallbackOnExitExceptionHandler(DatabaseException.class, new CallbackStartupExceptionLoggingAdapter());
+    addCallbackOnExitExceptionHandler(LocationNotCreatedException.class, new CallbackStartupExceptionLoggingAdapter());
+    addCallbackOnExitExceptionHandler(FileNotCreatedException.class, new CallbackStartupExceptionLoggingAdapter());
+    addCallbackOnExitExceptionHandler(TCDataFileLockingException.class, new CallbackStartupExceptionLoggingAdapter());
+  }
+
+  public void addCallbackOnExitDefaultHandler(CallbackOnExitHandler callbackOnExitHandler) {
+    callbackOnExitDefaultHandlers.add(callbackOnExitHandler);
+  }
+
+  public void addCallbackOnExitExceptionHandler(Class c, CallbackOnExitHandler exitHandler) {
+    callbackOnExitExceptionHandlers.put(c, exitHandler);
+  }
 
   /**
    * Handle throwable occurring on thread
-   *
+   * 
    * @param thread Thread receiving Throwable
    * @param t Throwable
    */
   public void handleThrowable(final Thread thread, final Throwable t) {
     final Throwable proximateCause = helper.getProximateCause(t);
     final Throwable ultimateCause = helper.getUltimateCause(t);
-    if (proximateCause instanceof ConfigurationSetupException) {
-      handleStartupException((ConfigurationSetupException) proximateCause);
-    } else if (ultimateCause instanceof BindException) {
-      logger.error(ultimateCause);
-      handleStartupException((Exception) ultimateCause,
-                             ".  Please make sure the server isn't already running or choose a different port.");
-    } else if (ultimateCause instanceof DatabaseException) {
-      handleStartupException((Exception) proximateCause);
-    } else if (ultimateCause instanceof LocationNotCreatedException) {
-      handleStartupException((Exception) ultimateCause);
-    } else if (ultimateCause instanceof FileNotCreatedException) {
-      handleStartupException((Exception) ultimateCause);
-    } else if (ultimateCause instanceof TCDataFileLockingException) {
-      handleStartupException((Exception) ultimateCause);
+
+    Object registeredExitHandlerObject = null;
+    CallbackOnExitState throwableState = new CallbackOnExitState(t);
+    try {
+      if ((registeredExitHandlerObject = callbackOnExitExceptionHandlers.get(proximateCause.getClass())) != null) {
+        ((CallbackOnExitHandler) registeredExitHandlerObject).callbackOnExit(throwableState);
+      } else if ((registeredExitHandlerObject = callbackOnExitExceptionHandlers.get(ultimateCause.getClass())) != null) {
+        ((CallbackOnExitHandler) registeredExitHandlerObject).callbackOnExit(throwableState);
+      } else {
+        handleDefaultException(thread, throwableState);
+      }
+    } catch (Throwable throwable) {
+      logger.error("Error while handling uncaught expection" + t.getCause(), throwable);
+    }
+
+    boolean autoRestart = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_NHA_AUTORESTART);
+
+    if (autoRestart && throwableState.isRestartNeeded()) {
+      exit(EXITCODE_RESTART_REQUEST);
     } else {
-      handleDefaultException(thread, proximateCause);
+      exit(EXITCODE_STARTUP_ERROR);
     }
   }
 
-  protected void registerDefaultCallbackHandlers() {
-    callbackOnExitHandlers.add( new ThreadDumpHandler());
-  }
-
-  protected void exit(int status) {
-    System.exit(status);
-  }
-
-  private void handleDefaultException(Thread thread, Throwable throwable) {
+  private void handleDefaultException(Thread thread, CallbackOnExitState throwableState) {
 
     // We need to make SURE that our stacktrace gets printed, when using just the logger sometimes the VM exits
     // before the stacktrace prints
-    try {
-      throwable.printStackTrace(System.err);
-      System.err.flush();
-
-      logger.error("Thread:" + thread + " got an uncaught exception. calling CallbackOnExitHandlers.", throwable);
-
-      try {
-      for (Iterator iter = callbackOnExitHandlers.iterator(); iter.hasNext();) {
-        CallbackOnExitHandler callbackOnExitHandler = (CallbackOnExitHandler) iter.next();
-        callbackOnExitHandler.callbackOnExit();
-      }
-      } catch (Throwable t) {
-        logger.error("Exception thrown in callbackOnExitHanders ", t);
-      }
-
-      logger.error("Thread:" + thread + " got an uncaught exception.  About to sleep then exit.", throwable);
-
-      try {
-        // Give our logger a chance to print the stacktrace before the VM exits
-        Thread.sleep(3000);
-      } catch (InterruptedException ie) {
-        // When you suck you just suck and nothing will help you
-      }
-    } catch (Throwable t) {
-      logger.error(t);
-    } finally {
-      exit(1);
+    throwableState.getThrowable().printStackTrace(System.err);
+    System.err.flush();
+    logger.error("Thread:" + thread + " got an uncaught exception. calling CallbackOnExitDefaultHandlers.", throwableState.getThrowable());
+    for (Iterator iter = callbackOnExitDefaultHandlers.iterator(); iter.hasNext();) {
+      CallbackOnExitHandler callbackOnExitHandler = (CallbackOnExitHandler) iter.next();
+      callbackOnExitHandler.callbackOnExit(throwableState);
     }
   }
 
-  private void handleStartupException(Exception e) {
-    handleStartupException(e, "");
-  }
-
-  private void handleStartupException(Exception e, String extraMessage) {
-    System.err.println("");
-    System.err.println("");
-    System.err.println("Fatal Terracotta startup exception:");
-    System.err.println("");
-    System.err.println("   " + e.getMessage() + extraMessage);
-    System.err.println("");
-    System.err.println("Server startup failed.");
-    exit(2);
+  protected void exit(int status) {
+    // let all the logging finish
+    ThreadUtil.reallySleep(2000);
+    System.exit(status);
   }
 
 }

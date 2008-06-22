@@ -132,7 +132,9 @@ public class DBEnvironment {
   }
 
   public synchronized DatabaseOpenResult open() throws TCDatabaseException {
-    assertInit();
+    if ((status != STATUS_INIT) && (status != STATUS_CLOSED)) { throw new DatabaseOpenException(
+                                                                                                "Database environment isn't in INIT/CLOSED state."); }
+
     status = STATUS_OPENING;
     try {
       env = openEnvironment();
@@ -276,7 +278,7 @@ public class DBEnvironment {
     assertOpen();
     return (Database) databasesByName.get(OID_LOG_SEQUENCE_NAME);
   }
-  
+
   public synchronized ClassCatalogWrapper getClassCatalogWrapper() throws TCDatabaseException {
     assertOpen();
     return catalog;
@@ -291,7 +293,7 @@ public class DBEnvironment {
     assertOpen();
     return (Database) databasesByName.get(OBJECTID_SEQUENCE_NAME);
   }
-  
+
   public Database getClientStateDatabase() throws TCDatabaseException {
     assertOpen();
     return (Database) databasesByName.get(CLIENT_STATE_DB_NAME);
@@ -334,10 +336,6 @@ public class DBEnvironment {
 
   private void assertNotError() throws TCDatabaseException {
     if (STATUS_ERROR == status) throw new TCDatabaseException("Attempt to operate on an environment in an error state.");
-  }
-
-  private void assertInit() throws TCDatabaseException {
-    if (STATUS_INIT != status) throw new DatabaseOpenException("Database environment isn't in INIT state.");
   }
 
   private void assertOpening() {

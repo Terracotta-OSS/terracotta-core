@@ -4,7 +4,7 @@
  */
 package com.tc.objectserver.persistence.impl;
 
-import com.tc.objectserver.persistence.api.PersistentMapStore;
+import com.tc.object.persistence.api.PersistentMapStore;
 
 import java.util.Hashtable;
 import java.util.Map;

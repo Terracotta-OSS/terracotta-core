@@ -5,7 +5,7 @@
 package com.tc.objectserver.persistence.impl;
 
 import com.tc.memorydatastore.client.MemoryDataStoreClient;
-import com.tc.objectserver.persistence.api.PersistentMapStore;
+import com.tc.object.persistence.api.PersistentMapStore;
 
 public class MemoryStorePersistentMapStore implements PersistentMapStore {
   private MemoryDataStoreClient memoryStore;

@@ -6,12 +6,12 @@ package com.tc.objectserver.persistence.impl;
 
 import com.tc.exception.ImplementMe;
 import com.tc.io.serializer.api.StringIndex;
+import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.objectserver.persistence.api.ClassPersistor;
 import com.tc.objectserver.persistence.api.ClientStatePersistor;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.api.PersistentCollectionFactory;
-import com.tc.objectserver.persistence.api.PersistentMapStore;
 import com.tc.objectserver.persistence.api.Persistor;
 import com.tc.objectserver.persistence.api.TransactionPersistor;
 import com.tc.util.sequence.MutableSequence;

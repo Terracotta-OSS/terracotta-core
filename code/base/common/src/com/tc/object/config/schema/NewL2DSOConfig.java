@@ -15,6 +15,10 @@ import com.tc.config.schema.dynamic.StringConfigItem;
  */
 public interface NewL2DSOConfig extends NewConfig {
 
+  public static final String OBJECTDB_DIRNAME              = "objectdb";
+  public static final String DIRTY_OBJECTDB_BACKUP_DIRNAME = "dirty-objectdb-backup";
+  public static final String DIRTY_OBJECTDB_BACKUP_PREFIX  = "dirty-objectdb-";
+
   ConfigItem persistenceMode();
 
   BooleanConfigItem garbageCollectionEnabled();

@@ -52,4 +52,8 @@ public class NullServerControl implements ServerControl {
     return 0;
   }
 
+  public int waitFor() throws Exception {
+    return 1;
+  }
+
 }
