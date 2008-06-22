@@ -18,5 +18,7 @@ set OPTS=-server -Xms256m -Xmx256m
 set OPTS=%OPTS% -Dcom.sun.management.jmxremote
 set OPTS=%OPTS% -Dtc.install-root=%TC_INSTALL_DIR%
 set JAVA_OPTS=%OPTS% %JAVA_OPTS%
-%JAVA_HOME%\bin\java %JAVA_OPTS% -cp %CLASSPATH% com.tc.server.TCServerMain %*
+:START_TCSERVER
+START /W %JAVA_HOME%\bin\java %JAVA_OPTS% -cp %CLASSPATH% com.tc.server.TCServerMain %*                                          
+if %ERRORLEVEL% EQU 11 GOTO START_TCSERVER
 endlocal

@@ -30,9 +30,21 @@ if $cygwin; then
   [ -n "$TC_INSTALL_DIR" ] && TC_INSTALL_DIR=`cygpath --windows "$TC_INSTALL_DIR"`
 fi
 
-exec "${JAVA_HOME}/bin/java" \
-  -server -Xms256m -Xmx256m -Dcom.sun.management.jmxremote \
-  -Dtc.install-root="${TC_INSTALL_DIR}" \
-  ${JAVA_OPTS} \
-  -cp "${TC_INSTALL_DIR}/lib/tc.jar" \
-  com.tc.server.TCServerMain "$@"
+start=true
+while "$start"
+do
+ "${JAVA_HOME}/bin/java" \
+   -server -Xms256m -Xmx256m -Dcom.sun.management.jmxremote \
+   -Dtc.install-root="${TC_INSTALL_DIR}" \
+   ${JAVA_OPTS} \
+   -cp "${TC_INSTALL_DIR}/lib/tc.jar" \
+   com.tc.server.TCServerMain "$@" &
+ wait $!
+ exitValue=$?
+ start=false;
+ if [ "$exitValue" == 11 ]
+ then
+   start=true;
+   echo "Restarting the Server ...";
+ fi
+done
