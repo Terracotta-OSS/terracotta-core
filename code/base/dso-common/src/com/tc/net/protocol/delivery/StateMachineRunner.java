@@ -47,20 +47,13 @@ public class StateMachineRunner implements EventContext {
     //scheduleIfNeeded();
   }
 
-  public void run() {
+  public synchronized void run() {
     OOOProtocolEvent pe = null;
-    synchronized (this) {
-      // NOTE: in some cases, our message q gets out of synch with this event q.
-      // in this case check if empty.
-      // this should simplified.
-      if (events.isEmpty()) return;
-      pe = (OOOProtocolEvent) events.removeFirst();
-    }
+    if (events.isEmpty()) return;
+    pe = (OOOProtocolEvent) events.removeFirst();
     pe.execute(stateMachine);
-    synchronized (this) {
-      scheduled = false;
-      scheduleIfNeeded();
-    }
+    scheduled = false;
+    scheduleIfNeeded();
   }
 
   public synchronized void addEvent(OOOProtocolEvent event) {
