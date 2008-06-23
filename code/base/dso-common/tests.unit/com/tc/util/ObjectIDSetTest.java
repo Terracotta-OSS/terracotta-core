@@ -17,6 +17,7 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.ConcurrentModificationException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -38,7 +39,7 @@ public class ObjectIDSetTest extends TCTestCase {
     basicTest(creator, 500000, 100000);
     basicTest(creator, 100000, 1000000);
   }
-  
+
   public void testSortedSetObjectIDSet() throws Exception {
     SecureRandom sr = new SecureRandom();
     long seed = sr.nextLong();
@@ -54,8 +55,8 @@ public class ObjectIDSetTest extends TCTestCase {
       assertEquals(b1, b2);
       assertEquals(ts.size(), oids.size());
     }
-    
-    //verify sorted
+
+    // verify sorted
     Iterator i = ts.iterator();
     for (Iterator j = oids.iterator(); j.hasNext();) {
       ObjectID oid1 = (ObjectID) i.next();
@@ -210,20 +211,51 @@ public class ObjectIDSetTest extends TCTestCase {
   public void testObjectIDSetDump() {
     ObjectIDSet s = new ObjectIDSet();
     System.err.println(" toString() : " + s);
-    
+
     for (int i = 0; i < 100; i++) {
       s.add(new ObjectID(i));
     }
     System.err.println(" toString() : " + s);
-    
-    for (int i = 0; i < 100; i+=2) {
+
+    for (int i = 0; i < 100; i += 2) {
       s.remove(new ObjectID(i));
     }
     System.err.println(" toString() : " + s);
-    
+
   }
-  
-  
+
+  public void testObjectIdSetConcurrentModification() {
+    ObjectIDSet objIdSet = new ObjectIDSet();
+    int num = 0;
+    for (num = 0; num < 50; num++) {
+      objIdSet.add(new ObjectID(num));
+    }
+
+    Iterator iterator = objIdSet.iterator();
+    objIdSet.add(new ObjectID(num));
+    iterateElements(iterator);
+
+    iterator = objIdSet.iterator();
+    objIdSet.remove(new ObjectID(0));
+    iterateElements(iterator);
+
+    iterator = objIdSet.iterator();
+    objIdSet.clear();
+    iterateElements(iterator);
+
+  }
+
+  private void iterateElements(Iterator iterator) {
+    try {
+      while (iterator.hasNext()) {
+        System.out.print(((ObjectID) iterator.next()).toString());
+        throw new AssertionError("We should have got the ConcurrentModificationException");
+      }
+    } catch (ConcurrentModificationException cme) {
+      System.out.println("Caught Expected Exception");
+    }
+  }
+
   public void iteratorRemoveTest(SetCreator creator) {
     SecureRandom sr = new SecureRandom();
     long seed = sr.nextLong();
@@ -254,4 +286,5 @@ public class ObjectIDSetTest extends TCTestCase {
     }
     Assert.eval(oidSet.size() == 0);
   }
+
 }
