@@ -19,11 +19,10 @@ public class SleepycatDBUsageTest extends AbstractDBUtilsTestBase {
 
     SleepycatDBUsage sleepycatDBUsage = new SleepycatDBUsage(databaseDir);
     sleepycatDBUsage.report();
-    assertEquals(122, sleepycatDBUsage.totalCount);
-    assertEquals(991, sleepycatDBUsage.keyTotal);
-    assertEquals(16282, sleepycatDBUsage.valuesTotal);
-    assertEquals(17273, sleepycatDBUsage.grandTotal);
-
+    assertEquals(123, sleepycatDBUsage.totalCount);
+    assertEquals(1012, sleepycatDBUsage.keyTotal);
+    assertEquals(16287, sleepycatDBUsage.valuesTotal);
+    assertEquals(17299, sleepycatDBUsage.grandTotal);
   }
 
 }
