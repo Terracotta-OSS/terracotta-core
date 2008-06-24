@@ -48,7 +48,9 @@ public class TerracottaSessionManager implements SessionManager {
   private final boolean                debugSessions;
   private final String                 sessionCookieName;
   private final String                 sessionUrlPathParamTag;
+  private final boolean                      usesStandardUrlPathParam;
   private int                          serverHopsDetected = 0;
+
 
   private static final Set             excludedVHosts     = loadExcludedVHosts();
 
@@ -110,7 +112,9 @@ public class TerracottaSessionManager implements SessionManager {
     this.debugSessions = cp.isDebugSessions();
     this.sessionCookieName = this.cookieWriter.getCookieName();
     this.sessionUrlPathParamTag = this.cookieWriter.getPathParameterTag();
-
+    this.usesStandardUrlPathParam = this.sessionUrlPathParamTag.equalsIgnoreCase(";"
+                                                                                 + ConfigProperties.defaultCookieName
+                                                                                 + "=");
   }
 
   private static Set loadExcludedVHosts() {
@@ -191,6 +195,11 @@ public class TerracottaSessionManager implements SessionManager {
   }
 
   private String findSessionInURL(HttpServletRequest req) {
+    if (usesStandardUrlPathParam && req.isRequestedSessionIdFromURL()) {
+      // let the container take care of finding the sessionid in this case
+      return req.getRequestedSessionId();
+    }
+
     String rv = null;
 
     String requestURI = req.getRequestURI();

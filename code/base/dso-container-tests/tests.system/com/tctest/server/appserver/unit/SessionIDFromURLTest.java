@@ -10,8 +10,6 @@ import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.util.TcConfigBuilder;
 import com.tctest.webapp.servlets.SessionIDFromURLServlet;
 
-import java.util.Date;
-
 import junit.framework.Test;
 
 public class SessionIDFromURLTest extends AbstractOneServerDeploymentTest {
@@ -23,10 +21,10 @@ public class SessionIDFromURLTest extends AbstractOneServerDeploymentTest {
   }
 
   public SessionIDFromURLTest() {
-    disableAllUntil(new Date(Long.MAX_VALUE));
+    //
   }
 
-  public void testSessionForwardSession() throws Exception {
+  public void testURLSessionId() throws Exception {
     String encodedURL = server0.ping("/" + CONTEXT + "/" + SERVLET + "?cmd=new").getText().trim();
 
     encodedURL = encodedURL.concat("?cmd=query");
