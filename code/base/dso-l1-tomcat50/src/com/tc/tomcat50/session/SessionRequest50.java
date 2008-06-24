@@ -318,8 +318,4 @@ public class SessionRequest50 extends SessionRequest implements HttpRequest {
     }
     return rv;
   }
-
-  public boolean getCheckRestrictedResources() {
-    return this.checkRestrictedResources;
-  }
 }

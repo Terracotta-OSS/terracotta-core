@@ -642,6 +642,7 @@ modules:
         - common-api
         - deploy-api
         - dso-common
+        - dso-l1
         - dso-l1-api
         - modules-common
         - dso-statistics-api
