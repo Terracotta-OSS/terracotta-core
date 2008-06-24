@@ -302,9 +302,13 @@ public class AATreeSetTest extends TCTestCase {
     checkTailSets(treeSet, aaTreeSet, new Long(13));
     checkTailSets(treeSet, aaTreeSet, new Long(17));
     checkTailSets(treeSet, aaTreeSet, new Long(33));
-    
+    checkTailSets(treeSet, aaTreeSet, new Long(25));
     checkTailSets(treeSet, aaTreeSet, new Long(47));
 
+    // node with no left child
+    checkTailSets(treeSet, aaTreeSet, new Long(27));
+    // node with no right child
+    checkTailSets(treeSet, aaTreeSet, new Long(11));
   }
 
   private void checkTailSets(TreeSet treeSet, AATreeSet aaTreeSet, Long tailKey) {

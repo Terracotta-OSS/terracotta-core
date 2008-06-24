@@ -337,11 +337,11 @@ public class AATreeSet {
         } else if (result == 0) {
 
           // We are suppose to retain a Tree { elements >= c} . So, put a
-          // "take diversion board" in the left subtree
-          if (next.left != nullNode) {
-            s.push(next);
-            next = nullNode;
-          }
+          // "take diversion board" in the left subtree. We need to push the next
+          // element here, so that iterator.next can pop and start traversing
+          // from the right child
+          s.push(next);
+          next = nullNode;
           break;
         } else if (result > 0) {
           next = next.right;
