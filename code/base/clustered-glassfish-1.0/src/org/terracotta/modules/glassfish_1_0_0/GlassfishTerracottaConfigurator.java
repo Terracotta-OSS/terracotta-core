@@ -11,10 +11,10 @@ public class GlassfishTerracottaConfigurator extends TerracottaConfiguratorModul
     configHelper.addCustomAdapter("com.sun.jdo.api.persistence.model.RuntimeModel", new RuntimeModelAdapter());
     configHelper.addCustomAdapter("com.sun.enterprise.server.PEMain", new PEMainAdapter());
     configHelper.addCustomAdapter("org.apache.catalina.core.ApplicationDispatcher", new ApplicationDispatcherAdapter());
-    configHelper.addCustomAdapter("org.apache.catalina.core.ApplicationDispatcherForward", new ApplicationDispatcherForwardAdapter());
-    final DelegateMethodAdapter delegateMethodAdapter = new DelegateMethodAdapter("org.apache.coyote.tomcat5.CoyoteRequest", "req");
-    delegateMethodAdapter.setSkipMethodsFromClass("com.terracotta.session.SessionRequest");
-    configHelper.addCustomAdapter("com.tc.tomcat50.session.SessionRequest50",
-      delegateMethodAdapter);
+    configHelper.addCustomAdapter("org.apache.catalina.core.ApplicationDispatcherForward",
+                                  new ApplicationDispatcherForwardAdapter());
+    final DelegateMethodAdapter delegateMethodAdapter = new DelegateMethodAdapter("org.apache.catalina.HttpRequest",
+                                                                                  "req");
+    configHelper.addCustomAdapter("com.tc.tomcat50.session.SessionRequest50", delegateMethodAdapter);
   }
 }

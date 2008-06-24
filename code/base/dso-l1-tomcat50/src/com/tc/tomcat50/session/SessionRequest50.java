@@ -15,6 +15,7 @@ import org.apache.coyote.tomcat5.CoyoteRequest;
 import org.apache.coyote.tomcat5.CoyoteResponse;
 import org.apache.tomcat.util.buf.MessageBytes;
 
+import com.tc.object.util.OverrideCheck;
 import com.terracotta.session.SessionIDSource;
 import com.terracotta.session.SessionId;
 import com.terracotta.session.SessionManager;
@@ -35,9 +36,15 @@ import javax.servlet.http.Cookie;
 
 public class SessionRequest50 extends SessionRequest implements HttpRequest {
 
+  static {
+    // make sure we actually implement all the method in tomcat's HttpRequest interface. We compile against tomcat's
+    // standard, but at runtime and in other containers (eg. glassfish) the interface might be different. If this check
+    // is going off, there is probably a container specific class adapter missing
+    OverrideCheck.check(HttpRequest.class, SessionRequest50.class);
+  }
+
   private final CoyoteRequest req;
-  private SessionResponse50 sessRes50;
-  private boolean checkRestrictedResources = true;
+  private SessionResponse50   sessRes50;
 
   public SessionRequest50(SessionId requestedSessionId, CoyoteRequest req, CoyoteResponse res, SessionManager manager,
                           String rawRequestedSessionId, SessionIDSource source) {
@@ -308,10 +315,10 @@ public class SessionRequest50 extends SessionRequest implements HttpRequest {
     Object current = request;
     while (current != null) {
       if (current instanceof SessionRequest50) {
-        rv = ((SessionRequest50)current).req;
+        rv = ((SessionRequest50) current).req;
         break;
       } else if (current instanceof ServletRequestWrapper) {
-        current = ((ServletRequestWrapper)current).getRequest();
+        current = ((ServletRequestWrapper) current).getRequest();
       } else {
         break;
       }

@@ -6,6 +6,7 @@ package com.tc.object.bytecode;
 
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
+import com.tc.asm.FieldVisitor;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.asm.Type;
@@ -17,62 +18,58 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * Use me to make sure a class overrides all methods from a super class and delegates the call
+ * Use me to make sure a class overrides all methods from parent hierarchy and delegates the call
  */
 public class DelegateMethodAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
 
-  private final Map    overrideMethods;
-  private final String delegateField;
-  private final String delegateType;
-  private String       thisClassname;
-  private String       skipMethodsFromClass;
-  private final Map    skipMethods;
+  private final Map     overrideMethods;
+  private final String  delegateFieldName;
+  private final String  delegateType;
+  private final boolean delegateIsInterface;
+
+  private String        delegateFieldType;
+  private String        thisClassname;
 
   // This is the real constructor for the actual adapter
-  private DelegateMethodAdapter(ClassVisitor cv, Class superClass, String delegateField, Class skipFromClass) {
+  private DelegateMethodAdapter(ClassVisitor cv, Class superClass, String delegateFieldName) {
     super(cv);
-    this.delegateField = delegateField;
-    this.overrideMethods = getOverrideMethods(superClass, false);
+    this.delegateFieldName = delegateFieldName;
+    this.overrideMethods = getOverrideMethods(superClass);
     this.delegateType = superClass.getName().replace('.', '/');
-    if (skipFromClass != null) {
-      skipMethods = getOverrideMethods(skipFromClass, true);
-    }
-    else skipMethods = null;
+    this.delegateIsInterface = superClass.isInterface();
   }
 
   // This constructor is for creating the factory
   public DelegateMethodAdapter(String delegateType, String delegateField) {
     super(null);
-    this.delegateField = delegateField;
+    this.delegateFieldName = delegateField;
     this.delegateType = delegateType;
     this.overrideMethods = null;
-    this.skipMethods = null;
-  }
-
-  public void setSkipMethodsFromClass(final String skipMethodsFromClass) {
-    this.skipMethodsFromClass = skipMethodsFromClass;
+    this.delegateIsInterface = false;
   }
 
   public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
     final Class c;
-    final Class skipFromClass;
-    String name = null;
     try {
-      name = delegateType;
       c = Class.forName(delegateType, false, loader);
-
-      name = skipMethodsFromClass;
-      skipFromClass = Class.forName(skipMethodsFromClass, false, loader);
     } catch (ClassNotFoundException e) {
-      throw new RuntimeException("Unable to load class " + name);
+      throw new RuntimeException("Unable to load class " + delegateType);
     }
 
-    return new DelegateMethodAdapter(visitor, c, delegateField, skipFromClass);
+    return new DelegateMethodAdapter(visitor, c, delegateFieldName);
   }
 
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
     super.visit(version, access, name, signature, superName, interfaces);
     this.thisClassname = name;
+  }
+
+  public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+    if (delegateFieldName.equals(name)) {
+      if (delegateFieldType != null) { throw new AssertionError("field type already set: " + delegateFieldType); }
+      delegateFieldType = desc;
+    }
+    return super.visitField(access, name, desc, signature, value);
   }
 
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
@@ -82,11 +79,6 @@ public class DelegateMethodAdapter extends ClassAdapter implements Opcodes, Clas
   }
 
   public void visitEnd() {
-    if (skipMethods != null) {
-      for (Iterator it = skipMethods.keySet().iterator(); it.hasNext();) {
-        overrideMethods.remove(it.next());
-      }
-    }
     for (Iterator iter = overrideMethods.values().iterator(); iter.hasNext();) {
       Method m = (Method) iter.next();
 
@@ -98,12 +90,12 @@ public class DelegateMethodAdapter extends ClassAdapter implements Opcodes, Clas
 
       Type[] argumentTypes = Type.getArgumentTypes(m);
 
-      MethodVisitor mv = super
-          .visitMethod(m.getModifiers(), m.getName(), Type.getMethodDescriptor(m), null, exceptions);
+      MethodVisitor mv = super.visitMethod(m.getModifiers() & ~ACC_ABSTRACT, m.getName(), Type.getMethodDescriptor(m),
+                                           null, exceptions);
       mv.visitCode();
 
       mv.visitVarInsn(ALOAD, 0);
-      mv.visitFieldInsn(GETFIELD, thisClassname, delegateField, "L" + delegateType + ";");
+      mv.visitFieldInsn(GETFIELD, thisClassname, delegateFieldName, delegateFieldType);
 
       int slot = 1;
       for (int i = 0; i < argumentTypes.length; i++) {
@@ -112,7 +104,8 @@ public class DelegateMethodAdapter extends ClassAdapter implements Opcodes, Clas
         slot += arg.getSize();
       }
 
-      mv.visitMethodInsn(INVOKEVIRTUAL, delegateType, m.getName(), Type.getMethodDescriptor(m));
+      mv.visitMethodInsn(delegateIsInterface ? INVOKEINTERFACE : INVOKEVIRTUAL, delegateType, m.getName(), Type
+          .getMethodDescriptor(m));
 
       Type returnType = Type.getReturnType(m);
       if (returnType == Type.VOID_TYPE) {
@@ -127,24 +120,27 @@ public class DelegateMethodAdapter extends ClassAdapter implements Opcodes, Clas
     super.visitEnd();
   }
 
-  private static Map getOverrideMethods(Class c, boolean allowFinalMethods) {
+  private static Map getOverrideMethods(Class c) {
     Map rv = new HashMap();
-    Method[] methods = c.getDeclaredMethods();
-    for (int i = 0; i < methods.length; i++) {
-      Method m = methods[i];
 
-      int access = m.getModifiers();
+    while (c != null && c != Object.class) {
+      Method[] methods = c.isInterface() ? c.getMethods() : c.getDeclaredMethods();
+      for (int i = 0; i < methods.length; i++) {
+        Method m = methods[i];
 
-      if (Modifier.isStatic(access) || Modifier.isPrivate(access)) {
-        continue;
+        int access = m.getModifiers();
+
+        if (Modifier.isStatic(access) || Modifier.isPrivate(access)) {
+          continue;
+        }
+
+        if (Modifier.isFinal(access)) { throw new AssertionError("Final modifier found (must be be removed): "
+                                                                 + m.toString()); }
+
+        String sig = m.getName() + Type.getMethodDescriptor(m);
+        rv.put(sig, m);
       }
-
-      if (!allowFinalMethods && Modifier.isFinal(access)) { throw new AssertionError("Final modifier found (must be be removed): "
-                                                               + m.toString()); }
-
-      String sig = m.getName() + Type.getMethodDescriptor(m);
-      Object prev = rv.put(sig, m);
-      if (prev != null) { throw new AssertionError("replaced mapping for " + sig); }
+      c = c.getSuperclass();
     }
     return rv;
   }

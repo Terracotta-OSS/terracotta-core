@@ -33,33 +33,38 @@ public class OverrideCheck {
   }
 
   private static Set methodsFor(Class c) {
-    Method[] methods = c.getDeclaredMethods();
-
     Set set = new HashSet();
-    for (int i = 0; i < methods.length; i++) {
-      Method m = methods[i];
 
-      int access = m.getModifiers();
+    while (c != null && c != Object.class) {
+      Method[] methods = c.isInterface() ? c.getMethods() : c.getDeclaredMethods();
 
-      if (Modifier.isAbstract(access) || Modifier.isStatic(access) || Modifier.isPrivate(access)) {
-        continue;
-      }
+      for (int i = 0; i < methods.length; i++) {
+        Method m = methods[i];
 
-      StringBuffer sig = new StringBuffer();
-      sig.append(m.getName()).append('(');
+        int access = m.getModifiers();
 
-      Class[] parameterTypes = m.getParameterTypes();
-      for (int j = 0; j < parameterTypes.length; j++) {
-        sig.append(parameterTypes[j].getName());
-        if (j < (parameterTypes.length - 1)) {
-          sig.append(',');
+        if (Modifier.isStatic(access) || Modifier.isPrivate(access)) {
+          continue;
         }
-      }
-      sig.append(')');
 
-      set.add(sig.toString());
+        StringBuffer sig = new StringBuffer();
+        sig.append(m.getName()).append('(');
+
+        Class[] parameterTypes = m.getParameterTypes();
+        for (int j = 0; j < parameterTypes.length; j++) {
+          sig.append(parameterTypes[j].getName());
+          if (j < (parameterTypes.length - 1)) {
+            sig.append(',');
+          }
+        }
+        sig.append(')');
+
+        set.add(sig.toString());
+
+      }
+      c = c.getSuperclass();
     }
+
     return set;
   }
-
 }
