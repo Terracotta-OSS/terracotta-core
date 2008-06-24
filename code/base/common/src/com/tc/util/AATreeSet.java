@@ -327,20 +327,29 @@ public class AATreeSet {
     /**
      * creates an iterator for the tail set greater than or equal to c
      */
-    //TODO::FIXME::Wrong logic
     public AATreeSetIterator(Comparable c) {
-      this();
+      int result = 0;
       while (next != nullNode) {
-        int res = c.compareTo(next.element);
-        if (res < 0) {
+        result = c.compareTo(next.element);
+        if (result < 0) {
           s.push(next);
           next = next.left;
-        } else if (res > 0) {
-          next = next.right;
-        } else  {
+        } else if (result == 0) {
+
+          // We are suppose to retain a Tree { elements >= c} . So, put a
+          // "take diversion board" in the left subtree
+          if (next.left != nullNode) {
+            s.push(next);
+            next = nullNode;
+          }
           break;
+        } else if (result > 0) {
+          next = next.right;
         }
       }
+
+      // next (which has already been pushed to the stack) points to Tree Node
+      // which is next greater element or null
     }
 
     public boolean hasNext() {
