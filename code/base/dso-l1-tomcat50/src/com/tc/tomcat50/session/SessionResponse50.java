@@ -10,6 +10,7 @@ import org.apache.catalina.Request;
 import org.apache.coyote.tomcat5.CoyoteResponse;
 import org.apache.coyote.tomcat5.CoyoteResponseFacade;
 
+import com.tc.object.util.OverrideCheck;
 import com.terracotta.session.SessionResponse;
 
 import java.io.IOException;
@@ -22,6 +23,13 @@ import javax.servlet.ServletResponseWrapper;
 import javax.servlet.http.Cookie;
 
 public class SessionResponse50 extends SessionResponse implements HttpResponse {
+
+  static {
+    // make sure we actually implement all the method in tomcat's HttpResponse interface. We compile against tomcat's
+    // standard, but at runtime and in other containers (eg. glassfish) the interface might be different. If this check
+    // is going off, there is probably a container specific class adapter missing
+    OverrideCheck.check(HttpResponse.class, SessionResponse50.class);
+  }
 
   private final CoyoteResponse   valveRes;
   private final SessionRequest50 sessReq;

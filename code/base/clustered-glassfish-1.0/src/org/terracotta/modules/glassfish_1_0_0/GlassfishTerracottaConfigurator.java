@@ -16,5 +16,9 @@ public class GlassfishTerracottaConfigurator extends TerracottaConfiguratorModul
     final DelegateMethodAdapter delegateMethodAdapter = new DelegateMethodAdapter("org.apache.catalina.HttpRequest",
                                                                                   "req");
     configHelper.addCustomAdapter("com.tc.tomcat50.session.SessionRequest50", delegateMethodAdapter);
+
+    final DelegateMethodAdapter respAdapter = new DelegateMethodAdapter("org.apache.catalina.HttpResponse",
+                                                                                  "valveRes");
+    configHelper.addCustomAdapter("com.tc.tomcat50.session.SessionResponse50", respAdapter);
   }
 }
