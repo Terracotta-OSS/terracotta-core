@@ -7,13 +7,13 @@ package com.tc.util.concurrent;
 import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
 
 public class TCBoundedLinkedQueue implements TCQueue {
-  private BoundedLinkedQueue queue;
+  private final BoundedLinkedQueue queue;
 
   public TCBoundedLinkedQueue() {
     queue = new BoundedLinkedQueue();
   }
-  
-  public TCBoundedLinkedQueue(int capacity){
+
+  public TCBoundedLinkedQueue(int capacity) {
     queue = new BoundedLinkedQueue(capacity);
   }
 
@@ -39,10 +39,6 @@ public class TCBoundedLinkedQueue implements TCQueue {
 
   public int size() {
     return queue.size();
-  }
-  
-  public void setCapacity(int capacity){
-    queue.setCapacity(capacity);
   }
 
   public boolean isEmpty() {

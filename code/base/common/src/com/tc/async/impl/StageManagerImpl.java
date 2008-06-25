@@ -86,8 +86,8 @@ public class StageManagerImpl implements StageManager {
   }
 
   public synchronized Stage createStage(String name, EventHandler handler, int threads, int maxSize) {
-    //Channel q = maxSize > 0 ? (Channel) new BoundedLinkedQueue(maxSize) : new LinkedQueue();
-    TCQueue q = this.queueFactory.createInstance(maxSize);
+    int capacity = maxSize > 0 ? maxSize : Integer.MAX_VALUE;
+    TCQueue q = this.queueFactory.createInstance(capacity);
     Stage s = new StageImpl(loggerProvider, name, handler, new StageQueueImpl(loggerProvider, name, q), threads, group);
     addStage(name, s);
     return s;

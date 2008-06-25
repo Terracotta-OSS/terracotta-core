@@ -27,12 +27,49 @@ public class TCLinkedQueueJDK15Test extends TestCase {
     }
     TCQueue linkedBlockingQueue = (new QueueFactory()).createInstance();
     Assert.assertTrue(linkedBlockingQueue instanceof TCLinkedBlockingQueue);
-    
+
     TCQueue boundedLinkedQueue = (new QueueFactory(BoundedLinkedQueue.class.getName())).createInstance();
     Assert.assertTrue(boundedLinkedQueue instanceof TCBoundedLinkedQueue);
   }
 
-  public void testTCQueuePutPrformance() throws Exception {
+  public void testLinkedQueueCapacity() {
+    System.out.println(" --TEST CASE : testLinkedQueueCapacity");
+    if (!Vm.isJDK15Compliant()) {
+      System.out.println("This test is supposed to run only for JDK 1.5 and above. Exiting the test...");
+      return;
+    }
+    int capacity = 100;
+    TCQueue linkedBlockingQueue = (new QueueFactory()).createInstance(capacity);
+    Assert.assertTrue(linkedBlockingQueue instanceof TCLinkedBlockingQueue);
+
+    for (int i = 0; i < capacity; i++) {
+      try {
+        linkedBlockingQueue.put(new Integer(i));
+      } catch (InterruptedException e) {
+        throw new AssertionError(e);
+      }
+    }
+
+    // Now try to offer, and it should fail
+    try {
+      boolean offered = linkedBlockingQueue.offer(new Integer(1000), 0);
+      assertFalse(offered);
+    } catch (InterruptedException e) {
+      throw new AssertionError(e);
+    }
+
+    // try creating with negative capacity.
+    boolean failed = true;
+    try {
+      linkedBlockingQueue = (new QueueFactory()).createInstance(-1);
+      failed = false;
+    } catch (AssertionError iae) {
+      // expected
+    }
+    if (!failed) { throw new AssertionError("Expected to throw an Exception"); }
+  }
+
+  public void testTCQueuePutPerformance() throws Exception {
     System.out.println(" --TEST CASE : testTCQueuePutPrformance");
     if (!Vm.isJDK15Compliant()) {
       System.out.println("This test is supposed to run only for JDK 1.5 and above. Exiting the test...");
@@ -46,7 +83,7 @@ public class TCLinkedQueueJDK15Test extends TestCase {
     producer1.join();
     long endTime = System.currentTimeMillis();
     long timeTakenProducer = endTime - startTime;
-    
+
     Thread consumer1 = new Consumer("Consumer TCLinkedBlockingQueue", queue);
     startTime = System.currentTimeMillis();
     consumer1.start();
@@ -58,7 +95,7 @@ public class TCLinkedQueueJDK15Test extends TestCase {
     System.out.println("Inserted " + NUMBER_OF_TRANSACTIONS + " nodes in " + timeTakenProducer + " milliseconds");
     System.out.println("Removed " + NUMBER_OF_TRANSACTIONS + " nodes in " + timeTakenConsumer + " milliseconds");
     System.out.println("*****************************************************************************************\n");
-    
+
     TCQueue tcBoundedLinkedQueue = new TCBoundedLinkedQueue(NUMBER_OF_TRANSACTIONS);
     nodeId.set(0);
 
@@ -68,7 +105,7 @@ public class TCLinkedQueueJDK15Test extends TestCase {
     producer2.join();
     endTime = System.currentTimeMillis();
     timeTakenProducer = endTime - startTime;
-    
+
     Thread consumer2 = new Consumer("Consumer TCBoundedLinkedQueue", tcBoundedLinkedQueue);
     startTime = System.currentTimeMillis();
     consumer2.start();
@@ -81,7 +118,7 @@ public class TCLinkedQueueJDK15Test extends TestCase {
     System.out.println("Removed " + NUMBER_OF_TRANSACTIONS + " nodes in " + timeTakenConsumer + " milliseconds");
     System.out.println("****************************************************************************************\n");
   }
-  
+
   public void testTCQueueMultiThreadPrformance() throws Exception {
     System.out.println(" --TEST CASE : testTCQueueMultiThreadPrformance");
     if (!Vm.isJDK15Compliant()) {
@@ -128,7 +165,7 @@ public class TCLinkedQueueJDK15Test extends TestCase {
     System.out.println("\n********************************* TCLinkedBlockingQueue *********************************");
     System.out.println("Operated on " + NUMBER_OF_TRANSACTIONS + " nodes in " + timeTaken + " milliseconds");
     System.out.println("*****************************************************************************************\n");
-    
+
     TCQueue boundedLinkedueue = new TCBoundedLinkedQueue(NUMBER_OF_TRANSACTIONS);
     nodeId.set(0);
 
@@ -171,6 +208,7 @@ public class TCLinkedQueueJDK15Test extends TestCase {
     System.out.println("****************************************************************************************\n");
 
   }
+
   private synchronized static int getNextNodeID() {
     return nodeId.increment();
   }

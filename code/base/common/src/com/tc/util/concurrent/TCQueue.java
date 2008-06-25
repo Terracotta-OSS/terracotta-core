@@ -38,11 +38,6 @@ public interface TCQueue {
   public int size();
   
   /**
-   * Sets the capacity of the queue
-   */
-  public void setCapacity(int capacity);
-  
-  /**
    * Tells whether queue is empty or not
    */
   public boolean isEmpty();

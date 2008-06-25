@@ -12,8 +12,8 @@ import com.tc.util.runtime.Vm;
 import java.lang.reflect.Constructor;
 
 public class QueueFactory {
-  public static final String BoundedLinkedQueue    = BoundedLinkedQueue.class.getName();
-  public static final String LinkedBlockingQueue    =  "java.util.concurrent.LinkedBlockingQueue";
+  public static final String BOUNDED_LINKED_QUEUE  = BoundedLinkedQueue.class.getName();
+  public static final String LINKED_BLOCKING_QUEUE = "java.util.concurrent.LinkedBlockingQueue";
   private boolean            useBoundedLinkedQueue = false;
 
   /**
@@ -24,14 +24,12 @@ public class QueueFactory {
   }
 
   /**
-   * The type of Queues to be created is under user's control 
-   * Arg: whether u want BoundedLinkedQueue or LinkedBlockingQueue 
-   * true: BoundedLinkedQueue 
-   * false: LinkedBlockingQueue
+   * The type of Queues to be created is under user's control Arg: whether u want BoundedLinkedQueue or
+   * LinkedBlockingQueue true: BoundedLinkedQueue false: LinkedBlockingQueue
    */
   public QueueFactory(String className) {
-    Assert.eval(className.equals(BoundedLinkedQueue) || className.equals(LinkedBlockingQueue));
-    if (className.equals(BoundedLinkedQueue)) this.useBoundedLinkedQueue = true;
+    Assert.eval(className.equals(BOUNDED_LINKED_QUEUE) || className.equals(LINKED_BLOCKING_QUEUE));
+    if (className.equals(BOUNDED_LINKED_QUEUE)) this.useBoundedLinkedQueue = true;
     else this.useBoundedLinkedQueue = false;
   }
 
@@ -45,15 +43,33 @@ public class QueueFactory {
     return queue;
   }
 
+  /**
+   * @return a TCQueue backed by either LinkedBlockingQueue or BoundedLinkedQueue with a capacity as the input
+   *         parameter.
+   * @throws IllegalArgumentException if the capacity is less than or equal to zero
+   */
   public TCQueue createInstance(int capacity) {
     TCQueue queue = null;
     if (useBoundedLinkedQueue) {
       queue = new TCBoundedLinkedQueue(capacity);
     } else {
-      queue = createTCLinkedBlockingQueue();
-      queue.setCapacity(capacity);
+      queue = createTCLinkedBlockingQueue(capacity);
     }
     return queue;
+  }
+
+  private TCQueue createTCLinkedBlockingQueue(int capacity) {
+    try {
+      Class clazz = Class.forName("com.tc.util.concurrent.TCLinkedBlockingQueue");
+      Class argsClass[] = new Class[1];
+      argsClass[0] = int.class;
+      Constructor constructor = clazz.getConstructor(argsClass);
+      Object[] args = new Object[1];
+      args[0] = new Integer(capacity);
+      return (TCQueue) constructor.newInstance(args);
+    } catch (Exception e) {
+      throw new AssertionError(e);
+    }
   }
 
   private TCQueue createTCLinkedBlockingQueue() {
