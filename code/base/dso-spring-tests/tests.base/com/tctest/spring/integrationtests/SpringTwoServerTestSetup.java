@@ -7,11 +7,14 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.BeanFactory;
 
+import com.tc.test.TCTestCase;
 import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest.TwoServerTestSetup;
 
 import java.io.IOException;
+
+import junit.framework.TestCase;
 
 public abstract class SpringTwoServerTestSetup extends TwoServerTestSetup {
 
@@ -32,6 +35,10 @@ public abstract class SpringTwoServerTestSetup extends TwoServerTestSetup {
     // All spring tests need these I guess
     builder.addDirectoryOrJARContainingClass(LogFactory.class); // commons-logging
     builder.addDirectoryOrJARContainingClass(Logger.class); // log4j
+    
+    // Couple tests fail using Spring 2.5.4 w/o these lines
+    builder.addDirectoryOrJARContainingClass(TCTestCase.class);
+    builder.addDirectoryOrJARContainingClass(TestCase.class);
 
     return builder.addDirectoryOrJARContainingClassOfSelectedVersion(BeanFactory.class,
                                                               new String[] { TestConfigObject.SPRING_VARIANT }); // springframework
