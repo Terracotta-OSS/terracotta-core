@@ -4,7 +4,6 @@
  */
 package com.tc.util;
 
-import com.tc.exception.ImplementMe;
 import com.tc.object.ObjectID;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
@@ -34,12 +33,11 @@ import java.util.SortedSet;
 public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintable, Externalizable {
 
   /**
-   * The number of times this HashMap has been structurally modified Structural modifications are those that change the
-   * number of mappings in the HashMap or otherwise modify its internal structure (e.g., rehash). This field is used to
-   * make iterators on Collection-views of the HashMap fail-fast. (See ConcurrentModificationException).
+   * modCount - number of times this HashMap has been structurally modified Structural modifications are those that
+   * change the number of mappings in the HashMap or otherwise modify its internal structure (e.g., rehash). This field
+   * is used to make iterators on Collection-views of the HashMap fail-fast. (See ConcurrentModificationException).
    */
   private transient volatile int modCount;
-
   private final AATreeSet        ranges;
   private int                    size = 0;
 
@@ -333,8 +331,6 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
     }
 
     public void remove() {
-      // XXX::FIXME::This is broken still.
-      if (true) throw new ImplementMe();
       if (lastReturned == null) throw new IllegalStateException();
       if (expectedModCount != modCount) throw new ConcurrentModificationException();
       ObjectIDSet.this.remove(lastReturned);

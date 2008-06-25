@@ -248,6 +248,12 @@ public class AATreeSetTest extends TCTestCase {
     List longList = new ArrayList();
     longList.add(new Long(25));
     longList.add(new Long(27));
+    longList.add(new Long(9));
+    longList.add(new Long(13));
+    longList.add(new Long(2));
+    longList.add(new Long(23));
+    longList.add(new Long(47));
+    longList.add(new Long(35));
     longList.add(new Long(10));
     longList.add(new Long(1));
     longList.add(new Long(4));
@@ -256,12 +262,6 @@ public class AATreeSetTest extends TCTestCase {
     longList.add(new Long(56));
     longList.add(new Long(11));
     longList.add(new Long(10));
-    longList.add(new Long(9));
-    longList.add(new Long(13));
-    longList.add(new Long(2));
-    longList.add(new Long(23));
-    longList.add(new Long(47));
-    longList.add(new Long(35));
     longList.add(new Long(33));
     longList.add(new Long(17));
     longList.add(new Long(29));
