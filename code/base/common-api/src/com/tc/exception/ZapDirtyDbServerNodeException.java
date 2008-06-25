@@ -5,7 +5,7 @@
 package com.tc.exception;
 
 /**
- * RMP-309
+ * RMP-309 : Zap Node which joined with dirty db 
  */
 
 public class ZapDirtyDbServerNodeException extends TCServerRestartException {

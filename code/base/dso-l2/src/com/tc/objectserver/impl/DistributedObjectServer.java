@@ -20,7 +20,6 @@ import com.tc.exception.ZapDirtyDbServerNodeException;
 import com.tc.exception.ZapServerNodeException;
 import com.tc.handler.CallbackDirtyDatabaseCleanUpAdapter;
 import com.tc.handler.CallbackDumpAdapter;
-import com.tc.handler.CallbackZapServerNodeAdapter;
 import com.tc.io.TCFile;
 import com.tc.io.TCFileImpl;
 import com.tc.io.TCRandomFileAccessImpl;
@@ -482,8 +481,10 @@ public class DistributedObjectServer implements TCDumper {
     threadGroup.addCallbackOnExitExceptionHandler(CleanDirtyDatabaseException.class, dirtydbExceptionHandler);
     threadGroup.addCallbackOnExitExceptionHandler(ZapDirtyDbServerNodeException.class, dirtydbExceptionHandler);
 
-    CallbackOnExitHandler zapServerNodeHandler = new CallbackZapServerNodeAdapter(consoleLogger);
-    threadGroup.addCallbackOnExitExceptionHandler(ZapServerNodeException.class, zapServerNodeHandler);
+    /**
+     * using same CallbackOnExitHandler as in dirtyDb problems for Splitbrain and other Zap-Node events
+     */
+    threadGroup.addCallbackOnExitExceptionHandler(ZapServerNodeException.class, dirtydbExceptionHandler);
 
     persistenceTransactionProvider = persistor.getPersistenceTransactionProvider();
     PersistenceTransactionProvider transactionStorePTP;

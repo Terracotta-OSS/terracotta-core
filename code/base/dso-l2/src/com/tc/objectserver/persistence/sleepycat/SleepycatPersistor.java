@@ -8,7 +8,6 @@ import com.sleepycat.je.Cursor;
 import com.sleepycat.je.CursorConfig;
 import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.Transaction;
-import com.tc.exception.CleanDirtyDatabaseException;
 import com.tc.io.serializer.api.StringIndex;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
@@ -113,20 +112,13 @@ public class SleepycatPersistor implements Persistor {
   private void open(DBEnvironment dbenv, TCLogger logger) throws TCDatabaseException {
     Assert.eval(!dbenv.isOpen());
     DatabaseOpenResult result = dbenv.open();
-    if (!result.isClean()) {
-      String errorMessage = Banner
-          .makeBanner("Attempt to open a dirty database.  "
-                      + "This may be because a previous instance of the server didn't exit cleanly."
-                      + "  Since the integrity of the data cannot be assured, " + "the server is refusing to start."
-                      + "  If 'l2.nha.dirtydb.autoDelete = true' is enabled in tc.properties "
-                      + "then dirty database files will be automatically moved to "
-                      + "a backup directory and the server will be restarted. "
-                      + "Otherwise, please remove the database files in the following directory and restart "
-                      + "the server: " + dbenv.getEnvironmentHome(), "ERROR");
-      logger.error(errorMessage, new Throwable());
-      throw new CleanDirtyDatabaseException(errorMessage);
-    }
-    return;
+    if (!result.isClean()) { throw new DatabaseDirtyException(
+                                                              "Attempt to open a dirty database.  "
+                                                                  + "This may be because a previous instance of the server didn't exit cleanly."
+                                                                  + "  Since the integrity of the data cannot be assured, "
+                                                                  + "the server is refusing to start."
+                                                                  + "  Please remove the database files in the following directory and restart "
+                                                                  + "the server: " + env.getEnvironmentHome()); }
   }
 
   private void sanityCheckAndClean(DBEnvironment dbenv, File l2DataPath, TCLogger logger) throws TCDatabaseException {

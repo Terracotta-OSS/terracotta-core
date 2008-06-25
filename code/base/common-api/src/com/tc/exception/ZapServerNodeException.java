@@ -5,7 +5,7 @@
 package com.tc.exception;
 
 /**
- * RMP-309
+ * RMP-309 : SplitBrain and other Zap node requests
  */
 
 public class ZapServerNodeException extends TCServerRestartException {

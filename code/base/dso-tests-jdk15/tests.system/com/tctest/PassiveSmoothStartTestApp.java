@@ -4,7 +4,7 @@
  */
 package com.tctest;
 
-import com.tc.lang.ThrowableHandler;
+import com.tc.lang.ServerExitStatus;
 import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
@@ -128,7 +128,7 @@ public class PassiveSmoothStartTestApp extends AbstractTransparentApp {
       System.out.println("XXX Passvie crashed while booting-up as expected. ExitCode = " + exitCode);
 
       // Simulating start-up script behavior
-      Assert.eval(exitCode == ThrowableHandler.EXITCODE_RESTART_REQUEST);
+      Assert.eval(exitCode == ServerExitStatus.EXITCODE_RESTART_REQUEST);
       serverControls[serverIndexp].start();
     } catch (Exception e1) {
       throw new RuntimeException(e1);

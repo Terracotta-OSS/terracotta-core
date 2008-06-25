@@ -11,7 +11,7 @@ import com.tc.io.TCFileImpl;
 import com.tc.logging.TCLogger;
 import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.object.persistence.api.PersistentMapStore;
-import com.tc.object.persistence.api.SleepycatClusterStateMapStore;
+import com.tc.object.persistence.api.ClusterStatePersistentMapStore;
 import com.tc.util.Assert;
 
 import java.io.File;
@@ -35,14 +35,14 @@ public class DirtyObjectDbCleaner {
   }
 
   private void init() {
-    String dbState = clusterStateStore.get(SleepycatClusterStateMapStore.DBKEY_STATE);
-    Assert.eval((dbState == null) || (dbState.equals(SleepycatClusterStateMapStore.DB_STATE_CLEAN))
-                || (dbState.equals(SleepycatClusterStateMapStore.DB_STATE_DIRTY)));
+    String dbState = clusterStateStore.get(ClusterStatePersistentMapStore.DBKEY_STATE);
+    Assert.eval((dbState == null) || (dbState.equals(ClusterStatePersistentMapStore.DB_STATE_CLEAN))
+                || (dbState.equals(ClusterStatePersistentMapStore.DB_STATE_DIRTY)));
 
     objectDbClean = true;
     if (dbState == null) {
-      clusterStateStore.put(SleepycatClusterStateMapStore.DBKEY_STATE, SleepycatClusterStateMapStore.DB_STATE_CLEAN);
-    } else if (dbState.equals(SleepycatClusterStateMapStore.DB_STATE_DIRTY)) {
+      clusterStateStore.put(ClusterStatePersistentMapStore.DBKEY_STATE, ClusterStatePersistentMapStore.DB_STATE_CLEAN);
+    } else if (dbState.equals(ClusterStatePersistentMapStore.DB_STATE_DIRTY)) {
       Assert.eval(l2DataPath != null);
       objectDbClean = false;
     }
