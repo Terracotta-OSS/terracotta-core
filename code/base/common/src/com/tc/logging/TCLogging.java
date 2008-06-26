@@ -458,10 +458,8 @@ public class TCLogging {
         // It's possible someone is being bad and shoving non-String keys or values into system props
         if (objKey instanceof String && objValue instanceof String) {
           String key = (String) objKey;
-          if (key != null) {
-            keys.add(key);
-          }
-          maxKeyLength = Math.max(maxKeyLength, key == null ? 0 : key.length());
+          keys.add(key);
+          maxKeyLength = Math.max(maxKeyLength, key.length());
         }
       }
 

@@ -68,7 +68,8 @@ public class OidLongArrayTest extends TCTestCase {
     int destSize = 4;
     OidLongArray bits = new OidLongArray(arySize, oid);
     for(int i = 0; i < bits.length(); ++i) {
-      bits.set(i,(long)i);
+      long j = i;
+      bits.set(i,j);
     }
     
     OidLongArray dest = new OidLongArray(destSize, oid);
@@ -76,7 +77,7 @@ public class OidLongArrayTest extends TCTestCase {
     bits.copyOut(dest, offset);
     
     // verify
-    long expected = (long)offset;
+    long expected = offset;
     for(int i = 0; i < destSize; ++i) {    
       Assert.assertTrue("Failed copyOut"+expected+" got "+dest.get(i), 
                         expected == dest.get(i));

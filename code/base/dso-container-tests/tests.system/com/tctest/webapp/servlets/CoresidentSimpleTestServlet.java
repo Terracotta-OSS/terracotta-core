@@ -21,9 +21,9 @@ import javax.servlet.http.HttpServletResponse;
 
 public class CoresidentSimpleTestServlet extends HttpServlet {
 
-  private Map sharedMap0;
-  private Map sharedMap1;
-  private  static Manager[] managers = ClassProcessorHelper.getPartitionedManagers();
+  private Map              sharedMap0;
+  private Map              sharedMap1;
+  private static Manager[] managers = ClassProcessorHelper.getPartitionedManagers();
 
   protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     final ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -57,11 +57,13 @@ public class CoresidentSimpleTestServlet extends HttpServlet {
       }
 
       out.println("Using map: " + mapNum + " hashCode: " + System.identityHashCode(map));
-      
+
       if ("print".equals(cmd)) {
-        out.println("partition: " + partition + " sharedMap:"
-                    + (map == null ? "NULL" : "map:" + System.identityHashCode(map)
-                                              + " keys:" + (map == null ? "NULL" : map.keySet().toString())));
+        out.println("partition: "
+                    + partition
+                    + " sharedMap:"
+                    + (map == null ? "NULL" : "map:" + System.identityHashCode(map) + " keys:"
+                                              + map.keySet().toString()));
         out.println("OK");
       }
       if ("initialize".equals(cmd)) {

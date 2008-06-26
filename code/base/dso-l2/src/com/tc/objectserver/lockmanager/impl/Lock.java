@@ -1030,7 +1030,6 @@ public class Lock {
     for (Iterator i = holders.values().iterator(); i.hasNext();) {
       Holder holder = (Holder) i.next();
       if (holder.getNodeID().equals(nodeID)) {
-        ServerThreadContext txn = holder.getThreadContext();
         i.remove();
       }
     }
@@ -1039,8 +1038,6 @@ public class Lock {
       if (r.getRequesterID().equals(nodeID)) {
         // debug("checkAndClear... removing request = ", r);
         i.remove();
-        ServerThreadContext tid = r.getThreadContext();
-        // debug("checkAndClear... clearing threadContext = ", tid);
         cancelTryLockTimer(r);
       }
     }

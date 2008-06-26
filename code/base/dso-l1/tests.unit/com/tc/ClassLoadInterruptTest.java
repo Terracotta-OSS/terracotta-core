@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc;
 
@@ -18,7 +19,9 @@ public class ClassLoadInterruptTest extends TCTestCase {
         fail("Expected NoClassDefFoundError");
       } else {
         new Thread() {
-          public void run() { System.out.println("Successfullly created "+instance); }
+          public void run() {
+            System.out.println("Successfullly created " + instance);
+          }
         }.start();
       }
     } catch (NoClassDefFoundError e) {
@@ -26,6 +29,12 @@ public class ClassLoadInterruptTest extends TCTestCase {
       assertTrue(!Vm.isJDK16Compliant());
     }
   }
-  static class LoadingClass {}
-  static class NotLoadingClass {}
+
+  static class LoadingClass {
+    //
+  }
+
+  static class NotLoadingClass {
+    //
+  }
 }

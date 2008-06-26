@@ -65,7 +65,7 @@ public class PhysicalManagedObjectFacade extends AbstractObjectFacade implements
   }
 
   public String[] getFields() {
-    return (String[]) this.fieldNames.clone();
+    return this.fieldNames.clone();
   }
 
   protected Object basicGetFieldValue(String fieldName) {

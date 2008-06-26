@@ -134,23 +134,21 @@ public class TCXMLJUnitFormatter
     rootElement.setAttribute(ATTR_TIME, "" + (suite.getRunTime() / 1000.0));
     try {
       FileOutputStream out = new FileOutputStream(logfile, true);
-      if (out != null) {
-        Writer wri = null;
-        try {
-          wri = new BufferedWriter(new OutputStreamWriter(out, "UTF8"));
-          wri.write("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
-          (new DOMElementWriter()).write(rootElement, wri, 0, "  ");
-          wri.flush();
-          rootElement = null;
-        } catch (IOException exc) {
-          throw new BuildException("Unable to write log file", exc);
-        } finally {
-          if (wri != null) {
-            try {
-              wri.close();
-            } catch (IOException e) {
-              // ignore
-            }
+      Writer wri = null;
+      try {
+        wri = new BufferedWriter(new OutputStreamWriter(out, "UTF8"));
+        wri.write("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
+        (new DOMElementWriter()).write(rootElement, wri, 0, "  ");
+        wri.flush();
+        rootElement = null;
+      } catch (IOException exc) {
+        throw new BuildException("Unable to write log file", exc);
+      } finally {
+        if (wri != null) {
+          try {
+            wri.close();
+          } catch (IOException e) {
+            // ignore
           }
         }
       }

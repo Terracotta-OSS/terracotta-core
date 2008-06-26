@@ -7,10 +7,6 @@ import com.tc.util.AbstractIdentifier;
 
 public class NetworkStackID extends AbstractIdentifier {
 
-  private NetworkStackID()  {
-    super();
-  }
-  
   public NetworkStackID(long id) {
     super(id);
   }

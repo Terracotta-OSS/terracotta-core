@@ -21,7 +21,7 @@ public class ExceptionHelperTest extends TestCase {
 
     ultimateCause = new RuntimeException();
     proximateCause = new MultiException();
-    ((MultiException)proximateCause).add((Exception)ultimateCause);
+    ((MultiException)proximateCause).add(ultimateCause);
     top = new RuntimeException(proximateCause);
     check(helper, ultimateCause, proximateCause, top);
   }

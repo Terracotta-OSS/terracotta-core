@@ -252,7 +252,6 @@ public class DefaultCookieWriter implements SessionCookieWriter {
     if (cookieDomain != null) c.setDomain(cookieDomain);
     if (cookieComment != null) c.setComment(cookieComment);
 
-    Assert.post(c != null);
     return c;
   }
 

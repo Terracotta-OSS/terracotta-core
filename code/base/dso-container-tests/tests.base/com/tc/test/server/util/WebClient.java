@@ -43,7 +43,7 @@ public class WebClient {
       }
     } finally {
       try {
-        if (in != null) in.close();
+        in.close();
       } catch (Exception ignored) { // nop
       }
     }

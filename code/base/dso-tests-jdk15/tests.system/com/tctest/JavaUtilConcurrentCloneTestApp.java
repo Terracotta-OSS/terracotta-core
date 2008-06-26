@@ -148,7 +148,6 @@ public class JavaUtilConcurrentCloneTestApp extends AbstractTransparentApp {
         copy.obj1.one = 250;
         copy.obj1.map.put("steve", "steve");
         copy.obj1.map.put("doh", copy);
-        Assert.eval(copy != null);
         copy.obj1.myStuffArray[7] = new MyStuff(null);
         copy.obj1.myStuffArray[7].one = 7;
         copy.obj1.myStuffArray[3] = copy;

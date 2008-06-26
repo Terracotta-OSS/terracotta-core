@@ -82,7 +82,7 @@ public class TCPProxy {
    */
   public boolean probeBackendConnection() {
     Socket connectedSocket = null;
-    for (int pos = 0; connectedSocket == null && pos < endpoints.length; ++pos) {
+    for (int pos = 0; pos < endpoints.length; ++pos) {
       final int roundRobinOffset = (pos + roundRobinSequence) % endpoints.length;
       try {
         connectedSocket = new Socket(endpoints[roundRobinOffset].getAddress(), endpoints[roundRobinOffset].getPort());
@@ -102,7 +102,7 @@ public class TCPProxy {
   }
 
   public synchronized void start() throws IOException {
-    
+
     if (acceptThread != null) {
       log("Stop previous accept thread before start a new one");
       fastStop();
@@ -132,7 +132,7 @@ public class TCPProxy {
         ME.run();
       }
     }, "Accept thread (port " + listenPort + ")");
-    
+
     // verify
     int count = 0;
     while (true) {
@@ -141,14 +141,12 @@ public class TCPProxy {
         sk.close();
         break;
       } catch (Exception e) {
-        if(++count > 10) {
-          throw new RuntimeException("Listen socket at " + listenPort + " is bad: " + e);
-        }
+        if (++count > 10) { throw new RuntimeException("Listen socket at " + listenPort + " is bad: " + e); }
         log("Listen socket at " + listenPort + " is bad: " + e);
 
         serverSocket.close();
         ThreadUtil.reallySleep(100);
-        
+
         log("Rebind listen socket at " + listenPort);
         serverSocket = new ServerSocket();
         serverSocket.setReuseAddress(true);
@@ -182,7 +180,7 @@ public class TCPProxy {
 
     if (acceptThread == null) return;
     acceptThread.interrupt();
-    
+
     /*
      * Observed on windows-xp. The ServerSocket is still hanging around after "close()", until someone makes a new
      * connection. To make sure the old ServerSocket and accept thread go away for good, fake a connection to the old
@@ -198,7 +196,7 @@ public class TCPProxy {
       }
       ThreadUtil.reallySleep(100);
     }
-    
+
     try {
       try {
         acceptThread.join(10000);
@@ -208,7 +206,7 @@ public class TCPProxy {
     } finally {
       acceptThread = null;
     }
-    
+
     closeAllConnections(waitDeadThread);
   }
 
@@ -300,7 +298,7 @@ public class TCPProxy {
       serverSocket.close();
       serverSocket = null;
     } catch (IOException e) {
-      //throw e;
+      // throw e;
       throw new RuntimeException("Unable to close client socket " + e);
     }
   }
@@ -478,7 +476,7 @@ public class TCPProxy {
       IOException lastConnectException = null;
       Socket connectedSocket = null;
       final int roundRobinSequence = parent.getAndIncrementRoundRobinSequence();
-      for (int pos = 0; connectedSocket == null && pos < parent.endpoints.length; ++pos) {
+      for (int pos = 0; pos < parent.endpoints.length; ++pos) {
         final int roundRobinOffset = (pos + roundRobinSequence) % parent.endpoints.length;
         try {
           connectedSocket = new Socket(parent.endpoints[roundRobinOffset].getAddress(),

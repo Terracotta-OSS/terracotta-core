@@ -83,8 +83,6 @@ public class LinkedBlockingQueueTestApp extends AbstractTransparentApp {
       if ("STOP".equals(o)) {
         break;
       }
-      WorkItem w = (WorkItem) o;
-      //System.out.println("Getting " + w.getI());
     }
   }
 
