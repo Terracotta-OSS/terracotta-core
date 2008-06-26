@@ -98,9 +98,9 @@ public class TCTestCase extends TestCase {
   }
 
   // called by timer thread (ie. NOT the main thread of test case)
-  private void timeoutCallback() {
+  private void timeoutCallback(long elapsedTime) {
     String bar = "***************************************";
-    System.err.println("\n" + bar + "\n+ TCTestCase timeout alarm going off at " + new Date() + "\n" + bar + "\n");
+    System.err.println("\n" + bar + "\n+ TCTestCase timeout alarm going off after " + millisToMinutes(elapsedTime) + " minutes at " + new Date() + "\n" + bar + "\n");
     System.err.flush();
 
     doDumpServerDetails();
@@ -207,15 +207,19 @@ public class TCTestCase extends TestCase {
       timeoutThreshold = MIN_THRESH;
     }
 
-    long delay = junitTimeout - timeoutThreshold;
+    final long delay = junitTimeout - timeoutThreshold;
 
-    System.err.println("Timeout task is scheduled to run in " + (delay / (1000 * 60)) + " minutes");
+    System.err.println("Timeout task is scheduled to run in " + millisToMinutes(delay) + " minutes");
 
     timeoutTimer.schedule(new TimerTask() {
       public void run() {
-        timeoutCallback();
+        timeoutCallback(delay);
       }
     }, delay);
+  }
+
+  private long millisToMinutes(final long timeInMilliseconds) {
+    return (timeInMilliseconds / (1000 * 60));
   }
 
   public void setThreadDumpInterval(long interval) {
