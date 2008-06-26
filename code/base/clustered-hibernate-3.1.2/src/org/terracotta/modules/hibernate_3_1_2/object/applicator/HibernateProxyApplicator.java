@@ -40,10 +40,10 @@ public class HibernateProxyApplicator extends BaseApplicator {
   private static final String COMPONENT_ID_TYPE_FIELD_NAME         = "org.hibernate.proxy.HibernateProxy.componentIdType";
 
   private static final String BASIC_LAZY_INITIALIZER_CLASS_NAME    = "org.hibernate.proxy.pojo.BasicLazyInitializer";
-  //private static final String BASIC_LAZY_INITIALIZER_CLASS_NAME    = "org.hibernate.proxy.BasicLazyInitializer";
+  // private static final String BASIC_LAZY_INITIALIZER_CLASS_NAME = "org.hibernate.proxy.BasicLazyInitializer";
   private static final String ABSTRACT_LAZY_INITIALIZER_CLASS_NAME = "org.hibernate.proxy.AbstractLazyInitializer";
   private static final String CGLIB_LAZY_INITIALIZER_CLASS_NAME    = "org.hibernate.proxy.pojo.cglib.CGLIBLazyInitializer";
-  //private static final String CGLIB_LAZY_INITIALIZER_CLASS_NAME    = "org.hibernate.proxy.CGLIBLazyInitializer";
+  // private static final String CGLIB_LAZY_INITIALIZER_CLASS_NAME = "org.hibernate.proxy.CGLIBLazyInitializer";
   private static final String HIBERNATE_PROXY_CLASS_NAME           = "org.hibernate.proxy.HibernateProxy";
   private static final String ABSTRACT_COMPONENT_CLASS_NAME        = "org.hibernate.type.AbstractComponentType";
   private static final String SESSION_IMPLEMENTOR_CLASS_NAME       = "org.hibernate.engine.SessionImplementor";
@@ -134,8 +134,8 @@ public class HibernateProxyApplicator extends BaseApplicator {
     }
   }
 
-  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
-      IllegalArgumentException, ClassNotFoundException {
+  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po)
+      throws IllegalArgumentException {
     // 
   }
 
@@ -218,17 +218,17 @@ public class HibernateProxyApplicator extends BaseApplicator {
 
     Object hibernateProxy = createHibernateProxy(persistenceClass, entityName, interfaces, id, session,
                                                  getIdentifierMethod, setIdentifierMethod, componentIdType);
-    
+
     if (target != null) {
       Object lazyInitializer = getLazyInitializer(hibernateProxy);
       invokeMethod(ABSTRACT_LAZY_INITIALIZER_CLASS_NAME, lazyInitializer, "setImplementation", target);
     }
-    
+
     closeSession(session);
-    
+
     return hibernateProxy;
   }
-  
+
   private void closeSession(Object session) {
     try {
       Method m = session.getClass().getDeclaredMethod("close", new Class[0]);
@@ -248,7 +248,8 @@ public class HibernateProxyApplicator extends BaseApplicator {
 
   private Object getSession(ClassLoader loader) {
     try {
-      Class hibernateUtilClass = Class.forName("org.terracotta.modules.hibernate_3_1_2.util.HibernateUtil", true, loader);
+      Class hibernateUtilClass = Class.forName("org.terracotta.modules.hibernate_3_1_2.util.HibernateUtil", true,
+                                               loader);
       Method m = hibernateUtilClass.getDeclaredMethod("getSessionFactory", new Class[0]);
       Object sessionFactory = m.invoke(null, new Object[0]);
 

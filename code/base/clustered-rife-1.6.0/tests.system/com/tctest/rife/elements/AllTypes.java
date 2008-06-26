@@ -208,8 +208,6 @@ public class AllTypes extends Element {
 		while (int1 < 40) {
 			int int7 = 2;
 			assert int7 != 0;
-			Long long_obj1 = new Long(43L);
-			assert long_obj1 != null;
 			print(BEFORE + " while " + int1 + "\n" + getContinuationId());
 			pause();
 			int1++;
@@ -241,13 +239,13 @@ public class AllTypes extends Element {
 
 		long[] longs5 = createArrayLong(2);
 		longs5[0] = -98;
-		long[] longs6 = (long[]) longs5;
+		long[] longs6 = longs5;
 		longs6[1] = 97;
 		long[] longs7 = new long[] { 98L, 23L, 11L };
 		longs7[0] = -longs5[0];
 
 		long[][] longs8 = createMultiArrayLong(2, 5);
-		long[][] longs9 = (long[][]) longs8;
+		long[][] longs9 = longs8;
 		longs9[1][3] = -89L;
 		long[][] longs10 = new long[3][3];
 		fillMultiArrayLong(longs10);
@@ -285,7 +283,7 @@ public class AllTypes extends Element {
 		ints2[1][2][5] = null;
 
 		int[][] ints3 = new int[][] { { 1, 3 }, { 5, 7 }, { 11, 13 }, { 17, 19 } };
-		int[][] ints4 = (int[][]) ints3;
+		int[][] ints4 = ints3;
 		ints3[2][1] = -199;
 
 		boolean[] booleans1 = new boolean[] { true, false, false };

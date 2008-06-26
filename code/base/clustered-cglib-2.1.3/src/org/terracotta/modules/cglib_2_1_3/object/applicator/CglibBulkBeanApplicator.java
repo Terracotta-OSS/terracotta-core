@@ -76,24 +76,7 @@ public class CglibBulkBeanApplicator extends BaseApplicator {
     }
   }
 
-  private Object get(Object pojo, String methodName, Class[] parameterTypes, Object[] parameterValues) {
-    try {
-      Method m = pojo.getClass().getMethod(methodName, parameterTypes);
-      Object callBack = m.invoke(pojo, parameterValues);
-      return callBack;
-    } catch (NoSuchMethodException e) {
-      throw new TCRuntimeException(e);
-    } catch (IllegalArgumentException e) {
-      throw new TCRuntimeException(e);
-    } catch (IllegalAccessException e) {
-      throw new TCRuntimeException(e);
-    } catch (InvocationTargetException e) {
-      throw new TCRuntimeException(e);
-    }
-  }
-
-  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
-      IllegalArgumentException, ClassNotFoundException {
+  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IllegalArgumentException {
     // 
   }
 

@@ -25,8 +25,8 @@ import java.lang.reflect.Method;
 import java.util.Map;
 
 public class CglibProxyApplicator extends BaseApplicator {
-  private static final String SUPERCLASS_FIELD_NAME  = "net.sf.cglib.proxy.Factory.superclass";
-  private static final String CALLBACK_FIELD_NAME    = "net.sf.cglib.proxy.Factory.callBack";
+  private static final String SUPERCLASS_FIELD_NAME = "net.sf.cglib.proxy.Factory.superclass";
+  private static final String CALLBACK_FIELD_NAME   = "net.sf.cglib.proxy.Factory.callBack";
 
   public CglibProxyApplicator(DNAEncoding encoding) {
     super(encoding);
@@ -36,11 +36,11 @@ public class CglibProxyApplicator extends BaseApplicator {
     addTo.addAnonymousReference(getCallBack(pojo));
     return addTo;
   }
-  
+
   private Object getCallBack(Object pojo) {
-    return get(pojo, "getCallback", new Class[]{Integer.TYPE}, new Object[]{new Integer(0)});
+    return get(pojo, "getCallback", new Class[] { Integer.TYPE }, new Object[] { new Integer(0) });
   }
-  
+
   private Object get(Object pojo, String methodName, Class[] parameterTypes, Object[] parameterValues) {
     try {
       Method m = pojo.getClass().getDeclaredMethod(methodName, parameterTypes);
@@ -57,8 +57,8 @@ public class CglibProxyApplicator extends BaseApplicator {
     }
   }
 
-  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
-      IllegalArgumentException, ClassNotFoundException {
+  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po)
+      throws IllegalArgumentException {
     // 
   }
 
@@ -86,16 +86,16 @@ public class CglibProxyApplicator extends BaseApplicator {
 
     callBack = objectManager.lookupObject((ObjectID) callBack);
 
-    //return Enhancer.create(superClass, (Callback) callBack);
+    // return Enhancer.create(superClass, (Callback) callBack);
     return create(superClass, callBack);
   }
-  
+
   private Object create(Class superClass, Object callBack) {
     try {
       Class enhancerClass = superClass.getClassLoader().loadClass("net.sf.cglib.proxy.Enhancer");
       Class callbackClass = callBack.getClass().getClassLoader().loadClass("net.sf.cglib.proxy.Callback");
-      Method m = enhancerClass.getDeclaredMethod("create", new Class[]{ Class.class, callbackClass } );
-      Object o = m.invoke(null, new Object[]{ superClass, callBack });
+      Method m = enhancerClass.getDeclaredMethod("create", new Class[] { Class.class, callbackClass });
+      Object o = m.invoke(null, new Object[] { superClass, callBack });
       return o;
     } catch (NoSuchMethodException e) {
       throw new TCRuntimeException(e);

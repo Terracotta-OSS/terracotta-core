@@ -5,7 +5,6 @@ package com.tc.statistics.mock;
 
 import com.tc.statistics.AgentStatisticsManager;
 import com.tc.statistics.StatisticData;
-import com.tc.statistics.exceptions.AgentStatisticsManagerException;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -18,7 +17,7 @@ public class NullAgentStatisticsManager implements AgentStatisticsManager {
     return Collections.EMPTY_LIST;
   }
 
-  public void injectStatisticData(String sessionId, StatisticData data) throws AgentStatisticsManagerException {
+  public void injectStatisticData(String sessionId, StatisticData data) {
     //no-op
   }
 }
