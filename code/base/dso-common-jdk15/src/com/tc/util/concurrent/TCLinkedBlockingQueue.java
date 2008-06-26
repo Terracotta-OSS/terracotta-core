@@ -30,12 +30,12 @@ public class TCLinkedBlockingQueue implements TCQueue {
     return queue.poll(timeout, TimeUnit.MILLISECONDS);
   }
 
-  public void put(Object obj) {
-    queue.add(obj);
+  public void put(Object obj) throws InterruptedException {
+    queue.put(obj);
   }
 
-  public Object take() {
-    return queue.remove();
+  public Object take() throws InterruptedException {
+    return queue.take();
   }
 
   public int size() {
