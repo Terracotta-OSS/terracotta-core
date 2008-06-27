@@ -11,7 +11,6 @@ import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 
 public class ChangeClassNameRootAdapter extends ChangeClassNameHierarchyAdapter implements Opcodes {
@@ -24,7 +23,6 @@ public class ChangeClassNameRootAdapter extends ChangeClassNameHierarchyAdapter 
   private final String        targetInnerClassName;
   private final Map           instrumentedContext;
   private final ChangeContext changeContext;
-  private final Collection    methodsToBeRemoved;
 
   public static String replaceClassName(String className, String srcClassName, String targetClassName, String srcInnerClassName, String targetInnerClassName) {
     if (className == null || className.length() == 0) { return className; }
@@ -71,13 +69,6 @@ public class ChangeClassNameRootAdapter extends ChangeClassNameHierarchyAdapter 
     return newClassName.toString();
   }
 
-  public ChangeClassNameRootAdapter(ClassVisitor cv, String fullClassNameDots, String srcClassNameDots,
-                                    String targetClassNameDots, String srcInnerClassName, String targetInnerClassName,
-                                    Map instrumentedContext, Collection innerClassesHolder) {
-    this(cv, fullClassNameDots, srcClassNameDots, targetClassNameDots, srcInnerClassName, targetInnerClassName, instrumentedContext, innerClassesHolder,
-         Collections.EMPTY_SET);
-  }
-
   /**
    * @param fullClassNameDots The fully qualified class name that this class adapter is working on, e.g.,
    *        java.util.LinkedHashMap.
@@ -85,8 +76,7 @@ public class ChangeClassNameRootAdapter extends ChangeClassNameHierarchyAdapter 
    * @param targetClassNameSlashes The fully qualified new class name, e.g., java.util.HashMap_J$Entry.
    */
   public ChangeClassNameRootAdapter(ClassVisitor cv, String fullClassNameDots, String srcClassNameDots,
-                                    String targetClassNameDots, String srcInnerClassName, String targetInnerClassName, Map instrumentedContext, Collection innerClassesHolder,
-                                    Collection methodsToBeRemoved) {
+                                    String targetClassNameDots, String srcInnerClassName, String targetInnerClassName, Map instrumentedContext, Collection innerClassesHolder) {
     super(cv);
     this.srcClassNameSlashes = srcClassNameDots.replace(DOT_DELIMITER, SLASH_DELIMITER);
     this.targetClassNameSlashes = targetClassNameDots.replace(DOT_DELIMITER, SLASH_DELIMITER);
@@ -94,7 +84,6 @@ public class ChangeClassNameRootAdapter extends ChangeClassNameHierarchyAdapter 
     this.targetInnerClassName = targetInnerClassName;
     this.fullClassNameSlashes = fullClassNameDots.replace(DOT_DELIMITER, SLASH_DELIMITER);
     this.innerClassesNames = innerClassesHolder;
-    this.methodsToBeRemoved = methodsToBeRemoved;
     this.instrumentedContext = instrumentedContext;
     this.changeContext = addNewContextIfNotExist(fullClassNameSlashes, replaceInnerClassName(replaceClassNameInner(fullClassNameSlashes,
                                                                                              srcClassNameSlashes,
@@ -138,9 +127,6 @@ public class ChangeClassNameRootAdapter extends ChangeClassNameHierarchyAdapter 
   }
 
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-    // if (methodsToBeRemoved.contains(name+desc)) { return invokeSuperVisitMethod(access, name, desc, signature,
-    // exceptions, instrumentedContext, fullClassNameSlashes); }
-
     String convertedDesc = replaceInnerClassName(replaceClassNameInner(desc, srcClassNameSlashes, targetClassNameSlashes), srcInnerClassName, targetInnerClassName);
     String convertedSign = replaceInnerClassName(replaceClassNameInner(signature, srcClassNameSlashes, targetClassNameSlashes), srcInnerClassName, targetInnerClassName);
 
