@@ -170,7 +170,7 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
 
   // Range contains two longs instead of 1 long in ObjectID
   private float getCompressionRatio() {
-    return (ranges.size() == 0 ? 1.0f : (size / (ranges.size() * 2)));
+    return (ranges.size() == 0 ? 1.0f : (size / (ranges.size() * 2.0f)));
   }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
@@ -368,27 +368,6 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
       for (Iterator i = toRemove.iterator(); i.hasNext();) {
         remove(i.next());
       }
-    }
-    return modified;
-  }
-
-  /*
-   * Because of the short comings of the iterator (it can't perform remove), this method is overridden FIXME::Once
-   * remove is fixed
-   */
-  public boolean retainAll(Collection c) {
-    boolean modified = false;
-    ObjectIDSet toRemove = new ObjectIDSet();
-    Iterator e = iterator();
-    while (e.hasNext()) {
-      Object o = e.next();
-      if (!c.contains(o)) {
-        toRemove.add(o);
-        modified = true;
-      }
-    }
-    for (Iterator i = toRemove.iterator(); i.hasNext();) {
-      remove(i.next());
     }
     return modified;
   }

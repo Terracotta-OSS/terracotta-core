@@ -642,9 +642,6 @@ public class StringBufferTestApp extends GenericTestApp {
     sharedMap.put("target array StringBufferBuddy", new char[GET_CHARS_STRING.length()]);
   }
 
-  private static final String BUFFER_TARGET_ARRAY  = "buffer target array";
-  private static final String BUILDER_TARGET_ARRAY = "builder target array";
-
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClass = StringBufferTestApp.class.getName();
     config.getOrCreateSpec(testClass);
