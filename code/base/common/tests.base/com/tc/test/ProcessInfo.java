@@ -17,22 +17,22 @@ public class ProcessInfo {
     String execPath = TestConfigObject.getInstance().executableSearchPath();
     if (execPath == null) return "";
     try {
-      if (Os.isWindows()) {        
+      if (Os.isWindows()) {
         args = new String[] { execPath + "\\pv.exe", "-l", "java.exe" };
       } else if (Os.isSolaris()) {
         args = new String[] { "sh", "-c", "/usr/ucb/ps auxwww | grep java | grep -v grep" };
       }
 
       Process p = Runtime.getRuntime().exec(args);
-      StreamGobbler out = new StreamGobbler(p.getInputStream(), "stdout");
-      StreamGobbler err = new StreamGobbler(p.getErrorStream(), "stderr");
-      
+      StreamGobbler out = new StreamGobbler(p.getInputStream());
+      StreamGobbler err = new StreamGobbler(p.getErrorStream());
+
       out.start();
       err.start();
-      
+
       p.waitFor();
       String result = out.getOutput().trim() + "\n" + err.getOutput();
-      
+
       return result.trim();
 
     } catch (Exception e) {
@@ -43,13 +43,11 @@ public class ProcessInfo {
 }
 
 class StreamGobbler extends Thread {
-  private InputStream  is;
-  private String       type;
-  private StringBuffer output = new StringBuffer(1024);
+  private final InputStream  is;
+  private final StringBuffer output = new StringBuffer(1024);
 
-  StreamGobbler(InputStream is, String type) {
+  StreamGobbler(InputStream is) {
     this.is = is;
-    this.type = type;
   }
 
   public void run() {
@@ -64,7 +62,7 @@ class StreamGobbler extends Thread {
       ioe.printStackTrace();
     }
   }
-  
+
   public String getOutput() {
     return output.toString();
   }

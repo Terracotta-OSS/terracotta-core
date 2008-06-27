@@ -54,7 +54,7 @@ public abstract class LinkedHashMapTC extends LinkedHashMap implements Manageabl
         Object actualKey = entry.getKey();
 
         // do the original get logic
-        Object val = super.get(key);
+        super.get(key);
 
         if (accessOrder) {
           ManagerUtil.logicalInvoke(this, "get(Ljava/lang/Object;)Ljava/lang/Object;", new Object[] { actualKey });
@@ -65,7 +65,7 @@ public abstract class LinkedHashMapTC extends LinkedHashMap implements Manageabl
       return super.get(key);
     }
   }
-  
+
   private Object lookUpAndStoreIfNecessary(Map.Entry e) {
     if (e == null) return null;
     Object value = e.getValue();
@@ -85,7 +85,7 @@ public abstract class LinkedHashMapTC extends LinkedHashMap implements Manageabl
       }
     }
   }
-  
+
   private static Object lookUpIfNecessary(Object o) {
     if (o instanceof ObjectID) {
       try {

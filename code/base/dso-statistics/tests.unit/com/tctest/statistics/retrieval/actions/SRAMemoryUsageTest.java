@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.statistics.retrieval.actions;
 
@@ -23,7 +24,7 @@ public class SRAMemoryUsageTest extends TestCase {
     long max1 = values1[2];
 
     int memsize = 1024 * 1024 * 10;
-    byte[] mem = (byte[])Array.newInstance(byte.class, memsize);
+    byte[] mem = (byte[]) Array.newInstance(byte.class, memsize);
 
     StatisticData[] data2 = action.retrieveStatisticData();
 
@@ -38,7 +39,9 @@ public class SRAMemoryUsageTest extends TestCase {
     assertTrue(difference <= used2 - used1);
     assertEquals(max1, max2);
 
-    mem = null;
+    if (mem != null) {
+      mem = null;
+    }
 
     System.gc();
     Thread.sleep(500);
@@ -80,7 +83,7 @@ public class SRAMemoryUsageTest extends TestCase {
           fail();
           break;
       }
-      values[i] = ((Long)data[i].getData()).longValue();
+      values[i] = ((Long) data[i].getData()).longValue();
     }
 
     return values;

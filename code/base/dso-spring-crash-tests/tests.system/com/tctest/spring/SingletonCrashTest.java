@@ -35,7 +35,7 @@ public class SingletonCrashTest extends TransparentTestBase {
       disableAllUntil(new Date(Long.MAX_VALUE));
     }
   }
-  
+
   protected boolean canRunCrash() {
     return true;
   }
@@ -56,7 +56,6 @@ public class SingletonCrashTest extends TransparentTestBase {
 
     public void run() {
       long total = TEST_DURATION / INTERVAL;
-      long timeout = System.currentTimeMillis() + TEST_DURATION;
 
       try {
         moveToStageAndWait(1);

@@ -92,7 +92,7 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
       if (retrieverMap.containsKey(sessionId)) {
         LOGGER.warn("The capture session with ID '" + sessionId + "' already exists, not creating it again.");
       }
-      
+
       StatisticsRetriever retriever = buffer.createCaptureSession(sessionId);
       retrieverMap.put(sessionId, retriever);
     } catch (StatisticsBufferException e) {
@@ -128,7 +128,7 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
 
   public StatisticData[] captureStatistic(final String sessionId, final String name) {
     // obtain the retriever to make sure that the provided session ID is active
-    StatisticsRetriever retriever = obtainRetriever(sessionId);
+    obtainRetriever(sessionId);
 
     StatisticRetrievalAction action = registry.getActionInstance(name);
     if (null == action) {
@@ -216,7 +216,7 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
     if (!retrieverMap.containsKey(sessionId)) {
       throw new StatisticDataInjectionErrorException(sessionId, data, new UnknownStatisticsSessionIdException(buffer.getDefaultNodeName(), sessionId, null));
     }
-    
+
     try {
       data.setSessionId(sessionId);
       buffer.storeStatistic(data);
