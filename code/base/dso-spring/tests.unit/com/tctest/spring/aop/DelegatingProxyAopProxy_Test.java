@@ -37,7 +37,7 @@ public class DelegatingProxyAopProxy_Test extends TCTestCase {
     ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext(BEAN_CONFIG);
     IDelegatingProxyTarget proxy = (IDelegatingProxyTarget) ctx.getBean("testAfterReturningAdviceDelegating");
     assertNotNull(proxy);
-    String stuff = proxy.returnStuff("fuzzy");
+    proxy.returnStuff("fuzzy");
     assertEquals("returnStuff after-returning(stuff) args(fuzzy) this(" + proxy.getClass().getName() + ") ", Logger.log);
   }
 

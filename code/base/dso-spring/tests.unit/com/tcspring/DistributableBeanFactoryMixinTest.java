@@ -40,8 +40,8 @@ public class DistributableBeanFactoryMixinTest extends MockObjectTestCase {
 
   private HashMap                       singletonCache;
 
-  private Object                        localBean;
-  private Object                        distributedBean;
+//  private Object                        localBean;
+//  private Object                        distributedBean;
 
   protected void setUp() {
     dsoContextMock = mock(DSOContext.class);
