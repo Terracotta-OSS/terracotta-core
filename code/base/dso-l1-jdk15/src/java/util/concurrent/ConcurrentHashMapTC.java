@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package java.util.concurrent;
 
@@ -35,6 +36,7 @@ public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements T
   // ConcurrentHashMap class, these abstract methods are simply ignored. They
   // are implemented during the actual instrumentation of ConcurrentHashMap.
   abstract void __tc_fullyReadLock();
+
   abstract void __tc_fullyReadUnlock();
 
   /*
@@ -67,8 +69,7 @@ public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements T
 
     if (System.identityHashCode(obj) == i) {
       if (flag) {
-        if (__tc_managed() != null || ManagerUtil.isCreationInProgress())
-          useObjectIDHashCode = true;
+        if (__tc_managed() != null || ManagerUtil.isCreationInProgress()) useObjectIDHashCode = true;
       } else {
         useObjectIDHashCode = true;
       }
@@ -90,41 +91,45 @@ public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements T
   }
 
   private boolean __tc_isDsoHashRequired(Object obj) {
-    return __tc_managed() == null
-      || ManagerUtil.lookupExistingOrNull(obj) != null
-      || obj.hashCode() != System.identityHashCode(obj);
+    return __tc_managed() == null || ManagerUtil.lookupExistingOrNull(obj) != null
+           || obj.hashCode() != System.identityHashCode(obj);
   }
 
+  void __tc_dummy() {
+    // XXX: this method can removed when this hashing nonsense is cleaned up (CDV-615)
+    if (false) {
+      __tc_hash(this);
+      __tc_isDsoHashRequired(this);
+    }
+    throw new AssertionError();
+  }
 
   /*
-   * Provides access to the real entryset that is wrapped by the
-   * ConcurrentHashMapEntrySetWrapper.
+   * Provides access to the real entryset that is wrapped by the ConcurrentHashMapEntrySetWrapper.
    */
   public Set __tc_delegateEntrySet() {
     Set set = entrySet();
     if (set instanceof ConcurrentHashMapEntrySetWrapper) {
-      return ((ConcurrentHashMapEntrySetWrapper)set).getDelegateEntrySet();
+      return ((ConcurrentHashMapEntrySetWrapper) set).getDelegateEntrySet();
     } else {
       return set;
     }
   }
 
-
   /*
    * CHM-wide locking methods
    */
   private void __tc_fullyWriteLock() {
-    for(int i = 0; i < segments.length; i++) {
+    for (int i = 0; i < segments.length; i++) {
       segments[i].lock();
     }
   }
 
   private void __tc_fullyWriteUnlock() {
-    for(int i = 0; i < segments.length; i++) {
+    for (int i = 0; i < segments.length; i++) {
       segments[i].unlock();
     }
   }
-
 
   /*
    * TCMap methods
@@ -167,8 +172,8 @@ public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements T
     Object[] tmp = new Object[entrySetSize];
     int index = -1;
     for (Iterator i = fullEntrySet.iterator(); i.hasNext();) {
-      Map.Entry e = (Map.Entry)i.next();
-      if (((TCMapEntry)e).__tc_isValueFaultedIn()) {
+      Map.Entry e = (Map.Entry) i.next();
+      if (((TCMapEntry) e).__tc_isValueFaultedIn()) {
         index++;
         tmp[index] = new ConcurrentHashMapEntrySetWrapper.EntryWrapper(this, e);
       }
@@ -190,14 +195,12 @@ public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements T
 
       int cleared = 0;
       for (Iterator i = __tc_delegateEntrySet().iterator(); i.hasNext() && toClear > cleared;) {
-        Map.Entry e = (Map.Entry)i.next();
-        if (((TCMapEntry)e).__tc_isValueFaultedIn()
-            && e.getValue() instanceof Manageable) {
-          Manageable m = (Manageable)e.getValue();
+        Map.Entry e = (Map.Entry) i.next();
+        if (((TCMapEntry) e).__tc_isValueFaultedIn() && e.getValue() instanceof Manageable) {
+          Manageable m = (Manageable) e.getValue();
           TCObject tcObject = m.__tc_managed();
-          if (tcObject != null
-              && !tcObject.recentlyAccessed()) {
-            ((TCMapEntry)e).__tc_rawSetValue(tcObject.getObjectID());
+          if (tcObject != null && !tcObject.recentlyAccessed()) {
+            ((TCMapEntry) e).__tc_rawSetValue(tcObject.getObjectID());
             cleared++;
           }
         }
@@ -207,7 +210,7 @@ public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements T
       __tc_fullyWriteUnlock();
     }
   }
-  
+
   // TODO: ImplementMe XXX
   public void __tc_put_logical(Object key, Object value) {
     throw new UnsupportedOperationException();

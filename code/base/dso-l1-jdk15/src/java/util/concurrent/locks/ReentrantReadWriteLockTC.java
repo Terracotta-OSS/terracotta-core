@@ -21,6 +21,14 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
   private ReentrantReadWriteLock.WriteLock writerLock;
   private Sync                             sync;
 
+  public ReentrantReadWriteLock.WriteLock writeLock() {
+    return writerLock;
+  }
+
+  public ReentrantReadWriteLock.ReadLock readLock() {
+    return readerLock;
+  }
+
   private static class DsoLock {
     private final Object lock;
     private final int    lockLevel;
@@ -66,8 +74,7 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
 
     public String getLockState(int level) {
       return (ManagerUtil.isLocked(lock, level) ? (ManagerUtil.isHeldByCurrentThread(lock, level) ? "[Locally locked]"
-          : "[Remotelly locked]")
-          : "[Unlocked]");
+          : "[Remotelly locked]") : "[Unlocked]");
     }
 
   }
@@ -75,7 +82,7 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
   public static class ReadLock extends ReentrantReadWriteLock.ReadLock implements Manageable {
     private volatile transient TCObject $__tc_MANAGED;
     private transient DsoLock           dsoLock;
-    private Sync                      sync;
+    private Sync                        sync;
 
     protected ReadLock(ReentrantReadWriteLockTC lock, Sync sync) {
       super(lock);
@@ -126,7 +133,6 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
                                                              "You are attempting to share a ReentrantReadWriteLock.ReadLock when it is in a locked state. Lock cannot be shared while locked."); }
     }
 
-
     public String toString() {
       if (ManagerUtil.isManaged(this)) {
         String objectString = getClass().getName() + "@" + Integer.toHexString(hashCode());
@@ -157,7 +163,7 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
   public static class WriteLock extends ReentrantReadWriteLock.WriteLock implements TCLock, Manageable {
     private volatile transient TCObject $__tc_MANAGED;
     private transient DsoLock           dsoLock;
-    private Sync                      sync;
+    private Sync                        sync;
 
     protected WriteLock(ReentrantReadWriteLockTC lock, Sync sync) {
       super(lock);
