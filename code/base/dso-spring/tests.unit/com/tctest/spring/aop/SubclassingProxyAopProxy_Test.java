@@ -36,7 +36,7 @@ public class SubclassingProxyAopProxy_Test extends TCTestCase {
     ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext(BEAN_CONFIG);
     SubclassingProxyTarget proxy = (SubclassingProxyTarget) ctx.getBean("testAfterReturningAdviceSubclassing");
     assertNotNull(proxy);
-    String stuff = proxy.returnStuff("fuzzy");
+    proxy.returnStuff("fuzzy");
     assertEquals("returnStuff after-returning(stuff) args(fuzzy) this(" + proxy.getClass().getName() + ") ", Logger.log);
   }
 
