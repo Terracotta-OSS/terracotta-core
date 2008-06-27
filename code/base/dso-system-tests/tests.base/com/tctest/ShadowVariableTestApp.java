@@ -36,7 +36,7 @@ public class ShadowVariableTestApp extends AbstractTransparentApp {
 
     Assert.eval(root.getBaseMyNumber().equals(new Integer(1)));
     Assert.eval(root.getSubMyNumber().equals(new Integer(2)));
-    
+
     Assert.assertEquals(0, root.getPublicInt());
   }
 
@@ -53,10 +53,9 @@ public class ShadowVariableTestApp extends AbstractTransparentApp {
 
   private static class ShadowBase {
     // NOTE: It is very important that the shadow fields be of the exact same type
+    // STOP: These fields are "shadowed" on purpose -- do not rename to fix eclipse warnings
     private Integer     myNumber = null;
-
     protected final int finalInt = 1;
-    
     public int publicInt = 10;
 
     public int getFinalInt() {
@@ -70,19 +69,18 @@ public class ShadowVariableTestApp extends AbstractTransparentApp {
     public Integer getBaseMyNumber() {
       return this.myNumber;
     }
-    
+
     public int getPublicInt() {
       return publicInt;
-    }   
+    }
 
   }
 
   private static class ShadowSub extends ShadowBase {
     // NOTE: It is very important that the shadow fields be of the exact same type
+    // STOP: These fields are "shadowed" on purpose -- do not rename to fix eclipse warnings
     private Integer     myNumber = null;
-
     protected final int finalInt = 2;
-    
     public int publicInt;
 
     public int getFinalInt() {
@@ -96,11 +94,11 @@ public class ShadowVariableTestApp extends AbstractTransparentApp {
     public Integer getSubMyNumber() {
       return this.myNumber;
     }
-    
+
     public int getPublicInt() {
       return publicInt;
     }
-    
+
     public void setPublicInt(int i) {
       publicInt = i;
       super.publicInt = i;

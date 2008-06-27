@@ -44,6 +44,10 @@ public class ApplicationEventTestApp extends AbstractTransparentApp {
     UNDEFINED, LOGICAL_INVOKE, FIELD_SET, ROOT
   }
 
+  Object getNonPortableRoot() {
+    return nonPortableRoot;
+  }
+
   public ApplicationEventTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     jmxPort = (Integer) cfg.getAttributeObject("jmx-port");
@@ -253,7 +257,7 @@ public class ApplicationEventTestApp extends AbstractTransparentApp {
   }
 
   private static class Struct {
-    private Object field;
+    Object field;
   }
 
   private static class Root {

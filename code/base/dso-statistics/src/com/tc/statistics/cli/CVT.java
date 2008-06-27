@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.statistics.cli;
 
@@ -9,6 +10,7 @@ import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.MissingArgumentException;
 import org.apache.commons.cli.MissingOptionException;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
@@ -26,33 +28,32 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class CVT {
-  private final static ResourceBundleHelper BUNDLE_HELPER = new ResourceBundleHelper(CVT.class);
-  private final static Pattern SCRIPT_COMMANDS_PATTERN = Pattern.compile("(?:(?<=\\s+\")[^\"]++(?=\"\\s+))|(?:[^\\s\"]+)", Pattern.MULTILINE);
-  private final static Pattern STRIP_NEWLINES = Pattern.compile("[\n\r]", Pattern.MULTILINE);
+  private final static ResourceBundleHelper BUNDLE_HELPER           = new ResourceBundleHelper(CVT.class);
+  private final static Pattern              SCRIPT_COMMANDS_PATTERN = Pattern
+                                                                        .compile(
+                                                                                 "(?:(?<=\\s+\")[^\"]++(?=\"\\s+))|(?:[^\\s\"]+)",
+                                                                                 Pattern.MULTILINE);
+  private final static Pattern              STRIP_NEWLINES          = Pattern.compile("[\n\r]", Pattern.MULTILINE);
 
-  private final CliCommands commands;
-  private final Options options;
+  private final CliCommands                 commands;
+  private final Options                     options;
 
   public CVT() {
     commands = new CliCommands();
-    
-    options = new Options()
-      .addOption("h", "help", false, BUNDLE_HELPER.getString("option.help"))
-      .addOption(OptionBuilder.hasArg()
-        .withArgName("number")
-        .withDescription(BUNDLE_HELPER.getString("option.port"))
-        .withLongOpt("port")
-        .create("p"))
-      .addOption(OptionBuilder.hasArg()
-        .withArgName("hostname|ip")
-        .withDescription(BUNDLE_HELPER.getString("option.host"))
-        .withLongOpt("host")
-        .create("H"))
-      .addOption(OptionBuilder.hasArg()
-        .withArgName("filename")
-        .withDescription(BUNDLE_HELPER.getString("option.file"))
-        .withLongOpt("file")
-        .create("f"));
+
+    options = new Options();
+    options.addOption("h", "help", false, BUNDLE_HELPER.getString("option.help"));
+    options.addOption(createOption("number", "option.port", "port", "p"));
+    options.addOption(createOption("hostname|ip", "option.host", "host", "H"));
+    options.addOption(createOption("filename", "option.file", "file", "f"));
+  }
+
+  private static Option createOption(String argName, String descString, String longOpt, String opt) {
+    OptionBuilder.hasArg();
+    OptionBuilder.withArgName(argName);
+    OptionBuilder.withDescription(BUNDLE_HELPER.getString(descString));
+    OptionBuilder.withLongOpt(longOpt);
+    return OptionBuilder.create(opt);
   }
 
   private void run(final String[] args) throws Exception {
@@ -78,9 +79,7 @@ public class CVT {
 
     if (cli.hasOption("f")) {
       String filename = cli.getOptionValue("f");
-      if (!extractCommandsFromScript(aggregated_commands, filename)) {
-        return;
-      }
+      if (!extractCommandsFromScript(aggregated_commands, filename)) { return; }
     }
     aggregated_commands.addAll(cli.getArgList());
 
@@ -131,18 +130,19 @@ public class CVT {
   private void printHelp() {
     PrintWriter writer = new PrintWriter(System.out);
     HelpFormatter formatter = new HelpFormatter();
-    formatter.printHelp(writer, HelpFormatter.DEFAULT_WIDTH, "java " + CVT.class.getName() + " [OPTION]... [COMMAND [ARGUMENTS]]...", "Options:", options, HelpFormatter.DEFAULT_LEFT_PAD, HelpFormatter.DEFAULT_DESC_PAD, null);
+    formatter.printHelp(writer, HelpFormatter.DEFAULT_WIDTH, "java " + CVT.class.getName()
+                                                             + " [OPTION]... [COMMAND [ARGUMENTS]]...", "Options:",
+                        options, HelpFormatter.DEFAULT_LEFT_PAD, HelpFormatter.DEFAULT_DESC_PAD, null);
 
     writer.println();
     writer.println("Commands:");
-    for (Iterator it = commands.getSupportedCommands().iterator(); it.hasNext(); ) {
-      CliCommand command = (CliCommand)it.next();
+    for (Iterator it = commands.getSupportedCommands().iterator(); it.hasNext();) {
+      CliCommand command = (CliCommand) it.next();
       StringBuffer buffer = new StringBuffer();
       buffer.append(" ");
       buffer.append(command.getCommandName());
       String[] argument_names = command.getArgumentNames();
-      if (argument_names != null &&
-          argument_names.length > 0) {
+      if (argument_names != null && argument_names.length > 0) {
         for (int i = 0; i < argument_names.length; i++) {
           buffer.append(" <");
           buffer.append(argument_names[i]);

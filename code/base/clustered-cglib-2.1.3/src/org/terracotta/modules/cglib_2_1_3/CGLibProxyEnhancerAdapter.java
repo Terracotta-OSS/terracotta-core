@@ -27,18 +27,15 @@ import java.util.Iterator;
 import java.util.List;
 
 public class CGLibProxyEnhancerAdapter extends ClassAdapter implements ClassAdapterFactory, Opcodes {
-  private final ClassLoader caller;
   private final Bundle bundle;
 
   public CGLibProxyEnhancerAdapter(Bundle bundle) {
     super(null);
-    this.caller = null;
     this.bundle = bundle;
   }
 
   private CGLibProxyEnhancerAdapter(ClassVisitor cv, ClassLoader caller, Bundle bundle) {
     super(cv);
-    this.caller = caller;
     this.bundle = bundle;
   }
 

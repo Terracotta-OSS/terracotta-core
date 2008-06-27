@@ -27,7 +27,6 @@ public class SingletonTest extends SpringDeploymentTest {
   private Deployment          deployment;
 
   private String              context                       = "test-singleton";
-  private String              url                           = "/test-singleton";
 
   public static Test suite() {
     return new ServerTestSetup(SingletonTest.class);

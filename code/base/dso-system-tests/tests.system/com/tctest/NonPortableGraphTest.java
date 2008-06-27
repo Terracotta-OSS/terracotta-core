@@ -100,6 +100,14 @@ public class NonPortableGraphTest extends TransparentTestBase {
       assertTrue(dsoLogs.getCurrentLogEvent().replaceAll("\\s", "").indexOf(log1.replaceAll("\\s", "")) > 0);
     }
 
+    Portable getPortable() {
+      return portable;
+    }
+
+    NonPortable getNon_portable() {
+      return non_portable;
+    }
+
     private static class NonPortable {
       Map map = new HashMap();
 

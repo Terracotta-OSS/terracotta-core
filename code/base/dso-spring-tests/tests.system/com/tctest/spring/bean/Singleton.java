@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.spring.bean;
 
@@ -13,11 +14,11 @@ public class Singleton implements ISingleton, Serializable {
 
   private int               counter           = 0;
   private boolean           sharedBoolean;
-  
+
   private List              recorder;
   private List              localRecorder     = new ArrayList();
   private transient List    transientRecorder = new ArrayList();
- 
+
   // InitializingBean
   public void afterPropertiesSet() throws Exception {
     final String msg = "afterPropertiesSet";
@@ -45,6 +46,10 @@ public class Singleton implements ISingleton, Serializable {
         r.add(Thread.currentThread().getName() + " " + msg);
       }
     }
+  }
+
+  boolean getTransientBoolean() {
+    return transientBoolean;
   }
 
   public void setRecorder(List recorder) {
@@ -79,11 +84,11 @@ public class Singleton implements ISingleton, Serializable {
   public void setTransientValue(String transientValue) {
     this.transientValue = transientValue;
   }
-  
+
   public synchronized void resetCounter() {
     this.counter = 0;
   }
-  
+
   public String toString() {
     return "Singleton:" + counter + " " + transientValue;
   }

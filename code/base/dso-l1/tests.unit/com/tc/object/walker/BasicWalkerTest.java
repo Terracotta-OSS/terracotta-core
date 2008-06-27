@@ -123,7 +123,7 @@ public class BasicWalkerTest extends TestCase {
 
   private static class MyWalkTestImpl implements WalkTest {
     private static Set logicalTypes = new HashSet();
-    
+
     static {
       logicalTypes.add(ArrayList.class);
       logicalTypes.add(HashMap.class);
@@ -131,7 +131,7 @@ public class BasicWalkerTest extends TestCase {
       logicalTypes.add(LinkedHashMap.class);
       logicalTypes.add(LinkedList.class);
     }
-    
+
     public boolean includeFieldsForType(Class type) {
       return !logicalTypes.contains(type);
     }
@@ -187,13 +187,21 @@ public class BasicWalkerTest extends TestCase {
   }
 
   private static class B extends A {
-    // this variable is "shadowed" on purpose, please do not rename them to remove the eclipse warning
+    // STOP: this variable is "shadowed" on purpose, please do not rename them to remove the eclipse warning
     private int i = 1;
+
+    public int getI() {
+      return i;
+    }
   }
 
   private static class A {
-    // this variable is "shadowed" on purpose, please do not rename them to remove the eclipse warning
+    // STOP: this variable is "shadowed" on purpose, please do not rename them to remove the eclipse warning
     private int i = 0;
+
+    public int getI() {
+      return i;
+    }
   }
 
   private static class Foo {
