@@ -118,7 +118,7 @@ public final class ContainerHibernateTestServlet extends HttpServlet {
     Statistics stats = HibernateUtil.getSessionFactory().getStatistics();
     stats.setStatisticsEnabled(true);
     
-    // this will get the data from ehcache
+    // this will get the data from ehcache, events=List<Event>
     List events = mgr.listEvents();
 
     Session session = HibernateUtil.getSessionFactory().getCurrentSession();
@@ -126,7 +126,7 @@ public final class ContainerHibernateTestServlet extends HttpServlet {
 
     // reassociate transient pojos to this session
     for (Iterator it = events.iterator(); it.hasNext();) {
-      session.lock((Event) it.next(), LockMode.NONE);
+      session.lock(it.next(), LockMode.NONE);
     }
     
     System.out.println("events: " + events);
