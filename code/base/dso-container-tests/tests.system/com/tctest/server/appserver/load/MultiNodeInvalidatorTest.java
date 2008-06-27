@@ -41,6 +41,11 @@ public class MultiNodeInvalidatorTest extends AbstractDeploymentTest {
   private Deployment          deployment;
   private TcConfigBuilder     configBuilder;
 
+  public MultiNodeInvalidatorTest() {
+    disableAllUntil("2008-07-14");
+  }
+
+
   private Deployment makeDeployment() throws Exception {
     DeploymentBuilder builder = makeDeploymentBuilder(CONTEXT + ".war");
     builder.addListener(MultiNodeInvalidatorListener.class);
