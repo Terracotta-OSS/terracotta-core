@@ -12,9 +12,13 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.store.RAMDirectory;
 
+import EDU.oswego.cs.dl.util.concurrent.BrokenBarrierException;
+import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
+
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
@@ -22,26 +26,23 @@ import com.tc.util.TIMUtil;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.util.Iterator;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
 
 /**
  * RAMDirectory clustering test
- * 
+ *
  * @author jgalang
  */
 public class RAMDirectoryTestApp extends AbstractErrorCatchingTransparentApp {
 
-  static final int               EXPECTED_THREAD_COUNT = 2;
+  static final int                                             EXPECTED_THREAD_COUNT = 2;
 
-  private final CyclicBarrier    barrier;
+  private final EDU.oswego.cs.dl.util.concurrent.CyclicBarrier barrier;
 
-  private final RAMDirectory     clusteredDirectory;
+  private final RAMDirectory                                   clusteredDirectory;
 
-  private final StandardAnalyzer analyzer;
+  private final StandardAnalyzer                               analyzer;
 
   /**
-   * 
    * @param appId
    * @param cfg
    * @param listenerProvider
@@ -55,11 +56,12 @@ public class RAMDirectoryTestApp extends AbstractErrorCatchingTransparentApp {
 
   /**
    * Inject Lucene 2.0.0 configuration, and instrument this test class
-   * 
+   *
    * @param visitor
    * @param config
    */
   public static void visitL1DSOConfig(final ConfigVisitor visitor, final DSOClientConfigHelper config) {
+    new CyclicBarrierSpec().visit(visitor, config);
     config.addModule(TIMUtil.LUCENE_2_0_0, TIMUtil.getVersion(TIMUtil.LUCENE_2_0_0));
 
     final String testClass = RAMDirectoryTestApp.class.getName();
@@ -72,7 +74,7 @@ public class RAMDirectoryTestApp extends AbstractErrorCatchingTransparentApp {
    * Test that the data written in the clustered RAMDirectory by one node, becomes available in the other.
    */
   protected void runTest() throws Throwable {
-    if (barrier.await() == 0) {
+    if (barrier.barrier() == 0) {
       addDataToMap("DATA1");
       letOtherNodeProceed();
       waitForPermissionToProceed();
@@ -83,22 +85,22 @@ public class RAMDirectoryTestApp extends AbstractErrorCatchingTransparentApp {
       addDataToMap("DATA2");
       letOtherNodeProceed();
     }
-    barrier.await();
+    barrier.barrier();
   }
 
   // This is lame but it makes runTest() slightly more readable
   private void letOtherNodeProceed() throws InterruptedException, BrokenBarrierException {
-    barrier.await();
+    barrier.barrier();
   }
 
   // This is lame but it makes runTest() slightly more readable
   private void waitForPermissionToProceed() throws InterruptedException, BrokenBarrierException {
-    barrier.await();
+    barrier.barrier();
   }
 
   /**
    * Add datum to RAMDirectory
-   * 
+   *
    * @param value The datum to add
    * @throws Throwable
    */
@@ -108,7 +110,7 @@ public class RAMDirectoryTestApp extends AbstractErrorCatchingTransparentApp {
     doc.add(new Field("value", value, Field.Store.YES, Field.Index.TOKENIZED));
 
     final IndexWriter writer = new IndexWriter(this.clusteredDirectory, this.analyzer,
-        this.clusteredDirectory.list().length == 0);
+                                               this.clusteredDirectory.list().length == 0);
     writer.addDocument(doc);
     writer.optimize();
     writer.close();
@@ -116,7 +118,7 @@ public class RAMDirectoryTestApp extends AbstractErrorCatchingTransparentApp {
 
   /**
    * Attempt to retrieve datum from RAMDirectory.
-   * 
+   *
    * @param value The datum to retrieve
    * @throws Exception
    */

@@ -72,6 +72,9 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
     // being loaded by a child class loader as this would result in a
     // ClassCircularityError exception
     InitialClassDumper dummy = InitialClassDumper.INSTANCE;
+    if (false && dummy != dummy) {
+      // silence eclipse warning
+    }
   }
 
   private static final TCLogger       consoleLogger = CustomerLogging.getConsoleLogger();

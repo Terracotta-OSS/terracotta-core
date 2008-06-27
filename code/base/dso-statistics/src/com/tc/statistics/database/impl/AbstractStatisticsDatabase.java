@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.statistics.database.impl;
 
@@ -33,8 +34,8 @@ import java.util.Map;
 import java.util.Set;
 
 public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
-  protected final Map preparedStatements = new CopyOnWriteArrayMap();
-  
+  protected final Map           preparedStatements = new CopyOnWriteArrayMap();
+
   protected volatile Connection connection;
 
   protected synchronized void open(final String driver) throws StatisticsDatabaseException {
@@ -50,11 +51,9 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
   }
 
   protected abstract void openConnection() throws StatisticsDatabaseException;
-  
+
   public void ensureExistingConnection() throws StatisticsDatabaseException {
-    if (null == connection) {
-      throw new StatisticsDatabaseNotReadyException();
-    }
+    if (null == connection) { throw new StatisticsDatabaseNotReadyException(); }
   }
 
   public Connection getConnection() {
@@ -66,7 +65,7 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
 
     try {
       PreparedStatement stmt = connection.prepareStatement(sql);
-      PreparedStatement previous = (PreparedStatement)preparedStatements.put(sql, stmt);
+      PreparedStatement previous = (PreparedStatement) preparedStatements.put(sql, stmt);
       if (previous != null) {
         previous.close();
       }
@@ -77,14 +76,12 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
   }
 
   public PreparedStatement getPreparedStatement(final String sql) {
-    return (PreparedStatement)preparedStatements.get(sql);
+    return (PreparedStatement) preparedStatements.get(sql);
   }
 
   public void createVersionTable() throws SQLException {
-    JdbcHelper.executeUpdate(getConnection(),
-        "CREATE TABLE IF NOT EXISTS dbstructureversion (" +
-          "version INT NOT NULL PRIMARY KEY, "+
-          "created TIMESTAMP NOT NULL)");
+    JdbcHelper.executeUpdate(getConnection(), "CREATE TABLE IF NOT EXISTS dbstructureversion ("
+                                              + "version INT NOT NULL PRIMARY KEY, " + "created TIMESTAMP NOT NULL)");
   }
 
   // TODO: Currently version checks just fail hard when they don't match, in the future this should
@@ -94,7 +91,10 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
     Assert.assertNotNull("Expected the checksum of SQL statements to be calculated at this time.", csc);
 
     long checksum = csc.checksum();
-    Assert.assertTrue("The checksum of the SQL that creates the database structure doesn't correspond to the checksum that corresponds to the version number of the database structure. Any significant change to the database structure should increase the version number and adapt the SQL checksum. The current checksum is "+checksum+"L.", currentChecksum == checksum);
+    Assert
+        .assertTrue(
+                    "The checksum of the SQL that creates the database structure doesn't correspond to the checksum that corresponds to the version number of the database structure. Any significant change to the database structure should increase the version number and adapt the SQL checksum. The current checksum is "
+                        + checksum + "L.", currentChecksum == checksum);
 
     final Integer[] version = new Integer[1];
     final Date[] created = new Date[1];
@@ -103,14 +103,15 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
       getConnection().setAutoCommit(false);
       try {
         try {
-          JdbcHelper.executeQuery(getConnection(), "SELECT version, created FROM dbstructureversion", new ResultSetHandler() {
-            public void useResultSet(ResultSet resultSet) throws SQLException {
-              if (resultSet.next()) {
-                version[0] = new Integer(resultSet.getInt("version"));
-                created[0] = resultSet.getTimestamp("created");
-              }
-            }
-          });
+          JdbcHelper.executeQuery(getConnection(), "SELECT version, created FROM dbstructureversion",
+                                  new ResultSetHandler() {
+                                    public void useResultSet(ResultSet resultSet) throws SQLException {
+                                      if (resultSet.next()) {
+                                        version[0] = new Integer(resultSet.getInt("version"));
+                                        created[0] = resultSet.getTimestamp("created");
+                                      }
+                                    }
+                                  });
         } catch (SQLException e) {
           throw new StatisticsDatabaseVersionCheckErrorException("Unexpected error while checking the version.", e);
         }
@@ -120,9 +121,11 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
         } else {
           if (version[0].intValue() < currentVersion) {
             throw new StatisticsDatabaseStructureOutdatedError(version[0].intValue(), currentVersion, created[0]);
-          } else if (version[0].intValue() > currentVersion) {
-            throw new StatisticsDatabaseStructureFuturedatedError(version[0].intValue(), currentVersion, created[0]);
-          }
+          } else if (version[0].intValue() > currentVersion) { throw new StatisticsDatabaseStructureFuturedatedError(
+                                                                                                                     version[0]
+                                                                                                                         .intValue(),
+                                                                                                                     currentVersion,
+                                                                                                                     created[0]); }
         }
 
         getConnection().commit();
@@ -139,24 +142,22 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
 
   private void storeCurrentVersion(final int currentVersion) throws StatisticsDatabaseException {
     try {
-      JdbcHelper.executeUpdate(getConnection(), "INSERT INTO dbstructureversion (version, created) VALUES (?, CURRENT_TIMESTAMP)", new PreparedStatementHandler() {
-        public void setParameters(PreparedStatement statement) throws SQLException {
-          statement.setInt(1, currentVersion);
-        }
-      });
+      JdbcHelper.executeUpdate(getConnection(),
+                               "INSERT INTO dbstructureversion (version, created) VALUES (?, CURRENT_TIMESTAMP)",
+                               new PreparedStatementHandler() {
+                                 public void setParameters(PreparedStatement statement) throws SQLException {
+                                   statement.setInt(1, currentVersion);
+                                 }
+                               });
     } catch (SQLException e) {
       throw new StatisticsDatabaseStoreVersionErrorException(currentVersion, e);
     }
   }
 
   public StatisticData getStatisticsData(String sessionId, final ResultSet resultSet) throws SQLException {
-    StatisticData data = new StatisticData()
-      .sessionId(sessionId)
-      .agentIp(resultSet.getString("agentip"))
-      .agentDifferentiator(resultSet.getString("agentdifferentiator"))
-      .moment(resultSet.getTimestamp("moment"))
-      .name(resultSet.getString("statName"))
-      .element(resultSet.getString("statElement"));
+    StatisticData data = new StatisticData().sessionId(sessionId).agentIp(resultSet.getString("agentip"))
+        .agentDifferentiator(resultSet.getString("agentdifferentiator")).moment(resultSet.getTimestamp("moment"))
+        .name(resultSet.getString("statName")).element(resultSet.getString("statElement"));
 
     long datanumber = resultSet.getLong("dataNumber");
     if (!resultSet.wasNull()) {
@@ -188,9 +189,9 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
     try {
       try {
         Set entries = preparedStatements.entrySet();
-        for (Iterator entries_it = entries.iterator(); entries_it.hasNext(); ) {
-          Map.Entry entry = (Map.Entry)entries_it.next();
-          PreparedStatement stmt = (PreparedStatement)entry.getValue();
+        for (Iterator entries_it = entries.iterator(); entries_it.hasNext();) {
+          Map.Entry entry = (Map.Entry) entries_it.next();
+          PreparedStatement stmt = (PreparedStatement) entry.getValue();
           try {
             stmt.close();
           } catch (SQLException e) {
@@ -203,19 +204,19 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
 
         preparedStatements.clear();
       } finally {
-        connection.close();
+        try {
+          connection.close();
+        } catch (SQLException e) {
+          if (exception != null) {
+            e.setNextException(exception);
+          }
+          exception = e;
+        }
       }
-    } catch (SQLException e) {
-      if (exception != null) {
-        e.setNextException(exception);
-      }
-      exception = e;
     } finally {
       connection = null;
     }
 
-    if (exception != null) {
-      throw new StatisticsDatabaseCloseErrorException(exception);
-    }
+    if (exception != null) { throw new StatisticsDatabaseCloseErrorException(exception); }
   }
 }

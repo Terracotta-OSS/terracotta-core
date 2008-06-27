@@ -14,7 +14,7 @@ import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 /**
  * Test for DEV-865
- * 
+ *
  * @author hhuynh
  */
 public class CloneExceptionTestApp extends AbstractErrorCatchingTransparentApp {
@@ -27,7 +27,7 @@ public class CloneExceptionTestApp extends AbstractErrorCatchingTransparentApp {
   protected void runTest() throws Throwable {
     synchronized (root) {
       try {
-        MyStuff cloned = (MyStuff) root.clone();
+        root.clone();
       } catch (RuntimeException e) {
         System.err.println("Expecting CloneNotSupportedException, got " + e.getCause());
         Assert.assertTrue(e.getCause() instanceof CloneNotSupportedException);

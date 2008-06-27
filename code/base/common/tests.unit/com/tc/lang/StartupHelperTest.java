@@ -32,7 +32,7 @@ public class StartupHelperTest extends TestCase {
     helper.startUp();
 
     RuntimeException thrown = (RuntimeException) error.get();
-    if (re == null) {
+    if (thrown == null) {
       fail("no exception delivered to group");
     }
 

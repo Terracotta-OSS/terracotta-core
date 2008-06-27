@@ -13,8 +13,8 @@ import java.util.Map;
 
 public class PartitionManagerTestApp {
 
-  private Map sharedMap0;
-  private Map sharedMap1;
+  private Map              sharedMap0;
+  private Map              sharedMap1;
   private static Manager[] managers = ClassProcessorHelper.getPartitionedManagers();
 
   public static void main(String[] args) {
@@ -56,9 +56,11 @@ public class PartitionManagerTestApp {
     String cmd = System.getProperty("cmd");
 
     if ("print".equals(cmd)) {
-      System.err.println("partition: " + partition + " sharedMap:"
-                         + (map == null ? "NULL" : "map:" + System.identityHashCode(map)
-                                                   + " keys:" + (map == null ? "NULL" : map.keySet().toString())));
+      System.err.println("partition: "
+                         + partition
+                         + " sharedMap:"
+                         + (map == null ? "NULL" : ("map:" + System.identityHashCode(map) + " keys:" + map.keySet()
+                             .toString())));
       System.err.println("OK");
     }
     if ("assertSize".equals(cmd)) {

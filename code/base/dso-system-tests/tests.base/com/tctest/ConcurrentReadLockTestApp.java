@@ -167,7 +167,7 @@ public class ConcurrentReadLockTestApp extends AbstractTransparentApp {
 
     barrier.barrier();
   }
-  
+
   private void testConcurrentReadBlockWithinSingleJVMOnSharedStr(int index) throws Exception {
     if (index == 0) {
       final CyclicBarrier localBarrier = new CyclicBarrier(3);
@@ -262,10 +262,19 @@ public class ConcurrentReadLockTestApp extends AbstractTransparentApp {
       super();
     }
 
+
+    public synchronized SharedObject getObj() {
+      return obj;
+    }
+
+    public synchronized String getStr() {
+      return str;
+    }
+
     public synchronized void makeShared(SharedObject object) {
       this.obj = object;
     }
-    
+
     public synchronized void makeShared(String object) {
       this.str = object;
     }

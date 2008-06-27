@@ -1,5 +1,6 @@
 /**
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test.collections;
 
@@ -51,14 +52,14 @@ public class CollectionComparerTestBase extends TCTestCase {
 
   private static class MyComparator implements EqualityComparator {
     public boolean isEquals(Object one, Object two) {
+      if ((one == null) != (two == null)) return false;
+      if (one == null) return true;
+
       if (!(one instanceof MyObj)) return false;
       if (!(two instanceof MyObj)) return false;
 
       MyObj myOne = (MyObj) one;
       MyObj myTwo = (MyObj) two;
-
-      if ((one == null) != (two == null)) return false;
-      if (one == null) return true;
 
       if (CASE_INSENSITIVE) return myOne.value.equalsIgnoreCase(myTwo.value);
       else return myOne.value.equals(myTwo.value);

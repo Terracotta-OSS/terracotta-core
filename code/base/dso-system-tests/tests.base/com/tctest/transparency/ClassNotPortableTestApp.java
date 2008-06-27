@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.transparency;
 
@@ -19,10 +20,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 import java.util.TreeMap;
 import java.util.Vector;
 
@@ -94,8 +93,6 @@ public class ClassNotPortableTestApp extends AbstractTransparentApp {
     testSuperClassNotPortable();
 
     testNonPortableClassAddedToSharedGraph();
-
-    //testSubclassOfCollections();
 
     testThreadAndSubClassOfThreads();
 
@@ -230,52 +227,6 @@ public class ClassNotPortableTestApp extends AbstractTransparentApp {
     }
   }
 
-  private void testSubclassOfCollections() {
-    int count = 13;
-    try {
-      root7 = new SubClassOfArrayList(count);
-      addSomething(root7, count);
-      System.err.println(root7);
-      throw new AssertionError("Should have failed");
-    } catch (TCNonPortableObjectError tcp) {
-      // Expected
-    }
-
-    // Should go thru fine
-    root7 = new Stack();
-    synchronized (root7) {
-      addSomething(root7, count);
-      System.err.println(root7);
-
-      root7.add(addSomething(new ArrayList(), 2));
-      root7.add(addSomething(new LinkedList(), 2));
-
-      try {
-        root7.add(addSomething(new ArrayStack(), 9));
-        throw new AssertionError("Should have failed");
-      } catch (TCNonPortableObjectError tcp) {
-        // Expected
-      }
-
-      root8 = new HashMap();
-      putSomething(root8, 3);
-      synchronized (root8) {
-
-        root8.put(new Long(count++), new TreeMap());
-        // root8.put(new Long(count ++ ), new TObjectByteHashMap());
-
-        try {
-          root8.put(new Long(count++), new MultiHashMap());
-          throw new AssertionError("Should have failed");
-        } catch (TCNonPortableObjectError tcp) {
-          // Expected
-        }
-      }
-
-      // System.err.println(root8);
-    }
-  }
-
   private void testThreadAndSubClassOfThreads() {
     if (root8 == null) {
       root8 = new HashMap();
@@ -344,24 +295,6 @@ public class ClassNotPortableTestApp extends AbstractTransparentApp {
     }
     l.add(new SubClassC());
     return l;
-  }
-
-  private Collection addSomething(Collection root, int count) {
-    while (count > 0) {
-      synchronized (root) {
-        root.add(new Long(count--));
-      }
-    }
-    return root;
-  }
-
-  private Map putSomething(Map root, int count) {
-    while (count > 0) {
-      synchronized (root) {
-        root.put(new Long(count), new Long(count--));
-      }
-    }
-    return root;
   }
 
   static class TreeNode {

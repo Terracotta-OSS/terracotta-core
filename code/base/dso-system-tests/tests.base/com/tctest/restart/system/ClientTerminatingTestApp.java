@@ -54,15 +54,14 @@ public class ClientTerminatingTestApp extends ServerCrashingAppBase {
   }
 
   public void runTest() throws Throwable {
-    List myList = new ArrayList();
+    final List myList = new ArrayList();
     synchronized (queue) {
       if (id != -1) { throw new AssertionError("Only one controller per Instance allowed. Check the Execution count"); }
       id = queue.size();
 
       debugPrintln("******* appId=[" + appId + "] id=[" + id + "]");
       queue.add(myList);
-      debugPrintln("*******  adding to queue: mylistInQueue=[" + queue.contains(myList) + "]  isNull=["
-                   + (myList == null) + "]");
+      debugPrintln("*******  adding to queue: mylistInQueue=[" + queue.contains(myList) + "]");
     }
 
     Random random = new Random();
