@@ -12,7 +12,7 @@ import java.io.IOException;
  */
 public class DataDirectoryHelper extends BaseDirectoryHelper {
 
-  public DataDirectoryHelper(Class theClass) throws IOException {
+  public DataDirectoryHelper(Class theClass) {
     this(theClass, TestConfigObject.getInstance().dataDirectoryRoot());
   }
 

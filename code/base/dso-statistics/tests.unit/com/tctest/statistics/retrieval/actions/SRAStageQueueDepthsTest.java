@@ -1,12 +1,12 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.statistics.retrieval.actions;
 
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.EventHandler;
-import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.ConfigurationContextImpl;
@@ -26,12 +26,12 @@ import junit.framework.TestCase;
 
 public class SRAStageQueueDepthsTest extends TestCase {
 
-  private StageManager stageManager;
+  private StageManager          stageManager;
   private static final String[] STAGE_NAMES = { "DUMMY1", "DUMMY2", "DUMMY3" };
 
   protected void setUp() throws Exception {
-    stageManager = new StageManagerImpl(new TCThreadGroup(
-      new ThrowableHandler(TCLogging.getLogger(StageManagerImpl.class))), new QueueFactory());
+    stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(TCLogging
+        .getLogger(StageManagerImpl.class))), new QueueFactory());
 
     for (int i = 0; i < STAGE_NAMES.length; i++) {
       createStage(STAGE_NAMES[i]);
@@ -42,20 +42,20 @@ public class SRAStageQueueDepthsTest extends TestCase {
 
   private void createStage(String stageName) {
     stageManager.createStage(stageName, new EventHandler() {
-      public void handleEvent(EventContext context) throws EventHandlerException {
-        //no-op
+      public void handleEvent(EventContext context) {
+        // no-op
       }
 
-      public void handleEvents(Collection context) throws EventHandlerException {
-        //no-op
+      public void handleEvents(Collection context) {
+        // no-op
       }
 
       public void initializeContext(ConfigurationContext context) {
-        //no-op
+        // no-op
       }
 
       public void destroy() {
-        //no-op
+        // no-op
       }
     }, 1, 100);
   }
@@ -77,7 +77,7 @@ public class SRAStageQueueDepthsTest extends TestCase {
       Assert.assertNull(statisticDatas[i].getAgentIp());
       Assert.assertNull(statisticDatas[i].getAgentDifferentiator());
       Assert.assertEquals(STAGE_NAMES[i], statisticDatas[i].getElement());
-      Assert.eval("Stage queue depth should be zero", ((Long)statisticDatas[i].getData()).longValue() == 0);
+      Assert.eval("Stage queue depth should be zero", ((Long) statisticDatas[i].getData()).longValue() == 0);
     }
 
     stageQueueDepths.disableStatisticCollection();
@@ -89,7 +89,7 @@ public class SRAStageQueueDepthsTest extends TestCase {
 
   private void assertStatCollectionStateInManager(final boolean state) {
     for (Iterator stageIterator = stageManager.getStages().iterator(); stageIterator.hasNext();) {
-      final Stage stage = (Stage)stageIterator.next();
+      final Stage stage = (Stage) stageIterator.next();
       if (state) {
         Assert.assertTrue("Stats collection should be true", stage.getSink().isStatsCollectionEnabled());
       } else {

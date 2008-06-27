@@ -5,7 +5,6 @@
 package com.tc.async.impl;
 
 import com.tc.async.api.EventContext;
-import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.async.api.SpecializedEventContext;
 
@@ -19,7 +18,7 @@ public class InBandMoveToNextSink implements SpecializedEventContext {
     this.sink = sink;
   }
 
-  public void execute() throws EventHandlerException {
+  public void execute() {
     sink.add(event);
   }
 

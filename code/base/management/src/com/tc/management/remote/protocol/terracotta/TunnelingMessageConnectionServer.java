@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.management.remote.protocol.terracotta;
 
@@ -40,7 +41,7 @@ public final class TunnelingMessageConnectionServer implements MessageConnection
     if (handler == null) { throw new IOException("Tunneling event handler must be defined in the start environment"); }
   }
 
-  public synchronized void stop() throws IOException {
+  public synchronized void stop() {
     handler = null;
   }
 

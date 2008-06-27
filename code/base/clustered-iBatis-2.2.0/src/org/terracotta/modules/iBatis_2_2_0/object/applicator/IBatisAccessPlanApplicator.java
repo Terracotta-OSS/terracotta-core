@@ -67,18 +67,17 @@ public class IBatisAccessPlanApplicator extends BaseApplicator {
     }
   }
 
-  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
-      IllegalArgumentException, ClassNotFoundException {
-    // 
+  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IllegalArgumentException {
+    //
   }
 
   public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
     String className = pojo.getClass().getName();
     writer.addPhysicalAction(CLASSNAME_FIELD_NAME, className);
-    
+
     Class clazz = (Class)getClazz(pojo);
     writer.addPhysicalAction(CLAZZ_FIELD_NAME, clazz);
-    
+
     Object propertyNames = getPropertyNames(pojo);
     Object dehydratablePropertyNames = getDehydratableObject(propertyNames, objectManager);
     writer.addPhysicalAction(PROPERTY_NAMES_FIELD_NAME, dehydratablePropertyNames);
@@ -87,7 +86,7 @@ public class IBatisAccessPlanApplicator extends BaseApplicator {
   public Object getNewInstance(ClientObjectManager objectManager, DNA dna) throws IOException, ClassNotFoundException {
     DNACursor cursor = dna.getCursor();
     Assert.assertEquals(3, cursor.getActionCount());
-    
+
     cursor.next(encoding);
     PhysicalAction a = cursor.getPhysicalAction();
     String className = (String)a.getObject();
@@ -100,18 +99,18 @@ public class IBatisAccessPlanApplicator extends BaseApplicator {
     a = cursor.getPhysicalAction();
     Object propertyNames = a.getObject();
     propertyNames = objectManager.lookupObject((ObjectID) propertyNames);
-    
+
     return create(target, className, propertyNames);
   }
 
   private Object create(Class target, String className, Object propertyNames) {
     try {
       Class clazz = target.getClassLoader().loadClass(className);
-      
+
       Constructor c = clazz.getDeclaredConstructor(new Class[]{Class.class, String[].class});
       c.setAccessible(true);
       Object o = c.newInstance(new Object[]{target, propertyNames});
-      
+
       return o;
     } catch (NoSuchMethodException e) {
       throw new TCRuntimeException(e);

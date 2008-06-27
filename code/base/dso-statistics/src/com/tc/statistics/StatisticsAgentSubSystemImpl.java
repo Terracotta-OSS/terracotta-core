@@ -154,7 +154,7 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
     server.registerMBean(statisticsManagerMBean, StatisticsMBeanNames.STATISTICS_MANAGER);
   }
 
-  public void unregisterMBeans(MBeanServer server) throws InstanceNotFoundException, MBeanRegistrationException {
+  public void unregisterMBeans(MBeanServer server) throws MBeanRegistrationException {
     try {
       server.unregisterMBean(StatisticsMBeanNames.STATISTICS_EMITTER);
     } catch (InstanceNotFoundException e) {

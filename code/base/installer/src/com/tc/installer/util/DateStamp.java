@@ -38,7 +38,7 @@ public class DateStamp extends CustomCodeAction {
    * <li>sets the InstallAnywhere variable $FORAMATTED_DATE$ with the current date whose <br>
    * date format is specified by $DATE_FORMAT$</li>
    * </ol>
-   * 
+   *
    * @see com.zerog.ia.api.pub.CustomCodeAction#install
    */
   public void install(InstallerProxy ip) throws InstallException {
@@ -58,11 +58,11 @@ public class DateStamp extends CustomCodeAction {
    * <p>
    * For the purposes of the this action (DateStamp), this method is not used.
    */
-  public void uninstall(UninstallerProxy up) throws InstallException {
+  public void uninstall(UninstallerProxy up) {
     //
   }
 
-  
+
   /**
    * Returns the current date/time in the date format specified by dateFormat
    * @param dateFormat The date format we want for the current date/time
@@ -81,7 +81,7 @@ public class DateStamp extends CustomCodeAction {
 
   /**
    * This method will be called to display a status message during the installation.
-   * 
+   *
    * @see com.zerog.ia.api.pub.CustomCodeAction#getInstallStatusMessage
    */
   public String getInstallStatusMessage() {
@@ -90,7 +90,7 @@ public class DateStamp extends CustomCodeAction {
 
   /**
    * This method will be called to display a status message during the uninstall.
-   * 
+   *
    * @see com.zerog.ia.api.pub.CustomCodeAction#getUninstallStatusMessage
    */
   public String getUninstallStatusMessage() {

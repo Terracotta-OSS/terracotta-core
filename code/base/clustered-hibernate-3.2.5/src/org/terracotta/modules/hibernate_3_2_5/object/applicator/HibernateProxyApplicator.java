@@ -134,9 +134,8 @@ public class HibernateProxyApplicator extends BaseApplicator {
     }
   }
 
-  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
-      IllegalArgumentException, ClassNotFoundException {
-    // 
+  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IllegalArgumentException {
+    //
   }
 
   public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
@@ -218,17 +217,17 @@ public class HibernateProxyApplicator extends BaseApplicator {
 
     Object hibernateProxy = createHibernateProxy(persistenceClass, entityName, interfaces, id, session,
                                                  getIdentifierMethod, setIdentifierMethod, componentIdType);
-    
+
     if (target != null) {
       Object lazyInitializer = getLazyInitializer(hibernateProxy);
       invokeMethod(ABSTRACT_LAZY_INITIALIZER_CLASS_NAME, lazyInitializer, "setImplementation", target);
     }
-    
+
     closeSession(session);
-    
+
     return hibernateProxy;
   }
-  
+
   private void closeSession(Object session) {
     try {
       Method m = session.getClass().getDeclaredMethod("close", new Class[0]);

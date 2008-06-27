@@ -10,7 +10,7 @@ import com.zerog.ia.api.pub.*;
 /**
  * DeleteDirectory deletes the specified directory. If the directory is not empty, its contents are deleted recursively
  * before it is removed.
- * 
+ *
  * @see com.acme.dialogs.CustomCodeAction
  * @version 3.0.0
  */
@@ -33,7 +33,7 @@ public class DeleteDirectory extends CustomCodeAction {
    * <li>checks the parameters' validity,</li>
    * <li>and recursively deletes the directories.</li>
    * </ol>
-   * 
+   *
    * @see com.zerog.ia.api.pub.CustomCodeAction#install
    */
   public void install(InstallerProxy ip) throws InstallException {
@@ -69,17 +69,17 @@ public class DeleteDirectory extends CustomCodeAction {
   /**
    * This is the method that is called at uninstall-time. For an example of how to effect the uninstallation of
    * something like this, please see com.acme.fileutils.CopyFile.
-   * 
+   *
    * @see com.acme.fileutils.CopyFile
    * @see com.zerog.ia.api.pub.CustomCodeAction#uninstall
    */
-  public void uninstall(UninstallerProxy up) throws InstallException {
+  public void uninstall(UninstallerProxy up) {
     //
   }
 
   /**
    * This method will be called to display a status message during the installation.
-   * 
+   *
    * @see com.zerog.ia.api.pub.CustomCodeAction#getInstallStatusMessage
    */
   public String getInstallStatusMessage() {
@@ -88,7 +88,7 @@ public class DeleteDirectory extends CustomCodeAction {
 
   /**
    * This method will be called to display a status message during the uninstall.
-   * 
+   *
    * @see com.zerog.ia.api.pub.CustomCodeAction#getUninstallStatusMessage
    */
   public String getUninstallStatusMessage() {

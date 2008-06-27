@@ -5,14 +5,12 @@
 package com.tc.admin;
 
 import org.apache.commons.httpclient.auth.AuthScope;
-import org.dijon.AbstractTreeCellRenderer;
 
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.common.MBeanServerInvocationProxy;
-import com.tc.admin.common.StatusView;
 import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.common.XTreeCellRenderer;
 import com.tc.admin.dso.ClassesNode;
@@ -35,7 +33,6 @@ import com.tc.util.concurrent.ThreadUtil;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Frame;
-import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
@@ -56,7 +53,6 @@ import javax.naming.CommunicationException;
 import javax.naming.ServiceUnavailableException;
 import javax.swing.Icon;
 import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
@@ -103,6 +99,12 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
   private static final String     HOST                = ServersHelper.HOST;
   private static final String     PORT                = ServersHelper.PORT;
   private static final String     AUTO_CONNECT        = ServersHelper.AUTO_CONNECT;
+
+  {
+    if (false && m_threadDumpsNode == null) {
+      // silence eclipse warning
+    }
+  }
 
   ClusterNode() {
     this(ConnectionContext.DEFAULT_HOST, ConnectionContext.DEFAULT_PORT, ConnectionContext.DEFAULT_AUTO_CONNECT);
@@ -1105,39 +1107,6 @@ public class ClusterNode extends ComponentNode implements ConnectionListener, No
       } else if (scm.getConnectionException() != null) { return Color.RED; }
     }
     return Color.LIGHT_GRAY;
-  }
-
-  private class ServerNodeTreeCellRenderer extends AbstractTreeCellRenderer {
-    protected StatusView m_statusView;
-
-    public ServerNodeTreeCellRenderer() {
-      super();
-
-      m_statusView = new StatusView() {
-        public void setForeground(Color fg) {
-          super.setForeground(fg);
-          if (m_label != null) {
-            m_label.setForeground(fg);
-          }
-        }
-
-        public void paint(Graphics g) {
-          super.paint(g);
-          if (hasFocus) {
-            paintFocus(g, 0, 0, getWidth(), getHeight());
-          }
-        }
-      };
-    }
-
-    public JComponent getComponent() {
-      return m_statusView;
-    }
-
-    public void setValue(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean focused) {
-      m_statusView.setIndicator(ClusterNode.this.getServerStatusColor());
-      m_statusView.setLabel(value.toString());
-    }
   }
 
   ClusterThreadDumpEntry takeThreadDump() {

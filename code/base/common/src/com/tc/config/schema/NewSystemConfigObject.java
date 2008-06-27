@@ -9,7 +9,6 @@ import org.apache.xmlbeans.XmlObject;
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.dynamic.XPathBasedConfigItem;
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.util.Assert;
 import com.terracottatech.config.ConfigurationModel;
 import com.terracottatech.config.System;
@@ -21,7 +20,7 @@ public class NewSystemConfigObject extends BaseNewConfigObject implements NewSys
 
   private final ConfigItem configurationModel;
 
-  public NewSystemConfigObject(ConfigContext context) throws ConfigurationSetupException {
+  public NewSystemConfigObject(ConfigContext context) {
     super(context);
 
     this.context.ensureRepositoryProvides(System.class);

@@ -1,15 +1,15 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.management.beans.tx;
+
+import com.tc.management.AbstractTerracottaMBean;
 
 import java.util.Map;
 
 import javax.management.NotCompliantMBeanException;
-import javax.management.openmbean.OpenDataException;
 import javax.management.openmbean.TabularData;
-
-import com.tc.management.AbstractTerracottaMBean;
 
 public final class MockClientTxMonitor extends AbstractTerracottaMBean implements ClientTxMonitorMBean {
 
@@ -70,7 +70,7 @@ public final class MockClientTxMonitor extends AbstractTerracottaMBean implement
     return 0;
   }
 
-  public TabularData getObjectCreationCountByClass() throws OpenDataException {
+  public TabularData getObjectCreationCountByClass() {
     return null;
   }
 

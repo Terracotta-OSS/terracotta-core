@@ -100,7 +100,8 @@ public class TCTestCase extends TestCase {
   // called by timer thread (ie. NOT the main thread of test case)
   private void timeoutCallback(long elapsedTime) {
     String bar = "***************************************";
-    System.err.println("\n" + bar + "\n+ TCTestCase timeout alarm going off after " + millisToMinutes(elapsedTime) + " minutes at " + new Date() + "\n" + bar + "\n");
+    System.err.println("\n" + bar + "\n+ TCTestCase timeout alarm going off after " + millisToMinutes(elapsedTime)
+                       + " minutes at " + new Date() + "\n" + bar + "\n");
     System.err.flush();
 
     doDumpServerDetails();
@@ -252,11 +253,7 @@ public class TCTestCase extends TestCase {
 
   protected final synchronized DataDirectoryHelper getDataDirectoryHelper() {
     if (dataDirectoryHelper == null) {
-      try {
-        dataDirectoryHelper = new DataDirectoryHelper(getClass());
-      } catch (IOException ioe) {
-        throw new TCRuntimeException(ioe.getLocalizedMessage(), ioe);
-      }
+      dataDirectoryHelper = new DataDirectoryHelper(getClass());
     }
 
     return dataDirectoryHelper;

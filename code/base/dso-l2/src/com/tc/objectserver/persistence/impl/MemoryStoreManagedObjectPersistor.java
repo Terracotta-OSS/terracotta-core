@@ -127,7 +127,7 @@ public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPer
     }
   }
 
-  private void loadCollection(ManagedObject mo) throws IOException, ClassNotFoundException {
+  private void loadCollection(ManagedObject mo) {
     ManagedObjectState state = mo.getManagedObjectState();
     if (PersistentCollectionsUtil.isPersistableCollectionType(state.getType())) {
       MapManagedObjectState mapState = (MapManagedObjectState) state;
@@ -158,7 +158,7 @@ public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPer
     return true;
   }
 
-  private void basicSaveCollection(ManagedObject managedObject) throws IOException {
+  private void basicSaveCollection(ManagedObject managedObject) {
     ManagedObjectState state = managedObject.getManagedObjectState();
     if (PersistentCollectionsUtil.isPersistableCollectionType(state.getType())) {
       MapManagedObjectState mapState = (MapManagedObjectState) state;

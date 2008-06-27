@@ -92,12 +92,8 @@ public class MemoryStorePersistableMap implements Map {
   }
 
   public void clear() {
-    try {
-      db.removeAll(persistor.serialize(id));
-      mapSize = 0;
-    } catch (IOException e) {
-      throw new TCRuntimeException(e);
-    }
+    db.removeAll(persistor.serialize(id));
+    mapSize = 0;
   }
 
   public Set keySet() {
@@ -146,7 +142,7 @@ public class MemoryStorePersistableMap implements Map {
   }
 
   public void commit(MemoryStoreCollectionsPersistor memeoryStoreCollectionsPersistor,
-                     MemoryDataStoreClient memoryDataStoreClient) throws IOException {
+                     MemoryDataStoreClient memoryDataStoreClient) {
     //
   }
 

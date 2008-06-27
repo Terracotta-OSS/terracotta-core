@@ -1,12 +1,12 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.beanfactory;
 
 import org.apache.xmlbeans.XmlError;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlOptions;
-import org.xml.sax.SAXException;
 
 import com.tc.config.Loader;
 import com.tc.util.Assert;
@@ -17,8 +17,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.parsers.ParserConfigurationException;
-
 /**
  * A {@link ConfigBeanFactory} that creates {@link TerracottaDomainConfigurationDocument} beans.
  */
@@ -28,8 +26,7 @@ public class TerracottaDomainConfigurationDocumentBeanFactory implements ConfigB
     // Nothing here yet.
   }
 
-  public BeanWithErrors createBean(InputStream in, String sourceDescription) throws IOException, SAXException,
-      ParserConfigurationException, XmlException {
+  public BeanWithErrors createBean(InputStream in, String sourceDescription) throws IOException, XmlException {
     Assert.assertNotBlank(sourceDescription);
 
     List errors = new ArrayList();
@@ -41,8 +38,7 @@ public class TerracottaDomainConfigurationDocumentBeanFactory implements ConfigB
     return new BeanWithErrors(document, (XmlError[]) errors.toArray(new XmlError[errors.size()]));
   }
 
-  public static XmlOptions createXmlOptions(List errors, String sourceDescription)
-      throws SAXException, ParserConfigurationException {
+  public static XmlOptions createXmlOptions(List errors, String sourceDescription) {
     ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
     Thread.currentThread().setContextClassLoader(
                                                  TerracottaDomainConfigurationDocumentBeanFactory.class

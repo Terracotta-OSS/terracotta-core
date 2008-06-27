@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -9,7 +10,6 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -18,10 +18,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GenericURLTestApp extends GenericTestApp {
-  public final static String URL_SPEC1 = "https://www.terracotta.org/path?param1=val1&param2=val2;test#reference";
-  public final static String URL_SPEC2 = "http://www.terracottatech.com:8081";
-  public final static String URL_SPEC3 = "http://user:pass@www.apple.com#ref";
-  
+  public final static String URL_SPEC1     = "https://www.terracotta.org/path?param1=val1&param2=val2;test#reference";
+  public final static String URL_SPEC2     = "http://www.terracottatech.com:8081";
+  public final static String URL_SPEC3     = "http://user:pass@www.apple.com#ref";
+
   public final static String URL_SPEC1_NEW = "https://dso.www.terracotta.org/path/tim?param1=val1&param2=val2;test#reference";
   public final static String URL_SPEC2_NEW = "http://dso.www.terracottatech.com:8081/tim";
   public final static String URL_SPEC3_NEW = "http://dso.www.apple.com/tim#ref";
@@ -32,11 +32,9 @@ public class GenericURLTestApp extends GenericTestApp {
 
   protected Object getTestObject(String testName) {
     if ("SharedURL".equals(testName)) {
-      return ((List)sharedMap.get("list1")).iterator();
-    } else if ("URLWithCustomHandler".equals(testName)){
-      return ((List)sharedMap.get("list2")).iterator();
-    }
-    
+      return ((List) sharedMap.get("list1")).iterator();
+    } else if ("URLWithCustomHandler".equals(testName)) { return ((List) sharedMap.get("list2")).iterator(); }
+
     return null;
   }
 
@@ -45,16 +43,16 @@ public class GenericURLTestApp extends GenericTestApp {
     list1.add(createURL(URL_SPEC1));
     list1.add(createURL(URL_SPEC2));
     list1.add(createURL(URL_SPEC3));
-    
+
     List list2 = new ArrayList();
     list2.add(createURLWithCustomHandler(URL_SPEC1));
     list2.add(createURLWithCustomHandler(URL_SPEC2));
     list2.add(createURLWithCustomHandler(URL_SPEC3));
-    
+
     sharedMap.put("list1", list1);
     sharedMap.put("list2", list2);
   }
-  
+
   private URL createURL(String url) {
     try {
       return new URL(url);
@@ -62,7 +60,7 @@ public class GenericURLTestApp extends GenericTestApp {
       throw new RuntimeException(e);
     }
   }
-  
+
   private URL createURLWithCustomHandler(String url) {
     try {
       return new URL(null, url, new DummyURLStreamHandler());
@@ -84,20 +82,19 @@ public class GenericURLTestApp extends GenericTestApp {
       }
     } else {
       synchronized (url) {
-        System.out.println("SharedURL : "+url);
+        System.out.println("SharedURL : " + url);
       }
     }
   }
 
   void testURLWithCustomHandler(URL url, boolean validate) throws Exception {
     if (validate) {
-      Assert.assertTrue(URL_SPEC1_NEW.equals(url.toExternalForm())
-          || URL_SPEC2_NEW.equals(url.toExternalForm())
-          || URL_SPEC3_NEW.equals(url.toExternalForm()));
+      Assert.assertTrue(URL_SPEC1_NEW.equals(url.toExternalForm()) || URL_SPEC2_NEW.equals(url.toExternalForm())
+                        || URL_SPEC3_NEW.equals(url.toExternalForm()));
     } else {
       synchronized (url) {
         url.openConnection();
-        System.out.println("URLWithCustomHandler : "+url);
+        System.out.println("URLWithCustomHandler : " + url);
       }
     }
   }
@@ -110,11 +107,12 @@ public class GenericURLTestApp extends GenericTestApp {
     String readOnlyMethodExpression = "* " + testClass + "*.*ReadOnly*(..)";
     config.addReadAutolock(readOnlyMethodExpression);
   }
-  
+
   public static class DummyURLStreamHandler extends URLStreamHandler {
-    protected URLConnection openConnection(URL u) throws IOException {
-      setURL(u, u.getProtocol(), "dso."+u.getHost(), u.getPort(), u.getFile(), u.getRef());
-      setURL(u, u.getProtocol(), u.getHost(), u.getPort(), u.getAuthority(), u.getUserInfo(), u.getPath()+"/tim", u.getQuery(), u.getRef());
+    protected URLConnection openConnection(URL u) {
+      setURL(u, u.getProtocol(), "dso." + u.getHost(), u.getPort(), u.getFile(), u.getRef());
+      setURL(u, u.getProtocol(), u.getHost(), u.getPort(), u.getAuthority(), u.getUserInfo(), u.getPath() + "/tim", u
+          .getQuery(), u.getRef());
       return null;
     }
   }

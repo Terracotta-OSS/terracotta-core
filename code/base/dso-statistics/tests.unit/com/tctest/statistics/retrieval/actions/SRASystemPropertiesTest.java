@@ -8,7 +8,6 @@ import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.retrieval.actions.SRASystemProperties;
 
 import java.io.ByteArrayInputStream;
-import java.util.Date;
 import java.util.Properties;
 
 import junit.framework.TestCase;
@@ -16,9 +15,7 @@ import junit.framework.TestCase;
 public class SRASystemPropertiesTest extends TestCase {
   public void testRetrieval() throws Exception {
     StatisticRetrievalAction action = new SRASystemProperties();
-    Date before = new Date();
     StatisticData data = action.retrieveStatisticData()[0];
-    Date after = new Date();
     assertEquals(SRASystemProperties.ACTION_NAME, data.getName());
     assertNull(data.getAgentIp());
     assertNull(data.getAgentDifferentiator());
