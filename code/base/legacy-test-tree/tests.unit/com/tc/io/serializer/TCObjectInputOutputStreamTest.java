@@ -21,6 +21,11 @@ import java.util.List;
 import java.util.Random;
 
 public class TCObjectInputOutputStreamTest extends TCTestCase {
+  
+  public TCObjectInputOutputStreamTest() {
+    // MNK-587
+    disableAllUntil("2008-07-30");
+  }
 
   public void testBasic() throws IOException, ClassNotFoundException {
     ByteArrayOutputStream bao = new ByteArrayOutputStream(1024);
