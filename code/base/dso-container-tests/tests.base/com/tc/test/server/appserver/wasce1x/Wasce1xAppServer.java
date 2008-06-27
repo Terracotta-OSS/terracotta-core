@@ -233,7 +233,7 @@ public final class Wasce1xAppServer extends AbstractAppServer {
     File config = new File(configDir + File.separator + CONFIG);
     BufferedReader reader = new BufferedReader(new FileReader(config));
     PrintWriter writer = new PrintWriter(new FileWriter(tmpConfig));
-    String line;
+    String line = null;
     boolean useServerPort = false;
     boolean useRMIPort = false;
 

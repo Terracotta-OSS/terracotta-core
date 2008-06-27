@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.webapp.servlets;
 
@@ -11,7 +12,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class RootCounterServlet extends HttpServlet {
-  private final RootCounterServlet.Counter counterObject = new Counter();
+  private transient final RootCounterServlet.Counter counterObject = new Counter();
 
   private static class Counter {
     private int counter;

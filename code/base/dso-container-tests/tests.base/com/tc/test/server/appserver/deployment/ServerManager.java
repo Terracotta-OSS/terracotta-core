@@ -29,7 +29,7 @@ import junit.framework.Assert;
 
 public class ServerManager {
 
-  protected static TCLogger           logger         = TCLogging.getLogger(ServerManager.class);
+  protected final static TCLogger     logger         = TCLogging.getLogger(ServerManager.class);
   private static int                  appServerIndex = 0;
   private final boolean               DEBUG_MODE     = false;
 
@@ -46,7 +46,7 @@ public class ServerManager {
   private final File                  tcConfigFile;
   private final TcConfigBuilder       serverTcConfig = new TcConfigBuilder();
   private final Collection            jvmArgs;
-  private static int                  serverCounter = 0;
+  private static int                  serverCounter  = 0;
 
   public ServerManager(final Class testClass, Collection extraJvmArgs) throws Exception {
     PropertiesHackForRunningInEclipse.initializePropertiesWhenRunningInEclipse();
@@ -55,7 +55,7 @@ public class ServerManager {
     installDir = config.appserverServerInstallDir();
     tempDir = TempDirectoryUtil.getTempDirectory(testClass);
     tcConfigFile = new File(tempDir, "tc-config.xml");
-    serverCounter ++;
+    serverCounter++;
     sandbox = AppServerUtil.createSandbox(tempDir);
     warDir = new File(sandbox, "war");
     jvmArgs = extraJvmArgs;
@@ -146,11 +146,11 @@ public class ServerManager {
     return appServer;
   }
 
-  public WebApplicationServer makeCoresidentWebApplicationServer(TcConfigBuilder config0, TcConfigBuilder config1, final boolean enableDebug) throws Exception {
+  public WebApplicationServer makeCoresidentWebApplicationServer(TcConfigBuilder config0, TcConfigBuilder config1,
+                                                                 final boolean enableDebug) throws Exception {
     int i = ServerManager.appServerIndex++;
-    WebApplicationServer appServer = new GenericServer(config, factory, installation,
-                                                       config0.getTcConfigFile(), config1.getTcConfigFile(), i,
-                                                       tempDir, true, enableDebug);
+    WebApplicationServer appServer = new GenericServer(config, factory, installation, config0.getTcConfigFile(),
+                                                       config1.getTcConfigFile(), i, tempDir, true, enableDebug);
     addServerToStop(appServer);
     return appServer;
   }
@@ -231,13 +231,8 @@ public class ServerManager {
     return tcConfigFile;
   }
 
-
   public String toString() {
-    return "ServerManager{" +
-           "dsoServer=" + dsoServer.toString() +
-           ", sandbox=" + sandbox.getAbsolutePath() +
-           ", warDir=" + warDir.getAbsolutePath() +
-           ", jvmArgs=" + jvmArgs +
-           '}';
+    return "ServerManager{" + "dsoServer=" + dsoServer.toString() + ", sandbox=" + sandbox.getAbsolutePath()
+           + ", warDir=" + warDir.getAbsolutePath() + ", jvmArgs=" + jvmArgs + '}';
   }
 }

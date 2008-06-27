@@ -77,7 +77,7 @@ public class DirectoryMonitor implements DirectoryMonitorMBean {
     log.debug("********* Scanner Detected " + files.size() + " Files ********* ");
   }
 
-  private class ScannerThread extends Thread {
+  private static class ScannerThread extends Thread {
     private DirectoryMonitor monitor;
 
     public ScannerThread(DirectoryMonitor m) {
@@ -86,16 +86,12 @@ public class DirectoryMonitor implements DirectoryMonitorMBean {
 
     public void run() {
       File dir = null;
-      String[] exts = null;
 
       dir = new File(monitor.getDirectory());
       if (!dir.isDirectory()) {
         log.warn(" Specified directory is invalid.");
       }
 
-      if (monitor.getExtensionList() != null) {
-        exts = monitor.getExtensionList().equals("*") ? null : monitor.getExtensionList().split(",");
-      }
       // scan for files - log when files are found.
       for (;;) {
         try {

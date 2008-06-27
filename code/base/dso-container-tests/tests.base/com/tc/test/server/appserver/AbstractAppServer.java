@@ -92,16 +92,14 @@ public abstract class AbstractAppServer implements AppServer {
   }
 
   public final static class ConsoleLogger extends AbstractLogger {
-
-    private static final DateFormat FORMAT = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss.SSS");
-
-    private final String            instance;
+    private final String instance;
 
     public ConsoleLogger(String instance) {
       this.instance = instance;
     }
 
     protected void doLog(LogLevel level, String message, String category) {
+      DateFormat FORMAT = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss.SSS");
       String msg = "[" + FORMAT.format(new Date()) + "]" + "[" + level.getLevel() + "][" + instance + "] " + message;
       System.out.println(msg);
     }

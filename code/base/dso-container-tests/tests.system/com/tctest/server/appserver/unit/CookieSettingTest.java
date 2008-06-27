@@ -31,11 +31,11 @@ import junit.framework.Test;
  * @author hhuynh
  */
 public class CookieSettingTest extends AbstractDeploymentTest {
-  private static final String         CONTEXT = "CookieSettingTest";
-  private static Deployment           deployment;
-  private static TcConfigBuilder      tcConfigBuilder;
-  private static WebApplicationServer server0;
-  private static WebApplicationServer server1;
+  private static final String  CONTEXT = "CookieSettingTest";
+  private Deployment           deployment;
+  private TcConfigBuilder      tcConfigBuilder;
+  private WebApplicationServer server0;
+  private WebApplicationServer server1;
 
   public CookieSettingTest() {
     //
@@ -52,26 +52,24 @@ public class CookieSettingTest extends AbstractDeploymentTest {
   public void setUp() throws Exception {
     super.setUp();
 
-    if (deployment == null) {
-      tcConfigBuilder = new TcConfigBuilder();
-      tcConfigBuilder.addWebApplication(CONTEXT);
+    tcConfigBuilder = new TcConfigBuilder();
+    tcConfigBuilder.addWebApplication(CONTEXT);
 
-      deployment = makeDeployment();
+    deployment = makeDeployment();
 
-      // server0 is NOT enabled with DSO
-      GenericServer.setDsoEnabled(false);
-      server0 = makeWebApplicationServer(tcConfigBuilder);
-      server0.addWarDeployment(deployment, CONTEXT);
-      setCookieForWebsphere(server0);
-      server0.start();
+    // server0 is NOT enabled with DSO
+    GenericServer.setDsoEnabled(false);
+    server0 = makeWebApplicationServer(tcConfigBuilder);
+    server0.addWarDeployment(deployment, CONTEXT);
+    setCookieForWebsphere(server0);
+    server0.start();
 
-      // server1 is enabled with DSO
-      GenericServer.setDsoEnabled(true);
-      server1 = makeWebApplicationServer(tcConfigBuilder);
-      server1.addWarDeployment(deployment, CONTEXT);
-      setCookieForWebsphere(server1);
-      server1.start();
-    }
+    // server1 is enabled with DSO
+    GenericServer.setDsoEnabled(true);
+    server1 = makeWebApplicationServer(tcConfigBuilder);
+    server1.addWarDeployment(deployment, CONTEXT);
+    setCookieForWebsphere(server1);
+    server1.start();
   }
 
   public void testCookieSetting() throws Exception {

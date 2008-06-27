@@ -40,7 +40,7 @@ public class TcConfigBuilder {
 
   public TcConfigBuilder(String resourcePath) {
     try {
-      tcConfigDocument = new Loader().parse(getClass().getResourceAsStream(resourcePath));
+      tcConfigDocument = new Loader().parse(TcConfigBuilder.class.getResourceAsStream(resourcePath));
       tcConfig = tcConfigDocument.getTcConfig();
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -101,12 +101,12 @@ public class TcConfigBuilder {
     ensureServers();
     tcConfig.getServers().getServerArray(0).setData(path);
   }
-  
+
   public void setServerStatistics(String path) {
     ensureServers();
     tcConfig.getServers().getServerArray(0).setStatistics(path);
   }
-  
+
   public void setServerLogs(int index, String path) {
     ensureServers();
     tcConfig.getServers().getServerArray(index).setLogs(path);
@@ -116,7 +116,7 @@ public class TcConfigBuilder {
     ensureServers();
     tcConfig.getServers().getServerArray(index).setData(path);
   }
-  
+
   public void setServerStatistics(int index, String path) {
     ensureServers();
     tcConfig.getServers().getServerArray(index).setStatistics(path);
@@ -131,7 +131,7 @@ public class TcConfigBuilder {
     ensureClients();
     tcConfig.getClients().setStatistics(path);
   }
-  
+
   public void addAutoLock(String pattern, String lockLevel) {
     addAutoLock(pattern, lockLevel, false);
   }

@@ -227,7 +227,6 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
       cmd.add("--port=" + adminPort);
       cmd.add(warFile.getAbsolutePath());
 
-
       for (int i = 10; i > 0; i--) {
         System.err.println("Deploying war file in " + i + " secs...");
         ThreadUtil.reallySleep(1000);
@@ -369,12 +368,11 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
 
     if (runner != null) {
       runner.join(START_STOP_TIMEOUT);
-    }
-
-    if (runner.isAlive()) {
-      Banner.errorBanner("instance still running on port " + httpPort);
-    } else {
-      System.err.println("Stopped instance on port " + httpPort);
+      if (runner.isAlive()) {
+        Banner.errorBanner("instance still running on port " + httpPort);
+      } else {
+        System.err.println("Stopped instance on port " + httpPort);
+      }
     }
 
   }

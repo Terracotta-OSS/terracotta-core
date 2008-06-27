@@ -30,8 +30,8 @@ import java.util.Set;
 public class Jetty6xAppServer extends AbstractAppServer {
   private static final String JAVA_CMD           = System.getProperty("java.home") + File.separator + "bin"
                                                    + File.separator + "java";
-  private final String        STOP_KEY           = "secret";
-  private final String        JETTY_MAIN_CLASS   = "org.mortbay.start.Main";
+  private static final String STOP_KEY           = "secret";
+  private static final String JETTY_MAIN_CLASS   = "org.mortbay.start.Main";
   private static final long   START_STOP_TIMEOUT = 240 * 1000;
 
   private static final String target             = "<SystemProperty name=\"jetty.home\" default=\".\"/>/webapps";
@@ -66,13 +66,13 @@ public class Jetty6xAppServer extends AbstractAppServer {
 
     if (runner != null) {
       runner.join(START_STOP_TIMEOUT);
+      if (runner.isAlive()) {
+        System.err.println("Instance " + instanceName + " on port " + jetty_port + " still alive.");
+      } else {
+        System.err.println("jetty instance " + instanceName + " stopped");
+      }
     }
 
-    if (runner.isAlive()) {
-      System.err.println("Instance " + instanceName + " on port " + jetty_port + " still alive.");
-    } else {
-      System.err.println("jetty instance " + instanceName + " stopped");
-    }
   }
 
   private AppServerResult startJetty(AppServerParameters params) throws Exception {

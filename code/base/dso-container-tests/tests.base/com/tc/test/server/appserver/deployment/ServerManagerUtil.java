@@ -11,10 +11,10 @@ import java.util.Collection;
 
 public class ServerManagerUtil {
 
-  protected static Log logger = LogFactory.getLog(ServerManagerUtil.class);
+  protected final static Log logger = LogFactory.getLog(ServerManagerUtil.class);
 
-  private static ServerManager start(Class testClass, boolean withPersistentStore, Collection extraJvmArgs, final boolean coresident)
-      throws Exception {
+  private static ServerManager start(Class testClass, boolean withPersistentStore, Collection extraJvmArgs,
+                                     final boolean coresident) throws Exception {
     if (!coresident) {
       ServerManager existingServerManager = getExistingServerManager();
       if (existingServerManager != null) {
@@ -51,8 +51,8 @@ public class ServerManagerUtil {
     return startAndBind(testClass, withPersistentStore, extraJvmArgs, false);
   }
 
-  public static ServerManager startAndBind(Class testClass, boolean withPersistentStore, Collection extraJvmArgs, final boolean coresident)
-      throws Exception {
+  public static ServerManager startAndBind(Class testClass, boolean withPersistentStore, Collection extraJvmArgs,
+                                           final boolean coresident) throws Exception {
     ServerManager sm = start(testClass, withPersistentStore, extraJvmArgs, coresident);
     if (!coresident) serverManagerHolder.set(sm);
     return sm;
