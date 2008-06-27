@@ -17,6 +17,10 @@ public class Event {
     return id;
   }
 
+  public void setId(Long id) {
+    this.id = id;
+  }
+
   public Date getDate() {
     return date;
   }
