@@ -14,7 +14,6 @@ import com.tc.util.Assert;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.Date;
-import java.util.Random;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -34,8 +33,6 @@ public class LinkedBlockingQueueInterruptTakeTestApp extends AbstractTransparent
   private transient Thread1 thread1;
 
   private volatile int node = -1;
-
-  private final Random random = new Random();
 
   public LinkedBlockingQueueInterruptTakeTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -136,7 +133,7 @@ public class LinkedBlockingQueueInterruptTakeTestApp extends AbstractTransparent
         } catch (InterruptedException e) {
           continue;
         }
-        
+
         try {
           if (queue.size() >= 20) {
             try {

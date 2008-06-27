@@ -19,14 +19,12 @@ import java.util.Set;
 public class LinkedHashMapMutateValidateTestApp extends AbstractMutateValidateTransparentApp {
 
   private int             upbound    = 1000;
-  private final String    appId;
   private final MapRoot   map1       = new MapRoot(upbound);
   private final MapRoot   map2       = new MapRoot(upbound + 100);
   private final EventNode eventIndex = new EventNode(0, "test");
 
   public LinkedHashMapMutateValidateTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
-    this.appId = appId;
   }
 
   protected void mutate() throws Throwable {

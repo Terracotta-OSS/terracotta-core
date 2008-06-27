@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.terracotta.dso.wizards;
 
@@ -15,11 +16,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
-import org.eclipse.jdt.core.IPackageFragment;
-import org.eclipse.jdt.core.IPackageFragmentRoot;
-import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.ui.JavaUIStatus;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.operation.IRunnableWithProgress;
@@ -131,13 +128,13 @@ public class ProjectWizard extends Wizard {
       monitor.worked(stepIndex++);
     }
 
-    //    monitor.subTask(step = "Inspecting classes");
-    //    try {
-    //      inspectProject(monitor);
-    //    } catch(Throwable t) {
-    //      handleProblem(step, t, monitor);
-    //    }
-    //    monitor.worked(stepIndex++);
+    // monitor.subTask(step = "Inspecting classes");
+    // try {
+    // inspectProject(monitor);
+    // } catch(Throwable t) {
+    // handleProblem(step, t, monitor);
+    // }
+    // monitor.worked(stepIndex++);
 
     TcPlugin.getDefault().updateDecorators();
     TcPlugin.getDefault().notifyProjectActions(m_javaProject.getProject());
@@ -239,25 +236,25 @@ public class ProjectWizard extends Wizard {
     }
   }
 
-  private void inspectProject(IProgressMonitor monitor) throws JavaModelException, CoreException {
-    TcPlugin plugin = TcPlugin.getDefault();
-    IPackageFragment[] fragments = m_javaProject.getPackageFragments();
-    IPackageFragment fragment;
-    ICompilationUnit[] cus;
-
-    for (int i = 0; i < fragments.length; i++) {
-      fragment = fragments[i];
-
-      if (fragment.getKind() == IPackageFragmentRoot.K_SOURCE) {
-        cus = fragment.getCompilationUnits();
-
-        for (int j = 0; j < cus.length; j++) {
-          monitor.subTask(cus[j].getResource().getLocation().toString());
-          plugin.inspect(cus[j]);
-        }
-      }
-    }
-  }
+  // private void inspectProject(IProgressMonitor monitor) throws JavaModelException, CoreException {
+  // TcPlugin plugin = TcPlugin.getDefault();
+  // IPackageFragment[] fragments = m_javaProject.getPackageFragments();
+  // IPackageFragment fragment;
+  // ICompilationUnit[] cus;
+  //
+  // for (int i = 0; i < fragments.length; i++) {
+  // fragment = fragments[i];
+  //
+  // if (fragment.getKind() == IPackageFragmentRoot.K_SOURCE) {
+  // cus = fragment.getCompilationUnits();
+  //
+  // for (int j = 0; j < cus.length; j++) {
+  // monitor.subTask(cus[j].getResource().getLocation().toString());
+  // plugin.inspect(cus[j]);
+  // }
+  // }
+  // }
+  // }
 
   private void buildBootJar(IProgressMonitor monitor) {
     BuildBootJarAction bbja = new BuildBootJarAction(m_javaProject);

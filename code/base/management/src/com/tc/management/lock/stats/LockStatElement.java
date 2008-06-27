@@ -445,6 +445,10 @@ public class LockStatElement implements TCSerializable, Serializable, LockTraceE
       this.maxSize = maxSize;
     }
 
+    public int getMaxSize() {
+      return maxSize;
+    }
+
     public void clear() {
       this.pendingData.clear();
       this.pendingHeldTimeData.clear();

@@ -110,10 +110,6 @@ public class LongrunningGCTestApp implements Application {
                                                    return true;
                                                  }
 
-                                                 public void setAdditivity(boolean additive) {
-                                                   return;
-                                                 }
-                                                 
                                                  public void setLevel(LogLevel level) {
                                                    return;
                                                  }

@@ -23,9 +23,9 @@ import java.util.Vector;
 
 public class LinkedHashMapClassAdapterTestApp extends AbstractTransparentApp {
 
-  private final CyclicBarrier barrier;  
+  private final CyclicBarrier barrier;
   private final Map linkedHashMap;
-  private int nodeId; 
+  private int nodeId;
 
   public LinkedHashMapClassAdapterTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -39,7 +39,7 @@ public class LinkedHashMapClassAdapterTestApp extends AbstractTransparentApp {
 
     config.getOrCreateSpec(Element.class.getName());
     config.addWriteAutolock("* " + Element.class.getName() + "*.*(..)");
-    
+
     config.getOrCreateSpec(CyclicBarrier.class.getName());
     config.addWriteAutolock("* " + CyclicBarrier.class.getName() + "*.*(..)");
     config.addWriteAutolock("* " + Hashtable.class.getName() + "*.*(..)");
@@ -47,7 +47,7 @@ public class LinkedHashMapClassAdapterTestApp extends AbstractTransparentApp {
 
     config.getOrCreateSpec(CustomLinkedHashMap.class.getName());
     config.addWriteAutolock("* " + CustomLinkedHashMap.class.getName() + "*.*(..)");
-    
+
     final String testClass = LinkedHashMapClassAdapterTestApp.class.getName();
     final TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     spec.addRoot("barrier", "barrier");
@@ -61,17 +61,17 @@ public class LinkedHashMapClassAdapterTestApp extends AbstractTransparentApp {
       getTesting();
       removeTesting();
       clearTesting();
-      //putAllTesting(); 
+      putAllTesting();
       barrier.barrier();
     } catch (Throwable t) {
       notifyError(t);
     }
   }
- 
+
   private void putTesting() throws Exception {
-    Element elem1 = new Element("key1", "value1"); 
-    Element elem2 = new Element("key2", "value2"); 
-    Element elem3 = new Element("key3", "value3"); 
+    Element elem1 = new Element("key1", "value1");
+    Element elem2 = new Element("key2", "value2");
+    Element elem3 = new Element("key3", "value3");
     put(elem1);
     put(elem2);
     put(elem3);
@@ -85,7 +85,7 @@ public class LinkedHashMapClassAdapterTestApp extends AbstractTransparentApp {
   }
 
   private void getTesting() throws Exception {
-    String expected = "value1"; 
+    String expected = "value1";
     Element actual = get("key1");
     Assert.assertEquals(expected, actual.getValue());
     barrier.barrier();
@@ -132,13 +132,13 @@ public class LinkedHashMapClassAdapterTestApp extends AbstractTransparentApp {
       linkedHashMap.put(element.getKey(), element);
     }
   }
-  
+
   private Element get(final String key) {
     synchronized(linkedHashMap) {
       return (Element)linkedHashMap.get(key);
     }
   }
-  
+
   private static final class CustomLinkedHashMap extends LinkedHashMap {
     private static final int INITIAL_CAPACITY = 100;
     private static final float GROWTH_FACTOR = .75F;
@@ -146,26 +146,26 @@ public class LinkedHashMapClassAdapterTestApp extends AbstractTransparentApp {
     public CustomLinkedHashMap() {
         super(INITIAL_CAPACITY, GROWTH_FACTOR, true);
     }
-    
+
     protected final boolean removeEldestEntry(Map.Entry eldest) {
       Element element = (Element)eldest.getValue();
       return (element.getValue() == null);
     }
   }
-  
+
   private final class Element {
     private final String key;
     private final Object value;
-    
+
     public Element(final String key, final Object value) {
       this.key = key;
       this.value = value;
     }
-    
+
     public String getKey() {
       return this.key;
     }
-    
+
     public Object getValue() {
       return this.value;
     }

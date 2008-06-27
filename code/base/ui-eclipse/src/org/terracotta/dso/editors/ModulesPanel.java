@@ -156,13 +156,13 @@ public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectS
     return m_modules != null && (m_modules.sizeOfRepositoryArray() > 0 || m_modules.sizeOfModuleArray() > 0);
   }
 
-  private void internalAddModule(String groupId, String name, String version) {
-    Module module = ensureModules().addNewModule();
-    module.setName(name);
-    module.setGroupId(groupId);
-    module.setVersion(version);
-    createModuleTableItem(module);
-  }
+  // private void internalAddModule(String groupId, String name, String version) {
+  // Module module = ensureModules().addNewModule();
+  // module.setName(name);
+  // module.setGroupId(groupId);
+  // module.setVersion(version);
+  // createModuleTableItem(module);
+  // }
 
   private void createModuleTableItem(Module module) {
     TableItem item = new TableItem(m_layout.m_moduleTable, SWT.NONE);
@@ -380,7 +380,7 @@ public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectS
         Module module = (Module) item.getData();
         if (event.index == MODULE_NAME_INDEX) {
           module.setName(text);
-        } else if(event.index == MODULE_GROUP_ID_INDEX){
+        } else if (event.index == MODULE_GROUP_ID_INDEX) {
           module.setGroupId(text);
         } else {
           module.setVersion(text);
@@ -407,17 +407,17 @@ public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectS
               tip = error.getMessage();
             } else {
               File loc = moduleInfo.getLocation();
-              if(loc != null) {
+              if (loc != null) {
                 tip = loc.getAbsolutePath();
               }
             }
           }
         }
       }
-      
+
       final IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-      if(window instanceof ApplicationWindow) {
-        ((ApplicationWindow)window).setStatus(tip);
+      if (window instanceof ApplicationWindow) {
+        ((ApplicationWindow) window).setStatus(tip);
       }
     }
   }

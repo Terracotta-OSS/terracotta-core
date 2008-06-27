@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -22,9 +23,9 @@ import java.util.Hashtable;
 
 public class HashtableCloneTestApp extends AbstractErrorCatchingTransparentApp {
 
-  private Properties rootProperties = new Properties();
+  private Properties       rootProperties   = new Properties();
   private AnotherHashtable anotherHashtable = new AnotherHashtable("aName");
-  private CyclicBarrier barrier;
+  private CyclicBarrier    barrier;
 
   public HashtableCloneTestApp(final String appId, final ApplicationConfig cfg, final ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -59,8 +60,10 @@ public class HashtableCloneTestApp extends AbstractErrorCatchingTransparentApp {
 
     barrier.barrier();
 
-    //TODO: Uncomment this line when CDV-703 is fixed
-    //testSubClass(myId);
+    // TODO: remove the if(false) when CDV-703 is fixed
+    if (false) {
+      testSubClass(myId);
+    }
   }
 
   private void testClearedReferences(final int myId) throws InterruptedException {
@@ -74,7 +77,7 @@ public class HashtableCloneTestApp extends AbstractErrorCatchingTransparentApp {
     barrier.barrier();
 
     log("Clearing value object references...");
-    ((Clearable)rootProperties).__tc_clearReferences(Integer.MAX_VALUE);
+    ((Clearable) rootProperties).__tc_clearReferences(Integer.MAX_VALUE);
 
     log("Cloning properties... " + System.identityHashCode(rootProperties));
     Object clone = rootProperties.clone();
@@ -82,8 +85,8 @@ public class HashtableCloneTestApp extends AbstractErrorCatchingTransparentApp {
     log("Asserting " + rootProperties.getClass().getName() + " equals " + clone.getClass().getName());
     Assert.assertEquals(rootProperties.getClass().getName(), clone.getClass().getName());
 
-    Properties cloneProps = (Properties)clone;
-    log("Clone.isManaged: " + ((Manageable)cloneProps).__tc_isManaged());
+    Properties cloneProps = (Properties) clone;
+    log("Clone.isManaged: " + ((Manageable) cloneProps).__tc_isManaged());
     printClassHierarchy(cloneProps);
     final Object obj = cloneProps.get("1");
 
@@ -96,13 +99,13 @@ public class HashtableCloneTestApp extends AbstractErrorCatchingTransparentApp {
 
     barrier.barrier();
 
-    //modify clone on node-1, it should not be visible on node-0
+    // modify clone on node-1, it should not be visible on node-0
     if (myId == 1) {
       cloneProps.put("1", new JunkData("secondJunk"));
     }
     barrier.barrier();
 
-    JunkData secondData = (JunkData)cloneProps.get("1");
+    JunkData secondData = (JunkData) cloneProps.get("1");
     log("firstData=" + firstData);
     log("secondData=" + secondData);
     if (myId == 0) {
@@ -114,13 +117,13 @@ public class HashtableCloneTestApp extends AbstractErrorCatchingTransparentApp {
 
     barrier.barrier();
 
-    //modify clone on node-0, it should not be visible on node-1
+    // modify clone on node-0, it should not be visible on node-1
     if (myId == 0) {
       cloneProps.put("1", new JunkData("thirdJunk"));
     }
     barrier.barrier();
 
-    JunkData thirdData = (JunkData)cloneProps.get("1");
+    JunkData thirdData = (JunkData) cloneProps.get("1");
     log("firstData=" + firstData);
     log("thirdData=" + thirdData);
     if (myId == 1) {
@@ -162,7 +165,7 @@ public class HashtableCloneTestApp extends AbstractErrorCatchingTransparentApp {
     log("Assert " + anotherHashtable.getClass().getName() + " equals " + clone.getClass().getName());
     Assert.assertEquals(anotherHashtable.getClass().getName(), clone.getClass().getName());
 
-    AnotherHashtable prop = (AnotherHashtable)clone;
+    AnotherHashtable prop = (AnotherHashtable) clone;
     Assert.assertEquals("correctValue", prop.get("key"));
     log("Asserted key-value");
   }
@@ -179,7 +182,7 @@ public class HashtableCloneTestApp extends AbstractErrorCatchingTransparentApp {
     log("Assert " + rootProperties.getClass().getName() + " equals " + clone.getClass().getName());
     Assert.assertEquals(rootProperties.getClass().getName(), clone.getClass().getName());
 
-    Properties prop = (Properties)clone;
+    Properties prop = (Properties) clone;
     Assert.assertEquals("correctValue", prop.getProperty("key"));
     log("Asserted key-value");
   }
@@ -187,7 +190,6 @@ public class HashtableCloneTestApp extends AbstractErrorCatchingTransparentApp {
   private void log(String msg) {
     System.err.println(ManagerUtil.getClientID() + ": " + msg);
   }
-
 
   private static class AnotherHashtable extends Hashtable {
 
@@ -197,12 +199,8 @@ public class HashtableCloneTestApp extends AbstractErrorCatchingTransparentApp {
       this.name = name;
     }
 
-
     public String toString() {
-      return "AnotherHashtable{" +
-             "name=" + name +
-             ", super.toString()=" + super.toString() +
-             '}';
+      return "AnotherHashtable{" + "name=" + name + ", super.toString()=" + super.toString() + '}';
     }
   }
 
@@ -217,7 +215,7 @@ public class HashtableCloneTestApp extends AbstractErrorCatchingTransparentApp {
       if (this == o) return true;
       if (!(o instanceof JunkData)) return false;
 
-      final JunkData junkData = (JunkData)o;
+      final JunkData junkData = (JunkData) o;
 
       if (junk != null ? !junk.equals(junkData.junk) : junkData.junk != null) return false;
 
@@ -228,11 +226,8 @@ public class HashtableCloneTestApp extends AbstractErrorCatchingTransparentApp {
       return (junk != null ? junk.hashCode() : 0);
     }
 
-
     public String toString() {
-      return "JunkData{" +
-             "junk='" + junk + '\'' +
-             '}';
+      return "JunkData{" + "junk='" + junk + '\'' + '}';
     }
   }
 }

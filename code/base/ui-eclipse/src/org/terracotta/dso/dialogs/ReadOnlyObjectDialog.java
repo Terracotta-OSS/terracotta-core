@@ -14,7 +14,6 @@ import com.tc.admin.common.AbstractWorkState;
 import com.tc.admin.common.ReadOnlyWorkState;
 import com.tc.object.appevent.AbstractLockEvent;
 import com.tc.object.appevent.ReadOnlyObjectEvent;
-import com.tc.object.appevent.ReadOnlyObjectEventContext;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,17 +28,17 @@ public class ReadOnlyObjectDialog extends AbstractLockDialog {
     return new ReadOnlyWorkState((ReadOnlyObjectEvent) lockEvent);
   }
 
-  private ReadOnlyWorkState getReadOnlyWorkState() {
-    return (ReadOnlyWorkState) getWorkState();
-  }
+  // private ReadOnlyWorkState getReadOnlyWorkState() {
+  // return (ReadOnlyWorkState) getWorkState();
+  // }
 
-  private ReadOnlyObjectEvent getReadOnlyObjectEvent() {
-    return (ReadOnlyObjectEvent) getApplicationEvent();
-  }
+  // private ReadOnlyObjectEvent getReadOnlyObjectEvent() {
+  // return (ReadOnlyObjectEvent) getApplicationEvent();
+  // }
 
-  private ReadOnlyObjectEventContext getReadOnlyObjectEventContext() {
-    return getReadOnlyObjectEvent().getReadOnlyObjectEventContext();
-  }
+  // private ReadOnlyObjectEventContext getReadOnlyObjectEventContext() {
+  // return getReadOnlyObjectEvent().getReadOnlyObjectEventContext();
+  // }
 
   protected String getIssueName() {
     return "Read-locked shared object modification";
@@ -58,7 +57,7 @@ public class ReadOnlyObjectDialog extends AbstractLockDialog {
   protected AbstractResolutionAction[] createActions(AbstractWorkState workState) {
     AbstractResolutionAction[] actions = super.createActions(workState);
     ArrayList list = new ArrayList(Arrays.asList(actions));
-    
+
     list.add(new AddLockAction());
 
     return (AbstractResolutionAction[]) list.toArray(new AbstractResolutionAction[0]);

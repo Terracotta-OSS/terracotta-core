@@ -47,7 +47,7 @@ public class TimeExpiryMapGlobalEvictionTest extends ServerCrashingTestBase {
     String dataRootClassName = DataRoot.class.getName();
     String expiryMapClassName = MockTimeExpiryMap.class.getName();
     String barrierClassName = CyclicBarrier.class.getName();
-    
+
     L1ConfigBuilder l1Config = cb.getClient();
     l1Config.addModule(TIMUtil.EHCACHE_1_2_4, TIMUtil.getVersion(TIMUtil.EHCACHE_1_2_4));
 
@@ -66,11 +66,11 @@ public class TimeExpiryMapGlobalEvictionTest extends ServerCrashingTestBase {
     LockConfigBuilder lock4 = new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
     lock4.setMethodExpression("* " + expiryMapClassName + "*.*(..)");
     setLockLevel(lock4);
-    
+
     LockConfigBuilder lock5 = new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
     lock5.setMethodExpression("* " + barrierClassName + "*.*(..)");
     setLockLevel(lock5);
-    
+
     cb.getApplication().getDSO().setLocks(new LockConfigBuilder[] { lock1, lock2, lock3, lock4, lock5 });
 
     RootConfigBuilder root = new RootConfigBuilderImpl();
@@ -92,22 +92,19 @@ public class TimeExpiryMapGlobalEvictionTest extends ServerCrashingTestBase {
 
     InstrumentedClassConfigBuilder instrumented4 = new InstrumentedClassConfigBuilderImpl();
     instrumented4.setClassExpression(expiryMapClassName + "*");
-    
+
     InstrumentedClassConfigBuilder instrumented5 = new InstrumentedClassConfigBuilderImpl();
     instrumented5.setClassExpression(barrierClassName + "*");
-    
-    cb.getApplication().getDSO().setInstrumentedClasses(
-                                                        new InstrumentedClassConfigBuilder[] { instrumented1,
-                                                            instrumented2, instrumented3, instrumented4, instrumented5 });
+
+    cb.getApplication().getDSO()
+        .setInstrumentedClasses(
+                                new InstrumentedClassConfigBuilder[] { instrumented1, instrumented2, instrumented3,
+                                    instrumented4, instrumented5 });
 
   }
 
   private void setLockLevel(LockConfigBuilder lock) {
     lock.setLockLevel(LockConfigBuilder.LEVEL_WRITE);
-  }
-  
-  private void setReadLockLevel(LockConfigBuilder lock) {
-    lock.setLockLevel(LockConfigBuilder.LEVEL_READ);
   }
 
 }

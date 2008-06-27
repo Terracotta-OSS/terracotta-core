@@ -14,7 +14,6 @@ import com.tc.admin.common.AbstractWorkState;
 import com.tc.admin.common.UnlockedSharedWorkState;
 import com.tc.object.appevent.AbstractLockEvent;
 import com.tc.object.appevent.UnlockedSharedObjectEvent;
-import com.tc.object.appevent.UnlockedSharedObjectEventContext;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,22 +28,22 @@ public class UnlockedSharedObjectDialog extends AbstractLockDialog {
     return new UnlockedSharedWorkState((UnlockedSharedObjectEvent) lockEvent);
   }
 
-  private UnlockedSharedWorkState getUnlockedSharedObjectWorkState() {
-    return (UnlockedSharedWorkState) getWorkState();
-  }
-
-  private UnlockedSharedObjectEvent getUnlockedSharedObjectEvent() {
-    return (UnlockedSharedObjectEvent) getApplicationEvent();
-  }
-
-  private UnlockedSharedObjectEventContext getUnlockedSharedObjectEventContext() {
-    return getUnlockedSharedObjectEvent().getUnlockedSharedObjectEventContext();
-  }
+  // private UnlockedSharedWorkState getUnlockedSharedObjectWorkState() {
+  // return (UnlockedSharedWorkState) getWorkState();
+  // }
+  //
+  // private UnlockedSharedObjectEvent getUnlockedSharedObjectEvent() {
+  // return (UnlockedSharedObjectEvent) getApplicationEvent();
+  // }
+  //
+  // private UnlockedSharedObjectEventContext getUnlockedSharedObjectEventContext() {
+  // return getUnlockedSharedObjectEvent().getUnlockedSharedObjectEventContext();
+  // }
 
   protected String getIssueName() {
     return "Unlocked shared object access";
   }
-  
+
   protected String getDialogSettingsSectionName() {
     return TcPlugin.PLUGIN_ID + ".UNLOCKED_SHARED_OBJECT_DIALOG_SECTION"; //$NON-NLS-1$
   }
@@ -58,7 +57,7 @@ public class UnlockedSharedObjectDialog extends AbstractLockDialog {
   protected AbstractResolutionAction[] createActions(AbstractWorkState workState) {
     AbstractResolutionAction[] actions = super.createActions(workState);
     ArrayList list = new ArrayList(Arrays.asList(actions));
-    
+
     list.add(new AddLockAction());
 
     return (AbstractResolutionAction[]) list.toArray(new AbstractResolutionAction[0]);
