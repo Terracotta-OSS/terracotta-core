@@ -6,14 +6,12 @@ package com.tc.object.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.management.lock.stats.LockStatisticsMessage;
 import com.tc.object.ClientConfigurationContext;
 import com.tc.object.lockmanager.api.ClientLockManager;
 
 public class LockStatisticsEnableDisableHandler extends AbstractEventHandler {
-  private static final TCLogger logger = TCLogging.getLogger(LockStatisticsEnableDisableHandler.class);
+//  private static final TCLogger logger = TCLogging.getLogger(LockStatisticsEnableDisableHandler.class);
   
   private ClientLockManager clientLockManager;
 
