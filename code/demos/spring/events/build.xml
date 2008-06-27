@@ -31,12 +31,12 @@
         <include name="commons-logging-1.0.4.jar"/>
         <include name="jstl-1.0.jar"/>
         <include name="standard-1.0.6.jar"/>
-        <include name="spring-beans-2.0.jar"/>
-        <include name="spring-context-2.0.jar"/>
-        <include name="spring-core-2.0.jar"/>
-        <include name="spring-support-2.0.jar"/>
-        <include name="spring-web-2.0.jar"/>
-        <include name="spring-webmvc-2.0.jar"/>
+        <include name="spring-beans-2.5.4.jar"/>
+        <include name="spring-context-2.5.4.jar"/>
+        <include name="spring-core-2.5.4.jar"/>
+        <include name="spring-support-2.5.4.jar"/>
+        <include name="spring-web-2.5.4.jar"/>
+        <include name="spring-webmvc-2.5.4.jar"/>
       </zipfileset>
     </zip>
   </target>

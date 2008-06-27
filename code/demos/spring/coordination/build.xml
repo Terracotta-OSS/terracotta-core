@@ -29,10 +29,10 @@
       <zipfileset dir="target/classes" prefix="WEB-INF/classes"/>        
       <zipfileset dir="lib" prefix="WEB-INF/lib">
         <include name="commons-logging-1.0.4.jar"/>
-        <include name="spring-beans-2.0.jar"/>
-        <include name="spring-context-2.0.jar"/>
-        <include name="spring-core-2.0.jar"/>
-        <include name="spring-web-2.0.jar"/>
+        <include name="spring-beans-2.5.4.jar"/>
+        <include name="spring-context-2.5.4.jar"/>
+        <include name="spring-core-2.5.4.jar"/>
+        <include name="spring-web-2.5.4.jar"/>
         <include name="dwr-1.1.3.jar"/>
       </zipfileset>
     </zip>

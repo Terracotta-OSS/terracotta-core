@@ -29,7 +29,8 @@
       <zipfileset dir="target/classes" prefix="WEB-INF/classes"/>        
       <zipfileset dir="lib" prefix="WEB-INF/lib">
         <include name="commons-logging-1.0.4.jar"/>
-        <include name="spring-2.0.jar"/>
+        <include name="spring-2.5.4.jar"/>
+        <include name="spring-webmvc-2.5.4.jar"/>
         <include name="jstl-1.0.jar"/>
         <include name="standard-1.0.6.jar"/>
       </zipfileset>
