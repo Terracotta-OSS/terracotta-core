@@ -181,8 +181,8 @@ public class Main {
         output = output.substring(0, output.lastIndexOf(".resources"));
       }
 
-      ps.println("\t<classpathentry kind=\"src\" output=\"build.eclipse/" + output + ".classes\" path=\"" + path
-                 + "\"/>");
+      ps.println("\t<classpathentry excluding=\"**/.svn/*\" kind=\"src\" output=\"build.eclipse/" + output
+                 + ".classes\" path=\"" + path + "\"/>");
     }
 
     // JDK
@@ -208,6 +208,8 @@ public class Main {
       ps.println("\t<classpathentry exported=\"true\" kind=\"lib\" path=\"" + jar + "\"/>");
 
     }
+
+    // ps.println("\t<classpathentry kind=\"output\" path=\"bin\"/>");
 
     ps.println("</classpath>");
     ps.close();
@@ -293,8 +295,9 @@ public class Main {
     String actualModuleAttr = info.getAttributes().getNamedItem("module").getNodeValue();
     if (!expectedIvyModuleAttr.equals(actualModuleAttr)) {
       //
-      throw new RuntimeException("wrong \"module\" name (" + actualModuleAttr + ") in " + ivyFile.getParentFile().getName() + "/"
-                                 + ivyFile.getName() + ", expected " + expectedIvyModuleAttr);
+      throw new RuntimeException("wrong \"module\" name (" + actualModuleAttr + ") in "
+                                 + ivyFile.getParentFile().getName() + "/" + ivyFile.getName() + ", expected "
+                                 + expectedIvyModuleAttr);
     }
 
     NodeList depsList = ivyDoc.getElementsByTagName("dependencies");
