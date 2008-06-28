@@ -16,7 +16,6 @@ import com.tc.aspectwerkz.util.ContextClassLoader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -285,7 +284,6 @@ public class AspectWerkzC {
    */
   public void compileClass(File file, String packaging) throws CompileException {
     InputStream in = null;
-    FileOutputStream fos = null;
     try {
       utility.log(" [compile] " + file.getCanonicalPath());
 
@@ -374,12 +372,7 @@ public class AspectWerkzC {
         in.close();
       } catch (Throwable e) {
         ;
-      }
-      try {
-        fos.close();
-      } catch (Throwable e) {
-        ;
-      }
+      }     
     }
   }
 

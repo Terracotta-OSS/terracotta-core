@@ -41,7 +41,6 @@ public class AutoLockMapTestApp extends GenericTestApp {
     return maps.iterator();
   }
 
-  @SuppressWarnings( { "unchecked", "unchecked" })
   protected void setupTestObject(String test) {
     List maps = new ArrayList();
     maps.add(new HashMap());
@@ -169,12 +168,9 @@ public class AutoLockMapTestApp extends GenericTestApp {
    * method will not work and will throw a NonPortableException at this point.
    */
   /*
-   * void testEntrySetToArray(Map map, boolean validate) { Object[] array = getArray(map);
-   * 
-   * if (validate) { assertArray(array, map); } else { initialize(map);
-   * 
-   * synchronized (array) { Object[] returnArray = map.entrySet().toArray(array); Assert.assertTrue(returnArray ==
-   * array); } } }
+   * void testEntrySetToArray(Map map, boolean validate) { Object[] array = getArray(map); if (validate) {
+   * assertArray(array, map); } else { initialize(map); synchronized (array) { Object[] returnArray =
+   * map.entrySet().toArray(array); Assert.assertTrue(returnArray == array); } } }
    */
 
   void testEntrySetIterator(Map map, boolean validate) throws Exception {
