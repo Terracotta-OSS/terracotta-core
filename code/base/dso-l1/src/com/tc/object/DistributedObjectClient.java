@@ -518,7 +518,18 @@ public class DistributedObjectClient extends SEDA {
     }
 
     cluster.addClusterEventListener(l1Management.getTerracottaCluster());
+    if (useOOOLayer) {
+      setReconnectCloseOnExit(channel);
+    }
     setLoggerOnExit();
+  }
+  
+  private void setReconnectCloseOnExit(final DSOClientMessageChannel channel) {
+    CommonShutDownHook.addShutdownHook(new Runnable() {
+      public void run() {
+        channel.close();
+      }
+    });
   }
 
   private void setLoggerOnExit() {
