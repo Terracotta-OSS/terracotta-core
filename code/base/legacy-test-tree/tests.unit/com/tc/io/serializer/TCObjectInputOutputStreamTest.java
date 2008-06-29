@@ -55,14 +55,14 @@ public class TCObjectInputOutputStreamTest extends TCTestCase {
     try {
       os.writeObject(new Object());
       failed = true;
-    } catch (Exception ex) {
+    } catch (AssertionError ae) {
       // this is normal
     }
     Assert.assertFalse(failed);
     try {
       os.writeObject(l);
       failed = true;
-    } catch (Exception ex) {
+    } catch (AssertionError ae) {
       // this is normal
     }
     Assert.assertFalse(failed);
