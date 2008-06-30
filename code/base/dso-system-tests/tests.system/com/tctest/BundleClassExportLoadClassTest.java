@@ -5,7 +5,7 @@ public class BundleClassExportLoadClassTest extends TransparentTestBase {
 
   public BundleClassExportLoadClassTest() {
     // CDV-598
-    disableAllUntil("2008-06-30");
+    disableAllUntil("2009-06-30");
   }
 
   public void doSetUp(final TransparentTestIface tt) throws Exception {
