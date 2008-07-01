@@ -4,12 +4,16 @@
  */
 package com.tctest.server.appserver.load;
 
+import com.tc.test.AppServerInfo;
 import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
 import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tc.test.server.appserver.load.Node;
 import com.tc.test.server.util.TcConfigBuilder;
+import com.tc.text.Banner;
+import com.tc.util.runtime.Os;
+import com.tc.util.runtime.SystemMemory;
 import com.tctest.webapp.servlets.CounterServlet;
 
 import java.net.URL;
@@ -28,6 +32,7 @@ public class MultiNodeLoadTest extends AbstractDeploymentTest {
     DeploymentBuilder builder = makeDeploymentBuilder(CONTEXT + ".war");
     builder.addServlet(SERVLET, "/" + SERVLET + "/*", CounterServlet.class, null, false);
     return builder.makeDeployment();
+
   }
 
   public void setUp() throws Exception {
@@ -39,13 +44,26 @@ public class MultiNodeLoadTest extends AbstractDeploymentTest {
     }
   }
 
-  public void testFourNodeLoad() throws Throwable {
-    runFourNodeLoad(true);
+  public void testLoad() throws Throwable {
+    runLoad(true);
   }
 
-  protected void runFourNodeLoad(boolean sticky) throws Throwable {
+  protected final void runLoad(boolean sticky) throws Throwable {
+    int numNodes = computeNumberOfNodes(4);
     assertTimeDirection();
-    runNodes(4, sticky);
+    runNodes(numNodes, sticky);
+  }
+
+  private int computeNumberOfNodes(int defaultNum) {
+    if (Os.isSolaris() && appServerInfo().getId() == AppServerInfo.GLASSFISH) {
+      long mem = SystemMemory.getTotalSystemMemory();
+      if (mem < (SystemMemory.GB * 2)) {
+        Banner.warnBanner("Using 2 nodes (instead of " + defaultNum + ") since this machine has limited memory (" + mem
+                          + ")");
+        return 2;
+      }
+    }
+    return defaultNum;
   }
 
   private WebApplicationServer createAndStartServer() throws Exception {

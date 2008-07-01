@@ -12,9 +12,8 @@ import java.util.regex.Pattern;
 
 public class SystemMemory {
 
-  private static final long MB = 1024L * 1024L;
-
-  private static final long GB = MB * 1024L;
+  public static final long MB = 1024L * 1024L;
+  public static final long GB = MB * 1024L;
 
   public static long getTotalSystemMemory() {
     if (!Os.isSolaris()) { throw new UnsupportedOperationException("No support exists for " + Os.getOsName()); }

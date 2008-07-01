@@ -4,10 +4,9 @@
  */
 package com.tctest.server.appserver.load;
 
-
 public class NonStickyMultiNodeLoadTest extends MultiNodeLoadTest {
 
   public void testFourNodeLoad() throws Throwable {
-    runFourNodeLoad(false);
+    runLoad(false);
   }
 }
