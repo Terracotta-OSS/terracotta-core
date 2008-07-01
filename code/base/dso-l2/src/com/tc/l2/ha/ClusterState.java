@@ -58,20 +58,16 @@ public class ClusterState {
          * crash. Force user to clean up the DB so that this server can resync state from the ACTIVE.
          */
         String errorMessage = Banner
-            .makeBanner(
-                        "This server is running with persistence turned on and was stopped in "
-                            + stateStr
-                            + " state. Only the "
-                            + StateManager.ACTIVE_COORDINATOR.getName()
-                            + " server is allowed "
-                            + " to be restarted without cleaning up the data directory with persistence turned on.\n\n"
-                            + "If 'l2.nha.dirtydb.autoDelete' is enabled in tc.properties, data directory will be automatically "
-                            + "moved to a backup directory and Server will be restarted. Otherwise, Please clean up the "
-                            + "data directory and make sure that the " + StateManager.ACTIVE_COORDINATOR.getName()
-                            + " is up and running before starting this server. It is important that the "
-                            + StateManager.ACTIVE_COORDINATOR.getName()
-                            + " is up and running before starting this server else you might end up losing data",
-                        "ERROR");
+            .makeBanner("This server is running with persistence turned on and was stopped in " + stateStr
+                        + " state. Only the " + StateManager.ACTIVE_COORDINATOR.getName() + " server is allowed "
+                        + " to be restarted without cleaning up the data directory with persistence turned on.\n\n"
+                        + "If 'l2.nha.autoRestart' is enabled, Server will be restarted and "
+                        + "if 'l2.nha.dirtydb.autoDelete' is enabled, data directory will be automatically "
+                        + "moved to a backup directory during boot-up. Otherwise, Please clean up the "
+                        + "data directory and make sure that the " + StateManager.ACTIVE_COORDINATOR.getName()
+                        + " is up and running before starting this server. It is important that the "
+                        + StateManager.ACTIVE_COORDINATOR.getName()
+                        + " is up and running before starting this server else you might end up losing data", "ERROR");
         logger.error(errorMessage, new Throwable());
         throw new CleanDirtyDatabaseException(errorMessage);
       }
