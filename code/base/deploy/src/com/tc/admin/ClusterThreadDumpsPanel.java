@@ -16,7 +16,13 @@ import com.tc.admin.common.XTreeNode;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.text.SimpleDateFormat;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
+import javax.swing.JFileChooser;
 import javax.swing.SwingUtilities;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
@@ -31,6 +37,10 @@ public class ClusterThreadDumpsPanel extends XContainer {
   private TextArea               m_threadDumpTextArea;
   private ScrollPane             m_threadDumpTextScroller;
   private ThreadDumpTreeNode     m_lastSelectedThreadDumpTreeNode;
+  private Button                 m_exportButton;
+  private File                   m_lastExportDir;
+
+  private static final String    DEFAULT_EXPORT_ARCHIVE_FILENAME = "tc-cluster-thread-dumps.zip";
 
   public ClusterThreadDumpsPanel(ClusterThreadDumpsNode clusterThreadDumpsNode) {
     super();
@@ -51,6 +61,9 @@ public class ClusterThreadDumpsPanel extends XContainer {
 
     m_threadDumpTextArea = (TextArea) findComponent("ThreadDumpTextArea");
     m_threadDumpTextScroller = (ScrollPane) findComponent("ThreadDumpTextScroller");
+
+    m_exportButton = (Button) findComponent("ExportButton");
+    m_exportButton.addActionListener(new ExportHandler());
   }
 
   private class ThreadDumpButtonHandler implements ActionListener {
@@ -58,13 +71,14 @@ public class ClusterThreadDumpsPanel extends XContainer {
       try {
         ClusterThreadDumpEntry tde = m_clusterThreadDumpsNode.takeThreadDump();
         XTreeNode root = (XTreeNode) m_threadDumpTreeModel.getRoot();
-        int index = root.getChildCount();
+        int count = root.getChildCount();
 
         root.add(tde);
         // TODO: the following is daft; nodesWereInserted is all that should be needed but for some
         // reason the first node requires nodeStructureChanged on the root; why? I don't know.
-        m_threadDumpTreeModel.nodesWereInserted(root, new int[] { index });
+        m_threadDumpTreeModel.nodesWereInserted(root, new int[] { count });
         m_threadDumpTreeModel.nodeStructureChanged(root);
+        m_exportButton.setEnabled(true);
       } catch (Exception e) {
         m_acc.log(e);
       }
@@ -89,6 +103,47 @@ public class ClusterThreadDumpsPanel extends XContainer {
         }
       }
       m_lastSelectedThreadDumpTreeNode = tdtn;
+      m_exportButton.setEnabled(tdtn != null);
+    }
+  }
+
+  private void handleExport() throws Exception {
+    JFileChooser chooser = new JFileChooser();
+    if (m_lastExportDir != null) chooser.setCurrentDirectory(m_lastExportDir);
+    chooser.setDialogTitle("Export thread dumps");
+    chooser.setMultiSelectionEnabled(false);
+    chooser.setSelectedFile(new File(chooser.getCurrentDirectory(), DEFAULT_EXPORT_ARCHIVE_FILENAME));
+    if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
+    File file = chooser.getSelectedFile();
+    ZipOutputStream zipstream = new ZipOutputStream(new FileOutputStream(file));
+    zipstream.setLevel(9);
+    zipstream.setMethod(ZipOutputStream.DEFLATED);
+    m_lastExportDir = file.getParentFile();
+    XTreeNode root = (XTreeNode) m_threadDumpTreeModel.getRoot();
+    int count = root.getChildCount();
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'/'HH.mm.ss.SSSZ");
+    for(int i = 0; i < count; i++) {
+      ClusterThreadDumpEntry ctde = (ClusterThreadDumpEntry)root.getChildAt(i);
+      String filenameBase = dateFormat.format(ctde.getTime())+"/";
+      int entryCount = ctde.getChildCount();
+      for(int j = 0; j < entryCount; j++) {
+        ThreadDumpElement tde = (ThreadDumpElement)ctde.getChildAt(j);
+        ZipEntry zipentry = new ZipEntry(filenameBase + tde.toString().replace(':', '-'));
+        zipstream.putNextEntry(zipentry);
+        zipstream.write(tde.getThreadDump().getBytes("UTF-8"));
+        zipstream.closeEntry();        
+      }
+    }
+    zipstream.close();
+  }
+
+  private class ExportHandler implements ActionListener {
+    public void actionPerformed(ActionEvent ae) {
+      try {
+        handleExport();
+      } catch(Exception e) {
+        m_acc.log(e);
+      }
     }
   }
 }

@@ -34,7 +34,7 @@ public class Splash extends Dialog {
     label.setIcon(new ImageIcon(getClass().getResource("/com/tc/admin/icons/logo.png")));
     label.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     Container contentPane = (Container) getContentPane();
-    contentPane.setBorder(BorderFactory.createEtchedBorder());
+    contentPane.setBorder(UIManager.getBorder("InternalFrame.border"));
     contentPane.setLayout(new BorderLayout());
     contentPane.add(label, BorderLayout.CENTER);
     JProgressBar progressBar = new JProgressBar();

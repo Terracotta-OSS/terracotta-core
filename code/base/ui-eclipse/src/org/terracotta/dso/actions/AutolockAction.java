@@ -6,6 +6,7 @@ package org.terracotta.dso.actions;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.swt.widgets.Shell;
 import org.terracotta.dso.ConfigurationHelper;
+import org.terracotta.dso.MultiChangeSignaller;
 import org.terracotta.dso.PatternHelper;
 import org.terracotta.dso.dialogs.AutolockDialog;
 
@@ -41,11 +42,14 @@ public class AutolockAction extends BaseAction {
       AutolockDialog dialog = new AutolockDialog(shell, pattern);
       dialog.addValueListener(new UpdateEventListener() {
         public void handleUpdate(UpdateEvent e) {
+          MultiChangeSignaller signaller = new MultiChangeSignaller();
+          helper.ensureAdaptable(m_element, signaller);
           Object[] values = (Object[]) e.data;
           boolean autoSync = (Boolean)values[0];
           LockLevel.Enum level = (LockLevel.Enum) values[1];
-          Autolock lock = helper.addNewAutolock(pattern, level);
+          Autolock lock = helper.addNewAutolock(pattern, level, signaller);
           lock.setAutoSynchronized(autoSync);
+          signaller.signal(m_element.getJavaProject().getProject());
         }
       });
       dialog.open();

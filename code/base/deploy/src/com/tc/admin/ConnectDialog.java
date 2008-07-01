@@ -24,10 +24,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import javax.management.remote.JMXConnector;
+import javax.swing.JComponent;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
+import javax.swing.UIManager;
 
 public final class ConnectDialog extends Dialog {
   private static final long          DEFAULT_CONNECT_TIMEOUT_MILLIS = 8000;
@@ -63,6 +65,7 @@ public final class ConnectDialog extends Dialog {
     m_listener = listener;
 
     load((DialogResource) m_acc.topRes.child("ConnectDialog"));
+    ((JComponent)getContentPane()).setBorder(UIManager.getBorder("InternalFrame.border"));    
     m_label = (Label) findComponent("ConnectLabel");
     m_label.setText("Connecting to " + scm + ". Please wait...");
     pack();
