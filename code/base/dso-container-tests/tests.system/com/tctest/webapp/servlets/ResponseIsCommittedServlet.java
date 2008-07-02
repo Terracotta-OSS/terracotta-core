@@ -32,6 +32,12 @@ public class ResponseIsCommittedServlet extends HttpServlet {
     if ("sendRedirect".equals(cmd)) {
       resp.sendRedirect("http://www.google.com/DOESNT_MATTER");
       wasCommitted.set(cmd, resp.isCommitted());
+    } else if ("sendError1".equals(cmd)) {
+      resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+      wasCommitted.set(cmd, resp.isCommitted());
+    } else if ("sendError2".equals(cmd)) {
+      resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "error message");
+      wasCommitted.set(cmd, resp.isCommitted());
     } else {
       throw new AssertionError("unknown command: " + cmd);
     }

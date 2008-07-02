@@ -31,8 +31,17 @@ public class ResponseIsCommittedTest extends AbstractOneServerDeploymentTest {
 
     response = request("/" + CONTEXT + "/" + MAPPING, "cmd=sendRedirect");
     assertEquals(HttpServletResponse.SC_MOVED_TEMPORARILY, response.getResponseCode());
-
     response = request("/" + CONTEXT + "/" + MAPPING, "cmd=check-sendRedirect");
+    assertEquals("true", response.getText().trim());
+
+    response = request("/" + CONTEXT + "/" + MAPPING, "cmd=sendError1");
+    assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response.getResponseCode());
+    response = request("/" + CONTEXT + "/" + MAPPING, "cmd=check-sendError1");
+    assertEquals("true", response.getText().trim());
+
+    response = request("/" + CONTEXT + "/" + MAPPING, "cmd=sendError2");
+    assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response.getResponseCode());
+    response = request("/" + CONTEXT + "/" + MAPPING, "cmd=check-sendError2");
     assertEquals("true", response.getText().trim());
   }
 
