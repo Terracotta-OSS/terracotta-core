@@ -444,7 +444,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     // test that limit is working okay
     facade = objectManager.lookupFacade(id, 1);
-    assertEquals(1, facade.getArrayLength());
+    assertEquals(1, facade.getFields().length);
     assertEquals("tim", facade.getFieldValue("0"));
 
     facade = objectManager.lookupFacade(id, 19212);
