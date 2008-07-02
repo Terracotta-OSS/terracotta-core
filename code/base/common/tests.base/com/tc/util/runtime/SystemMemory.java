@@ -31,13 +31,13 @@ public class SystemMemory {
 
     if (result.getExitCode() != 0) { throw new RuntimeException("non-zero exit code: " + result); }
 
-    Pattern pattern = Pattern.compile("Memory size: (\\d+)\\.(\\d+)(GB|MB)");
+    Pattern pattern = Pattern.compile("Memory size: (\\d+)\\.?(\\d+)?(GB|MB)");
     Matcher matcher = pattern.matcher(findMemLine(result.getStdout()));
 
     if (!matcher.matches()) { throw new RuntimeException("cannot find expected output: " + result); }
 
     String memWhole = matcher.group(1);
-    String memFraction = matcher.group(2);
+    String memFraction = matcher.group(2) == null ? "0" : matcher.group(2);
     String memUnit = matcher.group(3);
 
     long rv = Long.parseLong(memWhole + memFraction);
