@@ -183,7 +183,7 @@ public class ArrayManagedObjectState extends LogicalManagedObjectState implement
     ObjectID parent = ObjectID.NULL_ID;
     boolean isInner = false;
 
-    return new PhysicalManagedObjectFacade(objectID, parent, className, dataCopy, isInner, limit, isArray);
+    return new PhysicalManagedObjectFacade(objectID, parent, className, dataCopy, isInner, size /*limit*/, isArray);
   }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {

@@ -3,7 +3,8 @@
  */
 package com.tc.admin;
 
-import com.tc.admin.common.XTreeNode;
+import org.apache.commons.lang.builder.HashCodeBuilder;
+
 import com.tc.config.schema.L2Info;
 
 import java.io.IOException;
@@ -77,18 +78,6 @@ public class ConnectionContext {
     if(jmxc != null) {
       jmxc.getConnectionId();
     }
-  }
-
-  public static ConnectionContext getConnectionContext(XTreeNode node) {
-    while(node != null) {
-      if(node instanceof ServerNode) {
-        return ((ServerNode)node).getConnectionContext();
-      }
-
-      node = (XTreeNode)node.getParent();
-    }
-
-    return null;
   }
 
   public ObjectInstance queryMBean(String query)
@@ -188,10 +177,13 @@ public class ConnectionContext {
     return this.host+":"+this.port;
   }
   
+  public int hashCode() {
+    return new HashCodeBuilder().append(port).append(host).toHashCode();
+  }
+  
   public boolean equals(Object obj) {
     if(obj instanceof ConnectionContext) {
       ConnectionContext other = (ConnectionContext)obj;
-      
       return (other.host == this.host ||
           other.host != null && other.host.equals(this.host)) &&
           other.port == this.port;

@@ -8,14 +8,17 @@ import com.tc.management.lock.stats.LockSpec;
 import com.tc.management.lock.stats.LockStats;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 
 public class RootLockNode extends BasicLockNode {
-  LockStats                  fStats = new LockStats();
-  LockNode[]                 fChildren;
+  private LockStats               fStats         = new LockStats();
+  private LockNode[]              fChildren;
+
+  private static final LockNode[] EMPTY_CHILDREN = {};
 
   RootLockNode(Collection<LockSpec> lockInfos) {
     ArrayList<LockSpecNode> list = new ArrayList<LockSpecNode>();
@@ -41,6 +44,6 @@ public class RootLockNode extends BasicLockNode {
   }
 
   public LockNode[] children() {
-    return fChildren;
+    return Arrays.asList(fChildren).toArray(EMPTY_CHILDREN);
   }
 }

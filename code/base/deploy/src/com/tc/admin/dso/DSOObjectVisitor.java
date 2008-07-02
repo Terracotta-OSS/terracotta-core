@@ -3,8 +3,10 @@
  */
 package com.tc.admin.dso;
 
+import com.tc.admin.model.IBasicObject;
+import com.tc.admin.model.IMapEntry;
+
 public interface DSOObjectVisitor {
-  public void visitDSOField(DSOField field);
-  public void visitDSORoot(DSORoot root);
-  public void visitDSOMapEntryField(DSOMapEntryField mapEntryField);
+  public void visitBasicObject(IBasicObject basicObject);
+  public void visitMapEntry(IMapEntry mapEntry);
 }

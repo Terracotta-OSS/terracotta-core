@@ -137,7 +137,7 @@ public class DSOClient implements NotificationListener {
 
   public int getPort() {
     if (port == null) {
-      port = new Integer(-1);
+      port = Integer.valueOf(-1);
 
       String addr = getRemoteAddress();
       if (addr != null && addr.indexOf(":") != -1) {

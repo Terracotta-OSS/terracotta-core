@@ -5,6 +5,7 @@ package com.tc.admin.common;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -69,7 +70,7 @@ public class XObjectTableModel extends AbstractTableModel {
     super();
 
     m_type       = type;
-    m_fieldNames = fields;
+    m_fieldNames = Arrays.asList(fields).toArray(new String[0]);
     
     createColumns(fields, headings);
   }
@@ -299,11 +300,7 @@ public class XObjectTableModel extends AbstractTableModel {
       return colClass;
     }
 
-    if((method = getShowingFieldOperation(col)) != null) {
-      return Method.class;
-    }
-
-    return Object.class;
+    return getShowingFieldOperation(col) != null ? Method.class : Object.class;
   }
 
   public void clear() {

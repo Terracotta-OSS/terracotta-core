@@ -6,41 +6,24 @@ package com.tc.admin;
 
 import org.dijon.AbstractTreeCellRenderer;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
-
 import com.tc.admin.common.ComponentNode;
-import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.admin.common.StatusView;
 import com.tc.admin.common.XTreeNode;
-import com.tc.admin.dso.DSOHelper;
-import com.tc.config.schema.L2Info;
-import com.tc.management.beans.L2MBeanNames;
-import com.tc.management.beans.TCServerInfoMBean;
-import com.tc.statistics.beans.StatisticsEmitterMBean;
-import com.tc.statistics.beans.StatisticsMBeanNames;
-import com.tc.statistics.beans.StatisticsManagerMBean;
-import com.tc.stats.DSOMBean;
-import com.tc.util.ProductInfo;
+import com.tc.admin.model.IClusterNode;
+import com.tc.admin.model.IServer;
 
 import java.awt.Color;
 import java.awt.Frame;
 import java.awt.Graphics;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.text.MessageFormat;
-import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.management.MBeanServerInvocationHandler;
-import javax.management.MBeanServerNotification;
-import javax.management.Notification;
-import javax.management.NotificationListener;
-import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
-import javax.management.remote.generic.ConnectionClosedException;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JTree;
 import javax.swing.SwingUtilities;
@@ -53,164 +36,132 @@ import javax.swing.SwingUtilities;
  * through a refactoring.
  */
 
-public class ServerNode extends ComponentNode implements ConnectionListener, NotificationListener {
-  protected AdminClientContext      m_acc;
-  protected ServersNode             m_serversNode;
-  protected ServerConnectionManager m_connectManager;
-  protected L2Info                  m_l2Info;
-  protected int                     m_jmxPort;
-  protected Integer                 m_dsoPort;
-  protected Exception               m_connectException;
-  protected TCServerInfoMBean       m_serverInfoBean;
-  protected DSOMBean                m_dsoBean;
-  protected long                    m_startTime;
-  protected long                    m_activateTime;
-  protected String                  m_environment;
-  protected String                  m_config;
-  protected ProductInfo             m_productInfo;
-  protected ServerPanel             m_serverPanel;
-  protected ConnectDialog           m_connectDialog;
-  protected JDialog                 m_versionMismatchDialog;
-  protected JPopupMenu              m_popupMenu;
+public class ServerNode extends ComponentNode implements ConnectionListener {
+  protected AdminClientContext           m_acc;
+  protected ServersNode                  m_serversNode;
+  protected IServer                      m_server;
+  protected ServerPropertyChangeListener m_serverPropertyChangeListener;
+  protected ServerPanel                  m_serverPanel;
+  protected ConnectDialog                m_connectDialog;
+  protected JDialog                      m_versionMismatchDialog;
+  protected JPopupMenu                   m_popupMenu;
+  protected ServerThreadDumpsNode        m_threadDumpsNode;
+  protected ServerRuntimeStatsNode       m_runtimeStatsNode;
 
-  protected ServerThreadDumpsNode   m_threadDumpsNode;
-  protected ServerRuntimeStatsNode  m_runtimeStatsNode;
-
-  ServerNode(ServersNode serversNode, L2Info l2Info) {
+  ServerNode(ServersNode serversNode, IServer server) {
     super();
 
     m_acc = AdminClient.getContext();
     m_serversNode = serversNode;
-    m_l2Info = l2Info;
+    m_server = server;
 
     setRenderer(new ServerNodeTreeCellRenderer());
     initMenu();
     setComponent(m_serverPanel = createServerPanel());
-    AutoConnectionListener acl = new AutoConnectionListener();
-    m_connectManager = new ServerConnectionManager(m_l2Info, false, acl);
-    String[] creds = ServerConnectionManager.getCachedCredentials(m_connectManager);
-    if (creds != null) {
-      m_connectManager.setCredentials(creds);
+    m_server.addPropertyChangeListener(m_serverPropertyChangeListener = new ServerPropertyChangeListener());
+  }
+
+  public IServer getServer() {
+    return m_server;
+  }
+
+  private class ServerPropertyChangeRunnable implements Runnable {
+    PropertyChangeEvent m_pce;
+
+    ServerPropertyChangeRunnable(PropertyChangeEvent pce) {
+      m_pce = pce;
     }
-    m_connectManager.setAutoConnect(true);
+
+    public void run() {
+      String prop = m_pce.getPropertyName();
+      if (IServer.PROP_CONNECTED.equals(prop)) {
+        if (!m_server.isConnected()) {
+          handleDisconnected();
+        } else {
+          handleConnected();
+        }
+      } else if (IClusterNode.PROP_READY.equals(prop)) {
+        if (m_server.isReady()) {
+          handleConnected();
+        }
+      } else if (IServer.PROP_CONNECT_ERROR.equals(prop)) {
+        handleConnectError();
+      }
+    }
+  }
+
+  private class ServerPropertyChangeListener implements PropertyChangeListener {
+    public void propertyChange(PropertyChangeEvent evt) {
+      Runnable r = new ServerPropertyChangeRunnable(evt);
+      if (SwingUtilities.isEventDispatchThread()) {
+        r.run();
+      } else {
+        SwingUtilities.invokeLater(r);
+      }
+    }
+  }
+
+  void handleConnected() {
+    if (m_acc == null) return;
+    if (m_versionMismatchDialog != null) return;
+    if (!m_serverPanel.isProductInfoShowing() && !m_acc.controller.testServerMatch(this)) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          if (m_server.isConnected()) {
+            disconnect();
+          }
+        }
+      });
+      return;
+    }
+    if (isActive()) {
+      handleActivation();
+    } else if (isPassiveStandby()) {
+      handlePassiveStandby();
+    } else if (isPassiveUninitialized()) {
+      handlePassiveUninitialized();
+    } else if (isStarted()) {
+      handleStarting();
+    }
+  }
+
+  private void handleDisconnected() {
+    if (m_versionMismatchDialog != null) {
+      m_versionMismatchDialog.setVisible(false);
+    }
+    handleDisconnect();
+  }
+
+  private void handleConnectError() {
+    reportConnectError();
   }
 
   protected ServerPanel createServerPanel() {
     return new ServerPanel(this);
   }
 
-  void newConnectionContext() {
-    resetBeanProxies();
-    String[] creds = ServerConnectionManager.getCachedCredentials(m_connectManager);
-    if (creds != null) {
-      m_connectManager.setCredentials(creds);
-    }
-  }
-
-  /**
-   * We need to use invokeLater here because this is being called from a background thread and all Swing stuff has to be
-   * done in the primary event loop.
-   */
-  private class AutoConnectionListener implements ConnectionListener {
-    public void handleConnection() {
-      if (m_connectManager != null) {
-        final boolean isConnected = m_connectManager.isConnected();
-
-        if (SwingUtilities.isEventDispatchThread()) {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              if (m_connectManager != null) {
-                setConnected(isConnected);
-              }
-            }
-          });
-        } else {
-          try {
-            SwingUtilities.invokeAndWait(new Runnable() {
-              public void run() {
-                if (m_connectManager != null) {
-                  setConnected(isConnected);
-                }
-              }
-            });
-          } catch (InterruptedException ex) {/**/
-          } catch (InvocationTargetException ite) {
-            m_acc.log(ite);
-          }
-        }
-      }
-    }
-
-    public void handleException() {
-      if (m_connectManager != null) {
-        final Exception e = m_connectManager.getConnectionException();
-
-        if (SwingUtilities.isEventDispatchThread()) {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              if (m_connectManager != null) {
-                reportConnectionException(e);
-              }
-            }
-          });
-        } else {
-          try {
-            SwingUtilities.invokeAndWait(new Runnable() {
-              public void run() {
-                if (m_connectManager != null) {
-                  reportConnectionException(e);
-                }
-              }
-            });
-          } catch (InterruptedException ex) {/**/
-          } catch (InvocationTargetException ite) {
-            m_acc.log(ite);
-          }
-        }
-      }
-    }
-  }
-
-  ServerConnectionManager getServerConnectionManager() {
-    return m_connectManager;
-  }
-
-  ConnectionContext getConnectionContext() {
-    return m_connectManager.getConnectionContext();
-  }
-
   public String getHost() {
-    return m_l2Info.host();
+    return m_server.getHost();
   }
 
   public String getCanonicalHostName() {
-    return m_connectManager.safeGetHostName();
+    return m_server.getCanonicalHostName();
   }
 
   public String getHostAddress() {
-    return m_connectManager.safeGetHostAddress();
+    return m_server.getHostAddress();
   }
 
   public int getPort() {
-    return m_l2Info.jmxPort();
+    return m_server.getPort();
   }
 
-  public Integer getDSOListenPort() {
-    if (m_dsoPort != null) return m_dsoPort;
-    try {
-      TCServerInfoMBean serverInfo = getServerInfoBean();
-      m_dsoPort = serverInfo != null ? serverInfo.getDSOListenPort() : -1;
-    } catch (Exception e) {
-      // connection was probably dropped. Wait for disconnect message.
-      m_dsoPort = -1;
-    }
-    return m_dsoPort;
+  public Integer getDSOListenPort() throws Exception {
+    return m_server.getDSOListenPort();
   }
 
   String getStatsExportServletURI(String sessionId) throws Exception {
-    Integer dsoPort = getDSOListenPort();
-    Object[] args = new Object[] { getHost(), dsoPort.toString(), sessionId };
-    return MessageFormat.format("http://{0}:{1}/stats-export?session={2}", args);
+    return m_server.getStatsExportServletURI(sessionId);
   }
 
   protected void initMenu() {
@@ -221,74 +172,36 @@ public class ServerNode extends ComponentNode implements ConnectionListener, Not
     m_versionMismatchDialog = dialog;
   }
 
-  private void setConnected(boolean connected) {
-    if (m_acc == null) { return; }
-    if (connected) {
-      if (m_versionMismatchDialog != null) return;
-      if (!m_serverPanel.isProductInfoShowing() && !m_acc.controller.testServerMatch(this)) {
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            if (m_connectManager.isConnected()) {
-              disconnect();
-            }
-          }
-        });
-        return;
-      }
-      m_acc.controller.block();
-      m_connectException = null;
-      if (m_connectManager.isConnected()) {
-        if (m_connectManager.isActive()) {
-          handleActivation();
-        } else if (m_connectManager.isPassiveStandby()) {
-          handlePassiveStandby();
-        } else if (m_connectManager.isPassiveUninitialized()) {
-          handlePassiveUninitialized();
-        } else if (m_connectManager.isStarted()) {
-          handleStarting();
-        }
-      } else {
-        handleDisconnect();
-      }
-      m_acc.controller.unblock();
-    } else {
-      if (m_versionMismatchDialog != null) {
-        m_versionMismatchDialog.setVisible(false);
-      }
-      handleDisconnect();
-    }
-  }
-
   boolean isConnected() {
-    return m_connectManager != null && m_connectManager.isConnected();
+    return m_server.isConnected();
   }
 
   boolean isStarted() {
-    return m_connectManager != null && m_connectManager.isStarted();
+    return m_server.isStarted();
   }
 
   boolean isActive() {
-    return m_connectManager != null && m_connectManager.isActive();
+    return m_server.isActive();
   }
 
   boolean isPassiveUninitialized() {
-    return m_connectManager != null && m_connectManager.isPassiveUninitialized();
+    return m_server.isPassiveUninitialized();
   }
 
   boolean isPassiveStandby() {
-    return m_connectManager != null && m_connectManager.isPassiveStandby();
+    return m_server.isPassiveStandby();
   }
 
-  boolean hasConnectionException() {
-    return m_connectException != null;
+  boolean hasConnectError() {
+    return m_server.hasConnectError();
   }
 
   ConnectDialog getConnectDialog(ConnectionListener listener) {
     if (m_connectDialog == null) {
       Frame frame = (Frame) m_serverPanel.getAncestorOfClass(java.awt.Frame.class);
-      m_connectDialog = new ConnectDialog(frame, m_connectManager, listener);
+      m_connectDialog = new ConnectDialog(frame, m_server, listener);
     } else {
-      m_connectDialog.setServerConnectionManager(m_connectManager);
+      m_connectDialog.setServer(m_server);
       m_connectDialog.setConnectionListener(listener);
     }
 
@@ -308,101 +221,54 @@ public class ServerNode extends ComponentNode implements ConnectionListener, Not
 
   private void beginConnect() throws Exception {
     m_acc.controller.block();
-
-    m_connectException = null;
-
     ConnectDialog cd = getConnectDialog(this);
-    Frame frame = (Frame) m_serverPanel.getAncestorOfClass(java.awt.Frame.class);
-
-    String[] creds = ServerConnectionManager.getCachedCredentials(getServerConnectionManager());
-    if (creds != null) {
-      m_connectManager.setCredentials(creds);
-    }
-
-    cd.center(frame);
+    m_server.refreshCachedCredentials();
+    cd.center((Frame) m_serverPanel.getAncestorOfClass(java.awt.Frame.class));
     cd.setVisible(true);
   }
 
   /**
-   * Callback from the ConnectDialog.
+   * Call back from the ConnectDialog.
    */
   public void handleConnection() {
     JMXConnector jmxc;
     if ((jmxc = m_connectDialog.getConnector()) != null) {
       try {
-        m_connectManager.setJMXConnector(jmxc);
+        m_server.setJMXConnector(jmxc);
       } catch (IOException ioe) {
-        reportConnectionException(ioe);
+        reportConnectError(ioe);
       }
     }
-
     m_acc.controller.unblock();
   }
 
   /**
-   * Callback from the ConnectDialog.
+   * Call back from the ConnectDialog.
    */
   public void handleException() {
     Exception e = m_connectDialog.getError();
-
     if (e != null) {
-      reportConnectionException(e);
+      reportConnectError(e);
     }
-
     m_acc.controller.unblock();
   }
 
-  private void reportConnectionException(Exception e) {
-    String msg = ClusterNode.getConnectionExceptionString(e, getConnectionContext());
+  private void reportConnectError() {
+    reportConnectError(m_server.getConnectError());
+  }
 
-    m_connectException = e;
+  private void reportConnectError(Exception e) {
+    String msg = m_server.getConnectErrorMessage(e);
     if (msg != null && m_serverPanel != null) {
       m_serverPanel.setConnectExceptionMessage(msg);
     }
-    m_acc.controller.nodeChanged(ServerNode.this);
+    m_acc.controller.nodeChanged(this);
   }
 
   void disconnect() {
-    String msg = m_acc.getMessage("disconnecting.from");
-    MessageFormat form = new MessageFormat(msg);
-    Object[] args = new Object[] { this };
-
-    m_acc.controller.setStatus(form.format(args));
+    m_acc.controller.setStatus(m_acc.format("disconnecting.from", this));
     m_acc.controller.updateServerPrefs();
-    m_connectManager.setConnected(false);
-  }
-
-  void disconnectOnExit() {
-    String msg = m_acc.getMessage("disconnecting.from");
-    MessageFormat form = new MessageFormat(msg);
-    Object[] args = new Object[] { this };
-
-    m_acc.controller.setStatus(form.format(args));
-    m_connectManager.disconnectOnExit();
-  }
-
-  void shutdown() {
-    AdminClientPanel topPanel = (AdminClientPanel) m_serverPanel.getAncestorOfClass(AdminClientPanel.class);
-    Frame frame = (Frame) topPanel.getAncestorOfClass(java.awt.Frame.class);
-    String msg = "Are you sure you want to shutdown '" + this + "'?";
-
-    int result = JOptionPane.showConfirmDialog(frame, msg, frame.getTitle(), JOptionPane.OK_CANCEL_OPTION);
-    if (result == JOptionPane.OK_OPTION) {
-      doShutdown();
-    }
-  }
-
-  void doShutdown() {
-    try {
-      TCServerInfoMBean serverInfo = getServerInfoBean();
-      if (serverInfo != null) {
-        serverInfo.shutdown();
-      }
-    } catch (ConnectionClosedException ignore) {
-      /* expected */
-    } catch (Exception e) {
-      m_acc.log(e);
-    }
+    m_server.disconnect();
   }
 
   public Icon getIcon() {
@@ -414,61 +280,33 @@ public class ServerNode extends ComponentNode implements ConnectionListener, Not
   }
 
   public String toString() {
-    return m_connectManager != null ? m_connectManager.toString() : "";
+    return m_server != null ? m_server.toString() : "";
   }
 
   void handleStarting() {
-    m_acc.controller.nodeChanged(ServerNode.this);
+    m_acc.controller.nodeChanged(this);
     m_serverPanel.started();
   }
 
-  DSOMBean getDSOBean() {
-    if (m_dsoBean != null) return m_dsoBean;
-    try {
-      ConnectionContext cc = getConnectionContext();
-      ObjectName objectName = DSOHelper.getHelper().getDSOMBean(cc);
-      if (objectName == null) return null;
-      m_dsoBean = (DSOMBean) MBeanServerInvocationProxy.newProxyInstance(cc.mbsc, objectName, DSOMBean.class, true);
-    } catch (Exception ioe) {
-      return null;
-    }
-    return m_dsoBean;
-  }
+  private AtomicBoolean m_addingChildren = new AtomicBoolean(false);
 
-  SynchronizedBoolean m_tryAddingChildren = new SynchronizedBoolean(false);
-
-  void tryAddChildren() throws Exception {
-    if (m_tryAddingChildren.get()) { return; }
+  void tryAddChildren() {
+    if(!m_server.isReady()) { return; } 
+    if (m_addingChildren.get()) { return; }
 
     try {
-      m_tryAddingChildren.set(true);
+      m_addingChildren.set(true);
       if (getChildCount() == 0) {
-        ConnectionContext cntx = getConnectionContext();
-
-        if (DSOHelper.getHelper().getDSOMBean(cntx) != null) {
-          addChildren(cntx);
-          m_acc.controller.nodeStructureChanged(this);
-          m_acc.controller.expand(this);
-        } else {
-          ObjectName mbsd = cntx.queryName("JMImplementation:type=MBeanServerDelegate");
-          if (mbsd != null) {
-            try {
-              cntx.removeNotificationListener(mbsd, this);
-            } catch (Exception e) {/**/
-            }
-            cntx.addNotificationListener(mbsd, this);
-          }
-        }
+        addChildren();
+        m_acc.controller.nodeStructureChanged(this);
+//        m_acc.controller.expand(this);
       }
-      m_acc.controller.nodeChanged(ServerNode.this);
-    } catch (Exception e) {
-      m_acc.log(e);
     } finally {
-      m_tryAddingChildren.set(false);
+      m_addingChildren.set(false);
     }
   }
 
-  private void addChildren(ConnectionContext cc) {
+  private void addChildren() {
     add(m_runtimeStatsNode = createRuntimeStatsNode());
     add(m_threadDumpsNode = createThreadDumpsNode());
   }
@@ -482,204 +320,78 @@ public class ServerNode extends ComponentNode implements ConnectionListener, Not
   }
 
   void handlePassiveUninitialized() {
-    try {
-      tryAddChildren();
-      m_serverPanel.passiveUninitialized();
-      m_serversNode.serverStateChanged(this);
-    } catch (Exception e) {
-      // just wait for disconnect message to come in
-    }
+    tryAddChildren();
+    m_serverPanel.passiveUninitialized();
+    m_acc.controller.nodeChanged(this);
   }
 
   void handlePassiveStandby() {
-    try {
-      tryAddChildren();
-      m_serverPanel.passiveStandby();
-      m_serversNode.serverStateChanged(this);
-    } catch (Exception e) {
-      // just wait for disconnect message to come in
-    }
+    tryAddChildren();
+    m_serverPanel.passiveStandby();
+    m_acc.controller.nodeChanged(this);
   }
 
   void handleActivation() {
-    try {
-      tryAddChildren();
-      m_serverPanel.activated();
-      m_serversNode.serverStateChanged(this);
-    } catch (Exception e) {
-      // just wait for disconnect message to come in
-    }
+    tryAddChildren();
+    m_serverPanel.activated();
+    m_acc.controller.nodeChanged(this);
   }
 
   void handleDisconnect() {
-    m_serversNode.serverStateChanged(this);
+    m_acc.controller.nodeChanged(this);
     m_serverPanel.disconnected();
-    resetBeanProxies();
     for (int i = getChildCount() - 1; i >= 0; i--) {
       m_acc.controller.remove((XTreeNode) getChildAt(i));
     }
   }
 
-  TCServerInfoMBean getServerInfoBean() throws Exception {
-    if (m_serverInfoBean != null) return m_serverInfoBean;
-    m_serverInfoBean = ServerHelper.getHelper().getServerInfoBean(getConnectionContext());
-    return m_serverInfoBean;
+  public String getProductVersion() throws Exception {
+    return m_server.getProductVersion();
   }
 
-  public ProductInfo getProductInfo() {
-    if (m_productInfo != null) return m_productInfo;
-
-    try {
-      TCServerInfoMBean serverInfo = getServerInfoBean();
-
-      String version = serverInfo.getVersion();
-      String buildID = serverInfo.getBuildID();
-      String license = serverInfo.getDescriptionOfCapabilities();
-      String copyright = serverInfo.getCopyright();
-
-      m_productInfo = new ProductInfo(version, buildID, license, copyright);
-    } catch (Exception e) {
-      m_acc.log(e);
-      m_productInfo = ProductInfo.getInstance();
-    }
-
-    return m_productInfo;
+  public String getProductBuildID() throws Exception {
+    return m_server.getProductBuildID();
   }
 
-  public String getProductVersion() {
-    return getProductInfo().version();
+  public String getProductLicense() throws Exception {
+    return m_server.getProductLicense();
   }
 
-  public String getProductBuildID() {
-    return getProductInfo().buildID();
+  public String getProductCopyright() throws Exception {
+    return m_server.getProductCopyright();
+  }
+  
+  String getEnvironment() throws Exception {
+    return m_server.getEnvironment();
   }
 
-  public String getProductLicense() {
-    return getProductInfo().license();
+  String getConfig() throws Exception {
+    return m_server.getConfig();
   }
 
-  String getEnvironment() {
-    if (m_environment != null) return m_environment;
-    try {
-      TCServerInfoMBean serverInfo = getServerInfoBean();
-      return m_environment = serverInfo.getEnvironment();
-    } catch (Exception e) {
-      m_acc.log(e);
-      return e.getMessage();
-    }
+  long getStartTime() throws Exception {
+    return m_server.getStartTime();
   }
 
-  String getConfig() {
-    if (m_config != null) return m_config;
-    try {
-      TCServerInfoMBean serverInfo = getServerInfoBean();
-      return m_config = serverInfo.getConfig();
-    } catch (Exception e) {
-      m_acc.log(e);
-      return e.getMessage();
-    }
-  }
-
-  long getStartTime() {
-    if (m_startTime > 0) return m_startTime;
-    try {
-      TCServerInfoMBean serverInfo = getServerInfoBean();
-      return m_startTime = serverInfo.getStartTime();
-    } catch (Exception e) {
-      m_acc.log(e);
-      return 0L;
-    }
-  }
-
-  long getActivateTime() {
-    if (m_activateTime > 0) return m_activateTime;
-    try {
-      TCServerInfoMBean serverInfo = getServerInfoBean();
-      return m_activateTime = serverInfo.getActivateTime();
-    } catch (Exception e) {
-      m_acc.log(e);
-      return 0L;
-    }
-  }
-
-  public void handleNotification(Notification notification, Object handback) {
-    if (notification instanceof MBeanServerNotification) {
-      MBeanServerNotification mbsn = (MBeanServerNotification) notification;
-      String type = notification.getType();
-      ObjectName name = mbsn.getMBeanName();
-
-      if (type.equals(MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
-        if (name.getCanonicalName().equals(L2MBeanNames.DSO.getCanonicalName())) {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              try {
-                addChildren(getConnectionContext());
-                m_acc.controller.nodeStructureChanged(ServerNode.this);
-                // m_acc.controller.expand(ServerNode.this);
-                m_acc.controller.nodeChanged(ServerNode.this);
-              } catch (Exception e) {
-                // just wait for disconnect message to come in
-              }
-            }
-          });
-        }
-      }
-    }
-  }
-
-  StatisticsManagerMBean getStatisticsManagerMBean() {
-    ConnectionContext cc = getConnectionContext();
-    return (StatisticsManagerMBean) MBeanServerInvocationHandler
-        .newProxyInstance(cc.mbsc, StatisticsMBeanNames.STATISTICS_MANAGER, StatisticsManagerMBean.class, false);
-  }
-
-  StatisticsEmitterMBean registerStatisticsEmitterListener(NotificationListener listener) {
-    ConnectionContext cc = getConnectionContext();
-    StatisticsEmitterMBean stat_emitter = (StatisticsEmitterMBean) MBeanServerInvocationHandler
-        .newProxyInstance(cc.mbsc, StatisticsMBeanNames.STATISTICS_EMITTER, StatisticsEmitterMBean.class, false);
-    ArrayList dataList = new ArrayList();
-    try {
-      cc.mbsc.addNotificationListener(StatisticsMBeanNames.STATISTICS_EMITTER, listener, null, dataList);
-    } catch (Exception e) {
-      throw new RuntimeException("Registering stats emitter listener", e);
-    }
-    return stat_emitter;
-  }
-
-  L2Info[] getClusterMembers() {
-    L2Info[] result = null;
-
-    try {
-      TCServerInfoMBean serverInfo = getServerInfoBean();
-      result = serverInfo.getL2Info();
-    } catch (Exception e) {
-      m_acc.log(e);
-    }
-
-    return result != null ? result : new L2Info[0];
-  }
-
-  private void resetBeanProxies() {
-    m_dsoBean = null;
-    m_serverInfoBean = null;
-    m_productInfo = null;
+  long getActivateTime() throws Exception {
+    return m_server.getActivateTime();
   }
 
   Color getServerStatusColor() {
-    return getServerStatusColor(getServerConnectionManager());
+    return getServerStatusColor(m_server);
   }
 
-  static Color getServerStatusColor(ServerConnectionManager scm) {
-    if (scm != null) {
-      if (scm.isActive()) {
+  static Color getServerStatusColor(IServer server) {
+    if (server != null) {
+      if (server.isActive()) {
         return Color.GREEN;
-      } else if (scm.isPassiveStandby()) {
+      } else if (server.isPassiveStandby()) {
         return Color.CYAN;
-      } else if (scm.isPassiveUninitialized()) {
+      } else if (server.isPassiveUninitialized()) {
         return Color.ORANGE;
-      } else if (scm.isStarted()) {
+      } else if (server.isStarted()) {
         return Color.YELLOW;
-      } else if (scm.getConnectionException() != null) { return Color.RED; }
+      } else if (server.hasConnectError()) { return Color.RED; }
     }
     return Color.LIGHT_GRAY;
   }
@@ -718,18 +430,15 @@ public class ServerNode extends ComponentNode implements ConnectionListener, Not
   }
 
   public void tearDown() {
+    m_server.removePropertyChangeListener(m_serverPropertyChangeListener);
     if (m_connectDialog != null) {
       m_connectDialog.tearDown();
     }
-    m_connectManager.tearDown();
-
     m_acc = null;
-    m_connectManager = null;
+    m_server = null;
     m_serverPanel = null;
     m_connectDialog = null;
     m_popupMenu = null;
-    m_environment = null;
-    m_config = null;
     m_threadDumpsNode = null;
 
     super.tearDown();

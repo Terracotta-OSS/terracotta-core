@@ -9,15 +9,18 @@ import com.tc.management.lock.stats.LockStats;
 import com.tc.management.lock.stats.LockTraceElement;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 
 public class LockSpecNode extends BasicLockNode {
-  LockSpec   fLockSpec;
-  LockNode[] fChildren;
-  String     fLabel;
-  
+  private LockSpec                fLockSpec;
+  private LockNode[]              fChildren;
+  private String                  fLabel;
+
+  private static final LockNode[] EMPTY_CHILDREN = {};
+
   LockSpecNode(LockSpec spec) {
     fLockSpec = spec;
 
@@ -35,7 +38,7 @@ public class LockSpecNode extends BasicLockNode {
 
     fLabel = fLockSpec.getLockID().asString();
     String objectType = fLockSpec.getObjectType();
-    if(objectType != null && objectType.length() > 0) {
+    if (objectType != null && objectType.length() > 0) {
       fLabel += " (" + objectType + ")";
     }
   }
@@ -53,7 +56,7 @@ public class LockSpecNode extends BasicLockNode {
   }
 
   public LockNode[] children() {
-    return fChildren;
+    return Arrays.asList(fChildren).toArray(EMPTY_CHILDREN);
   }
 
   public String toString() {

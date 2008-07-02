@@ -4,12 +4,12 @@
 package com.tc.stats;
 
 import com.tc.management.TerracottaMBean;
+import com.tc.net.groups.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.lockmanager.api.LockMBean;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.statistics.StatisticData;
-import com.tc.stats.counter.Counter;
 import com.tc.stats.statistics.CountStatistic;
 
 import java.util.Map;
@@ -40,12 +40,21 @@ public interface DSOMBean extends DSOStats, TerracottaMBean {
 
   DSOClassInfo[] getClassInfo();
 
-  Map<String, Counter> getAllPendingRequests();
+  Map<ObjectName, CountStatistic> getAllPendingTransactionsCount();
   
   Map<ObjectName, CountStatistic> getClientTransactionRates();
   
   Map<ObjectName, StatisticData[]> getL1CpuUsages();
   
+  Map<ObjectName, Map> getL1Statistics();
+  
+  Map<ObjectName, Map> getPrimaryClientStatistics();
+  
   ManagedObjectFacade lookupFacade(ObjectID objectID, int limit) throws NoSuchObjectException;
 
+  Map<ObjectName, Integer> getClientLiveObjectCount();
+  
+  int getLiveObjectCount();
+  
+  boolean isResident(NodeID node, ObjectID oid);
 }

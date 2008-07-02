@@ -4,14 +4,13 @@
  */
 package com.tc.admin.dso;
 
-import org.dijon.Component;
-
 import com.tc.admin.AdminClient;
 import com.tc.admin.ClusterNode;
-import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.common.XAbstractAction;
+import com.tc.admin.model.IClusterModel;
 
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -46,14 +45,14 @@ public class ClassesNode extends ComponentNode {
     return m_classesPanel;
   }
 
-  ConnectionContext getConnectionContext() {
-    return m_clusterNode.getConnectionContext();
+  IClusterModel getClusterModel() {
+    return m_clusterNode.getClusterModel();
   }
 
   private void initMenu() {
     m_refreshAction = new RefreshAction();
 
-    m_popupMenu = new JPopupMenu("Roots Actions");
+    m_popupMenu = new JPopupMenu("Classes Actions");
     m_popupMenu.add(m_refreshAction);
 
     addActionBinding(REFRESH_ACTION, m_refreshAction);

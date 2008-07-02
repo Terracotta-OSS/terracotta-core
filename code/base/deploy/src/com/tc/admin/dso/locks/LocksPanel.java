@@ -31,6 +31,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.IOException;
+import java.io.Serializable;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.Date;
@@ -351,7 +352,7 @@ public class LocksPanel extends XContainer implements NotificationListener {
     Toolkit.getDefaultToolkit().beep();
   }
 
-  class TraceDepthSpinnerChangeListener implements ChangeListener {
+  class TraceDepthSpinnerChangeListener implements ChangeListener, Serializable {
     public void stateChanged(ChangeEvent e) {
       fTraceDepthChangeTimer.stop();
       fTraceDepthChangeTimer.start();

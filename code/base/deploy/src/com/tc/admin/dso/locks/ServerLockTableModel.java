@@ -15,11 +15,11 @@ import java.util.Comparator;
 import java.util.Iterator;
 
 public class ServerLockTableModel extends XObjectTableModel {
-  static protected String[]                cNames      = (String[]) AdminClient.getContext()
+  private static final String[]            cNames      = (String[]) AdminClient.getContext()
                                                            .getObject("dso.locks.column.headings");
-  static protected String[]                cFields     = { "Name", "Requested", "Hops", "Waiters", "AcquireTime",
+  private static final String[]            cFields     = { "Name", "Requested", "Hops", "Waiters", "AcquireTime",
       "HeldTime"                                      };
-  static protected String[]                cTips       = (String[]) AdminClient.getContext()
+  private static final String[]            cTips       = (String[]) AdminClient.getContext()
                                                            .getObject("dso.locks.column.tips");
 
   public static final ServerLockTableModel EMPTY_MODEL = new ServerLockTableModel();
@@ -46,7 +46,7 @@ public class ServerLockTableModel extends XObjectTableModel {
   public void notifyChanged() {
     fireTableDataChanged();
   }
-  
+
   public static String columnTip(int column) {
     return cTips[column];
   }

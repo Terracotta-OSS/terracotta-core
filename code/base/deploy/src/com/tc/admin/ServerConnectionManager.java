@@ -5,10 +5,10 @@
 package com.tc.admin;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 
 import com.tc.config.schema.L2Info;
 import com.tc.management.JMXConnectorProxy;
-import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -95,7 +95,7 @@ public class ServerConnectionManager implements NotificationListener {
   }
   
   private void resetAllState() {
-    m_connected = false;
+    _setConnected(false);
     resetConnectedState();
   }
   
@@ -180,7 +180,7 @@ public class ServerConnectionManager implements NotificationListener {
     setConnected(true);
   }
 
-  protected void setConnected(boolean connected) {
+  public void setConnected(boolean connected) {
     if (m_connected != connected) {
       synchronized (this) {
         _setConnected(connected);
@@ -215,7 +215,7 @@ public class ServerConnectionManager implements NotificationListener {
   /**
    * Mark not-connected, notify, cancel connection monitor, don't startup auto-connect thread.
    */
-  void disconnectOnExit() {
+  public void disconnect() {
     cancelActiveServices();
     if (isConnected()) {
       _setConnected(false);
@@ -231,7 +231,7 @@ public class ServerConnectionManager implements NotificationListener {
   public Map<String, Object> getConnectionEnvironment() {
     if (m_connectEnv == null) {
       m_connectEnv = new HashMap<String, Object>();
-      m_connectEnv.put("jmx.remote.x.client.connection.check.period", new Long(0));
+      m_connectEnv.put("jmx.remote.x.client.connection.check.period", Integer.valueOf(0));
       m_connectEnv.put("jmx.remote.default.class.loader", getClass().getClassLoader());
     }
     return m_connectEnv;
@@ -316,7 +316,7 @@ public class ServerConnectionManager implements NotificationListener {
     }
 
     public void run() {
-      ThreadUtil.reallySleep(500);
+//      ThreadUtil.reallySleep(500);
 
       while (!m_cancel && !m_connected) {
         try {
@@ -331,12 +331,6 @@ public class ServerConnectionManager implements NotificationListener {
           } else {
             m_connectException = e;
             if (m_connectListener != null) {
-//              if (e instanceof SecurityException) {
-//                setAutoConnect(false);
-//                fireToggleAutoConnectEvent();
-//                m_connectListener.handleException();
-//                return;
-//              }
               m_connectListener.handleException();
             }
           }
@@ -387,6 +381,8 @@ public class ServerConnectionManager implements NotificationListener {
   }
 
   private void _setConnected(boolean connected) {
+//    System.err.println("connected="+connected);
+//    Thread.dumpStack();
     m_connected = connected;
   }
   
@@ -598,6 +594,10 @@ public class ServerConnectionManager implements NotificationListener {
     m_connectThread = null;
   }
 
+  public int hashCode() {
+    return new HashCodeBuilder().append(getJMXPortNumber()).append(safeGetHostName()).toHashCode();
+  }
+  
   public boolean equals(Object o) {
     if(!(o instanceof ServerConnectionManager)) return false;
     

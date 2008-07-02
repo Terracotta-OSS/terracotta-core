@@ -36,7 +36,7 @@ public class AdminClientContext {
     return bundleHelper.getString(id);
   }
   
-  public String format(final String key, Object[] args) {
+  public String format(final String key, Object... args) {
     return bundleHelper.format(key, args);
   }
 

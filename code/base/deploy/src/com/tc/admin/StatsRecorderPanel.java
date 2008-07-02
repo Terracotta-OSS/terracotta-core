@@ -214,7 +214,7 @@ public class StatsRecorderPanel extends XContainer {
     m_acc.executorService.execute(new GathererConnectedWorker());
   }
 
-  class GathererConnectedState {
+  private static class GathererConnectedState {
     private boolean  fIsCapturing;
     private String[] fSessions;
     private String   fActiveStatsSessionId;
@@ -448,8 +448,8 @@ public class StatsRecorderPanel extends XContainer {
           m_currentStatsSessionId = new Date().toString();
           m_statisticsGathererMBean.createSession(m_currentStatsSessionId);
           m_statisticsGathererMBean.enableStatistics(stats);
-          m_statisticsGathererMBean.setSessionParam(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL,
-                                                    new Long(samplePeriodMillis));
+          m_statisticsGathererMBean.setSessionParam(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL, Long
+              .valueOf(samplePeriodMillis));
           m_statisticsGathererMBean.startCapturing();
           return null;
         }
@@ -509,7 +509,7 @@ public class StatsRecorderPanel extends XContainer {
     }
   }
 
-  class StatsSessionListItem {
+  private static class StatsSessionListItem {
     private String fSessionId;
 
     StatsSessionListItem(String sessionId) {
@@ -560,6 +560,8 @@ public class StatsRecorderPanel extends XContainer {
         if (tcStatsConfig.isSetEnabledStatistics()) {
           setSelectedStats(tcStatsConfig.getEnabledStatistics().getNameArray());
         }
+      } catch (RuntimeException re) {
+        throw re;
       } catch (Exception e) {
         Frame frame = (Frame) getAncestorOfClass(Frame.class);
         String msg = "Unable to parse '" + file.getName() + "' as a Terracotta stats config document";
@@ -600,7 +602,7 @@ public class StatsRecorderPanel extends XContainer {
     }
   }
 
-  class ZipFileFilter extends FileFilter {
+  private static class ZipFileFilter extends FileFilter {
     public boolean accept(File file) {
       return file.isDirectory() || file.getName().endsWith(".zip");
     }
@@ -672,40 +674,6 @@ public class StatsRecorderPanel extends XContainer {
         if (get != null) {
           get.releaseConnection();
         }
-      }
-    }
-
-    private class LoginPanel extends JPanel {
-      private JTextField     m_userNameField;
-      private JPasswordField m_passwordField;
-
-      private LoginPanel() {
-        super();
-        setLayout(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridx = gbc.gridy = 0;
-        gbc.insets = new Insets(2, 2, 2, 2);
-        add(new JLabel("Username:"), gbc);
-        gbc.gridx++;
-        m_userNameField = new JTextField(20);
-        add(m_userNameField, gbc);
-        gbc.gridx--;
-        gbc.gridy++;
-        add(new JLabel("Password:"), gbc);
-        gbc.gridx++;
-        m_passwordField = new JPasswordField(20);
-        add(m_passwordField, gbc);
-
-        m_userNameField.requestFocusInWindow();
-      }
-
-      String getUserName() {
-        return m_userNameField.getText();
-      }
-
-      String getPassword() {
-        return new String(m_passwordField.getPassword());
       }
     }
 
@@ -938,5 +906,39 @@ public class StatsRecorderPanel extends XContainer {
     m_lastExportDir = null;
     m_clearStatsSessionButton = null;
     m_clearAllStatsSessionsButton = null;
+  }
+
+  private static class LoginPanel extends JPanel {
+    private JTextField     m_userNameField;
+    private JPasswordField m_passwordField;
+
+    private LoginPanel() {
+      super();
+      setLayout(new GridBagLayout());
+      GridBagConstraints gbc = new GridBagConstraints();
+      gbc.fill = GridBagConstraints.HORIZONTAL;
+      gbc.gridx = gbc.gridy = 0;
+      gbc.insets = new Insets(2, 2, 2, 2);
+      add(new JLabel("Username:"), gbc);
+      gbc.gridx++;
+      m_userNameField = new JTextField(20);
+      add(m_userNameField, gbc);
+      gbc.gridx--;
+      gbc.gridy++;
+      add(new JLabel("Password:"), gbc);
+      gbc.gridx++;
+      m_passwordField = new JPasswordField(20);
+      add(m_passwordField, gbc);
+
+      m_userNameField.requestFocusInWindow();
+    }
+
+    String getUserName() {
+      return m_userNameField.getText();
+    }
+
+    String getPassword() {
+      return new String(m_passwordField.getPassword());
+    }
   }
 }

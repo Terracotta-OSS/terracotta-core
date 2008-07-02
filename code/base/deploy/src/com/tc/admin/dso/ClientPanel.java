@@ -14,10 +14,11 @@ import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.PropertyTable;
 import com.tc.admin.common.PropertyTableModel;
 import com.tc.admin.common.XContainer;
+import com.tc.admin.model.IClient;
+import com.tc.admin.model.IClusterNode;
 import com.tc.management.beans.logging.InstrumentationLoggingMBean;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
 import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
-import com.tc.stats.DSOClientMBean;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -35,7 +36,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 public class ClientPanel extends XContainer implements NotificationListener, PropertyChangeListener {
   protected AdminClientContext        m_acc;
   protected ClientNode                m_clientNode;
-  protected DSOClient                 m_client;
+  protected IClient                   m_client;
 
   protected PropertyTable             m_propertyTable;
 
@@ -99,7 +100,7 @@ public class ClientPanel extends XContainer implements NotificationListener, Pro
     setClient(clientNode.getClient());
   }
 
-  public void setClient(DSOClient client) {
+  public void setClient(IClient client) {
     m_client = client;
 
     String[] fields = { "Host", "Port", "ChannelID" };
@@ -107,10 +108,10 @@ public class ClientPanel extends XContainer implements NotificationListener, Pro
 
     m_loggingChangeHandler = new LoggingChangeHandler();
 
-    if(client.isTunneledBeansRegistered()) {
+    if (client.isReady()) {
       try {
         setupTunneledBeans();
-      } catch(Exception e) {
+      } catch (Exception e) {
         m_acc.log(e);
       }
     } else {
@@ -118,19 +119,19 @@ public class ClientPanel extends XContainer implements NotificationListener, Pro
     }
   }
 
-  public DSOClient getClient() {
+  public IClient getClient() {
     return m_client;
   }
 
   private void setupTunneledBeans() throws Exception {
-    m_environmentTextArea.setText(m_client.getL1InfoBean().getEnvironment());
-    m_configTextArea.setText(m_client.getL1InfoBean().getConfig());
+    m_environmentTextArea.setText(m_client.getEnvironment());
+    m_configTextArea.setText(m_client.getConfig());
 
     setupInstrumentationLogging();
     setupRuntimeLogging();
     setupRuntimeOutputOptions();
   }
-  
+
   private void setupInstrumentationLogging() throws Exception {
     InstrumentationLoggingMBean instrumentationLoggingBean = m_client.getInstrumentationLoggingBean();
 
@@ -139,8 +140,6 @@ public class ClientPanel extends XContainer implements NotificationListener, Pro
     setupLoggingControl(m_transientRootCheckBox, instrumentationLoggingBean);
     setupLoggingControl(m_rootsCheckBox, instrumentationLoggingBean);
     setupLoggingControl(m_distributedMethodsCheckBox, instrumentationLoggingBean);
-
-    m_client.addNotificationListener(m_client.getInstrumentationLoggingObjectName(), this);
   }
 
   private void setupRuntimeLogging() throws Exception {
@@ -152,8 +151,6 @@ public class ClientPanel extends XContainer implements NotificationListener, Pro
     setupLoggingControl(m_waitNotifyDebugCheckBox, runtimeLoggingBean);
     setupLoggingControl(m_distributedMethodDebugCheckBox, runtimeLoggingBean);
     setupLoggingControl(m_newObjectDebugCheckBox, runtimeLoggingBean);
-
-    m_client.addNotificationListener(m_client.getRuntimeLoggingObjectName(), this);
   }
 
   private void setupRuntimeOutputOptions() throws Exception {
@@ -162,8 +159,6 @@ public class ClientPanel extends XContainer implements NotificationListener, Pro
     setupLoggingControl(m_autoLockDetailsCheckBox, runtimeOutputOptionsBean);
     setupLoggingControl(m_callerCheckBox, runtimeOutputOptionsBean);
     setupLoggingControl(m_fullStackCheckBox, runtimeOutputOptionsBean);
-
-    m_client.addNotificationListener(m_client.getRuntimeOutputOptionsObjectName(), this);
   }
 
   private void setupLoggingControl(CheckBox checkBox, Object bean) {
@@ -228,19 +223,24 @@ public class ClientPanel extends XContainer implements NotificationListener, Pro
     }
   }
 
-
   public void propertyChange(PropertyChangeEvent evt) {
-    String propName = evt.getPropertyName();
-    if(DSOClientMBean.TUNNELED_BEANS_REGISTERED.equals(propName)) {
+    String prop = evt.getPropertyName();
+    if (IClusterNode.PROP_READY.equals(prop)) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           try {
             setupTunneledBeans();
-          } catch(Exception e) {
+          } catch (Exception e) {
             m_acc.log(e);
           }
         }
       });
+    } else if (prop.startsWith("tc.logging.")) {
+      String name = prop.substring(prop.lastIndexOf('.') + 1);
+      CheckBox checkBox = m_loggingControlMap.get(name);
+      if (checkBox != null) {
+        checkBox.setSelected((Boolean) evt.getNewValue());
+      }
     }
   }
 

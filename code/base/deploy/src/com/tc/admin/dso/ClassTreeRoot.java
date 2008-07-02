@@ -58,8 +58,7 @@ public class ClassTreeRoot extends XRootNode implements ClassTreeNode {
 
   public int getInstanceCount() {
     if(instanceCount == null) {
-      ClassesHelper helper = ClassesHelper.getHelper();
-      instanceCount = new Integer(helper.getInstanceCount(this));
+      instanceCount = Integer.valueOf(ClassesHelper.getHelper().getInstanceCount(this));
     }
 
     return instanceCount.intValue();

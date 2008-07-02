@@ -56,33 +56,33 @@ import javax.swing.text.Element;
 import javax.swing.text.html.HTML;
 
 public class RuntimeStatsPanel extends XContainer implements RuntimeStatisticConstants {
-  protected AdminClientContext  m_acc;
-  protected Timer               m_statsGathererTimer;
-  protected Container           m_chartsPanel;
-  private Button                m_startMonitoringButton;
-  private Button                m_stopMonitoringButton;
-  private Button                m_clearSamplesButton;
-  private Spinner               m_samplePeriodSpinner;
-  private Spinner               m_sampleHistorySpinner;
-  protected AxisSpace           m_rangeAxisSpace;
+  protected AdminClientContext     m_acc;
+  protected Timer                  m_statsGathererTimer;
+  protected Container              m_chartsPanel;
+  private Button                   m_startMonitoringButton;
+  private Button                   m_stopMonitoringButton;
+  private Button                   m_clearSamplesButton;
+  private Spinner                  m_samplePeriodSpinner;
+  private Spinner                  m_sampleHistorySpinner;
+  protected AxisSpace              m_rangeAxisSpace;
 
-  private boolean               m_shouldAutoStart;
+  private boolean                  m_shouldAutoStart;
 
-  protected static Dimension    fDefaultGraphSize                       = new Dimension(
-                                                                                        ChartPanel.DEFAULT_MINIMUM_DRAW_WIDTH,
-                                                                                        ChartPanel.DEFAULT_MINIMUM_DRAW_HEIGHT);
+  protected static final Dimension fDefaultGraphSize                       = new Dimension(
+                                                                                           ChartPanel.DEFAULT_MINIMUM_DRAW_WIDTH,
+                                                                                           ChartPanel.DEFAULT_MINIMUM_DRAW_HEIGHT);
 
-  private static final int      DEFAULT_POLL_PERIOD_SECS                = 3;
-  private static final int      DEFAULT_SAMPLE_HISTORY_MINUTES          = 5;
-  private static final int      SAMPLE_SAMPLE_HISTORY_STEP_SIZE         = 1;
+  private static final int         DEFAULT_POLL_PERIOD_SECS                = 3;
+  private static final int         DEFAULT_SAMPLE_HISTORY_MINUTES          = 5;
+  private static final int         SAMPLE_SAMPLE_HISTORY_STEP_SIZE         = 1;
 
-  private static final String   DEFAULT_POLL_PERIOD_SECONDS_PREF_KEY    = "poll-periods-seconds";
-  private static final String   DEFAULT_SAMPLE_HISTORY_MINUTES_PREF_KEY = "sample-history-minutes";
+  private static final String      DEFAULT_POLL_PERIOD_SECONDS_PREF_KEY    = "poll-periods-seconds";
+  private static final String      DEFAULT_SAMPLE_HISTORY_MINUTES_PREF_KEY = "sample-history-minutes";
 
-  private ArrayList<TimeSeries> m_allSeries;
-  private ArrayList<JFreeChart> m_allCharts;
+  private ArrayList<TimeSeries>    m_allSeries;
+  private ArrayList<JFreeChart>    m_allCharts;
 
-  private static final String   HYPERIC_INSTRUCTIONS_URI                = "/com/tc/admin/HypericInstructions.html";
+  private static final String      HYPERIC_INSTRUCTIONS_URI                = "/com/tc/admin/HypericInstructions.html";
 
   public RuntimeStatsPanel() {
     super();

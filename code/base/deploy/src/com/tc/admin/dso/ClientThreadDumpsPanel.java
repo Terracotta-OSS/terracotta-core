@@ -6,7 +6,6 @@ package com.tc.admin.dso;
 import com.tc.admin.AbstractThreadDumpsPanel;
 import com.tc.admin.AdminClient;
 import com.tc.admin.AdminClientContext;
-import com.tc.management.beans.l1.L1InfoMBean;
 
 import java.util.prefs.Preferences;
 
@@ -19,9 +18,7 @@ public class ClientThreadDumpsPanel extends AbstractThreadDumpsPanel {
   }
 
   protected String getThreadDumpText() throws Exception {
-    long requestMillis = System.currentTimeMillis();
-    L1InfoMBean l1InfoBean = m_clientThreadDumpsNode.getL1InfoBean();
-    return l1InfoBean != null ? l1InfoBean.takeThreadDump(requestMillis) : "L1InfoMBean not registered yet";
+    return m_clientThreadDumpsNode.getClient().takeThreadDump(System.currentTimeMillis());
   }
 
   protected Preferences getPreferences() {

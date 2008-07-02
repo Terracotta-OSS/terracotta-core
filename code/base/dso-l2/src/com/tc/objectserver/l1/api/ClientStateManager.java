@@ -54,4 +54,5 @@ public interface ClientStateManager extends PrettyPrintable {
 
   public Set addReferences(NodeID nodeID, Set oids);
 
+  public int getReferenceCount(NodeID nodeID);
 }

@@ -4,14 +4,10 @@
 package com.tc.admin.dso;
 
 import com.tc.admin.BaseHelper;
-import com.tc.admin.AdminClient;
-import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.XTreeNode;
-import com.tc.stats.DSOClassInfo;
 
 import java.net.URL;
 
-import javax.management.ObjectName;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.tree.TreeNode;
@@ -34,16 +30,6 @@ public class ClassesHelper extends BaseHelper {
     }
 
     return m_classesIcon;
-  }
-
-  public DSOClassInfo[] getClassInfo(ConnectionContext cc) {
-    try {
-      ObjectName dso = DSOHelper.getHelper().getDSOMBean(cc);
-      return (DSOClassInfo[])cc.getAttribute(dso, "ClassInfo");
-    } catch(Exception e) {
-      AdminClient.getContext().log(e);
-      return new DSOClassInfo[]{ new DSOClassInfo("java.lang.Void", 0) };
-    }
   }
 
   ClassTreeBranch testGetBranch(XTreeNode parent, String name) {

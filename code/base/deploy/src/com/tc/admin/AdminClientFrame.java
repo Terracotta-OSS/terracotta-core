@@ -8,6 +8,7 @@ import org.dijon.Container;
 import com.tc.admin.common.XFrame;
 import com.tc.admin.common.XMenuBar;
 import com.tc.admin.common.XTreeNode;
+import com.tc.admin.model.IServer;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -168,8 +169,7 @@ public class AdminClientFrame extends XFrame
       return;
     }
 
-    int state = getExtendedState();
-    if((state & NORMAL) != NORMAL) {
+    if((getExtendedState() & NORMAL) != NORMAL) {
       return;
     }
     
@@ -186,11 +186,11 @@ public class AdminClientFrame extends XFrame
     return s != null ? parseBoundsString(s) : getDefaultBounds();
   }
 
-  public void addServerLog(ConnectionContext cc) {
-    m_mainPanel.addServerLog(cc);
+  public void addServerLog(IServer server) {
+    m_mainPanel.addServerLog(server);
   }
 
-  public void removeServerLog(ConnectionContext cc) {
-    m_mainPanel.removeServerLog(cc);
+  public void removeServerLog(IServer server) {
+    m_mainPanel.removeServerLog(server);
   }
 }

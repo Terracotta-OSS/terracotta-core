@@ -15,59 +15,57 @@ import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 
 // XXX: DEPRECATED
-public class TextComponentHelper extends XPopupListener
-  implements CaretListener
-{
+public class TextComponentHelper extends XPopupListener implements CaretListener {
   protected JTextComponent m_component;
   protected CutAction      m_cutAction;
   protected CopyAction     m_copyAction;
   protected PasteAction    m_pasteAction;
   protected ClearAction    m_clearAction;
-  
+
   public TextComponentHelper() {
     super();
   }
-  
+
   public TextComponentHelper(JTextComponent component) {
     this();
     setTarget(component);
   }
 
   protected void setTarget(JTextComponent component) {
-    if(m_component != null) {
+    if (m_component != null) {
       m_component.removeCaretListener(this);
     }
 
     super.setTarget(m_component = component);
 
-    if(component != null) {
+    if (component != null) {
       component.addCaretListener(this);
     }
   }
-  
+
   public JPopupMenu createPopup() {
     JPopupMenu popup = new JPopupMenu("TextComponent Actions");
-    
-    if(m_component.isEditable()) {
+
+    if (m_component.isEditable()) {
       addCutAction(popup);
     }
     addCopyAction(popup);
-    if(m_component.isEditable()) {
+    if (m_component.isEditable()) {
       addPasteAction(popup);
       addClearAction(popup);
     }
-    
+
     return popup;
   }
 
   protected void addCutAction(JPopupMenu popup) {
     popup.add(m_cutAction = new CutAction());
   }
-  
+
   public Action getCutAction() {
     return m_cutAction;
   }
-  
+
   protected void addCopyAction(JPopupMenu popup) {
     popup.add(m_copyAction = new CopyAction());
   }
@@ -75,7 +73,7 @@ public class TextComponentHelper extends XPopupListener
   public Action getCopyAction() {
     return m_copyAction;
   }
-  
+
   protected void addPasteAction(JPopupMenu popup) {
     popup.add(m_pasteAction = new PasteAction());
   }
@@ -83,7 +81,7 @@ public class TextComponentHelper extends XPopupListener
   public Action getPasteAction() {
     return m_pasteAction;
   }
-  
+
   protected void addClearAction(JPopupMenu popup) {
     popup.add(m_clearAction = new ClearAction());
   }
@@ -91,8 +89,8 @@ public class TextComponentHelper extends XPopupListener
   public Action getClearAction() {
     return m_clearAction;
   }
-  
-  protected class CutAction extends XAbstractAction {
+
+  private class CutAction extends XAbstractAction {
     protected CutAction() {
       super("Cut");
       String uri = "/com/tc/admin/icons/cut_edit.gif";
@@ -103,8 +101,8 @@ public class TextComponentHelper extends XPopupListener
       m_component.cut();
     }
   }
-  
-  protected class CopyAction extends XAbstractAction {
+
+  private class CopyAction extends XAbstractAction {
     protected CopyAction() {
       super("Copy");
       String uri = "/com/tc/admin/icons/copy_edit.gif";
@@ -115,8 +113,8 @@ public class TextComponentHelper extends XPopupListener
       m_component.copy();
     }
   }
-  
-  protected class PasteAction extends XAbstractAction {
+
+  private class PasteAction extends XAbstractAction {
     protected PasteAction() {
       super("Paste");
       String uri = "/com/tc/admin/icons/paste_edit.gif";
@@ -128,7 +126,7 @@ public class TextComponentHelper extends XPopupListener
     }
   }
 
-  protected class ClearAction extends XAbstractAction {
+  private class ClearAction extends XAbstractAction {
     protected ClearAction() {
       super("Clear");
       String uri = "/com/tc/admin/icons/clear_co.gif";
@@ -136,39 +134,40 @@ public class TextComponentHelper extends XPopupListener
     }
 
     public void actionPerformed(ActionEvent ae) {
-      Document doc = m_component.getDocument();
-      
       try {
+        Document doc = m_component.getDocument();
         doc.remove(0, doc.getLength());
-      } catch(BadLocationException ble) {/**/}
+      } catch (BadLocationException ble) {
+        throw new AssertionError(ble);
+      }
     }
   }
 
   public boolean hasSelectionRange() {
-    return (m_component.getSelectionStart()-m_component.getSelectionEnd()) != 0;
+    return (m_component.getSelectionStart() - m_component.getSelectionEnd()) != 0;
   }
-  
+
   private void testEnableMenuItems() {
     boolean hasSelectionRange = hasSelectionRange();
-    boolean editable          = m_component.isEditable();
-    
-    if(m_cutAction != null) {
+    boolean editable = m_component.isEditable();
+
+    if (m_cutAction != null) {
       m_cutAction.setEnabled(editable && hasSelectionRange);
     }
 
-    if(m_copyAction != null) {
+    if (m_copyAction != null) {
       m_copyAction.setEnabled(hasSelectionRange);
     }
-    
-    if(m_pasteAction != null) {
+
+    if (m_pasteAction != null) {
       m_pasteAction.setEnabled(editable);
     }
-    
-    if(m_clearAction != null) {
+
+    if (m_clearAction != null) {
       m_clearAction.setEnabled(m_component.getDocument().getLength() > 0);
     }
   }
-  
+
   public void caretUpdate(CaretEvent e) {
     testEnableMenuItems();
   }

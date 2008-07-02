@@ -25,7 +25,7 @@ public class GCStatsWrapper implements GCStats {
   }
 
   public Date getStartDate() {
-    return m_startDate;
+    return new Date(m_startDate.getTime());
   }
 
   public long getElapsedTime() {

@@ -52,7 +52,7 @@ public abstract class AbstractThreadDumpsPanel extends XContainer {
     m_threadDumpButton.addActionListener(new ThreadDumpButtonHandler());
 
     m_threadDumpsSplitter = (SplitPane) findComponent("ThreadDumpsSplitter");
-    m_dividerLoc = new Integer(getThreadDumpSplitPref());
+    m_dividerLoc = Integer.valueOf(getThreadDumpSplitPref());
     m_dividerListener = new DividerListener();
 
     m_threadDumpList = (List) findComponent("ThreadDumpList");
@@ -139,7 +139,7 @@ public abstract class AbstractThreadDumpsPanel extends XContainer {
       if (splitter.isShowing() == false || JSplitPane.DIVIDER_LOCATION_PROPERTY.equals(propName) == false) { return; }
 
       int divLoc = splitter.getDividerLocation();
-      Integer divLocObj = new Integer(divLoc);
+      Integer divLocObj =  Integer.valueOf(divLoc);
       Preferences prefs = getPreferences();
       String name = splitter.getName();
       Preferences node = prefs.node(name);

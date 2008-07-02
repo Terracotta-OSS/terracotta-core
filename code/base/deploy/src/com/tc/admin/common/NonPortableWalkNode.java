@@ -30,7 +30,7 @@ public class NonPortableWalkNode extends XTreeNode {
   public NonPortableWalkNode(Object userObject) {
     super();
     setUserObject(userObject);
-    if(userObject instanceof NonPortableObjectState) {
+    if (userObject instanceof NonPortableObjectState) {
       setObjectState((NonPortableObjectState) userObject);
     }
   }
@@ -62,11 +62,11 @@ public class NonPortableWalkNode extends XTreeNode {
   }
 
   public String getFieldName() {
-    return this.objectState != null ? this.objectState.getFieldName() : null;    
+    return this.objectState != null ? this.objectState.getFieldName() : null;
   }
-  
+
   public String getTypeName() {
-    return this.objectState != null ? this.objectState.getTypeName() : null;    
+    return this.objectState != null ? this.objectState.getTypeName() : null;
   }
 
   public boolean isPortable() {
@@ -85,7 +85,7 @@ public class NonPortableWalkNode extends XTreeNode {
     return this.objectState != null ? this.objectState.isPreInstrumented() : false;
   }
 
-  class MakeTransientAction extends XAbstractAction {
+  private static class MakeTransientAction extends XAbstractAction {
     public MakeTransientAction() {
       super("Make transient");
     }
@@ -95,7 +95,7 @@ public class NonPortableWalkNode extends XTreeNode {
     }
   }
 
-  class IncludeForInstrumentationAction extends XAbstractAction {
+  private static class IncludeForInstrumentationAction extends XAbstractAction {
     public IncludeForInstrumentationAction() {
       super("Include from instrumentation");
     }
@@ -105,7 +105,7 @@ public class NonPortableWalkNode extends XTreeNode {
     }
   }
 
-  class ExcludeForInstrumentationAction extends XAbstractAction {
+  private static class ExcludeForInstrumentationAction extends XAbstractAction {
     public ExcludeForInstrumentationAction() {
       super("Exclude from instrumentation");
     }
@@ -115,7 +115,7 @@ public class NonPortableWalkNode extends XTreeNode {
     }
   }
 
-  class MakeBootClassAction extends XAbstractAction {
+  private static class MakeBootClassAction extends XAbstractAction {
     public MakeBootClassAction() {
       super("Add to BootJar");
     }
@@ -134,7 +134,7 @@ public class NonPortableWalkNode extends XTreeNode {
       } else if (!isPortable()) {
         popupMenu.add(new IncludeForInstrumentationAction());
         popupMenu.add(new MakeBootClassAction());
-        if(getFieldName() != null) {
+        if (getFieldName() != null) {
           popupMenu.add(new MakeTransientAction());
         }
       } else {

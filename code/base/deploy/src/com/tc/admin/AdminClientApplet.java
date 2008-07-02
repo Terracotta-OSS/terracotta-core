@@ -8,6 +8,7 @@ import org.dijon.Container;
 import com.tc.admin.common.XApplet;
 import com.tc.admin.common.XMenuBar;
 import com.tc.admin.common.XTreeNode;
+import com.tc.admin.model.IServer;
 
 import java.awt.BorderLayout;
 
@@ -87,12 +88,12 @@ public class AdminClientApplet extends XApplet
     m_mainPanel.clearStatus();
   }
 
-  public void addServerLog(ConnectionContext cc) {
-    m_mainPanel.addServerLog(cc);
+  public void addServerLog(IServer server) {
+    m_mainPanel.addServerLog(server);
   }
 
-  public void removeServerLog(ConnectionContext cc) {
-    m_mainPanel.removeServerLog(cc);
+  public void removeServerLog(IServer server) {
+    m_mainPanel.removeServerLog(server);
   }
   
   public Container getActivityArea() {

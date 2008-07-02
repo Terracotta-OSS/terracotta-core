@@ -15,9 +15,8 @@ import org.jfree.data.time.TimeSeries;
 import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.dso.RuntimeStatsPanel;
-import com.tc.management.beans.TCServerInfoMBean;
+import com.tc.admin.model.IServer;
 import com.tc.statistics.StatisticData;
-import com.tc.stats.DSOMBean;
 import com.tc.stats.statistics.CountStatistic;
 import com.tc.stats.statistics.Statistic;
 
@@ -73,7 +72,11 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
     setup(m_chartsPanel);
   }
 
-  protected void setup(Container chartsPanel) {
+  IServer getServer() {
+    return m_serverStatsNode.getServer();
+  }
+  
+  protected synchronized void setup(Container chartsPanel) {
     chartsPanel.setLayout(new GridLayout(0, 2));
     setupMemoryPanel(chartsPanel);
     setupCpuPanel(chartsPanel);
@@ -134,7 +137,7 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
     m_memoryPanel.setBorder(new TitledBorder("Heap Usage"));
   }
 
-  private void setupCpuSeries(int processorCount) {
+  private synchronized void setupCpuSeries(int processorCount) {
     m_cpuTimeSeriesMap = new HashMap<String, TimeSeries>();
     m_cpuTimeSeries = new TimeSeries[processorCount];
     for (int i = 0; i < processorCount; i++) {
@@ -157,8 +160,7 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
     private CpuPanelWorker() {
       super(new Callable<String[]>() {
         public String[] call() throws Exception {
-          TCServerInfoMBean tcServerInfoBean = m_serverStatsNode.getServerInfoBean();
-          String[] cpuNames = tcServerInfoBean.getCpuStatNames();
+          String[] cpuNames = getServer().getCpuStatNames();
           return cpuNames;
         }
       });
@@ -178,10 +180,10 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
         }
       }
     }
+  }
 
-    private void setupInstructions() {
-      setupHypericInstructions(m_cpuPanel);
-    }
+  private synchronized void setupInstructions() {
+    setupHypericInstructions(m_cpuPanel);
   }
 
   private void setupCpuPanel(Container parent) {
@@ -196,8 +198,7 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
     TCServerInfoStatGetter() {
       super(new Callable<Map>() {
         public Map call() throws Exception {
-          TCServerInfoMBean tcServerInfoBean = m_serverStatsNode.getServerInfoBean();
-          return tcServerInfoBean != null ? tcServerInfoBean.getStatistics() : null;
+          return getServer().getServerStatistics();
         }
       }, getRuntimeStatsPollPeriodSeconds(), TimeUnit.SECONDS);
     }
@@ -258,8 +259,7 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
     DSOServerStatGetter() {
       super(new Callable<Statistic[]>() {
         public Statistic[] call() throws Exception {
-          DSOMBean dsoBean = m_serverStatsNode.getDSOBean();
-          return dsoBean != null ? dsoBean.getStatistics(STATS) : null;
+          return getServer().getDSOStatistics(STATS);
         }
       }, getRuntimeStatsPollPeriodSeconds(), TimeUnit.SECONDS);
     }

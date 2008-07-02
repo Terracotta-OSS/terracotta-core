@@ -4,6 +4,7 @@
 package com.tc.admin;
 
 import com.tc.admin.common.XTreeNode;
+import com.tc.admin.model.IServer;
 
 public interface AdminClientController {
   void    setStatus(String msg);
@@ -22,6 +23,6 @@ public interface AdminClientController {
   void    block();
   void    unblock();
   void    updateServerPrefs();
-  void    addServerLog(ConnectionContext cc);
-  void    removeServerLog(ConnectionContext cc);
+  void    addServerLog(IServer server);
+  void    removeServerLog(IServer server);
 }

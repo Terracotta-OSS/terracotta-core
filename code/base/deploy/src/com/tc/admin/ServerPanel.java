@@ -14,7 +14,6 @@ import com.tc.admin.common.PropertyTableModel;
 import com.tc.admin.common.StatusView;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XTextArea;
-import com.tc.util.ProductInfo;
 
 import java.util.Date;
 import java.util.concurrent.Callable;
@@ -22,14 +21,14 @@ import java.util.concurrent.Callable;
 import javax.swing.table.DefaultTableCellRenderer;
 
 public class ServerPanel extends XContainer {
-  private AdminClientContext      m_acc;
-  private ServerNode              m_serverNode;
-  private PropertyTable           m_propertyTable;
-  private StatusView              m_statusView;
-  private ProductInfoPanel        m_productInfoPanel;
-  private TabbedPane              m_tabbedPane;
-  private XTextArea               m_environmentTextArea;
-  private XTextArea               m_configTextArea;
+  private AdminClientContext m_acc;
+  private ServerNode         m_serverNode;
+  private PropertyTable      m_propertyTable;
+  private StatusView         m_statusView;
+  private ProductInfoPanel   m_productInfoPanel;
+  private TabbedPane         m_tabbedPane;
+  private XTextArea          m_environmentTextArea;
+  private XTextArea          m_configTextArea;
 
   public ServerPanel(ServerNode serverNode) {
     super(serverNode);
@@ -63,20 +62,24 @@ public class ServerPanel extends XContainer {
     acc.client.storePrefs();
   }
 
-  class ServerState {
-    private Date        fStartDate;
-    private Date        fActivateDate;
-    private ProductInfo fProductInfo;
-    private String      fEnvironment;
-    private String      fConfig;
-    private Integer     fDSOListenPort;
+  private static class ServerState {
+    private Date    fStartDate;
+    private Date    fActivateDate;
+    private String  fVersion;
+    private String  fCopyright;
+    private String  fEnvironment;
+    private String  fConfig;
+    private Integer fDSOListenPort;
 
-    ServerState(Date startDate, Date activateDate, ProductInfo productInfo, String environment, String config, Integer dsoListenPort) {
+    ServerState(Date startDate, Date activateDate, String version, String copyright, String environment, String config,
+                Integer dsoListenPort) {
       fStartDate = startDate;
       fActivateDate = activateDate;
-      fProductInfo = productInfo;
+      fVersion = version;
+      fCopyright = copyright;
       fEnvironment = environment;
       fConfig = config;
+      fDSOListenPort = dsoListenPort;
     }
 
     Date getStartDate() {
@@ -87,8 +90,12 @@ public class ServerPanel extends XContainer {
       return fActivateDate;
     }
 
-    ProductInfo getProductInfo() {
-      return fProductInfo;
+    String getVersion() {
+      return fVersion;
+    }
+
+    String getCopyright() {
+      return fCopyright;
     }
 
     String getEnvironment() {
@@ -98,7 +105,7 @@ public class ServerPanel extends XContainer {
     String getConfig() {
       return fConfig;
     }
-    
+
     Integer getDSOListenPort() {
       return fDSOListenPort;
     }
@@ -107,15 +114,16 @@ public class ServerPanel extends XContainer {
   private class ServerStateWorker extends BasicWorker<ServerState> {
     private ServerStateWorker() {
       super(new Callable<ServerState>() {
-        public ServerState call() {
+        public ServerState call() throws Exception {
           Date startDate = new Date(m_serverNode.getStartTime());
           Date activateDate = new Date(m_serverNode.getActivateTime());
-          ProductInfo productInfo = m_serverNode.getProductInfo();
+          String version = m_serverNode.getProductVersion();
+          String copyright = m_serverNode.getProductCopyright();
           String environment = m_serverNode.getEnvironment();
           String config = m_serverNode.getConfig();
           Integer dsoListenPort = m_serverNode.getDSOListenPort();
-          
-          return new ServerState(startDate, activateDate, productInfo, environment, config, dsoListenPort);
+
+          return new ServerState(startDate, activateDate, version, copyright, environment, config, dsoListenPort);
         }
       });
     }
@@ -126,7 +134,7 @@ public class ServerPanel extends XContainer {
         m_acc.log(e);
       } else {
         ServerState serverState = getResult();
-        showProductInfo(serverState.getProductInfo());
+        showProductInfo(serverState.getVersion(), serverState.getCopyright());
         m_environmentTextArea.setText(serverState.getEnvironment());
         m_configTextArea.setText(serverState.getConfig());
       }
@@ -139,8 +147,10 @@ public class ServerPanel extends XContainer {
       if (getException() == null) {
         ServerState serverState = getResult();
         String startTime = serverState.getStartDate().toString();
-        setStatusLabel(m_acc.format("server.started.label", new Object[] { startTime }));
-        m_acc.controller.setStatus(m_acc.format("server.started.status", new Object[] { m_serverNode, startTime }));
+        setStatusLabel(m_acc.format("server.started.label", startTime));
+        m_acc.controller.setStatus(m_acc.format("server.started.status", m_serverNode, startTime));
+      } else {
+        m_acc.log(getException());
       }
     }
   }
@@ -152,10 +162,11 @@ public class ServerPanel extends XContainer {
         ServerState serverState = getResult();
         String activateTime = serverState.getActivateDate().toString();
 
-        setStatusLabel(m_acc.format("server.activated.label", new Object[] { activateTime }));
-        m_acc.controller.addServerLog(m_serverNode.getConnectionContext());
-        m_acc.controller
-            .setStatus(m_acc.format("server.activated.status", new Object[] { m_serverNode, activateTime }));
+        setStatusLabel(m_acc.format("server.activated.label", activateTime));
+        m_acc.controller.addServerLog(m_serverNode.getServer());
+        m_acc.controller.setStatus(m_acc.format("server.activated.status", m_serverNode, activateTime));
+      } else {
+        m_acc.log(getException());
       }
     }
   }
@@ -165,9 +176,8 @@ public class ServerPanel extends XContainer {
       super.finished();
       if (getException() == null) {
         String startTime = new Date().toString();
-        setStatusLabel(m_acc.format("server.initializing.label", new Object[] { startTime }));
-        m_acc.controller
-            .setStatus(m_acc.format("server.initializing.status", new Object[] { m_serverNode, startTime }));
+        setStatusLabel(m_acc.format("server.initializing.label", startTime));
+        m_acc.controller.setStatus(m_acc.format("server.initializing.status", m_serverNode, startTime));
       }
     }
   }
@@ -177,8 +187,8 @@ public class ServerPanel extends XContainer {
       super.finished();
       if (getException() == null) {
         String startTime = new Date().toString();
-        setStatusLabel(m_acc.format("server.standingby.label", new Object[] { startTime }));
-        m_acc.controller.setStatus(m_acc.format("server.standingby.status", new Object[] { m_serverNode, startTime }));
+        setStatusLabel(m_acc.format("server.standingby.label", startTime));
+        m_acc.controller.setStatus(m_acc.format("server.standingby.status", m_serverNode, startTime));
       }
     }
   }
@@ -206,11 +216,11 @@ public class ServerPanel extends XContainer {
   void disconnected() {
     String startTime = new Date().toString();
 
-    setStatusLabel(m_acc.format("server.disconnected.label", new Object[] { startTime }));
+    setStatusLabel(m_acc.format("server.disconnected.label", startTime));
     hideProductInfo();
 
-    m_acc.controller.removeServerLog(m_serverNode.getConnectionContext());
-    m_acc.controller.setStatus(m_acc.format("server.disconnected.status", new Object[] { m_serverNode, startTime }));
+    m_acc.controller.removeServerLog(m_serverNode.getServer());
+    m_acc.controller.setStatus(m_acc.format("server.disconnected.status", m_serverNode, startTime));
   }
 
   private void setTabbedPaneEnabled(boolean enabled) {
@@ -238,16 +248,16 @@ public class ServerPanel extends XContainer {
 
   /**
    * The fields listed below are on ProductNode. If those methods change, so will these fields need to change.
-   * PropertyTable uses reflection to access values to display.
-   * TODO: i18n
+   * PropertyTable uses reflection to access values to display. TODO: i18n
    */
-  private void showProductInfo(ProductInfo productInfo) {
-    String[] fields = { "CanonicalHostName", "HostAddress", "Port", "DSOListenPort", "ProductVersion", "ProductBuildID", "ProductLicense" };
+  private void showProductInfo(String version, String copyright) {
+    String[] fields = { "CanonicalHostName", "HostAddress", "Port", "DSOListenPort", "ProductVersion",
+        "ProductBuildID", "ProductLicense" };
     String[] headings = { "Host", "Address", "JMX port", "DSO port", "Version", "Build", "License" };
     m_propertyTable.setModel(new PropertyTableModel(m_serverNode, fields, headings));
     m_propertyTable.getAncestorOfClass(ScrollPane.class).setVisible(true);
 
-    m_productInfoPanel.init(productInfo);
+    m_productInfoPanel.init(version, copyright);
     m_productInfoPanel.setVisible(true);
     setTabbedPaneEnabled(true);
 
@@ -280,5 +290,5 @@ public class ServerPanel extends XContainer {
     m_tabbedPane = null;
     m_environmentTextArea = null;
     m_configTextArea = null;
- }
+  }
 }

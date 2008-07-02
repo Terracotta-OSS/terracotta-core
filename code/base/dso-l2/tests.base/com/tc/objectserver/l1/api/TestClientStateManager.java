@@ -60,6 +60,10 @@ public class TestClientStateManager implements ClientStateManager {
     throw new ImplementMe();
 
   }
+  
+  public int getReferenceCount(NodeID node) {
+    return 0;
+  }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     return out.print(getClass().getName());

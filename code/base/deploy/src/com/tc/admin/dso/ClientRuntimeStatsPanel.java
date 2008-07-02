@@ -14,7 +14,6 @@ import org.jfree.data.time.TimeSeries;
 
 import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.ExceptionHelper;
-import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.statistics.StatisticData;
 import com.tc.stats.statistics.CountStatistic;
 import com.tc.stats.statistics.Statistic;
@@ -72,7 +71,7 @@ public class ClientRuntimeStatsPanel extends RuntimeStatsPanel {
     setup(m_chartsPanel);
   }
 
-  protected void setup(Container chartsPanel) {
+  protected synchronized void setup(Container chartsPanel) {
     chartsPanel.setLayout(new GridLayout(0, 2));
     setupMemoryPanel(chartsPanel);
     setupCpuPanel(chartsPanel);
@@ -133,7 +132,7 @@ public class ClientRuntimeStatsPanel extends RuntimeStatsPanel {
     m_memoryPanel.setBorder(new TitledBorder("Heap Usage"));
   }
 
-  private void setupCpuSeries(int processorCount) {
+  private synchronized void setupCpuSeries(int processorCount) {
     m_cpuTimeSeriesMap = new HashMap<String, TimeSeries>();
     m_cpuTimeSeries = new TimeSeries[processorCount];
     for (int i = 0; i < processorCount; i++) {
@@ -153,8 +152,7 @@ public class ClientRuntimeStatsPanel extends RuntimeStatsPanel {
     private CpuPanelWorker() {
       super(new Callable<String[]>() {
         public String[] call() throws Exception {
-          L1InfoMBean l1InfoBean = m_clientStatsNode.getL1InfoBean();
-          return l1InfoBean.getCpuStatNames();
+          return m_clientStatsNode.getClient().getCpuStatNames();
         }
       });
     }
@@ -173,10 +171,10 @@ public class ClientRuntimeStatsPanel extends RuntimeStatsPanel {
         }
       }
     }
+  }
 
-    private void setupInstructions() {
-      setupHypericInstructions(m_cpuPanel);
-    }
+  private synchronized void setupInstructions() {
+    setupHypericInstructions(m_cpuPanel);
   }
 
   private void setupCpuPanel(Container parent) {
@@ -191,8 +189,7 @@ public class ClientRuntimeStatsPanel extends RuntimeStatsPanel {
     L1InfoStatGetter() {
       super(new Callable<Map>() {
         public Map call() throws Exception {
-          L1InfoMBean l1InfoBean = m_clientStatsNode.getL1InfoBean();
-          return l1InfoBean != null ? l1InfoBean.getStatistics() : null;
+          return m_clientStatsNode.getClient().getL1Statistics();
         }
       }, getRuntimeStatsPollPeriodSeconds(), TimeUnit.SECONDS);
     }
@@ -202,7 +199,7 @@ public class ClientRuntimeStatsPanel extends RuntimeStatsPanel {
       if (e == null) {
         Map statMap = getResult();
         if (statMap != null) {
-          handleL1InfoStats(statMap);
+          handleL1Statistics(statMap);
         }
       } else {
         Throwable rootCause = ExceptionHelper.getRootCause(e);
@@ -219,7 +216,7 @@ public class ClientRuntimeStatsPanel extends RuntimeStatsPanel {
     }
   }
 
-  private synchronized void handleL1InfoStats(Map statMap) {
+  private synchronized void handleL1Statistics(Map statMap) {
     if (m_acc == null) return;
 
     Second now = new Second();
@@ -249,8 +246,7 @@ public class ClientRuntimeStatsPanel extends RuntimeStatsPanel {
     DSOClientStatGetter() {
       super(new Callable<Statistic[]>() {
         public Statistic[] call() throws Exception {
-          DSOClient client = m_clientStatsNode.getClient();
-          return client != null ? client.getStatistics(STATS) : null;
+          return m_clientStatsNode.getClient().getDSOStatistics(STATS);
         }
       }, getRuntimeStatsPollPeriodSeconds(), TimeUnit.SECONDS);
     }
@@ -260,7 +256,7 @@ public class ClientRuntimeStatsPanel extends RuntimeStatsPanel {
       if (e == null) {
         Statistic[] stats = getResult();
         if (stats != null) {
-          handleDSOClientStats(stats);
+          handleDSOStatistics(stats);
         }
       } else {
         Throwable rootCause = ExceptionHelper.getRootCause(e);
@@ -276,7 +272,7 @@ public class ClientRuntimeStatsPanel extends RuntimeStatsPanel {
     }
   }
 
-  private synchronized void handleDSOClientStats(Statistic[] stats) {
+  private synchronized void handleDSOStatistics(Statistic[] stats) {
     if (m_acc == null) return;
 
     updateSeries(m_flushRateSeries, (CountStatistic) stats[0]);

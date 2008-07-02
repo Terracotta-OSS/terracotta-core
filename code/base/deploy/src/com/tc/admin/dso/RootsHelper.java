@@ -5,8 +5,6 @@ package com.tc.admin.dso;
 
 import com.tc.admin.BaseHelper;
 import com.tc.admin.ConnectionContext;
-import com.tc.admin.common.XTreeNode;
-import com.tc.stats.DSOMBean;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -74,21 +72,8 @@ public class RootsHelper extends BaseHelper {
     return m_cycleIcon;
   }
 
-  public DSORoot[] getRoots(ConnectionContext cc) throws Exception {
-    ObjectName[] rootNames = getRootNames(cc);
-    int count = (rootNames != null) ? rootNames.length : 0;
-    DSORoot[] result = new DSORoot[count];
-
-    for (int i = 0; i < count; i++) {
-      result[i] = new DSORoot(cc, rootNames[i]);
-    }
-
-    return result;
-  }
-
-  public ObjectName[] getRootNames(ConnectionContext cc) throws Exception {
-    DSOMBean dso = DSOHelper.getHelper().getDSOBean(cc);
-    return dso.getRoots();
+  public ObjectName[] getRootNames(ConnectionContext cc) {
+    return DSOHelper.getHelper().getDSOBean(cc).getRoots();
   }
 
   public String[] trimFields(String[] fields) {
@@ -108,13 +93,5 @@ public class RootsHelper extends BaseHelper {
     }
 
     return new String[] {};
-  }
-
-  public XTreeNode createFieldNode(ConnectionContext cc, DSOObject field) {
-    if (field instanceof DSOMapEntryField) { return new MapEntryNode(cc, (DSOMapEntryField) field); }
-
-    if (field instanceof DSOField) { return new FieldTreeNode(cc, (DSOField) field); }
-
-    return new XTreeNode("NoSuchObject");
   }
 }

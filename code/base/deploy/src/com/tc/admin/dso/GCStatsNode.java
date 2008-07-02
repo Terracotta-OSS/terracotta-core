@@ -4,22 +4,26 @@
  */
 package com.tc.admin.dso;
 
-import org.dijon.Component;
-
 import com.tc.admin.AdminClient;
 import com.tc.admin.ClusterNode;
-import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.ComponentNode;
+import com.tc.admin.model.IClusterModel;
+
+import java.awt.Component;
 
 public class GCStatsNode extends ComponentNode {
   protected ClusterNode  m_clusterNode;
   protected GCStatsPanel m_gcStatsPanel;
 
-  public GCStatsNode(ClusterNode clusterNode) throws Exception {
+  public GCStatsNode(ClusterNode clusterNode) {
     super();
     m_clusterNode = clusterNode;
     setLabel(AdminClient.getContext().getMessage("dso.gcstats"));
     setIcon(DSOHelper.getHelper().getGCIcon());
+  }
+
+  IClusterModel getClusterModel() {
+    return m_clusterNode.getClusterModel();
   }
 
   protected GCStatsPanel createGCStatsPanel() {
@@ -31,16 +35,6 @@ public class GCStatsNode extends ComponentNode {
       m_gcStatsPanel = createGCStatsPanel();
     }
     return m_gcStatsPanel;
-  }
-
-  ConnectionContext getConnectionContext() {
-    return m_clusterNode.getConnectionContext();
-  }
-
-  public void newConnectionContext() {
-    if (m_gcStatsPanel != null) {
-      m_gcStatsPanel.newConnectionContext();
-    }
   }
 
   public void tearDown() {

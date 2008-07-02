@@ -55,6 +55,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.Element;
 import javax.swing.text.html.HTML;
@@ -92,7 +93,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
     runServer();
 
     try {
-      m_textPane.setPage(getClass().getResource("SamplesPojo.html"));
+      m_textPane.setPage(DSOSamplesFrame.class.getResource("SamplesPojo.html"));
     } catch (IOException ioe) {
       m_textPane.setText(ioe.getMessage());
     }
@@ -168,11 +169,11 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
   }
 
   private void toOutputPane(String s) {
-    Document doc = m_outputPane.getDocument();
-
     try {
+      Document doc = m_outputPane.getDocument();
       doc.insertString(doc.getLength(), s + "\n", null);
-    } catch (Exception e) {/**/
+    } catch (BadLocationException ble) {
+      throw new AssertionError(ble);
     }
   }
 
@@ -512,8 +513,8 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
 class SampleFrame extends Frame {
   public SampleFrame(Frame parentFrame, String title) {
     super(title);
-    
-    if(Os.isMac()) {
+
+    if (Os.isMac()) {
       System.setProperty("com.apple.macos.useScreenMenuBar", "true");
       System.setProperty("apple.laf.useScreenMenuBar", "true");
       System.setProperty("apple.awt.showGrowBox", "true");

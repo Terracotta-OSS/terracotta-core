@@ -6,15 +6,19 @@ package com.tc.admin.common;
 
 import com.tc.object.appevent.ApplicationEventContext;
 
+import java.util.Arrays;
+
 public abstract class AbstractWorkState {
   private AbstractResolutionAction[] fResolutionActions;
 
+  private static final AbstractResolutionAction[] EMPTY_RESOLUTION_ACTIONS = {};
+  
   public void setActions(AbstractResolutionAction[] actions) {
-    fResolutionActions = actions;
+    fResolutionActions = Arrays.asList(actions).toArray(EMPTY_RESOLUTION_ACTIONS);
   }
 
   public AbstractResolutionAction[] getActions() {
-    return fResolutionActions;
+    return Arrays.asList(fResolutionActions).toArray(EMPTY_RESOLUTION_ACTIONS);
   }
 
   public boolean hasSelectedActions() {

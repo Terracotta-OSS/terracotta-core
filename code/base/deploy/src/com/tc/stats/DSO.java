@@ -9,8 +9,7 @@ import org.apache.commons.collections.set.ListOrderedSet;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2MBeanNames;
-import com.tc.management.beans.l1.L1InfoMBean;
-import com.tc.net.TCSocketAddress;
+import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ObjectID;
 import com.tc.object.net.ChannelStats;
@@ -21,17 +20,15 @@ import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.api.ObjectInstanceMonitorMBean;
 import com.tc.objectserver.api.ObjectManagerEventListener;
 import com.tc.objectserver.api.ObjectManagerMBean;
+import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
+import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.lockmanager.api.LockMBean;
 import com.tc.objectserver.lockmanager.api.LockManagerMBean;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.tx.ServerTransactionManagerEventListener;
 import com.tc.objectserver.tx.ServerTransactionManagerMBean;
 import com.tc.statistics.StatisticData;
-import com.tc.stats.DSOClassInfo;
-import com.tc.stats.DSOMBean;
-import com.tc.stats.DSOStats;
-import com.tc.stats.counter.Counter;
 import com.tc.stats.statistics.CountStatistic;
 import com.tc.stats.statistics.DoubleStatistic;
 import com.tc.stats.statistics.Statistic;
@@ -39,9 +36,15 @@ import com.tc.stats.statistics.Statistic;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
@@ -64,26 +67,30 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   private final MBeanServer                   mbeanServer;
   private final ArrayList                     rootObjectNames        = new ArrayList();
   private final Set                           clientObjectNames      = new ListOrderedSet();
+  private final Map<ObjectName, DSOClient>    clientMap              = new HashMap<ObjectName, DSOClient>();
   private final DSOChannelManagerMBean        channelMgr;
   private final ServerTransactionManagerMBean txnMgr;
   private final LockManagerMBean              lockMgr;
   private final ChannelStats                  channelStats;
-  private final ObjectInstanceMonitorMBean    instanceMonitor;
+  private final ObjectInstanceMonitorMBean    instanceMonitor; 
+  private final ClientStateManager            clientStateManager;
 
-  public DSO(final ServerManagementContext context, final MBeanServer mbeanServer) throws NotCompliantMBeanException {
+  public DSO(final ServerManagementContext managementContext, final ServerConfigurationContext configContext,
+             final MBeanServer mbeanServer) throws NotCompliantMBeanException {
     super(DSOMBean.class);
     try {
       // TraceImplementation.init(TraceTags.LEVEL_TRACE);
     } catch (Exception e) {/**/
     }
     this.mbeanServer = mbeanServer;
-    this.dsoStats = new DSOStatsImpl(context);
-    this.lockMgr = context.getLockManager();
-    this.objMgr = context.getObjectManager();
-    this.channelMgr = context.getChannelManager();
-    this.txnMgr = context.getTransactionManager();
-    this.channelStats = context.getChannelStats();
-    this.instanceMonitor = context.getInstanceMonitor();
+    this.dsoStats = new DSOStatsImpl(managementContext);
+    this.lockMgr = managementContext.getLockManager();
+    this.objMgr = managementContext.getObjectManager();
+    this.channelMgr = managementContext.getChannelManager();
+    this.txnMgr = managementContext.getTransactionManager();
+    this.channelStats = managementContext.getChannelStats();
+    this.instanceMonitor = managementContext.getInstanceMonitor();
+    this.clientStateManager = configContext.getClientStateManager();
 
     // add various listeners (do this before the setupXXX() methods below so we don't ever miss anything)
     txnMgr.addRootListener(new TransactionManagerListener());
@@ -148,16 +155,15 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
 
   public DSOClassInfo[] getClassInfo() {
     Map counts = instanceMonitor.getInstanceCounts();
-    DSOClassInfo[] rv = new DSOClassInfo[counts.size()];
+    List<DSOClassInfo> list = new ArrayList<DSOClassInfo>();
 
-    int i = 0;
-    for (Iterator iter = counts.keySet().iterator(); iter.hasNext();) {
-      String type = (String) iter.next();
-      int count = ((Integer) counts.get(type)).intValue();
-      rv[i++] = new DSOClassInfo(type, count);
+    Iterator<Map.Entry<String, Integer>> iter = counts.entrySet().iterator();
+    while (iter.hasNext()) {
+      Map.Entry<String, Integer> entry = iter.next();
+      list.add(new DSOClassInfo(entry.getKey(), entry.getValue()));
     }
 
-    return rv;
+    return list.toArray(new DSOClassInfo[list.size()]);
   }
 
   public ManagedObjectFacade lookupFacade(ObjectID objectID, int limit) throws NoSuchObjectException {
@@ -243,6 +249,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
         logger.error(e);
       } finally {
         clientObjectNames.remove(clientName);
+        clientMap.remove(clientName);
       }
     }
   }
@@ -256,9 +263,11 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
       }
 
       try {
-        final DSOClient client = new DSOClient(mbeanServer, channel, channelStats, channelMgr.getClientIDFor(channel.getChannelID()) );
+        final DSOClient client = new DSOClient(mbeanServer, channel, channelStats, channelMgr.getClientIDFor(channel
+            .getChannelID()), clientStateManager);
         mbeanServer.registerMBean(client, clientName);
         clientObjectNames.add(clientName);
+        clientMap.put(clientName, client);
         sendNotification(CLIENT_ATTACHED, clientName);
       } catch (Exception e) {
         logger.error("Unable to register DSO client MBean", e);
@@ -266,14 +275,13 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     }
   }
 
-  public Map<String, Counter> getAllPendingRequests() {
-    HashMap map = new HashMap<String, Counter>();
-    MessageChannel[] channels = channelMgr.getActiveChannels();
-    if (channels != null && channels.length > 0) {
-      for (MessageChannel channel : channels) {
-        TCSocketAddress remoteAddr = channel.getRemoteAddress();
-        Counter counter = channelStats.getCounter(channel, ChannelStats.PENDING_TRANSACTIONS);
-        map.put(remoteAddr.getCanonicalStringForm(), counter);
+  public Map<ObjectName, CountStatistic> getAllPendingTransactionsCount() {
+    Map<ObjectName, CountStatistic> map = new HashMap<ObjectName, CountStatistic>();
+    synchronized (clientObjectNames) {
+      Iterator<ObjectName> iter = clientObjectNames.iterator();
+      while (iter.hasNext()) {
+        ObjectName clientBeanName = iter.next();
+        map.put(clientBeanName, clientMap.get(clientBeanName).getPendingTransactionsCount());
       }
     }
     return map;
@@ -285,11 +293,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
       Iterator<ObjectName> iter = clientObjectNames.iterator();
       while (iter.hasNext()) {
         ObjectName clientBeanName = iter.next();
-        try {
-          CountStatistic txnRate = (CountStatistic) mbeanServer.getAttribute(clientBeanName, "TransactionRate");
-          result.put(clientBeanName, txnRate);
-        } catch (Exception e) {/**/
-        }
+        result.put(clientBeanName, clientMap.get(clientBeanName).getTransactionRate());
       }
     }
     return result;
@@ -301,15 +305,102 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
       Iterator<ObjectName> iter = clientObjectNames.iterator();
       while (iter.hasNext()) {
         ObjectName clientBeanName = iter.next();
-        try {
-          L1InfoMBean l1InfoBean = (L1InfoMBean) mbeanServer.getAttribute(clientBeanName, "L1InfoBean");
-          StatisticData[] cpu = l1InfoBean.getCpuUsage();
-          result.put(clientBeanName, cpu);
-        } catch (Exception e) {/**/
-        }
+        result.put(clientBeanName, clientMap.get(clientBeanName).getCpuUsage());
       }
     }
     return result;
+  }
+
+  public Map<ObjectName, Map> getL1Statistics() {
+    Map<ObjectName, Map> result = new HashMap<ObjectName, Map>();
+    synchronized (clientObjectNames) {
+      Iterator<ObjectName> iter = clientObjectNames.iterator();
+      while (iter.hasNext()) {
+        ObjectName clientBeanName = iter.next();
+        result.put(clientBeanName, clientMap.get(clientBeanName).getStatistics());
+      }
+    }
+    return result;
+  }
+
+  private static final ExecutorService pool = Executors.newCachedThreadPool();
+
+  private static class PrimaryClientStatWorker implements Callable<Map> {
+    private final ObjectName clientBeanName;
+    private final DSOClient  client;
+
+    private PrimaryClientStatWorker(ObjectName clientBeanName, DSOClient client) {
+      this.clientBeanName = clientBeanName;
+      this.client = client;
+    }
+
+    public Map call() {
+      try {
+        Map result = client.getStatistics();
+        if (result != null) {
+          result.put("TransactionRate", client.getTransactionRate());
+          result.put("clientBeanName", clientBeanName);
+        }
+        return result;
+      } catch (Exception e) {
+        return null;
+      }
+    }
+  }
+
+  /*
+   * MemoryUsage, CpuUsage, TransactionRate
+   */
+  public Map<ObjectName, Map> getPrimaryClientStatistics() {
+    Map<ObjectName, Map> result = new HashMap<ObjectName, Map>();
+    synchronized (clientObjectNames) {
+      Iterator<ObjectName> iter = clientObjectNames.iterator();
+      List<Callable<Map>> tasks = new ArrayList<Callable<Map>>();
+      while (iter.hasNext()) {
+        ObjectName clientBeanName = iter.next();
+        tasks.add(new PrimaryClientStatWorker(clientBeanName, clientMap.get(clientBeanName)));
+      }
+      List<Future<Map>> results;
+      try {
+        results = pool.invokeAll(tasks, 1500, TimeUnit.MILLISECONDS);
+        Iterator<Future<Map>> resultIter = results.iterator();
+        while (resultIter.hasNext()) {
+          Future<Map> future = resultIter.next();
+          if (future.isDone()) {
+            try {
+              Map statsMap = future.get();
+              if(statsMap != null) {
+                result.put((ObjectName) statsMap.remove("clientBeanName"), statsMap);
+              }
+            } catch (Exception e) {
+              /**/
+            }
+          }
+        }
+      } catch (InterruptedException ie) {/**/
+      }
+    }
+    return result;
+  }
+
+  public int getLiveObjectCount() {
+    return objMgr.getLiveObjectCount();
+  }
+
+  public Map<ObjectName, Integer> getClientLiveObjectCount() {
+    Map<ObjectName, Integer> result = new HashMap<ObjectName, Integer>();
+    synchronized (clientObjectNames) {
+      Iterator<ObjectName> iter = clientObjectNames.iterator();
+      while (iter.hasNext()) {
+        ObjectName clientBeanName = iter.next();
+        result.put(clientBeanName, clientMap.get(clientBeanName).getLiveObjectCount());
+      }
+    }
+    return result;
+  }
+
+  public boolean isResident(NodeID node, ObjectID oid) {
+    return clientStateManager.hasReference(node, oid);
   }
 
   private class TransactionManagerListener implements ServerTransactionManagerEventListener {

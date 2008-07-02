@@ -3,9 +3,10 @@
  */
 package com.tc.admin;
 
-import org.dijon.Component;
 
 import com.tc.admin.common.ComponentNode;
+
+import java.awt.Component;
 
 public class ClusterThreadDumpsNode extends ComponentNode {
   protected ClusterNode m_clusterNode;

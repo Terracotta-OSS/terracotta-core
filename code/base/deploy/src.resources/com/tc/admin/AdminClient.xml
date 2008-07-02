@@ -53,8 +53,7 @@
         </tab>
         <tab title="Config">
           <scrollpane>
-            <textarea class="com.tc.admin.common.XTextArea" name="ConfigTextArea" editable="false" line-wrap="false"
-              font="Monospaced-plain-12" />
+            <textarea class="com.tc.admin.common.XTextArea" name="ConfigTextArea" editable="false" line-wrap="false" font="Monospaced-plain-12" />
           </scrollpane>
         </tab>
       </tabbedpane>
@@ -220,8 +219,7 @@
                     <children>
                       <label text="Find:" />
                       <textfield name="ClientLocksFindField" />
-                      <button name="ClientLocksFindNextButton" text="Next" class="com.tc.admin.common.RolloverButton"
-                        image-uri="/com/tc/admin/icons/next_nav.gif" />
+                      <button name="ClientLocksFindNextButton" text="Next" class="com.tc.admin.common.RolloverButton" image-uri="/com/tc/admin/icons/next_nav.gif" />
                       <button name="ClientLocksFindPreviousButton" text="Previous" class="com.tc.admin.common.RolloverButton"
                         image-uri="/com/tc/admin/icons/previous_nav.gif" />
                     </children>
@@ -260,8 +258,7 @@
                     <children>
                       <label name="ConfigLabel" />
                       <scrollpane>
-                        <textarea name="ConfigText" line-wrap="false" editable="false" class="com.tc.admin.common.XTextArea"
-                          font="Monospaced-plain-12" />
+                        <textarea name="ConfigText" line-wrap="false" editable="false" class="com.tc.admin.common.XTextArea" font="Monospaced-plain-12" />
                       </scrollpane>
                     </children>
                     <connections>
@@ -287,10 +284,8 @@
                 <children>
                   <label text="Find:" />
                   <textfield name="ServerLocksFindField" />
-                  <button name="ServerLocksFindNextButton" text="Next" class="com.tc.admin.common.RolloverButton"
-                    image-uri="/com/tc/admin/icons/next_nav.gif" />
-                  <button name="ServerLocksFindPreviousButton" text="Previous" class="com.tc.admin.common.RolloverButton"
-                    image-uri="/com/tc/admin/icons/previous_nav.gif" />
+                  <button name="ServerLocksFindNextButton" text="Next" class="com.tc.admin.common.RolloverButton" image-uri="/com/tc/admin/icons/next_nav.gif" />
+                  <button name="ServerLocksFindPreviousButton" text="Previous" class="com.tc.admin.common.RolloverButton" image-uri="/com/tc/admin/icons/previous_nav.gif" />
                 </children>
                 <connections>
                   <item bottom="1,bottom:s" height="n" left="-1,left:n" right="1,left:n" top="1,top:s" width="n" />
@@ -447,8 +442,7 @@
         </tab>
         <tab title="Config">
           <scrollpane>
-            <textarea class="com.tc.admin.common.XTextArea" name="ConfigTextArea" editable="false" line-wrap="false"
-              font="Monospaced-plain-12" />
+            <textarea class="com.tc.admin.common.XTextArea" name="ConfigTextArea" editable="false" line-wrap="false" font="Monospaced-plain-12" />
           </scrollpane>
         </tab>
         <tab title="Logging">
@@ -553,8 +547,7 @@
         </tab>
         <tab title="Config">
           <scrollpane>
-            <textarea class="com.tc.admin.common.XTextArea" name="ClassesConfigTextArea" editable="false" line-wrap="false"
-              font="Monospaced-plain-12" />
+            <textarea class="com.tc.admin.common.XTextArea" name="ClassesConfigTextArea" editable="false" line-wrap="false" font="Monospaced-plain-12" />
           </scrollpane>
         </tab>
       </tabbedpane>
@@ -563,8 +556,7 @@
       <item bottom="-1,bottom:0" height="s" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s" />
     </connections>
   </container>
-  <dialog bounds="50,50,324,91" modal="true" resizable="false" tag="ConnectDialog" title="AdminConsole" undecorated="true"
-    visible="false">
+  <dialog bounds="50,50,324,91" modal="true" resizable="false" tag="ConnectDialog" title="AdminConsole" undecorated="true" visible="false">
     <content-pane>
       <children>
         <container>
@@ -773,6 +765,74 @@
       <item bottom="1,top:0" height="n" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s" />
       <item bottom="2,top:n" height="s" left="-1,left:0" right="-1,right:0" top="0,bottom:0" width="s" />
       <item bottom="-1,bottom:n" height="n" left="-1,left:0" right="-1,right:0" top="1,bottom:0" width="s" />
+    </connections>
+  </container>
+  <container tag="ClusterRuntimeStatsPanel">
+    <children>
+      <tabbedpane>
+        <tab title="Combined">
+          <container name="CombinedPanel" class="com.tc.admin.common.XContainer" />
+        </tab>
+        <tab title="CPU">
+          <container name="CpusPanel" class="com.tc.admin.common.XContainer" />
+        </tab>
+        <tab title="Memory">
+          <container name="MemoryPanel" class="com.tc.admin.common.XContainer" />
+        </tab>
+        <tab title="Transactions">
+          <container name="TransactionsPanel" class="com.tc.admin.common.XContainer" />
+        </tab>
+      </tabbedpane>
+    </children>
+    <connections>
+      <item bottom="-1,bottom:0" height="s" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s" />
+    </connections>
+  </container>
+  <container tag="RootsPanel">
+    <children>
+      <container>
+        <children>
+          <label text="Live object count:" />
+          <label name="LiveObjectCountLabel" text="42000" />
+        </children>
+        <connections>
+          <item bottom="-1,bottom:ns" height="n" left="-1,left:n" right="1,left:n" top="-1,top:ns" width="n" />
+          <item bottom="-1,bottom:ns" height="n" left="0,right:n" right="-1,right:ns" top="-1,top:ns" width="n" />
+        </connections>
+      </container>
+      <item child-name="ObjectSetPanel" child-type="com.tc.admin.dso.BasicObjectSetPanel" />
+    </children>
+    <connections>
+      <item bottom="1,top:0" height="n" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="ns" />
+      <item bottom="-1,bottom:0" height="s" left="-1,left:0" right="-1,right:0" top="0,bottom:0" width="s" />
+    </connections>
+  </container>
+  <container tag="BackupPanel">
+    <children>
+      <container>
+        <children>
+          <button text="Backup DB" name="BackupButton" />
+          <label name="BackupPathLabel" />
+        </children>
+        <connections>
+          <item bottom="-1,bottom:ns" height="n" left="-1,left:n" right="1,left:n" top="-1,top:ns" width="n" />
+          <item bottom="0,bottom:s" height="n" left="0,right:n" right="-1,right:ns" top="0,top:s" width="n" />
+        </connections>
+      </container>
+      <container>
+        <children>
+          <label name="BackupStatusLabel" />
+          <item name="BackupProgressBarHolder" />
+        </children>
+        <connections>
+          <item bottom="1,top:n" height="n" left="-1,left:n" right="-1,right:ns" top="-1,top:n" width="n" />
+          <item bottom="-1,bottom:n" height="n" left="-1,left:n" right="-1,right:n" top="0,top:n" width="s" />
+        </connections>
+      </container>
+    </children>
+    <connections>
+      <item bottom="1,top:0" height="n" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s" />
+      <item bottom="-1,bottom:0" height="n" left="-1,left:0" right="-1,right:0" top="0,top:0" width="s" />
     </connections>
   </container>
   <dialog bounds="50,50,459,279" modal="true" tag="ProgressDialog" title="Progress" visible="false" resizable="false">

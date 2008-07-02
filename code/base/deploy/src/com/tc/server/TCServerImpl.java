@@ -30,9 +30,9 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.l2.state.StateManager;
 import com.tc.lang.StartupHelper;
-import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
+import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -41,6 +41,7 @@ import com.tc.management.beans.L2State;
 import com.tc.management.beans.TCServerInfo;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
+import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.properties.TCPropertiesConsts;
@@ -180,7 +181,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     if (canShutdown()) {
       state.setState(StateManager.STOP_STATE);
       consoleLogger.info("Server exiting...");
-      System.exit(0);
+      Runtime.getRuntime().exit(0);
     } else {
       logger.warn("Server in incorrect state (" + state.getState() + ") to be shutdown.");
     }
@@ -463,8 +464,9 @@ public class TCServerImpl extends SEDA implements TCServer {
       NotCompliantMBeanException, NullPointerException {
 
     ServerManagementContext mgmtContext = dsoServer.getManagementContext();
+    ServerConfigurationContext configContext = dsoServer.getContext();
     MBeanServer mBeanServer = dsoServer.getMBeanServer();
-    DSOMBean dso = new DSO(mgmtContext, mBeanServer);
+    DSOMBean dso = new DSO(mgmtContext, configContext, mBeanServer);
     mBeanServer.registerMBean(dso, L2MBeanNames.DSO);
     mBeanServer.registerMBean(mgmtContext.getDSOAppEventsMBean(), L2MBeanNames.DSO_APP_EVENTS);
     StatisticsLocalGathererMBeanImpl local_gatherer = new StatisticsLocalGathererMBeanImpl(statisticsGathererSubSystem,

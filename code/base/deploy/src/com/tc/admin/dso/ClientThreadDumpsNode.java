@@ -4,11 +4,11 @@
  */
 package com.tc.admin.dso;
 
-import org.dijon.Component;
-
 import com.tc.admin.AdminClient;
 import com.tc.admin.common.ComponentNode;
-import com.tc.management.beans.l1.L1InfoMBean;
+import com.tc.admin.model.IClient;
+
+import java.awt.Component;
 
 public class ClientThreadDumpsNode extends ComponentNode {
   protected ClientNode             m_clientNode;
@@ -24,15 +24,15 @@ public class ClientThreadDumpsNode extends ComponentNode {
     return new ClientThreadDumpsPanel(this);
   }
 
+  IClient getClient() {
+    return m_clientNode.getClient();
+  }
+
   public Component getComponent() {
     if (m_threadDumpsPanel == null) {
       m_threadDumpsPanel = createThreadDumpsPanel();
     }
     return m_threadDumpsPanel;
-  }
-
-  L1InfoMBean getL1InfoBean() throws Exception {
-    return m_clientNode.getL1InfoBean();
   }
 
   public void tearDown() {

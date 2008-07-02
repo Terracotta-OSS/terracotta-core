@@ -26,11 +26,12 @@ public class TextPaneUpdater implements Runnable {
   }
     
   public void run() {
-    Document doc = m_view.getDocument();
-      
     try {
+      Document doc = m_view.getDocument();
       doc.insertString(doc.getLength(), m_line+LINE_SEP, null);
       m_view.setCaretPosition(doc.getLength()-1);
-    } catch(Exception e) {/**/}
+    } catch(Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 }

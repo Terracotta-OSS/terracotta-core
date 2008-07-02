@@ -30,6 +30,11 @@ public class XTree extends org.dijon.Tree {
 
     MouseListener ml = new MouseAdapter() {
       public void mousePressed(MouseEvent e) {
+        TreePath path = getPathForLocation(e.getX(), e.getY());
+        if (path != null) {
+          requestFocus();
+          setSelectionPath(path);
+        }
         testPopup(e);
       }
 

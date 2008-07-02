@@ -8,22 +8,16 @@ import com.tc.admin.BaseHelper;
 import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.management.beans.L2MBeanNames;
+import com.tc.management.beans.object.ObjectManagementMonitorMBean;
 import com.tc.object.ObjectID;
-import com.tc.objectserver.api.GCStats;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.stats.DSOMBean;
-import com.tc.stats.counter.Counter;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Map;
 
-import javax.management.AttributeNotFoundException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanException;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
-import javax.management.ReflectionException;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
@@ -60,34 +54,25 @@ public class DSOHelper extends BaseHelper {
     return m_gcIcon;
   }
 
-  public DSOMBean getDSOBean(ConnectionContext cc) throws Exception {
-    ObjectName objectName = getDSOMBean(cc);
-    return (DSOMBean) MBeanServerInvocationProxy.newProxyInstance(cc.mbsc, objectName, DSOMBean.class, false);
+  public DSOMBean getDSOBean(ConnectionContext cc) {
+    return (DSOMBean) MBeanServerInvocationProxy.newProxyInstance(cc.mbsc, L2MBeanNames.DSO, DSOMBean.class, false);
   }
 
   public ObjectName getDSOMBean(ConnectionContext cc) throws IOException, MalformedObjectNameException {
     return cc.queryName(L2MBeanNames.DSO.getCanonicalName());
   }
 
+  public ObjectManagementMonitorMBean getObjectManagementMonitorBean(ConnectionContext cc) {
+    return (ObjectManagementMonitorMBean) MBeanServerInvocationProxy
+        .newProxyInstance(cc.mbsc, L2MBeanNames.OBJECT_MANAGEMENT, ObjectManagementMonitorMBean.class, false);
+  }
+
   public ManagedObjectFacade lookupFacade(ConnectionContext cc, ObjectID objectID, int batchSize) throws Exception {
     ObjectName bean = getDSOMBean(cc);
     String op = "lookupFacade";
-    Object[] args = new Object[] { objectID, new Integer(batchSize) };
+    Object[] args = new Object[] { objectID, Integer.valueOf(batchSize) };
     String[] types = new String[] { "com.tc.object.ObjectID", "int" };
 
     return (ManagedObjectFacade) cc.invoke(bean, op, args, types);
-  }
-
-  public GCStats[] getGCStats(ConnectionContext cc) throws IOException, MalformedObjectNameException,
-      AttributeNotFoundException, ReflectionException, MBeanException, InstanceNotFoundException {
-    ObjectName bean = getDSOMBean(cc);
-    String attr = "GarbageCollectorStats";
-
-    return (GCStats[]) cc.getAttribute(bean, attr);
-  }
-
-  public Map<String, Counter> getAllPendingRequests(ConnectionContext cc) throws Exception {
-    DSOMBean bean = getDSOBean(cc);
-    return bean.getAllPendingRequests();
   }
 }

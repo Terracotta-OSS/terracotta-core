@@ -7,10 +7,6 @@ import java.util.ListResourceBundle;
 
 public class WelcomeFrameBundle extends ListResourceBundle {
   public Object[][] getContents() {
-    return contents;
+    return new Object[][] { { "welcome.title", "Terracotta Welcome" }, };
   }
-
-  static final Object[][] contents = {
-    {"welcome.title", "Terracotta Welcome"},
-  };
 }

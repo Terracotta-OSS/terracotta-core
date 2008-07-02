@@ -39,6 +39,10 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
     this.extantObjectIDs = objectPersistor.getAllObjectIDs();
   }
 
+  public synchronized int getObjectCount() {
+    return this.extantObjectIDs.size();
+  }
+  
   public long nextObjectIDBatch(int batchSize) {
     long rv = this.objectPersistor.nextObjectIDBatch(batchSize);
     return rv;

@@ -9,6 +9,7 @@ import com.tc.management.beans.logging.InstrumentationLoggingMBean;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
 import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.object.ObjectID;
 import com.tc.stats.statistics.CountStatistic;
 import com.tc.stats.statistics.Statistic;
 
@@ -51,5 +52,9 @@ public interface DSOClientMBean extends TerracottaMBean {
 
   Statistic[] getStatistics(String[] names);
 
+  int getLiveObjectCount();
+  
+  boolean isResident(ObjectID oid);
+  
   void killClient();
 }

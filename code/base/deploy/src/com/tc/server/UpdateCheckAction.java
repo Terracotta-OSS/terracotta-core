@@ -7,7 +7,6 @@ package com.tc.server;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -16,7 +15,6 @@ import com.tc.logging.TCLogger;
 import com.tc.util.ProductInfo;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
@@ -128,7 +126,6 @@ class UpdateCheckAction extends TimerTask {
   private void doUpdateCheck() {
     showMessage("Update Checker: Checking...");
 
-    InputStream is = null;
     try {
       StringBuffer sb = new StringBuffer();
       String version = productInfo.version();
@@ -169,10 +166,10 @@ class UpdateCheckAction extends TimerTask {
       } else {
         showMessage("Update Checker: No updates found");
       }
+    } catch (RuntimeException re) {
+      consoleLogger.info("Update Checker: Check failed (" + re.getClass().getName() + ": " + re.getMessage() + ")");
     } catch (Exception e) {
       consoleLogger.info("Update Checker: Check failed (" + e.getClass().getName() + ": " + e.getMessage() + ")");
-    } finally {
-      IOUtils.closeQuietly(is);
     }
 
     showMessage("Update Checker: Next check at " + new Date(System.currentTimeMillis() + periodMillis));
@@ -189,7 +186,7 @@ class UpdateCheckAction extends TimerTask {
     if (minutes != null) {
       nextCheckTime = minutes.longValue() * 60 * 1000;
     } else {
-      nextCheckTime = days * 24 * 60 * 60 * 1000;
+      nextCheckTime = 1000L * 60 * 60 * days;
     }
 
     return nextCheckTime;

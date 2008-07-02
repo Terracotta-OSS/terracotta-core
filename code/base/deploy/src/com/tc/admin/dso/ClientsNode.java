@@ -4,8 +4,6 @@
  */
 package com.tc.admin.dso;
 
-import org.dijon.Component;
-
 import com.tc.admin.AdminClient;
 import com.tc.admin.AdminClientContext;
 import com.tc.admin.ClusterNode;
@@ -14,34 +12,60 @@ import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.common.XTreeModel;
 import com.tc.admin.common.XTreeNode;
-import com.tc.stats.DSOMBean;
+import com.tc.admin.model.ClientConnectionListener;
+import com.tc.admin.model.IClient;
+import com.tc.admin.model.IClusterModel;
 
+import java.awt.Component;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Callable;
 
-import javax.management.Notification;
-import javax.management.NotificationListener;
-import javax.management.ObjectName;
 import javax.swing.SwingUtilities;
 
-public class ClientsNode extends ComponentNode implements NotificationListener {
+public class ClientsNode extends ComponentNode implements ClientConnectionListener, PropertyChangeListener {
   protected AdminClientContext m_acc;
   protected ClusterNode        m_clusterNode;
   protected ConnectionContext  m_cc;
-  protected DSOClient[]        m_clients;
+  protected IClient[]          m_clients;
   protected ClientsPanel       m_clientsPanel;
 
   public ClientsNode(ClusterNode clusterNode) {
     super();
     m_acc = AdminClient.getContext();
     m_clusterNode = clusterNode;
+    clusterNode.getClusterModel().addPropertyChangeListener(this);
     init();
   }
 
+  IClusterModel getClusterModel() {
+    return getClusterNode().getClusterModel();
+  }
+  
+  ClusterNode getClusterNode() {
+    return m_clusterNode;
+  }
+  
+  public void propertyChange(PropertyChangeEvent evt) {
+    String prop = evt.getPropertyName();
+    if (IClusterModel.PROP_ACTIVE_SERVER.equals(prop)) {
+      SwingUtilities.invokeLater(new InitRunnable());
+    }
+  }
+
+  private class InitRunnable implements Runnable {
+    public void run() {
+      init();
+    }
+  }
+
   private void init() {
+    m_clusterNode.getClusterModel().removeClientConnectionListener(this);
     setLabel(m_acc.getMessage("clients"));
-    m_clients = new DSOClient[0];
+    m_clients = new IClient[0];
     for (int i = getChildCount() - 1; i >= 0; i--) {
       m_acc.controller.remove((XTreeNode) getChildAt(i));
     }
@@ -51,14 +75,13 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
     m_acc.executorService.execute(new InitWorker());
   }
 
-  private class InitWorker extends BasicWorker<DSOClient[]> {
+  private class InitWorker extends BasicWorker<IClient[]> {
     private InitWorker() {
-      super(new Callable<DSOClient[]>() {
-        public DSOClient[] call() throws Exception {
-          m_cc = m_clusterNode.getConnectionContext();
-          ObjectName dso = DSOHelper.getHelper().getDSOMBean(m_cc);
-          m_cc.addNotificationListener(dso, ClientsNode.this);
-          return ClientsHelper.getHelper().getClients(m_cc);
+      super(new Callable<IClient[]>() {
+        public IClient[] call() throws Exception {
+          IClient[] result = getClusterModel().getClients();
+          getClusterModel().addClientConnectionListener(ClientsNode.this);
+          return result;
         }
       });
     }
@@ -77,11 +100,11 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
     }
   }
 
-  protected ClientNode createClientNode(DSOClient client) {
+  protected ClientNode createClientNode(IClient client) {
     return new ClientNode(this, client);
   }
 
-  protected ClientsPanel createClientsPanel(ClientsNode clientsNode, DSOClient[] clients) {
+  protected ClientsPanel createClientsPanel(ClientsNode clientsNode, IClient[] clients) {
     return new ClientsPanel(this, clients);
   }
 
@@ -90,14 +113,6 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
       m_clientsPanel = createClientsPanel(ClientsNode.this, m_clients);
     }
     return m_clientsPanel;
-  }
-
-  public ConnectionContext getConnectionContext() {
-    return m_clusterNode.getConnectionContext();
-  }
-  
-  public void newConnectionContext() {
-    init();
   }
 
   public void selectClientNode(String remoteAddr) {
@@ -124,91 +139,14 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
     }
   }
 
-  public DSOClient[] getClients() {
-    return m_clients;
-  }
-
-  private boolean haveClient(ObjectName objectName) {
-    if (m_clients == null) return false;
-    for (DSOClient client : m_clients) {
-      if (client.getObjectName().equals(objectName)) { return true; }
-    }
-    return false;
-  }
-
-  public void handleNotification(final Notification notice, final Object handback) {
-    String type = notice.getType();
-
-    if (DSOMBean.CLIENT_ATTACHED.equals(type) || DSOMBean.CLIENT_DETACHED.equals(type)) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          internalHandleNotification(notice, handback);
-          updateLabel();
-        }
-      });
-    }
-  }
-
   private void updateLabel() {
     setLabel(m_acc.getMessage("clients") + " (" + getChildCount() + ")");
     nodeChanged();
   }
 
-  private void internalHandleNotification(Notification notice, Object handback) {
-    String type = notice.getType();
-
-    if (DSOMBean.CLIENT_ATTACHED.equals(type)) {
-      m_acc.setStatus(m_acc.getMessage("dso.client.retrieving"));
-
-      ObjectName clientObjectName = (ObjectName) notice.getSource();
-      if (haveClient(clientObjectName)) return;
-
-      DSOClient client = new DSOClient(m_cc, clientObjectName);
-      ArrayList<DSOClient> list = new ArrayList<DSOClient>(Arrays.asList(m_clients));
-
-      list.add(client);
-      m_clients = list.toArray(new DSOClient[0]);
-      addClientNode(createClientNode(client));
-
-      m_acc.setStatus(m_acc.getMessage("dso.client.new") + client);
-    } else if (DSOMBean.CLIENT_DETACHED.equals(type)) {
-      m_acc.setStatus(m_acc.getMessage("dso.client.detaching"));
-
-      int nodeIndex = -1;
-      ObjectName clientObjectName = (ObjectName) notice.getSource();
-      ArrayList<DSOClient> list = new ArrayList<DSOClient>(Arrays.asList(m_clients));
-      DSOClient client = null;
-
-      for (int i = 0; i < list.size(); i++) {
-        client = list.get(i);
-
-        if (client.getObjectName().equals(clientObjectName)) {
-          list.remove(client);
-          m_clients = list.toArray(new DSOClient[] {});
-          nodeIndex = i;
-          break;
-        }
-      }
-
-      if (nodeIndex != -1) {
-        m_acc.controller.remove((XTreeNode) getChildAt(nodeIndex));
-        if (m_clientsPanel != null) {
-          m_clientsPanel.remove(client);
-        }
-      }
-
-      m_acc.setStatus(m_acc.getMessage("dso.client.detached") + client);
-    }
-  }
-
   public void tearDown() {
-    try {
-      ObjectName dso = DSOHelper.getHelper().getDSOMBean(m_cc);
-      if (dso != null) {
-        m_cc.removeNotificationListener(dso, this);
-      }
-    } catch (Exception e) {/**/
-    }
+    getClusterModel().removeClientConnectionListener(this);
+    getClusterModel().removePropertyChangeListener(this);
 
     if (m_clientsPanel != null) {
       m_clientsPanel.tearDown();
@@ -222,4 +160,59 @@ public class ClientsNode extends ComponentNode implements NotificationListener {
 
     super.tearDown();
   }
+
+  public void clientConnected(IClient client) {
+    if (m_acc == null) return;
+    SwingUtilities.invokeLater(new ClientConnectedRunnable(client));
+  }
+
+  private class ClientConnectedRunnable implements Runnable {
+    private IClient m_client;
+
+    private ClientConnectedRunnable(IClient client) {
+      m_client = client;
+    }
+
+    public void run() {
+      if (m_acc == null) return;
+      m_acc.setStatus(m_acc.getMessage("dso.client.retrieving"));
+      List<IClient> list = new ArrayList(Arrays.asList(m_clients));
+      list.add(m_client);
+      m_clients = list.toArray(new IClient[list.size()]);
+      addClientNode(createClientNode(m_client));
+      updateLabel();
+      m_acc.setStatus(m_acc.getMessage("dso.client.new") + m_client);
+    }
+  }
+
+  public void clientDisconnected(IClient client) {
+    if (m_acc == null) return;
+    SwingUtilities.invokeLater(new ClientDisconnectedRunnable(client));
+  }
+
+  private class ClientDisconnectedRunnable implements Runnable {
+    private IClient m_client;
+
+    private ClientDisconnectedRunnable(IClient client) {
+      m_client = client;
+    }
+
+    public void run() {
+      if (m_acc == null) return;
+      m_acc.setStatus(m_acc.getMessage("dso.client.detaching"));
+      ArrayList<IClient> list = new ArrayList<IClient>(Arrays.asList(m_clients));
+      int nodeIndex = list.indexOf(m_client);
+      if (nodeIndex != -1) {
+        list.remove(m_client);
+        m_clients = list.toArray(new IClient[] {});
+        m_acc.controller.remove((XTreeNode) getChildAt(nodeIndex));
+        if (m_clientsPanel != null) {
+          m_clientsPanel.remove(m_client);
+        }
+      }
+      updateLabel();
+      m_acc.setStatus(m_acc.getMessage("dso.client.detached") + m_client);
+    }
+  }
+
 }

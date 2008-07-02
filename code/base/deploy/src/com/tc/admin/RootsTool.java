@@ -4,13 +4,14 @@
 
 package com.tc.admin;
 
+import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.admin.dso.DSOHelper;
-import com.tc.admin.dso.DSORoot;
 import com.tc.admin.dso.RootsHelper;
 import com.tc.management.JMXConnectorProxy;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.MapEntryFacade;
+import com.tc.stats.DSORootMBean;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -47,18 +48,20 @@ public class RootsTool {
   private void print(PrintWriter w) throws Exception {
     connect();
     try {
-      DSORoot[] roots = RootsHelper.getHelper().getRoots(context);
-      for (int i = 0; i < roots.length; i++) {
-        DSORoot root = roots[i];
-        ObjectName objectName = root.getObjectName();
-        String rootId = objectName.getKeyProperty("rootID");
-        w.println(i + " " + root + " id=" + rootId);
+      ObjectName[] rootBeanNames = RootsHelper.getHelper().getRootNames(context);
+      for (int i = 0; i < rootBeanNames.length; i++) {
+        ObjectName objectName = rootBeanNames[i];
+        DSORootMBean rootBean = (DSORootMBean) MBeanServerInvocationProxy.newProxyInstance(context.mbsc, objectName,
+                                                                                           DSORootMBean.class, false);
+        ManagedObjectFacade facade = rootBean.lookupFacade(10);
+        String rootId = facade.getObjectId().toString();
+        w.println(i + " " + rootBean.getRootName() + " id=" + rootId);
 
-        String[] fieldNames = root.getFieldNames();
+        String[] fieldNames = facade.getFields();
         for (int j = 0; j < fieldNames.length; j++) {
           String fieldName = fieldNames[i];
-          Object fieldValue = root.getFieldValue(fieldName);
-          printValue(w, "  ", fieldName, root.getFieldType(fieldName), fieldValue, new HashSet());
+          Object fieldValue = facade.getFieldValue(fieldName);
+          printValue(w, "  ", fieldName, facade.getFieldType(fieldName), fieldValue, new HashSet());
         }
       }
     } finally {

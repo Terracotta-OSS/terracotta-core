@@ -4,25 +4,29 @@
  */
 package com.tc.admin;
 
-import org.dijon.Component;
-
 import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.common.XTreeNode;
-import com.tc.config.schema.L2Info;
+import com.tc.admin.model.IClusterModel;
+import com.tc.admin.model.IServer;
 
+import java.awt.Component;
 import java.util.concurrent.Callable;
 
 public class ServersNode extends ComponentNode {
   protected AdminClientContext m_acc;
-  protected ClusterNode m_clusterNode;
-  protected ServersPanel m_serversPanel;
+  protected ClusterNode        m_clusterNode;
+  protected ServersPanel       m_serversPanel;
 
   public ServersNode(ClusterNode clusterNode) {
     super();
     m_acc = AdminClient.getContext();
     m_clusterNode = clusterNode;
     init();
+  }
+
+  IClusterModel getClusterModel() {
+    return m_clusterNode.getClusterModel();
   }
 
   private void init() {
@@ -33,11 +37,11 @@ public class ServersNode extends ComponentNode {
     m_acc.executorService.execute(new InitWorker());
   }
 
-  private class InitWorker extends BasicWorker<L2Info[]> {
+  private class InitWorker extends BasicWorker<IServer[]> {
     private InitWorker() {
-      super(new Callable<L2Info[]>() {
-        public L2Info[] call() throws Exception {
-          return m_clusterNode.getClusterMembers();
+      super(new Callable<IServer[]>() {
+        public IServer[] call() throws Exception {
+          return m_clusterNode.getClusterServers();
         }
       });
     }
@@ -47,22 +51,24 @@ public class ServersNode extends ComponentNode {
       if (e != null) {
         m_acc.log(e);
       } else {
-        L2Info[] clusterMembers = getResult();
-        for (L2Info member : clusterMembers) {
-          add(m_acc.nodeFactory.createServerNode(ServersNode.this, member));
+        IServer[] clusterServers = getResult();
+        for (IServer server : clusterServers) {
+          ServerNode serverNode = m_acc.nodeFactory.createServerNode(ServersNode.this, server); 
+          add(serverNode);
+          serverNode.handleConnected();
         }
         setLabel(m_acc.getMessage("servers") + " (" + getChildCount() + ")");
         m_acc.controller.nodeChanged(ServersNode.this);
       }
     }
   }
-  
+
   protected ServersPanel createServersPanel() {
     return new ServersPanel(ServersNode.this);
   }
-  
+
   public Component getComponent() {
-    if(m_serversPanel== null) {
+    if (m_serversPanel == null) {
       m_serversPanel = createServersPanel();
     }
     return m_serversPanel;
@@ -71,35 +77,22 @@ public class ServersNode extends ComponentNode {
   public ConnectionContext getConnectionContext() {
     return m_clusterNode.getConnectionContext();
   }
-  
-  void newConnectionContext() {
-    int serverCount = getChildCount();
-    for(int i = 0; i < serverCount; i++) {
-      ((ServerNode)getChildAt(i)).newConnectionContext();
-    }
-  }
-
-  void serverStateChanged(ServerNode serverNode) {
-    if(m_serversPanel != null) {
-      m_serversPanel.serverStateChanged(serverNode);
-    }
-  }
 
   void selectClientNode(String remoteAddr) {
     m_clusterNode.selectClientNode(remoteAddr);
   }
-  
+
   /**
    * Return any credentials that were used when the initial cluster server was connected.
    */
   String[] getParentCredentials() {
-    return m_clusterNode.getServerConnectionManager().getCredentials();
+    return m_clusterNode.getConnectionCredentials();
   }
 
   public void tearDown() {
     int serverCount = getChildCount();
-    for(int i = 0; i < serverCount; i++) {
-      ((ServerNode)getChildAt(i)).handleDisconnect();
+    for (int i = 0; i < serverCount; i++) {
+      ((ServerNode) getChildAt(i)).handleDisconnect();
     }
     super.tearDown();
     m_acc = null;

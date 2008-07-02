@@ -21,9 +21,8 @@ public class ServerHelper extends BaseHelper {
     return cc.queryName(L2MBeanNames.TC_SERVER_INFO.getCanonicalName());
   }
 
-  public TCServerInfoMBean getServerInfoBean(ConnectionContext cc) throws Exception {
-    ObjectName objectName = cc.queryName(L2MBeanNames.TC_SERVER_INFO.getCanonicalName());
-    return (TCServerInfoMBean) MBeanServerInvocationProxy.newProxyInstance(cc.mbsc, objectName,
+  public TCServerInfoMBean getServerInfoBean(ConnectionContext cc) {
+    return (TCServerInfoMBean) MBeanServerInvocationProxy.newProxyInstance(cc.mbsc, L2MBeanNames.TC_SERVER_INFO,
                                                                            TCServerInfoMBean.class, false);
   }
 
@@ -50,16 +49,5 @@ public class ServerHelper extends BaseHelper {
   public boolean isPassiveStandby(ConnectionContext cc) throws Exception {
     ObjectName infoMBean = getServerInfoMBean(cc);
     return infoMBean != null && cc.getBooleanAttribute(infoMBean, "PassiveStandby");
-  }
-
-  public String takeThreadDump(ConnectionContext cc, long requestMillis) throws Exception {
-    ObjectName infoMBean = getServerInfoMBean(cc);
-    return infoMBean != null ? (String) cc.invoke(infoMBean, "takeThreadDump", new Object[] { Long
-        .valueOf(requestMillis) }, new String[] { "long" }) : "no connection";
-  }
-
-  public Integer getDSOListenPort(ConnectionContext cc) throws Exception {
-    ObjectName infoMBean = getServerInfoMBean(cc);
-    return infoMBean != null ? (Integer) cc.getAttribute(infoMBean, "DSOListenPort") : null;
   }
 }

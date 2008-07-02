@@ -27,19 +27,19 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
 public class XObjectTable extends XTable {
-  protected int sortColumn;
-  protected int sortDirection;
+  protected int               sortColumn;
+  protected int               sortDirection;
 
   private TableColumnRenderer columnRenderer;
 
-  public static final int UP   = XObjectTableModel.UP;
-  public static final int DOWN = XObjectTableModel.DOWN;
+  public static final int     UP                      = XObjectTableModel.UP;
+  public static final int     DOWN                    = XObjectTableModel.DOWN;
 
-  private ArrowLabel arrowLabel;
+  private ArrowLabel          arrowLabel;
 
   private static final String SORT_COLUMN_PREF_KEY    = "SortColumn";
   private static final String SORT_DIRECTION_PREF_KEY = "SortDirection";
-  
+
   public XObjectTable() {
     super();
     init();
@@ -60,16 +60,16 @@ public class XObjectTable extends XTable {
     setDefaultEditor(Method.class, new MethodEditor());
 
     getTableHeader().addMouseListener(new MouseAdapter() {
-        public void mouseClicked(MouseEvent me) {
-          if(me.getClickCount() == 2) {
-            int col = columnAtPoint(me.getPoint());
-            
-            if(((XObjectTableModel)getModel()).isColumnSortable(col)) {
-              setSortDirection(toggleSortDirection());
-              setSortColumn(col);
-            }
+      public void mouseClicked(MouseEvent me) {
+        if (me.getClickCount() == 2) {
+          int col = columnAtPoint(me.getPoint());
+
+          if (((XObjectTableModel) getModel()).isColumnSortable(col)) {
+            setSortDirection(toggleSortDirection());
+            setSortColumn(col);
           }
         }
+      }
     });
     columnRenderer = new TableColumnRenderer();
 
@@ -79,11 +79,11 @@ public class XObjectTable extends XTable {
   public void createDefaultColumnsFromModel() {
     super.createDefaultColumnsFromModel();
 
-    XObjectTableModel tableModel = (XObjectTableModel)getModel();
-    TableColumnModel  colModel   = getColumnModel();
-    TableColumn       column;
+    XObjectTableModel tableModel = (XObjectTableModel) getModel();
+    TableColumnModel colModel = getColumnModel();
+    TableColumn column;
 
-    for(int i = 0; i < colModel.getColumnCount(); i++) {
+    for (int i = 0; i < colModel.getColumnCount(); i++) {
       column = colModel.getColumn(i);
       column.setHeaderRenderer(columnRenderer);
       column.setIdentifier(tableModel.getFieldName(i));
@@ -94,31 +94,25 @@ public class XObjectTable extends XTable {
     super.addNotify();
     loadSortPrefs();
   }
-  
+
   protected class TableColumnRenderer extends XTableCellRenderer {
     private JComponent sortView;
     private Border     border;
 
     public TableColumnRenderer() {
       super();
-      sortView = new JComponent(){/**/};
+      sortView = new JComponent() {/**/};
       sortView.setLayout(new BorderLayout());
 
-      border = Os.isMac() ? new BevelBorder(BevelBorder.RAISED) :
-        UIManager.getBorder("TableHeader.cellBorder");
+      border = Os.isMac() ? new BevelBorder(BevelBorder.RAISED) : UIManager.getBorder("TableHeader.cellBorder");
     }
 
-    public Component getTableCellRendererComponent(JTable  table,
-                                                   Object  value,
-                                                   boolean isSelected,
-                                                   boolean hasFocus,
-                                                   int     row,
-                                                   int     column)
-    {
-      if(table != null) {
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
+                                                   int row, int column) {
+      if (table != null) {
         JTableHeader header = table.getTableHeader();
 
-        if(header != null) {
+        if (header != null) {
           setForeground(header.getForeground());
           setBackground(header.getBackground());
           setFont(header.getFont());
@@ -128,8 +122,8 @@ public class XObjectTable extends XTable {
       String text = (value == null) ? "" : value.toString();
       setText(text);
 
-      if(sortColumn != -1) {
-        if(column == sortColumn) {
+      if (sortColumn != -1) {
+        if (column == sortColumn) {
           arrowLabel.setDirection(sortDirection);
 
           setBorder(null);
@@ -152,11 +146,11 @@ public class XObjectTable extends XTable {
   }
 
   private void internalSetSortColumn(int columnIndex) {
-    if((sortColumn = columnIndex) != -1) {
+    if ((sortColumn = columnIndex) != -1) {
       sort();
     }
   }
-  
+
   public void setSortColumn(int columnIndex) {
     internalSetSortColumn(columnIndex);
     storeSortPrefs();
@@ -165,30 +159,30 @@ public class XObjectTable extends XTable {
   public int getSortColumn() {
     return sortColumn;
   }
-  
-  public void sort() {
-    if(sortColumn != -1) {
-      TableModel   model  = getModel();
-      JTableHeader header = getTableHeader();
-      
-      if(model != null && model instanceof XObjectTableModel) {
-        Object[] selection = getSelection();
-        
-        ((XObjectTableModel)model).sortColumn(sortColumn, sortDirection);
 
-        if(header != null) {
+  public void sort() {
+    if (sortColumn != -1) {
+      TableModel model = getModel();
+      JTableHeader header = getTableHeader();
+
+      if (model != null && model instanceof XObjectTableModel) {
+        Object[] selection = getSelection();
+
+        ((XObjectTableModel) model).sortColumn(sortColumn, sortDirection);
+
+        if (header != null) {
           header.repaint();
         }
-        
+
         setSelection(selection);
       }
     }
   }
 
-  private void internalSetSortDirection(int direction)  {
-    sortDirection = direction;    
+  private void internalSetSortDirection(int direction) {
+    sortDirection = direction;
   }
-  
+
   public void setSortDirection(int direction) {
     internalSetSortDirection(direction);
     storeSortPrefs();
@@ -197,91 +191,91 @@ public class XObjectTable extends XTable {
   public int getSortDirection() {
     return sortDirection;
   }
-  
+
   public int toggleSortDirection() {
     return sortDirection == UP ? DOWN : UP;
   }
 
   public Object[] getSelection() {
-    XObjectTableModel model  = (XObjectTableModel)getModel();
-    int[]             rows   = getSelectedRows();
-    Object[]          result = new Object[rows.length];
-    
-    for(int i = 0; i < rows.length; i++) {
+    XObjectTableModel model = (XObjectTableModel) getModel();
+    int[] rows = getSelectedRows();
+    Object[] result = new Object[rows.length];
+
+    for (int i = 0; i < rows.length; i++) {
       result[i] = model.getObjectAt(rows[i]);
     }
-    
+
     return result;
   }
-  
+
   public void setSelection(Object[] selection) {
-    XObjectTableModel model = (XObjectTableModel)getModel();
-    int               index;
+    XObjectTableModel model = (XObjectTableModel) getModel();
+    int index;
 
     clearSelection();
-    
-    for(int i = 0; i < selection.length; i++) {
+
+    for (int i = 0; i < selection.length; i++) {
       index = model.getObjectIndex(selection[i]);
       addRowSelectionInterval(index, index);
     }
   }
-  
+
   protected TableModel createDefaultDataModel() {
     return new XObjectTableModel();
   }
 
   public void setModel(TableModel model) {
     super.setModel(model);
-    if(sortColumn != -1) {
-      sortColumn = Math.min(sortColumn, model.getColumnCount()-1);
+    if (sortColumn != -1) {
+      sortColumn = Math.min(sortColumn, model.getColumnCount() - 1);
       sort();
     }
   }
 
   public void showColumnsExclusive(String[] fieldNames) {
-    Object[]          selection = getSelection();
-    XObjectTableModel model     = (XObjectTableModel)getModel();
-   
+    Object[] selection = getSelection();
+    XObjectTableModel model = (XObjectTableModel) getModel();
+
     model.showColumnsExclusive(fieldNames);
     setSelection(selection);
   }
-  
+
   public void showColumn(String fieldName) {
-    Object[]          selection = getSelection();
-    XObjectTableModel model     = (XObjectTableModel)getModel();
-   
+    Object[] selection = getSelection();
+    XObjectTableModel model = (XObjectTableModel) getModel();
+
     model.showColumn(fieldName);
     setSelection(selection);
   }
-  
+
   public void hideColumn(String fieldName) {
-    Object[]          selection = getSelection();
-    XObjectTableModel model     = (XObjectTableModel)getModel();
-   
+    Object[] selection = getSelection();
+    XObjectTableModel model = (XObjectTableModel) getModel();
+
     model.hideColumn(fieldName);
-    if(getSortColumn() >= getColumnCount()) {
-      setSortColumn(getColumnCount()-1);
+    if (getSortColumn() >= getColumnCount()) {
+      setSortColumn(getColumnCount() - 1);
     }
     setSelection(selection);
   }
 
   public TableColumn findColumn(String fieldName) {
-    XObjectTableModel model = (XObjectTableModel)getModel();
-    int               index = model.getShowingFieldIndex(fieldName);
-    
+    XObjectTableModel model = (XObjectTableModel) getModel();
+    int index = model.getShowingFieldIndex(fieldName);
+
     return index != -1 ? getColumnModel().getColumn(index) : null;
   }
 
   public int getShowingFieldCount() {
     return getColumnCount();
   }
-  
+
   public String[] getShowingFields() {
-    return ((XObjectTableModel)getModel()).getShowingFields();
+    return ((XObjectTableModel) getModel()).getShowingFields();
   }
 
   public boolean isColumnShowing(String fieldName) {
-    return ((XObjectTableModel)getModel()).isColumnShowing(fieldName);
+    return ((XObjectTableModel) getModel()).isColumnShowing(fieldName);
   }
 
   class MethodRenderer extends XTableCellRenderer {
@@ -296,16 +290,9 @@ public class XObjectTable extends XTable {
       return new MethodEditor();
     }
 
-    public java.awt.Component getTableCellRendererComponent(
-      JTable  table,
-      Object  value,
-      boolean isSelected,
-      boolean hasFocus,
-      int     row,
-      int     col)
-    {
-      return m_editor.getTableCellEditorComponent(
-               table, value, false, row, col);
+    public java.awt.Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                                                            boolean hasFocus, int row, int col) {
+      return m_editor.getTableCellEditorComponent(table, value, false, row, col);
     }
   }
 
@@ -318,17 +305,16 @@ public class XObjectTable extends XTable {
       m_editorComponent = button = new InvokerButton();
       button.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ae) {
-          int               row    = button.getRow();
-          int               col    = button.getCol();
-          XObjectTableModel model  = (XObjectTableModel)getModel();
-          Method            method = (Method)model.getValueAt(row, col);
-          Object            obj    = model.getObjectAt(row);
+          int row = button.getRow();
+          int col = button.getCol();
+          XObjectTableModel model = (XObjectTableModel) getModel();
+          Method method = (Method) model.getValueAt(row, col);
+          Object obj = model.getObjectAt(row);
 
           try {
-            method.invoke(obj, new Object[]{});
+            method.invoke(obj, new Object[] {});
             XObjectTable.this.repaint();
-          }
-          catch(Exception e) {
+          } catch (Exception e) {
             e.printStackTrace();
           }
         }
@@ -336,60 +322,57 @@ public class XObjectTable extends XTable {
       m_clicksToStart = 1;
     }
 
-    public java.awt.Component getTableCellEditorComponent(
-      JTable  table,
-      Object  value,
-      boolean isSelected,
-      int     row,
-      int     col)
-    {
+    public java.awt.Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row,
+                                                          int col) {
       super.getTableCellEditorComponent(table, value, isSelected, row, col);
 
-      XObjectTableModel model  = (XObjectTableModel)table.getModel();
-      Method            method = (Method)model.getValueAt(row, col);
+      XObjectTableModel model = (XObjectTableModel) table.getModel();
+      Method method = (Method) model.getValueAt(row, col);
 
       button.setText(method.getName());
       button.setCell(row, col);
       button.setForeground(table.getForeground());
       button.setBackground(table.getBackground());
       button.setFont(table.getFont());
-      
+
       return button;
     }
   }
 
   protected void loadSortPrefs() {
     PrefsHelper helper = PrefsHelper.getHelper();
-    Preferences prefs  = helper.userNodeForClass(getClass());
-    String      s;
+    Preferences prefs = helper.userNodeForClass(getClass());
+    String s;
 
     // It's important that we set the sortDirection prior to the sortColumn
     // because the latter does an actual sort.
-    
-    if((s = prefs.get(SORT_DIRECTION_PREF_KEY, null)) != null) {
+
+    if ((s = prefs.get(SORT_DIRECTION_PREF_KEY, null)) != null) {
       try {
         internalSetSortDirection(Integer.parseInt(s));
-      } catch(NumberFormatException nfe) {/**/}
+      } catch (NumberFormatException nfe) {/**/
+      }
     }
 
-    if((s = prefs.get(SORT_COLUMN_PREF_KEY, null)) != null) {
+    if ((s = prefs.get(SORT_COLUMN_PREF_KEY, null)) != null) {
       try {
         internalSetSortColumn(Integer.parseInt(s));
-      } catch(NumberFormatException nfe) {/**/}
+      } catch (NumberFormatException nfe) {/**/
+      }
     }
   }
-  
+
   protected void storeSortPrefs() {
     PrefsHelper helper = PrefsHelper.getHelper();
-    Preferences prefs  = helper.userNodeForClass(getClass());
+    Preferences prefs = helper.userNodeForClass(getClass());
 
-    prefs.put(SORT_COLUMN_PREF_KEY,    Integer.toString(getSortColumn()));
+    prefs.put(SORT_COLUMN_PREF_KEY, Integer.toString(getSortColumn()));
     prefs.put(SORT_DIRECTION_PREF_KEY, Integer.toString(getSortDirection()));
-    
+
     helper.flush(prefs);
   }
 
-  class InvokerButton extends XButton {
+  private static class InvokerButton extends XButton {
     private int     row;
     private int     col;
     private boolean ignoreNextMouseEvent;
@@ -433,7 +416,7 @@ public class XObjectTable extends XTable {
     public Dimension _getPreferredSize() {
       Dimension d = super.getPreferredSize();
 
-      if(true || System.getProperty("os.name").equals("Mac OS X")) {
+      if (true || System.getProperty("os.name").equals("Mac OS X")) {
         d.height = 20;
       }
 
@@ -441,10 +424,9 @@ public class XObjectTable extends XTable {
     }
 
     protected void processMouseEvent(MouseEvent e) {
-      if(!ignoreNextMouseEvent) {
+      if (!ignoreNextMouseEvent) {
         super.processMouseEvent(e);
-      }
-      else {
+      } else {
         requestFocus();
       }
 

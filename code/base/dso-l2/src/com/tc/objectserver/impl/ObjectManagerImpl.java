@@ -606,6 +606,10 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return objectStore.getAllObjectIDs();
   }
 
+  public int getLiveObjectCount() {
+    return objectStore.getObjectCount();
+  }
+  
   private void postRelease() {
     if (collector.isPausingOrPaused()) {
       checkAndNotifyGC();

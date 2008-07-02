@@ -145,7 +145,7 @@ public class ClusterPanel extends XContainer {
   private class ActivatedWorker extends BasicWorker<Date> {
     private ActivatedWorker() {
       super(new Callable<Date>() {
-        public Date call() {
+        public Date call() throws Exception {
           return new Date(m_clusterNode.getActivateTime());
         }
       });
@@ -159,11 +159,7 @@ public class ClusterPanel extends XContainer {
         m_hostField.setEditable(false);
         m_portField.setEditable(false);
         setupConnectButton();
-
-        Date activateDate = getResult();
-        String activateTime = activateDate.toString();
-        setStatusLabel(m_acc.format("server.activated.label", new Object[] { activateTime }));
-
+        setStatusLabel(m_acc.format("server.activated.label", getResult().toString()));
         testShowProductInfo();
       }
     }
@@ -180,7 +176,7 @@ public class ClusterPanel extends XContainer {
   private class StartedWorker extends BasicWorker<Date> {
     private StartedWorker() {
       super(new Callable<Date>() {
-        public Date call() {
+        public Date call() throws Exception {
           return new Date(m_clusterNode.getStartTime());
         }
       });
@@ -194,11 +190,7 @@ public class ClusterPanel extends XContainer {
         m_hostField.setEditable(false);
         m_portField.setEditable(false);
         setupConnectButton();
-
-        Date startDate = getResult();
-        String startTime = startDate.toString();
-        setStatusLabel(m_acc.format("server.started.label", new Object[] { startTime }));
-
+        setStatusLabel(m_acc.format("server.started.label", getResult().toString()));
         testShowProductInfo();
       }
     }
@@ -208,10 +200,7 @@ public class ClusterPanel extends XContainer {
     m_hostField.setEditable(false);
     m_portField.setEditable(false);
     setupConnectButton();
-
-    String startTime = new Date().toString();
-    setStatusLabel(m_acc.format("server.initializing.label", new Object[] { startTime }));
-
+    setStatusLabel(m_acc.format("server.initializing.label", new Date().toString()));
     testShowProductInfo();
   }
 
@@ -219,10 +208,7 @@ public class ClusterPanel extends XContainer {
     m_hostField.setEditable(false);
     m_portField.setEditable(false);
     setupConnectButton();
-
-    String startTime = new Date().toString();
-    setStatusLabel(m_acc.format("server.standingby.label", new Object[] { startTime }));
-
+    setStatusLabel(m_acc.format("server.standingby.label", new Date().toString()));
     testShowProductInfo();
   }
 
@@ -241,10 +227,10 @@ public class ClusterPanel extends XContainer {
 
     String startTime = new Date().toString();
     setupConnectButton();
-    setStatusLabel(m_acc.format("server.disconnected.label", new Object[] { startTime }));
+    setStatusLabel(m_acc.format("server.disconnected.label", startTime));
     hideProductInfo();
 
-    m_acc.controller.setStatus(m_acc.format("server.disconnected.status", new Object[] { m_clusterNode, startTime }));
+    m_acc.controller.setStatus(m_acc.format("server.disconnected.status", m_clusterNode, startTime));
   }
 
   void setStatusLabel(String msg) {
@@ -265,7 +251,7 @@ public class ClusterPanel extends XContainer {
   private class ProductInfoWorker extends BasicWorker<ProductInfo> {
     private ProductInfoWorker() {
       super(new Callable<ProductInfo>() {
-        public ProductInfo call() {
+        public ProductInfo call() throws Exception {
           return m_clusterNode.getProductInfo();
         }
       });
@@ -282,7 +268,7 @@ public class ClusterPanel extends XContainer {
   }
 
   private void showProductInfo(ProductInfo productInfo) {
-    m_productInfoPanel.init(productInfo);
+    m_productInfoPanel.init(productInfo.version(), productInfo.copyright());
     m_productInfoPanel.setVisible(true);
     revalidate();
     repaint();

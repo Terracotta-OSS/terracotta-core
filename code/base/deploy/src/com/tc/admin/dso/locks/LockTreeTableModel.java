@@ -16,13 +16,13 @@ import javax.swing.SwingConstants;
 import javax.swing.tree.TreePath;
 
 public class LockTreeTableModel extends AbstractTreeTableModel {
-  static protected String[] cNames = { "Lock", "<html>Times<br>Requested</html>", "<html>Times<br>Hopped</html>",
+  private static final String[] cNames = { "Lock", "<html>Times<br>Requested</html>", "<html>Times<br>Hopped</html>",
       "<html>Average<br>Contenders</html>", "<html>Average<br>Acquire Time</html>",
       "<html>Average<br>Held Time</html>", "<html>Average Nested<br>Lock Depth</html>" };
-  static protected Class[]  cTypes = { TreeTableModel.class, Long.class, Long.class, Long.class, Long.class,
-      Long.class, Long.class      };
+  private static final Class[]  cTypes = { TreeTableModel.class, Long.class, Long.class, Long.class, Long.class,
+      Long.class, Long.class          };
 
-  private RootLockNode      fRoot;
+  private RootLockNode          fRoot;
 
   public LockTreeTableModel(Collection<LockSpec> lockInfos) {
     this(new RootLockNode(lockInfos));

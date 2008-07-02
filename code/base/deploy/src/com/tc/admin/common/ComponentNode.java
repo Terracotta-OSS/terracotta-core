@@ -3,15 +3,17 @@
  */
 package com.tc.admin.common;
 
-import org.dijon.Component;
+import java.awt.Component;
 
-public class ComponentNode extends XTreeNode {
+import javax.swing.JComponent;
+
+public class ComponentNode extends XTreeNode implements IComponentProvider {
   private String    m_label;
   private Component m_component;
 
   public ComponentNode() {
     super();
-  }    
+  }
 
   public ComponentNode(String label) {
     this(label, null);
@@ -19,7 +21,7 @@ public class ComponentNode extends XTreeNode {
 
   public ComponentNode(String label, Component component) {
     this();
-      
+
     setLabel(label);
     setComponent(component);
   }
@@ -33,16 +35,18 @@ public class ComponentNode extends XTreeNode {
   }
 
   public void setComponent(Component comp) {
-    if(m_component instanceof XContainer) {
-      ((XContainer)m_component).tearDown();
+    if (m_component instanceof XContainer) {
+      ((XContainer) m_component).tearDown();
     }
     m_component = comp;
-    if(comp != null) {
-      comp.revalidate();
+    if (comp != null) {
+      if (comp instanceof JComponent) {
+        ((JComponent) comp).revalidate();
+      }
       comp.repaint();
     }
   }
-    
+
   public Component getComponent() {
     return m_component;
   }
@@ -54,4 +58,3 @@ public class ComponentNode extends XTreeNode {
     setComponent(null);
   }
 }
-  

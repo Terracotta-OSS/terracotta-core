@@ -28,7 +28,7 @@ public class RunnerUtility {
 
   public RunnerUtility(String callingClassName, String[] cmdArguments) {
     this.callingClassName = callingClassName;
-    this.cmdArguments = cmdArguments;
+    this.cmdArguments = Arrays.asList(cmdArguments).toArray(new String[0]);
   }
   
   public void setOptions(Options options) {
@@ -131,11 +131,12 @@ public class RunnerUtility {
           return new String(pw);
         }
       }
+    } catch (RuntimeException re) {/**/
     } catch (Exception e) {/**/
     }
     try {
       System.out.print("Enter password: ");
-      return new jline.ConsoleReader().readLine(new Character('*'));
+      return new jline.ConsoleReader().readLine(Character.valueOf('*'));
     } catch (Exception e) {/**/
     }
     return null;

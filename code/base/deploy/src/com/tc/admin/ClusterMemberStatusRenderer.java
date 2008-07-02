@@ -4,6 +4,7 @@
 package com.tc.admin;
 
 import com.tc.admin.common.StatusRenderer;
+import com.tc.admin.model.IServer;
 
 import javax.swing.JTable;
 
@@ -18,9 +19,9 @@ public class ClusterMemberStatusRenderer extends StatusRenderer {
     }
     
     ClusterMemberTableModel clusterMemberTableModel = (ClusterMemberTableModel)table.getModel();
-    ServerConnectionManager member = clusterMemberTableModel.getClusterMemberAt(row);
+    IServer server = clusterMemberTableModel.getClusterMemberAt(row);
 
-    m_label.setText(member.getName());
-    m_indicator.setBackground(ServerNode.getServerStatusColor(member));
+    m_label.setText(server.getName());
+    m_indicator.setBackground(ServerNode.getServerStatusColor(server));
   }
 }

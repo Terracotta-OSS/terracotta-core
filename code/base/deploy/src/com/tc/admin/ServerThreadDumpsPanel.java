@@ -15,8 +15,7 @@ public class ServerThreadDumpsPanel extends AbstractThreadDumpsPanel {
 
   protected String getThreadDumpText() throws Exception {
     long requestMillis = System.currentTimeMillis();
-    ConnectionContext cc = m_serverThreadDumpsNode.getConnectionContext();
-    return ServerHelper.getHelper().takeThreadDump(cc, requestMillis);
+    return m_serverThreadDumpsNode.getServer().takeThreadDump(requestMillis);
   }
 
   protected Preferences getPreferences() {

@@ -3,6 +3,8 @@
  */
 package com.tc.admin.dso;
 
+import com.tc.admin.model.IObject;
+
 public interface DSOObjectTreeNode {
-  DSOObject getDSOObject();
+  IObject getObject();
 }

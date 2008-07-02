@@ -30,20 +30,26 @@ import javax.management.StandardMBean;
 
 public abstract class AbstractTerracottaMBean extends StandardMBean implements NotificationEmitter, TerracottaMBean {
 
-  private static final ResourceBundle DEFAULT_BUNDLE        = getBundleForMBean(TerracottaMBean.class, TCLogging
-                                                                .getLogger(TerracottaMBean.class));
+  private static final ResourceBundle            DEFAULT_BUNDLE          = getBundleForMBean(
+                                                                                             TerracottaMBean.class,
+                                                                                             TCLogging
+                                                                                                 .getLogger(TerracottaMBean.class));
 
-  private static final boolean        ENABLED               = TCPropertiesImpl.getProperties().getBoolean(
-                                                                TCPropertiesConsts.TC_MANAGEMENT_MBEANS_ENABLED);
+  private static final boolean                   ENABLED                 = TCPropertiesImpl
+                                                                             .getProperties()
+                                                                             .getBoolean(
+                                                                                         TCPropertiesConsts.TC_MANAGEMENT_MBEANS_ENABLED);
 
-  private final TCLogger              logger;
-  private final ResourceBundle        beanBundle;
-  private final boolean               isNotificationBroadcaster;
+  private final TCLogger                         logger;
+  private final ResourceBundle                   beanBundle;
+  private final boolean                          isNotificationBroadcaster;
 
   // NOTE: The use of NotificationBroadcasterSupport has been removed and re-implemented internally
   // to avoid issues with JDK logging (DEV-421)
-  private final List                  notificationListeners = new CopyOnWriteArrayList();
-  private boolean                     isActive;
+  private final List                             notificationListeners   = new CopyOnWriteArrayList();
+  private boolean                                isActive;
+
+  protected static final MBeanNotificationInfo[] EMPTY_NOTIFICATION_INFO = {};
 
   protected AbstractTerracottaMBean(final Class mBeanInterface, final boolean isNotificationBroadcaster)
       throws NotCompliantMBeanException {
@@ -62,27 +68,28 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
   public final String getInterfaceClassName() {
     return getMBeanInterface().getName();
   }
-  
+
   public final boolean hasListeners() {
     return !notificationListeners.isEmpty();
   }
 
   public void addNotificationListener(final NotificationListener listener, final NotificationFilter filter,
-                                            final Object obj) {
+                                      final Object obj) {
     notificationListeners.add(new Listener(listener, filter, obj));
   }
 
   public MBeanNotificationInfo[] getNotificationInfo() {
     if (isNotificationBroadcaster()) {
       final RuntimeException re = new TCRuntimeException("MBean error: this MBean[" + getClass().getName()
-          + "] must override getNotificationInfo() since" + " it broadcasts notifications");
+                                                         + "] must override getNotificationInfo() since"
+                                                         + " it broadcasts notifications");
       throw re;
     }
     return new MBeanNotificationInfo[0];
   }
 
   public void removeNotificationListener(final NotificationListener listener, final NotificationFilter filter,
-                                               final Object obj) throws ListenerNotFoundException {
+                                         final Object obj) throws ListenerNotFoundException {
     boolean removed = false;
 
     for (Iterator i = notificationListeners.iterator(); i.hasNext();) {
@@ -144,7 +151,7 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
       enabledStateChanged();
     }
   }
-  
+
   protected synchronized void enabledStateChanged() {
     //
   }

@@ -1,17 +1,15 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin;
 
-import com.tc.management.beans.L2MBeanNames;
+import com.tc.admin.model.IServer;
+import com.tc.admin.model.ServerLogListener;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import javax.management.Notification;
-import javax.management.NotificationListener;
-import javax.management.ObjectName;
-import javax.swing.Icon;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
@@ -19,68 +17,46 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
 public class ServerLog extends LogPane {
-  private ConnectionContext   m_cc;
-  private ObjectName          m_logger;
-  private LogListener         m_logListener;
-  private Icon                m_errorIcon;
-  private Icon                m_warnIcon;
-  private Icon                m_infoIcon;
-  private Icon                m_blankIcon;
-  private SimpleAttributeSet  m_errorIconAttrSet;
-  private SimpleAttributeSet  m_warnIconAttrSet;
-  private SimpleAttributeSet  m_infoIconAttrSet;
-  private SimpleAttributeSet  m_blankIconAttrSet;
+  private IServer                         m_server;
+  private LogListener                     m_logListener;
 
-  private static final String LOG_ERROR             = AdminClient.getContext().getMessage("log.error");
+  private static final SimpleAttributeSet m_errorIconAttrSet    = new SimpleAttributeSet();
+  private static final SimpleAttributeSet m_warnIconAttrSet     = new SimpleAttributeSet();
+  private static final SimpleAttributeSet m_infoIconAttrSet     = new SimpleAttributeSet();
+  private static final SimpleAttributeSet m_blankIconAttrSet    = new SimpleAttributeSet();
 
-  private static final String LOG_WARN              = AdminClient.getContext().getMessage("log.warn");
+  private static final String             LOG_ERROR             = AdminClient.getContext().getMessage("log.error");
 
-  private static final String LOG_INFO              = AdminClient.getContext().getMessage("log.info");
+  private static final String             LOG_WARN              = AdminClient.getContext().getMessage("log.warn");
 
-  private static final int    DEFAULT_MAX_LOG_LINES = 1000;
+  private static final String             LOG_INFO              = AdminClient.getContext().getMessage("log.info");
 
-  private static int          MAX_LOG_LINES         = Integer.getInteger("com.tc.admin.ServerLog.maxLines",
-                                                                         DEFAULT_MAX_LOG_LINES).intValue();
+  private static final int                DEFAULT_MAX_LOG_LINES = 1000;
 
-  public ServerLog(ConnectionContext cc) {
+  private static int                      MAX_LOG_LINES         = Integer.getInteger("com.tc.admin.ServerLog.maxLines",
+                                                                                     DEFAULT_MAX_LOG_LINES).intValue();
+
+  static {
+    StyleConstants.setIcon(m_errorIconAttrSet, LogHelper.getHelper().getErrorIcon());
+    StyleConstants.setIcon(m_warnIconAttrSet, LogHelper.getHelper().getWarningIcon());
+    StyleConstants.setIcon(m_infoIconAttrSet, LogHelper.getHelper().getInfoIcon());
+    StyleConstants.setIcon(m_blankIconAttrSet, LogHelper.getHelper().getBlankIcon());
+  }
+
+  public ServerLog(IServer server) {
     super();
-
-    m_cc = cc;
-    m_logListener = new LogListener();
-    m_errorIcon = LogHelper.getHelper().getErrorIcon();
-    m_warnIcon = LogHelper.getHelper().getWarningIcon();
-    m_infoIcon = LogHelper.getHelper().getInfoIcon();
-    m_blankIcon = LogHelper.getHelper().getBlankIcon();
-
-    m_errorIconAttrSet = new SimpleAttributeSet();
-    StyleConstants.setIcon(m_errorIconAttrSet, m_errorIcon);
-
-    m_warnIconAttrSet = new SimpleAttributeSet();
-    StyleConstants.setIcon(m_warnIconAttrSet, m_warnIcon);
-
-    m_infoIconAttrSet = new SimpleAttributeSet();
-    StyleConstants.setIcon(m_infoIconAttrSet, m_infoIcon);
-
-    m_blankIconAttrSet = new SimpleAttributeSet();
-    StyleConstants.setIcon(m_blankIconAttrSet, m_blankIcon);
-
-    try {
-      m_logger = m_cc.queryName(L2MBeanNames.LOGGER.getCanonicalName());
-      m_cc.addNotificationListener(m_logger, m_logListener);
-    } catch (Exception e) {
-      AdminClient.getContext().log(e);
-    }
-
+    m_server = server;
+    server.addServerLogListener(m_logListener = new LogListener());
     setEditable(false);
   }
 
-  public ConnectionContext getConnectionContext() {
-    return m_cc;
+  public IServer getServer() {
+    return m_server;
   }
 
-  class LogListener implements NotificationListener {
-    public void handleNotification(Notification notice, Object handback) {
-      log(notice.getMessage());
+  class LogListener implements ServerLogListener {
+    public void messageLogged(String logMsg) {
+      log(logMsg);
     }
   }
 
@@ -160,5 +136,11 @@ public class ServerLog extends LogPane {
   public void log(String s) {
     append(s);
     setCaretPosition(getDocument().getLength() - 1);
+  }
+
+  public void tearDown() {
+    m_server.removeServerLogListener(m_logListener);
+    m_logListener = null;
+    m_server = null;
   }
 }

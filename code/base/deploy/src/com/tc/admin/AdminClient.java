@@ -120,6 +120,8 @@ public class AdminClient extends ApplicationManager {
         fis = new FileInputStream(f);
         Preferences.importPreferences(fis);
       }
+    } catch(RuntimeException re) {
+      // ignore
     } catch(Exception e) {
       // ignore
     } finally {
@@ -151,9 +153,10 @@ public class AdminClient extends ApplicationManager {
     try {
       is = getClass().getResourceAsStream("AdminClient.xml");
       topRes = ApplicationManager.loadResource(is);
-    } catch(Throwable t) {
-      t.printStackTrace();
-      System.exit(-1);
+    } catch(RuntimeException re) {
+      throw re;
+    } catch(Exception e) {
+      throw new RuntimeException(e);
     } finally {
       IOUtils.closeQuietly(is);
     }

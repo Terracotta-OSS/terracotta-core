@@ -314,11 +314,7 @@ public class PropertyTableModel extends AbstractTableModel {
       return rowClass;
     }
 
-    if((method = m_ops[row]) != null) {
-      return Method.class;
-    }
-
-    return Object.class;
+    return m_ops[row] != null ? Method.class : Object.class;
   }
   
   private Object _getFieldValue(int fieldIndex) {

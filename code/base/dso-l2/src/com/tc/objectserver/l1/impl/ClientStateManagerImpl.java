@@ -194,6 +194,11 @@ public class ClientStateManagerImpl implements ClientStateManager {
     return (ClientStateImpl) clientStates.get(id);
   }
 
+  public int getReferenceCount(NodeID nodeID) {
+    ClientState clientState = getClientState(nodeID);
+    return clientState != null ? clientState.getReferences().size() : 0;
+  }
+  
   public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
     PrettyPrinter rv = out;
     out.println(getClass().getName());

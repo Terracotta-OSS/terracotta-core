@@ -9,7 +9,6 @@ import org.dijon.ContainerResource;
 
 import com.tc.admin.AdminClient;
 import com.tc.admin.AdminClientContext;
-import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XTextArea;
@@ -50,9 +49,8 @@ public class ClassesPanel extends XContainer {
 
   public ClassesPanel(ClassesNode classesNode) {
     super();
-    AdminClientContext cntx = AdminClient.getContext();
 
-    load((ContainerResource) cntx.topRes.getComponent("ClassesPanel"));
+    load((ContainerResource) AdminClient.getContext().topRes.getComponent("ClassesPanel"));
 
     m_classesNode = classesNode;
 
@@ -77,8 +75,7 @@ public class ClassesPanel extends XContainer {
   }
 
   private DSOClassInfo[] getClassInfos() {
-    ConnectionContext cc = m_classesNode.getConnectionContext();
-    DSOClassInfo[] classInfo = ClassesHelper.getHelper().getClassInfo(cc);
+    DSOClassInfo[] classInfo = m_classesNode.getClusterModel().getClassInfo();
     ArrayList<DSOClassInfo> list = new ArrayList<DSOClassInfo>();
 
     if (classInfo != null) {
