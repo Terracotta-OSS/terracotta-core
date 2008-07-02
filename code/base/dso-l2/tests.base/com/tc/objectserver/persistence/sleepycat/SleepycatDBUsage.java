@@ -29,10 +29,10 @@ public class SleepycatDBUsage {
   private Environment       env;
   private DatabaseConfig    dbc;
   private boolean           header = true;
-  protected long            keyTotal;
-  protected long            valuesTotal;
-  protected long            grandTotal;
-  protected long            totalCount;
+  private long              keyTotal;
+  private long              valuesTotal;
+  private long              grandTotal;
+  private long              totalCount;
 
   public SleepycatDBUsage(File dir) throws Exception {
     enc = new EnvironmentConfig();
@@ -130,6 +130,22 @@ public class SleepycatDBUsage {
       sb.append(' ');
     }
     return sb.toString();
+  }
+
+  public long getTotalCount() {
+    return totalCount;
+  }
+
+  public long getGrandTotal() {
+    return grandTotal;
+  }
+
+  public long getValuesTotal() {
+    return valuesTotal;
+  }
+
+  public long getKeyTotal() {
+    return keyTotal;
   }
 
   public static void main(String[] args) {
