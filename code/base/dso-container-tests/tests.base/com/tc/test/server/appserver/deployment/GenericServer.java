@@ -70,8 +70,8 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
   private final AppServerInstallation       installation;
   private final Map                         proxyBuilderMap = new HashMap();
   private ProxyBuilder                      proxyBuilder    = null;
-  private File                              workingDir;
-  private String                            serverInstanceName;
+  private final File                        workingDir;
+  private final String                      serverInstanceName;
   private final File                        tcConfigFile;
   private final File                        coresidentConfigFile;
 
@@ -156,7 +156,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
         // bumped up because ContainerHibernateTest, ContinuationsTest was failing with glassfish-v1
         parameters.appendJvmArgs("-XX:MaxPermSize=128m");
         parameters.appendJvmArgs("-Xms128m -Xmx256m");
-//        parameters.appendJvmArgs("-XX:+PrintGCDetails");
+        // parameters.appendJvmArgs("-XX:+PrintGCDetails");
         break;
     }
 
