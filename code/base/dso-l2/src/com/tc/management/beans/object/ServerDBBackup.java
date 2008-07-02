@@ -92,6 +92,8 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
   }
 
   public void runBackUp(String destinationDir) throws IOException {
+    if (destinationDir == null) destinationDir = defaultPathForBackup;
+    
     backupFileLogger = new FileLoggerForBackup(destinationDir);
 
     backupFileLogger.logStartMessage();
@@ -104,9 +106,7 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
       backupFailed(e);
       throw e;
     }
-
-    if (destinationDir == null) destinationDir = defaultPathForBackup;
-
+    
     logger.log(LogLevel.INFO, "The destination directory is:" + destinationDir);
 
     try {
