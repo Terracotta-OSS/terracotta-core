@@ -59,7 +59,7 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
   private static final String ADMIN_USER         = "admin";
   private static final String PASSWD             = "password";
 
-  private static final long   START_STOP_TIMEOUT = 1000 * 240;
+  private static final long   START_STOP_TIMEOUT = 1000 * 300;
   private final PortChooser   pc                 = new PortChooser();
   private final int           httpPort           = pc.chooseRandomPort();
   private final int           adminPort          = pc.chooseRandomPort();
@@ -183,9 +183,35 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
 
     System.err.println("Started " + params.instanceName() + " on port " + httpPort);
 
+    checkAppStatus(params);
+
     deployWars(params.wars());
 
     return new AppServerResult(httpPort, this);
+  }
+
+  private void checkAppStatus(AppServerParameters params) throws Exception {
+    File asAdminScript = getAsadminScript();
+    List cmd = new ArrayList();
+    cmd.add(asAdminScript.getAbsolutePath());
+    cmd.add("list-domains");
+    cmd.add("--domaindir=" + sandboxDirectory());
+
+    Result result = Exec.execute((String[]) cmd.toArray(new String[] {}), null, null, asAdminScript.getParentFile());
+
+    /**
+     * Output should be something like this:
+     * <instance_name> <status>
+     * where <instance_name> is the name of the instance
+     *       <status> is one of {not running, running, starting}
+     */
+    System.err.println("Status: " + result.getStdout());
+    if (result.getStderr().trim().length() > 0) {
+      System.err.println("Error Stream: " + result.getStderr());
+    }
+    System.err.flush();
+
+    if (result.getExitCode() != 0) { throw new RuntimeException(result.toString()); }
   }
 
   private static byte[] startupInput() {
