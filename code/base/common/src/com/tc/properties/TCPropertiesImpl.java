@@ -127,6 +127,7 @@ public class TCPropertiesImpl implements TCProperties {
 
     if (noOfProperties == 0) {
       LOG_BUFFER.addLog("tc-config doesn't have any tc-property. No tc-property will be overridden", LogLevel.WARN);
+      LoggingWorkaround.doLog();
       return;
     }
 
@@ -147,6 +148,7 @@ public class TCPropertiesImpl implements TCProperties {
         setProperty(propertyName, propertyValue);
       }
     }
+    LoggingWorkaround.doLog();
   }
 
   Properties addAllPropertiesTo(Properties properties, String filter) {
@@ -228,13 +230,13 @@ public class TCPropertiesImpl implements TCProperties {
   }
 
   public String getProperty(String key, boolean missingOkay) {
-    LoggingWorkaround.doLog();
     String val = props.getProperty(key);
     if (val == null && !missingOkay) { throw new AssertionError("TCProperties : Property not found for " + key); }
     if (tcPropertiesInitialized == false) {
       LOG_BUFFER.addLog("The property \"" + key + "\" has been read before the initialization is complete. \"" + key
                         + "\" = " + val);
     }
+    LoggingWorkaround.doLog();
     return val;
   }
 
@@ -369,17 +371,18 @@ public class TCPropertiesImpl implements TCProperties {
   }
 
   private static class LoggingWorkaround {
+    private static TCLogger logger;
+    
     static {
-      TCLogger logger = TCLogging.getLogger(TCProperties.class);
+      logger = TCLogging.getLogger(TCProperties.class);
       LOG_BUFFER.logTo(logger);
       logger.info("Loaded TCProperties : " + INSTANCE);
     }
 
-    /**
-     * the only reason this method is here is to trigger the static initializer of this inner class one (and only once)
-     */
     static void doLog() {
-      //
+      if(logger != null){
+        LOG_BUFFER.logTo(logger);
+      }
     }
 
   }
