@@ -28,10 +28,10 @@ import java.util.Map.Entry;
 
 public class ReviveClassFiles {
 
-  private static final TCLogger    logger = TCLogging.getLogger(ReviveClassFiles.class);
-  private SleepycatPersistor       sleepycatPersistor;
-  private ClassPersistor           persistor;
-  private PhysicalStateClassLoader loader;
+  private static final TCLogger          logger = TCLogging.getLogger(ReviveClassFiles.class);
+  private final SleepycatPersistor       sleepycatPersistor;
+  private final ClassPersistor           persistor;
+  private final PhysicalStateClassLoader loader;
 
   public ReviveClassFiles(File sourceDir, File destDir) throws Exception {
     DBEnvironment env = new DBEnvironment(true, sourceDir);
@@ -64,14 +64,14 @@ public class ReviveClassFiles {
       ByteArrayInputStream bai = new ByteArrayInputStream(clazzBytes);
       TCObjectInputStream tci = new TCObjectInputStream(bai);
 
-      @SuppressWarnings("unused")
-      String classIdentifier = tci.readString();
+      /* String classIdentifier = */tci.readString();
 
       String genClassName = tci.readString();
 
       File file = new File(destDir.getPath() + File.separator + genClassName + ".class");
       file.createNewFile();
-      ByteArrayInputStream bais = new ByteArrayInputStream(clazzBytes, clazzBytes.length - bai.available(), bai.available());
+      ByteArrayInputStream bais = new ByteArrayInputStream(clazzBytes, clazzBytes.length - bai.available(), bai
+          .available());
       FileOutputStream fos = new FileOutputStream(file);
       IOUtils.copy(bais, fos);
       IOUtils.closeQuietly(fos);
