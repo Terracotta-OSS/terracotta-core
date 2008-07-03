@@ -183,21 +183,33 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
 
     System.err.println("Started " + params.instanceName() + " on port " + httpPort);
 
-    checkAppStatus(params);
+    waitForAppInstanceRunning(params);
 
     deployWars(params.wars());
 
     return new AppServerResult(httpPort, this);
   }
 
-  private void checkAppStatus(AppServerParameters params) throws Exception {
+  private void waitForAppInstanceRunning(final AppServerParameters params) throws Exception {
+    while (true) {
+      String status = getAppInstanceStatus(params);
+      System.err.println(params.instanceName() + " is " + status);
+      if ("running".equals(status)) {
+        break;
+      }
+      System.err.println("Sleeping for 2 sec before checking again...");
+      ThreadUtil.reallySleep(2000);
+    }
+  }
+
+  private String getAppInstanceStatus(AppServerParameters params) throws Exception {
     File asAdminScript = getAsadminScript();
     List cmd = new ArrayList();
     cmd.add(asAdminScript.getAbsolutePath());
     cmd.add("list-domains");
     cmd.add("--domaindir=" + sandboxDirectory());
 
-    Result result = Exec.execute((String[]) cmd.toArray(new String[] {}), null, null, asAdminScript.getParentFile());
+    Result result = Exec.execute((String[])cmd.toArray(new String[] { }), null, null, asAdminScript.getParentFile());
 
     /**
      * Output should be something like this:
@@ -205,13 +217,32 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
      * where <instance_name> is the name of the instance
      *       <status> is one of {not running, running, starting}
      */
-    System.err.println("Status: " + result.getStdout());
+//    System.err.println("list-domains output: \n" + result.getStdout());
     if (result.getStderr().trim().length() > 0) {
       System.err.println("Error Stream: " + result.getStderr());
     }
     System.err.flush();
 
     if (result.getExitCode() != 0) { throw new RuntimeException(result.toString()); }
+
+    return getStatus(params.instanceName(), result.getStdout());
+  }
+
+  private String getStatus(final String instanceName, final String output) {
+    int start = output.indexOf(instanceName);
+    if (start < 0) { return ""; }
+    String line = output.substring(start);
+
+    int end = line.indexOf("\n");
+    if (end < 0) { throw new RuntimeException("no end: " + line); }
+    line = line.substring(0, end).trim();
+
+    final int delim = line.indexOf(" ");
+    String appName = line.substring(0, delim);
+    String status = line.substring(delim + 1);
+    Assert.assertEquals(appName, instanceName);
+
+    return status.trim();
   }
 
   private static byte[] startupInput() {
@@ -252,11 +283,6 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
       cmd.add("--contextroot=" + warName);
       cmd.add("--port=" + adminPort);
       cmd.add(warFile.getAbsolutePath());
-
-      for (int i = 10; i > 0; i--) {
-        System.err.println("Deploying war file in " + i + " secs...");
-        ThreadUtil.reallySleep(1000);
-      }
 
       Result result = Exec.execute((String[]) cmd.toArray(new String[] {}));
       if (result.getExitCode() != 0) { throw new RuntimeException("Deploy failed for " + warName + ": " + result); }
