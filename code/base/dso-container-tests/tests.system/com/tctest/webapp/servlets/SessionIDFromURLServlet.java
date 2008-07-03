@@ -23,6 +23,8 @@ public class SessionIDFromURLServlet extends HttpServlet {
     String cmd = req.getParameter("cmd");
     if (cmd == null) { throw new AssertionError("missing cmd"); }
 
+    boolean absolute = Boolean.valueOf(req.getParameter("abs")).booleanValue();
+
     if ("new".equals(cmd)) {
       Assert.assertFalse(req.isRequestedSessionIdValid());
       Assert.assertFalse(req.isRequestedSessionIdFromCookie());
@@ -33,7 +35,13 @@ public class SessionIDFromURLServlet extends HttpServlet {
       HttpSession session = req.getSession(true);
       Assert.assertTrue(session.isNew());
 
-      out.println(resp.encodeURL(req.getRequestURL().toString()));
+      if (absolute) {
+        out.println(resp.encodeURL(req.getRequestURL().toString()));
+      } else {
+        String thisServlet = req.getServletPath();
+        thisServlet = thisServlet.substring(1); // trim leading slash
+        out.println(resp.encodeURL(thisServlet));
+      }
     } else if ("query".equals(cmd)) {
       Assert.assertTrue(req.isRequestedSessionIdValid());
       Assert.assertFalse(req.isRequestedSessionIdFromCookie());
@@ -51,5 +59,4 @@ public class SessionIDFromURLServlet extends HttpServlet {
     }
 
   }
-
 }
