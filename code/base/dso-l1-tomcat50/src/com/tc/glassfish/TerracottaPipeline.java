@@ -125,7 +125,8 @@ public class TerracottaPipeline extends StandardPipeline {
       }
     }
 
-    return new DefaultWebAppConfig(context.getManager().getMaxInactiveInterval(), attrList, sessList, ".", jvmRoute);
+    return new DefaultWebAppConfig(context.getManager().getMaxInactiveInterval(), attrList, sessList, ".", jvmRoute,
+                                   context.getCookies());
   }
 
   private static void sortByType(Object[] listeners, ArrayList sessionListeners, ArrayList attributeListeners) {

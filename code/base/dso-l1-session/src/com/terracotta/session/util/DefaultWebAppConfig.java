@@ -16,14 +16,17 @@ public class DefaultWebAppConfig implements WebAppConfig {
   private final HttpSessionListener[]          sessList;
   private final String                         serverId;
   private final String                         delimiter;
+  private final boolean                        cookiesEnabled;
 
   public DefaultWebAppConfig(final int sessTimeoutSeconds, final HttpSessionAttributeListener[] attrList,
-                             final HttpSessionListener[] sessList, final String delimiter, final String serverId) {
+                             final HttpSessionListener[] sessList, final String delimiter, final String serverId,
+                             final boolean cookiesEnabled) {
     this.sessTimeoutSeconds = sessTimeoutSeconds;
     this.attrList = attrList;
     this.sessList = sessList;
     this.delimiter = delimiter;
     this.serverId = serverId;
+    this.cookiesEnabled = cookiesEnabled;
   }
 
   public String __tc_session_getCookieComment() {
@@ -51,7 +54,7 @@ public class DefaultWebAppConfig implements WebAppConfig {
   }
 
   public boolean __tc_session_getCookiesEnabled() {
-    return ConfigProperties.defaultCookiesEnabled;
+    return cookiesEnabled;
   }
 
   public HttpSessionAttributeListener[] __tc_session_getHttpSessionAttributeListeners() {
