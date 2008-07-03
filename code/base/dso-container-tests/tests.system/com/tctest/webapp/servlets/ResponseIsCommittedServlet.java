@@ -15,7 +15,10 @@ import javax.servlet.http.HttpServletResponse;
 
 public class ResponseIsCommittedServlet extends HttpServlet {
 
-  private static final WasCommitted wasCommitted = new WasCommitted();
+  // not using anything 400 or above since it trips up HttpURLConnection
+  public static final int           SEND_ERROR_CODE = 399;
+
+  private static final WasCommitted wasCommitted    = new WasCommitted();
 
   protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     resp.setContentType("text/html");
@@ -33,10 +36,10 @@ public class ResponseIsCommittedServlet extends HttpServlet {
       resp.sendRedirect("http://www.google.com/DOESNT_MATTER");
       wasCommitted.set(cmd, resp.isCommitted());
     } else if ("sendError1".equals(cmd)) {
-      resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+      resp.sendError(SEND_ERROR_CODE);
       wasCommitted.set(cmd, resp.isCommitted());
     } else if ("sendError2".equals(cmd)) {
-      resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "error message");
+      resp.sendError(SEND_ERROR_CODE, "error message");
       wasCommitted.set(cmd, resp.isCommitted());
     } else {
       throw new AssertionError("unknown command: " + cmd);

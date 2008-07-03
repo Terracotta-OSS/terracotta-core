@@ -35,12 +35,12 @@ public class ResponseIsCommittedTest extends AbstractOneServerDeploymentTest {
     assertEquals("true", response.getText().trim());
 
     response = request("/" + CONTEXT + "/" + MAPPING, "cmd=sendError1");
-    assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response.getResponseCode());
+    assertEquals(ResponseIsCommittedServlet.SEND_ERROR_CODE, response.getResponseCode());
     response = request("/" + CONTEXT + "/" + MAPPING, "cmd=check-sendError1");
     assertEquals("true", response.getText().trim());
 
     response = request("/" + CONTEXT + "/" + MAPPING, "cmd=sendError2");
-    assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response.getResponseCode());
+    assertEquals(ResponseIsCommittedServlet.SEND_ERROR_CODE, response.getResponseCode());
     response = request("/" + CONTEXT + "/" + MAPPING, "cmd=check-sendError2");
     assertEquals("true", response.getText().trim());
   }
