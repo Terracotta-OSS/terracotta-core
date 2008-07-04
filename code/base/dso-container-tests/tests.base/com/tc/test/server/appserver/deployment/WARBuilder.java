@@ -68,6 +68,10 @@ public class WARBuilder implements DeploymentBuilder {
     this(File.createTempFile("test", ".war", tempDir).getAbsolutePath(), tempDir, config);
   }
 
+  public WARBuilder(String warFileName, File tempDir) {
+    this(warFileName, tempDir, TestConfigObject.getInstance());
+  }
+
   public WARBuilder(String warFileName, File tempDir, TestConfigObject config) {
     this.warFileName = warFileName;
     this.tempDirPath = new FileSystemPath(tempDir);

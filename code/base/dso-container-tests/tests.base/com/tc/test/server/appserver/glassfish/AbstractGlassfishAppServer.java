@@ -11,6 +11,8 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebResponse;
 import com.tc.lcp.CargoLinkedChildProcess;
 import com.tc.lcp.HeartBeatService;
 import com.tc.process.Exec;
@@ -21,6 +23,8 @@ import com.tc.test.server.ServerResult;
 import com.tc.test.server.appserver.AbstractAppServer;
 import com.tc.test.server.appserver.AppServerParameters;
 import com.tc.test.server.appserver.AppServerResult;
+import com.tc.test.server.appserver.deployment.DeploymentBuilder;
+import com.tc.test.server.appserver.deployment.WARBuilder;
 import com.tc.test.server.util.AppServerUtil;
 import com.tc.text.Banner;
 import com.tc.util.Assert;
@@ -58,6 +62,7 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
 
   private static final String ADMIN_USER         = "admin";
   private static final String PASSWD             = "password";
+  private static final String PINGWAR            = "ping";
 
   private static final long   START_STOP_TIMEOUT = 1000 * 300;
   private final PortChooser   pc                 = new PortChooser();
@@ -187,7 +192,27 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
 
     deployWars(params.wars());
 
+    waitForPing();
+
     return new AppServerResult(httpPort, this);
+  }
+
+  private void waitForPing() {
+    String pingUrl = "http://localhost:" + httpPort + "/ping/index.html";
+    WebConversation wc = new WebConversation();
+    wc.setExceptionsThrownOnErrorStatus(false);
+    int tries = 10;
+    for (int i = 0; i < tries; i++) {
+      WebResponse response;
+      try {
+        System.err.println("Pinging " + pingUrl + " - try #" + i);
+        response = wc.getResponse(pingUrl);
+        if (response.getResponseCode() == 200) break;
+      } catch (Exception e) {
+        // ignored
+      }
+      ThreadUtil.reallySleep(2000);
+    }
   }
 
   private void waitForAppInstanceRunning(final AppServerParameters params) throws Exception {
@@ -209,15 +234,13 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
     cmd.add("list-domains");
     cmd.add("--domaindir=" + sandboxDirectory());
 
-    Result result = Exec.execute((String[])cmd.toArray(new String[] { }), null, null, asAdminScript.getParentFile());
+    Result result = Exec.execute((String[]) cmd.toArray(new String[] {}), null, null, asAdminScript.getParentFile());
 
     /**
-     * Output should be something like this:
-     * <instance_name> <status>
-     * where <instance_name> is the name of the instance
-     *       <status> is one of {not running, running, starting}
+     * Output should be something like this: <instance_name> <status> where <instance_name> is the name of the instance
+     * <status> is one of {not running, running, starting}
      */
-//    System.err.println("list-domains output: \n" + result.getStdout());
+    // System.err.println("list-domains output: \n" + result.getStdout());
     if (result.getStderr().trim().length() > 0) {
       System.err.println("Error Stream: " + result.getStderr());
     }
@@ -266,28 +289,39 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
   private void deployWars(Map wars) throws Exception {
     for (Iterator iter = wars.entrySet().iterator(); iter.hasNext();) {
       Map.Entry entry = (Entry) iter.next();
-
       String warName = (String) entry.getKey();
       File warFile = (File) entry.getValue();
-
-      System.err.println("Deploying war [" + warName + "] on " + instanceDir.getName());
-
-      List cmd = new ArrayList();
-      cmd.add(getAsadminScript().getAbsolutePath());
-      cmd.add("deploy");
-      cmd.add("--interactive=false");
-      cmd.add("--user");
-      cmd.add(ADMIN_USER);
-      cmd.add("--passwordfile");
-      cmd.add(getPasswdFile().getAbsolutePath());
-      cmd.add("--contextroot=" + warName);
-      cmd.add("--port=" + adminPort);
-      cmd.add(warFile.getAbsolutePath());
-
-      Result result = Exec.execute((String[]) cmd.toArray(new String[] {}));
-      if (result.getExitCode() != 0) { throw new RuntimeException("Deploy failed for " + warName + ": " + result); }
-      System.err.println("Deployed war file successfully.");
+      deployWar(warName, warFile);
     }
+
+    // deploy the ping app so we can test to see
+    // if wars are ready
+    deployWar(PINGWAR, createPingWarFile(PINGWAR + ".war"));
+  }
+
+  private File createPingWarFile(String warName) throws Exception {
+    DeploymentBuilder builder = new WARBuilder(warName, new File(sandboxDirectory(), "war"));
+    builder.addResourceFullpath("/com/tc/test/server/appserver/glassfish", "index.html", "index.html");
+    return builder.makeDeployment().getFileSystemPath().getFile();
+  }
+
+  private void deployWar(String warName, File warFile) throws IOException, Exception {
+    System.err.println("Deploying war [" + warName + "] on " + instanceDir.getName());
+    List cmd = new ArrayList();
+    cmd.add(getAsadminScript().getAbsolutePath());
+    cmd.add("deploy");
+    cmd.add("--interactive=false");
+    cmd.add("--user");
+    cmd.add(ADMIN_USER);
+    cmd.add("--passwordfile");
+    cmd.add(getPasswdFile().getAbsolutePath());
+    cmd.add("--contextroot=" + warName);
+    cmd.add("--port=" + adminPort);
+    cmd.add(warFile.getAbsolutePath());
+
+    Result result = Exec.execute((String[]) cmd.toArray(new String[] {}));
+    if (result.getExitCode() != 0) { throw new RuntimeException("Deploy failed for " + warName + ": " + result); }
+    System.err.println("Deployed war file successfully.");
   }
 
   abstract protected String[] getDisplayCommand(String script);
