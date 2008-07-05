@@ -31,6 +31,8 @@ public class AspectJTest extends SpringDeploymentTest {
 
   public AspectJTest() {
     this.disableVariant(TestConfigObject.SPRING_VARIANT, "128");
+    
+    // MNK-591
     this.disableVariant(TestConfigObject.SPRING_VARIANT, "254");
   }
 
