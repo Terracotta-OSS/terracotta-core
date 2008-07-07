@@ -637,9 +637,6 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       }
 
       setBootClassHelper(project, new BootClassHelper(JavaCore.create(project)));
-
-      getConfigurationHelper(project).validateAll();
-      fireConfigurationChange(project);
     }
   }
 
@@ -828,9 +825,6 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       }
 
       setBootClassHelper(project, new BootClassHelper(JavaCore.create(project)));
-
-      getConfigurationHelper(project).validateAll();
-      fireConfigurationChange(project);
     }
   }
 
@@ -1001,12 +995,15 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
   public TcConfig getConfiguration(IProject project) {
     if (project == null) return null;
 
+    boolean fireChanged = false;
+    TcConfig config = null;
     synchronized (project) {
-      TcConfig config = (TcConfig) getSessionProperty(project, CONFIGURATION);
+      config = (TcConfig) getSessionProperty(project, CONFIGURATION);
 
       if (config == null) {
         try {
           loadConfiguration(project);
+          fireChanged = true;
         } catch (XmlException e) {
           LineLengths lineLengths = getConfigurationLineLengths(project);
           handleXmlException(getConfigurationFile(project), lineLengths, e);
@@ -1019,12 +1016,19 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
         if (config == null) {
           config = BAD_CONFIG;
           setSessionProperty(project, CONFIGURATION, config);
-          fireConfigurationChange(project);
+          fireChanged = true;
         }
       }
-
-      return config;
     }
+
+    if(fireChanged) {
+      if(config != BAD_CONFIG) {
+        getConfigurationHelper(project).validateAll();
+      }
+      fireConfigurationChange(project);
+    }
+    
+    return config;
   }
 
   public void handleXmlException(IFile configFile, LineLengths lineLengths, XmlException e) {

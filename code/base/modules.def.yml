@@ -374,6 +374,16 @@ modules:
         - dso-statistics-api
         - thirdparty
         - thirdparty-api
+  - ui-eclipse-33:
+      options:
+        jdk: J2SE-1.5
+      dependencies:
+        - ui-eclipse
+  - ui-eclipse-34:
+      options:
+        jdk: J2SE-1.5
+      dependencies:
+        - ui-eclipse
   - installer:
       options:
         jdk: J2SE-1.4
@@ -1094,4 +1104,6 @@ module-groups:
   gui:
     - ui-configurator
     - ui-eclipse
+    - ui-eclipse-33
+    - ui-eclipse-34
     - installer

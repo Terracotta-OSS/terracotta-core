@@ -173,15 +173,13 @@
 
    <extension point="org.eclipse.ui.bindings">
       <key
-	sequence="M3+M2+D D"
-	commandId="org.terracotta.dso.debug.ui.dsoApplicationShortcut.debug"
-	schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-	contextId="org.eclipse.ui.globalScope"/>
+        sequence="M3+M2+D T"
+        commandId="org.terracotta.dso.debug.ui.dsoApplicationShortcut.debug"
+        schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"/>
       <key
-	sequence="M3+M2+X D"
-	commandId="org.terracotta.dso.debug.ui.dsoApplicationShortcut.run"
-	schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-	contextId="org.eclipse.ui.globalScope"/>
+        sequence="M3+M2+X T"
+        commandId="org.terracotta.dso.debug.ui.dsoApplicationShortcut.run"
+        schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"/>
    </extension>
 
    <extension point="org.eclipse.ui.editors">
@@ -738,14 +736,19 @@
       </viewerContribution>
    </extension>
 
+
    <extension point="org.eclipse.ui.propertyPages"
               id="propertyPages">
       <page
-            objectClass="org.eclipse.jdt.core.IJavaProject"
-            name="Terracotta"
+            name="%propertyPageName"        
             class="org.terracotta.dso.properties.PropertyPage"
-            id="propertyPagesPage">
-         <filter name="nature" value="org.terracotta.dso.ProjectNature"/>
+            id="org.terracotta.dso.ui.propertyPages.PropertyPage">
+         <enabledWhen>
+	     <adapt type="org.eclipse.core.resources.IProject">
+	          <test property="org.eclipse.core.resources.projectNature"
+                        value="org.terracotta.dso.ProjectNature"/>
+	     </adapt>         
+         </enabledWhen>
       </page>
    </extension>
 

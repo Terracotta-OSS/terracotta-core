@@ -98,7 +98,6 @@ public class ClasspathProvider extends StandardClasspathProvider {
       "dso-l1-jdk15",
       "dso-l2",
       "dso-l2-common",
-      "dso-spring",
       "dso-statistics",
       "dso-statistics-api"};
 
