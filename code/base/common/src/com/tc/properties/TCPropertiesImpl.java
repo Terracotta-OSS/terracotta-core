@@ -8,6 +8,7 @@ import com.tc.config.TcProperty;
 import com.tc.logging.LogLevel;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.util.Assert;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -51,6 +52,8 @@ public class TCPropertiesImpl implements TCProperties {
   private final Properties              localTcProperties          = new Properties();
 
   private boolean                       tcPropertiesInitialized    = false;
+
+  private TCLogger                      logger                     = null;
 
   static {
     INSTANCE = new TCPropertiesImpl();
@@ -125,9 +128,13 @@ public class TCPropertiesImpl implements TCProperties {
     tcPropertiesInitialized = true;
     int noOfProperties = tcProperties.length;
 
+    if(this.logger == null){
+      logger = TCLogging.getLogger(TCProperties.class);
+      Assert.assertNotNull(logger);
+    }
+
     if (noOfProperties == 0) {
-      LOG_BUFFER.addLog("tc-config doesn't have any tc-property. No tc-property will be overridden", LogLevel.WARN);
-      LoggingWorkaround.doLog();
+      logger.info("tc-config doesn't have any tc-property. No tc-property will be overridden");
       return;
     }
 
@@ -137,18 +144,12 @@ public class TCPropertiesImpl implements TCProperties {
     for (int i = 0; i < noOfProperties; i++) {
       propertyName = tcProperties[i].getPropertyName();
       propertyValue = tcProperties[i].getPropertyValue();
-      if (this.localTcProperties.containsKey(propertyName)) {
-        LOG_BUFFER.addLog("The property \"" + propertyName
-                          + "\" has been set by the local settings(tc.properties/system) to "
-                          + tcProps.getProperty(propertyName) + "This will not be overridden to " + propertyValue
-                          + " from the tc-config file", LogLevel.WARN);
-      } else {
-        LOG_BUFFER.addLog("The property \"" + propertyName + "\" has been overridden to " + propertyValue + " from "
-                          + tcProps.getProperty(propertyName) + " through tc-config file", LogLevel.WARN);
+      if (!this.localTcProperties.containsKey(propertyName)) {
+        logger.info("The property \"" + propertyName + "\" has been overridden to " + propertyValue + " from "
+                    + tcProps.getProperty(propertyName) + " by the tc-config file");
         setProperty(propertyName, propertyValue);
       }
     }
-    LoggingWorkaround.doLog();
   }
 
   Properties addAllPropertiesTo(Properties properties, String filter) {
@@ -230,13 +231,18 @@ public class TCPropertiesImpl implements TCProperties {
   }
 
   public String getProperty(String key, boolean missingOkay) {
+    LoggingWorkaround.doLog();
+    if(this.logger == null){
+      logger = TCLogging.getLogger(TCProperties.class);
+      Assert.assertNotNull(logger);
+    }
+    
     String val = props.getProperty(key);
     if (val == null && !missingOkay) { throw new AssertionError("TCProperties : Property not found for " + key); }
     if (tcPropertiesInitialized == false) {
-      LOG_BUFFER.addLog("The property \"" + key + "\" has been read before the initialization is complete. \"" + key
-                        + "\" = " + val);
+      logger.info("The property \"" + key + "\" has been read before the initialization is complete. \"" + key
+                  + "\" = " + val);
     }
-    LoggingWorkaround.doLog();
     return val;
   }
 
@@ -371,18 +377,18 @@ public class TCPropertiesImpl implements TCProperties {
   }
 
   private static class LoggingWorkaround {
-    private static TCLogger logger;
-    
+
     static {
-      logger = TCLogging.getLogger(TCProperties.class);
+      TCLogger logger = TCLogging.getLogger(TCProperties.class);
       LOG_BUFFER.logTo(logger);
       logger.info("Loaded TCProperties : " + INSTANCE);
     }
 
+    /**
+     * the only reason this method is here is to trigger the static initializer of this inner class one (and only once)
+     */
     static void doLog() {
-      if(logger != null){
-        LOG_BUFFER.logTo(logger);
-      }
+      //
     }
 
   }
