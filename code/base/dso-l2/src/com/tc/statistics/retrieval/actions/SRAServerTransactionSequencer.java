@@ -38,10 +38,12 @@ public class SRAServerTransactionSequencer implements StatisticRetrievalAction {
   }
 
   public StatisticData[] retrieveStatisticData() {
-    return new StatisticData[] { new StatisticData(TXN_COUNT, (long) serverTransactionSequencerStats.getTxnsCount()),
-        new StatisticData(PENDING_TXN_COUNT, (long) serverTransactionSequencerStats.getPendingTxnsCount()),
-        new StatisticData(BLOCKED_TXN_COUNT, (long) serverTransactionSequencerStats.getBlockedTxnsCount()),
-        new StatisticData(BLOCKED_OBJECTS_COUNT, (long) serverTransactionSequencerStats.getBlockedObjectsCount()) };
+    return new StatisticData[] {
+        new StatisticData(ACTION_NAME, TXN_COUNT, (long) serverTransactionSequencerStats.getTxnsCount()),
+        new StatisticData(ACTION_NAME, PENDING_TXN_COUNT, (long) serverTransactionSequencerStats.getPendingTxnsCount()),
+        new StatisticData(ACTION_NAME, BLOCKED_TXN_COUNT, (long) serverTransactionSequencerStats.getBlockedTxnsCount()),
+        new StatisticData(ACTION_NAME, BLOCKED_OBJECTS_COUNT, (long) serverTransactionSequencerStats
+            .getBlockedObjectsCount()) };
 
   }
 }
