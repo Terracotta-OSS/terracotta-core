@@ -40,6 +40,7 @@ import com.tc.ibatis.IBatisAccessPlanInstance;
 import com.tc.io.TCByteArrayOutputStream;
 import com.tc.jboss.JBossLoaderNaming;
 import com.tc.logging.CustomerLogging;
+import com.tc.logging.LogLevel;
 import com.tc.logging.NullTCLogger;
 import com.tc.logging.TCLogger;
 import com.tc.management.TerracottaMBean;
@@ -212,8 +213,8 @@ public class BootJarTool {
 
   private InstrumentationLogger       instrumentationLogger;
   private BootJar                     bootJar;
-  private BootJarHandler              bootJarHandler;
-  private boolean                     quiet;
+  private final BootJarHandler        bootJarHandler;
+  private final boolean               quiet;
 
   public static final String          SYSTEM_CLASSLOADER_NAME_PROPERTY = "com.tc.loader.system.name";
   public static final String          EXT_CLASSLOADER_NAME_PROPERTY    = "com.tc.loader.ext.name";
@@ -457,6 +458,7 @@ public class BootJarTool {
       loadTerracottaClass(WebsphereLoaderNaming.class.getName());
       loadTerracottaClass(TomcatLoaderNaming.class.getName());
       loadTerracottaClass(TCLogger.class.getName());
+      loadTerracottaClass(LogLevel.class.getName());
       loadTerracottaClass(Banner.class.getName());
       loadTerracottaClass(StandardClassProvider.class.getName());
       loadTerracottaClass(StandardClassProvider.SystemLoaderHolder.class.getName());
