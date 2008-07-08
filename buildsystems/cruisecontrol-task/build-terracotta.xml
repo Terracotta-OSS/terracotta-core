@@ -106,12 +106,12 @@
                     delimiter=" "
                     target="write-to-buildconfig-file"
                     inheritAll="true"/>
-<!--
+
                 <exec executable="${tcbuild}" dir="${basedir}">
                     <arg value="clean" />
                     <arg value="build-archive-dir=NONE" />
                 </exec>
--->
+
                 <exec executable="${tcbuild}" dir="${basedir}" resultproperty="build.result-code">
                     <arg value="${tc.build-control.build.target}" />
                 </exec>
