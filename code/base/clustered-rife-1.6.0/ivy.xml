@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<ivy-module version="2.0">
-  <info organisation="ibiblio" module="clustered-rife-1.6.0"/>
-  <dependencies>
-    <dependency name="rife" rev="1.6-jdk15" org="terracotta"/>
-  </dependencies>
-</ivy-module>

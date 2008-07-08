@@ -1,3 +1,0 @@
-include-dso-boot-jar=true
-timeout=900
-test.tc.properties=com/tc/properties/tests.properties
