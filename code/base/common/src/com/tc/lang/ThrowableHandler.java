@@ -105,6 +105,11 @@ public class ThrowableHandler {
     boolean autoRestart = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_NHA_AUTORESTART);
 
     if (autoRestart && throwableState.isRestartNeeded()) {
+      // don't print any scary stack traces on the console during auto restart of the server. Anyway, logs have them.
+      String errorMessage = "\n\nTerracotta Server startup exception: "
+                            + throwableState.getThrowable().getClass().getName() + "\n\n";
+      System.err.print(errorMessage);
+      System.err.flush();
       exit(ServerExitStatus.EXITCODE_RESTART_REQUEST);
     } else {
       exit(ServerExitStatus.EXITCODE_STARTUP_ERROR);

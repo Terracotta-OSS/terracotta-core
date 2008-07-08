@@ -7,8 +7,8 @@ package com.tc.handler;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
 import com.tc.logging.TCLogger;
-import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.object.persistence.api.ClusterStatePersistentMapStore;
+import com.tc.object.persistence.api.PersistentMapStore;
 
 public class CallbackDirtyDatabaseCleanUpAdapter implements CallbackOnExitHandler {
 
@@ -21,11 +21,6 @@ public class CallbackDirtyDatabaseCleanUpAdapter implements CallbackOnExitHandle
   }
 
   public void callbackOnExit(CallbackOnExitState state) {
-    String errorMessage = "\n\nTerracotta Persistent-data startup exception:\n\n";
-    System.err.print(errorMessage);
-    state.getThrowable().printStackTrace(System.err);
-    System.err.flush();
-
     logger.error("Marking the object db as dirty ...");
     // there is no harm in marking this even for non-persistent dbs, except it has no effect :)
     clusterStateStore.put(ClusterStatePersistentMapStore.DBKEY_STATE, ClusterStatePersistentMapStore.DB_STATE_DIRTY);
