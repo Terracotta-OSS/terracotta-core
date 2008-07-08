@@ -1,0 +1,1480 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+  All content copyright (c) 2003-2008 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved
+
+-->
+<?eclipse version="3.0"?>
+<plugin>
+   <extension point="org.eclipse.ui.newWizards"> 
+	  <category
+	   id="org.terracotta.dso.ui.project"
+	   parentCategory="org.eclipse.jdt.ui.java"
+	   name="Terracotta Projects"/>
+      <wizard 
+          id="org.terracotta.dso.newProjectWizard" 
+          name="Terracotta DSO Project" 
+          category="org.eclipse.jdt.ui.java/org.terracotta.dso.ui.project"
+          project="true"
+          icon="images/eclipse/logo16.gif" 
+          class="org.terracotta.dso.wizards.NewProjectWizard"
+          hasPages="true"
+          canFinishEarly="false"> 
+          <description> 
+              Create a new Terracotta DSO Project 
+          </description> 
+      </wizard> 
+   </extension> 
+
+   <extension point="org.eclipse.debug.core.launchConfigurationTypes">
+       <launchConfigurationType
+             delegate="org.terracotta.dso.launch.ConfigurationDelegate"
+             id="launch.configurationDelegate"
+             modes="run,debug"
+             name="Terracotta DSO Application"
+             sourceLocatorId="org.eclipse.jdt.launching.sourceLocator.JavaSourceLookupDirector"
+             sourcePathComputerId="org.eclipse.jdt.launching.sourceLookup.javaSourcePathComputer"
+             public="true">
+      </launchConfigurationType>
+      <launchConfigurationType
+             delegate="org.terracotta.dso.launch.DSOEclipseApplicationLaunchConfiguration"
+             id="launch.eclipseAppConfigurationDelegate"
+             modes="run,debug"
+             name="Terracotta DSO Eclipse Application"
+             public="true"
+             sourceLocatorId="org.eclipse.pde.ui.launcher.PDESourceLookupDirector"
+             sourcePathComputerId="org.eclipse.jdt.launching.sourceLookup.javaSourcePathComputer">
+      </launchConfigurationType>
+      <launchConfigurationType
+             delegate="org.terracotta.dso.launch.DSOJUnitLaunchConfiguration"
+             id="launch.junitTestConfigurationDelegate"
+             modes="run,debug"
+             name="Terracotta DSO JUnit Test"
+             sourceLocatorId="org.eclipse.jdt.launching.sourceLocator.JavaSourceLookupDirector"
+             sourcePathComputerId="org.eclipse.jdt.launching.sourceLookup.javaSourcePathComputer"
+             public="true">
+      </launchConfigurationType>
+   </extension>
+
+   <extension point="org.eclipse.debug.ui.launchConfigurationTypeImages">
+     <launchConfigurationTypeImage
+          icon="images/eclipse/logo16.gif"
+          configTypeID="launch.configurationDelegate"
+          id="launch.configurationTypeImage">
+    </launchConfigurationTypeImage>
+     <launchConfigurationTypeImage
+          icon="images/eclipse/logo16.gif"
+          configTypeID="launch.eclipseAppConfigurationDelegate"
+          id="launch.pluginConfigurationTypeImage">
+    </launchConfigurationTypeImage>
+     <launchConfigurationTypeImage
+          icon="images/eclipse/logo16.gif"
+          configTypeID="launch.junitTestConfigurationDelegate"
+          id="launch.pluginConfigurationTypeImage">
+    </launchConfigurationTypeImage>
+   </extension>
+
+   <extension point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+     <launchConfigurationTabGroup
+         id="launch.configurationTabGroup"
+         type="launch.configurationDelegate"
+         class="org.terracotta.dso.launch.ConfigurationTabGroup">
+     </launchConfigurationTabGroup>
+     <launchConfigurationTabGroup
+         id="launch.pluginConfigurationTabGroup"
+         type="launch.eclipseAppConfigurationDelegate"
+         class="org.terracotta.dso.launch.DSOEclipseApplicationLaunchConfigurationTabGroup">
+     </launchConfigurationTabGroup>
+     <launchConfigurationTabGroup
+         id="launch.junitTestConfigurationTabGroup"
+         type="launch.junitTestConfigurationDelegate"
+         class="org.terracotta.dso.launch.DSOJUnitTabGroup">
+     </launchConfigurationTabGroup>
+   </extension>
+
+   <extension point="org.eclipse.debug.ui.launchShortcuts">
+      <shortcut
+            label="Terracotta DSO Application"
+            icon="images/eclipse/logo16.gif"	
+            modes="run,debug"
+            class="org.terracotta.dso.launch.LaunchShortcut"
+            id="org.terracotta.dso.debug.ui.dsoApplicationShortcut">
+         <contextualLaunch>
+           <enablement>
+             <with variable="selection">
+               <count value="1"/>
+               <iterate>
+                <and>
+                  <test property="org.eclipse.jdt.launching.hasProjectNature" args="org.terracotta.dso.ProjectNature"/>
+                  <or>
+               	    <test property="org.eclipse.jdt.launching.hasMain"/>
+              	    <test property="org.eclipse.jdt.launching.isContainer"/>
+               	    <test property="org.eclipse.jdt.launching.isPackageFragment"/>
+               	    <test property="org.eclipse.jdt.launching.isPackageFragmentRoot"/>
+                  </or>
+                 </and>
+               </iterate>
+             </with>
+           </enablement>
+        </contextualLaunch>
+      </shortcut>
+      <shortcut
+            label="Terracotta DSO JUnit Test"
+            icon="images/eclipse/logo16.gif"	
+            modes="run,debug"
+            class="org.terracotta.dso.launch.DSOJUnitLaunchShortcut"
+            id="org.terracotta.dso.debug.ui.dsoJUnitTestLaunchShortcut">
+         <contextualLaunch>
+           <enablement>
+             <with variable="selection">
+               <count value="1"/>
+               <iterate>
+                 <adapt type="org.eclipse.jdt.core.IJavaElement">
+	                <test property="org.eclipse.jdt.core.isInJavaProject"/>
+	                <test property="org.eclipse.jdt.core.hasTypeOnClasspath" value="junit.framework.Test"/>
+	                <test property="org.eclipse.jdt.junit.canLaunchAsJUnit" forcePluginActivation="true"/>
+           	        <test property="org.eclipse.jdt.launching.hasProjectNature" args="org.terracotta.dso.ProjectNature"/>
+	             </adapt>
+               </iterate>
+             </with>
+           </enablement>
+        </contextualLaunch>
+      </shortcut>
+   </extension>
+
+   <extension point="org.eclipse.ui.commands">
+      <command
+            name="Debug Terracotta DSO Application"
+            description="Debug Terracotta DSO Application"
+            categoryId="org.eclipse.debug.ui.category.run"
+            id="org.terracotta.dso.debug.ui.dsoApplicationShortcut.debug">
+      </command>
+      <command
+            name="Run Terracotta DSO Application"
+            description="Run Terracotta DSO Application"
+            categoryId="org.eclipse.debug.ui.category.run"
+            id="org.terracotta.dso.debug.ui.dsoApplicationShortcut.run">
+      </command>
+      <command
+            name="Debug Terracotta DSO JUnit Test"
+            description="Debug Terracotta DSO JUnit Test"
+            categoryId="org.eclipse.debug.ui.category.run"
+            id="org.terracotta.dso.debug.ui.dsoJUnitTestLaunchShortcut.debug">
+      </command>
+      <command
+            name="Run Terracotta DSO JUnit Test"
+            description="Run Terracotta DSO JUnit Test"
+            categoryId="org.eclipse.debug.ui.category.run"
+            id="org.terracotta.dso.debug.ui.dsoJUnitTestLaunchShortcut.run">
+      </command>
+   </extension>      
+
+   <extension point="org.eclipse.ui.bindings">
+      <key
+        sequence="M3+M2+D T"
+        commandId="org.terracotta.dso.debug.ui.dsoApplicationShortcut.debug"
+        schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"/>
+      <key
+        sequence="M3+M2+X T"
+        commandId="org.terracotta.dso.debug.ui.dsoApplicationShortcut.run"
+        schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"/>
+   </extension>
+
+   <extension point="org.eclipse.ui.editors">
+      <editor
+            class="org.terracotta.dso.editors.ConfigurationEditor"
+            contributorClass="org.terracotta.dso.editors.ConfigurationEditorContributor"
+            default="false"
+            icon="images/eclipse/logo16.gif"
+            id="editors.configurationEditor"
+            name="Terracotta Config">
+      </editor>
+   </extension>
+
+   <extension point="org.eclipse.ui.views"> 
+      <category id="org.terracotta.dso.views" name="Terracotta DSO"/> 
+      <view 
+         id="org.terracotta.dso.ui.views.bootJarView" 
+         name="BootJar" 
+         category="org.terracotta.dso.views"
+         class="org.terracotta.dso.views.BootJarView" 
+         icon="images/eclipse/logo16.gif"/>
+      <view 
+         id="org.terracotta.dso.ui.views.configView" 
+         name="DSO Config" 
+         category="org.terracotta.dso.views"
+         class="org.terracotta.dso.views.ConfigViewPart" 
+         icon="images/eclipse/logo16.gif"/>
+   </extension>
+
+   <extension point="org.eclipse.core.resources.natures"
+            id="ProjectNature"
+            name="Terracotta">
+      <requires-nature id="org.eclipse.jdt.core.javanature"/>
+      <runtime>
+         <run class="org.terracotta.dso.ProjectNature"/>
+      </runtime>
+   </extension>
+
+   <extension point="org.eclipse.ui.actionSets">
+      <actionSet id="org.terracotta.dso.workbenchActionSet"
+         label="Terracotta"
+         visible="true">
+         <menu id="org.terracotta.dso.workbenchActionSetMenu"
+            label="Terracotta"
+            path="additions">
+            <separator name="group1"/>
+            <separator name="group2"/>
+            <separator name="group3"/>
+            <separator name="group4"/>
+            <separator name="group5"/>
+            <separator name="group6"/>
+         </menu>
+         <action
+               label="Add Terracotta nature"
+               class="org.terracotta.dso.actions.WorkbenchNatureAction"
+               menubarPath="org.terracotta.dso.workbenchActionSetMenu/group3"
+               enablesFor="1"
+               id="workbenchNatureAction">
+         </action>
+         <action
+               label="Servers"
+               icon="images/eclipse/logo16.gif"
+               style="pulldown"
+               class="org.terracotta.dso.actions.ManageServerHandler"
+               menubarPath="org.terracotta.dso.workbenchActionSetMenu/group1"
+               toolbarPath="Terracotta"
+               enablesFor="1"
+               id="workbenchServerAction">
+         </action>
+         <action
+               id="showConfigEditorAction"
+               label="Show Config Editor"
+               menubarPath="org.terracotta.dso.workbenchActionSetMenu/group2"
+               tooltip="Show the DSO configuration editor"
+               class="org.terracotta.dso.actions.ShowConfigEditorAction"
+               enablesFor="*">
+               <enablement>
+                 <objectState name="projectNature" value="org.terracotta.dso.ProjectNature"/>
+               </enablement>
+         </action>
+         <action
+               id="showAdminConsoleAction"
+               label="Show AdminConsole..."
+               menubarPath="org.terracotta.dso.workbenchActionSetMenu/group2"
+               tooltip="Show the Terracotta AdminConsole"
+               icon="images/eclipse/monitor_obj.gif"
+               class="org.terracotta.dso.actions.ShowAdminConsoleAction"
+               enablesFor="*">
+               <enablement>
+                 <objectState name="projectNature" value="org.terracotta.dso.ProjectNature"/>
+               </enablement>
+         </action>
+         <action
+               id="buildBootJarAction"
+               label="Build BootJar..."
+               menubarPath="org.terracotta.dso.workbenchActionSetMenu/group2"
+               tooltip="Build the BootJar from you current DSO configuration"
+               icon="images/eclipse/jar_obj.gif"
+               class="org.terracotta.dso.actions.BuildBootJarAction"
+               enablesFor="*">
+               <enablement>
+                 <objectState name="projectNature" value="org.terracotta.dso.ProjectNature"/>
+               </enablement>
+         </action>
+         <action
+               label="About Terracotta"
+               class="org.terracotta.dso.actions.AboutAction"
+               menubarPath="org.terracotta.dso.workbenchActionSetMenu/group6"
+               enablesFor="*"
+               id="aboutAction">
+         </action>
+         <action
+               label="Help"
+               style="pulldown"
+               class="org.terracotta.dso.actions.HelpHandler"
+               menubarPath="org.terracotta.dso.workbenchActionSetMenu/group5"
+               enablesFor="*"
+               id="helpAction">
+         </action>
+         <action
+               id="reportDefectAction"
+               label="Report Defect/Request Feature"
+               menubarPath="org.terracotta.dso.workbenchActionSetMenu/group4"
+               class="org.terracotta.dso.actions.ReportDefectAction"
+               enablesFor="*">
+         </action>
+         <action
+               id="contactSupportAction"
+               label="Contact Terracotta Technical Support"
+               menubarPath="org.terracotta.dso.workbenchActionSetMenu/group4"
+               class="org.terracotta.dso.actions.ContactTerracottaAction"
+               enablesFor="*">
+         </action>
+         <action
+               id="visitForumsAction"
+               label="Visit Terracotta Forums"
+               menubarPath="org.terracotta.dso.workbenchActionSetMenu/group4"
+               class="org.terracotta.dso.actions.ContactTerracottaAction"
+               enablesFor="*">
+         </action>
+      </actionSet>
+   </extension>
+
+   <extension point="org.eclipse.ui.popupMenus">
+      <objectContribution
+            objectClass="org.eclipse.core.resources.IFile"
+            id="filePopupMenusContribution"
+            adaptable="true"
+            nameFilter="*.xml">
+            <visibility>
+              <and>
+                <objectState name="projectNature" value="org.terracotta.dso.ProjectNature"/>
+                <not>
+                  <objectState name="sessionProperty" value="org.terracotta.dso.ActiveDomainConfigFile"/>
+                </not>
+              </and>
+            </visibility>
+         <menu
+            label="Terracotta"
+            path="additions"
+            id="filePopupMenu">
+            <separator name="group1"/>
+         </menu>
+         <action
+           id="makeConfigFileAction"
+           label="Make Current Config File"
+           menubarPath="filePopupMenu/group1"
+           tooltip="Make this file the current config file"
+           class="org.terracotta.dso.actions.MakeConfigFileAction"
+           enablesFor="1">
+         </action>
+      </objectContribution>
+      
+      <objectContribution
+            objectClass="org.eclipse.jdt.core.IJavaProject"
+            id="projectPopupMenusContribution">
+         <menu
+            label="Terracotta"
+            path="additions"
+            id="projectPopupMenu">
+            <separator name="group1"/>
+            <separator name="group2"/>
+            <separator name="group3"/>
+         </menu>
+      </objectContribution>
+
+      <objectContribution
+            objectClass="org.eclipse.jdt.core.IJavaProject"
+            id="addTerracottaNatureContribution">
+         <visibility>
+            <not>
+               <objectState name="nature" value="org.terracotta.dso.ProjectNature"/>
+            </not>
+         </visibility>
+         <action
+               label="Add Terracotta nature"
+               class="org.terracotta.dso.actions.AddTerracottaNatureAction"
+               menubarPath="projectPopupMenu/group3"
+               enablesFor="1"
+               id="addTerracottaNatureAction">
+         </action>
+      </objectContribution>
+
+      <objectContribution
+            objectClass="org.eclipse.jdt.core.IJavaProject"
+            id="removeTerracottaNatureContribution">
+         <visibility>
+            <objectState name="nature" value="org.terracotta.dso.ProjectNature"/>
+         </visibility>
+         <action
+               label="Remove Terracotta nature"
+               class="org.terracotta.dso.actions.RemoveTerracottaNatureAction"
+               menubarPath="projectPopupMenu/group3"
+               enablesFor="1"
+               id="removeTerracottaNatureAction">
+         </action>
+      </objectContribution>
+
+      <objectContribution
+            objectClass="org.eclipse.jdt.core.IJavaProject"
+            id="stopTerracottaServerContribution">
+         <action
+               label="Servers"
+               icon="images/eclipse/logo16.gif"
+               style="pulldown"
+               class="org.terracotta.dso.actions.ManageServerHandler"
+               menubarPath="projectPopupMenu/group2"
+               enablesFor="1"
+               id="stopTerracottaServerAction">
+         </action>
+      </objectContribution>
+
+      <objectContribution
+            objectClass="org.eclipse.jdt.core.IJavaProject"
+            id="showConfigEditorContribution">
+         <visibility>
+            <objectState name="nature" value="org.terracotta.dso.ProjectNature"/>
+         </visibility>
+       <action
+         id="showConfigEditorAction"
+         label="Show Config Editor"
+         menubarPath="projectPopupMenu/group1"
+         tooltip="Show the DSO configuration editor"
+         class="org.terracotta.dso.actions.ShowConfigEditorAction"
+         enablesFor="1">
+       </action>
+      </objectContribution>
+
+      <objectContribution
+            objectClass="org.eclipse.jdt.core.IJavaProject"
+            id="showAdminConsoleContribution">
+         <visibility>
+            <objectState name="nature" value="org.terracotta.dso.ProjectNature"/>
+         </visibility>
+       <action
+         id="showAdminConsoleAction"
+         label="Show AdminConsole..."
+         menubarPath="projectPopupMenu/group1"
+         tooltip="Show the Terracotta AdminConsole"
+         icon="images/eclipse/monitor_obj.gif"
+         class="org.terracotta.dso.actions.ShowAdminConsoleAction"
+         enablesFor="1">
+       </action>
+      </objectContribution>
+
+      <objectContribution
+            objectClass="org.eclipse.jdt.core.IJavaProject"
+            id="buildBootJarContribution">
+         <visibility>
+            <objectState name="nature" value="org.terracotta.dso.ProjectNature"/>
+         </visibility>
+       <action
+         id="buildBootJarAction"
+         label="Build BootJar..."
+         menubarPath="projectPopupMenu/group1"
+         tooltip="Build the BootJar from you current DSO configuration"
+         icon="images/eclipse/jar_obj.gif"
+         class="org.terracotta.dso.actions.BuildBootJarAction"
+         enablesFor="1">
+       </action>
+      </objectContribution>
+
+      <objectContribution
+            objectClass="org.eclipse.jdt.core.IJavaProject"
+            id="projectConfigurationContribution">
+         <visibility>
+            <objectState name="nature" value="org.terracotta.dso.ProjectNature"/>
+         </visibility>
+         <action
+               label="Configuration"
+               style="pulldown"
+               class="org.terracotta.dso.actions.ProjectHandler"
+               menubarPath="projectPopupMenu/group1"
+               enablesFor="1"
+               id="projectConfigurationMenu">
+         </action>
+      </objectContribution>
+
+      <objectContribution
+            objectClass="org.eclipse.jdt.core.IField"
+            id="fieldMenuContribution">
+         <filter
+            name="projectNature"
+            value="org.terracotta.dso.ProjectNature">
+         </filter>
+         <menu
+            label="Terracotta"
+            path="additions"
+            id="fieldMenu">
+            <separator name="group1"/>
+         </menu>
+      </objectContribution>
+
+      <objectContribution
+            objectClass="org.eclipse.jdt.core.IField"
+            id="fieldsMenuContribution">
+         <filter
+            name="projectNature"
+            value="org.terracotta.dso.ProjectNature">
+         </filter>
+         <action
+               label="Fields"
+               icon="images/eclipse/members.gif"
+               style="pulldown"
+               class="org.terracotta.dso.actions.FieldHandler"
+               menubarPath="fieldMenu/group1"
+               enablesFor="1"
+               id="fieldsMenu">
+         </action>
+      </objectContribution>
+
+      <objectContribution
+            objectClass="org.eclipse.jdt.core.IMethod"
+            id="methodMenuContribution">
+         <filter
+            name="projectNature"
+            value="org.terracotta.dso.ProjectNature">
+         </filter>
+         <menu
+            label="Terracotta"
+            path="additions"
+            id="methodMenu">
+            <separator name="group1"/>
+         </menu>
+      </objectContribution>
+
+      <objectContribution
+            objectClass="org.eclipse.jdt.core.IMethod"
+            id="methodsMenuContribution">
+         <filter
+            name="projectNature"
+            value="org.terracotta.dso.ProjectNature">
+         </filter>
+         <action
+               label="Methods"
+               icon="images/eclipse/jmeth_obj.gif"
+               class="org.terracotta.dso.actions.MethodHandler"
+               menubarPath="methodMenu/group1"
+               enablesFor="1"
+               id="methodsMenu">
+         </action>
+      </objectContribution>
+
+      <objectContribution
+            objectClass="org.eclipse.jdt.core.ICompilationUnit"
+            id="moduleMenuContribution">
+         <visibility>
+            <objectState name="projectNature" value="org.terracotta.dso.ProjectNature"/>
+         </visibility>
+         <menu
+            label="Terracotta"
+            path="additions"
+            id="moduleMenu">
+            <separator name="group1"/>
+         </menu>
+      </objectContribution>
+
+      <objectContribution
+            objectClass="org.eclipse.jdt.core.ICompilationUnit"
+            id="modulesMenuContribution">
+         <visibility>
+            <objectState name="projectNature" value="org.terracotta.dso.ProjectNature"/>
+         </visibility>
+         <action
+               label="Modules"
+               icon="images/eclipse/jcu_obj.gif"
+               class="org.terracotta.dso.actions.ModuleHandler"
+               menubarPath="moduleMenu/group1"
+               enablesFor="1"
+               id="modulesMenu">
+         </action>
+      </objectContribution>
+
+      <objectContribution
+            objectClass="org.eclipse.jdt.core.IType"
+            id="typeMenuContribution">
+         <filter
+            name="projectNature"
+            value="org.terracotta.dso.ProjectNature">
+         </filter>
+         <menu
+            label="Terracotta"
+            path="additions"
+            id="typeMenu">
+            <separator name="group1"/>
+         </menu>
+      </objectContribution>
+
+      <objectContribution
+            objectClass="org.eclipse.jdt.core.IType"
+            id="typesMenuContribution">
+         <filter
+            name="projectNature"
+            value="org.terracotta.dso.ProjectNature">
+         </filter>
+         <action
+               label="Types"
+               icon="images/eclipse/types.gif"
+               class="org.terracotta.dso.actions.TypeHandler"
+               menubarPath="typeMenu/group1"
+               enablesFor="1"
+               id="typesMenu">
+         </action>
+      </objectContribution>
+
+      <objectContribution
+            objectClass="org.eclipse.jdt.core.IClassFile"
+            id="classMenuContribution">
+         <filter
+            name="projectNature"
+            value="org.terracotta.dso.ProjectNature">
+         </filter>
+         <menu
+            label="Terracotta"
+            path="additions"
+            id="classMenu">
+            <separator name="group1"/>
+         </menu>
+      </objectContribution>
+
+      <objectContribution
+            objectClass="org.eclipse.jdt.core.IClassFile"
+            id="classTypesMenuContribution">
+         <filter
+            name="projectNature"
+            value="org.terracotta.dso.ProjectNature">
+         </filter>
+         <action
+               label="Types"
+               icon="images/eclipse/types.gif"
+               class="org.terracotta.dso.actions.TypeHandler"
+               menubarPath="classMenu/group1"
+               enablesFor="1"
+               id="classTypesMenu">
+         </action>
+      </objectContribution>
+
+      <objectContribution
+            objectClass="org.eclipse.jdt.core.IPackageFragment"
+            id="packageFragmentMenuContribution">
+         <visibility>
+            <objectState name="projectNature" value="org.terracotta.dso.ProjectNature"/>
+         </visibility>
+         <menu
+            label="Terracotta"
+            path="additions"
+            id="packageFragmentMenu">
+            <separator name="group1"/>
+         </menu>
+      </objectContribution>
+
+      <objectContribution
+            objectClass="org.eclipse.jdt.core.IPackageFragment"
+            id="packageFragmentsMenuContribution">
+         <visibility>
+            <objectState name="projectNature" value="org.terracotta.dso.ProjectNature"/>
+         </visibility>
+         <action
+               label="Package fragment"
+               icon="images/eclipse/package.gif"
+               class="org.terracotta.dso.actions.PackageFragmentHandler"
+               menubarPath="packageFragmentMenu/group1"
+               enablesFor="1"
+               id="packageFragmentsMenu">
+         </action>
+      </objectContribution>
+    </extension>
+
+   <extension point="org.eclipse.ui.popupMenus">
+      <viewerContribution
+            targetID="#CompilationUnitEditorContext"
+            id="compilationUnitEditorPopupContribution">
+         <menu
+            label="Terracotta"
+            path="additions"
+            id="compilationUnitPopupMenu">
+               <separator name="group1"/>
+         </menu>
+         <action
+               label="Types"
+               icon="images/eclipse/types.gif"
+               class="org.terracotta.dso.actions.TypeHandler"
+               menubarPath="compilationUnitPopupMenu/group1"
+               id="compilationUnitTypesMenu">
+         </action>
+         <action
+               label="Fields"
+               icon="images/eclipse/members.gif"
+               class="org.terracotta.dso.actions.FieldHandler"
+               menubarPath="compilationUnitPopupMenu/group1"
+               id="compilationUnitFieldsMenu">
+         </action>
+         <action
+               label="Methods"
+               icon="images/eclipse/jmeth_obj.gif"
+               class="org.terracotta.dso.actions.MethodHandler"
+               menubarPath="compilationUnitPopupMenu/group1"
+               id="compilationUnitMethodsMenu">
+         </action>
+      </viewerContribution>
+   </extension>
+
+   <extension point="org.eclipse.ui.popupMenus">
+      <viewerContribution
+            targetID="#ClassFileEditorContext"
+            id="classFileEditorPopupContribution">
+         <menu
+            label="Terracotta"
+            path="additions"
+            id="classFilePopupMenu">
+               <separator name="group1"/>
+         </menu>
+         <action
+               label="Types"
+               icon="images/eclipse/types.gif"
+               class="org.terracotta.dso.actions.TypeHandler"
+               menubarPath="classFilePopupMenu/group1"
+               id="classFileTypesMenu">
+         </action>
+         <action
+               label="Fields"
+               icon="images/eclipse/members.gif"
+               class="org.terracotta.dso.actions.FieldHandler"
+               menubarPath="classFilePopupMenu/group1"
+               id="classFileFieldsMenu">
+         </action>
+         <action
+               label="Methods"
+               icon="images/eclipse/jmeth_obj.gif"
+               class="org.terracotta.dso.actions.MethodHandler"
+               menubarPath="classFilePopupMenu/group1"
+               id="classFileMethodsMenu">
+         </action>
+      </viewerContribution>
+   </extension>
+
+
+   <extension point="org.eclipse.ui.propertyPages"
+              id="propertyPages">
+      <page
+            name="%propertyPageName"        
+            class="org.terracotta.dso.properties.PropertyPage"
+            id="org.terracotta.dso.ui.propertyPages.PropertyPage">
+         <enabledWhen>
+	     <adapt type="org.eclipse.core.resources.IProject">
+	          <test property="org.eclipse.core.resources.projectNature"
+                        value="org.terracotta.dso.ProjectNature"/>
+	     </adapt>         
+         </enabledWhen>
+      </page>
+   </extension>
+
+   <extension point="org.eclipse.ui.decorators">
+      <decorator
+            lightweight="true"
+            location="TOP_RIGHT"
+            adaptable="true"
+            label="Terracotta Project"
+            icon="images/eclipse/nature.gif"
+            state="true"
+            id="org.terracotta.dso.projectDecorator">
+         <description>Flags Terracotta Projects</description>
+         <enablement>
+            <and>
+               <objectClass name="org.eclipse.jdt.core.IJavaProject"/>
+               <objectState name="nature" value="org.terracotta.dso.ProjectNature"/>
+            </and>
+         </enablement>
+      </decorator>
+      <decorator
+            lightweight="true"
+            location="TOP_RIGHT"
+            adaptable="true"
+            label="Terracotta Config File"
+            state="true"
+            class="org.terracotta.dso.decorator.ConfigFileDecorator"
+            id="org.terracotta.dso.configFileDecorator">
+         <description>Flags a project's active Terracotta configuration file</description>
+         <enablement>
+            <objectClass name="org.eclipse.core.resources.IFile"/>
+         </enablement>
+      </decorator>
+      <decorator
+            lightweight="true"
+            location="BOTTOM_RIGHT"
+            adaptable="true"
+            label="Terracotta Server Running"
+            state="true"
+            class="org.terracotta.dso.decorator.ServerRunningDecorator"
+            id="org.terracotta.dso.serverRunningDecorator">
+         <description>Flags Terracotta Projects which have a running server</description>
+         <enablement>
+            <and>
+               <objectClass name="org.eclipse.jdt.core.IJavaProject"/>
+               <objectState name="nature" value="org.terracotta.dso.ProjectNature"/>
+            </and>
+         </enablement>
+      </decorator>
+      <decorator
+            lightweight="true"
+            location="TOP_RIGHT"
+            adaptable="true"
+            label="Instrumented DSO Module"
+            state="true"
+            class="org.terracotta.dso.decorator.AdaptedModuleDecorator"
+            id="org.terracotta.dso.adaptedModuleDecorator">
+         <description>Flags CompilationUnits whose primary type is instrumented</description>
+         <enablement>
+            <objectClass name="org.eclipse.jdt.core.ICompilationUnit"/>
+         </enablement>
+      </decorator>
+      <decorator
+            lightweight="true"
+            location="TOP_RIGHT"
+            adaptable="true"
+            label="Instrumented ClassFile"
+            state="true"
+            class="org.terracotta.dso.decorator.ClassFileDecorator"
+            id="org.terracotta.dso.adaptedClassFileDecorator">
+         <description>Flags ClassFiles whose primary type is instrumented</description>
+         <enablement>
+            <objectClass name="org.eclipse.jdt.core.IClassFile"/>
+         </enablement>
+      </decorator>
+      <decorator
+            lightweight="true"
+            location="TOP_RIGHT"
+            adaptable="true"
+            label="Instrumented DSO Type"
+            state="true"
+            class="org.terracotta.dso.decorator.AdaptedTypeDecorator"
+            id="org.terracotta.dso.adaptedTypeDecorator">
+         <description>Flags classes that are instrumented</description>
+         <enablement>
+            <objectClass name="org.eclipse.jdt.core.IType"/>
+         </enablement>
+      </decorator>
+      <decorator
+            lightweight="true"
+            location="TOP_RIGHT"
+            adaptable="true"
+            label="Excluded DSO Module"
+            state="true"
+            class="org.terracotta.dso.decorator.ExcludedModuleDecorator"
+            id="org.terracotta.dso.excludedModuleDecorator">
+         <description>Flags CompilationUnits whose primary type is excluded from instrumented</description>
+         <enablement>
+            <objectClass name="org.eclipse.jdt.core.ICompilationUnit"/>
+         </enablement>
+      </decorator>
+      <decorator
+            lightweight="true"
+            location="TOP_RIGHT"
+            adaptable="true"
+            label="Excluded DSO Type"
+            state="true"
+            class="org.terracotta.dso.decorator.ExcludedTypeDecorator"
+            id="org.terracotta.dso.excludedTypeDecorator">
+         <description>Flags classes that are excluded from instrumented</description>
+         <enablement>
+            <objectClass name="org.eclipse.jdt.core.IType"/>
+         </enablement>
+      </decorator>
+      <decorator
+            lightweight="true"
+            location="TOP_RIGHT"
+            adaptable="true"
+            label="DSO Root"
+            state="true"
+            class="org.terracotta.dso.decorator.RootDecorator"
+            id="org.terracotta.dso.rootDecorator">
+         <description>Flags Fields that are DSO Roots</description>
+         <enablement>
+            <objectClass name="org.eclipse.jdt.core.IField"/>
+         </enablement>
+      </decorator>
+      <decorator
+            lightweight="true"
+            location="BOTTOM_LEFT"
+            adaptable="true"
+            label="Transient field"
+            state="true"
+            class="org.terracotta.dso.decorator.TransientDecorator"
+            id="org.terracotta.dso.transientDecorator">
+         <description>Flags Fields that are not to be shared as DSO objects</description>
+         <enablement>
+            <objectClass name="org.eclipse.jdt.core.IField"/>
+         </enablement>
+      </decorator>
+      <decorator
+            lightweight="true"
+            location="BOTTOM_LEFT"
+            adaptable="true"
+            label="DSO Named Lock"
+            state="true"
+            class="org.terracotta.dso.decorator.NameLockedDecorator"
+            id="org.terracotta.dso.nameLockedDecorator">
+         <description>Flags methods that are DSO named distributed-lock methods</description>
+         <enablement>
+            <objectClass name="org.eclipse.jdt.core.IMethod"/>
+         </enablement>
+      </decorator>
+      <decorator
+            lightweight="true"
+            location="BOTTOM_LEFT"
+            adaptable="true"
+            label="DSO Autolock"
+            state="true"
+            class="org.terracotta.dso.decorator.AutolockedDecorator"
+            id="org.terracotta.dso.autoLockedDecorator">
+         <description>Flags methods that are DSO automatic distributed-lock methods</description>
+         <enablement>
+            <objectClass name="org.eclipse.jdt.core.IMethod"/>
+         </enablement>
+      </decorator>
+      <decorator
+            lightweight="true"
+            location="BOTTOM_RIGHT"
+            adaptable="true"
+            label="DSO Distributed Method"
+            state="true"
+            class="org.terracotta.dso.decorator.DistributedMethodDecorator"
+            id="org.terracotta.dso.distributedMethodDecorator">
+         <description>Flags methods that are DSO distributed methods</description>
+         <enablement>
+            <objectClass name="org.eclipse.jdt.core.IMethod"/>
+         </enablement>
+      </decorator>
+   </extension>
+
+   <extension point="org.eclipse.core.resources.markers"
+      id="baseMarker"
+      name="Base marker">
+      <super type="org.eclipse.core.resources.marker"/>
+      <persistent value="true"/>
+   </extension>
+
+   <extension point="org.eclipse.core.resources.markers"
+      id="baseTextMarker"
+      name="Base text marker">
+      <super type="org.terracotta.dso.baseMarker"/>
+      <super type="org.eclipse.core.resources.textmarker"/>
+   </extension>
+
+   <extension point="org.eclipse.core.resources.markers"
+      id="adaptedTypeMarker"
+      name="Instrumented type marker">
+      <super type="org.terracotta.dso.baseMarker"/>
+   </extension>
+
+   <extension point="org.eclipse.core.resources.markers"
+      id="adaptedTypeReferenceMarker"
+      name="Instrumented type reference marker">
+      <super type="org.terracotta.dso.baseMarker"/>
+   </extension>
+
+   <extension point="org.eclipse.core.resources.markers"
+      id="bootJarTypeMarker"
+      name="BootJar type marker">
+      <super type="org.terracotta.dso.baseMarker"/>
+   </extension>
+
+   <extension point="org.eclipse.core.resources.markers"
+      id="excludedTypeMarker"
+      name="Excluded type marker">
+      <super type="org.terracotta.dso.baseMarker"/>
+   </extension>
+
+   <extension point="org.eclipse.core.resources.markers"
+      id="nameLockedMarker"
+      name="Named Lock marker">
+      <super type="org.terracotta.dso.baseMarker"/>
+   </extension>
+
+   <extension point="org.eclipse.core.resources.markers"
+      id="autolockedMarker"
+      name="Autolocked marker">
+      <super type="org.terracotta.dso.baseMarker"/>
+   </extension>
+
+   <extension point="org.eclipse.core.resources.markers"
+      id="rootMarker"
+      name="Root marker">
+      <super type="org.terracotta.dso.baseMarker"/>
+   </extension>
+
+   <extension point="org.eclipse.core.resources.markers"
+      id="distributedMethodMarker"
+      name="Distributed method marker">
+      <super type="org.terracotta.dso.baseMarker"/>
+   </extension>
+
+   <extension point="org.eclipse.core.resources.markers"
+      id="transientFieldMarker"
+      name="Transient field marker">
+      <super type="org.terracotta.dso.baseMarker"/>
+   </extension>
+
+   <extension point="org.eclipse.ui.editors.annotationTypes">
+     <type name="org.terracotta.dso.adaptedTypeAnnotation"
+       markerType="org.terracotta.dso.adaptedTypeMarker"/>
+     <type name="org.terracotta.dso.adaptedTypeReferenceAnnotation"
+       markerType="org.terracotta.dso.adaptedTypeReferenceMarker"/>
+     <type name="org.terracotta.dso.excludedTypeAnnotation"
+       markerType="org.terracotta.dso.excludedTypeMarker"/>
+     <type name="org.terracotta.dso.bootJarTypeAnnotation"
+       markerType="org.terracotta.dso.bootJarTypeMarker"/>
+     <type name="org.terracotta.dso.nameLockedAnnotation"
+       markerType="org.terracotta.dso.nameLockedMarker"/>
+     <type name="org.terracotta.dso.autolockedAnnotation"
+       markerType="org.terracotta.dso.autolockedMarker"/>
+     <type name="org.terracotta.dso.rootAnnotation"
+       markerType="org.terracotta.dso.rootMarker"/>
+     <type name="org.terracotta.dso.distributedMethodAnnotation"
+       markerType="org.terracotta.dso.distributedMethodMarker"/>
+     <type name="org.terracotta.dso.transientFieldAnnotation"
+       markerType="org.terracotta.dso.transientFieldMarker"/>
+   </extension>
+
+   <extension point="org.eclipse.core.resources.markers"
+      id="SAXMarker">
+      <super type="org.eclipse.core.resources.problemmarker"/>
+      <super type="org.eclipse.core.resources.textmarker"/>
+      <persistent value="true" />
+   </extension>
+
+   <extension point="org.eclipse.core.resources.markers"
+      id="ConfigProblemMarker">
+      <super type="org.eclipse.core.resources.problemmarker"/>
+      <super type="org.terracotta.dso.baseTextMarker"/>
+   </extension>
+
+   <extension point="org.eclipse.core.resources.markers"
+      id="RootProblemMarker">
+      <super type="org.terracotta.dso.ConfigProblemMarker"/>
+   </extension>
+
+   <extension point="org.eclipse.core.resources.markers"
+      id="DeclaringTypeNotInstrumentedMarker">
+      <super type="org.terracotta.dso.ConfigProblemMarker"/>
+   </extension>
+
+   <extension point="org.eclipse.core.resources.markers"
+      id="InstrumentedProblemMarker">
+      <super type="org.terracotta.dso.ConfigProblemMarker"/>
+   </extension>
+
+   <extension point="org.eclipse.core.resources.markers"
+      id="TransientProblemMarker">
+      <super type="org.terracotta.dso.ConfigProblemMarker"/>
+   </extension>
+
+   <extension point="org.eclipse.core.resources.markers"
+      id="DistributedMethodProblemMarker">
+      <super type="org.terracotta.dso.ConfigProblemMarker"/>
+   </extension>
+
+   <extension point="org.eclipse.core.resources.markers"
+      id="LockMethodProblemMarker">
+      <super type="org.terracotta.dso.ConfigProblemMarker"/>
+   </extension>
+
+   <extension point="org.eclipse.core.resources.markers"
+      id="BootClassProblemMarker">
+      <super type="org.terracotta.dso.ConfigProblemMarker"/>
+   </extension>
+
+   <extension point="org.eclipse.core.resources.markers"
+      id="ModuleProblemMarker">
+      <super type="org.terracotta.dso.ConfigProblemMarker"/>
+   </extension>
+
+   <extension point="org.eclipse.core.resources.markers"
+      id="ModuleRepoProblemMarker">
+      <super type="org.terracotta.dso.ConfigProblemMarker"/>
+   </extension>
+
+  <extension point="org.eclipse.ui.editors.markerAnnotationSpecification"
+      id="markerAnnotationSpecification"
+      name="MarkerAnnotationSpecification">
+   <specification
+     annotationType="org.terracotta.dso.adaptedTypeAnnotation"
+     colorPreferenceKey="AdaptedTypeIndicationColor"
+     overviewRulerPreferenceKey="AdaptedTypeIndicationInOverviewRuler"
+     verticalRulerPreferenceKey="AdaptedTypeIndicationInVerticalRuler"
+     textPreferenceKey="AdaptedTypeIndication"
+     label="DSO Instrumented Type"
+     highlightPreferenceKey="AdaptedTypeHighlighting"
+     colorPreferenceValue="255,255,255"
+     presentationLayer="3"
+     overviewRulerPreferenceValue="false"
+     verticalRulerPreferenceValue="true"
+     textPreferenceValue="false"
+     highlightPreferenceValue="false"
+     contributesToHeader="false"
+     showInNextPrevDropdownToolbarActionKey="adapted-type.indicator.navigation.dropdown"
+     showInNextPrevDropdownToolbarAction="true"
+     isGoToNextNavigationTargetKey="adapted-type.indication.goto.next"
+     isGoToNextNavigationTarget="false"
+     isGoToPreviousNavigationTargetKey="adapted-type.indication.goto.previous"
+     isGoToPreviousNavigationTarget="false"
+     annotationImageProvider="org.terracotta.dso.AnnotationImageProvider"
+     textStylePreferenceKey="adapted-type.indication.text.style"
+     textStylePreferenceValue="NONE"
+     includeOnPreferencePage="true"/>
+   <specification
+     annotationType="org.terracotta.dso.adaptedTypeReferenceAnnotation"
+     colorPreferenceKey="AdaptedTypeReferenceIndicationColor"
+     overviewRulerPreferenceKey="AdaptedTypeReferenceIndicationInOverviewRuler"
+     verticalRulerPreferenceKey="AdaptedTypeReferenceIndicationInVerticalRuler"
+     textPreferenceKey="AdaptedTypeReferenceIndication"
+     label="DSO Instrumented Type Reference"
+     highlightPreferenceKey="AdaptedTypeReferenceHighlighting"
+     colorPreferenceValue="255,255,255"
+     presentationLayer="3"
+     overviewRulerPreferenceValue="false"
+     verticalRulerPreferenceValue="false"
+     textPreferenceValue="false"
+     highlightPreferenceValue="false"
+     contributesToHeader="false"
+     showInNextPrevDropdownToolbarActionKey="adapted-type-reference.indicator.navigation.dropdown"
+     showInNextPrevDropdownToolbarAction="true"
+     isGoToNextNavigationTargetKey="adapted-type-reference.indication.goto.next"
+     isGoToNextNavigationTarget="false"
+     isGoToPreviousNavigationTargetKey="adapted-type-reference.indication.goto.previous"
+     isGoToPreviousNavigationTarget="false"
+     annotationImageProvider="org.terracotta.dso.AnnotationImageProvider"
+     textStylePreferenceKey="adapted-type-reference.indication.text.style"
+     textStylePreferenceValue="NONE"
+     includeOnPreferencePage="true"/>
+   <specification
+     annotationType="org.terracotta.dso.excludedTypeAnnotation"
+     colorPreferenceKey="ExcludedTypeIndicationColor"
+     overviewRulerPreferenceKey="ExcludedTypeIndicationInOverviewRuler"
+     verticalRulerPreferenceKey="ExcludedTypeIndicationInVerticalRuler"
+     textPreferenceKey="ExcludedTypeIndication"
+     label="DSO Excluded Type"
+     highlightPreferenceKey="ExcludedTypeHighlighting"
+     colorPreferenceValue="255,255,255"
+     presentationLayer="3"
+     overviewRulerPreferenceValue="false"
+     verticalRulerPreferenceValue="true"
+     textPreferenceValue="false"
+     highlightPreferenceValue="false"
+     contributesToHeader="false"
+     showInNextPrevDropdownToolbarActionKey="excluded-type.indicator.navigation.dropdown"
+     showInNextPrevDropdownToolbarAction="true"
+     isGoToNextNavigationTargetKey="excluded-type.indication.goto.next"
+     isGoToNextNavigationTarget="false"
+     isGoToPreviousNavigationTargetKey="excluded-type.indication.goto.previous"
+     isGoToPreviousNavigationTarget="false"
+     annotationImageProvider="org.terracotta.dso.AnnotationImageProvider"
+     textStylePreferenceKey="excluded-type.indication.text.style"
+     textStylePreferenceValue="NONE"
+     includeOnPreferencePage="true"/>
+   <specification
+     annotationType="org.terracotta.dso.bootJarTypeAnnotation"
+     colorPreferenceKey="BootJarTypeIndicationColor"
+     overviewRulerPreferenceKey="BootJarTypeIndicationInOverviewRuler"
+     verticalRulerPreferenceKey="BootJarTypeIndicationInVerticalRuler"
+     textPreferenceKey="BootJarTypeIndication"
+     label="DSO BootJar Type"
+     highlightPreferenceKey="BootJarTypeHighlighting"
+     colorPreferenceValue="255,255,255"
+     presentationLayer="3"
+     overviewRulerPreferenceValue="false"
+     verticalRulerPreferenceValue="true"
+     textPreferenceValue="false"
+     highlightPreferenceValue="false"
+     contributesToHeader="false"
+     showInNextPrevDropdownToolbarActionKey="bootjar-type.indicator.navigation.dropdown"
+     showInNextPrevDropdownToolbarAction="true"
+     isGoToNextNavigationTargetKey="bootjar-type.indication.goto.next"
+     isGoToNextNavigationTarget="false"
+     isGoToPreviousNavigationTargetKey="bootjar-type.indication.goto.previous"
+     isGoToPreviousNavigationTarget="false"
+     annotationImageProvider="org.terracotta.dso.AnnotationImageProvider"
+     textStylePreferenceKey="bootjar-type.indication.text.style"
+     textStylePreferenceValue="NONE"
+     includeOnPreferencePage="true"/>
+   <specification
+     annotationType="org.terracotta.dso.nameLockedAnnotation"
+     colorPreferenceKey="NameLockedIndicationColor"
+     overviewRulerPreferenceKey="NameLockedIndicationInOverviewRuler"
+     verticalRulerPreferenceKey="NameLockedIndicationInVerticalRuler"
+     textPreferenceKey="NameLockedIndication"
+     label="DSO Name-locked method"
+     highlightPreferenceKey="NameLockedHighlighting"
+     colorPreferenceValue="255,255,255"
+     presentationLayer="3"
+     overviewRulerPreferenceValue="false"
+     verticalRulerPreferenceValue="true"
+     textPreferenceValue="false"
+     highlightPreferenceValue="false"
+     contributesToHeader="false"
+     showInNextPrevDropdownToolbarActionKey="namelocked.indicator.navigation.dropdown"
+     showInNextPrevDropdownToolbarAction="true"
+     isGoToNextNavigationTargetKey="namelocked.indication.goto.next"
+     isGoToNextNavigationTarget="false"
+     isGoToPreviousNavigationTargetKey="namelocked.indication.goto.previous"
+     isGoToPreviousNavigationTarget="false"
+     annotationImageProvider="org.terracotta.dso.AnnotationImageProvider"
+     textStylePreferenceKey="namelocked.indication.text.style"
+     textStylePreferenceValue="NONE"
+     includeOnPreferencePage="true"/>
+   <specification
+     annotationType="org.terracotta.dso.autolockedAnnotation"
+     colorPreferenceKey="AutolockedIndicationColor"
+     overviewRulerPreferenceKey="AutolockedIndicationInOverviewRuler"
+     verticalRulerPreferenceKey="AutolockedIndicationInVerticalRuler"
+     textPreferenceKey="AutolockedIndication"
+     label="DSO Autolocked method"
+     highlightPreferenceKey="AutolockedHighlighting"
+     colorPreferenceValue="255,255,255"
+     presentationLayer="3"
+     overviewRulerPreferenceValue="false"
+     verticalRulerPreferenceValue="true"
+     textPreferenceValue="false"
+     highlightPreferenceValue="false"
+     contributesToHeader="false"
+     showInNextPrevDropdownToolbarActionKey="autolocked.indicator.navigation.dropdown"
+     showInNextPrevDropdownToolbarAction="true"
+     isGoToNextNavigationTargetKey="autolocked.indication.goto.next"
+     isGoToNextNavigationTarget="false"
+     isGoToPreviousNavigationTargetKey="autolocked.indication.goto.previous"
+     isGoToPreviousNavigationTarget="false"
+     annotationImageProvider="org.terracotta.dso.AnnotationImageProvider"
+     textStylePreferenceKey="autolocked.indication.text.style"
+     textStylePreferenceValue="NONE"
+     includeOnPreferencePage="true"/>
+   <specification
+     annotationType="org.terracotta.dso.rootAnnotation"
+     colorPreferenceKey="RootIndicationColor"
+     overviewRulerPreferenceKey="RootIndicationInOverviewRuler"
+     verticalRulerPreferenceKey="RootIndicationInVerticalRuler"
+     textPreferenceKey="RootIndication"
+     label="DSO Root"
+     highlightPreferenceKey="RootHighlighting"
+     colorPreferenceValue="255,255,255"
+     presentationLayer="3"
+     overviewRulerPreferenceValue="false"
+     verticalRulerPreferenceValue="true"
+     textPreferenceValue="false"
+     highlightPreferenceValue="false"
+     contributesToHeader="false"
+     showInNextPrevDropdownToolbarActionKey="root.indicator.navigation.dropdown"
+     showInNextPrevDropdownToolbarAction="true"
+     isGoToNextNavigationTargetKey="root.indication.goto.next"
+     isGoToNextNavigationTarget="false"
+     isGoToPreviousNavigationTargetKey="root.indication.goto.previous"
+     isGoToPreviousNavigationTarget="false"
+     annotationImageProvider="org.terracotta.dso.AnnotationImageProvider"
+     textStylePreferenceKey="root.indication.text.style"
+     textStylePreferenceValue="NONE"
+     includeOnPreferencePage="true"/>
+   <specification
+     annotationType="org.terracotta.dso.distributedMethodAnnotation"
+     colorPreferenceKey="DistributedMethodIndicationColor"
+     overviewRulerPreferenceKey="DistributedMethodIndicationInOverviewRuler"
+     verticalRulerPreferenceKey="DistributedMethodIndicationInVerticalRuler"
+     textPreferenceKey="DistributedMethodIndication"
+     label="DSO Distributed Method"
+     highlightPreferenceKey="DistributedMethodHighlighting"
+     colorPreferenceValue="255,255,255"
+     presentationLayer="3"
+     overviewRulerPreferenceValue="false"
+     verticalRulerPreferenceValue="true"
+     textPreferenceValue="false"
+     highlightPreferenceValue="false"
+     contributesToHeader="false"
+     showInNextPrevDropdownToolbarActionKey="distributed-method.indicator.navigation.dropdown"
+     showInNextPrevDropdownToolbarAction="true"
+     isGoToNextNavigationTargetKey="distributed-method.indication.goto.next"
+     isGoToNextNavigationTarget="false"
+     isGoToPreviousNavigationTargetKey="distributed-method.indication.goto.previous"
+     isGoToPreviousNavigationTarget="false"
+     annotationImageProvider="org.terracotta.dso.AnnotationImageProvider"
+     textStylePreferenceKey="distributed-method.indication.text.style"
+     textStylePreferenceValue="NONE"
+     includeOnPreferencePage="true"/>
+   <specification
+     annotationType="org.terracotta.dso.transientFieldAnnotation"
+     colorPreferenceKey="TransientFieldIndicationColor"
+     overviewRulerPreferenceKey="TransientFieldIndicationInOverviewRuler"
+     verticalRulerPreferenceKey="DistributedMethodIndicationInVerticalRuler"
+     textPreferenceKey="TransientFieldIndication"
+     label="DSO Transient field"
+     highlightPreferenceKey="TransientFieldHighlighting"
+     colorPreferenceValue="255,255,255"
+     presentationLayer="3"
+     overviewRulerPreferenceValue="false"
+     verticalRulerPreferenceValue="true"
+     textPreferenceValue="false"
+     highlightPreferenceValue="false"
+     contributesToHeader="false"
+     showInNextPrevDropdownToolbarActionKey="transient-field.indicator.navigation.dropdown"
+     showInNextPrevDropdownToolbarAction="true"
+     isGoToNextNavigationTargetKey="transient-field.indication.goto.next"
+     isGoToNextNavigationTarget="false"
+     isGoToPreviousNavigationTargetKey="transient-field.indication.goto.previous"
+     isGoToPreviousNavigationTarget="false"
+     annotationImageProvider="org.terracotta.dso.AnnotationImageProvider"
+     textStylePreferenceKey="transient-field.indication.text.style"
+     textStylePreferenceValue="NONE"
+     includeOnPreferencePage="true"/>
+  </extension>
+
+   <extension point="org.eclipse.core.filebuffers.documentSetup"
+         id="javaDocumentSetup"
+         name="Terracotta JavaDocumentSetup">
+      <participant extensions="java" class="org.terracotta.dso.JavaSetupParticipant"/>
+   </extension>
+
+   <extension point="org.eclipse.jdt.launching.classpathProviders">
+     <classpathProvider
+       class="org.terracotta.dso.ClasspathProvider"
+       id="org.terracotta.dso.classpathProvider">
+     </classpathProvider>
+   </extension>
+
+   <extension
+     point="org.eclipse.ui.ide.markerResolution">
+     <markerResolutionGenerator
+      markerType="org.terracotta.dso.DeclaringTypeNotInstrumentedMarker"
+      class="org.terracotta.dso.correction.NotInstrumentedResolutionGenerator">
+     </markerResolutionGenerator>
+   </extension>
+
+   <extension point="org.eclipse.ltk.core.refactoring.moveParticipants">
+     <moveParticipant
+    	id="org.terracotta.dso.moveTypeParticipant"
+    	name="TCMoveTypeParticipant" 
+    	class="org.terracotta.dso.refactoring.MoveTypeParticipant">
+    	<enablement>
+          <with variable="affectedNatures">
+            <iterate operator="or">
+              <equals value="org.terracotta.dso.ProjectNature"/>
+            </iterate>
+          </with>
+          <with variable="element">
+            <instanceof value="org.eclipse.jdt.core.IType"/>
+          </with>
+        </enablement>
+  	 </moveParticipant>
+   </extension>
+  
+   <extension point="org.eclipse.ltk.core.refactoring.renameParticipants">
+	  <renameParticipant
+    	id="org.terracotta.dso.renameTypeParticipant"
+    	name="TCRenameTypeParticipant" 
+    	class="org.terracotta.dso.refactoring.RenameTypeParticipant">
+    	<enablement>
+          <with variable="affectedNatures">
+            <iterate operator="or">
+              <equals value="org.terracotta.dso.ProjectNature"/>
+            </iterate>
+          </with>
+          <with variable="element">
+            <instanceof value="org.eclipse.jdt.core.IType"/>
+          </with>
+    	</enablement>
+	  </renameParticipant>
+	  <renameParticipant
+    	id="org.terracotta.dso.renameFieldParticipant"
+    	name="TCRenameFieldParticipant" 
+    	class="org.terracotta.dso.refactoring.RenameFieldParticipant">
+    	<enablement>
+          <with variable="affectedNatures">
+            <iterate operator="or">
+              <equals value="org.terracotta.dso.ProjectNature"/>
+            </iterate>
+          </with>
+          <with variable="element">
+            <instanceof value="org.eclipse.jdt.core.IField"/>
+          </with>
+    	</enablement>
+	  </renameParticipant>
+	  <renameParticipant
+    	id="org.terracotta.dso.renameMethodParticipant"
+    	name="TCRenameMethodParticipant" 
+    	class="org.terracotta.dso.refactoring.RenameMethodParticipant">
+    	<enablement>
+          <with variable="affectedNatures">
+            <iterate operator="or">
+              <equals value="org.terracotta.dso.ProjectNature"/>
+            </iterate>
+          </with>
+          <with variable="element">
+            <instanceof value="org.eclipse.jdt.core.IMethod"/>
+          </with>
+    	</enablement>
+	  </renameParticipant>
+	  <renameParticipant
+    	id="org.terracotta.dso.renamePackageFragmentParticipant"
+    	name="TCRenamePackageFragmentParticipant" 
+    	class="org.terracotta.dso.refactoring.RenamePackageFragmentParticipant">
+    	<enablement>
+          <with variable="affectedNatures">
+            <iterate operator="or">
+              <equals value="org.terracotta.dso.ProjectNature"/>
+            </iterate>
+          </with>
+          <with variable="element">
+            <instanceof value="org.eclipse.jdt.core.IPackageFragment"/>
+          </with>
+    	</enablement>
+	  </renameParticipant>
+   </extension>
+  
+   <extension point="org.eclipse.ltk.core.refactoring.deleteParticipants">
+	  <deleteParticipant
+    	id="org.terracotta.dso.deleteFieldParticipant"
+    	name="TCDeleteFieldParticipant" 
+    	class="org.terracotta.dso.refactoring.DeleteFieldParticipant">
+    	<enablement>
+          <with variable="affectedNatures">
+            <iterate operator="or">
+              <equals value="org.terracotta.dso.ProjectNature"/>
+            </iterate>
+          </with>
+          <with variable="element">
+            <instanceof value="org.eclipse.jdt.core.IField"/>
+          </with>
+    	</enablement>
+	  </deleteParticipant>
+	  <deleteParticipant
+    	id="org.terracotta.dso.deleteMethodParticipant"
+    	name="TCDeleteMethodParticipant" 
+    	class="org.terracotta.dso.refactoring.DeleteMethodParticipant">
+    	<enablement>
+          <with variable="affectedNatures">
+            <iterate operator="or">
+              <equals value="org.terracotta.dso.ProjectNature"/>
+            </iterate>
+          </with>
+          <with variable="element">
+            <instanceof value="org.eclipse.jdt.core.IMethod"/>
+          </with>
+    	</enablement>
+	  </deleteParticipant>
+	  <deleteParticipant
+    	id="org.terracotta.dso.deleteTypeParticipant"
+    	name="TCDeleteTypeParticipant" 
+    	class="org.terracotta.dso.refactoring.DeleteTypeParticipant">
+    	<enablement>
+          <with variable="affectedNatures">
+            <iterate operator="or">
+              <equals value="org.terracotta.dso.ProjectNature"/>
+            </iterate>
+          </with>
+          <with variable="element">
+            <instanceof value="org.eclipse.jdt.core.IType"/>
+          </with>
+    	</enablement>
+	  </deleteParticipant>
+   </extension> 
+
+  <extension point="org.eclipse.ui.perspectives">
+      <perspective name="Terracotta"
+            icon="images/eclipse/logo16.gif" 
+            class="org.terracotta.dso.TerracottaPerspective"
+            id="org.terracotta.dso.terracottaPerspective">
+      </perspective>
+  </extension>
+
+  <extension point="org.eclipse.ui.perspectiveExtensions">
+    <perspectiveExtension targetID="org.eclipse.jdt.ui.JavaPerspective">
+	  <actionSet id="org.eclipse.jdt.debug.ui.JDTDebugActionSet"/>
+      <view id="org.terracotta.dso.ui.views.configView" 
+            relative="org.eclipse.jdt.ui.PackageExplorer" 
+            relationship="bottom"
+			ratio="0.50"
+            visible="true"/>
+      <viewShortcut id="org.terracotta.dso.ui.views.configView"/>
+      <perspectiveShortcut id="org.terracotta.dso.terracottaPerspective"/>
+    </perspectiveExtension> 
+  </extension>
+</plugin>

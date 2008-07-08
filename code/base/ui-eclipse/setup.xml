@@ -6,18 +6,10 @@
   All rights reserved
 
 -->
-<project name="Terracotta" default="setup-eclipse-dev" basedir=".">
-   <target name="setup-eclipse-dev">
-     <copy overwrite="true" todir=".">
-       <fileset dir="../../../kits/skeletons/eclipse-plugin/common/org.terracotta.dso" excludes="**/.svn/**"/>
+<project name="Terracotta" default="update-kit-area" basedir=".">
+   <target name="update-kit-area">
+     <copy overwrite="true" todir="../../../kits/skeletons/eclipse-plugin/common/org.terracotta.dso">
+       <fileset dir="." excludes="**/.svn/**" includes="plugin.xml,META-INF/*,plugin.properties,images/*"/>
      </copy>
-   </target>
-
-   <target name="clean-eclipse-dev">
-     <delete>
-       <fileset dir=".">
-         <present targetdir="../../../kits/skeletons/eclipse-plugin/common/org.terracotta.dso"/>
-       </fileset>
-     </delete>
    </target>
 </project>
