@@ -233,7 +233,6 @@ import javax.management.remote.JMXConnectorServer;
 /**
  * Startup and shutdown point. Builds and starts the server
  * 
- * @author steve
  */
 public class DistributedObjectServer implements TCDumper {
   private final ConnectionPolicy               connectionPolicy;
@@ -318,11 +317,11 @@ public class DistributedObjectServer implements TCDumper {
     }
 
     if (this.txnObjectManager != null) {
-      this.objectManager.dumpToLogger();
+      this.txnObjectManager.dumpToLogger();
     }
 
     if (this.transactionManager != null) {
-      this.objectManager.dumpToLogger();
+      this.transactionManager.dumpToLogger();
     }
   }
 
