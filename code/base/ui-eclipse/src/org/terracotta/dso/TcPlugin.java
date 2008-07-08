@@ -529,10 +529,10 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
 
       if (servers != null) {
         Server launchServer = createLaunchServer(launch);
-        Server[] serverArr = servers.getServerArray();
+        Server[] serverArray = servers.getServerArray();
 
-        for (int i = 0; i < serverArr.length; i++) {
-          Server server = serverArr[i];
+        for (int i = 0; i < serverArray.length; i++) {
+          Server server = serverArray[i];
           Server serverCopy = (Server) server.copy();
           replacePatterns(serverCopy);
           if (areEquivalentServers(launchServer, serverCopy)) { return server; }
@@ -543,6 +543,11 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     return null;
   }
 
+  /**
+   * This should not be called with a configuration server or any patterns will be overwritten with whatever values
+   * apply at call-time. Clone the configuration server first: Server serverCopy = (Server) server.copy(); Further,
+   * identity comparison should not be used on servers, rather use areEquivalentServers(Server1, Server2).
+   */
   public void replacePatterns(Server server) {
     if (server != null) {
       if (server.isSetName()) {
@@ -564,11 +569,12 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       Servers servers = config.getServers();
 
       if (servers != null) {
-        Server[] serverArr = servers.getServerArray();
+        Server[] serverArray = servers.getServerArray();
 
-        if (serverArr.length > 0) {
-          replacePatterns(serverArr[0]);
-          return serverArr[0];
+        if (serverArray.length > 0) {
+          Server server = (Server) serverArray[0].copy();
+          replacePatterns(server);
+          return server;
         }
       }
     }
@@ -1021,13 +1027,13 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       }
     }
 
-    if(fireChanged) {
-      if(config != BAD_CONFIG) {
+    if (fireChanged) {
+      if (config != BAD_CONFIG) {
         getConfigurationHelper(project).validateAll();
       }
       fireConfigurationChange(project);
     }
-    
+
     return config;
   }
 
