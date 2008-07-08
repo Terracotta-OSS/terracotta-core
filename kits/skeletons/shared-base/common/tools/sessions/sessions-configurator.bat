@@ -22,5 +22,5 @@ if exist "%SVT_JAR%"  set CLASSPATH=%CLASSPATH%;%SVT_JAR%
 set CLASSPATH="%CLASSPATH:"=%"
 
 set JAVA_OPTS=-Dtc.install-root=%TC_INSTALL_DIR% %JAVA_OPTS%
-start "session configurator" /B %JAVA_HOME%\bin\java %JAVA_OPTS% -cp %CLASSPATH% com.tc.SessionIntegrator %*
+start "session configurator" /B %JAVA_HOME%\bin\java %JAVA_OPTS% -cp %CLASSPATH% org.terracotta.ui.session.SessionIntegrator %*
 endlocal

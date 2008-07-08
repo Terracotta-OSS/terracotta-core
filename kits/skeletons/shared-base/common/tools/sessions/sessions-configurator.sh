@@ -34,4 +34,4 @@ fi
   -Dtc.install-root="${TC_INSTALL_DIR}" \
   ${JAVA_OPTS} \
   -cp "$CP" \
-  com.tc.SessionIntegrator "$@"
+  org.terracotta.ui.session.SessionIntegrator "$@"
