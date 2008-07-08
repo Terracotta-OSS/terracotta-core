@@ -232,7 +232,7 @@ public class DefaultCookieWriter implements SessionCookieWriter {
   }
 
   private static String encodeSafely(final String source) {
-    URLEncoder encoder = new URLEncoder();
+    UEncoder encoder = new UEncoder();
     encoder.addSafeCharacter('/');
     return encoder.encodeURL(source);
   }
