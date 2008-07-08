@@ -53,7 +53,7 @@ class TCSubProperties implements TCProperties {
   public long getLong(String key) {
     return properties.getLong(getActualKey(key));
   }
-  
+
   public long getLong(String key, long defaultValue) {
     return properties.getLong(getActualKey(key), defaultValue);
   }
@@ -71,11 +71,11 @@ class TCSubProperties implements TCProperties {
   }
 
   public void overwriteTcPropertiesFromConfig(TcProperty[] tcProperties) {
-    properties.overwriteTcPropertiesFromConfig(tcProperties);
+    throw new UnsupportedOperationException();
   }
 
   public void setProperty(String key, String value) {
     properties.setProperty(getActualKey(key), value);
   }
-  
+
 }
