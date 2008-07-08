@@ -120,8 +120,11 @@ public class ShadowRootTestApp extends AbstractErrorCatchingTransparentApp {
 
   private static class DerivedClass extends BaseClass {
     // STOP: These fields are "shadowed" on purpose -- do not rename to fix eclipse warnings
+    @SuppressWarnings("hiding")
     public AtomicInteger    sum1 = new AtomicInteger(10);
+    @SuppressWarnings("hiding")
     protected AtomicInteger sum2 = new AtomicInteger(10);
+    @SuppressWarnings("hiding")
     public int              sum3 = 10;
 
     public int addAndGet1(int delta) {
