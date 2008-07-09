@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.logging;
 
@@ -8,10 +9,10 @@ import org.apache.log4j.Logger;
 /**
  * An implementation of TCLogger that just delegates to a log4j Logger instance NOTE: This implementation differs from
  * log4j in at least one detail....When calling the various log methods (info, warn, etc..) that take a single
- * <code>Object</code> parameter (eg. <code>debug(Object message)</code>), if an instance of <code>Throwable</code>
- * is passed as the message paramater, the call will be translated to the <code>xxx(Object Message, Throwable t)</code>
+ * <code>Object</code> parameter (eg. <code>debug(Object message)</code>), if an instance of <code>Throwable</code> is
+ * passed as the message paramater, the call will be translated to the <code>xxx(Object Message, Throwable t)</code>
  * signature
- *
+ * 
  * @author teck
  */
 class TCLoggerImpl implements TCLogger {
@@ -95,73 +96,12 @@ class TCLoggerImpl implements TCLogger {
     return logger.isInfoEnabled();
   }
 
-  public void log(LogLevel level, Object message) {
-    if (message instanceof Throwable) {
-      log(level, "Exception thrown", (Throwable) message);
-    }
-
-    _log(level, message, null, false);
-  }
-
-  public void log(LogLevel level, Object message, Throwable t) {
-    _log(level, message, t, true);
-  }
-
-  private void _log(LogLevel level, Object message, Throwable t, boolean withException) {
-    switch (level.getLevel()) {
-      case LogLevel.LEVEL_DEBUG: {
-        if (withException) {
-          debug(message, t);
-        } else {
-          debug(message);
-        }
-        break;
-      }
-      case LogLevel.LEVEL_INFO: {
-        if (withException) {
-          info(message, t);
-        } else {
-          info(message);
-        }
-        break;
-      }
-      case LogLevel.LEVEL_WARN: {
-        if (withException) {
-          warn(message, t);
-        } else {
-          warn(message);
-        }
-        break;
-      }
-      case LogLevel.LEVEL_ERROR: {
-        if (withException) {
-          error(message, t);
-        } else {
-          error(message);
-        }
-        break;
-      }
-      case LogLevel.LEVEL_FATAL: {
-        if (withException) {
-          fatal(message, t);
-        } else {
-          fatal(message);
-        }
-        break;
-      }
-      default: {
-        logger.error("Unknown log level: " + level.getLevel());
-        break;
-      }
-    }
-  }
-
   public void setLevel(LogLevel level) {
-    logger.setLevel(LogLevel.toLog4JLevel(level));
+    logger.setLevel(LogLevelImpl.toLog4JLevel(level));
   }
 
   public LogLevel getLevel() {
-    return LogLevel.fromLog4JLevel(logger.getLevel());
+    return LogLevelImpl.fromLog4JLevel(logger.getLevel());
   }
 
   public String getName() {

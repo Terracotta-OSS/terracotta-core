@@ -1,11 +1,12 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.logging;
 
 /**
  * Common TC logger interface (mostly a copy of the log4j logger interface)
- *
+ * 
  * @author teck
  */
 public interface TCLogger {
@@ -28,10 +29,6 @@ public interface TCLogger {
   void warn(Object message);
 
   void warn(Object message, Throwable t);
-
-  void log(LogLevel level, Object message);
-
-  void log(LogLevel level, Object message, Throwable t);
 
   boolean isDebugEnabled();
 

@@ -1,13 +1,13 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.logging;
-
 
 public class ConnectionIdLogger implements TCLogger {
 
   private final ConnectionIDProvider cidp;
-  private final TCLogger logger;
+  private final TCLogger             logger;
 
   public ConnectionIdLogger(ConnectionIDProvider connectionIDProvider, TCLogger logger) {
     this.cidp = connectionIDProvider;
@@ -52,14 +52,6 @@ public class ConnectionIdLogger implements TCLogger {
 
   public void warn(Object message, Throwable t) {
     logger.warn(msg(message), t);
-  }
-
-  public void log(LogLevel level, Object message) {
-    logger.log(level, msg(message));
-  }
-
-  public void log(LogLevel level, Object message, Throwable t) {
-    logger.log(level, msg(message), t);
   }
 
   public boolean isDebugEnabled() {

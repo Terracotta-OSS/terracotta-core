@@ -1,9 +1,10 @@
 /**
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
-import com.tc.logging.LogLevel;
+import com.tc.logging.LogLevelImpl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 
@@ -32,7 +33,7 @@ public class ActivityMonitor {
 
   static {
     // Since this is only used when debugging...
-    logger.setLevel(LogLevel.DEBUG);
+    logger.setLevel(LogLevelImpl.DEBUG);
   }
 
   public ActivityMonitor() {

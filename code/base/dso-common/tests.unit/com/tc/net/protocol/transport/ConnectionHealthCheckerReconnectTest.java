@@ -10,7 +10,7 @@ import com.tc.async.api.Stage;
 import com.tc.async.impl.StageManagerImpl;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
-import com.tc.logging.LogLevel;
+import com.tc.logging.LogLevelImpl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.TCSocketAddress;
@@ -56,7 +56,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
 
     NetworkStackHarnessFactory networkStackHarnessFactory;
 
-    logger.setLevel(LogLevel.DEBUG);
+    logger.setLevel(LogLevelImpl.DEBUG);
 
     if (true /* TCPropertiesImpl.getProperties().getBoolean(L1ReconnectProperties.L1_RECONNECT_ENABLED) */) {
       StageManagerImpl stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(TCLogging
@@ -263,7 +263,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
 
   public void tearDown() throws Exception {
     super.tearDown();
-    logger.setLevel(LogLevel.INFO);
+    logger.setLevel(LogLevelImpl.INFO);
     closeCommsMgr();
   }
 }

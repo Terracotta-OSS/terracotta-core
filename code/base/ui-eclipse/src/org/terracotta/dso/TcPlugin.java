@@ -103,7 +103,7 @@ import com.tc.bundles.ResolverUtils;
 import com.tc.config.Loader;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.logging.CustomerLogging;
-import com.tc.logging.LogLevel;
+import com.tc.logging.LogLevelImpl;
 import com.tc.object.util.JarResourceLoader;
 import com.tc.plugins.ModulesLoader;
 import com.tc.server.ServerConstants;
@@ -157,33 +157,33 @@ import java.util.Properties;
 
 public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaLaunchConfigurationConstants,
     TcPluginStatusConstants {
-  private static TcPlugin           m_plugin;
-  private Loader                    m_configLoader;
-  private CompilationUnitVisitor    m_compilationUnitVisitor;
-  private ResourceListener          m_resourceListener;
-  private ResourceDeltaVisitor      m_resourceDeltaVisitor;
-  private XmlOptions                m_xmlOptions;
-  private DecoratorUpdateAction     m_decoratorUpdateAction;
-  private ArrayList<IProjectAction> m_projectActionList;
-  private ConfigurationEventManager m_configurationEventManager;
+  private static TcPlugin                 m_plugin;
+  private Loader                          m_configLoader;
+  private CompilationUnitVisitor          m_compilationUnitVisitor;
+  private ResourceListener                m_resourceListener;
+  private ResourceDeltaVisitor            m_resourceDeltaVisitor;
+  private XmlOptions                      m_xmlOptions;
+  private DecoratorUpdateAction           m_decoratorUpdateAction;
+  private ArrayList<IProjectAction>       m_projectActionList;
+  private final ConfigurationEventManager m_configurationEventManager;
 
-  public static final String        PLUGIN_ID                           = "org.terracotta.dso";
+  public static final String              PLUGIN_ID                           = "org.terracotta.dso";
 
-  public static final String        DEFAULT_CONFIG_FILENAME             = "tc-config.xml";
-  public static final String        DEFAULT_SERVER_OPTIONS              = "-Xms256m -Xmx256m";
-  public static final boolean       DEFAULT_AUTO_START_SERVER_OPTION    = false;
-  public static final boolean       DEFAULT_WARN_CONFIG_PROBLEMS_OPTION = true;
-  public static final boolean       DEFAULT_QUERY_RESTART_OPTION        = true;
+  public static final String              DEFAULT_CONFIG_FILENAME             = "tc-config.xml";
+  public static final String              DEFAULT_SERVER_OPTIONS              = "-Xms256m -Xmx256m";
+  public static final boolean             DEFAULT_AUTO_START_SERVER_OPTION    = false;
+  public static final boolean             DEFAULT_WARN_CONFIG_PROBLEMS_OPTION = true;
+  public static final boolean             DEFAULT_QUERY_RESTART_OPTION        = true;
 
-  public static final String        SERVER_NAME_LAUNCH_ATTR             = "server.name";
-  public static final String        SERVER_HOST_LAUNCH_ATTR             = "server.host";
-  public static final String        SERVER_JMX_PORT_LAUNCH_ATTR         = "server.jmx-port";
-  public static final String        SERVER_DSO_PORT_LAUNCH_ATTR         = "server.dso-port";
+  public static final String              SERVER_NAME_LAUNCH_ATTR             = "server.name";
+  public static final String              SERVER_HOST_LAUNCH_ATTR             = "server.host";
+  public static final String              SERVER_JMX_PORT_LAUNCH_ATTR         = "server.jmx-port";
+  public static final String              SERVER_DSO_PORT_LAUNCH_ATTR         = "server.dso-port";
 
-  public static final Server        DEFAULT_SERVER_INSTANCE             = createDefaultServerInstance();
+  public static final Server              DEFAULT_SERVER_INSTANCE             = createDefaultServerInstance();
 
   static {
-    CustomerLogging.getConsoleLogger().setLevel(LogLevel.OFF);
+    CustomerLogging.getConsoleLogger().setLevel(LogLevelImpl.OFF);
     Logger.getLogger("com.terracottatech").setLevel(Level.OFF);
     Logger.getLogger("com.tc").setLevel(Level.OFF);
   }
@@ -258,6 +258,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     return getLocation().append("lib");
   }
 
+  @Override
   public void start(BundleContext context) throws Exception {
     super.start(context);
 
@@ -297,6 +298,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     // manager.registerAdapters(factory, BinaryMember.class);
   }
 
+  @Override
   public void stop(BundleContext context) throws Exception {
     ServerTracker.getDefault().shutdownAllServers();
     super.stop(context);

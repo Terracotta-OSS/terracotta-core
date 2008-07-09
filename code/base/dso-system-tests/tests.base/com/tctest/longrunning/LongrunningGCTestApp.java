@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.longrunning;
 
@@ -27,118 +28,109 @@ import java.util.Random;
 
 public class LongrunningGCTestApp implements Application {
 
-  private TCLogger            logger           = new TCLogger() {
+  private final TCLogger       logger           = new TCLogger() {
 
-                                                 PrintStream out = System.out;
+                                                  PrintStream out = System.out;
 
-                                                 DateFormat  df  = DateFormat.getDateTimeInstance();
+                                                  DateFormat  df  = DateFormat.getDateTimeInstance();
 
-                                                 private void println(String header, Object message) {
-                                                   out.println(format(header + message));
-                                                 }
+                                                  private void println(String header, Object message) {
+                                                    out.println(format(header + message));
+                                                  }
 
-                                                 private void println(String header, Object message, Throwable t) {
-                                                   out.println(format(header + message, t));
-                                                 }
+                                                  private void println(String header, Object message, Throwable t) {
+                                                    out.println(format(header + message, t));
+                                                  }
 
-                                                 private String format(Object message) {
-                                                   return df.format(new java.util.Date()) + message;
-                                                 }
+                                                  private String format(Object message) {
+                                                    return df.format(new java.util.Date()) + message;
+                                                  }
 
-                                                 private String format(Object message, Throwable t) {
-                                                   CharArrayWriter chaw = new CharArrayWriter();
-                                                   PrintWriter ps = new PrintWriter(chaw);
-                                                   t.printStackTrace(ps);
-                                                   ps.flush();
+                                                  private String format(Object message, Throwable t) {
+                                                    CharArrayWriter chaw = new CharArrayWriter();
+                                                    PrintWriter ps = new PrintWriter(chaw);
+                                                    t.printStackTrace(ps);
+                                                    ps.flush();
 
-                                                   return format(message + chaw.toString());
-                                                 }
+                                                    return format(message + chaw.toString());
+                                                  }
 
-                                                 public void debug(Object message) {
-                                                   println(" DEBUG ", message);
-                                                 }
+                                                  public void debug(Object message) {
+                                                    println(" DEBUG ", message);
+                                                  }
 
-                                                 public void debug(Object message, Throwable t) {
-                                                   println(" DEBUG ", message, t);
-                                                 }
+                                                  public void debug(Object message, Throwable t) {
+                                                    println(" DEBUG ", message, t);
+                                                  }
 
-                                                 public void error(Object message) {
-                                                   println(" ERROR ", message);
-                                                 }
+                                                  public void error(Object message) {
+                                                    println(" ERROR ", message);
+                                                  }
 
-                                                 public void error(Object message, Throwable t) {
-                                                   println(" ERROR ", message, t);
-                                                 }
+                                                  public void error(Object message, Throwable t) {
+                                                    println(" ERROR ", message, t);
+                                                  }
 
-                                                 public void fatal(Object message) {
-                                                   println(" FATAL ", message);
-                                                 }
+                                                  public void fatal(Object message) {
+                                                    println(" FATAL ", message);
+                                                  }
 
-                                                 public void fatal(Object message, Throwable t) {
-                                                   println(" FATAL ", message, t);
-                                                 }
+                                                  public void fatal(Object message, Throwable t) {
+                                                    println(" FATAL ", message, t);
+                                                  }
 
-                                                 public void info(Object message) {
-                                                   println(" INFO ", message);
-                                                 }
+                                                  public void info(Object message) {
+                                                    println(" INFO ", message);
+                                                  }
 
-                                                 public void info(Object message, Throwable t) {
-                                                   println(" INFO ", message, t);
-                                                 }
+                                                  public void info(Object message, Throwable t) {
+                                                    println(" INFO ", message, t);
+                                                  }
 
-                                                 public void warn(Object message) {
-                                                   println(" WARN ", message);
-                                                 }
+                                                  public void warn(Object message) {
+                                                    println(" WARN ", message);
+                                                  }
 
-                                                 public void warn(Object message, Throwable t) {
-                                                   println(" WARN ", message, t);
-                                                 }
+                                                  public void warn(Object message, Throwable t) {
+                                                    println(" WARN ", message, t);
+                                                  }
 
-                                                 public void log(LogLevel level, Object message) {
-                                                   println(level.toString(), message);
-                                                 }
+                                                  public boolean isDebugEnabled() {
+                                                    return true;
+                                                  }
 
-                                                 public void log(LogLevel level, Object message, Throwable t) {
-                                                   println(level.toString(), message, t);
-                                                 }
+                                                  public boolean isInfoEnabled() {
+                                                    return true;
+                                                  }
 
-                                                 public boolean isDebugEnabled() {
-                                                   return true;
-                                                 }
+                                                  public void setLevel(LogLevel level) {
+                                                    return;
+                                                  }
 
-                                                 public boolean isInfoEnabled() {
-                                                   return true;
-                                                 }
+                                                  public LogLevel getLevel() {
+                                                    return null;
+                                                  }
 
-                                                 public void setLevel(LogLevel level) {
-                                                   return;
-                                                 }
+                                                  public String getName() {
+                                                    return getClass().getName();
+                                                  }
 
-                                                 public LogLevel getLevel() {
-                                                   return null;
-                                                 }
+                                                };
 
-                                                 public String getName() {
-                                                   return getClass().getName();
-                                                 }
+  private static final long    TEST_DURATION    = 1000 * 60 * 60 * 24 * 7;
+  private final Date           endDate;
 
+  private final String         appId;
+  private final StatsListener  statsListener;
+  private final List           list             = new ArrayList();
+  private transient final List unmanaged        = new ArrayList();
+  private transient final List agedUnmanaged    = new ArrayList();
+  private long                 loopSleepTime    = 0;
 
-                                               };
-
-  private static final long   TEST_DURATION    = 1000 * 60 * 60 * 24 * 7;
-  private final Date          endDate;
-
-  private String              appId;
-  private final StatsListener statsListener;
-  private List                list             = new ArrayList();
-  private transient List      unmanaged        = new ArrayList();
-  private transient List      agedUnmanaged    = new ArrayList();
-  private long                loopSleepTime    = 0;
-
-  private boolean             useUnmanaged     = true;
-  private boolean             useAgedUnmanaged = true;
-  private boolean             beRandom         = true;
-  private boolean             doComplex        = true;
+  private final boolean        useUnmanaged     = true;
+  private final boolean        useAgedUnmanaged = true;
+  private final boolean        beRandom         = true;
+  private final boolean        doComplex        = true;
 
   public LongrunningGCTestApp(String appId, ApplicationConfig cfg, ListenerProvider listeners) {
     this.appId = appId;

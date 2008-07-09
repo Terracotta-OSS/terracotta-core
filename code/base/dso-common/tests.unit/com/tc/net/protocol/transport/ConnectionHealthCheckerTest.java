@@ -4,7 +4,7 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.logging.LogLevel;
+import com.tc.logging.LogLevelImpl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.TCSocketAddress;
@@ -41,7 +41,7 @@ public class ConnectionHealthCheckerTest extends TCTestCase {
 
     NetworkStackHarnessFactory networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
 
-    logger.setLevel(LogLevel.DEBUG);
+    logger.setLevel(LogLevelImpl.DEBUG);
 
     if (serverHCConf != null) {
       serverComms = new CommunicationsManagerImpl(new NullMessageMonitor(), networkStackHarnessFactory,
@@ -344,7 +344,7 @@ public class ConnectionHealthCheckerTest extends TCTestCase {
 
   public void tearDown() throws Exception {
     super.tearDown();
-    logger.setLevel(LogLevel.INFO);
+    logger.setLevel(LogLevelImpl.INFO);
     closeCommsMgr();
   }
 

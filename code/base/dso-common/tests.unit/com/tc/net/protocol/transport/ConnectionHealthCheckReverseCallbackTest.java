@@ -6,7 +6,7 @@ package com.tc.net.protocol.transport;
 
 import EDU.oswego.cs.dl.util.concurrent.WaitableInt;
 
-import com.tc.logging.LogLevel;
+import com.tc.logging.LogLevelImpl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.TCSocketAddress;
@@ -40,7 +40,7 @@ import java.util.Collections;
 public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
 
   static {
-    TCLogging.getLogger(ConnectionHealthCheckerImpl.class).setLevel(LogLevel.DEBUG);
+    TCLogging.getLogger(ConnectionHealthCheckerImpl.class).setLevel(LogLevelImpl.DEBUG);
   }
 
   private final TCLogger            logger               = TCLogging.getLogger(getClass());
