@@ -10,6 +10,7 @@ import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
@@ -19,8 +20,7 @@ import java.util.Random;
 
 public class TryLockStressTest extends TransparentTestBase {
 
-  private static final int NODE_COUNT = 1;
-//  private static final int NODE_COUNT = 3;
+  private static final int NODE_COUNT = 3;
 
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
@@ -71,6 +71,12 @@ public class TryLockStressTest extends TransparentTestBase {
       private final List            locks;
       private final Random          random = new Random();
 
+      private boolean lockSucceeded = false;
+      private boolean tryLockSucceeded = false;
+      private boolean tryLockFailed = false;
+      private boolean tryLockTimeoutSucceeded = false;
+      private boolean tryLockTimeoutFailed = false;
+
       LockerThread(List locks) {
         this.locks = locks;
         setDaemon(true);
@@ -89,20 +95,36 @@ public class TryLockStressTest extends TransparentTestBase {
         final long end = System.currentTimeMillis() + LOAD_DURATION;
         while (System.currentTimeMillis() < end) {
           String lock = (String) locks.get(random.nextInt(NUM_LOCKS));
-          if (random.nextInt(LOCK_RATIO) == 0) {
+          int lock_mode = random.nextInt(LOCK_RATIO);
+          if (0 == lock_mode) {
             ManagerUtil.beginLock(lock, Manager.LOCK_TYPE_WRITE);
             try {
+              lockSucceeded = true;
               ThreadUtil.reallySleep(random.nextInt(5));
             } finally {
               ManagerUtil.commitLock(lock);
             }
-          } else {
-            if (ManagerUtil.tryBeginLock(lock, Manager.LOCK_TYPE_WRITE)) {
+          } else if (1 == lock_mode) {
+            if (ManagerUtil.tryBeginLockWithTimeout(lock, random.nextInt(20)*1000, Manager.LOCK_TYPE_WRITE)) {
               try {
+                tryLockTimeoutSucceeded = true;
                 ThreadUtil.reallySleep(random.nextInt(5));
               } finally {
                 ManagerUtil.commitLock(lock);
               }
+            } else {
+              tryLockTimeoutFailed = true;
+            }
+          } else {
+            if (ManagerUtil.tryBeginLock(lock, Manager.LOCK_TYPE_WRITE)) {
+              try {
+                tryLockSucceeded = true;
+                ThreadUtil.reallySleep(random.nextInt(5));
+              } finally {
+                ManagerUtil.commitLock(lock);
+              }
+            } else {
+              tryLockFailed = true;
             }
           }
         }
@@ -112,9 +134,13 @@ public class TryLockStressTest extends TransparentTestBase {
         join();
         Throwable t = (Throwable) error.get();
         if (t != null) { throw t; }
+        Assert.assertTrue(lockSucceeded);
+        Assert.assertTrue(tryLockTimeoutSucceeded);
+        Assert.assertTrue(tryLockTimeoutFailed);
+        Assert.assertTrue(tryLockSucceeded);
+        Assert.assertTrue(tryLockFailed);
       }
     }
-
   }
 
 }

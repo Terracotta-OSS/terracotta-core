@@ -193,6 +193,10 @@ public final class NullManager implements Manager {
     throw new UnsupportedOperationException();
   }
 
+  public boolean tryBeginLock(String lockID, long timeoutInNanos, int type) {
+    throw new UnsupportedOperationException();
+  }
+
   public final TCObject shareObjectIfNecessary(Object pojo) {
     throw new UnsupportedOperationException();
   }

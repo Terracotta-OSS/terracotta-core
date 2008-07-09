@@ -637,8 +637,21 @@ class ClientLock implements TimerCallback, LockFlushCallback {
       Object o = i.next();
       if (isOnlyWaitLockRequest(o)) continue;
       LockRequest lr = (LockRequest) o;
-      if (canAwardGreedilyNow(lr.threadID(), lr.lockLevel())) {
-        awardLock(lr.threadID(), lr.lockLevel());
+      if (isTryLockRequest(lr) &&
+          !((TryLockRequest)lr).getTimerSpec().needsToWait() &&
+          isHeld()) {
+        // The tryLock contract stipulates that it should return immediately
+        // and only acquire the lock if it wasn't held at the time of
+        // invocation. Any tryLocks without a timeout that are pending should
+        // thus be rejected as soon as any lock award is handed out when this
+        // lock isn't held yet.
+        cannotAwardLock(lr.threadID(), lr.lockLevel());
+      } else {
+        // Greedily award the lock to the next pending request on the local
+        // JVM if the right conditions are present.
+        if (canAwardGreedilyNow(lr.threadID(), lr.lockLevel())) {
+          awardLock(lr.threadID(), lr.lockLevel());
+        }
       }
     }
   }

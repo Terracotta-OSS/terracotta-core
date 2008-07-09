@@ -126,6 +126,16 @@ public interface Manager {
   public boolean tryBeginLock(String lockID, int type);
 
   /**
+   * Try to begin lock within a specific timespan
+   *
+   * @param lockID Lock identifier
+   * @param type Lock type
+   * @param timeoutInNanos Timeout in nanoseconds
+   * @return True if lock was successful
+   */
+  public boolean tryBeginLock(String lockID, long timeoutInNanos, int type);
+
+  /**
    * Commit volatile lock
    *
    * @param tcObject Volatile object TCObject
@@ -215,7 +225,7 @@ public interface Manager {
    *
    * @param obj Instance
    * @param millis Wait time
-   * @param nonas More wait time
+   * @param nanos More wait time
    */
   public void objectWait2(Object obj, long millis, int nanos) throws InterruptedException;
 
@@ -304,7 +314,7 @@ public interface Manager {
   /**
    * Check whether an object is shared
    *
-   * @param object Instance
+   * @param obj Instance
    * @return True if shared
    */
   public boolean isDsoMonitored(Object obj);
@@ -425,7 +435,7 @@ public interface Manager {
   /**
    * Get the named logger
    *
-   * @param name Logger name
+   * @param loggerName Logger name
    * @return The logger
    */
   public TCLogger getLogger(String loggerName);

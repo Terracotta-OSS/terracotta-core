@@ -5,6 +5,7 @@
 package com.tc.object.bytecode;
 
 // import com.partitions.TCNoPartitionError;
+
 import com.tc.cluster.ClusterEventListener;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
@@ -58,7 +59,7 @@ public class ManagerUtil {
   /**
    * Get the named logger
    *
-   * @param name Logger name
+   * @param loggerName Logger name
    * @return The logger
    */
   public static TCLogger getLogger(String loggerName) {
@@ -116,7 +117,7 @@ public class ManagerUtil {
   /**
    * Deep copy the source object graph
    *
-   * @param source Source object
+   * @param pojo Source object
    * @return The copy
    */
   public static Object deepCopy(Object pojo) {
@@ -224,6 +225,18 @@ public class ManagerUtil {
    */
   public static boolean tryBeginLock(String lockID, int type) {
     return getManager().tryBeginLock(lockID, type);
+  }
+
+  /**
+   * Try to begin lock within a specific timespan
+   *
+   * @param lockID Lock identifier
+   * @param type Lock type
+   * @param timeoutInNanos Timeout in nanoseconds
+   * @return True if lock was successful
+   */
+  public static boolean tryBeginLockWithTimeout(String lockID, long timeoutInNanos, int type) {
+    return getManager().tryBeginLock(lockID, timeoutInNanos, type);
   }
 
   /**
@@ -469,7 +482,7 @@ public class ManagerUtil {
    *
    * @param obj Instance
    * @param millis Wait time
-   * @param nonas More wait time
+   * @param nanos More wait time
    */
   public static void objectWait2(Object obj, long millis, int nanos) throws InterruptedException {
     getManager().objectWait2(obj, millis, nanos);
@@ -490,7 +503,7 @@ public class ManagerUtil {
    *
    * @param obj Object
    * @param type Lock type
-   * @param configText Configuration text of the lock
+   * @param contextInfo Configuration text of the lock
    */
   public static void monitorEnterWithContextInfo(Object obj, int type, String contextInfo) {
     getManager().monitorEnter(obj, type, contextInfo);
@@ -926,7 +939,7 @@ public class ManagerUtil {
    * @param dest Destination array
    * @param destPos Start in dest
    * @param length Number of items to copy
-   * @param tcDest TCObject for dest array
+   * @param tco TCObject for dest array
    */
   public static void charArrayCopy(char[] src, int srcPos, char[] dest, int destPos, int length, TCObject tco) {
     ArrayManager.charArrayCopy(src, srcPos, dest, destPos, length, tco);
@@ -936,11 +949,11 @@ public class ManagerUtil {
    * Register an array with its TCO. It is an error to register an array that has already been registered.
    *
    * @param array Array
-   * @param tco TCObject
+   * @param obj TCObject
    * @throws NullPointerException if array or tco are null
    */
-  public static void register(Object pojo, TCObject obj) {
-    ArrayManager.register(pojo, obj);
+  public static void register(Object array, TCObject obj) {
+    ArrayManager.register(array, obj);
   }
 
   /**
