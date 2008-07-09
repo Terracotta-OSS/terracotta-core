@@ -17,8 +17,8 @@ import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.ServerThreadID;
-import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.lockmanager.api.TCLockTimer;
+import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.lockmanager.api.TimerCallback;
 import com.tc.object.lockmanager.impl.LockHolder;
 import com.tc.object.net.DSOChannelManager;
@@ -225,9 +225,14 @@ public class Lock {
     // it is an error (probably originating from the client side) to
     // request a lock you already hold
     Holder holder = getHolder(txn);
-    if (noBlock && !lockRequestTimeout.needsToWait() && holder == null && (requestedLockLevel != LockLevel.READ || !this.isRead())
+    if (noBlock && !lockRequestTimeout.needsToWait() && holder == null
+        && (requestedLockLevel != LockLevel.READ || !this.isRead())
         && (getHoldersCount() > 0 || hasGreedyHolders())) {
-      cannotAwardAndRespond(txn, requestedLockLevel, lockResponseSink);
+      // These requests are the ones in the wire when the greedy lock was given out to the client.
+      // We can safely ignore it as the clients will be able to award it locally.
+      if (!isPolicyGreedy() || !canAwardGreedilyOnTheClient(txn, requestedLockLevel)) {
+        cannotAwardAndRespond(txn, requestedLockLevel, lockResponseSink);
+      }
       return false;
     }
 

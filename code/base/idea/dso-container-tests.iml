@@ -14,16 +14,19 @@
     <orderEntry type="module" module-name="common" />
     <orderEntry type="module" module-name="common-api" />
     <orderEntry type="module" module-name="deploy" />
+    <orderEntry type="module" module-name="deploy-api" />
     <orderEntry type="module" module-name="dso-common" />
     <orderEntry type="module" module-name="dso-common-jdk15" />
     <orderEntry type="module" module-name="dso-l1" />
     <orderEntry type="module" module-name="dso-l1-api" />
-    <orderEntry type="module" module-name="dso-l1-jdk15" />
     <orderEntry type="module" module-name="dso-l1-session" />
     <orderEntry type="module" module-name="dso-l2" />
     <orderEntry type="module" module-name="dso-l2-common" />
+    <orderEntry type="module" module-name="dso-statistics" />
+    <orderEntry type="module" module-name="dso-statistics-api" />
     <orderEntry type="module" module-name="legacy-test-tree" />
     <orderEntry type="module" module-name="management" />
+    <orderEntry type="module" module-name="management-api" />
     <orderEntry type="module" module-name="modules-common" />
     <orderEntry type="module" module-name="simulator" />
     <orderEntry type="module" module-name="thirdparty" />
@@ -32,15 +35,6 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../dependencies/lib/ant-launcher-1.6.5.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library" exported="">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../dependencies/lib/cargo-core-uberjar-0.9-tc-20080103.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -130,15 +124,6 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../dependencies/lib/hibernate-3.1.2.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library" exported="">
-      <library>
-        <CLASSES>
           <root url="jar://$MODULE_DIR$/../dependencies/lib/httpunit-1.6.2.jar!/" />
         </CLASSES>
         <JAVADOC />
@@ -202,7 +187,7 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../dependencies/lib/jtidy-4aug2000r7-dev.jar!/" />
+          <root url="jar://$MODULE_DIR$/../dependencies/lib/tc-cargo-core-uberjar-0.9.20080618.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -211,7 +196,34 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../dependencies/lib/spring-2.0.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../dependencies/lib/nekohtml-1.9.6.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/lib/xercesImpl-2.9.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/lib/linked-child-process-1.0.2-SNAPSHOT.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/lib/spring-2.0.8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

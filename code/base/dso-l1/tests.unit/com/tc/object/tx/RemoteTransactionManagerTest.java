@@ -113,7 +113,7 @@ public class RemoteTransactionManagerTest extends TestCase {
     new Thread(flusher).start();
     // XXX: Figure out how to do this without a timeout.
     int timeout = 5 * 1000;
-    System.err.println("About too wait for " + timeout + " ms.");
+    System.err.println("About to wait for " + timeout + " ms.");
 
     Object o = flushCalls.poll(timeout);
 
