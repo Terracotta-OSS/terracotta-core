@@ -1,9 +1,0 @@
-com.tc.object.walker.BasicWalkerTest$HashMapSubclass (id 0)
-  int iVal = 42
-  String sVal = "timmy"
-  [entry 0]
-    key = "sVal"
-    value = "timmy"
-  [entry 1]
-    key = "iVal"
-    value = 42

@@ -1,4 +1,0 @@
-com.tc.object.walker.BasicWalkerTest$AbstractListSubclass (id 0)
-  int iVal = 42
-  int modCount = 0
-  String sVal = "timmy"
