@@ -10,12 +10,35 @@ import com.tc.object.persistence.api.PersistentMapStore;
 
 public class DBVersionChecker {
 
-  private static final String   DBKEY_VERSION      = "DBKEY_VERSION";
-  private static final String   DB_VERISON_1       = "1.0";
-  private static final String   DB_VERSION_CURRENT = DB_VERISON_1;
+  private static final String DBKEY_VERSION = "DBKEY_VERSION";
 
-  private PersistentMapStore    clusterStore;
-  private static final TCLogger logger             = CustomerLogging.getDSOGenericLogger();
+  private static enum DbVersions {
+    /**
+     * TC r2.6 : dbVersion 1.0; TC r2.7 : dbVersion 2.0;
+     */
+    DB_VERSION_1("1.0"), DB_VERSION_2("2.0");
+
+    private String version;
+    private DbVersions(String ver) {
+      this.version = ver;
+    }
+
+    String getVersion() {
+      return this.version;
+    }
+
+    @Override
+    public String toString() {
+      return "Sleepycat DB version [" + getVersion() + "]";
+    }
+
+    // TODO: db upgrade/revert routines
+  }
+
+  private static final DbVersions DB_VERSION_CURRENT = DbVersions.DB_VERSION_2;
+
+  private PersistentMapStore      clusterStore;
+  private static final TCLogger   logger             = CustomerLogging.getDSOGenericLogger();
 
   public DBVersionChecker(PersistentMapStore clusterStore) {
     this.clusterStore = clusterStore;
@@ -26,16 +49,19 @@ public class DBVersionChecker {
     try {
       dbVersion = clusterStore.get(DBKEY_VERSION);
       if (dbVersion == null) {
-        clusterStore.put(DBKEY_VERSION, DB_VERSION_CURRENT);
-        logger.info("Sleepy Cat DB version is " + DB_VERSION_CURRENT);
+        clusterStore.put(DBKEY_VERSION, DB_VERSION_CURRENT.getVersion());
+        logger.info(DB_VERSION_CURRENT);
       } else {
         logger.info("Sleepy Cat DB version is " + dbVersion);
-        if (!dbVersion.equals(DB_VERSION_CURRENT)) { throw new AssertionError(
-                                                                              "There is a mismatch in Terracotta and DB data format. "
-                                                                                  + "Please ensure that both Terracotta Server and "
-                                                                                  + "DB are upgraded to the same version."
-                                                                                  + " Expected : " + DB_VERSION_CURRENT
-                                                                                  + " Actual: " + dbVersion); }
+        if (!dbVersion.equals(DB_VERSION_CURRENT.getVersion())) { throw new AssertionError(
+                                                                                           "There is a mismatch in Terracotta and DB data format. "
+                                                                                               + "Please ensure that both Terracotta Server and "
+                                                                                               + "DB are upgraded to the same version."
+                                                                                               + " Expected : "
+                                                                                               + DB_VERSION_CURRENT
+                                                                                                   .getVersion()
+                                                                                               + " Actual: "
+                                                                                               + dbVersion); }
       }
     } catch (DBException e) {
       // the key was not found
