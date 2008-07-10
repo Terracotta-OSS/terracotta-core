@@ -188,7 +188,6 @@ public class BasicWalkerTest extends TestCase {
 
   private static class B extends A {
     // STOP: this variable is "shadowed" on purpose, please do not rename them to remove the eclipse warning
-    @SuppressWarnings("hiding")
     private int i = 1;
 
     public int getI() {

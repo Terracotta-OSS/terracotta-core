@@ -79,7 +79,6 @@ public class ShadowVariableTestApp extends AbstractTransparentApp {
   private static class ShadowSub extends ShadowBase {
     // NOTE: It is very important that the shadow fields be of the exact same type
     // STOP: These fields are "shadowed" on purpose -- do not rename to fix eclipse warnings
-    @SuppressWarnings("hiding")
     private Integer     myNumber = null;
     @SuppressWarnings("hiding")
     protected final int finalInt = 2;
