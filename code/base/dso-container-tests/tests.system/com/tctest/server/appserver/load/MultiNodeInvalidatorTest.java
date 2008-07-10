@@ -42,9 +42,8 @@ public class MultiNodeInvalidatorTest extends AbstractDeploymentTest {
   private TcConfigBuilder     configBuilder;
 
   public MultiNodeInvalidatorTest() {
-    disableAllUntil("2008-07-14");
+    //
   }
-
 
   private Deployment makeDeployment() throws Exception {
     DeploymentBuilder builder = makeDeploymentBuilder(CONTEXT + ".war");
@@ -77,8 +76,8 @@ public class MultiNodeInvalidatorTest extends AbstractDeploymentTest {
     return server;
   }
 
-  public void testFourNodeLoad() throws Throwable {
-    runLoad(4);
+  public void testLoad() throws Throwable {
+    runLoad(LowMemWorkaround.computeNumberOfNodes(4, appServerInfo()));
   }
 
   private void runLoad(final int numServers) throws Throwable {
@@ -135,6 +134,7 @@ public class MultiNodeInvalidatorTest extends AbstractDeploymentTest {
         if (r.nextInt(ABANDON_RATE) == 0) {
           sessions[getRandomSessionIndex()] = newSession();
         }
+        ThreadUtil.reallySleep(r.nextInt(5) + 1);
       }
     }
 
