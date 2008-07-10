@@ -6,6 +6,7 @@
 
 class BaseCodeTerracottaBuilder <  TerracottaBuilder
   include MavenConstants
+  include BuildData
 
   # assemble the kit for the product code supplied
   def dist(product_code='DSO', flavor='OPENSOURCE')
@@ -13,6 +14,59 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
 
     depends :init, :compile
     call_actions :__assemble
+  end
+
+  # Assemble a kit just like 'dist', but then selectively extract elements from
+  # the kit and bundle into a patch tarball.
+  def patch(product_code = 'DSO', flavor = 'OPENSOURCE')
+    # Do error checking first, before going through the lengthy dist target
+    descriptor_file = self.patch_descriptor_file.to_s
+    unless File.readable?(descriptor_file)
+      raise("Patch descriptor file does not exist: #{descriptor_file}")
+    end
+
+    patch_descriptor = YAML.load_file(descriptor_file)
+    unless patch_descriptor['level'] && patch_descriptor['files'].is_a?(Array)
+      raise("Invalid patch descriptor file")
+    end
+
+    patch_level = config_source['level'] || patch_descriptor['level']
+
+    depends :dist
+
+    begin
+      # Warn if patch level is not a positive integer
+      i = Integer(patch_level)
+      raise("not a positive integer") if i < 0
+    rescue
+      loud_message("WARNING: patch level is not a positive integer")
+    end
+
+    puts("Building patch level #{patch_level}")
+
+    patch_files = Array.new
+
+    Dir.chdir(product_directory.to_s) do
+      # Make sure patch-data.txt and releasenotes.txt are included in the patch
+      patch_files << create_patch_data(patch_level, @config_source, FilePath.new('lib', 'resources'))
+      patch_files << 'releasenotes.txt'
+
+      patch_descriptor['files'].each do |file|
+        raise("Patch may not include build-data.txt") if file =~ /build-data\.txt$/
+
+        path = file.to_s
+        unless File.readable?(path)
+          raise("Patch descriptor file references non-existant file: #{path}")
+        end
+        patch_files << path
+      end
+
+      patch_file_name = File.basename(Dir.pwd) + "-patch-#{patch_level}.tar"
+      patch_file = FilePath.new(self.dist_directory, patch_file_name)
+      ant.tar(:destfile => patch_file.to_s, :longfile => 'gnu') do
+        ant.tarfileset(:dir => Dir.pwd, :includes => patch_files.join(','))
+      end
+    end
   end
 
   def dist_all(flavor='OPENSOURCE')

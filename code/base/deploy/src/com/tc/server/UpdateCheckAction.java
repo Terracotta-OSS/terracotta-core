@@ -89,6 +89,11 @@ class UpdateCheckAction extends TimerTask {
     sb.append("&uptime-secs=");
     sb.append((System.currentTimeMillis() - server.getStartTime())/1000);
     sb.append("&source=server");
+    
+    if(productInfo.isPatched()) {
+      sb.append("&patch=");
+      sb.append(productInfo.patchLevel());
+    }
 
     return new URL(sb.toString());
   }

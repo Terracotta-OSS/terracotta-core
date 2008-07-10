@@ -137,6 +137,9 @@ packaging:
 postscripts:
   - fix-bin-perms
   - inject-copyright
+  - make-build-data:
+      args:
+        - lib/resources
   - include-schemas:
       args:
         - schema

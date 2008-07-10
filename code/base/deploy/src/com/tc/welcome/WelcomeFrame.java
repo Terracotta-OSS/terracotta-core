@@ -37,34 +37,29 @@ import javax.swing.text.Element;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 
-public class WelcomeFrame extends HyperlinkFrame
-  implements HyperlinkListener,
-             PropertyChangeListener
-{
+public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, PropertyChangeListener {
   private static String[]             PRODUCTS       = { "Pojo", "Spring", "Sessions" };
   private static ResourceBundleHelper m_bundleHelper = new ResourceBundleHelper(WelcomeFrame.class);
-  
-  private TabbedPane m_tabbedPane;
-  private ArrayList  m_startupList;
+
+  private TabbedPane                  m_tabbedPane;
+  private ArrayList                   m_startupList;
 
   public WelcomeFrame() {
-    super();
+    super(getBundleString("welcome.title"));
 
-    if(Os.isMac()) {
+    if (Os.isMac()) {
       System.setProperty("com.apple.macos.useScreenMenuBar", "true");
       System.setProperty("apple.laf.useScreenMenuBar", "true");
       System.setProperty("apple.awt.showGrowBox", "true");
       System.setProperty("com.apple.mrj.application.growbox.intrudes", "false");
     }
 
-    setTitle(getBundleString("welcome.title"));
-
     m_startupList = new ArrayList();
 
     Container cp = getContentPane();
     cp.setLayout(new BorderLayout());
     cp.add(m_tabbedPane = new TabbedPane());
-    
+
     addWindowListener(new WindowAdapter() {
       public void windowDeactivated(WindowEvent e) {
         setTextPaneCursor(Cursor.DEFAULT_CURSOR);
@@ -97,7 +92,7 @@ public class WelcomeFrame extends HyperlinkFrame
     }
   }
 
-  private String getBundleString(String key) {
+  private static String getBundleString(String key) {
     return m_bundleHelper.getString(key);
   }
 
@@ -122,11 +117,7 @@ public class WelcomeFrame extends HyperlinkFrame
     HyperlinkEvent.EventType type = e.getEventType();
     Element elem = e.getSourceElement();
 
-    if (elem == null ||
-        type == HyperlinkEvent.EventType.ENTERED ||
-        type == HyperlinkEvent.EventType.EXITED) {
-      return;
-    }
+    if (elem == null || type == HyperlinkEvent.EventType.ENTERED || type == HyperlinkEvent.EventType.EXITED) { return; }
 
     if (textPane.getCursor().getType() != Cursor.WAIT_CURSOR) {
       AttributeSet a = elem.getAttributes();
@@ -146,8 +137,7 @@ public class WelcomeFrame extends HyperlinkFrame
 
     try {
       String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Dtc.config=tc-config.xml",
-          "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(),
-          "-cp", getTCLib().getAbsolutePath(),
+          "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(), "-cp", getTCLib().getAbsolutePath(),
           "com.tc.welcome.DSOSamplesFrame" };
 
       Process p = exec(cmdarray, null, getProductDirectory());
@@ -279,7 +269,7 @@ public class WelcomeFrame extends HyperlinkFrame
   }
 
   private static Process splashProc;
-  
+
   public static void main(final String[] args) throws Exception {
     UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 

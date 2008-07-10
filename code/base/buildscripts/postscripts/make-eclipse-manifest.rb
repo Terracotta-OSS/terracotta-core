@@ -53,7 +53,8 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
       out.puts " org.eclipse.core.variables;bundle-version=\"[3.2.0,4.0.0)\","
       out.puts " org.eclipse.ui.forms;bundle-version=\"[3.2.0,4.0.0)\""
 
-      libfiles = Dir.entries(common_lib_directory.to_s).delete_if { |item| /\.jar$/ !~ item }
+      libfiles = Dir.entries(common_lib_directory.to_s).delete_if { |item| /\.jar$/ !~ item } << "resources/"
+      libfiles.sort!
       out.puts "Bundle-ClassPath: #{relative_libpath}/#{libfiles.first},"
       libfiles[1..-2].each { |item| out.puts " #{relative_libpath}/#{item}," }
       out.puts " #{relative_libpath}/#{libfiles.last}"

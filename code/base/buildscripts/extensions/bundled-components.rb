@@ -43,13 +43,9 @@ module BundledComponents
     jarfile = FilePath.new(destdir, "tc.jar")
     if File.exist?(libdir.to_s)
       ant.chmod(:dir => libdir.to_s, :perm => "a+x", :includes => "**/*.dll")
-      ant.jar(:destfile => jarfile.to_s, :basedir => runtime_classes_dir.to_s) do
-        classpath = ''
-        libfiles  = Dir.entries(libdir.to_s).delete_if { |item| /\.jar$/ !~ item }
-        classpath << "#{libfiles.first} "
-        libfiles[1..-2].each { |item| classpath << "#{item} " }
-        classpath << "#{libfiles.last}"
-        ant.manifest { ant.attribute(:name => 'Class-Path', :value => classpath) }
+      ant.jar(:destfile => jarfile.to_s, :basedir => runtime_classes_dir.to_s, :excludes => '**/build-data.txt') do
+        libfiles  = Dir.entries(libdir.to_s).delete_if { |item| /\.jar$/ !~ item } << "resources/"
+        ant.manifest { ant.attribute(:name => 'Class-Path', :value => libfiles.sort.join(' ')) }
       end
     end
     runtime_classes_dir.delete
@@ -86,7 +82,7 @@ module BundledComponents
         end
         libdir  = FilePath.new(File.dirname(destdir.to_s), *(module_package[name]['install_directory'] || '').split('/')).ensure_directory
         jarfile = FilePath.new(libdir, interpolate("#{name}.jar"))
-        ant.jar(:destfile => jarfile.to_s, :basedir => runtime_classes_dir.to_s)
+        ant.jar(:destfile => jarfile.to_s, :basedir => runtime_classes_dir.to_s, :excludes => '**/build-data.txt')
       end
       runtime_classes_dir.delete
     end

@@ -336,41 +336,6 @@
       <item bottom="0,top:n" height="n" left="-1,left:sn" right="-1,right:sn" top="-1,top:n" width="n" />
     </connections>
   </container>
-  <dialog bounds="50,50,459,279" modal="true" tag="AboutDialog" title="About Administrator Console" visible="false" resizable="false">
-    <content-pane>
-      <children>
-        <label font="Trebuchet MS-plain-17" text="Terrracotta Administrator Console" name="MonikerLabel" />
-        <label image-uri="/com/tc/admin/icons/logo.png" />
-        <container class="com.tc.admin.AdminClientInfoPanel" name="AdminClientInfoPanel">
-          <children>
-            <container>
-              <border>
-                <titled-border title="System Information" />
-              </border>
-              <children>
-                <textarea name="SystemInformationTextArea" class="com.tc.admin.common.XTextArea" editable="false" />
-              </children>
-              <connections>
-                <item bottom="-1,bottom:0" height="n" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="ns" />
-              </connections>
-            </container>
-            <label name="CopyrightLabel" text="Copyright" />
-          </children>
-          <connections>
-            <item bottom="1,top:n" height="n" left="-1,left:n" right="-1,right:n" top="-1,top:n" width="ns" />
-            <item bottom="-1,bottom:n" height="n" left="-1,left:s" right="-1,right:s" top="0,bottom:n" width="sn" />
-          </connections>
-        </container>
-        <button name="OKButton" text="OK" />
-      </children>
-      <connections>
-        <item bottom="1,top:sn" height="n" left="-1,left:s" right="-1,right:s" top="-1,top:n" width="n" />
-        <item bottom="2,top:sn" height="sn" left="-1,left:sn" right="-1,right:sn" top="0,bottom:n" width="sn" />
-        <item bottom="3,top:n" height="sn" left="-1,left:n" right="-1,right:n" top="1,bottom:n" width="sn" />
-        <item bottom="-1,bottom:n" height="n" left="-1,left:s" right="-1,right:s" top="2,bottom:n" width="n" />
-      </connections>
-    </content-pane>
-  </dialog>
   <container tag="SessionMonitorPanel">
     <children>
       <scrollpane>

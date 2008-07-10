@@ -34,7 +34,6 @@ import com.tc.stats.DSOMBean;
 import com.tc.stats.DSORootMBean;
 import com.tc.stats.statistics.CountStatistic;
 import com.tc.stats.statistics.Statistic;
-import com.tc.util.ProductInfo;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -72,7 +71,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   protected DSOMBean                      m_dsoBean;
   protected ObjectManagementMonitorMBean  m_objectManagementMonitorBean;
   protected ServerDBBackupMBean           m_serverDBBackupBean;
-  protected ProductInfo                   m_productInfo;
+  protected ServerVersion                   m_productInfo;
   protected List<IBasicObject>            m_roots;
   protected Map<ObjectName, IBasicObject> m_rootMap;
   protected LogListener                   m_logListener;
@@ -360,7 +359,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     return m_objectManagementMonitorBean;
   }
 
-  public ProductInfo getProductInfo() {
+  public ServerVersion getProductInfo() {
     if (m_productInfo != null) return m_productInfo;
 
     TCServerInfoMBean serverInfo = getServerInfoBean();
@@ -369,7 +368,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     String license = serverInfo.getDescriptionOfCapabilities();
     String copyright = serverInfo.getCopyright();
 
-    return m_productInfo = new ProductInfo(version, buildID, license, copyright);
+    return m_productInfo = new ServerVersion(version, buildID, license, copyright);
   }
 
   public String getProductVersion() {

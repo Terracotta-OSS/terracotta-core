@@ -19,8 +19,8 @@ import com.tc.admin.model.IClusterModel;
 import com.tc.admin.model.IClusterNode;
 import com.tc.admin.model.IServer;
 import com.tc.admin.model.Server;
+import com.tc.admin.model.ServerVersion;
 import com.tc.statistics.beans.StatisticsLocalGathererMBean;
-import com.tc.util.ProductInfo;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -614,7 +614,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
     m_clusterPanel.activated();
   }
 
-  public ProductInfo getProductInfo() {
+  public ServerVersion getProductInfo() {
     return m_clusterModel.getProductInfo();
   }
 

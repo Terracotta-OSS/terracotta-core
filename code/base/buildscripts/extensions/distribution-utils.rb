@@ -46,7 +46,7 @@ module DistributionUtils
     flavor       = (@flavor || @config_source["flavor"]).downcase
 
     @config = product_config(product_code, flavor)
-    @distribution_results = DistributionResults.new(FilePath.new(@build_results.build_dir, "dist"))
+    @distribution_results = DistributionResults.new(self.dist_directory)
   end
 
   def check_if_type_supplied(product_code, flavor)
@@ -54,6 +54,14 @@ module DistributionUtils
     fail 'You need to tell me the flavor of the kit to build: OPENSOURCE|ENTERPRISE?' if flavor.nil?
     @product_code = product_code
     @flavor       = flavor.downcase
+  end
+
+  def patch_descriptor_file
+    FilePath.new(@basedir, 'patch.def.yml')
+  end
+
+  def dist_directory
+    FilePath.new(@build_results.build_dir, "dist")
   end
 
   def product_directory

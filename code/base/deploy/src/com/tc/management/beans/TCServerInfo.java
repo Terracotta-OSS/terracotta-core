@@ -166,6 +166,14 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     return buildID;
   }
 
+  public String getPatchVersion() {
+    return productInfo.toShortPatchString();
+  }
+
+  public String getPatchBuildID() {
+    return productInfo.patchBuildID();
+  }
+
   public String getCopyright() {
     return productInfo.copyright();
   }

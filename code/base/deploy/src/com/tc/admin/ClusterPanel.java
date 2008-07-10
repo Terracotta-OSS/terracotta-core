@@ -9,7 +9,7 @@ import org.dijon.ContainerResource;
 import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.StatusView;
 import com.tc.admin.common.XContainer;
-import com.tc.util.ProductInfo;
+import com.tc.admin.model.ServerVersion;
 
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -248,10 +248,10 @@ public class ClusterPanel extends XContainer {
     }
   }
 
-  private class ProductInfoWorker extends BasicWorker<ProductInfo> {
+  private class ProductInfoWorker extends BasicWorker<ServerVersion> {
     private ProductInfoWorker() {
-      super(new Callable<ProductInfo>() {
-        public ProductInfo call() throws Exception {
+      super(new Callable<ServerVersion>() {
+        public ServerVersion call() throws Exception {
           return m_clusterNode.getProductInfo();
         }
       });
@@ -267,7 +267,7 @@ public class ClusterPanel extends XContainer {
     }
   }
 
-  private void showProductInfo(ProductInfo productInfo) {
+  private void showProductInfo(ServerVersion productInfo) {
     m_productInfoPanel.init(productInfo.version(), productInfo.copyright());
     m_productInfoPanel.setVisible(true);
     revalidate();

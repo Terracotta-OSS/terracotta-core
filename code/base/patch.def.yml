@@ -1,0 +1,11 @@
+# Patch level identifier.  May be any arbitrary string, but for official
+# patches should be a positive integer in increasing sequence.
+# The patch level identifier may be overridden on the tcbuild command-line
+# using the 'level' argument to the patch target.
+level: 1
+
+# List of files to include in the patch tar.  File paths listed here are
+# relative to the kit root directory.  Use the YAML syntax for lists:
+# one entry per line, each line beginning with a dash.
+files: 
+- lib/tc.jar

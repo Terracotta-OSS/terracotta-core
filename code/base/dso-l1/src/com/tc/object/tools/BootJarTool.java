@@ -466,7 +466,7 @@ public class BootJarTool {
       loadTerracottaClass(ClassProcessorHelper.class.getName());
       loadTerracottaClass(ClassProcessorHelperJDK15.class.getName());
       loadTerracottaClass(ClassProcessorHelper.State.class.getName());
-      loadTerracottaClass(ClassProcessorHelper.JarFilter.class.getName());
+      loadTerracottaClass(ClassProcessorHelper.TcCommonLibQualifier.class.getName());
       loadTerracottaClass(ClassProcessor.class.getName());
       loadTerracottaClass(ClassPreProcessor.class.getName());
       loadTerracottaClass(ClassPostProcessor.class.getName());
