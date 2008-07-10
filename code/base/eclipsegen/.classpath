@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src"/>
+	<classpathentry excluding="**/.svn/*" kind="src" output="build.eclipse/src.classes" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5"/>
-	<classpathentry kind="lib" path="lib/antlr-2.7.7.jar"/>
-	<classpathentry kind="lib" path="lib/stringtemplate.jar"/>
-	<classpathentry kind="lib" path="lib/jvyaml.jar" sourcepath="C:/downloads/jvyaml-0.2.1-src.zip"/>
-	<classpathentry kind="lib" path="lib/commons-io-1.3.2.jar"/>
-	<classpathentry kind="output" path="bin"/>
+	<classpathentry exported="true" kind="lib" path="lib/antlr-2.7.7.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-io-1.3.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jvyaml.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/stringtemplate.jar"/>
 </classpath>

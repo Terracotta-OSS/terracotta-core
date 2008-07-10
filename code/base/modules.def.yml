@@ -749,6 +749,11 @@ modules:
         - thirdparty
         - thirdparty-api
         - thirdparty-api
+
+  - eclipsegen:
+      options:
+        jdk: J2SE-1.5
+
 # these groups are used by the monkeys to run tests in each module.
 module-groups:
   reflector:

@@ -42,7 +42,9 @@ public class Main {
   }
 
   public static void main(String[] args) throws Exception {
+    System.out.println("Running eclipsegen...");
     new Main(resolveModulesDef()).generate();
+    System.out.println("Done!");
   }
 
   private void generate() throws Exception {
