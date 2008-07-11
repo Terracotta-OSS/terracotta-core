@@ -49,6 +49,20 @@ public class IntList {
     return rv;
   }
 
+  public String toString() {
+    StringBuffer sb = new StringBuffer();
+    sb.append('{');
+    int[] vals = toArray();
+    for (int i = 0, n = vals.length, last = n - 1; i < n; i++) {
+      sb.append(vals[i]);
+      if (i != last) {
+        sb.append(", ");
+      }
+    }
+    sb.append('}');
+    return sb.toString();
+  }
+
   public int get(int index) {
     int whichArray = index == 0 ? 0 : index / BLOCK;
     return ((int[]) arrays.get(whichArray))[index % BLOCK];

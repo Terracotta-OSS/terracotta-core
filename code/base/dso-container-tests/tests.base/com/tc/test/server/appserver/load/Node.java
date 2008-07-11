@@ -10,7 +10,10 @@ import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.util.IntList;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tc.util.runtime.Os;
+import com.tc.util.runtime.ThreadDump;
 
 import java.net.URL;
 import java.util.Random;
@@ -27,6 +30,7 @@ public class Node implements Runnable {
   protected final URL[]             validateUrls;
   protected final Random            random = new Random();
   protected final WebConversation[] conversations;
+  protected final IntList[]         requestTimes;
 
   public Node(URL mutateUrl, URL validateUrl, int numSessions, long duration) {
     this(new URL[] { mutateUrl }, new URL[] { validateUrl }, numSessions, duration);
@@ -38,6 +42,10 @@ public class Node implements Runnable {
     this.conversations = createConversations(numSessions);
     this.duration = duration;
     this.numRequests = new int[numSessions];
+    this.requestTimes = new IntList[numSessions];
+    for (int i = 0; i < requestTimes.length; i++) {
+      requestTimes[i] = new IntList();
+    }
   }
 
   private WebConversation[] createConversations(int count) {
@@ -66,7 +74,15 @@ public class Node implements Runnable {
   private void validate() throws Exception {
     for (int i = 0; i < conversations.length; i++) {
       int expect = numRequests[i];
-      if (expect == 0) { throw new AssertionError("No requests were ever made for client " + i); }
+      if (expect == 0) {
+        if (Os.isUnix() && !Os.isMac()) {
+          ThreadDump.dumpProcessGroupMany(3, 500);
+        }
+
+        dumpRequestTimes();
+
+        throw new AssertionError("No requests were ever made for client " + i);
+      }
 
       WebConversation wc = conversations[i];
 
@@ -77,6 +93,12 @@ public class Node implements Runnable {
         // Recording the request that was just made. This is needed for RequestCountTest.
         numRequests[i]++;
       }
+    }
+  }
+
+  private void dumpRequestTimes() {
+    for (int i = 0; i < requestTimes.length; i++) {
+      logger.info("request times for client " + i + ": " + requestTimes[i]);
     }
   }
 
@@ -97,6 +119,8 @@ public class Node implements Runnable {
       final long start = System.currentTimeMillis();
       try {
         int newVal = getResponseAsInt(wc, mutateUrl);
+        long elapsed = System.currentTimeMillis() - start;
+        requestTimes[session].add((int) elapsed);
         numRequests[session]++;
         Assert.assertEquals(getSessionID(wc), numRequests[session], newVal);
         session = (session + 1) % conversations.length;

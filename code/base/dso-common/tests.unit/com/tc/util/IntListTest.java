@@ -32,4 +32,25 @@ public class IntListTest extends TestCase {
     }
   }
 
+  public void testToString() {
+    IntList list = new IntList();
+
+    assertEquals("{}", list.toString());
+
+    list.add(1);
+    assertEquals("{1}", list.toString());
+
+    list.add(11);
+    assertEquals("{1, 11}", list.toString());
+
+    list.add(21);
+    assertEquals("{1, 11, 21}", list.toString());
+
+    list.add(1211);
+    list.add(111221);
+    assertEquals("{1, 11, 21, 1211, 111221}", list.toString());
+
+    // what's the next number in the sequence above?
+  }
+
 }
