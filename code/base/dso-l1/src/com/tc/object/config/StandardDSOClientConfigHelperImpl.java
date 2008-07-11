@@ -1,4 +1,4 @@
-/*
+/**
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
@@ -1742,8 +1742,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     InputStream l1PropFromL2Stream = null;
     URL theURL = null;
     for (int i = 0; i < connectInfo.length; i++) {
+      ConnectionInfo ci = connectInfo[i];
       try {
-        ConnectionInfo ci = connectInfo[i];
         theURL = new URL("http", ci.getHostname(), ci.getPort(), "/l1reconnectproperties");
         String text = "Trying to get L1 Reconnect Properties from " + theURL.toString();
         logger.info(text);
@@ -1751,9 +1751,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
         l1PropFromL2Stream = connection.getInputStream();
         if (l1PropFromL2Stream != null) return l1PropFromL2Stream;
       } catch (IOException e) {
-        String text = "We couldn't load l1 reconnect properties from the URL :" + theURL.toString();
+        String text = "Can not connect to " + ci.getHostname() + ":" + ci.getPort();
         boolean tryAgain = i < connectInfo.length;
-        if (tryAgain) text += " \n Skipping this source and going to the next one.";
+        if (tryAgain) text += " \n Will retry next server";
         logger.warn(text);
       }
     }
