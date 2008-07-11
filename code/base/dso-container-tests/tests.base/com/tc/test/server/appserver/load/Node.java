@@ -16,6 +16,7 @@ import com.tc.util.runtime.Os;
 import com.tc.util.runtime.ThreadDump;
 
 import java.net.URL;
+import java.util.Date;
 import java.util.Random;
 
 import junit.framework.Assert;
@@ -98,7 +99,8 @@ public class Node implements Runnable {
 
   private void dumpRequestTimes() {
     for (int i = 0; i < requestTimes.length; i++) {
-      logger.info("request times for client " + i + ": " + requestTimes[i]);
+      System.err.println("[" + new Date() + "] [" + Thread.currentThread().getName() + "] request times for client "
+                         + i + ": " + requestTimes[i]);
     }
   }
 
