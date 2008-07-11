@@ -41,7 +41,11 @@ public class MultiNodeLoadTest extends AbstractDeploymentTest {
   }
 
   public void testLoad() throws Throwable {
-    runLoad(true);
+    runLoad(isSticky());
+  }
+
+  boolean isSticky() {
+    return true;
   }
 
   protected final void runLoad(boolean sticky) throws Throwable {
