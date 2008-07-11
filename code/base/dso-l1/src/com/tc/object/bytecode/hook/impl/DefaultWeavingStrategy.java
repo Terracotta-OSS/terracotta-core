@@ -60,7 +60,7 @@ import java.util.Set;
 
 /**
  * A weaving strategy implementing a weaving scheme based on statical compilation, and no reflection.
- *
+ * 
  * @author <a href="mailto:jboner@codehaus.org">Jonas Bon&#233;r </a>
  * @author <a href="mailto:alex@gnilux.com">Alexandre Vasseur </a>
  */
@@ -90,11 +90,14 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
 
     // deploy all system aspect modules
     StandardAspectModuleDeployer.deploy(getClass().getClassLoader(), StandardAspectModuleDeployer.ASPECT_MODULES);
+
+    // workaround for ClassCircularityError in ConcurrentHashMap
+    configHelper.getAspectModules().entrySet().iterator();
   }
 
   /**
    * Performs the weaving of the target class.
-   *
+   * 
    * @param className
    * @param context
    */
@@ -371,7 +374,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
 
   /**
    * Filters out the classes that are not eligible for transformation.
-   *
+   * 
    * @param definitions the definitions
    * @param ctxs an array with the contexts
    * @param classInfo the class to filter
@@ -387,7 +390,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
 
   /**
    * Filters out the classes that are not eligible for transformation.
-   *
+   * 
    * @param definition the definition
    * @param ctxs an array with the contexts
    * @param classInfo the class to filter
