@@ -53,15 +53,15 @@ public class DBVersionChecker {
         logger.info(DB_VERSION_CURRENT);
       } else {
         logger.info("Sleepy Cat DB version is " + dbVersion);
-        if (!dbVersion.equals(DB_VERSION_CURRENT.getVersion())) { throw new AssertionError(
-                                                                                           "There is a mismatch in Terracotta and DB data format. "
-                                                                                               + "Please ensure that both Terracotta Server and "
-                                                                                               + "DB are upgraded to the same version."
-                                                                                               + " Expected : "
-                                                                                               + DB_VERSION_CURRENT
-                                                                                                   .getVersion()
-                                                                                               + " Actual: "
-                                                                                               + dbVersion); }
+        if (!dbVersion.equals(DB_VERSION_CURRENT.getVersion())) { throw new DBVersionMismatchException(
+                                                                                                       "There is a mismatch in Terracotta and DB data format. "
+                                                                                                           + "Please ensure that both Terracotta Server and "
+                                                                                                           + "DB are upgraded to the same version."
+                                                                                                           + " Expected : "
+                                                                                                           + DB_VERSION_CURRENT
+                                                                                                               .getVersion()
+                                                                                                           + " Actual: "
+                                                                                                           + dbVersion); }
       }
     } catch (DBException e) {
       // the key was not found
