@@ -32,7 +32,7 @@ public final class RequestCountTest extends AbstractDeploymentTest {
   private static final TCLogger logger             = TCLogging.getTestingLogger(RequestCountTest.class);
 
   private static final int      SESSIONS_PER_NODE  = 10;
-  private static final long     TEST_DURATION      = 30 * 1000;
+  private static final long     TEST_DURATION      = 60 * 1000;
   private static final String   CLIENT_NAME_PREFIX = "client-";
 
   private static final String   CONTEXT            = "RequestCountTest";
