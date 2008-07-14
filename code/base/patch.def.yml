@@ -2,10 +2,15 @@
 # patches should be a positive integer in increasing sequence.
 # The patch level identifier may be overridden on the tcbuild command-line
 # using the 'level' argument to the patch target.
-level: 1
+#
+# Example:
+# level: 1
+level: set_this_when_first_patch_created
 
 # List of files to include in the patch tar.  File paths listed here are
 # relative to the kit root directory.  Use the YAML syntax for lists:
 # one entry per line, each line beginning with a dash.
+#
+# Example:
+#- lib/tc.jar
 files: 
-- lib/tc.jar
