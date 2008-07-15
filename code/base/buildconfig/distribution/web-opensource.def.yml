@@ -78,6 +78,10 @@ bundled_modules:
 packaging:
   - tar
 postscripts:
+  - inject-copyright
+  - make-build-data:
+      args:
+        - lib/resources
   - include-schemas:
       args:
         - eclipse/org.terracotta.dso/html/ref/schema
