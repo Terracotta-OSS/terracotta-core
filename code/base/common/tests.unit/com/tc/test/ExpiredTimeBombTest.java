@@ -22,6 +22,6 @@ public class ExpiredTimeBombTest extends TCTestCase {
       // expected
       return;
     }
-    fail("shouldn't have thrown exception when timebomb expired");
+    fail("should have thrown exception when timebomb expired");
   }
 }
