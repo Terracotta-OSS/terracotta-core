@@ -30,7 +30,7 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
   }
 
   public static abstract class TwoServerTestSetup extends ServerTestSetup {
-    private Log                    logger = LogFactory.getLog(getClass());
+    private final Log              logger = LogFactory.getLog(getClass());
 
     private final Class            testClass;
     private final String           context;
@@ -44,7 +44,7 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
     protected TwoServerTestSetup(Class testClass, String context) {
       this(testClass, new TcConfigBuilder(), context);
     }
-    
+
     protected TwoServerTestSetup(Class testClass, String tcConfigFile, String context) {
       this(testClass, new TcConfigBuilder(tcConfigFile), context);
     }
@@ -55,7 +55,7 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
       this.context = context;
       this.tcConfigBuilder = configBuilder;
     }
-    
+
     protected void setStart(boolean start) {
       this.start = start;
     }
@@ -112,7 +112,7 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
     protected void configureTcConfig(TcConfigBuilder clientConfig) {
       // override this method to modify tc-config.xml
     }
-    
+
     protected void configureServerParamers(StandardAppServerParameters params) {
       // override this method to modify jvm args for app server
     }

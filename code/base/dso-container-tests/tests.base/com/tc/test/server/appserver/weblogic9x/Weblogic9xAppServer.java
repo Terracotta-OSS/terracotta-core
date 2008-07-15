@@ -37,7 +37,7 @@ public final class Weblogic9xAppServer extends CargoAppServer {
     return "weblogic9x";
   }
 
-  protected InstalledLocalContainer container(LocalConfiguration config) {
+  protected InstalledLocalContainer container(LocalConfiguration config, AppServerParameters params) {
     return new TCWebLogic9xInstalledLocalContainer(config);
   }
 

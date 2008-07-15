@@ -4,7 +4,6 @@
  */
 package com.tctest.server.appserver.unit;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.LogFactory;
 import org.jboss.logging.JBossJDKLogManager;
 import org.jboss.mx.util.JBossNotificationBroadcasterSupport;
@@ -15,6 +14,7 @@ import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
 import com.tc.test.AppServerInfo;
 import com.tc.test.TestConfigObject;
+import com.tc.test.server.appserver.StandardAppServerParameters;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.JARBuilder;
@@ -30,9 +30,8 @@ import java.util.Date;
 import junit.framework.Test;
 
 public class JBossSarTest extends AbstractTwoServerDeploymentTest {
-  private static final String CONTEXT          = "jbossSar";
-  private static final String SERVLET          = "JBossSarServlet";
-  protected boolean           parentDelegation = false;
+  private static final String CONTEXT = "jbossSar";
+  private static final String SERVLET = "JBossSarServlet";
 
   public JBossSarTest() {
     if (TestConfigObject.getInstance().appServerId() != AppServerInfo.JBOSS || Vm.isJDK14()) {
@@ -41,28 +40,14 @@ public class JBossSarTest extends AbstractTwoServerDeploymentTest {
   }
 
   public static Test suite() {
-    return new JBossSarTestSetup(JBossSarTest.class);
+    return new JBossSarTestSetup(JBossSarTest.class, false);
   }
 
-  protected void setUp() throws Exception {
-    super.setUp();
-    File sarFile = buildSar();
-
-    System.out.println("Deploying SAR...");
-    File deploy = new File(server0.getWorkingDirectory(), "deploy");
-    FileUtils.copyFileToDirectory(sarFile, deploy);
-    deploy = new File(server1.getWorkingDirectory(), "deploy");
-    FileUtils.copyFileToDirectory(sarFile, deploy);
-
-    // give jboss server time to pick up the hot deploy sar
-    Thread.sleep(10 * 1000);
-  }
-
-  public void testSar() throws Exception {
+  public final void testSar() throws Exception {
     doTest();
   }
 
-  protected void doTest() throws Exception {
+  private void doTest() throws Exception {
     System.out.println("Hitting jboss servers...");
     WebResponse resp = request(server0, "", new WebConversation());
     System.out.println("server0 response: " + resp.getText());
@@ -75,7 +60,7 @@ public class JBossSarTest extends AbstractTwoServerDeploymentTest {
     assertContains("YMCA", resp.getText());
   }
 
-  private File buildSar() throws Exception {
+  private File buildSar(boolean parentDelegation) throws Exception {
     File sarFile = getTempFile("directory-monitor.sar");
     JARBuilder sar = new JARBuilder(sarFile.getName(), sarFile.getParentFile());
 
@@ -91,6 +76,7 @@ public class JBossSarTest extends AbstractTwoServerDeploymentTest {
     }
 
     sar.finish();
+
     return sarFile;
   }
 
@@ -100,8 +86,23 @@ public class JBossSarTest extends AbstractTwoServerDeploymentTest {
 
   static class JBossSarTestSetup extends TwoServerTestSetup {
 
-    public JBossSarTestSetup(Class testClass) {
+    private final boolean parentDelegation;
+    private final Class   testClass;
+
+    public JBossSarTestSetup(Class testClass, boolean parentDelegation) {
       super(testClass, CONTEXT);
+      this.testClass = testClass;
+      this.parentDelegation = parentDelegation;
+    }
+
+    protected void configureServerParamers(StandardAppServerParameters params) {
+      try {
+        JBossSarTest jbossTest = (JBossSarTest) this.testClass.newInstance();
+        File sarFile = jbossTest.buildSar(parentDelegation);
+        params.addSar(sarFile);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -124,6 +125,7 @@ public class JBossSarTest extends AbstractTwoServerDeploymentTest {
       clientConfig.addAutoLock("* " + DirectoryMonitor.class.getName() + ".*(..)", "write");
       clientConfig.addAutoLock("* " + JBossSarServlet.class.getName() + ".*(..)", "write");
     }
+
   }
 
 }

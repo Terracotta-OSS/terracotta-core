@@ -71,7 +71,7 @@ public abstract class CargoAppServer extends AbstractAppServer {
     config.setProperty(GeneralPropertySet.LOGGING, "low");
     addWars(config, params.wars(), params.instanceName());
 
-    container = container(config);
+    container = container(config, params);
     container.setTimeout(8 * 60 * 1000);
     container.setHome(serverInstallDirectory().getAbsolutePath());
     container.setLogger(new ConsoleLogger(params.instanceName()));
@@ -142,7 +142,7 @@ public abstract class CargoAppServer extends AbstractAppServer {
 
   protected abstract String cargoServerKey();
 
-  protected abstract InstalledLocalContainer container(LocalConfiguration config);
+  protected abstract InstalledLocalContainer container(LocalConfiguration config, AppServerParameters params);
 
   protected void setConfigProperties(LocalConfiguration config) throws Exception {
     // do nothing

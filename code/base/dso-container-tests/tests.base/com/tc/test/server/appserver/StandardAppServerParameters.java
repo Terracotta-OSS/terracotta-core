@@ -11,6 +11,8 @@ import com.tc.util.runtime.Os;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -22,6 +24,7 @@ import java.util.Properties;
 public class StandardAppServerParameters implements AppServerParameters {
 
   private final Map        wars      = new HashMap();
+  private final Collection sars      = new ArrayList();
   private final String     instanceName;
   private final Properties props;
   private String           jvmArgs   = "";
@@ -39,6 +42,10 @@ public class StandardAppServerParameters implements AppServerParameters {
   public final void addWar(File war) {
     String name = war.getName();
     addWar(name.substring(0, name.length() - 4), war);
+  }
+
+  public final void addSar(File sar) {
+    sars.add(sar);
   }
 
   public final String jvmArgs() {
@@ -110,6 +117,10 @@ public class StandardAppServerParameters implements AppServerParameters {
 
   public void appendSysProp(String name, boolean b) {
     appendSysProp(name, Boolean.toString(b));
+  }
+
+  public Collection sars() {
+    return sars;
   }
 
 }
