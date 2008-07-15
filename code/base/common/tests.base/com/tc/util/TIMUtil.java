@@ -17,7 +17,7 @@ import java.util.Set;
  */
 public class TIMUtil {
   public static final String      COMMONS_COLLECTIONS_3_1;
-  public static final String      GLASSFISH_1_0;
+  public static final String      GLASSFISH_2_0;
   public static final String      SUREFIRE_2_3;
   public static final String      WEBSPHERE_6_1_0_7;
   public static final String      MODULES_COMMON;
@@ -31,7 +31,7 @@ public class TIMUtil {
       throw new RuntimeException(e);
     }
     COMMONS_COLLECTIONS_3_1 = lookup(".*commons-collections-3.1");
-    GLASSFISH_1_0 = lookup(".*glassfish-1.0");
+    GLASSFISH_2_0 = lookup(".*glassfish-2.0");
     SUREFIRE_2_3 = lookup(".*surefire-2.3");
     WEBSPHERE_6_1_0_7 = lookup(".*websphere-6.1.0.7");
     MODULES_COMMON = lookup("modules-common");

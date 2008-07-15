@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<projectDescription ><name >clustered-glassfish-1.0</name>
+<projectDescription ><name >clustered-glassfish-2.0</name>
 
-<comment >clustered-glassfish-1.0 source code</comment>
+<comment >clustered-glassfish-2.0 source code</comment>
 
 <projects />
 <buildSpec ><buildCommand ><name >org.eclipse.jdt.core.javabuilder</name>

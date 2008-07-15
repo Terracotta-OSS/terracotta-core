@@ -593,7 +593,7 @@ modules:
         - simulator
         - thirdparty
         - thirdparty-api
-  - clustered-glassfish-1.0:
+  - clustered-glassfish-2.0:
       options:
         jdk: J2SE-1.5
         module: true

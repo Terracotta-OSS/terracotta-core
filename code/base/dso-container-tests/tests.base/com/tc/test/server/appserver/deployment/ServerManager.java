@@ -175,7 +175,7 @@ public class ServerManager {
         aCopy.addModule(TIMUtil.WEBSPHERE_6_1_0_7, TIMUtil.getVersion(TIMUtil.WEBSPHERE_6_1_0_7));
         break;
       case AppServerInfo.GLASSFISH:
-        aCopy.addModule(TIMUtil.GLASSFISH_1_0, TIMUtil.getVersion(TIMUtil.GLASSFISH_1_0));
+        aCopy.addModule(TIMUtil.GLASSFISH_2_0, TIMUtil.getVersion(TIMUtil.GLASSFISH_2_0));
         break;
       default:
         // nothing for now
