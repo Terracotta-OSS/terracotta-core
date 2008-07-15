@@ -131,13 +131,8 @@ public class TCTestCase extends TestCase {
   }
 
   public void runBare() throws Throwable {
-    if (isAllDisabled()) {
-      System.out.println("NOTE: ALL tests in " + this.getClass().getName() + " are disabled until "
-                         + this.allDisabledUntil);
-      System.out.flush();
-      return;
-    }
-
+    checkTimeBomb();
+    
     final String testMethod = getName();
     if (isTestDisabled(testMethod)) {
       System.out.println("NOTE: Test method " + testMethod + "() is disabled until "
@@ -175,6 +170,19 @@ public class TCTestCase extends TestCase {
 
     // no errors -- woo-hoo!
     return;
+  }
+
+  // print out message if a timebomb is in effect or
+  // throw an exception if timebomb has expired
+  private void checkTimeBomb() {
+    if (allDisabledUntil != null) {
+      if (new Date().before(this.allDisabledUntil)) {
+        System.out.println("NOTE: ALL tests in " + this.getClass().getName() + " are disabled until "
+                           + this.allDisabledUntil);
+      } else {
+        throw new RuntimeException("Timebomb has expired on " + allDisabledUntil);
+      }
+    }
   }
 
   private void printOutCurrentJavaProcesses() {
