@@ -47,11 +47,11 @@ class UpdateCheckAction extends TimerTask {
     UpdateCheckAction action = new UpdateCheckAction(server, periodDays);
     new Timer("Update Checker", true).schedule(action, 0, action.getCheckPeriodMillis());
   }
-  
+
   public long getCheckPeriodMillis() {
     return periodMillis;
   }
-  
+
   public static void silenceHttpClientLoggers() {
     Logger.getLogger("org.apache.commons.httpclient.HttpClient").setLevel(Level.OFF);
     Logger.getLogger("org.apache.commons.httpclient.params.DefaultHttpParams").setLevel(Level.OFF);
@@ -87,10 +87,10 @@ class UpdateCheckAction extends TimerTask {
     sb.append("&tc-product=");
     sb.append(productInfo.edition().equals("opensource") ? "oss" : "ee");
     sb.append("&uptime-secs=");
-    sb.append((System.currentTimeMillis() - server.getStartTime())/1000);
+    sb.append((System.currentTimeMillis() - server.getStartTime()) / 1000);
     sb.append("&source=server");
-    
-    if(productInfo.isPatched()) {
+
+    if (productInfo.isPatched()) {
       sb.append("&patch=");
       sb.append(productInfo.patchLevel());
     }
@@ -141,12 +141,12 @@ class UpdateCheckAction extends TimerTask {
 
         String propVal = props.getProperty("general.notice");
         if (propVal != null && (propVal = propVal.trim()) != null && propVal.length() > 0) {
-          showMessage("Update Checker: "+propVal);
+          showMessage("Update Checker: " + propVal);
         }
 
         propVal = props.getProperty(version + ".notice");
         if (propVal != null && (propVal = propVal.trim()) != null && propVal.length() > 0) {
-          showMessage("Update Checker: "+propVal);
+          showMessage("Update Checker: " + propVal);
         }
 
         propVal = props.getProperty(version + ".updates");
@@ -167,7 +167,7 @@ class UpdateCheckAction extends TimerTask {
       }
       if (sb.length() > 0) {
         showMessage("Update Checker: Available updates:");
-        showMessage("Update Checker:   * "+sb.toString());
+        showMessage("Update Checker:   * " + sb.toString());
       } else {
         showMessage("Update Checker: No updates found");
       }
@@ -191,7 +191,7 @@ class UpdateCheckAction extends TimerTask {
     if (minutes != null) {
       nextCheckTime = minutes.longValue() * 60 * 1000;
     } else {
-      nextCheckTime = 1000L * 60 * 60 * days;
+      nextCheckTime = 1000L * 60 * 60 * 24 * days;
     }
 
     return nextCheckTime;
