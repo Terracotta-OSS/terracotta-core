@@ -137,7 +137,7 @@ public class TCTestCase extends TestCase {
                            + this.allDisabledUntil);
         return;
       } else {
-        throw new RuntimeException("Timebomb has expired on " + allDisabledUntil);
+        throw new Exception("Timebomb has expired on " + allDisabledUntil);
       }
     }
     
