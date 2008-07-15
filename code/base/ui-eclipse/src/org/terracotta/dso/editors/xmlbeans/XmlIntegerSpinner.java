@@ -8,58 +8,82 @@ import org.apache.xmlbeans.XmlObject;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.FocusAdapter;
 import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.widgets.Spinner;
 import org.terracotta.dso.editors.ConfigurationEditorPanel;
 import org.terracotta.ui.util.SWTUtil;
 
 public class XmlIntegerSpinner implements XmlObjectHolder {
-  private XmlObjectHolderHelper m_helper;
-  private Spinner               m_spinner;
-  private boolean               m_listening;
+  private final XmlObjectHolderHelper m_helper;
+  private final Spinner               m_spinner;
+  private final FocusListener         m_focusListener;
+  private final SelectionListener     m_selectionListener;
+  private final KeyListener           m_keyListener;
+  private boolean                     m_listening;
 
-  public XmlIntegerSpinner(Spinner spinner) {
-    m_spinner = spinner;
+  public static XmlIntegerSpinner newInstance(Spinner spinner) {
+    XmlIntegerSpinner result = new XmlIntegerSpinner(spinner);
+    result.addListeners();
+    return result;
+  }
+
+  protected void addListeners() {
+    m_spinner.addFocusListener(m_focusListener);
+    m_spinner.addSelectionListener(m_selectionListener);
+    m_spinner.addKeyListener(m_keyListener);
+  }
+
+  protected XmlIntegerSpinner(Spinner spinner) {
     m_helper = new XmlObjectHolderHelper();
-    spinner.addFocusListener(new FocusAdapter() {
-      public void focusLost(FocusEvent e) {
-        if(m_listening) {
-          set();
+    m_spinner = spinner;
+    m_focusListener = new SpinnerFocusAdapter();
+    m_selectionListener = new SpinnerSelectionAdapter();
+    m_keyListener = new SpinnerKeyAdapter();
+  }
+
+  private class SpinnerFocusAdapter extends FocusAdapter {
+    public void focusLost(FocusEvent e) {
+      if (m_listening) {
+        set();
+      }
+    }
+  }
+
+  private class SpinnerSelectionAdapter extends SelectionAdapter {
+    public void widgetSelected(SelectionEvent se) {
+      if (m_listening) {
+        set();
+      }
+    }
+  }
+
+  private class SpinnerKeyAdapter extends KeyAdapter {
+    public void keyPressed(KeyEvent e) {
+      if (!m_listening) return;
+      switch (e.keyCode) {
+        case SWT.F5: {
+          unset();
+          break;
         }
       }
-    });
-    spinner.addSelectionListener(new SelectionAdapter() {
-      public void widgetSelected(SelectionEvent se) {
-        if(m_listening) {
-          set();
-        }
-      }
-    });
-    spinner.addKeyListener(new KeyAdapter() {
-      public void keyPressed(KeyEvent e) {
-        if(!m_listening) return;
-        switch(e.keyCode) {
-          case SWT.F5: {
-            unset();
-            break;
-          }
-        }
-      }
-    });
+    }
   }
 
   protected void ensureXmlObject() {
-    ConfigurationEditorPanel parent = (ConfigurationEditorPanel)
-      SWTUtil.getAncestorOfClass(ConfigurationEditorPanel.class, m_spinner);
-    
-    if(parent != null) {
+    ConfigurationEditorPanel parent = (ConfigurationEditorPanel) SWTUtil
+        .getAncestorOfClass(ConfigurationEditorPanel.class, m_spinner);
+
+    if (parent != null) {
       parent.ensureXmlObject();
     }
   }
-  
+
   public void setup(XmlObject parent) {
     m_listening = false;
     m_helper.setup(parent);
@@ -80,23 +104,23 @@ public class XmlIntegerSpinner implements XmlObjectHolder {
     m_listening = false;
     setSelection(m_helper.defaultIntegerValue());
   }
-  
+
   public Integer integerValue() {
     return isSet() ? m_helper.getIntegerValue() : m_helper.defaultIntegerValue();
   }
-  
+
   public boolean isRequired() {
     return m_helper.isRequired();
   }
-  
+
   public boolean isSet() {
     return m_helper.isSet();
   }
-  
+
   public void set() {
     m_listening = false;
     int iVal = getSelection();
-    if(m_helper.hasDefault() && m_helper.defaultIntegerValue().equals(iVal)) {
+    if (m_helper.hasDefault() && m_helper.defaultIntegerValue().equals(iVal)) {
       unset();
     } else {
       ensureXmlObject();
@@ -104,9 +128,9 @@ public class XmlIntegerSpinner implements XmlObjectHolder {
     }
     m_listening = true;
   }
-  
+
   public void unset() {
-    if(!isRequired()) {
+    if (!isRequired()) {
       m_listening = false;
       m_helper.unset();
       Integer iVal = m_helper.defaultIntegerValue();
@@ -114,7 +138,7 @@ public class XmlIntegerSpinner implements XmlObjectHolder {
       m_listening = true;
     }
   }
-  
+
   public synchronized void addXmlObjectStructureListener(XmlObjectStructureListener listener) {
     m_helper.addXmlObjectStructureListener(listener);
   }
@@ -126,7 +150,7 @@ public class XmlIntegerSpinner implements XmlObjectHolder {
   public int getSelection() {
     return m_spinner.getSelection();
   }
-  
+
   public void setSelection(int value) {
     m_spinner.setSelection(value);
   }

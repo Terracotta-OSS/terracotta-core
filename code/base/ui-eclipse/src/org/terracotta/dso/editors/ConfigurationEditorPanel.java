@@ -160,31 +160,42 @@ public abstract class ConfigurationEditorPanel extends AbstractSWTPanel
   }
   
   void initStringField(Text field, Class parentType, String fieldName) {
-    XmlStringField xmlField = new XmlStringField(field); 
+    XmlStringField xmlField = XmlStringField.newInstance(field); 
     field.setData(xmlField);
     xmlField.init(parentType, fieldName);
   }
 
+  void setStringField(Text text, String value) {
+    assert(text != null);
+    text.setText(value);
+    text.selectAll();
+    text.forceFocus();
+    Object data = text.getData();
+    if(data instanceof XmlStringField) {
+      ((XmlStringField) data).set();
+    }
+  }
+  
   void initIntegerField(Text field, Class parentType, String fieldName) {
-    XmlIntegerField xmlField = new XmlIntegerField(field); 
+    XmlIntegerField xmlField = XmlIntegerField.newInstance(field); 
     field.setData(xmlField);
     xmlField.init(parentType, fieldName);
   }
 
   void initBooleanField(Button field, Class parentType, String fieldName) {
-    XmlBooleanToggle xmlField = new XmlBooleanToggle(field); 
+    XmlBooleanToggle xmlField = XmlBooleanToggle.newInstance(field); 
     field.setData(xmlField);
     xmlField.init(parentType, fieldName);
   }
 
   void initIntegerSpinnerField(Spinner field, Class parentType, String fieldName) {
-    XmlIntegerSpinner xmlField = new XmlIntegerSpinner(field); 
+    XmlIntegerSpinner xmlField = XmlIntegerSpinner.newInstance(field); 
     field.setData(xmlField);
     xmlField.init(parentType, fieldName);
   }
   
   void initStringEnumCombo(Combo field, Class parentType, String fieldName) {
-    XmlStringEnumCombo xmlField = new XmlStringEnumCombo(field); 
+    XmlStringEnumCombo xmlField = XmlStringEnumCombo.newInstance(field); 
     field.setData(xmlField);
     xmlField.init(parentType, fieldName);
   }

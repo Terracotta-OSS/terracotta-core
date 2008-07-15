@@ -464,7 +464,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       wc.setAttribute(ATTR_CLASSPATH_PROVIDER, "org.terracotta.dso.classpathProvider");
       wc.setAttribute(ATTR_WORKING_DIRECTORY, project.getLocation().makeAbsolute().toOSString());
 
-      return wc.launch(ILaunchManager.DEBUG_MODE, monitor);
+      return wc.launch(ILaunchManager.RUN_MODE, monitor);
     } else {
       System.out.println("No config file specified.  Set in project properties");
       return null;

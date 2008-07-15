@@ -306,9 +306,7 @@ public class ServerPanel extends ConfigurationEditorPanel implements XmlObjectSt
       IFolder folder = SWTUtil.openSelectFolderDialog(getProject(), "Select logs folder",
                                                       "Choose a folder for the server log area");
       if (folder != null) {
-        m_layout.m_logsLocation.setText(folder.getProjectRelativePath().toString());
-        m_layout.m_logsLocation.selectAll();
-        m_layout.m_logsLocation.forceFocus();
+        setStringField(m_layout.m_logsLocation, folder.getProjectRelativePath().toString());
       }
     }
   }
@@ -318,9 +316,7 @@ public class ServerPanel extends ConfigurationEditorPanel implements XmlObjectSt
       IFolder folder = SWTUtil.openSelectFolderDialog(getProject(), "Select data folder",
                                                       "Choose a folder for the server database area");
       if (folder != null) {
-        m_layout.m_dataLocation.setText(folder.getProjectRelativePath().toString());
-        m_layout.m_dataLocation.selectAll();
-        m_layout.m_dataLocation.forceFocus();
+        setStringField(m_layout.m_dataLocation, folder.getProjectRelativePath().toString());
       }
     }
   }
@@ -330,9 +326,7 @@ public class ServerPanel extends ConfigurationEditorPanel implements XmlObjectSt
       IFolder folder = SWTUtil.openSelectFolderDialog(getProject(), "Select statistics folder",
                                                       "Choose a folder for the server statistics database area");
       if (folder != null) {
-        m_layout.m_statisticsLocation.setText(folder.getProjectRelativePath().toString());
-        m_layout.m_statisticsLocation.selectAll();
-        m_layout.m_statisticsLocation.forceFocus();
+        setStringField(m_layout.m_statisticsLocation, folder.getProjectRelativePath().toString());
       }
     }
   }
