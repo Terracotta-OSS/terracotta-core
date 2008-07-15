@@ -306,22 +306,38 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
   }
 
   private void deployWar(String warName, File warFile) throws IOException, Exception {
-    System.err.println("Deploying war [" + warName + "] on " + instanceDir.getName());
-    List cmd = new ArrayList();
-    cmd.add(getAsadminScript().getAbsolutePath());
-    cmd.add("deploy");
-    cmd.add("--interactive=false");
-    cmd.add("--user");
-    cmd.add(ADMIN_USER);
-    cmd.add("--passwordfile");
-    cmd.add(getPasswdFile().getAbsolutePath());
-    cmd.add("--contextroot=" + warName);
-    cmd.add("--port=" + adminPort);
-    cmd.add(warFile.getAbsolutePath());
+    Result result = null;
 
-    Result result = Exec.execute((String[]) cmd.toArray(new String[] {}));
-    if (result.getExitCode() != 0) { throw new RuntimeException("Deploy failed for " + warName + ": " + result); }
-    System.err.println("Deployed war file successfully.");
+    // This retry logic is a bit of a hack for sure but. I mostly want to see if waiting some amount and/or retrying
+    // allows the deploy to eventually succeed (if so, then we can search for another indicator of when GF is ready to
+    // accept things)
+    for (int i = 0; i < 3; i++) {
+      System.err.println("Deploying war [" + warName + "] on " + instanceDir.getName() + " [attempt #" + i + "]");
+
+      List cmd = new ArrayList();
+      cmd.add(getAsadminScript().getAbsolutePath());
+      cmd.add("deploy");
+      cmd.add("--interactive=false");
+      cmd.add("--user");
+      cmd.add(ADMIN_USER);
+      cmd.add("--passwordfile");
+      cmd.add(getPasswdFile().getAbsolutePath());
+      cmd.add("--contextroot=" + warName);
+      cmd.add("--port=" + adminPort);
+      cmd.add(warFile.getAbsolutePath());
+
+      result = Exec.execute((String[]) cmd.toArray(new String[] {}));
+
+      if (result.getExitCode() == 0) {
+        System.err.println("Deployed war file successfully.");
+        return;
+      }
+
+      System.err.println("Deploy failed for " + warName + ": " + result);
+      ThreadUtil.reallySleep(5000);
+    }
+
+    throw new RuntimeException("Deploy failed for " + warName + ": " + result);
   }
 
   abstract protected String[] getDisplayCommand(String script);
