@@ -17,6 +17,7 @@ import com.tc.net.protocol.ProtocolAdaptorFactory;
 import com.tc.net.protocol.StackNotFoundException;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.util.Assert;
 
 import java.util.ArrayList;
@@ -226,8 +227,11 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
           handleHandshakeError(new TransportHandshakeErrorContext(
                                                                   "Unable to find communications stack. "
                                                                       + e.getMessage()
-                                                                      + ". This is usually caused by a client from a prior run trying to illegally reconnect to the server."
-                                                                      + " While that client is being rejected, everything else should proceed as normal. ",
+                                                                      + ". This is usually caused by a client that is not connected to the cluster."
+                                                                      + " While that client is being rejected, everything else should proceed as normal."
+                                                                      + " Some possible reasons for this situation might be:"
+                                                                      + " the client is from a previous run and can't safely join this newer run; or"
+                                                                      + " the client couldn't reconnect (configurable through several TC properties: '"+ TCPropertiesConsts.L2_L1RECONNECT_ENABLED +"', '"+ TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS +"', ...)",
                                                                   e));
         }
       }
