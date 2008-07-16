@@ -216,8 +216,6 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
       synchronized (__tc_managed().getResolveLock()) {
         ManagerUtil.checkWriteAccess(this);
 
-        ManagerUtil.checkWriteAccess(this);
-
         Entry entry = removeEntryForKey(key);
         if (entry == null) { return; }
 
@@ -232,8 +230,8 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
   }
 
   /**
-   * This method is to be invoked when one needs a put to get broadcast, but do not want to fault in the value of a
-   * map entry.
+   * This method is to be invoked when one needs a put to get broadcast, but do not want to fault in the value of a map
+   * entry.
    */
   public void __tc_put_logical(Object key, Object value) {
     if (__tc_isManaged()) {
