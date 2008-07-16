@@ -42,6 +42,7 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
   private final String        defaultL2Identifier;
   private final String        configSpec;
   private final File          cwd;
+  private boolean             l2IdentifierSpecified = false;
 
   public StandardTVSConfigurationSetupManagerFactory(boolean isForL2,
                                                      IllegalConfigurationChangeHandler illegalChangeHandler)
@@ -130,6 +131,7 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
 
     if (specifiedL2Identifier != null) {
       this.defaultL2Identifier = specifiedL2Identifier;
+      l2IdentifierSpecified = true;
     } else {
       String hostName = null;
 
@@ -210,7 +212,7 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
     configurationCreator = new StandardXMLFileConfigurationCreator(this.configSpec, this.cwd, this.beanFactory);
 
     return new StandardL2TVSConfigurationSetupManager(configurationCreator, l2Name, this.defaultValueProvider,
-                                                      this.xmlObjectComparator, this.illegalChangeHandler);
+      this.xmlObjectComparator, this.illegalChangeHandler, l2IdentifierSpecified);
   }
 
 }

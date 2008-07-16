@@ -71,11 +71,21 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
   private final String               thisL2Identifier;
   private L2ConfigData               myConfigData;
   private ConfigTCProperties         configTCProperties;
+  private final boolean              thisl2IdentifierSpecified;
 
   public StandardL2TVSConfigurationSetupManager(ConfigurationCreator configurationCreator, String thisL2Identifier,
                                                 DefaultValueProvider defaultValueProvider,
                                                 XmlObjectComparator xmlObjectComparator,
                                                 IllegalConfigurationChangeHandler illegalConfigChangeHandler)
+      throws ConfigurationSetupException {
+    this(configurationCreator, thisL2Identifier, defaultValueProvider, xmlObjectComparator, illegalConfigChangeHandler, false);
+  }
+
+  public StandardL2TVSConfigurationSetupManager(ConfigurationCreator configurationCreator, String thisL2Identifier,
+                                                DefaultValueProvider defaultValueProvider,
+                                                XmlObjectComparator xmlObjectComparator,
+                                                IllegalConfigurationChangeHandler illegalConfigChangeHandler,
+                                                boolean thisl2IdentifierSpecified)
       throws ConfigurationSetupException {
     super(defaultValueProvider, xmlObjectComparator, illegalConfigChangeHandler);
 
@@ -92,6 +102,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
     this.thisL2Identifier = thisL2Identifier;
     this.myConfigData = null;
+    this.thisl2IdentifierSpecified = thisl2IdentifierSpecified;
 
     runConfigurationCreator(this.configurationCreator);
 
@@ -250,7 +261,13 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
     if (this.allCurrentlyKnownServers().length == 1) {
       if (servers != null && servers.getServerArray() != null && servers.getServerArray()[0] != null) {
-        this.myConfigData = configDataFor(servers.getServerArray()[0].getName());
+        final String server0Name = servers.getServerArray()[0].getName();
+        if (thisl2IdentifierSpecified && !thisL2Identifier.equals(server0Name)) {
+          throw new ConfigurationSetupException("You have specified server name '" + thisL2Identifier + "' which does not " +
+                                                "exist in the specified tc-config file. \n\n" +
+                                                "Please check your settings and try again");
+        }
+        this.myConfigData = configDataFor(server0Name);
       } else {
         this.myConfigData = configDataFor(null);
       }
