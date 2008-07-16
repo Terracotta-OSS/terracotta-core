@@ -240,6 +240,9 @@ public class NonPortableReason implements Serializable {
         if (detail == null) {
           detail = findDetailByLabel(NonPortableFieldSetContext.FIELD_NAME_LABEL);
         }
+        if (detail == null ) {
+          detail = findDetailByLabel("Referring field");
+        }
         sb.append(Messages.superClassNotAdaptableInstructions(detail != null ? detail.getValue() : null, className,
                                                               getErroneousSuperClassNames(), isRoot));
       }
