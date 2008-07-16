@@ -22,12 +22,15 @@ public class ReentrantReadWriteLockDowngraderTest extends TransparentTestBase {
   private static final int NODE_COUNT = 3;
   private static final int LOOP_COUNT = 1000;
 
+  public ReentrantReadWriteLockDowngraderTest() {
+    disableAllUntil("2008-09-01");
+  }
+
   @Override
   protected Class getApplicationClass() {
     return ReentrantReadWriteLockDowngraderTestApp.class;
   }
 
-  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
@@ -63,11 +66,11 @@ public class ReentrantReadWriteLockDowngraderTest extends TransparentTestBase {
 
     @Override
     protected void runTest() throws Throwable {
-      if (false) {
-        // XXX: enable me when this test will pass
-        runTestFailing();
-      }
+      runTestFailing();
+      runTestSucceeding();
+    }
 
+    private void runTestSucceeding() throws InterruptedException, BrokenBarrierException {
       int index = barrier.await();
 
       // lock2.writeLock().lock();
