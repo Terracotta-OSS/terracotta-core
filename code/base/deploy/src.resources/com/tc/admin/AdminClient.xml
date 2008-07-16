@@ -162,7 +162,8 @@
       <children>
         <splitpane class="com.tc.admin.common.XSplitPane" divider-location="-1" focus-index="0" name="MainSplitter">
           <left>
-            <splitpane class="com.tc.admin.common.XSplitPane" divider-location="-1" focus-index="0" name="LeftSplitter" orientation="horizontal">
+            <splitpane class="com.tc.admin.common.XSplitPane" divider-location="-1" focus-index="0" name="LeftSplitter"
+              orientation="horizontal">
               <left>
                 <scrollpane>
                   <tree class="com.tc.admin.NavTree" name="Tree" />
@@ -512,7 +513,8 @@
         </tab>
         <tab title="Config">
           <scrollpane>
-            <textarea class="com.tc.admin.common.XTextArea" name="ClassesConfigTextArea" editable="false" line-wrap="false" font="Monospaced-plain-12" />
+            <textarea class="com.tc.admin.common.XTextArea" name="ClassesConfigTextArea" editable="false" line-wrap="false"
+              font="Monospaced-plain-12" />
           </scrollpane>
         </tab>
       </tabbedpane>
@@ -589,7 +591,8 @@
           <item bottom="-1,bottom:ns" height="n" left="0,right:n" right="-1,right:ns" top="-1,top:ns" width="n" />
         </connections>
       </container>
-      <splitpane name="ThreadDumpsSplitter" divider-location="-1" focus-index="0" orientation="horizontal" resize-weight="0.25">
+      <splitpane name="ThreadDumpsSplitter" class="com.tc.admin.common.XSplitPane" divider-location="-1" focus-index="0"
+        orientation="horizontal" resize-weight="0.25">
         <left>
           <scrollpane>
             <tree name="ThreadDumpTree" class="com.tc.admin.common.XTree" />
@@ -618,7 +621,8 @@
           <item bottom="-1,bottom:ns" height="n" left="-1,left:n" right="-1,right:ns" top="-1,top:ns" width="n" />
         </connections>
       </container>
-      <splitpane name="ThreadDumpsSplitter" divider-location="-1" focus-index="0" orientation="horizontal" resize-weight="0.25">
+      <splitpane name="ThreadDumpsSplitter" class="com.tc.admin.common.XSplitPane" divider-location="-1" focus-index="0"
+        orientation="horizontal" resize-weight="0.25">
         <left>
           <scrollpane>
             <list name="ThreadDumpList" />
